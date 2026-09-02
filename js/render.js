@@ -547,15 +547,27 @@
     }
     // Cover-render the plate for the current habitat (object-fit: cover, centred).
     // Returns true when a plate was painted, false to request the procedural fallback.
-    function drawHabitatPlate(view) {
+    function drawHabitatPlate(view, pal) {
       var rec = plates[view.habitat];
       if (!rec || !rec.ready || rec.failed) return false;
       var iw = rec.img.naturalWidth || rec.img.width, ih = rec.img.naturalHeight || rec.img.height;
       if (!iw || !ih) return false;
       var s = Math.max(cssW / iw, cssH / ih);
       var dw = iw * s, dh = ih * s;
+      // The plates are OPAQUE underwater scenes. Paint the photo ONLY in the wet region
+      // (below the waterline) and fill glass/air above it, so an unfilled or evaporated
+      // tank shows a real dry gap rather than a submerged photo. At level 0 the waterline
+      // sits at SUB_TOP, so no underwater plate appears above the substrate. A full tank's
+      // waterline is near the rim, so its composition is effectively unchanged.
+      var wl = waterlineY(view) * cssH;
+      drawAirGlass(wl, pal ? pal.waterTop : "#cfe6ee");
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, wl, cssW, cssH - wl);
+      ctx.clip();
       try { ctx.drawImage(rec.img, (cssW - dw) / 2, (cssH - dh) / 2, dw, dh); }
-      catch (e) { rec.failed = true; return false; }
+      catch (e) { ctx.restore(); rec.failed = true; return false; }
+      ctx.restore();
       return true;
     }
 
@@ -866,7 +878,7 @@
 
       // Photographic habitat plate is the visual hero; fall back to the
       // procedural, habitat-appropriate scene until (or unless) it loads.
-      var photo = drawHabitatPlate(view);
+      var photo = drawHabitatPlate(view, pal);
       if (!photo) {
         drawWater(view, pal, now);
         drawSubstrate(view, pal, now);
@@ -933,6 +945,15 @@
     }
 
     /* ------------------------------ water -------------------------------- */
+    // Glassy air region above the waterline, blended toward the water tone. Shared by
+    // the procedural water pass and the photographic plate so a low/zero tank shows a
+    // real dry/air gap in both, instead of a full-canvas submerged scene.
+    function drawAirGlass(wl, blend) {
+      if (wl <= 2) return;
+      var ag = ctx.createLinearGradient(0, 0, 0, wl);
+      ag.addColorStop(0, "#e9eef0"); ag.addColorStop(1, mix("#e9eef0", blend, 0.6));
+      ctx.fillStyle = ag; ctx.fillRect(0, 0, cssW, wl);
+    }
     function drawWater(view, pal, now) {
       var wl = waterlineY(view) * cssH;
       var haze = view.films.haze, green = view.films.green;
@@ -942,12 +963,7 @@
       var g = ctx.createLinearGradient(0, wl, 0, cssH);
       g.addColorStop(0, top); g.addColorStop(0.55, mid); g.addColorStop(1, deep);
       ctx.fillStyle = g; ctx.fillRect(0, wl, cssW, cssH - wl);
-      // air gap above the waterline (glassy, faintly lit)
-      if (wl > 2) {
-        var ag = ctx.createLinearGradient(0, 0, 0, wl);
-        ag.addColorStop(0, "#e9eef0"); ag.addColorStop(1, mix("#e9eef0", top, 0.6));
-        ctx.fillStyle = ag; ctx.fillRect(0, 0, cssW, wl);
-      }
+      drawAirGlass(wl, top); // glassy air gap above the waterline (faintly lit)
     }
 
     /* ============================== lighting ============================= */
