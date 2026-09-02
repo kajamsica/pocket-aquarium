@@ -200,6 +200,24 @@ ok(/recAct\s*=\s*m\.action\.act/.test(waterToolsSrc), "waterToolsHTML derives th
 ok(!/\brecTest\b/.test(app) && !/\brecWC\b/.test(app) && !/\brecTop\b/.test(app),
    "no independent per-tool recommendation booleans remain (single source of truth)");
 
+group("guide + canvas summary are orientation-only");
+// Regression guard (PAR5-01A browser finding): the Guide card and the canvas accessibility
+// summary read snap.nextAction ("Stock your first community") which contradicted the command
+// surface's real careAdvice ("Review water"). Only the command surface may state the action.
+var renderGuideSrc = (app.match(/function renderGuide\([\s\S]*?\n  \}/) || [""])[0];
+ok(renderGuideSrc.length > 0, "renderGuide located for the orientation-only contract check");
+ok(!/snap\.nextAction/.test(renderGuideSrc), "renderGuide does not consume snap.nextAction");
+ok(!/careAdvice/.test(renderGuideSrc), "renderGuide does not read careAdvice's action either");
+ok(/STAGE_NOTES/.test(renderGuideSrc), "renderGuide shows the educational stage meaning (STAGE_NOTES)");
+ok(/snap\.cycle\.(stage|index)/.test(renderGuideSrc), "renderGuide titles the current cycle/maturity stage");
+ok(/id="nextAction"/.test(html) && /nextActionEl/.test(renderGuideSrc), "#nextAction target/DOM compatibility is preserved");
+var summaryTextSrc = (app.match(/function summaryText\([\s\S]*?\n  \}/) || [""])[0];
+ok(summaryTextSrc.length > 0, "summaryText located for the orientation-only contract check");
+ok(!/snap\.nextAction/.test(summaryTextSrc), "canvas summary no longer consumes snap.nextAction");
+ok(!/["']Next:/.test(summaryTextSrc), "canvas summary emits no competing 'Next:' action clause");
+// Belt-and-suspenders: nothing outside the command surface renders snap.nextAction anymore.
+ok(!/snap\.nextAction/.test(app), "no surface other than the command bar consumes snap.nextAction");
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));

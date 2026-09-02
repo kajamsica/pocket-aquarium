@@ -345,7 +345,8 @@
     parts.push(life + ".");
     if (snap.clutches && snap.clutches.length) parts.push("Breeding: " + snap.clutches.map(function (c) { return c.count + " " + c.stage; }).join(", ") + ".");
     if (snap.alerts.length) parts.push("Alerts: " + snap.alerts.slice(0, 3).join(", ") + ".");
-    parts.push("Next: " + snap.nextAction.title + ".");
+    // No forward-looking action clause here — the command surface is the single owner of the
+    // care action, so this scene description stays purely factual and never competes with it.
     return parts.join(" ");
   }
 
@@ -544,15 +545,16 @@
     "Mature biome": "A stable, biodiverse, well-aged system."
   };
   function renderGuide(snap) {
-    // Learning/orientation only. The single recommended ACTION lives on the always-visible
-    // command surface, so the Guide no longer repeats it as a competing call-to-action — it
-    // just names the current cycle phase and what it means (progression content).
-    if (!snap.nextAction) { nextActionEl.innerHTML = ""; }
+    // Orientation only — never a second "next action". The command surface is the sole owner
+    // of the recommended action; #nextAction just names the current cycle/maturity stage and
+    // explains what it means, reusing the same STAGE_NOTES the phase timeline teaches below.
+    if (!snap.habitat) { nextActionEl.innerHTML = ""; }
     else {
+      var stage = STAGES[snap.cycle.index] || snap.cycle.stage || STAGES[0];
       nextActionEl.innerHTML =
-        '<div class="next-card"><span class="next-eyebrow">' + esc(snap.cycle.stage || "Getting started") + "</span>" +
-        '<h3 class="next-title">' + esc(snap.nextAction.title) + "</h3>" +
-        '<p class="next-body">' + esc(snap.nextAction.detail) + "</p></div>";
+        '<div class="next-card"><span class="next-eyebrow">Current stage</span>' +
+        '<h3 class="next-title">' + esc(stage) + "</h3>" +
+        '<p class="next-body">' + esc(STAGE_NOTES[stage] || "") + "</p></div>";
     }
     // phase timeline via stage index / isCycled (never literal-stage equality)
     phaseTimeline.innerHTML = phaseTimelineHTML(snap);
