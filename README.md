@@ -240,7 +240,7 @@ index.html
   │                   only dispatches explicit pointer feed/select actions.
   └─ js/app.js     →  bootstrap only (DOM binding)
                       Binds the shell to PA: first-run habitat flow, guide/care actions, water
-                      controls, store purchases, inspector, feed mode, time controls, journal,
+                      controls, store purchases, inspector, tank feeding, time controls, journal,
                       autosave/reload, offline report, and accessible status updates.
 ```
 

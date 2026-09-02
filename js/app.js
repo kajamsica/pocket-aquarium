@@ -271,7 +271,7 @@
       '<p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--ink-soft)">This clears your <b>ecosystem</b> progress — habitat, cycle, water, livestock, corals, journal and credits — and begins a fresh tank. Your preserved <b>arcade</b> progress is never touched.</p>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">' +
       '<button class="tbtn" type="button" data-act="modal-cancel" data-fk="so-cancel" style="border:var(--line);background:var(--paper)">Cancel</button>' +
-      '<button class="offer-cta" type="button" data-act="modal-startover" data-fk="so-ok" style="min-height:40px;background:var(--bad)">Clear &amp; start over</button>' +
+      '<button class="offer-cta" type="button" data-act="modal-startover" data-fk="so-ok" style="background:var(--bad)">Clear &amp; start over</button>' +
       '</div>';
     modalRoot.appendChild(d);
     d.addEventListener("close", function () { if (d.parentNode) d.parentNode.removeChild(d); });
@@ -1091,7 +1091,7 @@
     journalFooter = document.createElement("div");
     journalFooter.id = "journalFooter";
     journalFooter.style.cssText = "margin-top:8px;padding-top:10px;border-top:2px dashed color-mix(in srgb,var(--ink) 22%,transparent)";
-    journalFooter.innerHTML = actBtn("offer-cta", "Start over…", "startover", null, ' style="min-height:38px;background:var(--bad)" data-fk="startover"') +
+    journalFooter.innerHTML = actBtn("offer-cta", "Start over…", "startover", null, ' style="background:var(--bad)" data-fk="startover"') +
       '<p class="meter-foot" style="margin:6px 0 0">Clears ecosystem progress only — your preserved arcade save is never touched.</p>';
     journalList.insertAdjacentElement("afterend", journalFooter);
   }

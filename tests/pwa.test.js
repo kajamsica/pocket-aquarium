@@ -82,6 +82,17 @@ ok(/url\.origin\s*!==\s*self\.location\.origin/.test(sw), "sw.js restricts handl
 ok(/request\.mode\s*===\s*["']navigate["']/.test(sw) && /["']\.\/index\.html["']/.test(sw), "sw.js falls back to the cached ./index.html on navigation");
 ok(/caches\.delete/.test(sw) && /activate/.test(sw), "sw.js prunes old caches on activate (no stale shell)");
 ok(!/\.register\s*\(/.test(sw), "sw.js does not register itself (the browser owns updates)");
+// Renderer-critical art the Canvas draws (js/render.js): two habitat plates + three
+// validated species sprites. These MUST be precached so the "hyper-real" look survives
+// a cold offline launch / HTTP-cache eviction. Removing any of them from the allowlist
+// (or from disk) must fail this test.
+var RENDER_CRITICAL_ASSETS = [
+  "./assets/habitats/reef-lagoon-v1.png",
+  "./assets/habitats/amazon-blackwater-v1.png",
+  "./assets/animals/ocellaris-clownfish-v2.png",
+  "./assets/animals/neon-tetra-v1.png",
+  "./assets/animals/yellow-watchman-goby-v1.png"
+];
 var m = sw.match(/PRECACHE_URLS\s*=\s*\[([\s\S]*?)\]/);
 ok(m !== null, "sw.js declares a PRECACHE_URLS allowlist");
 if (m) {
@@ -90,9 +101,19 @@ if (m) {
   ["./index.html", "./styles.css", "./manifest.webmanifest",
    "./js/data.js", "./js/sim.js", "./js/render.js", "./js/app.js",
    "./assets/icons/icon-192.png", "./assets/icons/icon-512.png", "./assets/icons/apple-touch-icon.png"]
+    .concat(RENDER_CRITICAL_ASSETS)
     .forEach(function (u) { ok(list.indexOf(u) >= 0, "allowlist includes " + u); });
   ok(list.length > 0 && list.every(relative), "every allowlisted URL is relative (base-path safe)");
+  // The invalid clownfish v1 must never be precached (it is stripped from the Pages artifact).
+  ok(list.indexOf("./assets/animals/ocellaris-clownfish-v1.png") < 0, "invalid clownfish v1 is NOT precached");
 }
+// Each renderer-critical asset must also exist on disk as a real PNG so cache.addAll() can't 404.
+group("renderer-critical offline art");
+RENDER_CRITICAL_ASSETS.forEach(function (rel) {
+  var d = rel.replace(/^\.\//, "");
+  if (!exists(d)) { ok(false, d + " exists on disk for precache"); return; }
+  ok(pngSize(read(d)) !== null, d + " is a real PNG");
+});
 
 /* ------------------------------ 5. index.html wiring ------------------------------ */
 group("index wiring");
@@ -119,6 +140,13 @@ var css = readText("styles.css");
 ok(/env\(safe-area-inset-/.test(css), "styles honour the iPhone safe-area insets");
 ok(/touch-action:\s*none/.test(css), "canvas disables accidental scroll/zoom (touch-action:none)");
 ok(/min-height:44px/.test(css), "styles provide 44px touch targets");
+// The 44px contract must hold at the BASE rule, not only inside a mobile media query, and
+// must not be undercut by sub-44px inline overrides. These guard the exact defects PAIOS-R found.
+ok(/\.tbtn\s*\{[^}]*min-height:44px/.test(css), "transport .tbtn base min-height is 44px");
+ok(!/\.tbtn\s*\{[^}]*min-height:3\dpx/.test(css), "transport .tbtn base is not a sub-44px height");
+ok(/\.offer-cta\s*\{[^}]*min-height:44px/.test(css), "offer-cta base min-height is 44px");
+ok(!/\.offer-cta\s*\{[^}]*min-height:40px/.test(css), "offer-cta base is not the old 40px height");
+ok(!/min-height:38px/.test(app) && !/min-height:40px/.test(app), "app.js has no inline min-height that defeats the 44px rule");
 ok(/prefers-reduced-motion/.test(css), "styles respect prefers-reduced-motion");
 ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface is an accessible polite live region");
 ok(/id="canvasSummary"/.test(html) && /aria-describedby="canvasSummary"/.test(html), "canvas keeps a described-by text alternative");

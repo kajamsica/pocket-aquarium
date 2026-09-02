@@ -175,7 +175,7 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   border:var(--line);border-radius:999px;box-shadow:var(--pop-sm);
 }
 .tbtn{
-  min-width:44px;min-height:38px;padding:0 12px;cursor:pointer;
+  min-width:44px;min-height:44px;padding:0 12px;cursor:pointer;
   font-family:var(--font-mono);font-weight:800;font-size:13px;color:var(--ink);
   background:transparent;border:2px solid transparent;border-radius:999px;
 }
@@ -458,7 +458,7 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
 .offer-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px}
 .offer-price{font-family:var(--font-mono);font-weight:800;font-size:13px;color:var(--water-2)}
 .offer-cta{
-  min-height:40px;padding:0 15px;cursor:pointer;
+  min-height:44px;padding:0 15px;cursor:pointer;
   font-family:var(--font-ui);font-weight:800;font-size:13px;color:#fff;background:var(--ok);
   border:var(--line);border-radius:var(--r-sm);box-shadow:var(--pop-sm);
 }

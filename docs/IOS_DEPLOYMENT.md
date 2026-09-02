@@ -146,16 +146,31 @@ and *TestFlight* (<https://developer.apple.com/testflight/>).
 > dependency-free. Run them only on a Mac with full Xcode 26+ and an Apple signing state.
 
 ```sh
+# --- Stage a dedicated runtime web directory (run from the repo root) ---
+# NOT EXECUTED HERE. Capacitor 8 REJECTS webDir values of "", ".", "..", "./", "../"
+# (see cli/src/common.ts checkWebDir), so `--web-dir .` cannot be used. Instead copy
+# ONLY the runtime app into a clean ./www — never the repo root, labs/, docs/, tests/,
+# checkpoints/, .git, or the generated ios/ tree. This mirrors the Pages staging step.
+rm -rf www
+mkdir -p www
+cp index.html styles.css manifest.webmanifest sw.js www/
+cp -R js www/js
+cp -R assets www/assets
+rm -f www/assets/icons/app-icon-master-v1.png       # source master, not a runtime asset
+rm -f www/assets/animals/ocellaris-clownfish-v1.png # invalid sprite, never shipped
+
 # --- One-time native scaffold (run from the repo root) ---
 # NOT EXECUTED HERE — adds package.json + Capacitor deps + an ios/ project.
 npm init -y
 npm i @capacitor/core
 npm i -D @capacitor/cli
-npx cap init "Pocket Aquarium" com.kajamsica.pocketaquarium --web-dir .
+npx cap init "Pocket Aquarium" com.kajamsica.pocketaquarium --web-dir www
 npm i @capacitor/ios
 npx cap add ios
 
-# --- Sync the static web app into the native shell after any change ---
+# --- Re-stage ./www and sync the static web app into the native shell after any change ---
+# Re-run the staging block above (rm -rf www … cp …) so ./www reflects the latest runtime,
+# then sync it into the native project:
 npx cap sync ios
 
 # --- Open the generated project in Xcode to set the signing Team ---

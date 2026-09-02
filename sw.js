@@ -14,7 +14,9 @@
    - The worker never caches itself; the browser updates sw.js on its own byte-diff. */
 "use strict";
 
-var CACHE_VERSION = "v1";
+// v2: precache the renderer-critical habitat plates and validated species sprites
+// so the "hyper-real" art is durably offline, not dependent on the incidental HTTP cache.
+var CACHE_VERSION = "v2";
 var CACHE_NAME = "pocket-aquarium-shell-" + CACHE_VERSION;
 
 /* Relative to the worker scope — subpath-safe under /pocket-aquarium/. */
@@ -27,6 +29,14 @@ var PRECACHE_URLS = [
   "./js/sim.js",
   "./js/render.js",
   "./js/app.js",
+  // Renderer-critical art: two habitat plates + three validated species sprites.
+  // These are what the Canvas draws (js/render.js); without them a cold offline
+  // launch falls back to the procedural look after HTTP-cache eviction.
+  "./assets/habitats/reef-lagoon-v1.png",
+  "./assets/habitats/amazon-blackwater-v1.png",
+  "./assets/animals/ocellaris-clownfish-v2.png",
+  "./assets/animals/neon-tetra-v1.png",
+  "./assets/animals/yellow-watchman-goby-v1.png",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
   "./assets/icons/apple-touch-icon.png"

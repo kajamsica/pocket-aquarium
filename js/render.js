@@ -293,7 +293,14 @@
           if (Number.isFinite(lvl)) return lvl <= 1 ? lvl : clamp01(lvl / 10);
         }
         if (Number.isFinite(+v) && +v > 0) return clamp01(+v <= 1 ? +v : +v / 10);
-        if (typeof v === "string" && v) return 1;
+        if (typeof v === "string") {
+          // The sim stores equipment as tier-id strings ("sponge", "basic",
+          // "powerhead"...) and uses "none" for an EMPTY slot. Treat the off
+          // sentinels as disabled; any real installed tier reads as on.
+          var s = v.trim().toLowerCase();
+          if (s === "" || s === "none" || s === "off" || s === "no" || s === "false" || s === "disabled") continue;
+          return 1;
+        }
       }
       return 0;
     }
@@ -306,6 +313,17 @@
       refugium:    on(["refugium", "fuge", "sump"]),
       ato:         on(["ato", "topOff", "autoTopOff", "freshwaterAto"])
     };
+  }
+
+  // Mirror of the authoritative photoperiod window in js/sim.js (daylight()): a
+  // triangular day/night curve over the fractional game day. Duplicated here (not
+  // imported) so the renderer stays a standalone, defensive normalizer while its
+  // ambient light still tracks the sim's midnight..midday cycle exactly.
+  function simDaylight(frac) {
+    var start = 0.28, end = 0.86;
+    if (frac <= start || frac >= end) return 0;
+    var mid = (start + end) / 2, half = (end - start) / 2;
+    return clamp01(1 - Math.abs(frac - mid) / half);
   }
 
   function normalizeView(st) {
@@ -323,18 +341,26 @@
     if (Number.isFinite(par)) par = par > 1.5 ? clamp01(par / 600) : clamp01(par);
     else par = null;
 
-    // Clock hour (0..24) drives the photoperiod phase when the sim exposes it.
+    // Photoperiod: the sim advances a FRACTIONAL game-day counter (state.time.days)
+    // and lights the tank on a fixed daily window — it exposes no clock/daylight field.
+    // Derive the hour and daylight from that counter so the canvas light matches the
+    // sim's night/day exactly. An explicit clock/daylight field (if a host ever supplies
+    // one) still wins; the legacy hour-window fallback covers any other schema.
     var hour = firstNum(st, ["timeOfDay", "clock.hour", "time.hour", "hourOfDay"], NaN);
     if (Number.isFinite(hour)) hour = hour <= 1 ? hour * 24 : (hour >= 24 ? hour % 24 : hour);
     else hour = null;
 
+    var dayCount = firstNum(st, ["time.days", "gameDays", "gameDay", "dayFloat", "time.day"], NaN);
+    var dayFrac = Number.isFinite(dayCount) ? dayCount - Math.floor(dayCount) : NaN;
+    if (hour == null && Number.isFinite(dayFrac)) hour = dayFrac * 24;
+
     var daylight = firstNum(st, ["daylight", "dayFraction", "lightOn", "photoperiodOn"], NaN);
-    if (!Number.isFinite(daylight)) {
-      if (hour != null) {
-        var hr = hour;
-        daylight = (hr >= 8 && hr <= 20) ? 1 : (hr >= 6 && hr < 8 ? (hr - 6) / 2 : (hr > 20 && hr <= 22 ? (22 - hr) / 2 : 0.08));
-      } else daylight = 1;
-    } else daylight = clamp01(daylight <= 1 ? daylight : daylight / 100);
+    if (Number.isFinite(daylight)) daylight = clamp01(daylight <= 1 ? daylight : daylight / 100);
+    else if (Number.isFinite(dayFrac)) daylight = simDaylight(dayFrac);
+    else if (hour != null) {
+      var hr = hour;
+      daylight = (hr >= 8 && hr <= 20) ? 1 : (hr >= 6 && hr < 8 ? (hr - 6) / 2 : (hr > 20 && hr <= 22 ? (22 - hr) / 2 : 0.08));
+    } else daylight = 1;
 
     var flow = firstNum(st, ["flow", "water.flow", "circulation"], NaN);
     var equipment = normalizeEquipment(st);
@@ -422,6 +448,11 @@
     };
   }
   function to01n(v) { return Number.isFinite(v) ? clamp01(v <= 1 ? v : v / 100) : null; }
+
+  /* Test-only surface (no browser/canvas dependency): lets tests/render.test.js
+     assert the sim->view normalization contract — photoperiod, equipment on/off,
+     and water level — headlessly under Node. Not used by the running app. */
+  PA._render = { normalizeView: normalizeView, simDaylight: simDaylight };
 
   /* ============================ the renderer ============================== */
 
@@ -540,8 +571,10 @@
 
     /* ---------------------- geometry helpers per frame ------------------- */
     function waterlineY(view) {
-      // level 1 => near the rim; lower level => visible air gap.
-      return clamp(0.035 + (1 - view.level) * 0.5, 0.03, 0.55);
+      // level 1 => waterline near the rim; level 0 => a genuinely DRY tank with the
+      // surface dropped to the substrate line (reach 0). The old 0.5/0.55 clamp pinned
+      // an unfilled tank to a false mid-tank waterline; span to SUB_TOP instead.
+      return clamp(0.035 + (1 - view.level) * (SUB_TOP - 0.035), 0.03, SUB_TOP);
     }
     function swimBounds(view, arch) {
       var top = waterlineY(view) + 0.05;
