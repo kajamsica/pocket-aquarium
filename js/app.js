@@ -265,7 +265,7 @@
     var d = document.createElement("dialog");
     d.className = "app-modal";
     d.setAttribute("aria-labelledby", "soTitle");
-    d.style.cssText = "max-width:440px;width:calc(100vw - 28px);padding:20px;border:var(--line);border-radius:var(--r-md);background:var(--chrome);color:var(--ink);box-shadow:8px 8px 0 var(--ink)";
+    d.style.cssText = "max-width:440px;width:calc(100vw - 28px);padding:20px;border:var(--line);border-radius:var(--r-md);background:var(--chrome);color:var(--ink);box-shadow:var(--pop)";
     d.innerHTML =
       '<h2 id="soTitle" style="margin:0 0 8px;font-size:20px;font-weight:800">Start over?</h2>' +
       '<p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--ink-soft)">This clears your <b>ecosystem</b> progress — habitat, cycle, water, livestock, corals, journal and credits — and begins a fresh tank. Your preserved <b>arcade</b> progress is never touched.</p>' +
@@ -380,7 +380,7 @@
   }
 
   // The single guidance ladder. Returns {level, word, reason, why, action, freshness,
-  // stale}. nextCommand() (Guide) reuses .action so the two surfaces never disagree.
+  // stale}. The Water panel verdict reuses this so the surfaces never disagree.
   function careAdvice(snap) {
     var c = state.cycle, fresh = dataFreshness(snap);
     if (!state.habitat)
@@ -404,8 +404,10 @@
         return advice("watch", "CYCLING", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", null, fresh);
       return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
     }
-    if (aliveEaters() === 0 && !snap.corals.length)
-      return advice("watch", "READY", "The tank is cycled and empty.", "Stock a small, compatible starter group from the store.", "Open the store", "open-store", null, fresh);
+    // Ordinary care, highest-priority first. An empty cycled tank still passes through the
+    // environment/accumulation/light/staleness checks BELOW before "READY to stock" — so
+    // salinity/level out of range or stale readings are fixed first, never skipped merely
+    // because the tank has no residents yet (PAR5-01A truthful-priority fix).
     var hungry = hungryCount();
     if (hungry > 0)
       return advice("watch", "WATCH", hungry + (hungry === 1 ? " resident is" : " residents are") + " hungry.", "Tap the water to feed; uneaten food decays into ammonia, so feed sparingly.", "Feed the tank", "feed", null, fresh);
@@ -421,6 +423,9 @@
       return advice("watch", "WATCH", "Cyanobacteria is spreading across surfaces.", "Improve flow and nutrient export and cut the photoperiod to starve it back.", "Review water", "open-water", null, fresh);
     if (fresh.stale)
       return advice("watch", "WATCH", "Your readings are getting stale.", "A quick water test refreshes every parameter so this guidance stays accurate.", "Test the water", "test", null, fresh);
+    // Cycled, empty, environment in range and readings fresh — now it is genuinely time to stock.
+    if (aliveEaters() === 0 && !snap.corals.length)
+      return advice("watch", "READY", "The tank is cycled and the environment is in range.", "Nothing lives here yet — stock a small, compatible starter group from the store.", "Open the store", "open-store", null, fresh);
     return advice("stable", "STABLE", "Water is in range and residents look healthy.", "Keep parameters steady — consider corals, upgrades or a breeding project.", "Open the store", "open-store", null, fresh);
   }
   function advice(level, word, reason, why, label, act, ds, fresh) {
@@ -538,19 +543,16 @@
     "Young biome": "Diatoms and films bloom while the biology settles in.",
     "Mature biome": "A stable, biodiverse, well-aged system."
   };
-  // The Guide's next move is exactly the command surface's recommended action.
-  function nextCommand(snap) { return careAdvice(snap).action; }
   function renderGuide(snap) {
-    // Guide teaches the current phase and the single next move only — the recommended
-    // action itself lives on the always-visible command surface.
+    // Learning/orientation only. The single recommended ACTION lives on the always-visible
+    // command surface, so the Guide no longer repeats it as a competing call-to-action — it
+    // just names the current cycle phase and what it means (progression content).
     if (!snap.nextAction) { nextActionEl.innerHTML = ""; }
     else {
-      var cmd = nextCommand(snap);
       nextActionEl.innerHTML =
-        '<div class="next-card"><span class="next-eyebrow">Next best action</span>' +
+        '<div class="next-card"><span class="next-eyebrow">' + esc(snap.cycle.stage || "Getting started") + "</span>" +
         '<h3 class="next-title">' + esc(snap.nextAction.title) + "</h3>" +
-        '<p class="next-body">' + esc(snap.nextAction.detail) + "</p>" +
-        actBtn("next-cta", cmd.label, cmd.act, cmd.ds, ' data-fk="next-cta"') + "</div>";
+        '<p class="next-body">' + esc(snap.nextAction.detail) + "</p></div>";
     }
     // phase timeline via stage index / isCycled (never literal-stage equality)
     phaseTimeline.innerHTML = phaseTimelineHTML(snap);
@@ -660,11 +662,18 @@
       ato = '<p class="wtool-ato">ATO: <b>' + (auto ? "Automatic" : "Manual") + "</b> — " +
         (auto ? "holding volume &amp; salinity steady across evaporation." : "top off to pull salinity back toward 35 ppt (buy an ATO to automate).") + "</p>";
     }
-    return '<ul class="water-tools">' + tools.join("") + "</ul>" + ato;
+    // Compact current verdict leads the panel, reusing the single care ladder so the Water
+    // tab and the command surface can never disagree; the tools below stay quieter.
+    var m = careAdvice(snap);
+    var verdict = '<div class="water-verdict is-' + m.level + '">' +
+      '<span class="wv-word">' + esc(m.word) + "</span>" +
+      '<span class="wv-reason">' + esc(m.reason) + "</span></div>";
+    return verdict + '<ul class="water-tools">' + tools.join("") + "</ul>" + ato;
   }
   function waterTool(label, act, enabled, reason, recommended, caption, fk) {
-    var rec = recommended && enabled ? '<span class="wtool-rec">Recommended now</span>' : "";
-    return '<li class="wtool">' +
+    var isRec = recommended && enabled;
+    var rec = isRec ? '<span class="wtool-rec">Recommended now</span>' : "";
+    return '<li class="wtool' + (isRec ? " is-rec" : "") + '">' +
       '<div class="wtool-head">' + careBtn(label, act, null, enabled, reason, fk) + rec + "</div>" +
       '<p class="wtool-note">' + esc(caption) + "</p></li>";
   }

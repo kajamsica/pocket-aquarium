@@ -151,6 +151,40 @@ ok(/prefers-reduced-motion/.test(css), "styles respect prefers-reduced-motion");
 ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface is an accessible polite live region");
 ok(/id="canvasSummary"/.test(html) && /aria-describedby="canvasSummary"/.test(html), "canvas keeps a described-by text alternative");
 
+/* --------------- 8. dark aquarium-instrument shell (PAR5-01A) --------------- */
+// Structural redesign contract: the warm paper/pop/toy substrate is gone and a restrained
+// dark instrument language + truthful single-care hierarchy are in place. These are byte
+// checks on the shipped shell — no DOM, no screenshots.
+group("dark instrument shell — legacy substrate removed");
+ok(!/PostHog/i.test(css), "no 'PostHog-inspired console' substrate note remains");
+ok(!/#f5f1e6/.test(css), "cream --chrome paper colour is removed from styles");
+ok(!/#f5f1e6/.test(html), "index theme-color is no longer the cream paper colour");
+ok(!/--line:\s*2px solid/.test(css), "2px ink outline token replaced by a hairline");
+ok(!/4px 4px 0 var\(--ink\)/.test(css), "hard offset pop-shadow token is removed");
+ok(!/box-shadow:\d+px \d+px 0 var\(--ink\)/.test(css), "no hard offset pop-shadows remain in styles");
+ok(!/ui-rounded/.test(css), "rounded toy UI font is replaced with native system type");
+
+group("dark instrument shell — new language present");
+ok(/color-scheme:\s*dark/.test(css), "styles declare a dark color-scheme");
+ok(/name="color-scheme"\s+content="dark"/.test(html), "index opts into a dark color-scheme");
+ok(/--line:\s*1px/.test(css), "borders use a restrained hairline token");
+ok(/backdrop-filter/.test(css), "secondary tool surfaces use a translucent backdrop blur");
+
+group("truthful single-care hierarchy");
+// One dominant care surface stays the single live-region contract; the Guide's duplicate
+// next-action CALL-TO-ACTION is demoted while #nextAction survives as a compatible target.
+ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface stays the single polite care contract");
+ok(/id="nextAction"/.test(html), "#nextAction preserved as a compatible Guide target");
+ok(!/next-cta/.test(app), "Guide no longer renders a duplicate next-action call-to-action");
+ok(/water-verdict/.test(css) && /water-verdict/.test(app), "Water panel leads with a compact current verdict");
+ok(/wtool.{0,3}is-rec/.test(css) && /is-rec/.test(app), "Water tools emphasise the one contextually-correct operation");
+// The truthful-priority fix: the empty-tank READY branch is evaluated AFTER environment and
+// staleness, so an empty cycled tank with bad salinity/level fixes the environment first.
+var careAdviceSrc = (app.match(/function careAdvice[\s\S]*?\n  \}/) || [""])[0];
+var idxEnv = careAdviceSrc.indexOf("environmentIssue(snap)");
+var idxReady = careAdviceSrc.indexOf('"READY"');
+ok(idxEnv > -1 && idxReady > -1 && idxEnv < idxReady, "careAdvice checks environment before recommending stocking an empty tank");
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
