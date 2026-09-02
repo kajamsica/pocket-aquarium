@@ -158,9 +158,17 @@
     for (var i = 0; i < ls.length; i++) { var a = ls[i]; if (a && a.alive !== false && a.species === species && a.stage === "adult") out.push(a); }
     return out;
   }
-  function waterDangerous() {
-    var w = state.water;
-    return w.ammonia > DATA.PARAMS.ammonia.good[1] + 1e-9 || w.nitrite > DATA.PARAMS.nitrite.good[1] + 1e-9;
+  // Toxic-waste care reads the SAME rounded snapshot value and severity the visible
+  // ammonia/nitrite meters use, so care can never call an amber "elevated" reading "toxic".
+  // "danger" severity is exactly the PARAMS.*.toxic contract (rounded value past warn[1] == toxic);
+  // "warn" is elevated-but-not-yet-toxic. Both read snap.water, never raw unrounded chemistry.
+  function waterToxic(snap) {
+    var k = waterByKey(snap || currentSnap());
+    return (!!k.ammonia && k.ammonia.severity === "danger") || (!!k.nitrite && k.nitrite.severity === "danger");
+  }
+  function waterElevated(snap) {
+    var k = waterByKey(snap || currentSnap());
+    return (!!k.ammonia && k.ammonia.severity === "warn") || (!!k.nitrite && k.nitrite.severity === "warn");
   }
 
   /* ============================ renderer view boundary ============================ */
@@ -392,10 +400,13 @@
       return advice("watch", "SET UP", "Life support is off.", "The filter, heater and flow grow the biofilter that keeps water safe.", "Start life support", "life-on", null, fresh);
     // Live-animal emergencies outrank cycle bookkeeping. A post-cycle ammonia/nitrite spike
     // un-sets DATA.isCycled, so these must be checked BEFORE the fishless-cycle branch — else a
-    // toxic tank full of fish would be mislabelled "still cycling". During a real fishless cycle
-    // there are no animals, so intentionally-high ammonia correctly stays "CYCLING" below.
-    if (waterDangerous() && aliveEaters() > 0)
+    // stocked tank with rising waste would be mislabelled "still cycling". Toxic (danger) and
+    // elevated (warn) split by the SAME meter severity, so care never calls an amber reading toxic.
+    // During a real fishless cycle there are no animals, so intentionally-high ammonia stays "CYCLING".
+    if (waterToxic(snap) && aliveEaters() > 0)
       return advice("critical", "CRITICAL", "Ammonia or nitrite is at a toxic level.", "A 25% water change dilutes the toxins now; don't feed heavily until it clears.", "25% water change", "wc25", null, fresh);
+    if (waterElevated(snap) && aliveEaters() > 0)
+      return advice("watch", "WATCH", "Ammonia or nitrite is elevated.", "It isn't toxic yet, but a 25% water change and lighter feeding keep it from climbing.", "25% water change", "wc25", null, fresh);
     if (deadCount() > 0)
       return advice("critical", "CRITICAL", "A dead animal is decaying in the tank.", "Remove the body before it spikes ammonia — find it under Livestock.", "Review livestock", "open-livestock", null, fresh);
     if (snap.welfare === "critical")
@@ -1063,7 +1074,7 @@
     else parts.push("and looks healthy");
     var drivers = [];
     if (a.hunger > 0.85) drivers.push("hungry — feed the tank");
-    if (waterDangerous()) drivers.push("the water is toxic — do a water change");
+    if (waterToxic()) drivers.push("the water is toxic — do a water change");
     if (Math.abs(w.tempC - 26) > 4) drivers.push("temperature is off-target");
     if (isReef() && Math.abs(w.salinity - 35) > 3) drivers.push("salinity is off-target");
     if (w.oxygen < 4.5) drivers.push("oxygen is low");

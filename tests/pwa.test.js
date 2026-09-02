@@ -255,6 +255,107 @@ if (typeof fmtMeter === "function") {
   ok(fmtMeter({ value: 5.98, good: [6, 7.5] }) === "<6.0", "one-decimal below-low value is qualified at band precision (<6.0)");
 }
 
+group("toxic-waste care matches the visible meter severity (PAR5-01F)");
+// Live review found careAdvice calling an amber "elevated" ammonia reading "CRITICAL — toxic":
+// waterDangerous() compared the RAW, unrounded chemistry against good[1] (0.25), while the meter
+// derives severity from the r3-ROUNDED snapshot value with the toxic contract at 0.5. So a 0.30
+// reading (meter "warn") and even a raw 0.2504 (meter shows "0.25 / ok") were mislabelled toxic.
+// The fix reads the SAME rounded snapshot value + severity the meters use. These checks lock it.
+
+// (a) the raw/good[1] comparator is gone; care now reads snapshot severity, not raw chemistry.
+ok(!/waterDangerous/.test(app), "the raw-value waterDangerous() comparator is removed");
+ok(!/\bw\.ammonia\s*>\s*DATA\.PARAMS\.ammonia\.good/.test(app), "no raw ammonia-vs-good[1] comparison remains in js/app.js");
+var toxicSrc = (app.match(/function waterToxic\([\s\S]*?\n  \}/) || [""])[0];
+var elevSrc = (app.match(/function waterElevated\([\s\S]*?\n  \}/) || [""])[0];
+ok(/waterByKey\(/.test(toxicSrc) && /severity === "danger"/.test(toxicSrc), "waterToxic reads snapshot severity 'danger' (the toxic contract), not raw chemistry");
+ok(/waterByKey\(/.test(elevSrc) && /severity === "warn"/.test(elevSrc), "waterElevated reads snapshot severity 'warn' (elevated-but-not-toxic)");
+// (b) careAdvice splits toxic (CRITICAL) from elevated (WATCH) and checks toxic first.
+var careSrc = (app.match(/function careAdvice[\s\S]*?\n  \}/) || [""])[0];
+var iTox = careSrc.indexOf("waterToxic(snap)"), iElev = careSrc.indexOf("waterElevated(snap)");
+ok(iTox > -1 && iElev > -1 && iTox < iElev, "careAdvice checks toxic before elevated");
+ok(/waterToxic\(snap\)[\s\S]*?"CRITICAL"[\s\S]*?toxic level/.test(careSrc), "the toxic branch stays CRITICAL and says 'toxic level'");
+ok(/waterElevated\(snap\)[\s\S]*?"WATCH"[\s\S]*?elevated/.test(careSrc), "the elevated branch is WATCH and says 'elevated', not toxic");
+ok(/waterElevated\(snap\)[\s\S]*?isn't toxic yet/.test(careSrc), "the elevated branch explicitly denies toxicity");
+
+// (c) the ammonia/nitrite toxic contract in js/data.js the meter severity splits on.
+var dataSrc = readText("js/data.js");
+function bandOf(param) {
+  var re = new RegExp(param + ":\\s*\\{[^}]*good:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\][^}]*warn:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\][^}]*toxic:\\s*([\\d.]+)");
+  var mm = dataSrc.match(re);
+  return mm ? { good: [+mm[1], +mm[2]], warn: [+mm[3], +mm[4]], toxic: +mm[5] } : null;
+}
+var bandA = bandOf("ammonia"), bandN = bandOf("nitrite");
+ok(bandA && bandA.good[1] === 0.25 && bandA.warn[1] === 0.5 && bandA.toxic === 0.5, "ammonia contract: good≤0.25, warn≤0.5, toxic=0.5");
+ok(bandN && bandN.good[1] === 0.25 && bandN.warn[1] === 0.5 && bandN.toxic === 0.5, "nitrite contract: good≤0.25, warn≤0.5, toxic=0.5");
+
+// (d) end-to-end: build the snapshot metric with the SHIPPED r3 + severityOf (sim.js), then run
+// the SHIPPED waterToxic/waterElevated (app.js) over it. Displayed value, severity and care
+// wording all descend from one rounded number, so they cannot contradict at any threshold.
+var simSrc = readText("js/sim.js");
+var numSrc = (simSrc.match(/function num\(v, d\) \{[^\n]*\}/) || [""])[0];
+var r3Src = (simSrc.match(/function r3\(v\) \{[^\n]*\}/) || [""])[0];
+var sevSrc = (simSrc.match(/function severityOf\([\s\S]*?\n  \}/) || [""])[0];
+var byKeySrc = (app.match(/function waterByKey\(snap\) \{[^\n]*\}/) || [""])[0];
+ok(numSrc && r3Src && sevSrc && byKeySrc && toxicSrc && elevSrc, "shipped r3/severityOf + waterByKey/waterToxic/waterElevated sources located");
+var api = null;
+try {
+  api = new Function(
+    numSrc + "\n" + r3Src + "\n" + sevSrc + "\n" +
+    "function currentSnap(){ return { water: [] }; }\n" +
+    byKeySrc + "\n" + toxicSrc + "\n" + elevSrc + "\n" +
+    "return { r3: r3, severityOf: severityOf, waterToxic: waterToxic, waterElevated: waterElevated };"
+  )();
+} catch (e) { api = null; }
+ok(api && typeof api.waterToxic === "function" && typeof api.waterElevated === "function", "shipped severity + care helpers evaluate in isolation");
+if (api && bandA && bandN) {
+  var RANK = { ok: 0, warn: 1, danger: 2 };
+  function metric(key, raw, band) { var shown = api.r3(raw); return { key: key, value: shown, severity: api.severityOf(band, shown) }; }
+  function run(aRaw, nRaw) {
+    var snap = { water: [metric("ammonia", aRaw, bandA), metric("nitrite", nRaw, bandN)] };
+    var worst = snap.water[0].severity;
+    if (RANK[snap.water[1].severity] > RANK[worst]) worst = snap.water[1].severity;
+    var care = api.waterToxic(snap) ? "toxic" : (api.waterElevated(snap) ? "elevated" : "clear");
+    return { care: care, worst: worst, aShown: snap.water[0].value, nShown: snap.water[1].value };
+  }
+  var MAP = { danger: "toxic", warn: "elevated", ok: "clear" };
+  // Focused threshold cases around 0.25 (good/warn) and 0.5 (warn/danger=toxic). aShown/nShown
+  // is the value the METER prints; `care` is the wording careAdvice would choose.
+  var CASES = [
+    // ammonia sweep, nitrite clear
+    { a: 0.25,   n: 0, sev: "ok",     care: "clear",    aShown: 0.25,  note: "0.25 exact — in good band, not flagged" },
+    { a: 0.2504, n: 0, sev: "ok",     care: "clear",    aShown: 0.25,  note: "raw 0.2504 rounds to displayed 0.25 → clear (old bug: raw>0.25 called this toxic)" },
+    { a: 0.2506, n: 0, sev: "warn",   care: "elevated", aShown: 0.251, note: "rounds off 0.25 → elevated" },
+    { a: 0.30,   n: 0, sev: "warn",   care: "elevated", aShown: 0.3,   note: "0.30 elevated, NOT toxic" },
+    { a: 0.50,   n: 0, sev: "warn",   care: "elevated", aShown: 0.5,   note: "0.5 exact — top of warn, still elevated not toxic" },
+    { a: 0.4996, n: 0, sev: "warn",   care: "elevated", aShown: 0.5,   note: "rounds onto 0.5 → elevated" },
+    { a: 0.5004, n: 0, sev: "warn",   care: "elevated", aShown: 0.5,   note: "raw just over 0.5 rounds to displayed 0.5 → elevated (matches meter, not toxic)" },
+    { a: 0.5006, n: 0, sev: "danger", care: "toxic",    aShown: 0.501, note: "rounds off 0.5 → toxic" },
+    { a: 0.70,   n: 0, sev: "danger", care: "toxic",    aShown: 0.7,   note: "0.70 toxic" },
+    // nitrite sweep, ammonia clear
+    { a: 0, n: 0.2504, sev: "ok",     care: "clear",    nShown: 0.25,  note: "nitrite rounds to 0.25 → clear" },
+    { a: 0, n: 0.30,   sev: "warn",   care: "elevated", nShown: 0.3,   note: "nitrite elevated" },
+    { a: 0, n: 0.50,   sev: "warn",   care: "elevated", nShown: 0.5,   note: "nitrite 0.5 exact → elevated" },
+    { a: 0, n: 0.5006, sev: "danger", care: "toxic",    nShown: 0.501, note: "nitrite rounds off 0.5 → toxic" },
+    { a: 0, n: 0.70,   sev: "danger", care: "toxic",    nShown: 0.7,   note: "nitrite toxic" },
+    // cross cases — worst parameter drives, OR logic per parameter
+    { a: 0.10, n: 0.70, sev: "danger", care: "toxic",    note: "nitrite toxic drives while ammonia clear" },
+    { a: 0.30, n: 0.10, sev: "warn",   care: "elevated", note: "ammonia elevated drives while nitrite clear" },
+    { a: 0.10, n: 0.10, sev: "ok",     care: "clear",    note: "both clear" },
+    { a: 0.70, n: 0.30, sev: "danger", care: "toxic",    note: "worst (ammonia toxic) wins over nitrite elevated" }
+  ];
+  CASES.forEach(function (c) {
+    var r = run(c.a, c.n);
+    ok(r.worst === c.sev, "meter severity for a=" + c.a + " n=" + c.n + " is " + c.sev + " (" + c.note + ")");
+    ok(r.care === c.care, "care wording for a=" + c.a + " n=" + c.n + " is " + c.care + ", matching the meter");
+    ok(r.care === MAP[r.worst], "care can never contradict the worst meter severity (a=" + c.a + " n=" + c.n + ")");
+    if (typeof c.aShown === "number") ok(r.aShown === c.aShown, "ammonia displays " + c.aShown + " for raw " + c.a);
+    if (typeof c.nShown === "number") ok(r.nShown === c.nShown, "nitrite displays " + c.nShown + " for raw " + c.n);
+  });
+  // Elevated must never be called toxic unless it meets the 0.5 toxic contract; the exact 0.5
+  // boundary and a value that rounds down onto 0.5 both stay elevated, only >0.5 is toxic.
+  ok(run(0.5, 0).care === "elevated" && run(0.5006, 0).care === "toxic", "0.5 is elevated; only past the 0.5 toxic contract is it toxic");
+}
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
