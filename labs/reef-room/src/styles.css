@@ -1,0 +1,250 @@
+:root {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #e9fbff;
+  background: #06151d;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.reef-app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(21, 101, 115, 0.3), transparent 48%),
+    #06151d;
+}
+
+.reef-app::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: '';
+  background:
+    linear-gradient(180deg, rgba(1, 7, 12, 0.1), transparent 35%, rgba(1, 7, 12, 0.46)),
+    linear-gradient(90deg, rgba(1, 7, 12, 0.28), transparent 21%, transparent 79%, rgba(1, 7, 12, 0.28));
+}
+
+.canvas-shell,
+.canvas-shell canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.canvas-shell {
+  position: absolute;
+  inset: 0;
+}
+
+.title-card,
+.control-card,
+.reading-card {
+  position: absolute;
+  z-index: 2;
+}
+
+.title-card {
+  top: clamp(24px, 5vw, 64px);
+  left: clamp(24px, 5vw, 72px);
+  max-width: 360px;
+}
+
+.title-card .eyebrow,
+.control-label,
+.reading-card > span {
+  margin: 0 0 8px;
+  color: #8ed5dc;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title-card h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 6vw, 5.4rem);
+  font-weight: 500;
+  letter-spacing: -0.065em;
+  line-height: 0.95;
+  text-shadow: 0 10px 42px rgba(0, 0, 0, 0.28);
+}
+
+.title-card > p:last-child {
+  max-width: 300px;
+  margin: 18px 0 0;
+  color: rgba(224, 248, 250, 0.72);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.control-card,
+.reading-card {
+  border: 1px solid rgba(183, 239, 243, 0.16);
+  border-radius: 18px;
+  background: rgba(4, 17, 23, 0.72);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.control-card {
+  right: clamp(20px, 4vw, 56px);
+  bottom: clamp(20px, 5vw, 56px);
+  display: flex;
+  min-width: min(430px, calc(100vw - 40px));
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 20px;
+}
+
+.control-card > div {
+  display: grid;
+  grid-template-columns: 10px auto;
+  column-gap: 12px;
+  align-items: center;
+}
+
+.control-card .control-label,
+.control-card strong {
+  grid-column: 2;
+}
+
+.control-card .control-label {
+  margin-bottom: 3px;
+}
+
+.control-card strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.status-dot {
+  grid-row: 1 / span 2;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5edfc0;
+  box-shadow: 0 0 14px rgba(94, 223, 192, 0.78);
+}
+
+.status-dot[data-boosted='true'] {
+  background: #8ba8ff;
+  box-shadow: 0 0 14px rgba(98, 129, 255, 0.92);
+}
+
+.control-card button {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid rgba(177, 235, 242, 0.28);
+  border-radius: 12px;
+  color: #e9fbff;
+  background: linear-gradient(135deg, rgba(35, 139, 148, 0.48), rgba(18, 80, 98, 0.6));
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.control-card button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(177, 235, 242, 0.55);
+  background: linear-gradient(135deg, rgba(49, 166, 174, 0.58), rgba(28, 97, 119, 0.72));
+}
+
+.control-card button:focus-visible {
+  outline: 3px solid rgba(91, 198, 255, 0.74);
+  outline-offset: 3px;
+}
+
+.reading-card {
+  right: clamp(20px, 4vw, 56px);
+  top: clamp(20px, 5vw, 56px);
+  width: 220px;
+  padding: 18px;
+}
+
+.reading-card dl {
+  display: grid;
+  gap: 9px;
+  margin: 15px 0 0;
+}
+
+.reading-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reading-card dt {
+  color: rgba(224, 248, 250, 0.48);
+  font-size: 0.72rem;
+}
+
+.reading-card dd {
+  margin: 0;
+  color: rgba(242, 253, 255, 0.9);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.68rem;
+}
+
+.webgl-fallback {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  padding: 32px;
+  color: #d7eef2;
+  background: #06151d;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .reef-app {
+    min-height: 500px;
+  }
+
+  .reading-card {
+    display: none;
+  }
+
+  .control-card {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    min-width: 0;
+  }
+
+  .title-card {
+    top: 24px;
+    left: 24px;
+  }
+
+  .title-card > p:last-child {
+    max-width: 235px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-card button {
+    transition: none;
+  }
+}
