@@ -41,9 +41,11 @@ never copies the app-icon master, the invalid sprite, docs, tests, labs, or reef
 
 ## Signing, device, and TestFlight — environment-gated
 
-Opening, signing, building to a simulator/device, and TestFlight all require **full
-Xcode 26+** and an **Apple signing identity / provisioning profile**. Those are not
-present in the environment where this host was generated, so no `xcodebuild`, simulator,
-device install, or TestFlight result is claimed here. See `../docs/IOS_DEPLOYMENT.md`.
+The checked-in host compiles as an unsigned iOS Simulator app in GitHub Actions on macOS 26 /
+Xcode 26. Local opening and an interactive Simulator launch require a macOS upgrade plus **full
+Xcode 26+**, but not Apple signing. Physical-device installation and TestFlight additionally
+require an **Apple signing identity / provisioning profile**. This Mac is on macOS Sonoma
+14.8.8—below Xcode 26's minimum macOS Sequoia 15.6—and has no signing state. See
+`../docs/IOS_DEPLOYMENT.md`.
 
 The installable PWA remains the working iPhone distribution today.
