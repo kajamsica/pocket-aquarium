@@ -1,0 +1,81 @@
+name: Validate native iOS host
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ios.yml"
+      - "native/**"
+      - "tests/native.test.js"
+      - "index.html"
+      - "styles.css"
+      - "manifest.webmanifest"
+      - "sw.js"
+      - "js/**"
+      - "assets/**"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ios.yml"
+      - "native/**"
+      - "tests/native.test.js"
+      - "index.html"
+      - "styles.css"
+      - "manifest.webmanifest"
+      - "sw.js"
+      - "js/**"
+      - "assets/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-ios-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned iOS simulator app
+    runs-on: macos-26
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Install pinned Capacitor toolchain
+        working-directory: native
+        run: npm ci
+
+      - name: Stage and sync the accepted web runtime
+        working-directory: native
+        run: npm run sync
+
+      - name: Run native packaging contracts
+        run: node tests/native.test.js
+
+      - name: Record Xcode toolchain
+        run: xcodebuild -version
+
+      - name: Build without signing for the iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project native/ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath native/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
