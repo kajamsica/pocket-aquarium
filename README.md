@@ -77,9 +77,13 @@ The install surface is entirely dependency-free and safe under the `/pocket-aqua
   `index.html` for navigations when offline. `app.js` registers it only on http(s) — never on
   `file://` — and it never caches cross-origin or opaque responses.
 
-For the full deploy / verify / redeploy path and the native **Capacitor** follow-on — and why a
-signed native binary is a separate, gated step — see
-[`docs/IOS_DEPLOYMENT.md`](docs/IOS_DEPLOYMENT.md).
+The installable PWA remains today's working iPhone distribution. A **native Capacitor 8 iOS
+shell** is now checked in under [`native/`](native/) and is reproducible from a clean checkout
+(`npm ci` → `npm run stage` → `npx cap sync ios` → `npx cap open ios`) — it wraps this exact
+runtime in a WKWebView without changing a byte of the web app or the Pages deploy. Opening,
+signing, and shipping to a device or TestFlight still require full Xcode 26+ and an Apple signing
+identity, which are separate, gated steps. For the full deploy / verify / redeploy path and the
+native host details, see [`docs/IOS_DEPLOYMENT.md`](docs/IOS_DEPLOYMENT.md).
 
 ---
 
