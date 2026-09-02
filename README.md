@@ -77,12 +77,18 @@ The install surface is entirely dependency-free and safe under the `/pocket-aqua
   `index.html` for navigations when offline. `app.js` registers it only on http(s) — never on
   `file://` — and it never caches cross-origin or opaque responses.
 
+For the full deploy / verify / redeploy path and the native **Capacitor** follow-on — and why a
+signed native binary is a separate, gated step — see
+[`docs/IOS_DEPLOYMENT.md`](docs/IOS_DEPLOYMENT.md).
+
 ---
 
-## Repository, privacy & the experimental reef lab
+## Repository, visibility & the experimental reef lab
 
 This game lives in its own standalone repository, **`kajamsica/pocket-aquarium`**, which is
-**private** and shared with collaborator **Ben Fowlersmith** (`Bioscopics`) at write access.
+**public**: GitHub Pages publishes from a *private* repository only on a paid plan, so the
+free-plan Pages deployment requires a public source. A **write-access invitation** is pending
+for collaborator **Ben Fowlersmith** (`Bioscopics`).
 GitHub Pages (`.github/workflows/pages.yml`) publishes the **runtime app only** — `index.html`,
 `styles.css`, `js/`, `assets/`, `manifest.webmanifest`, and `sw.js`; the `labs/`, `docs/`,
 `tests/`, and `checkpoints/` paths are never deployed.
