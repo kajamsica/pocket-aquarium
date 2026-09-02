@@ -1,0 +1,24 @@
+# Pocket Aquarium — repository ignore rules (PAIOS-03)
+# The deployable game lives at the repository root; only the runtime app, valid
+# assets, tests, docs, and the labs/reef-room export are tracked here.
+
+# macOS / editor cruft
+.DS_Store
+*.swp
+
+# Node / build output — this project has no build step; guards accidental installs.
+node_modules/
+dist/
+
+# The original nested reef prototype repo is NOT tracked here. Its tracked HEAD is
+# exported to labs/reef-room as a distinct attribution commit (no .git/node_modules).
+/reef/
+
+# Preserved local checkpoints are development history, not part of the shipped app.
+/checkpoints/
+
+# Invalid RGB/checkerboard clownfish cutout — never ship as a sprite (v2 is valid).
+/assets/animals/ocellaris-clownfish-v1.png
+
+# Untracked reef orchestration artifact — never carried into this repo.
+game_vertical_slice_repair_pack.md

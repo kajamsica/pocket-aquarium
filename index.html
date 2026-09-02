@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f5f1e6">
+<meta name="description" content="Pocket Aquarium Ecosystem — establish, cycle, and steward a living freshwater or reef habitat.">
+<title>Pocket Aquarium · Ecosystem</title>
+<link rel="stylesheet" href="styles.css">
+<!-- Installable PWA metadata. All URLs are RELATIVE so they resolve under the
+     GitHub Pages subpath /pocket-aquarium/ as well as at "/" and localhost. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pocket Aquarium">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Pocket Aquarium">
+<!-- Non-module scripts extend one window.PA namespace; defer keeps this exact execution order and stays file:// safe. -->
+<script defer src="js/data.js"></script>
+<script defer src="js/sim.js"></script>
+<script defer src="js/render.js"></script>
+<script defer src="js/app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#tankCanvas">Skip to the aquarium</a>
+
+<main id="app" class="app" aria-label="Pocket Aquarium Ecosystem">
+
+  <!-- ============ Top chrome: identity, live status, wallet, time transport ============ -->
+  <header class="chrome">
+    <div class="brand">
+      <span class="brand-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="brand-name">Pocket Aquarium</span>
+      <span class="brand-sub" aria-hidden="true">Ecosystem</span>
+    </div>
+
+    <div class="status" role="group" aria-label="Habitat status">
+      <span class="pill"><span class="pill-k">Habitat</span><b id="habitatLabel" class="pill-v">Not set</b></span>
+      <span class="pill"><span class="pill-k">Day</span><b id="dayLabel" class="pill-v">—</b></span>
+      <span class="pill pill-welfare"><span class="pill-k">Welfare</span><b id="welfareLabel" class="pill-v">—</b></span>
+    </div>
+
+    <div class="wallet" role="group" aria-label="Progression">
+      <span class="coin coin-credit"><span class="coin-i" aria-hidden="true">◉</span><b id="creditCount">0</b><span class="visually-hidden"> credits</span></span>
+      <span class="coin coin-xp"><span class="coin-i" aria-hidden="true">✦</span><b id="xpCount">0</b><span class="visually-hidden"> keeper XP</span></span>
+    </div>
+
+    <div class="transport" role="group" aria-label="Time controls">
+      <button id="pauseBtn" class="tbtn tbtn-pause" type="button" aria-pressed="false" aria-label="Pause simulation">
+        <span aria-hidden="true">❚❚</span>
+      </button>
+      <span class="tbtn-sep" aria-hidden="true"></span>
+      <button id="speed1Btn" class="tbtn" type="button" aria-pressed="true" aria-label="Normal speed, one times">1&times;</button>
+      <button id="speed4Btn" class="tbtn" type="button" aria-pressed="false" aria-label="Fast, four times">4&times;</button>
+      <button id="speed8Btn" class="tbtn" type="button" aria-pressed="false" aria-label="Fastest, eight times">8&times;</button>
+    </div>
+  </header>
+
+  <!-- ============ Dominant living surface ============ -->
+  <section class="stage" aria-labelledby="stageHeading">
+    <h1 id="stageHeading" class="visually-hidden">Living aquarium</h1>
+    <div class="tank">
+      <canvas id="tankCanvas" class="tank-canvas" tabindex="0" role="img"
+        aria-describedby="canvasSummary"
+        aria-label="Living aquarium view. When feed mode is armed, click the water or press Enter to drop food; click a resident to inspect it.">
+      </canvas>
+
+      <!-- Selected-entity inspector: overlays the tank, hidden resting state via :empty -->
+      <div id="inspector" class="inspector js-root" role="region" aria-label="Selected resident"
+        aria-live="polite" data-empty="Tap a fish or coral to inspect its condition."></div>
+    </div>
+
+    <!-- Always-visible command surface: single glanceable STABLE / WATCH / CRITICAL
+         readout — plain-language reason, data freshness, and one recommended action
+         with why it helps. app.js hydrates it; the :empty state shows data-empty. -->
+    <div id="commandSurface" class="command js-root" role="status" aria-live="polite"
+      aria-label="Habitat status and recommended action"
+      data-empty="Reading your habitat&hellip;"></div>
+
+    <!-- Full scene description for assistive tech (the canvas aria-describedby target).
+         Not a live region — the command surface above is the single spoken status. -->
+    <p id="canvasSummary" class="visually-hidden">Preparing your habitat&hellip;</p>
+  </section>
+
+  <!-- ============ Right dock: bounded tools, one panel scrolls internally ============ -->
+  <aside class="dock" aria-label="Aquarium tools">
+    <div class="dock-tabs" role="tablist" aria-label="Aquarium panels">
+      <button id="guideTab" class="dock-tab" type="button" role="tab" aria-controls="guidePanel" aria-selected="true" tabindex="0">Guide</button>
+      <button id="waterTab" class="dock-tab" type="button" role="tab" aria-controls="waterPanel" aria-selected="false" tabindex="-1">Water</button>
+      <button id="livestockTab" class="dock-tab" type="button" role="tab" aria-controls="livestockPanel" aria-selected="false" tabindex="-1">Livestock</button>
+      <button id="storeTab" class="dock-tab" type="button" role="tab" aria-controls="storePanel" aria-selected="false" tabindex="-1">Store</button>
+      <button id="journalTab" class="dock-tab" type="button" role="tab" aria-controls="journalPanel" aria-selected="false" tabindex="-1">Journal</button>
+    </div>
+
+    <div class="dock-body">
+
+      <!-- Guide: contextual teaching first (next action + cycle phases) -->
+      <section id="guidePanel" class="dock-panel" role="tabpanel" aria-labelledby="guideTab" tabindex="0">
+        <h2 class="dock-h">Next best action</h2>
+        <div id="nextAction" class="next-slot js-root" data-empty="Choosing the best first step for your habitat&hellip;"></div>
+
+        <h2 class="dock-h dock-h-space">Cycle &amp; maturity</h2>
+        <ol id="phaseTimeline" class="phase-list js-root" data-empty="The cycle timeline appears once a habitat is chosen."></ol>
+      </section>
+
+      <!-- Water: care tools (Test / Water change / Top-off) teach when each applies,
+           then readings grouped by role: toxic waste, environment, accumulation. -->
+      <section id="waterPanel" class="dock-panel" role="tabpanel" aria-labelledby="waterTab" tabindex="0" hidden>
+        <h2 class="dock-h">Water care</h2>
+        <ul id="waterList" class="meter-list js-root" data-empty="Test readings appear once life support is running."></ul>
+
+        <details class="advanced">
+          <summary class="advanced-summary">
+            <span>Accumulation &amp; advanced chemistry</span>
+            <span class="advanced-hint">optional</span>
+          </summary>
+          <ul id="waterAdvancedList" class="meter-list js-root" data-empty="Advanced parameters surface as your system matures."></ul>
+        </details>
+      </section>
+
+      <!-- Livestock: residents with condition + compatibility alerts -->
+      <section id="livestockPanel" class="dock-panel" role="tabpanel" aria-labelledby="livestockTab" tabindex="0" hidden>
+        <h2 class="dock-h">Residents</h2>
+        <ul id="livestockList" class="creature-list js-root" data-empty="No residents yet — cycle the habitat before stocking anything."></ul>
+      </section>
+
+      <!-- Store: every lock reason shown; collection growth never hides the store -->
+      <section id="storePanel" class="dock-panel" role="tabpanel" aria-labelledby="storeTab" tabindex="0" hidden>
+        <h2 class="dock-h">Store</h2>
+        <ul id="storeList" class="offer-list js-root" data-empty="The livestock &amp; equipment catalog loads with your habitat."></ul>
+      </section>
+
+      <!-- Journal: causal event history -->
+      <section id="journalPanel" class="dock-panel" role="tabpanel" aria-labelledby="journalTab" tabindex="0" hidden>
+        <h2 class="dock-h">Journal</h2>
+        <ul id="journalList" class="log-list js-root" data-empty="Notable events — tests, cycles, births, losses — will log here."></ul>
+      </section>
+
+    </div>
+  </aside>
+</main>
+
+<!-- ============ First-run habitat decision screen ============ -->
+<dialog id="habitatDialog" class="habitat-dialog" aria-labelledby="hdTitle" aria-describedby="hdIntro">
+  <form class="hd-inner" method="dialog">
+    <header class="hd-head">
+      <span class="hd-eyebrow">New habitat</span>
+      <h2 id="hdTitle" class="hd-title">Choose the water you'll steward</h2>
+      <p id="hdIntro" class="hd-intro">This decision shapes your species, chemistry and equipment for the whole tank. Either way you'll cycle it from scratch — nothing goes in the water until the biology is ready.</p>
+    </header>
+
+    <div class="hd-choices">
+      <article class="hd-card hd-fresh">
+        <span class="hd-art" aria-hidden="true">🌿</span>
+        <h3 class="hd-name">Amazonian blackwater</h3>
+        <p class="hd-tag">Freshwater · 0 ppt · 75 L start</p>
+        <ul class="hd-points">
+          <li>Tannin-stained water over leaf litter, roots and fine sand</li>
+          <li>Forgiving chemistry — a gentler first nitrogen cycle</li>
+          <li>Schooling neon tetras and pygmy cory once matured</li>
+        </ul>
+        <button id="habitatFreshBtn" class="hd-choose hd-choose-fresh" type="submit" value="freshwater">Start freshwater</button>
+      </article>
+
+      <article class="hd-card hd-reef">
+        <span class="hd-art" aria-hidden="true">🪸</span>
+        <h3 class="hd-name">Indo-Pacific reef</h3>
+        <p class="hd-tag">Saltwater · ~35 ppt · 75 L start</p>
+        <ul class="hd-points">
+          <li>Live rock and aragonite sand in a sheltered lagoon reef</li>
+          <li>Salinity, alkalinity and PAR to hold steady over time</li>
+          <li>Ocellaris clownfish, corals and goby–shrimp symbiosis</li>
+        </ul>
+        <button id="habitatReefBtn" class="hd-choose hd-choose-reef" type="submit" value="reef">Start reef</button>
+      </article>
+    </div>
+
+    <p class="hd-foot">You can add a second tank later. Your preserved arcade progress is never touched.</p>
+  </form>
+</dialog>
+
+<!-- Generic host for app-generated modals (confirmations, detail sheets) -->
+<div id="modalRoot" class="modal-root"></div>
+
+<!-- Transient status announcements -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div class="noscript-banner" role="alert">
+    Pocket Aquarium Ecosystem is a live simulation and needs JavaScript enabled. The console above is the resting shell; enable scripts to choose a habitat and begin.
+  </div>
+</noscript>
+</body>
+</html>

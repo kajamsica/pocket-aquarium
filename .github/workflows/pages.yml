@@ -1,0 +1,60 @@
+name: Deploy Pocket Aquarium PWA to GitHub Pages
+
+# Deploys ONLY the runtime app (index.html, styles.css, js/, assets/,
+# manifest.webmanifest, sw.js). Labs, docs, tests, checkpoints and repo metadata
+# are never published. Uses the official Pages Actions pipeline (no dependencies).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least-privilege permissions for an OIDC-based Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One production deployment at a time; never cancel an in-progress deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage runtime-only static artifact
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          # Ship ONLY the runtime app — nothing else in the repo is copied.
+          cp index.html styles.css manifest.webmanifest sw.js _site/
+          cp -R js _site/js
+          cp -R assets _site/assets
+          # The app-icon master is a source asset, not consumed at runtime.
+          rm -f _site/assets/icons/app-icon-master-v1.png
+          # Defensive: never publish the invalid clownfish cutout, even if present.
+          rm -f _site/assets/animals/ocellaris-clownfish-v1.png
+          echo "Staged artifact contents:"
+          find _site -type f | sort
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

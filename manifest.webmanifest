@@ -1,0 +1,16 @@
+{
+  "name": "Pocket Aquarium — Ecosystem",
+  "short_name": "Aquarium",
+  "description": "Establish, cycle, and steward a living freshwater or reef habitat.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#123d4a",
+  "theme_color": "#f5f1e6",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
