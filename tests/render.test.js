@@ -21,6 +21,7 @@ var passed = 0, failed = 0, failures = [], curr = "";
 function group(name) { curr = name; }
 function ok(cond, msg) { if (cond) { passed++; } else { failed++; failures.push(curr + " :: " + msg); } }
 function near(a, b) { return Math.abs(a - b) < 1e-9; }
+function angDiff2(from, to) { var d = (to - from) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; else if (d < -Math.PI) d += Math.PI * 2; return d; }
 
 group("test surface present");
 ok(PA && PA._render && typeof PA._render.normalizeView === "function", "render.js exposes PA._render.normalizeView");
@@ -71,6 +72,64 @@ ok(eq.filter > 0, "an installed 'sponge' filter reads ON");
 ok(eq.light > 0, "an installed 'basic' light reads ON");
 var eqPowered = nv(stateAt(5.57, VOL, { filter: "sponge", heater: "basic", circulation: "powerhead", light: "reef-led", skimmer: "none", refugium: "none", ato: "none" })).equipment;
 ok(eqPowered.circulation > 0 && eqPowered.heater > 0, "installed circulation/heater tiers read ON");
+
+/* ------------------------------ 4. smooth photoperiod light ------------------------------ */
+// computeLight must drive the tank's light from the sim's SMOOTH daylight curve so
+// day<->night is continuous (no stepwise hour-window jumps that flicker the scene).
+group("photoperiod light is smooth and continuous (computeLight)");
+var cl = PA && PA._render ? PA._render.computeLight : null;
+ok(typeof cl === "function", "render.js exposes PA._render.computeLight");
+if (typeof cl === "function") {
+  var prevI = null, maxJump = 0, N = 200;
+  for (var s = 0; s <= N; s++) {
+    var frac = s / N;                                  // 0..1 across one game-day (light on)
+    var li = cl(nv(stateAt(10 + frac, VOL, null))).surfaceI;
+    if (prevI != null) maxJump = Math.max(maxJump, Math.abs(li - prevI));
+    prevI = li;
+  }
+  ok(maxJump < 0.02, "surface irradiance changes smoothly across the day (max step " + maxJump.toFixed(4) + ")");
+  var noonI = cl(nv(stateAt(10.57, VOL, null))).surfaceI;   // peak of the daylight window
+  var duskI = cl(nv(stateAt(10.80, VOL, null))).surfaceI;   // descending limb
+  var nightI = cl(nv(stateAt(10.00, VOL, null))).surfaceI;  // outside the window
+  ok(noonI > duskI && duskI > nightI, "irradiance falls monotonically noon>dusk>night (" + noonI.toFixed(2) + ">" + duskI.toFixed(2) + ">" + nightI.toFixed(2) + ")");
+  var offEquip = { filter: "sponge", heater: "none", circulation: "none", light: "none", skimmer: "none", refugium: "none", ato: "none" };
+  var nightOff = cl(nv(stateAt(10.00, VOL, offEquip))).surfaceI;
+  ok(nightI > nightOff, "an installed light lifts the night irradiance floor (" + nightI.toFixed(2) + " > " + nightOff.toFixed(2) + ")");
+}
+
+/* ------------------------------ 5. bounded, frame-rate-independent motion ------------------------------ */
+// The steering integrators must stay bounded for ANY dt so visible locomotion never
+// inflates at 4x/8x transport or a slow frame, and turns never snap.
+group("motion is bounded and frame-rate independent (stepTurn/stepSpeed)");
+var stepTurn = PA && PA._render ? PA._render.stepTurn : null;
+var stepSpeed = PA && PA._render ? PA._render.stepSpeed : null;
+var MAX_DT = PA && PA._render ? PA._render.MAX_DT : 0;
+ok(typeof stepTurn === "function" && typeof stepSpeed === "function", "render.js exposes stepTurn/stepSpeed");
+ok(MAX_DT > 0 && MAX_DT <= 100, "render.js exposes a bounded MAX_DT frame cap (" + MAX_DT + "ms)");
+if (typeof stepTurn === "function") {
+  var maxRate = 0.011, angAccel = maxRate * 0.02;
+  var hd = 0, av = 0, peakAv = 0, turnOk = true;
+  for (var i = 0; i < 400; i++) {
+    var dt = [16, 33, 50][i % 3];
+    var r = stepTurn(hd, av, Math.PI, maxRate, angAccel, dt);   // steer toward a 180-degree target
+    if (Math.abs(angDiff2(hd, r.hd)) > maxRate * dt + 1e-9) turnOk = false; // per-step change bounded
+    hd = r.hd; av = r.av; peakAv = Math.max(peakAv, Math.abs(av));
+  }
+  ok(peakAv <= maxRate + 1e-9, "angular velocity stays within the species cap (peak " + peakAv.toFixed(5) + " <= " + maxRate + ")");
+  ok(turnOk, "no snap: each heading step is bounded by maxRate*dt (turn continuity)");
+  ok(Math.abs(angDiff2(hd, Math.PI)) < 0.1, "heading still converges onto the target (settled, no runaway ringing)");
+}
+if (typeof stepSpeed === "function") {
+  var cruise = 2.9e-4, accel = 2.2e-6, noInflate = true;
+  [16, 50, 1000, 100000].forEach(function (dt) {
+    var sp = 0;
+    for (var k = 0; k < 6; k++) sp = stepSpeed(sp, cruise, accel, Math.min(dt, MAX_DT));
+    if (sp > cruise + 1e-12) noInflate = false;                 // approaching from below never overshoots
+  });
+  ok(noInflate, "speed never inflates above the species target for any dt (bounded at 4x/8x)");
+  var spCap = stepSpeed(cruise, cruise * 1.6, accel, MAX_DT);   // fastest sustainable frame
+  ok(spCap * MAX_DT <= cruise * 1.6 * MAX_DT + 1e-9, "per-frame displacement is hard-capped by the clamped dt");
+}
 
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium renderer tests ===================");

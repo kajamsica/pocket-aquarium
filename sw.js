@@ -14,9 +14,10 @@
    - The worker never caches itself; the browser updates sw.js on its own byte-diff. */
 "use strict";
 
-// v2: precache the renderer-critical habitat plates and validated species sprites
-// so the "hyper-real" art is durably offline, not dependent on the incidental HTTP cache.
-var CACHE_VERSION = "v2";
+// v3: ship the PAR5 dark aquarium-instrument shell — index.html, styles.css, js/app.js and
+// js/render.js all changed, so this bump retires the v2 cache and stops an already-controlled
+// client from continuing to serve the pre-fix app on next activate.
+var CACHE_VERSION = "v3";
 var CACHE_NAME = "pocket-aquarium-shell-" + CACHE_VERSION;
 
 /* Relative to the worker scope — subpath-safe under /pocket-aquarium/. */

@@ -39,6 +39,33 @@
     else if (d < -Math.PI) d += TAU;
     return d;
   }
+
+  // Longest per-frame step (ms). A slow frame, a backgrounded tab, or fast sim
+  // transport can hand the renderer a large gap; clamping it here keeps visible
+  // locomotion frame-rate independent (bounded), never inflated at 4x/8x.
+  var MAX_DT = 50;
+
+  /* --------- bounded, frame-rate-independent steering integrators --------- */
+  // Shared by the renderer AND exercised directly by tests. Every result is hard
+  // bounded so a large dt can never push turn rate or speed past the per-ms
+  // species limits — the core of watchable, physically coherent motion.
+  function stepTurn(hd, av, want, maxRate, angAccel, dt) {
+    // Desired angular velocity is proportional to heading error, capped at the
+    // species turn rate and decaying to 0 at the target so momentum settles
+    // instead of ringing. The gain stays below 1/MAX_DT so even a full 50ms frame
+    // corrects a fraction of the error, never past it (no overshoot blow-up).
+    var desired = clamp(angDiff(hd, want) * 0.012, -maxRate, maxRate);
+    av += clamp(desired - av, -angAccel * dt, angAccel * dt);
+    if (av > maxRate) av = maxRate; else if (av < -maxRate) av = -maxRate;
+    return { hd: hd + av * dt, av: av };
+  }
+  function stepSpeed(sp, target, accel, dt) {
+    // Bounded acceleration; drag lets it shed speed a little faster. Approaching
+    // from below never overshoots the target, so speed cannot inflate with dt.
+    sp += clamp(target - sp, -accel * 1.6 * dt, accel * dt);
+    return sp < 0 ? 0 : sp;
+  }
+
   function isArr(v) { return Array.isArray(v); }
   function asArray(v) { return isArr(v) ? v : []; }
   function lc(v) { return String(v == null ? "" : v).toLowerCase(); }
@@ -326,6 +353,38 @@
     return clamp01(1 - Math.abs(frac - mid) / half);
   }
 
+  /* ============================== lighting ============================= */
+  // Causal chain mirrored from the reef reference (contracts.ts lightField):
+  //   surface irradiance x air/glass/seawater transmission
+  //     -> Beer-Lambert attenuation over water depth -> local PPFD -> presentation.
+  // Resolved from EXISTING state only (daylight, par, equipment.light); no new
+  // persisted settings. Pure over `view` (hoisted to module scope so tests can
+  // assert photoperiod continuity headlessly).
+  function computeLight(view) {
+    var marine = view.habitat === "marine";
+    // Photoperiod is the sim's own SMOOTH daylight curve (simDaylight over the
+    // fractional game-day, mirrored into view.daylight), so day<->night is
+    // continuous — no stepwise hour-window jumps. A fixture lifts a night floor.
+    var sun = clamp01(view.daylight);
+    var fixture = view.equipment.light ? 1 : 0;
+    var elev = sun * sun * (3 - 2 * sun);             // smoothstep sun elevation
+    var dayWarmth = marine ? 0.12 : 0.5;
+    var warmth = lerp(0.92, dayWarmth, elev);         // warm amber low sun -> cool at noon
+    var nightAmt = clamp01((0.16 - sun) / 0.16);      // smoothly ramps to moonlight near 0
+    var phase = sun > 0.55 ? "day" : (sun > 0.14 ? "dusk" : "night");
+    // surface irradiance at the waterline (photoperiod x PAR, lifted by a fixture)
+    var surfaceI = clamp01(sun * 0.85 * (0.45 + view.par * 0.6) + fixture * 0.3);
+    var dayCol = marine ? [255, 251, 236] : [255, 236, 196], warmCol = [255, 214, 150], moonCol = [150, 178, 224];
+    var col = mixRGB(dayCol, warmCol, warmth);
+    col = mixRGB(col, moonCol, nightAmt * (1 - fixture * 0.6)); // fixture keeps colour truer at night
+    if (fixture) col = mixRGB(col, marine ? [232, 244, 255] : [255, 240, 205], 0.2 + elev * 0.15);
+    var iface = 0.9;                        // air/glass/seawater interface transmission
+    var atten = marine ? 1.15 : 2.6;        // clear reef vs tannin-stained blackwater
+    var adequacy = clamp01(surfaceI * iface * Math.exp(-atten * 0.5) * (0.45 + view.par * 0.7));
+    return { marine: marine, phase: phase, fx: 0.5, sun: sun,
+      rgb: col, col: col.join(","), surfaceI: surfaceI, iface: iface, atten: atten, adequacy: adequacy, fixture: fixture };
+  }
+
   // Resolve the current tank volume (litres) for the water-level ratio. Prefer the
   // authoritative catalog the sim divides against (PA.DATA.TIERS[state.tier].volumeL),
   // then any explicit volume on the state, so the renderer still degrades gracefully
@@ -473,7 +532,8 @@
   /* Test-only surface (no browser/canvas dependency): lets tests/render.test.js
      assert the sim->view normalization contract — photoperiod, equipment on/off,
      and water level — headlessly under Node. Not used by the running app. */
-  PA._render = { normalizeView: normalizeView, simDaylight: simDaylight };
+  PA._render = { normalizeView: normalizeView, simDaylight: simDaylight, computeLight: computeLight,
+    stepTurn: stepTurn, stepSpeed: stepSpeed, MAX_DT: MAX_DT };
 
   /* ============================ the renderer ============================== */
 
@@ -640,16 +700,19 @@
         var b = swimBounds(view, arch);
         var hy = Number.isFinite(rec.seedY) ? clamp(rec.seedY, b.yLo, b.yHi) : lerp(b.yLo, b.yHi, seeded(rec.id, "hy"));
         var f = seeded(rec.id, "f") > 0.5 ? 1 : -1;
+        var hd0 = seeded(rec.id, "hd") * TAU;
         a = actors[rec.id] = {
           id: rec.id, kind: rec.kind,
           x: hx, y: hy,
-          hd: seeded(rec.id, "hd") * TAU, sp: arch.cruise * 0.5, // persistent heading + speed
+          hd: hd0, av: 0, rhd: hd0, sp: arch.cruise * 0.5,        // heading, angular velocity, lagged body heading, speed
           face: f, faceTarget: f, faceHold: 0,                    // flip hysteresis state
           phase: seeded(rec.id, "p") * 6.28,
           homeX: hx, homeY: hy,
           z: 0.15 + seeded(rec.id, "z") * 0.85,                   // depth 0..1 (near = larger/opaque)
           wander: seeded(rec.id, "wn") * TAU,                     // smooth wander phase (no random targets)
+          intent: seeded(rec.id, "in") * TAU,                     // low-frequency burst/glide phase
           pausePhase: seeded(rec.id, "pp") * TAU,                 // benthic settle/pause cadence
+          swim: seeded(rec.id, "p") * 6.28, eff: 0, forage: 0,    // undulation phase, swim effort, eased food gain
           rlen: 0,                                                // rendered length, eased (stage-scale)
           sink: 0, seen: true
         };
@@ -690,7 +753,7 @@
     }
 
     function updateActors(view, dt) {
-      var dts = clamp(dt, 0, 50);
+      var dts = clamp(dt, 0, MAX_DT);
       // Ease the global stage scale so size changes across a resize interpolate.
       renderScale = renderScale > 0 ? renderScale + (scale - renderScale) * Math.min(1, dts / 260) : scale;
 
@@ -724,11 +787,17 @@
         var speedScale = 1, chase = false;
         var benthic = (arch.layer === "bottom" || arch.layer === "benthic" || arch.layer === "burrow" || arch.layer === "burrow2");
 
-        // Food attraction: steer toward the nearest reachable pellet.
+        // Food attraction eases in and out via a forage gain (0..1) so a pellet
+        // blends into the steering over ~0.5s instead of instantly hijacking the
+        // fish; interest fades as the fish is fed or the pellet drifts off.
         var pellet = nearestFood(view, a, arch);
-        if (pellet && hungerOf(ent) > 0.25) {
+        var wantForage = (pellet && hungerOf(ent) > 0.25) ? hungerOf(ent) : 0;
+        a.forage += clamp(wantForage - a.forage, -dts / 900, dts / 500);
+        if (pellet && a.forage > 0.02) {
           var fdx = pellet.x - a.x, fdy = pellet.y - a.y, fd = Math.hypot(fdx, fdy) || 1e-4;
-          Sx += fdx / fd * 2.4; Sy += fdy / fd * 2.4; chase = true; speedScale = 1.5;
+          var fg = a.forage * 2.6;
+          Sx += fdx / fd * fg; Sy += fdy / fd * fg;
+          chase = a.forage > 0.5; speedScale = 1 + a.forage * 0.6;
         }
 
         // Smooth wander: a slowly-evolving lateral bias giving gentle S-curves —
@@ -737,6 +806,10 @@
         var wob = Math.sin(a.wander) * 0.7 + Math.sin(a.wander * 0.53 + a.phase) * 0.3;
         Sx += Math.cos(a.hd + Math.PI / 2) * wob * 0.55;
         Sy += Math.sin(a.hd + Math.PI / 2) * wob * 0.55;
+
+        // Low-frequency intent: a slow burst/glide bias so cruising speed drifts
+        // (visible coasting) instead of holding one mechanical velocity forever.
+        a.intent += dts * arch.wanderRate * 0.32;
 
         // Schooling: cohesion + alignment + short-range separation.
         if (arch.school) {
@@ -783,17 +856,15 @@
         if (a.y < b.yLo + m) Sy += (1 - (a.y - b.yLo) / m) * 2.0;
         else if (a.y > b.yHi - m) Sy -= (1 - (b.yHi - a.y) / m) * 2.0;
 
-        // --- resolve to a bounded heading + bounded speed (no ricochet) ---
+        // --- resolve to a bounded heading (angular momentum) + bounded speed ---
         var mag = Math.hypot(Sx, Sy);
         if (mag > 1e-6) {
-          var want2 = Math.atan2(Sy, Sx);
-          var maxTurn = arch.turn * (chase ? 1.5 : 1) * dts; // bounded turn rate
-          a.hd += clamp(angDiff(a.hd, want2), -maxTurn, maxTurn);
-        }
-        var targetSp = arch.cruise * speedScale;
-        var acc = arch.accel * dts;                          // bounded acceleration
-        a.sp += clamp(targetSp - a.sp, -acc * 1.6, acc);
-        if (a.sp < 0) a.sp = 0;
+          var maxRate = arch.turn * (chase ? 1.5 : 1);       // species turn-rate cap (rad/ms)
+          var st = stepTurn(a.hd, a.av, Math.atan2(Sy, Sx), maxRate, arch.turn * 0.02, dts);
+          a.hd = st.hd; a.av = st.av;
+        } else { a.av *= Math.max(0, 1 - dts / 200); }        // no goal -> shed spin, don't snap
+        var glide = chase ? 1 : (0.72 + 0.28 * (0.5 + 0.5 * Math.sin(a.intent))); // burst/glide coasting
+        a.sp = stepSpeed(a.sp, arch.cruise * speedScale * glide, arch.accel, dts);
         a.x += Math.cos(a.hd) * a.sp * dts;
         a.y += Math.sin(a.hd) * a.sp * dts;
 
@@ -802,6 +873,15 @@
         else if (a.x > 1 - MARGIN_X) a.x -= (a.x - (1 - MARGIN_X)) * Math.min(1, dts / 120);
         if (a.y < b.yLo) a.y += (b.yLo - a.y) * Math.min(1, dts / 120);
         else if (a.y > b.yHi) a.y -= (a.y - b.yHi) * Math.min(1, dts / 120);
+
+        // Mild body-axis lag: the drawn body heading trails the true heading, so a
+        // turn reads as a body swinging around rather than an instant re-point.
+        a.rhd += angDiff(a.rhd, a.hd) * Math.min(1, dts / 220);
+        // Swim effort from real speed + turn effort drives undulation: a nearly
+        // still fish barely beats its tail; a fast or hard-turning one works harder.
+        var eff = clamp01(a.sp / arch.cruise * 0.75 + Math.abs(a.av) / (arch.turn + 1e-6) * 0.35);
+        a.eff += (eff - a.eff) * Math.min(1, dts / 160);
+        a.swim += dts * (0.006 + a.eff * 0.013);              // tailbeat frequency rises with effort
 
         updateFace(a, dts);
       }
@@ -854,7 +934,7 @@
     /* ============================== drawing ============================== */
     function render(now) {
       if (destroyed || !ctx) return;
-      var dt = prevNow == null ? 16 : clamp(now - prevNow, 0, 50);
+      var dt = prevNow == null ? 16 : clamp(now - prevNow, 0, MAX_DT);
       prevNow = now; lastRenderAt = now;
 
       var view;
@@ -966,40 +1046,6 @@
       drawAirGlass(wl, top); // glassy air gap above the waterline (faintly lit)
     }
 
-    /* ============================== lighting ============================= */
-    // Causal chain mirrored from the reef reference (contracts.ts lightField):
-    //   surface irradiance x air/glass/seawater transmission
-    //     -> Beer-Lambert attenuation over water depth -> local PPFD
-    //     -> minus rock/coral shading -> drives polyp presentation.
-    // Resolved once per frame from EXISTING state only (par, daylight, hour,
-    // equipment.light, equipment.circulation, flow); no new persisted settings.
-    function computeLight(view) {
-      var marine = view.habitat === "marine";
-      var hr = view.hour, phase, warmth, sun;
-      if (hr != null) {
-        if (hr >= 9 && hr < 17) { phase = "day"; sun = 1; warmth = marine ? 0.12 : 0.5; }
-        else if (hr >= 6 && hr < 9) { phase = "dawn"; sun = clamp01((hr - 6) / 3); warmth = 0.85; }
-        else if (hr >= 17 && hr < 20) { phase = "dusk"; sun = clamp01((20 - hr) / 3); warmth = 0.95; }
-        else { phase = "night"; sun = 0.06; warmth = 0.1; }
-      } else {
-        sun = view.daylight;
-        phase = sun > 0.55 ? "day" : (sun > 0.12 ? "dusk" : "night");
-        warmth = sun > 0.55 ? (marine ? 0.12 : 0.5) : (sun > 0.12 ? 0.9 : 0.1);
-      }
-      var fixture = view.equipment.light ? 1 : 0;
-      // surface irradiance at the waterline (photoperiod x PAR, lifted by a fixture)
-      var surfaceI = clamp01(sun * 0.85 * (0.45 + view.par * 0.6) + fixture * 0.3);
-      // colour temperature: warm amber at twilight, cool daylight by day, moon-blue at night
-      var dayCol = marine ? [255, 251, 236] : [255, 236, 196], warmCol = [255, 214, 150], moonCol = [150, 178, 224];
-      var col = phase === "night" ? moonCol : mixRGB(dayCol, warmCol, warmth);
-      if (fixture) col = mixRGB(col, marine ? [232, 244, 255] : [255, 240, 205], phase === "night" ? 0.2 : 0.35);
-      var iface = 0.9;                        // air/glass/seawater interface transmission
-      var atten = marine ? 1.15 : 2.6;        // clear reef vs tannin-stained blackwater
-      var adequacy = clamp01(surfaceI * iface * Math.exp(-atten * 0.5) * (0.45 + view.par * 0.7));
-      return { marine: marine, phase: phase, fx: 0.5, sun: sun,
-        rgb: col, col: col.join(","), surfaceI: surfaceI, iface: iface, atten: atten, adequacy: adequacy, fixture: fixture };
-    }
-
     // Water-depth attenuation + photoperiod dimming as a MULTIPLY gradient that
     // deepens toward the substrate — not a flat full-frame tint.
     function drawDepthAttenuation(view, light) {
@@ -1054,13 +1100,16 @@
     function drawCaustics(view, light, now) {
       if (reduced) return;
       var wl = waterlineY(view) * cssH, sub = cssH * SUB_TOP;
+      if (sub - wl <= 0) return;                     // no water column (dry tank): suppress entirely
       var flow = view.flow, boost = view.equipment.circulation ? 1.35 : 1;
       var spd = 0.0006 + flow * 0.0016 * boost;    // pump/flow -> ripple speed
       var amp = (4 + flow * 10 * boost) * scale;    // pump/flow -> ripple amplitude
       var bright = clamp01(0.03 + light.surfaceI * 0.10) * (0.4 + light.adequacy);
       if (bright < 0.01) return;
       var cx = light.fx * cssW, span = cssW * 0.42;
-      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, wl, cssW, sub - wl); ctx.clip();   // confine ripples to the wet region — never above the waterline
+      ctx.globalCompositeOperation = "lighter";
       ctx.strokeStyle = "rgba(" + light.col + "," + bright + ")"; ctx.lineWidth = 1.6 * scale;
       for (var i = 0; i < caustics.length; i++) {
         var c = caustics[i], yy = lerp(wl, sub, c.y), started = false;
@@ -1108,7 +1157,11 @@
       var n = Math.round(density * (reduced ? 10 : 26));
       if (n <= 0 || light.surfaceI < 0.04) return;
       var wlF = waterlineY(view), cx = light.fx, span = 0.42;
-      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      var wlPx = wlF * cssH, subPx = cssH * SUB_TOP;
+      if (subPx - wlPx <= 0) return;                  // no water column (dry tank): suppress entirely
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, wlPx, cssW, subPx - wlPx); ctx.clip();   // confine motes to the wet region — never above the waterline
+      ctx.globalCompositeOperation = "lighter";
       for (var i = 0; i < n; i++) {
         var driftX = reduced ? 0 : Math.sin(now * (0.00016 + seeded("mote", i) * 0.0002) + i) * 0.02 * (0.4 + view.flow);
         var driftY = reduced ? 0 : Math.sin(now * 0.0002 + i * 1.3) * 0.03;
@@ -1565,10 +1618,12 @@
           var spr = spriteFor(rec.kind);
           var dir = a.face >= 0 ? Math.max(0.3, a.face) : Math.min(-0.3, a.face);
           if (spr) {
-            // Bank into ascents/descents so the sprite rides the physics layer
+            // Bank on the LAGGED body heading (body-axis lag) plus a subtle
+            // effort-scaled sway, so the sprite rides the physics layer
             // (heading/speed/flip/depth) rather than reading as a flat sticker.
-            var bank = reduced ? 0 : clamp(Math.sin(a.hd) * 0.5, -0.26, 0.26);
-            ctx.rotate(bank * (a.face >= 0 ? 1 : -1));
+            var bank = reduced ? 0 : clamp(Math.sin(a.rhd) * 0.5, -0.26, 0.26);
+            var sway = reduced ? 0 : Math.sin(a.swim) * a.eff * 0.05;
+            ctx.rotate((bank + sway) * (a.face >= 0 ? 1 : -1));
             ctx.scale(dir, 1);
             drawSpriteBody(spr, L, a, view);
           } else {
@@ -1630,7 +1685,7 @@
     function tri(ax, ay, bx, by, cx, cy) { ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(cx, cy); ctx.closePath(); ctx.fill(); }
 
     function drawTetra(L, now, a, dead) {
-      var bh = L * 0.42, wag = dead ? 0 : Math.sin(now * 0.011 + a.phase) * bh * 0.4;
+      var bh = L * 0.42, wag = dead ? 0 : Math.sin(a.swim + a.phase) * bh * (0.14 + a.eff * 0.5);
       // caudal + dorsal fins
       ctx.fillStyle = "rgba(200,225,235,0.62)";
       tri(-L * 0.42, 0, -L * 0.62, -bh * 0.6 + wag, -L * 0.62, bh * 0.6 + wag);
@@ -1670,7 +1725,7 @@
     }
 
     function drawClown(L, now, a, dead) {
-      var bh = L * 0.5, wag = dead ? 0 : Math.sin(now * 0.007 + a.phase) * bh * 0.24;
+      var bh = L * 0.5, wag = dead ? 0 : Math.sin(a.swim + a.phase) * bh * (0.08 + a.eff * 0.3);
       // soft translucent fins (no hard black margins)
       ctx.fillStyle = "rgba(233,120,44,0.9)";
       tri(-L * 0.34, 0, -L * 0.56, -bh * 0.5 + wag, -L * 0.56, bh * 0.5 + wag);
@@ -1695,7 +1750,7 @@
     }
 
     function drawGoby(L, now, a, dead) {
-      var bh = L * 0.34, wag = dead ? 0 : Math.sin(now * 0.01 + a.phase) * bh * 0.4;
+      var bh = L * 0.34, wag = dead ? 0 : Math.sin(a.swim + a.phase) * bh * (0.14 + a.eff * 0.5);
       // elongate yellow body
       ctx.fillStyle = "rgba(255,210,62,0.6)"; tri(-L * 0.42, 0, -L * 0.6, -bh * 0.7 + wag, -L * 0.6, bh * 0.7 + wag);
       var g = ctx.createLinearGradient(0, -bh, 0, bh);
@@ -1716,7 +1771,7 @@
 
     function drawShrimp(L, now, a, dead) {
       var bh = L * 0.4;
-      var flick = dead ? 0 : Math.sin(now * 0.006 + a.phase) * 2 * scale;
+      var flick = dead ? 0 : Math.sin(a.swim + a.phase) * (0.4 + a.eff * 2.2) * scale;
       // banded body (segments), red/white tiger
       ctx.save();
       var segs = 6;
@@ -1740,7 +1795,7 @@
     }
 
     function drawShark(L, now, a, dead) {
-      var bh = L * 0.24, undo = dead ? 0 : Math.sin(now * 0.004 + a.phase) * bh * 0.5;
+      var bh = L * 0.24, undo = dead ? 0 : Math.sin(a.swim + a.phase) * bh * (0.2 + a.eff * 0.6);
       // long benthic body
       ctx.fillStyle = "rgba(150,120,80,0.6)"; tri(-L * 0.44, undo, -L * 0.6, -bh * 0.9 + undo, -L * 0.58, bh * 0.5 + undo); // caudal
       var g = ctx.createLinearGradient(0, -bh, 0, bh);
@@ -1753,7 +1808,7 @@
       ctx.quadraticCurveTo(L * 0.3, bh * 0.7, L * 0.5, 0); ctx.closePath(); ctx.fill();
       // pectoral + pelvic "walking" fins
       ctx.fillStyle = "#9c8253";
-      var step = dead ? 0 : Math.sin(now * 0.006 + a.phase) * bh * 0.4;
+      var step = dead ? 0 : Math.sin(a.swim * 0.8 + a.phase) * bh * (0.15 + a.eff * 0.45);
       tri(L * 0.16, bh * 0.5, L * 0.28, bh * 1.1 + step, L * 0.02, bh * 0.7); // pectoral
       tri(-L * 0.12, bh * 0.55, -L * 0.02, bh * 1.05 - step, -L * 0.24, bh * 0.7); // pelvic
       // dorsal fins set far back
@@ -1778,7 +1833,7 @@
     }
 
     function drawGeneric(L, now, a, dead) {
-      var bh = L * 0.46, wag = dead ? 0 : Math.sin(now * 0.009 + a.phase) * bh * 0.35;
+      var bh = L * 0.46, wag = dead ? 0 : Math.sin(a.swim + a.phase) * bh * (0.12 + a.eff * 0.45);
       ctx.fillStyle = "#5a86a8"; tri(-L * 0.4, 0, -L * 0.62, -bh * 0.5 + wag, -L * 0.62, bh * 0.5 + wag);
       var g = ctx.createLinearGradient(0, -bh, 0, bh);
       g.addColorStop(0, "#6fa0c2"); g.addColorStop(1, "#cfe2ee");
