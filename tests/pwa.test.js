@@ -185,6 +185,21 @@ var idxEnv = careAdviceSrc.indexOf("environmentIssue(snap)");
 var idxReady = careAdviceSrc.indexOf('"READY"');
 ok(idxEnv > -1 && idxReady > -1 && idxEnv < idxReady, "careAdvice checks environment before recommending stocking an empty tank");
 
+group("water panel: exactly one care-matched recommendation");
+// Regression guard (PAR5-01A browser finding): a reef fishless cycle badged Test + water
+// change + top-off all at once because each tool computed its own recommendation. The badge
+// must instead come from the SINGLE careAdvice action, so at most one tool can be emphasised.
+// The tool source: emphasis is gated on the tool's own action matching one recommended action.
+var waterToolSrc = (app.match(/function waterTool\([\s\S]*?\n  \}/) || [""])[0];
+ok(/act\s*===\s*recAct/.test(waterToolSrc), "waterTool emphasises a tool only when its own action equals the single recommended action");
+ok(/wtool-rec/.test(waterToolSrc) && /is-rec/.test(waterToolSrc) &&
+   waterToolSrc.split("isRec").length >= 3, "the RECOMMENDED NOW badge and is-rec class share one isRec decision (no second independent flag)");
+// The builder feeds tools the one careAdvice action, not per-tool booleans.
+var waterToolsSrc = (app.match(/function waterToolsHTML\([\s\S]*?\n  \}/) || [""])[0];
+ok(/recAct\s*=\s*m\.action\.act/.test(waterToolsSrc), "waterToolsHTML derives the recommendation from careAdvice(snap).action.act");
+ok(!/\brecTest\b/.test(app) && !/\brecWC\b/.test(app) && !/\brecTop\b/.test(app),
+   "no independent per-tool recommendation booleans remain (single source of truth)");
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));

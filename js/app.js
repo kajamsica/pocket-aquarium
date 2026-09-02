@@ -639,20 +639,20 @@
   // the current state. Recommendations are honest: water change dilutes waste/nitrate;
   // top-off only restores evaporated volume/salinity and never removes nitrate.
   function waterToolsHTML(snap) {
-    var filled = state.cycle.filled, full = tierVol(), k = waterByKey(snap);
-    var levelM = k.level, salM = k.salinity;
+    var filled = state.cycle.filled, full = tierVol();
     var topEnabled = filled && state.water.levelL < full - 1e-6;
-    var fresh = dataFreshness(snap);
-    var recTest = fresh.stale;
-    var recWC = waterDangerous() || accumulationHigh(snap);
-    var recTop = (levelM && levelM.value < (levelM.good ? levelM.good[0] : 92)) ||
-      (isReef() && salM && salM.severity !== "ok" && salM.value > (salM.target || 35));
+    // The single care ladder decides the ONE recommended operation; each tool is emphasised
+    // only when its own action equals that action (recAct). Computing recommendation per tool
+    // independently badged Test + water change + top-off together during a fishless cycle.
+    // All tools stay available and explanatory — only the matching one carries the badge.
+    var m = careAdvice(snap);
+    var recAct = m.action.act;
     var tools = [
-      waterTool("Test the water", "test", filled, filled ? null : "Fill the tank first.", recTest,
+      waterTool("Test the water", "test", filled, filled ? null : "Fill the tank first.", recAct,
         "Reveals the current chemistry so every reading is known and fresh.", "wtool:test"),
-      waterTool("25% water change", "wc25", filled, filled ? null : "Fill the tank first.", recWC,
+      waterTool("25% water change", "wc25", filled, filled ? null : "Fill the tank first.", recAct,
         "Dilutes toxic ammonia and nitrite and draws down accumulated nitrate.", "wtool:wc"),
-      waterTool("Freshwater top-off", "topoff", topEnabled, !filled ? "Fill the tank first." : (topEnabled ? null : "Water level is already full."), recTop,
+      waterTool("Freshwater top-off", "topoff", topEnabled, !filled ? "Fill the tank first." : (topEnabled ? null : "Water level is already full."), recAct,
         isReef() ? "Replaces evaporated water to restore volume and lower salinity — it does not remove nitrate."
                  : "Replaces evaporated water to restore volume — it does not remove nitrate.", "wtool:top")
     ];
@@ -662,16 +662,17 @@
       ato = '<p class="wtool-ato">ATO: <b>' + (auto ? "Automatic" : "Manual") + "</b> — " +
         (auto ? "holding volume &amp; salinity steady across evaporation." : "top off to pull salinity back toward 35 ppt (buy an ATO to automate).") + "</p>";
     }
-    // Compact current verdict leads the panel, reusing the single care ladder so the Water
+    // Compact current verdict leads the panel, reusing the same care action so the Water
     // tab and the command surface can never disagree; the tools below stay quieter.
-    var m = careAdvice(snap);
     var verdict = '<div class="water-verdict is-' + m.level + '">' +
       '<span class="wv-word">' + esc(m.word) + "</span>" +
       '<span class="wv-reason">' + esc(m.reason) + "</span></div>";
     return verdict + '<ul class="water-tools">' + tools.join("") + "</ul>" + ato;
   }
-  function waterTool(label, act, enabled, reason, recommended, caption, fk) {
-    var isRec = recommended && enabled;
+  // A tool is "recommended" only when it is enabled AND its own action is the single action
+  // careAdvice chose (recAct). Since the three tool actions are distinct, at most one badges.
+  function waterTool(label, act, enabled, reason, recAct, caption, fk) {
+    var isRec = enabled && act === recAct;
     var rec = isRec ? '<span class="wtool-rec">Recommended now</span>' : "";
     return '<li class="wtool' + (isRec ? " is-rec" : "") + '">' +
       '<div class="wtool-head">' + careBtn(label, act, null, enabled, reason, fk) + rec + "</div>" +
