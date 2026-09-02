@@ -1100,13 +1100,16 @@
     function drawCaustics(view, light, now) {
       if (reduced) return;
       var wl = waterlineY(view) * cssH, sub = cssH * SUB_TOP;
+      if (sub - wl <= 0) return;                     // no water column (dry tank): suppress entirely
       var flow = view.flow, boost = view.equipment.circulation ? 1.35 : 1;
       var spd = 0.0006 + flow * 0.0016 * boost;    // pump/flow -> ripple speed
       var amp = (4 + flow * 10 * boost) * scale;    // pump/flow -> ripple amplitude
       var bright = clamp01(0.03 + light.surfaceI * 0.10) * (0.4 + light.adequacy);
       if (bright < 0.01) return;
       var cx = light.fx * cssW, span = cssW * 0.42;
-      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, wl, cssW, sub - wl); ctx.clip();   // confine ripples to the wet region — never above the waterline
+      ctx.globalCompositeOperation = "lighter";
       ctx.strokeStyle = "rgba(" + light.col + "," + bright + ")"; ctx.lineWidth = 1.6 * scale;
       for (var i = 0; i < caustics.length; i++) {
         var c = caustics[i], yy = lerp(wl, sub, c.y), started = false;
@@ -1154,7 +1157,11 @@
       var n = Math.round(density * (reduced ? 10 : 26));
       if (n <= 0 || light.surfaceI < 0.04) return;
       var wlF = waterlineY(view), cx = light.fx, span = 0.42;
-      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      var wlPx = wlF * cssH, subPx = cssH * SUB_TOP;
+      if (subPx - wlPx <= 0) return;                  // no water column (dry tank): suppress entirely
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, wlPx, cssW, subPx - wlPx); ctx.clip();   // confine motes to the wet region — never above the waterline
+      ctx.globalCompositeOperation = "lighter";
       for (var i = 0; i < n; i++) {
         var driftX = reduced ? 0 : Math.sin(now * (0.00016 + seeded("mote", i) * 0.0002) + i) * 0.02 * (0.4 + view.flow);
         var driftY = reduced ? 0 : Math.sin(now * 0.0002 + i * 1.3) * 0.03;
