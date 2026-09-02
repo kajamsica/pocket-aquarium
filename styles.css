@@ -602,7 +602,7 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   .status{width:100%;order:3}
   .wallet{margin-left:0}
   .coin{padding:5px 10px;font-size:13px}
-  .tbtn{min-width:40px;padding:0 9px}
+  .tbtn{min-width:44px;padding:0 9px}
 }
 
 /* Short viewports: relax the outer cap so the tank keeps breathing room */

@@ -151,6 +151,11 @@ ok(!/\.tbtn\s*\{[^}]*min-height:3\dpx/.test(css), "transport .tbtn base is not a
 ok(/\.offer-cta\s*\{[^}]*min-height:44px/.test(css), "offer-cta base min-height is 44px");
 ok(!/\.offer-cta\s*\{[^}]*min-height:40px/.test(css), "offer-cta base is not the old 40px height");
 ok(!/min-height:38px/.test(app) && !/min-height:40px/.test(app), "app.js has no inline min-height that defeats the 44px rule");
+// PAR5-01F: the narrow-phone (<=380px) override must not undercut the base .tbtn 44px
+// transport touch-WIDTH contract. Scope the check to that media block so the cascade guard
+// fails against the old min-width:40px override and passes once it is corrected to 44px.
+var narrow380 = (css.match(/@media \(max-width:380px\)\s*\{[\s\S]*?\n\}/) || [""])[0];
+ok(/\.tbtn\s*\{[^}]*min-width:44px/.test(narrow380), "narrow-phone override keeps the transport .tbtn min-width at 44px");
 ok(/prefers-reduced-motion/.test(css), "styles respect prefers-reduced-motion");
 ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface is an accessible polite live region");
 ok(/id="canvasSummary"/.test(html) && /aria-describedby="canvasSummary"/.test(html), "canvas keeps a described-by text alternative");
