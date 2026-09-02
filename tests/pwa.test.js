@@ -74,6 +74,10 @@ if (exists("assets/icons/app-icon-master-v1.png")) {
 group("service worker");
 var sw = readText("sw.js");
 ok(/CACHE_VERSION\s*=/.test(sw), "sw.js defines an explicit CACHE_VERSION");
+// PAR5-01C release gate: the shell (index.html/styles.css/app.js/render.js) changed, so the
+// cache MUST be bumped to v3 — v2 would let an already-controlled client pin the pre-fix app.
+ok(/CACHE_VERSION\s*=\s*["']v3["']/.test(sw), "sw.js ships the v3 release cache (bumped from v2 so the redesigned shell can't be pinned)");
+ok(!/CACHE_VERSION\s*=\s*["']v2["']/.test(sw), "sw.js no longer ships the superseded v2 cache version");
 ok(/pocket-aquarium-shell-/.test(sw), "sw.js cache name is namespaced and versioned");
 ok(/addEventListener\(\s*["']install["']/.test(sw), "sw.js has an install handler");
 ok(/addEventListener\(\s*["']activate["']/.test(sw), "sw.js has an activate handler");
@@ -147,9 +151,210 @@ ok(!/\.tbtn\s*\{[^}]*min-height:3\dpx/.test(css), "transport .tbtn base is not a
 ok(/\.offer-cta\s*\{[^}]*min-height:44px/.test(css), "offer-cta base min-height is 44px");
 ok(!/\.offer-cta\s*\{[^}]*min-height:40px/.test(css), "offer-cta base is not the old 40px height");
 ok(!/min-height:38px/.test(app) && !/min-height:40px/.test(app), "app.js has no inline min-height that defeats the 44px rule");
+// PAR5-01F: the narrow-phone (<=380px) override must not undercut the base .tbtn 44px
+// transport touch-WIDTH contract. Scope the check to that media block so the cascade guard
+// fails against the old min-width:40px override and passes once it is corrected to 44px.
+var narrow380 = (css.match(/@media \(max-width:380px\)\s*\{[\s\S]*?\n\}/) || [""])[0];
+ok(/\.tbtn\s*\{[^}]*min-width:44px/.test(narrow380), "narrow-phone override keeps the transport .tbtn min-width at 44px");
 ok(/prefers-reduced-motion/.test(css), "styles respect prefers-reduced-motion");
 ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface is an accessible polite live region");
 ok(/id="canvasSummary"/.test(html) && /aria-describedby="canvasSummary"/.test(html), "canvas keeps a described-by text alternative");
+
+/* --------------- 8. dark aquarium-instrument shell (PAR5-01A) --------------- */
+// Structural redesign contract: the warm paper/pop/toy substrate is gone and a restrained
+// dark instrument language + truthful single-care hierarchy are in place. These are byte
+// checks on the shipped shell — no DOM, no screenshots.
+group("dark instrument shell — legacy substrate removed");
+ok(!/PostHog/i.test(css), "no 'PostHog-inspired console' substrate note remains");
+ok(!/#f5f1e6/.test(css), "cream --chrome paper colour is removed from styles");
+ok(!/#f5f1e6/.test(html), "index theme-color is no longer the cream paper colour");
+ok(!/--line:\s*2px solid/.test(css), "2px ink outline token replaced by a hairline");
+ok(!/4px 4px 0 var\(--ink\)/.test(css), "hard offset pop-shadow token is removed");
+ok(!/box-shadow:\d+px \d+px 0 var\(--ink\)/.test(css), "no hard offset pop-shadows remain in styles");
+ok(!/ui-rounded/.test(css), "rounded toy UI font is replaced with native system type");
+
+group("dark instrument shell — new language present");
+ok(/color-scheme:\s*dark/.test(css), "styles declare a dark color-scheme");
+ok(/name="color-scheme"\s+content="dark"/.test(html), "index opts into a dark color-scheme");
+ok(/--line:\s*1px/.test(css), "borders use a restrained hairline token");
+ok(/backdrop-filter/.test(css), "secondary tool surfaces use a translucent backdrop blur");
+
+group("truthful single-care hierarchy");
+// One dominant care surface stays the single live-region contract; the Guide's duplicate
+// next-action CALL-TO-ACTION is demoted while #nextAction survives as a compatible target.
+ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface stays the single polite care contract");
+ok(/id="nextAction"/.test(html), "#nextAction preserved as a compatible Guide target");
+ok(!/next-cta/.test(app), "Guide no longer renders a duplicate next-action call-to-action");
+ok(/water-verdict/.test(css) && /water-verdict/.test(app), "Water panel leads with a compact current verdict");
+ok(/wtool.{0,3}is-rec/.test(css) && /is-rec/.test(app), "Water tools emphasise the one contextually-correct operation");
+// The truthful-priority fix: the empty-tank READY branch is evaluated AFTER environment and
+// staleness, so an empty cycled tank with bad salinity/level fixes the environment first.
+var careAdviceSrc = (app.match(/function careAdvice[\s\S]*?\n  \}/) || [""])[0];
+var idxEnv = careAdviceSrc.indexOf("environmentIssue(snap)");
+var idxReady = careAdviceSrc.indexOf('"READY"');
+ok(idxEnv > -1 && idxReady > -1 && idxEnv < idxReady, "careAdvice checks environment before recommending stocking an empty tank");
+
+group("water panel: exactly one care-matched recommendation");
+// Regression guard (PAR5-01A browser finding): a reef fishless cycle badged Test + water
+// change + top-off all at once because each tool computed its own recommendation. The badge
+// must instead come from the SINGLE careAdvice action, so at most one tool can be emphasised.
+// The tool source: emphasis is gated on the tool's own action matching one recommended action.
+var waterToolSrc = (app.match(/function waterTool\([\s\S]*?\n  \}/) || [""])[0];
+ok(/act\s*===\s*recAct/.test(waterToolSrc), "waterTool emphasises a tool only when its own action equals the single recommended action");
+ok(/wtool-rec/.test(waterToolSrc) && /is-rec/.test(waterToolSrc) &&
+   waterToolSrc.split("isRec").length >= 3, "the RECOMMENDED NOW badge and is-rec class share one isRec decision (no second independent flag)");
+// The builder feeds tools the one careAdvice action, not per-tool booleans.
+var waterToolsSrc = (app.match(/function waterToolsHTML\([\s\S]*?\n  \}/) || [""])[0];
+ok(/recAct\s*=\s*m\.action\.act/.test(waterToolsSrc), "waterToolsHTML derives the recommendation from careAdvice(snap).action.act");
+ok(!/\brecTest\b/.test(app) && !/\brecWC\b/.test(app) && !/\brecTop\b/.test(app),
+   "no independent per-tool recommendation booleans remain (single source of truth)");
+
+group("guide + canvas summary are orientation-only");
+// Regression guard (PAR5-01A browser finding): the Guide card and the canvas accessibility
+// summary read snap.nextAction ("Stock your first community") which contradicted the command
+// surface's real careAdvice ("Review water"). Only the command surface may state the action.
+var renderGuideSrc = (app.match(/function renderGuide\([\s\S]*?\n  \}/) || [""])[0];
+ok(renderGuideSrc.length > 0, "renderGuide located for the orientation-only contract check");
+ok(!/snap\.nextAction/.test(renderGuideSrc), "renderGuide does not consume snap.nextAction");
+ok(!/careAdvice/.test(renderGuideSrc), "renderGuide does not read careAdvice's action either");
+ok(/STAGE_NOTES/.test(renderGuideSrc), "renderGuide shows the educational stage meaning (STAGE_NOTES)");
+ok(/snap\.cycle\.(stage|index)/.test(renderGuideSrc), "renderGuide titles the current cycle/maturity stage");
+ok(/id="nextAction"/.test(html) && /nextActionEl/.test(renderGuideSrc), "#nextAction target/DOM compatibility is preserved");
+var summaryTextSrc = (app.match(/function summaryText\([\s\S]*?\n  \}/) || [""])[0];
+ok(summaryTextSrc.length > 0, "summaryText located for the orientation-only contract check");
+ok(!/snap\.nextAction/.test(summaryTextSrc), "canvas summary no longer consumes snap.nextAction");
+ok(!/["']Next:/.test(summaryTextSrc), "canvas summary emits no competing 'Next:' action clause");
+// Belt-and-suspenders: nothing outside the command surface renders snap.nextAction anymore.
+ok(!/snap\.nextAction/.test(app), "no surface other than the command bar consumes snap.nextAction");
+
+group("meter value never contradicts its own target band (PAR5-01E)");
+// Live proof found the command surface saying "Temperature outside the safe band" while the
+// Water meter showed "24 °C" inside a "24–28 °C" target — fmtVal rounded 23.6 up into the band.
+// Deterministically exercise the SHIPPED formatting helpers (extracted + evaluated in isolation,
+// no DOM) so a below-low/above-high value can never render as in-band.
+ok(/var val = known \? \(meterValueLabel\(m\) \+ unit\)/.test(app), "meterHTML formats the value through meterValueLabel");
+var fmtValSrc = (app.match(/function fmtVal\([\s\S]*?\n  \}/) || [""])[0];
+var labelSrc = (app.match(/function meterValueLabel\([\s\S]*?\n  \}/) || [""])[0];
+ok(fmtValSrc.length > 0 && labelSrc.length > 0, "fmtVal + meterValueLabel helpers are present in js/app.js");
+var fmtMeter = null;
+try { fmtMeter = new Function(fmtValSrc + "\n" + labelSrc + "\nreturn meterValueLabel;")(); } catch (e) { fmtMeter = null; }
+ok(typeof fmtMeter === "function", "shipped meterValueLabel evaluates in isolation");
+if (typeof fmtMeter === "function") {
+  // below-low rounding: 23.6 would fmtVal to "24" and read inside 24–28 -> must qualify.
+  ok(fmtMeter({ value: 23.6, good: [24, 28] }) === "<24", "below-low value rounding into band is qualified (<24)");
+  // above-high rounding: 28.4 would fmtVal to "28" and read inside 24–28 -> must qualify.
+  ok(fmtMeter({ value: 28.4, good: [24, 28] }) === ">28", "above-high value rounding into band is qualified (>28)");
+  // normal in-band value: unchanged and readable.
+  ok(fmtMeter({ value: 26, good: [24, 28] }) === "26", "ordinary in-band value is unchanged (26)");
+  // inclusive boundary is in-band, not qualified.
+  ok(fmtMeter({ value: 24, good: [24, 28] }) === "24", "inclusive low boundary stays in-band (24)");
+  // already-out-of-band displays: no spurious qualifier, plain rounded value.
+  ok(fmtMeter({ value: 23.4, good: [24, 28] }) === "23", "value that already reads below band is not qualified (23)");
+  ok(fmtMeter({ value: 29, good: [24, 28] }) === "29", "value that already reads above band is not qualified (29)");
+  // one-decimal precision (e.g. pH): qualifier matches the band's own precision.
+  ok(fmtMeter({ value: 5.98, good: [6, 7.5] }) === "<6.0", "one-decimal below-low value is qualified at band precision (<6.0)");
+}
+
+group("toxic-waste care matches the visible meter severity (PAR5-01F)");
+// Live review found careAdvice calling an amber "elevated" ammonia reading "CRITICAL — toxic":
+// waterDangerous() compared the RAW, unrounded chemistry against good[1] (0.25), while the meter
+// derives severity from the r3-ROUNDED snapshot value with the toxic contract at 0.5. So a 0.30
+// reading (meter "warn") and even a raw 0.2504 (meter shows "0.25 / ok") were mislabelled toxic.
+// The fix reads the SAME rounded snapshot value + severity the meters use. These checks lock it.
+
+// (a) the raw/good[1] comparator is gone; care now reads snapshot severity, not raw chemistry.
+ok(!/waterDangerous/.test(app), "the raw-value waterDangerous() comparator is removed");
+ok(!/\bw\.ammonia\s*>\s*DATA\.PARAMS\.ammonia\.good/.test(app), "no raw ammonia-vs-good[1] comparison remains in js/app.js");
+var toxicSrc = (app.match(/function waterToxic\([\s\S]*?\n  \}/) || [""])[0];
+var elevSrc = (app.match(/function waterElevated\([\s\S]*?\n  \}/) || [""])[0];
+ok(/waterByKey\(/.test(toxicSrc) && /severity === "danger"/.test(toxicSrc), "waterToxic reads snapshot severity 'danger' (the toxic contract), not raw chemistry");
+ok(/waterByKey\(/.test(elevSrc) && /severity === "warn"/.test(elevSrc), "waterElevated reads snapshot severity 'warn' (elevated-but-not-toxic)");
+// (b) careAdvice splits toxic (CRITICAL) from elevated (WATCH) and checks toxic first.
+var careSrc = (app.match(/function careAdvice[\s\S]*?\n  \}/) || [""])[0];
+var iTox = careSrc.indexOf("waterToxic(snap)"), iElev = careSrc.indexOf("waterElevated(snap)");
+ok(iTox > -1 && iElev > -1 && iTox < iElev, "careAdvice checks toxic before elevated");
+ok(/waterToxic\(snap\)[\s\S]*?"CRITICAL"[\s\S]*?toxic level/.test(careSrc), "the toxic branch stays CRITICAL and says 'toxic level'");
+ok(/waterElevated\(snap\)[\s\S]*?"WATCH"[\s\S]*?elevated/.test(careSrc), "the elevated branch is WATCH and says 'elevated', not toxic");
+ok(/waterElevated\(snap\)[\s\S]*?isn't toxic yet/.test(careSrc), "the elevated branch explicitly denies toxicity");
+
+// (c) the ammonia/nitrite toxic contract in js/data.js the meter severity splits on.
+var dataSrc = readText("js/data.js");
+function bandOf(param) {
+  var re = new RegExp(param + ":\\s*\\{[^}]*good:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\][^}]*warn:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\][^}]*toxic:\\s*([\\d.]+)");
+  var mm = dataSrc.match(re);
+  return mm ? { good: [+mm[1], +mm[2]], warn: [+mm[3], +mm[4]], toxic: +mm[5] } : null;
+}
+var bandA = bandOf("ammonia"), bandN = bandOf("nitrite");
+ok(bandA && bandA.good[1] === 0.25 && bandA.warn[1] === 0.5 && bandA.toxic === 0.5, "ammonia contract: good≤0.25, warn≤0.5, toxic=0.5");
+ok(bandN && bandN.good[1] === 0.25 && bandN.warn[1] === 0.5 && bandN.toxic === 0.5, "nitrite contract: good≤0.25, warn≤0.5, toxic=0.5");
+
+// (d) end-to-end: build the snapshot metric with the SHIPPED r3 + severityOf (sim.js), then run
+// the SHIPPED waterToxic/waterElevated (app.js) over it. Displayed value, severity and care
+// wording all descend from one rounded number, so they cannot contradict at any threshold.
+var simSrc = readText("js/sim.js");
+var numSrc = (simSrc.match(/function num\(v, d\) \{[^\n]*\}/) || [""])[0];
+var r3Src = (simSrc.match(/function r3\(v\) \{[^\n]*\}/) || [""])[0];
+var sevSrc = (simSrc.match(/function severityOf\([\s\S]*?\n  \}/) || [""])[0];
+var byKeySrc = (app.match(/function waterByKey\(snap\) \{[^\n]*\}/) || [""])[0];
+ok(numSrc && r3Src && sevSrc && byKeySrc && toxicSrc && elevSrc, "shipped r3/severityOf + waterByKey/waterToxic/waterElevated sources located");
+var api = null;
+try {
+  api = new Function(
+    numSrc + "\n" + r3Src + "\n" + sevSrc + "\n" +
+    "function currentSnap(){ return { water: [] }; }\n" +
+    byKeySrc + "\n" + toxicSrc + "\n" + elevSrc + "\n" +
+    "return { r3: r3, severityOf: severityOf, waterToxic: waterToxic, waterElevated: waterElevated };"
+  )();
+} catch (e) { api = null; }
+ok(api && typeof api.waterToxic === "function" && typeof api.waterElevated === "function", "shipped severity + care helpers evaluate in isolation");
+if (api && bandA && bandN) {
+  var RANK = { ok: 0, warn: 1, danger: 2 };
+  function metric(key, raw, band) { var shown = api.r3(raw); return { key: key, value: shown, severity: api.severityOf(band, shown) }; }
+  function run(aRaw, nRaw) {
+    var snap = { water: [metric("ammonia", aRaw, bandA), metric("nitrite", nRaw, bandN)] };
+    var worst = snap.water[0].severity;
+    if (RANK[snap.water[1].severity] > RANK[worst]) worst = snap.water[1].severity;
+    var care = api.waterToxic(snap) ? "toxic" : (api.waterElevated(snap) ? "elevated" : "clear");
+    return { care: care, worst: worst, aShown: snap.water[0].value, nShown: snap.water[1].value };
+  }
+  var MAP = { danger: "toxic", warn: "elevated", ok: "clear" };
+  // Focused threshold cases around 0.25 (good/warn) and 0.5 (warn/danger=toxic). aShown/nShown
+  // is the value the METER prints; `care` is the wording careAdvice would choose.
+  var CASES = [
+    // ammonia sweep, nitrite clear
+    { a: 0.25,   n: 0, sev: "ok",     care: "clear",    aShown: 0.25,  note: "0.25 exact — in good band, not flagged" },
+    { a: 0.2504, n: 0, sev: "ok",     care: "clear",    aShown: 0.25,  note: "raw 0.2504 rounds to displayed 0.25 → clear (old bug: raw>0.25 called this toxic)" },
+    { a: 0.2506, n: 0, sev: "warn",   care: "elevated", aShown: 0.251, note: "rounds off 0.25 → elevated" },
+    { a: 0.30,   n: 0, sev: "warn",   care: "elevated", aShown: 0.3,   note: "0.30 elevated, NOT toxic" },
+    { a: 0.50,   n: 0, sev: "warn",   care: "elevated", aShown: 0.5,   note: "0.5 exact — top of warn, still elevated not toxic" },
+    { a: 0.4996, n: 0, sev: "warn",   care: "elevated", aShown: 0.5,   note: "rounds onto 0.5 → elevated" },
+    { a: 0.5004, n: 0, sev: "warn",   care: "elevated", aShown: 0.5,   note: "raw just over 0.5 rounds to displayed 0.5 → elevated (matches meter, not toxic)" },
+    { a: 0.5006, n: 0, sev: "danger", care: "toxic",    aShown: 0.501, note: "rounds off 0.5 → toxic" },
+    { a: 0.70,   n: 0, sev: "danger", care: "toxic",    aShown: 0.7,   note: "0.70 toxic" },
+    // nitrite sweep, ammonia clear
+    { a: 0, n: 0.2504, sev: "ok",     care: "clear",    nShown: 0.25,  note: "nitrite rounds to 0.25 → clear" },
+    { a: 0, n: 0.30,   sev: "warn",   care: "elevated", nShown: 0.3,   note: "nitrite elevated" },
+    { a: 0, n: 0.50,   sev: "warn",   care: "elevated", nShown: 0.5,   note: "nitrite 0.5 exact → elevated" },
+    { a: 0, n: 0.5006, sev: "danger", care: "toxic",    nShown: 0.501, note: "nitrite rounds off 0.5 → toxic" },
+    { a: 0, n: 0.70,   sev: "danger", care: "toxic",    nShown: 0.7,   note: "nitrite toxic" },
+    // cross cases — worst parameter drives, OR logic per parameter
+    { a: 0.10, n: 0.70, sev: "danger", care: "toxic",    note: "nitrite toxic drives while ammonia clear" },
+    { a: 0.30, n: 0.10, sev: "warn",   care: "elevated", note: "ammonia elevated drives while nitrite clear" },
+    { a: 0.10, n: 0.10, sev: "ok",     care: "clear",    note: "both clear" },
+    { a: 0.70, n: 0.30, sev: "danger", care: "toxic",    note: "worst (ammonia toxic) wins over nitrite elevated" }
+  ];
+  CASES.forEach(function (c) {
+    var r = run(c.a, c.n);
+    ok(r.worst === c.sev, "meter severity for a=" + c.a + " n=" + c.n + " is " + c.sev + " (" + c.note + ")");
+    ok(r.care === c.care, "care wording for a=" + c.a + " n=" + c.n + " is " + c.care + ", matching the meter");
+    ok(r.care === MAP[r.worst], "care can never contradict the worst meter severity (a=" + c.a + " n=" + c.n + ")");
+    if (typeof c.aShown === "number") ok(r.aShown === c.aShown, "ammonia displays " + c.aShown + " for raw " + c.a);
+    if (typeof c.nShown === "number") ok(r.nShown === c.nShown, "nitrite displays " + c.nShown + " for raw " + c.n);
+  });
+  // Elevated must never be called toxic unless it meets the 0.5 toxic contract; the exact 0.5
+  // boundary and a value that rounds down onto 0.5 both stay elevated, only >0.5 is toxic.
+  ok(run(0.5, 0).care === "elevated" && run(0.5006, 0).care === "toxic", "0.5 is elevated; only past the 0.5 toxic contract is it toxic");
+}
 
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");

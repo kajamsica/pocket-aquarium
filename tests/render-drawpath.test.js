@@ -66,9 +66,14 @@ function expectedWlPx(level) { return (RIM + (1 - level) * (SUB_TOP - RIM)) * CH
 
 var PLATE = /reef-lagoon-v1\.png$/; // js/render.js maps reef -> marine -> this plate
 
-function runFrame(levelFrac) {
+function runFrame(levelFrac, effectsOn) {
   var VOL = PA.DATA.TIERS.nano20.volumeL;
-  var state = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOL * levelFrac, par: 0, flow: 0 } };
+  // time.days 5.57 => day-fraction 0.57 => peak daylight (see render.test.js). effectsOn
+  // adds nonzero PAR/flow and a saturated microfauna population so BOTH water-only passes
+  // (caustics + suspended motes) are strongly visible; ordinary calls keep the dark/still defaults.
+  var water = { levelL: VOL * levelFrac, par: effectsOn ? 0.6 : 0, flow: effectsOn ? 0.5 : 0 };
+  var state = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: water };
+  if (effectsOn) state.microfauna = { population: 100, capacity: 100 };
   var log = [];
   var r = PA.createRenderer(makeCanvas(makeCtx(log)), function () { return state; }, function () {});
   r.draw(1000);
@@ -122,6 +127,99 @@ var wl1 = expectedWlPx(1);
 var a1 = analyze(runFrame(1));
 ok(a1.pIdx >= 0 && a1.before === "clip", "full tank: plate is drawn and clipped");
 ok(a1.rect && near(a1.rect[1], wl1) && wl1 < 0.05 * CH, "full clip starts at the rim (" + Math.round(wl1) + "px, ~top), so the photo still fills essentially the whole tank");
+
+/* ----- water-only effects clipped to the wet column; suppressed in a dry tank (PAR5-01F item 2) ----- */
+// Behavioral proof over the recording context. Only drawHabitatPlate, drawCaustics and
+// drawLightMotes call ctx.rect(); the plate rect spans the whole wet region (height CH - wl)
+// while both effect passes clip to the WATER COLUMN (waterline -> SUB_TOP, height SUB_TOP*CH - wl).
+// So a rect matching the water-column geometry, immediately followed by clip(), is an effect
+// scope — and its top==waterline / bottom==SUB_TOP proves neither pass can paint above the
+// waterline or into dry air. A dry tank has zero water column, so both passes must draw nothing.
+var SUB_PX = SUB_TOP * CH;
+function effectClips(log, wl) {
+  // indices of rect ops equal to the exact water-column rect [0, wl, CW, SUB_PX - wl], clip-followed
+  var out = [];
+  for (var i = 0; i < log.length; i++) {
+    var e = log[i];
+    if (e.op === "rect" && e.args[0] === 0 && near(e.args[1], wl) && e.args[2] === CW &&
+        near(e.args[3], SUB_PX - wl) && log[i + 1] && log[i + 1].op === "clip") out.push(i);
+  }
+  return out;
+}
+function opsUntilRestore(log, rectIdx) {
+  // drawing ops recorded from the clip() (rectIdx+1) up to the matching restore()
+  var ops = [];
+  for (var i = rectIdx + 2; i < log.length; i++) {
+    if (log[i].op === "restore") break;
+    ops.push(log[i].op);
+  }
+  return ops;
+}
+function count(ops, name) { var c = 0; for (var i = 0; i < ops.length; i++) if (ops[i] === name) c++; return c; }
+
+group("water-only effects (caustics + motes) clip to the wet column and never paint above the waterline");
+var wlE = expectedWlPx(0.5);
+var wetLog = runFrame(0.5, true);
+var wetClips = effectClips(wetLog, wlE);
+ok(wetClips.length === 2, "an effects-on partial tank emits exactly two water-column effect clips (caustics + motes), got " + wetClips.length);
+ok(wetClips.every(function (ri) { return near(wetLog[ri].args[1], wlE); }),
+   "each effect clip top sits exactly at the waterline (" + Math.round(wlE) + "px) — nothing can paint above it");
+ok(wetClips.every(function (ri) { return near(wetLog[ri].args[1] + wetLog[ri].args[3], SUB_PX); }),
+   "each effect clip bottom sits exactly at SUB_TOP (" + Math.round(SUB_PX) + "px) — confined to the water column, not dry air");
+var causticOps = opsUntilRestore(wetLog, wetClips[0]);
+var moteOps = opsUntilRestore(wetLog, wetClips[1]);
+ok(count(causticOps, "stroke") === 5, "the first effect scope draws the five caustic strokes INSIDE the clip (got " + count(causticOps, "stroke") + ")");
+ok(count(moteOps, "arc") > 0 && count(moteOps, "fill") > 0, "the second effect scope draws mote arc/fill ops INSIDE the clip (arcs " + count(moteOps, "arc") + ", fills " + count(moteOps, "fill") + ")");
+ok(count(causticOps, "arc") === 0 && count(moteOps, "stroke") === 0, "the two effect scopes are distinct passes: caustics stroke only, motes arc/fill only");
+
+group("water-only effects are suppressed entirely in a dry tank (no water column)");
+var wlD = expectedWlPx(0); // waterline pinned at SUB_TOP => zero water column
+var dryLog = runFrame(0, true);
+ok(effectClips(dryLog, wlD).length === 0, "an effects-on dry tank emits ZERO effect clips: both passes early-return before drawing");
+var dryPlate = analyze(dryLog);
+ok(dryPlate.pIdx >= 0 && dryPlate.before === "clip", "the photographic-plate clip (height CH - wl, not the water column) is unaffected and still present when dry");
+
+/* ----- live locomotion: a sprite fish moves between frames and stays in-bounds ----- */
+// Drives the full motion+draw pipeline through the PUBLIC api across advancing real-time
+// frames (spaced wider than MAX_DT to simulate fast transport / slow frames): the fish
+// must visibly change position (frame-driven locomotion) yet never escape the tank bounds.
+group("live locomotion: sprite fish moves across frames, stays inside the tank");
+function clownTranslateX(log) {
+  var di = -1;
+  for (var i = 0; i < log.length; i++) {
+    var e = log[i];
+    if (e.op === "drawImage" && e.args[0] && /ocellaris|clownfish/.test(String(e.args[0]._src || ""))) di = i;
+  }
+  if (di < 0) return null;
+  for (var j = di - 1; j >= 0; j--) if (log[j].op === "translate") return log[j].args[0]; // fish x in px
+  return null;
+}
+(function () {
+  var VOL = PA.DATA.TIERS.nano20.volumeL;
+  var state = {
+    habitat: "reef", tier: "nano20", time: { days: 5.57 },
+    water: { levelL: VOL, par: 0.6, flow: 0.5 },
+    livestock: [{ id: "clown1", species: "ocellaris clownfish", x: 0.5, y: 0.5, hunger: 0.4, health: 1 }]
+  };
+  var log = [];
+  var r = PA.createRenderer(makeCanvas(makeCtx(log)), function () { return state; }, function () {});
+  var xs = [];
+  for (var t = 0; t < 24; t++) {
+    log.length = 0;
+    r.draw(1000 + t * 160);                    // 160ms/frame wall-time (clamps internally)
+    var tx = clownTranslateX(log);
+    if (tx != null) xs.push(tx);
+  }
+  r.destroy();
+  ok(xs.length > 3, "the clownfish sprite is drawn across frames (captured " + xs.length + " positions)");
+  var moved = false, inBounds = true;
+  for (var i = 1; i < xs.length; i++) {
+    if (Math.abs(xs[i] - xs[i - 1]) > 0.5) moved = true;
+    if (xs[i] < -2 || xs[i] > CW + 2) inBounds = false;
+  }
+  ok(moved, "the fish visibly changes position between frames (live, frame-driven locomotion)");
+  ok(inBounds, "the fish stays within the tank bounds — no glass-edge escape at any frame");
+})();
 
 /* -------- report -------- */
 console.log("\n=============== Pocket Aquarium renderer draw-path tests ===============");

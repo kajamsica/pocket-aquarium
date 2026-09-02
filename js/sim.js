@@ -873,15 +873,17 @@
       var value = key === "level" ? (state.water.levelL / tierVol(state) * 100) : state.water[key];
       var band = DATA.paramBand(hab, key) || DATA.PARAMS[key];
       var test = state.tests[key];
+      var shown = r3(value);                       // one rounded value drives display, severity, and alert
+      var severity = severityOf(band, shown);
       var trend = 0;
-      if (test && test.known) trend = Math.sign(+value.toFixed(3) - test.value);
+      if (test && test.known) trend = Math.sign(shown - test.value);
       out.water.push({
         key: key, label: band ? band.label : key, unit: band ? band.unit : "",
-        value: r3(value), target: band ? band.target : null, good: band ? band.good : null, warn: band ? band.warn : null,
-        severity: severityOf(band, value), trend: trend,
+        value: shown, target: band ? band.target : null, good: band ? band.good : null, warn: band ? band.warn : null,
+        severity: severity, trend: trend,
         known: !!(test && test.known), testAgeDays: test ? r3(test.ageDays) : null
       });
-      if (severityOf(band, value) === "danger") out.alerts.push(band ? band.label : key + " is out of range");
+      if (severity === "danger") out.alerts.push(band ? band.label : key + " is out of range");
     }
 
     var healthSum = 0, n = 0, dead = 0;

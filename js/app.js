@@ -158,9 +158,17 @@
     for (var i = 0; i < ls.length; i++) { var a = ls[i]; if (a && a.alive !== false && a.species === species && a.stage === "adult") out.push(a); }
     return out;
   }
-  function waterDangerous() {
-    var w = state.water;
-    return w.ammonia > DATA.PARAMS.ammonia.good[1] + 1e-9 || w.nitrite > DATA.PARAMS.nitrite.good[1] + 1e-9;
+  // Toxic-waste care reads the SAME rounded snapshot value and severity the visible
+  // ammonia/nitrite meters use, so care can never call an amber "elevated" reading "toxic".
+  // "danger" severity is exactly the PARAMS.*.toxic contract (rounded value past warn[1] == toxic);
+  // "warn" is elevated-but-not-yet-toxic. Both read snap.water, never raw unrounded chemistry.
+  function waterToxic(snap) {
+    var k = waterByKey(snap || currentSnap());
+    return (!!k.ammonia && k.ammonia.severity === "danger") || (!!k.nitrite && k.nitrite.severity === "danger");
+  }
+  function waterElevated(snap) {
+    var k = waterByKey(snap || currentSnap());
+    return (!!k.ammonia && k.ammonia.severity === "warn") || (!!k.nitrite && k.nitrite.severity === "warn");
   }
 
   /* ============================ renderer view boundary ============================ */
@@ -265,7 +273,7 @@
     var d = document.createElement("dialog");
     d.className = "app-modal";
     d.setAttribute("aria-labelledby", "soTitle");
-    d.style.cssText = "max-width:440px;width:calc(100vw - 28px);padding:20px;border:var(--line);border-radius:var(--r-md);background:var(--chrome);color:var(--ink);box-shadow:8px 8px 0 var(--ink)";
+    d.style.cssText = "max-width:440px;width:calc(100vw - 28px);padding:20px;border:var(--line);border-radius:var(--r-md);background:var(--chrome);color:var(--ink);box-shadow:var(--pop)";
     d.innerHTML =
       '<h2 id="soTitle" style="margin:0 0 8px;font-size:20px;font-weight:800">Start over?</h2>' +
       '<p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--ink-soft)">This clears your <b>ecosystem</b> progress — habitat, cycle, water, livestock, corals, journal and credits — and begins a fresh tank. Your preserved <b>arcade</b> progress is never touched.</p>' +
@@ -345,7 +353,8 @@
     parts.push(life + ".");
     if (snap.clutches && snap.clutches.length) parts.push("Breeding: " + snap.clutches.map(function (c) { return c.count + " " + c.stage; }).join(", ") + ".");
     if (snap.alerts.length) parts.push("Alerts: " + snap.alerts.slice(0, 3).join(", ") + ".");
-    parts.push("Next: " + snap.nextAction.title + ".");
+    // No forward-looking action clause here — the command surface is the single owner of the
+    // care action, so this scene description stays purely factual and never competes with it.
     return parts.join(" ");
   }
 
@@ -380,7 +389,7 @@
   }
 
   // The single guidance ladder. Returns {level, word, reason, why, action, freshness,
-  // stale}. nextCommand() (Guide) reuses .action so the two surfaces never disagree.
+  // stale}. The Water panel verdict reuses this so the surfaces never disagree.
   function careAdvice(snap) {
     var c = state.cycle, fresh = dataFreshness(snap);
     if (!state.habitat)
@@ -391,10 +400,13 @@
       return advice("watch", "SET UP", "Life support is off.", "The filter, heater and flow grow the biofilter that keeps water safe.", "Start life support", "life-on", null, fresh);
     // Live-animal emergencies outrank cycle bookkeeping. A post-cycle ammonia/nitrite spike
     // un-sets DATA.isCycled, so these must be checked BEFORE the fishless-cycle branch — else a
-    // toxic tank full of fish would be mislabelled "still cycling". During a real fishless cycle
-    // there are no animals, so intentionally-high ammonia correctly stays "CYCLING" below.
-    if (waterDangerous() && aliveEaters() > 0)
+    // stocked tank with rising waste would be mislabelled "still cycling". Toxic (danger) and
+    // elevated (warn) split by the SAME meter severity, so care never calls an amber reading toxic.
+    // During a real fishless cycle there are no animals, so intentionally-high ammonia stays "CYCLING".
+    if (waterToxic(snap) && aliveEaters() > 0)
       return advice("critical", "CRITICAL", "Ammonia or nitrite is at a toxic level.", "A 25% water change dilutes the toxins now; don't feed heavily until it clears.", "25% water change", "wc25", null, fresh);
+    if (waterElevated(snap) && aliveEaters() > 0)
+      return advice("watch", "WATCH", "Ammonia or nitrite is elevated.", "It isn't toxic yet, but a 25% water change and lighter feeding keep it from climbing.", "25% water change", "wc25", null, fresh);
     if (deadCount() > 0)
       return advice("critical", "CRITICAL", "A dead animal is decaying in the tank.", "Remove the body before it spikes ammonia — find it under Livestock.", "Review livestock", "open-livestock", null, fresh);
     if (snap.welfare === "critical")
@@ -404,8 +416,10 @@
         return advice("watch", "CYCLING", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", null, fresh);
       return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
     }
-    if (aliveEaters() === 0 && !snap.corals.length)
-      return advice("watch", "READY", "The tank is cycled and empty.", "Stock a small, compatible starter group from the store.", "Open the store", "open-store", null, fresh);
+    // Ordinary care, highest-priority first. An empty cycled tank still passes through the
+    // environment/accumulation/light/staleness checks BELOW before "READY to stock" — so
+    // salinity/level out of range or stale readings are fixed first, never skipped merely
+    // because the tank has no residents yet (PAR5-01A truthful-priority fix).
     var hungry = hungryCount();
     if (hungry > 0)
       return advice("watch", "WATCH", hungry + (hungry === 1 ? " resident is" : " residents are") + " hungry.", "Tap the water to feed; uneaten food decays into ammonia, so feed sparingly.", "Feed the tank", "feed", null, fresh);
@@ -421,6 +435,9 @@
       return advice("watch", "WATCH", "Cyanobacteria is spreading across surfaces.", "Improve flow and nutrient export and cut the photoperiod to starve it back.", "Review water", "open-water", null, fresh);
     if (fresh.stale)
       return advice("watch", "WATCH", "Your readings are getting stale.", "A quick water test refreshes every parameter so this guidance stays accurate.", "Test the water", "test", null, fresh);
+    // Cycled, empty, environment in range and readings fresh — now it is genuinely time to stock.
+    if (aliveEaters() === 0 && !snap.corals.length)
+      return advice("watch", "READY", "The tank is cycled and the environment is in range.", "Nothing lives here yet — stock a small, compatible starter group from the store.", "Open the store", "open-store", null, fresh);
     return advice("stable", "STABLE", "Water is in range and residents look healthy.", "Keep parameters steady — consider corals, upgrades or a breeding project.", "Open the store", "open-store", null, fresh);
   }
   function advice(level, word, reason, why, label, act, ds, fresh) {
@@ -538,19 +555,17 @@
     "Young biome": "Diatoms and films bloom while the biology settles in.",
     "Mature biome": "A stable, biodiverse, well-aged system."
   };
-  // The Guide's next move is exactly the command surface's recommended action.
-  function nextCommand(snap) { return careAdvice(snap).action; }
   function renderGuide(snap) {
-    // Guide teaches the current phase and the single next move only — the recommended
-    // action itself lives on the always-visible command surface.
-    if (!snap.nextAction) { nextActionEl.innerHTML = ""; }
+    // Orientation only — never a second "next action". The command surface is the sole owner
+    // of the recommended action; #nextAction just names the current cycle/maturity stage and
+    // explains what it means, reusing the same STAGE_NOTES the phase timeline teaches below.
+    if (!snap.habitat) { nextActionEl.innerHTML = ""; }
     else {
-      var cmd = nextCommand(snap);
+      var stage = STAGES[snap.cycle.index] || snap.cycle.stage || STAGES[0];
       nextActionEl.innerHTML =
-        '<div class="next-card"><span class="next-eyebrow">Next best action</span>' +
-        '<h3 class="next-title">' + esc(snap.nextAction.title) + "</h3>" +
-        '<p class="next-body">' + esc(snap.nextAction.detail) + "</p>" +
-        actBtn("next-cta", cmd.label, cmd.act, cmd.ds, ' data-fk="next-cta"') + "</div>";
+        '<div class="next-card"><span class="next-eyebrow">Current stage</span>' +
+        '<h3 class="next-title">' + esc(stage) + "</h3>" +
+        '<p class="next-body">' + esc(STAGE_NOTES[stage] || "") + "</p></div>";
     }
     // phase timeline via stage index / isCycled (never literal-stage equality)
     phaseTimeline.innerHTML = phaseTimelineHTML(snap);
@@ -637,20 +652,20 @@
   // the current state. Recommendations are honest: water change dilutes waste/nitrate;
   // top-off only restores evaporated volume/salinity and never removes nitrate.
   function waterToolsHTML(snap) {
-    var filled = state.cycle.filled, full = tierVol(), k = waterByKey(snap);
-    var levelM = k.level, salM = k.salinity;
+    var filled = state.cycle.filled, full = tierVol();
     var topEnabled = filled && state.water.levelL < full - 1e-6;
-    var fresh = dataFreshness(snap);
-    var recTest = fresh.stale;
-    var recWC = waterDangerous() || accumulationHigh(snap);
-    var recTop = (levelM && levelM.value < (levelM.good ? levelM.good[0] : 92)) ||
-      (isReef() && salM && salM.severity !== "ok" && salM.value > (salM.target || 35));
+    // The single care ladder decides the ONE recommended operation; each tool is emphasised
+    // only when its own action equals that action (recAct). Computing recommendation per tool
+    // independently badged Test + water change + top-off together during a fishless cycle.
+    // All tools stay available and explanatory — only the matching one carries the badge.
+    var m = careAdvice(snap);
+    var recAct = m.action.act;
     var tools = [
-      waterTool("Test the water", "test", filled, filled ? null : "Fill the tank first.", recTest,
+      waterTool("Test the water", "test", filled, filled ? null : "Fill the tank first.", recAct,
         "Reveals the current chemistry so every reading is known and fresh.", "wtool:test"),
-      waterTool("25% water change", "wc25", filled, filled ? null : "Fill the tank first.", recWC,
+      waterTool("25% water change", "wc25", filled, filled ? null : "Fill the tank first.", recAct,
         "Dilutes toxic ammonia and nitrite and draws down accumulated nitrate.", "wtool:wc"),
-      waterTool("Freshwater top-off", "topoff", topEnabled, !filled ? "Fill the tank first." : (topEnabled ? null : "Water level is already full."), recTop,
+      waterTool("Freshwater top-off", "topoff", topEnabled, !filled ? "Fill the tank first." : (topEnabled ? null : "Water level is already full."), recAct,
         isReef() ? "Replaces evaporated water to restore volume and lower salinity — it does not remove nitrate."
                  : "Replaces evaporated water to restore volume — it does not remove nitrate.", "wtool:top")
     ];
@@ -660,19 +675,42 @@
       ato = '<p class="wtool-ato">ATO: <b>' + (auto ? "Automatic" : "Manual") + "</b> — " +
         (auto ? "holding volume &amp; salinity steady across evaporation." : "top off to pull salinity back toward 35 ppt (buy an ATO to automate).") + "</p>";
     }
-    return '<ul class="water-tools">' + tools.join("") + "</ul>" + ato;
+    // Compact current verdict leads the panel, reusing the same care action so the Water
+    // tab and the command surface can never disagree; the tools below stay quieter.
+    var verdict = '<div class="water-verdict is-' + m.level + '">' +
+      '<span class="wv-word">' + esc(m.word) + "</span>" +
+      '<span class="wv-reason">' + esc(m.reason) + "</span></div>";
+    return verdict + '<ul class="water-tools">' + tools.join("") + "</ul>" + ato;
   }
-  function waterTool(label, act, enabled, reason, recommended, caption, fk) {
-    var rec = recommended && enabled ? '<span class="wtool-rec">Recommended now</span>' : "";
-    return '<li class="wtool">' +
+  // A tool is "recommended" only when it is enabled AND its own action is the single action
+  // careAdvice chose (recAct). Since the three tool actions are distinct, at most one badges.
+  function waterTool(label, act, enabled, reason, recAct, caption, fk) {
+    var isRec = enabled && act === recAct;
+    var rec = isRec ? '<span class="wtool-rec">Recommended now</span>' : "";
+    return '<li class="wtool' + (isRec ? " is-rec" : "") + '">' +
       '<div class="wtool-head">' + careBtn(label, act, null, enabled, reason, fk) + rec + "</div>" +
       '<p class="wtool-note">' + esc(caption) + "</p></li>";
+  }
+  // Compact meter value that can never visually contradict its OWN displayed target band.
+  // fmtVal rounds coarsely, so a value just outside the band (e.g. 23.6°C against a 24–28 band)
+  // would otherwise render as "24" and read as in-range — contradicting the command surface's
+  // "outside the safe band". When, and only when, compact rounding would land an out-of-band
+  // value inside the shown band, boundary-qualify it (<low / >high) at the band's own precision.
+  // Ordinary in-band values render exactly as before; severity/colour stay authoritative (m.severity).
+  function meterValueLabel(m) {
+    var raw = fmtVal(m.value);
+    if (m.good) {
+      var lo = m.good[0], hi = m.good[1];
+      if (m.value < lo && parseFloat(raw) >= parseFloat(fmtVal(lo))) return "<" + fmtVal(lo);
+      if (m.value > hi && parseFloat(raw) <= parseFloat(fmtVal(hi))) return ">" + fmtVal(hi);
+    }
+    return raw;
   }
   function meterHTML(m) {
     var known = m.known;
     var sev = known ? "sev-" + (m.severity === "danger" ? "bad" : m.severity) : "is-unknown";
     var unit = m.unit ? " " + m.unit : "";
-    var val = known ? (fmtVal(m.value) + unit) : "—";
+    var val = known ? (meterValueLabel(m) + unit) : "—";
     var band = m.good ? (fmtVal(m.good[0]) + "–" + fmtVal(m.good[1]) + unit) : "";
     var pctv = known ? meterPct(m) : 0;
     var trend = known ? trendArrow(m.trend) : "▬";
@@ -1036,7 +1074,7 @@
     else parts.push("and looks healthy");
     var drivers = [];
     if (a.hunger > 0.85) drivers.push("hungry — feed the tank");
-    if (waterDangerous()) drivers.push("the water is toxic — do a water change");
+    if (waterToxic()) drivers.push("the water is toxic — do a water change");
     if (Math.abs(w.tempC - 26) > 4) drivers.push("temperature is off-target");
     if (isReef() && Math.abs(w.salinity - 35) > 3) drivers.push("salinity is off-target");
     if (w.oxygen < 4.5) drivers.push("oxygen is low");
