@@ -680,11 +680,26 @@
       '<div class="wtool-head">' + careBtn(label, act, null, enabled, reason, fk) + rec + "</div>" +
       '<p class="wtool-note">' + esc(caption) + "</p></li>";
   }
+  // Compact meter value that can never visually contradict its OWN displayed target band.
+  // fmtVal rounds coarsely, so a value just outside the band (e.g. 23.6°C against a 24–28 band)
+  // would otherwise render as "24" and read as in-range — contradicting the command surface's
+  // "outside the safe band". When, and only when, compact rounding would land an out-of-band
+  // value inside the shown band, boundary-qualify it (<low / >high) at the band's own precision.
+  // Ordinary in-band values render exactly as before; severity/colour stay authoritative (m.severity).
+  function meterValueLabel(m) {
+    var raw = fmtVal(m.value);
+    if (m.good) {
+      var lo = m.good[0], hi = m.good[1];
+      if (m.value < lo && parseFloat(raw) >= parseFloat(fmtVal(lo))) return "<" + fmtVal(lo);
+      if (m.value > hi && parseFloat(raw) <= parseFloat(fmtVal(hi))) return ">" + fmtVal(hi);
+    }
+    return raw;
+  }
   function meterHTML(m) {
     var known = m.known;
     var sev = known ? "sev-" + (m.severity === "danger" ? "bad" : m.severity) : "is-unknown";
     var unit = m.unit ? " " + m.unit : "";
-    var val = known ? (fmtVal(m.value) + unit) : "—";
+    var val = known ? (meterValueLabel(m) + unit) : "—";
     var band = m.good ? (fmtVal(m.good[0]) + "–" + fmtVal(m.good[1]) + unit) : "";
     var pctv = known ? meterPct(m) : 0;
     var trend = known ? trendArrow(m.trend) : "▬";

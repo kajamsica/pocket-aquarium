@@ -222,6 +222,34 @@ ok(!/["']Next:/.test(summaryTextSrc), "canvas summary emits no competing 'Next:'
 // Belt-and-suspenders: nothing outside the command surface renders snap.nextAction anymore.
 ok(!/snap\.nextAction/.test(app), "no surface other than the command bar consumes snap.nextAction");
 
+group("meter value never contradicts its own target band (PAR5-01E)");
+// Live proof found the command surface saying "Temperature outside the safe band" while the
+// Water meter showed "24 °C" inside a "24–28 °C" target — fmtVal rounded 23.6 up into the band.
+// Deterministically exercise the SHIPPED formatting helpers (extracted + evaluated in isolation,
+// no DOM) so a below-low/above-high value can never render as in-band.
+ok(/var val = known \? \(meterValueLabel\(m\) \+ unit\)/.test(app), "meterHTML formats the value through meterValueLabel");
+var fmtValSrc = (app.match(/function fmtVal\([\s\S]*?\n  \}/) || [""])[0];
+var labelSrc = (app.match(/function meterValueLabel\([\s\S]*?\n  \}/) || [""])[0];
+ok(fmtValSrc.length > 0 && labelSrc.length > 0, "fmtVal + meterValueLabel helpers are present in js/app.js");
+var fmtMeter = null;
+try { fmtMeter = new Function(fmtValSrc + "\n" + labelSrc + "\nreturn meterValueLabel;")(); } catch (e) { fmtMeter = null; }
+ok(typeof fmtMeter === "function", "shipped meterValueLabel evaluates in isolation");
+if (typeof fmtMeter === "function") {
+  // below-low rounding: 23.6 would fmtVal to "24" and read inside 24–28 -> must qualify.
+  ok(fmtMeter({ value: 23.6, good: [24, 28] }) === "<24", "below-low value rounding into band is qualified (<24)");
+  // above-high rounding: 28.4 would fmtVal to "28" and read inside 24–28 -> must qualify.
+  ok(fmtMeter({ value: 28.4, good: [24, 28] }) === ">28", "above-high value rounding into band is qualified (>28)");
+  // normal in-band value: unchanged and readable.
+  ok(fmtMeter({ value: 26, good: [24, 28] }) === "26", "ordinary in-band value is unchanged (26)");
+  // inclusive boundary is in-band, not qualified.
+  ok(fmtMeter({ value: 24, good: [24, 28] }) === "24", "inclusive low boundary stays in-band (24)");
+  // already-out-of-band displays: no spurious qualifier, plain rounded value.
+  ok(fmtMeter({ value: 23.4, good: [24, 28] }) === "23", "value that already reads below band is not qualified (23)");
+  ok(fmtMeter({ value: 29, good: [24, 28] }) === "29", "value that already reads above band is not qualified (29)");
+  // one-decimal precision (e.g. pH): qualifier matches the band's own precision.
+  ok(fmtMeter({ value: 5.98, good: [6, 7.5] }) === "<6.0", "one-decimal below-low value is qualified at band precision (<6.0)");
+}
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
