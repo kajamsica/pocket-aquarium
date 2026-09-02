@@ -123,6 +123,48 @@ var a1 = analyze(runFrame(1));
 ok(a1.pIdx >= 0 && a1.before === "clip", "full tank: plate is drawn and clipped");
 ok(a1.rect && near(a1.rect[1], wl1) && wl1 < 0.05 * CH, "full clip starts at the rim (" + Math.round(wl1) + "px, ~top), so the photo still fills essentially the whole tank");
 
+/* ----- live locomotion: a sprite fish moves between frames and stays in-bounds ----- */
+// Drives the full motion+draw pipeline through the PUBLIC api across advancing real-time
+// frames (spaced wider than MAX_DT to simulate fast transport / slow frames): the fish
+// must visibly change position (frame-driven locomotion) yet never escape the tank bounds.
+group("live locomotion: sprite fish moves across frames, stays inside the tank");
+function clownTranslateX(log) {
+  var di = -1;
+  for (var i = 0; i < log.length; i++) {
+    var e = log[i];
+    if (e.op === "drawImage" && e.args[0] && /ocellaris|clownfish/.test(String(e.args[0]._src || ""))) di = i;
+  }
+  if (di < 0) return null;
+  for (var j = di - 1; j >= 0; j--) if (log[j].op === "translate") return log[j].args[0]; // fish x in px
+  return null;
+}
+(function () {
+  var VOL = PA.DATA.TIERS.nano20.volumeL;
+  var state = {
+    habitat: "reef", tier: "nano20", time: { days: 5.57 },
+    water: { levelL: VOL, par: 0.6, flow: 0.5 },
+    livestock: [{ id: "clown1", species: "ocellaris clownfish", x: 0.5, y: 0.5, hunger: 0.4, health: 1 }]
+  };
+  var log = [];
+  var r = PA.createRenderer(makeCanvas(makeCtx(log)), function () { return state; }, function () {});
+  var xs = [];
+  for (var t = 0; t < 24; t++) {
+    log.length = 0;
+    r.draw(1000 + t * 160);                    // 160ms/frame wall-time (clamps internally)
+    var tx = clownTranslateX(log);
+    if (tx != null) xs.push(tx);
+  }
+  r.destroy();
+  ok(xs.length > 3, "the clownfish sprite is drawn across frames (captured " + xs.length + " positions)");
+  var moved = false, inBounds = true;
+  for (var i = 1; i < xs.length; i++) {
+    if (Math.abs(xs[i] - xs[i - 1]) > 0.5) moved = true;
+    if (xs[i] < -2 || xs[i] > CW + 2) inBounds = false;
+  }
+  ok(moved, "the fish visibly changes position between frames (live, frame-driven locomotion)");
+  ok(inBounds, "the fish stays within the tank bounds — no glass-edge escape at any frame");
+})();
+
 /* -------- report -------- */
 console.log("\n=============== Pocket Aquarium renderer draw-path tests ===============");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
