@@ -578,6 +578,28 @@ group("offline catch-up cap (two game days)");
   eq(rep2.deaths, 0, "offline cap does not instantly kill a healthy animal");
 })();
 
+group("snapshot display-rounding boundary (PAR5-01D)");
+(function () {
+  // A raw temperature fractionally under 24 must not be flagged out-of-range when
+  // its displayed value rounds onto the 24 good lower bound. Value, severity, and
+  // the alert list all derive from the same r3-rounded value.
+  function tempEntry(snap) { return snap.water.filter(function (w) { return w.key === "tempC"; })[0]; }
+
+  var s = cycledReef(200);
+  s.water.tempC = 23.9996;                         // raw just below the 24 °C good lower bound
+  var t = tempEntry(PA.snapshotSummary(s));
+  eq(t.value, 24, "raw 23.9996 displays as the 24 good lower bound");
+  eq(t.severity, "ok", "severity matches the displayed in-range value, not the hidden raw");
+  ok(PA.snapshotSummary(s).alerts.indexOf(t.label) < 0, "no out-of-range alert for a displayed in-band temp");
+
+  var s2 = cycledReef(201);
+  s2.water.tempC = 30.0004;                        // raw just above 30 warn upper; rounds back onto 30
+  var t2 = tempEntry(PA.snapshotSummary(s2));
+  eq(t2.value, 30, "raw 30.0004 displays as 30, outside the 24-28 good band");
+  eq(t2.severity, "warn", "displayed 30 is warn (in 22-30), not danger from hidden raw");
+  ok(PA.snapshotSummary(s2).alerts.indexOf(t2.label) < 0, "no danger alert when the displayed value is in the warn band");
+})();
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium sim tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
