@@ -1,0 +1,19 @@
+{
+  "name": "pocket-aquarium-native",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Isolated Capacitor 8 native iOS host that wraps the root Pocket Aquarium PWA. No web runtime lives here; scripts/stage-web.mjs stages the accepted root runtime allowlist into ./www.",
+  "type": "module",
+  "scripts": {
+    "stage": "node scripts/stage-web.mjs",
+    "sync": "node scripts/stage-web.mjs && cap sync ios",
+    "open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.5.1",
+    "@capacitor/ios": "8.5.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.1"
+  }
+}

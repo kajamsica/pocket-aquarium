@@ -3,12 +3,16 @@
 This document describes the two ways Pocket Aquarium can reach an iPhone:
 
 1. **Live today — the installable PWA** (verified, no paid plan, no signing).
-2. **Follow-on — a native app via Capacitor** (a documented checklist, **not built here**
-   because this Mac has no full Xcode and no code-signing identity).
+2. **Follow-on — a native app via Capacitor** — the iOS host is now **checked in and
+   reproducible** under [`native/`](../native/). What is still gated is *signing and shipping*
+   to a device/TestFlight, which needs full Xcode 26+ and an Apple signing identity that this
+   machine does not have.
 
-> **Status: `PWA_DEPLOYED_NATIVE_BLOCKED_ON_XCODE_SIGNING`.**
-> The Progressive Web App is deployed and installable on iPhone right now. A signed native
-> binary is **not** produced: the required Apple toolchain (full Xcode) and signing state
+> **Status: `PWA_DEPLOYED_NATIVE_HOST_COMPILES_SIGNING_BLOCKED`.**
+> The Progressive Web App is deployed and installable on iPhone right now. The native Capacitor 8
+> iOS project has been **generated and committed** (`native/ios/`, Swift Package Manager, no
+> CocoaPods) and can be re-staged and re-synced deterministically. A signed native **binary** is
+> still **not** produced: the required Apple toolchain (full Xcode 26+) and signing state
 > (identity, App ID, provisioning profile) are absent on this machine — see
 > [Local toolchain evidence](#local-toolchain-evidence-recorded-2026-09-02).
 
@@ -105,17 +109,67 @@ app bundle. The workflow itself uses the built-in `GITHUB_TOKEN` with least-priv
 
 ---
 
-## 3. Native app follow-on (Capacitor 8) — checklist, NOT built here
+## 3. Native app host (Capacitor 8) — checked in under `native/`
 
-A native iOS app can wrap this same static web app with **Capacitor 8**. The steps below are a
-**forward checklist for a future operator on a properly provisioned Mac**. They are
-**deliberately NOT executed in this environment**, and no Capacitor packages, `package.json`,
-native `ios/` project, or dependencies are added to this repository while Xcode and signing are
-absent (see [§5](#5-what-is-done-vs-blocked)).
+A native iOS app wraps this same static web app with **Capacitor 8**. The host is a **checked-in,
+isolated** package at [`native/`](../native/): pinned Capacitor 8.5.1 toolchain, a deterministic
+staging boundary, and the generated **Swift Package Manager** Xcode project. It changes nothing
+about the web runtime or the Pages deployment — the game's source of truth stays at the repo root.
 
-### Prerequisites (all required before any native build)
+### What is committed vs. regenerated
 
-- **macOS** on Apple hardware (iOS builds cannot be produced off macOS).
+Committed (the reproducible source of truth):
+
+- `native/package.json` + `native/package-lock.json` — exact-pinned `@capacitor/core`,
+  `@capacitor/ios`, and `@capacitor/cli` at `8.5.1`.
+- `native/capacitor.config.json` — app identity (`Pocket Aquarium`,
+  `com.kajamsica.pocketaquarium`) and the `webDir: "www"` boundary. **No remote server URL** —
+  the app loads its bundled assets offline.
+- `native/scripts/stage-web.mjs` — the one staging boundary (see below).
+- `native/ios/**` — the generated Xcode/SPM project sources needed to open the app, including a
+  `native/ios/App/CapApp-SPM/Package.swift` that pins `capacitor-swift-pm` to `exact: "8.5.1"`.
+  The app icon is a `sips`-resized 1024×1024 derivative of the preserved RGB master
+  `assets/icons/app-icon-master-v1.png` (the master itself is never modified).
+
+Regenerated locally and git-ignored (never committed — no duplicated runtime bytes, no secrets):
+`native/node_modules/`, the staged `native/www/`, the copied `native/ios/App/App/public/`,
+the generated `capacitor.config.json`/`config.xml` inside `ios/`, `native/ios/capacitor-cordova-ios-plugins/`,
+`DerivedData/`, `xcuserdata/`, and any Apple signing material.
+
+### The staging boundary
+
+`native/scripts/stage-web.mjs` rebuilds `native/www` from an **explicit 16-file allowlist** that
+matches the GitHub Pages runtime artifact exactly (root shell + `js/` + validated `assets/`):
+`index.html`, `styles.css`, `manifest.webmanifest`, `sw.js`; `js/{data,sim,render,app}.js`;
+the two habitat plates; the three validated species sprites (clownfish **v2**, not the invalid
+v1); and the three runtime icons (**not** the app-icon master). It fails loudly if any
+allowlisted file is missing, removes stale destination bytes safely (never touching anything
+outside `native/www`), and prints a deterministic checksum receipt. `tests/native.test.js`
+locks all of this behavior.
+
+### Reproduce the host from a clean checkout
+
+> The **first three** commands **were executed in this environment** to generate the committed
+> host (Node v24.2.0). They require only Node + the standalone Command Line Tools — **not** full
+> Xcode. `npx cap open ios` was **not** executed here: opening the project (and any subsequent
+> build/sign) requires full Xcode 26+.
+
+```sh
+cd native
+npm ci                     # install the pinned Capacitor 8.5.1 toolchain (reproducible)
+npm run stage              # rebuild ./www from the root runtime allowlist (deterministic)
+npx cap sync ios           # copy ./www into ios/App/App/public and update the SPM manifest/wiring
+npx cap open ios           # open native/ios/App/App.xcodeproj in Xcode (needs full Xcode 26+)
+```
+
+Package **resolution and build** happen in Xcode / `xcodebuild` (from the `Package.swift` wiring),
+not during `cap sync`.
+
+### Prerequisites (all required before a local native build)
+
+- **macOS** on Apple hardware. Xcode 26.0–26.3 requires macOS Sequoia 15.6 or later;
+  Apple's current Xcode 26.6 requires macOS Tahoe 26.2 or later. *This host is on Sonoma
+  14.8.8 and must be upgraded before any Xcode 26 release can be installed.*
 - **Node.js 22 or higher** (this repo needs no build step of its own; Node is for the
   Capacitor CLI). *Present here: Node v24.2.0.*
 - **Xcode 26.0 or higher** — Capacitor 8 requires a minimum of Xcode 26.0. *Absent here.*
@@ -137,52 +191,31 @@ Primary sources: Capacitor — *Environment Setup*
 (<https://capacitorjs.com/docs/getting-started>), *iOS Documentation*
 (<https://capacitorjs.com/docs/ios>); Apple — *Distributing your app to registered devices*
 (<https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices>)
-and *TestFlight* (<https://developer.apple.com/testflight/>).
+and *TestFlight* (<https://developer.apple.com/testflight/>), plus *Xcode SDK and system
+requirements* (<https://developer.apple.com/xcode/system-requirements/>).
 
-### Exact commands for a future operator
+### Sign and distribute (gated — needs full Xcode 26+ and an Apple signing state)
 
-> **NOT EXECUTED in this environment.** Running these here would fail at the Xcode/signing
-> steps and would add unbuildable native dependencies to a repository that is intentionally
-> dependency-free. Run them only on a Mac with full Xcode 26+ and an Apple signing state.
+The host is already generated (see §3), so a future operator does **not** re-scaffold it. They
+re-stage, re-sync, open the committed project, set a signing Team, and distribute. The commands
+below **were NOT executed here** because they require full Xcode 26+ and an Apple signing
+identity — both absent on this machine, whose current macOS version is also below Xcode 26's
+minimum (see [§4](#4-local-toolchain-evidence-recorded-2026-09-02)).
 
 ```sh
-# --- Stage a dedicated runtime web directory (run from the repo root) ---
-# NOT EXECUTED HERE. Capacitor 8 REJECTS webDir values of "", ".", "..", "./", "../"
-# (see cli/src/common.ts checkWebDir), so `--web-dir .` cannot be used. Instead copy
-# ONLY the runtime app into a clean ./www — never the repo root, labs/, docs/, tests/,
-# checkpoints/, .git, or the generated ios/ tree. This mirrors the Pages staging step.
-rm -rf www
-mkdir -p www
-cp index.html styles.css manifest.webmanifest sw.js www/
-cp -R js www/js
-cp -R assets www/assets
-rm -f www/assets/icons/app-icon-master-v1.png       # source master, not a runtime asset
-rm -f www/assets/animals/ocellaris-clownfish-v1.png # invalid sprite, never shipped
-
-# --- One-time native scaffold (run from the repo root) ---
-# NOT EXECUTED HERE — adds package.json + Capacitor deps + an ios/ project.
-npm init -y
-npm i @capacitor/core
-npm i -D @capacitor/cli
-npx cap init "Pocket Aquarium" com.kajamsica.pocketaquarium --web-dir www
-npm i @capacitor/ios
-npx cap add ios
-
-# --- Re-stage ./www and sync the static web app into the native shell after any change ---
-# Re-run the staging block above (rm -rf www … cp …) so ./www reflects the latest runtime,
-# then sync it into the native project:
-npx cap sync ios
-
-# --- Open the generated project in Xcode to set the signing Team ---
+# From native/: refresh the bundle and open the committed project.
+cd native
+npm ci && npm run stage && npx cap sync ios
 npx cap open ios
-# In Xcode: select the target → Signing & Capabilities → choose your Team,
-# confirm the bundle identifier, and let Xcode manage the provisioning profile.
+# In Xcode: select the App target → Signing & Capabilities → choose your Team,
+# confirm the bundle identifier (com.kajamsica.pocketaquarium), and let Xcode manage
+# the provisioning profile.
 
-# --- Verify the native toolchain is actually present (these currently fail here) ---
+# Confirm the native toolchain is actually present (these currently FAIL here):
 xcodebuild -version
 security find-identity -v -p codesigning
 
-# --- Distribute (choose one) ---
+# Distribute (choose one), all requiring the signing state above:
 # a) Direct install to a registered device: Xcode → Product → Run (device selected).
 # b) Ad-hoc build for registered devices: Xcode → Product → Archive → Distribute App.
 # c) TestFlight/App Store: Archive → Distribute App → upload to App Store Connect,
@@ -190,7 +223,8 @@ security find-identity -v -p codesigning
 ```
 
 Never embed Apple credentials, App Store Connect API keys, or signing secrets in the repository
-or in any command output.
+or in any command output. The `native/.gitignore` excludes `*.mobileprovision`, `*.p12`, `*.cer`,
+and other signing material so they can never be committed.
 
 ---
 
@@ -200,6 +234,7 @@ Captured on this machine during this deployment step:
 
 | Check | Command | Result |
 |---|---|---|
+| Host OS | `sw_vers` | macOS Sonoma `14.8.8` — below Xcode 26's minimum host OS, macOS Sequoia `15.6` |
 | Xcode | `xcodebuild -version` | **Fails** — "tool 'xcodebuild' requires Xcode, but active developer directory `/Library/Developer/CommandLineTools` is a command line tools instance" |
 | Active developer dir | `xcode-select -p` | `/Library/Developer/CommandLineTools` (Command Line Tools only — no full Xcode) |
 | Signing identities | `security find-identity -v -p codesigning` | **0 valid identities found** |
@@ -207,8 +242,9 @@ Captured on this machine during this deployment step:
 | Device tooling | `xcrun xctrace list devices` / `xcrun devicectl list devices` | Utilities not present (full Xcode absent) → cannot enumerate connected iOS devices |
 | Node | `node --version` | `v24.2.0` (meets Capacitor's Node 22+) |
 
-**Conclusion:** Node is sufficient, but full Xcode, a code-signing identity, and a provisioning
-profile are all absent, so no native iOS build or signing is possible here.
+**Conclusion:** the checked-in host compiles on GitHub's macOS 26 / Xcode 26 runner, but this
+local Mac needs a macOS upgrade before Xcode 26 can be installed. Full Xcode, a code-signing
+identity, and a provisioning profile are absent, so no local iPhone build or signing is possible.
 
 ---
 
@@ -221,18 +257,29 @@ profile are all absent, so no native iOS build or signing is possible here.
 - GitHub Pages deploys the runtime-only app from the **public** repository through the existing
   Actions workflow; the latest run completed successfully; runtime assets return HTTPS 200 and
   source-only paths return 404.
-- Deterministic tests pass (`node tests/sim.test.js`, `node tests/pwa.test.js`).
+- Deterministic tests pass (`node tests/sim.test.js`, `node tests/pwa.test.js`,
+  `node tests/native.test.js`).
+- The **native Capacitor 8 iOS host is generated and committed** under `native/`. With Node +
+  Command Line Tools only, `npm ci`, `npm run stage`, and `npx cap sync ios` all ran successfully
+  and are reproducible; the SPM project (`native/ios/App/CapApp-SPM/Package.swift`) pins
+  `capacitor-swift-pm` to `8.5.1`, and the app icon is a derivative of the preserved master.
+- GitHub Actions has compiled the staged host as an **unsigned iOS Simulator app** on a macOS 26 /
+  Xcode 26 runner, proving the checked-in Xcode/SPM project resolves and builds without signing.
 
-**Blocked (native), and why no fake artifact is produced:**
+**Blocked (native binary), and why no fake artifact is produced:**
 
-- Native iOS packaging is blocked on **full Xcode 26+** and an **Apple signing state**
-  (identity, App ID, provisioning profile) that this machine does not have.
+- Opening the project and launching it in a local **Simulator** are blocked on a macOS upgrade and
+  **full Xcode 26+**; Simulator use does not require Apple signing. `xcodebuild` currently fails
+  locally because only the Command Line Tools are installed. The hosted unsigned Simulator compile
+  is proven, but an interactive local Simulator launch is not yet claimed.
+- A **physical-device** install or **TestFlight** upload additionally requires an Apple signing
+  state (identity, App ID, provisioning profile). This machine has none:
+  `security find-identity -v -p codesigning` reports **0 valid identities**.
 - **No unsigned or fake `.ipa` is created.** An unsigned or ad-hoc-without-profile IPA cannot
   install on an iPhone, cannot go to TestFlight or the App Store, and would be a misleading
-  artifact. Producing one would also mean adding unbuildable Capacitor/native dependencies to a
-  repository that is intentionally dependency-free. The honest state is
-  **`PWA_DEPLOYED_NATIVE_BLOCKED_ON_XCODE_SIGNING`**: the native path becomes runnable once the
-  prerequisites in [§3](#3-native-app-follow-on-capacitor-8--checklist-not-built-here) exist.
+  artifact. The honest state is **`PWA_DEPLOYED_NATIVE_HOST_COMPILES_SIGNING_BLOCKED`**: the
+  host exists, is reproducible, and compiles today; the *signed build* becomes runnable once the
+  prerequisites in [§3](#3-native-app-host-capacitor-8--checked-in-under-native) exist.
 
 ---
 
@@ -241,6 +288,7 @@ profile are all absent, so no native iOS build or signing is possible here.
 - Apple — Turn a website into an app in Safari on iPhone: <https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios>
 - Apple — Distributing your app to registered devices: <https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices>
 - Apple — TestFlight: <https://developer.apple.com/testflight/>
+- Apple — Xcode SDK and system requirements: <https://developer.apple.com/xcode/system-requirements/>
 - Capacitor — Environment Setup: <https://capacitorjs.com/docs/getting-started/environment-setup>
 - Capacitor — Installing Capacitor (Getting Started): <https://capacitorjs.com/docs/getting-started>
 - Capacitor — iOS Documentation: <https://capacitorjs.com/docs/ios>

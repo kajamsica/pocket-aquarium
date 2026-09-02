@@ -77,9 +77,15 @@ The install surface is entirely dependency-free and safe under the `/pocket-aqua
   `index.html` for navigations when offline. `app.js` registers it only on http(s) — never on
   `file://` — and it never caches cross-origin or opaque responses.
 
-For the full deploy / verify / redeploy path and the native **Capacitor** follow-on — and why a
-signed native binary is a separate, gated step — see
-[`docs/IOS_DEPLOYMENT.md`](docs/IOS_DEPLOYMENT.md).
+The installable PWA remains today's working iPhone distribution. A **native Capacitor 8 iOS
+shell** is now checked in under [`native/`](native/) and is reproducible from a clean checkout
+(`npm ci` → `npm run stage` → `npx cap sync ios` → `npx cap open ios`) — it wraps this exact
+runtime in a WKWebView without changing a byte of the web app or the Pages deploy. GitHub Actions
+proves the host compiles as an unsigned iOS Simulator app. Opening or running it in a local
+Simulator requires full Xcode 26+ but not signing; physical-device and TestFlight distribution
+additionally require an Apple signing identity and provisioning. This local Mac must move from
+Sonoma 14.8.8 to at least Sequoia 15.6 before Xcode 26 can be installed. For the full deploy /
+verify / redeploy path and native host details, see [`docs/IOS_DEPLOYMENT.md`](docs/IOS_DEPLOYMENT.md).
 
 ---
 

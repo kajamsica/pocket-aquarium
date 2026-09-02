@@ -1,0 +1,28 @@
+# Pocket Aquarium native host (IOS-1) — ignore everything regenerable or sensitive.
+# The committed source of truth is: package.json, package-lock.json,
+# capacitor.config.json, scripts/, README.md, and the generated ios/ project sources.
+
+# Toolchain — reinstalled with `npm ci`.
+node_modules/
+
+# Staged web bundle — rebuilt deterministically by scripts/stage-web.mjs from the
+# root runtime allowlist. Never commit these copied runtime bytes.
+www/
+
+# Capacitor copies the staged web + generated config into the iOS project. The
+# generated ios/.gitignore already excludes App/App/public, DerivedData, xcuserdata,
+# build output, and the generated capacitor.config.json/config.xml. These lines are a
+# belt-and-suspenders guard in case the tree is inspected from this directory.
+ios/App/App/public/
+ios/App/build/
+ios/App/output/
+DerivedData/
+xcuserdata/
+
+# Apple signing / provisioning material — must never be committed.
+*.mobileprovision
+*.p12
+*.cer
+*.certSigningRequest
+*.keychain
+ExportOptions.plist
