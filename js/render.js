@@ -326,13 +326,34 @@
     return clamp01(1 - Math.abs(frac - mid) / half);
   }
 
+  // Resolve the current tank volume (litres) for the water-level ratio. Prefer the
+  // authoritative catalog the sim divides against (PA.DATA.TIERS[state.tier].volumeL),
+  // then any explicit volume on the state, so the renderer still degrades gracefully
+  // if the catalog is absent. Returns NaN when no volume is known.
+  function tierVolumeOf(st) {
+    var tier = firstVal(st, ["tier", "tank.tier", "tierId"]);
+    if (tier != null && PA && PA.DATA && PA.DATA.TIERS && PA.DATA.TIERS[tier]) {
+      var v = +PA.DATA.TIERS[tier].volumeL;
+      if (Number.isFinite(v) && v > 0) return v;
+    }
+    return firstNum(st, ["tierVolumeL", "tank.volumeL", "volumeL", "tank.capacity", "water.capacity", "capacityL"], NaN);
+  }
+
   function normalizeView(st) {
     if (!st || typeof st !== "object") return { ready: false };
     var habitat = normalizeHabitat(st);
     var ready = !!habitat;
 
-    var level = to01(firstNum(st, ["waterLevel", "water.level", "tank.waterLevel", "water.levelPct", "level"], NaN),
-                     firstNum(st, ["tank.capacity", "water.capacity", "capacityL", "tank.volumeL"], NaN));
+    // Water level: the sim stores authoritative LITRES in water.levelL against a
+    // per-tier volume it does not inline. Divide by the resolved tier volume, keeping
+    // a true zero for an unfilled tank (never a forced midpoint). Fall back to a
+    // pre-divided fraction or a value+capacity pair for alternate schemas, then to full.
+    var level = null;
+    var levelL = firstNum(st, ["water.levelL", "levelL"], NaN);
+    var tankVol = tierVolumeOf(st);
+    if (Number.isFinite(levelL) && Number.isFinite(tankVol) && tankVol > 0) level = clamp01(levelL / tankVol);
+    if (level == null) level = to01(firstNum(st, ["waterLevel", "water.level", "tank.waterLevel", "water.levelPct", "level"], NaN),
+                                    firstNum(st, ["tank.capacity", "water.capacity", "capacityL", "tank.volumeL"], NaN));
     if (level == null) level = 1;
 
     var trend = firstNum(st, ["water.levelTrend", "waterTrend", "water.trend", "evaporationTrend"], NaN);
