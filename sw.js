@@ -27,6 +27,7 @@ var PRECACHE_URLS = [
   "./js/specimenProfiles.js",
   "./js/data.js",
   "./js/sim.js",
+  "./js/sessionGuide.js",
   "./js/render.js",
   "./js/app.js",
   // Renderer-critical art: two habitat plates + three validated species sprites.
