@@ -52,16 +52,19 @@ the iPhone Home Screen and open full-screen with no browser chrome.
    (notch / Dynamic Island / home indicator), keeps 44 px touch targets, and — after the
    first load — runs offline.
 
-The install surface is entirely dependency-free and safe under the `/pocket-aquarium/` subpath:
+The install surface is emitted with the compiled 3D artifact and is safe under the
+`/pocket-aquarium/` subpath:
 
-- `manifest.webmanifest` — `display: standalone`, theme/background colours, and 192/512 icons,
-  all with **relative** URLs so they resolve at `/`, at localhost, and under the Pages subpath.
-- `assets/icons/` — `icon-192.png`, `icon-512.png`, and `apple-touch-icon.png` (180 px) derived
-  from the preserved RGB master `app-icon-master-v1.png`.
-- `sw.js` — a **versioned allowlist** service worker that precaches the shell, prunes older
-  caches on activate, serves same-origin assets cache-first, and falls back to the cached
-  `index.html` for navigations when offline. `app.js` registers it only on http(s) — never on
-  `file://` — and it never caches cross-origin or opaque responses.
+- `realistic_light_transport/public/manifest.webmanifest` — `display: standalone`, flexible
+  portrait/landscape orientation, theme/background colours, and relative 192/512 icon URLs.
+- `realistic_light_transport/public/assets/icons/` — `icon-192.png`, `icon-512.png`, and
+  `apple-touch-icon.png` (180 px) copied from derivatives of the preserved validated RGB
+  master `app-icon-master-v1.png`.
+- `realistic_light_transport/public/sw.js` plus Vite's `asset-manifest.json` — a versioned
+  service worker that precaches the complete hashed JavaScript/CSS, GLB, specimen texture,
+  shell, and icons; prunes older caches; and falls back to cached `index.html` offline.
+  `src/main.tsx` registers it only for production HTTP(S), never the Vite dev server or
+  Capacitor custom scheme, and the worker never handles cross-origin requests.
 
 The installable PWA remains today's working iPhone distribution. A **native Capacitor 8 iOS
 shell** is checked in under [`native/`](native/) and is reproducible from a clean checkout

@@ -76,7 +76,7 @@ and *Changing the visibility of your GitHub Pages site*
 ```sh
 # Runtime assets must return HTTPS 200:
 base="https://kajamsica.github.io/pocket-aquarium"
-for p in / /manifest.webmanifest /sw.js /js/app.js /assets/icons/icon-192.png; do
+for p in / /manifest.webmanifest /sw.js /asset-manifest.json /assets/icons/icon-192.png /assets/icons/apple-touch-icon.png; do
   printf '%s  %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$base$p")" "$base$p"
 done
 # Source-only paths must return 404 (never published):
@@ -95,11 +95,11 @@ because the workflow declares `workflow_dispatch`:
 #   gh auth login            # or: gh auth switch --user kajamsica
 
 # Manually trigger a redeploy of the existing workflow:
-gh workflow run "Deploy Pocket Aquarium PWA to GitHub Pages" --repo kajamsica/pocket-aquarium --ref main
+gh workflow run "Deploy Pocket Aquarium 3D app to GitHub Pages" --repo kajamsica/pocket-aquarium --ref main
 
 # Watch the run and confirm success:
 gh run list --repo kajamsica/pocket-aquarium \
-  --workflow "Deploy Pocket Aquarium PWA to GitHub Pages" -L 3
+  --workflow "Deploy Pocket Aquarium 3D app to GitHub Pages" -L 3
 ```
 
 Never place a Personal Access Token or `GH_TOKEN` in the repository, the workflow, logs, or the
