@@ -1,5 +1,4 @@
 import {
-  acceptedSpecimenAssets,
   categoryLabel,
   rowsByCategory,
   sharedScaleSpan,
@@ -10,7 +9,7 @@ import {
   type SharedScaleSpan,
   type VisualCatalog,
 } from '../catalog/visualCatalog'
-import { specimenAssetFor } from '../scene/specimens/assetRegistry'
+import { acceptedSpecimenAssetList, type SpecimenAsset } from '../scene/specimens/assetRegistry'
 
 // The workbench may inspect two kinds of assets: accepted runtime assets (resolved through the
 // untouched asset registry) and awaiting_user_acceptance candidates served by the dev-only
@@ -117,23 +116,20 @@ export function rowStatusText(row: Pick<CatalogRow, 'assetStatus' | 'candidates'
   }
 }
 
-function acceptedFromRow(row: CatalogRow | undefined, fallback: { speciesId: string; displayName: string; scientificName: string; referenceSizeKind: string }, asset: { url: string; assetVersion: string; referenceAdultLengthMeters: number; clips: readonly string[] }): WorkbenchAsset {
-  const roles = row?.clipRoles ?? { idle: 'idle', locomotion: 'swim', response: 'burst' }
-  const clipRoles = { idle: roles.idle ?? 'idle', locomotion: roles.locomotion ?? 'swim', response: roles.response ?? 'burst' }
-  const clipLoops = Object.fromEntries(asset.clips.map((clip) => [clip, clip !== clipRoles.response]))
+function acceptedFromRow(row: CatalogRow | undefined, asset: SpecimenAsset): WorkbenchAsset {
   return {
-    key: fallback.speciesId,
+    key: asset.speciesId,
     state: 'accepted',
-    speciesId: fallback.speciesId,
-    displayName: row?.displayName ?? fallback.displayName,
-    scientificName: row?.scientificLabel ?? fallback.scientificName,
+    speciesId: asset.speciesId,
+    displayName: row?.displayName ?? asset.displayName,
+    scientificName: row?.scientificLabel ?? undefined,
     url: asset.url,
     assetVersion: asset.assetVersion,
     referenceSizeMeters: row?.referenceSize.meters ?? asset.referenceAdultLengthMeters,
-    referenceSizeKind: row?.referenceSize.kind ?? fallback.referenceSizeKind,
+    referenceSizeKind: row?.referenceSize.kind ?? 'adult_total_length',
     clips: asset.clips,
-    clipRoles,
-    clipLoops,
+    clipRoles: asset.clipRoles,
+    clipLoops: asset.clipLoops,
     referenceGrade: row?.referenceGrade ?? undefined,
     bodyPlan: row?.bodyPlan ?? undefined,
     category: row?.category,
@@ -146,25 +142,8 @@ function acceptedFromRow(row: CatalogRow | undefined, fallback: { speciesId: str
 }
 
 export function acceptedWorkbenchAssets(rows: readonly CatalogRow[] = visualCatalog.rows): WorkbenchAsset[] {
-  const accepted = acceptedSpecimenAssets(rows).map(({ row, asset }) => acceptedFromRow(row, {
-    speciesId: row.id,
-    displayName: row.displayName,
-    scientificName: row.scientificLabel ?? row.id,
-    referenceSizeKind: row.referenceSize.kind ?? 'adult_total_length',
-  }, asset))
-  if (accepted.some((asset) => asset.speciesId === DEFAULT_WORKBENCH_SPECIES)) return accepted
-  // The registry is the acceptance gate: Ocellaris stays inspectable even if the catalog row is absent.
-  const registered = specimenAssetFor(DEFAULT_WORKBENCH_SPECIES)
-  if (!registered) return accepted
-  return [
-    acceptedFromRow(undefined, {
-      speciesId: registered.speciesId,
-      displayName: 'Ocellaris Clownfish',
-      scientificName: 'Amphiprion ocellaris',
-      referenceSizeKind: 'adult_total_length',
-    }, registered),
-    ...accepted,
-  ]
+  return acceptedSpecimenAssetList().map((asset) =>
+    acceptedFromRow(rows.find((row) => row.id === asset.speciesId), asset))
 }
 
 export function candidateKey(speciesId: string, candidate: string) {
@@ -350,12 +329,13 @@ export function workbenchOptionGroups(catalog: Pick<WorkbenchCatalog, 'assets' |
     const options: WorkbenchOption[] = []
     for (const row of group.rows) {
       const rowLabel = row.displayName
-      if (row.assetStatus === 'accepted') {
-        const accepted = byKey.get(row.id)
+      const accepted = byKey.get(row.id)
+      if (accepted?.state === 'accepted') {
         seenKeys.add(row.id)
-        options.push(accepted
-          ? { key: accepted.key, speciesId: row.id, label: `${rowLabel} (accepted v${accepted.assetVersion})`, disabled: false, status: rowStatusText(row), badge: 'accepted' }
-          : { key: `row:${row.id}`, speciesId: row.id, label: `${rowLabel} (accepted, not in registry)`, disabled: true, status: 'accepted package missing from the runtime registry' })
+        options.push({ key: accepted.key, speciesId: row.id, label: `${rowLabel} (accepted v${accepted.assetVersion})`, disabled: false, status: BADGE_LABELS.accepted, badge: 'accepted' })
+      } else if (row.assetStatus === 'accepted') {
+        seenKeys.add(row.id)
+        options.push({ key: `row:${row.id}`, speciesId: row.id, label: `${rowLabel} (accepted, not in registry)`, disabled: true, status: 'accepted package missing from the runtime registry' })
       }
       for (const candidate of row.candidates) {
         const key = candidateKey(row.id, candidate.name)
