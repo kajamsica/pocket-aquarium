@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "ca6436c9bea22781fdaae9f2574687eba047d2c87f95c8c8a1f889a53587c0c1",
+  "rebuildGeometryDigest": "ca6436c9bea22781fdaae9f2574687eba047d2c87f95c8c8a1f889a53587c0c1",
+  "textureHashMatch": true,
+  "textures": {
+    "polyp-albedo.png": "a718e79d336f36112b1d55aa7f54ef59ac4735223b152b980d7bee2d53d13760",
+    "polyp-normal.png": "29be5493f9c5ba6890d9131e4a36b3ff679ca16a0f9c2aae13da957708776ef9",
+    "polyp-roughness.png": "e03f3c94e62667dab1d5c1940061941f10594e4928a38cd7981fb06ba386b3a9",
+    "rock-albedo.png": "e79d4e1635a1c0bc976c647ceaedd5e860643710e08bcb9160955e8e20fde56f",
+    "rock-normal.png": "7b6da6d01ef2b3c4d3b66d4cba161ee9926ad68ae00393f18dad548a259e4940",
+    "rock-roughness.png": "fef7ff431ba28cfe8fa5d2db9d7265f79ca57da77ef34fa119c47504150a6316",
+    "tissue-albedo.png": "05f5161386d1d61c6f052cd5f91cae4a3fe05a1764dc6e07c01109ade9c7ef14",
+    "tissue-normal.png": "47c0df9f5630072ff3a946ffa74ece6be40392c6904a38c85d4d5d28d6d7b5a4",
+    "tissue-roughness.png": "bfda794f8f6e2fc486b7a7dcee7a52a8b42e9875bb2a233e33df3f750176b0d2"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

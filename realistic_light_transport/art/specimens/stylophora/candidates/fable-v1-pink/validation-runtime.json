@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_18",
+        "Br_19",
+        "Mound"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_18",
+        "Br_19",
+        "Mound"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_18",
+        "Br_19",
+        "Mound"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 16196,
+    "materials": 3,
+    "nodes": 26,
+    "skinJoints": 22,
+    "images": 9,
+    "meshes": [
+      "PA_stylophora_Polyps",
+      "PA_stylophora_Skeleton"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.0569135956466198,
+      -0.04778539016842842,
+      -1.6895487128822369e-22
+    ],
+    "max": [
+      0.04323494806885719,
+      0.04070776700973511,
+      0.09045733511447906
+    ],
+    "deviationMeters": 7.450580596923828e-09
+  }
+}

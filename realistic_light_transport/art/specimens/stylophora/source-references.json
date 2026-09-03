@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "stylophora",
+  "revision": 1,
+  "policy": "References informed colony form, branch thickness and fork habit, corallite size, spacing and hood orientation, polyp size and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source; the trade name 'blueberry Stylophora' guided the identity of the blue-violet colour morph only. The accepted name Stylophora pistillata (Esper, 1792), family Pocilloporidae per WoRMS, is used at species confidence; Corals of the World flags the name as a species complex, which is why the geometry follows the genus level shallow water habit rather than one regional clade.",
+  "sources": [
+    {
+      "id": "WORMS-206982",
+      "title": "Stylophora pistillata (Esper, 1792) taxon record (accepted; family Pocilloporidae; common names hood coral, pistillate coral). Description: branches stoutest in shallow water; calices 0.5 to 1.5 mm diameter, scattered irregularly and closely, usually hooded by a projection of coenosteum on the side of the calice towards the branch tip; six primary septa and a small columella; ends of branches blunt and often slightly club-shaped; colour cream, pink, blue or green; polyps extended only at night.",
+      "publisher": "World Register of Marine Species (World List of Scleractinia, Hoeksema, Cairns and Samimi-Namin)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=206982",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-STYLOPHORA_PISTILLATA",
+      "title": "Stylophora pistillata species factsheet: colonies branching with blunt-ended branches becoming thick and submassive; corallites immersed, conical or hooded; solid style-like columella, six primary septa; coenosteum covered by fine spinules; colour uniform cream, pink, blue (which may photograph pink) or green; shallow water exposed to strong wave action; a species complex.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/stylophora-pistillata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "CORALTRAITS-1441",
+      "title": "Coral Trait Database species page 1441, Stylophora pistillata: growth form branching_closed (Veron 2000 textual descriptions), corallite width 0.9 to 1.4 mm, colonial, zooxanthellate, brooder.",
+      "publisher": "Coral Trait Database (Madin et al.)",
+      "url": "https://www.coraltraits.org/species/1441",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "COMMSBIO-2022-MALIK",
+      "title": "Malik et al. (2022). Morpho-functional traits of the coral Stylophora pistillata enhance light capture for photosynthesis at mesophotic depths. Communications Biology 5:861. Shallow colonies: subspherical densely branched form, branch thickness about 30 percent greater than mesophotic colonies, larger closely spaced corallites (calyx diameter roughly 0.85 to 1.2 mm), spiny coenosteum.",
+      "publisher": "Nature Portfolio (Communications Biology)",
+      "url": "https://doi.org/10.1038/s42003-022-03829-4",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "COMMONS-STYLOPHORA_PISTILLATA",
+      "title": "Category:Stylophora pistillata (openly licensed photographs, proportion and colour placement study only: branch thickness to length ratio, fork angle, knob shape, polyp density)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Stylophora_pistillata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Colony habit, branch thickness, corallite size, spacing and hood orientation come from authoritative descriptions (WoRMS, Corals of the World, Coral Trait Database, Malik et al. 2022); fork angle, knob shape, branch length to thickness ratio and the extended polyp look are read from openly licensed photographs, which are oblique field and aquarium views rather than calibrated side, top and front plates. The blue-violet 'blueberry' pigmentation is an aquarium morph known from trade descriptions only, so its exact hue is an authored interpretation."
+}
