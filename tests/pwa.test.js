@@ -208,7 +208,25 @@ if (renderInto) {
   ok(shortPanel.scrollTop === 40, "saved scroll position clamps when rerendered content becomes shorter");
 }
 
-/* --------------- 9. dark aquarium-instrument shell (PAR5-01A) --------------- */
+/* ------------------------------ 9. player-facing resource clarity ------------------------------ */
+group("resource vocabulary");
+ok(/class="coin coin-credit"[\s\S]*?Tank Credits[\s\S]*?id="creditCount"/.test(html), "wallet visibly names the orange Tank Credits balance");
+ok(/class="coin coin-xp"[\s\S]*?Keeper XP[\s\S]*?id="xpCount"/.test(html), "wallet visibly names the blue Keeper XP balance");
+ok(/Tank Credits[\s\S]*?stable care[\s\S]*?milestones[\s\S]*?spent here[\s\S]*?Keeper XP[\s\S]*?not spent/.test(html), "Store explains how both resources are earned and whether they are spent");
+ok(/offer-price[^}]*color:var\(--coral\)/.test(css), "Store prices use the same coral/orange semantic colour as Tank Credits");
+ok(!/offer-price[^}]*color:var\(--blue-2\)/.test(css), "Store prices do not imply that blue Keeper XP buys offers");
+var offerSrc = (app.match(/function offer\([\s\S]*?\n  \}/) || [""])[0];
+ok(/Tank Credits/.test(offerSrc), "every priced Store offer explicitly says Tank Credits");
+var presentEventMessageSrc = (app.match(/function presentEventMessage\([\s\S]*?\n  \}/) || [""])[0];
+ok(/Tank Credits/.test(presentEventMessageSrc) && /Keeper XP/.test(presentEventMessageSrc), "compact reward tokens expand to the visible resource names");
+var presentReward = null;
+try { presentReward = new Function(presentEventMessageSrc + "\nreturn presentEventMessage;")(); } catch (e) { presentReward = null; }
+ok(typeof presentReward === "function", "shipped reward presentation helper evaluates in isolation");
+if (typeof presentReward === "function") {
+  ok(presentReward("A calm day. (+8c +5xp)") === "A calm day. (+8 Tank Credits +5 Keeper XP)", "Journal/toast reward wording expands both compact tokens");
+}
+
+/* --------------- 10. dark aquarium-instrument shell (PAR5-01A) --------------- */
 // Structural redesign contract: the warm paper/pop/toy substrate is gone and a restrained
 // dark instrument language + truthful single-care hierarchy are in place. These are byte
 // checks on the shipped shell — no DOM, no screenshots.

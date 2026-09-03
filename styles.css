@@ -41,7 +41,7 @@
                        <span class="offer-sci">Genus species</span>
                        <span class="offer-meta">habitat · adult size · min tank</span>
                        <ul class="lock-reasons"><li>…</li></ul></span>
-                     <span class="offer-side"><span class="offer-price">◉ 20</span>
+                     <span class="offer-side"><span class="offer-price">◉ 20 Tank Credits</span>
                        <button class="offer-cta" type="button" data-action="buy">Buy</button></span></li>
    #journalList <- <li class="log-entry sev-…"><time class="log-day">Day 3</time>
                      <span class="log-text">…</span></li>
@@ -167,6 +167,7 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   background:rgba(255,255,255,.03);
 }
 .coin-i{font-size:13px}
+.coin-label{font-size:11px;letter-spacing:.01em;white-space:nowrap}
 .coin-credit .coin-i{color:var(--coral)}
 .coin-xp .coin-i{color:var(--blue-2)}
 
@@ -472,11 +473,13 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
 .offer.is-buyable{background:color-mix(in srgb,var(--ok) 8%,var(--surface-3));border-color:color-mix(in srgb,var(--ok) 40%,var(--edge))}
 .offer.is-locked{background:rgba(255,255,255,.02);opacity:.86}
 .offer-meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft)}
+.store-explainer{margin:0;font-size:12px;line-height:1.45;color:var(--ink-soft)}
+.store-explainer b{color:var(--ink)}
 .lock-reasons{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:3px}
 .lock-reasons li{position:relative;padding-left:16px;font-size:11.5px;line-height:1.35;color:var(--bad)}
 .lock-reasons li::before{content:"⊘";position:absolute;left:0;top:0}
 .offer-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px}
-.offer-price{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--blue-2)}
+.offer-price{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--coral);text-align:right}
 .offer-cta{
   min-height:44px;padding:0 15px;cursor:pointer;
   font-family:var(--font-ui);font-weight:700;font-size:13px;color:#04140d;background:var(--ok);

@@ -140,7 +140,16 @@
     var pick = null;
     for (var i = logCursor; i < log.length; i++) if (NOTABLE[log[i].type]) pick = log[i];
     logCursor = log.length;
-    if (pick && pick.message !== lastToastMsg) { toast(pick.message, pick.type); lastToastMsg = pick.message; }
+    if (pick && pick.message !== lastToastMsg) { toast(presentEventMessage(pick.message), pick.type); lastToastMsg = pick.message; }
+  }
+
+  // The simulation deliberately stores compact reward tokens in event messages. Expand them
+  // only at the player-facing boundary so saves, arithmetic, and historical event semantics
+  // remain unchanged while the wallet vocabulary stays clear everywhere it is shown.
+  function presentEventMessage(message) {
+    return String(message || "")
+      .replace(/\+(\d+(?:\.\d+)?)c\b/g, "+$1 Tank Credits")
+      .replace(/\+(\d+(?:\.\d+)?)xp\b/gi, "+$1 Keeper XP");
   }
 
   /* ============================ dispatch ============================ */
@@ -1004,7 +1013,7 @@
       '<span class="offer-body"><span class="offer-name">' + esc(opts.name) + "</span>" +
       (opts.sci ? '<span class="offer-sci">' + esc(opts.sci) + "</span>" : "") +
       '<span class="offer-meta">' + (opts.meta || "") + "</span>" + (opts.extra || "") + lockReasons(opts.reasons) + "</span>" +
-      '<span class="offer-side"><span class="offer-price">' + (opts.priceIcon || "◉") + " " + opts.price + "</span>" + btn + "</span></li>";
+      '<span class="offer-side"><span class="offer-price">' + (opts.priceIcon || "◉") + " " + opts.price + " Tank Credits</span>" + btn + "</span></li>";
   }
   function speciesOffer(sp) {
     var sty = SPECIES_STYLE[sp.id] || { c: "#8aa0a8", m: "??" };
@@ -1099,7 +1108,7 @@
       var sev = e.type === "death" ? "sev-bad" : (e.type === "warn" || e.type === "quarantine" ? "sev-warn" : (e.type === "milestone" || e.type === "breeding" ? "sev-ok" : ""));
       out.push('<li class="log-entry ' + sev + '">' +
         '<time class="log-day">Day ' + ((e.day || 0) + 1) + "</time>" +
-        '<span class="log-text">' + esc(clockOf(e.t) + " · " + e.message) + "</span></li>");
+        '<span class="log-text">' + esc(clockOf(e.t) + " · " + presentEventMessage(e.message)) + "</span></li>");
     }
     journalList.innerHTML = out.join("");
   }
