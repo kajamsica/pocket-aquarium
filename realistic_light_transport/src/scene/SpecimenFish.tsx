@@ -4,6 +4,8 @@ import * as THREE from 'three'
 
 import type { ReefSnapshot } from '../contracts'
 import type { PocketSpecimen } from '../integration/pocketAquariumBridge'
+import type { MorphologyProfileV1 } from '../specimens/specimenProfile'
+import { evaluateMorphology } from '../workbench/geometry/evaluateMorphology'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
@@ -11,7 +13,11 @@ const MAX_SPECIMENS = 24
 const TANK_HALF_WIDTH = 2.76
 const SAND_Y = -1.44
 const MARINE_SPECIES = new Set(['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark'])
-const SpecimenRosterContext = createContext<readonly PocketSpecimen[]>([])
+interface SpecimenRosterValue {
+  readonly specimens: readonly PocketSpecimen[]
+  readonly morphologyOverride?: MorphologyProfileV1
+}
+const SpecimenRosterContext = createContext<SpecimenRosterValue>({ specimens: [] })
 const VISUAL_SKINS = {
   watchman_goby: {
     url: new URL('../../../assets/animals/yellow-watchman-goby-v1.png', import.meta.url).href,
@@ -19,11 +25,13 @@ const VISUAL_SKINS = {
   },
 } as const
 
-export function SpecimenRosterProvider({ specimens, children }: {
+export function SpecimenRosterProvider({ specimens, morphologyOverride, children }: {
   readonly specimens: readonly PocketSpecimen[]
+  readonly morphologyOverride?: MorphologyProfileV1
   readonly children: ReactNode
 }) {
-  return <SpecimenRosterContext.Provider value={specimens}>{children}</SpecimenRosterContext.Provider>
+  const value = useMemo(() => ({ specimens, morphologyOverride }), [morphologyOverride, specimens])
+  return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
 }
 
 export interface SpecimenFishProps {
@@ -108,6 +116,20 @@ function useSpecimenGeometry() {
 type SpecimenGeometry = ReturnType<typeof useSpecimenGeometry>
 const FIN_MATERIAL = { roughness: 0.48, metalness: 0.02 } as const
 
+function DraftMorphologyOverlay({ profile, targetLengthSceneUnits }: {
+  readonly profile: MorphologyProfileV1
+  readonly targetLengthSceneUnits: number
+}) {
+  const evaluated = useMemo(() => evaluateMorphology(profile), [profile])
+  useEffect(() => () => evaluated.geometry.dispose(), [evaluated.geometry])
+  return <mesh name={`draft-morphology-overlay-${profile.speciesId}`} geometry={evaluated.geometry}
+    scale={targetLengthSceneUnits / profile.adultLengthMeters}
+    renderOrder={20}
+    userData={{ draftMorphology: true, speciesId: profile.speciesId, geometryDigest: evaluated.digest.value }}>
+    <meshBasicMaterial color="#ff45d7" transparent opacity={.58} wireframe depthTest={false} depthWrite={false} />
+  </mesh>
+}
+
 function WatchmanGoby({ geometry, skin, tailRef }: {
   readonly geometry: SpecimenGeometry
   readonly skin: THREE.Texture
@@ -170,12 +192,13 @@ function seededUnit(id: number, salt: number) {
 
 type SpeciesSkins = Readonly<Record<'watchman_goby', THREE.Texture>>
 
-function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins }: {
+function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, morphologyOverride }: {
   readonly specimen: PocketSpecimen
   readonly snapshot: ReefSnapshot
   readonly waterSurfaceY: number
   readonly geometry: SpecimenGeometry
   readonly skins: SpeciesSkins
+  readonly morphologyOverride?: MorphologyProfileV1
 }) {
   const group = useRef<THREE.Group>(null)
   const tail = useRef<THREE.Group>(null)
@@ -219,6 +242,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins }
     {riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
       feedPulse={snapshot.events.feedPulse} />}
+    {morphologyOverride?.speciesId === specimen.speciesId &&
+      <DraftMorphologyOverlay profile={morphologyOverride} targetLengthSceneUnits={length} />}
     {specimen.speciesId === 'watchman_goby' && <WatchmanGoby geometry={geometry} skin={skins.watchman_goby} tailRef={tail} />}
     {specimen.speciesId === 'epaulette_shark' && <EpauletteShark geometry={geometry} tailRef={tail} />}
     {specimen.speciesId === 'pistol_shrimp' && <PistolShrimp />}
@@ -226,7 +251,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins }
 }
 
 export function SpecimenFish({ snapshot, waterSurfaceY }: SpecimenFishProps) {
-  const roster = useContext(SpecimenRosterContext)
+  const { specimens: roster, morphologyOverride } = useContext(SpecimenRosterContext)
   const geometry = useSpecimenGeometry()
   const gobySource = useLoader(THREE.TextureLoader, VISUAL_SKINS.watchman_goby.url)
   const skins = useMemo(() => ({
@@ -236,6 +261,7 @@ export function SpecimenFish({ snapshot, waterSurfaceY }: SpecimenFishProps) {
   const marineRoster = roster.filter((specimen) => specimen.alive && MARINE_SPECIES.has(specimen.speciesId)).slice(0, MAX_SPECIMENS)
   return <group name="root-pocket-aquarium-specimens">
     {marineRoster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
-      waterSurfaceY={waterSurfaceY} geometry={geometry} skins={skins} />)}
+      waterSurfaceY={waterSurfaceY} geometry={geometry} skins={skins}
+      morphologyOverride={morphologyOverride?.speciesId === specimen.speciesId ? morphologyOverride : undefined} />)}
   </group>
 }
