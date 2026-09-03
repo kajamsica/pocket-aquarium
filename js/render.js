@@ -258,7 +258,9 @@
   }
   function hungerOf(ent) {
     var h = firstNum(ent, ["hunger", "appetite"], NaN);
-    if (Number.isFinite(h)) return clamp01(h <= 1 ? h : h / 100);
+    // The authoritative sim permits acute hunger through 1.2. Only values above
+    // that range are unambiguously legacy/display percentages.
+    if (Number.isFinite(h)) return clamp01(h <= 1.2 ? h : h / 100);
     var sat = firstNum(ent, ["satiation", "fullness", "fed"], NaN);
     if (Number.isFinite(sat)) return clamp01(1 - (sat <= 1 ? sat : sat / 100));
     return 0.3;

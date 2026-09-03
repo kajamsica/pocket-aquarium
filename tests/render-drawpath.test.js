@@ -53,6 +53,13 @@ function makeCanvas(ctx, listeners) {
     style: {}, addEventListener: function (type, fn) { if (listeners) listeners[type] = fn; }, removeEventListener: function () {}
   };
 }
+function withMotionPreference(reduced, fn) {
+  var hadWindow = Object.prototype.hasOwnProperty.call(global, "window"), prior = global.window;
+  global.window = { PA: PA, devicePixelRatio: 1,
+    matchMedia: function () { return { matches: reduced, addEventListener: function () {}, removeEventListener: function () {} }; },
+    addEventListener: function () {}, removeEventListener: function () {} };
+  try { return fn(); } finally { if (hadWindow) global.window = prior; else delete global.window; }
+}
 
 /* -------- tiny harness -------- */
 var passed = 0, failed = 0, failures = [], curr = "";
@@ -322,6 +329,34 @@ group("feeding physics: every empty-water tap drops; starter fish pursues and ea
   eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 1, "overlap emits contact once the acknowledgement floor passes");
 })();
 
+group("authoritative acute hunger remains edible in normal and reduced motion");
+[false, true].forEach(function (reduced) {
+  [1.01, 1.2].forEach(function (hunger) {
+    withMotionPreference(reduced, function () {
+      var VOL = PA.DATA.TIERS.nano20.volumeL, sent = [];
+      var s = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOL, par: 0, flow: 0 }, food: [],
+        livestock: [{ id: 109, species: "ocellaris", x: 0.5, y: 0.4, hunger: hunger, health: 1 }] };
+      var r = PA.createRenderer(makeCanvas(makeCtx([])), function () { return s; }, function (a) { sent.push(a); });
+      r.draw(1000); s.food.push({ id: 110, x: 0.5, y: 0.4, amount: 1, ageDays: 0, sunk: false });
+      r.draw(1050); r.draw(1650); r.destroy();
+      eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 1,
+        "hunger " + hunger + " consumes in " + (reduced ? "reduced" : "normal") + " motion");
+    });
+  });
+});
+withMotionPreference(false, function () {
+  var VOL = PA.DATA.TIERS.nano20.volumeL;
+  function overlapCount(hunger) {
+    var sent = [], s = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOL }, food: [],
+      livestock: [{ id: 119, species: "ocellaris", x: 0.5, y: 0.4, hunger: hunger, health: 1 }] };
+    var r = PA.createRenderer(makeCanvas(makeCtx([])), function () { return s; }, function (a) { sent.push(a); });
+    r.draw(1000); s.food.push({ id: 120, x: 0.5, y: 0.4, amount: 1 }); r.draw(1050); r.draw(1650); r.destroy();
+    return sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length;
+  }
+  eq(overlapCount(50), 1, "clear legacy 50% hunger remains eligible");
+  eq(overlapCount(2), 0, "clear legacy 2% hunger remains satiated");
+});
+
 /* Clownfish host affinity must yield to a feeding target, then resume when food is absent. */
 group("reef clownfish: food outranks host pull across identities and simulation speeds");
 [11, 17, 23, 29, 37, 47, 59, 71, 83, 97].forEach(function (id) {
@@ -352,6 +387,28 @@ group("reef clownfish: food outranks host pull across identities and simulation 
   r.destroy();
   ok(first != null && last > first + 20, "without food, clownfish still returns toward its host territory");
 })();
+
+group("bottom feeding: hungry cory waits for sinking food, then eats across speeds and motion modes");
+[false, true].forEach(function (reduced) {
+  [1, 4, 8].forEach(function (speed) {
+    withMotionPreference(reduced, function () {
+      var s = PA.createState({ habitat: "amazon", seed: 131 + speed }); PA.dispatch(s, { type: "SETUP_FILL" }); s.speed = speed;
+      var fish = { id: s.nextId++, species: "pygmy_cory", kind: "fish", ageDays: 12, stage: "juvenile", sex: "unknown",
+        hunger: 0.8, condition: 1, health: 1, alive: true, causeOfDeath: null, decayDays: 0, lastFedDay: 0, x: 0.5, y: 0.75 };
+      s.livestock.push(fish); PA.dispatch(s, { type: "FEED_AT", x: 0.5 });
+      var sent = [], contactedSunk = false;
+      var r = PA.createRenderer(makeCanvas(makeCtx([])), function () { return s; }, function (a) {
+        sent.push(a); if (a.type === "CONSUME_FOOD") contactedSunk = !!(s.food[0] && s.food[0].sunk); PA.dispatch(s, a);
+      });
+      r.draw(1000);
+      for (var frame = 1; frame <= 800 && s.food.length; frame++) { PA.step(s, 0.05); r.draw(1000 + frame * 50); }
+      r.destroy();
+      eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 1,
+        "cory eats at " + speed + "x in " + (reduced ? "reduced" : "normal") + " motion");
+      ok(contactedSunk, "cory contact occurs only after the pellet settles");
+    });
+  });
+});
 
 /* -------- report -------- */
 console.log("\n=============== Pocket Aquarium renderer draw-path tests ===============");
