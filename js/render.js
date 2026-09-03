@@ -65,9 +65,9 @@
     sp += clamp(target - sp, -accel * 1.6 * dt, accel * dt);
     return sp < 0 ? 0 : sp;
   }
-  // Transient feeding-emphasis intensity (runtime-only): 1 the instant a pellet drops, easing
-  // linearly to 0 across `dur` ms, then staying 0. Pure + exported so render.test.js can prove
-  // the emphasis is brief and never persisted, without a canvas or a save field.
+  // Transient feeding-emphasis intensity (runtime-only, internal): 1 the instant a pellet drops,
+  // easing linearly to 0 across `dur` ms, then staying 0. Renderer lifecycle (first-frame baseline,
+  // real-feed retrigger, expiry) is proven through PA.createRenderer in tests/render-drawpath.test.js.
   var FEED_FLASH_MS = 1100;
   function feedFlash(now, until, dur) {
     if (!(dur > 0) || !(until > now)) return 0;
@@ -542,7 +542,7 @@
      assert the sim->view normalization contract — photoperiod, equipment on/off,
      and water level — headlessly under Node. Not used by the running app. */
   PA._render = { normalizeView: normalizeView, simDaylight: simDaylight, computeLight: computeLight,
-    stepTurn: stepTurn, stepSpeed: stepSpeed, MAX_DT: MAX_DT, feedFlash: feedFlash };
+    stepTurn: stepTurn, stepSpeed: stepSpeed, MAX_DT: MAX_DT };
 
   /* ============================ the renderer ============================== */
 
@@ -563,7 +563,7 @@
     var levelHist = [];                 // visual-only trend smoothing
     var hitTargets = [];                // rebuilt each frame for pointer routing
     var prevNow = null, lastRenderAt = -1e9, rafId = 0, destroyed = false;
-    var lastFoodCount = 0, feedFlashUntil = 0; // runtime-only feeding emphasis (never persisted)
+    var lastFoodCount = 0, feedFlashUntil = 0, foodBaselined = false; // runtime-only feeding emphasis (never persisted)
 
     var reducedMQ = (typeof window !== "undefined" && window.matchMedia)
       ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -1581,8 +1581,12 @@
       // A fresh pellet (food count rose since last frame) opens a brief, runtime-only emphasis
       // window so a cold player sees the food land and the fish turn to it. Purely visual —
       // FEED_AT stays the authoritative feeding action and nothing here touches state or the save.
+      // The FIRST ready frame only BASELINES the count (adopting any pellets a save already holds),
+      // so loading a save or recreating the renderer never fabricates a feed response; only a later
+      // increase flashes.
       var fc = view.food.length;
-      if (fc > lastFoodCount) feedFlashUntil = now + FEED_FLASH_MS;
+      if (!foodBaselined) foodBaselined = true;
+      else if (fc > lastFoodCount) feedFlashUntil = now + FEED_FLASH_MS;
       lastFoodCount = fc;
       var flash = feedFlash(now, feedFlashUntil, FEED_FLASH_MS); // 1 at the drop, easing to 0
       for (var i = 0; i < view.food.length; i++) {

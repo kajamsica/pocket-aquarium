@@ -221,6 +221,47 @@ function clownTranslateX(log) {
   ok(inBounds, "the fish stays within the tank bounds — no glass-edge escape at any frame");
 })();
 
+/* ----- feeding emphasis lifecycle: no false flash on first frame / recreate; real feeds retrigger ----- */
+// The first-delight feed response (drawFood) must baseline existing pellets silently on the first
+// ready frame and on renderer recreation, and only flash when the food COUNT rises. Detected on the
+// real draw path: pellets and their emphasis halo are both arcs centered on the pellet pixel, so the
+// number of arcs at that center is (pellets) with no flash and (2 x pellets) during a flash.
+group("feeding emphasis lifecycle (createRenderer draw path)");
+var VOLF = PA.DATA.TIERS.nano20.volumeL;
+var FPX = 0.5 * CW, FPY = 0.4 * CH; // pellet pixel center (cssW==CW, cssH==CH; see waterline geometry)
+function foodStateAt(n) {
+  var food = []; for (var i = 0; i < n; i++) food.push({ x: 0.5, y: 0.4, amount: 1 });
+  return { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOLF, par: 0, flow: 0 }, food: food };
+}
+function arcsAt(log, x, y) {
+  var n = 0; for (var i = 0; i < log.length; i++) { var e = log[i]; if (e.op === "arc" && near(e.args[0], x, 1.5) && near(e.args[1], y, 1.5)) n++; }
+  return n;
+}
+(function () {
+  var st = foodStateAt(1);            // a save already holding one pellet
+  var flog = [];
+  var r = PA.createRenderer(makeCanvas(makeCtx(flog)), function () { return st; }, function () {});
+  r.draw(1000);
+  ok(arcsAt(flog, FPX, FPY) === 1, "first ready frame with existing food draws the pellet only — no false flash");
+  flog.length = 0; st.food.push({ x: 0.5, y: 0.4, amount: 1 }); // a real feed: 1 -> 2
+  r.draw(1100);
+  ok(arcsAt(flog, FPX, FPY) === 4, "a later feed (count increase) flashes: halo + pellet for each of the two pellets");
+  flog.length = 0; st.food.push({ x: 0.5, y: 0.4, amount: 1 }); // a second real feed: 2 -> 3
+  r.draw(1200);
+  ok(arcsAt(flog, FPX, FPY) === 6, "a second feed before the pellets clear retriggers the flash (halo + pellet x3)");
+  flog.length = 0; r.draw(1200 + 2 * 1100); // well past the emphasis window
+  ok(arcsAt(flog, FPX, FPY) === 3, "the emphasis expires: three pellets drawn without halos");
+  flog.length = 0; r.resize(); r.draw(1200 + 2 * 1100 + 1); // resize must not fabricate a feed
+  ok(arcsAt(flog, FPX, FPY) === 3, "resize does not retrigger the flash (still three plain pellets)");
+  r.destroy();
+
+  var rlog = []; // a recreated renderer over a save that already has pellets
+  var r2 = PA.createRenderer(makeCanvas(makeCtx(rlog)), function () { return foodStateAt(2); }, function () {});
+  r2.draw(1000);
+  ok(arcsAt(rlog, FPX, FPY) === 2, "a recreated renderer with existing food draws pellets only — no false flash on its first frame");
+  r2.destroy();
+})();
+
 /* -------- report -------- */
 console.log("\n=============== Pocket Aquarium renderer draw-path tests ===============");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));

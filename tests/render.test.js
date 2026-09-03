@@ -131,26 +131,6 @@ if (typeof stepSpeed === "function") {
   ok(spCap * MAX_DT <= cruise * 1.6 * MAX_DT + 1e-9, "per-frame displacement is hard-capped by the clamped dt");
 }
 
-/* ------------------------------ 6. transient feeding emphasis ------------------------------ */
-// The first-delight feeding beat shows a brief, runtime-only emphasis when a pellet drops
-// (drawFood keys its halo off feedFlash). Proving the intensity curve here proves the emphasis
-// is transient and unsaved: it is full at the drop, decays to zero across the window, never
-// re-fires afterward, and clamps to [0,1] — with no persisted or biology field involved.
-group("feeding emphasis is brief and runtime-only (feedFlash)");
-var ff = PA && PA._render ? PA._render.feedFlash : null;
-ok(typeof ff === "function", "render.js exposes PA._render.feedFlash");
-if (typeof ff === "function") {
-  var DUR = 1100, T = 1000, UNTIL = T + DUR; // a pellet dropped at T opens the window to UNTIL
-  ok(ff(T, 0, DUR) === 0, "no emphasis when no feed window is open (until 0)");
-  ok(near(ff(T, UNTIL, DUR), 1), "emphasis is full the instant a pellet drops");
-  ok(ff(UNTIL, UNTIL, DUR) === 0, "emphasis has fully decayed by the end of the window");
-  var mid = ff(T + DUR / 2, UNTIL, DUR);
-  ok(mid > 0 && mid < 1, "emphasis eases through the window (mid " + mid.toFixed(2) + ")");
-  ok(ff(UNTIL + 5000, UNTIL, DUR) === 0, "emphasis never re-fires once the window has closed (transient)");
-  ok(ff(T, T + 2 * DUR, DUR) === 1, "emphasis clamps to 1 and never exceeds it");
-  ok(ff(T, UNTIL, 0) === 0, "a zero-length window yields no emphasis (guarded)");
-}
-
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium renderer tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));

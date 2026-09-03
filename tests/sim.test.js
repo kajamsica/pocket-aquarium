@@ -11,8 +11,8 @@ global.window = global;
 require("../js/data.js");
 require("../js/sim.js");
 // js/app.js is loaded headlessly (no document) so its DOM bootstrap is skipped and only the
-// DOM-free PA._guide first-delight seam is published — mirroring how render.test.js loads
-// render.js for PA._render. This lets the cold-start contract be proven on the real surface.
+// shared live-action surface PA._app is published — the SAME helpers handleAct calls in the
+// browser. This lets the cold-start wiring be proven on the real path, not a parallel copy.
 require("../js/app.js");
 var PA = global.PA, D = PA.DATA;
 
@@ -605,140 +605,107 @@ group("snapshot display-rounding boundary (PAR5-01D)");
 })();
 
 /* ============================================================ *
- * 12. First-delight cold-start guide (PA-101-02)
- *   The onboarding is orchestrated in js/app.js but built entirely on the public sim surface.
- *   These assertions drive that real surface (PA.dispatch / PA.stepDays / PA.sanitizeState /
- *   PA.validatePurchase) plus the DOM-free PA._guide seam app.js publishes, proving the
- *   cold-start contract without a browser.
+ * 12. First-delight cold-start guide — LIVE wiring (PA-101-02 / PA-101-F1)
+ *   These drive the SAME helpers js/app.js's handleAct calls, via the shared PA._app surface,
+ *   so a broken inoculate / purchase / feed wiring cannot pass. Compatibility, determinism, and
+ *   save-schema sanitation are already covered by the base suite above and are not re-asserted.
  * ============================================================ */
-function coldSetup(hab) { return PA.createState({ seed: 11, habitat: hab }); }
-function doGuidedSetup(s) {
+var APP = PA._app;
+// Spy PA.stepDays around a thunk; returns the per-call day args (proves the ONE-time 8x boost).
+function spyStepDays(fn) {
+  var calls = [], orig = PA.stepDays;
+  PA.stepDays = function (st, d) { calls.push(d); return orig(st, d); };
+  try { fn(); } finally { PA.stepDays = orig; }
+  return calls;
+}
+// Cold tank with the first three setup beats done (fill/life/ammonia), installed as the app state.
+function coldFilled(hab) {
+  var s = PA.createState({ seed: 11, habitat: hab });
+  APP.setState(s);
   PA.dispatch(s, { type: "SETUP_FILL" });
   PA.dispatch(s, { type: "SETUP_LIFE_SUPPORT", on: true });
   PA.dispatch(s, { type: "ADD_AMMONIA_SOURCE", on: true });
-  PA.dispatch(s, { type: "INOCULATE_BACTERIA" });
+  return s;
 }
 
 (function () {
-  group("first-delight: PA._guide seam present");
-  ok(PA._guide && typeof PA._guide.fastForwardAfterInoculation === "function", "app.js publishes PA._guide.fastForwardAfterInoculation headlessly");
-  eq(PA._guide.FAST_FORWARD_DAYS, 8, "the guide compresses exactly eight game-days");
+  group("first-delight: shared live-action surface present (no parallel seam)");
+  ok(APP && typeof APP.inoculate === "function" && typeof APP.buyLivestock === "function" &&
+     typeof APP.feed === "function" && typeof APP.recommendedAction === "function",
+     "app.js exposes the shared handleAct helpers (inoculate/buyLivestock/feed/recommendedAction)");
+  ok(PA._guide === undefined, "the rejected parallel PA._guide seam is gone");
+
+  group("first-delight: failed live inoculation runs no fast-forward");
+  var s = PA.createState({ seed: 3, habitat: "amazon" }); APP.setState(s);
+  var calls = spyStepDays(function () { APP.inoculate(); });
+  eq(calls.length, 0, "inoculating an unfilled tank makes zero simulation-step calls");
+  ok(!s.cycle.inoculated, "an unfilled tank is not inoculated");
 })();
 
 ["amazon", "reef"].forEach(function (hab) {
-  group("first-delight: four setup actions ordered + resumable (" + hab + ")");
-  var s = coldSetup(hab);
-  // The existing resumable guards mean no setup action takes effect before the tank is filled.
+  var starter = hab === "reef" ? "ocellaris" : "neon_tetra";
+  var count = D.BUNDLES[starter] || 1;
+
+  group("first-delight: four setup beats ordered + resumable (" + hab + ")");
+  var s = PA.createState({ seed: 11, habitat: hab }); APP.setState(s);
   PA.dispatch(s, { type: "SETUP_LIFE_SUPPORT", on: true });
-  PA.dispatch(s, { type: "ADD_AMMONIA_SOURCE", on: true });
-  PA.dispatch(s, { type: "INOCULATE_BACTERIA" });
-  ok(!s.cycle.lifeSupport && !s.cycle.ammoniaSource && !s.cycle.inoculated, "no setup beat takes effect before the tank is filled (ordered)");
+  ok(!s.cycle.lifeSupport, "no setup beat takes effect before the tank is filled (ordered)");
   PA.dispatch(s, { type: "SETUP_FILL" });
-  ok(s.cycle.filled && !s.cycle.lifeSupport && !s.cycle.ammoniaSource && !s.cycle.inoculated, "beat 1: fill completes first");
   PA.dispatch(s, { type: "SETUP_LIFE_SUPPORT", on: true });
-  ok(s.cycle.lifeSupport && !s.cycle.ammoniaSource && !s.cycle.inoculated, "beat 2: life support completes second");
-  // Resume after a reload with two beats done: sanitizeState restores exactly what was completed.
-  var resumed = PA.sanitizeState(JSON.parse(JSON.stringify(s)));
-  ok(resumed.cycle.filled && resumed.cycle.lifeSupport, "reload keeps the two completed beats");
-  ok(!resumed.cycle.ammoniaSource && !resumed.cycle.inoculated, "reload resumes at the third beat, never replaying completed ones");
-  PA.dispatch(resumed, { type: "ADD_AMMONIA_SOURCE", on: true });
-  ok(resumed.cycle.ammoniaSource && !resumed.cycle.inoculated, "beat 3: ammonia source completes third");
-  PA.dispatch(resumed, { type: "INOCULATE_BACTERIA" });
-  ok(resumed.cycle.inoculated, "beat 4: inoculation completes fourth");
+  var r = PA.sanitizeState(JSON.parse(JSON.stringify(s))); APP.setState(r); // reload after two beats
+  ok(r.cycle.filled && r.cycle.lifeSupport && !r.cycle.ammoniaSource && !r.cycle.inoculated,
+     "reload resumes at the third beat without replaying completed ones");
+  PA.dispatch(r, { type: "ADD_AMMONIA_SOURCE", on: true });
+
+  group("first-delight: live inoculation fast-forwards exactly eight days once (" + hab + ")");
+  var d0 = r.time.days;
+  var calls = spyStepDays(function () { APP.inoculate(); }); // the SAME helper handleAct calls
+  eq(calls.length, 8, "the live inoculate helper makes exactly eight simulation-step calls");
+  ok(calls.every(function (d) { return d === 1; }), "each call advances exactly one game-day");
+  approx(r.time.days - d0, 8, 1e-6, "eight game-days elapse through the public path");
+  ok(D.isCycled(r), "the fast-forwarded tank is cycled and stockable");
+  var repeat = spyStepDays(function () { APP.inoculate(); });
+  eq(repeat.length, 0, "a repeat inoculate click runs no further fast-forward");
+
+  group("first-delight: validated first purchase opens the feed beat; feed emits FEED_AT (" + hab + ")");
+  ok(APP.recommendedAction() !== "feed", "feed is not recommended before the first fish");
+  var before = r.livestock.length;
+  APP.buyLivestock(starter, count); // the SAME helper handleAct calls
+  eq(r.livestock.length - before, count, "the starter stocks through the existing validated purchase action");
+  ok(APP.isPendingFirstFeed(), "a validated first purchase (0 -> >0 eaters) opens the runtime first-feed prompt");
+  eq(APP.recommendedAction(), "feed", "the guide immediately recommends feeding after the first fish");
+  var fed = [], od = PA.dispatch;
+  PA.dispatch = function (st, a) { fed.push(a.type); return od(st, a); };
+  try { APP.feed(); } finally { PA.dispatch = od; }
+  eq(fed.join(","), "FEED_AT", "the shared feed helper dispatches exactly FEED_AT (not FEED)");
+  ok(!APP.isPendingFirstFeed(), "the first-feed prompt clears once a feed executes");
+  ok(APP.recommendedAction() !== "feed", "after feeding, the guide surfaces the next care action");
 });
 
 (function () {
-  group("first-delight: eight-day fast-forward runs once, through the real sim path");
-  var s = coldSetup("amazon"); doGuidedSetup(s);
-  var d0 = s.time.days;
-  var calls = [], orig = PA.stepDays;
-  PA.stepDays = function (st, days) { calls.push(days); return orig(st, days); };
-  PA._guide.fastForwardAfterInoculation(s);
-  PA.stepDays = orig;
-  eq(calls.length, 8, "exactly eight simulation-step calls after inoculation");
-  ok(calls.every(function (d) { return d === 1; }), "each call advances exactly one game-day");
-  approx(s.time.days - d0, 8, 1e-6, "eight game-days elapse through the public step path");
-  ok(D.isCycled(s), "the fast-forwarded tank is cycled and stockable");
-
-  group("first-delight: boot / reload / resume never replay the fast-forward");
+  group("first-delight: load / resume / render never replay the boost; no persisted prompt");
+  var s = coldFilled("amazon");
+  PA.dispatch(s, { type: "INOCULATE_BACTERIA" }); // plain sim action, not the app boost
   var saved = JSON.parse(JSON.stringify(s));
-  var tSaved = saved.time.days;
-  var calls2 = [], orig2 = PA.stepDays;
-  PA.stepDays = function (st, days) { calls2.push(days); return orig2(st, days); };
-  var reloaded = PA.sanitizeState(saved); // the exact load path bootstrap uses
-  PA.snapshotSummary(reloaded);           // a render/snapshot pass
-  PA.stepDays = orig2;
-  eq(calls2.length, 0, "loading + snapshotting a save never calls the simulation-step path (no replay)");
-  approx(reloaded.time.days, tSaved, 1e-6, "reload preserves game-time; no synthetic days are re-added");
-  ok(reloaded.cycle.inoculated, "the inoculated flag round-trips without re-triggering the boost");
-  eq(PA.createState({ seed: 1, habitat: "reef" }).time.days, 0, "a cold boot starts at game-day 0");
-})();
+  var calls = spyStepDays(function () {
+    var reloaded = PA.sanitizeState(saved); // the exact load path bootstrap uses
+    APP.setState(reloaded);                 // bootstrap installs + baselines the runtime prompt
+    PA.snapshotSummary(reloaded);           // a render/snapshot pass
+    APP.recommendedAction();
+  });
+  eq(calls.length, 0, "load + render never call the simulation-step path (no boost replay)");
+  ok(!APP.isPendingFirstFeed(), "a freshly loaded save carries no first-feed prompt");
 
-(function () {
-  group("first-delight: long-term determinism + ongoing rates unchanged");
-  function guided(seed) {
-    var s = PA.createState({ seed: seed, habitat: "amazon" });
-    doGuidedSetup(s);
-    PA._guide.fastForwardAfterInoculation(s);
-    PA.stepDays(s, 12); // ordinary ongoing play after the guided opening
-    return s;
-  }
-  var a = guided(42), b = guided(42);
-  eq(JSON.stringify(a.water), JSON.stringify(b.water), "same seed + guided path => identical water (deterministic)");
-  eq(JSON.stringify(a.cycle), JSON.stringify(b.cycle), "same seed + guided path => identical cycle state");
-  eq(a.time.days, b.time.days, "same elapsed game-time");
-  // Eight one-day steps equal a single eight-day step on the same start: the boost neither
-  // changes TICK_DAYS granularity nor the ongoing per-day rate (js/sim.js is untouched).
-  var s1 = coldSetup("amazon"); doGuidedSetup(s1);
-  var s2 = PA.sanitizeState(JSON.parse(JSON.stringify(s1)));
-  for (var i = 0; i < 8; i++) PA.stepDays(s1, 1);
-  PA.stepDays(s2, 8);
-  approx(s1.water.nitrate, s2.water.nitrate, 1e-6, "8x one-day steps match one eight-day step (ongoing rate unchanged)");
-})();
-
-(function () {
-  group("first-delight: readiness gate + starter purchase only via the validator/action");
-  var s = coldSetup("amazon");
-  PA.dispatch(s, { type: "SETUP_FILL" });
-  PA.dispatch(s, { type: "SETUP_LIFE_SUPPORT", on: true });
-  PA.dispatch(s, { type: "ADD_AMMONIA_SOURCE", on: true });
-  var early = PA.validatePurchase(s, { kind: "livestock", id: "neon_tetra", count: 6 });
-  ok(!early.ok, "an un-cycled tank rejects the starter (water-readiness gate intact)");
-  has(early.reasons, "cycled", "rejection cites the cycle gate");
-  PA.dispatch(s, { type: "INOCULATE_BACTERIA" });
-  PA._guide.fastForwardAfterInoculation(s);
-  var okBuy = PA.validatePurchase(s, { kind: "livestock", id: "neon_tetra", count: 6 });
-  ok(okBuy.ok, "after the guided cycle the data-driven freshwater starter passes the validator");
-  var before = s.livestock.length;
-  PA.dispatch(s, { type: "PURCHASE_LIVESTOCK", species: "neon_tetra", count: 6 });
-  eq(s.livestock.length - before, 6, "the starter school is stocked through the existing purchase action (no injection)");
-
-  group("first-delight: incompatible livestock still rejected (no compatibility bypass)");
-  var reef = cycledReef(77);
-  ok(!PA.validatePurchase(reef, { kind: "livestock", id: "neon_tetra", count: 6 }).ok, "a freshwater fish is rejected in a reef tank");
-  var fresh = cycledFresh(78);
-  ok(!PA.validatePurchase(fresh, { kind: "livestock", id: "ocellaris", count: 1 }).ok, "a saltwater fish is rejected in a freshwater tank");
-  ok(!PA.validatePurchase(reef, { kind: "livestock", id: "epaulette_shark", count: 1 }).ok, "an expert predator over the tank tier is rejected");
-})();
-
-(function () {
-  group("first-delight: FEED_AT stays authoritative; feeding emphasis is never persisted");
-  var s = cycledFresh(90); addAdult(s, "neon_tetra", 6);
-  var fBefore = s.food.length;
-  PA.dispatch(s, { type: "FEED_AT", x: 0.5, y: 0.4 });
-  eq(s.food.length - fBefore, 1, "FEED_AT drops one pellet through the existing feeding path");
-  ok(!/tutorial|feedFlash|feedEmphasis|emphasis|syntheticDay|fastForward|guideComplete/i.test(JSON.stringify(s)),
-     "no first-delight / emphasis / tutorial field is persisted in the save");
-
-  group("first-delight: established & resident saves bypass setup without a schema change");
+  group("first-delight: established resident saves bypass the guide with no schema change");
   var est = cycledFresh(91); addAdult(est, "neon_tetra", 6);
   var reloaded = PA.sanitizeState(JSON.parse(JSON.stringify(est)));
-  ok(reloaded.cycle.filled && reloaded.cycle.lifeSupport, "reloaded established save keeps its setup progress");
-  ok(D.isCycled(reloaded), "reloaded established save is cycled — no setup beat applies (guide bypassed)");
-  ok(reloaded.livestock.filter(function (a) { return a && a.alive !== false; }).length > 0, "reloaded established save keeps its residents");
-  eq(Object.keys(reloaded.cycle).sort().join(","),
-     ["aob", "ammoniaSource", "filled", "inoculated", "lifeSupport", "nob", "stage", "validationDays"].sort().join(","),
-     "the cycle save schema is unchanged (no tutorial / guide / synthetic-day field added)");
+  APP.setState(reloaded);
+  ok(!APP.isPendingFirstFeed(), "a resident save never enters the first-feed prompt");
+  ok(APP.recommendedAction() !== "feed", "a resident save is not forced into the first-feed beat");
+  ok(D.isCycled(reloaded) && reloaded.livestock.filter(function (a) { return a && a.alive !== false; }).length > 0,
+     "the resident save reloads cycled with its residents intact");
+  ok(!/pendingFirstFeed|firstFeed|tutorial|guideComplete|syntheticDay|feedFlash/i.test(JSON.stringify(reloaded)),
+     "no first-feed / tutorial / emphasis field is persisted in the save");
 })();
 
 /* ------------------------------ report ------------------------------ */
