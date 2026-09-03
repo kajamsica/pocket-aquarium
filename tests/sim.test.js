@@ -403,6 +403,19 @@ group("compatibility + capacity blockers");
   var reef = cycledReef(71);
   has(PA.validatePurchase(reef, { kind: "livestock", id: "ocellaris", count: 3 }).reasons, "should not exceed", "clownfish social maximum enforced");
 
+  // Published aquarium sizes are nominal, so tolerate up to one litre of conversion/rounding drift only.
+  var savedMinVolume = D.SPECIES.ocellaris.minVolumeL;
+  try {
+    D.SPECIES.ocellaris.minVolumeL = 75.71;
+    eq(PA.validatePurchase(reef, { kind: "livestock", id: "ocellaris", count: 1 }).ok, true,
+      "nominal 75 L tank accepts the 75.71 L ocellaris minimum");
+    D.SPECIES.ocellaris.minVolumeL = 76.01;
+    has(PA.validatePurchase(reef, { kind: "livestock", id: "ocellaris", count: 1 }).reasons, "needs at least 76.01 L",
+      "a volume deficit beyond the fixed one-litre tolerance remains blocked");
+  } finally {
+    D.SPECIES.ocellaris.minVolumeL = savedMinVolume;
+  }
+
   // footprint / tier
   var pyR = PA.validatePurchase(cycledFresh(72), { kind: "livestock", id: "pygmy_cory", count: 6 }).reasons;
   has(pyR, "needs at least the", "pygmy cory tier gate");

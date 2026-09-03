@@ -599,7 +599,8 @@
     // tank volume / tier / footprint
     if (tierIndex(currentTierId(state)) < tierIndex(sp.minTier))
       reasons.push(sp.name + " needs at least the " + TIERS[sp.minTier].name + " tank.");
-    if (tankVolumeL(state) < sp.minVolumeL)
+    // Published aquarium sizes are nominal; allow at most 1 L of conversion/rounding drift.
+    if (sp.minVolumeL - tankVolumeL(state) > 1)
       reasons.push(sp.name + " needs at least " + sp.minVolumeL + " L of water (this tank holds " + tankVolumeL(state) + " L).");
     if (tankFootprint(state) < sp.minFootprintCm2)
       reasons.push(sp.name + " needs at least " + sp.minFootprintCm2 + " cm² of floor space.");
