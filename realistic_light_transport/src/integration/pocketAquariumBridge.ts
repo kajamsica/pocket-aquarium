@@ -167,7 +167,7 @@ export interface CatalogSpecies {
 }
 
 interface CatalogCoral { id: string; name: string; price: number }
-interface CatalogTier { id: string; name: string; volumeL: number; price: number }
+interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
 interface Validation { ok: boolean; reasons: string[] }
 
@@ -221,6 +221,14 @@ export interface PocketStoreOffer {
   readonly action: PocketAction
   /** Equipment-only causal copy so a card can explain itself without a content framework. */
   readonly category?: string
+  /** Stable catalog category used to group equipment into one upgrade path. */
+  readonly categoryId?: string
+  /** Zero-based position in an ordered equipment/tank upgrade path. */
+  readonly levelIndex?: number
+  readonly levelCount?: number
+  readonly installedLevelIndex?: number
+  /** Human-readable system currently installed before this offer is purchased. */
+  readonly installedName?: string
   readonly problemSolved?: string
   readonly durableEffect?: string
   readonly operatingResource?: string
@@ -510,20 +518,27 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
   })
   const corals = Object.values(runtime.DATA.CORALS).map((item) => offer('coral', 'coral', item.id, item.name, item.price,
     { kind: 'coral', id: item.id }, { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id }))
-  const equipment = Object.entries(runtime.DATA.EQUIPMENT).flatMap(([category, item]) => item.levels
-    .map((level) => {
+  const equipment = Object.entries(runtime.DATA.EQUIPMENT).flatMap(([category, item]) => {
+    const installedLevelIndex = item.levels.findIndex((level) => level.id === state.equipment[category])
+    const installedName = item.levels[installedLevelIndex]?.name
+    return item.levels.map((level, levelIndex) => {
       const installed = state.equipment[category] === level.id
       const copy = EQUIPMENT_COPY[`${category}:${level.id}`]
       return offer('equipment', 'equipment', `${category}:${level.id}`, level.name, level.price,
         { kind: 'equipment', category, levelId: level.id },
         { type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id },
-        { installed, category: item.label,
+        { installed, category: item.label, categoryId: category, levelIndex, levelCount: item.levels.length,
+          installedLevelIndex, installedName,
           problemSolved: copy?.problem, durableEffect: copy?.effect, operatingResource: copy?.resource })
-    }))
+    })
+  })
   const tiers = runtime.DATA.TIER_ORDER.filter((id) => id !== state.tier).map((id) => {
     const item = runtime.DATA.TIERS[id]
     return offer('tier', 'tank', id, item.name, item.price, { kind: 'tier', id },
-      { type: runtime.ACTIONS.PURCHASE_TIER, tier: id })
+      { type: runtime.ACTIONS.PURCHASE_TIER, tier: id }, { levelIndex: runtime.DATA.TIER_ORDER.indexOf(id),
+        levelCount: runtime.DATA.TIER_ORDER.length, installedLevelIndex: runtime.DATA.TIER_ORDER.indexOf(state.tier),
+        installedName: runtime.DATA.TIERS[state.tier]?.name,
+        detail: `${item.volumeL} L · ${item.bioloadCap} bioload capacity · ${item.hardscapeSlots} hardscape slots` })
   })
   return [...livestock, ...corals, ...equipment, ...tiers]
 }
