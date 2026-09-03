@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
-import type { ReefSceneProps } from '../contracts'
+import type { LifecyclePhase, ReefSceneProps } from '../contracts'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
 import {
   normalizedXToSurfaceX, pelletDepthY, pelletLateralZ, surfaceXToNormalizedX,
@@ -23,6 +23,78 @@ const DYNAMIC_FLOOR_Y = SAND_Y + 0.06
 const PARTICLE_SURFACE_CLEARANCE = 0.05
 const MICROFAUNA_SURFACE_CLEARANCE = 0.09
 const UP = new THREE.Vector3(0, 1, 0)
+const MAX_SUSPENDED_PARTICLES = 180
+
+interface SuspendedParticleProfile {
+  readonly visibleCount: number
+  readonly size: number
+  readonly opacity: number
+  readonly suspendedColor: string
+  readonly detritusColor: string
+}
+
+const PARTICLE_PHASE_PROFILE: Record<LifecyclePhase, {
+  readonly density: number
+  readonly densityFromAttenuation: number
+  readonly size: number
+  readonly sizeFromAttenuation: number
+  readonly opacity: number
+  readonly opacityFromAttenuation: number
+  readonly suspendedColor: string
+  readonly detritusColor: string
+}> = {
+  commissioning: {
+    density: 0.15, densityFromAttenuation: 0.08,
+    size: 0.008, sizeFromAttenuation: 0.002,
+    opacity: 0.14, opacityFromAttenuation: 0.06,
+    suspendedColor: '#c5edf0', detritusColor: '#94704a',
+  },
+  cycling: {
+    density: 0.65, densityFromAttenuation: 0.2,
+    size: 0.014, sizeFromAttenuation: 0.003,
+    opacity: 0.42, opacityFromAttenuation: 0.12,
+    suspendedColor: '#c9c3a1', detritusColor: '#a66f3c',
+  },
+  ugly_phase: {
+    density: 0.85, densityFromAttenuation: 0.15,
+    size: 0.019, sizeFromAttenuation: 0.004,
+    opacity: 0.58, opacityFromAttenuation: 0.18,
+    suspendedColor: '#d0a462', detritusColor: '#8f4d24',
+  },
+  stabilizing: {
+    density: 0.28, densityFromAttenuation: 0.12,
+    size: 0.009, sizeFromAttenuation: 0.002,
+    opacity: 0.24, opacityFromAttenuation: 0.09,
+    suspendedColor: '#bfdee0', detritusColor: '#8c7457',
+  },
+  young_reef: {
+    density: 0.15, densityFromAttenuation: 0.08,
+    size: 0.006, sizeFromAttenuation: 0.002,
+    opacity: 0.16, opacityFromAttenuation: 0.06,
+    suspendedColor: '#c5edf0', detritusColor: '#7a7465',
+  },
+}
+
+export function suspendedParticleProfile(
+  phase: LifecyclePhase,
+  tankFillRatio: number,
+  attenuationPerMeter: number,
+): SuspendedParticleProfile {
+  const fillRatio = THREE.MathUtils.clamp(tankFillRatio, 0, 1)
+  const attenuationLoad = THREE.MathUtils.clamp((attenuationPerMeter - 0.78) / 0.62, 0, 1)
+  const profile = PARTICLE_PHASE_PROFILE[phase]
+  return {
+    visibleCount: Math.round(
+      MAX_SUSPENDED_PARTICLES
+        * (profile.density + profile.densityFromAttenuation * attenuationLoad)
+        * fillRatio,
+    ),
+    size: profile.size + profile.sizeFromAttenuation * attenuationLoad,
+    opacity: profile.opacity + profile.opacityFromAttenuation * attenuationLoad,
+    suspendedColor: profile.suspendedColor,
+    detritusColor: profile.detritusColor,
+  }
+}
 
 interface FlowFieldSource {
   readonly current: FlowFieldState
@@ -500,22 +572,23 @@ function SoftCoral({
   )
 }
 
-function SuspendedParticles({ flowField, waterSurfaceY }: {
-  flowField: FlowFieldSource; waterSurfaceY: number
+function SuspendedParticles({ flowField, profile, waterSurfaceY }: {
+  flowField: FlowFieldSource; profile: SuspendedParticleProfile; waterSurfaceY: number
 }) {
-  const count = 180
+  const count = MAX_SUSPENDED_PARTICLES
   const geometry = useMemo(() => {
     const buffer = new THREE.BufferGeometry()
     buffer.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3))
     const colors = new Float32Array(count * 3)
     const color = new THREE.Color()
     for (let index = 0; index < count; index += 1) {
-      color.set(index % 6 === 0 ? '#94704a' : '#c5edf0')
+      color.set(index % 6 === 0 ? profile.detritusColor : profile.suspendedColor)
       color.toArray(colors, index * 3)
     }
     buffer.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    buffer.setDrawRange(0, profile.visibleCount)
     return buffer
-  }, [])
+  }, [profile.detritusColor, profile.suspendedColor, profile.visibleCount])
   const base = useMemo(() => {
     const values = new Float32Array(count * 3)
     for (let index = 0; index < count; index += 1) {
@@ -557,7 +630,7 @@ function SuspendedParticles({ flowField, waterSurfaceY }: {
 
   return (
     <points geometry={geometry} frustumCulled={false}>
-      <pointsMaterial vertexColors size={0.012} transparent opacity={0.38} sizeAttenuation depthWrite={false} />
+      <pointsMaterial vertexColors size={profile.size} transparent opacity={profile.opacity} sizeAttenuation depthWrite={false} />
     </points>
   )
 }
@@ -713,6 +786,13 @@ function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed:
 export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
   const { ecology, equipment, livestock } = snapshot
   const waterSurfaceY = waterSurfaceFor(snapshot.tank)
+  const tankFillRatio = snapshot.tank.waterVolumeLiters
+    / Math.max(snapshot.tank.targetWaterVolumeLiters, 0.001)
+  const particleProfile = suspendedParticleProfile(
+    ecology.phase,
+    tankFillRatio,
+    snapshot.lightField.attenuationPerMeter,
+  )
   const feeding = useFeeding()
   const scenePellets: ScenePellet[] = feeding.food.map((pellet) => ({
     id: pellet.id,
@@ -769,7 +849,7 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
         />
       )}
       <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} pellets={scenePellets} consume={feeding.consume} />
-      <SuspendedParticles flowField={flowField} waterSurfaceY={waterSurfaceY} />
+      <SuspendedParticles flowField={flowField} profile={particleProfile} waterSurfaceY={waterSurfaceY} />
       <Microfauna activity={ecology.microfaunaActivity} waterSurfaceY={waterSurfaceY} />
       <FoodPellets pellets={scenePellets} />
       <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />
