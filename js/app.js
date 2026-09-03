@@ -26,8 +26,25 @@
   var ACT = PA.ACTIONS;
   var STAGES = DATA.CYCLE_STAGES;
 
+  /* ============================ first-delight fast-forward ============================ */
+  // The one-time cold-start cycle compression: advance exactly eight game-days through the SAME
+  // public simulation path normal play uses (PA.stepDays), one game-day per call. Internal, and
+  // invoked ONLY from the live INOCULATE_BACTERIA completion path (doInoculate) — never on boot,
+  // reload, resume, render, or save hydration, because no state predicate ever triggers it. The
+  // live route (handleAct → doInoculate) is exercised by tests through the shared PA._app surface.
+  var FAST_FORWARD_DAYS = 8;
+  function fastForwardAfterInoculation(state, days, afterDay) {
+    for (var d = 0; d < days; d++) {
+      PA.stepDays(state, 1);
+      afterDay();
+    }
+    return state;
+  }
+
   /* ============================ tiny helpers ============================ */
-  function $(id) { return document.getElementById(id); }
+  // DOM-safe lookup: returns null with no document (headless test load — see PA._app),
+  // so requiring this module under Node to exercise the shared action helpers never throws.
+  function $(id) { return (typeof document !== "undefined") ? document.getElementById(id) : null; }
   function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
   function clamp01(v) { return clamp(v, 0, 1); }
   function esc(s) {
@@ -87,6 +104,8 @@
   var pendingSave = false, lastSaveAt = 0;
   var logCursor = 0, lastToastMsg = "", toastTimer = 0;
   var visibilityPaused = false;
+  var pendingFirstFeed = false; // runtime-only first-feed guide prompt; never persisted or loaded
+  var pendingCycleBoostDays = 0; // runtime-only retry remainder; reloads never replay synthetic days
   var DOM_INTERVAL = 170; // ~6 Hz DOM cadence (not per Canvas frame)
 
   /* ============================ persistence ============================ */
@@ -136,6 +155,7 @@
       if (aliveFishBefore === 0) toast("Nothing alive to eat it — uneaten food just decays into waste and raises ammonia.", "warn");
       else if (state._feedWarning) toast("Careful: ammonia/nitrite is elevated. Extra food will worsen the water.", "warn");
       state._feedWarning = false;
+      pendingFirstFeed = false; // the first-feed beat is satisfied once a feed actually executes
     }
     markDirty();
     renderNow();
@@ -243,13 +263,13 @@
       case "life-off": dispatchAction({ type: ACT.SETUP_LIFE_SUPPORT, on: false }); break;
       case "ammonia-on": dispatchAction({ type: ACT.ADD_AMMONIA_SOURCE, on: true }); break;
       case "ammonia-off": dispatchAction({ type: ACT.ADD_AMMONIA_SOURCE, on: false }); break;
-      case "inoculate": dispatchAction({ type: ACT.INOCULATE_BACTERIA }); break;
+      case "inoculate": doInoculate(); break;
       case "test": dispatchAction({ type: ACT.WATER_TEST }); toast("Water tested — readings and freshness updated.", "water"); break;
       case "wc25": dispatchAction({ type: ACT.WATER_CHANGE, fraction: 0.25 }); break;
       case "topoff": dispatchAction({ type: ACT.WATER_TOP_OFF }); break;
       case "buy-equip": dispatchAction({ type: ACT.PURCHASE_EQUIPMENT, category: ds.category, levelId: ds.level }); break;
       case "buy-tier": dispatchAction({ type: ACT.PURCHASE_TIER, tier: ds.tier }); break;
-      case "buy-live": dispatchAction({ type: ACT.PURCHASE_LIVESTOCK, species: ds.species, count: +ds.count || undefined }); break;
+      case "buy-live": doBuyLivestock(ds.species, +ds.count || undefined); break;
       case "buy-coral": dispatchAction({ type: ACT.PURCHASE_CORAL, coral: ds.coral }); break;
       case "seed": dispatchAction({ type: ACT.SEED_MICROFAUNA, culture: ds.culture }); break;
       case "feed": feedCenter(); break;
@@ -266,7 +286,53 @@
       default: break;
     }
   }
-  function feedCenter() { dispatchAction({ type: ACT.FEED, x: 0.5, y: 0.4 }); }
+  // The shared feed helper: it dispatches the exact FEED_AT action the renderer's pointer-feed
+  // uses (not FEED), so the guided feed beat and a tap on the water are one authoritative path.
+  function feedCenter() { dispatchAction({ type: "FEED_AT", x: 0.5, y: 0.4 }); }
+  // Live inoculation: dispatch the existing action, then — only when THIS click just completed
+  // it (inoculated false -> true) — run the one-time eight-day cycle fast-forward through the
+  // real public sim path. Boot/reload never reach here, so the boost can never replay.
+  function doInoculate() {
+    var wasInoculated = state.cycle.inoculated;
+    if (!wasInoculated) dispatchAction({ type: ACT.INOCULATE_BACTERIA });
+    if (!wasInoculated && state.cycle.inoculated) {
+      pendingCycleBoostDays = FAST_FORWARD_DAYS;
+    }
+    if (!state.cycle.inoculated || pendingCycleBoostDays <= 0) return;
+    var boostStartDay = state.time.days, boostDays = pendingCycleBoostDays;
+    try {
+      fastForwardAfterInoculation(state, pendingCycleBoostDays, function () { pendingCycleBoostDays--; });
+    } catch (e) {
+      pendingCycleBoostDays = Math.max(0, boostDays - Math.floor(state.time.days - boostStartDay + 1e-9));
+      markDirty(); renderNow();
+      if (pendingCycleBoostDays) toast("Cycle boost paused — retry inoculating bacteria to continue.", "warn");
+      return;
+    }
+    markDirty(); renderNow();
+  }
+  // Live validated purchase through the existing validator/action. When THIS purchase takes the
+  // tank from zero living eaters to one or more, open the runtime-only first-feed prompt so the
+  // guide's next beat is to feed. Any executed feed clears it (dispatchAction). Never persisted.
+  function doBuyLivestock(species, count) {
+    var eatersBefore = aliveEaters();
+    dispatchAction({ type: ACT.PURCHASE_LIVESTOCK, species: species, count: count });
+    if (eatersBefore === 0 && aliveEaters() > 0) {
+      pendingFirstFeed = true;
+      renderNow(); // dispatchAction painted the pre-purchase advice; repaint the first-feed beat.
+    }
+  }
+  // Shared live-action surface. handleAct calls these exact helpers in the browser; tests drive
+  // the same functions headlessly, so there is no parallel path. recommendedAction is read-only
+  // (what careAdvice would surface). Nothing here is persisted or added to the save schema.
+  PA._app = {
+    setState: function (s) { state = s; pendingFirstFeed = false; pendingCycleBoostDays = 0; },
+    isPendingFirstFeed: function () { return pendingFirstFeed; },
+    inoculate: doInoculate,
+    buyLivestock: doBuyLivestock,
+    feed: feedCenter,
+    startOver: doStartOver,
+    recommendedAction: function () { return careAdvice(PA.snapshotSummary(state)).action.act; }
+  };
 
   /* ============================ start over (accessible confirm) ============================ */
   function confirmStartOver() {
@@ -290,7 +356,7 @@
   function doStartOver() {
     try { global.localStorage.removeItem(DATA.saveKey); } catch (e) {} // arcadeKey untouched
     state = PA.createState({ now: Date.now() });
-    logCursor = state.log.length; lastToastMsg = "";
+    logCursor = state.log.length; lastToastMsg = ""; pendingFirstFeed = false; pendingCycleBoostDays = 0;
     applyTheme(); save(); renderNow();
     openHabitatDialog();
     toast("Started a fresh ecosystem. Choose a habitat to begin.", "care");
@@ -304,6 +370,7 @@
   }
   function nowMs() { return (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now(); }
   function renderDynamic() {
+    if (typeof document === "undefined") return; // headless (test) load has no DOM to paint
     var snap = PA.snapshotSummary(state);
     lastSnap = snap;
     renderChrome(snap);
@@ -411,18 +478,33 @@
       return advice("critical", "CRITICAL", "A dead animal is decaying in the tank.", "Remove the body before it spikes ammonia — find it under Livestock.", "Review livestock", "open-livestock", null, fresh);
     if (snap.welfare === "critical")
       return advice("critical", "CRITICAL", "Residents are in critical condition.", "Open the Water tab and stabilise chemistry and feeding before anything else.", "Review water", "open-water", null, fresh);
+    if (pendingCycleBoostDays > 0 && aliveEaters() === 0)
+      return advice("watch", "CYCLING", "The bacteria boost was interrupted.", "Retry inoculating bacteria to finish the remaining guided cycle days through the normal simulation.", "Retry inoculation", "inoculate", null, fresh);
     if (!DATA.isCycled(state)) {
       if (!c.ammoniaSource && aliveEaters() === 0)
         return advice("watch", "CYCLING", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", null, fresh);
+      // Fourth guided setup beat: seeding the filter establishes the biofilter and fast-forwards
+      // the fishless cycle (see doInoculate) so a cold player reaches a stockable tank quickly.
+      if (!c.inoculated && aliveEaters() === 0)
+        return advice("watch", "CYCLING", "Seed the filter to finish the cycle.", "Add bottled nitrifying bacteria — it establishes the biofilter and fast-forwards the fishless cycle so the tank is ready to stock.", "Inoculate bacteria", "inoculate", null, fresh);
       return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
     }
     // Ordinary care, highest-priority first. An empty cycled tank still passes through the
     // environment/accumulation/light/staleness checks BELOW before "READY to stock" — so
     // salinity/level out of range or stale readings are fixed first, never skipped merely
     // because the tank has no residents yet (PAR5-01A truthful-priority fix).
+    // Feeding is the next beat when residents are hungry OR right after the first fish is stocked
+    // (the runtime-only first-feed prompt), so a cold player is guided straight into feeding.
     var hungry = hungryCount();
-    if (hungry > 0)
-      return advice("watch", "WATCH", hungry + (hungry === 1 ? " resident is" : " residents are") + " hungry.", "Tap the water to feed; uneaten food decays into ammonia, so feed sparingly.", "Feed the tank", "feed", null, fresh);
+    if (hungry > 0 || pendingFirstFeed) {
+      var feedReason = hungry > 0
+        ? (hungry + (hungry === 1 ? " resident is" : " residents are") + " hungry.")
+        : "Your first fish has settled in.";
+      var feedWhy = hungry > 0
+        ? "Tap the water to feed; uneaten food decays into ammonia, so feed sparingly."
+        : "Tap the water to drop a pellet and watch it respond — then keep the water clean.";
+      return advice("watch", "WATCH", feedReason, feedWhy, "Feed the tank", "feed", null, fresh);
+    }
     var env = environmentIssue(snap);
     if (env)
       return advice("watch", "WATCH", env.reason, env.why, env.label, env.act, null, fresh);
@@ -1199,6 +1281,7 @@
     var parsed = load();
     if (parsed) state = PA.sanitizeState(parsed);
     else state = PA.createState({ now: Date.now() });
+    pendingFirstFeed = false; pendingCycleBoostDays = 0; // resident/loaded saves never enter transient guide beats
 
     // offline catch-up (capped by the sim) with a concise return report when meaningful
     var report = null;
@@ -1238,7 +1321,11 @@
     } catch (e) { /* SW unsupported — the app still runs directly from the network/file */ }
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootstrap);
-  else bootstrap();
+  // Bootstrap only in a real document. Under a headless test load (no document) the module
+  // just publishes PA._app above and returns — bootstrap and all DOM binding are skipped.
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootstrap);
+    else bootstrap();
+  }
 
 })(typeof window !== "undefined" ? window : this);
