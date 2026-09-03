@@ -8,19 +8,27 @@ import {
   type WorkbenchAssetStats,
   type WorkbenchClipName,
 } from './WorkbenchSpecimen'
+import { SHARED_SCALE_BAR_METERS } from '../catalog/visualCatalog'
 import {
+  BADGE_LABELS,
+  assetBadge,
   clipLoops,
   loadWorkbenchCatalog,
+  parseScaleMode,
   selectWorkbenchAsset,
+  workbenchOptionGroups,
   workbenchSearch,
+  type ScaleMode,
   type WorkbenchAsset,
   type WorkbenchCatalog,
+  type WorkbenchSelection,
 } from './workbenchCatalog'
 
 type CameraPreset = 'side' | 'front' | 'top' | 'three-quarter'
 type Projection = 'perspective' | 'orthographic'
 
-// Framing was authored for the 8 cm Ocellaris; every distance scales with the specimen's reference size.
+// Framing was authored for the 8 cm Ocellaris; every distance scales with the frame span. In fit mode
+// the span is the specimen's own reference size, in shared mode it is the catalog-wide shared span.
 const REFERENCE_FRAME_METERS = 0.08
 const CAMERA_POSITIONS: Readonly<Record<CameraPreset, THREE.Vector3Tuple>> = {
   side: [0, 0.012, 0.19],
@@ -62,16 +70,18 @@ class AssetBoundary extends Component<AssetBoundaryProps, AssetBoundaryState> {
   }
 }
 
-function CameraControls({ preset, projection, resetToken, scale }: {
+function CameraControls({ preset, projection, resetToken, scale, zoomScale }: {
   readonly preset: CameraPreset
   readonly projection: Projection
   readonly resetToken: number
   readonly scale: number
+  /** Scale of the specimen itself, so shared-scale mode can still zoom into small species. */
+  readonly zoomScale: number
 }) {
   const { gl, set, size } = useThree()
   const camera = useMemo(() => projection === 'perspective'
-    ? new THREE.PerspectiveCamera(34, 1, 0.005 * scale, 5 * Math.max(scale, 1))
-    : new THREE.OrthographicCamera(-0.08 * scale, 0.08 * scale, 0.08 * scale, -0.08 * scale, 0.005 * scale, 5 * Math.max(scale, 1)), [projection, scale])
+    ? new THREE.PerspectiveCamera(34, 1, 0.005 * Math.min(scale, zoomScale), 5 * Math.max(scale, 1))
+    : new THREE.OrthographicCamera(-0.08 * scale, 0.08 * scale, 0.08 * scale, -0.08 * scale, 0.005 * Math.min(scale, zoomScale), 5 * Math.max(scale, 1)), [projection, scale, zoomScale])
   const controlsRef = useRef<OrbitControls | null>(null)
 
   useEffect(() => {
@@ -92,10 +102,10 @@ function CameraControls({ preset, projection, resetToken, scale }: {
     camera.position.set(x * scale, y * scale, z * scale)
     camera.lookAt(0, 0, 0)
     controls.target.set(0, 0, 0)
-    controls.minDistance = 0.06 * scale
+    controls.minDistance = 0.06 * Math.min(scale, zoomScale)
     controls.maxDistance = 0.75 * scale
     controls.minZoom = 0.5
-    controls.maxZoom = 7
+    controls.maxZoom = 7 * Math.max(1, scale / Math.max(zoomScale, 1e-6))
     controls.enableDamping = true
     controls.dampingFactor = 0.075
     controls.enablePan = true
@@ -105,25 +115,33 @@ function CameraControls({ preset, projection, resetToken, scale }: {
       controls.dispose()
       if (controlsRef.current === controls) controlsRef.current = null
     }
-  }, [camera, gl.domElement, preset, projection, resetToken, scale, set, size.height, size.width])
+  }, [camera, gl.domElement, preset, projection, resetToken, scale, set, size.height, size.width, zoomScale])
 
   useFrame(() => controlsRef.current?.update())
   return null
 }
 
-function StudioRuler({ lengthMeters, floorY }: { readonly lengthMeters: number; readonly floorY: number }) {
-  const tick = lengthMeters * 0.0075
-  const bar = lengthMeters * 0.0075
+function StudioRuler({ lengthMeters, unitMeters, floorY, offset = 0, color = '#68727a', ticks = [-0.5, -0.25, 0, 0.25, 0.5] }: {
+  readonly lengthMeters: number
+  /** Span that sets bar thickness and stand-off so bars stay legible at any framing. */
+  readonly unitMeters: number
+  readonly floorY: number
+  readonly offset?: number
+  readonly color?: string
+  readonly ticks?: readonly number[]
+}) {
+  const tick = unitMeters * 0.0075
+  const bar = unitMeters * 0.0075
   return (
-    <group position={[0, floorY + tick * 1.2, lengthMeters * 0.075]}>
+    <group position={[0, floorY + tick * 1.2, unitMeters * 0.075 + offset]}>
       <mesh receiveShadow>
         <boxGeometry args={[lengthMeters, bar, bar]} />
-        <meshStandardMaterial color="#68727a" roughness={0.7} />
+        <meshStandardMaterial color={color} roughness={0.7} />
       </mesh>
-      {[-0.5, -0.25, 0, 0.25, 0.5].map((fraction) => (
+      {ticks.map((fraction) => (
         <mesh key={fraction} position={[fraction * lengthMeters, tick * 3.3, 0]}>
           <boxGeometry args={[bar, tick * 7.5, bar]} />
-          <meshStandardMaterial color="#68727a" roughness={0.7} />
+          <meshStandardMaterial color={color} roughness={0.7} />
         </mesh>
       ))}
     </group>
@@ -149,20 +167,20 @@ function formatSize(meters: number) {
   return meters >= 1 ? `${meters.toFixed(2)} m` : `${(meters * 100).toFixed(1)} cm`
 }
 
-function defaultClip(asset: WorkbenchAsset): WorkbenchClipName {
-  return asset.clipRoles?.locomotion ?? (asset.clips.includes('swim') ? 'swim' : asset.clips[0] ?? 'swim')
+function formatSpan(meters: number) {
+  return `${meters.toFixed(2)} m`
 }
 
-function assetLabel(asset: WorkbenchAsset) {
-  return asset.state === 'accepted'
-    ? `${asset.displayName} (accepted v${asset.assetVersion})`
-    : `${asset.displayName} (${asset.candidate}, ${asset.buildStatus === 'passed' ? 'validated' : asset.buildStatus ?? 'unvalidated'})`
+function defaultClip(asset: WorkbenchAsset): WorkbenchClipName {
+  return asset.clipRoles?.locomotion ?? (asset.clips.includes('swim') ? 'swim' : asset.clips[0] ?? 'swim')
 }
 
 export function SpecimenWorkbench() {
   const [catalog, setCatalog] = useState<WorkbenchCatalog>()
   const [selectionKey, setSelectionKey] = useState<string>()
   const [invalidSelection, setInvalidSelection] = useState<string>()
+  const [unavailableSelection, setUnavailableSelection] = useState<WorkbenchSelection['unavailable']>()
+  const [scaleMode, setScaleMode] = useState<ScaleMode>(() => parseScaleMode(SEARCH.get('scale')))
   const [clipName, setClipName] = useState<WorkbenchClipName>('swim')
   const [playing, setPlaying] = useState(true)
   const [playbackRate, setPlaybackRate] = useState<number>(1)
@@ -184,9 +202,10 @@ export function SpecimenWorkbench() {
     let active = true
     loadWorkbenchCatalog().then((loaded) => {
       if (!active) return
-      const { asset, invalid } = selectWorkbenchAsset(loaded.assets, SEARCH.get('workbench'), SEARCH.get('candidate'))
+      const { asset, invalid, unavailable } = selectWorkbenchAsset(loaded.assets, SEARCH.get('workbench'), SEARCH.get('candidate'), loaded.rows, loaded.candidateSource)
       setCatalog(loaded)
       setInvalidSelection(invalid)
+      setUnavailableSelection(unavailable)
       if (asset) {
         setSelectionKey(asset.key)
         setClipName(defaultClip(asset))
@@ -198,20 +217,32 @@ export function SpecimenWorkbench() {
   }, [])
 
   const asset = useMemo(() => catalog?.assets.find((entry) => entry.key === selectionKey), [catalog, selectionKey])
-  const scale = (asset?.referenceSizeMeters ?? REFERENCE_FRAME_METERS) / REFERENCE_FRAME_METERS
-  const floorY = stats ? stats.bounds.center[1] - stats.bounds.size[1] / 2 - 0.006 * scale : -0.047 * scale
+  const span = catalog?.span
+  const specimenScale = (asset?.referenceSizeMeters ?? REFERENCE_FRAME_METERS) / REFERENCE_FRAME_METERS
+  const scale = scaleMode === 'shared' && span ? span.spanMeters / REFERENCE_FRAME_METERS : specimenScale
+  const rulerUnit = scaleMode === 'shared' && span ? span.spanMeters : asset?.referenceSizeMeters ?? REFERENCE_FRAME_METERS
+  // The floor hugs the specimen (gap follows its own size) even when the frame is fixed to the shared span.
+  const floorY = stats ? stats.bounds.center[1] - stats.bounds.size[1] / 2 - 0.006 * specimenScale : -0.047 * scale
+  const shadowExtent = Math.max(0.12 * scale, (asset?.referenceSizeMeters ?? 0) * 0.75)
 
   const selectAsset = useCallback((next: WorkbenchAsset) => {
     setSelectionKey(next.key)
     setInvalidSelection(undefined)
+    setUnavailableSelection(undefined)
     setClipName(defaultClip(next))
     setPhase(0)
     setStats(undefined)
     setAssetBytes(undefined)
     setLoading(true)
     setError(undefined)
-    window.history.replaceState(null, '', workbenchSearch(next))
-  }, [])
+    window.history.replaceState(null, '', workbenchSearch(next, scaleMode))
+  }, [scaleMode])
+
+  const changeScaleMode = useCallback((mode: ScaleMode) => {
+    setScaleMode(mode)
+    setResetToken((value) => value + 1)
+    if (asset) window.history.replaceState(null, '', workbenchSearch(asset, mode))
+  }, [asset])
 
   const handleReady = useCallback((nextStats: WorkbenchAssetStats) => {
     setStats(nextStats)
@@ -268,6 +299,7 @@ export function SpecimenWorkbench() {
       } else if (event.key.toLowerCase() === 'r') reset()
       else if (event.key.toLowerCase() === 'w') setWireframe((value) => !value)
       else if (event.key.toLowerCase() === 'k') setShowSkeleton((value) => !value)
+      else if (event.key.toLowerCase() === 's') changeScaleMode(scaleMode === 'shared' ? 'fit' : 'shared')
       else if (event.key === '1') setPreset('side')
       else if (event.key === '2') setPreset('front')
       else if (event.key === '3') setPreset('top')
@@ -275,7 +307,7 @@ export function SpecimenWorkbench() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [reset])
+  }, [changeScaleMode, reset, scaleMode])
 
   if (catalog && !asset) {
     return <main className="specimen-workbench specimen-workbench--fatal" role="alert">Ocellaris asset registry entry is missing.</main>
@@ -284,23 +316,18 @@ export function SpecimenWorkbench() {
     return <main className="specimen-workbench specimen-workbench--fatal" role="status">Loading specimen catalog…</main>
   }
 
-  const accepted = catalog.assets.filter((entry) => entry.state === 'accepted')
-  const candidateSpecies = [...new Set(catalog.assets.filter((entry) => entry.state === 'candidate').map((entry) => entry.speciesId))]
   const clips = asset.clips.length ? asset.clips : stats?.clips.map((clip) => clip.name) ?? []
-  const statusLabel = error
-    ? 'Inspection blocked'
-    : loading
-      ? 'Loading GLB'
-      : asset.state === 'accepted'
-        ? 'Accepted asset loaded'
-        : `Candidate loaded: ${asset.candidateState ?? 'awaiting_user_acceptance'}`
+  const badge = assetBadge(asset)
+  const optionGroups = workbenchOptionGroups(catalog)
+  const loadState = error ? 'inspection blocked' : loading ? 'loading GLB' : 'loaded'
+  const sharedSpan = scaleMode === 'shared' ? span : undefined
 
   return (
-    <main className="specimen-workbench" data-asset-state={asset.state}>
+    <main className="specimen-workbench" data-asset-state={asset.state} data-scale-mode={scaleMode}>
       <title>{`${asset.displayName} Specimen Workbench`}</title>
       <header className="workbench-header">
         <div>
-          <p className="workbench-eyebrow">Isolated 3D specimen workbench</p>
+          <p className="workbench-eyebrow">Isolated 3D specimen workbench · {catalog.rows.length} catalog rows</p>
           <h1>{asset.displayName} <span>{asset.scientificName ?? asset.speciesId} · LOD1</span></h1>
         </div>
         <label className="workbench-picker" htmlFor="workbench-species">
@@ -313,21 +340,19 @@ export function SpecimenWorkbench() {
               if (next) selectAsset(next)
             }}
           >
-            <optgroup label="Accepted (runtime)">
-              {accepted.map((entry) => <option key={entry.key} value={entry.key}>{assetLabel(entry)}</option>)}
-            </optgroup>
-            {candidateSpecies.map((speciesId) => (
-              <optgroup key={speciesId} label={`Candidate · ${speciesId}`}>
-                {catalog.assets.filter((entry) => entry.state === 'candidate' && entry.speciesId === speciesId).map((entry) => (
-                  <option key={entry.key} value={entry.key}>{assetLabel(entry)}</option>
+            {optionGroups.map((group) => (
+              <optgroup key={group.category} label={group.label}>
+                {group.options.map((option) => (
+                  <option key={option.key} value={option.key} disabled={option.disabled} data-badge={option.badge}>{option.label}</option>
                 ))}
               </optgroup>
             ))}
           </select>
         </label>
-        <div className="workbench-status" data-ready={!loading && !error} data-candidate={asset.state === 'candidate'}>
+        <div className="workbench-status" data-ready={!loading && !error} data-candidate={asset.state === 'candidate'} data-badge={badge} data-error={Boolean(error)}>
           <span aria-hidden="true" />
-          {statusLabel}
+          <strong>{BADGE_LABELS[badge]}</strong>
+          <em>{loadState}</em>
         </div>
       </header>
 
@@ -348,16 +373,23 @@ export function SpecimenWorkbench() {
             shadow-mapSize={[1024, 1024]}
             shadow-camera-near={0.02 * scale}
             shadow-camera-far={1 * Math.max(scale, 1)}
-            shadow-camera-left={-0.12 * scale}
-            shadow-camera-right={0.12 * scale}
-            shadow-camera-top={0.12 * scale}
-            shadow-camera-bottom={-0.12 * scale}
+            shadow-camera-left={-shadowExtent}
+            shadow-camera-right={shadowExtent}
+            shadow-camera-top={shadowExtent}
+            shadow-camera-bottom={-shadowExtent}
           />
           <spotLight position={[-0.12 * scale, 0.08 * scale, 0.16 * scale]} intensity={3.1 * scale * scale} angle={0.65} penumbra={0.8} />
           <pointLight position={[-0.14 * scale, 0.1 * scale, -0.16 * scale]} color="#b5d7ff" intensity={1.2 * scale * scale} />
-          <CameraControls preset={preset} projection={projection} resetToken={resetToken} scale={scale} />
+          <CameraControls preset={preset} projection={projection} resetToken={resetToken} scale={scale} zoomScale={specimenScale} />
           <StudioFloor visible={showFloor} floorY={floorY} scale={scale} />
-          <StudioRuler lengthMeters={asset.referenceSizeMeters} floorY={floorY} />
+          {sharedSpan ? (
+            <>
+              <StudioRuler lengthMeters={SHARED_SCALE_BAR_METERS} unitMeters={rulerUnit} floorY={floorY} ticks={[-0.5, -0.3, -0.1, 0.1, 0.3, 0.5]} />
+              <StudioRuler lengthMeters={asset.referenceSizeMeters} unitMeters={rulerUnit} floorY={floorY} offset={rulerUnit * 0.035} color="#b8642f" ticks={[-0.5, 0.5]} />
+            </>
+          ) : (
+            <StudioRuler lengthMeters={asset.referenceSizeMeters} unitMeters={rulerUnit} floorY={floorY} />
+          )}
           <AssetBoundary onError={handleError} resetKey={asset.key}>
             <Suspense fallback={null}>
               <WorkbenchSpecimen
@@ -388,11 +420,46 @@ export function SpecimenWorkbench() {
             <span>Fell back to the accepted Ocellaris. Pick a catalog entry from the Specimen menu.</span>
           </div>
         )}
-        <div className="workbench-ruler-label">0 <i /> {formatSize(asset.referenceSizeMeters)} {asset.referenceSizeKind.replaceAll('_', ' ')}</div>
-        <div className="workbench-orbit-hint">Drag to orbit · wheel to zoom · right-drag to pan · framing scales with the specimen</div>
+        {unavailableSelection && (
+          <div className="workbench-error workbench-error--notice" role="alert">
+            <strong>{unavailableSelection.row.displayName}{unavailableSelection.candidate ? ` / ${unavailableSelection.candidate}` : ''} has no loadable asset</strong>
+            <span>{unavailableSelection.reason}. Fell back to the accepted Ocellaris; the row stays listed in the Specimen menu.</span>
+          </div>
+        )}
+        {sharedSpan ? (
+          <div className="workbench-ruler-label" data-mode="shared">
+            <b>Shared scale</b>
+            <span>0 <i /> {formatSize(SHARED_SCALE_BAR_METERS)} bar</span>
+            <span className="workbench-ruler-specimen">0 <i /> {formatSize(asset.referenceSizeMeters)} {asset.referenceSizeKind.replaceAll('_', ' ')}</span>
+            <small>
+              frame {formatSpan(sharedSpan.spanMeters)} span
+              {sharedSpan.clamped && sharedSpan.largestDisplayName
+                ? ` (clamped; largest ${formatSpan(sharedSpan.largestMeters)} ${sharedSpan.largestDisplayName} exceeds the frame)`
+                : sharedSpan.largestDisplayName ? ` (largest ${sharedSpan.largestDisplayName})` : ''}
+            </small>
+          </div>
+        ) : (
+          <div className="workbench-ruler-label">0 <i /> {formatSize(asset.referenceSizeMeters)} {asset.referenceSizeKind.replaceAll('_', ' ')}</div>
+        )}
+        <div className="workbench-orbit-hint">
+          Drag to orbit · wheel to zoom · right-drag to pan · {sharedSpan ? `framing fixed to the shared ${formatSpan(sharedSpan.spanMeters)} span` : 'framing scales with the specimen'}
+        </div>
       </section>
 
       <aside className="workbench-controls" aria-label="Specimen controls">
+        <fieldset>
+          <legend>Scale</legend>
+          <div className="workbench-grid workbench-grid--two" role="radiogroup" aria-label="Framing scale mode">
+            <button type="button" aria-pressed={scaleMode === 'shared'} onClick={() => changeScaleMode('shared')}>Shared scale</button>
+            <button type="button" aria-pressed={scaleMode === 'fit'} onClick={() => changeScaleMode('fit')}>Fit specimen</button>
+          </div>
+          <p className="workbench-scale-note">
+            {scaleMode === 'shared'
+              ? `Every specimen is framed to the same ${span ? formatSpan(span.spanMeters) : ''} span with a fixed ${formatSize(SHARED_SCALE_BAR_METERS)} bar, so relative size is real.`
+              : 'The camera and ruler adapt to each specimen so small species fill the stage.'}
+          </p>
+        </fieldset>
+
         <fieldset>
           <legend>Camera</legend>
           <div className="workbench-grid workbench-grid--camera">
@@ -447,19 +514,21 @@ export function SpecimenWorkbench() {
             </button>
           )}
         </fieldset>
-        <p className="workbench-shortcuts">Keys: space play/pause, 1–4 views, W wireframe, K skeleton, R reset.</p>
+        <p className="workbench-shortcuts">Keys: space play/pause, 1–4 views, W wireframe, K skeleton, S scale mode, R reset.</p>
       </aside>
 
       <section className="workbench-stats" aria-label="Asset statistics">
         <div className="workbench-stats-heading">
-          <div><span>Species</span><strong>{asset.speciesId}{asset.candidate ? ` / ${asset.candidate}` : ''}</strong></div>
+          <div><span>Species</span><strong>{asset.speciesId}{asset.candidate ? ` / ${asset.candidate}` : ''}{asset.variantId ? ` (${asset.variantId})` : ''}</strong></div>
           <div><span>{asset.state === 'accepted' ? 'Asset version' : 'Candidate state'}</span><strong>{asset.state === 'accepted' ? asset.assetVersion : asset.candidateState ?? 'awaiting_user_acceptance'}</strong></div>
-          <div><span>Reference size</span><strong>{formatSize(asset.referenceSizeMeters)}</strong></div>
+          <div><span>Reference size</span><strong>{formatSize(asset.referenceSizeMeters)} · {asset.referenceSizeKind.replaceAll('_', ' ')}</strong></div>
           <div><span>GLB</span><strong>{formatBytes(assetBytes)}</strong></div>
+          <div><span>Catalog</span><strong>{asset.category ?? 'uncatalogued'}{asset.waterType ? ` · ${asset.waterType}` : ''}{asset.taxonomyConfidence ? ` · ${asset.taxonomyConfidence}` : ''}</strong></div>
+          <div><span>Reference grade</span><strong>{asset.referenceGrade ?? '?'} · {asset.bodyPlan ?? 'plan ?'}</strong></div>
           {asset.state === 'candidate' && (
             <>
               <div><span>Validator</span><strong>{asset.validatorStatus ?? 'pending'}{asset.buildFailedStage ? ` (failed ${asset.buildFailedStage})` : ''}</strong></div>
-              <div><span>Reference grade</span><strong>{asset.referenceGrade ?? '?'} · {asset.bodyPlan ?? 'plan ?'}</strong></div>
+              <div><span>User approval</span><strong>{asset.userApproved ? 'approved look' : 'not recorded'}</strong></div>
             </>
           )}
         </div>
@@ -472,7 +541,15 @@ export function SpecimenWorkbench() {
         <div className="workbench-clips">
           <span>Animation clips</span>
           {stats?.clips.map((clip) => <code key={clip.name}>{clip.name} {clip.duration.toFixed(2)}s</code>) ?? <code>Loading…</code>}
-          {catalog.candidateSource === 'unavailable' && <code>candidate catalog unavailable (dev server only)</code>}
+          {catalog.candidateSource === 'unavailable' && (
+            <code className="workbench-clips-warning">candidate GLBs need the dev server: catalog rows are listed, only accepted assets load</code>
+          )}
+          {asset.visualDebt && asset.visualDebt.length > 0 && (
+            <details className="workbench-visual-debt">
+              <summary>Visual debt ({asset.visualDebt.length})</summary>
+              <ul>{asset.visualDebt.map((item) => <li key={item}>{item}</li>)}</ul>
+            </details>
+          )}
         </div>
       </section>
 

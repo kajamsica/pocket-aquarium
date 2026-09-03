@@ -1,0 +1,3860 @@
+{
+  "schemaVersion": "pocket-aquarium.visual-catalog/v1",
+  "generatedAt": "2026-09-03T22:24:23.662Z",
+  "categories": [
+    "fish",
+    "coral",
+    "invertebrate",
+    "cleanup_crew"
+  ],
+  "assetStatuses": [
+    "accepted",
+    "candidate",
+    "provisional",
+    "failed",
+    "missing"
+  ],
+  "userApprovals": {
+    "blue_hippo_tang": "approved-v2",
+    "brittle_star": "fable-v1",
+    "gem_tang": "fable-v2",
+    "tomini_tang": "fable-v1"
+  },
+  "summary": {
+    "rows": 34,
+    "byCategory": {
+      "fish": 13,
+      "coral": 9,
+      "invertebrate": 3,
+      "cleanup_crew": 9
+    },
+    "byStatus": {
+      "accepted": 1,
+      "candidate": 33,
+      "provisional": 0,
+      "failed": 0,
+      "missing": 0
+    },
+    "candidates": {
+      "total": 55,
+      "loadable": 52,
+      "missing": 3,
+      "userApproved": 4
+    }
+  },
+  "rows": [
+    {
+      "id": "banggai_cardinal",
+      "displayName": "Banggai Cardinalfish",
+      "scientificLabel": "Pterapogon kauderni",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Banggai Cardinalfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/banggai_cardinal/candidates/fable-v1/lod1.glb",
+          "glbSha256": "2d9e21b87528977bf6d8d575dc7954da839dab6b7b00c167ecb5c2815627edd6",
+          "glbSha256Verified": true,
+          "geometryDigest": "0f7bac2e48661a64ca71641723b26cc6c5e2f3e45f317c549a2c54fee8babea3",
+          "statistics": {
+            "triangles": 8290,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/banggai_cardinal/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/banggai_cardinal/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/banggai_cardinal/asset.source.json",
+        "sourceReferences": "art/specimens/banggai_cardinal/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "First dorsal spine tassels are painted (soft ray tips) rather than modelled as separate filaments.",
+        "Second dorsal and anal membranes are single sheared thin shells; the elongated anterior ray is part of the sheet, not a free filament.",
+        "White spot pattern is procedural and identical across builds; real individuals carry unique spot patterns.",
+        "Mouth is the shared plan's small tube cue and reads narrower than the species' large gape (MG 27% SL)."
+      ]
+    },
+    {
+      "id": "black_storm_ocellaris",
+      "displayName": "Black Storm Ocellaris",
+      "scientificLabel": "Amphiprion ocellaris",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Black Storm Ocellaris",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/black_storm_ocellaris/candidates/fable-v1/lod1.glb",
+          "glbSha256": "76283052d28cc706cee922adb96ead1061c9eba73f985a4ace38abc1bc39c175",
+          "glbSha256Verified": true,
+          "geometryDigest": "25dc999c59d569cf53eec6b929795c5c1d7e78cfc556cec6a183373f889c9b66",
+          "statistics": {
+            "triangles": 7976,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/black_storm_ocellaris/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/black_storm_ocellaris/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/black_storm_ocellaris/asset.source.json",
+        "sourceReferences": "art/specimens/black_storm_ocellaris/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Storm pattern is bilaterally symmetric; real Black Storms are asymmetric and individually unique.",
+        "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays.",
+        "Eye is a flattened ellipsoid seated in the head; no eyelid ring or corneal bulge."
+      ]
+    },
+    {
+      "id": "blue_hippo_tang",
+      "displayName": "Blue Hippo Tang",
+      "scientificLabel": "Paracanthurus hepatus",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.25,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.2.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "alt-v2",
+          "variantId": null,
+          "displayName": "Blue Hippo Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/blue_hippo_tang/candidates/alt-v2/lod1.glb",
+          "glbSha256": "80a3061d811caaa80ae641dc55fa6d440abb44d3e34e4eaf2535dcbb858426d4",
+          "glbSha256Verified": true,
+          "geometryDigest": "73468be36868c08818f2ffeffb9aa2951fe98404a6b9146346a5a3a854f97dcb",
+          "statistics": {
+            "triangles": 8188,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.25,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/blue_hippo_tang/candidates/alt-v2/renders/author-preview.png",
+            "threeView": "art/specimens/blue_hippo_tang/candidates/alt-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "approved-v2",
+          "variantId": null,
+          "displayName": "Blue Hippo Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/blue_hippo_tang/candidates/approved-v2/lod1.glb",
+          "glbSha256": "01f81984a1e5f734244076abf5e1abe6faaae8d6c5984378a5bdc731985924df",
+          "glbSha256Verified": true,
+          "geometryDigest": "73468be36868c08818f2ffeffb9aa2951fe98404a6b9146346a5a3a854f97dcb",
+          "statistics": {
+            "triangles": 8188,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.25,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/blue_hippo_tang/candidates/approved-v2/renders/author-preview.png",
+            "threeView": "art/specimens/blue_hippo_tang/candidates/approved-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/blue_hippo_tang/asset.source.json",
+        "sourceReferences": "art/specimens/blue_hippo_tang/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Scalpel is a smooth ellipsoid rather than a hinged spine in a groove.",
+        "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays."
+      ]
+    },
+    {
+      "id": "diamond_goby",
+      "displayName": "Diamond Goby",
+      "scientificLabel": "Valenciennea puellaris",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Diamond Goby",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/diamond_goby/candidates/fable-v1/lod1.glb",
+          "glbSha256": "5e943d82d975689724557aad097635af9d6b28d54edd6b23923441bbf664d07b",
+          "glbSha256Verified": true,
+          "geometryDigest": "fa5017a70c37f7c76340898e8f9be7a6c22b488fd805c20e37dcd5aa1b71e02a",
+          "statistics": {
+            "triangles": 8388,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "idle",
+              "sift",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "sift"
+          },
+          "clipLoops": {
+            "idle": true,
+            "sift": false,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/diamond_goby/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/diamond_goby/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "sift"
+      },
+      "provenance": {
+        "source": "art/specimens/diamond_goby/asset.source.json",
+        "sourceReferences": "art/specimens/diamond_goby/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Pelvic fins are two separate ventral fans; the low frenum joining Valenciennea pelvic fins is not modelled.",
+        "The sift gape is a rigid downward tilt of the single mouth cue (the shared fish plan carries both lips on one Jaw bone); there is no separately hinged lower jaw.",
+        "Fin ray relief is a normal map only; membranes are single thin shells without modelled rays.",
+        "Eyes are flattened lateral discs seated in the head contour; the dorsolateral bulge of a goby eye above the head profile is only approximated."
+      ]
+    },
+    {
+      "id": "epaulette_shark",
+      "displayName": "Epaulette Shark",
+      "scientificLabel": "Hemiscyllium ocellatum",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.9,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Epaulette Shark",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/epaulette_shark/candidates/fable-v1/lod1.glb",
+          "glbSha256": "7174c53ecceae5a42394b36086f2aa305e922a88250cfca80580258ccaec2ba1",
+          "glbSha256Verified": true,
+          "geometryDigest": "2eec53d73f9e2de349a563c92cc7f81ad1e883b82fb388ca75f7b9c7cec54a90",
+          "statistics": {
+            "triangles": 9614,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.9,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/epaulette_shark/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/epaulette_shark/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/epaulette_shark/asset.source.json",
+        "sourceReferences": "art/specimens/epaulette_shark/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Eye is a round disc; the real eye is a horizontally oval slit with a raised supraorbital ridge.",
+        "Gill slits 1-4, spiracles, mouth, labial furrows and nostrils are painted cues; only the fifth gill slit has relief.",
+        "Caudal subterminal notch is not modelled; the caudal is a low rounded heterocercal blade.",
+        "Paired fins are single thin shells so the spotted dorsal pattern also appears on their ventral face.",
+        "Spot pattern is bilaterally mirrored (painted in a folded arc coordinate so the dorsal midline has no seam); real spotting is asymmetric."
+      ]
+    },
+    {
+      "id": "gem_tang",
+      "displayName": "Gem Tang",
+      "scientificLabel": "Zebrasoma gemmatum",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.2,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.2.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Gem Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/gem_tang/candidates/fable-v1/lod1.glb",
+          "glbSha256": "9dc470a58d8a9b56213a2d0e5924b186db5c92131c31929ed199d29dbd1de53b",
+          "glbSha256Verified": true,
+          "geometryDigest": "1bf2dcc1645c66525a16a98eea340b0e4ea776c7abac879a9fbf31057a4973c4",
+          "statistics": {
+            "triangles": 8768,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.2,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/gem_tang/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/gem_tang/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Gem Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/gem_tang/candidates/fable-v2/lod1.glb",
+          "glbSha256": "af65712b54f44682c627998e3a16bfc132bba649c50b63961cdf7b18bde31d74",
+          "glbSha256Verified": true,
+          "geometryDigest": "88bfbd8f51c84e523f69f7062c4fb9207473499788def105c54855b39771a824",
+          "statistics": {
+            "triangles": 9248,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.2,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/gem_tang/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/gem_tang/candidates/fable-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/gem_tang/asset.source.json",
+        "sourceReferences": "art/specimens/gem_tang/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Fin ray relief is painted (normal map) rather than modelled.",
+        "Spot pattern is mirrored left/right (one lattice shared by both flanks) to avoid a UV seam on the dorsal ridge.",
+        "Lips are a simple cue tube; the crenulated Zebrasoma lip margin is not modelled.",
+        "Roughness and normal PNGs are written blank by the shared lib/textures.py at the build commit (colorspace set after pixel upload); the candidate needs a rebuild once the shared fix lands (see /tmp/pa-lanes/gem_tang/shared-change-request.md)."
+      ]
+    },
+    {
+      "id": "ocellaris",
+      "displayName": "Ocellaris Clownfish",
+      "scientificLabel": "Amphiprion ocellaris",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "accepted",
+      "assetVersion": "1.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": "src/assets/specimens/ocellaris/v1/lod1.glb",
+        "sha256": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+        "clips": [
+          "burst",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 9052,
+          "materials": 6,
+          "bones": 14,
+          "clips": [
+            "burst",
+            "idle",
+            "swim"
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "name": "fable-baseline",
+          "variantId": null,
+          "displayName": "Ocellaris Clownfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "missing",
+          "buildFailedStage": null,
+          "assetVersion": "1.1.0",
+          "loadable": true,
+          "glb": "art/specimens/ocellaris/candidates/fable-baseline/lod1.glb",
+          "glbSha256": "6a8cae395ac88d77d37c53e645620e34edc89aae992983016e7b567032ff43bc",
+          "glbSha256Verified": true,
+          "geometryDigest": "ed88d64ef40c35e650c2245588ace9154bf91deea6cf860713c67e0a9ea86042",
+          "statistics": {
+            "triangles": 9052,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": null,
+          "clipLoops": null,
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/ocellaris/candidates/fable-baseline/renders/author-preview.png",
+            "threeView": null
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Ocellaris Clownfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "2.0.0-candidate",
+          "loadable": true,
+          "glb": "art/specimens/ocellaris/candidates/fable-v2/lod1.glb",
+          "glbSha256": "dabfa037d0764a3c0abb1ab3c9ab3277adef8ef5301c8d56d34b9ffddd2bfae4",
+          "glbSha256Verified": true,
+          "geometryDigest": "93126a478b8703f414f6d32ec308e4587f0d7cf27f9a71e5e1a61819468bab79",
+          "statistics": {
+            "triangles": 8004,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/ocellaris/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/ocellaris/candidates/fable-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/ocellaris/asset.source.json",
+        "sourceReferences": "art/specimens/ocellaris/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays or the fine white outer rim seen on some wild fish.",
+        "Eye is a flattened ellipsoid seated in the head; no eyelid ring or corneal bulge.",
+        "Bar edges are bilaterally symmetric; live fish show small left/right differences in the middle-bar bulge.",
+        "Cross-sections are inferred from general Pomacentridae body plans; no calibrated top/front orthographic reference was available."
+      ]
+    },
+    {
+      "id": "purple_tang",
+      "displayName": "Purple Tang",
+      "scientificLabel": "Zebrasoma xanthurum",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.22,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.2.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Purple Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/purple_tang/candidates/fable-v1/lod1.glb",
+          "glbSha256": "a9d744a4d73bcdda1d30dcf91f87f83a51f0fcbc18e5130f72c02b3062b71841",
+          "glbSha256Verified": true,
+          "geometryDigest": "e06f7aadb8f7aeb7eef3283046d9abf2bf533e8fac326f65f9ead6e915c5362e",
+          "statistics": {
+            "triangles": 8576,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.22,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/purple_tang/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/purple_tang/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Purple Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/purple_tang/candidates/fable-v2/lod1.glb",
+          "glbSha256": "3da76e8badbcd31565ce7154906834482c051e5443d56b6369f7c75033a309af",
+          "glbSha256Verified": true,
+          "geometryDigest": "5a6b7e3e35a531fc4e37d34bdd09ceecc776ce49ca0f52f86626a59c347c9b62",
+          "statistics": {
+            "triangles": 9232,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.22,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/purple_tang/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/purple_tang/candidates/fable-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/purple_tang/asset.source.json",
+        "sourceReferences": "art/specimens/purple_tang/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Head spots and flank lines are procedural approximations of the real pattern density and irregularity.",
+        "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays.",
+        "Roughness and normal PNGs come out flat black with the shared textures.write_image at this commit (colourspace is set after the pixels); see the lane's shared-change request. Skin reads glossier than authored until the shared fix lands."
+      ]
+    },
+    {
+      "id": "royal_gramma",
+      "displayName": "Royal Gramma",
+      "scientificLabel": "Gramma loreto",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Royal Gramma",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/royal_gramma/candidates/fable-v1/lod1.glb",
+          "glbSha256": "04e9b1e77d15116be3f4a893e03c2985857e168d8274dbda5f927f6783b2b6d1",
+          "glbSha256Verified": true,
+          "geometryDigest": "26a265b30af48aae5e15969f37dc9df203729b2430f00846d2e1f585c4bbc81c",
+          "statistics": {
+            "triangles": 7784,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/royal_gramma/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/royal_gramma/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/royal_gramma/asset.source.json",
+        "sourceReferences": "art/specimens/royal_gramma/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Pelvic fin is a pointed fan peaked at its middle ray; the real first soft ray is a single trailing filament.",
+        "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays.",
+        "Eye-line and yellow head streaks are painted in body texture space and are slightly softened where the head tapers."
+      ]
+    },
+    {
+      "id": "six_line_wrasse",
+      "displayName": "Six-Line Wrasse",
+      "scientificLabel": "Pseudocheilinus hexataenia",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.075,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.2.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Six-Line Wrasse",
+          "state": "missing",
+          "manifest": "missing",
+          "validatorStatus": null,
+          "buildStatus": "failed",
+          "buildFailedStage": "source",
+          "assetVersion": null,
+          "loadable": false,
+          "glb": null,
+          "glbSha256": null,
+          "glbSha256Verified": false,
+          "geometryDigest": "c1e0160a993482f4ff071c7c94c34e982479da387f8d891a717e128762d653d5",
+          "statistics": null,
+          "clipRoles": null,
+          "clipLoops": null,
+          "referenceSizeMeters": null,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/six_line_wrasse/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/six_line_wrasse/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Six-Line Wrasse",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/six_line_wrasse/candidates/fable-v2/lod1.glb",
+          "glbSha256": "fab550f5d40505a19147aa2d2f54cda7a76779f967c64490dcdde494fc53ea9c",
+          "glbSha256Verified": true,
+          "geometryDigest": "d1005a51c6df4ecc7ea0ae2f499e4d756c424d75870634a87e2b87f9f9b01b4f",
+          "statistics": {
+            "triangles": 8922,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.075,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/six_line_wrasse/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/six_line_wrasse/candidates/fable-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/six_line_wrasse/asset.source.json",
+        "sourceReferences": "art/specimens/six_line_wrasse/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "The two white eye lines are straight ellipsoid adornments across the iris, not curved iris markings, and the double pupil of the modified cornea is not modelled.",
+        "Head markings are the six body stripes continued and converging onto the head; the finer blue arabesques of the cheek are not painted.",
+        "Fin rays are normal-map relief only; membranes are single thin shells without modelled rays or the filamentous anterior anal spines.",
+        "Built against the committed shared lib: textures.write_image saves Non-Color images (roughness, normal) black, so renders show a glossier body than authored until the shared fix lands."
+      ]
+    },
+    {
+      "id": "tomini_tang",
+      "displayName": "Tomini Tang",
+      "scientificLabel": "Ctenochaetus tominiensis",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "C",
+      "assetStatus": "candidate",
+      "assetVersion": "0.2.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Tomini Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/tomini_tang/candidates/fable-v1/lod1.glb",
+          "glbSha256": "02de75d52ad19b33ad262f268d6c8486881bbed50e963a1d70aade244bb1ef52",
+          "glbSha256Verified": true,
+          "geometryDigest": "46023e82c8d3e0b0589d286feeec8a2c732eb80acecc5abae2b712e5e7684ab2",
+          "statistics": {
+            "triangles": 8092,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/tomini_tang/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/tomini_tang/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/tomini_tang/asset.source.json",
+        "sourceReferences": "art/specimens/tomini_tang/source-references.json",
+        "referenceGrade": "C"
+      },
+      "visualDebt": [
+        "Bristletooth mouth is a simple protruding tube; no comb-like teeth.",
+        "Reference grade C: fin colour extents approximated from descriptions."
+      ]
+    },
+    {
+      "id": "yellow_tang",
+      "displayName": "Yellow Tang",
+      "scientificLabel": "Zebrasoma flavescens",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.2,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.2.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Yellow Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/yellow_tang/candidates/fable-v1/lod1.glb",
+          "glbSha256": "a38c46c93dc87ab5e101e644a4d61be56059746b2691b3781b65a2b585e3f6b5",
+          "glbSha256Verified": true,
+          "geometryDigest": "84d145f12acd880af0cc32dcc9c1d4b78df0cff804c9197d31a5eed10d8cf9fe",
+          "statistics": {
+            "triangles": 8576,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.2,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/yellow_tang/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/yellow_tang/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Yellow Tang",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/yellow_tang/candidates/fable-v2/lod1.glb",
+          "glbSha256": "0fe62d2b8bf45ce6cbced5fc574de2d210658208946b56b74bd6ef40e60902b1",
+          "glbSha256Verified": true,
+          "geometryDigest": "e5dd08f98c7411a4155f0bba3a17509b539f93a749e45a6423a0e0cb1053ae12",
+          "statistics": {
+            "triangles": 9056,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.2,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/yellow_tang/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/yellow_tang/candidates/fable-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/yellow_tang/asset.source.json",
+        "sourceReferences": "art/specimens/yellow_tang/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Sail fins are smooth thin shells; ray relief is a normal map, not modelled rays.",
+        "Scalpel is a smooth white ellipsoid, not a hinged spine in a groove.",
+        "Fin membrane translucency is a constant alpha ramp rather than a measured transmission.",
+        "Body roughness and normal PNGs are written black by the committed shared textures.write_image (colourspace set after the pixel write); the fix is pending in shared code, so scale relief is currently painted into the albedo only."
+      ]
+    },
+    {
+      "id": "watchman_goby",
+      "displayName": "Yellow Watchman Goby",
+      "scientificLabel": "Cryptocentrus cinctus",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Yellow Watchman Goby",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/watchman_goby/candidates/fable-v1/lod1.glb",
+          "glbSha256": "07ddb89826a22a1dbd4c35113e7de41afb740c3cac5b7a4379d89886979b19c6",
+          "glbSha256Verified": true,
+          "geometryDigest": "07d42fd61ad58b47ab069acb2a71a4f0ce82577dc45c4e81ae0548a6540b4320",
+          "statistics": {
+            "triangles": 8324,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/watchman_goby/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/watchman_goby/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/watchman_goby/asset.source.json",
+        "sourceReferences": "art/specimens/watchman_goby/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Pelvic disc is two converging thin sheets rather than a single fused cup with a frenum.",
+        "Eyes are lateral flattened ellipsoids; real goby eyes bulge dorsolaterally with a visible upper rim.",
+        "Fin rays are normal-map relief on single thin membranes; no modelled spines on the first dorsal.",
+        "Four to five dusky bars are painted faint (yellow colour phase); the pale colour phase is not a variant yet."
+      ]
+    },
+    {
+      "id": "acropora_branching",
+      "displayName": "Acropora (branching SPS)",
+      "scientificLabel": "Acropora sp.",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "branching_sps_coral",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-bushy_pink",
+          "variantId": "bushy_pink",
+          "displayName": "Acropora digitate, pink",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/lod1.glb",
+          "glbSha256": "566806a6801b1c7cebe2dfd5d697bb14570471553bcfbed594ee6ad2ca40e805",
+          "glbSha256Verified": true,
+          "geometryDigest": "062bb8fe567801c916fa5badc02ee6f118fc549d6a5b117ccf5b805d8dd4c24d",
+          "statistics": {
+            "triangles": 12276,
+            "materials": 3,
+            "bones": 12,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-staghorn_blue",
+          "variantId": "staghorn_blue",
+          "displayName": "Acropora staghorn, steel blue with pale tips",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/lod1.glb",
+          "glbSha256": "49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee",
+          "glbSha256Verified": true,
+          "geometryDigest": "03f867d4118f8772c2aaf20fc2269ad8d20a4c7aaaeda170c5192e0e4bcdf179",
+          "statistics": {
+            "triangles": 14960,
+            "materials": 3,
+            "bones": 9,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-staghorn_green_purple_tips",
+          "variantId": "staghorn_green_purple_tips",
+          "displayName": "Acropora staghorn, green with purple tips",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/lod1.glb",
+          "glbSha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
+          "glbSha256Verified": true,
+          "geometryDigest": "d1ae2dd481bd2521ae77d609c9e285fac23b1c6ee00e99138dddb005aee8d6ac",
+          "statistics": {
+            "triangles": 14960,
+            "materials": 3,
+            "bones": 9,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-table_blue",
+          "variantId": "table_blue",
+          "displayName": "Acropora table, blue",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/lod1.glb",
+          "glbSha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
+          "glbSha256Verified": true,
+          "geometryDigest": "f6eca79dcff54709edc9dfd8971e840687d51b025da2f09a50d2c11e5c4127c7",
+          "statistics": {
+            "triangles": 17248,
+            "materials": 3,
+            "bones": 10,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-table_green",
+          "variantId": "table_green",
+          "displayName": "Acropora table, green with cream tips",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/acropora_branching/candidates/fable-v1-table_green/lod1.glb",
+          "glbSha256": "a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc",
+          "glbSha256Verified": true,
+          "geometryDigest": "9b982f9e3847d59785eb28b5b2ef3296f358775a34e4ff4f5ab42010477ea8c7",
+          "statistics": {
+            "triangles": 17248,
+            "materials": 3,
+            "bones": 10,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-table_green/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-table_green/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "bushy_pink",
+          "displayName": "Acropora digitate, pink"
+        },
+        {
+          "id": "hairy_green",
+          "displayName": "Acropora millepora style, green with pale-green polyps"
+        },
+        {
+          "id": "staghorn_blue",
+          "displayName": "Acropora staghorn, steel blue with pale tips"
+        },
+        {
+          "id": "staghorn_green_purple_tips",
+          "displayName": "Acropora staghorn, green with purple tips"
+        },
+        {
+          "id": "table_blue",
+          "displayName": "Acropora table, blue"
+        },
+        {
+          "id": "table_green",
+          "displayName": "Acropora table, green with cream tips"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/acropora_branching/asset.source.json",
+        "sourceReferences": "art/specimens/acropora_branching/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Polyps carry six tentacle tubes instead of the twelve of a real Acropora polyp (LOD1 triangle budget).",
+        "Only the prominent radial corallites are modelled (up to thirteen per branch, some dropped where a neighbouring branch is too close); the dense field of small radials is carried by the texture relief and roughness.",
+        "Corallites are flared tubes with a recessed calice; the nariform (longer lower lip) profile and the septa are texture only.",
+        "The tabular plate is a lobed, radially ridged solid lens rather than a perforated mesh of anastomosing horizontal branchlets.",
+        "Retraction folds the tentacles to about half length (0.3 of the length on the hairy form) rather than fully into the calice.",
+        "Polyp crowns are one rigid unskinned mesh per branch cluster with morph targets rather than skinned geometry; this works around a glTF importer and runtime-gate interaction, see the lane shared-change-request. Per-polyp variation comes from seeded tentacle geometry, per-polyp flutter directions and two interleaved flutter halves per cluster, not from independent per-polyp phases.",
+        "The hairy form is the digitate layout with short thick branchlets; A. millepora's plate-like fused base and the coenosteum spinules are texture only."
+      ]
+    },
+    {
+      "id": "anacropora",
+      "displayName": "Anacropora",
+      "scientificLabel": "Anacropora sp.",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "branching_sps_coral",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-brown_pink_tips",
+          "variantId": "brown_pink_tips",
+          "displayName": "Anacropora (tan brown, pink-purple tips)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/anacropora/candidates/fable-v1-brown_pink_tips/lod1.glb",
+          "glbSha256": "d6325876d75889611df0fc1c04e49a1a47cf13c7d7ccdf1795c4cb465461d3ae",
+          "glbSha256Verified": true,
+          "geometryDigest": "94c6c6dea06b76ff5c2881e64e08f5e56e0e8908f4e7001af895aefaecda835f",
+          "statistics": {
+            "triangles": 12900,
+            "materials": 3,
+            "bones": 27,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/anacropora/candidates/fable-v1-brown_pink_tips/renders/author-preview.png",
+            "threeView": "art/specimens/anacropora/candidates/fable-v1-brown_pink_tips/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-green",
+          "variantId": "green",
+          "displayName": "Anacropora (green, pale lime tips)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/anacropora/candidates/fable-v1-green/lod1.glb",
+          "glbSha256": "d2240c0653653ca8a9a07d31215d6523bce1f414146689f7ec06ad4259b34b2a",
+          "glbSha256Verified": true,
+          "geometryDigest": "86d7665705bdcfaa59ca68a0dbd34a654ff0e0930426abf92269f366183c445c",
+          "statistics": {
+            "triangles": 11208,
+            "materials": 3,
+            "bones": 21,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/anacropora/candidates/fable-v1-green/renders/author-preview.png",
+            "threeView": "art/specimens/anacropora/candidates/fable-v1-green/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "brown_pink_tips",
+          "displayName": "Anacropora (tan brown, pink-purple tips)"
+        },
+        {
+          "id": "green",
+          "displayName": "Anacropora (green, pale lime tips)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/anacropora/asset.source.json",
+        "sourceReferences": "art/specimens/anacropora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Polyps carry six tentacle tubes instead of the twelve of a real acroporid polyp (LOD1 triangle budget).",
+        "Only about one corallite in three carries a modelled polyp; the remaining corallites are painted pits with a raised lower lip in the branch texture.",
+        "Loose anastomosis (branches fusing where they touch) is not modelled; every branch is a separate closed tube kept clear of its neighbours.",
+        "Polyps of one branch share one cluster bone: lean, swirl and pulsing are uniform along the branch apart from a bend gradient toward the tip and per-polyp skin gain; retraction pulls polyps toward the branch axis, so on curved branches the retracted depth varies slightly along the branch.",
+        "The reticulate coenosteum and corallite septa are texture relief only."
+      ]
+    },
+    {
+      "id": "stylophora",
+      "displayName": "Blueberry Stylophora",
+      "scientificLabel": "Stylophora pistillata",
+      "taxonomyConfidence": "species",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "branching_sps_coral",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-blueberry",
+          "variantId": "blueberry",
+          "displayName": "Blueberry Stylophora (blue-violet, lavender polyps)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/stylophora/candidates/fable-v1-blueberry/lod1.glb",
+          "glbSha256": "d61420f0a95f375723687b4ab747e8b1a1f637ac227719aa7bbc89606689a6e1",
+          "glbSha256Verified": true,
+          "geometryDigest": "ca6436c9bea22781fdaae9f2574687eba047d2c87f95c8c8a1f889a53587c0c1",
+          "statistics": {
+            "triangles": 18116,
+            "materials": 3,
+            "bones": 24,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.1,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/stylophora/candidates/fable-v1-blueberry/renders/author-preview.png",
+            "threeView": "art/specimens/stylophora/candidates/fable-v1-blueberry/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-pink",
+          "variantId": "pink",
+          "displayName": "Pink Stylophora (pink-lilac wild form)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/stylophora/candidates/fable-v1-pink/lod1.glb",
+          "glbSha256": "bd7b9588ea9f8728577f3c965bfc74f1250fc6035d11cd6911418ed35bdfe79d",
+          "glbSha256Verified": true,
+          "geometryDigest": "810c284006ad9e635440d3025db8c56d836cbe16cdc92629720dbf04aa4a8dbe",
+          "statistics": {
+            "triangles": 16196,
+            "materials": 3,
+            "bones": 22,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.1,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/stylophora/candidates/fable-v1-pink/renders/author-preview.png",
+            "threeView": "art/specimens/stylophora/candidates/fable-v1-pink/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "blueberry",
+          "displayName": "Blueberry Stylophora (blue-violet, lavender polyps)"
+        },
+        {
+          "id": "pink",
+          "displayName": "Pink Stylophora (pink-lilac wild form)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/stylophora/asset.source.json",
+        "sourceReferences": "art/specimens/stylophora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Modelled polyps are the prominent fraction of the real dense field (about one nub per 3 mm of tissue); the remaining corallites and their tiny polyps are suggested by the painted calices, hoods and polyp speckle.",
+        "Each polyp is a four sided nub with a slightly flared crown and recessed mouth; the six short tentacles of a real Stylophora polyp are painted as crown grooves, not modelled, so polyps read as small pale blocks at close range.",
+        "Polyps are shown extended; in the wild Stylophora pistillata extends its polyps mainly at night (WoRMS description), the aquarium blueberry morph is commonly seen with polyps out by day.",
+        "Retraction pulls each crown toward its branch axis, so polyps on the rounded knob within about 40 degrees of the apex only partially retract and slide slightly toward the branch axis.",
+        "Fork blades are elliptical tube sections; the flattened, slightly spatulate tips of some wild colonies are not modelled.",
+        "The mound apex cap keeps the polar fan UV of the dome loft, so its tissue texture streaks radially at the very top (mostly hidden under the central leader).",
+        "The pink seed keeps three primaries unforked because the compact layout leaves less than the 2.2 mm minimum branch gap for their forks; the blueberry seed forks all primaries but one.",
+        "Skeleton is static by design (user rule for stony corals): no branch flex in any clip."
+      ]
+    },
+    {
+      "id": "chalice_coral",
+      "displayName": "Chalice Coral",
+      "scientificLabel": "aquarium \"chalice\" corals (Echinophyllia / Mycedium / Oxypora group; Lobophylliidae and Merulinidae)",
+      "taxonomyConfidence": "group",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "encrusting_coral",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-jelly_bean",
+          "variantId": "jelly_bean",
+          "displayName": "Chalice Coral (jelly bean: dark plate, candy blotches)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/chalice_coral/candidates/fable-v1-jelly_bean/lod1.glb",
+          "glbSha256": "e2dc5acfbee6673838dd56a2cf4f04c5fbefd1a5134678492d0c9514979e0276",
+          "glbSha256Verified": true,
+          "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+          "statistics": {
+            "triangles": 15036,
+            "materials": 3,
+            "bones": 17,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/chalice_coral/candidates/fable-v1-jelly_bean/renders/author-preview.png",
+            "threeView": "art/specimens/chalice_coral/candidates/fable-v1-jelly_bean/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-purple_orange_eyes",
+          "variantId": "purple_orange_eyes",
+          "displayName": "Chalice Coral (purple plate, orange eyes)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes/lod1.glb",
+          "glbSha256": "c33b0513c019d448c4767d48d0a8d5667ecb6e59d6dfaeead534b06a98d66912",
+          "glbSha256Verified": true,
+          "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+          "statistics": {
+            "triangles": 15036,
+            "materials": 3,
+            "bones": 17,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes/renders/author-preview.png",
+            "threeView": "art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-red_green_eyes",
+          "variantId": "red_green_eyes",
+          "displayName": "Chalice Coral (red plate, green eyes)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/chalice_coral/candidates/fable-v1-red_green_eyes/lod1.glb",
+          "glbSha256": "e13e9cfba773f55b7567cfa3ce1f7c20f4a272494244af23491eaed08113ce10",
+          "glbSha256Verified": true,
+          "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+          "statistics": {
+            "triangles": 15036,
+            "materials": 3,
+            "bones": 17,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/chalice_coral/candidates/fable-v1-red_green_eyes/renders/author-preview.png",
+            "threeView": "art/specimens/chalice_coral/candidates/fable-v1-red_green_eyes/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "jelly_bean",
+          "displayName": "Chalice Coral (jelly bean: dark plate, candy blotches)"
+        },
+        {
+          "id": "purple_orange_eyes",
+          "displayName": "Chalice Coral (purple plate, orange eyes)"
+        },
+        {
+          "id": "red_green_eyes",
+          "displayName": "Chalice Coral (red plate, green eyes)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/chalice_coral/asset.source.json",
+        "sourceReferences": "art/specimens/chalice_coral/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Septa inside the calice are painted (albedo and normal map) rather than modelled as ridges.",
+        "Feeding tentacles are simple tapered tubes without a bulbous acrosphere; retraction scales them into the calice instead of morphing tissue over them.",
+        "Undulation of the plate is a smooth noise field; real chalice margins fold and lobe more sharply."
+      ]
+    },
+    {
+      "id": "goniopora",
+      "displayName": "Goniopora (flowerpot coral)",
+      "scientificLabel": "Goniopora sp.",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "lps_coral",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-green_pink",
+          "variantId": "green_pink",
+          "displayName": "Goniopora, green polyps with pink oral discs",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/goniopora/candidates/fable-v1-green_pink/lod1.glb",
+          "glbSha256": "44d028d0810d606ea751f8fd407368bdd039a23b1966d5620e98d7e71ffbc64c",
+          "glbSha256Verified": true,
+          "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+          "statistics": {
+            "triangles": 17208,
+            "materials": 4,
+            "bones": 27,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.1,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/goniopora/candidates/fable-v1-green_pink/renders/author-preview.png",
+            "threeView": "art/specimens/goniopora/candidates/fable-v1-green_pink/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-purple_green",
+          "variantId": "purple_green",
+          "displayName": "Goniopora, purple polyps with green oral discs",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/goniopora/candidates/fable-v1-purple_green/lod1.glb",
+          "glbSha256": "13b8236f7267cf5fcc183199e2593f6502376e5f95ec4cf04228dc1962aa81b5",
+          "glbSha256Verified": true,
+          "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+          "statistics": {
+            "triangles": 17208,
+            "materials": 4,
+            "bones": 27,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.1,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/goniopora/candidates/fable-v1-purple_green/renders/author-preview.png",
+            "threeView": "art/specimens/goniopora/candidates/fable-v1-purple_green/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-red_brown",
+          "variantId": "red_brown",
+          "displayName": "Goniopora, red-brown polyps with pale green oral discs",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/goniopora/candidates/fable-v1-red_brown/lod1.glb",
+          "glbSha256": "c8ed9059e590fc5f646ae0b0d7a71f08f0c62c2f813d514bce499f2a3cc83de3",
+          "glbSha256Verified": true,
+          "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+          "statistics": {
+            "triangles": 17208,
+            "materials": 4,
+            "bones": 27,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.1,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/goniopora/candidates/fable-v1-red_brown/renders/author-preview.png",
+            "threeView": "art/specimens/goniopora/candidates/fable-v1-red_brown/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "green_pink",
+          "displayName": "Goniopora, green polyps with pink oral discs"
+        },
+        {
+          "id": "purple_green",
+          "displayName": "Goniopora, purple polyps with green oral discs"
+        },
+        {
+          "id": "red_brown",
+          "displayName": "Goniopora, red-brown polyps with pale green oral discs"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/goniopora/asset.source.json",
+        "sourceReferences": "art/specimens/goniopora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Polyp retraction is a partial contraction (stalks shorten to roughly 60 percent and deflate 22 percent radially); polyps do not vanish fully into their calices.",
+        "Tentacles gather toward the oral axis through the head's radial deflation only; the authored fold shape key is not baked because the pinned glTF importer renames animated skinned meshes and the runtime parity gate rejects that.",
+        "Corallite calices and septa are painted (albedo/normal) rather than modelled as recessed cups.",
+        "Tentacles are 3-segment tubes with a single shared bone per polyp; no per-tentacle motion."
+      ]
+    },
+    {
+      "id": "millepora",
+      "displayName": "Millepora (fire coral)",
+      "scientificLabel": "Millepora sp.",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "hydrocoral_colony",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-blade",
+          "variantId": "blade",
+          "displayName": "Millepora (fire coral, blade form)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/millepora/candidates/fable-v1-blade/lod1.glb",
+          "glbSha256": "77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780",
+          "glbSha256Verified": true,
+          "geometryDigest": "cb6ab153ddc685be23268ebc5d22851819f944c846534fb101ffd772e0a1d6ae",
+          "statistics": {
+            "triangles": 16300,
+            "materials": 3,
+            "bones": 26,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/millepora/candidates/fable-v1-blade/renders/author-preview.png",
+            "threeView": "art/specimens/millepora/candidates/fable-v1-blade/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-branching",
+          "variantId": "branching",
+          "displayName": "Millepora (fire coral, branching form)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/millepora/candidates/fable-v1-branching/lod1.glb",
+          "glbSha256": "9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634",
+          "glbSha256Verified": true,
+          "geometryDigest": "93925401aec570f1d3eed9931020348203d0a6f9a6a92a3334fcf40c88dca1c5",
+          "statistics": {
+            "triangles": 13552,
+            "materials": 3,
+            "bones": 26,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/millepora/candidates/fable-v1-branching/renders/author-preview.png",
+            "threeView": "art/specimens/millepora/candidates/fable-v1-branching/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "blade",
+          "displayName": "Millepora (fire coral, blade form)"
+        },
+        {
+          "id": "branching",
+          "displayName": "Millepora (fire coral, branching form)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/millepora/asset.source.json",
+        "sourceReferences": "art/specimens/millepora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Dactylozooids are drawn about twice their real diameter (0.28 mm radius) and at a fraction of their real density so they read at LOD1; real colonies carry thousands of finer hairs per square centimetre.",
+        "Gastropores and dactylopores are painted as cyclosystem speckle in the albedo and normal maps, not modelled as holes.",
+        "Hairs in one cluster share a bone: bending comes from root-to-tip weight blending plus baked per-hair lean and gain, so hairs within a cluster move in step with a small twist gradient; hair-vs-hair clearance is not proven.",
+        "Branching form: dichotomous forks are fused intersecting tubes (parent knuckle plus two children) rather than a single smoothed junction; sibling branches are not clearance-checked against each other at the fork.",
+        "Blade form: blades are separate lofts that root in the encrusting base and do not fuse into the honeycomb plates seen in M. platyphylla."
+      ]
+    },
+    {
+      "id": "montipora",
+      "displayName": "Montipora",
+      "scientificLabel": "Montipora sp. (Acroporidae)",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "montipora_colony",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-capricornis_plating",
+          "variantId": "capricornis_plating",
+          "displayName": "Montipora capricornis (orange whorling plate, green polyps)",
+          "state": "missing",
+          "manifest": "missing",
+          "validatorStatus": null,
+          "buildStatus": "failed",
+          "buildFailedStage": "source",
+          "assetVersion": null,
+          "loadable": false,
+          "glb": null,
+          "glbSha256": null,
+          "glbSha256Verified": false,
+          "geometryDigest": "0a2e942b7315f12730fcf6345bfe825e3e5101fb54aa9e0da0bc354e6c932fc5",
+          "statistics": null,
+          "clipRoles": null,
+          "clipLoops": null,
+          "referenceSizeMeters": null,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/renders/author-preview.png",
+            "threeView": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-digitata_branching",
+          "variantId": "digitata_branching",
+          "displayName": "Montipora digitata (purple fingers, green polyps)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/montipora/candidates/fable-v1-digitata_branching/lod1.glb",
+          "glbSha256": "6ed04e87e2fdb8510cb68fc28264cee3a10ab81fd28df5ec717e109793d3b8e1",
+          "glbSha256Verified": true,
+          "geometryDigest": "fddd1ecd194020f64be2c8484bdf3b0612208096a86d61acae12aec4c63b9314",
+          "statistics": {
+            "triangles": 13296,
+            "materials": 4,
+            "bones": 31,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/author-preview.png",
+            "threeView": "art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-encrusting",
+          "variantId": "encrusting",
+          "displayName": "Montipora encrusting (red sheet, green polyps)",
+          "state": "missing",
+          "manifest": "missing",
+          "validatorStatus": null,
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": null,
+          "loadable": false,
+          "glb": null,
+          "glbSha256": null,
+          "glbSha256Verified": false,
+          "geometryDigest": "d53509bb55512fb337016602bcde8d99c4a7d54152562f74358f92e5da08741f",
+          "statistics": null,
+          "clipRoles": null,
+          "clipLoops": null,
+          "referenceSizeMeters": null,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/author-preview.png",
+            "threeView": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "capricornis_plating",
+          "displayName": "Montipora capricornis (orange whorling plate, green polyps)"
+        },
+        {
+          "id": "digitata_branching",
+          "displayName": "Montipora digitata (purple fingers, green polyps)"
+        },
+        {
+          "id": "encrusting",
+          "displayName": "Montipora encrusting (red sheet, green polyps)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/montipora/asset.source.json",
+        "sourceReferences": "art/specimens/montipora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Polyp density is far below reality (about 220 modelled polyps per colony versus thousands of 0.5 to 1.5 mm corallites); the remaining corallites are painted as pits in the tissue textures.",
+        "Each polyp is a six-sided tube with a flared crown; the twelve tentacles of a real Montipora polyp are painted on the crown, not modelled.",
+        "Tuberculae are modelled on the encrusting sheet only; on the plate and fingers they are normal-map relief.",
+        "Retraction translates polyps along their axis into the corallite (tips stop about 0.3 mm above the surface) instead of morphing tissue over them; finger polyps between the four sector directions retract to 70 to 100 percent of the pull.",
+        "The whorling plate is one continuous 2.6-turn scroll; real M. capricornis colonies often stack several separate tiers and fuse plates."
+      ]
+    },
+    {
+      "id": "torch_coral",
+      "displayName": "Torch Coral",
+      "scientificLabel": "Euphyllia glabrescens",
+      "taxonomyConfidence": "species",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "lps_coral",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-gold_white_tips",
+          "variantId": "gold_white_tips",
+          "displayName": "Torch Coral (gold, white tips)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/torch_coral/candidates/fable-v1-gold_white_tips/lod1.glb",
+          "glbSha256": "c46c99600f3fa2be4e90d12f6ac5d282aea4b6e9abede919841b1197ba26774f",
+          "glbSha256Verified": true,
+          "geometryDigest": "cc02e0cf997655e1efed1ab00fa6f07a1ab01202a549768deb8d24997266f59b",
+          "statistics": {
+            "triangles": 18072,
+            "materials": 5,
+            "bones": 29,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/torch_coral/candidates/fable-v1-gold_white_tips/renders/author-preview.png",
+            "threeView": "art/specimens/torch_coral/candidates/fable-v1-gold_white_tips/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-green_pink_tips",
+          "variantId": "green_pink_tips",
+          "displayName": "Torch Coral (green, pink tips)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/torch_coral/candidates/fable-v1-green_pink_tips/lod1.glb",
+          "glbSha256": "b65330873959b66400c9458f76050acfeecc67f56b14e5ceb025047de718ce56",
+          "glbSha256Verified": true,
+          "geometryDigest": "021f16563a6dbab8bc35e55e38146fb99bbb4240509cc166ff64dc0d8cbb42b5",
+          "statistics": {
+            "triangles": 18072,
+            "materials": 5,
+            "bones": 29,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.12,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/torch_coral/candidates/fable-v1-green_pink_tips/renders/author-preview.png",
+            "threeView": "art/specimens/torch_coral/candidates/fable-v1-green_pink_tips/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "gold_white_tips",
+          "displayName": "Torch Coral (gold, white tips)"
+        },
+        {
+          "id": "green_pink_tips",
+          "displayName": "Torch Coral (green, pink tips)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/torch_coral/asset.source.json",
+        "sourceReferences": "art/specimens/torch_coral/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Tentacle acrospheres are lofted knobs on a six-sided tube; at close range the knob silhouette is faceted.",
+        "Septa inside the calice are not modelled; the oral disc covers the calice so only the outer costae relief (normal map) reads.",
+        "Tentacles of one cluster share a three-bone chain (two clusters per head within the 32-bone budget); bending along each tentacle comes from arc-length skinning to that shared chain plus baked per-tentacle lean, sag and curl, not from a chain per tentacle.",
+        "Retraction is driven by chain scale and curl toward the disc axis, so retracted tentacles fold into a tuft rather than deflating into wrinkled nubs.",
+        "Tentacles of one polyp may overlap tentacles of a neighbouring polyp (as in live colonies); only tentacle-vs-skeleton and tentacle-vs-disc clearances are proven."
+      ]
+    },
+    {
+      "id": "zoanthid",
+      "displayName": "Zoanthid Colony",
+      "scientificLabel": "Zoanthus sp.",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "zoanthid_colony",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-blue_green",
+          "variantId": "blue_green",
+          "displayName": "Zoanthid Colony (blue and green)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/zoanthid/candidates/fable-v1-blue_green/lod1.glb",
+          "glbSha256": "78d9e3db16fbe4e63a6a872f92c3f3477802fd150daad6367c8e2febb2b3f03b",
+          "glbSha256Verified": true,
+          "geometryDigest": "b429b37e0a290835357911844d935d34b9f7f61fbe058abc7a8854e9d70957c1",
+          "statistics": {
+            "triangles": 18096,
+            "materials": 3,
+            "bones": 22,
+            "clips": [
+              "close",
+              "flow",
+              "open"
+            ]
+          },
+          "clipRoles": {
+            "idle": "open",
+            "locomotion": "flow",
+            "response": "close"
+          },
+          "clipLoops": {
+            "close": false,
+            "flow": true,
+            "open": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/zoanthid/candidates/fable-v1-blue_green/renders/author-preview.png",
+            "threeView": "art/specimens/zoanthid/candidates/fable-v1-blue_green/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-orange_red",
+          "variantId": "orange_red",
+          "displayName": "Zoanthid Colony (orange and red)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/zoanthid/candidates/fable-v1-orange_red/lod1.glb",
+          "glbSha256": "c403b75a2795b33a1a2e1df8deee5595f0ead0875e5e45ea5604e3a7ab7d78b6",
+          "glbSha256Verified": true,
+          "geometryDigest": "6306b40a2e62380a30f791f18c9519b3d54cc9170413561e02988bf5746ffaeb",
+          "statistics": {
+            "triangles": 19008,
+            "materials": 3,
+            "bones": 23,
+            "clips": [
+              "close",
+              "flow",
+              "open"
+            ]
+          },
+          "clipRoles": {
+            "idle": "open",
+            "locomotion": "flow",
+            "response": "close"
+          },
+          "clipLoops": {
+            "close": false,
+            "flow": true,
+            "open": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/zoanthid/candidates/fable-v1-orange_red/renders/author-preview.png",
+            "threeView": "art/specimens/zoanthid/candidates/fable-v1-orange_red/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "blue_green",
+          "displayName": "Zoanthid Colony (blue and green)"
+        },
+        {
+          "id": "orange_red",
+          "displayName": "Zoanthid Colony (orange and red)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "open",
+        "locomotion": "flow",
+        "response": "close"
+      },
+      "provenance": {
+        "source": "art/specimens/zoanthid/asset.source.json",
+        "sourceReferences": "art/specimens/zoanthid/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Tentacle fringe is modelled with 20 to 24 tapered tubes per polyp; real Zoanthus carry 40 to 60 shorter tentacles in two or three cycles.",
+        "Coenenchyme mat is a raised plateau and per-polyp collar relief on the rock loft rather than a separate tissue layer with stolons.",
+        "Closing is a single staggered pulse per cluster; real polyps close in seconds and reopen over minutes.",
+        "Polyps are bone-parented rigid objects that sway about their base; the column itself does not bend (this keeps shape-key clips importable, see the lane's shared-change request).",
+        "Neighbouring discs stop short of touching by the flattest tentacle reach plus a sway margin, because the clearance gates forbid tentacle and disc interpenetration; real mats overlap discs and interleave fringes."
+      ]
+    },
+    {
+      "id": "blue_linckia",
+      "displayName": "Blue Linckia Starfish",
+      "scientificLabel": "Linckia laevigata",
+      "taxonomyConfidence": "species",
+      "category": "invertebrate",
+      "waterType": "saltwater",
+      "bodyPlan": "asteroid",
+      "referenceSize": {
+        "meters": 0.25,
+        "kind": "adult_arm_span"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Blue Linckia Starfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/blue_linckia/candidates/fable-v1/lod1.glb",
+          "glbSha256": "f72a764948a50c981082a2f2a177800fd93273dc531f38dc10968caa33cfeae1",
+          "glbSha256Verified": true,
+          "geometryDigest": "eda6d565969d27a8270543a50e18e45cb3c0dcca6ce2e60e389da221c4210a77",
+          "statistics": {
+            "triangles": 7680,
+            "materials": 1,
+            "bones": 21,
+            "clips": [
+              "arm_curl",
+              "crawl",
+              "rest"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "arm_curl"
+          },
+          "clipLoops": {
+            "arm_curl": false,
+            "crawl": true,
+            "rest": true
+          },
+          "referenceSizeMeters": 0.25,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/blue_linckia/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/blue_linckia/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "arm_curl"
+      },
+      "provenance": {
+        "source": "art/specimens/blue_linckia/asset.source.json",
+        "sourceReferences": "art/specimens/blue_linckia/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Arms are straight tubes; live animals often show slight lateral arm curvature and per-individual length asymmetry beyond the mild front/side/rear variation modelled here.",
+        "Granules are a normal-map relief only; no modelled plate geometry.",
+        "Ambulacral groove is a shallow cross-section dip with painted tube feet; no individual tube-foot geometry.",
+        "Disc and arm bases are overlapping closed solids; the interradial crotch is an intersection crease rather than a blended surface.",
+        "Hub dome is about 4.6 cm across interradially, slightly larger than the 3-4 cm disc Laxton (1974) measured, because it must cover the five arm-tube junctions."
+      ]
+    },
+    {
+      "id": "cleaner_shrimp",
+      "displayName": "Skunk Cleaner Shrimp",
+      "scientificLabel": "Lysmata amboinensis",
+      "taxonomyConfidence": "species",
+      "category": "invertebrate",
+      "waterType": "saltwater",
+      "bodyPlan": "decapod_shrimp",
+      "referenceSize": {
+        "meters": 0.06,
+        "kind": "adult_body_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Skunk Cleaner Shrimp",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/cleaner_shrimp/candidates/fable-v1/lod1.glb",
+          "glbSha256": "e6f2165f2af3ff61a60fa80dc061b07b8130ac9dbca5406491e978fd5adbf33a",
+          "glbSha256Verified": true,
+          "geometryDigest": "a8fe8f832f2e05179600e39364a304448f55db8c51b4f7b4f4d6a6337d70fbbd",
+          "statistics": {
+            "triangles": 8304,
+            "materials": 3,
+            "bones": 31,
+            "clips": [
+              "clean",
+              "hover",
+              "walk"
+            ]
+          },
+          "clipRoles": {
+            "idle": "hover",
+            "locomotion": "walk",
+            "response": "clean"
+          },
+          "clipLoops": {
+            "clean": false,
+            "hover": true,
+            "walk": true
+          },
+          "referenceSizeMeters": 0.06,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/cleaner_shrimp/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/cleaner_shrimp/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "hover",
+        "locomotion": "walk",
+        "response": "clean"
+      },
+      "provenance": {
+        "source": "art/specimens/cleaner_shrimp/asset.source.json",
+        "sourceReferences": "art/specimens/cleaner_shrimp/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Pleopods are single paddles per segment rather than biramous rami with setae.",
+        "Antennular flagella are two smooth tubes per side; the real outer flagellum forks with a setose thickened portion.",
+        "Rostral teeth and carapace spines are implied by the normal map, not modelled.",
+        "Legs use a single bone each except the chelipeds, so knees do not articulate while walking."
+      ]
+    },
+    {
+      "id": "pistol_shrimp",
+      "displayName": "Tiger Pistol Shrimp",
+      "scientificLabel": "Alpheus bellulus",
+      "taxonomyConfidence": "species",
+      "category": "invertebrate",
+      "waterType": "saltwater",
+      "bodyPlan": "decapod_shrimp",
+      "referenceSize": {
+        "meters": 0.05,
+        "kind": "adult_body_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Tiger Pistol Shrimp",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/pistol_shrimp/candidates/fable-v1/lod1.glb",
+          "glbSha256": "019eea507f3cacb6de1eebb191fa04ce088612e7e8e41c09e307004ebf0382ae",
+          "glbSha256Verified": true,
+          "geometryDigest": "d5f6f3e027b57cc54ffe08f868d0307eec41de6c230d405031f2eaebc7c4e4de",
+          "statistics": {
+            "triangles": 10972,
+            "materials": 2,
+            "bones": 31,
+            "clips": [
+              "rest",
+              "snap",
+              "walk"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "walk",
+            "response": "snap"
+          },
+          "clipLoops": {
+            "rest": true,
+            "snap": false,
+            "walk": true
+          },
+          "referenceSizeMeters": 0.05,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/pistol_shrimp/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/pistol_shrimp/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "walk",
+        "response": "snap"
+      },
+      "provenance": {
+        "source": "art/specimens/pistol_shrimp/asset.source.json",
+        "sourceReferences": "art/specimens/pistol_shrimp/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Orbital hoods are smooth ellipsoids fused to the carapace rather than a sculpted anterior margin.",
+        "The major palm's dorsal saddle notch is only hinted by the loft profile and texture.",
+        "Setae and leg bristles are texture-only; pleopods do not beat.",
+        "Major chela proportions follow general Alpheus descriptions, not A. bellulus specific measurements; the rest pose includes the forward-held chela in the 50 mm x extent (rostrum to telson about 41 mm)."
+      ]
+    },
+    {
+      "id": "astrea_snail",
+      "displayName": "Astrea Snail",
+      "scientificLabel": "Lithopoma sp.",
+      "taxonomyConfidence": "genus",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "gastropod",
+      "referenceSize": {
+        "meters": 0.025,
+        "kind": "adult_shell_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Astrea Snail",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/astrea_snail/candidates/fable-v1/lod1.glb",
+          "glbSha256": "49bb4da3a596735277e8cebe8cba1ebfcff9ef29e54b54099bbc6ea555b83c13",
+          "glbSha256Verified": true,
+          "geometryDigest": "0ae41e4c0ddfeff8fcc5eb3402d4ac05c9ae1b745ee901b33c6adc104dfecbe5",
+          "statistics": {
+            "triangles": 13232,
+            "materials": 3,
+            "bones": 7,
+            "clips": [
+              "crawl",
+              "rest",
+              "retract"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "crawl": true,
+            "rest": true,
+            "retract": false
+          },
+          "referenceSizeMeters": 0.025,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/astrea_snail/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/astrea_snail/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/astrea_snail/asset.source.json",
+        "sourceReferences": "art/specimens/astrea_snail/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Epipodial tentacles along the foot margin and the calcareous operculum are not modelled.",
+        "Axial folds are geometric knobs on the loft; the two impressed spiral lines, growth striae and basal lirae are normal-map relief only.",
+        "Shell colour is the aquarium olive-tan morph with algal film; the reddish-orange wild morph of Lithopoma tectum is not offered as a variant.",
+        "Whorl interior near the columella is a self-overlapping tube rather than a true shared-wall shell.",
+        "Aperture is the constricted, obliquely sheared end of the whorl tube; the thickened columellar callus and bidentate columella are not modelled.",
+        "The body column that fills the aperture is a smooth lofted mass without a distinct mantle edge, and the eyes are simple beads on short stalks."
+      ]
+    },
+    {
+      "id": "brittle_star",
+      "displayName": "Brittle Star",
+      "scientificLabel": "Ophiuroidea (reef brittle star, Ophiocoma / Ophioderma group)",
+      "taxonomyConfidence": "group",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "ophiuroid",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_arm_span"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Brittle Star",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/brittle_star/candidates/fable-v1/lod1.glb",
+          "glbSha256": "3eaee6c7d76f18e1b0a95eb06474bbff1940f132ccda059d02a8b2c641d2819e",
+          "glbSha256Verified": true,
+          "geometryDigest": "f24ad62ff83eee476d931d7ca745f85101180874b7f4e19a54795ab6050d866e",
+          "statistics": {
+            "triangles": 14360,
+            "materials": 1,
+            "bones": 26,
+            "clips": [
+              "arm_recoil",
+              "crawl",
+              "rest"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "arm_recoil"
+          },
+          "clipLoops": {
+            "arm_recoil": false,
+            "crawl": true,
+            "rest": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/brittle_star/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/brittle_star/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "arm_recoil"
+      },
+      "provenance": {
+        "source": "art/specimens/brittle_star/asset.source.json",
+        "sourceReferences": "art/specimens/brittle_star/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Lateral spines are one or two spikes per plate side; Ophiocoma echinata carries a vertical row of four graded spines per side of each arm joint.",
+        "Ventral disc (jaws, oral shields, bursal slits) and the pale oral arm surface are texture-only because the animal rests on them.",
+        "Arm segmentation is 26 plates per arm for the triangle budget; real arms carry many more, shorter vertebrae.",
+        "Rest pose is mirror symmetric (leading arm straight in plan) so the shared bilateral gates apply; live animals hold every arm in a different curve."
+      ]
+    },
+    {
+      "id": "cerith_snail",
+      "displayName": "Cerith Snail",
+      "scientificLabel": "Cerithium sp.",
+      "taxonomyConfidence": "genus",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "gastropod",
+      "referenceSize": {
+        "meters": 0.025,
+        "kind": "adult_crawling_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Cerith Snail",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/cerith_snail/candidates/fable-v1/lod1.glb",
+          "glbSha256": "cde6b0f1fda6942b3b9e80aa0ef07f1a4c4dcfea478ff9906e43840e03275e49",
+          "glbSha256Verified": true,
+          "geometryDigest": "0cfe81e63bf9e8c39bebc404c9d9bf16e282b28b8954989f4be9a1b5d16ef267",
+          "statistics": {
+            "triangles": 14328,
+            "materials": 3,
+            "bones": 8,
+            "clips": [
+              "crawl",
+              "rest",
+              "retract"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "crawl": true,
+            "rest": true,
+            "retract": false
+          },
+          "referenceSizeMeters": 0.025,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/cerith_snail/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/cerith_snail/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/cerith_snail/asset.source.json",
+        "sourceReferences": "art/specimens/cerith_snail/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Spiral cords and beads are geometric only on the last five whorls; earlier whorls carry the sculpture in the normal map alone.",
+        "Whorls are a single swept tube that overlaps itself to form sutures, with a thin columella plug closing the axis; the shell wall has no modelled thickness and the aperture interior is a shallow recessed cap behind the neck.",
+        "The operculum is not modelled and the aperture is nearly circular rather than the slightly oblique oval of real Cerithium.",
+        "The rounded shell base reads dark in the front orthographic view; base flecking and lighting could be improved.",
+        "Soft-part proportions (foot, snout, siphon) are inferred from general cerithiid anatomy rather than calibrated live photographs, and the tentacles are straight tapered tubes without curl."
+      ]
+    },
+    {
+      "id": "emerald_crab",
+      "displayName": "Emerald Crab",
+      "scientificLabel": "Mithraculus sculptus",
+      "taxonomyConfidence": "species",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "brachyuran_crab",
+      "referenceSize": {
+        "meters": 0.045,
+        "kind": "adult_carapace_width_including_legs"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Emerald Crab",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/emerald_crab/candidates/fable-v1/lod1.glb",
+          "glbSha256": "4ffb56f932b304bd4753e60cedc33b79a3dc4e4af56ece526e17b37b75065dd2",
+          "glbSha256Verified": true,
+          "geometryDigest": "9a83c9840afda24167a7622ee14a9da77c8b0d7723a1c47a6ab37bd656edec05",
+          "statistics": {
+            "triangles": 6760,
+            "materials": 5,
+            "bones": 27,
+            "clips": [
+              "rest",
+              "threat",
+              "walk"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "walk",
+            "response": "threat"
+          },
+          "clipLoops": {
+            "rest": true,
+            "threat": false,
+            "walk": true
+          },
+          "referenceSizeMeters": 0.045,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/emerald_crab/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/emerald_crab/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "walk",
+        "response": "threat"
+      },
+      "provenance": {
+        "source": "art/specimens/emerald_crab/asset.source.json",
+        "sourceReferences": "art/specimens/emerald_crab/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Leg and cheliped setae (hair) are painted flecks in the albedo/roughness/normal maps, not modelled fibres.",
+        "Mouthparts (maxillipeds) and antennules are not modelled; the frontal region is the carapace margin plus eyestalks and antennae.",
+        "Carapace sculpture is a smooth lobe displacement plus a granular normal map rather than individually modelled tubercles.",
+        "Sideways walk is a kinematic loop with the body fixed in place; the runtime must translate the root along the crab's lateral axis to sell the gait."
+      ]
+    },
+    {
+      "id": "fighting_conch",
+      "displayName": "Fighting Conch",
+      "scientificLabel": "Strombus sp.",
+      "taxonomyConfidence": "genus",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "gastropod_strombid",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_shell_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Fighting Conch",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/fighting_conch/candidates/fable-v1/lod1.glb",
+          "glbSha256": "db5a28862bca7468cc8e8fa146f1c022ab1c5122f3caf4b7270cbe1ecd8fa93a",
+          "glbSha256Verified": true,
+          "geometryDigest": "5e22bb0a19849bf0d3cb13a8f1495e63f549ebea841b835b884a15edfed67add",
+          "statistics": {
+            "triangles": 15128,
+            "materials": 3,
+            "bones": 10,
+            "clips": [
+              "hop",
+              "rest",
+              "withdraw"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "hop",
+            "response": "withdraw"
+          },
+          "clipLoops": {
+            "hop": true,
+            "rest": true,
+            "withdraw": false
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/fighting_conch/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/fighting_conch/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "hop",
+        "response": "withdraw"
+      },
+      "provenance": {
+        "source": "art/specimens/fighting_conch/asset.source.json",
+        "sourceReferences": "art/specimens/fighting_conch/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Shell is one self-overlapping closed loft: whorls overlap inside the shell as in life, but the union surface is not resolved, so the suture is a geometric step rather than a modelled channel.",
+        "Shoulder knobs are ring displacements at 64 rings per whorl, so they read as blunt scallops rather than sculpted nodules; the 36-segment rings show mild faceting on the ramp.",
+        "Operculum serrations and the mantle edge are not modelled; the sickle operculum is a smooth flattened tube.",
+        "Eye pattern is a texture on an ellipsoid (no separate cornea); eyestalks retract by bone scaling, which also shrinks the eye.",
+        "Eyestalk versus shell clearance is not declared: during withdraw the retracting stalks pass the parietal wall inside the aperture region. Eyestalks are proven clear of the foot, the proboscis and each other in every clip.",
+        "Shell colour is procedural mottling with flammules and spiral bands, not a calibrated pattern from a specific specimen."
+      ]
+    },
+    {
+      "id": "nassarius_snail",
+      "displayName": "Nassarius Snail",
+      "scientificLabel": "Nassarius sp.",
+      "taxonomyConfidence": "genus",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "gastropod",
+      "referenceSize": {
+        "meters": 0.0334,
+        "kind": "adult_extended_length_crawling"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Nassarius Snail",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/nassarius_snail/candidates/fable-v1/lod1.glb",
+          "glbSha256": "10a1352e15747c0dac17b225a04d15c022f47f295c7126f563f9e1c43353dcd9",
+          "glbSha256Verified": true,
+          "geometryDigest": "aa693a3497b14f731b2a14f08de23ede46d4c7cc50145730c4ef022fbbb62940",
+          "statistics": {
+            "triangles": 15760,
+            "materials": 3,
+            "bones": 11,
+            "clips": [
+              "crawl",
+              "rest",
+              "siphon_probe"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "siphon_probe"
+          },
+          "clipLoops": {
+            "crawl": true,
+            "rest": true,
+            "siphon_probe": false
+          },
+          "referenceSizeMeters": 0.0334,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/nassarius_snail/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/nassarius_snail/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "siphon_probe"
+      },
+      "provenance": {
+        "source": "art/specimens/nassarius_snail/asset.source.json",
+        "sourceReferences": "art/specimens/nassarius_snail/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Aperture interior (columella, parietal callus, lip teeth) is a capped loft filled by the soft body column rather than modelled shell interior.",
+        "Beaded sculpture is a smooth radius relief plus normal map; individual beads are not separate nodules.",
+        "Operculum is not modelled (hidden under the shell while crawling)."
+      ]
+    },
+    {
+      "id": "scarlet_hermit",
+      "displayName": "Scarlet Reef Hermit Crab",
+      "scientificLabel": "Paguristes cadenati",
+      "taxonomyConfidence": "species",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "anomuran_hermit",
+      "referenceSize": {
+        "meters": 0.03,
+        "kind": "adult_total_length_including_borrowed_shell"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Scarlet Reef Hermit Crab",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/scarlet_hermit/candidates/fable-v1/lod1.glb",
+          "glbSha256": "f277808a049f03147cedae15b203cc393f55a62ed6be1765fe34a71ac533995e",
+          "glbSha256Verified": true,
+          "geometryDigest": "50a38d6e7ebe049a2fe334d108d4cd2ffb2b11fe108b47da2f04de55af437eb5",
+          "statistics": {
+            "triangles": 7856,
+            "materials": 3,
+            "bones": 28,
+            "clips": [
+              "rest",
+              "retreat",
+              "walk"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "walk",
+            "response": "retreat"
+          },
+          "clipLoops": {
+            "rest": true,
+            "retreat": false,
+            "walk": true
+          },
+          "referenceSizeMeters": 0.03,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/scarlet_hermit/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/scarlet_hermit/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "walk",
+        "response": "retreat"
+      },
+      "provenance": {
+        "source": "art/specimens/scarlet_hermit/asset.source.json",
+        "sourceReferences": "art/specimens/scarlet_hermit/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Abdomen and pleopods are not modelled (hidden inside the shell); the body ends as a capped loft inside the aperture.",
+        "Third maxillipeds and other mouthparts are absent; the anterior shield margin is rounded without a modelled rostrum or frontal teeth.",
+        "Each limb is one pinched tube per appendage, so articulations flex as skin rather than as true condylar joints; no setae or tubercles are modelled (granules are texture-only).",
+        "The borrowed shell is a generic authored turbinate form with a recessed aperture floor; no columella, inner lip or specific gastropod species is represented. It is carried low with the lower body whorl about half a millimetre above the substrate rather than touching it, and the walk clip rocks and surges it in place (clips do not translate along the ground).",
+        "The dextral carry has the spire pointing back, slightly up and to the crab's right rather than straight back: with the aperture facing forward-down, a straight-back spire would force the coil axis level with the ground or lifted.",
+        "The left chela is only 8 percent larger than the right; both chelae are smooth tubes without the tuberculate palm surface."
+      ]
+    },
+    {
+      "id": "trochus_snail",
+      "displayName": "Trochus Snail",
+      "scientificLabel": "Trochus / Rochia sp.",
+      "taxonomyConfidence": "genus",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "gastropod",
+      "referenceSize": {
+        "meters": 0.03,
+        "kind": "adult_shell_diameter"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Trochus Snail",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/trochus_snail/candidates/fable-v1/lod1.glb",
+          "glbSha256": "e2a591004c4fb7cf0a0997ea699fb22086b5973e674e9c1e15a82b433e63a3e5",
+          "glbSha256Verified": true,
+          "geometryDigest": "02c3e69addec58b8593a841bdcf8adbd8a3e3e5040a8e3375b222c877c9f8618",
+          "statistics": {
+            "triangles": 14414,
+            "materials": 3,
+            "bones": 13,
+            "clips": [
+              "crawl",
+              "rest",
+              "retract"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "crawl": true,
+            "rest": true,
+            "retract": false
+          },
+          "referenceSizeMeters": 0.03,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/trochus_snail/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/trochus_snail/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/trochus_snail/asset.source.json",
+        "sourceReferences": "art/specimens/trochus_snail/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "The shell is a strictly self-similar conispiral, so its base is a shallow spiral ramp (lowest at the aperture lip); the body hump fills most of the space under it but the front whorl still overhangs the mantle edge.",
+        "Beaded spiral cords, growth striae and the suture are normal-map relief only; the shell geometry itself is smooth.",
+        "No operculum, mouth or epipodial skirt is modelled; epipodial tentacles attach directly to the foot flank and the eyes are stalkless black ellipsoids.",
+        "Soft-body proportions in life position are inferred from general trochid anatomy (reference grade B for the shell, weaker for the animal)."
+      ]
+    },
+    {
+      "id": "turbo_snail",
+      "displayName": "Turbo Snail",
+      "scientificLabel": "Turbo sp.",
+      "taxonomyConfidence": "genus",
+      "category": "cleanup_crew",
+      "waterType": "saltwater",
+      "bodyPlan": "gastropod",
+      "referenceSize": {
+        "meters": 0.04,
+        "kind": "adult_shell_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Turbo Snail",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/turbo_snail/candidates/fable-v1/lod1.glb",
+          "glbSha256": "066f4edf6f390cca9b31db3e82fcc18a8dbdfe652c01fda9047fe084029c2efd",
+          "glbSha256Verified": true,
+          "geometryDigest": "96bd05302d1acebfc568347e0143a9360788762d7bcbf745d63b98f45e270c56",
+          "statistics": {
+            "triangles": 14840,
+            "materials": 5,
+            "bones": 7,
+            "clips": [
+              "crawl",
+              "rest",
+              "retract"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "crawl",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "crawl": true,
+            "rest": true,
+            "retract": false
+          },
+          "referenceSizeMeters": 0.04,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/turbo_snail/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/turbo_snail/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/turbo_snail/asset.source.json",
+        "sourceReferences": "art/specimens/turbo_snail/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Successive whorls are a single self-overlapping lofted tube: the suture reads as an intersection crease rather than a modelled overlap seam.",
+        "Aperture is capped with a flat nacre disc behind the neck instead of a modelled columella and interior.",
+        "Spiral cord beading and fine lirulae are normal-map relief only; the mesh carries just the shoulder nodules and the broad cord undulation.",
+        "Retract draws the shrinking tentacles back under the lip into the body whorl, so shell-vs-tentacle clearance is asserted implicitly by geometry in rest and crawl (about 7 mm and 10 mm) but not as a validator constraint."
+      ]
+    }
+  ]
+}

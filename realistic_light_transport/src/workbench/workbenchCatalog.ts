@@ -1,8 +1,22 @@
+import {
+  acceptedSpecimenAssets,
+  categoryLabel,
+  rowsByCategory,
+  sharedScaleSpan,
+  visualCatalog,
+  type AssetStatus,
+  type CatalogCandidate,
+  type CatalogRow,
+  type SharedScaleSpan,
+  type VisualCatalog,
+} from '../catalog/visualCatalog'
 import { specimenAssetFor } from '../scene/specimens/assetRegistry'
 
 // The workbench may inspect two kinds of assets: accepted runtime assets (resolved through the
 // untouched asset registry) and awaiting_user_acceptance candidates served by the dev-only
-// candidate catalog service. Normal aquarium runtime resolution never sees candidates.
+// candidate catalog service. Normal aquarium runtime resolution never sees candidates. The visual
+// catalog (src/catalog/visual-catalog.v1.json) supplies every row shown in the picker, including
+// species that have no loadable asset yet.
 export type WorkbenchAssetState = 'accepted' | 'candidate'
 
 export interface WorkbenchAsset {
@@ -10,6 +24,7 @@ export interface WorkbenchAsset {
   readonly state: WorkbenchAssetState
   readonly speciesId: string
   readonly candidate?: string
+  readonly variantId?: string
   readonly displayName: string
   readonly scientificName?: string
   readonly url: string
@@ -21,6 +36,11 @@ export interface WorkbenchAsset {
   readonly clipLoops?: Readonly<Record<string, boolean>>
   readonly referenceGrade?: string
   readonly bodyPlan?: string
+  readonly category?: string
+  readonly waterType?: string
+  readonly taxonomyConfidence?: string
+  readonly assetStatus?: AssetStatus
+  readonly userApproved?: boolean
   readonly candidateState?: string
   readonly validatorStatus?: string
   readonly buildStatus?: string
@@ -30,6 +50,7 @@ export interface WorkbenchAsset {
   readonly candidateHash?: string
   readonly authorPreviewUrl?: string
   readonly threeViewUrl?: string
+  readonly visualDebt?: readonly string[]
 }
 
 interface CandidateIndexEntry {
@@ -38,6 +59,7 @@ interface CandidateIndexEntry {
   readonly loadable: boolean
   readonly displayName: string
   readonly scientificName: string | null
+  readonly variantId?: string | null
   readonly assetVersion: string | null
   readonly bodyPlan: string | null
   readonly referenceGrade: string | null
@@ -57,49 +79,125 @@ interface CandidateIndexEntry {
 }
 
 export const CANDIDATE_INDEX_URL = '/__catalog/v1/candidates.json'
+export const CANDIDATE_FILES_URL = '/__catalog/v1/candidates'
 export const DEFAULT_WORKBENCH_SPECIES = 'ocellaris'
 
-export function acceptedWorkbenchAssets(): WorkbenchAsset[] {
-  const ocellaris = specimenAssetFor('ocellaris')
-  if (!ocellaris) return []
-  return [{
-    key: ocellaris.speciesId,
+export type ScaleMode = 'shared' | 'fit'
+export const DEFAULT_SCALE_MODE: ScaleMode = 'shared'
+
+export function parseScaleMode(value: string | null | undefined): ScaleMode {
+  return value === 'fit' ? 'fit' : 'shared'
+}
+
+export type WorkbenchBadge = 'accepted' | 'candidate' | 'approved' | 'provisional' | 'failed'
+
+export const BADGE_LABELS: Readonly<Record<WorkbenchBadge, string>> = {
+  accepted: 'Accepted (runtime)',
+  candidate: 'Candidate',
+  approved: 'Candidate (user approved look)',
+  provisional: 'Provisional',
+  failed: 'Failed',
+}
+
+export function assetBadge(asset: Pick<WorkbenchAsset, 'state' | 'buildStatus' | 'validatorStatus' | 'assetStatus' | 'userApproved'>): WorkbenchBadge {
+  if (asset.state === 'accepted') return 'accepted'
+  if (asset.buildStatus === 'failed' || asset.validatorStatus === 'failed') return 'failed'
+  if (asset.assetStatus === 'provisional') return 'provisional'
+  if (asset.userApproved) return 'approved'
+  return 'candidate'
+}
+
+export function rowStatusText(row: Pick<CatalogRow, 'assetStatus' | 'candidates'>) {
+  switch (row.assetStatus) {
+    case 'accepted': return 'accepted runtime asset'
+    case 'candidate': return 'candidate awaiting acceptance'
+    case 'provisional': return 'provisional reference'
+    case 'failed': return 'build failed'
+    default: return row.candidates.length ? 'candidate still building' : 'no candidate yet'
+  }
+}
+
+function acceptedFromRow(row: CatalogRow | undefined, fallback: { speciesId: string; displayName: string; scientificName: string; referenceSizeKind: string }, asset: { url: string; assetVersion: string; referenceAdultLengthMeters: number; clips: readonly string[] }): WorkbenchAsset {
+  const roles = row?.clipRoles ?? { idle: 'idle', locomotion: 'swim', response: 'burst' }
+  const clipRoles = { idle: roles.idle ?? 'idle', locomotion: roles.locomotion ?? 'swim', response: roles.response ?? 'burst' }
+  const clipLoops = Object.fromEntries(asset.clips.map((clip) => [clip, clip !== clipRoles.response]))
+  return {
+    key: fallback.speciesId,
     state: 'accepted',
-    speciesId: ocellaris.speciesId,
-    displayName: 'Ocellaris clownfish',
-    scientificName: 'Amphiprion ocellaris',
-    url: ocellaris.url,
-    assetVersion: ocellaris.assetVersion,
-    referenceSizeMeters: ocellaris.referenceAdultLengthMeters,
-    referenceSizeKind: 'adult_total_length',
-    clips: ocellaris.clips,
-    clipRoles: { idle: 'idle', locomotion: 'swim', response: 'burst' },
-    clipLoops: { idle: true, swim: true, burst: false },
-  }]
+    speciesId: fallback.speciesId,
+    displayName: row?.displayName ?? fallback.displayName,
+    scientificName: row?.scientificLabel ?? fallback.scientificName,
+    url: asset.url,
+    assetVersion: asset.assetVersion,
+    referenceSizeMeters: row?.referenceSize.meters ?? asset.referenceAdultLengthMeters,
+    referenceSizeKind: row?.referenceSize.kind ?? fallback.referenceSizeKind,
+    clips: asset.clips,
+    clipRoles,
+    clipLoops,
+    referenceGrade: row?.referenceGrade ?? undefined,
+    bodyPlan: row?.bodyPlan ?? undefined,
+    category: row?.category,
+    waterType: row?.waterType ?? undefined,
+    taxonomyConfidence: row?.taxonomyConfidence ?? undefined,
+    assetStatus: 'accepted',
+    glbSha256: row?.accepted.sha256 ?? undefined,
+    visualDebt: row?.visualDebt,
+  }
+}
+
+export function acceptedWorkbenchAssets(rows: readonly CatalogRow[] = visualCatalog.rows): WorkbenchAsset[] {
+  const accepted = acceptedSpecimenAssets(rows).map(({ row, asset }) => acceptedFromRow(row, {
+    speciesId: row.id,
+    displayName: row.displayName,
+    scientificName: row.scientificLabel ?? row.id,
+    referenceSizeKind: row.referenceSize.kind ?? 'adult_total_length',
+  }, asset))
+  if (accepted.some((asset) => asset.speciesId === DEFAULT_WORKBENCH_SPECIES)) return accepted
+  // The registry is the acceptance gate: Ocellaris stays inspectable even if the catalog row is absent.
+  const registered = specimenAssetFor(DEFAULT_WORKBENCH_SPECIES)
+  if (!registered) return accepted
+  return [
+    acceptedFromRow(undefined, {
+      speciesId: registered.speciesId,
+      displayName: 'Ocellaris Clownfish',
+      scientificName: 'Amphiprion ocellaris',
+      referenceSizeKind: 'adult_total_length',
+    }, registered),
+    ...accepted,
+  ]
 }
 
 export function candidateKey(speciesId: string, candidate: string) {
   return `${speciesId}@${candidate}`
 }
 
-function toWorkbenchAsset(entry: CandidateIndexEntry): WorkbenchAsset | undefined {
-  if (!entry.loadable || !entry.files.glb || !entry.referenceSizeMeters) return undefined
+function toWorkbenchAsset(entry: CandidateIndexEntry, row: CatalogRow | undefined, approvals: Readonly<Record<string, string>>): WorkbenchAsset | undefined {
+  if (!entry.loadable || !entry.files.glb) return undefined
+  const catalogCandidate = row?.candidates.find((candidate) => candidate.name === entry.candidate)
+  const referenceSizeMeters = entry.referenceSizeMeters ?? catalogCandidate?.referenceSizeMeters ?? row?.referenceSize.meters ?? null
+  if (!referenceSizeMeters) return undefined
   return {
     key: candidateKey(entry.speciesId, entry.candidate),
     state: 'candidate',
     speciesId: entry.speciesId,
     candidate: entry.candidate,
-    displayName: entry.displayName,
-    scientificName: entry.scientificName ?? undefined,
+    variantId: entry.variantId ?? catalogCandidate?.variantId ?? undefined,
+    displayName: entry.displayName || row?.displayName || entry.speciesId,
+    scientificName: entry.scientificName ?? row?.scientificLabel ?? undefined,
     url: entry.files.glb,
-    assetVersion: entry.assetVersion ?? 'candidate',
-    referenceSizeMeters: entry.referenceSizeMeters,
-    referenceSizeKind: entry.referenceSizeKind ?? 'adult_total_length',
+    assetVersion: entry.assetVersion ?? catalogCandidate?.assetVersion ?? 'candidate',
+    referenceSizeMeters,
+    referenceSizeKind: entry.referenceSizeKind ?? row?.referenceSize.kind ?? 'adult_total_length',
     clips: entry.clips,
     clipRoles: entry.clipRoles ?? undefined,
     clipLoops: entry.clipLoops ?? undefined,
-    referenceGrade: entry.referenceGrade ?? undefined,
-    bodyPlan: entry.bodyPlan ?? undefined,
+    referenceGrade: entry.referenceGrade ?? row?.referenceGrade ?? undefined,
+    bodyPlan: entry.bodyPlan ?? row?.bodyPlan ?? undefined,
+    category: row?.category,
+    waterType: row?.waterType ?? undefined,
+    taxonomyConfidence: row?.taxonomyConfidence ?? undefined,
+    assetStatus: row?.assetStatus,
+    userApproved: catalogCandidate?.userApproved ?? approvals[entry.speciesId] === entry.candidate,
     candidateState: entry.candidateState,
     validatorStatus: entry.validatorStatus,
     buildStatus: entry.buildStatus,
@@ -109,6 +207,7 @@ function toWorkbenchAsset(entry: CandidateIndexEntry): WorkbenchAsset | undefine
     candidateHash: entry.candidateHash ?? undefined,
     authorPreviewUrl: entry.files.authorPreview ?? undefined,
     threeViewUrl: entry.files.threeView ?? undefined,
+    visualDebt: row?.visualDebt,
   }
 }
 
@@ -116,48 +215,187 @@ export interface WorkbenchCatalog {
   readonly assets: readonly WorkbenchAsset[]
   readonly candidateSource: 'dev-service' | 'unavailable'
   readonly skipped: readonly { readonly speciesId: string; readonly candidate: string; readonly reason: string }[]
+  readonly rows: readonly CatalogRow[]
+  readonly generatedAt: string
+  readonly span: SharedScaleSpan
 }
 
-export async function loadWorkbenchCatalog(fetchImpl: typeof fetch = fetch): Promise<WorkbenchCatalog> {
-  const accepted = acceptedWorkbenchAssets()
+export interface LoadWorkbenchCatalogOptions {
+  /** Override the bundled visual catalog (tests). */
+  readonly catalog?: Pick<VisualCatalog, 'rows' | 'userApprovals' | 'generatedAt'>
+}
+
+export async function loadWorkbenchCatalog(fetchImpl: typeof fetch = fetch, options: LoadWorkbenchCatalogOptions = {}): Promise<WorkbenchCatalog> {
+  const source = options.catalog ?? visualCatalog
+  const rows = source.rows
+  const accepted = acceptedWorkbenchAssets(rows)
+  const base = { rows, generatedAt: source.generatedAt, span: sharedScaleSpan(rows) }
   try {
     const response = await fetchImpl(CANDIDATE_INDEX_URL, { cache: 'no-store' })
-    if (!response.ok) return { assets: accepted, candidateSource: 'unavailable', skipped: [] }
+    if (!response.ok) return { ...base, assets: accepted, candidateSource: 'unavailable', skipped: [] }
     const payload = (await response.json()) as { readonly candidates?: readonly CandidateIndexEntry[] }
     const candidates: WorkbenchAsset[] = []
     const skipped: { speciesId: string; candidate: string; reason: string }[] = []
     for (const entry of payload.candidates ?? []) {
-      const asset = toWorkbenchAsset(entry)
+      const row = rows.find((candidate) => candidate.id === entry.speciesId)
+      const asset = toWorkbenchAsset(entry, row, source.userApprovals)
       if (asset) candidates.push(asset)
       else skipped.push({ speciesId: entry.speciesId, candidate: entry.candidate, reason: entry.buildFailedStage ? `build failed at ${entry.buildFailedStage}` : 'no runtime GLB or manifest yet' })
     }
-    return { assets: [...accepted, ...candidates], candidateSource: 'dev-service', skipped }
+    return { ...base, assets: [...accepted, ...candidates], candidateSource: 'dev-service', skipped }
   } catch {
-    return { assets: accepted, candidateSource: 'unavailable', skipped: [] }
+    return { ...base, assets: accepted, candidateSource: 'unavailable', skipped: [] }
   }
 }
 
-export function selectWorkbenchAsset(catalog: readonly WorkbenchAsset[], speciesId: string | null, candidate: string | null) {
-  const fallback = catalog.find((asset) => asset.key === DEFAULT_WORKBENCH_SPECIES)
-  if (!speciesId) return { asset: fallback, invalid: undefined }
-  const key = candidate ? candidateKey(speciesId, candidate) : speciesId
-  const exact = catalog.find((asset) => asset.key === key)
-  if (exact) return { asset: exact, invalid: undefined }
-  // A species without an accepted asset: fall through to its newest loadable candidate.
-  const newest = candidate ? undefined : [...catalog].reverse().find((asset) => asset.speciesId === speciesId && asset.state === 'candidate')
-  if (newest) return { asset: newest, invalid: undefined }
-  return { asset: fallback, invalid: candidate ? `${speciesId} / ${candidate}` : speciesId }
+/** Among a species' loadable candidates prefer the user-approved look, then validated builds, then the newest. */
+export function preferredCandidate(catalog: readonly WorkbenchAsset[], speciesId: string) {
+  const candidates = catalog.filter((asset) => asset.speciesId === speciesId && asset.state === 'candidate')
+  return candidates.find((asset) => asset.userApproved)
+    ?? [...candidates].reverse().find((asset) => asset.validatorStatus === 'passed')
+    ?? candidates[candidates.length - 1]
 }
 
-export function workbenchSearch(asset: WorkbenchAsset) {
-  const params = new URLSearchParams(window.location.search)
+export interface WorkbenchSelection {
+  readonly asset: WorkbenchAsset | undefined
+  /** Set when the request named something the catalog does not know at all. */
+  readonly invalid: string | undefined
+  /** Set when the request named a catalog row (or its candidate) that has no loadable asset right now. */
+  readonly unavailable: { readonly row: CatalogRow; readonly candidate?: string; readonly reason: string } | undefined
+}
+
+export function selectWorkbenchAsset(
+  catalog: readonly WorkbenchAsset[],
+  speciesId: string | null,
+  candidate: string | null,
+  rows: readonly CatalogRow[] = [],
+  candidateSource: WorkbenchCatalog['candidateSource'] = 'dev-service',
+): WorkbenchSelection {
+  const fallback = catalog.find((asset) => asset.key === DEFAULT_WORKBENCH_SPECIES)
+  if (!speciesId) return { asset: fallback, invalid: undefined, unavailable: undefined }
+  const key = candidate ? candidateKey(speciesId, candidate) : speciesId
+  const exact = catalog.find((asset) => asset.key === key)
+  if (exact) return { asset: exact, invalid: undefined, unavailable: undefined }
+  // A species without an accepted asset: fall through to its best loadable candidate.
+  const preferred = candidate ? undefined : preferredCandidate(catalog, speciesId)
+  if (preferred) return { asset: preferred, invalid: undefined, unavailable: undefined }
+  const row = rows.find((entry) => entry.id === speciesId)
+  if (row) {
+    const catalogCandidate = candidate ? row.candidates.find((entry) => entry.name === candidate) : undefined
+    if (!candidate || catalogCandidate) {
+      const reason = catalogCandidate
+        ? candidateStatusText(catalogCandidate, candidateSource)
+        : candidateSource === 'unavailable' && row.candidates.length
+          ? 'candidate GLBs load through the dev server only'
+          : rowStatusText(row)
+      return { asset: fallback, invalid: undefined, unavailable: { row, candidate: candidate ?? undefined, reason } }
+    }
+  }
+  return { asset: fallback, invalid: candidate ? `${speciesId} / ${candidate}` : speciesId, unavailable: undefined }
+}
+
+export function workbenchSearch(asset: Pick<WorkbenchAsset, 'speciesId' | 'candidate'>, scaleMode: ScaleMode = DEFAULT_SCALE_MODE, search = window.location.search) {
+  const params = new URLSearchParams(search)
   params.set('workbench', asset.speciesId)
   if (asset.candidate) params.set('candidate', asset.candidate)
   else params.delete('candidate')
+  params.set('scale', scaleMode)
   return `?${params.toString()}`
 }
 
-export function clipLoops(asset: WorkbenchAsset, clip: string) {
+export function clipLoops(asset: Pick<WorkbenchAsset, 'clipLoops' | 'clipRoles'>, clip: string) {
   if (asset.clipLoops && clip in asset.clipLoops) return asset.clipLoops[clip]
   return asset.clipRoles?.response !== clip
 }
+
+// Picker model: one option per accepted asset and per catalog candidate, grouped by category with
+// accepted rows first. Rows without a loadable asset stay visible as disabled options that explain why.
+export interface WorkbenchOption {
+  readonly key: string
+  readonly speciesId: string
+  readonly candidate?: string
+  readonly label: string
+  readonly disabled: boolean
+  readonly status: string
+  readonly badge?: WorkbenchBadge
+}
+
+export interface WorkbenchOptionGroup {
+  readonly category: string
+  readonly label: string
+  readonly options: readonly WorkbenchOption[]
+}
+
+export function candidateStatusText(candidate: CatalogCandidate, candidateSource: WorkbenchCatalog['candidateSource']) {
+  if (candidate.buildStatus === 'failed') return candidate.buildFailedStage ? `build failed at ${candidate.buildFailedStage}` : 'build failed'
+  if (candidate.state === 'missing') return candidate.manifest === 'unparsable' ? 'manifest unparsable' : 'building, manifest missing'
+  if (!candidate.glb) return 'no runtime GLB yet'
+  if (candidate.validatorStatus === 'failed') return 'validator failed'
+  if (candidateSource === 'unavailable') return 'dev server only'
+  return 'not served yet, restart the dev server'
+}
+
+function candidateSuffix(candidate: Pick<CatalogCandidate, 'userApproved' | 'validatorStatus' | 'buildStatus'>) {
+  if (candidate.buildStatus === 'failed' || candidate.validatorStatus === 'failed') return 'failed'
+  if (candidate.userApproved) return 'user approved'
+  return candidate.validatorStatus === 'passed' ? 'validated' : candidate.validatorStatus ?? 'unvalidated'
+}
+
+export function workbenchOptionGroups(catalog: Pick<WorkbenchCatalog, 'assets' | 'rows' | 'candidateSource'>): WorkbenchOptionGroup[] {
+  const byKey = new Map(catalog.assets.map((asset) => [asset.key, asset]))
+  const seenKeys = new Set<string>()
+  const groups: WorkbenchOptionGroup[] = []
+
+  for (const group of rowsByCategory(catalog.rows)) {
+    const options: WorkbenchOption[] = []
+    for (const row of group.rows) {
+      const rowLabel = row.displayName
+      if (row.assetStatus === 'accepted') {
+        const accepted = byKey.get(row.id)
+        seenKeys.add(row.id)
+        options.push(accepted
+          ? { key: accepted.key, speciesId: row.id, label: `${rowLabel} (accepted v${accepted.assetVersion})`, disabled: false, status: rowStatusText(row), badge: 'accepted' }
+          : { key: `row:${row.id}`, speciesId: row.id, label: `${rowLabel} (accepted, not in registry)`, disabled: true, status: 'accepted package missing from the runtime registry' })
+      }
+      for (const candidate of row.candidates) {
+        const key = candidateKey(row.id, candidate.name)
+        seenKeys.add(key)
+        const asset = byKey.get(key)
+        const variant = candidate.variantId ? ` / ${candidate.displayName}` : ''
+        if (asset) {
+          const badge = assetBadge(asset)
+          options.push({ key, speciesId: row.id, candidate: candidate.name, label: `${rowLabel}${variant} (${candidate.name}, ${candidateSuffix({ ...candidate, userApproved: asset.userApproved ?? candidate.userApproved })})`, disabled: false, status: BADGE_LABELS[badge], badge })
+        } else {
+          const status = candidateStatusText(candidate, catalog.candidateSource)
+          options.push({ key: `row:${key}`, speciesId: row.id, candidate: candidate.name, label: `${rowLabel}${variant} (${candidate.name}, ${status})`, disabled: true, status })
+        }
+      }
+      // Loadable candidates the committed catalog has not been rebuilt for yet.
+      for (const asset of catalog.assets) {
+        if (asset.speciesId !== row.id || asset.state !== 'candidate' || seenKeys.has(asset.key)) continue
+        seenKeys.add(asset.key)
+        const badge = assetBadge(asset)
+        options.push({ key: asset.key, speciesId: row.id, candidate: asset.candidate, label: `${rowLabel} (${asset.candidate}, not in catalog yet)`, disabled: false, status: BADGE_LABELS[badge], badge })
+      }
+      if (row.assetStatus !== 'accepted' && row.candidates.length === 0 && !options.some((option) => option.speciesId === row.id)) {
+        options.push({ key: `row:${row.id}`, speciesId: row.id, label: `${rowLabel} (${rowStatusText(row)})`, disabled: true, status: rowStatusText(row) })
+      }
+    }
+    if (options.length) groups.push({ category: group.category, label: group.label, options })
+  }
+
+  const orphans = catalog.assets.filter((asset) => !seenKeys.has(asset.key))
+  if (orphans.length) {
+    groups.push({
+      category: 'uncatalogued',
+      label: 'Not in catalog yet',
+      options: orphans.map((asset) => {
+        const badge = assetBadge(asset)
+        return { key: asset.key, speciesId: asset.speciesId, candidate: asset.candidate, label: `${asset.displayName}${asset.candidate ? ` (${asset.candidate})` : ''}`, disabled: false, status: BADGE_LABELS[badge], badge }
+      }),
+    })
+  }
+  return groups
+}
+
+export { categoryLabel }
