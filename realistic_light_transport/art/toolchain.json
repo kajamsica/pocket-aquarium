@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "blender": {
+    "version": "5.2.1 LTS",
+    "platform": "macOS Apple Silicon",
+    "sourceUrl": "https://download.blender.org/release/Blender5.2/blender-5.2.1-macos-arm64.dmg",
+    "checksumUrl": "https://download.blender.org/release/Blender5.2/blender-5.2.1.sha256",
+    "sha256": "6409e21de80994db5f4c4a34486b6fd43cea21085b912f7491c53e923acb65a3",
+    "taskScopedBinary": "/tmp/pocket-aquarium-tools/blender-5.2.1/Blender.app/Contents/MacOS/Blender"
+  },
+  "policy": "Execute only the checksum-verified task-scoped binary. Do not install Blender globally or commit the application bundle."
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "ocellaris",
+  "scientificName": "Amphiprion ocellaris",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "1.0.0",
+  "referenceAdultLengthMeters": 0.08,
+  "origin": "center_of_mass",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "sourceManifest": "ocellaris.asset.json",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Codex FISH3D-P1 asset lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "path": "../../../../assets/animals/ocellaris-clownfish-v2.png",
+      "usage": "internal visual reference only; no pixels sampled or copied",
+      "sha256": "27b7f593e45c9f3fe3704d0e0ddcd118aaa0f6e1945f578d38f6d82fd30f223a",
+      "rightsStatus": "UNRESOLVED_REFERENCE_ONLY"
+    }
+  ],
+  "generatedReferences": [],
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceBlendSha256": "23b373dc61acaf819a22a1efb76314aa0df1110bfcc7e720d2d23d58144a12ce",
+  "exportScriptSha256": "92ede4f818829e618bad2a26dda376a1be14ff31997e1c382cbdc5ba7e6d2017",
+  "runtimeGlbSha256": {
+    "lod1": "6ea07136a440888a555dd29a4d4cf14f8f441ffbf69608cb7d8f551c7d105e73"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "forwardAxis": "+X",
+    "upAxis": "+Y",
+    "origin": "center_of_mass"
+  },
+  "statistics": {
+    "triangles": 4424,
+    "sourceTriangles": 2392,
+    "materials": 6,
+    "bones": 13,
+    "clips": [
+      "idle",
+      "swim",
+      "burst"
+    ],
+    "bodyVertices": 1218,
+    "finVertices": 62,
+    "runtimeBytes": 250868
+  },
+  "validator": {
+    "status": "deferred_to_FISH3D-03A",
+    "report": null
+  }
+}
