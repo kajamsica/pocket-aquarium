@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "blue_hippo_tang",
+  "revision": 1,
+  "policy": "References informed proportions, fin layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used.",
+  "sources": [
+    { "id": "WORMS-219676", "title": "Paracanthurus hepatus (Linnaeus, 1766) taxon record", "publisher": "World Register of Marine Species", "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219676", "accessedAt": "2026-09-03", "evidenceClass": "authoritative_reference", "allowedUse": "facts_and_citation", "license": "CC BY 4.0 (WoRMS data)" },
+    { "id": "FISHBASE-HEPATUS", "title": "Paracanthurus hepatus species summary (max length 31.0 cm TL, morphology, distribution)", "publisher": "FishBase", "url": "https://www.fishbase.se/summary/Paracanthurus-hepatus.html", "accessedAt": "2026-09-03", "evidenceClass": "authoritative_reference", "allowedUse": "facts_and_citation", "license": "CC BY-NC 3.0 (text)" },
+    { "id": "AM-HEPATUS", "title": "Blue Tang, Paracanthurus hepatus species account", "publisher": "Australian Museum", "url": "https://australian.museum/learn/animals/fishes/blue-tang-paracanthurus-hepatus/", "accessedAt": "2026-09-03", "evidenceClass": "authoritative_reference", "allowedUse": "facts_and_citation" },
+    { "id": "COMMONS-HEPATUS", "title": "Category:Paracanthurus hepatus (openly licensed photographs used for proportion study only)", "publisher": "Wikimedia Commons", "url": "https://commons.wikimedia.org/wiki/Category:Paracanthurus_hepatus", "accessedAt": "2026-09-03", "evidenceClass": "open_reference_imagery", "allowedUse": "proportion_reference_only", "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied" }
+  ],
+  "referenceGradeRationale": "Calibrated lateral photographs are openly available; top and front views are inferred from general Acanthuridae body plans, so the morphology is graded B rather than A."
+}

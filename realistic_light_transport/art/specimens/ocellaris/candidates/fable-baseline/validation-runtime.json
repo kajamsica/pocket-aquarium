@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "neutralOffsetsDegrees": {
+    "burst": {
+      "Body": 0.0,
+      "Spine_A": 0.0,
+      "Spine_B": 0.0,
+      "Peduncle": 0.0,
+      "Caudal": 0.0
+    },
+    "idle": {
+      "Body": 0.0,
+      "Spine_A": 0.0,
+      "Spine_B": 0.0,
+      "Peduncle": 0.0,
+      "Caudal": 0.0
+    },
+    "swim": {
+      "Body": 0.0,
+      "Spine_A": 0.0,
+      "Spine_B": 0.0,
+      "Peduncle": 0.0,
+      "Caudal": 0.0
+    }
+  },
+  "clips": {
+    "idle": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "maxLandmarkErrorMeters": 4.6193712360779216e-06,
+      "phases": {
+        "0.00": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 1.8557931460430253e-08
+        },
+        "0.25": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 4.617989821428235e-06
+        },
+        "0.50": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 1.9419782053371685e-07
+        },
+        "0.75": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 4.6193712360779216e-06
+        }
+      },
+      "loopSeam": {
+        "rotationDegrees": 0.0,
+        "landmarkMeters": 0.0
+      }
+    },
+    "swim": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "maxLandmarkErrorMeters": 3.919420465659835e-05,
+      "phases": {
+        "0.00": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 1.8557931460430253e-08
+        },
+        "0.25": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 3.919420465659835e-05
+        },
+        "0.50": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 3.864161766890522e-07
+        },
+        "0.75": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 3.919309230620262e-05
+        }
+      },
+      "loopSeam": {
+        "rotationDegrees": 0.0,
+        "landmarkMeters": 0.0
+      }
+    },
+    "burst": {
+      "maxBoneRotationErrorDegrees": 0.22028686090485455,
+      "maxLandmarkErrorMeters": 8.401606105134743e-05,
+      "phases": {
+        "0.00": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 1.8557931460430253e-08
+        },
+        "0.25": {
+          "maxBoneRotationErrorDegrees": 0.22028686090485455,
+          "maxLandmarkErrorMeters": 8.401606105134743e-05
+        },
+        "0.50": {
+          "maxBoneRotationErrorDegrees": 0.0,
+          "maxLandmarkErrorMeters": 6.151349032661369e-07
+        },
+        "0.75": {
+          "maxBoneRotationErrorDegrees": 0.22028686090485455,
+          "maxLandmarkErrorMeters": 8.401453609411681e-05
+        }
+      }
+    }
+  }
+}

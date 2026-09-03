@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "ocellaris",
+  "morphologySha256": "ea4d3feb589c98313e55022f51d377b86267578ebcfdf5b422332e2fbb0c5b32",
+  "objects": [
+    {
+      "name": "PA_ocellaris_Body",
+      "vertexCount": 2306,
+      "triangleCount": 4608,
+      "vertexDigest": "6a88c516218cd180b5ea2e84f02498f8ac41864e29cf11c4848bd82087625a02",
+      "topologyDigest": "73893e1ae0c5d589e9379bb96d29d09a92bd8fd48263f86a61cb63374fd37b09"
+    },
+    {
+      "name": "PA_ocellaris_Fins",
+      "vertexCount": 196,
+      "triangleCount": 252,
+      "vertexDigest": "31913a95f40deb7c45dbcab520024ac71c147c75079e7be6382998b8bf20e5e9",
+      "topologyDigest": "8d457f291d78bb6676a35d9fc1f0b87c9312c7dd2e30311101ad70c6a25e23ac"
+    }
+  ],
+  "geometryDigest": "ed88d64ef40c35e650c2245588ace9154bf91deea6cf860713c67e0a9ea86042"
+}

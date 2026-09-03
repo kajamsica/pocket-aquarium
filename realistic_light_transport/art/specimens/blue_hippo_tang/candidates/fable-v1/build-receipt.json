@@ -1,0 +1,36 @@
+{
+  "asset": "blue_hippo_tang",
+  "variant": null,
+  "candidateDir": "art/specimens/blue_hippo_tang/candidates/fable-v1",
+  "startedAt": "2026-09-03T19:52:41.086Z",
+  "pid": 5740,
+  "stages": [
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 2117,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 2076,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 2056,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1148,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T19:52:48.487Z",
+  "status": "passed",
+  "failure": null
+}
