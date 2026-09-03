@@ -204,6 +204,22 @@ type SpeciesSkins = Readonly<Record<'watchman_goby', THREE.Texture>>
 type MouthPositions = Map<number, THREE.Vector3>
 type FoodAssignments = ReadonlyMap<number, number>
 
+export type ProceduralSpecimenFallback = 'watchman_goby' | 'pistol_shrimp' | 'epaulette_shark'
+
+export interface SpecimenVisualPlan {
+  readonly renderAcceptedAsset: boolean
+  readonly proceduralFallback?: ProceduralSpecimenFallback
+}
+
+/** Accepted assets are the sole primary visual. Procedural bodies remain a fail-safe only. */
+export function resolveSpecimenVisualPlan(speciesId: string, hasAcceptedAsset: boolean): SpecimenVisualPlan {
+  if (hasAcceptedAsset) return { renderAcceptedAsset: true }
+  if (speciesId === 'watchman_goby' || speciesId === 'pistol_shrimp' || speciesId === 'epaulette_shark') {
+    return { renderAcceptedAsset: false, proceduralFallback: speciesId }
+  }
+  return { renderAcceptedAsset: false }
+}
+
 /** Hunger decides priority, but every eligible fish receives one portion before repeats. */
 export function assignPelletTargets(specimens: readonly PocketSpecimen[], food: readonly ScenePellet[],
   mouths: ReadonlyMap<number, THREE.Vector3>, waterSurfaceY: number) {
@@ -320,6 +336,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
   const lifeScale = specimen.stage === 'adult' ? 1 : .68
   const length = THREE.MathUtils.clamp(specimen.adultSizeCm / 100 * sceneUnitsPerMeter * lifeScale, .16, 3.7)
   const riggedAsset = specimenAssetFor(specimen.speciesId)
+  const visualPlan = resolveSpecimenVisualPlan(specimen.speciesId, Boolean(riggedAsset))
   const targetFood = food.find((pellet) => assignments.get(pellet.id) === specimen.id)
   const targetPosition = targetFood ?? null
 
@@ -392,14 +409,15 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
       event.stopPropagation()
       dispatch?.({ type: 'SELECT_ENTITY', entityType: 'livestock', id: specimen.id })
     }}>
-    {riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
+    {visualPlan.renderAcceptedAsset && riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
       feedDrive={forage} />}
     {morphologyOverride?.speciesId === specimen.speciesId &&
       <DraftMorphologyOverlay profile={morphologyOverride} targetLengthSceneUnits={length} />}
-    {specimen.speciesId === 'watchman_goby' && <WatchmanGoby geometry={geometry} skin={skins.watchman_goby} tailRef={tail} />}
-    {specimen.speciesId === 'epaulette_shark' && <EpauletteShark geometry={geometry} tailRef={tail} />}
-    {specimen.speciesId === 'pistol_shrimp' && <PistolShrimp />}
+    {visualPlan.proceduralFallback === 'watchman_goby' &&
+      <WatchmanGoby geometry={geometry} skin={skins.watchman_goby} tailRef={tail} />}
+    {visualPlan.proceduralFallback === 'epaulette_shark' && <EpauletteShark geometry={geometry} tailRef={tail} />}
+    {visualPlan.proceduralFallback === 'pistol_shrimp' && <PistolShrimp />}
   </group>
 }
 
