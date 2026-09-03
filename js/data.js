@@ -22,6 +22,10 @@
     WATER_TEST: "WATER_TEST",               // {param?} reveal parameter freshness; whole panel if no param
     WATER_CHANGE: "WATER_CHANGE",           // {fraction}
     WATER_TOP_OFF: "WATER_TOP_OFF",         // restore evaporated volume with freshwater
+    // ---- automation (installed physical equipment) ----
+    SET_FEEDER: "SET_FEEDER",               // {enabled?, intervalDays?, portionsPerDispense?} configure/toggle auto feeder
+    REFILL_FEEDER: "REFILL_FEEDER",         // refill the auto-feeder hopper (costs credits)
+    REFILL_RESERVOIR: "REFILL_RESERVOIR",   // refill the finite freshwater ATO reservoir
     // ---- purchases ----
     PURCHASE_EQUIPMENT: "PURCHASE_EQUIPMENT", // {category, levelId}
     PURCHASE_TIER: "PURCHASE_TIER",           // {tier}
@@ -173,8 +177,15 @@
     ato: {
       category: "ato", label: "Auto top-off (ATO)",
       levels: [
-        { id: "none", name: "Manual top-off", price: 0,  autoTopOff: false },
-        { id: "ato",  name: "Freshwater ATO", price: 70, autoTopOff: true }
+        { id: "none", name: "Manual top-off", price: 0,  autoTopOff: false, reservoirCapacityL: 0 },
+        { id: "ato",  name: "Freshwater ATO", price: 70, autoTopOff: true,  reservoirCapacityL: 90 }
+      ]
+    },
+    feeder: {
+      category: "feeder", label: "Auto feeder",
+      levels: [
+        { id: "none", name: "Hand feeding",              price: 0,  autoFeed: false, hopperCapacity: 0 },
+        { id: "auto", name: "Programmable auto feeder",  price: 55, autoFeed: true,  hopperCapacity: 28 }
       ]
     }
   };
@@ -520,6 +531,20 @@
       var catDef = EQUIPMENT[request.category];
       if (catDef && catDef.reefOnly && state.habitat !== "reef")
         reasons.push(catDef.label + " is only useful on a saltwater reef.");
+      // Repurchase / downgrade gate: the same installed level is never purchasable, and any
+      // lower level in the category is not an upgrade. Higher levels fall through to credits.
+      if (catDef && state.equipment) {
+        var installedId = state.equipment[request.category];
+        var reqIdx = -1, instIdx = -1;
+        for (var li = 0; li < catDef.levels.length; li++) {
+          if (catDef.levels[li].id === request.levelId) reqIdx = li;
+          if (catDef.levels[li].id === installedId) instIdx = li;
+        }
+        if (instIdx >= 0 && reqIdx >= 0) {
+          if (reqIdx === instIdx) { reasons.push("Already installed."); return { ok: false, reasons: reasons }; }
+          if (reqIdx < instIdx) { reasons.push("Not an upgrade over current equipment."); return { ok: false, reasons: reasons }; }
+        }
+      }
       if ((state.credits || 0) < lvl.price)
         reasons.push("Not enough credits (need " + lvl.price + ", have " + Math.floor(state.credits || 0) + ").");
       return { ok: reasons.length === 0, reasons: reasons };

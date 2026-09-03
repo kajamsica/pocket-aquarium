@@ -7,7 +7,10 @@ export function seededUnit(index: number, salt = 0) {
   return value - Math.floor(value)
 }
 
-/** One shared live-rock layout drives both rendering and fish collision clearance. */
+/** One shared live-rock layout drives both rendering and fish collision clearance.
+ *  TODO(aquascaping): this fixed seeded layout is engine-owned. Player-authored
+ *  aquascaping is a future system that would supply these rocks from saved state;
+ *  it is intentionally out of scope here. */
 export const REEF_ROCKS = Array.from({ length: 13 }, (_, index) => {
   const arc = (index / 12) * Math.PI * 1.74 + 0.16
   const radius = 0.66 + seededUnit(index, 1) * 1.12

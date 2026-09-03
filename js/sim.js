@@ -59,8 +59,35 @@
       light: equipLevel("light", e.light) || DATA.EQUIPMENT.light.levels[0],
       skimmer: equipLevel("skimmer", e.skimmer) || DATA.EQUIPMENT.skimmer.levels[0],
       refugium: equipLevel("refugium", e.refugium) || DATA.EQUIPMENT.refugium.levels[0],
-      ato: equipLevel("ato", e.ato) || DATA.EQUIPMENT.ato.levels[0]
+      ato: equipLevel("ato", e.ato) || DATA.EQUIPMENT.ato.levels[0],
+      feeder: equipLevel("feeder", e.feeder) || DATA.EQUIPMENT.feeder.levels[0]
     };
+  }
+
+  /* Compact automation state for installed physical equipment (one object, no
+     generic scheduler framework). Only the auto feeder and ATO live here. */
+  var FEEDER_REFILL_COST = 8;         // tank credits to top up the hopper
+  var MIN_FEED_INTERVAL = 0.25;       // guards nextFeedDay from ever stalling
+  function freshAutomation() {
+    return {
+      feeder: { enabled: false, intervalDays: 1, portionsPerDispense: 1, hopperPortions: 0, capacity: 0, nextFeedDay: 0, status: "idle" },
+      ato: { reservoirL: 0, capacityL: 0 }
+    };
+  }
+  /* Mirror installed-equipment capacities into automation state. On a fresh install
+     the physical device arrives loaded (hopper full / reservoir full) so it works
+     immediately; refills are needed only after it runs down. */
+  function syncAutomationCapacity(state, freshInstall) {
+    var a = (state.automation = state.automation || freshAutomation());
+    var eq = EQ(state);
+    a.feeder.capacity = eq.feeder.hopperCapacity || 0;
+    a.ato.capacityL = eq.ato.reservoirCapacityL || 0;
+    if (freshInstall) {
+      if (eq.feeder.autoFeed) a.feeder.hopperPortions = a.feeder.capacity;
+      if (eq.ato.autoTopOff) a.ato.reservoirL = a.ato.capacityL;
+    }
+    a.feeder.hopperPortions = clamp(a.feeder.hopperPortions, 0, a.feeder.capacity);
+    a.ato.reservoirL = clamp(a.ato.reservoirL, 0, a.ato.capacityL);
   }
   function isReef(state) { return state.habitat === "reef"; }
 
@@ -90,7 +117,8 @@
       speed: 1, lastSpeed: 1,
       credits: (credits == null ? 120 : credits), xp: 0,
       tier: "nano20",
-      equipment: { filter: "sponge", heater: "none", circulation: "none", light: "basic", skimmer: "none", refugium: "none", ato: "none" },
+      equipment: { filter: "sponge", heater: "none", circulation: "none", light: "basic", skimmer: "none", refugium: "none", ato: "none", feeder: "none" },
+      automation: freshAutomation(),
       water: emptyWater(),
       cycle: { stage: "Setup", aob: 0.02, nob: 0.01, ammoniaSource: false, inoculated: false, lifeSupport: false, filled: false, validationDays: 0 },
       succession: { age: 0, haze: 0, diatom: 0, greenFilm: 0, cyano: 0, silicate: 1.0 },
@@ -128,6 +156,8 @@
     if (habitat === "reef") state.microfauna.pods = 0.05;
     else state.microfauna.infusoria = 0.05;
     state.breeding = { clown: { paired: false, femaleId: null, maleId: null, bondDays: 0, spawnCooldown: 0 }, tetra: { readyDays: 0, spawnCooldown: 0 } };
+    state.automation = freshAutomation();
+    syncAutomationCapacity(state, false);
     log(state, "habitat", "Started a new " + DATA.HABITATS[habitat].name + ".");
   }
 
@@ -192,12 +222,18 @@
     var oldL = w.levelL;
     var evapL = oldL * evapFrac;
     var newL = Math.max(oldL - evapL, full * 0.4);
-    // ATO auto-replaces evaporated freshwater, holding volume (and reef salinity) steady.
-    // Net solute mass is conserved across evaporate(oldL->newL) + refill(newL->full),
-    // which equals a single dilution from oldL to full — so use oldL, not newL.
-    if (eq.ato.autoTopOff && newL < full) {
-      applyDilution(state, oldL, full, /*freshwater*/ true);
-      newL = full;
+    // ATO replaces evaporated freshwater from a FINITE reservoir: it adds only the
+    // water it holds and stops when empty. Net solute mass is conserved across
+    // evaporate(oldL->newL) + refill(newL->target) — which equals a single dilution
+    // from oldL to target — so dilute from oldL, not newL. Works for full and partial
+    // top-off, and is deterministic under fast-forward/offline stepping.
+    var res = state.automation && state.automation.ato;
+    if (eq.ato.autoTopOff && res && res.reservoirL > 0 && newL < full) {
+      var added = Math.min(full - newL, res.reservoirL);
+      var target = newL + added;
+      applyDilution(state, oldL, target, /*freshwater*/ true);
+      res.reservoirL = Math.max(0, res.reservoirL - added);
+      newL = target;
     } else {
       // evaporation concentrates dissolved species (salts + wastes)
       applyDilution(state, oldL, newL, /*evaporating*/ false);
@@ -386,6 +422,33 @@
       kept.push(food[i]);
     }
     state.food = kept;
+  }
+
+  /* ============================ auto feeder ============================ */
+  /* Deterministic physical dispenser: only runs when installed, enabled, due, and
+     non-empty, and drops portions through the SAME authoritative doFeed food-entity
+     path as manual FEED/FEED_AT. No RNG (keeps the shared stream repeatable) and no
+     jams — it simply cannot create more food than the hopper holds. */
+  function feederDropX(seq) {
+    // spread drops across the surface with a low-discrepancy sequence, no RNG
+    return 0.28 + ((seq * 0.6180339887) % 1) * 0.44;
+  }
+  function stepAutoFeeder(state, dt) {
+    var eq = EQ(state); if (!eq.feeder.autoFeed) return;
+    var f = state.automation && state.automation.feeder; if (!f || !f.enabled) return;
+    var interval = Math.max(num(f.intervalDays, 1), MIN_FEED_INTERVAL);
+    var portions = Math.max(1, Math.floor(num(f.portionsPerDispense, 1)));
+    var guard = 0;
+    while (state.time.days >= f.nextFeedDay && guard < 2000) {
+      guard++;
+      if (f.hopperPortions <= 0) { f.status = "empty"; break; }
+      var give = Math.min(portions, Math.floor(f.hopperPortions));
+      for (var i = 0; i < give; i++) { doFeed(state, feederDropX(state.nextId), 0); f.hopperPortions -= 1; }
+      f.status = f.hopperPortions <= 0 ? "empty" : "dispensed";
+      log(state, "feeder", "Auto feeder dispensed " + give + " portion(s); " + Math.floor(f.hopperPortions) + " left in the hopper.");
+      f.nextFeedDay += interval;
+    }
+    void dt;
   }
 
   /* ============================ livestock welfare ============================ */
@@ -627,6 +690,7 @@
     stepLight(state);
     updateVolumeAndConcentration(state, dt, EQ(state));
     stepChemistry(state, dt);
+    stepAutoFeeder(state, dt);
     stepFeeding(state, dt);
     stepLivestock(state, dt);
     stepCorals(state, dt);
@@ -696,6 +760,10 @@
       case ACT.WATER_CHANGE: doWaterChange(state, num(action.fraction, 0.25)); break;
       case ACT.WATER_TOP_OFF: doTopOff(state); break;
 
+      case ACT.SET_FEEDER: doSetFeeder(state, action); break;
+      case ACT.REFILL_FEEDER: doRefillFeeder(state); break;
+      case ACT.REFILL_RESERVOIR: doRefillReservoir(state); break;
+
       case ACT.PURCHASE_EQUIPMENT: doBuyEquipment(state, action.category, action.levelId); break;
       case ACT.PURCHASE_TIER: doBuyTier(state, action.tier); break;
       case ACT.PURCHASE_LIVESTOCK: doBuyLivestock(state, action.species, action.count); break;
@@ -762,11 +830,49 @@
     log(state, "water", isReef(state) ? "Topped off with freshwater — restored volume and lowered salinity back toward 35 ppt." : "Topped off with freshwater — restored volume and diluted dissolved wastes.");
   }
 
+  /* Configure/toggle the auto feeder. Only acts on an installed device; scheduling
+     the next feed from "now" when enabling keeps the cadence deterministic. */
+  function doSetFeeder(state, action) {
+    var eq = EQ(state), f = (state.automation = state.automation || freshAutomation()).feeder;
+    if (!eq.feeder.autoFeed) { log(state, "feeder", "Install an auto feeder before configuring it."); return false; }
+    f.capacity = eq.feeder.hopperCapacity;
+    if (action.intervalDays != null) f.intervalDays = clamp(num(action.intervalDays, f.intervalDays), MIN_FEED_INTERVAL, 14);
+    if (action.portionsPerDispense != null) f.portionsPerDispense = clamp(Math.round(num(action.portionsPerDispense, f.portionsPerDispense)), 1, 10);
+    if (action.enabled != null) f.enabled = !!action.enabled;
+    if (f.enabled && f.nextFeedDay <= state.time.days) f.nextFeedDay = state.time.days + Math.max(f.intervalDays, MIN_FEED_INTERVAL);
+    log(state, "feeder", "Auto feeder " + (f.enabled ? "enabled" : "disabled") + " — every " + r3(f.intervalDays) + " day(s), " + f.portionsPerDispense + " portion(s).");
+    return true;
+  }
+  function doRefillFeeder(state) {
+    var eq = EQ(state), f = (state.automation = state.automation || freshAutomation()).feeder;
+    if (!eq.feeder.autoFeed) { log(state, "feeder", "No auto feeder installed to refill."); return false; }
+    f.capacity = eq.feeder.hopperCapacity;
+    if (f.hopperPortions >= f.capacity) { log(state, "feeder", "The feeder hopper is already full."); return false; }
+    if (state.credits < FEEDER_REFILL_COST) { log(state, "store", "Not enough credits to refill the feeder (need " + FEEDER_REFILL_COST + ")."); return false; }
+    state.credits -= FEEDER_REFILL_COST;
+    f.hopperPortions = f.capacity;
+    if (f.status === "empty") f.status = "idle";
+    log(state, "feeder", "Refilled the feeder hopper to " + f.capacity + " portions (-" + FEEDER_REFILL_COST + "c).");
+    return true;
+  }
+  /* Refill the finite freshwater ATO reservoir. Freshwater is free (like a manual
+     top-off); the point is the reservoir is finite and must be replenished. */
+  function doRefillReservoir(state) {
+    var eq = EQ(state), a = (state.automation = state.automation || freshAutomation()).ato;
+    if (!eq.ato.autoTopOff) { log(state, "water", "No ATO installed to refill."); return false; }
+    a.capacityL = eq.ato.reservoirCapacityL;
+    if (a.reservoirL >= a.capacityL) { log(state, "water", "The ATO reservoir is already full."); return false; }
+    a.reservoirL = a.capacityL;
+    log(state, "water", "Filled the ATO freshwater reservoir to " + r3(a.capacityL) + " L.");
+    return true;
+  }
+
   function doBuyEquipment(state, category, levelId) {
     var v = PA.validatePurchase(state, { kind: "equipment", category: category, levelId: levelId });
     if (!v.ok) { log(state, "store", "Cannot buy equipment: " + v.reasons.join(" ")); return false; }
     var lvl = equipLevel(category, levelId);
     state.credits -= lvl.price; state.equipment[category] = levelId;
+    if (category === "feeder" || category === "ato") syncAutomationCapacity(state, true);
     log(state, "store", "Installed " + lvl.name + ".");
     award(state, "equip_" + category + "_" + levelId, 6, 0, null, true);
     return true;
@@ -988,6 +1094,28 @@
       for (var cat in DATA.EQUIPMENT) if (DATA.EQUIPMENT.hasOwnProperty(cat)) {
         if (equipLevel(cat, raw.equipment[cat])) base.equipment[cat] = raw.equipment[cat];
       }
+    }
+    // automation: one compact object for the auto feeder + finite ATO reservoir.
+    // Capacities always follow the installed equipment; contents are clamped to them.
+    base.automation = freshAutomation();
+    var rawAuto = raw.automation;
+    if (rawAuto && typeof rawAuto === "object") {
+      if (rawAuto.feeder && typeof rawAuto.feeder === "object") {
+        var rf = rawAuto.feeder, bf = base.automation.feeder;
+        bf.enabled = !!rf.enabled;
+        bf.intervalDays = clamp(num(rf.intervalDays, 1), MIN_FEED_INTERVAL, 14);
+        bf.portionsPerDispense = clamp(Math.round(num(rf.portionsPerDispense, 1)), 1, 10);
+        bf.hopperPortions = clamp(num(rf.hopperPortions, 0), 0, 1e4);
+        bf.nextFeedDay = clamp(num(rf.nextFeedDay, 0), 0, 1e7);
+        bf.status = ["idle", "dispensed", "empty"].indexOf(rf.status) >= 0 ? rf.status : "idle";
+      }
+      if (rawAuto.ato && typeof rawAuto.ato === "object") {
+        base.automation.ato.reservoirL = clamp(num(rawAuto.ato.reservoirL, 0), 0, 1e4);
+      }
+      syncAutomationCapacity(base, false);
+    } else {
+      // legacy save: assume the installed devices were topped so behavior is graceful
+      syncAutomationCapacity(base, true);
     }
     // water: clamp numeric ranges
     if (raw.water && typeof raw.water === "object") {

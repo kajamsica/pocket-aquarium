@@ -80,6 +80,20 @@ export interface ReefSnapshot {
     readonly atoPumpLitersPerHour: number
     readonly lightPower: number
     readonly flowPower: number
+    /** Finite ATO reservoir capacity and empty cue (optional: only the pocket bridge fills these). */
+    readonly atoReservoirCapacityLiters?: number
+    readonly atoEmpty?: boolean
+    /** Physical auto-feeder projection for the reef hardware and HUD cues. */
+    readonly feederInstalled?: boolean
+    readonly feederEnabled?: boolean
+    readonly feederDispensing?: boolean
+    readonly feederEmpty?: boolean
+    /** Installed equipment level ids, projected so the reef can render owned hardware. */
+    readonly filterLevel?: string
+    readonly circulationLevel?: string
+    readonly lightLevel?: string
+    readonly skimmerLevel?: string
+    readonly refugiumLevel?: string
   }
   readonly ecology: {
     readonly phase: LifecyclePhase

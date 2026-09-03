@@ -3,13 +3,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReefRenderSettings, ReefRenderTelemetry } from './contracts'
 import {
   advancePocketState,
+  advancePocketStateDevSafe,
   createPocketNewGame,
   createPocketReefShowcase,
+  devSafeSaveKey,
   dispatchPocketAction,
+  isDevSafeActive,
   pocketSaveKey,
   projectPocketState,
   restorePocketGame,
   serializePocketGame,
+  type PocketPreventedDeath,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
@@ -28,6 +32,9 @@ const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
 const SEARCH_PARAMS = new URLSearchParams(window.location.search)
 const WORKBENCH_SPECIES = SEARCH_PARAMS.get('workbench')
 const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
+const DEV_SAFE = isDevSafeActive()
+const SAVE_KEY = DEV_SAFE ? devSafeSaveKey : pocketSaveKey
+const MAX_PREVENTED = 20
 
 if (WORKBENCH_SPECIES === 'ocellaris') {
   const icon = document.createElement('link')
@@ -40,17 +47,23 @@ function AquariumApp() {
   const [pocketState, setPocketState] = useState(() => {
     if (SHOWCASE_MODE) return createPocketReefShowcase()
     try {
-      const saved = window.localStorage.getItem(pocketSaveKey)
+      const saved = window.localStorage.getItem(SAVE_KEY)
       return saved ? restorePocketGame(JSON.parse(saved)) : createPocketNewGame()
     } catch {
       return createPocketNewGame()
     }
   })
   const pocketStateRef = useRef(pocketState)
+  const [prevented, setPrevented] = useState<readonly PocketPreventedDeath[]>([])
+  // Death protection defaults on inside the gated dev shell; toggling only changes future ticks.
+  const [protectionOn, setProtectionOn] = useState(true)
+  const protectionRef = useRef(true)
+  protectionRef.current = protectionOn
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const lastTelemetryUpdate = useRef(0)
-  const view = projectPocketState(pocketState)
+  const godModeOn = DEV_SAFE && protectionOn
+  const view = projectPocketState(pocketState, { unlimitedCredits: godModeOn })
   pocketStateRef.current = pocketState
 
   useEffect(() => {
@@ -63,6 +76,13 @@ function AquariumApp() {
         MAX_ELAPSED_REAL_SECONDS,
       )
       previousUpdate = currentUpdate
+      if (DEV_SAFE && protectionRef.current) {
+        const advanced = advancePocketStateDevSafe(pocketStateRef.current, elapsedRealSeconds)
+        pocketStateRef.current = advanced.state
+        setPocketState(advanced.state)
+        if (advanced.prevented.length) setPrevented((log) => [...advanced.prevented, ...log].slice(0, MAX_PREVENTED))
+        return
+      }
       setPocketState((current) => advancePocketState(current, elapsedRealSeconds))
     }, UPDATE_INTERVAL_MS)
 
@@ -72,7 +92,7 @@ function AquariumApp() {
   useEffect(() => {
     if (SHOWCASE_MODE) return
     const save = () => {
-      try { window.localStorage.setItem(pocketSaveKey, serializePocketGame(pocketStateRef.current)) } catch { /* storage is optional */ }
+      try { window.localStorage.setItem(SAVE_KEY, serializePocketGame(pocketStateRef.current)) } catch { /* storage is optional */ }
     }
     const timer = window.setInterval(save, 1000)
     window.addEventListener('pagehide', save)
@@ -83,8 +103,23 @@ function AquariumApp() {
   }, [])
 
   const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
-    setPocketState((current) => dispatchPocketAction(current, action))
+    setPocketState((current) => {
+      // God mode: validate/apply the action with unlimited credits, then restore the real
+      // dev-save balance so purchases and refills install for free without touching economy.
+      if (DEV_SAFE && protectionRef.current) {
+        const next = dispatchPocketAction({ ...current, credits: Number.MAX_SAFE_INTEGER }, action)
+        next.credits = current.credits
+        return next
+      }
+      return dispatchPocketAction(current, action)
+    })
   }, [])
+
+  const godMode = useMemo(() => DEV_SAFE ? {
+    on: protectionOn,
+    prevented,
+    toggle: () => setProtectionOn((current) => !current),
+  } : undefined, [prevented, protectionOn])
 
   const feeding = useMemo<FeedingApi>(() => ({
     food: view.food,
@@ -116,6 +151,7 @@ function AquariumApp() {
         renderSettings={renderSettings}
         renderTelemetry={renderTelemetry}
         onRenderSettingsChange={setRenderSettings}
+        godMode={godMode}
       />
     </main>
   )
