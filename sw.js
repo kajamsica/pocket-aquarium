@@ -14,10 +14,10 @@
    - The worker never caches itself; the browser updates sw.js on its own byte-diff. */
 "use strict";
 
-// v4: ship contact-driven feeding and the player-feedback repairs. The simulation, renderer,
-// app shell and styles all changed, so this bump retires v3 and prevents installed clients from
-// remaining pinned to the instant-consumption feeding behavior after the release activates.
-var CACHE_VERSION = "v4";
+// v5: ship the aquarium-first mobile shell plus explicit drop/contact/eating feedback.
+// app.js, render.js, styles.css and the install manifest all changed, so this bump
+// retires earlier caches instead of leaving an installed iPhone on stale feeding code.
+var CACHE_VERSION = "v5";
 var CACHE_NAME = "pocket-aquarium-shell-" + CACHE_VERSION;
 
 /* Relative to the worker scope — subpath-safe under /pocket-aquarium/. */

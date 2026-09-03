@@ -160,12 +160,24 @@
     if (!action || !action.type) return;
     var t = action.type;
     var aliveFishBefore = (t === "FEED" || t === "FEED_AT") ? aliveEaters() : 0;
+    var resumedForFeed = (t === "FEED" || t === "FEED_AT") && aliveFishBefore > 0 && state.speed === 0;
+    var foodBefore = t === ACT.CONSUME_FOOD ? state.food.length : 0;
+    // A feed gesture is active husbandry, so do not leave a dropped pellet visually
+    // stranded by an easy-to-miss paused transport. Resume the keeper's prior speed.
+    if (resumedForFeed) PA.dispatch(state, { type: ACT.TOGGLE_PAUSE });
     PA.dispatch(state, action);
     if (t === "FEED" || t === "FEED_AT") {
       if (aliveFishBefore === 0) toast("Nothing alive to eat it — uneaten food just decays into waste and raises ammonia.", "warn");
       else if (state._feedWarning) toast("Careful: ammonia/nitrite is elevated. Extra food will worsen the water.", "warn");
+      else toast(resumedForFeed ? "Food dropped — aquarium resumed so the fish can pursue it." : "Food dropped — watch the fish pursue and eat the pellet.", "care");
       state._feedWarning = false;
       pendingFirstFeed = false; // the first-feed beat is satisfied once a feed actually executes
+    } else if (t === ACT.CONSUME_FOOD && state.food.length < foodBefore) {
+      var eater = null;
+      for (var ei = 0; ei < state.livestock.length; ei++) if (String(state.livestock[ei].id) === String(action.eaterId)) { eater = state.livestock[ei]; break; }
+      var esp = eater && DATA.SPECIES[eater.species];
+      var fed = eater ? Math.round((1 - clamp01(eater.hunger)) * 100) : null;
+      toast((esp ? esp.name : "A fish") + " ate the pellet" + (fed == null ? "." : " · Fed " + fed + "%"), "care");
     }
     markDirty();
     renderNow();
@@ -420,7 +432,14 @@
   function setPressed(btn, on) { if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false"); }
   function renderTransport(snap) {
     var sp = snap.speed;
-    setPressed(pauseBtn, sp === 0);
+    var paused = sp === 0;
+    setPressed(pauseBtn, paused);
+    if (pauseBtn) {
+      pauseBtn.setAttribute("aria-label", paused ? "Aquarium paused — resume simulation" : "Pause simulation");
+      pauseBtn.title = paused ? "Resume aquarium" : "Pause aquarium";
+      var glyph = pauseBtn.querySelector("[aria-hidden]");
+      if (glyph) glyph.textContent = paused ? "▶" : "❚❚";
+    }
     setPressed(speed1Btn, sp === 1);
     setPressed(speed4Btn, sp === 4);
     setPressed(speed8Btn, sp === 8);

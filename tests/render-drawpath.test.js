@@ -318,15 +318,19 @@ group("feeding physics: every empty-water tap drops; starter fish pursues and ea
   eq(s.food.length, 3, "no valid rapid tap is silently lost before paint");
 })();
 (function () {
-  var VOL = PA.DATA.TIERS.nano20.volumeL, sent = [];
+  var VOL = PA.DATA.TIERS.nano20.volumeL, sent = [], eatLog = [];
   var s = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOL, par: 0, flow: 0 }, food: [],
     livestock: [{ id: 9, species: "ocellaris", x: 0.5, y: 0.4, hunger: 0.2, health: 1 }] };
-  var r = PA.createRenderer(makeCanvas(makeCtx([])), function () { return s; }, function (a) { sent.push(a); });
+  var r = PA.createRenderer(makeCanvas(makeCtx(eatLog)), function () { return s; }, function (a) { sent.push(a); });
   r.draw(1000); s.food.push({ id: 10, x: 0.5, y: 0.4, amount: 1, ageDays: 0, sunk: false });
   r.draw(1050); r.draw(1599);
   eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 0, "even immediate overlap remains visible for the full acknowledgement floor");
-  r.draw(1650); r.destroy();
+  eatLog.length = 0; r.draw(1650);
   eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 1, "overlap emits contact once the acknowledgement floor passes");
+  ok(arcsAt(eatLog, FPX, FPY) >= 5, "successful contact paints an obvious particulate bite burst at the pellet");
+  eatLog.length = 0; r.draw(2300);
+  eq(arcsAt(eatLog, FPX, FPY), 1, "the bite burst expires, leaving only the still-authoritative test pellet");
+  r.destroy();
 })();
 
 group("authoritative acute hunger remains edible in normal and reduced motion");

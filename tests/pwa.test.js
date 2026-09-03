@@ -76,10 +76,10 @@ if (exists("assets/icons/app-icon-master-v1.png")) {
 group("service worker");
 var sw = readText("sw.js");
 ok(/CACHE_VERSION\s*=/.test(sw), "sw.js defines an explicit CACHE_VERSION");
-// PAR5-01C release gate: the shell (index.html/styles.css/app.js/render.js) changed, so the
-// cache MUST be bumped to v4 — v3 would let an already-controlled client pin the old feeding model.
-ok(/CACHE_VERSION\s*=\s*["']v4["']/.test(sw), "sw.js ships the v4 release cache so contact-driven feeding and player fixes cannot be pinned behind v3");
-ok(!/CACHE_VERSION\s*=\s*["']v3["']/.test(sw), "sw.js no longer ships the superseded v3 cache version");
+// Release gate: the mobile shell and feeding-feedback runtime changed, so the cache must move
+// past v4 or an already-controlled iPhone can keep serving the pre-feedback renderer/app.
+ok(/CACHE_VERSION\s*=\s*["']v5["']/.test(sw), "sw.js ships the v5 release cache so visible eating feedback cannot be pinned behind older feeding code");
+ok(!/CACHE_VERSION\s*=\s*["']v4["']/.test(sw), "sw.js no longer ships the superseded v4 cache version");
 ok(/pocket-aquarium-shell-/.test(sw), "sw.js cache name is namespaced and versioned");
 ok(/addEventListener\(\s*["']install["']/.test(sw), "sw.js has an install handler");
 ok(/addEventListener\(\s*["']activate["']/.test(sw), "sw.js has an activate handler");
@@ -227,6 +227,14 @@ ok(typeof presentReward === "function", "shipped reward presentation helper eval
 if (typeof presentReward === "function") {
   ok(presentReward("A calm day. (+8c +5xp)") === "A calm day. (+8 Tank Credits +5 Keeper Score)", "Journal/toast reward wording expands both compact tokens");
 }
+
+group("feeding interaction feedback");
+var dispatchActionSrc = (app.match(/function dispatchAction\(action\)[\s\S]*?\n  \}/) || [""])[0];
+ok(/resumedForFeed[\s\S]*ACT\.TOGGLE_PAUSE/.test(dispatchActionSrc), "feeding a stocked paused aquarium resumes its prior simulation speed");
+ok(/Food dropped[^\n]*watch the fish pursue and eat/.test(dispatchActionSrc), "a valid feed gesture immediately confirms the physical pellet journey");
+ok(/CONSUME_FOOD[\s\S]*ate the pellet[\s\S]*Fed/.test(dispatchActionSrc), "successful contact reports which fish ate and its updated fed percentage");
+var transportSrc = (app.match(/function renderTransport\(snap\)[\s\S]*?\n  \}/) || [""])[0];
+ok(/Aquarium paused[^\n]*resume simulation/.test(transportSrc) && /▶/.test(transportSrc), "paused transport changes to an explicit resume action and play glyph");
 
 /* --------------- 10. dark aquarium-instrument shell (PAR5-01A) --------------- */
 // Structural redesign contract: the warm paper/pop/toy substrate is gone and a restrained

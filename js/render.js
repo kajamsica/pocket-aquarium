@@ -568,7 +568,7 @@
     var levelHist = [];                 // visual-only trend smoothing
     var hitTargets = [];                // rebuilt each frame for pointer routing
     var prevNow = null, lastRenderAt = -1e9, rafId = 0, destroyed = false;
-    var foodSeenAt = Object.create(null), foodFlashUntil = Object.create(null), consumeSent = Object.create(null);
+    var foodSeenAt = Object.create(null), foodFlashUntil = Object.create(null), consumeSent = Object.create(null), eatBursts = [];
     var foodBaselined = false; // runtime-only acknowledgement/contact state (never persisted)
 
     var reducedMQ = (typeof window !== "undefined" && window.matchMedia)
@@ -947,6 +947,7 @@
       if (!pellet || consumeSent[pellet.id] || now - foodSeenAt[pellet.id] < FOOD_ACK_MS) return;
       if (Math.hypot(pellet.x - a.x, pellet.y - a.y) > 0.025 + arch.rel * 0.18) return;
       consumeSent[pellet.id] = true;
+      eatBursts.push({ x: pellet.x, y: pellet.y, at: now, until: now + 620 });
       send({ type: "CONSUME_FOOD", foodId: pellet.id, eaterId: rec.id });
     }
 
@@ -1015,6 +1016,7 @@
       // dead behind, then living from back (bottom) to front (surface)
       drawAnimalsPass(view, now, true);
       drawAnimalsPass(view, now, false);
+      drawEatBursts(now);
       if (view.fry > 0) drawFry(view, pal, now);
 
       drawHaze(view);
@@ -1619,8 +1621,32 @@
         }
         var g = ctx.createRadialGradient(x - 1.5, y - 1.5, 0.5, x, y, 5 * scale);
         g.addColorStop(0, "#ffe6a8"); g.addColorStop(1, "#c07a24");
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, (3.4 + clamp(p.amt, 0.3, 2)) * scale, 0, 6.29); ctx.fill();
+        var pr = (3.8 + clamp(p.amt, 0.3, 2)) * scale;
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, pr, 0, 6.29); ctx.fill();
+        ctx.strokeStyle = "rgba(70,35,12,.78)"; ctx.lineWidth = Math.max(1, scale * 0.8); ctx.stroke();
       }
+    }
+    function drawEatBursts(now) {
+      var keep = [];
+      for (var i = 0; i < eatBursts.length; i++) {
+        var b = eatBursts[i];
+        if (now >= b.until) continue;
+        keep.push(b);
+        var life = clamp01((b.until - now) / Math.max(1, b.until - b.at));
+        var age = 1 - life, x = b.x * cssW, y = b.y * cssH;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,225,155," + (0.72 * life).toFixed(3) + ")";
+        ctx.lineWidth = Math.max(1, 1.6 * scale * life);
+        ctx.beginPath(); ctx.arc(x, y, (5 + age * 15) * scale, -0.65, 0.65); ctx.stroke();
+        ctx.fillStyle = "rgba(255,210,120," + (0.8 * life).toFixed(3) + ")";
+        for (var j = 0; j < 3; j++) {
+          var ang = -1.9 + j * 0.55;
+          ctx.beginPath(); ctx.arc(x + Math.cos(ang) * age * 13 * scale, y + Math.sin(ang) * age * 13 * scale,
+            Math.max(1, (2.1 - age) * scale), 0, 6.29); ctx.fill();
+        }
+        ctx.restore();
+      }
+      eatBursts = keep;
     }
 
     /* ----------------------------- animals ------------------------------- */
