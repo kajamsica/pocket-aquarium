@@ -431,16 +431,6 @@ def runtime_gate():
         "samplesPerFrame": 8,
         "gates": ["triangle_bvh_zones", "fin_attachment_exclusion", "center_plane", "axial_curvature", "normal_orientation", "retained_actions", "neutral_offsets", "blender_glb_parity"],
     }
-    manifest["promotion"] = {
-        "status": "accepted",
-        "acceptedBy": "user",
-        "acceptedOn": "2026-09-03",
-        "promotedAssetVersion": "1.1.0",
-        "rollback": {
-            "assetVersion": "1.0.0",
-            "runtimeGlbSha256": "6ea07136a440888a555dd29a4d4cf14f8f441ffbf69608cb7d8f551c7d105e73",
-        },
-    }
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"stage": "runtime", "status": "passed", "report": str(RUNTIME_REPORT_PATH), "clips": report["clips"]}, indent=2))
 
