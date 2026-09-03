@@ -26,8 +26,26 @@
   var ACT = PA.ACTIONS;
   var STAGES = DATA.CYCLE_STAGES;
 
+  /* ============================ first-delight guide (test seam) ============================ */
+  // DOM-free derivation of the cold-start onboarding, mirroring render.js's PA._render seam so
+  // tests/sim.test.js can assert the one-time post-inoculation fast-forward headlessly. The
+  // running app consumes fastForwardAfterInoculation directly; nothing here persists, adds a
+  // save field, or mutates the save schema — bypass/resume are derived from authoritative state.
+  var FAST_FORWARD_DAYS = 8;
+  // The one-time cold-start cycle compression: advance exactly eight game-days through the SAME
+  // public simulation path normal play uses (PA.stepDays), one game-day per call. Invoked ONLY
+  // from the live INOCULATE_BACTERIA completion path (doInoculate) — never on boot, reload,
+  // resume, render, or save hydration, because no state predicate ever triggers it.
+  function fastForwardAfterInoculation(state) {
+    for (var d = 0; d < FAST_FORWARD_DAYS; d++) PA.stepDays(state, 1);
+    return state;
+  }
+  PA._guide = { FAST_FORWARD_DAYS: FAST_FORWARD_DAYS, fastForwardAfterInoculation: fastForwardAfterInoculation };
+
   /* ============================ tiny helpers ============================ */
-  function $(id) { return document.getElementById(id); }
+  // DOM-safe lookup: returns null with no document (headless test load — see PA._guide),
+  // so requiring this module under Node to exercise the guide seam never throws.
+  function $(id) { return (typeof document !== "undefined") ? document.getElementById(id) : null; }
   function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
   function clamp01(v) { return clamp(v, 0, 1); }
   function esc(s) {
@@ -243,7 +261,7 @@
       case "life-off": dispatchAction({ type: ACT.SETUP_LIFE_SUPPORT, on: false }); break;
       case "ammonia-on": dispatchAction({ type: ACT.ADD_AMMONIA_SOURCE, on: true }); break;
       case "ammonia-off": dispatchAction({ type: ACT.ADD_AMMONIA_SOURCE, on: false }); break;
-      case "inoculate": dispatchAction({ type: ACT.INOCULATE_BACTERIA }); break;
+      case "inoculate": doInoculate(); break;
       case "test": dispatchAction({ type: ACT.WATER_TEST }); toast("Water tested — readings and freshness updated.", "water"); break;
       case "wc25": dispatchAction({ type: ACT.WATER_CHANGE, fraction: 0.25 }); break;
       case "topoff": dispatchAction({ type: ACT.WATER_TOP_OFF }); break;
@@ -267,6 +285,17 @@
     }
   }
   function feedCenter() { dispatchAction({ type: ACT.FEED, x: 0.5, y: 0.4 }); }
+  // Live inoculation: dispatch the existing action, then — only when THIS click just completed
+  // it (inoculated false -> true) — run the one-time eight-day cycle fast-forward through the
+  // real public sim path. Boot/reload never reach here, so the boost can never replay.
+  function doInoculate() {
+    var wasInoculated = state.cycle.inoculated;
+    dispatchAction({ type: ACT.INOCULATE_BACTERIA });
+    if (!wasInoculated && state.cycle.inoculated) {
+      fastForwardAfterInoculation(state);
+      markDirty(); renderNow();
+    }
+  }
 
   /* ============================ start over (accessible confirm) ============================ */
   function confirmStartOver() {
@@ -414,6 +443,10 @@
     if (!DATA.isCycled(state)) {
       if (!c.ammoniaSource && aliveEaters() === 0)
         return advice("watch", "CYCLING", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", null, fresh);
+      // Fourth guided setup beat: seeding the filter establishes the biofilter and fast-forwards
+      // the fishless cycle (see doInoculate) so a cold player reaches a stockable tank quickly.
+      if (!c.inoculated && aliveEaters() === 0)
+        return advice("watch", "CYCLING", "Seed the filter to finish the cycle.", "Add bottled nitrifying bacteria — it establishes the biofilter and fast-forwards the fishless cycle so the tank is ready to stock.", "Inoculate bacteria", "inoculate", null, fresh);
       return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
     }
     // Ordinary care, highest-priority first. An empty cycled tank still passes through the
@@ -1238,7 +1271,11 @@
     } catch (e) { /* SW unsupported — the app still runs directly from the network/file */ }
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootstrap);
-  else bootstrap();
+  // Bootstrap only in a real document. Under a headless test load (no document) the module
+  // just publishes PA._guide above and returns — bootstrap and all DOM binding are skipped.
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootstrap);
+    else bootstrap();
+  }
 
 })(typeof window !== "undefined" ? window : this);

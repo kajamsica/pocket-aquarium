@@ -110,6 +110,19 @@ if (m) {
   ok(list.length > 0 && list.every(relative), "every allowlisted URL is relative (base-path safe)");
   // The invalid clownfish v1 must never be precached (it is stripped from the Pages artifact).
   ok(list.indexOf("./assets/animals/ocellaris-clownfish-v1.png") < 0, "invalid clownfish v1 is NOT precached");
+  // PA-101-02 no-drift lock: the first-delight change edits only js/app.js + js/render.js content
+  // and MUST NOT add, remove, or reorder any precached runtime file. Assert the allowlist is
+  // EXACTLY this set — any drift (a new runtime file, a dropped asset) fails here.
+  var EXPECT_PRECACHE = [
+    "./", "./index.html", "./styles.css", "./manifest.webmanifest",
+    "./js/data.js", "./js/sim.js", "./js/render.js", "./js/app.js",
+    "./assets/habitats/reef-lagoon-v1.png", "./assets/habitats/amazon-blackwater-v1.png",
+    "./assets/animals/ocellaris-clownfish-v2.png", "./assets/animals/neon-tetra-v1.png",
+    "./assets/animals/yellow-watchman-goby-v1.png",
+    "./assets/icons/icon-192.png", "./assets/icons/icon-512.png", "./assets/icons/apple-touch-icon.png"
+  ];
+  ok(list.length === EXPECT_PRECACHE.length, "precache runtime list has no drift in count (" + list.length + " == " + EXPECT_PRECACHE.length + ")");
+  ok(EXPECT_PRECACHE.slice().sort().join("|") === list.slice().sort().join("|"), "precache runtime list is exactly the accepted set (no additions/removals)");
 }
 // Each renderer-critical asset must also exist on disk as a real PNG so cache.addAll() can't 404.
 group("renderer-critical offline art");

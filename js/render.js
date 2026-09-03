@@ -65,6 +65,15 @@
     sp += clamp(target - sp, -accel * 1.6 * dt, accel * dt);
     return sp < 0 ? 0 : sp;
   }
+  // Transient feeding-emphasis intensity (runtime-only): 1 the instant a pellet drops, easing
+  // linearly to 0 across `dur` ms, then staying 0. Pure + exported so render.test.js can prove
+  // the emphasis is brief and never persisted, without a canvas or a save field.
+  var FEED_FLASH_MS = 1100;
+  function feedFlash(now, until, dur) {
+    if (!(dur > 0) || !(until > now)) return 0;
+    var t = (until - now) / dur;
+    return t > 1 ? 1 : (t < 0 ? 0 : t);
+  }
 
   function isArr(v) { return Array.isArray(v); }
   function asArray(v) { return isArr(v) ? v : []; }
@@ -533,7 +542,7 @@
      assert the sim->view normalization contract — photoperiod, equipment on/off,
      and water level — headlessly under Node. Not used by the running app. */
   PA._render = { normalizeView: normalizeView, simDaylight: simDaylight, computeLight: computeLight,
-    stepTurn: stepTurn, stepSpeed: stepSpeed, MAX_DT: MAX_DT };
+    stepTurn: stepTurn, stepSpeed: stepSpeed, MAX_DT: MAX_DT, feedFlash: feedFlash };
 
   /* ============================ the renderer ============================== */
 
@@ -554,6 +563,7 @@
     var levelHist = [];                 // visual-only trend smoothing
     var hitTargets = [];                // rebuilt each frame for pointer routing
     var prevNow = null, lastRenderAt = -1e9, rafId = 0, destroyed = false;
+    var lastFoodCount = 0, feedFlashUntil = 0; // runtime-only feeding emphasis (never persisted)
 
     var reducedMQ = (typeof window !== "undefined" && window.matchMedia)
       ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -1568,8 +1578,22 @@
 
     /* ------------------------------ food --------------------------------- */
     function drawFood(view, now) {
+      // A fresh pellet (food count rose since last frame) opens a brief, runtime-only emphasis
+      // window so a cold player sees the food land and the fish turn to it. Purely visual —
+      // FEED_AT stays the authoritative feeding action and nothing here touches state or the save.
+      var fc = view.food.length;
+      if (fc > lastFoodCount) feedFlashUntil = now + FEED_FLASH_MS;
+      lastFoodCount = fc;
+      var flash = feedFlash(now, feedFlashUntil, FEED_FLASH_MS); // 1 at the drop, easing to 0
       for (var i = 0; i < view.food.length; i++) {
         var p = view.food[i], x = p.x * cssW, y = p.y * cssH;
+        if (flash > 0) {
+          var hr = (7 + 9 * (1 - flash)) * scale; // an expanding, fading halo
+          var hg = ctx.createRadialGradient(x, y, 0.5, x, y, hr);
+          hg.addColorStop(0, "rgba(255,242,200," + (0.6 * flash).toFixed(3) + ")");
+          hg.addColorStop(1, "rgba(255,214,120,0)");
+          ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(x, y, hr, 0, 6.29); ctx.fill();
+        }
         var g = ctx.createRadialGradient(x - 1.5, y - 1.5, 0.5, x, y, 5 * scale);
         g.addColorStop(0, "#ffe6a8"); g.addColorStop(1, "#c07a24");
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, (3.4 + clamp(p.amt, 0.3, 2)) * scale, 0, 6.29); ctx.fill();
