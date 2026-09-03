@@ -312,7 +312,7 @@ export const pocketSaveKey = runtime.DATA.saveKey
 export function restorePocketGame(raw: unknown, now = Date.now()): PocketState {
   const state = runtime.sanitizeState(raw)
   if (!state.habitat) return createPocketNewGame()
-  if (state.lastRealTimestamp && now > state.lastRealTimestamp) {
+  if (state.lastRealTimestamp && now - state.lastRealTimestamp > 1000) {
     runtime.offlineCatchUp(state, now - state.lastRealTimestamp)
   }
   return state
@@ -366,6 +366,13 @@ function lifecycleFor(state: PocketState): LifecyclePhase {
   return state.cycle.stage === 'Mature biome' ? 'young_reef' : 'stabilizing'
 }
 
+function biologicalCycleEstablished(state: PocketState) {
+  return runtime.DATA.isCycled(state)
+    || state.cycle.stage === 'Cycled'
+    || state.cycle.stage === 'Young biome'
+    || state.cycle.stage === 'Mature biome'
+}
+
 function storeOffers(state: PocketState): PocketStoreOffer[] {
   const offer = (kind: PocketStoreOffer['kind'], id: string, name: string, price: number,
     request: Record<string, unknown>, action: PocketAction): PocketStoreOffer => {
@@ -402,7 +409,7 @@ function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjecti
     detail: 'Turn on filtration, heat, oxygenation, and circulation.',
     lesson: 'Flow carries oxygen and dissolved waste to the biofilter.',
     destination: 'care', actionLabel: 'Start life support', action: { type: 'SETUP_LIFE_SUPPORT', on: true } }
-  if (!state.cycle.ammoniaSource && !runtime.DATA.isCycled(state)) return {
+  if (!state.cycle.ammoniaSource && !biologicalCycleEstablished(state)) return {
     chapter: 'Commissioning · 3 of 4', title: 'Feed the invisible filter',
     detail: 'Add a measured ammonia source before any animal enters.',
     lesson: 'A fishless ammonia dose grows the first bacterial colony.',
@@ -415,12 +422,12 @@ function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjecti
   if (dead.length) return { chapter: 'Tank care · urgent', title: `Remove ${dead.length} dead ${dead.length === 1 ? 'resident' : 'residents'}`,
     detail: 'Dead livestock keeps decomposing until it is removed.',
     lesson: 'Prompt removal limits the ammonia pulse.', destination: 'journal' }
-  if (runtime.DATA.isCycled(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) return {
+  if (biologicalCycleEstablished(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) return {
     chapter: 'Tank care · urgent', title: 'Dilute toxic nitrogen now',
     detail: `Ammonia ${state.water.ammonia.toFixed(2)} · nitrite ${state.water.nitrite.toFixed(2)} mg/L`,
     lesson: 'A water change immediately lowers both toxic nitrogen compounds.',
     destination: 'care', actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } }
-  if (!runtime.DATA.isCycled(state)) return { chapter: `Fishless cycle · ${state.cycle.stage}`, title: 'Watch the nitrogen cycle',
+  if (!biologicalCycleEstablished(state)) return { chapter: `Fishless cycle · ${state.cycle.stage}`, title: 'Watch the nitrogen cycle',
     detail: `Ammonia ${state.water.ammonia.toFixed(2)} → nitrite ${state.water.nitrite.toFixed(2)} → nitrate ${state.water.nitrate.toFixed(1)} mg/L`,
     lesson: 'Wait for ammonia and nitrite to fall while nitrate proves both colonies are working.',
     destination: 'care', actionLabel: state.speed >= 4 ? 'Test the water' : 'Observe at 4×',
@@ -434,11 +441,11 @@ function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjecti
 
 function careRecommendations(state: PocketState, offers: readonly PocketStoreOffer[]): PocketCareRecommendation[] {
   const result: PocketCareRecommendation[] = []
-  if (!state.cycle.filled || (!runtime.DATA.isCycled(state) && state.livestock.length === 0)) return result
+  if (!state.cycle.filled || (!biologicalCycleEstablished(state) && state.livestock.length === 0)) return result
   const deadCount = state.livestock.filter((animal) => animal.alive === false).length
   if (deadCount) result.push({ severity: 'urgent', title: `Remove ${deadCount} dead ${deadCount === 1 ? 'resident' : 'residents'}`,
     cause: 'Decomposition releases ammonia continuously.' })
-  if (runtime.DATA.isCycled(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) {
+  if (biologicalCycleEstablished(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) {
     const upgradeId = state.equipment.filter === 'sponge' ? 'filter:hob' : 'filter:canister'
     const upgrade = offers.find((offer) => offer.id === upgradeId)
     result.push({ severity: 'urgent', title: 'Toxic nitrogen detected',
@@ -540,7 +547,7 @@ export function projectPocketState(state: PocketState): PocketGameView {
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
-    cycled: runtime.DATA.isCycled(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
+    cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
     objective, residents, selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
     specimens: residents.filter((animal) => animal.alive !== false),
     food: state.food.map(({ id, x, y, amount, ageDays, sunk }) => ({ id, x, y, amount, ageDays, sunk })),
