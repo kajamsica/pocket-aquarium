@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_leader"
+      ],
+      "morphTargets": [
+        "PA_acropora_branching_Polyps_Br_00",
+        "PA_acropora_branching_Polyps_Br_01",
+        "PA_acropora_branching_Polyps_Br_02",
+        "PA_acropora_branching_Polyps_Br_03",
+        "PA_acropora_branching_Polyps_Br_04",
+        "PA_acropora_branching_Polyps_Br_05",
+        "PA_acropora_branching_Polyps_Br_leader"
+      ],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_leader"
+      ],
+      "morphTargets": [
+        "PA_acropora_branching_Polyps_Br_00",
+        "PA_acropora_branching_Polyps_Br_01",
+        "PA_acropora_branching_Polyps_Br_02",
+        "PA_acropora_branching_Polyps_Br_03",
+        "PA_acropora_branching_Polyps_Br_04",
+        "PA_acropora_branching_Polyps_Br_05",
+        "PA_acropora_branching_Polyps_Br_leader"
+      ],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_leader"
+      ],
+      "morphTargets": [
+        "PA_acropora_branching_Polyps_Br_00",
+        "PA_acropora_branching_Polyps_Br_01",
+        "PA_acropora_branching_Polyps_Br_02",
+        "PA_acropora_branching_Polyps_Br_03",
+        "PA_acropora_branching_Polyps_Br_04",
+        "PA_acropora_branching_Polyps_Br_05",
+        "PA_acropora_branching_Polyps_Br_leader"
+      ],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 14960,
+    "materials": 3,
+    "nodes": 20,
+    "skinJoints": 9,
+    "images": 9,
+    "meshes": [
+      "PA_acropora_branching_Corallites",
+      "PA_acropora_branching_Polyps_Br_00",
+      "PA_acropora_branching_Polyps_Br_01",
+      "PA_acropora_branching_Polyps_Br_02",
+      "PA_acropora_branching_Polyps_Br_03",
+      "PA_acropora_branching_Polyps_Br_04",
+      "PA_acropora_branching_Polyps_Br_05",
+      "PA_acropora_branching_Polyps_Br_leader",
+      "PA_acropora_branching_Skeleton"
+    ]
+  },
+  "parity": {
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    },
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.07347282767295837,
+      -0.08227774500846863,
+      0.0
+    ],
+    "max": [
+      0.057691220194101334,
+      0.067650206387043,
+      0.14013175666332245
+    ],
+    "deviationMeters": 0.0006424581041433565
+  }
+}

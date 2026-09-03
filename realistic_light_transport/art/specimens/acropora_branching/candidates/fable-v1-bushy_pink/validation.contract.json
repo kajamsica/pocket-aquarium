@@ -1,0 +1,1733 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "acropora_branching",
+  "rig": "PA_acropora_branching_Rig",
+  "root": "PA_acropora_branching_Root",
+  "meshes": [
+    "PA_acropora_branching_Skeleton",
+    "PA_acropora_branching_Corallites",
+    "PA_acropora_branching_Polyps_Finger_00",
+    "PA_acropora_branching_Polyps_Finger_01",
+    "PA_acropora_branching_Polyps_Finger_02",
+    "PA_acropora_branching_Polyps_Finger_03",
+    "PA_acropora_branching_Polyps_Finger_04",
+    "PA_acropora_branching_Polyps_Finger_05",
+    "PA_acropora_branching_Polyps_Finger_06",
+    "PA_acropora_branching_Polyps_Finger_07",
+    "PA_acropora_branching_Polyps_Finger_08",
+    "PA_acropora_branching_Polyps_Finger_09",
+    "PA_acropora_branching_Polyps_Finger_10"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_base",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_09",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Skeleton",
+      "group": "part_finger_10",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_00_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_01_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_02_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_03_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_04_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_05_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_06_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_07_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_08_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_09_axial",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_c08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_acropora_branching_Corallites",
+      "group": "part_finger_10_axial",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "label": "skeleton_base_finger_00"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "label": "skeleton_base_finger_01"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "label": "skeleton_base_finger_02"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "label": "skeleton_base_finger_03"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "label": "skeleton_base_finger_04"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "label": "skeleton_base_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "label": "skeleton_base_finger_06"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "label": "skeleton_base_finger_07"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_base_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_base_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_base"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_base_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "label": "skeleton_finger_00_finger_01"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "label": "skeleton_finger_00_finger_02"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "label": "skeleton_finger_00_finger_03"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "label": "skeleton_finger_00_finger_04"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "label": "skeleton_finger_00_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "label": "skeleton_finger_00_finger_06"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "label": "skeleton_finger_00_finger_07"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_finger_00_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_00_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00",
+        "attach_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_00_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "label": "skeleton_finger_01_finger_02"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "label": "skeleton_finger_01_finger_03"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "label": "skeleton_finger_01_finger_04"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "label": "skeleton_finger_01_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "label": "skeleton_finger_01_finger_06"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "label": "skeleton_finger_01_finger_07"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_finger_01_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_01_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_01",
+        "attach_finger_01"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_01_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "label": "skeleton_finger_02_finger_03"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "label": "skeleton_finger_02_finger_04"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "label": "skeleton_finger_02_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "label": "skeleton_finger_02_finger_06"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "label": "skeleton_finger_02_finger_07"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_finger_02_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_02_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02",
+        "attach_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_02_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "label": "skeleton_finger_03_finger_04"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "label": "skeleton_finger_03_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "label": "skeleton_finger_03_finger_06"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_finger_03_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03",
+        "attach_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_03_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "label": "skeleton_finger_04_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "label": "skeleton_finger_04_finger_06"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "label": "skeleton_finger_04_finger_07"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_04_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04",
+        "attach_finger_04"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_04_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "label": "skeleton_finger_05_finger_07"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_finger_05_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05",
+        "attach_finger_05"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_05_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "label": "skeleton_finger_06_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_06",
+        "attach_finger_06"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_06_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_09",
+        "attach_finger_09"
+      ],
+      "label": "skeleton_finger_07_finger_09"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_07",
+        "attach_finger_07"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_07_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08",
+        "attach_finger_08"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_10",
+        "attach_finger_10"
+      ],
+      "label": "skeleton_finger_08_finger_10"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_02"
+      ],
+      "label": "corallites_finger_00_vs_finger_02"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03"
+      ],
+      "label": "corallites_finger_00_vs_finger_03"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_00"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_05"
+      ],
+      "label": "corallites_finger_00_vs_finger_05"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_02"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00"
+      ],
+      "label": "corallites_finger_02_vs_finger_00"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00"
+      ],
+      "label": "corallites_finger_03_vs_finger_00"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_03"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_08"
+      ],
+      "label": "corallites_finger_03_vs_finger_08"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_05"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00"
+      ],
+      "label": "corallites_finger_05_vs_finger_00"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_07"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_04"
+      ],
+      "label": "corallites_finger_07_vs_finger_04"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_08"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_00"
+      ],
+      "label": "corallites_finger_08_vs_finger_00"
+    },
+    {
+      "a": [
+        "PA_acropora_branching_Corallites",
+        "cor_finger_08"
+      ],
+      "b": [
+        "PA_acropora_branching_Skeleton",
+        "part_finger_03"
+      ],
+      "label": "corallites_finger_08_vs_finger_03"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.15,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Finger_00",
+        "Finger_01",
+        "Finger_02",
+        "Finger_03",
+        "Finger_04",
+        "Finger_05",
+        "Finger_06",
+        "Finger_07",
+        "Finger_08",
+        "Finger_09",
+        "Finger_10"
+      ],
+      "shapeKeys": [
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/sweep"
+      ]
+    },
+    "retract": {
+      "loop": false,
+      "frames": 60,
+      "bones": [
+        "Finger_00",
+        "Finger_01",
+        "Finger_02",
+        "Finger_03",
+        "Finger_04",
+        "Finger_05",
+        "Finger_06",
+        "Finger_07",
+        "Finger_08",
+        "Finger_09",
+        "Finger_10"
+      ],
+      "shapeKeys": [
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/retract",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/retract"
+      ]
+    },
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Finger_00",
+        "Finger_01",
+        "Finger_02",
+        "Finger_03",
+        "Finger_04",
+        "Finger_05",
+        "Finger_06",
+        "Finger_07",
+        "Finger_08",
+        "Finger_09",
+        "Finger_10"
+      ],
+      "shapeKeys": [
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_00/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_01/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_02/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_03/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_04/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_05/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_06/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_07/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_08/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_09/sweep",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/bend",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/lean",
+        "shapekey:PA_acropora_branching_Polyps_Finger_10/sweep"
+      ]
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 4,
+  "variantId": "bushy_pink",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.083896,
+      -0.067776,
+      -0.002526
+    ],
+    "max": [
+      0.066104,
+      0.070892,
+      0.110606
+    ]
+  },
+  "textures": [
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/polyp-albedo.png",
+    "textures/polyp-roughness.png",
+    "textures/polyp-normal.png",
+    "textures/base-albedo.png",
+    "textures/base-roughness.png",
+    "textures/base-normal.png"
+  ],
+  "notes": {
+    "form": "bushy",
+    "seed": 29,
+    "designExtentCm": 8.90078067779541,
+    "scaleMetersPerCm": 0.016852454344168016,
+    "branches": 11,
+    "corallites": 110,
+    "polyps": 110,
+    "clusterBones": [
+      "Finger_00",
+      "Finger_01",
+      "Finger_02",
+      "Finger_03",
+      "Finger_04",
+      "Finger_05",
+      "Finger_06",
+      "Finger_07",
+      "Finger_08",
+      "Finger_09",
+      "Finger_10"
+    ],
+    "polypObjects": [
+      "PA_acropora_branching_Polyps_Finger_00",
+      "PA_acropora_branching_Polyps_Finger_01",
+      "PA_acropora_branching_Polyps_Finger_02",
+      "PA_acropora_branching_Polyps_Finger_03",
+      "PA_acropora_branching_Polyps_Finger_04",
+      "PA_acropora_branching_Polyps_Finger_05",
+      "PA_acropora_branching_Polyps_Finger_06",
+      "PA_acropora_branching_Polyps_Finger_07",
+      "PA_acropora_branching_Polyps_Finger_08",
+      "PA_acropora_branching_Polyps_Finger_09",
+      "PA_acropora_branching_Polyps_Finger_10"
+    ],
+    "triangles": 12276,
+    "clearancePairs": 66,
+    "layoutExits": {
+      "finger_00": 0.125,
+      "finger_01": 0.25,
+      "finger_02": 0.25,
+      "finger_03": 0.25,
+      "finger_04": 0.25,
+      "finger_05": 0.25,
+      "finger_06": 0.25,
+      "finger_07": 0.25,
+      "finger_08": 0.25,
+      "finger_09": 0.25,
+      "finger_10": 0.25
+    }
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/renders/three-view.png",
+    "boundsMin": [
+      -0.08389589190483093,
+      -0.06777554750442505,
+      -0.002526057418435812
+    ],
+    "boundsMax": [
+      0.06610410660505295,
+      0.0708923190832138,
+      0.11060634255409241
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

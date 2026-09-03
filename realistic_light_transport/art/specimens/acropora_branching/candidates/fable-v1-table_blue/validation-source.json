@@ -1,0 +1,2302 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "retainedActions": [
+    "flow",
+    "retract",
+    "sway"
+  ],
+  "deformBones": 10,
+  "gates": [
+    "finite_vertices_and_weights",
+    "triangle_budget",
+    "reference_size",
+    "closed_parts_watertight_manifold",
+    "animated_clearance_bvh",
+    "closed_part_orientation_and_volume",
+    "clip_targets_move",
+    "clip_roles_resolve"
+  ],
+  "clips": {
+    "flow": {
+      "frameRange": [
+        1.0,
+        90.0
+      ],
+      "loop": true,
+      "metrics": {
+        "samples": 24,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.62585,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.22603,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.87581,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.23717,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.84691,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.23928,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.45567,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.19743,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.34058,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.17088,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.85557,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.23882,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.32658,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.16721,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.74193,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.23753
+          }
+        },
+        "0.25": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999995,
+                -0.002916,
+                0.0,
+                0.001206
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                0.999999,
+                -0.001278,
+                0.0,
+                9.1e-05
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999946,
+                -0.004295,
+                4.5e-05,
+                -0.009427
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999969,
+                -0.001017,
+                2.7e-05,
+                -0.007813
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999997,
+                0.002252,
+                0.0,
+                -0.000931
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                0.999993,
+                0.002655,
+                7e-06,
+                0.002524
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999995,
+                0.0033,
+                0.0,
+                0.000234
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999992,
+                0.002026,
+                8e-06,
+                0.003574
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.62261,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.93204,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.01397,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.2404,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.74753,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.00286,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.70737,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.98073,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.78663,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.00055,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.65886,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.96345,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.94785,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.04257,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.423,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.92082,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.06912,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.31406,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.72971,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.77581,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.00115,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.64249,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.91524,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.07279,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.17742,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.57826,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.87943,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.00244
+          }
+        },
+        "0.50": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999965,
+                -0.00318,
+                0.0,
+                -0.007688
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                0.999918,
+                -0.000905,
+                0.0,
+                -0.012755
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999993,
+                0.000266,
+                0.0,
+                -0.003755
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999994,
+                0.001352,
+                0.0,
+                -0.003269
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999928,
+                0.004599,
+                0.0,
+                0.011119
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                0.999983,
+                0.000418,
+                -0.0,
+                0.005895
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999966,
+                -0.00058,
+                -0.0,
+                0.008171
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999931,
+                -0.004481,
+                0.0,
+                0.010833
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.64483,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.37415,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.22603,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.94273,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.12419,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.23717,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.29263,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.15309,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.23939,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.34114,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.54433,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.19743,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.82066,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.65942,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.17088,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.68594,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.14443,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.23901,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.62497,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.67342,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.16721,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.82258,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.25807,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.23754
+          }
+        },
+        "0.75": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999985,
+                -0.004668,
+                1.4e-05,
+                -0.003028
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                0.999999,
+                -0.001333,
+                1e-06,
+                -0.000684
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999988,
+                -0.004941,
+                -0.0,
+                -0.000351
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999992,
+                -0.003623,
+                0.0,
+                -0.001499
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999994,
+                0.003257,
+                6e-06,
+                0.001499
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                0.999997,
+                0.002464,
+                -0.0,
+                -0.000175
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999983,
+                0.002952,
+                1.6e-05,
+                0.005137
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999995,
+                0.002992,
+                0.0,
+                0.001238
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.35517,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.6226,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.06796,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.01397,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.05727,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.24043,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.25247,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.00282,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.98026,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.21337,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.00071,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.96242,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.0522,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.04257,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.17934,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.42299,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.07918,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.06912,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.72969,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.22419,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.00113,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.37503,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.64247,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.08476,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.07279,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.57826,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.12057,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.00249
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.07491357624530792,
+          -0.07232975214719772,
+          0.0
+        ],
+        "max": [
+          0.07555633038282394,
+          0.07709074020385742,
+          0.06451442092657089
+        ]
+      }
+    },
+    "retract": {
+      "frameRange": [
+        1.0,
+        60.0
+      ],
+      "loop": false,
+      "metrics": {
+        "samples": 16,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.0
+          }
+        },
+        "0.25": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999997,
+                0.000184,
+                0.0,
+                -0.002593
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999998,
+                0.000746,
+                -0.0,
+                -0.001804
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                1.0,
+                5.5e-05,
+                -0.0,
+                0.000771
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                1.0,
+                -0.000276,
+                0.0,
+                0.000668
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.20209,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.18823,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.08973,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.05069,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 1.0
+          }
+        },
+        "0.50": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999997,
+                -0.000909,
+                0.0,
+                -0.002197
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                0.999993,
+                -0.000259,
+                0.0,
+                -0.003644
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999999,
+                7.6e-05,
+                0.0,
+                -0.001073
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999999,
+                0.000386,
+                0.0,
+                -0.000934
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999994,
+                0.001314,
+                0.0,
+                0.003177
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                0.999999,
+                0.00012,
+                -0.0,
+                0.001684
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999997,
+                -0.000166,
+                -0.0,
+                0.002335
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999994,
+                -0.00128,
+                0.0,
+                0.003095
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.18424,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.26933,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.08361,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.09747,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.23447,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.19598,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.17856,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 1.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.23502,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 1.0
+          }
+        },
+        "0.75": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999999,
+                -0.000484,
+                0.0,
+                -0.001171
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                1.0,
+                -1.5e-05,
+                0.0,
+                -0.000215
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                1.0,
+                0.000278,
+                0.0,
+                0.000672
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999999,
+                -9.6e-05,
+                -0.0,
+                0.001356
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.09823,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.01585,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0496,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.10372,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.96793
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.07491357624530792,
+          -0.07236751914024353,
+          0.0
+        ],
+        "max": [
+          0.07508642226457596,
+          0.07691989839076996,
+          0.06458251923322678
+        ]
+      }
+    },
+    "sway": {
+      "frameRange": [
+        1.0,
+        120.0
+      ],
+      "loop": true,
+      "metrics": {
+        "samples": 31,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.45425,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.56891,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.55892,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.35599,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.28262,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.56208,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.27327,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.51358,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.0
+          }
+        },
+        "0.25": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                1.0,
+                -0.000804,
+                0.0,
+                0.000332
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                0.999998,
+                -0.001835,
+                0.0,
+                0.00013
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999992,
+                0.000276,
+                0.0,
+                -0.00389
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999996,
+                0.001119,
+                0.0,
+                -0.002706
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999999,
+                0.001396,
+                0.0,
+                -0.000577
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                0.999999,
+                8.2e-05,
+                -0.0,
+                0.001157
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                1.0,
+                0.000835,
+                0.0,
+                5.9e-05
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999999,
+                -0.000414,
+                0.0,
+                0.001001
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.17154,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.53368,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.34527,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.37804,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.30316,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.40659,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.28237,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.57434,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.26227,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.57946,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.1346,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.39857,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.16251,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.57871,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.07604,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.48106,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.0
+          }
+        },
+        "0.50": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999993,
+                -0.002688,
+                5e-06,
+                -0.002747
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                0.999985,
+                -0.000969,
+                3e-06,
+                -0.005425
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                0.999996,
+                -0.002131,
+                4e-06,
+                -0.001769
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                0.999997,
+                -0.001068,
+                3e-06,
+                -0.002082
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999986,
+                0.002995,
+                6e-06,
+                0.004342
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                0.999996,
+                0.001299,
+                3e-06,
+                0.002447
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999993,
+                0.001251,
+                5e-06,
+                0.003609
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999986,
+                -0.000561,
+                7e-06,
+                0.005205
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.27635,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.283,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.14575,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.40403,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.10928,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.03109,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.12541,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.4454,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.04108,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.1462,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.43756,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.24401,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.35171,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.19227,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.31738,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.29397,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.33169,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.03792,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.26785,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.29204,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.32673,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.35254,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.26284,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.08642,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.0
+          }
+        },
+        "0.75": {
+          "bones": {
+            "Sector_0": {
+              "rotation": [
+                0.999998,
+                -0.000751,
+                -0.0,
+                -0.001815
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_1": {
+              "rotation": [
+                1.0,
+                -2.4e-05,
+                0.0,
+                -0.000332
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_2": {
+              "rotation": [
+                1.0,
+                -4.6e-05,
+                -0.0,
+                -3e-06
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_3": {
+              "rotation": [
+                1.0,
+                -6.4e-05,
+                0.0,
+                -2.6e-05
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_4": {
+              "rotation": [
+                0.999999,
+                0.000431,
+                0.0,
+                0.001041
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_5": {
+              "rotation": [
+                1.0,
+                0.000415,
+                -0.0,
+                -2.9e-05
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_6": {
+              "rotation": [
+                0.999998,
+                -0.000149,
+                -0.0,
+                0.002101
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Sector_7": {
+              "rotation": [
+                0.999999,
+                0.000992,
+                -0.0,
+                0.00041
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Sector_0/bend": 0.15222,
+            "PA_acropora_branching_Polyps_Sector_0/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_0/lean": 0.06632,
+            "PA_acropora_branching_Polyps_Sector_0/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/bend": 0.02454,
+            "PA_acropora_branching_Polyps_Sector_1/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_1/lean": 0.22196,
+            "PA_acropora_branching_Polyps_Sector_1/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_2/sweep": 0.00915,
+            "PA_acropora_branching_Polyps_Sector_2/lean": 0.19341,
+            "PA_acropora_branching_Polyps_Sector_2/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_3/sweep": 0.01698,
+            "PA_acropora_branching_Polyps_Sector_3/lean": 0.02566,
+            "PA_acropora_branching_Polyps_Sector_3/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/bend": 0.07686,
+            "PA_acropora_branching_Polyps_Sector_4/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_4/lean": 0.02051,
+            "PA_acropora_branching_Polyps_Sector_4/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_5/sweep": 0.12285,
+            "PA_acropora_branching_Polyps_Sector_5/lean": 0.20143,
+            "PA_acropora_branching_Polyps_Sector_5/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/bend": 0.16073,
+            "PA_acropora_branching_Polyps_Sector_6/sweep": 0.0,
+            "PA_acropora_branching_Polyps_Sector_6/lean": 0.02128,
+            "PA_acropora_branching_Polyps_Sector_6/retract": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/bend": 0.0,
+            "PA_acropora_branching_Polyps_Sector_7/sweep": 0.1917,
+            "PA_acropora_branching_Polyps_Sector_7/lean": 0.11894,
+            "PA_acropora_branching_Polyps_Sector_7/retract": 0.0
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.07491357624530792,
+          -0.07238023728132248,
+          0.0
+        ],
+        "max": [
+          0.07537611573934555,
+          0.07698389142751694,
+          0.06455963104963303
+        ]
+      }
+    }
+  },
+  "sourceTriangles": 17248,
+  "restSizeMeters": 0.15000000596046448,
+  "restBounds": {
+    "min": [
+      -0.07491357624530792,
+      -0.07236751914024353,
+      0.0
+    ],
+    "max": [
+      0.07508642226457596,
+      0.07691989839076996,
+      0.06458251923322678
+    ]
+  }
+}
