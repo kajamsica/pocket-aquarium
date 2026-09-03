@@ -14,10 +14,8 @@
    - The worker never caches itself; the browser updates sw.js on its own byte-diff. */
 "use strict";
 
-// v3: ship the PAR5 dark aquarium-instrument shell — index.html, styles.css, js/app.js and
-// js/render.js all changed, so this bump retires the v2 cache and stops an already-controlled
-// client from continuing to serve the pre-fix app on next activate.
-var CACHE_VERSION = "v3";
+// v4: load the accepted specimen catalog before root PA and keep it available offline.
+var CACHE_VERSION = "v4";
 var CACHE_NAME = "pocket-aquarium-shell-" + CACHE_VERSION;
 
 /* Relative to the worker scope — subpath-safe under /pocket-aquarium/. */
@@ -26,8 +24,10 @@ var PRECACHE_URLS = [
   "./index.html",
   "./styles.css",
   "./manifest.webmanifest",
+  "./js/specimenProfiles.js",
   "./js/data.js",
   "./js/sim.js",
+  "./js/sessionGuide.js",
   "./js/render.js",
   "./js/app.js",
   // Renderer-critical art: two habitat plates + three validated species sprites.

@@ -21,10 +21,15 @@
 
   var PA = global.PA;
   if (!PA || !PA.DATA) { return; } // sim not loaded — nothing to bind
+  if (!PA.sessionGuide && typeof require === "function") {
+    try { require("./sessionGuide.js"); } catch (e) { return; }
+  }
+  if (!PA.sessionGuide) { return; }
 
   var DATA = PA.DATA;
   var ACT = PA.ACTIONS;
   var STAGES = DATA.CYCLE_STAGES;
+  var GUIDE = PA.sessionGuide;
 
   /* ============================ first-delight fast-forward ============================ */
   // The one-time cold-start cycle compression: advance exactly eight game-days through the SAME
@@ -32,7 +37,6 @@
   // invoked ONLY from the live INOCULATE_BACTERIA completion path (doInoculate) — never on boot,
   // reload, resume, render, or save hydration, because no state predicate ever triggers it. The
   // live route (handleAct → doInoculate) is exercised by tests through the shared PA._app surface.
-  var FAST_FORWARD_DAYS = 8;
   function fastForwardAfterInoculation(state, days, afterDay) {
     for (var d = 0; d < days; d++) {
       PA.stepDays(state, 1);
@@ -186,11 +190,6 @@
     var k = waterByKey(snap || currentSnap());
     return (!!k.ammonia && k.ammonia.severity === "danger") || (!!k.nitrite && k.nitrite.severity === "danger");
   }
-  function waterElevated(snap) {
-    var k = waterByKey(snap || currentSnap());
-    return (!!k.ammonia && k.ammonia.severity === "warn") || (!!k.nitrite && k.nitrite.severity === "warn");
-  }
-
   /* ============================ renderer view boundary ============================ */
   // Derived, read-only projection of authoritative state into the renderer's field
   // vocabulary. The renderer reads a water-level FRACTION (state stores litres against a
@@ -296,7 +295,7 @@
     var wasInoculated = state.cycle.inoculated;
     if (!wasInoculated) dispatchAction({ type: ACT.INOCULATE_BACTERIA });
     if (!wasInoculated && state.cycle.inoculated) {
-      pendingCycleBoostDays = FAST_FORWARD_DAYS;
+      pendingCycleBoostDays = GUIDE.inoculationAdvanceDays;
     }
     if (!state.cycle.inoculated || pendingCycleBoostDays <= 0) return;
     var boostStartDay = state.time.days, boostDays = pendingCycleBoostDays;
@@ -455,136 +454,21 @@
       "</div>" + cta;
   }
 
-  // The single guidance ladder. Returns {level, word, reason, why, action, freshness,
-  // stale}. The Water panel verdict reuses this so the surfaces never disagree.
+  // Adapt the shared, pure GuideView to the legacy command-bar vocabulary. The Water
+  // panel reuses this adapter, so both legacy surfaces still show one recommendation.
   function careAdvice(snap) {
-    var c = state.cycle, fresh = dataFreshness(snap);
-    if (!state.habitat)
-      return advice("watch", "SET UP", "No habitat chosen yet.", "Pick a freshwater or reef habitat to start the cycle.", "Choose a habitat", "open-dialog", null, fresh);
-    if (!c.filled)
-      return advice("watch", "SET UP", "The tank isn't filled yet.", "Add and dechlorinate water before anything can live in it.", isReef() ? "Mix saltwater & fill" : "Fill & dechlorinate", "setup-fill", null, fresh);
-    if (!c.lifeSupport)
-      return advice("watch", "SET UP", "Life support is off.", "The filter, heater and flow grow the biofilter that keeps water safe.", "Start life support", "life-on", null, fresh);
-    // Live-animal emergencies outrank cycle bookkeeping. A post-cycle ammonia/nitrite spike
-    // un-sets DATA.isCycled, so these must be checked BEFORE the fishless-cycle branch — else a
-    // stocked tank with rising waste would be mislabelled "still cycling". Toxic (danger) and
-    // elevated (warn) split by the SAME meter severity, so care never calls an amber reading toxic.
-    // During a real fishless cycle there are no animals, so intentionally-high ammonia stays "CYCLING".
-    if (waterToxic(snap) && aliveEaters() > 0)
-      return advice("critical", "CRITICAL", "Ammonia or nitrite is at a toxic level.", "A 25% water change dilutes the toxins now; don't feed heavily until it clears.", "25% water change", "wc25", null, fresh);
-    if (waterElevated(snap) && aliveEaters() > 0)
-      return advice("watch", "WATCH", "Ammonia or nitrite is elevated.", "It isn't toxic yet, but a 25% water change and lighter feeding keep it from climbing.", "25% water change", "wc25", null, fresh);
-    if (deadCount() > 0)
-      return advice("critical", "CRITICAL", "A dead animal is decaying in the tank.", "Remove the body before it spikes ammonia — find it under Livestock.", "Review livestock", "open-livestock", null, fresh);
-    if (snap.welfare === "critical")
-      return advice("critical", "CRITICAL", "Residents are in critical condition.", "Open the Water tab and stabilise chemistry and feeding before anything else.", "Review water", "open-water", null, fresh);
-    if (pendingCycleBoostDays > 0 && aliveEaters() === 0)
-      return advice("watch", "CYCLING", "The bacteria boost was interrupted.", "Retry inoculating bacteria to finish the remaining guided cycle days through the normal simulation.", "Retry inoculation", "inoculate", null, fresh);
-    if (!DATA.isCycled(state)) {
-      if (!c.ammoniaSource && aliveEaters() === 0)
-        return advice("watch", "CYCLING", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", null, fresh);
-      // Fourth guided setup beat: seeding the filter establishes the biofilter and fast-forwards
-      // the fishless cycle (see doInoculate) so a cold player reaches a stockable tank quickly.
-      if (!c.inoculated && aliveEaters() === 0)
-        return advice("watch", "CYCLING", "Seed the filter to finish the cycle.", "Add bottled nitrifying bacteria — it establishes the biofilter and fast-forwards the fishless cycle so the tank is ready to stock.", "Inoculate bacteria", "inoculate", null, fresh);
-      return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
-    }
-    // Ordinary care, highest-priority first. An empty cycled tank still passes through the
-    // environment/accumulation/light/staleness checks BELOW before "READY to stock" — so
-    // salinity/level out of range or stale readings are fixed first, never skipped merely
-    // because the tank has no residents yet (PAR5-01A truthful-priority fix).
-    // Feeding is the next beat when residents are hungry OR right after the first fish is stocked
-    // (the runtime-only first-feed prompt), so a cold player is guided straight into feeding.
-    var hungry = hungryCount();
-    if (hungry > 0 || pendingFirstFeed) {
-      var feedReason = hungry > 0
-        ? (hungry + (hungry === 1 ? " resident is" : " residents are") + " hungry.")
-        : "Your first fish has settled in.";
-      var feedWhy = hungry > 0
-        ? "Tap the water to feed; uneaten food decays into ammonia, so feed sparingly."
-        : "Tap the water to drop a pellet and watch it respond — then keep the water clean.";
-      return advice("watch", "WATCH", feedReason, feedWhy, "Feed the tank", "feed", null, fresh);
-    }
-    var env = environmentIssue(snap);
-    if (env)
-      return advice("watch", "WATCH", env.reason, env.why, env.label, env.act, null, fresh);
-    var light = coralLightIssue(snap);
-    if (light)
-      return advice("watch", "WATCH", light.reason, light.why, light.label, light.act, null, fresh);
-    if (accumulationHigh(snap))
-      return advice("watch", "WATCH", "Nitrate is climbing from accumulated waste.", "A partial water change dilutes nitrate — a top-off won't, because evaporation leaves nitrate behind.", "25% water change", "wc25", null, fresh);
-    if (state.succession.cyano > 0.4)
-      return advice("watch", "WATCH", "Cyanobacteria is spreading across surfaces.", "Improve flow and nutrient export and cut the photoperiod to starve it back.", "Review water", "open-water", null, fresh);
-    if (fresh.stale)
-      return advice("watch", "WATCH", "Your readings are getting stale.", "A quick water test refreshes every parameter so this guidance stays accurate.", "Test the water", "test", null, fresh);
-    // Cycled, empty, environment in range and readings fresh — now it is genuinely time to stock.
-    if (aliveEaters() === 0 && !snap.corals.length)
-      return advice("watch", "READY", "The tank is cycled and the environment is in range.", "Nothing lives here yet — stock a small, compatible starter group from the store.", "Open the store", "open-store", null, fresh);
-    return advice("stable", "STABLE", "Water is in range and residents look healthy.", "Keep parameters steady — consider corals, upgrades or a breeding project.", "Open the store", "open-store", null, fresh);
-  }
-  function advice(level, word, reason, why, label, act, ds, fresh) {
-    return { level: level, word: word, reason: reason, why: why,
-      action: { label: label, act: act, ds: ds }, freshness: fresh.text, stale: fresh.stale };
-  }
-  // Freshness of the player's knowledge: unknown readings and how long ago they were tested.
-  // Coarse buckets (not a live "Xh ago" counter) so this aria-live surface doesn't re-announce
-  // every few seconds; the Water tab still shows the exact per-reading test age.
-  function dataFreshness(snap) {
-    var w = snap.water || [], unknown = 0, anyKnown = false, oldest = 0;
-    for (var i = 0; i < w.length; i++) {
-      if (!w[i].known) unknown++;
-      else { anyKnown = true; if (w[i].testAgeDays > oldest) oldest = w[i].testAgeDays; }
-    }
-    if (!anyKnown) return { text: "Never tested", stale: true };
-    if (unknown > 0) return { text: unknown + " reading" + (unknown === 1 ? "" : "s") + " untested", stale: true };
-    if (oldest < 0.25) return { text: "Readings fresh", stale: false };
-    if (oldest < 0.75) return { text: "Readings recent", stale: false };
-    if (oldest < 1.5) return { text: "Readings aging", stale: true };
-    return { text: "Readings stale", stale: true };
+    var view = GUIDE.project(state, { snapshot: snap, firstFeedPending: pendingFirstFeed,
+      cycleBoostDays: pendingCycleBoostDays });
+    var action = view.nextAction || {};
+    return { level: action.tone || "stable", word: action.badge || "STABLE",
+      reason: view.title, why: view.body,
+      action: { label: action.label || "Open the store", act: action.type || "open-store", ds: null },
+      freshness: action.freshness || "Never tested", stale: action.stale !== false };
   }
   function waterByKey(snap) { var m = {}, w = snap.water || []; for (var i = 0; i < w.length; i++) m[w[i].key] = w[i]; return m; }
-  function deadCount() { var n = 0, ls = state.livestock || []; for (var i = 0; i < ls.length; i++) if (ls[i] && ls[i].alive === false) n++; return n; }
-  function hungryCount() { var n = 0, ls = state.livestock || []; for (var i = 0; i < ls.length; i++) { var a = ls[i]; if (a && a.alive !== false && a.hunger > 0.85) n++; } return n; }
-  // Environment issues (temp / pH / salinity / level) mapped to the honest fix. Top-off is
-  // only ever recommended for evaporation/volume/salinity, and never framed as removing nitrate.
-  function environmentIssue(snap) {
-    var k = waterByKey(snap), level = k.level, sal = k.salinity, temp = k.tempC, ph = k.pH;
-    if (level && level.value < (level.good ? level.good[0] : 92))
-      return { reason: "The water level has dropped from evaporation.", why: isReef()
-        ? "A freshwater top-off restores volume and lowers salinity back toward target; it does not remove nitrate."
-        : "A freshwater top-off restores the evaporated volume; it does not remove nitrate.", label: "Freshwater top-off", act: "topoff" };
-    if (sal && isReef() && sal.severity !== "ok" && sal.value > (sal.target || 35))
-      return { reason: "Salinity has risen above the target range.", why: "Evaporation concentrates salt — top off with fresh (salt-free) water to dilute it back toward 35 ppt.", label: "Freshwater top-off", act: "topoff" };
-    if (temp && temp.severity !== "ok")
-      return { reason: "Temperature is outside the safe band.", why: "Check the heater/controller in the Water tab and let it stabilise before stocking or feeding.", label: "Review water", act: "open-water" };
-    if (ph && ph.severity !== "ok")
-      return { reason: "pH is outside the target band.", why: "Review chemistry in the Water tab; correct it gradually because sharp swings stress residents.", label: "Review water", act: "open-water" };
-    if (sal && isReef() && sal.severity !== "ok")
-      return { reason: "Salinity is outside the target range.", why: "Review salinity in the Water tab and adjust it gradually.", label: "Review water", act: "open-water" };
-    return null;
-  }
-  function accumulationHigh(snap) { var n = waterByKey(snap).nitrate; return !!(n && n.severity !== "ok"); }
   // Photoperiod phase read straight from the sim clock (same window explainCoral uses); no
   // persisted light setting is invented — daytime is a function of state.time.days only.
   function photoperiodDay() { var frac = state.time.days - Math.floor(state.time.days); return frac > 0.28 && frac < 0.86; }
-  // Coral light adequacy from existing state: current PAR vs each coral's usable-light band
-  // (DATA.CORALS[..].par). Under-light only matters during the daylight period; over-light is
-  // a bleaching risk whenever it occurs. Returns null when no reef coral is affected.
-  function coralLightIssue(snap) {
-    if (!isReef() || !snap.corals || !snap.corals.length) return null;
-    var par = state.water.par, day = photoperiodDay(), dim = 0, bright = 0;
-    for (var i = 0; i < state.corals.length; i++) {
-      var cd = DATA.CORALS[state.corals[i].species];
-      if (!cd || !cd.par) continue;
-      if (par > cd.par.high) bright++;
-      else if (day && par < cd.par.low) dim++;
-    }
-    if (bright > 0)
-      return { reason: "Daytime PAR is stronger than your coral can use.", why: "Too much usable light bleaches coral tissue — dim the fixture or raise it, then re-check PAR in the Water tab.", label: "Review water", act: "open-water" };
-    if (dim > 0)
-      return { reason: "Daytime PAR is too dim for your coral.", why: "Coral needs enough usable light (PAR) at its spot during the photoperiod to grow — check PAR and the fixture in the Water tab.", label: "Review water", act: "open-water" };
-    return null;
-  }
   function coralParStatus(cd, par, day) {
     if (par > cd.par.high) return "too strong now";
     if (day && par < cd.par.low) return "too dim now";

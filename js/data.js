@@ -272,6 +272,13 @@
     }
   };
 
+  /* Accepted specimen packages replace their legacy catalog rows at load time.
+     The generated file is loaded first by both index.html and the RLT bridge. */
+  var acceptedSpecimens = PA.SPECIMEN_PROFILES || {};
+  if (acceptedSpecimens.ocellaris && acceptedSpecimens.ocellaris.schemaVersion === "pocket-aquarium.runtime-specimen/v1") {
+    SPECIES.ocellaris = acceptedSpecimens.ocellaris;
+  }
+
   /* ------------------------------------------------------------------ *
    * Corals (reef only). PAR/flow preference and maturity gate.
    * ------------------------------------------------------------------ */
@@ -340,6 +347,74 @@
   DATA.equipLevel = equipLevel;
   DATA.paramBand = paramBand;
 
+  /* Preview profiles are constrained to the accepted runtime shape. Unknown
+     keys or incompatible value types invalidate the whole draft override. */
+  function isPlainObject(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+  }
+  var INVALID_PROFILE_VALUE = {};
+  function copyProfileShape(template, candidate) {
+    if (candidate === undefined) return template;
+    if (Array.isArray(template)) {
+      if (!Array.isArray(candidate) || (!template.length && candidate.length)) return INVALID_PROFILE_VALUE;
+      var arrayCopy = [];
+      for (var ai = 0; ai < candidate.length; ai++) {
+        var copiedItem = copyProfileShape(template[0], candidate[ai]);
+        if (copiedItem === INVALID_PROFILE_VALUE) return INVALID_PROFILE_VALUE;
+        arrayCopy.push(copiedItem);
+      }
+      return arrayCopy;
+    }
+    if (isPlainObject(template)) {
+      if (!isPlainObject(candidate)) return INVALID_PROFILE_VALUE;
+      var candidateKeys = Object.keys(candidate);
+      for (var ci = 0; ci < candidateKeys.length; ci++) {
+        if (!Object.prototype.hasOwnProperty.call(template, candidateKeys[ci])) return INVALID_PROFILE_VALUE;
+      }
+      var objectCopy = {};
+      var templateKeys = Object.keys(template);
+      for (var ti = 0; ti < templateKeys.length; ti++) {
+        var key = templateKeys[ti];
+        var copiedValue = copyProfileShape(template[key], candidate[key]);
+        if (copiedValue === INVALID_PROFILE_VALUE) return INVALID_PROFILE_VALUE;
+        objectCopy[key] = copiedValue;
+      }
+      return objectCopy;
+    }
+    if (template === null) return candidate === null ? null : INVALID_PROFILE_VALUE;
+    if (typeof candidate !== typeof template) return INVALID_PROFILE_VALUE;
+    if (typeof candidate === "number" && !isFinite(candidate)) return INVALID_PROFILE_VALUE;
+    return candidate;
+  }
+  function sanitizeProfileOverride(speciesId, candidate) {
+    var accepted = SPECIES[speciesId];
+    if (!accepted || !isPlainObject(candidate)) return null;
+    var copy = copyProfileShape(accepted, candidate);
+    if (!copy || copy === INVALID_PROFILE_VALUE || copy.id !== speciesId || copy.speciesId !== speciesId ||
+        copy.schemaVersion !== "pocket-aquarium.runtime-specimen/v1" ||
+        copy.waterType !== accepted.waterType || copy.habitat !== accepted.habitat) return null;
+    for (var i = 0; i < copy.compatibilityEdges.length; i++) {
+      var edge = copy.compatibilityEdges[i];
+      if (edge.subjectSpeciesId !== speciesId ||
+          ["compatible", "conditional", "incompatible", "unknown"].indexOf(edge.outcome) < 0) return null;
+    }
+    return copy;
+  }
+  function resolveSpecies(state, speciesId) {
+    var accepted = SPECIES[speciesId] || null;
+    if (!accepted || !state || state.mode !== "specimen_preview" || state.previewSpeciesId !== speciesId ||
+        state.profileOverrideStatus !== "valid") return accepted;
+    var overrides = state.profileOverrides;
+    if (!overrides || !Object.prototype.hasOwnProperty.call(overrides, speciesId)) return accepted;
+    var override = overrides[speciesId];
+    return override && override.id === speciesId && override.speciesId === speciesId &&
+      override.schemaVersion === "pocket-aquarium.runtime-specimen/v1" ? override : accepted;
+  }
+  DATA.sanitizeProfileOverride = sanitizeProfileOverride;
+  DATA.resolveSpecies = resolveSpecies;
+
   /* ------------------------------------------------------------------ *
    * validatePurchase(state, request) -> { ok, reasons[] }
    * Lists EVERY blocking reason, not just the first. request examples:
@@ -391,7 +466,7 @@
     var sum = 0, i, ls = (state && state.livestock) || [];
     for (i = 0; i < ls.length; i++) {
       if (ls[i] && ls[i].alive !== false) {
-        var sp = SPECIES[ls[i].species];
+        var sp = resolveSpecies(state, ls[i].species);
         sum += sp ? sp.bioload : 1;
       }
     }
@@ -480,7 +555,7 @@
     }
 
     // ---- livestock ----
-    var sp = SPECIES[request.id];
+    var sp = resolveSpecies(state, request.id);
     if (!sp) { reasons.push("Unknown species."); return { ok: false, reasons: reasons }; }
     var reqCount = Math.max(1, Math.floor(request.count || BUNDLES[request.id] || 1));
     var already = aliveOf(state, request.id);
@@ -567,7 +642,7 @@
     if (sp.predator && sp.preysOn && sp.preysOn.length) {
       for (i = 0; i < ls.length; i++) {
         other = ls[i]; if (!other || other.alive === false) continue;
-        var os = SPECIES[other.species]; if (!os) continue;
+        var os = resolveSpecies(state, other.species); if (!os) continue;
         if (tagsIntersect(sp.preysOn, os.preyTags)) {
           out.push(sp.name + " will prey on your " + os.name + ".");
           break;
@@ -577,7 +652,7 @@
     // adding prey into a tank that already holds a predator that eats it
     for (i = 0; i < ls.length; i++) {
       other = ls[i]; if (!other || other.alive === false) continue;
-      var predSp = SPECIES[other.species]; if (!predSp || !predSp.predator) continue;
+      var predSp = resolveSpecies(state, other.species); if (!predSp || !predSp.predator) continue;
       if (tagsIntersect(predSp.preysOn, sp.preyTags)) {
         out.push("Your " + predSp.name + " would hunt and eat " + sp.name + ".");
         break;
@@ -591,7 +666,7 @@
     var ls = (state && state.livestock) || [];
     for (var i = 0; i < ls.length; i++) {
       var other = ls[i]; if (!other || other.alive === false) continue;
-      var os = SPECIES[other.species]; if (!os) continue;
+      var os = resolveSpecies(state, other.species); if (!os) continue;
       if (os.id !== sp.id && os.layer === sp.layer && os.territoriality >= 0.45)
         return sp.name + " will fight your " + os.name + " over the same territory.";
     }
@@ -603,7 +678,7 @@
     var ls = (state && state.livestock) || [];
     for (var i = 0; i < ls.length; i++) {
       var o = ls[i]; if (!o || o.alive === false) continue;
-      var os = SPECIES[o.species];
+      var os = resolveSpecies(state, o.species);
       if (os && os.kind === "invert") return true;
     }
     return false;

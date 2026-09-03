@@ -1,4 +1,4 @@
-"""Deterministically author and export Pocket Aquarium's ocellaris LOD1.
+"""Ocellaris-specific Blender backend for the package-driven specimen builder.
 
 The asset is built from project-owned anatomical profiles and procedural texture
 masks. Reference images guide proportions only. No source pixels are sampled.
@@ -33,23 +33,16 @@ MANIFEST_PATH = SOURCE_DIR / "ocellaris.asset.json"
 PREVIEW_PATH = SOURCE_DIR / "renders" / "lod1-author-preview.png"
 SOURCE_VALIDATION_PATH = SOURCE_DIR / "validation-source.json"
 RUNTIME_VALIDATION_PATH = SOURCE_DIR / "validation-runtime.json"
+EXPORT_SCRIPT_PATH = Path(__file__).resolve()
+VALIDATOR_SCRIPT_PATH = Path(__file__).with_name("validate_ocellaris.py")
+SOURCE_MANIFEST_NAME = "ocellaris.asset.json"
 
-BODY_STATIONS = (
-    (-0.0300, 0.0030, 0.0048, 0.0040, -0.0002),
-    (-0.0270, 0.0046, 0.0080, 0.0067, 0.0001),
-    (-0.0230, 0.0063, 0.0118, 0.0102, 0.0004),
-    (-0.0180, 0.0077, 0.0147, 0.0128, 0.0007),
-    (-0.0120, 0.0087, 0.0164, 0.0144, 0.0007),
-    (-0.0050, 0.0093, 0.0174, 0.0152, 0.0008),
-    (0.0030, 0.0096, 0.0178, 0.0157, 0.0007),
-    (0.0110, 0.0095, 0.0175, 0.0156, 0.0006),
-    (0.0190, 0.0090, 0.0163, 0.0149, 0.0005),
-    (0.0260, 0.0082, 0.0146, 0.0137, 0.0001),
-    (0.0320, 0.0072, 0.0123, 0.0119, -0.0004),
-    (0.0370, 0.0058, 0.0094, 0.0096, -0.0010),
-    (0.0400, 0.0040, 0.0068, 0.0074, -0.0015),
-    (0.0415, 0.0024, 0.0046, 0.0055, -0.0019),
+MORPHOLOGY = json.loads((SOURCE_DIR / "morphology.profile.json").read_text(encoding="utf-8"))
+BODY_STATIONS = tuple(
+    (item["x"], item["halfWidth"], item["dorsalHeight"], item["ventralDepth"], item["centerZ"])
+    for item in MORPHOLOGY["controlStations"]
 )
+CROSS_SECTION_EXPONENT = MORPHOLOGY["sampling"]["crossSectionExponent"]
 AXIAL_BONES = ("Body", "Spine_A", "Spine_B", "Peduncle", "Caudal")
 ANIMATED_BONES = AXIAL_BONES + (
     "Pectoral_L", "Pectoral_R", "Dorsal", "Anal", "Pelvic_L", "Pelvic_R", "Jaw", "Gill"
@@ -87,15 +80,7 @@ def interpolate_station(x: float) -> tuple[float, float, float, float]:
     raise ValueError(x)
 
 
-def dense_stations() -> tuple[tuple[float, float, float, float, float], ...]:
-    xs = sorted({round(value, 8) for value in (set(point[0] for point in BODY_STATIONS) | {
-        BODY_STATIONS[0][0] + index * (BODY_STATIONS[-1][0] - BODY_STATIONS[0][0]) / 35
-        for index in range(36)
-    })})
-    return tuple((x, *interpolate_station(x)) for x in xs)
-
-
-STATIONS = dense_stations()
+STATIONS = tuple((x, *interpolate_station(x)) for x in MORPHOLOGY["sampling"]["ringPositions"])
 
 
 def write_image(name: str, path: Path, width: int, height: int, pixel_fn, non_color: bool = False):
@@ -324,7 +309,7 @@ def create_body(rig, materials):
             angle = segment / segments * math.tau
             side = math.sin(angle)
             vertical = math.cos(angle)
-            exponent = 1.72
+            exponent = CROSS_SECTION_EXPONENT
             y = math.copysign(abs(side) ** (2.0 / exponent), side) * lateral
             radius = top if vertical >= 0 else bottom
             z = center_z + math.copysign(abs(vertical) ** (2.0 / exponent), vertical) * radius
@@ -743,7 +728,7 @@ def metadata():
         "forwardAxis": "+X",
         "upAxis": "+Y",
         "lod": 1,
-        "sourceManifest": "ocellaris.asset.json",
+        "sourceManifest": SOURCE_MANIFEST_NAME,
     }
 
 
@@ -824,8 +809,8 @@ def export_runtime():
         "generatedReferences": [],
         "toolchain": {"blender": "5.2.1 LTS", "exporter": "Blender native glTF 2.0 exporter"},
         "sourceBlendSha256": sha256(BLEND_PATH),
-        "exportScriptSha256": sha256(Path(__file__).resolve()),
-        "validatorScriptSha256": sha256(Path(__file__).with_name("validate_ocellaris.py")),
+        "exportScriptSha256": sha256(EXPORT_SCRIPT_PATH),
+        "validatorScriptSha256": sha256(VALIDATOR_SCRIPT_PATH),
         "runtimeGlbSha256": {"lod1": sha256(GLB_PATH)},
         "coordinateContract": {"unitMeters": 1, "source": {"forwardAxis": "+X", "upAxis": "+Z"}, "runtime": {"forwardAxis": "+X", "upAxis": "+Y"}, "origin": "anatomical_midbody"},
         "proceduralTextures": [{"path": str(path.relative_to(SOURCE_DIR)), "sha256": sha256(path)} for path in textures],

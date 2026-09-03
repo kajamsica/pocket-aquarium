@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ReefRenderSettings, ReefRenderTelemetry } from './contracts'
-import { projectPocketState } from './integration/pocketAquariumBridge'
-import { createPocketGameController } from './integration/pocketGameController'
-import { FeedingProvider, type FeedingApi } from './scene/feeding'
+import {
+  advancePocketState,
+  createPocketNewGame,
+  createPocketReefShowcase,
+  dispatchPocketAction,
+  pocketSaveKey,
+  projectPocketState,
+  restorePocketGame,
+  serializePocketGame,
+} from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
+import { FeedingProvider, type FeedingApi } from './scene/feeding'
 import { SpecimenRosterProvider } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
 import { SpecimenWorkbench } from './workbench/SpecimenWorkbench'
@@ -17,7 +25,9 @@ const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   diagnosticView: 'beauty',
   brightness: 1,
 }
-const WORKBENCH_SPECIES = new URLSearchParams(window.location.search).get('workbench')
+const SEARCH_PARAMS = new URLSearchParams(window.location.search)
+const WORKBENCH_SPECIES = SEARCH_PARAMS.get('workbench')
+const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
 
 if (WORKBENCH_SPECIES === 'ocellaris') {
   const icon = document.createElement('link')
@@ -27,17 +37,25 @@ if (WORKBENCH_SPECIES === 'ocellaris') {
 }
 
 function AquariumApp() {
-  const controller = useMemo(() => createPocketGameController(), [])
-  const [view, setView] = useState(() => projectPocketState(controller.getState()))
+  const [pocketState, setPocketState] = useState(() => {
+    if (SHOWCASE_MODE) return createPocketReefShowcase()
+    try {
+      const saved = window.localStorage.getItem(pocketSaveKey)
+      return saved ? restorePocketGame(JSON.parse(saved)) : createPocketNewGame()
+    } catch {
+      return createPocketNewGame()
+    }
+  })
+  const pocketStateRef = useRef(pocketState)
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const lastTelemetryUpdate = useRef(0)
-
-  // The controller owns mutable state; the scene and HUD only ever project its snapshots.
-  useEffect(() => controller.subscribe((state) => setView(projectPocketState(state))), [controller])
+  const view = projectPocketState(pocketState)
+  pocketStateRef.current = pocketState
 
   useEffect(() => {
     let previousUpdate = performance.now()
+
     const timer = window.setInterval(() => {
       const currentUpdate = performance.now()
       const elapsedRealSeconds = Math.min(
@@ -45,32 +63,34 @@ function AquariumApp() {
         MAX_ELAPSED_REAL_SECONDS,
       )
       previousUpdate = currentUpdate
-      controller.advance(elapsedRealSeconds)
+      setPocketState((current) => advancePocketState(current, elapsedRealSeconds))
     }, UPDATE_INTERVAL_MS)
+
     return () => window.clearInterval(timer)
-  }, [controller])
+  }, [])
 
   useEffect(() => {
-    const flush = () => controller.save()
-    window.addEventListener('pagehide', flush)
-    window.addEventListener('beforeunload', flush)
-    return () => {
-      window.removeEventListener('pagehide', flush)
-      window.removeEventListener('beforeunload', flush)
+    if (SHOWCASE_MODE) return
+    const save = () => {
+      try { window.localStorage.setItem(pocketSaveKey, serializePocketGame(pocketStateRef.current)) } catch { /* storage is optional */ }
     }
-  }, [controller])
+    const timer = window.setInterval(save, 1000)
+    window.addEventListener('pagehide', save)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('pagehide', save)
+    }
+  }, [])
 
-  const dispatch = useCallback(
-    (action: Parameters<typeof controller.dispatch>[0]) => controller.dispatch(action),
-    [controller],
-  )
+  const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
+    setPocketState((current) => dispatchPocketAction(current, action))
+  }, [])
 
-  // Tapping the water and mouth contact both flow through the one authoritative dispatcher.
   const feeding = useMemo<FeedingApi>(() => ({
     food: view.food,
-    feed: (normalizedX) => controller.dispatch({ type: 'FEED', x: normalizedX }),
-    consume: (foodId, eaterId) => controller.dispatch({ type: 'CONSUME_FOOD', foodId, eaterId }),
-  }), [controller, view.food])
+    feed: (normalizedX) => dispatch({ type: 'FEED', x: normalizedX }),
+    consume: (foodId, eaterId) => dispatch({ type: 'CONSUME_FOOD', foodId, eaterId }),
+  }), [dispatch, view.food])
 
   const updateRenderTelemetry = useCallback((telemetry: ReefRenderTelemetry) => {
     const now = performance.now()
@@ -82,8 +102,7 @@ function AquariumApp() {
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
-        <SpecimenRosterProvider specimens={view.specimens}
-          select={(id) => controller.dispatch({ type: 'SELECT_ENTITY', entityType: 'livestock', id })}>
+        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}>
           <ReefScene
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}
