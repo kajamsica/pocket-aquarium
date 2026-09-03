@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "blue_hippo_tang",
+  "sourceSha256": "b97b8d0cc1b6f08eeff4829d771e91eff6b580d6df0d26109d868b1d3aa91bea",
+  "objects": [
+    {
+      "name": "PA_blue_hippo_tang_Body",
+      "vertexCount": 2498,
+      "triangleCount": 4992,
+      "vertexDigest": "d70fcabe435c43fb6dc5720b68681f2a8ee109c7ade0bed5cc45713ee892cccc",
+      "topologyDigest": "c97cf6b2d515e9eb30825cf1bb49b250acbdbe5f76864b7eb0cebf28cc99c1aa",
+      "uvDigest": "faabd4d71fb8cb954582e0b6cfcaf4c3a5c97a9af242d5e2de43e73453c95749",
+      "weightDigest": "d1ac5807168f85ce4cccbf252a98283db1e46cd9b80789f4f023cce8f93b5185",
+      "materials": [
+        "PA_blue_hippo_tang_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_blue_hippo_tang_Details",
+      "vertexCount": 1200,
+      "triangleCount": 2352,
+      "vertexDigest": "8d532b0af534d6bc0ab1f7b4461907f423e5b20900a75fbddbe9e9468a318c8f",
+      "topologyDigest": "82f0fa3fcff9dd99119e7fee0d254c6dccd8f0c25e0e182ddc139257ab56d4bf",
+      "uvDigest": "561ad76b410fc61e0ee6986fa0e9adef015a3739eb048eefb7adffb0db300791",
+      "weightDigest": "1f343ff715a3a821fbb4d77084a7b4b1a3c19bab93168f8d0a9ebfecc224e72c",
+      "materials": [
+        "PA_blue_hippo_tang_Adornment",
+        "PA_blue_hippo_tang_Cue",
+        "PA_blue_hippo_tang_Eye",
+        "PA_blue_hippo_tang_Glint",
+        "PA_blue_hippo_tang_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_blue_hippo_tang_Fins",
+      "vertexCount": 490,
+      "triangleCount": 844,
+      "vertexDigest": "395ab1f2b1c2e7df2a4172769c9929fae4322865f68fac3f4683373fa3454606",
+      "topologyDigest": "621c85907291c12eb04a9f1d593bf4235f36058f0781a0c47d478000f34257be",
+      "uvDigest": "2924cd555debbbca039dc100a6b16de933f52a3459ff4884cfb4f8cd1d79e8ae",
+      "weightDigest": "7ae0f46852fe7526d76f2fcdd1539f0bca3dfafa26308672b52465102905221a",
+      "materials": [
+        "PA_blue_hippo_tang_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_blue_hippo_tang_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "ab3f57f6fa0a5e4f2b2344d727253882efd0c69385eeebe43435d19a6b8bce68"
+  },
+  "geometryDigest": "73468be36868c08818f2ffeffb9aa2951fe98404a6b9146346a5a3a854f97dcb",
+  "variantId": null
+}
