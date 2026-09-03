@@ -168,6 +168,7 @@ export interface CatalogSpecies {
 
 interface CatalogCoral { id: string; name: string; price: number }
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number }
+interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
 interface Validation { ok: boolean; reasons: string[] }
 
@@ -183,6 +184,7 @@ interface PocketRuntime {
     TIER_ORDER: string[]
     HABITATS: Record<string, { params: string[] }>
     EQUIPMENT: Record<string, { label: string; levels: EquipmentLevel[] }>
+    KEEPER_RANKS: CatalogKeeperRank[]
     resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
     equipLevel: (category: string, id: string) => EquipmentLevel | null
     isCycled: (state: PocketState) => boolean
@@ -291,6 +293,7 @@ export interface PocketGameView {
   /** True when God mode is active: Store treats credits as unlimited and the pill shows ∞. */
   readonly unlimitedCredits: boolean
   readonly xp: number
+  readonly progression: PocketProgressionView
   readonly cycleStage: string
   readonly cycled: boolean
   readonly filled: boolean
@@ -315,6 +318,18 @@ export interface PocketGameView {
   readonly alerts: readonly string[]
   readonly optics: Readonly<{ localPpfd: number; mode: 'read_only' }>
   readonly reefSnapshot: ReefSnapshot
+}
+
+export interface PocketProgressionView {
+  readonly rank: string
+  readonly rankMinXp: number
+  readonly nextRank: string | null
+  readonly nextRankXp: number | null
+  readonly xpToNext: number
+  readonly progress: number
+  readonly nextRewardCredits: number
+  readonly recentMilestones: readonly string[]
+  readonly earningPaths: readonly Readonly<{ label: string; reward: string }>[]
 }
 
 const runtime = (globalThis as unknown as { PA: PocketRuntime }).PA
@@ -473,6 +488,30 @@ function lifecycleFor(state: PocketState): LifecyclePhase {
   if (!runtime.DATA.isCycled(state)) return 'cycling'
   if (nuisance > 0.18) return 'ugly_phase'
   return state.cycle.stage === 'Mature biome' ? 'young_reef' : 'stabilizing'
+}
+
+function keeperProgression(state: PocketState): PocketProgressionView {
+  const ranks = runtime.DATA.KEEPER_RANKS
+  const currentIndex = Math.max(0, ranks.findLastIndex((rank) => state.xp >= rank.minXp))
+  const current = ranks[currentIndex]
+  const next = ranks[currentIndex + 1]
+  const span = next ? Math.max(1, next.minXp - current.minXp) : 1
+  return {
+    rank: current.name,
+    rankMinXp: current.minXp,
+    nextRank: next?.name ?? null,
+    nextRankXp: next?.minXp ?? null,
+    xpToNext: next ? Math.max(0, next.minXp - state.xp) : 0,
+    progress: next ? clamp((state.xp - current.minXp) / span) : 1,
+    nextRewardCredits: next?.rewardCredits ?? 0,
+    recentMilestones: state.log.filter((entry) => entry.type === 'milestone').slice(-5).reverse().map((entry) => entry.message),
+    earningPaths: [
+      { label: 'Maintain a safe, stable day with living residents', reward: '+5 XP · +8 credits' },
+      { label: 'Advance the nitrogen cycle', reward: '+10–25 XP · +5–15 credits' },
+      { label: 'Mature livestock or a coral colony', reward: '+8–30 XP' },
+      { label: 'Establish breeding, hatching, and surviving fry', reward: '+25–40 XP · +12–25 credits' },
+    ],
+  }
 }
 
 function biologicalCycleEstablished(state: PocketState) {
@@ -724,7 +763,7 @@ export function projectPocketState(
       causalNote: feedPulse > 0 ? 'Root livestock hunger and the optical feed response share the same action.' : 'Pocket Aquarium advances all gameplay state.', feedPulse },
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
-    credits: Math.floor(state.credits), unlimitedCredits, xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
+    credits: Math.floor(state.credits), unlimitedCredits, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,
     cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
     objective, residents, selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
     specimens: residents.filter((animal) => animal.alive !== false),

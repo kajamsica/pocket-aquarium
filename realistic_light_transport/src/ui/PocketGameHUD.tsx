@@ -25,6 +25,9 @@ const STORE_FILTERS = ['recommended', 'equipment', 'livestock', 'coral', 'tank']
 const STORE_FILTER_META: Readonly<Record<StoreFilter, readonly [string, string]>> = {
   recommended: ['For you', '✦'], equipment: ['Equipment', '⚙'], livestock: ['Fish', '◁'], coral: ['Coral', '⌁'], tank: ['Aquariums', '□'],
 }
+const PANEL_TABS = [
+  ['guide', 'Guide'], ['water', 'Water'], ['care', 'Care'], ['store', 'Store'], ['progress', 'Rank'], ['view', 'View'],
+] as const satisfies readonly (readonly [HudPanelId, string])[]
 
 interface PocketGameHUDProps {
   readonly view: PocketGameView
@@ -179,8 +182,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </aside> : null}
 
     <nav className="pocket-sheet-tabs" aria-label="Aquarium panels">
-      {(['guide', 'water', 'care', 'store', 'view'] as const).map((sheet) => <button key={sheet} type="button"
-        aria-pressed={workspace.isOpen(sheet)} onClick={() => workspace.togglePanel(sheet)}>{sheet}</button>)}
+      {PANEL_TABS.map(([sheet, label]) => <button key={sheet} type="button"
+        aria-pressed={workspace.isOpen(sheet)} onClick={() => workspace.togglePanel(sheet)}>{label}</button>)}
     </nav>
 
     <HudWindow id="guide" title="Next step" eyebrow="Guided reef care" className="pocket-guide-window" workspace={workspace}>
@@ -188,6 +191,25 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         <div><p>Next guided step · {view.guide.stage.replaceAll('_', ' ')}</p><h2 id="pocket-guide-title">{view.guide.title}</h2></div>
         <p>{view.guide.body}</p>
         {command ? <button className="hud-button hud-button-primary" type="button" onClick={runGuide}>{guideLabel}</button> : null}
+      </section>
+    </HudWindow>
+
+    <HudWindow id="progress" title="Keeper rank" eyebrow="Lifetime husbandry experience" className="hud-panel pocket-progress-panel" workspace={workspace}>
+      <section className="pocket-progress" aria-labelledby="pocket-progress-title">
+        <div className="pocket-rank-hero"><span className="pocket-rank-mark" aria-hidden="true">{view.progression.rank.split(' ').map((word) => word[0]).join('')}</span><div>
+          <p>Your keeper rank</p><h2 id="pocket-progress-title">{view.progression.rank}</h2><strong>{view.xp} lifetime XP</strong></div></div>
+        <p className="pocket-progress-explainer"><strong>XP records real husbandry experience.</strong> It is never spent. Rank-ups pay Tank credits; Tank credits are what you spend in the Store.</p>
+        <div className="pocket-rank-progress"><div><span>{view.progression.rank}</span><strong>{view.progression.nextRank ?? 'Highest rank'}</strong></div>
+          <div className="pocket-rank-track" role="progressbar" aria-label="Progress to next keeper rank" aria-valuemin={0} aria-valuemax={100}
+            aria-valuenow={Math.round(view.progression.progress * 100)}><span style={{ '--rank-progress': `${view.progression.progress * 100}%` } as React.CSSProperties} /></div>
+          <small>{view.progression.nextRank
+            ? `${view.progression.xpToNext} XP to ${view.progression.nextRank} · rank reward +${view.progression.nextRewardCredits} Tank credits`
+            : 'Every keeper rank achieved. Stable husbandry still earns XP and credits.'}</small></div>
+        <div className="pocket-progress-section"><h3>How to earn it</h3><ul>{view.progression.earningPaths.map((path) => <li key={path.label}>
+          <span>{path.label}</span><strong>{path.reward}</strong></li>)}</ul></div>
+        <div className="pocket-progress-section"><h3>Recent achievements</h3>{view.progression.recentMilestones.length
+          ? <ul>{view.progression.recentMilestones.map((milestone, index) => <li key={`${index}:${milestone}`}><span>{milestone}</span></li>)}</ul>
+          : <p>Your first water test and cycling milestones will appear here.</p>}</div>
       </section>
     </HudWindow>
 
@@ -213,7 +235,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       <div className="hud-panel-heading"><div><p>Last tested water</p><h2 id="pocket-water-heading">{view.habitatName}</h2></div>
         <span className="hud-status-chip" data-alert={view.testFreshness.stale}>{view.testFreshness.label}</span></div>
       <dl className="hud-metric-grid pocket-summary-grid" aria-label="Progression and tank summary">
-        <div className="hud-metric"><dt>Credits</dt><dd>{view.unlimitedCredits ? '∞' : view.credits}</dd></div><div className="hud-metric"><dt>XP</dt><dd>{view.xp}</dd></div>
+        <div className="hud-metric"><dt>Credits</dt><dd>{view.unlimitedCredits ? '∞' : view.credits}</dd></div><div className="hud-metric"><dt>Keeper rank</dt><dd>{view.progression.rank}</dd></div>
         <div className="hud-metric"><dt>Tier</dt><dd>{view.tierName}</dd></div><div className="hud-metric"><dt>Residents</dt><dd>{view.specimens.length}</dd></div>
         <div className="hud-metric"><dt>Still need food</dt><dd>{hungryFishCount}</dd></div>
       </dl>

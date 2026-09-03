@@ -1814,6 +1814,160 @@ input:focus-visible {
   margin: 0;
 }
 
+/* Keeper progression: XP is a lifetime record; rank rewards connect it back to
+   the spendable Tank-credit economy without pretending XP itself is currency. */
+.pocket-progress {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.pocket-rank-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pocket-rank-mark {
+  display: grid;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid rgba(240, 199, 105, 0.48);
+  border-radius: 50%;
+  color: #f6d883;
+  background: radial-gradient(circle at 34% 28%, rgba(255, 229, 140, 0.2), rgba(104, 74, 15, 0.13));
+  box-shadow: 0 0 24px rgba(220, 177, 70, 0.12);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.pocket-rank-hero p,
+.pocket-rank-hero h2,
+.pocket-rank-hero strong,
+.pocket-progress-explainer,
+.pocket-progress-section h3,
+.pocket-progress-section p {
+  margin: 0;
+}
+
+.pocket-rank-hero p {
+  color: var(--dim);
+  font-size: 0.48rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.pocket-rank-hero h2 {
+  margin: 2px 0 3px;
+  color: #f4fdfe;
+  font-size: 0.95rem;
+}
+
+.pocket-rank-hero strong {
+  color: #f3cc74;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.6rem;
+}
+
+.pocket-progress-explainer {
+  padding: 10px 11px;
+  border: 1px solid rgba(111, 212, 216, 0.16);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(13, 48, 57, 0.3);
+  font-size: 0.57rem;
+  line-height: 1.55;
+}
+
+.pocket-progress-explainer strong {
+  color: rgba(236, 252, 253, 0.92);
+}
+
+.pocket-rank-progress {
+  display: grid;
+  gap: 6px;
+}
+
+.pocket-rank-progress > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  color: var(--dim);
+  font-size: 0.5rem;
+}
+
+.pocket-rank-progress > div:first-child strong {
+  color: #dff8fa;
+}
+
+.pocket-rank-track {
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(126, 209, 219, 0.18);
+  border-radius: 999px;
+  background: rgba(3, 20, 26, 0.8);
+}
+
+.pocket-rank-track > span {
+  display: block;
+  width: var(--rank-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #46c6ca, #f0cd73);
+  box-shadow: 0 0 12px rgba(78, 208, 207, 0.28);
+}
+
+.pocket-rank-progress > small {
+  color: var(--muted);
+  font-size: 0.52rem;
+  line-height: 1.4;
+}
+
+.pocket-progress-section {
+  padding-top: 10px;
+  border-top: 1px solid rgba(176, 228, 235, 0.1);
+}
+
+.pocket-progress-section h3 {
+  color: rgba(226, 247, 249, 0.9);
+  font-size: 0.58rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pocket-progress-section ul {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pocket-progress-section li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.54rem;
+  line-height: 1.35;
+}
+
+.pocket-progress-section li strong {
+  color: #a8e7dc;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.48rem;
+  text-align: right;
+}
+
+.pocket-progress-section p {
+  margin-top: 7px;
+  color: var(--dim);
+  font-size: 0.54rem;
+  line-height: 1.45;
+}
+
 .pocket-store-list,
 .pocket-lock-reasons {
   margin: 0;
@@ -3462,7 +3616,7 @@ input:focus-visible {
 
 @media (max-width: 860px) {
   .pocket-game-hud .pocket-sheet-tabs {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 
   .pocket-game-hud .pocket-sheet-tabs button {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 
-export type HudPanelId = 'guide' | 'water' | 'store' | 'care' | 'view' | `metric:${string}`
+export type HudPanelId = 'guide' | 'water' | 'store' | 'care' | 'view' | 'progress' | `metric:${string}`
 
 export interface HudWindowLayout {
   readonly x: number
@@ -23,6 +23,7 @@ function defaultLayout(id: HudPanelId): HudWindowLayout {
     case 'store': return { x: Math.max(24, viewportWidth - 430), y: 116, width: 400, height: 570, open: false, minimized: false, z: 22 }
     case 'care': return { x: Math.max(24, viewportWidth - 420), y: 140, width: 390, height: 430, open: false, minimized: false, z: 23 }
     case 'view': return { x: Math.max(24, viewportWidth - 330), y: 150, width: 300, height: 320, open: false, minimized: false, z: 24 }
+    case 'progress': return { x: 24, y: 330, width: 340, height: 390, open: false, minimized: false, z: 25 }
     default: {
       const index = Math.abs(id.split('').reduce((value, character) => value + character.charCodeAt(0), 0)) % 5
       return { x: 28 + index * 44, y: 320 + index * 38, width: 220, height: 132, open: true, minimized: false, z: 30 + index }

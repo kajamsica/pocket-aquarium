@@ -321,6 +321,16 @@
     ocellaris: 1
   };
 
+  /* Keeper XP is cumulative husbandry experience, never a spendable currency.
+     Ordered ranks turn that record into one-time Tank credit rewards. */
+  var KEEPER_RANKS = [
+    { id: "new_keeper", name: "New Keeper", minXp: 0, rewardCredits: 0 },
+    { id: "cycle_technician", name: "Cycle Technician", minXp: 40, rewardCredits: 25 },
+    { id: "aquarist", name: "Aquarist", minXp: 120, rewardCredits: 50 },
+    { id: "reef_keeper", name: "Reef Keeper", minXp: 300, rewardCredits: 100 },
+    { id: "reef_steward", name: "Reef Steward", minXp: 650, rewardCredits: 200 }
+  ];
+
   var DATA = {
     version: 1,
     saveKey: "pocket-aquarium-ecosystem-v1",
@@ -337,7 +347,8 @@
     EQUIPMENT: EQUIPMENT,
     SPECIES: SPECIES,
     CORALS: CORALS,
-    BUNDLES: BUNDLES
+    BUNDLES: BUNDLES,
+    KEEPER_RANKS: KEEPER_RANKS
   };
 
   /* ------------------------------------------------------------------ *
