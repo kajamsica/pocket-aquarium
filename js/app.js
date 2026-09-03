@@ -80,6 +80,7 @@
   var waterList = $("waterList"), waterAdvancedList = $("waterAdvancedList");
   var livestockList = $("livestockList"), storeList = $("storeList"), journalList = $("journalList");
   var habitatDialog = $("habitatDialog"), modalRoot = $("modalRoot"), toastEl = $("toast");
+  var toolDock = $("toolDock"), dockBody = $("dockBody"), dockClose = $("dockClose");
   var guidePanel = $("guidePanel"), waterPanel = $("waterPanel"), livestockPanel = $("livestockPanel"),
       storePanel = $("storePanel"), journalPanel = $("journalPanel");
 
@@ -250,7 +251,21 @@
   }
 
   /* ============================ tabs (roving tabindex) ============================ */
-  function selectTab(i, focus) {
+  function mobileDockLayout() {
+    return typeof global.matchMedia === "function" && global.matchMedia("(max-width: 900px)").matches;
+  }
+  function setDockOpen(open, restoreFocus) {
+    if (!toolDock) return;
+    var mobile = mobileDockLayout();
+    toolDock.classList.toggle("is-open", mobile && !!open);
+    if (dockBody) dockBody.setAttribute("aria-hidden", mobile && !open ? "true" : "false");
+    if (dockClose) dockClose.tabIndex = mobile && open ? 0 : -1;
+    for (var k = 0; k < TABS.length; k++) {
+      TABS[k].tab.setAttribute("aria-expanded", mobile && open && k === activeTab ? "true" : "false");
+    }
+    if (restoreFocus && TABS[activeTab]) TABS[activeTab].tab.focus();
+  }
+  function selectTab(i, focus, openDock) {
     i = (i % TABS.length + TABS.length) % TABS.length;
     activeTab = i;
     for (var k = 0; k < TABS.length; k++) {
@@ -259,6 +274,7 @@
       TABS[k].tab.tabIndex = on ? 0 : -1;
       TABS[k].panel.hidden = !on;
     }
+    if (openDock) setDockOpen(true, false);
     if (focus) TABS[i].tab.focus();
     renderActivePanel(currentSnap());
   }
@@ -285,9 +301,9 @@
       case "select": dispatchAction({ type: ACT.SELECT_ENTITY, entityType: ds.etype, id: ds.id }); break;
       case "insp-close": dispatchAction({ type: ACT.SELECT_ENTITY, id: null }); break;
       case "removedead": dispatchAction({ type: ACT.REMOVE_DEAD, id: +ds.id }); break;
-      case "open-store": selectTab(STORE_TAB, false); break;
-      case "open-water": selectTab(1, false); break;
-      case "open-livestock": selectTab(2, false); break;
+      case "open-store": selectTab(STORE_TAB, false, true); break;
+      case "open-water": selectTab(1, false, true); break;
+      case "open-livestock": selectTab(2, false, true); break;
       case "open-dialog": openHabitatDialog(); break;
       case "startover": confirmStartOver(); break;
       case "modal-cancel": { var d1 = el.closest("dialog"); if (d1) d1.close(); break; }
@@ -1243,15 +1259,27 @@
     if (speed4Btn) speed4Btn.addEventListener("click", function () { dispatchAction({ type: ACT.SET_SPEED, speed: 4 }); });
     if (speed8Btn) speed8Btn.addEventListener("click", function () { dispatchAction({ type: ACT.SET_SPEED, speed: 8 }); });
     // tabs: click + roving arrow/home/end
-    for (var i = 0; i < TABS.length; i++) (function (idx) { TABS[idx].tab.addEventListener("click", function () { selectTab(idx, false); }); })(i);
+    for (var i = 0; i < TABS.length; i++) (function (idx) {
+      TABS[idx].tab.addEventListener("click", function () {
+        if (mobileDockLayout() && idx === activeTab && toolDock && toolDock.classList.contains("is-open")) setDockOpen(false, false);
+        else selectTab(idx, false, true);
+      });
+    })(i);
+    if (dockClose) dockClose.addEventListener("click", function () { setDockOpen(false, true); });
+    if (typeof global.matchMedia === "function") {
+      var dockMedia = global.matchMedia("(max-width: 900px)");
+      var syncDockMode = function () { setDockOpen(toolDock && toolDock.classList.contains("is-open"), false); };
+      if (dockMedia.addEventListener) dockMedia.addEventListener("change", syncDockMode);
+      else if (dockMedia.addListener) dockMedia.addListener(syncDockMode);
+    }
     var tablist = document.querySelector(".dock-tabs");
     if (tablist) tablist.addEventListener("keydown", function (e) {
       var handled = true;
       switch (e.key) {
-        case "ArrowRight": case "ArrowDown": selectTab(activeTab + 1, true); break;
-        case "ArrowLeft": case "ArrowUp": selectTab(activeTab - 1, true); break;
-        case "Home": selectTab(0, true); break;
-        case "End": selectTab(TABS.length - 1, true); break;
+        case "ArrowRight": case "ArrowDown": selectTab(activeTab + 1, true, true); break;
+        case "ArrowLeft": case "ArrowUp": selectTab(activeTab - 1, true, true); break;
+        case "Home": selectTab(0, true, true); break;
+        case "End": selectTab(TABS.length - 1, true, true); break;
         default: handled = false;
       }
       if (handled) e.preventDefault();
@@ -1272,6 +1300,7 @@
       if (habitatDialog && habitatDialog.open) return; // native dialog handles its own Escape
       var m = modalRoot.querySelector("dialog[open]");
       if (m) { m.close(); return; }
+      if (mobileDockLayout() && toolDock && toolDock.classList.contains("is-open")) { setDockOpen(false, true); return; }
       if (state.selection) dispatchAction({ type: ACT.SELECT_ENTITY, id: null });
     });
     // pause with the page; resume the prior speed only if it was running
@@ -1308,7 +1337,8 @@
     wire();
     renderer = PA.createRenderer(tankCanvas, rendererState, dispatchAction);
     applyTheme();
-    selectTab(0, false);
+    selectTab(0, false, false);
+    setDockOpen(false, false);
     renderNow();
 
     if (report && (report.appliedDays >= 0.02 || report.deaths > 0)) {

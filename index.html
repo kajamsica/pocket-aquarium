@@ -86,7 +86,7 @@
   </section>
 
   <!-- ============ Right dock: bounded tools, one panel scrolls internally ============ -->
-  <aside class="dock" aria-label="Aquarium tools">
+  <aside id="toolDock" class="dock" aria-label="Aquarium tools">
     <div class="dock-tabs" role="tablist" aria-label="Aquarium panels">
       <button id="guideTab" class="dock-tab" type="button" role="tab" aria-controls="guidePanel" aria-selected="true" tabindex="0">Guide</button>
       <button id="waterTab" class="dock-tab" type="button" role="tab" aria-controls="waterPanel" aria-selected="false" tabindex="-1">Water</button>
@@ -95,7 +95,8 @@
       <button id="journalTab" class="dock-tab" type="button" role="tab" aria-controls="journalPanel" aria-selected="false" tabindex="-1">Journal</button>
     </div>
 
-    <div class="dock-body">
+    <div id="dockBody" class="dock-body">
+      <button id="dockClose" class="dock-close" type="button" aria-label="Close aquarium tools">Close</button>
 
       <!-- Guide: contextual teaching first (next action + cycle phases) -->
       <section id="guidePanel" class="dock-panel" role="tabpanel" aria-labelledby="guideTab" tabindex="0">

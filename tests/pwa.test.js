@@ -422,27 +422,31 @@ if (api && bandA && bandN) {
   ok(run(0.5, 0).care === "elevated" && run(0.5006, 0).care === "toxic", "0.5 is elevated; only past the 0.5 toxic contract is it toxic");
 }
 
-group("stocked mobile feeding surface stays usable (PA-FEED-TOUCH-01)");
-// Live proof at 390x844: after stocking + Inspect the wet canvas was only ~103px tall while a
-// 337.5px mobile dock (40svh) and a full-bleed inspector (left:12px;right:12px) covered ~49% of
-// the tank. The repair is pure cascade: a smaller bounded dock and a width-capped populated
-// inspector recover a usable strip. Scope every assertion to the @media (max-width:900px) block
-// so these fail on the pre-repair CSS and pass only after it, without touching desktop behavior.
+group("mobile aquarium remains the persistent game world (PA-MOBILE-WORLD-01)");
 var mobile900 = (css.match(/@media \(max-width:900px\)\s*\{[\s\S]*?\n\}/) || [""])[0];
 ok(mobile900.length > 0, "the @media (max-width:900px) block is present for scoped assertions");
-// Dock: exact bounded 30svh contract — 208px floor retained, 40svh/352px oversize removed.
-ok(/\.dock\s*\{[^}]*height:clamp\(208px,30svh,320px\)/.test(mobile900),
-   "mobile dock uses the bounded clamp(208px,30svh,320px) tank-recovery contract");
-ok(/clamp\(208px,30svh,/.test(mobile900), "mobile dock keeps the 208px minimum floor");
-ok(!/clamp\(208px,40svh,352px\)/.test(mobile900), "the oversized clamp(208px,40svh,352px) dock cap is gone");
-// Populated inspector: clears the inherited right inset and is width-capped so a full-height
-// wet strip stays reachable beside it. The empty resting-hint rule must be left untouched.
+ok(/id="toolDock"/.test(html) && /id="dockBody"/.test(html) && /id="dockClose"/.test(html),
+   "the existing tool dock exposes one accessible overlay/close boundary");
+ok(/grid-template-rows:auto minmax\(0,1fr\)/.test(mobile900) && /grid-template-areas:"chrome" "stage"/.test(mobile900),
+   "mobile gives the full remaining viewport row to the aquarium instead of stacking tools below it");
+ok(/\.tank\s*\{[^}]*position:absolute[^}]*inset:0/.test(mobile900), "the tank fills the persistent mobile play row");
+ok(/\.command\s*\{[^}]*position:absolute/.test(mobile900), "care guidance overlays the tank instead of consuming aquarium height");
+ok(/\.dock\s*\{[^}]*grid-area:stage[^}]*height:52px/.test(mobile900), "the collapsed tool rail overlays the aquarium at a compact 52px");
+ok(/\.dock\.is-open\s*\{[^}]*height:clamp\(300px,52svh,470px\)/.test(mobile900), "the expanded tool window is bounded over the aquarium");
+ok(/\.dock:not\(\.is-open\) \.dock-body\s*\{[^}]*display:none/.test(mobile900), "collapsed tools leave the aquarium unobstructed");
+ok(/function setDockOpen\(/.test(app) && /aria-hidden/.test(app) && /aria-expanded/.test(app), "mobile sheet state is synchronized for assistive technology");
+ok(/matchMedia\("\(max-width: 900px\)"\)[\s\S]*?addEventListener\("change", syncDockMode\)/.test(app), "orientation and breakpoint changes resynchronize visual and accessible sheet state");
+ok(/idx === activeTab[\s\S]*?setDockOpen\(false/.test(app), "tapping the active tool tab collapses the sheet");
+ok(/case "open-store": selectTab\(STORE_TAB, false, true\)/.test(app) &&
+   /case "open-water": selectTab\(1, false, true\)/.test(app), "command actions open their requested tool window");
+ok(/classList\.contains\("is-open"\)[\s\S]*?setDockOpen\(false, true\)/.test(app), "Escape closes an expanded tool window first");
+// Populated inspector leaves a feedable wet region; the empty hint cannot intercept taps.
 ok(/\.inspector:not\(:empty\)\s*\{[^}]*right:auto/.test(mobile900),
    "populated inspector clears the inherited right inset (right:auto) on mobile");
-ok(/\.inspector:not\(:empty\)\s*\{[^}]*width:min\(260px,70%\)/.test(mobile900),
-   "populated inspector width is capped to min(260px,70%) on mobile");
-ok(/\.inspector\.js-root:empty\s*\{[^}]*left:auto/.test(css),
-   "the empty inspector resting-hint chip rule is preserved");
+ok(/\.inspector:not\(:empty\)\s*\{[^}]*width:min\(260px,68%\)/.test(mobile900),
+   "populated inspector is capped to 68% of the tank width on mobile");
+ok(/\.inspector\.js-root:empty\s*\{[^}]*pointer-events:none/.test(mobile900),
+   "the empty inspector hint never intercepts a feed gesture");
 
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");

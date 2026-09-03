@@ -287,6 +287,7 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   border:1px solid var(--edge);border-radius:0 var(--r-md) var(--r-md) var(--r-md);
   background:var(--glass);backdrop-filter:blur(12px);box-shadow:var(--pop-sm);overflow:hidden;
 }
+.dock-close{display:none}
 .dock-panel{
   height:100%;overflow:auto;overscroll-behavior:contain;padding:14px;
   display:flex;flex-direction:column;gap:10px;
@@ -561,36 +562,70 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
 .dock-tab:focus-visible{outline-offset:-3px;position:relative;z-index:3}
 
 /* ========================================================================
-   Responsive — stack the tank over a bounded bottom-sheet dock, within 100svh
+   Responsive — persistent aquarium world + tools that rise over it
    ======================================================================== */
 @media (max-width:900px){
   body{padding:0}
   .app{
-    width:100%;height:100svh;gap:10px;
+    width:100%;height:100svh;gap:6px;
     /* Honour the iPhone safe areas (notch, Dynamic Island, home indicator) in
        standalone/PWA mode; box-sizing:border-box keeps it within 100svh. */
-    padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right))
-            max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+    padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right))
+            max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
     border:0;border-radius:0;box-shadow:none;
     grid-template-columns:1fr;
-    grid-template-rows:auto minmax(0,1fr) auto;
-    grid-template-areas:"chrome" "stage" "dock";
+    grid-template-rows:auto minmax(0,1fr);
+    grid-template-areas:"chrome" "stage";
   }
-  /* The dock becomes a stable bottom sheet: bounded height + internal scroll keep the
-     tank the dominant surface and stop growing livestock/store from pushing it away. */
+  .chrome{padding:5px 8px;gap:5px 8px}
+  .brand-sub{display:none}
+  .status{gap:5px}
+  .pill{padding:3px 8px;gap:5px}
+  .coin{padding:4px 9px}
+  .transport{padding:2px}
+  .tbtn{min-height:40px}
+
+  /* The tank owns the full play row. Guidance becomes glass over the world instead of
+     a permanent row that makes the aquarium shorter. */
+  .stage{position:relative;display:block;min-height:0}
+  .tank{position:absolute;inset:0;min-height:0;border-radius:var(--r-lg)}
+  .command{
+    position:absolute;z-index:5;top:8px;left:8px;right:8px;margin:0;
+    padding:8px 10px;gap:7px 9px;background:rgba(9,22,29,.84);backdrop-filter:blur(12px);
+  }
+  .command-main{min-width:150px}
+  .command-why,.command-fresh{display:none}
+  .command-reason{font-size:12.5px}
+  .command-badge{padding:4px 8px;font-size:10px}
+  .command-cta{min-height:40px;padding:0 12px;font-size:12.5px}
+
+  /* Persistent bottom navigation; its selected panel rises over the aquarium and can
+     be dismissed without moving or unmounting the living scene behind it. */
   .dock{
-    height:clamp(208px,30svh,320px);position:relative;padding-top:9px;
+    grid-area:stage;align-self:end;z-index:10;height:52px;min-height:52px;
+    position:relative;padding:0;
     background:var(--glass);backdrop-filter:blur(16px);
     border:1px solid var(--edge);border-bottom:0;border-radius:18px 18px 0 0;
     box-shadow:0 -14px 34px rgba(0,0,0,.5);
+    transition:height .2s ease;
   }
-  .dock::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
-    width:38px;height:4px;border-radius:999px;background:var(--edge-strong)}
-  .dock-body{border:0;border-radius:0;background:transparent;backdrop-filter:none;box-shadow:none}
-  /* A populated inspector must not span nearly the whole tank: drop the inherited
-     right inset and cap its width so a full-height wet strip stays reachable beside it.
-     The empty resting-hint chip (.inspector.js-root:empty) is untouched. */
-  .inspector:not(:empty){right:auto;width:min(260px,70%)}
+  .dock.is-open{height:clamp(300px,52svh,470px)}
+  .dock-tabs{height:51px;padding:6px 5px 0;gap:3px;background:rgba(7,18,24,.9);border-radius:18px 18px 0 0}
+  .dock-tab{min-height:44px;border-bottom:0;border-radius:12px 12px 0 0}
+  .dock-body{border:0;border-radius:0;background:rgba(7,18,24,.96);backdrop-filter:none;box-shadow:none}
+  .dock:not(.is-open) .dock-body{display:none}
+  .dock-close{
+    display:block;position:sticky;top:8px;z-index:4;margin:8px 8px -44px auto;
+    min-width:64px;min-height:36px;padding:0 12px;cursor:pointer;
+    font:700 11px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink);
+    background:var(--surface-3);border:1px solid var(--edge-strong);border-radius:999px;
+  }
+  .dock-panel{padding:14px;padding-top:52px}
+
+  /* The empty hint never steals feed taps. A selected resident remains operable but
+     leaves most of the full-height tank exposed beside and above it. */
+  .inspector.js-root:empty{pointer-events:none}
+  .inspector:not(:empty){right:auto;width:min(260px,68%);max-height:38%;bottom:62px}
   /* Comfortable 44px touch targets on phones/tablets. */
   .tbtn,.offer-cta{min-height:44px}
   .wallet{margin-left:auto}
@@ -598,24 +633,27 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   .hd-title{font-size:21px}
 }
 @media (max-width:640px){
-  .chrome{gap:8px 10px;padding:9px 11px}
-  .brand-sub{display:none}
+  .chrome{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;padding:5px 7px}
+  .brand{align-self:center}
+  .wallet{justify-self:end}
+  .status{grid-column:1 / -1;justify-content:space-between;order:3}
+  .transport{position:absolute;right:10px;top:182px;z-index:7;background:rgba(7,18,24,.78);backdrop-filter:blur(10px)}
   .hd-choices{grid-template-columns:1fr}
   .dock-tab{font-size:12px;padding:0 4px}
-  .pill{padding:4px 9px}
+  .pill{padding:3px 7px}
 }
 @media (max-width:380px){
   .brand-name{font-size:15px}
   .status{width:100%;order:3}
   .wallet{margin-left:0}
-  .coin{padding:5px 10px;font-size:13px}
+  .coin{padding:4px 7px;font-size:12px}
   .tbtn{min-width:44px;padding:0 9px}
 }
 
 /* Short viewports: relax the outer cap so the tank keeps breathing room */
 @media (max-height:560px){
   .app{height:100svh}
-  .dock{height:clamp(160px,40svh,300px)}
+  .dock.is-open{height:clamp(250px,58svh,330px)}
 }
 
 /* ========================================================================
