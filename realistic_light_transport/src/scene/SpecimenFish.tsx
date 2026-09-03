@@ -3,9 +3,10 @@ import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode, 
 import * as THREE from 'three'
 
 import type { ReefSnapshot } from '../contracts'
-import type { PocketSpecimen } from '../integration/pocketAquariumBridge'
+import type { PocketAction, PocketFoodPellet, PocketSpecimen } from '../integration/pocketAquariumBridge'
 import type { MorphologyProfileV1 } from '../specimens/specimenProfile'
 import { evaluateMorphology } from '../workbench/geometry/evaluateMorphology'
+import { foodPelletScenePosition, visibleFoodContact } from './foodContact'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
@@ -15,9 +16,11 @@ const SAND_Y = -1.44
 const MARINE_SPECIES = new Set(['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark'])
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
+  readonly food: readonly PocketFoodPellet[]
   readonly morphologyOverride?: MorphologyProfileV1
+  readonly dispatch?: (action: PocketAction) => void
 }
-const SpecimenRosterContext = createContext<SpecimenRosterValue>({ specimens: [] })
+const SpecimenRosterContext = createContext<SpecimenRosterValue>({ specimens: [], food: [] })
 const VISUAL_SKINS = {
   watchman_goby: {
     url: new URL('../../../assets/animals/yellow-watchman-goby-v1.png', import.meta.url).href,
@@ -25,12 +28,14 @@ const VISUAL_SKINS = {
   },
 } as const
 
-export function SpecimenRosterProvider({ specimens, morphologyOverride, children }: {
+export function SpecimenRosterProvider({ specimens, food = [], morphologyOverride, dispatch, children }: {
   readonly specimens: readonly PocketSpecimen[]
+  readonly food?: readonly PocketFoodPellet[]
   readonly morphologyOverride?: MorphologyProfileV1
+  readonly dispatch?: (action: PocketAction) => void
   readonly children: ReactNode
 }) {
-  const value = useMemo(() => ({ specimens, morphologyOverride }), [morphologyOverride, specimens])
+  const value = useMemo(() => ({ specimens, food, morphologyOverride, dispatch }), [dispatch, food, morphologyOverride, specimens])
   return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
 }
 
@@ -191,17 +196,74 @@ function seededUnit(id: number, salt: number) {
 }
 
 type SpeciesSkins = Readonly<Record<'watchman_goby', THREE.Texture>>
+type MouthPositions = Map<number, THREE.Vector3>
 
-function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, morphologyOverride }: {
+function FoodPellets({ food, waterSurfaceY }: { readonly food: readonly PocketFoodPellet[]; readonly waterSurfaceY: number }) {
+  return <group name="root-pocket-aquarium-food">
+    {food.map((pellet) => {
+      const position = foodPelletScenePosition(pellet, waterSurfaceY)
+      const radius = THREE.MathUtils.clamp(.032 + pellet.amount * .007, .035, .07)
+      return <mesh key={pellet.id} name={`root-food-${pellet.id}`} position={[position.x, position.y, position.z]}
+        scale={pellet.sunk ? [1.18, .72, 1.18] : 1}
+        userData={{ rootFoodId: pellet.id, normalizedX: pellet.x, normalizedY: pellet.y, sunk: pellet.sunk }}
+        castShadow>
+        <dodecahedronGeometry args={[radius, 1]} />
+        <meshStandardMaterial color={pellet.sunk ? '#8f6538' : '#d6a35d'} roughness={.76} />
+      </mesh>
+    })}
+  </group>
+}
+
+function FoodContactDriver({ food, specimens, mouths, waterSurfaceY, dispatch }: {
+  readonly food: readonly PocketFoodPellet[]
+  readonly specimens: readonly PocketSpecimen[]
+  readonly mouths: MouthPositions
+  readonly waterSurfaceY: number
+  readonly dispatch?: (action: PocketAction) => void
+}) {
+  const firstSeenAt = useRef(new Map<number, number>())
+  const consumeSent = useRef(new Set<number>())
+
+  useFrame(({ clock }) => {
+    if (!dispatch) return
+    const nowMs = clock.getElapsedTime() * 1000
+    const activeFood = new Set(food.map((pellet) => pellet.id))
+    for (const id of firstSeenAt.current.keys()) if (!activeFood.has(id)) firstSeenAt.current.delete(id)
+    for (const id of consumeSent.current) if (!activeFood.has(id)) consumeSent.current.delete(id)
+
+    for (const pellet of food) {
+      if (!firstSeenAt.current.has(pellet.id)) firstSeenAt.current.set(pellet.id, nowMs)
+      if (consumeSent.current.has(pellet.id)) continue
+      const pelletPosition = foodPelletScenePosition(pellet, waterSurfaceY)
+      const eater = specimens.find((specimen) => specimen.alive && specimen.kind === 'fish' && specimen.hunger > .05 &&
+        (specimen.layer !== 'bottom' || pellet.sunk) &&
+        visibleFoodContact(mouths.get(specimen.id) ?? { x: Infinity, y: Infinity, z: Infinity }, pelletPosition,
+          firstSeenAt.current.get(pellet.id) ?? nowMs, nowMs))
+      if (!eater) continue
+      consumeSent.current.add(pellet.id)
+      dispatch({ type: 'CONSUME_FOOD', foodId: pellet.id, eaterId: eater.id })
+    }
+  })
+
+  return <group name="root-food-contact-driver" userData={{ contactDriver: 'root-food-contact-v1' }} />
+}
+
+function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, mouths, dispatch, geometry, skins, morphologyOverride }: {
   readonly specimen: PocketSpecimen
   readonly snapshot: ReefSnapshot
   readonly waterSurfaceY: number
+  readonly food: readonly PocketFoodPellet[]
+  readonly mouths: MouthPositions
+  readonly dispatch?: (action: PocketAction) => void
   readonly geometry: SpecimenGeometry
   readonly skins: SpeciesSkins
   readonly morphologyOverride?: MorphologyProfileV1
 }) {
   const group = useRef<THREE.Group>(null)
   const tail = useRef<THREE.Group>(null)
+  const mouthPosition = useMemo(() => new THREE.Vector3(), [])
+  const fallbackMouth = useMemo(() => new THREE.Vector3(), [])
+  const forage = useRef(0)
   const phase = seededUnit(specimen.id, 1) * Math.PI * 2
   const rootX = THREE.MathUtils.lerp(-TANK_HALF_WIDTH * .72, TANK_HALF_WIDTH * .72, specimen.x)
   const benthic = specimen.layer === 'bottom' || specimen.speciesId === 'epaulette_shark'
@@ -212,8 +274,13 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
   const lifeScale = specimen.stage === 'adult' ? 1 : .68
   const length = THREE.MathUtils.clamp(specimen.adultSizeCm / 100 * sceneUnitsPerMeter * lifeScale, .16, 3.7)
   const riggedAsset = specimenAssetFor(specimen.speciesId)
+  const targetFood = food.find((pellet) => specimen.kind === 'fish' && specimen.hunger > .05 &&
+    (specimen.layer !== 'bottom' || pellet.sunk))
+  const targetPosition = targetFood ? foodPelletScenePosition(targetFood, waterSurfaceY) : null
 
-  useFrame(({ clock }) => {
+  useEffect(() => () => { mouths.delete(specimen.id) }, [mouths, specimen.id])
+
+  useFrame(({ clock }, delta) => {
     const node = group.current
     if (!node) return
     const shark = specimen.speciesId === 'epaulette_shark'
@@ -221,24 +288,36 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
     const clown = specimen.speciesId === 'ocellaris'
     const speed = (.33 + seededUnit(specimen.id, 3) * .13) * (shark ? .42 : shrimp ? .55 : 1)
     const wave = clock.getElapsedTime() * speed + phase
-    const feedDrive = THREE.MathUtils.clamp(snapshot.events.feedPulse * specimen.hunger, 0, .75)
-    const x = clown ? THREE.MathUtils.lerp(rootX * .25 + Math.sin(wave) * 1.55, 0, feedDrive)
+    forage.current += ((targetPosition ? 1 : 0) - forage.current) * (1 - Math.exp(-delta * 4.5))
+    const ambientX = clown ? rootX * .25 + Math.sin(wave) * 1.55
       : benthic ? rootX * .28 + Math.sin(wave) * (shark ? 1.55 : .28) : rootX + Math.sin(wave) * .35
-    const y = benthic ? rootY : THREE.MathUtils.lerp(rootY + Math.sin(wave * .71) * .11, waterSurfaceY - .42, feedDrive)
-    const z = clown ? THREE.MathUtils.lerp(1.04 + Math.cos(wave * .61) * .28, 1.24, feedDrive)
+    const ambientY = benthic ? rootY : rootY + Math.sin(wave * .71) * .11
+    const ambientZ = clown ? 1.04 + Math.cos(wave * .61) * .28
       : benthic ? .48 + Math.cos(wave * .67) * (shark ? .32 : .12) : Math.cos(wave * .8) * .4
-    const direction = Math.cos(wave) + (0 - x) * feedDrive >= 0 ? 1 : -1
+    const direction = targetPosition ? (targetPosition.x >= ambientX ? 1 : -1) : (Math.cos(wave) >= 0 ? 1 : -1)
+    const mouthLead = riggedAsset ? length * .53 : length * .5
+    const x = THREE.MathUtils.lerp(ambientX, (targetPosition?.x ?? ambientX) - direction * mouthLead, forage.current)
+    const y = THREE.MathUtils.lerp(ambientY, targetPosition?.y ?? ambientY, forage.current)
+    const z = THREE.MathUtils.lerp(ambientZ, targetPosition?.z ?? ambientZ, forage.current)
     node.position.set(x, Math.min(y, waterSurfaceY - .2), z)
     node.rotation.set(benthic ? -.03 : Math.sin(wave * .53) * .04, THREE.MathUtils.clamp(-Math.sin(wave * .61) * .24, -.26, .26), benthic ? 0 : Math.sin(wave * .67) * .055)
     node.scale.set(direction * (riggedAsset ? 1 : length), riggedAsset ? 1 : length, riggedAsset ? 1 : length)
     if (tail.current) {
       const tailAmplitude = shark ? .1 : shrimp ? 0 : specimen.speciesId === 'watchman_goby' ? .14 : .22
-      tail.current.rotation.y = Math.sin(wave * 8.2) * tailAmplitude * (1 + feedDrive * .45)
+      tail.current.rotation.y = Math.sin(wave * 8.2) * tailAmplitude * (1 + forage.current * .45)
     }
+    const rigMouth = riggedAsset ? node.getObjectByName(`PA_${specimen.speciesId}_Mouth`) : undefined
+    if (rigMouth) rigMouth.getWorldPosition(mouthPosition)
+    else node.localToWorld(mouthPosition.copy(fallbackMouth.set(.5, 0, 0)))
+    mouths.set(specimen.id, mouthPosition)
   })
 
   return <group ref={group} name={`root-specimen-${specimen.speciesId}-${specimen.id}`}
-    userData={{ rootSpecimenId: specimen.id, speciesId: specimen.speciesId }}>
+    userData={{ rootSpecimenId: specimen.id, speciesId: specimen.speciesId, mouthAnchor: riggedAsset ? 'rig-node-or-fallback' : 'body-fallback' }}
+    onClick={(event) => {
+      event.stopPropagation()
+      dispatch?.({ type: 'SELECT_ENTITY', entityType: 'livestock', id: specimen.id })
+    }}>
     {riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
       feedPulse={snapshot.events.feedPulse} />}
@@ -251,7 +330,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
 }
 
 export function SpecimenFish({ snapshot, waterSurfaceY }: SpecimenFishProps) {
-  const { specimens: roster, morphologyOverride } = useContext(SpecimenRosterContext)
+  const { specimens: roster, food, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
+  const mouths = useMemo<MouthPositions>(() => new Map(), [])
   const geometry = useSpecimenGeometry()
   const gobySource = useLoader(THREE.TextureLoader, VISUAL_SKINS.watchman_goby.url)
   const skins = useMemo(() => ({
@@ -260,8 +340,10 @@ export function SpecimenFish({ snapshot, waterSurfaceY }: SpecimenFishProps) {
   useEffect(() => () => Object.values(skins).forEach((skin) => skin.dispose()), [skins])
   const marineRoster = roster.filter((specimen) => specimen.alive && MARINE_SPECIES.has(specimen.speciesId)).slice(0, MAX_SPECIMENS)
   return <group name="root-pocket-aquarium-specimens">
+    <FoodPellets food={food} waterSurfaceY={waterSurfaceY} />
+    <FoodContactDriver food={food} specimens={marineRoster} mouths={mouths} waterSurfaceY={waterSurfaceY} dispatch={dispatch} />
     {marineRoster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
-      waterSurfaceY={waterSurfaceY} geometry={geometry} skins={skins}
+      waterSurfaceY={waterSurfaceY} food={food} mouths={mouths} dispatch={dispatch} geometry={geometry} skins={skins}
       morphologyOverride={morphologyOverride?.speciesId === specimen.speciesId ? morphologyOverride : undefined} />)}
   </group>
 }
