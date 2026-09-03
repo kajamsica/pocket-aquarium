@@ -1,0 +1,952 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "anacropora",
+  "rig": "PA_anacropora_Rig",
+  "root": "PA_anacropora_Root",
+  "meshes": [
+    "PA_anacropora_Skeleton",
+    "PA_anacropora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_00",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_01",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_02",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_03",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_04",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_05",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_06",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_07",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_08",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_09",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_10",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_11",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_12",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_13",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_14",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_15",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_16",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_17",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_18",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_anacropora_Skeleton",
+      "group": "part_branch_19",
+      "volumeFloor": 0.9
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "label": "skeleton_branch_00_branch_01"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_00_branch_05"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_00"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_branch_00_branch_06"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_00"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_00_branch_07"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_01"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "label": "skeleton_branch_01_branch_08"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "label": "skeleton_branch_02_branch_03"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_02_branch_05"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_02"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_02_branch_09"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_02"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_02_branch_10"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_branch_03_branch_04"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_03_branch_05"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_03"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_03_branch_11"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_04_branch_05"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_04"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "label": "skeleton_branch_04_branch_12"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "label": "skeleton_branch_05_branch_13"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_05_branch_14"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_06_branch_07"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_07"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_07_branch_15"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_08"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "label": "skeleton_branch_08_branch_16"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_09_branch_10"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_10"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_10_branch_17"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_11_branch_18"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_13_branch_14"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_13"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_13_branch_18"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_14_branch_18"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_14"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_14_branch_19"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_18_branch_19"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "label": "skeleton_rock_branch_00"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "label": "skeleton_rock_branch_01"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "label": "skeleton_rock_branch_02"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "label": "skeleton_rock_branch_03"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_rock_branch_04"
+    },
+    {
+      "a": [
+        "PA_anacropora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_rock_branch_05"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_01"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_08"
+      ],
+      "label": "polyps_branch_01_vs_branch_08"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_02"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_02_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_03"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_03_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_04"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_12"
+      ],
+      "label": "polyps_branch_04_vs_branch_12"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_05"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_13"
+      ],
+      "label": "polyps_branch_05_vs_branch_13"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_06"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_00"
+      ],
+      "label": "polyps_branch_06_vs_branch_00"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_06"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_06_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_07"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_07_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_08"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_01"
+      ],
+      "label": "polyps_branch_08_vs_branch_01"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_08"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_16"
+      ],
+      "label": "polyps_branch_08_vs_branch_16"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_09"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_branch_09_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_09"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_09_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_10"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_17"
+      ],
+      "label": "polyps_branch_10_vs_branch_17"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_13"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_18"
+      ],
+      "label": "polyps_branch_13_vs_branch_18"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_14"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_19"
+      ],
+      "label": "polyps_branch_14_vs_branch_19"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_15"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_15_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_16"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_08"
+      ],
+      "label": "polyps_branch_16_vs_branch_08"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_19"
+      ],
+      "b": [
+        "PA_anacropora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_19_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_03"
+      ],
+      "b": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_11"
+      ],
+      "label": "polyps_branch_03_vs_polyps_branch_11"
+    },
+    {
+      "a": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_04"
+      ],
+      "b": [
+        "PA_anacropora_Polyps",
+        "polyps_branch_12"
+      ],
+      "label": "polyps_branch_04_vs_polyps_branch_12"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.12,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_18",
+        "Br_19"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_18",
+        "Br_19"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_18",
+        "Br_19"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 4,
+  "variantId": "green",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.059843,
+      -0.06,
+      0.0
+    ],
+    "max": [
+      0.059843,
+      0.06,
+      0.083627
+    ]
+  },
+  "textures": [
+    "textures/branch-albedo.png",
+    "textures/branch-roughness.png",
+    "textures/branch-normal.png",
+    "textures/polyp-albedo.png",
+    "textures/polyp-roughness.png",
+    "textures/polyp-normal.png",
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png"
+  ],
+  "notes": {
+    "seed": 23,
+    "designExtentCm": 9.215572357177734,
+    "scaleMetersPerCm": 0.013021437556890926,
+    "branches": 20,
+    "droppedBranches": [],
+    "polyps": 74,
+    "polypsPerBranch": {
+      "branch_00": 1,
+      "branch_01": 8,
+      "branch_02": 5,
+      "branch_03": 8,
+      "branch_04": 8,
+      "branch_05": 1,
+      "branch_06": 5,
+      "branch_07": 1,
+      "branch_08": 4,
+      "branch_09": 4,
+      "branch_10": 3,
+      "branch_11": 4,
+      "branch_12": 10,
+      "branch_13": 1,
+      "branch_14": 2,
+      "branch_15": 2,
+      "branch_16": 3,
+      "branch_17": 0,
+      "branch_18": 2,
+      "branch_19": 2
+    },
+    "branchDiameterMm": [
+      5.21,
+      3.13
+    ],
+    "polypReachMm": 2.99,
+    "triangles": 11208,
+    "clearancePairs": 53,
+    "polypClearancePairs": 20,
+    "staticSkeletonBone": "Base",
+    "clusterBones": [
+      "Br_00",
+      "Br_01",
+      "Br_02",
+      "Br_03",
+      "Br_04",
+      "Br_05",
+      "Br_06",
+      "Br_07",
+      "Br_08",
+      "Br_09",
+      "Br_10",
+      "Br_11",
+      "Br_12",
+      "Br_13",
+      "Br_14",
+      "Br_15",
+      "Br_16",
+      "Br_17",
+      "Br_18",
+      "Br_19"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/anacropora/candidates/fable-v1-green/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/anacropora/candidates/fable-v1-green/renders/three-view.png",
+    "boundsMin": [
+      -0.059842661023139954,
+      -0.05999999865889549,
+      0.0
+    ],
+    "boundsMax": [
+      0.059842661023139954,
+      0.05999999865889549,
+      0.08362673968076706
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

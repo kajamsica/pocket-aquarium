@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "anacropora",
+  "variantId": "brown_pink_tips",
+  "scientificName": "Anacropora sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.12,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "22c47bc1b52f7bb8f83dfd427424709f1a28fccea5ee91e185ce506b5aad6a1e",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Anacropora (tan brown, pink-purple tips)",
+  "bodyPlan": "branching_sps_coral",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-206932",
+      "title": "Anacropora Ridley, 1884 genus record (accepted; family Acroporidae). Description after Veron (1986): colonies arborescent with thin tapered branches, without axial corallites; all corallites radial, small and immersed; septa in two cycles; columellae absent; corallite walls and coenosteum porous without elaborations; polyps extended day and night, widely spaced, small, with fine tentacles. Type species Anacropora forbesi Ridley, 1884.",
+      "publisher": "World Register of Marine Species (World List of Scleractinia, Hoeksema & Cairns)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=206932",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-ANACROPORA_FORBESI",
+      "title": "Anacropora forbesi species factsheet: branches evenly spaced, less than 10 mm thick and tapered with blunt tips; corallites with slightly prominent lower lips; coenosteum smooth; colour pale brown with white branch tips; shallow, usually turbid reef environments; the type species of the genus and a species complex.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/anacropora-forbesi/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "COTW-ANACROPORA_PUERTOGALERAE",
+      "title": "Anacropora puertogalerae species factsheet: branches compact, less than 13 mm thick and tapering to a point; corallites widely spaced; the lower lip of corallites commonly spine-like; colour pale brown, sometimes with white branch tips; a species complex.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/anacropora-puertogalerae/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "NATURALIS-INDOMALAYAN-ANACROPORA",
+      "title": "Reef Corals of the Indo-Malayan Seas, genus Anacropora (after Veron and Wallace 1984): zooxanthellate, thinly branched with no axial polyp, not encrusting at the base; polyps small (up to 1 mm in diameter), inconspicuous, slightly or not protruding; coenosteum smooth from fine, evenly distributed granulated spines; colour predominantly brown, branch tips may appear white from the local absence of zooxanthellae; sheltered, silt-tolerant habitats.",
+      "publisher": "Naturalis Biodiversity Center (Linnaeus NG key)",
+      "url": "https://indo-malayan-reef-corals.linnaeus.naturalis.nl/linnaeus_ng/app/views/highertaxa/taxon.php?cat=TAB_DESCRIPTION&id=27611",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "CMFRI-PILLAI-1973",
+      "title": "Pillai, C. S. G. (1973). A review of the genus Anacropora Ridley (Scleractinia, Acroporidae) with the description of a new species. Branches of the type slender, 2.2 to 2.5 mm thick, branchlets equal in thickness to the main branches, apices obtuse; corallites projecting with walls 0.9 to 1.1 mm high, openings 0.8 to 0.9 mm, adjacent corallites 2.5 to 3 mm apart; septa in two cycles.",
+      "publisher": "Central Marine Fisheries Research Institute (CMFRI eprints)",
+      "url": "https://eprints.cmfri.org.in/1582/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Institutional repository text; facts cited only"
+    },
+    {
+      "id": "WIKIPEDIA-ANACROPORA",
+      "title": "Anacropora (briar corals): fragile corals with branches less than ten centimetres long forming small colonies, branches spreading or clustered and sometimes fused; calices rounded and up to one millimetre in diameter; coenosteum porous with small tubercles; no axial corallites; delicate tentacles often extended by day. Seven species listed.",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Anacropora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 text; no imagery used"
+    },
+    {
+      "id": "COMMONS-ANACROPORA",
+      "title": "Category:Anacropora (a single openly licensed photograph at the time of access; branch thickness relative to colony spread and tip pallor studied for proportion only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Anacropora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "b7608c2c2a01e6c50ef5e062247eff17b4617724759da45f366de2ec48f4a0fc",
+  "sourceReferencesSha256": "35ec3faa93930077d49eb19ad8a049251e248c6bdde45ea63be6080f2e9cc06c",
+  "sourceBlendSha256": "768fa1ee5b7c6b7f1bb553fc14b55de43865a56ec762010b86b55b8b1d872e5a",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:218f29481200c6a087aa3a2136e6a2e202910a0826553f1dffbe8f37f0e2994b",
+    "speciesBackend": "218f29481200c6a087aa3a2136e6a2e202910a0826553f1dffbe8f37f0e2994b",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "d6325876d75889611df0fc1c04e49a1a47cf13c7d7ccdf1795c4cb465461d3ae"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/branch-albedo.png",
+      "sha256": "1e9c4541c47f27f8681d28b375221871b329da2fd0ea34a08625cd3b47d49cd1"
+    },
+    {
+      "path": "textures/branch-normal.png",
+      "sha256": "2bc9f35571feff8fed2c9a3c3bdd16957804eda6fa098d09795b936be10494de"
+    },
+    {
+      "path": "textures/branch-roughness.png",
+      "sha256": "d7d7e4da652e1605fc61d14882176960b0e3af48f44c9801b4d6a57188607e87"
+    },
+    {
+      "path": "textures/polyp-albedo.png",
+      "sha256": "f0325b604a102b8cb8b8e533b129ba1f9af0dc49a148b8828c0f86ddf24cd207"
+    },
+    {
+      "path": "textures/polyp-normal.png",
+      "sha256": "f83282ff0a51675de39b73c9dbc71635659428559755c89c1e70a547fdb24786"
+    },
+    {
+      "path": "textures/polyp-roughness.png",
+      "sha256": "953bb1bb8e8419f55935b769749cf507b9f55f0ac485feebdd812c83d11dfcd2"
+    },
+    {
+      "path": "textures/rock-albedo.png",
+      "sha256": "756d856a2d32ada6c22a85fb380533984b789a0c568f05e0530a8303c17523f5"
+    },
+    {
+      "path": "textures/rock-normal.png",
+      "sha256": "82414f2089810a455a8118ecec6f814843ccfe19ce15c6e59d651085f0d2eb98"
+    },
+    {
+      "path": "textures/rock-roughness.png",
+      "sha256": "cd8f54a63cbd514c963113b16e7102a351f0fb8a7b65b3507f31a4f88014e867"
+    }
+  ],
+  "statistics": {
+    "triangles": 12900,
+    "materials": 3,
+    "bones": 27,
+    "nodes": 32,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_anacropora_Skeleton": 2824,
+      "PA_anacropora_Polyps": 4800
+    },
+    "runtimeBytes": 3224020
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "sway": true,
+    "flow": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.06,
+      -0.038362,
+      0.0
+    ],
+    "max": [
+      0.06,
+      0.038362,
+      0.094199
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

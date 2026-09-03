@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "anacropora",
+  "revision": 1,
+  "policy": "References informed colony habit, branch thickness and tapering, the absence of an axial corallite, corallite size and spacing, polyp size and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source; the trade name Anacropora covers several species (A. forbesi, A. puertogalerae, A. matthai, A. spinosa, A. reticulata and others that Corals of the World treats as species complexes), so the candidate carries a genus-level label with taxonomyConfidence genus.",
+  "sources": [
+    {
+      "id": "WORMS-206932",
+      "title": "Anacropora Ridley, 1884 genus record (accepted; family Acroporidae). Description after Veron (1986): colonies arborescent with thin tapered branches, without axial corallites; all corallites radial, small and immersed; septa in two cycles; columellae absent; corallite walls and coenosteum porous without elaborations; polyps extended day and night, widely spaced, small, with fine tentacles. Type species Anacropora forbesi Ridley, 1884.",
+      "publisher": "World Register of Marine Species (World List of Scleractinia, Hoeksema & Cairns)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=206932",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-ANACROPORA_FORBESI",
+      "title": "Anacropora forbesi species factsheet: branches evenly spaced, less than 10 mm thick and tapered with blunt tips; corallites with slightly prominent lower lips; coenosteum smooth; colour pale brown with white branch tips; shallow, usually turbid reef environments; the type species of the genus and a species complex.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/anacropora-forbesi/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "COTW-ANACROPORA_PUERTOGALERAE",
+      "title": "Anacropora puertogalerae species factsheet: branches compact, less than 13 mm thick and tapering to a point; corallites widely spaced; the lower lip of corallites commonly spine-like; colour pale brown, sometimes with white branch tips; a species complex.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/anacropora-puertogalerae/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "NATURALIS-INDOMALAYAN-ANACROPORA",
+      "title": "Reef Corals of the Indo-Malayan Seas, genus Anacropora (after Veron and Wallace 1984): zooxanthellate, thinly branched with no axial polyp, not encrusting at the base; polyps small (up to 1 mm in diameter), inconspicuous, slightly or not protruding; coenosteum smooth from fine, evenly distributed granulated spines; colour predominantly brown, branch tips may appear white from the local absence of zooxanthellae; sheltered, silt-tolerant habitats.",
+      "publisher": "Naturalis Biodiversity Center (Linnaeus NG key)",
+      "url": "https://indo-malayan-reef-corals.linnaeus.naturalis.nl/linnaeus_ng/app/views/highertaxa/taxon.php?cat=TAB_DESCRIPTION&id=27611",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "CMFRI-PILLAI-1973",
+      "title": "Pillai, C. S. G. (1973). A review of the genus Anacropora Ridley (Scleractinia, Acroporidae) with the description of a new species. Branches of the type slender, 2.2 to 2.5 mm thick, branchlets equal in thickness to the main branches, apices obtuse; corallites projecting with walls 0.9 to 1.1 mm high, openings 0.8 to 0.9 mm, adjacent corallites 2.5 to 3 mm apart; septa in two cycles.",
+      "publisher": "Central Marine Fisheries Research Institute (CMFRI eprints)",
+      "url": "https://eprints.cmfri.org.in/1582/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Institutional repository text; facts cited only"
+    },
+    {
+      "id": "WIKIPEDIA-ANACROPORA",
+      "title": "Anacropora (briar corals): fragile corals with branches less than ten centimetres long forming small colonies, branches spreading or clustered and sometimes fused; calices rounded and up to one millimetre in diameter; coenosteum porous with small tubercles; no axial corallites; delicate tentacles often extended by day. Seven species listed.",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Anacropora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 text; no imagery used"
+    },
+    {
+      "id": "COMMONS-ANACROPORA",
+      "title": "Category:Anacropora (a single openly licensed photograph at the time of access; branch thickness relative to colony spread and tip pallor studied for proportion only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Anacropora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Colony habit, the absence of axial corallites, branch thickness, corallite size and spacing, polyp size and colour placement come from authoritative descriptions (WoRMS after Veron 1986, Corals of the World factsheets, Veron and Wallace 1984 via Naturalis, Pillai 1973). Branch lengths, forking angles and the extended polyp length relative to branch diameter are inferred from those descriptions and one openly licensed photograph rather than calibrated side, top and front plates, and the pigment variants are aquarium colour morphs (tan brown with pink-purple tips, green) without a taxonomic reference."
+}

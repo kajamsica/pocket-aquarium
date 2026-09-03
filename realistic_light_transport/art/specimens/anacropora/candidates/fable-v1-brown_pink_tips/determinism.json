@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "94c6c6dea06b76ff5c2881e64e08f5e56e0e8908f4e7001af895aefaecda835f",
+  "rebuildGeometryDigest": "94c6c6dea06b76ff5c2881e64e08f5e56e0e8908f4e7001af895aefaecda835f",
+  "textureHashMatch": true,
+  "textures": {
+    "branch-albedo.png": "1e9c4541c47f27f8681d28b375221871b329da2fd0ea34a08625cd3b47d49cd1",
+    "branch-normal.png": "2bc9f35571feff8fed2c9a3c3bdd16957804eda6fa098d09795b936be10494de",
+    "branch-roughness.png": "d7d7e4da652e1605fc61d14882176960b0e3af48f44c9801b4d6a57188607e87",
+    "polyp-albedo.png": "f0325b604a102b8cb8b8e533b129ba1f9af0dc49a148b8828c0f86ddf24cd207",
+    "polyp-normal.png": "f83282ff0a51675de39b73c9dbc71635659428559755c89c1e70a547fdb24786",
+    "polyp-roughness.png": "953bb1bb8e8419f55935b769749cf507b9f55f0ac485feebdd812c83d11dfcd2",
+    "rock-albedo.png": "756d856a2d32ada6c22a85fb380533984b789a0c568f05e0530a8303c17523f5",
+    "rock-normal.png": "82414f2089810a455a8118ecec6f814843ccfe19ce15c6e59d651085f0d2eb98",
+    "rock-roughness.png": "cd8f54a63cbd514c963113b16e7102a351f0fb8a7b65b3507f31a4f88014e867"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}
