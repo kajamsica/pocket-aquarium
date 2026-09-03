@@ -149,7 +149,7 @@
   function presentEventMessage(message) {
     return String(message || "")
       .replace(/\+(\d+(?:\.\d+)?)c\b/g, "+$1 Tank Credits")
-      .replace(/\+(\d+(?:\.\d+)?)xp\b/gi, "+$1 Keeper XP");
+      .replace(/\+(\d+(?:\.\d+)?)xp\b/gi, "+$1 Keeper Score");
   }
 
   /* ============================ dispatch ============================ */
