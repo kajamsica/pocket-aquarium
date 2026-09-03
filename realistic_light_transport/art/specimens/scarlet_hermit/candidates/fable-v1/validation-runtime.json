@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "AntennaA_L",
+        "AntennaA_R",
+        "AntennaB_L",
+        "AntennaB_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Cheliped_L",
+        "Cheliped_R",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eyestalk_L",
+        "Eyestalk_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retreat": {
+      "durationSeconds": 1.600000023841858,
+      "targetedBones": [
+        "AntennaA_L",
+        "AntennaA_R",
+        "AntennaB_L",
+        "AntennaB_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Cheliped_L",
+        "Cheliped_R",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Leg1A_L",
+        "Leg1A_R",
+        "Leg1B_L",
+        "Leg1B_R",
+        "Leg1C_L",
+        "Leg1C_R",
+        "Leg2A_L",
+        "Leg2A_R",
+        "Leg2B_L",
+        "Leg2B_R",
+        "Leg2C_L",
+        "Leg2C_R",
+        "Palm_L",
+        "Palm_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "walk": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "AntennaA_L",
+        "AntennaA_R",
+        "AntennaB_L",
+        "AntennaB_R",
+        "Cheliped_L",
+        "Cheliped_R",
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Leg1A_L",
+        "Leg1A_R",
+        "Leg1B_L",
+        "Leg1B_R",
+        "Leg1C_L",
+        "Leg1C_R",
+        "Leg2A_L",
+        "Leg2A_R",
+        "Leg2B_L",
+        "Leg2B_R",
+        "Leg2C_L",
+        "Leg2C_R",
+        "Palm_L",
+        "Palm_R",
+        "Shell"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 7856,
+    "materials": 3,
+    "nodes": 34,
+    "skinJoints": 29,
+    "images": 6,
+    "meshes": [
+      "PA_scarlet_hermit_Body",
+      "PA_scarlet_hermit_Details",
+      "PA_scarlet_hermit_Shell"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "walk": {
+      "maxBoneRotationErrorDegrees": 0.03956468118525214,
+      "loopSeamDegrees": 0.0
+    },
+    "retreat": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.015000001527369022,
+      -0.011530901305377483,
+      -5.29042276653513e-09
+    ],
+    "max": [
+      0.015000012703239918,
+      0.011530901305377483,
+      0.017465420067310333
+    ],
+    "deviationMeters": 1.469602234480856e-08
+  }
+}

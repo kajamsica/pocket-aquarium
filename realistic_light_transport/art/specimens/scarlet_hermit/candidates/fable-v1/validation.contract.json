@@ -1,0 +1,970 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "scarlet_hermit",
+  "rig": "PA_scarlet_hermit_Rig",
+  "root": "PA_scarlet_hermit_Root",
+  "meshes": [
+    "PA_scarlet_hermit_Shell",
+    "PA_scarlet_hermit_Body",
+    "PA_scarlet_hermit_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_scarlet_hermit_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_carapace",
+      "volumeFloor": 0.8
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg1_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg2_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_cheliped_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_palm_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_dactyl_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_eyestalk_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_cornea_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antennule_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antenna_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg1_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg2_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_cheliped_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_palm_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_dactyl_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_eyestalk_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_cornea_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antennule_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antenna_R",
+      "volumeFloor": 0.5
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_L",
+        "attach_leg1_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_L",
+        "attach_leg2_L"
+      ],
+      "label": "leg1_leg2_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_L",
+        "attach_leg1_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "chela_L",
+        "attach_cheliped_L"
+      ],
+      "label": "leg1_chela_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_L",
+        "attach_leg1_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "leg1_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "leg1_shell_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_L"
+      ],
+      "label": "leg1_head_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_L",
+        "attach_leg2_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "chela_L",
+        "attach_cheliped_L"
+      ],
+      "label": "leg2_chela_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_L",
+        "attach_leg2_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "leg2_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "leg2_shell_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_L"
+      ],
+      "label": "leg2_head_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_cheliped_L",
+        "attach_cheliped_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "cheliped_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_palm_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "palm_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_dactyl_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "dactyl_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_dactyl_L",
+        "attach_dactyl_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_palm_L"
+      ],
+      "label": "dactyl_palm_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "chela_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "chela_shell_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "chela_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_L"
+      ],
+      "label": "chela_head_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "eye_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "part_antennule_L"
+      ],
+      "label": "eye_antennule_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "eye_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "part_antenna_L"
+      ],
+      "label": "eye_antenna_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_antenna_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "part_antennule_L"
+      ],
+      "label": "antenna_antennule_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_eyestalk_L",
+        "attach_eyestalk_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "eyestalk_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_antennule_L",
+        "attach_antennule_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "antennule_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_antenna_L",
+        "attach_antenna_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "antenna_carapace_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "head_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "head_shell_L"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_R",
+        "attach_leg1_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_R",
+        "attach_leg2_R"
+      ],
+      "label": "leg1_leg2_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_R",
+        "attach_leg1_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "chela_R",
+        "attach_cheliped_R"
+      ],
+      "label": "leg1_chela_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_R",
+        "attach_leg1_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "leg1_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "leg1_shell_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg1_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_R"
+      ],
+      "label": "leg1_head_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_R",
+        "attach_leg2_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "chela_R",
+        "attach_cheliped_R"
+      ],
+      "label": "leg2_chela_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_R",
+        "attach_leg2_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "leg2_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "leg2_shell_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_leg2_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_R"
+      ],
+      "label": "leg2_head_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_cheliped_R",
+        "attach_cheliped_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "cheliped_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_palm_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "palm_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_dactyl_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "dactyl_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "part_dactyl_R",
+        "attach_dactyl_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_palm_R"
+      ],
+      "label": "dactyl_palm_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "chela_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "chela_shell_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "chela_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_R"
+      ],
+      "label": "chela_head_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "eye_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "part_antennule_R"
+      ],
+      "label": "eye_antennule_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "eye_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "part_antenna_R"
+      ],
+      "label": "eye_antenna_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_antenna_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "part_antennule_R"
+      ],
+      "label": "antenna_antennule_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_eyestalk_R",
+        "attach_eyestalk_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "eyestalk_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_antennule_R",
+        "attach_antennule_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "antennule_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "part_antenna_R",
+        "attach_antenna_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "part_carapace"
+      ],
+      "label": "antenna_carapace_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "head_R"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Shell",
+        "part_shell"
+      ],
+      "label": "head_shell_R"
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Body",
+        "chela_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Body",
+        "chela_R"
+      ],
+      "label": "chela_left_right",
+      "minDistance": 0.00023770156413748016
+    },
+    {
+      "a": [
+        "PA_scarlet_hermit_Details",
+        "head_L"
+      ],
+      "b": [
+        "PA_scarlet_hermit_Details",
+        "head_R"
+      ],
+      "label": "head_left_right"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg1_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg2_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_cheliped_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_palm_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_dactyl_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_eyestalk_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_cornea_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antennule_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antenna_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg1_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_leg2_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_cheliped_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_palm_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "group": "part_dactyl_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_eyestalk_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_cornea_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antennule_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "group": "part_antenna_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.03,
+    "tolerance": 0.03,
+    "kind": "adult_total_length_including_borrowed_shell"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "AntennaA_L",
+        "AntennaA_R",
+        "AntennaB_L",
+        "AntennaB_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Cheliped_L",
+        "Cheliped_R",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eyestalk_L",
+        "Eyestalk_R"
+      ],
+      "shapeKeys": []
+    },
+    "walk": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "AntennaA_L",
+        "AntennaA_R",
+        "AntennaB_L",
+        "AntennaB_R",
+        "Cheliped_L",
+        "Cheliped_R",
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Leg1A_L",
+        "Leg1A_R",
+        "Leg1B_L",
+        "Leg1B_R",
+        "Leg1C_L",
+        "Leg1C_R",
+        "Leg2A_L",
+        "Leg2A_R",
+        "Leg2B_L",
+        "Leg2B_R",
+        "Leg2C_L",
+        "Leg2C_R",
+        "Palm_L",
+        "Palm_R",
+        "Shell"
+      ],
+      "shapeKeys": []
+    },
+    "retreat": {
+      "loop": false,
+      "frames": 48,
+      "bones": [
+        "AntennaA_L",
+        "AntennaA_R",
+        "AntennaB_L",
+        "AntennaB_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Cheliped_L",
+        "Cheliped_R",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Leg1A_L",
+        "Leg1A_R",
+        "Leg1B_L",
+        "Leg1B_R",
+        "Leg1C_L",
+        "Leg1C_R",
+        "Leg2A_L",
+        "Leg2A_R",
+        "Leg2B_L",
+        "Leg2B_R",
+        "Leg2C_L",
+        "Leg2C_R",
+        "Palm_L",
+        "Palm_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "walk",
+    "response": "retreat"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "left": "part_leg1_L",
+      "right": "part_leg1_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_scarlet_hermit_Body",
+      "left": "part_leg2_L",
+      "right": "part_leg2_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "left": "part_eyestalk_L",
+      "right": "part_eyestalk_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "left": "part_cornea_L",
+      "right": "part_cornea_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "left": "part_antennule_L",
+      "right": "part_antennule_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_scarlet_hermit_Details",
+      "left": "part_antenna_L",
+      "right": "part_antenna_R",
+      "tolerance": 2e-05
+    }
+  ],
+  "variantId": null,
+  "previewAction": "walk",
+  "restBounds": {
+    "min": [
+      -0.015,
+      -0.011531,
+      -0.0
+    ],
+    "max": [
+      0.015,
+      0.011531,
+      0.017465
+    ]
+  },
+  "textures": [
+    "textures/exo-albedo.png",
+    "textures/exo-roughness.png",
+    "textures/exo-normal.png",
+    "textures/shell-albedo.png",
+    "textures/shell-roughness.png",
+    "textures/shell-normal.png"
+  ],
+  "notes": {
+    "designUnit": "millimetre",
+    "designExtentMillimetres": 18.9313,
+    "designScale": 0.0015846770942498677,
+    "apertureHeightMillimetres": 3.1,
+    "leftChelaScale": 1.08,
+    "apertureNormalWorld": [
+      0.8713,
+      -0.1614,
+      -0.4633
+    ],
+    "shellBoundsMillimetres": [
+      [
+        -5.865725994110107,
+        -3.3166465759277344,
+        0.2610955238342285
+      ],
+      [
+        1.5700352191925049,
+        6.797943115234375,
+        10.982368469238281
+      ]
+    ],
+    "shellContactMillimetres": [
+      -1.4224,
+      0.4706,
+      0.2611
+    ],
+    "deformBones": 28
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/scarlet_hermit/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/scarlet_hermit/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.014999999664723873,
+      -0.011530897580087185,
+      -6.867819091205263e-10
+    ],
+    "boundsMax": [
+      0.014999999664723873,
+      0.011530894786119461,
+      0.017465418204665184
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}
