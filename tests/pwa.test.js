@@ -75,9 +75,9 @@ group("service worker");
 var sw = readText("sw.js");
 ok(/CACHE_VERSION\s*=/.test(sw), "sw.js defines an explicit CACHE_VERSION");
 // PAR5-01C release gate: the shell (index.html/styles.css/app.js/render.js) changed, so the
-// cache MUST be bumped to v3 — v2 would let an already-controlled client pin the pre-fix app.
-ok(/CACHE_VERSION\s*=\s*["']v3["']/.test(sw), "sw.js ships the v3 release cache (bumped from v2 so the redesigned shell can't be pinned)");
-ok(!/CACHE_VERSION\s*=\s*["']v2["']/.test(sw), "sw.js no longer ships the superseded v2 cache version");
+// cache MUST be bumped to v4 — v3 would let an already-controlled client pin the old feeding model.
+ok(/CACHE_VERSION\s*=\s*["']v4["']/.test(sw), "sw.js ships the v4 release cache so contact-driven feeding and player fixes cannot be pinned behind v3");
+ok(!/CACHE_VERSION\s*=\s*["']v3["']/.test(sw), "sw.js no longer ships the superseded v3 cache version");
 ok(/pocket-aquarium-shell-/.test(sw), "sw.js cache name is namespaced and versioned");
 ok(/addEventListener\(\s*["']install["']/.test(sw), "sw.js has an install handler");
 ok(/addEventListener\(\s*["']activate["']/.test(sw), "sw.js has an activate handler");

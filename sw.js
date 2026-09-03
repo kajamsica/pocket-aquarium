@@ -14,10 +14,10 @@
    - The worker never caches itself; the browser updates sw.js on its own byte-diff. */
 "use strict";
 
-// v3: ship the PAR5 dark aquarium-instrument shell — index.html, styles.css, js/app.js and
-// js/render.js all changed, so this bump retires the v2 cache and stops an already-controlled
-// client from continuing to serve the pre-fix app on next activate.
-var CACHE_VERSION = "v3";
+// v4: ship contact-driven feeding and the player-feedback repairs. The simulation, renderer,
+// app shell and styles all changed, so this bump retires v3 and prevents installed clients from
+// remaining pinned to the instant-consumption feeding behavior after the release activates.
+var CACHE_VERSION = "v4";
 var CACHE_NAME = "pocket-aquarium-shell-" + CACHE_VERSION;
 
 /* Relative to the worker scope — subpath-safe under /pocket-aquarium/. */
