@@ -33,8 +33,11 @@
   // reload, resume, render, or save hydration, because no state predicate ever triggers it. The
   // live route (handleAct → doInoculate) is exercised by tests through the shared PA._app surface.
   var FAST_FORWARD_DAYS = 8;
-  function fastForwardAfterInoculation(state) {
-    for (var d = 0; d < FAST_FORWARD_DAYS; d++) PA.stepDays(state, 1);
+  function fastForwardAfterInoculation(state, days, afterDay) {
+    for (var d = 0; d < days; d++) {
+      PA.stepDays(state, 1);
+      afterDay();
+    }
     return state;
   }
 
@@ -102,6 +105,7 @@
   var logCursor = 0, lastToastMsg = "", toastTimer = 0;
   var visibilityPaused = false;
   var pendingFirstFeed = false; // runtime-only first-feed guide prompt; never persisted or loaded
+  var pendingCycleBoostDays = 0; // runtime-only retry remainder; reloads never replay synthetic days
   var DOM_INTERVAL = 170; // ~6 Hz DOM cadence (not per Canvas frame)
 
   /* ============================ persistence ============================ */
@@ -290,11 +294,21 @@
   // real public sim path. Boot/reload never reach here, so the boost can never replay.
   function doInoculate() {
     var wasInoculated = state.cycle.inoculated;
-    dispatchAction({ type: ACT.INOCULATE_BACTERIA });
+    if (!wasInoculated) dispatchAction({ type: ACT.INOCULATE_BACTERIA });
     if (!wasInoculated && state.cycle.inoculated) {
-      fastForwardAfterInoculation(state);
-      markDirty(); renderNow();
+      pendingCycleBoostDays = FAST_FORWARD_DAYS;
     }
+    if (!state.cycle.inoculated || pendingCycleBoostDays <= 0) return;
+    try {
+      fastForwardAfterInoculation(state, pendingCycleBoostDays, function () { pendingCycleBoostDays--; });
+    } catch (e) {
+      // Keep the authoritative progress PA.stepDays already made. The runtime-only remainder
+      // leaves the same command action available for a retry, without inventing persisted state.
+      markDirty(); renderNow();
+      toast("Cycle boost paused — retry inoculating bacteria to continue.", "warn");
+      return;
+    }
+    markDirty(); renderNow();
   }
   // Live validated purchase through the existing validator/action. When THIS purchase takes the
   // tank from zero living eaters to one or more, open the runtime-only first-feed prompt so the
@@ -302,17 +316,21 @@
   function doBuyLivestock(species, count) {
     var eatersBefore = aliveEaters();
     dispatchAction({ type: ACT.PURCHASE_LIVESTOCK, species: species, count: count });
-    if (eatersBefore === 0 && aliveEaters() > 0) pendingFirstFeed = true;
+    if (eatersBefore === 0 && aliveEaters() > 0) {
+      pendingFirstFeed = true;
+      renderNow(); // dispatchAction painted the pre-purchase advice; repaint the first-feed beat.
+    }
   }
   // Shared live-action surface. handleAct calls these exact helpers in the browser; tests drive
   // the same functions headlessly, so there is no parallel path. recommendedAction is read-only
   // (what careAdvice would surface). Nothing here is persisted or added to the save schema.
   PA._app = {
-    setState: function (s) { state = s; pendingFirstFeed = false; },
+    setState: function (s) { state = s; pendingFirstFeed = false; pendingCycleBoostDays = 0; },
     isPendingFirstFeed: function () { return pendingFirstFeed; },
     inoculate: doInoculate,
     buyLivestock: doBuyLivestock,
     feed: feedCenter,
+    startOver: doStartOver,
     recommendedAction: function () { return careAdvice(PA.snapshotSummary(state)).action.act; }
   };
 
@@ -338,7 +356,7 @@
   function doStartOver() {
     try { global.localStorage.removeItem(DATA.saveKey); } catch (e) {} // arcadeKey untouched
     state = PA.createState({ now: Date.now() });
-    logCursor = state.log.length; lastToastMsg = "";
+    logCursor = state.log.length; lastToastMsg = ""; pendingFirstFeed = false; pendingCycleBoostDays = 0;
     applyTheme(); save(); renderNow();
     openHabitatDialog();
     toast("Started a fresh ecosystem. Choose a habitat to begin.", "care");
@@ -467,6 +485,8 @@
       // the fishless cycle (see doInoculate) so a cold player reaches a stockable tank quickly.
       if (!c.inoculated && aliveEaters() === 0)
         return advice("watch", "CYCLING", "Seed the filter to finish the cycle.", "Add bottled nitrifying bacteria — it establishes the biofilter and fast-forwards the fishless cycle so the tank is ready to stock.", "Inoculate bacteria", "inoculate", null, fresh);
+      if (pendingCycleBoostDays > 0 && aliveEaters() === 0)
+        return advice("watch", "CYCLING", "The bacteria boost was interrupted.", "Retry inoculating bacteria to finish the remaining guided cycle days through the normal simulation.", "Retry inoculation", "inoculate", null, fresh);
       return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
     }
     // Ordinary care, highest-priority first. An empty cycled tank still passes through the
@@ -1261,7 +1281,7 @@
     var parsed = load();
     if (parsed) state = PA.sanitizeState(parsed);
     else state = PA.createState({ now: Date.now() });
-    pendingFirstFeed = false; // runtime baseline: resident/loaded saves never enter the first-feed prompt
+    pendingFirstFeed = false; pendingCycleBoostDays = 0; // resident/loaded saves never enter transient guide beats
 
     // offline catch-up (capped by the sim) with a concise return report when meaningful
     var report = null;

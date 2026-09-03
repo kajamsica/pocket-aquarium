@@ -611,6 +611,7 @@ group("snapshot display-rounding boundary (PAR5-01D)");
  *   save-schema sanitation are already covered by the base suite above and are not re-asserted.
  * ============================================================ */
 var APP = PA._app;
+var appSource = require("fs").readFileSync(require("path").join(__dirname, "../js/app.js"), "utf8");
 // Spy PA.stepDays around a thunk; returns the per-call day args (proves the ONE-time 8x boost).
 function spyStepDays(fn) {
   var calls = [], orig = PA.stepDays;
@@ -667,12 +668,25 @@ function coldFilled(hab) {
   var repeat = spyStepDays(function () { APP.inoculate(); });
   eq(repeat.length, 0, "a repeat inoculate click runs no further fast-forward");
 
+  group("first-delight: interrupted boost resumes only its remaining days (" + hab + ")");
+  var interrupted = coldFilled(hab), d1 = interrupted.time.days, thrownCalls = 0, prior = PA.stepDays;
+  PA.stepDays = function (st, d) { thrownCalls++; if (thrownCalls === 3) throw new Error("interrupted"); return prior(st, d); };
+  try { APP.inoculate(); } finally { PA.stepDays = prior; }
+  eq(thrownCalls, 3, "the third public step can interrupt the guided boost");
+  approx(interrupted.time.days - d1, 2, 1e-6, "only completed authoritative days remain after interruption");
+  eq(APP.recommendedAction(), "inoculate", "the command flow surfaces a retry, not an unretryable test action");
+  var remaining = spyStepDays(function () { APP.inoculate(); });
+  eq(remaining.length, 6, "retry advances only the six uncompleted guided days");
+  approx(interrupted.time.days - d1, 8, 1e-6, "interruption plus retry advances exactly eight days, never more");
+
   group("first-delight: validated first purchase opens the feed beat; feed emits FEED_AT (" + hab + ")");
+  APP.setState(r);
   ok(APP.recommendedAction() !== "feed", "feed is not recommended before the first fish");
   var before = r.livestock.length;
   APP.buyLivestock(starter, count); // the SAME helper handleAct calls
   eq(r.livestock.length - before, count, "the starter stocks through the existing validated purchase action");
   ok(APP.isPendingFirstFeed(), "a validated first purchase (0 -> >0 eaters) opens the runtime first-feed prompt");
+  ok(/pendingFirstFeed = true;\s*renderNow\(\)/.test(appSource), "the live purchase path repaints after opening the feed beat (not merely a later state read)");
   eq(APP.recommendedAction(), "feed", "the guide immediately recommends feeding after the first fish");
   var fed = [], od = PA.dispatch;
   PA.dispatch = function (st, a) { fed.push(a.type); return od(st, a); };
@@ -706,6 +720,14 @@ function coldFilled(hab) {
      "the resident save reloads cycled with its residents intact");
   ok(!/pendingFirstFeed|firstFeed|tutorial|guideComplete|syntheticDay|feedFlash/i.test(JSON.stringify(reloaded)),
      "no first-feed / tutorial / emphasis field is persisted in the save");
+})();
+
+(function () {
+  group("first-delight: start over clears runtime-only beats");
+  var s = cycledFresh(92); APP.setState(s); APP.buyLivestock("neon_tetra", 6);
+  ok(APP.isPendingFirstFeed(), "first-feed prompt is active before starting over");
+  APP.startOver();
+  ok(!APP.isPendingFirstFeed() && APP.recommendedAction() !== "feed", "a fresh tank cannot inherit the prior tank's feed prompt");
 })();
 
 /* ------------------------------ report ------------------------------ */
