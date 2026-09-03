@@ -579,7 +579,7 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   /* The dock becomes a stable bottom sheet: bounded height + internal scroll keep the
      tank the dominant surface and stop growing livestock/store from pushing it away. */
   .dock{
-    height:clamp(208px,40svh,352px);position:relative;padding-top:9px;
+    height:clamp(208px,30svh,320px);position:relative;padding-top:9px;
     background:var(--glass);backdrop-filter:blur(16px);
     border:1px solid var(--edge);border-bottom:0;border-radius:18px 18px 0 0;
     box-shadow:0 -14px 34px rgba(0,0,0,.5);
@@ -587,6 +587,10 @@ body::after{width:46vmax;height:46vmax;right:-18vmax;bottom:-24vmax;
   .dock::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
     width:38px;height:4px;border-radius:999px;background:var(--edge-strong)}
   .dock-body{border:0;border-radius:0;background:transparent;backdrop-filter:none;box-shadow:none}
+  /* A populated inspector must not span nearly the whole tank: drop the inherited
+     right inset and cap its width so a full-height wet strip stays reachable beside it.
+     The empty resting-hint chip (.inspector.js-root:empty) is untouched. */
+  .inspector:not(:empty){right:auto;width:min(260px,70%)}
   /* Comfortable 44px touch targets on phones/tablets. */
   .tbtn,.offer-cta{min-height:44px}
   .wallet{margin-left:auto}

@@ -422,6 +422,28 @@ if (api && bandA && bandN) {
   ok(run(0.5, 0).care === "elevated" && run(0.5006, 0).care === "toxic", "0.5 is elevated; only past the 0.5 toxic contract is it toxic");
 }
 
+group("stocked mobile feeding surface stays usable (PA-FEED-TOUCH-01)");
+// Live proof at 390x844: after stocking + Inspect the wet canvas was only ~103px tall while a
+// 337.5px mobile dock (40svh) and a full-bleed inspector (left:12px;right:12px) covered ~49% of
+// the tank. The repair is pure cascade: a smaller bounded dock and a width-capped populated
+// inspector recover a usable strip. Scope every assertion to the @media (max-width:900px) block
+// so these fail on the pre-repair CSS and pass only after it, without touching desktop behavior.
+var mobile900 = (css.match(/@media \(max-width:900px\)\s*\{[\s\S]*?\n\}/) || [""])[0];
+ok(mobile900.length > 0, "the @media (max-width:900px) block is present for scoped assertions");
+// Dock: exact bounded 30svh contract — 208px floor retained, 40svh/352px oversize removed.
+ok(/\.dock\s*\{[^}]*height:clamp\(208px,30svh,320px\)/.test(mobile900),
+   "mobile dock uses the bounded clamp(208px,30svh,320px) tank-recovery contract");
+ok(/clamp\(208px,30svh,/.test(mobile900), "mobile dock keeps the 208px minimum floor");
+ok(!/clamp\(208px,40svh,352px\)/.test(mobile900), "the oversized clamp(208px,40svh,352px) dock cap is gone");
+// Populated inspector: clears the inherited right inset and is width-capped so a full-height
+// wet strip stays reachable beside it. The empty resting-hint rule must be left untouched.
+ok(/\.inspector:not\(:empty\)\s*\{[^}]*right:auto/.test(mobile900),
+   "populated inspector clears the inherited right inset (right:auto) on mobile");
+ok(/\.inspector:not\(:empty\)\s*\{[^}]*width:min\(260px,70%\)/.test(mobile900),
+   "populated inspector width is capped to min(260px,70%) on mobile");
+ok(/\.inspector\.js-root:empty\s*\{[^}]*left:auto/.test(css),
+   "the empty inspector resting-hint chip rule is preserved");
+
 /* ------------------------------ report ------------------------------ */
 console.log("\n=================== Pocket Aquarium PWA tests ===================");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
