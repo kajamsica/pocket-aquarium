@@ -47,6 +47,8 @@ if (manifest) {
   ok(relative(manifest.scope), "scope is relative (subpath-safe)");
   ok(typeof manifest.theme_color === "string" && manifest.theme_color.length > 0, "manifest has a theme_color");
   ok(typeof manifest.background_color === "string" && manifest.background_color.length > 0, "manifest has a background_color");
+  ok(manifest.theme_color === "#08131a", "manifest uses the aquarium chrome colour for installed UI");
+  ok(manifest.background_color === "#08131a", "manifest uses the aquarium chrome colour for the launch surface");
   ok(Array.isArray(manifest.icons) && manifest.icons.length >= 2, "manifest declares at least two icons");
   var sizes = (manifest.icons || []).map(function (i) { return i.sizes; });
   ok(sizes.indexOf("192x192") >= 0, "manifest declares a 192x192 icon");
