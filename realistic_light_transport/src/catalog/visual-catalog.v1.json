@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-03T22:24:23.662Z",
+  "generatedAt": "2026-09-03T22:26:11.261Z",
   "categories": [
     "fish",
     "coral",
@@ -21,24 +21,24 @@
     "tomini_tang": "fable-v1"
   },
   "summary": {
-    "rows": 34,
+    "rows": 32,
     "byCategory": {
       "fish": 13,
-      "coral": 9,
+      "coral": 7,
       "invertebrate": 3,
       "cleanup_crew": 9
     },
     "byStatus": {
       "accepted": 1,
-      "candidate": 33,
+      "candidate": 31,
       "provisional": 0,
       "failed": 0,
       "missing": 0
     },
     "candidates": {
-      "total": 55,
-      "loadable": 52,
-      "missing": 3,
+      "total": 50,
+      "loadable": 49,
+      "missing": 1,
       "userApproved": 4
     }
   },
@@ -1609,10 +1609,6 @@
           "displayName": "Acropora digitate, pink"
         },
         {
-          "id": "hairy_green",
-          "displayName": "Acropora millepora style, green with pale-green polyps"
-        },
-        {
           "id": "staghorn_blue",
           "displayName": "Acropora staghorn, steel blue with pale tips"
         },
@@ -1641,12 +1637,12 @@
       },
       "visualDebt": [
         "Polyps carry six tentacle tubes instead of the twelve of a real Acropora polyp (LOD1 triangle budget).",
-        "Only the prominent radial corallites are modelled (up to thirteen per branch, some dropped where a neighbouring branch is too close); the dense field of small radials is carried by the texture relief and roughness.",
+        "Only the prominent radial corallites are modelled (up to eleven per branch, some dropped where a neighbouring branch is too close); the dense field of small radials is carried by the texture relief and roughness.",
         "Corallites are flared tubes with a recessed calice; the nariform (longer lower lip) profile and the septa are texture only.",
         "The tabular plate is a lobed, radially ridged solid lens rather than a perforated mesh of anastomosing horizontal branchlets.",
-        "Retraction folds the tentacles to about half length (0.3 of the length on the hairy form) rather than fully into the calice.",
-        "Polyp crowns are one rigid unskinned mesh per branch cluster with morph targets rather than skinned geometry; this works around a glTF importer and runtime-gate interaction, see the lane shared-change-request. Per-polyp variation comes from seeded tentacle geometry, per-polyp flutter directions and two interleaved flutter halves per cluster, not from independent per-polyp phases.",
-        "The hairy form is the digitate layout with short thick branchlets; A. millepora's plate-like fused base and the coenosteum spinules are texture only."
+        "Retraction folds the tentacles to about half length (mean crown pull-in 0.7 mm to 0.8 mm on a 15 cm colony) rather than fully into the calice.",
+        "Polyp crowns are one rigid unskinned mesh per branch cluster rather than skin-blended along the branch, and they follow the branch bend through a linearised morph target (error below 0.02 mm at these amplitudes). This works around a glTF importer and runtime-gate interaction, see the lane shared-change-request.",
+        "Branch sway is a stylised current response; a real Acropora skeleton is rigid and only the polyps move."
       ]
     },
     {
@@ -2283,290 +2279,6 @@
         "Tentacles gather toward the oral axis through the head's radial deflation only; the authored fold shape key is not baked because the pinned glTF importer renames animated skinned meshes and the runtime parity gate rejects that.",
         "Corallite calices and septa are painted (albedo/normal) rather than modelled as recessed cups.",
         "Tentacles are 3-segment tubes with a single shared bone per polyp; no per-tentacle motion."
-      ]
-    },
-    {
-      "id": "millepora",
-      "displayName": "Millepora (fire coral)",
-      "scientificLabel": "Millepora sp.",
-      "taxonomyConfidence": "genus",
-      "category": "coral",
-      "waterType": "saltwater",
-      "bodyPlan": "hydrocoral_colony",
-      "referenceSize": {
-        "meters": 0.15,
-        "kind": "colony_width"
-      },
-      "referenceGrade": "B",
-      "assetStatus": "candidate",
-      "assetVersion": "0.1.0",
-      "provisional": false,
-      "accepted": {
-        "glb": null,
-        "sha256": null,
-        "clips": [],
-        "statistics": null
-      },
-      "candidates": [
-        {
-          "name": "fable-v1-blade",
-          "variantId": "blade",
-          "displayName": "Millepora (fire coral, blade form)",
-          "state": "awaiting_user_acceptance",
-          "manifest": "present",
-          "validatorStatus": "passed",
-          "buildStatus": "passed",
-          "buildFailedStage": null,
-          "assetVersion": "0.1.0",
-          "loadable": true,
-          "glb": "art/specimens/millepora/candidates/fable-v1-blade/lod1.glb",
-          "glbSha256": "77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780",
-          "glbSha256Verified": true,
-          "geometryDigest": "cb6ab153ddc685be23268ebc5d22851819f944c846534fb101ffd772e0a1d6ae",
-          "statistics": {
-            "triangles": 16300,
-            "materials": 3,
-            "bones": 26,
-            "clips": [
-              "flow",
-              "retract",
-              "sway"
-            ]
-          },
-          "clipRoles": {
-            "idle": "sway",
-            "locomotion": "flow",
-            "response": "retract"
-          },
-          "clipLoops": {
-            "flow": true,
-            "retract": false,
-            "sway": true
-          },
-          "referenceSizeMeters": 0.15,
-          "userApproved": false,
-          "renders": {
-            "authorPreview": "art/specimens/millepora/candidates/fable-v1-blade/renders/author-preview.png",
-            "threeView": "art/specimens/millepora/candidates/fable-v1-blade/renders/three-view.png"
-          }
-        },
-        {
-          "name": "fable-v1-branching",
-          "variantId": "branching",
-          "displayName": "Millepora (fire coral, branching form)",
-          "state": "awaiting_user_acceptance",
-          "manifest": "present",
-          "validatorStatus": "passed",
-          "buildStatus": "passed",
-          "buildFailedStage": null,
-          "assetVersion": "0.1.0",
-          "loadable": true,
-          "glb": "art/specimens/millepora/candidates/fable-v1-branching/lod1.glb",
-          "glbSha256": "9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634",
-          "glbSha256Verified": true,
-          "geometryDigest": "93925401aec570f1d3eed9931020348203d0a6f9a6a92a3334fcf40c88dca1c5",
-          "statistics": {
-            "triangles": 13552,
-            "materials": 3,
-            "bones": 26,
-            "clips": [
-              "flow",
-              "retract",
-              "sway"
-            ]
-          },
-          "clipRoles": {
-            "idle": "sway",
-            "locomotion": "flow",
-            "response": "retract"
-          },
-          "clipLoops": {
-            "flow": true,
-            "retract": false,
-            "sway": true
-          },
-          "referenceSizeMeters": 0.15,
-          "userApproved": false,
-          "renders": {
-            "authorPreview": "art/specimens/millepora/candidates/fable-v1-branching/renders/author-preview.png",
-            "threeView": "art/specimens/millepora/candidates/fable-v1-branching/renders/three-view.png"
-          }
-        }
-      ],
-      "variants": [
-        {
-          "id": "blade",
-          "displayName": "Millepora (fire coral, blade form)"
-        },
-        {
-          "id": "branching",
-          "displayName": "Millepora (fire coral, branching form)"
-        }
-      ],
-      "clipRoles": {
-        "idle": "sway",
-        "locomotion": "flow",
-        "response": "retract"
-      },
-      "provenance": {
-        "source": "art/specimens/millepora/asset.source.json",
-        "sourceReferences": "art/specimens/millepora/source-references.json",
-        "referenceGrade": "B"
-      },
-      "visualDebt": [
-        "Dactylozooids are drawn about twice their real diameter (0.28 mm radius) and at a fraction of their real density so they read at LOD1; real colonies carry thousands of finer hairs per square centimetre.",
-        "Gastropores and dactylopores are painted as cyclosystem speckle in the albedo and normal maps, not modelled as holes.",
-        "Hairs in one cluster share a bone: bending comes from root-to-tip weight blending plus baked per-hair lean and gain, so hairs within a cluster move in step with a small twist gradient; hair-vs-hair clearance is not proven.",
-        "Branching form: dichotomous forks are fused intersecting tubes (parent knuckle plus two children) rather than a single smoothed junction; sibling branches are not clearance-checked against each other at the fork.",
-        "Blade form: blades are separate lofts that root in the encrusting base and do not fuse into the honeycomb plates seen in M. platyphylla."
-      ]
-    },
-    {
-      "id": "montipora",
-      "displayName": "Montipora",
-      "scientificLabel": "Montipora sp. (Acroporidae)",
-      "taxonomyConfidence": "genus",
-      "category": "coral",
-      "waterType": "saltwater",
-      "bodyPlan": "montipora_colony",
-      "referenceSize": {
-        "meters": 0.15,
-        "kind": "colony_width"
-      },
-      "referenceGrade": "B",
-      "assetStatus": "candidate",
-      "assetVersion": "0.1.0",
-      "provisional": false,
-      "accepted": {
-        "glb": null,
-        "sha256": null,
-        "clips": [],
-        "statistics": null
-      },
-      "candidates": [
-        {
-          "name": "fable-v1-capricornis_plating",
-          "variantId": "capricornis_plating",
-          "displayName": "Montipora capricornis (orange whorling plate, green polyps)",
-          "state": "missing",
-          "manifest": "missing",
-          "validatorStatus": null,
-          "buildStatus": "failed",
-          "buildFailedStage": "source",
-          "assetVersion": null,
-          "loadable": false,
-          "glb": null,
-          "glbSha256": null,
-          "glbSha256Verified": false,
-          "geometryDigest": "0a2e942b7315f12730fcf6345bfe825e3e5101fb54aa9e0da0bc354e6c932fc5",
-          "statistics": null,
-          "clipRoles": null,
-          "clipLoops": null,
-          "referenceSizeMeters": null,
-          "userApproved": false,
-          "renders": {
-            "authorPreview": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/renders/author-preview.png",
-            "threeView": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/renders/three-view.png"
-          }
-        },
-        {
-          "name": "fable-v1-digitata_branching",
-          "variantId": "digitata_branching",
-          "displayName": "Montipora digitata (purple fingers, green polyps)",
-          "state": "awaiting_user_acceptance",
-          "manifest": "present",
-          "validatorStatus": "passed",
-          "buildStatus": "passed",
-          "buildFailedStage": null,
-          "assetVersion": "0.1.0",
-          "loadable": true,
-          "glb": "art/specimens/montipora/candidates/fable-v1-digitata_branching/lod1.glb",
-          "glbSha256": "6ed04e87e2fdb8510cb68fc28264cee3a10ab81fd28df5ec717e109793d3b8e1",
-          "glbSha256Verified": true,
-          "geometryDigest": "fddd1ecd194020f64be2c8484bdf3b0612208096a86d61acae12aec4c63b9314",
-          "statistics": {
-            "triangles": 13296,
-            "materials": 4,
-            "bones": 31,
-            "clips": [
-              "flow",
-              "retract",
-              "sway"
-            ]
-          },
-          "clipRoles": {
-            "idle": "sway",
-            "locomotion": "flow",
-            "response": "retract"
-          },
-          "clipLoops": {
-            "flow": true,
-            "retract": false,
-            "sway": true
-          },
-          "referenceSizeMeters": 0.15,
-          "userApproved": false,
-          "renders": {
-            "authorPreview": "art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/author-preview.png",
-            "threeView": "art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/three-view.png"
-          }
-        },
-        {
-          "name": "fable-v1-encrusting",
-          "variantId": "encrusting",
-          "displayName": "Montipora encrusting (red sheet, green polyps)",
-          "state": "missing",
-          "manifest": "missing",
-          "validatorStatus": null,
-          "buildStatus": "passed",
-          "buildFailedStage": null,
-          "assetVersion": null,
-          "loadable": false,
-          "glb": null,
-          "glbSha256": null,
-          "glbSha256Verified": false,
-          "geometryDigest": "d53509bb55512fb337016602bcde8d99c4a7d54152562f74358f92e5da08741f",
-          "statistics": null,
-          "clipRoles": null,
-          "clipLoops": null,
-          "referenceSizeMeters": null,
-          "userApproved": false,
-          "renders": {
-            "authorPreview": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/author-preview.png",
-            "threeView": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/three-view.png"
-          }
-        }
-      ],
-      "variants": [
-        {
-          "id": "capricornis_plating",
-          "displayName": "Montipora capricornis (orange whorling plate, green polyps)"
-        },
-        {
-          "id": "digitata_branching",
-          "displayName": "Montipora digitata (purple fingers, green polyps)"
-        },
-        {
-          "id": "encrusting",
-          "displayName": "Montipora encrusting (red sheet, green polyps)"
-        }
-      ],
-      "clipRoles": {
-        "idle": "sway",
-        "locomotion": "flow",
-        "response": "retract"
-      },
-      "provenance": {
-        "source": "art/specimens/montipora/asset.source.json",
-        "sourceReferences": "art/specimens/montipora/source-references.json",
-        "referenceGrade": "B"
-      },
-      "visualDebt": [
-        "Polyp density is far below reality (about 220 modelled polyps per colony versus thousands of 0.5 to 1.5 mm corallites); the remaining corallites are painted as pits in the tissue textures.",
-        "Each polyp is a six-sided tube with a flared crown; the twelve tentacles of a real Montipora polyp are painted on the crown, not modelled.",
-        "Tuberculae are modelled on the encrusting sheet only; on the plate and fingers they are normal-map relief.",
-        "Retraction translates polyps along their axis into the corallite (tips stop about 0.3 mm above the surface) instead of morphing tissue over them; finger polyps between the four sector directions retract to 70 to 100 percent of the pull.",
-        "The whorling plate is one continuous 2.6-turn scroll; real M. capricornis colonies often stack several separate tiers and fuse plates."
       ]
     },
     {
