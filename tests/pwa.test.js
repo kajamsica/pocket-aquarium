@@ -160,7 +160,55 @@ ok(/prefers-reduced-motion/.test(css), "styles respect prefers-reduced-motion");
 ok(/id="commandSurface"[^>]*role="status"[^>]*aria-live="polite"/.test(html), "command surface is an accessible polite live region");
 ok(/id="canvasSummary"/.test(html) && /aria-describedby="canvasSummary"/.test(html), "canvas keeps a described-by text alternative");
 
-/* --------------- 8. dark aquarium-instrument shell (PAR5-01A) --------------- */
+/* ------------------------------ 8. live panel scroll/focus stability ------------------------------ */
+group("live panel scroll/focus stability");
+var renderIntoSrc = (app.match(/function renderInto\(panel, fn\) \{[\s\S]*?\n  \}/) || [""])[0];
+ok(!!renderIntoSrc, "the shipped shared panel renderer is available for regression testing");
+var fakeDocument = { activeElement: null };
+var renderInto = renderIntoSrc ? Function("document", "return (" + renderIntoSrc + ");")(fakeDocument) : null;
+
+function panelRerenderCase(label, fk, legacyFocus) {
+  var oldControl = { getAttribute: function () { return fk; } };
+  var focusOptions = null, focusCalls = 0;
+  var panel = { scrollTop: 420, scrollHeight: 900, clientHeight: 300,
+    contains: function (el) { return el === oldControl; },
+    querySelector: function () { return replacement; } };
+  var replacement = { focus: function (opts) {
+    focusCalls++;
+    if (legacyFocus && focusCalls === 1) throw new Error("legacy focus options");
+    focusOptions = opts; fakeDocument.activeElement = replacement;
+    if (!opts || !opts.preventScroll) panel.scrollTop = 0;
+  } };
+  fakeDocument.activeElement = oldControl;
+  renderInto(panel, function () { panel.scrollTop = 0; });
+  ok(focusCalls === (legacyFocus ? 2 : 1), label + " restores focus to the replacement control");
+  if (!legacyFocus) ok(focusOptions && focusOptions.preventScroll === true, label + " requests focus without scrolling");
+  ok(panel.scrollTop === 420, label + " retains its scroll position after the focused control rerenders");
+}
+
+if (renderInto) {
+  panelRerenderCase("Water", "wtool:test", false);
+  panelRerenderCase("Livestock", "insp:1", true);
+  panelRerenderCase("Store", "buy:neon_tetra", false);
+
+  var top = 200.25, writes = 0;
+  var quietPanel = { scrollHeight: 800, clientHeight: 300,
+    contains: function () { return false; }, querySelector: function () { return null; } };
+  Object.defineProperty(quietPanel, "scrollTop", {
+    get: function () { return top; },
+    set: function (v) { writes++; top = v; }
+  });
+  fakeDocument.activeElement = null;
+  renderInto(quietPanel, function () { top = 200; });
+  ok(writes === 0, "sub-pixel scroll drift does not trigger a programmatic scroll write");
+
+  var shortPanel = { scrollTop: 420, scrollHeight: 900, clientHeight: 300,
+    contains: function () { return false; }, querySelector: function () { return null; } };
+  renderInto(shortPanel, function () { shortPanel.scrollHeight = 340; shortPanel.scrollTop = 0; });
+  ok(shortPanel.scrollTop === 40, "saved scroll position clamps when rerendered content becomes shorter");
+}
+
+/* --------------- 9. dark aquarium-instrument shell (PAR5-01A) --------------- */
 // Structural redesign contract: the warm paper/pop/toy substrate is gone and a restrained
 // dark instrument language + truthful single-care hierarchy are in place. These are byte
 // checks on the shipped shell — no DOM, no screenshots.

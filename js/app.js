@@ -598,11 +598,15 @@
     var ae = document.activeElement;
     var fk = (ae && ae.getAttribute && panel.contains(ae)) ? ae.getAttribute("data-fk") : null;
     fn();
-    panel.scrollTop = sc;
     if (fk) {
       var el = panel.querySelector('[data-fk="' + fk.replace(/"/g, "") + '"]');
-      if (el) { try { el.focus(); } catch (e) {} }
+      if (el) {
+        try { el.focus({ preventScroll: true }); }
+        catch (e) { try { el.focus(); } catch (ignored) {} }
+      }
     }
+    var target = Math.max(0, Math.min(sc, panel.scrollHeight - panel.clientHeight));
+    if (Math.abs(panel.scrollTop - target) > 0.5) panel.scrollTop = target;
   }
   function renderActivePanel(snap) {
     switch (activeTab) {
