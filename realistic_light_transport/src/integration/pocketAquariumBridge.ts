@@ -16,6 +16,7 @@ export interface PocketFoodPellet {
   readonly ageDays: number
   readonly sunk: boolean
 }
+export type FoodPellet = PocketFoodPellet
 
 export interface PocketGuideView {
   readonly stage: string
@@ -83,6 +84,8 @@ interface PocketAnimal {
   condition: number
   health: number
   alive: boolean
+  causeOfDeath?: string | null
+  decayDays?: number
   lastFedDay: number
   x: number
   y: number
@@ -212,6 +215,26 @@ export interface PocketStoreOffer {
   readonly action: PocketAction
 }
 
+export interface PocketObjective {
+  readonly chapter: string
+  readonly title: string
+  readonly detail: string
+  readonly lesson: string
+  readonly destination: 'care' | 'store' | 'journal'
+  readonly actionLabel?: string
+  readonly action?: PocketAction
+}
+
+export interface PocketCareRecommendation {
+  readonly severity: 'urgent' | 'watch' | 'stable'
+  readonly title: string
+  readonly cause: string
+  readonly actionLabel?: string
+  readonly action?: PocketAction
+  readonly suggestedOfferId?: string
+  readonly suggestedOfferName?: string
+}
+
 export interface PocketGameView {
   readonly authority: 'root_pa'
   readonly habitatName: string
@@ -220,9 +243,13 @@ export interface PocketGameView {
   readonly xp: number
   readonly cycleStage: string
   readonly cycled: boolean
+  readonly filled: boolean
   readonly cycle: Readonly<PocketState['cycle']>
+  readonly objective: PocketObjective
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
+  readonly residents: readonly PocketSpecimen[]
+  readonly selectedSpecimen?: PocketSpecimen
   readonly food: readonly PocketFoodPellet[]
   readonly guide: PocketGuideView
   readonly testedWater: readonly PocketTestedReading[]
@@ -230,6 +257,9 @@ export interface PocketGameView {
   readonly selection: PocketSelectionView | null
   readonly clutches: readonly PocketClutchView[]
   readonly storeOffers: readonly PocketStoreOffer[]
+  readonly careRecommendations: readonly PocketCareRecommendation[]
+  readonly nextAction: Readonly<{ title: string; detail: string }>
+  readonly alerts: readonly string[]
   readonly optics: Readonly<{ localPpfd: number; mode: 'read_only' }>
   readonly reefSnapshot: ReefSnapshot
 }
@@ -275,6 +305,8 @@ export function createPocketNewGame(): PocketState {
   return runtime.createState({ habitat: 'reef', seed: 0x51f15e })
 }
 
+export const createStarterPocketState = createPocketNewGame
+
 export const pocketSaveKey = runtime.DATA.saveKey
 
 export function restorePocketGame(raw: unknown, now = Date.now()): PocketState {
@@ -288,6 +320,21 @@ export function restorePocketGame(raw: unknown, now = Date.now()): PocketState {
 
 export function serializePocketGame(state: PocketState, now = Date.now()): string {
   return JSON.stringify({ ...state, lastRealTimestamp: now })
+}
+
+export function loadSavedPocketState(now: number, storage?: Storage): PocketState | null {
+  const store = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined)
+  if (!store) return null
+  let raw: string | null
+  try { raw = store.getItem(pocketSaveKey) } catch { return null }
+  if (!raw) return null
+  try { return restorePocketGame(JSON.parse(raw), now) } catch { return null }
+}
+
+export function savePocketState(state: PocketState, now = Date.now(), storage?: Storage): void {
+  const store = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined)
+  if (!store) return
+  try { store.setItem(pocketSaveKey, serializePocketGame(state, now)) } catch { /* storage is optional */ }
 }
 
 export function createPocketSpecimenPreview(speciesId: string, profileOverride?: CatalogSpecies): PocketState {
@@ -346,6 +393,71 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
   return [...livestock, ...corals, ...equipment, ...tiers]
 }
 
+function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjective {
+  if (!state.cycle.filled) return { chapter: 'Commissioning · 1 of 4', title: 'Mix saltwater and fill',
+    detail: 'Bring the dry reef to its operating waterline at 35 ppt.',
+    lesson: 'Saltwater establishes the habitat, but the filter still needs nitrifying bacteria.',
+    destination: 'care', actionLabel: 'Fill the reef', action: { type: 'SETUP_FILL' } }
+  if (!state.cycle.lifeSupport) return { chapter: 'Commissioning · 2 of 4', title: 'Start life support',
+    detail: 'Turn on filtration, heat, oxygenation, and circulation.',
+    lesson: 'Flow carries oxygen and dissolved waste to the biofilter.',
+    destination: 'care', actionLabel: 'Start life support', action: { type: 'SETUP_LIFE_SUPPORT', on: true } }
+  if (!state.cycle.ammoniaSource && !runtime.DATA.isCycled(state)) return {
+    chapter: 'Commissioning · 3 of 4', title: 'Feed the invisible filter',
+    detail: 'Add a measured ammonia source before any animal enters.',
+    lesson: 'A fishless ammonia dose grows the first bacterial colony.',
+    destination: 'care', actionLabel: 'Add ammonia source', action: { type: 'ADD_AMMONIA_SOURCE', on: true } }
+  if (!state.cycle.inoculated) return { chapter: 'Commissioning · 4 of 4', title: 'Seed nitrifying bacteria',
+    detail: 'Inoculate the filter, then observe both colonies establish.',
+    lesson: 'One colony converts ammonia to nitrite and another converts nitrite to nitrate.',
+    destination: 'care', actionLabel: 'Inoculate filter', action: { type: 'INOCULATE_BACTERIA' } }
+  const dead = state.livestock.filter((animal) => animal.alive === false)
+  if (dead.length) return { chapter: 'Tank care · urgent', title: `Remove ${dead.length} dead ${dead.length === 1 ? 'resident' : 'residents'}`,
+    detail: 'Dead livestock keeps decomposing until it is removed.',
+    lesson: 'Prompt removal limits the ammonia pulse.', destination: 'journal' }
+  if (runtime.DATA.isCycled(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) return {
+    chapter: 'Tank care · urgent', title: 'Dilute toxic nitrogen now',
+    detail: `Ammonia ${state.water.ammonia.toFixed(2)} · nitrite ${state.water.nitrite.toFixed(2)} mg/L`,
+    lesson: 'A water change immediately lowers both toxic nitrogen compounds.',
+    destination: 'care', actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } }
+  if (!runtime.DATA.isCycled(state)) return { chapter: `Fishless cycle · ${state.cycle.stage}`, title: 'Watch the nitrogen cycle',
+    detail: `Ammonia ${state.water.ammonia.toFixed(2)} → nitrite ${state.water.nitrite.toFixed(2)} → nitrate ${state.water.nitrate.toFixed(1)} mg/L`,
+    lesson: 'Wait for ammonia and nitrite to fall while nitrate proves both colonies are working.',
+    destination: 'care', actionLabel: state.speed >= 4 ? 'Test the water' : 'Observe at 4×',
+    action: state.speed >= 4 ? { type: 'WATER_TEST' } : { type: 'SET_SPEED', speed: 4 } }
+  if (!state.livestock.some((animal) => animal.alive !== false)) return { chapter: 'First stocking unlocked',
+    title: 'Choose the first resident', detail: 'The biofilter is ready for a gradual first stocking.',
+    lesson: 'Every animal adds waste, so stock slowly.', destination: 'store' }
+  return { chapter: 'Living reef', title: guide.title, detail: guide.body,
+    lesson: 'Observe animals and water together before intervening.', destination: 'care' }
+}
+
+function careRecommendations(state: PocketState, offers: readonly PocketStoreOffer[]): PocketCareRecommendation[] {
+  const result: PocketCareRecommendation[] = []
+  if (!state.cycle.filled || (!runtime.DATA.isCycled(state) && state.livestock.length === 0)) return result
+  const deadCount = state.livestock.filter((animal) => animal.alive === false).length
+  if (deadCount) result.push({ severity: 'urgent', title: `Remove ${deadCount} dead ${deadCount === 1 ? 'resident' : 'residents'}`,
+    cause: 'Decomposition releases ammonia continuously.' })
+  if (runtime.DATA.isCycled(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) {
+    const upgradeId = state.equipment.filter === 'sponge' ? 'filter:hob' : 'filter:canister'
+    const upgrade = offers.find((offer) => offer.id === upgradeId)
+    result.push({ severity: 'urgent', title: 'Toxic nitrogen detected',
+      cause: `Ammonia ${state.water.ammonia.toFixed(2)} and nitrite ${state.water.nitrite.toFixed(2)} mg/L stress gills.`,
+      actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 },
+      suggestedOfferId: upgradeId, suggestedOfferName: upgrade?.name })
+  }
+  const tier = runtime.DATA.TIERS[state.tier]
+  if (state.water.levelL / Math.max(tier.volumeL, 1) < .92 || state.water.salinity > 36) {
+    const upgrade = offers.find((offer) => offer.id === 'ato:ato')
+    result.push({ severity: state.water.salinity > 38 ? 'urgent' : 'watch', title: 'Evaporation is concentrating salt',
+      cause: 'Freshwater top-off restores volume without adding salt.', actionLabel: 'Top off freshwater',
+      action: { type: 'WATER_TOP_OFF' }, suggestedOfferId: 'ato:ato', suggestedOfferName: upgrade?.name })
+  }
+  if (!result.length) result.push({ severity: 'stable', title: 'No intervention needed',
+    cause: 'Routine observation is the right move.' })
+  return result.slice(0, 4)
+}
+
 export function projectPocketState(state: PocketState): PocketGameView {
   const tier = runtime.DATA.TIERS[state.tier]
   const light = runtime.DATA.equipLevel('light', state.equipment.light)
@@ -388,6 +500,14 @@ export function projectPocketState(state: PocketState): PocketGameView {
       facts: [profile.sci, `${animal.stage} · ${animal.sex}`, `Health ${Math.round(animal.health * 100)}%`,
         `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(animal.hunger * 100)}%`] }
   }
+  const residents = state.livestock.map((animal) => {
+    const species = runtime.DATA.resolveSpecies(state, animal.species)
+    if (!species) throw new Error(`Unknown root PA specimen: ${animal.species}`)
+    return { ...animal, speciesId: animal.species, name: species.name, scientificName: species.sci,
+      adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species }
+  })
+  const offers = storeOffers(state)
+  const objective = objectiveFor(state, guide)
   const reefSnapshot: ReefSnapshot = {
     namespace: 'marine_reef',
     clock: { elapsedHours: state.time.days * 24, day: Math.floor(state.time.days) + 1,
@@ -420,10 +540,9 @@ export function projectPocketState(state: PocketState): PocketGameView {
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
-    cycled: runtime.DATA.isCycled(state), cycle: { ...state.cycle }, water: { ...state.water },
-    specimens: living.map((animal) => { const species = runtime.DATA.resolveSpecies(state, animal.species); if (!species) throw new Error(`Unknown root PA specimen: ${animal.species}`); return { ...animal,
-      speciesId: animal.species, name: species.name, scientificName: species.sci,
-      adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species } }),
+    cycled: runtime.DATA.isCycled(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
+    objective, residents, selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
+    specimens: residents.filter((animal) => animal.alive !== false),
     food: state.food.map(({ id, x, y, amount, ageDays, sunk }) => ({ id, x, y, amount, ageDays, sunk })),
     guide, testedWater,
     testFreshness: { label: String(guide.nextAction?.freshness ?? 'Never tested'),
@@ -431,6 +550,7 @@ export function projectPocketState(state: PocketState): PocketGameView {
       readingAgeDays: guide.readingAgeDays },
     selection,
     clutches: state.clutches.map(({ id, species, stage, ageDays }) => ({ id, speciesId: species, stage, ageDays })),
-    storeOffers: storeOffers(state), optics: { localPpfd: reefSnapshot.lightField.localPpfd, mode: 'read_only' },
-    reefSnapshot }
+    storeOffers: offers, careRecommendations: careRecommendations(state, offers),
+    nextAction: { title: objective.title, detail: objective.detail }, alerts: [],
+    optics: { localPpfd: reefSnapshot.lightField.localPpfd, mode: 'read_only' }, reefSnapshot }
 }

@@ -5,7 +5,7 @@
 
    They assert the isolated `native/` Capacitor host is reproducible and safe:
      - exact Capacitor 8.5.1 pins and app identity/config (no remote server),
-     - the staging allowlist matches the accepted Pages runtime artifact exactly,
+     - the staged tree matches the compiled Three.js Pages artifact exactly,
      - path safety, stale cleanup, missing-file failure, and checksum repeatability,
      - forbidden bytes (icon master, invalid sprite, docs/tests/labs/reef) are never staged,
      - the generated iOS/SPM project is wired to capacitor-swift-pm 8.5.1,
@@ -21,6 +21,7 @@ var pathToFileURL = require("url").pathToFileURL;
 var ROOT = path.resolve(__dirname, "..");
 var NATIVE = path.join(ROOT, "native");
 var STAGE_SCRIPT = path.join(NATIVE, "scripts", "stage-web.mjs");
+var WEB_DIST = path.join(ROOT, "realistic_light_transport", "dist");
 
 /* ------------------------------ tiny harness ------------------------------ */
 var passed = 0, failed = 0, failures = [], curr = "";
@@ -41,26 +42,17 @@ function eqArrays(a, b) {
   return true;
 }
 
-/* The single source-of-truth allowlist the staging boundary must reproduce. It must
-   equal the GitHub Pages runtime artifact: root shell + js/ + validated assets/. */
-var EXPECTED_MANIFEST = [
-  "index.html",
-  "styles.css",
-  "manifest.webmanifest",
-  "sw.js",
-  "js/data.js",
-  "js/sim.js",
-  "js/render.js",
-  "js/app.js",
-  "assets/habitats/amazon-blackwater-v1.png",
-  "assets/habitats/reef-lagoon-v1.png",
-  "assets/animals/ocellaris-clownfish-v2.png",
-  "assets/animals/neon-tetra-v1.png",
-  "assets/animals/yellow-watchman-goby-v1.png",
-  "assets/icons/apple-touch-icon.png",
-  "assets/icons/icon-192.png",
-  "assets/icons/icon-512.png"
-];
+function listFiles(root) {
+  var files = [];
+  (function walk(dir, base) {
+    fs.readdirSync(dir, { withFileTypes: true }).forEach(function (entry) {
+      var rel = base ? base + "/" + entry.name : entry.name;
+      if (entry.isDirectory()) walk(path.join(dir, entry.name), rel);
+      else files.push(rel);
+    });
+  })(root, "");
+  return files.sort();
+}
 
 function main(mod) {
   /* ------------------ 1. package + version pins ------------------ */
@@ -70,6 +62,8 @@ function main(mod) {
   ok(pkg.dependencies["@capacitor/ios"] === "8.5.1", "@capacitor/ios pinned exactly to 8.5.1");
   ok(pkg.devDependencies["@capacitor/cli"] === "8.5.1", "@capacitor/cli pinned exactly to 8.5.1");
   ok(pkg.type === "module", "native package is an ESM module");
+  ok(/realistic_light_transport/.test(pkg.scripts["build:web"] || ""), "build:web compiles the Three.js product source");
+  ok(/build:web/.test(pkg.scripts["sync:fresh"] || "") && /sync/.test(pkg.scripts["sync:fresh"] || ""), "sync:fresh builds then syncs one accepted runtime");
   ok(exists(path.join(NATIVE, "package-lock.json")), "committed package-lock.json exists");
   var lock = JSON.parse(readText(path.join(NATIVE, "package-lock.json")));
   ok(lock.lockfileVersion >= 2, "lockfile is v2+ (reproducible npm ci)");
@@ -82,13 +76,16 @@ function main(mod) {
   ok(cfg.webDir === "www", "webDir is www");
   ok(!("server" in cfg), "config declares NO server block (no remote runtime URL)");
 
-  /* ------------------ 3. exact staging manifest ------------------ */
+  /* ------------------ 3. exact compiled artifact manifest ------------------ */
   group("staging manifest");
-  ok(Array.isArray(mod.MANIFEST), "stage-web exports a MANIFEST array");
-  ok(eqArrays(mod.MANIFEST.slice(), EXPECTED_MANIFEST), "MANIFEST equals the 16-file Pages runtime allowlist exactly");
-  ok(mod.MANIFEST.length === 16, "MANIFEST has exactly 16 entries");
-  // Every allowlisted source must exist at the repo root.
-  EXPECTED_MANIFEST.forEach(function (rel) { ok(exists(path.join(ROOT, rel)), "root source exists: " + rel); });
+  ok(typeof mod.manifestFor === "function", "stage-web exports compiled-artifact discovery");
+  ok(exists(WEB_DIST), "Three.js dist exists before native packaging tests");
+  var expectedManifest = mod.manifestFor(WEB_DIST);
+  ok(eqArrays(expectedManifest, listFiles(WEB_DIST)), "manifest is every and only file produced by Vite");
+  ok(expectedManifest.indexOf("index.html") >= 0, "compiled entrypoint is staged");
+  ok(expectedManifest.some(function (rel) { return /^assets\/index-[^/]+\.js$/.test(rel); }), "hashed Three.js JavaScript bundle is staged");
+  ok(expectedManifest.some(function (rel) { return /^assets\/index-[^/]+\.css$/.test(rel); }), "hashed player HUD stylesheet is staged");
+  ok(expectedManifest.some(function (rel) { return /\.glb$/.test(rel); }), "accepted rigged fish asset is staged");
 
   /* ------------------ 4. path safety ------------------ */
   group("path safety");
@@ -98,49 +95,41 @@ function main(mod) {
   ok(mod.isSafeRelative("../secret") === false, "rejects a parent-escaping path");
   ok(mod.isSafeRelative("js/../../x") === false, "rejects an embedded .. segment");
   ok(mod.isSafeRelative("") === false, "rejects an empty path");
-  ok(EXPECTED_MANIFEST.every(mod.isSafeRelative), "every manifest entry is a safe relative path");
+  ok(expectedManifest.every(mod.isSafeRelative), "every compiled artifact path is safe and relative");
 
   /* ------------------ 5. deterministic staging + repeatability ------------------ */
   group("staging determinism");
   var dest1 = fs.mkdtempSync(path.join(os.tmpdir(), "pa-stage-"));
-  var r1 = mod.stage({ src: ROOT, dest: dest1, log: function () {} });
-  var r2 = mod.stage({ src: ROOT, dest: dest1, log: function () {} });
-  ok(r1.count === 16, "stage reports 16 files");
+  var r1 = mod.stage({ src: WEB_DIST, dest: dest1, log: function () {} });
+  var r2 = mod.stage({ src: WEB_DIST, dest: dest1, log: function () {} });
+  ok(r1.count === expectedManifest.length, "stage reports every Vite artifact file");
   ok(/^[0-9a-f]{64}$/.test(r1.checksum), "stage returns a sha256 checksum receipt");
   ok(r1.checksum === r2.checksum, "checksum is stable across repeated staging (deterministic)");
   // Staged bytes are byte-identical to the root runtime.
   var byteFail = null;
-  EXPECTED_MANIFEST.forEach(function (rel) {
-    var a = sha256(read(path.join(ROOT, rel)));
+  expectedManifest.forEach(function (rel) {
+    var a = sha256(read(path.join(WEB_DIST, rel)));
     var b = sha256(read(path.join(dest1, rel)));
     if (a !== b) byteFail = rel;
   });
   ok(byteFail === null, "staged bytes are identical to the root runtime" + (byteFail ? " (mismatch: " + byteFail + ")" : ""));
   // Every receipt entry carries a matching checksum for tests to pin.
-  ok(r1.files.length === 16 && r1.files.every(function (f) { return /^[0-9a-f]{64}$/.test(f.sha256); }),
-    "receipt lists a per-file checksum for all 16 files");
+  ok(r1.files.length === expectedManifest.length && r1.files.every(function (f) { return /^[0-9a-f]{64}$/.test(f.sha256); }),
+    "receipt lists a per-file checksum for every compiled file");
 
   /* ------------------ 6. stale cleanup ------------------ */
   group("stale cleanup");
   fs.writeFileSync(path.join(dest1, "stale-sentinel.txt"), "STALE");
-  fs.mkdirSync(path.join(dest1, "js", "orphan"), { recursive: true });
-  fs.writeFileSync(path.join(dest1, "js", "orphan", "old.js"), "x");
-  mod.stage({ src: ROOT, dest: dest1, log: function () {} });
+  fs.mkdirSync(path.join(dest1, "assets", "orphan"), { recursive: true });
+  fs.writeFileSync(path.join(dest1, "assets", "orphan", "old.js"), "x");
+  mod.stage({ src: WEB_DIST, dest: dest1, log: function () {} });
   ok(!exists(path.join(dest1, "stale-sentinel.txt")), "stale top-level file is removed on restage");
-  ok(!exists(path.join(dest1, "js", "orphan")), "stale orphan directory is removed on restage");
+  ok(!exists(path.join(dest1, "assets", "orphan")), "stale orphan directory is removed on restage");
 
   /* ------------------ 7. forbidden files never staged ------------------ */
   group("forbidden exclusions");
-  var FORBIDDEN = [
-    "assets/icons/app-icon-master-v1.png",
-    "assets/animals/ocellaris-clownfish-v1.png"
-  ];
-  FORBIDDEN.forEach(function (rel) {
-    ok(EXPECTED_MANIFEST.indexOf(rel) < 0, "manifest excludes forbidden " + rel);
-    ok(!exists(path.join(dest1, rel)), "forbidden file not staged: " + rel);
-  });
-  // Whole-directory exclusions: docs/tests/labs/reef and git metadata never appear.
-  ["docs", "tests", "labs", "reef", ".git", ".github"].forEach(function (d) {
+  // Source and repository-only directories never appear in the Vite release artifact.
+  ["docs", "tests", "labs", "reef", "src", "js", ".git", ".github"].forEach(function (d) {
     ok(!exists(path.join(dest1, d)), "no '" + d + "' directory staged");
   });
   // The staged tree contains EXACTLY the allowlist and nothing else.
@@ -152,18 +141,14 @@ function main(mod) {
       else stagedFiles.push(rel);
     });
   })(dest1, "");
-  ok(eqArrays(stagedFiles.sort(), EXPECTED_MANIFEST.slice().sort()), "staged tree is exactly the allowlist, nothing extra");
+  ok(eqArrays(stagedFiles.sort(), expectedManifest.slice().sort()), "native tree is byte-for-byte the Pages input artifact, nothing extra");
 
   /* ------------------ 8. missing-file failure (disposable fixture) ------------------ */
   group("missing-file failure");
   var fixSrc = fs.mkdtempSync(path.join(os.tmpdir(), "pa-fixsrc-"));
   var fixDest = fs.mkdtempSync(path.join(os.tmpdir(), "pa-fixdest-"));
-  // Populate all-but-one allowlisted files so the run must fail loudly on the gap.
-  EXPECTED_MANIFEST.slice(1).forEach(function (rel) {
-    var to = path.join(fixSrc, rel);
-    fs.mkdirSync(path.dirname(to), { recursive: true });
-    fs.writeFileSync(to, "stub");
-  });
+  fs.writeFileSync(path.join(fixSrc, "index.html"), "stub");
+  fs.writeFileSync(path.join(fixDest, "previous-good-build.txt"), "keep until input validates");
   var failedAsExpected = false, stderr = "";
   try {
     childProcess.execFileSync("node", [STAGE_SCRIPT, "--src", fixSrc, "--dest", fixDest],
@@ -173,9 +158,9 @@ function main(mod) {
     stderr = (e.stderr || "").toString();
   }
   ok(failedAsExpected, "staging exits non-zero when an allowlisted file is missing");
-  ok(/missing allowlisted/.test(stderr), "failure message names the missing allowlisted file");
-  // A failed run must not leave a half-built destination behind.
-  ok(!exists(path.join(fixDest, "styles.css")), "no partial destination is written on failure");
+  ok(/missing compiled/.test(stderr), "failure names the missing compiled bundle");
+  // Invalid input is checked before the previous staged app is removed.
+  ok(exists(path.join(fixDest, "previous-good-build.txt")), "failed input does not destroy the previous good native bundle");
 
   /* ------------------ 9. generated iOS / SPM project wiring ------------------ */
   group("generated iOS project");

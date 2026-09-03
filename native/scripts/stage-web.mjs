@@ -1,27 +1,11 @@
 #!/usr/bin/env node
-/* Pocket Aquarium — native web staging boundary (IOS-1).
+/* Pocket Aquarium — native web staging boundary.
  *
- * This is the ONE compatibility seam between the accepted root PWA runtime and the
- * Capacitor iOS host. It rebuilds `native/www` from an explicit allowlist that MUST
- * match the GitHub Pages runtime artifact byte-for-byte:
- *   - root shell:   index.html, styles.css, manifest.webmanifest, sw.js
- *   - runtime JS:   js/{data,sim,render,app}.js
- *   - habitat art:  assets/habitats/{amazon-blackwater,reef-lagoon}-v1.png
- *   - species art:  assets/animals/{ocellaris-clownfish-v2,neon-tetra,yellow-watchman-goby}-v1|v2.png
- *   - runtime icons:assets/icons/{apple-touch-icon,icon-192,icon-512}.png
- *
- * It deliberately NEVER copies: the app-icon master, the invalid clownfish v1 cutout,
- * docs/, tests/, labs/, reef/, .git, package/config files, or any other repo bytes.
- *
- * Design rules:
- *   - Deterministic: same inputs -> same staged bytes -> same checksum receipt.
- *   - Fail loud: a missing allowlisted source is a hard error (never a silent skip).
- *   - Stale-safe: the destination is rebuilt from scratch, and every filesystem removal
- *     is asserted to live strictly inside the resolved destination root. The script can
- *     never delete or write outside `native/www` (or an injected test dest).
- *   - Injectable roots: `--src` / `--dest` (or STAGE_SRC_ROOT / STAGE_DEST_ROOT) let the
- *     contract test drive the exact same code against a disposable fixture.
- *   - Receipt: a stable JSON manifest+checksum is printed to STDOUT; human logs go to STDERR.
+ * Pages and Capacitor both ship the compiled `realistic_light_transport/dist` tree. Vite
+ * owns hashed filenames, so this boundary discovers the complete built artifact rather than
+ * maintaining a second hand-written runtime list that can silently keep packaging the old app.
+ * The destination is rebuilt from scratch, paths are confined to native/www, symlinks are
+ * rejected, and a content receipt proves byte identity with the Pages input artifact.
  */
 "use strict";
 
@@ -30,142 +14,97 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-/* The accepted root runtime allowlist — this list IS the contract with the Pages artifact.
- * Every entry is a repo-relative POSIX path. Order is stable so the receipt is stable. */
-export const MANIFEST = Object.freeze([
-  "index.html",
-  "styles.css",
-  "manifest.webmanifest",
-  "sw.js",
-  "js/data.js",
-  "js/sim.js",
-  "js/render.js",
-  "js/app.js",
-  "assets/habitats/amazon-blackwater-v1.png",
-  "assets/habitats/reef-lagoon-v1.png",
-  "assets/animals/ocellaris-clownfish-v2.png",
-  "assets/animals/neon-tetra-v1.png",
-  "assets/animals/yellow-watchman-goby-v1.png",
-  "assets/icons/apple-touch-icon.png",
-  "assets/icons/icon-192.png",
-  "assets/icons/icon-512.png"
-]);
-
-/* Bytes that must NEVER be staged even though they live under tracked runtime dirs. */
-export const FORBIDDEN = Object.freeze([
-  "assets/icons/app-icon-master-v1.png",
-  "assets/animals/ocellaris-clownfish-v1.png"
-]);
-
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_SRC = path.resolve(HERE, "..", "..");        // repo root
-const DEFAULT_DEST = path.resolve(HERE, "..", "www");      // native/www
+const DEFAULT_SRC = path.resolve(HERE, "..", "..", "realistic_light_transport", "dist");
+const DEFAULT_DEST = path.resolve(HERE, "..", "www");
 
-/* --- path safety -------------------------------------------------------------- */
-
-/* Reject anything that could escape a root: absolute paths, drive letters, or `..`. */
 export function isSafeRelative(rel) {
   if (typeof rel !== "string" || rel.length === 0) return false;
-  if (path.isAbsolute(rel)) return false;
-  if (/^[a-zA-Z]:/.test(rel)) return false;
-  return !rel.split(/[\\/]/).some((seg) => seg === ".." || seg === "");
+  if (path.isAbsolute(rel) || /^[a-zA-Z]:/.test(rel)) return false;
+  return !rel.split(/[\\/]/).some((segment) => segment === ".." || segment === "");
 }
 
-/* True only when `target` resolves to `root` itself or something strictly beneath it. */
 function isInside(root, target) {
-  const r = path.resolve(root);
-  const t = path.resolve(target);
-  return t === r || t.startsWith(r + path.sep);
+  const resolvedRoot = path.resolve(root);
+  const resolvedTarget = path.resolve(target);
+  return resolvedTarget === resolvedRoot || resolvedTarget.startsWith(resolvedRoot + path.sep);
 }
 
-/* Recursive remove that refuses to touch anything outside `root`. */
 function removeWithin(root, target) {
-  if (!isInside(root, target)) {
-    throw new Error("refusing to remove path outside destination root: " + target);
-  }
+  if (!isInside(root, target)) throw new Error("refusing to remove path outside destination root: " + target);
   fs.rmSync(target, { recursive: true, force: true });
 }
 
-/* --- staging ------------------------------------------------------------------ */
-
-function parseArgs(argv) {
-  const out = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === "--src") out.src = argv[++i];
-    else if (a === "--dest") out.dest = argv[++i];
+/** Return every regular file in the compiled 3D artifact in stable POSIX order. */
+export function manifestFor(srcRoot) {
+  const root = path.resolve(srcRoot);
+  if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
+    throw new Error("missing built 3D runtime: " + root + " (run the realistic_light_transport build first)");
   }
-  return out;
+  const files = [];
+  function walk(directory, base) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const relative = base ? base + "/" + entry.name : entry.name;
+      if (!isSafeRelative(relative)) throw new Error("unsafe runtime path: " + relative);
+      const absolute = path.join(directory, entry.name);
+      if (entry.isSymbolicLink()) throw new Error("runtime artifact may not contain symlinks: " + relative);
+      if (entry.isDirectory()) walk(absolute, relative);
+      else if (entry.isFile()) files.push(relative);
+      else throw new Error("unsupported runtime entry: " + relative);
+    }
+  }
+  walk(root, "");
+  files.sort();
+  if (!files.includes("index.html")) throw new Error("missing built runtime entry: index.html");
+  if (!files.some((file) => /^assets\/index-[^/]+\.js$/.test(file))) throw new Error("missing compiled JavaScript bundle");
+  if (!files.some((file) => /^assets\/index-[^/]+\.css$/.test(file))) throw new Error("missing compiled stylesheet bundle");
+  return files;
 }
 
-export function stage(opts = {}) {
-  const srcRoot = path.resolve(opts.src || process.env.STAGE_SRC_ROOT || DEFAULT_SRC);
-  const destRoot = path.resolve(opts.dest || process.env.STAGE_DEST_ROOT || DEFAULT_DEST);
-  const log = opts.log || ((m) => process.stderr.write(m + "\n"));
-
-  // Guard the allowlist itself before any filesystem mutation.
-  for (const rel of MANIFEST) {
-    if (!isSafeRelative(rel)) throw new Error("unsafe manifest entry: " + rel);
+function parseArgs(argv) {
+  const result = {};
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === "--src") result.src = argv[++index];
+    else if (argv[index] === "--dest") result.dest = argv[++index];
   }
+  return result;
+}
 
-  // Verify every allowlisted source exists BEFORE we destroy the destination, so a
-  // missing runtime file fails loudly without leaving a half-built www behind.
-  const missing = MANIFEST.filter((rel) => !fs.existsSync(path.join(srcRoot, rel)));
-  if (missing.length) {
-    throw new Error("missing allowlisted runtime file(s): " + missing.join(", "));
-  }
+export function stage(options = {}) {
+  const srcRoot = path.resolve(options.src || process.env.STAGE_SRC_ROOT || DEFAULT_SRC);
+  const destRoot = path.resolve(options.dest || process.env.STAGE_DEST_ROOT || DEFAULT_DEST);
+  const log = options.log || ((message) => process.stderr.write(message + "\n"));
+  const manifest = manifestFor(srcRoot);
 
-  // Rebuild the destination from scratch (stale-safe, guarded to stay inside destRoot).
   removeWithin(destRoot, destRoot);
   fs.mkdirSync(destRoot, { recursive: true });
 
   const entries = [];
-  for (const rel of MANIFEST) {
-    const from = path.join(srcRoot, rel);
-    const to = path.join(destRoot, rel);
-    if (!isInside(destRoot, to)) throw new Error("computed dest escapes root: " + rel);
+  for (const relative of manifest) {
+    const from = path.join(srcRoot, relative);
+    const to = path.join(destRoot, relative);
+    if (!isInside(srcRoot, from) || !isInside(destRoot, to)) throw new Error("computed path escapes staging boundary: " + relative);
     fs.mkdirSync(path.dirname(to), { recursive: true });
     const bytes = fs.readFileSync(from);
     fs.writeFileSync(to, bytes);
-    entries.push({
-      path: rel,
-      bytes: bytes.length,
-      sha256: crypto.createHash("sha256").update(bytes).digest("hex")
-    });
-    log("staged " + rel + " (" + bytes.length + " bytes)");
+    entries.push({ path: relative, bytes: bytes.length, sha256: crypto.createHash("sha256").update(bytes).digest("hex") });
+    log("staged " + relative + " (" + bytes.length + " bytes)");
   }
 
-  // A single order-independent checksum over "path:sha256" lines: the staging fingerprint.
-  const digestLines = entries
-    .map((e) => e.path + ":" + e.sha256)
-    .sort()
-    .join("\n");
-  const checksum = crypto.createHash("sha256").update(digestLines).digest("hex");
-
-  return {
-    srcRoot,
-    destRoot,
-    count: entries.length,
-    checksum,
-    files: entries
-  };
+  const checksum = crypto.createHash("sha256")
+    .update(entries.map((entry) => entry.path + ":" + entry.sha256).sort().join("\n"))
+    .digest("hex");
+  return { srcRoot, destRoot, count: entries.length, checksum, files: entries };
 }
 
-/* --- CLI ---------------------------------------------------------------------- */
-
-const invokedDirectly =
-  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-
+const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   try {
     const receipt = stage(parseArgs(process.argv.slice(2)));
-    process.stderr.write(
-      "staged " + receipt.count + " files -> " + receipt.destRoot +
-      " (checksum " + receipt.checksum.slice(0, 12) + ")\n"
-    );
+    process.stderr.write("staged " + receipt.count + " files -> " + receipt.destRoot + " (checksum " + receipt.checksum.slice(0, 12) + ")\n");
     process.stdout.write(JSON.stringify(receipt, null, 2) + "\n");
-  } catch (err) {
-    process.stderr.write("stage-web failed: " + err.message + "\n");
+  } catch (error) {
+    process.stderr.write("stage-web failed: " + error.message + "\n");
     process.exit(1);
   }
 }

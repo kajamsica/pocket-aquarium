@@ -7,7 +7,7 @@ export function seededUnit(index: number, salt = 0) {
   return value - Math.floor(value)
 }
 
-/** Shared by rendering and fish clearance so both use the same live-rock volumes. */
+/** One shared live-rock layout drives both rendering and fish collision clearance. */
 export const REEF_ROCKS = Array.from({ length: 13 }, (_, index) => {
   const arc = (index / 12) * Math.PI * 1.74 + 0.16
   const radius = 0.66 + seededUnit(index, 1) * 1.12

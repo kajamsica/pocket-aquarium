@@ -1,8 +1,10 @@
-name: Deploy Pocket Aquarium PWA to GitHub Pages
+name: Deploy Pocket Aquarium 3D app to GitHub Pages
 
-# Deploys ONLY the runtime app (index.html, styles.css, js/, assets/,
-# manifest.webmanifest, sw.js). Labs, docs, tests, checkpoints and repo metadata
-# are never published. Uses the official Pages Actions pipeline (no dependencies).
+# Builds and deploys the Three.js / React (realistic_light_transport) app — the main
+# Pocket Aquarium product. Vite bundles the authoritative root simulation (js/data.js,
+# js/sim.js) and required assets into a self-contained artifact. The asset workbench stays
+# reachable on the same build via the ?workbench= query. Docs, labs, tests and repo
+# metadata are never published.
 
 on:
   push:
@@ -27,19 +29,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Stage runtime-only static artifact
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: realistic_light_transport/package-lock.json
+
+      - name: Install dependencies
+        working-directory: realistic_light_transport
+        run: npm ci
+
+      - name: Build the 3D Pocket Aquarium app
+        working-directory: realistic_light_transport
+        run: npm run build
+
+      - name: Stage built artifact
         run: |
           set -euo pipefail
           rm -rf _site
-          mkdir -p _site
-          # Ship ONLY the runtime app — nothing else in the repo is copied.
-          cp index.html styles.css manifest.webmanifest sw.js _site/
-          cp -R js _site/js
-          cp -R assets _site/assets
-          # The app-icon master is a source asset, not consumed at runtime.
-          rm -f _site/assets/icons/app-icon-master-v1.png
-          # Defensive: never publish the invalid clownfish cutout, even if present.
-          rm -f _site/assets/animals/ocellaris-clownfish-v1.png
+          mv realistic_light_transport/dist _site
           echo "Staged artifact contents:"
           find _site -type f | sort
 

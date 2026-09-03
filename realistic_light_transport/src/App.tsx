@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ReefRenderSettings, ReefRenderTelemetry } from './contracts'
 import {
@@ -12,6 +12,7 @@ import {
   serializePocketGame,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
+import { FeedingProvider, type FeedingApi } from './scene/feeding'
 import { SpecimenRosterProvider } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
 import { SpecimenWorkbench } from './workbench/SpecimenWorkbench'
@@ -22,6 +23,7 @@ const RENDER_TELEMETRY_INTERVAL_MS = 250
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
   diagnosticView: 'beauty',
+  brightness: 1,
 }
 const SEARCH_PARAMS = new URLSearchParams(window.location.search)
 const WORKBENCH_SPECIES = SEARCH_PARAMS.get('workbench')
@@ -84,6 +86,12 @@ function AquariumApp() {
     setPocketState((current) => dispatchPocketAction(current, action))
   }, [])
 
+  const feeding = useMemo<FeedingApi>(() => ({
+    food: view.food,
+    feed: (normalizedX) => dispatch({ type: 'FEED', x: normalizedX }),
+    consume: (foodId, eaterId) => dispatch({ type: 'CONSUME_FOOD', foodId, eaterId }),
+  }), [dispatch, view.food])
+
   const updateRenderTelemetry = useCallback((telemetry: ReefRenderTelemetry) => {
     const now = performance.now()
     if (now - lastTelemetryUpdate.current < RENDER_TELEMETRY_INTERVAL_MS) return
@@ -92,14 +100,16 @@ function AquariumApp() {
   }, [])
 
   return (
-    <main className="reef-app">
-      <SpecimenRosterProvider specimens={view.specimens} food={view.food} dispatch={dispatch}>
-        <ReefScene
-          snapshot={view.reefSnapshot}
-          renderSettings={renderSettings}
-          onRenderTelemetry={updateRenderTelemetry}
-        />
-      </SpecimenRosterProvider>
+    <main className="reef-app pocket-reef-app">
+      <FeedingProvider value={feeding}>
+        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}>
+          <ReefScene
+            snapshot={view.reefSnapshot}
+            renderSettings={renderSettings}
+            onRenderTelemetry={updateRenderTelemetry}
+          />
+        </SpecimenRosterProvider>
+      </FeedingProvider>
       <PocketGameHUD
         view={view}
         dispatch={dispatch}

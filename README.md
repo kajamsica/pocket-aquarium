@@ -1,56 +1,42 @@
-# Pocket Aquarium — Ecosystem (v4)
+# Pocket Aquarium — 3D Reef Keeper
 
-A single-player, dependency-free browser aquarium **ecosystem** simulation. You establish a
-real freshwater or marine habitat, run an accelerated fishless cycle through its visible ugly
-phases, manage water chemistry and equipment, stock only compatible animals, keep corals and
-microfauna, and earn progression through stable stewardship, growth, and breeding — not
-feed-button arithmetic.
+A tank-first aquarium game built with React Three Fiber and the deterministic Pocket Aquarium
+simulation. Establish and cycle a reef, manage real chemistry and equipment, stock compatible
+animals, and feed fish through physical food/contact rather than a feed-button shortcut.
 
 - **Canonical source folder:** `/Users/jamessicard/Documents/RESEARCH/Games/PocketAquarium`
 - **Ecology model & research anchors:** [`docs/ECOLOGY_MODEL.md`](docs/ECOLOGY_MODEL.md)
-- **Deterministic tests:** `node tests/sim.test.js` (151 assertions) · `node tests/pwa.test.js` (PWA contract)
+- **Player source:** [`realistic_light_transport/`](realistic_light_transport/)
+- **Deterministic tests:** root simulation/PWA/native contracts plus the 3D app's Vitest suite
 - **Installable:** iPhone-ready Progressive Web App with an offline shell — see [Install on iPhone](#install-on-iphone-and-other-devices)
 
 ---
 
 ## Run it
 
-The whole game is static files — HTML, CSS, and four plain `<script defer>` files that extend
-one global (`window.PA`). There is **no build step, no bundler, no package manager, and no
-network access**.
+The accepted player is a Vite-built React/Three.js app. The compiled `dist/` artifact is the
+single input to both GitHub Pages and the Capacitor iOS host.
 
 ### From a local server (recommended)
 
 ```sh
-cd /Users/jamessicard/Documents/RESEARCH/Games/PocketAquarium
-python3 -m http.server 8000
-# then open http://localhost:8000/ in a browser
+cd realistic_light_transport
+npm ci
+npm run dev
 ```
-
-Any static file server works; `python3 -m http.server` is used above only because it ships
-with macOS and needs no dependencies.
-
-### Directly from the filesystem (`file://`)
-
-You can also just open `index.html` straight from disk (double-click it, or
-`open index.html`). This works because the scripts are **classic, non-module** scripts loaded
-in order and sharing the `window.PA` namespace — there are no ES-module imports and no
-`fetch`/XHR calls, so the browser's `file://` restrictions on modules and cross-origin
-requests don't apply. A localhost server is still the tidier option, but it is not required.
 
 ### Tests
 
 ```sh
 cd /Users/jamessicard/Documents/RESEARCH/Games/PocketAquarium
 node tests/sim.test.js
-# => passed: 151   failed: 0   total: 151   ALL PASSED
+node tests/pwa.test.js
+node tests/native.test.js
+cd realistic_light_transport && npm test && npm run build
 ```
 
-The tests load `js/data.js` and `js/sim.js` under Node (the only `require`s are those two
-local source files) and exercise the deterministic model directly — no test framework, no
-third-party packages. `node tests/pwa.test.js` is a second dependency-free harness that
-statically verifies the installable-PWA contract (manifest, icon dimensions, service-worker
-allowlist and base-path safety, and the index wiring).
+The root Node harnesses preserve the deterministic model, PWA, and native packaging contracts.
+The Vitest suite exercises the live 3D integration, physical feeding, controller, and scene math.
 
 ---
 
@@ -78,9 +64,9 @@ The install surface is entirely dependency-free and safe under the `/pocket-aqua
   `file://` — and it never caches cross-origin or opaque responses.
 
 The installable PWA remains today's working iPhone distribution. A **native Capacitor 8 iOS
-shell** is now checked in under [`native/`](native/) and is reproducible from a clean checkout
-(`npm ci` → `npm run stage` → `npx cap sync ios` → `npx cap open ios`) — it wraps this exact
-runtime in a WKWebView without changing a byte of the web app or the Pages deploy. GitHub Actions
+shell** is checked in under [`native/`](native/) and is reproducible from a clean checkout
+(`npm ci` → `npm run sync:fresh` → `npx cap open ios`) — it wraps the exact same compiled
+Three.js artifact used by Pages. GitHub Actions
 proves the host compiles as an unsigned iOS Simulator app. Opening or running it in a local
 Simulator requires full Xcode 26+ but not signing; physical-device and TestFlight distribution
 additionally require an Apple signing identity and provisioning. This local Mac must move from
@@ -95,14 +81,9 @@ This game lives in its own standalone repository, **`kajamsica/pocket-aquarium`*
 **public**: GitHub Pages publishes from a *private* repository only on a paid plan, so the
 free-plan Pages deployment requires a public source. A **write-access invitation** is pending
 for collaborator **Ben Fowlersmith** (`Bioscopics`).
-GitHub Pages (`.github/workflows/pages.yml`) publishes the **runtime app only** — `index.html`,
-`styles.css`, `js/`, `assets/`, `manifest.webmanifest`, and `sw.js`; the `labs/`, `docs/`,
-`tests/`, and `checkpoints/` paths are never deployed.
-
-`labs/reef-room/` holds a **separate, experimental** WebGL/physics prototype — Ben's
-"Reef Room" (React Three Fiber + three.js), imported from its tracked prototype commit
-`26a5f682`. It is a research lab for future physically-grounded lighting and is **not** part of
-the deployed Pocket Aquarium app; the deployable game remains at the repository root.
+GitHub Pages (`.github/workflows/pages.yml`) builds and publishes
+`realistic_light_transport/dist` only. Ben's Three.js renderer is no longer an experimental
+side lab: it is the product surface where the Pocket Aquarium simulation and gameplay live.
 
 ---
 

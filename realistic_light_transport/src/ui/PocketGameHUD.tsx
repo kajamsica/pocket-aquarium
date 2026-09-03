@@ -179,6 +179,11 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         <div className="hud-render-choice"><span id="pocket-diagnostic-label">Diagnostic</span><div role="group" aria-labelledby="pocket-diagnostic-label">
           {DIAGNOSTICS.map((diagnosticView) => <button key={diagnosticView} type="button" aria-pressed={renderSettings.diagnosticView === diagnosticView}
             onClick={() => onRenderSettingsChange({ ...renderSettings, diagnosticView })}>{diagnosticView}</button>)}</div></div>
+        <label className="pa-brightness"><span>Viewing brightness <small>visual only · PAR unchanged</small></span>
+          <output>{Math.round(renderSettings.brightness * 100)}%</output>
+          <input type="range" min="0.75" max="1.35" step="0.05" value={renderSettings.brightness}
+            onChange={(event) => onRenderSettingsChange({ ...renderSettings, brightness: Number(event.target.value) })} />
+        </label>
       </div><dl className="pocket-telemetry"><div><dt>Visible transmission</dt><dd>{telemetry(renderTelemetry?.optics.meanVisibleTransmittance === undefined ? undefined : renderTelemetry.optics.meanVisibleTransmittance * 100, 1, '%')}</dd></div>
         <div><dt>Mean flow</dt><dd>{telemetry(renderTelemetry?.flow.meanSpeedMetersPerSecond, 3, ' m/s')}</dd></div></dl></details>
     </aside>

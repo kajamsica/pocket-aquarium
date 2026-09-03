@@ -26,6 +26,7 @@ export interface OpticalTankProps extends ReefSceneProps {
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
   diagnosticView: 'beauty',
+  brightness: 1,
 }
 
 const renderTargetSize = (

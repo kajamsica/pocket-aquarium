@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/ios.yml"
       - "native/**"
+      - "realistic_light_transport/**"
       - "tests/native.test.js"
       - "index.html"
       - "styles.css"
@@ -17,6 +18,7 @@ on:
     paths:
       - ".github/workflows/ios.yml"
       - "native/**"
+      - "realistic_light_transport/**"
       - "tests/native.test.js"
       - "index.html"
       - "styles.css"
@@ -50,7 +52,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: native/package-lock.json
+          cache-dependency-path: |
+            native/package-lock.json
+            realistic_light_transport/package-lock.json
+
+      - name: Install 3D app dependencies
+        working-directory: realistic_light_transport
+        run: npm ci
+
+      - name: Build the accepted 3D web runtime
+        working-directory: realistic_light_transport
+        run: npm run build
 
       - name: Install pinned Capacitor toolchain
         working-directory: native
@@ -79,3 +91,14 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build
+
+      - name: Package the simulator app
+        run: ditto -c -k --sequesterRsrc --keepParent native/DerivedData/Build/Products/Debug-iphonesimulator/App.app PocketAquarium-Simulator.app.zip
+
+      - name: Upload simulator build
+        uses: actions/upload-artifact@v4
+        with:
+          name: PocketAquarium-iOS-Simulator
+          path: PocketAquarium-Simulator.app.zip
+          if-no-files-found: error
+          retention-days: 14
