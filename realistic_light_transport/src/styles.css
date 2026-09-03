@@ -1655,3 +1655,400 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* ================= Tank-dominant mobile HUD (Pack 3D-03) ================= *
+ * The aquarium owns the viewport; the HUD is a thin translucent overlay: a
+ * compact status rail on top, a bottom tool dock, and one closeable, scrollable
+ * sheet at a time. Nothing here uses fixed full-height panels, so the world stays
+ * visible and there is no horizontal overflow at phone widths. */
+.pa-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  padding:
+    max(10px, env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom))
+    max(10px, env(safe-area-inset-left));
+  pointer-events: none;
+  color: #eaf7fb;
+}
+.pa-hud button {
+  pointer-events: auto;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+.pa-rail,
+.pa-sheet,
+.pa-dock {
+  pointer-events: auto;
+  box-sizing: border-box;
+  border: 1px solid rgba(150, 220, 235, 0.18);
+  background: linear-gradient(150deg, rgba(4, 20, 27, 0.66), rgba(4, 26, 34, 0.5));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+.pa-rail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  width: 100%;
+  padding: 8px 12px;
+}
+.pa-rail-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, 0.7);
+}
+.pa-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #65efcb;
+  box-shadow: 0 0 10px rgba(101, 239, 203, 0.8);
+}
+.pa-live-dot[data-paused="true"] {
+  background: #f4b96c;
+  box-shadow: 0 0 10px rgba(244, 185, 108, 0.72);
+}
+.pa-rail-objective {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 140px;
+}
+.pa-rail-objective span {
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, 0.55);
+}
+.pa-rail-objective strong {
+  font-size: 0.84rem;
+  font-weight: 640;
+  line-height: 1.12;
+}
+.pa-rail-objective small {
+  font-size: 0.6rem;
+  color: rgba(218, 242, 246, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pa-rail-stats {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+.pa-rail-stats div {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+.pa-rail-stats dt {
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, 0.5);
+}
+.pa-rail-stats dd {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+}
+.pa-rail-stats div[data-alert="true"] dd {
+  color: #ffb37a;
+}
+
+.pa-spacer {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 0;
+  pointer-events: none;
+}
+.pa-feed-hint {
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(233, 247, 251, 0.72);
+  background: rgba(3, 15, 20, 0.4);
+  border-radius: 999px;
+}
+
+.pa-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.pa-sheet {
+  width: 100%;
+  max-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pa-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(150, 220, 235, 0.14);
+}
+.pa-sheet-head h2 {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+.pa-close {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(150, 220, 235, 0.22);
+  border-radius: 8px;
+  background: rgba(3, 15, 20, 0.5);
+  font-size: 0.9rem;
+}
+.pa-sheet-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: grid;
+  gap: 12px;
+}
+
+.pa-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pa-card {
+  padding: 9px 10px;
+  border: 1px solid rgba(150, 220, 235, 0.14);
+  border-radius: 10px;
+  background: rgba(3, 17, 23, 0.4);
+  min-width: 0;
+}
+.pa-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, 0.6);
+}
+.pa-card dl {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+.pa-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pa-card dt {
+  font-size: 0.64rem;
+  color: rgba(218, 242, 246, 0.62);
+}
+.pa-card dd {
+  margin: 0;
+  font-size: 0.64rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+}
+
+.pa-actions,
+.pa-speed,
+.pa-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.pa-speed span,
+.pa-choice span {
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, 0.55);
+}
+.pa-speed button,
+.pa-choice button,
+.pa-dock button {
+  min-height: 40px;
+  border: 1px solid rgba(150, 220, 235, 0.2);
+  border-radius: 8px;
+  background: rgba(3, 17, 23, 0.5);
+  padding: 7px 11px;
+  font-size: 0.7rem;
+}
+.pa-speed button[aria-pressed="true"],
+.pa-choice button[aria-pressed="true"],
+.pa-dock button[aria-pressed="true"] {
+  border-color: rgba(117, 229, 239, 0.6);
+  background: rgba(46, 201, 214, 0.18);
+  color: #bff6fb;
+}
+
+.pa-store {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.pa-offer {
+  padding: 9px 10px;
+  border: 1px solid rgba(150, 220, 235, 0.14);
+  border-radius: 10px;
+  background: rgba(3, 17, 23, 0.4);
+}
+.pa-offer[data-locked="true"] {
+  opacity: 0.72;
+}
+.pa-offer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pa-offer-head span {
+  display: block;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, 0.5);
+}
+.pa-offer-head strong {
+  font-size: 0.76rem;
+  font-weight: 620;
+}
+.pa-offer-effect {
+  margin: 6px 0 0;
+  font-size: 0.62rem;
+  color: rgba(218, 242, 246, 0.66);
+}
+.pa-offer-reasons {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  font-size: 0.58rem;
+  color: #ffb37a;
+}
+
+.pa-event {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(150, 220, 235, 0.14);
+  border-radius: 10px;
+  background: rgba(3, 17, 23, 0.4);
+}
+.pa-event span {
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(218, 242, 246, 0.5);
+}
+.pa-event strong {
+  font-size: 0.7rem;
+  font-weight: 560;
+}
+.pa-residents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.pa-residents li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(3, 17, 23, 0.32);
+}
+.pa-residents strong {
+  font-size: 0.72rem;
+}
+.pa-residents small {
+  font-size: 0.58rem;
+  color: rgba(218, 242, 246, 0.6);
+}
+
+.pa-tune {
+  display: grid;
+  gap: 10px;
+}
+.pa-telemetry {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.pa-telemetry div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pa-telemetry dt {
+  font-size: 0.62rem;
+  color: rgba(218, 242, 246, 0.6);
+}
+.pa-telemetry dd {
+  margin: 0;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pa-dock {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+}
+.pa-dock button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Desktop: cap the overlay so it reads as a side utility, not a wall. */
+@media (min-width: 760px) {
+  .pa-rail {
+    max-width: 680px;
+  }
+  .pa-sheet {
+    max-width: 440px;
+    max-height: 64vh;
+  }
+  .pa-bottom {
+    align-items: flex-start;
+    width: auto;
+  }
+  .pa-dock {
+    width: auto;
+    max-width: 440px;
+  }
+}

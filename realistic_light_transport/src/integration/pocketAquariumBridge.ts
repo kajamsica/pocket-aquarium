@@ -46,9 +46,31 @@ interface PocketCoral {
   polyps: number
 }
 
+interface PocketFood {
+  id: number
+  x: number
+  y: number
+  amount: number
+  ageDays: number
+  sunk: boolean
+  consumed?: boolean
+}
+
+/** A live, authoritative food pellet projected into the scene. `x` is the normalized
+ *  horizontal tap position and `y` is normalized depth (0 = waterline, sinks toward 1). */
+export interface FoodPellet {
+  readonly id: number
+  readonly x: number
+  readonly y: number
+  readonly amount: number
+  readonly ageDays: number
+  readonly sunk: boolean
+}
+
 export interface PocketState {
   habitat: 'reef' | 'amazon' | null
   time: { days: number }
+  lastRealTimestamp: number
   speed: number
   credits: number
   xp: number
@@ -60,7 +82,7 @@ export interface PocketState {
   livestock: PocketAnimal[]
   corals: PocketCoral[]
   microfauna: { pods: number; worms: number; infusoria: number; biodiversity: number }
-  food: unknown[]
+  food: PocketFood[]
   log: Array<{ type: string; message: string }>
 }
 
@@ -92,12 +114,19 @@ interface PocketRuntime {
     EQUIPMENT: Record<string, { label: string; levels: EquipmentLevel[] }>
     equipLevel: (category: string, id: string) => EquipmentLevel | null
     isCycled: (state: PocketState) => boolean
+    saveKey: string
   }
   createState: (options: Record<string, unknown>) => PocketState
   step: (state: PocketState, seconds: number) => PocketState
   stepDays: (state: PocketState, days: number) => PocketState
   dispatch: (state: PocketState, action: PocketAction) => PocketState
   validatePurchase: (state: PocketState, request: Record<string, unknown>) => Validation
+  sanitizeState: (raw: unknown) => PocketState
+  offlineCatchUp: (state: PocketState, elapsedMs: number) => unknown
+  snapshotSummary: (state: PocketState) => {
+    nextAction: { title: string; detail: string } | null
+    alerts: string[]
+  } | null
 }
 
 export interface PocketSpecimen extends PocketAnimal {
@@ -128,16 +157,21 @@ export interface PocketGameView {
   readonly cycled: boolean
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
+  readonly food: readonly FoodPellet[]
   readonly storeOffers: readonly PocketStoreOffer[]
   readonly reefSnapshot: ReefSnapshot
+  readonly nextAction: { readonly title: string; readonly detail: string }
+  readonly alerts: readonly string[]
 }
 
 const runtime = (globalThis as unknown as { PA: PocketRuntime }).PA
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value))
 const clone = (state: PocketState): PocketState => structuredClone(state)
 
-export function createPocketReefShowcase(): PocketState {
-  const state = runtime.createState({ habitat: 'reef', credits: 3000, seed: 0x51f15e })
+/** Authoritative fishless->cycled commissioning shared by the starter tank and the
+ *  workbench showcase: fill, install core equipment, run the fishless nitrogen cycle. */
+function commissionCycledReef(credits: number): PocketState {
+  const state = runtime.createState({ habitat: 'reef', credits, seed: 0x51f15e })
   const act = runtime.ACTIONS
   const send = (action: PocketAction) => runtime.dispatch(state, action)
   send({ type: act.SETUP_FILL })
@@ -150,6 +184,24 @@ export function createPocketReefShowcase(): PocketState {
   send({ type: act.INOCULATE_BACTERIA })
   runtime.stepDays(state, 21.5)
   send({ type: act.ADD_AMMONIA_SOURCE, on: false })
+  return state
+}
+
+/** First-run authoritative default: a cycled reef stocked with a clownfish pair so the
+ *  physical feeding slice is demonstrable. This — not the workbench showcase — is what a
+ *  player without a save opens into. */
+export function createStarterPocketState(): PocketState {
+  const state = commissionCycledReef(3000)
+  runtime.dispatch(state, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: 'ocellaris', count: 2 })
+  runtime.dispatch(state, { type: runtime.ACTIONS.WATER_TEST })
+  return state
+}
+
+/** Fully-stocked demo state — workbench/demo only, never the live game default. */
+export function createPocketReefShowcase(): PocketState {
+  const state = commissionCycledReef(3000)
+  const act = runtime.ACTIONS
+  const send = (action: PocketAction) => runtime.dispatch(state, action)
   send({ type: act.SEED_MICROFAUNA, culture: 'pods' })
   send({ type: act.PURCHASE_LIVESTOCK, species: 'ocellaris', count: 2 })
   send({ type: act.PURCHASE_LIVESTOCK, species: 'watchman_goby', count: 1 })
@@ -159,6 +211,32 @@ export function createPocketReefShowcase(): PocketState {
   runtime.stepDays(state, 0.02)
   send({ type: act.WATER_TEST })
   return state
+}
+
+/** Load the single authoritative save (shared key with the root Pocket Aquarium app),
+ *  sanitizing it through the root reducer and applying capped offline catch-up. Returns
+ *  null when there is no usable save so callers fall back to a fresh starter tank. */
+export function loadSavedPocketState(now: number, storage?: Storage): PocketState | null {
+  const store = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined)
+  if (!store) return null
+  let raw: string | null
+  try { raw = store.getItem(runtime.DATA.saveKey) } catch { return null }
+  if (!raw) return null
+  let parsed: unknown
+  try { parsed = JSON.parse(raw) } catch { return null }
+  const state = runtime.sanitizeState(parsed)
+  if (!state.habitat) return null
+  const elapsed = now - state.lastRealTimestamp
+  if (now > 0 && state.lastRealTimestamp > 0 && elapsed > 1000) runtime.offlineCatchUp(state, elapsed)
+  return state
+}
+
+/** Persist the authoritative state to the shared save key. */
+export function savePocketState(state: PocketState, now?: number, storage?: Storage): void {
+  const store = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined)
+  if (!store) return
+  if (now != null) state.lastRealTimestamp = now
+  try { store.setItem(runtime.DATA.saveKey, JSON.stringify(state)) } catch { /* storage full/unavailable */ }
 }
 
 export function advancePocketState(state: PocketState, elapsedSeconds: number): PocketState {
@@ -221,8 +299,6 @@ export function projectPocketState(state: PocketState): PocketGameView {
   const tankDepth = Math.sqrt(footprint / 2.4)
   const hunger = fish.length ? fish.reduce((sum, animal) => sum + animal.hunger, 0) / fish.length : 1
   const health = fish.length ? fish.reduce((sum, animal) => sum + animal.health, 0) / fish.length : 0
-  const lastFed = living.reduce((latest, animal) => Math.max(latest, animal.lastFedDay), -Infinity)
-  const feedPulse = state.food.length ? 1 : clamp(1 - (state.time.days - lastFed) / 0.012)
   const saltFraction = clamp(state.water.salinity / 1000, 0, 0.2)
   const reefSnapshot: ReefSnapshot = {
     namespace: 'marine_reef',
@@ -251,14 +327,22 @@ export function projectPocketState(state: PocketState): PocketGameView {
       coralHealth: corals.length ? corals.reduce((sum, coral) => sum + coral.health, 0) / corals.length : 0 },
     lightField: { surfacePpfd: state.water.par, localPpfd: state.water.par * transmission * (1 - shading), sampleDepthMeters: depth,
       interfaceTransmission: 0.96, attenuationPerMeter: attenuation, shading },
-    events: { sequence: state.log.length + (feedPulse > 0 ? 1 : 0), lastEvent: feedPulse > 0 ? 'Feed dispatched through root PA' : state.log.at(-1)?.message ?? 'Reef ready',
-      causalNote: feedPulse > 0 ? 'Root livestock hunger and the optical feed response share the same action.' : 'Pocket Aquarium advances all gameplay state.', feedPulse },
+    // feedPulse is retained only for the shared ReefSnapshot contract (Ben's legacy
+    // reefSimulation). The live scene now reads authoritative food/consumption events,
+    // so no lastFed/time heuristic drives feeding here.
+    events: { sequence: state.log.length, lastEvent: state.log.at(-1)?.message ?? 'Reef ready',
+      causalNote: 'Pocket Aquarium advances all gameplay state.', feedPulse: 0 },
   }
+  const summary = runtime.snapshotSummary(state)
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
     cycled: runtime.DATA.isCycled(state), water: { ...state.water },
     specimens: living.map((animal) => { const species = runtime.DATA.SPECIES[animal.species]; return { ...animal,
       speciesId: animal.species, name: species.name, scientificName: species.sci,
       adultSizeCm: species.adultSizeCm, layer: species.layer } }),
-    storeOffers: storeOffers(state), reefSnapshot }
+    food: state.food.filter((pellet) => !pellet.consumed).map((pellet) => ({
+      id: pellet.id, x: pellet.x, y: pellet.y, amount: pellet.amount, ageDays: pellet.ageDays, sunk: pellet.sunk })),
+    storeOffers: storeOffers(state), reefSnapshot,
+    nextAction: summary?.nextAction ?? { title: 'Observe the reef', detail: 'Keep the water stable.' },
+    alerts: summary?.alerts ?? [] }
 }

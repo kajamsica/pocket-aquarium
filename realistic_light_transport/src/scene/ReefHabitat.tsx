@@ -4,6 +4,10 @@ import * as THREE from 'three'
 
 import type { ReefSceneProps } from '../contracts'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
+import {
+  normalizedXToSurfaceX, pelletDepthY, pelletLateralZ, surfaceXToNormalizedX,
+  useFeeding, type ScenePellet,
+} from './feeding'
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
 import { SpecimenFish } from './SpecimenFish'
 
@@ -657,48 +661,58 @@ function Microfauna({ activity, waterSurfaceY }: { activity: number; waterSurfac
   )
 }
 
-function FeedCloud({ pulse, satiation, waterSurfaceY }: { pulse: number; satiation: number; waterSurfaceY: number }) {
-  const maximum = 84
-  const materialRef = useRef<THREE.PointsMaterial>(null)
-  const geometry = useMemo(() => {
-    const buffer = new THREE.BufferGeometry()
-    buffer.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maximum * 3), 3))
-    return buffer
-  }, [])
-  const response = THREE.MathUtils.clamp(pulse * (0.58 + (1 - THREE.MathUtils.clamp(satiation, 0, 1)) * 0.76), 0, 1)
-  const visibleCount = Math.round(maximum * response)
-
-  useEffect(() => () => geometry.dispose(), [geometry])
-
-  useFrame(({ clock }) => {
-    const attribute = geometry.attributes.position as THREE.BufferAttribute
-    const elapsed = clock.getElapsedTime()
-    geometry.setDrawRange(0, visibleCount)
-    for (let index = 0; index < visibleCount; index += 1) {
-      const fall = (elapsed * (0.12 + seededUnit(index, 100) * 0.14) + seededUnit(index, 101) * 1.4) % 1.55
-      const x = 0.32 + (seededUnit(index, 102) - 0.5) * (0.24 + fall * 0.18)
-      const y = THREE.MathUtils.lerp(
-        waterSurfaceY - PARTICLE_SURFACE_CLEARANCE,
-        DYNAMIC_FLOOR_Y,
-        fall / 1.55,
-      )
-      const z = (seededUnit(index, 103) - 0.5) * (0.22 + fall * 0.16)
-      attribute.setXYZ(index, x, y, z)
-    }
-    attribute.needsUpdate = true
-    if (materialRef.current) materialRef.current.opacity = response * 0.9
-  })
-
+/** Authoritative food pellets: one mesh per live pellet, entering at the waterline, sinking
+ *  with the sim, settling on the substrate, and fading as it decays. No feed heuristic. */
+function FoodPellets({ pellets }: { pellets: readonly ScenePellet[] }) {
   return (
-    <points geometry={geometry} frustumCulled={false}>
-      <pointsMaterial ref={materialRef} color="#d8a35b" size={0.032} transparent opacity={0} depthWrite={false} />
-    </points>
+    <group name="authoritative-food">
+      {pellets.map((pellet) => {
+        const decay = THREE.MathUtils.clamp(1 - pellet.ageDays / 0.6, 0, 1)
+        return (
+          <mesh key={pellet.id} position={[pellet.x, pellet.y, pellet.z]} castShadow>
+            <sphereGeometry args={[0.05, 10, 8]} />
+            <meshStandardMaterial
+              color={pellet.sunk ? '#b07d3f' : '#e0ad5f'}
+              emissive="#3a230c"
+              emissiveIntensity={0.35}
+              roughness={0.72}
+              transparent
+              opacity={0.5 + decay * 0.5}
+            />
+          </mesh>
+        )
+      })}
+    </group>
+  )
+}
+
+/** Invisible catcher over the water column: a tap resolves to the exact horizontal tank
+ *  position and drops one pellet at the rendered waterline. */
+function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed: (normalizedX: number) => void }) {
+  const columnHeight = Math.max(waterSurfaceY - SAND_Y, 0.1)
+  return (
+    <mesh
+      position={[0, (SAND_Y + waterSurfaceY) / 2, TANK_HALF_DEPTH]}
+      onPointerDown={(event) => { event.stopPropagation(); feed(surfaceXToNormalizedX(event.point.x)) }}
+    >
+      <planeGeometry args={[TANK_HALF_WIDTH * 2, columnHeight]} />
+      <meshBasicMaterial transparent opacity={0} colorWrite={false} depthWrite={false} />
+    </mesh>
   )
 }
 
 export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
-  const { ecology, equipment, events, livestock } = snapshot
+  const { ecology, equipment, livestock } = snapshot
   const waterSurfaceY = waterSurfaceFor(snapshot.tank)
+  const feeding = useFeeding()
+  const scenePellets: ScenePellet[] = feeding.food.map((pellet) => ({
+    id: pellet.id,
+    x: normalizedXToSurfaceX(pellet.x),
+    y: pelletDepthY(pellet.y, waterSurfaceY - PARTICLE_SURFACE_CLEARANCE, DYNAMIC_FLOOR_Y),
+    z: pelletLateralZ(pellet.id),
+    sunk: pellet.sunk,
+    ageDays: pellet.ageDays,
+  }))
   const hasCoral = livestock.coralHealth > 0
   const materials = useMemo<HabitatMaterials>(() => {
     const created = {
@@ -745,10 +759,11 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
           waterSurfaceY={waterSurfaceY}
         />
       )}
-      <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} />
+      <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} pellets={scenePellets} consume={feeding.consume} />
       <SuspendedParticles flowField={flowField} waterSurfaceY={waterSurfaceY} />
       <Microfauna activity={ecology.microfaunaActivity} waterSurfaceY={waterSurfaceY} />
-      <FeedCloud pulse={events.feedPulse} satiation={livestock.fishSatiation} waterSurfaceY={waterSurfaceY} />
+      <FoodPellets pellets={scenePellets} />
+      <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />
     </group>
   )
 }
