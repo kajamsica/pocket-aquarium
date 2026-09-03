@@ -1,0 +1,86 @@
+.specimen-profile-panel {
+  --studio-ink: #182127;
+  --studio-muted: #5e6b72;
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+  overflow: auto;
+  color: var(--studio-ink);
+  background: #d7d8d6;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.specimen-profile-panel .profile-section {
+  padding: 15px;
+  border: 1px solid rgba(24, 33, 39, 0.16);
+  border-radius: 12px;
+  background: rgba(247, 248, 246, 0.9);
+}
+
+.specimen-profile-panel .profile-section > header p,
+.specimen-profile-panel .profile-section h2,
+.specimen-profile-panel .profile-section h3,
+.specimen-profile-panel .profile-section p { margin: 0; }
+.specimen-profile-panel .profile-section > header p { color: var(--studio-muted); font-size: 0.62rem; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; }
+.specimen-profile-panel .profile-section h2 { margin: 2px 0 11px; font-size: 1rem; }
+
+.specimen-profile-panel .evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.specimen-profile-panel .evidence-card {
+  display: grid;
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid rgba(24, 33, 39, 0.12);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.specimen-profile-panel .evidence-card--unset { border-style: dashed; background: #f7f2ea; }
+.specimen-profile-panel .evidence-card h3 { font-size: 0.72rem; }
+.specimen-profile-panel .evidence-card > strong { font-family: ui-monospace, "SFMono-Regular", monospace; font-size: 0.68rem; }
+.specimen-profile-panel .evidence-card p { color: var(--studio-muted); font-size: 0.64rem; }
+.specimen-profile-panel .evidence-tags,
+.specimen-profile-panel .evidence-card nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.specimen-profile-panel .evidence-tags span,
+.specimen-profile-panel .evidence-card nav a,
+.specimen-profile-panel .evidence-card nav > span { padding: 2px 5px; border-radius: 4px; color: #34545a; background: #e7eff0; font-size: 0.58rem; }
+.specimen-profile-panel .evidence-card nav a { text-decoration: none; }
+.specimen-profile-panel .evidence-card .seller-warning { color: #8a4e21; font-weight: 700; }
+.specimen-profile-panel .profile-section details { margin-top: 10px; }
+.specimen-profile-panel .profile-section summary { cursor: pointer; font-weight: 700; }
+
+.specimen-profile-panel .calibration-warning,
+.specimen-profile-panel .critical-note { padding: 8px; border-radius: 7px; color: #6b461a; background: #fff1d8; }
+.specimen-profile-panel .calibration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.specimen-profile-panel .calibration-grid label { display: grid; gap: 4px; color: var(--studio-muted); font-size: 0.68rem; }
+.specimen-profile-panel .calibration-grid small { font-size: 0.58rem; }
+.specimen-profile-panel .calibration-grid input { width: 100%; min-height: 40px; padding: 7px; border: 1px solid rgba(24, 33, 39, 0.22); border-radius: 7px; color: var(--studio-ink); background: #fff; }
+
+.specimen-profile-panel .response-bands { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.specimen-profile-panel .response-band { display: grid; gap: 2px; padding: 8px; border-radius: 7px; background: #e6eceb; font-size: 0.6rem; }
+.specimen-profile-panel .response-band strong { text-transform: uppercase; }
+.specimen-profile-panel .response-band--ideal { background: #d6eee2; }
+.specimen-profile-panel .response-band--neutral { background: #e8ece5; }
+.specimen-profile-panel .response-band--poor { background: #f4e6c9; }
+.specimen-profile-panel .response-band--critical { background: #f2d4cf; }
+.specimen-profile-panel .critical-note { margin-top: 9px !important; }
+
+.specimen-profile-panel .compatibility-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.specimen-profile-panel .compatibility-list li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(24, 33, 39, 0.1); }
+.specimen-profile-panel .compatibility-list span { font-weight: 750; text-transform: uppercase; }
+.specimen-profile-panel .compatibility-list span[data-outcome="unknown"] { color: #8a4e21; }
+.specimen-profile-panel .compatibility-list small { grid-column: 1 / -1; color: var(--studio-muted); }
+
+@media (max-width: 800px) {
+  .specimen-profile-panel { grid-template-columns: 1fr; }
+  .specimen-profile-panel .evidence-grid,
+  .specimen-profile-panel .calibration-grid { grid-template-columns: 1fr; }
+  .specimen-profile-panel .response-bands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
