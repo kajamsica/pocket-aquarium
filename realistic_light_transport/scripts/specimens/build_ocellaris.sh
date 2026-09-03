@@ -9,4 +9,9 @@ if [ "$version" != "Blender 5.2.1 LTS" ]; then
   exit 1
 fi
 
-"$BLENDER_BIN" --background --factory-startup --python scripts/specimens/author_ocellaris.py --
+blend="art/specimens/ocellaris/ocellaris.blend"
+
+"$BLENDER_BIN" --background --factory-startup --python scripts/specimens/author_ocellaris.py -- --mode author
+"$BLENDER_BIN" "$blend" --background --python scripts/specimens/validate_ocellaris.py -- --stage source
+"$BLENDER_BIN" "$blend" --background --python scripts/specimens/author_ocellaris.py -- --mode export
+"$BLENDER_BIN" --background --factory-startup --python scripts/specimens/validate_ocellaris.py -- --stage runtime

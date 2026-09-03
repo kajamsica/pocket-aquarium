@@ -1,19 +1,20 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "speciesId": "ocellaris",
   "scientificName": "Amphiprion ocellaris",
   "biome": "reef",
   "waterType": "salt",
-  "assetVersion": "1.0.0",
+  "assetVersion": "1.1.0",
   "referenceAdultLengthMeters": 0.08,
-  "origin": "center_of_mass",
+  "origin": "anatomical_midbody",
   "forwardAxis": "+X",
   "upAxis": "+Y",
   "lod": 1,
   "sourceManifest": "ocellaris.asset.json",
   "author": "Pocket Aquarium project",
   "contributors": [
-    "Codex FISH3D-P1 asset lane"
+    "Codex FISH3D-P1 asset lane",
+    "Codex ocellaris repair lane"
   ],
   "rightsStatus": "PROJECT_OWNED",
   "licenseExpression": "NOASSERTION",
@@ -23,6 +24,18 @@
       "usage": "internal visual reference only; no pixels sampled or copied",
       "sha256": "27b7f593e45c9f3fe3704d0e0ddcd118aaa0f6e1945f578d38f6d82fd30f223a",
       "rightsStatus": "UNRESOLVED_REFERENCE_ONLY"
+    },
+    {
+      "url": "https://www.nausicaa.fr/en/my-visit/animals/clown-anemonefish",
+      "usage": "anatomy reference only"
+    },
+    {
+      "url": "https://zoo.hr/riba-klaun-amphiprion-ocellaris/",
+      "usage": "marking reference only"
+    },
+    {
+      "url": "https://unsplash.com/photos/a-fish-swimming-in-water-mJwTvRloq-c",
+      "usage": "swimming reference only"
     }
   ],
   "generatedReferences": [],
@@ -30,33 +43,81 @@
     "blender": "5.2.1 LTS",
     "exporter": "Blender native glTF 2.0 exporter"
   },
-  "sourceBlendSha256": "23b373dc61acaf819a22a1efb76314aa0df1110bfcc7e720d2d23d58144a12ce",
-  "exportScriptSha256": "92ede4f818829e618bad2a26dda376a1be14ff31997e1c382cbdc5ba7e6d2017",
+  "sourceBlendSha256": "c23b0cf9ea872c45a405102811d03a964e00ef16fea40f4328c773d5ef1b9463",
+  "exportScriptSha256": "ec1d8d50ab343952fcae6a6017d817bb0e2c18c8952783d601c5911577461855",
+  "validatorScriptSha256": "33b32ccacfba528b69c0cd879ac04372592e170e042f7f77188d1ecd3e2e7979",
   "runtimeGlbSha256": {
-    "lod1": "6ea07136a440888a555dd29a4d4cf14f8f441ffbf69608cb7d8f551c7d105e73"
+    "lod1": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0"
   },
   "coordinateContract": {
     "unitMeters": 1,
-    "forwardAxis": "+X",
-    "upAxis": "+Y",
-    "origin": "center_of_mass"
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
   },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "1f0d65eca7a15e6ad45b7066050f3f19b9a49603d697442dbe32f23fe933a75e"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "dbf578e9eb884e03acf28d14e07bbd3570aad2b8a51563533f9ee4b18667abaf"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "dbf578e9eb884e03acf28d14e07bbd3570aad2b8a51563533f9ee4b18667abaf"
+    },
+    {
+      "path": "textures/fin-mask.png",
+      "sha256": "9f7674d9431aeedefad9409785e2e16259a3db6b06f878593950adfacdf478a4"
+    }
+  ],
   "statistics": {
-    "triangles": 4424,
-    "sourceTriangles": 2392,
+    "triangles": 9052,
+    "sourceTriangles": 4860,
     "materials": 6,
-    "bones": 13,
+    "bones": 14,
+    "nodes": 25,
     "clips": [
+      "burst",
       "idle",
-      "swim",
-      "burst"
+      "swim"
     ],
-    "bodyVertices": 1218,
-    "finVertices": 62,
-    "runtimeBytes": 250868
+    "bodyVertices": 2306,
+    "finVertices": 196,
+    "runtimeBytes": 504444
   },
   "validator": {
-    "status": "deferred_to_FISH3D-03A",
-    "report": null
+    "status": "passed",
+    "sourceReport": "art/specimens/ocellaris/validation-source.json",
+    "runtimeReport": "art/specimens/ocellaris/validation-runtime.json",
+    "samplesPerFrame": 8,
+    "gates": [
+      "triangle_bvh_zones",
+      "fin_attachment_exclusion",
+      "center_plane",
+      "axial_curvature",
+      "normal_orientation",
+      "retained_actions",
+      "neutral_offsets",
+      "blender_glb_parity"
+    ]
+  },
+  "promotion": {
+    "status": "accepted",
+    "acceptedBy": "user",
+    "acceptedOn": "2026-09-03",
+    "promotedAssetVersion": "1.1.0",
+    "rollback": {
+      "assetVersion": "1.0.0",
+      "runtimeGlbSha256": "6ea07136a440888a555dd29a4d4cf14f8f441ffbf69608cb7d8f551c7d105e73"
+    }
   }
 }

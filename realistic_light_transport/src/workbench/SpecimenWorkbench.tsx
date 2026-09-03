@@ -223,7 +223,7 @@ export function SpecimenWorkbench() {
         </div>
         <div className="workbench-status" data-ready={!loading && !error}>
           <span aria-hidden="true" />
-          {error ? 'Inspection blocked' : loading ? 'Loading GLB' : 'Asset loaded'}
+          {error ? 'Inspection blocked' : loading ? 'Loading GLB' : 'Accepted asset loaded'}
         </div>
       </header>
 
