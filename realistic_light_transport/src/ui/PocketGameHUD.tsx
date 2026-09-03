@@ -57,6 +57,7 @@ function signal(label: string, value: number, inverted = false) {
 export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange }: PocketGameHUDProps) {
   const [mobileSheet, setMobileSheet] = useState<MobileSheet | null>('water')
   const { clock, tank, lightField, events } = view.reefSnapshot
+  const hungryFishCount = view.specimens.filter((specimen) => specimen.kind === 'fish' && specimen.alive && specimen.hunger > .12).length
   const levelRatio = Math.min(1, Math.max(0, view.water.levelL / tank.targetWaterVolumeLiters))
   const command = guideCommand(view.guide.nextAction?.type)
   const guideLabel = typeof view.guide.nextAction?.label === 'string' ? view.guide.nextAction.label : 'Continue'
@@ -97,11 +98,30 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         <p>{view.guide.body}</p>
         {command ? <button className="hud-button hud-button-primary" type="button" onClick={runGuide}>{guideLabel}</button> : null}
       </section>
+      <section className="pocket-nitrogen-cycle" aria-labelledby="pocket-cycle-heading">
+        <div><p>Live biofilter model</p><h2 id="pocket-cycle-heading">Ammonia → nitrite → nitrate</h2></div>
+        <ol>
+          <li data-active={view.water.ammonia > .05 || view.cycle.ammoniaSource}>
+            <span>1 · Waste fuel</span><strong>NH₃ {view.water.ammonia.toFixed(2)} mg/L</strong>
+            <small>{view.cycle.ammoniaSource ? 'Measured source is feeding colony one.' : 'Add a source to begin fishless cycling.'}</small>
+          </li>
+          <li data-active={view.water.nitrite > .05 || view.cycle.aob > .08}>
+            <span>2 · Colony one</span><strong>NO₂ {view.water.nitrite.toFixed(2)} mg/L</strong>
+            <small>Ammonia oxidizers {Math.round(view.cycle.aob * 100)}% established.</small>
+          </li>
+          <li data-active={view.water.nitrate > 1 || view.cycle.nob > .06}>
+            <span>3 · Colony two</span><strong>NO₃ {view.water.nitrate.toFixed(1)} mg/L</strong>
+            <small>Nitrite oxidizers {Math.round(view.cycle.nob * 100)}% established.</small>
+          </li>
+        </ol>
+        <small className="pocket-cycle-note">The arrows follow authoritative simulation state. Player water-test readings remain in the panel below.</small>
+      </section>
       <div className="hud-panel-heading"><div><p>Last tested water</p><h2 id="pocket-water-heading">{view.habitatName}</h2></div>
         <span className="hud-status-chip" data-alert={view.testFreshness.stale}>{view.testFreshness.label}</span></div>
       <dl className="hud-metric-grid pocket-summary-grid" aria-label="Progression and tank summary">
         <div className="hud-metric"><dt>Credits</dt><dd>{view.credits}</dd></div><div className="hud-metric"><dt>XP</dt><dd>{view.xp}</dd></div>
         <div className="hud-metric"><dt>Tier</dt><dd>{view.tierName}</dd></div><div className="hud-metric"><dt>Residents</dt><dd>{view.specimens.length}</dd></div>
+        <div className="hud-metric"><dt>Still need food</dt><dd>{hungryFishCount}</dd></div>
       </dl>
       <div className="pocket-water-level"><div><span>Live fill level</span><strong>{view.water.levelL.toFixed(1)} / {tank.targetWaterVolumeLiters.toFixed(1)} L</strong></div>
         <progress max={tank.targetWaterVolumeLiters} value={view.water.levelL} aria-label="Operating water level">{Math.round(levelRatio * 100)}%</progress>
@@ -169,6 +189,12 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         <button className="hud-button" type="button" onClick={() => dispatch({ type: 'WATER_TEST' })}>Water test</button>
         <button className="hud-button" type="button" onClick={() => dispatch({ type: 'WATER_CHANGE', fraction: 0.25 })}>25% water change</button>
         <button className="hud-button hud-button-ato" type="button" onClick={() => dispatch({ type: 'WATER_TOP_OFF' })}>Freshwater top-off</button>
+        <button className="hud-button" type="button" onClick={() => {
+          if (window.confirm('Start a new dry reef? This replaces the current aquarium save.')) {
+            dispatch({ type: 'CHOOSE_HABITAT', habitat: 'reef' })
+            setMobileSheet('water')
+          }
+        }}>Start new dry reef</button>
       </div>
       <div className="hud-speed-control pocket-speed-control" role="group" aria-label="Simulation speed"><span>Root speed</span>
         {SPEEDS.map((speed) => <button key={speed} type="button" aria-pressed={clock.speed === speed}

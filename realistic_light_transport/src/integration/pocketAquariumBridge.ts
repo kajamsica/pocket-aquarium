@@ -125,7 +125,16 @@ export interface PocketState {
   tier: string
   equipment: Record<string, string>
   water: PocketWater
-  cycle: { stage: string; filled: boolean; lifeSupport: boolean }
+  cycle: {
+    stage: string
+    filled: boolean
+    lifeSupport: boolean
+    ammoniaSource: boolean
+    inoculated: boolean
+    aob: number
+    nob: number
+    validationDays: number
+  }
   succession: { age: number; haze: number; diatom: number; greenFilm: number; cyano: number }
   livestock: PocketAnimal[]
   corals: PocketCoral[]
@@ -211,6 +220,7 @@ export interface PocketGameView {
   readonly xp: number
   readonly cycleStage: string
   readonly cycled: boolean
+  readonly cycle: Readonly<PocketState['cycle']>
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
   readonly food: readonly PocketFoodPellet[]
@@ -410,7 +420,7 @@ export function projectPocketState(state: PocketState): PocketGameView {
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
-    cycled: runtime.DATA.isCycled(state), water: { ...state.water },
+    cycled: runtime.DATA.isCycled(state), cycle: { ...state.cycle }, water: { ...state.water },
     specimens: living.map((animal) => { const species = runtime.DATA.resolveSpecies(state, animal.species); if (!species) throw new Error(`Unknown root PA specimen: ${animal.species}`); return { ...animal,
       speciesId: animal.species, name: species.name, scientificName: species.sci,
       adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species } }),

@@ -39,7 +39,7 @@ function ExposureController({ lightPower }: { readonly lightPower: number }) {
   const { gl } = useThree()
 
   useEffect(() => {
-    gl.toneMappingExposure = THREE.MathUtils.lerp(0.82, 1.08, lightPower)
+    gl.toneMappingExposure = THREE.MathUtils.lerp(1.06, 1.28, lightPower)
   }, [gl, lightPower])
 
   return null
@@ -152,7 +152,7 @@ function ReefWorld({
       keyLight.current.position.x = Math.sin(elapsed * 0.09) * 0.16
     }
     if (fillLight.current) {
-      fillLight.current.intensity = 3 + lightPower * 12
+      fillLight.current.intensity = 12 + lightPower * 18
     }
   })
 
@@ -160,7 +160,8 @@ function ReefWorld({
     <>
       <color attach="background" args={['#01080d']} />
       <fogExp2 attach="fog" args={['#061923', 0.055]} />
-      <hemisphereLight args={['#7cc8e8', '#071018', 0.38]} />
+      <hemisphereLight args={['#8bd5f2', '#0d1c24', 0.6]} />
+      <directionalLight color="#8fbfd0" intensity={0.42} position={[1.8, 2.5, 5]} />
       <spotLight
         ref={keyLight}
         castShadow
@@ -178,7 +179,7 @@ function ReefWorld({
       <pointLight
         ref={fillLight}
         color="#3dd9d0"
-        intensity={3 + lightPower * 12}
+        intensity={12 + lightPower * 18}
         decay={2}
         distance={7}
         position={[-3.4, 0.6, 3.2]}

@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import type { ReefSceneProps } from '../contracts'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
+import { REEF_ROCKS as ROCKS, seededUnit } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
 
 const TANK_HALF_WIDTH = 2.76
@@ -30,11 +31,6 @@ interface HabitatMaterials {
   readonly rock: ProceduralMaterialTextures
   readonly sand: ProceduralMaterialTextures
   readonly coral: ProceduralMaterialTextures
-}
-
-function seededUnit(index: number, salt = 0) {
-  const value = Math.sin((index + 1) * 12.9898 + salt * 78.233) * 43758.5453
-  return value - Math.floor(value)
 }
 
 function waterSurfaceFor(tank: ReefSceneProps['snapshot']['tank']) {
@@ -72,29 +68,6 @@ function sampleSceneFlow(flowField: FlowFieldSource, x: number, y: number, water
     (y - DYNAMIC_FLOOR_Y) / Math.max(waterSurfaceY - DYNAMIC_FLOOR_Y, 0.01),
   )
 }
-
-const ROCKS = Array.from({ length: 13 }, (_, index) => {
-  const arc = (index / 12) * Math.PI * 1.74 + 0.16
-  const radius = 0.66 + seededUnit(index, 1) * 1.12
-  const side = index < 7 ? -0.62 : 0.82
-  return {
-    position: new THREE.Vector3(
-      side + Math.cos(arc) * radius,
-      SAND_Y + 0.22 + seededUnit(index, 2) * 0.4,
-      Math.sin(arc) * 0.52 + (seededUnit(index, 3) - 0.5) * 0.42,
-    ),
-    rotation: new THREE.Euler(
-      seededUnit(index, 4) * 0.45,
-      seededUnit(index, 5) * Math.PI,
-      (seededUnit(index, 6) - 0.5) * 0.48,
-    ),
-    scale: new THREE.Vector3(
-      0.36 + seededUnit(index, 7) * 0.4,
-      0.32 + seededUnit(index, 8) * 0.42,
-      0.34 + seededUnit(index, 9) * 0.36,
-    ),
-  }
-})
 
 const PORE_PATCHES = Array.from({ length: 32 }, (_, index) => {
   const host = ROCKS[index % ROCKS.length]
