@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "torch_coral",
+  "sourceSha256": "fc2f6327eb361d1b7eeee4462d7ec492706cca0441222df924988e2a8c1bfbcc",
+  "objects": [
+    {
+      "name": "PA_torch_coral_Polyps",
+      "vertexCount": 512,
+      "triangleCount": 992,
+      "vertexDigest": "d46cb3216f6568187bb381ca6bb4c370a1c7d7ee3a2f676f7d550e9628d8b944",
+      "topologyDigest": "27208484deab163d9e487c822c192cfb4f699d6a08bffc8585f6e583d50d96c0",
+      "uvDigest": "36f5e559a04b97b28843b58ec64e873aa3a596015cef8d72a73d0437c05308c0",
+      "weightDigest": "cdd1fff8fff888167952340f709459fb0543e85147960416ce0054685832d7e3",
+      "materials": [
+        "PA_torch_coral_Disc",
+        "PA_torch_coral_Mouth"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_torch_coral_Skeleton",
+      "vertexCount": 390,
+      "triangleCount": 760,
+      "vertexDigest": "9a61adf24ccf8de7727de41f679c717e4b53e4f7303da31d021d298063651443",
+      "topologyDigest": "074c73851ea4fcc0a1d965774a3fc0038ef5f607fad7fe7f3e0f47e6c8456953",
+      "uvDigest": "2b47f01937ffdf1143e7573d8b978d701135822c1775ebe54dc2f613b0059cb8",
+      "weightDigest": "ee3657d40df9d443dcae4847c70b0a62407bdb56cbde809886df7b3f3355bb8a",
+      "materials": [
+        "PA_torch_coral_Rock",
+        "PA_torch_coral_Skeleton"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_torch_coral_Tentacles",
+      "vertexCount": 8432,
+      "triangleCount": 16320,
+      "vertexDigest": "afd58aaf27e838fe7821d47d10edbcb0a25678bd6b53f2ec021e23e276642a31",
+      "topologyDigest": "974b6a68df24eb61d2ce190f40c7a53e6ab2c837aa98886548252ab5f6c1cffa",
+      "uvDigest": "c2affe3acb6a284bb19d030dd462ff278e0dfde17c827724c288a800982f023a",
+      "weightDigest": "a6a555cfd4aa58e5c8e20642ff93254c34a2c7d2fe79b0d366e08112c5bc172e",
+      "materials": [
+        "PA_torch_coral_Tissue"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_torch_coral_Rig",
+    "boneCount": 30,
+    "deformBoneCount": 29,
+    "boneDigest": "3e15d3759af0acde798ad28419c1f4c9e5149d93ddd25df18b47304d56491e74"
+  },
+  "geometryDigest": "021f16563a6dbab8bc35e55e38146fb99bbb4240509cc166ff64dc0d8cbb42b5",
+  "variantId": "green_pink_tips"
+}

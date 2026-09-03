@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "arm_curl": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Arm0_A",
+        "Arm0_B",
+        "Arm0_C",
+        "Arm0_D",
+        "Arm1_A_L",
+        "Arm1_B_L",
+        "Arm1_C_L",
+        "Arm1_D_L"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "crawl": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Arm0_A",
+        "Arm0_B",
+        "Arm0_C",
+        "Arm0_D",
+        "Arm1_A_L",
+        "Arm1_A_R",
+        "Arm1_B_L",
+        "Arm1_B_R",
+        "Arm1_C_L",
+        "Arm1_C_R",
+        "Arm1_D_L",
+        "Arm1_D_R",
+        "Arm2_A_L",
+        "Arm2_A_R",
+        "Arm2_B_L",
+        "Arm2_B_R",
+        "Arm2_C_L",
+        "Arm2_C_R",
+        "Arm2_D_L",
+        "Arm2_D_R",
+        "Disc"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Arm0_B",
+        "Arm0_C",
+        "Arm0_D",
+        "Arm1_B_L",
+        "Arm1_B_R",
+        "Arm1_C_L",
+        "Arm1_C_R",
+        "Arm1_D_L",
+        "Arm1_D_R",
+        "Arm2_B_L",
+        "Arm2_B_R",
+        "Arm2_C_L",
+        "Arm2_C_R",
+        "Arm2_D_L",
+        "Arm2_D_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 7680,
+    "materials": 1,
+    "nodes": 25,
+    "skinJoints": 22,
+    "images": 3,
+    "meshes": [
+      "PA_blue_linckia_Body"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "arm_curl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.11293332278728485,
+      -0.1249999925494194,
+      -2.0152967291050468e-18
+    ],
+    "max": [
+      0.13415658473968506,
+      0.1249999925494194,
+      0.025759005919098854
+    ],
+    "deviationMeters": 3.094458528950093e-08
+  }
+}

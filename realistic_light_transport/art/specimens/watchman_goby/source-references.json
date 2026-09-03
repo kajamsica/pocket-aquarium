@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "watchman_goby",
+  "revision": 1,
+  "policy": "References informed proportions, meristics, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a reference, texture or tracing source.",
+  "sources": [
+    {
+      "id": "WORMS-278326",
+      "title": "Cryptocentrus cinctus (Herre, 1936) taxon record (accepted; synonym Smilogobius cinctus Herre, 1936)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=278326",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-CRYPTOCENTRUS_CINCTUS",
+      "title": "Cryptocentrus cinctus species summary: max 10.0 cm SL; D VII,10; A I,9; body depth 4.4-4.6 in SL; rounded caudal about equal to head length; united pelvic fins with frenum; head without scales; fine pale blue or white spotting on head, anterodorsal body and fins; dark brown streak above maxilla",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Cryptocentrus-cinctus.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "FOA-CRYPTOCENTRUS_CINCTUS",
+      "title": "Cryptocentrus cinctus species account (yellow and pale colour phases, 4-5 faint bars, meristics, pelvic disc)",
+      "publisher": "Fishes of Australia (Museums Victoria)",
+      "url": "https://fishesofaustralia.net.au/home/species/98",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-CRYPTOCENTRUS_CINCTUS",
+      "title": "Category:Cryptocentrus cinctus (openly licensed photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Cryptocentrus_cinctus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Measured proportions (body depth in SL, caudal length relative to head, fin meristics) come from FishBase and Fishes of Australia; lateral proportions are checked against openly licensed photographs. Top and front views are inferred from the general Gobiinae shrimp-goby body plan (broad head, circular section, flattened belly) rather than calibrated dorsal or frontal references."
+}

@@ -1,0 +1,1121 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "pistol_shrimp",
+  "rig": "PA_pistol_shrimp_Rig",
+  "root": "PA_pistol_shrimp_Root",
+  "meshes": [
+    "PA_pistol_shrimp_Body",
+    "PA_pistol_shrimp_Limbs"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_carapace",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_somite_1",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_somite_2",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_somite_3",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_somite_4",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_somite_5",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_somite_6",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_telson",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_palm_major",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_L",
+        "attach_leg_P2_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P2_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_L",
+        "attach_leg_P3_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P3_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_L",
+        "attach_leg_P4_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P4_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_L",
+        "attach_leg_P5_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P5_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_L"
+      ],
+      "label": "legs_P2_P3_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_L"
+      ],
+      "label": "legs_P2_P4_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_L"
+      ],
+      "label": "legs_P2_P5_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_L"
+      ],
+      "label": "legs_P3_P4_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_L"
+      ],
+      "label": "legs_P3_P5_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_L"
+      ],
+      "label": "legs_P4_P5_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_L",
+        "attach_leg_P5_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_1"
+      ],
+      "label": "leg_P5_L_somite_1"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_L",
+        "attach_leg_P5_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_2"
+      ],
+      "label": "leg_P5_L_somite_2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_L",
+        "attach_leg_P4_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_1"
+      ],
+      "label": "leg_P4_L_somite_1"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major",
+        "attach_cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "cheliped_major_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_L"
+      ],
+      "label": "cheliped_major_leg_P2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_L"
+      ],
+      "label": "cheliped_major_leg_P3"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_L"
+      ],
+      "label": "cheliped_major_antenna"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule_L"
+      ],
+      "label": "cheliped_major_antennule"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule2_L"
+      ],
+      "label": "cheliped_major_antennule2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_scaphocerite_L"
+      ],
+      "label": "cheliped_major_scaphocerite"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_L",
+        "attach_antenna_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "antenna_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule_L",
+        "attach_antennule_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "antennule_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_scaphocerite_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "scaphocerite_L_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule_L"
+      ],
+      "label": "antenna_antennule_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule2_L"
+      ],
+      "label": "antenna_antennule2_L"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_R",
+        "attach_leg_P2_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P2_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_R",
+        "attach_leg_P3_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P3_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_R",
+        "attach_leg_P4_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P4_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_R",
+        "attach_leg_P5_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "leg_P5_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_R"
+      ],
+      "label": "legs_P2_P3_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_R"
+      ],
+      "label": "legs_P2_P4_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_R"
+      ],
+      "label": "legs_P2_P5_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_R"
+      ],
+      "label": "legs_P3_P4_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_R"
+      ],
+      "label": "legs_P3_P5_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_R"
+      ],
+      "label": "legs_P4_P5_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_R",
+        "attach_leg_P5_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_1"
+      ],
+      "label": "leg_P5_R_somite_1"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P5_R",
+        "attach_leg_P5_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_2"
+      ],
+      "label": "leg_P5_R_somite_2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P4_R",
+        "attach_leg_P4_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_1"
+      ],
+      "label": "leg_P4_R_somite_1"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor",
+        "attach_cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "cheliped_minor_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P2_R"
+      ],
+      "label": "cheliped_minor_leg_P2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_leg_P3_R"
+      ],
+      "label": "cheliped_minor_leg_P3"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_R"
+      ],
+      "label": "cheliped_minor_antenna"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule_R"
+      ],
+      "label": "cheliped_minor_antennule"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule2_R"
+      ],
+      "label": "cheliped_minor_antennule2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_scaphocerite_R"
+      ],
+      "label": "cheliped_minor_scaphocerite"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_R",
+        "attach_antenna_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "antenna_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule_R",
+        "attach_antennule_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "antennule_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_scaphocerite_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "label": "scaphocerite_R_carapace"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule_R"
+      ],
+      "label": "antenna_antennule_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_R"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antennule2_R"
+      ],
+      "label": "antenna_antennule2_R"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_major"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "cheliped_minor"
+      ],
+      "label": "cheliped_major_minor"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Limbs",
+        "part_antenna_R"
+      ],
+      "label": "antennae"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "uropod_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "uropod_R"
+      ],
+      "label": "uropods"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_hood_L"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_hood_R"
+      ],
+      "label": "hoods"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_1"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_3"
+      ],
+      "label": "somites_1_3"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_2"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_4"
+      ],
+      "label": "somites_2_4"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_3"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_5"
+      ],
+      "label": "somites_3_5"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_4"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_6"
+      ],
+      "label": "somites_4_6"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_2"
+      ],
+      "label": "carapace_somite_2"
+    },
+    {
+      "a": [
+        "PA_pistol_shrimp_Body",
+        "part_carapace"
+      ],
+      "b": [
+        "PA_pistol_shrimp_Body",
+        "part_somite_3"
+      ],
+      "label": "carapace_somite_3"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P2_L",
+      "exclude": "attach_leg_P2_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P3_L",
+      "exclude": "attach_leg_P3_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P4_L",
+      "exclude": "attach_leg_P4_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P5_L",
+      "exclude": "attach_leg_P5_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_antenna_L",
+      "side": -1,
+      "exclude": "attach_antenna_L"
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_antennule_L",
+      "side": -1,
+      "exclude": "attach_antennule_L"
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_antennule2_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_scaphocerite_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "uropod_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_hood_L",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "cheliped_major",
+      "exclude": "attach_cheliped_major",
+      "side": -1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P2_R",
+      "exclude": "attach_leg_P2_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P3_R",
+      "exclude": "attach_leg_P3_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P4_R",
+      "exclude": "attach_leg_P4_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_leg_P5_R",
+      "exclude": "attach_leg_P5_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_antenna_R",
+      "side": 1,
+      "exclude": "attach_antenna_R"
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_antennule_R",
+      "side": 1,
+      "exclude": "attach_antennule_R"
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_antennule2_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "part_scaphocerite_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "uropod_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "group": "part_hood_R",
+      "side": 1
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "group": "cheliped_minor",
+      "exclude": "attach_cheliped_minor",
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.05,
+    "tolerance": 0.03,
+    "kind": "adult_body_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Antenna_L",
+        "Antenna_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Arm_minor",
+        "Body",
+        "Dactyl_minor",
+        "P2_L",
+        "P2_R",
+        "Uropod_L",
+        "Uropod_R"
+      ],
+      "shapeKeys": []
+    },
+    "walk": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Antenna_L",
+        "Antenna_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Arm_major",
+        "Arm_minor",
+        "Body",
+        "Dactyl_minor",
+        "P2_L",
+        "P2_R",
+        "P3_A_L",
+        "P3_A_R",
+        "P3_B_L",
+        "P3_B_R",
+        "P4_A_L",
+        "P4_A_R",
+        "P4_B_L",
+        "P4_B_R",
+        "P5_A_L",
+        "P5_A_R",
+        "P5_B_L",
+        "P5_B_R",
+        "Uropod_L",
+        "Uropod_R"
+      ],
+      "shapeKeys": []
+    },
+    "snap": {
+      "loop": false,
+      "frames": 40,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_major",
+        "Body",
+        "Dactyl_major",
+        "P3_B_L",
+        "P3_B_R",
+        "P4_B_L",
+        "P4_B_R",
+        "P5_B_L",
+        "P5_B_R",
+        "Uropod_L",
+        "Uropod_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "walk",
+    "response": "snap"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_leg_P2_L",
+      "right": "part_leg_P2_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_leg_P3_L",
+      "right": "part_leg_P3_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_leg_P4_L",
+      "right": "part_leg_P4_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_leg_P5_L",
+      "right": "part_leg_P5_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_antenna_L",
+      "right": "part_antenna_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_antennule_L",
+      "right": "part_antennule_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_antennule2_L",
+      "right": "part_antennule2_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Limbs",
+      "left": "part_scaphocerite_L",
+      "right": "part_scaphocerite_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_hood_L",
+      "right": "part_hood_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_protopod_L",
+      "right": "part_protopod_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_exopod_L",
+      "right": "part_exopod_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_endopod_L",
+      "right": "part_endopod_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_pleopod_1_L",
+      "right": "part_pleopod_1_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_pleopod_2_L",
+      "right": "part_pleopod_2_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_pleopod_3_L",
+      "right": "part_pleopod_3_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_pleopod_4_L",
+      "right": "part_pleopod_4_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_pistol_shrimp_Body",
+      "left": "part_pleopod_5_L",
+      "right": "part_pleopod_5_R",
+      "tolerance": 1e-05
+    }
+  ],
+  "variantId": null,
+  "previewAction": "walk",
+  "restBounds": {
+    "min": [
+      -0.017977,
+      -0.018367,
+      -0.007914
+    ],
+    "max": [
+      0.032023,
+      0.018367,
+      0.00402
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png"
+  ],
+  "notes": {
+    "designScale": 0.7879548998259713,
+    "legs": [
+      "P2",
+      "P3",
+      "P4",
+      "P5"
+    ],
+    "majorChelaSide": "y<0"
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/pistol_shrimp/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/pistol_shrimp/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.01797660067677498,
+      -0.01836710423231125,
+      -0.007913930341601372
+    ],
+    "boundsMax": [
+      0.03202340006828308,
+      0.018367106094956398,
+      0.004019641317427158
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

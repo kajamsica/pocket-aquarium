@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "cerith_snail",
+  "revision": 1,
+  "policy": "References informed shell proportions (whorl count, spire angle, length to width ratio, sculpture layout, aperture and canal form), soft-part layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source. The trade name 'cerith snail' covers several Cerithium species, so the asset is labelled at genus level.",
+  "sources": [
+    {
+      "id": "WORMS-137760",
+      "title": "Cerithium Bruguiere, 1789 genus record (accepted, Cerithiidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137760",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-CERITHIUM_LITTERATUM",
+      "title": "Cerithium litteratum (Born, 1778) species summary (max length 3.4 cm; benthic, 0-88 m, reef, seagrass and sand habitats)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Cerithium-litteratum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "CIESM-CERITHIUM_EGENUM",
+      "title": "Cerithium egenum atlas sheet: shell high-spired, about three times as long as wide, 9-11 whorls, granulose spiral cords, short deeply impressed siphonal canal, whitish with dark brown flames and mottles",
+      "publisher": "CIESM Mediterranean Science Commission, Atlas of Exotic Species",
+      "url": "https://www.ciesm.org/atlas/Cerithiumegenum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "PILSBRY_VANATTA-1906-HAWAIIAN_CERITHIIDAE",
+      "title": "On two Hawaiian Cerithiidae (Cerithium thaanumi: slender turreted shell, 12 convex whorls, three granose spiral cords per whorl, short straight anterior canal, length 14.2 mm x diameter 4.5 mm)",
+      "publisher": "Proceedings of the Academy of Natural Sciences of Philadelphia, via Biodiversity Heritage Library / Zenodo",
+      "url": "https://doi.org/10.5281/zenodo.16273768",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (published 1906)"
+    },
+    {
+      "id": "HAL-SANGIRAN-CERITHIUM_DIAGNOSIS",
+      "title": "The Sangiran fossil shell assemblages catalogue, Cerithiidae / Cerithium genus diagnosis (shell elongate, thick, sharply conical, high many-whorled spire, small aperture, spiral or nodulose sculpture with axial ribs, distinct anterior siphonal canal often laterally twisted)",
+      "publisher": "HAL open science",
+      "url": "https://hal.science/hal-04047360v1/document",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-CERITHIUM",
+      "title": "Category:Cerithium (openly licensed apertural and abapertural shell photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Cerithium",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Shell proportions (whorl count, spire angle, length to width ratio, cord layout, aperture and canal form) are calibrated from published genus and species descriptions and openly licensed apertural shell photographs. Soft-part proportions (foot, snout, tentacle length, siphon) are inferred from general cerithiid anatomy because calibrated live side, top and front photographs are not openly available; taxonomy is genus level because the trade name spans several Cerithium species."
+}

@@ -70,18 +70,25 @@ def grey(values: np.ndarray) -> np.ndarray:
 
 
 def write_image(name: str, path: Path, pixels: np.ndarray, non_color: bool = False):
-    """Create a packed Blender image from an (h, w, 4) float array and save it as PNG."""
+    """Create a packed Blender image from an (h, w, 4) float array and save it as PNG.
+
+    Pixel values are written verbatim as 8-bit bytes. Colour images are tagged sRGB, so species
+    paint functions author display-referred (sRGB-encoded) albedo values; data images
+    (roughness, normal) are tagged Non-Color and read back raw. The colourspace must be set
+    before the pixels are written: changing it afterwards makes Blender regenerate the buffer
+    and silently saves a black image.
+    """
     pixels = np.clip(np.asarray(pixels, dtype=np.float32), 0.0, 1.0)
     height, width = pixels.shape[:2]
     existing = bpy.data.images.get(name)
     if existing:
         bpy.data.images.remove(existing)
     image = bpy.data.images.new(name, width=width, height=height, alpha=True)
+    if non_color:
+        image.colorspace_settings.name = "Non-Color"
     image.pixels.foreach_set(pixels.ravel())
     image.filepath_raw = str(path)
     image.file_format = "PNG"
-    if non_color:
-        image.colorspace_settings.name = "Non-Color"
     path.parent.mkdir(parents=True, exist_ok=True)
     image.save()
     image.pack()

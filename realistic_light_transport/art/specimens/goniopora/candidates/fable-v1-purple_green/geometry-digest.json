@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "goniopora",
+  "sourceSha256": "950cccd9eda7c44689f8a765ddaf7acb7d981289956cca13f05f206eca0bb47a",
+  "objects": [
+    {
+      "name": "PA_goniopora_Polyps",
+      "vertexCount": 9672,
+      "triangleCount": 16120,
+      "vertexDigest": "0ea30d8b44dedffae360ede5cc5c0c143ac1960943a30ae4a6c287ce5c1e6655",
+      "topologyDigest": "4547b41fbca8da58c65144c85123b87362c1da0d0c4e1a1d4d8c299d5365186e",
+      "uvDigest": "96af5b1ba21f3234c1a73355dc2b768395dccf642de64689db8faafe57120a48",
+      "weightDigest": "a091e19877efe0b6a94bb2cdd0bebd1509487b47adb40a1de8be73ceca154c26",
+      "materials": [
+        "PA_goniopora_Tentacle",
+        "PA_goniopora_Tissue"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_goniopora_Skeleton",
+      "vertexCount": 548,
+      "triangleCount": 1088,
+      "vertexDigest": "8c63f1b69dde4e75872639d96eaff6f1385bd07afef10c5af614b093d711d235",
+      "topologyDigest": "a1a71a620f17792a9975ea3a4bd0656d56230011561fa52dbb06ff8b2db8328e",
+      "uvDigest": "ba89ba0c92fa6580aab820c342f045f41978fed77069d70ecdfaa2312479a548",
+      "weightDigest": "49a28df980700327afcadeb959e50d65c25007f881c4dc38198b77a3e7a7a586",
+      "materials": [
+        "PA_goniopora_Rock",
+        "PA_goniopora_Skeleton"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_goniopora_Rig",
+    "boneCount": 28,
+    "deformBoneCount": 27,
+    "boneDigest": "cae787b3e8469fdbe2e9953c6c125cbd2537e6321c68fd7f23ca197b80b11599"
+  },
+  "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+  "variantId": "purple_green"
+}

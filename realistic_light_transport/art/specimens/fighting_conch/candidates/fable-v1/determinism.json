@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "5e22bb0a19849bf0d3cb13a8f1495e63f549ebea841b835b884a15edfed67add",
+  "rebuildGeometryDigest": "5e22bb0a19849bf0d3cb13a8f1495e63f549ebea841b835b884a15edfed67add",
+  "textureHashMatch": true,
+  "textures": {
+    "shell-albedo.png": "67f4e1cc1073ca20c62f05fb996997a460a301c8cfd6def34435a1f0bc48075b",
+    "shell-normal.png": "6bec9082cb6c1e2eb3fbf3992c01976f244f72be61b6ee3d1a5ceecbab0d193d",
+    "shell-roughness.png": "ea6eaf575201ca9b10060451113e083d35051730deec5a44148148660ff8cfaa",
+    "soft-albedo.png": "8af656c1bd62f0997ff9579baac523c38a0d9e160755290804241a2c925a510b",
+    "soft-normal.png": "89643e33ceec7a580e9dc9b183887e4d480ef3597cd72efe1a8be7d52623de32",
+    "soft-roughness.png": "c43f311811f7c8dd498301630a0c7666d2819d4305d7ad9a89533ca383b8fcd7"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

@@ -1,0 +1,1046 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "cleaner_shrimp",
+  "rig": "PA_cleaner_shrimp_Rig",
+  "root": "PA_cleaner_shrimp_Root",
+  "meshes": [
+    "PA_cleaner_shrimp_Body",
+    "PA_cleaner_shrimp_Limbs",
+    "PA_cleaner_shrimp_Head"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_carapace",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_rostrum",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_abd_1",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_abd_2",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_abd_3",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_abd_4",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_abd_5",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_abd_6",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_telson",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_uropod_exopod_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_uropod_exopod_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_uropod_endopod_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "group": "part_uropod_endopod_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_1_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_1_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_hand_1_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_hand_1_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_dactyl_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_dactyl_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_2_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_2_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_hand_2_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_hand_2_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_3_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_3_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_4_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_4_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_5_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_leg_5_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_1_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_1_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_2_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_2_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_3_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_3_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_4_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_4_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_5_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_pleopod_5_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_maxilliped_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "part_maxilliped_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_eyestalk_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_eyestalk_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_eye_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_eye_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_ant_peduncle_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_ant_peduncle_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_scaphocerite_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_scaphocerite_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antennule_peduncle_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antennule_peduncle_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antenna_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antenna_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antennule_outer_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antennule_outer_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antennule_inner_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "part_antennule_inner_R",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_L"
+      ],
+      "label": "leg1_leg2_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_L"
+      ],
+      "label": "leg1_leg3_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_L"
+      ],
+      "label": "leg1_leg4_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_L"
+      ],
+      "label": "leg1_leg5_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_L"
+      ],
+      "label": "leg2_leg3_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_L"
+      ],
+      "label": "leg2_leg4_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_L"
+      ],
+      "label": "leg2_leg5_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_L"
+      ],
+      "label": "leg3_leg4_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_L"
+      ],
+      "label": "leg3_leg5_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_L"
+      ],
+      "label": "leg4_leg5_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "abdomen"
+      ],
+      "label": "legs_abdomen_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_L",
+        "pleo_root_L"
+      ],
+      "label": "legs_pleopods_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "maxillipeds"
+      ],
+      "label": "legs_maxillipeds_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_L",
+        "pleo_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "abdomen"
+      ],
+      "label": "pleopods_abdomen_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_L",
+        "pleo_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "tailfan"
+      ],
+      "label": "pleopods_tailfan_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_L",
+        "ant_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "carapace_all"
+      ],
+      "label": "antennae_carapace_all_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_L",
+        "ant_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "abdomen"
+      ],
+      "label": "antennae_abdomen_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_L",
+        "ant_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "tailfan"
+      ],
+      "label": "antennae_tailfan_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_L",
+        "ant_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Head",
+        "eyes_L"
+      ],
+      "label": "antennae_eyes_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antenna_L",
+        "ant_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Head",
+        "antennule_L",
+        "ant_root_L"
+      ],
+      "label": "antenna_antennule_L"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_R"
+      ],
+      "label": "leg1_leg2_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_R"
+      ],
+      "label": "leg1_leg3_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_R"
+      ],
+      "label": "leg1_leg4_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_1_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_R"
+      ],
+      "label": "leg1_leg5_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_R"
+      ],
+      "label": "leg2_leg3_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_R"
+      ],
+      "label": "leg2_leg4_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_2_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_R"
+      ],
+      "label": "leg2_leg5_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_R"
+      ],
+      "label": "leg3_leg4_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_3_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_R"
+      ],
+      "label": "leg3_leg5_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_4_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "leg_5_R"
+      ],
+      "label": "leg4_leg5_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "abdomen"
+      ],
+      "label": "legs_abdomen_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_R",
+        "pleo_root_R"
+      ],
+      "label": "legs_pleopods_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "maxillipeds"
+      ],
+      "label": "legs_maxillipeds_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_R",
+        "pleo_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "abdomen"
+      ],
+      "label": "pleopods_abdomen_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_R",
+        "pleo_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "tailfan"
+      ],
+      "label": "pleopods_tailfan_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_R",
+        "ant_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "carapace_all"
+      ],
+      "label": "antennae_carapace_all_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_R",
+        "ant_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "abdomen"
+      ],
+      "label": "antennae_abdomen_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_R",
+        "ant_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Body",
+        "tailfan"
+      ],
+      "label": "antennae_tailfan_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_R",
+        "ant_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Head",
+        "eyes_R"
+      ],
+      "label": "antennae_eyes_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antenna_R",
+        "ant_root_R"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Head",
+        "antennule_R",
+        "ant_root_R"
+      ],
+      "label": "antenna_antennule_R"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "legs_R"
+      ],
+      "label": "legs_left_right"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_L",
+        "pleo_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Limbs",
+        "pleopods_R",
+        "pleo_root_R"
+      ],
+      "label": "pleopods_left_right"
+    },
+    {
+      "a": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_L",
+        "ant_root_L"
+      ],
+      "b": [
+        "PA_cleaner_shrimp_Head",
+        "antennae_R",
+        "ant_root_R"
+      ],
+      "label": "antennae_left_right"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "legs_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "pleopods_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "antennae_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "legs_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "group": "pleopods_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "group": "antennae_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.06,
+    "tolerance": 0.03,
+    "kind": "adult_body_length"
+  },
+  "clips": {
+    "hover": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Ant_A_L",
+        "Ant_A_R",
+        "Ant_B_L",
+        "Ant_B_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Hand1_L",
+        "Hand1_R",
+        "Hand2_L",
+        "Hand2_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_A_L",
+        "Pleo_A_R",
+        "Pleo_B_L",
+        "Pleo_B_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    },
+    "walk": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Ant_A_L",
+        "Ant_A_R",
+        "Ant_B_L",
+        "Ant_B_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Hand1_L",
+        "Hand1_R",
+        "Hand2_L",
+        "Hand2_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_A_L",
+        "Pleo_A_R",
+        "Pleo_B_L",
+        "Pleo_B_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    },
+    "clean": {
+      "loop": false,
+      "frames": 45,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Ant_A_L",
+        "Ant_A_R",
+        "Ant_B_L",
+        "Ant_B_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Hand1_L",
+        "Hand1_R",
+        "Hand2_L",
+        "Hand2_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_A_L",
+        "Pleo_A_R",
+        "Pleo_B_L",
+        "Pleo_B_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "hover",
+    "locomotion": "walk",
+    "response": "clean"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "left": "legs_L",
+      "right": "legs_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_cleaner_shrimp_Limbs",
+      "left": "pleopods_L",
+      "right": "pleopods_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "left": "antennae_L",
+      "right": "antennae_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_cleaner_shrimp_Head",
+      "left": "eyes_L",
+      "right": "eyes_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_cleaner_shrimp_Body",
+      "left": "uropods_L",
+      "right": "uropods_R",
+      "tolerance": 0.0002
+    }
+  ],
+  "variantId": null,
+  "previewAction": "walk",
+  "restBounds": {
+    "min": [
+      -0.029912,
+      -0.012721,
+      -0.015953
+    ],
+    "max": [
+      0.03003,
+      0.012721,
+      0.022098
+    ]
+  },
+  "textures": [
+    "textures/shell-albedo.png",
+    "textures/shell-roughness.png",
+    "textures/shell-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.0598,
+    "deformBones": 31,
+    "parts": {
+      "body": 13,
+      "limbs": 28,
+      "head": 16
+    }
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/cleaner_shrimp/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/cleaner_shrimp/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.029912080615758896,
+      -0.012720519676804543,
+      -0.015953341498970985
+    ],
+    "boundsMax": [
+      0.03003017231822014,
+      0.012720519676804543,
+      0.022097783163189888
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

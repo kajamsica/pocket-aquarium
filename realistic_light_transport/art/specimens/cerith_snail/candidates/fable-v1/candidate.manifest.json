@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "cerith_snail",
+  "variantId": null,
+  "scientificName": "Cerithium sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.025,
+  "referenceSizeKind": "adult_crawling_length",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "dd87504fdbbb17dfdf2c74b25beb8df3cdec0e816e21dd7d4d7abbfc33e2e9a0",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Cerith Snail",
+  "bodyPlan": "gastropod",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-137760",
+      "title": "Cerithium Bruguiere, 1789 genus record (accepted, Cerithiidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137760",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-CERITHIUM_LITTERATUM",
+      "title": "Cerithium litteratum (Born, 1778) species summary (max length 3.4 cm; benthic, 0-88 m, reef, seagrass and sand habitats)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Cerithium-litteratum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "CIESM-CERITHIUM_EGENUM",
+      "title": "Cerithium egenum atlas sheet: shell high-spired, about three times as long as wide, 9-11 whorls, granulose spiral cords, short deeply impressed siphonal canal, whitish with dark brown flames and mottles",
+      "publisher": "CIESM Mediterranean Science Commission, Atlas of Exotic Species",
+      "url": "https://www.ciesm.org/atlas/Cerithiumegenum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "PILSBRY_VANATTA-1906-HAWAIIAN_CERITHIIDAE",
+      "title": "On two Hawaiian Cerithiidae (Cerithium thaanumi: slender turreted shell, 12 convex whorls, three granose spiral cords per whorl, short straight anterior canal, length 14.2 mm x diameter 4.5 mm)",
+      "publisher": "Proceedings of the Academy of Natural Sciences of Philadelphia, via Biodiversity Heritage Library / Zenodo",
+      "url": "https://doi.org/10.5281/zenodo.16273768",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (published 1906)"
+    },
+    {
+      "id": "HAL-SANGIRAN-CERITHIUM_DIAGNOSIS",
+      "title": "The Sangiran fossil shell assemblages catalogue, Cerithiidae / Cerithium genus diagnosis (shell elongate, thick, sharply conical, high many-whorled spire, small aperture, spiral or nodulose sculpture with axial ribs, distinct anterior siphonal canal often laterally twisted)",
+      "publisher": "HAL open science",
+      "url": "https://hal.science/hal-04047360v1/document",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-CERITHIUM",
+      "title": "Category:Cerithium (openly licensed apertural and abapertural shell photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Cerithium",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "ed3d00fc33a1a75e07831c1190e78cd1ad0451299b0ada0cea606ceec210ce62",
+  "sourceReferencesSha256": "991b96259853e9d5ac6bab00b97b8c7abad427114d8f75f071fb5cd9951eebed",
+  "sourceBlendSha256": "8bfa0a38115fc1f4abb0e093732e93dc327de23c6d8524f505654250c8ec1c6f",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:e4eb1cd56f8fe6da4cf3adf110369f5b96c5142e27a5ca0004ab75c9701e1bdd",
+    "speciesBackend": "e4eb1cd56f8fe6da4cf3adf110369f5b96c5142e27a5ca0004ab75c9701e1bdd",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "cde6b0f1fda6942b3b9e80aa0ef07f1a4c4dcfea478ff9906e43840e03275e49"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "aad77face1004a5bbf723e00d72cff78fc505af58896b65857571f136758fd8d"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "9a425f74e684303f38b65d03b99ab3b535fe3522691701dab8c29b530965b921"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "7b3e6b9ab00789372dcb2a73575a7276a83427bb45e5ee2dbff849381ccae2c8"
+    },
+    {
+      "path": "textures/shell-albedo.png",
+      "sha256": "98beece23a5134a39a8a457578daa1d3f142d36f80bfcf3f3cc053174dd16c27"
+    },
+    {
+      "path": "textures/shell-normal.png",
+      "sha256": "97227d5d70b3f0f1378fd7e35540951045fd5b9ef9f41d1c67b278eec9719941"
+    },
+    {
+      "path": "textures/shell-roughness.png",
+      "sha256": "1342a49ebac99890fba507c981693deffb771e940eae5f868129388361718760"
+    }
+  ],
+  "statistics": {
+    "triangles": 14328,
+    "materials": 3,
+    "bones": 8,
+    "nodes": 13,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "crawl",
+      "rest",
+      "retract"
+    ],
+    "vertices": {
+      "PA_cerith_snail_Shell": 6260,
+      "PA_cerith_snail_Body": 922
+    },
+    "runtimeBytes": 2473880
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "rest": true,
+    "crawl": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.0125,
+      -0.003934,
+      0.0
+    ],
+    "max": [
+      0.0125,
+      0.005144,
+      0.009294
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

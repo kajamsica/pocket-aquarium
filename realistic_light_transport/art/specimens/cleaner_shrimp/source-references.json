@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "cleaner_shrimp",
+  "revision": 1,
+  "policy": "References informed body proportions, appendage layout, posture and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a reference.",
+  "sources": [
+    {
+      "id": "WORMS-241289",
+      "title": "Lysmata amboinensis (De Man, 1888) taxon record (Decapoda, Caridea, Lysmatidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=241289",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-LYSMATA_AMBOINENSIS",
+      "title": "Lysmata amboinensis species summary (benthic, tropical Indo-Pacific, 1 to 120 m)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Lysmata-amboinensis.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "AOP-PACIFIC_CLEANER_SHRIMP",
+      "title": "Pacific Cleaner Shrimp species account (5 to 6 cm body, pale amber body, white dorsal band flanked by red, white spotted red tail fan, two pairs of long white antennae, ten walking legs with anterior pincers, white maxillipeds, pleopods)",
+      "publisher": "Aquarium of the Pacific Online Learning Center",
+      "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/pacific_cleaner_shrimp",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "WIKIPEDIA-LYSMATA_AMBOINENSIS",
+      "title": "Lysmata amboinensis article (5 to 6 cm body length, colour pattern and appendage description)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Lysmata_amboinensis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-LYSMATA_AMBOINENSIS",
+      "title": "Category:Lysmata amboinensis (openly licensed photographs, proportion and posture study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Lysmata_amboinensis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Lateral photographs and detailed descriptive accounts are openly available and give the body length, banding and appendage layout; top and front proportions are inferred from the general caridean (Lysmata) body plan rather than calibrated orthographic references."
+}

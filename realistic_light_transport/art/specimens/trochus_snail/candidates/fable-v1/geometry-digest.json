@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "trochus_snail",
+  "sourceSha256": "cf32f37d3992676cbfb1494552bc0e070bde0a300626f298c9521178a698b041",
+  "objects": [
+    {
+      "name": "PA_trochus_snail_Body",
+      "vertexCount": 1454,
+      "triangleCount": 2868,
+      "vertexDigest": "c3be4fdd00fcea26f441c4b52fbeeaaabf58db4b1e53fb55df88993262199924",
+      "topologyDigest": "95f3d87ce7a38dcd3a3edb2ae1b8a4c11926f2c7fe3062d0b2aa78a2cdbb57ef",
+      "uvDigest": "5506243025459c607bb7fdb5fa53ba7d07eafece0836af43cff4524a8f45071b",
+      "weightDigest": "431f523087416799510cfde8110e40222f0c0e302b19ea06f8c80191fd6d083f",
+      "materials": [
+        "PA_trochus_snail_Flesh"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_trochus_snail_Details",
+      "vertexCount": 200,
+      "triangleCount": 392,
+      "vertexDigest": "1d5dc4488169bfe7a52aa4621ad4c1c9da25ad88ed7c80b336ebdb51809d2157",
+      "topologyDigest": "4c80b6a6a7d5c96f369feeaaf11b61447d2b8cb9c71c80a80cab55698e43b5eb",
+      "uvDigest": "2b9f671ce97b0178583238910df0b68a6fa46ec7eb03404cc0f9da6591f47a64",
+      "weightDigest": "fbdff41e49ca36c605ba470f47032d72982eb541c0b64d9e9d3a024cd1933a1b",
+      "materials": [
+        "PA_trochus_snail_Eye"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_trochus_snail_Shell",
+      "vertexCount": 5579,
+      "triangleCount": 11154,
+      "vertexDigest": "104359417f78dca82e1063490cc771c9c258c5540d031fcc0d3e0944047a0062",
+      "topologyDigest": "19502f4893d0381a646acca34e5121afce791c826741b1ff427d0521e8725360",
+      "uvDigest": "1f9e0cda1f28d9cf51d4d363515a42b2ba33de2290809ba9a35bb29bfa608191",
+      "weightDigest": "89d5f70ed2fcc3463a9b18397759babc8295945c7240d81f2260797badbbe976",
+      "materials": [
+        "PA_trochus_snail_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_trochus_snail_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "b749ac184b196d48370e6b05f0f26f7bd8661bb8741e158995ed76855d5071ee"
+  },
+  "geometryDigest": "02c3e69addec58b8593a841bdcf8adbd8a3e3e5040a8e3375b222c877c9f8618",
+  "variantId": null
+}

@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "epaulette_shark",
+  "variantId": null,
+  "scientificName": "Hemiscyllium ocellatum",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.9,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "17430884644285555b8d73082522e0f50b2b161af46514c7bee910fdf8a1e3ae",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Epaulette Shark",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-281037",
+      "title": "Hemiscyllium ocellatum (Bonnaterre, 1788) taxon record (accepted; Orectolobiformes, Hemiscylliidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=281037",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-HEMISCYLLIUM_OCELLATUM",
+      "title": "Hemiscyllium ocellatum species summary (max length 107 cm TL; caudal fin with subterminal notch, no ventral lobe; lateral ocellus not surrounded by large spots)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Hemiscyllium-ocellatum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "ALLEN-2016-JOSF23",
+      "title": "Allen, Erdmann, White, Fahmi & Dudgeon (2016) Review of the bamboo shark genus Hemiscyllium. Journal of the Ocean Science Foundation 23: 51-97 (H. ocellatum morphometrics, 27 specimens, and colour-in-life description)",
+      "publisher": "Ocean Science Foundation / Zenodo (doi:10.5281/zenodo.164197)",
+      "url": "https://oceansciencefoundation.org/josf/josf23d.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Open access article; text measurements only, no figures reproduced"
+    },
+    {
+      "id": "AM-EPAULETTE_SHARK",
+      "title": "Epaulette Shark, Hemiscyllium ocellatum species account (ocellus above pectoral fin, two similar dorsal fins, anal fin just anterior to the tail, short nasal barbels, grows to just over 1 m)",
+      "publisher": "Australian Museum",
+      "url": "https://australian.museum/learn/animals/fishes/epaulette-shark-hemiscyllium-ocellatum/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-HEMISCYLLIUM_OCELLATUM",
+      "title": "Category:Hemiscyllium ocellatum (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Hemiscyllium_ocellatum",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "a225952cbbc3ef4666bc7fd3bf07fbbb163d221f89a42556713c92976a27a3bd",
+  "sourceReferencesSha256": "8524ecf977ad8088b32e41d5c2e801b76a51d53197a2438a470a3fcb406dc199",
+  "sourceBlendSha256": "25d384c89632ca82187de15b141bae6659b277cfdfad54b9817a3959208cd563",
+  "builder": {
+    "entrypoint": "34b433bd1d76b0f1d4110b48d61d71fbb13b3803c31ade6a25f14ece2449b1b7",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "f61594826c115ed6b6c14fcdd3534578652f64d835a7593b782a6fd991fe17dd",
+    "speciesBackend": "aef14c95ffc29d5331e4a82aa0292d300e2a320e5347408c38c93778cd94d9f5",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "7174c53ecceae5a42394b36086f2aa305e922a88250cfca80580258ccaec2ba1"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "cd4e0148e6fa1b89e6493c7114f1d3f5ceb37b2b11f298205ec649c67ae120ff"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "5e51bd66936c4b1bdf772f1a5ade904079bd8a381447b90dc1eae08064861683"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "f2a97c55faf66fcf3c4e21e8cd90bbf88b85fbd7e5dfddeef32c755fc4ec34bc"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "1a4b7ac385e7745b3502fc101c1ec31eeae0700d2cd78a7f812c0cbd3c8b6d2e"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "bf4fa6b673b6b7f74e547e619a920084db568de0f6473c211c758b5556f84a4d"
+    }
+  ],
+  "statistics": {
+    "triangles": 9614,
+    "materials": 7,
+    "bones": 14,
+    "nodes": 20,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_epaulette_shark_Body": 3038,
+      "PA_epaulette_shark_Fins": 702,
+      "PA_epaulette_shark_Details": 1176
+    },
+    "runtimeBytes": 3815988
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.535193,
+      -0.123101,
+      -0.040005
+    ],
+    "max": [
+      0.368015,
+      0.123101,
+      0.087011
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

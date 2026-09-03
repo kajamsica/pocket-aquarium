@@ -1,0 +1,54 @@
+{
+  "asset": "emerald_crab",
+  "variant": null,
+  "candidateDir": "art/specimens/emerald_crab/candidates/fable-v1",
+  "startedAt": "2026-09-03T21:08:14.868Z",
+  "pid": 81433,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 2800,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 4949,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 2514,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1694,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1676,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 872,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 879,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:08:30.255Z",
+  "status": "passed",
+  "failure": null
+}

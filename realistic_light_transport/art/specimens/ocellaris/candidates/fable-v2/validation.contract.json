@@ -1,0 +1,613 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "ocellaris",
+  "rig": "PA_ocellaris_Rig",
+  "root": "PA_ocellaris_Root",
+  "meshes": [
+    "PA_ocellaris_Body",
+    "PA_ocellaris_Fins",
+    "PA_ocellaris_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_ocellaris_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_ocellaris_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.0008,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_dorsal"
+      ],
+      "label": "fin_body_dorsal"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_ocellaris_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal_anal"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal_caudal"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_caudal"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_ocellaris_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_ocellaris_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_ocellaris_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_ocellaris_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_ocellaris_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_ocellaris_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.08,
+    "tolerance": 0.03,
+    "kind": "adult_total_length"
+  },
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "burst": {
+      "loop": false,
+      "frames": 30,
+      "bones": [
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_ocellaris_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.00032
+    },
+    {
+      "object": "PA_ocellaris_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.00032
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.046361,
+      -0.016077,
+      -0.020751
+    ],
+    "max": [
+      0.033861,
+      0.016077,
+      0.02449
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.064,
+    "fins": [
+      "dorsal",
+      "anal",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/ocellaris/candidates/fable-v2/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/ocellaris/candidates/fable-v2/renders/three-view.png",
+    "boundsMin": [
+      -0.04636083543300629,
+      -0.016077224165201187,
+      -0.02075134962797165
+    ],
+    "boundsMax": [
+      0.033861443400382996,
+      0.016077224165201187,
+      0.024490363895893097
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

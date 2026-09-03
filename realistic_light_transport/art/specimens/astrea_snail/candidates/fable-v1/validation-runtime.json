@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "crawl": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 1.2000000476837158,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    }
+  },
+  "inventory": {
+    "triangles": 13232,
+    "materials": 3,
+    "nodes": 12,
+    "skinJoints": 8,
+    "images": 6,
+    "meshes": [
+      "PA_astrea_snail_Body",
+      "PA_astrea_snail_Shell"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.055952909680744456,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.013000000268220901,
+      -0.009113031439483166,
+      -8.756980383883839e-12
+    ],
+    "max": [
+      0.016030780971050262,
+      0.01614241674542427,
+      0.022998368367552757
+    ],
+    "deviationMeters": 2.634178031930877e-09
+  }
+}

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "pocket-aquarium.source-references/v1",
   "speciesId": "purple_tang",
-  "revision": 1,
-  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
+  "revision": 2,
+  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source. Body depth, head depth at the eye, snout length and fin heights for fable-v2 were measured as ratios of standard length from the two Commons files listed below and then rounded to the catalog's station table.",
   "sources": [
     {
       "id": "WORMS-219681",
@@ -16,7 +16,7 @@
     },
     {
       "id": "FISHBASE-ZEBRASOMA_XANTHURUM",
-      "title": "Zebrasoma xanthurum species summary (max length 25.0 cm TL)",
+      "title": "Zebrasoma xanthurum species summary (max length 36.7 cm TL, Ref. 97602; common length 10 cm TL, Ref. 5450)",
       "publisher": "FishBase",
       "url": "https://www.fishbase.se/summary/Zebrasoma-xanthurum.html",
       "accessedAt": "2026-09-03",
@@ -33,8 +33,28 @@
       "evidenceClass": "open_reference_imagery",
       "allowedUse": "proportion_reference_only",
       "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-FORD-1866-FISHES-OF-ZANZIBAR",
+      "title": "File:Zebrasoma xanthurum.jpg, G. H. Ford lithograph from Fishes of Zanzibar: Acanthopterygii (1866), lateral view with fins spread",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Zebrasoma_xanthurum.jpg",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Public domain (author died more than 70 years ago)"
+    },
+    {
+      "id": "COMMONS-LIBERT-2014-MARSA-ALAM",
+      "title": "File:Yellowtail Tang - Zebrasoma xanthurum.jpg, Francois Libert, Marsa Alam, Egypt, 2014, lateral photograph",
+      "publisher": "Wikimedia Commons (from Flickr)",
+      "url": "https://commons.wikimedia.org/wiki/File:Yellowtail_Tang_-_Zebrasoma_xanthurum.jpg",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 2.0; nothing copied, proportion and colour placement only"
     }
   ],
   "referenceGrade": "B",
-  "referenceGradeRationale": "User-supplied watermarked seller image was used only to understand silhouette preference; not a texture source."
+  "referenceGradeRationale": "Two openly licensed lateral references (an 1866 scientific lithograph with fins spread and a 2014 in-situ photograph) give consistent standard-length ratios for body depth, head depth, eye position and snout length; no calibrated top or front reference is available, so lateral width follows the Zebrasoma compressed-disc norm (depth to width about 3.8). The user-supplied watermarked seller image was used only to understand silhouette preference; not a texture source."
 }

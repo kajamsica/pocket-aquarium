@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "diamond_goby",
+  "sourceSha256": "05a13d0d56e4677891a2ec309ae57847a959dd7341b0ca71fada55c29df04fe4",
+  "objects": [
+    {
+      "name": "PA_diamond_goby_Body",
+      "vertexCount": 2690,
+      "triangleCount": 5376,
+      "vertexDigest": "26df0d45353bb294318c5d07207fc66955b90483aa2ee4a6369a5c0130f877ed",
+      "topologyDigest": "3c709fb2e4b3f9185104af416cabcbed0e381ea53d1a05ea80c9415d37cf3026",
+      "uvDigest": "8ff0b13158d0be906861b88a64b565c59c98f73f86013a56e9f44777e8d15664",
+      "weightDigest": "513f2c081053acf8d5ea7e829dd6497aa68a813d819ef9bb0a1ba9e596d91b30",
+      "materials": [
+        "PA_diamond_goby_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_diamond_goby_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "9818aca0c22d6a4893a865e1b82de5f303ce10a0477617ec23bc7444e8aee3f1",
+      "topologyDigest": "af5d890e334b2cd282952f0a44dae55bd4ac9e200ce5af8c2c8b4ca427ae9d1a",
+      "uvDigest": "faa6d14466565dda8bc493f5bfafe6418526a05591b15255928b2720248e6183",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_diamond_goby_Cue",
+        "PA_diamond_goby_Eye",
+        "PA_diamond_goby_Glint",
+        "PA_diamond_goby_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_diamond_goby_Fins",
+      "vertexCount": 578,
+      "triangleCount": 996,
+      "vertexDigest": "078a6c3e008f17020b77a88b308da062413025918c206ef262d0f99d02aaf88d",
+      "topologyDigest": "c75421912b8e8f18b57fe85ddd6f0ca1562c3f7d82cefbf48a3aca3b6f49be71",
+      "uvDigest": "5a98ba64e911413ff8cb68c138a1c180b3c72a1966e429a942d8280ccc4de5dc",
+      "weightDigest": "9547d30aebe15e70a5f4d6ae18c0257952b9a826e25163c7dbc3211d9ce145bd",
+      "materials": [
+        "PA_diamond_goby_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_diamond_goby_Rig",
+    "boneCount": 15,
+    "deformBoneCount": 14,
+    "boneDigest": "cf840ede9bc0b436fe5c81bb008c31372e6808633d1ffd557c9373aa76871b2e"
+  },
+  "geometryDigest": "fa5017a70c37f7c76340898e8f9be7a6c22b488fd805c20e37dcd5aa1b71e02a",
+  "variantId": null
+}

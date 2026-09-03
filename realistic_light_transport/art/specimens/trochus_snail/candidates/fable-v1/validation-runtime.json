@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "crawl": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Epi1_L",
+        "Epi1_R",
+        "Epi2_L",
+        "Epi2_R",
+        "Epi3_L",
+        "Epi3_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Epi1_L",
+        "Epi1_R",
+        "Epi2_L",
+        "Epi2_R",
+        "Epi3_L",
+        "Epi3_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 1.2000000476837158,
+      "targetedBones": [
+        "Epi1_L",
+        "Epi1_R",
+        "Epi2_L",
+        "Epi2_R",
+        "Epi3_L",
+        "Epi3_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    }
+  },
+  "inventory": {
+    "triangles": 14414,
+    "materials": 3,
+    "nodes": 19,
+    "skinJoints": 14,
+    "images": 6,
+    "meshes": [
+      "PA_trochus_snail_Body",
+      "PA_trochus_snail_Details",
+      "PA_trochus_snail_Shell"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.16785874238244658,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.02012300118803978,
+      -0.01631372980773449,
+      -5.820766091346741e-11
+    ],
+    "max": [
+      0.019496673718094826,
+      0.01368626207113266,
+      0.03196924179792404
+    ],
+    "deviationMeters": 1.7071424778386354e-08
+  }
+}

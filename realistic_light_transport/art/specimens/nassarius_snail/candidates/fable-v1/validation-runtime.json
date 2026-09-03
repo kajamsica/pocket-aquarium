@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "crawl": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon_A",
+        "Siphon_B",
+        "Tail_L",
+        "Tail_R",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon_A",
+        "Siphon_B",
+        "Tail_L",
+        "Tail_R",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "siphon_probe": {
+      "durationSeconds": 1.600000023841858,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon_A",
+        "Siphon_B",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    }
+  },
+  "inventory": {
+    "triangles": 15760,
+    "materials": 3,
+    "nodes": 17,
+    "skinJoints": 12,
+    "images": 6,
+    "meshes": [
+      "PA_nassarius_snail_Details",
+      "PA_nassarius_snail_Shell",
+      "PA_nassarius_snail_Soft"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "siphon_probe": {
+      "maxBoneRotationErrorDegrees": 0.11869405356091633,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.017240196466445923,
+      -0.007499999832361937,
+      2.0232980568746228e-10
+    ],
+    "max": [
+      0.01604214683175087,
+      0.007499999832361937,
+      0.012301623821258545
+    ],
+    "deviationMeters": 7.508562643358995e-09
+  }
+}

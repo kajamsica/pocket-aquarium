@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "goniopora",
+  "displayName": "Goniopora (flowerpot coral)",
+  "scientificLabel": "Goniopora sp.",
+  "taxonomyConfidence": "genus",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "lps_coral",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.1,
+    "kind": "colony_width",
+    "note": "Colony width including extended polyps. Veron (1986, via WoRMS Goniopora stokesi record) describes hemispherical colonies with calices 3-6 mm across and very elongate polyps; Hoeksema (Reef Corals of the Indo-Malayan Seas) gives about 5 cm for the polyp base plus corallite field. A 10 cm colony here has a ~5 cm skeleton dome with 1.5-2.5 cm extended polyps, matching a mature aquarium colony (root DATA.CORALS goniopora startPolyps 24)."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "sway", "locomotion": "flow", "response": "retract" },
+  "palette": {
+    "skeleton": [0.8, 0.74, 0.6],
+    "calice": [0.36, 0.3, 0.2],
+    "rock": [0.26, 0.22, 0.18],
+    "stalkBase": [0.05, 0.22, 0.07],
+    "stalk": [0.1, 0.46, 0.12],
+    "rim": [0.35, 0.62, 0.2],
+    "disc": [0.72, 0.11, 0.34],
+    "mouth": [0.22, 0.02, 0.08],
+    "tentacle": [0.13, 0.52, 0.15],
+    "tentacleTip": [0.85, 0.68, 0.72]
+  },
+  "textures": {
+    "tissueResolution": [1024, 512],
+    "tentacleResolution": [512, 256],
+    "skeletonResolution": [1024, 512],
+    "rockResolution": [512, 256],
+    "tissueNormalStrength": 0.6,
+    "skeletonNormalStrength": 1.6
+  },
+  "morphology": {
+    "notes": "Hemispherical corallite dome sunk into a squat rubble plug; 26 long fleshy polyps of mixed size radiate from the dome on a jittered Fibonacci canopy, each stalk a closed bowed loft flaring into an oral disc with a central mouth dimple and a ring of 24 short tapered tentacles.",
+    "seed": 7,
+    "polypCount": 26,
+    "tentacleCount": 24,
+    "tintTiles": 4,
+    "rock": { "radius": 0.031, "height": 0.01, "segments": 28 },
+    "dome": { "radius": 0.026, "height": 0.022, "sink": 0.004, "seat": 0.002, "segments": 36, "rings": 12, "lumpiness": 0.035 },
+    "canopy": { "radius": 0.05, "height": 0.046, "minPolarDegrees": 6, "maxPolarDegrees": 72, "radialJitter": 0.1, "elongateFraction": 0.2, "elongateBoost": 0.1, "minGap": 0.004, "relaxIterations": 40, "maxBasePolarDegrees": 70 },
+    "stalk": { "radius": 0.002, "taper": 0.15, "segments": 10, "sValues": [0.16, 0.36, 0.58, 0.8, 1.0], "bow": [0.05, 0.14], "droop": 0.04, "embed": 0.0012, "minLength": 0.012 },
+    "disc": { "radius": 0.004, "sizeJitter": 0.15, "profile": [[0.001, 0.62], [0.0018, 0.94], [0.0026, 1.0], [0.0029, 0.74], [0.0027, 0.44], [0.0022, 0.17], [0.0016, 0.06]], "uValues": [0.68, 0.74, 0.78, 0.83, 0.89, 0.95, 0.98] },
+    "tentacles": { "length": 0.0046, "radius": 0.00082, "elevationDegrees": [28, 46], "segments": 3, "lengthJitter": 0.15, "closedLength": 0.62, "rimFraction": 0.86, "seat": 0.0022 }
+  },
+  "animation": {
+    "sway": { "frames": 120, "loop": true, "swayDegrees": 6.0, "wobbleDegrees": 2.0, "breath": 0.03, "headPulse": 0.03, "wavelength": 0.3, "phaseJitter": 0.15 },
+    "flow": { "frames": 90, "loop": true, "swayDegrees": 13.0, "wobbleDegrees": 3.0, "breath": 0.05, "headPulse": 0.05, "wavelength": 0.3, "phaseJitter": 0.15, "lean": 3.0, "harmonic": 0.3 },
+    "retract": { "frames": 72, "loop": false, "envelope": "hold", "shorten": 0.42, "deflate": 0.22, "stagger": 0.45, "lean": 2.5 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 24, "azimuthDegrees": -50, "elevationDegrees": 26 },
+  "variants": {
+    "green_pink": {
+      "displayName": "Goniopora, green polyps with pink oral discs",
+      "overrides": {}
+    },
+    "red_brown": {
+      "displayName": "Goniopora, red-brown polyps with pale green oral discs",
+      "overrides": {
+        "palette": {
+          "stalkBase": [0.2, 0.05, 0.03],
+          "stalk": [0.42, 0.1, 0.06],
+          "rim": [0.6, 0.3, 0.12],
+          "disc": [0.55, 0.72, 0.25],
+          "mouth": [0.16, 0.05, 0.03],
+          "tentacle": [0.5, 0.14, 0.08],
+          "tentacleTip": [0.9, 0.85, 0.7]
+        }
+      }
+    },
+    "purple_green": {
+      "displayName": "Goniopora, purple polyps with green oral discs",
+      "overrides": {
+        "palette": {
+          "stalkBase": [0.16, 0.07, 0.32],
+          "stalk": [0.36, 0.2, 0.62],
+          "rim": [0.55, 0.42, 0.8],
+          "disc": [0.25, 0.72, 0.2],
+          "mouth": [0.1, 0.3, 0.08],
+          "tentacle": [0.45, 0.28, 0.7],
+          "tentacleTip": [0.95, 0.92, 0.98]
+        }
+      }
+    }
+  },
+  "visualDebt": [
+    "Polyp retraction is a partial contraction (stalks shorten to roughly 60 percent and deflate 22 percent radially); polyps do not vanish fully into their calices.",
+    "Tentacles gather toward the oral axis through the head's radial deflation only; the authored fold shape key is not baked because the pinned glTF importer renames animated skinned meshes and the runtime parity gate rejects that.",
+    "Corallite calices and septa are painted (albedo/normal) rather than modelled as recessed cups.",
+    "Tentacles are 3-segment tubes with a single shared bone per polyp; no per-tentacle motion."
+  ]
+}

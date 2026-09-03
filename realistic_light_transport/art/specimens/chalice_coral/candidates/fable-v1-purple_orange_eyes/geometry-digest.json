@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "chalice_coral",
+  "sourceSha256": "efda80a2cdcc84578a0203614f28445789b21e8d8f4e176d78aa595a49a00bfc",
+  "objects": [
+    {
+      "name": "PA_chalice_coral_Colony",
+      "vertexCount": 4372,
+      "triangleCount": 8736,
+      "vertexDigest": "f5d2330c694924620ddf4065bac632c66b5645a234a41bae0c62f547e61c74a0",
+      "topologyDigest": "1b76f5e2b6b79a28170eda5852d9170f43c222190c8349aba527f2b0d409da65",
+      "uvDigest": "59f3883662244a5c758df9dd55ddb58243950a735557fd83b0a60dd953a40bc3",
+      "weightDigest": "0783ce2722292f339faf023606d9a9a640e653ac06bccd8e7b9231bb36bbbca9",
+      "materials": [
+        "PA_chalice_coral_Skeleton",
+        "PA_chalice_coral_Tissue"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_chalice_coral_Tentacles",
+      "vertexCount": 3360,
+      "triangleCount": 6300,
+      "vertexDigest": "cd9ba0664bd7d264a08a8c539454172a0789b0023ef16e77df676781af02616e",
+      "topologyDigest": "78ef48072a32db4e966f117fb18cd4f235e815dce3c055a0bacfb4c597d85027",
+      "uvDigest": "6d3693923333148d051b63cc5e2469d5d25edb513d5c257a1c20a9da7ecb6937",
+      "weightDigest": "3ff0f74f2d1cfbb3bca924971183c4880bbaebc1e2e19749702bc68980f49ff8",
+      "materials": [
+        "PA_chalice_coral_Tentacle"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_chalice_coral_Rig",
+    "boneCount": 18,
+    "deformBoneCount": 17,
+    "boneDigest": "9cbe07ad7eaa7f7f39e3542d7df3ff856ac7fa159d7a79e7b82e2425c47025d9"
+  },
+  "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+  "variantId": "purple_orange_eyes"
+}

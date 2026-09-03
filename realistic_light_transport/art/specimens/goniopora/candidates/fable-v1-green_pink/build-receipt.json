@@ -1,0 +1,54 @@
+{
+  "asset": "goniopora",
+  "variant": "green_pink",
+  "candidateDir": "art/specimens/goniopora/candidates/fable-v1-green_pink",
+  "startedAt": "2026-09-03T21:14:09.291Z",
+  "pid": 87640,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 91010,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 394898,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1709,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1056,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1705,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 856,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 894,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:22:21.473Z",
+  "status": "passed",
+  "failure": null
+}

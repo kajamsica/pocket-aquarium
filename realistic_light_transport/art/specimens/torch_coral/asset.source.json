@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "torch_coral",
+  "displayName": "Torch Coral",
+  "scientificLabel": "Euphyllia glabrescens",
+  "taxonomyConfidence": "species",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "lps_coral",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.12,
+    "kind": "colony_width",
+    "note": "Corals of the World (AIMS) gives phaceloid corallites of 20-30 mm diameter spaced 15-30 mm apart; WoRMS notes wild colonies reach nearly a metre. 12 cm is the width, tentacles extended, of a small four-head aquarium colony, which is what this candidate depicts (corallite diameters land at roughly 17-20 mm after fitting the tentacle reach into the 12 cm width)."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "sway", "locomotion": "flow", "response": "retract" },
+  "palette": {
+    "stem": [0.05, 0.36, 0.22],
+    "stemDark": [0.02, 0.17, 0.11],
+    "tip": [0.85, 0.20, 0.45],
+    "tipCore": [0.96, 0.58, 0.72],
+    "disc": [0.07, 0.20, 0.10],
+    "mouth": [0.05, 0.025, 0.03],
+    "skeleton": [0.86, 0.82, 0.72],
+    "rock": [0.14, 0.12, 0.10]
+  },
+  "textures": { "tissueNormalStrength": 0.45, "discNormalStrength": 0.8, "skeletonNormalStrength": 1.0, "rockNormalStrength": 1.0 },
+  "morphology": {
+    "seed": 11,
+    "notes": "Phaceloid colony: four tubular corallites diverge from a rock base, each with one polyp whose oral disc overhangs the calice and bears 34 long tubular tentacles in three cycles with swollen contrasting acrospheres.",
+    "rock": { "radius": 0.026, "height": 0.012, "embed": 0.004, "segments": 20, "rings": 5 },
+    "heads": [
+      { "x": -0.008, "y": -0.0072, "height": 0.056, "leanDegrees": 8, "radiusScale": 1.0 },
+      { "x": 0.0112, "y": -0.0048, "height": 0.046, "leanDegrees": 18, "radiusScale": 0.95 },
+      { "x": 0.004, "y": 0.012, "height": 0.051, "leanDegrees": 16, "radiusScale": 1.0 },
+      { "x": -0.0115, "y": 0.0075, "height": 0.040, "leanDegrees": 20, "radiusScale": 0.9 }
+    ],
+    "corallite": {
+      "radius": 0.010,
+      "radiusProfile": [[0.0, 0.62], [0.35, 0.72], [0.7, 0.9], [0.9, 1.0], [1.0, 1.06]],
+      "samples": 7,
+      "segments": 10
+    },
+    "disc": { "radiusFactor": 1.2, "heightFactor": 0.55, "lift": 0.36, "segments": 14, "rings": 7 },
+    "mouth": { "length": 0.30, "width": 0.11, "height": 0.06 },
+    "tentacles": {
+      "radius": 0.0018,
+      "lengthRange": [0.024, 0.040],
+      "droop": 0.62,
+      "curl": 0.10,
+      "placementRings": [[0.30, 6], [0.57, 11], [0.84, 17]],
+      "profileT": [0.0, 0.14, 0.30, 0.47, 0.63, 0.77, 0.86, 0.925, 0.975, 1.0],
+      "profileRadius": [0.92, 1.0, 0.98, 0.94, 0.88, 0.80, 0.68, 1.32, 1.12, 0.52],
+      "segments": 6,
+      "clustersPerHead": 2,
+      "chainFractions": [0.0, 0.34, 0.67, 1.0],
+      "chainGain": [0.35, 0.7, 1.0],
+      "avoidMargin": 0.004,
+      "swingBudgetDegrees": 28.0
+    }
+  },
+  "animation": {
+    "sway": { "frames": 150, "loop": true, "frequency": 1, "lag": 0.9, "tentacleDegrees": 11.0, "wobbleFraction": 0.45, "wobbleFrequencyOffset": 1, "discDegrees": 1.2, "discPulse": 0.02 },
+    "flow": { "frames": 120, "loop": true, "frequency": 2, "lag": 1.1, "tentacleDegrees": 9.0, "leanDegrees": 6.0, "waveNumber": 30.0, "flutterDegrees": 4.0, "flutterFrequency": 4, "discDegrees": 2.5 },
+    "retract": { "frames": 72, "loop": false, "envelope": "hold", "contract": 0.5, "tuckDegrees": 11.0, "discSinkFactor": 0.15, "discShrink": 0.10 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 30, "azimuthDegrees": -38, "elevationDegrees": 26 },
+  "variants": {
+    "green_pink_tips": {
+      "displayName": "Torch Coral (green, pink tips)",
+      "overrides": {
+        "palette": {
+          "stem": [0.05, 0.36, 0.22],
+          "stemDark": [0.02, 0.17, 0.11],
+          "tip": [0.85, 0.20, 0.45],
+          "tipCore": [0.96, 0.58, 0.72],
+          "disc": [0.07, 0.20, 0.10]
+        }
+      }
+    },
+    "gold_white_tips": {
+      "displayName": "Torch Coral (gold, white tips)",
+      "overrides": {
+        "palette": {
+          "stem": [0.58, 0.36, 0.09],
+          "stemDark": [0.30, 0.16, 0.04],
+          "tip": [0.92, 0.90, 0.85],
+          "tipCore": [0.99, 0.99, 0.97],
+          "disc": [0.36, 0.21, 0.07]
+        },
+        "morphology": { "seed": 23 }
+      }
+    }
+  },
+  "visualDebt": [
+    "Tentacle acrospheres are lofted knobs on a six-sided tube; at close range the knob silhouette is faceted.",
+    "Septa inside the calice are not modelled; the oral disc covers the calice so only the outer costae relief (normal map) reads.",
+    "Tentacles of one cluster share a three-bone chain (two clusters per head within the 32-bone budget); bending along each tentacle comes from arc-length skinning to that shared chain plus baked per-tentacle lean, sag and curl, not from a chain per tentacle.",
+    "Retraction is driven by chain scale and curl toward the disc axis, so retracted tentacles fold into a tuft rather than deflating into wrinkled nubs.",
+    "Tentacles of one polyp may overlap tentacles of a neighbouring polyp (as in live colonies); only tentacle-vs-skeleton and tentacle-vs-disc clearances are proven."
+  ]
+}

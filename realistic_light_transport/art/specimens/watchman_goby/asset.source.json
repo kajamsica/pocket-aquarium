@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "watchman_goby",
+  "displayName": "Yellow Watchman Goby",
+  "scientificLabel": "Cryptocentrus cinctus",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.08,
+    "kind": "adult_total_length",
+    "note": "FishBase records a maximum of 10.0 cm SL (roughly 12 cm TL); root gameplay data (DATA.SPECIES watchman_goby adultSizeCm 8) and the aquarium-adult range of 7-10 cm give 8 cm TL. Standard length here is 6.2 cm with a rounded caudal fin of 1.8 cm (FishBase: caudal about equal to head length)."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": {
+    "skin": [1.0, 0.82, 0.03],
+    "fin": [0.98, 0.84, 0.18],
+    "iris": [0.5, 0.36, 0.08],
+    "cue": [0.2, 0.11, 0.05],
+    "adornment": [0.9, 0.88, 0.8]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3, "finReliefStrength": 1.2 },
+  "morphology": {
+    "notes": "Elongate benthic shrimp-goby: greatest depth 4.4-4.6 in SL just behind the head; broad blunt head about 30% SL, slightly wider than deep, with a steep forehead and short snout; large oblique mouth; eyes large, dorsolateral and set high so they crest the head profile; two dorsal fins (D1 VI spines short-based and rounded, D2 I,10 long-based) with the anal fin (I,9) opposite D2; large rounded pectoral fans; pelvic fins united into a ventral disc; rounded caudal fin about equal to head length; flattened belly for resting on sand.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.031, "halfWidth": 0.0021, "dorsalHeight": 0.0037, "ventralDepth": 0.0035, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.027, "halfWidth": 0.0026, "dorsalHeight": 0.0043, "ventralDepth": 0.004, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.02, "halfWidth": 0.0036, "dorsalHeight": 0.0053, "ventralDepth": 0.0049, "centerZ": 0.0 },
+      { "id": "posterior-b", "x": -0.011, "halfWidth": 0.0046, "dorsalHeight": 0.0062, "ventralDepth": 0.0057, "centerZ": 0.0 },
+      { "id": "mid-a", "x": -0.002, "halfWidth": 0.0052, "dorsalHeight": 0.0069, "ventralDepth": 0.0063, "centerZ": 0.0 },
+      { "id": "mid-b", "x": 0.007, "halfWidth": 0.006, "dorsalHeight": 0.0073, "ventralDepth": 0.0066, "centerZ": 0.0 },
+      { "id": "shoulder", "x": 0.012, "halfWidth": 0.0068, "dorsalHeight": 0.0074, "ventralDepth": 0.0066, "centerZ": 0.0 },
+      { "id": "operculum", "x": 0.017, "halfWidth": 0.0075, "dorsalHeight": 0.0073, "ventralDepth": 0.0064, "centerZ": -0.0002 },
+      { "id": "head", "x": 0.022, "halfWidth": 0.0077, "dorsalHeight": 0.0068, "ventralDepth": 0.006, "centerZ": -0.0005 },
+      { "id": "eye", "x": 0.026, "halfWidth": 0.007, "dorsalHeight": 0.0058, "ventralDepth": 0.0055, "centerZ": -0.001 },
+      { "id": "snout", "x": 0.0295, "halfWidth": 0.0056, "dorsalHeight": 0.0042, "ventralDepth": 0.0046, "centerZ": -0.0018 },
+      { "id": "snout-tip", "x": 0.031, "halfWidth": 0.0028, "dorsalHeight": 0.002, "ventralDepth": 0.0026, "centerZ": -0.0024 }
+    ],
+    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 2.2 },
+    "sampling": { "ringSegments": 48, "ringCount": 56 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0009, "edge": 0.0001 },
+    "fins": [
+      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": 0.001, "xEnd": 0.012, "rows": 4, "columns": 8, "lean": -0.002, "rayCount": 6,
+        "heights": [[0.0, 0.003], [0.25, 0.0075], [0.5, 0.0085], [0.75, 0.0078], [1.0, 0.004]] },
+      { "name": "dorsal2", "type": "median", "side": "dorsal", "bone": "Dorsal2", "xStart": -0.024, "xEnd": -0.002, "rows": 4, "columns": 12, "lean": -0.003, "rayCount": 11,
+        "heights": [[0.0, 0.0035], [0.2, 0.0068], [0.5, 0.0068], [0.8, 0.0064], [1.0, 0.0045]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.024, "xEnd": -0.003, "rows": 4, "columns": 11, "lean": -0.003, "rayCount": 10,
+        "heights": [[0.0, 0.003], [0.2, 0.006], [0.5, 0.0063], [0.8, 0.006], [1.0, 0.004]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0068, "spanBottom": 0.0068, "length": 0.018, "fork": 0.0, "rounding": 0.5, "baseFraction": 0.92, "rayCount": 15 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0135, "rootLength": 0.0065, "rootHeight": -0.12, "length": 0.0135, "sweepDegrees": 38, "droopDegrees": 20, "spread": 0.7, "taper": 0.5, "power": 0.6, "flare": 0.9, "rayCount": 17, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0125, "rootLength": 0.006, "rootHeight": -0.92, "length": 0.009, "sweepDegrees": 55, "droopDegrees": 60, "spread": 0.3, "taper": 0.55, "power": 0.7, "flare": 0.8, "rayCount": 5, "rows": 3, "columns": 6 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0255, "zFraction": 0.64, "radius": 0.0026, "protrude": 0.32, "aspect": 0.34, "pupilFraction": 0.5 },
+    "mouth": { "zOffset": -0.3, "width": 0.0056, "radius": 0.0006 },
+    "gill": { "x": 0.0145, "radius": 0.00028, "points": 11, "bulge": 0.03 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.026, 0.009, -0.004, -0.016, -0.026, -0.033] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [0.8, 1.5, 2.5, 4.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 9, "pectoralFrequency": 2, "pelvic": 2.0, "median": 1.2, "dorsal1": 2.5, "gill": 3.0, "gillFrequency": 4, "jaw": 4.0, "jawFrequency": 4 },
+    "swim": { "frames": 48, "loop": true, "axial": [2.5, 4.5, 7.0, 11.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 26, "pectoralFrequency": 4, "pelvic": 5.0, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 1.5, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [5.0, 9.0, 15.0, 22.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 32, "pectoralFrequency": 3, "pelvic": 8.0, "median": 3.0, "gill": 2.0, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -50, "elevationDegrees": 24 },
+  "visualDebt": [
+    "Pelvic disc is two converging thin sheets rather than a single fused cup with a frenum.",
+    "Eyes are lateral flattened ellipsoids; real goby eyes bulge dorsolaterally with a visible upper rim.",
+    "Fin rays are normal-map relief on single thin membranes; no modelled spines on the first dorsal.",
+    "Four to five dusky bars are painted faint (yellow colour phase); the pale colour phase is not a variant yet."
+  ]
+}

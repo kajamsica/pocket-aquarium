@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "torch_coral",
+  "revision": 1,
+  "policy": "References informed colony form, corallite dimensions and spacing, polyp and tentacle layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source. The accepted name Euphyllia glabrescens is retained; related species formerly in Euphyllia (ancora, divisa, paraancora, paradivisa, yaeyamaensis) were moved to Fimbriaphyllia by Luzon et al. 2017 while E. glabrescens stayed in Euphyllia.",
+  "sources": [
+    {
+      "id": "WORMS-207617",
+      "title": "Euphyllia glabrescens (Chamisso & Eysenhardt, 1821) taxon record (accepted; family Euphylliidae). Description notes: polyps always extended except when disturbed, tentacles cylindrical with enlarged pale terminal knobs, coralla phaceloid, colonies up to nearly a metre across.",
+      "publisher": "World Register of Marine Species (World List of Scleractinia, Hoeksema & Cairns)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207617",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-EUPHYLLIA_GLABRESCENS",
+      "title": "Euphyllia glabrescens species factsheet: colonies phaceloid; corallites 20-30 mm diameter, 15-30 mm apart; walls thin with sharp edges; polyps with large tubular tentacles with knob-like tips; colour grey-blue to grey-green with cream, green, pink or white tentacle tips.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/euphyllia-glabrescens/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "PEERJ-LUZON-2017",
+      "title": "Luzon, Lin, Ablan Lagman, Licuanan, Chen (2017). Resurrecting a subgenus to genus: molecular phylogeny of Euphyllia and Fimbriaphyllia. PeerJ 5:e4074. E. glabrescens: phaceloid, long tubular tentacles with knob-like tips, hermaphroditic brooder; ancora-group species moved to Fimbriaphyllia.",
+      "publisher": "PeerJ",
+      "url": "https://doi.org/10.7717/peerj.4074",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "COMMONS-EUPHYLLIA_GLABRESCENS",
+      "title": "Category:Euphyllia glabrescens (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Euphyllia_glabrescens",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Corallite diameter and spacing, colony form and tentacle morphology come from authoritative descriptions (Corals of the World, WoRMS, Luzon et al. 2017); tentacle length relative to the corallite, disc overhang and the number of tentacle cycles are read from openly licensed photographs, which are oblique aquarium views rather than calibrated side, top and front plates."
+}

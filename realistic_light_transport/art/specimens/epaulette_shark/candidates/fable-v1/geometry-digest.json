@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "epaulette_shark",
+  "sourceSha256": "a225952cbbc3ef4666bc7fd3bf07fbbb163d221f89a42556713c92976a27a3bd",
+  "objects": [
+    {
+      "name": "PA_epaulette_shark_Body",
+      "vertexCount": 3038,
+      "triangleCount": 6072,
+      "vertexDigest": "01e9479fd6f74fe3a6f6ed80e9f48e67f369914ccd4ac6d4db15256ba56da8a3",
+      "topologyDigest": "74a0994cec9202032282ce9146bd4bf682212ce2769ec36390614d9f888d1d02",
+      "uvDigest": "3e690d29badf7310a866787e09138856ba36967830737e97b1966563afd95a2e",
+      "weightDigest": "ef5a86920578f9d4994a5201a5542210fc17e75e749efb2e7956432d7b7622e5",
+      "materials": [
+        "PA_epaulette_shark_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_epaulette_shark_Details",
+      "vertexCount": 1176,
+      "triangleCount": 2304,
+      "vertexDigest": "ea4712f0169b4e12c3f28f4914148111849e2b1ba3526dfc05ca6389f103a963",
+      "topologyDigest": "576c659faec0ca09af785dfecd15430470889d42953642619922865efd64c5d2",
+      "uvDigest": "a9db19fccef516139d1e08329ab5576775a2a003766d24098f87605ff42523c8",
+      "weightDigest": "691d60be596b8f4c88495b4d5ad14a5edd61ed4d137590409d14f486e83f2f95",
+      "materials": [
+        "PA_epaulette_shark_Adornment",
+        "PA_epaulette_shark_Cue",
+        "PA_epaulette_shark_Eye",
+        "PA_epaulette_shark_Glint",
+        "PA_epaulette_shark_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_epaulette_shark_Fins",
+      "vertexCount": 702,
+      "triangleCount": 1238,
+      "vertexDigest": "8303047847bd693e10a03729ef19de6c0131077a525c6693e0b0a5987a9bf044",
+      "topologyDigest": "b96775f24f06b4def300bbebc08b6bad4a30e4969481667f7aee0257888411da",
+      "uvDigest": "ea5d8f705aabdc8fe4ccc3fc3008a77e932e4d050d9e3cf1cfc1e15484a97d52",
+      "weightDigest": "43b302e354c1476c655d7530b738c6ff248dc7461c3e23a4b49673f675f3f8c1",
+      "materials": [
+        "PA_epaulette_shark_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_epaulette_shark_Rig",
+    "boneCount": 15,
+    "deformBoneCount": 14,
+    "boneDigest": "538eb2659bfb57eff1cb4c22fc48488aa679e6bede902078d6a7c392500a15e5"
+  },
+  "geometryDigest": "2eec53d73f9e2de349a563c92cc7f81ad1e883b82fb388ca75f7b9c7cec54a90",
+  "variantId": null
+}

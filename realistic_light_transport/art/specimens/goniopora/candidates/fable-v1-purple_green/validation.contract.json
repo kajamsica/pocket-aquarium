@@ -1,0 +1,2453 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "goniopora",
+  "rig": "PA_goniopora_Rig",
+  "root": "PA_goniopora_Root",
+  "meshes": [
+    "PA_goniopora_Skeleton",
+    "PA_goniopora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_goniopora_Skeleton",
+      "group": "part_skeleton",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_goniopora_Skeleton",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_01",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_02",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_03",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_04",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_05",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_06",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_07",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_08",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_09",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_10",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_11",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_12",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_13",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_14",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_15",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_16",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_17",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_18",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_19",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_20",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_21",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_22",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_23",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_24",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_25",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_goniopora_Polyps",
+      "group": "part_stalk_26",
+      "volumeFloor": 0.3
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01",
+        "attach_01"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_01_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01",
+        "attach_01"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_01_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02",
+        "attach_02"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_02_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02",
+        "attach_02"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_02_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03",
+        "attach_03"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_03_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03",
+        "attach_03"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_03_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04",
+        "attach_04"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_04_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04",
+        "attach_04"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_04_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05",
+        "attach_05"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_05_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05",
+        "attach_05"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_05_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06",
+        "attach_06"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_06_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06",
+        "attach_06"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_06_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07",
+        "attach_07"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_07_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07",
+        "attach_07"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_07_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08",
+        "attach_08"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_08_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08",
+        "attach_08"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_08_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09",
+        "attach_09"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_09_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09",
+        "attach_09"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_09_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10",
+        "attach_10"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_10_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10",
+        "attach_10"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_10_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11",
+        "attach_11"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_11_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11",
+        "attach_11"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_11_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12",
+        "attach_12"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_12_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12",
+        "attach_12"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_12_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13",
+        "attach_13"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_13_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13",
+        "attach_13"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_13_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_14",
+        "attach_14"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_14_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_14",
+        "attach_14"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_14_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_15",
+        "attach_15"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_15_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_15",
+        "attach_15"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_15_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_16",
+        "attach_16"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_16_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_16",
+        "attach_16"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_16_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_17",
+        "attach_17"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_17_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_17",
+        "attach_17"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_17_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_18",
+        "attach_18"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_18_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_18",
+        "attach_18"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_18_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_19",
+        "attach_19"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_19_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_19",
+        "attach_19"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_19_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_20",
+        "attach_20"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_20_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_20",
+        "attach_20"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_20_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_21",
+        "attach_21"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_21_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_21",
+        "attach_21"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_21_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_22",
+        "attach_22"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_22_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_22",
+        "attach_22"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_22_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_23",
+        "attach_23"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_23_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_23",
+        "attach_23"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_23_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_24",
+        "attach_24"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_24_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_24",
+        "attach_24"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_24_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_25",
+        "attach_25"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_25_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_25",
+        "attach_25"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_25_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_26",
+        "attach_26"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_skeleton"
+      ],
+      "label": "polyp_26_skeleton"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_26",
+        "attach_26"
+      ],
+      "b": [
+        "PA_goniopora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyp_26_rock"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "label": "polyp_01_polyp_02"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "label": "polyp_01_polyp_03"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "label": "polyp_01_polyp_04"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "label": "polyp_01_polyp_05"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "label": "polyp_01_polyp_06"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "label": "polyp_01_polyp_07"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "label": "polyp_01_polyp_08"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "label": "polyp_01_polyp_09"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "label": "polyp_01_polyp_10"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "label": "polyp_01_polyp_11"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "label": "polyp_01_polyp_12"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_01_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "label": "polyp_01_polyp_17"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_01_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_01"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_01_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "label": "polyp_02_polyp_03"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "label": "polyp_02_polyp_04"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "label": "polyp_02_polyp_05"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "label": "polyp_02_polyp_06"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "label": "polyp_02_polyp_07"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "label": "polyp_02_polyp_08"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "label": "polyp_02_polyp_09"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "label": "polyp_02_polyp_10"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "label": "polyp_02_polyp_12"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "label": "polyp_02_polyp_13"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "label": "polyp_02_polyp_15"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "label": "polyp_02_polyp_18"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "label": "polyp_02_polyp_20"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_02"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_02_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "label": "polyp_03_polyp_04"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "label": "polyp_03_polyp_05"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "label": "polyp_03_polyp_06"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "label": "polyp_03_polyp_08"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "label": "polyp_03_polyp_09"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "label": "polyp_03_polyp_10"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "label": "polyp_03_polyp_11"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "label": "polyp_03_polyp_13"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_03_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "label": "polyp_03_polyp_16"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_03_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_03_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_03"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_03_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "label": "polyp_04_polyp_06"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "label": "polyp_04_polyp_07"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "label": "polyp_04_polyp_09"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "label": "polyp_04_polyp_12"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_04_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "label": "polyp_04_polyp_17"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "label": "polyp_04_polyp_20"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_04_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_04"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_04_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "label": "polyp_05_polyp_06"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "label": "polyp_05_polyp_07"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "label": "polyp_05_polyp_08"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "label": "polyp_05_polyp_10"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "label": "polyp_05_polyp_11"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "label": "polyp_05_polyp_13"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "label": "polyp_05_polyp_15"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "label": "polyp_05_polyp_16"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "label": "polyp_05_polyp_18"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_05_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_05"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_05_polyp_26"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "label": "polyp_06_polyp_08"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "label": "polyp_06_polyp_09"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "label": "polyp_06_polyp_11"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_06_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "label": "polyp_06_polyp_16"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_06_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_06_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_06"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_06_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "label": "polyp_07_polyp_09"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "label": "polyp_07_polyp_10"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "label": "polyp_07_polyp_12"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "label": "polyp_07_polyp_15"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "label": "polyp_07_polyp_17"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "label": "polyp_07_polyp_20"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_07_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_07"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_07_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "label": "polyp_08_polyp_10"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "label": "polyp_08_polyp_11"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "label": "polyp_08_polyp_13"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "label": "polyp_08_polyp_16"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "label": "polyp_08_polyp_18"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_08_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_08_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_08"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_08_polyp_26"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "label": "polyp_09_polyp_12"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_09_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "label": "polyp_09_polyp_17"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_09_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_09_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_09"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_09_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "label": "polyp_10_polyp_13"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "label": "polyp_10_polyp_15"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "label": "polyp_10_polyp_18"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_10_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_10"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_10_polyp_26"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_11_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "label": "polyp_11_polyp_16"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_11_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_11_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_11"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_11_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "label": "polyp_12_polyp_14"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "label": "polyp_12_polyp_15"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "label": "polyp_12_polyp_17"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "label": "polyp_12_polyp_20"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_12_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_12"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_12_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "label": "polyp_13_polyp_16"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "label": "polyp_13_polyp_18"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_13_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_13_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_13"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_13_polyp_26"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "label": "polyp_14_polyp_17"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_14_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_14"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_14_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "label": "polyp_15_polyp_18"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "label": "polyp_15_polyp_20"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_15"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_15_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "label": "polyp_16_polyp_19"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_16_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_16"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_16_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "label": "polyp_17_polyp_20"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_17_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_17"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_17_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "label": "polyp_18_polyp_21"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_18_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_18"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_18_polyp_26"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "label": "polyp_19_polyp_22"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_19"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_19_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "label": "polyp_20_polyp_23"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_20"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_20_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_24"
+      ],
+      "label": "polyp_21_polyp_24"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_21"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_21_polyp_26"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_22"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_25"
+      ],
+      "label": "polyp_22_polyp_25"
+    },
+    {
+      "a": [
+        "PA_goniopora_Polyps",
+        "polyp_23"
+      ],
+      "b": [
+        "PA_goniopora_Polyps",
+        "polyp_26"
+      ],
+      "label": "polyp_23_polyp_26"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.1,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21",
+        "Polyp_22",
+        "Polyp_23",
+        "Polyp_24",
+        "Polyp_25",
+        "Polyp_26"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21",
+        "Polyp_22",
+        "Polyp_23",
+        "Polyp_24",
+        "Polyp_25",
+        "Polyp_26"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21",
+        "Polyp_22",
+        "Polyp_23",
+        "Polyp_24",
+        "Polyp_25",
+        "Polyp_26"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "variantId": "purple_green",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.047517,
+      -0.050202,
+      0.0
+    ],
+    "max": [
+      0.045546,
+      0.049798,
+      0.054423
+    ]
+  },
+  "textures": [
+    "textures/tissue-albedo.png",
+    "textures/tissue-roughness.png",
+    "textures/tissue-normal.png",
+    "textures/tentacle-albedo.png",
+    "textures/tentacle-roughness.png",
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png"
+  ],
+  "notes": {
+    "polypCount": 26,
+    "tentaclesPerPolyp": 24,
+    "uniformScale": 0.8848212061651499,
+    "estimatedTriangles": 17208,
+    "neighbourClearancePairs": 136,
+    "minHeadGapMeters": 0.003539282286820594,
+    "stalkLengthMeters": [
+      0.01710730823808608,
+      0.028691146132482838
+    ],
+    "domeApexMeters": 0.02462717903353567
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/goniopora/candidates/fable-v1-purple_green/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/goniopora/candidates/fable-v1-purple_green/renders/three-view.png",
+    "boundsMin": [
+      -0.04751690477132797,
+      -0.05020234361290932,
+      0.0
+    ],
+    "boundsMax": [
+      0.04554551839828491,
+      0.049797654151916504,
+      0.05442263185977936
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

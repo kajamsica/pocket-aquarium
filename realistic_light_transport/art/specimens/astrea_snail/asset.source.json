@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "astrea_snail",
+  "displayName": "Astrea Snail",
+  "scientificLabel": "Lithopoma sp.",
+  "taxonomyConfidence": "genus",
+  "category": "cleanup_crew",
+  "waterType": "saltwater",
+  "bodyPlan": "gastropod",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.025,
+    "kind": "adult_shell_length",
+    "note": "SeaLifeBase records Lithopoma tectum to 6.0 cm maximum shell size; reef-aquarium Astrea adults are typically 2 to 2.5 cm across the shell base. For this turbinate shell the measured length is the basal shell diameter, gated along y where the shell dominates the extent (the crawling animal with head and tentacles extended is about 1.2x longer along x)."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "rest", "locomotion": "crawl", "response": "retract" },
+  "palette": {
+    "shell": [0.20, 0.18, 0.08],
+    "shellPale": [0.70, 0.64, 0.48],
+    "shellBase": [0.84, 0.80, 0.70],
+    "algae": [0.24, 0.34, 0.11],
+    "body": [0.11, 0.095, 0.08],
+    "bodyFleck": [0.30, 0.27, 0.22],
+    "eye": [0.01, 0.008, 0.008]
+  },
+  "textures": {
+    "shellResolution": [1024, 512],
+    "bodyResolution": [512, 256],
+    "shellNormalStrength": 0.6,
+    "bodyNormalStrength": 0.45
+  },
+  "morphology": {
+    "notes": "Turbinate dextral shell with an apical angle near 75 degrees, 6.25 whorls, whorl expansion 1.9 per turn, a sutural shelf, a slightly concave whorl face, a projecting carinate periphery carrying about 22 knobbed axial folds per whorl, a nearly flat base and an oblique aperture. Shell carried in life position with the apex tilted back and to the right so the aperture opens onto the foot. Broad flattened foot on the substrate, short body column filling the aperture, rounded snout, two long cephalic tentacles with eye stalks at their outer bases.",
+    "shell": {
+      "whorls": 6.25,
+      "whorlExpansion": 1.9,
+      "bodyWhorlRingsPerTurn": 138,
+      "minRingsPerTurn": 12,
+      "knobsPerWhorl": 22,
+      "knobAmplitude": 0.10,
+      "knobSharpness": 2.2,
+      "knobSlantRadiansPerMm": 0.05,
+      "apertureShearRadians": 0.4,
+      "apertureShearWhorls": 0.3,
+      "lipConstriction": 0.08,
+      "lipWhorls": 0.1,
+      "tiltDegrees": 18.0,
+      "yawDegrees": 20.0,
+      "apertureYawBiasDegrees": 0.0,
+      "clearanceAboveSubstrate": 0.0056,
+      "apertureCenter": [-0.004, -0.0015]
+    },
+    "foot": {
+      "stations": [
+        [-0.0130, 0.0016, 0.0012],
+        [-0.0112, 0.0040, 0.0021],
+        [-0.0080, 0.0072, 0.0034],
+        [-0.0040, 0.0090, 0.0046],
+        [0.0005, 0.0088, 0.0045],
+        [0.0045, 0.0078, 0.0038],
+        [0.0080, 0.0064, 0.0028],
+        [0.0105, 0.0048, 0.0022],
+        [0.0120, 0.0024, 0.0014]
+      ],
+      "rings": 26,
+      "segments": 24,
+      "dorsalExponent": 2.1,
+      "ventralExponent": 6.0,
+      "soleCenter": 0.00045
+    },
+    "head": {
+      "path": [[0.0045, 0.0, 0.0026], [0.0075, 0.0, 0.0031], [0.0105, 0.0, 0.0031], [0.0124, 0.0, 0.0029], [0.0133, 0.0, 0.0028]],
+      "radii": [0.0018, 0.0021, 0.0019, 0.0013, 0.0006],
+      "segments": 16,
+      "aspect": 0.9
+    },
+    "tentacles": {
+      "base": [0.0080, -0.0015, 0.0043],
+      "direction": [0.80, -0.50, 0.36],
+      "length": 0.0100,
+      "radii": [0.00080, 0.00066, 0.00050, 0.00035, 0.00020],
+      "segments": 10,
+      "lift": 0.0008
+    },
+    "eyes": {
+      "stalkFrom": [0.0074, -0.0016, 0.0033],
+      "stalkTo": [0.0074, -0.0023, 0.0034],
+      "stalkRadius": 0.0003,
+      "radius": 0.0004
+    },
+    "bodyColumn": {
+      "inset": 0.0022,
+      "shrinkInner": 0.96,
+      "shrinkRim": 0.95,
+      "footEllipse": [0.0045, 0.0040],
+      "rings": 8,
+      "bulge": 0.05,
+      "footDepthFraction": 0.75
+    }
+  },
+  "rig": {
+    "footJoints": [-0.012, -0.004, 0.004, 0.0115],
+    "head": [[0.0045, 0.0, 0.0030], [0.0125, 0.0, 0.0031]],
+    "shellBoneLength": 0.008
+  },
+  "animation": {
+    "rest": { "frames": 90, "loop": true, "tentacleSway": 4.0, "tentaclePitch": 3.0, "headNod": 1.5, "footPulse": 0.015, "shellRock": 0.4 },
+    "crawl": { "frames": 60, "loop": true, "pedalShift": 0.00035, "pedalScale": 0.05, "pedalFrequency": 2, "pedalLag": 1.05, "tentacleSway": 7.0, "tentaclePitch": 5.0, "headNod": 3.0, "headShift": 0.0003, "shellPitch": 1.2, "shellYaw": 0.8 },
+    "retract": { "frames": 36, "loop": false, "envelope": "hold", "tentacleShrink": 0.5, "tentacleLift": 15.0, "headRetract": 0.0015, "footFrontRetract": 0.0012, "footRearAdvance": 0.001, "footCompress": 0.1, "shellDip": 4.0 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 20 },
+  "visualDebt": [
+    "Epipodial tentacles along the foot margin and the calcareous operculum are not modelled.",
+    "Axial folds are geometric knobs on the loft; the two impressed spiral lines, growth striae and basal lirae are normal-map relief only.",
+    "Shell colour is the aquarium olive-tan morph with algal film; the reddish-orange wild morph of Lithopoma tectum is not offered as a variant.",
+    "Whorl interior near the columella is a self-overlapping tube rather than a true shared-wall shell.",
+    "Aperture is the constricted, obliquely sheared end of the whorl tube; the thickened columellar callus and bidentate columella are not modelled.",
+    "The body column that fills the aperture is a smooth lofted mass without a distinct mantle edge, and the eyes are simple beads on short stalks."
+  ]
+}

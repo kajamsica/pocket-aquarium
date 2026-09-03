@@ -1,7 +1,7 @@
 {
   "schemaVersion": "pocket-aquarium.source-references/v1",
   "speciesId": "six_line_wrasse",
-  "revision": 1,
+  "revision": 2,
   "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
   "sources": [
     {
@@ -16,7 +16,7 @@
     },
     {
       "id": "FISHBASE-PSEUDOCHEILINUS_HEXATAENIA",
-      "title": "Pseudocheilinus hexataenia species summary (max length 10.0 cm TL)",
+      "title": "Pseudocheilinus hexataenia species summary (max length 10.0 cm TL; D IX,11-12; A III,9; fusiform, compressed; ocellus on the caudal-fin base)",
       "publisher": "FishBase",
       "url": "https://www.fishbase.se/summary/Pseudocheilinus-hexataenia.html",
       "accessedAt": "2026-09-03",
@@ -25,7 +25,37 @@
       "license": "CC BY-NC 3.0 (text)"
     },
     {
-      "id": "COMMONS-PSEUDOCHEILINUS_HEXATAEN",
+      "id": "FISHBASE-MORPHOLOGY-PSEUDOCHEILINUS_HEXATAENIA",
+      "title": "Pseudocheilinus hexataenia morphology summary (dorsal head profile more or less straight; caudal more or less truncate; single dorsal fin IX spines; anal III,9)",
+      "publisher": "FishBase (MNHN mirror)",
+      "url": "https://fishbase.mnhn.fr/physiology/Pseudocheilinus_hexataenia",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "DIAGNOSIS-PSEUDOCHEILINUS_HEXATAENIA",
+      "title": "Published species diagnosis as transcribed online: body depth 2.5-2.9 in SL, head 2.6-2.9 in SL, snout 2.8-3.5 in HL, caudal fin slightly rounded 3.7-4.0 in SL, pectoral rays 14-17, six dark blue stripes on the upper two thirds of the body, green caudal fin, blue-edged black spot on the upper caudal peduncle",
+      "publisher": "picture-worl.org (New Caledonia fish inventory; transcription of the reef-fish literature diagnosis)",
+      "url": "http://www.picture-worl.org/actinopterygien-nouvelle-caledonie-54-pseudocheilinus-hexataenia-bleeker-1857.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts only; no imagery used"
+    },
+    {
+      "id": "MONACO-NATURE-PSEUDOCHEILINUS_HEXATAENIA",
+      "title": "Pseudocheilinus hexataenia species account (eye red with two parallel white bands; anal fin blue at the base; translucent pectorals; pelvics with blue strokes; red and yellow dotting on the chin)",
+      "publisher": "Monaco Nature Encyclopedia",
+      "url": "https://www.monaconatureencyclopedia.com/pseudocheilinus-hexataenia/?lang=en",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts only; no imagery used"
+    },
+    {
+      "id": "COMMONS-PSEUDOCHEILINUS_HEXATAENIA",
       "title": "Category:Pseudocheilinus hexataenia (openly licensed photographs, proportion study only)",
       "publisher": "Wikimedia Commons",
       "url": "https://commons.wikimedia.org/wiki/Category:Pseudocheilinus_hexataenia",
@@ -36,5 +66,5 @@
     }
   ],
   "referenceGrade": "B",
-  "referenceGradeRationale": "Lateral photographs are openly available; small fish, dorsal view inferred."
+  "referenceGradeRationale": "Published morphometric ranges (body depth, head, snout and caudal fin in SL) and openly licensed lateral photographs are available; top and front views are inferred from the general labrid body plan, so the cross-section width is an estimate."
 }

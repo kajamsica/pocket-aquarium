@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "arm_recoil": {
+      "durationSeconds": 1.2000000476837158,
+      "targetedBones": [
+        "ArmA_0_L",
+        "ArmA_0_R",
+        "ArmA_1_L",
+        "ArmA_1_R",
+        "ArmA_2_L",
+        "ArmA_2_R",
+        "ArmA_3_L",
+        "ArmA_3_R",
+        "ArmA_4_L",
+        "ArmA_4_R",
+        "ArmB_0_L",
+        "ArmB_0_R",
+        "ArmB_1_L",
+        "ArmB_1_R",
+        "ArmB_2_L",
+        "ArmB_2_R",
+        "ArmB_3_L",
+        "ArmB_3_R",
+        "ArmB_4_L",
+        "ArmB_4_R",
+        "ArmLead_0",
+        "ArmLead_1",
+        "ArmLead_2",
+        "ArmLead_3",
+        "ArmLead_4"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "crawl": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "ArmA_0_L",
+        "ArmA_0_R",
+        "ArmA_1_L",
+        "ArmA_1_R",
+        "ArmA_2_L",
+        "ArmA_2_R",
+        "ArmA_3_L",
+        "ArmA_3_R",
+        "ArmA_4_L",
+        "ArmA_4_R",
+        "ArmB_0_L",
+        "ArmB_0_R",
+        "ArmB_1_L",
+        "ArmB_1_R",
+        "ArmB_2_L",
+        "ArmB_2_R",
+        "ArmB_3_L",
+        "ArmB_3_R",
+        "ArmB_4_L",
+        "ArmB_4_R",
+        "ArmLead_1",
+        "ArmLead_2",
+        "ArmLead_3",
+        "ArmLead_4",
+        "Disc"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "ArmA_1_L",
+        "ArmA_1_R",
+        "ArmA_2_L",
+        "ArmA_2_R",
+        "ArmA_3_L",
+        "ArmA_3_R",
+        "ArmA_4_L",
+        "ArmA_4_R",
+        "ArmB_1_L",
+        "ArmB_1_R",
+        "ArmB_2_L",
+        "ArmB_2_R",
+        "ArmB_3_L",
+        "ArmB_3_R",
+        "ArmB_4_L",
+        "ArmB_4_R",
+        "ArmLead_1",
+        "ArmLead_2",
+        "ArmLead_3",
+        "ArmLead_4",
+        "Disc"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 14360,
+    "materials": 1,
+    "nodes": 31,
+    "skinJoints": 27,
+    "images": 3,
+    "meshes": [
+      "PA_brittle_star_Arms",
+      "PA_brittle_star_Disc"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "arm_recoil": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.06529214978218079,
+      -0.07427319139242172,
+      -2.5127122778867656e-18
+    ],
+    "max": [
+      0.07815775275230408,
+      0.07427319139242172,
+      0.007449576631188393
+    ],
+    "deviationMeters": 1.4901161193847656e-08
+  }
+}

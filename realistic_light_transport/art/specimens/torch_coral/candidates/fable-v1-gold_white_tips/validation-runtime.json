@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Disc_0",
+        "Disc_1",
+        "Disc_2",
+        "Disc_3",
+        "Tent_0_0_mid",
+        "Tent_0_0_root",
+        "Tent_0_0_tip",
+        "Tent_0_1_mid",
+        "Tent_0_1_root",
+        "Tent_0_1_tip",
+        "Tent_1_0_mid",
+        "Tent_1_0_root",
+        "Tent_1_0_tip",
+        "Tent_1_1_mid",
+        "Tent_1_1_root",
+        "Tent_1_1_tip",
+        "Tent_2_0_mid",
+        "Tent_2_0_root",
+        "Tent_2_0_tip",
+        "Tent_2_1_mid",
+        "Tent_2_1_root",
+        "Tent_2_1_tip",
+        "Tent_3_0_mid",
+        "Tent_3_0_root",
+        "Tent_3_0_tip",
+        "Tent_3_1_mid",
+        "Tent_3_1_root",
+        "Tent_3_1_tip"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Disc_0",
+        "Disc_1",
+        "Disc_2",
+        "Disc_3",
+        "Tent_0_0_mid",
+        "Tent_0_0_root",
+        "Tent_0_0_tip",
+        "Tent_0_1_mid",
+        "Tent_0_1_root",
+        "Tent_0_1_tip",
+        "Tent_1_0_mid",
+        "Tent_1_0_root",
+        "Tent_1_0_tip",
+        "Tent_1_1_mid",
+        "Tent_1_1_root",
+        "Tent_1_1_tip",
+        "Tent_2_0_mid",
+        "Tent_2_0_root",
+        "Tent_2_0_tip",
+        "Tent_2_1_mid",
+        "Tent_2_1_root",
+        "Tent_2_1_tip",
+        "Tent_3_0_mid",
+        "Tent_3_0_root",
+        "Tent_3_0_tip",
+        "Tent_3_1_mid",
+        "Tent_3_1_root",
+        "Tent_3_1_tip"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 5.0,
+      "targetedBones": [
+        "Disc_0",
+        "Disc_1",
+        "Disc_2",
+        "Disc_3",
+        "Tent_0_0_mid",
+        "Tent_0_0_root",
+        "Tent_0_0_tip",
+        "Tent_0_1_mid",
+        "Tent_0_1_root",
+        "Tent_0_1_tip",
+        "Tent_1_0_mid",
+        "Tent_1_0_root",
+        "Tent_1_0_tip",
+        "Tent_1_1_mid",
+        "Tent_1_1_root",
+        "Tent_1_1_tip",
+        "Tent_2_0_mid",
+        "Tent_2_0_root",
+        "Tent_2_0_tip",
+        "Tent_2_1_mid",
+        "Tent_2_1_root",
+        "Tent_2_1_tip",
+        "Tent_3_0_mid",
+        "Tent_3_0_root",
+        "Tent_3_0_tip",
+        "Tent_3_1_mid",
+        "Tent_3_1_root",
+        "Tent_3_1_tip"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 18072,
+    "materials": 5,
+    "nodes": 35,
+    "skinJoints": 30,
+    "images": 12,
+    "meshes": [
+      "PA_torch_coral_Polyps",
+      "PA_torch_coral_Skeleton",
+      "PA_torch_coral_Tentacles"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.06000000983476639,
+      -0.05323681980371475,
+      -8.606350449039962e-26
+    ],
+    "max": [
+      0.06000000610947609,
+      0.05323679745197296,
+      0.0980709120631218
+    ],
+    "deviationMeters": 3.094458528950093e-08
+  }
+}

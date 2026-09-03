@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "blue_linckia",
+  "variantId": null,
+  "scientificName": "Linckia laevigata",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.25,
+  "referenceSizeKind": "adult_arm_span",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "757dc0c53ca8d5297942475b9fb2fc06590501a78777af9a8f6f91a36a90140c",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Blue Linckia Starfish",
+  "bodyPlan": "asteroid",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-207610",
+      "title": "Linckia laevigata (Linnaeus, 1758) taxon record (World Asteroidea Database)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207610",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-LINCKIA_LAEVIGATA",
+      "title": "Linckia laevigata, Blue linckia species summary (max length 40.0 cm WD)",
+      "publisher": "SeaLifeBase",
+      "url": "https://sealifebase.org/summary/Linckia-laevigata.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "GBRI-UQ-LINCKIA_LAEVIGATA",
+      "title": "Linckia laevigata, The Blue Sea Star fact sheet (size: adults over 20 cm, max 30 cm diameter; Heron Island disc diameter 30-40 mm, arm length 80-120 mm after Laxton 1974)",
+      "publisher": "Great Barrier Reef Invertebrates, The University of Queensland",
+      "url": "https://www.gbri.org.au/Species/Linckialaevigata.aspx?PageContentID=2428",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "ADW-LINCKIA_LAEVIGATA",
+      "title": "Linckia laevigata species account (five cylindrical arms, bright blue body, yellow tube feet, 30-40 cm across)",
+      "publisher": "Animal Diversity Web, University of Michigan Museum of Zoology",
+      "url": "https://animaldiversity.org/accounts/Linckia_laevigata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 3.0 (text)"
+    },
+    {
+      "id": "COMMONS-LINCKIA_LAEVIGATA",
+      "title": "Category:Linckia laevigata (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Linckia_laevigata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "e7fcf9352388dcbd9df69db3e89139d5910a8f3702199a02691c7f04365198b9",
+  "sourceReferencesSha256": "5dfcd961b4857576696aaed8511544a0e1f24669a7d4f601f948fcfafb292a49",
+  "sourceBlendSha256": "501c588dd58b3a1201dbdc5fce2609e65e54c21ecc0f42275b8f5143e206b373",
+  "builder": {
+    "entrypoint": "34b433bd1d76b0f1d4110b48d61d71fbb13b3803c31ade6a25f14ece2449b1b7",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:9ba1de85821120741823ab59fba444b49392abf1bba8e4c20863b8b59041a6a1",
+    "speciesBackend": "9ba1de85821120741823ab59fba444b49392abf1bba8e4c20863b8b59041a6a1",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "f72a764948a50c981082a2f2a177800fd93273dc531f38dc10968caa33cfeae1"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "674190564651048146c25dbd6268e3101dd9b82faa49ed4dbb9828effed28f5a"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "a985351ef01df1890860cdce72bb93458e21061ade83668973700aeff8c99851"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "c33433829a567eaa5ab75a5b091c72ea0416140e2c5b0c577e72bcfad9b88582"
+    }
+  ],
+  "statistics": {
+    "triangles": 7680,
+    "materials": 1,
+    "bones": 21,
+    "nodes": 25,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "arm_curl",
+      "crawl",
+      "rest"
+    ],
+    "vertices": {
+      "PA_blue_linckia_Body": 3852
+    },
+    "runtimeBytes": 4577160
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "arm_curl"
+  },
+  "clipLoops": {
+    "rest": true,
+    "crawl": true,
+    "arm_curl": false
+  },
+  "restBounds": {
+    "min": [
+      -0.112933,
+      -0.125,
+      0.0
+    ],
+    "max": [
+      0.134157,
+      0.125,
+      0.025759
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

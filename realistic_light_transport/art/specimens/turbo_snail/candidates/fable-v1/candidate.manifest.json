@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "turbo_snail",
+  "variantId": null,
+  "scientificName": "Turbo sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.04,
+  "referenceSizeKind": "adult_shell_length",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "22ebe34f1fbb41a1ff0cd3368381157b58f2c05d81d340662de6a0faa8f89102",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Turbo Snail",
+  "bodyPlan": "gastropod",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-151576",
+      "title": "Turbo Linnaeus, 1758 genus record",
+      "publisher": "World Register of Marine Species (MolluscaBase)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=151576",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-413380",
+      "title": "Turbo fluctuosus W. Wood, 1828 taxon record (type of subgenus Callopoma)",
+      "publisher": "World Register of Marine Species (MolluscaBase)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=413380",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "TRYON-1888-MANUAL-X",
+      "title": "Manual of Conchology, vol. X (Turbinidae): Turbo fluctuosus description (shell 25 to 86 mm, ovate-conic, five whorls angulate and nodose at the shoulder, coarse subnodose revolving carinae, large iridescent aperture, white columella; operculum description)",
+      "publisher": "G. W. Tryon, Academy of Natural Sciences of Philadelphia (public domain, summarised on Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Turbo_fluctuosus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (1888 text); Wikipedia summary CC BY-SA 4.0"
+    },
+    {
+      "id": "EOL-620053",
+      "title": "Turbo fluctuosus (wavy turban) trait summary",
+      "publisher": "Encyclopedia of Life",
+      "url": "https://eol.org/pages/620053",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY (EOL aggregated data)"
+    },
+    {
+      "id": "COMMONS-TURBO_FLUCTUOSUS",
+      "title": "Category:Turbo fluctuosus (openly licensed shell photographs, proportion and sculpture study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Turbo_fluctuosus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-TURBINIDAE",
+      "title": "Category:Turbinidae (openly licensed photographs of living turban snails for foot, head and tentacle layout)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Turbinidae",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "a38d355cdc04c55d046b9b7745ae6c28c2367ef7f7b4552c795dffd1c9ff0613",
+  "sourceReferencesSha256": "ad7fb2e3e189d7fb16c8a4d7221b885a3da3801ed67b892a64a1f5de380aafee",
+  "sourceBlendSha256": "91d1423a25d82a58fbe38572f537cc827377f21901aaec3244aef162164fb952",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:33351c189acffa8df30410e0560c3f569a7feff28ec7c0c7fc43870f67a8ccca",
+    "speciesBackend": "33351c189acffa8df30410e0560c3f569a7feff28ec7c0c7fc43870f67a8ccca",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "066f4edf6f390cca9b31db3e82fcc18a8dbdfe652c01fda9047fe084029c2efd"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "7f134df895dc52aa26915f177eec60c25a2feccc56f50daf520975c8fbb82298"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "c0fb95c0914e26bee534523f058b03a821392c87ce586e1fc000ee650b91e81e"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "1138b06c636d843449850413b3ebdbcd55048c73f1fc3671128fc5537becffd8"
+    },
+    {
+      "path": "textures/soft-albedo.png",
+      "sha256": "481c0246352e9aa36579b717f82f0cee59bf2cad3047c2c7e691c2090933456d"
+    },
+    {
+      "path": "textures/soft-normal.png",
+      "sha256": "bc5614e426d24b8c7212c1042c57e076e4d08354a45819a296833ff0927643c7"
+    },
+    {
+      "path": "textures/soft-roughness.png",
+      "sha256": "626db993b593a7cd2a281acbe7274f9af23ba7e59dd92ac8151c6e5ccc6fdbeb"
+    }
+  ],
+  "statistics": {
+    "triangles": 14840,
+    "materials": 5,
+    "bones": 7,
+    "nodes": 12,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "crawl",
+      "rest",
+      "retract"
+    ],
+    "vertices": {
+      "PA_turbo_snail_Shell": 5618,
+      "PA_turbo_snail_Body": 1822
+    },
+    "runtimeBytes": 3759968
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "rest": true,
+    "crawl": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.031483,
+      -0.02,
+      0.0
+    ],
+    "max": [
+      0.036626,
+      0.02,
+      0.03941
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

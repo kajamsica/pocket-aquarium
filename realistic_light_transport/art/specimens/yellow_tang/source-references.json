@@ -1,8 +1,8 @@
 {
   "schemaVersion": "pocket-aquarium.source-references/v1",
   "speciesId": "yellow_tang",
-  "revision": 1,
-  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
+  "revision": 2,
+  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source. A user-supplied side-profile photograph was consulted for proportion only (body depth, snout length, eye position) and is not redistributed with the asset.",
   "sources": [
     {
       "id": "WORMS-219683",
@@ -45,5 +45,5 @@
     }
   ],
   "referenceGrade": "B",
-  "referenceGradeRationale": "Lateral photographs are plentiful; dorsal/frontal proportions inferred from Zebrasoma descriptions."
+  "referenceGradeRationale": "Lateral photographs are plentiful and the FishBase description gives body depth 1.4 to 1.75 in SL, used to set the fable-v2 disc at 57 percent of SL with a distinct snout; dorsal/frontal proportions (lateral width, snout taper) are inferred from Zebrasoma descriptions rather than calibrated top/front views."
 }

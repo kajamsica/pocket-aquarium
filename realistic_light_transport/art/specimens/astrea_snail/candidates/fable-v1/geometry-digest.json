@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "astrea_snail",
+  "sourceSha256": "ea56645197380994e99afe5fb07a773f8113f0f6964b30ceefcdd3553ec00a6b",
+  "objects": [
+    {
+      "name": "PA_astrea_snail_Body",
+      "vertexCount": 1210,
+      "triangleCount": 2384,
+      "vertexDigest": "99ef75a87a841c5be55a4d270f04bdb26569ee7624ea143059b43fb2b2d199fc",
+      "topologyDigest": "f14cce4b141879dd4e838dd90ed023b97abaa7d25b424234db9fc7820a6498e2",
+      "uvDigest": "2c1ed9f4cf3990c3ae2482357dc8e21988ba269b8c0ea0c839d19f435852bb2e",
+      "weightDigest": "4477f5c23a9da61f699d0568830e4ea316022a6ee6d27b54f2603a6ce4920aa3",
+      "materials": [
+        "PA_astrea_snail_Body",
+        "PA_astrea_snail_Eye"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_astrea_snail_Shell",
+      "vertexCount": 5426,
+      "triangleCount": 10848,
+      "vertexDigest": "de4200e97d87e4d2215e2720c82721671fa0ded3051e2443434185df300f34ec",
+      "topologyDigest": "c902a2ef8138722242706b65ac90e282c9795d0a9dcea5710c073a2f535751fc",
+      "uvDigest": "4fd44d464860714d448fc8e8b67b95c7a4e20e6838b5089d7b406d76d9867556",
+      "weightDigest": "17c7411663fb71a53ceddba30ad2628a8316fa0fbe81df712b11581626595cbf",
+      "materials": [
+        "PA_astrea_snail_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_astrea_snail_Rig",
+    "boneCount": 8,
+    "deformBoneCount": 7,
+    "boneDigest": "2f6e27dca6823cffb612e67e85f522ea1da9dd371157f7bd3f106cec087df939"
+  },
+  "geometryDigest": "0ae41e4c0ddfeff8fcc5eb3402d4ac05c9ae1b745ee901b33c6adc104dfecbe5",
+  "variantId": null
+}

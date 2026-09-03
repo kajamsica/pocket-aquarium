@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "ocellaris",
+  "displayName": "Ocellaris Clownfish",
+  "scientificLabel": "Amphiprion ocellaris",
+  "taxonomyConfidence": "species",
+  "morph": "Wild type (bright orange with three white bars and thin black edging)",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "2.0.0-candidate",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.08,
+    "kind": "adult_total_length",
+    "note": "FishBase (Amphiprion-ocellaris summary, accessed 2026-09-03) gives max 11.0 cm TL (Ref. 9710, Allen 1991); 8 cm is a typical captive adult and matches root DATA.SPECIES ocellaris adultSizeCm 8. WoRMS AphiaID 278400 (accepted). Measured along x including the rounded caudal fin (standard length 0.064 m + caudal 0.016 m)."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "references": [
+    { "id": "WORMS-278400", "title": "Amphiprion ocellaris Cuvier, 1830 taxon record (AphiaID 278400, accepted)", "publisher": "World Register of Marine Species", "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=278400", "accessedAt": "2026-09-03", "evidenceClass": "authoritative_reference", "allowedUse": "facts_and_citation", "license": "CC BY 4.0 (WoRMS data)" },
+    { "id": "FISHBASE-AMPHIPRION_OCELLARIS", "title": "Amphiprion ocellaris species summary (max length 11.0 cm TL; D X-XI,13-17; A II,11-13; fusiform, compressed)", "publisher": "FishBase", "url": "https://www.fishbase.se/summary/Amphiprion-ocellaris.html", "accessedAt": "2026-09-03", "evidenceClass": "authoritative_reference", "allowedUse": "facts_and_citation", "license": "CC BY-NC 3.0 (text)" },
+    { "id": "COMMONS-AMPHIPRION_OCELLARIS", "title": "Category:Amphiprion ocellaris (openly licensed photographs, lateral proportion and bar-layout study only)", "publisher": "Wikimedia Commons", "url": "https://commons.wikimedia.org/wiki/Category:Amphiprion_ocellaris", "accessedAt": "2026-09-03", "evidenceClass": "open_reference_imagery", "allowedUse": "proportion_reference_only", "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied" },
+    { "id": "ACCEPTED-OCELLARIS-PROFILE", "title": "Pocket Aquarium accepted Ocellaris v1.1.0 morphology profile (art/specimens/ocellaris/morphology.profile.json), station proportions read only", "publisher": "Pocket Aquarium project", "url": "art/specimens/ocellaris/morphology.profile.json", "accessedAt": "2026-09-03", "evidenceClass": "project_reference", "allowedUse": "proportion_reference_only", "license": "Project owned" },
+    { "id": "BLACK-STORM-LANE-STATIONS", "title": "Black Storm Ocellaris lane (art/specimens/black_storm_ocellaris/asset.source.json), corrected Ocellaris body stations that passed the shared gates", "publisher": "Pocket Aquarium project", "url": "art/specimens/black_storm_ocellaris/asset.source.json", "accessedAt": "2026-09-03", "evidenceClass": "project_reference", "allowedUse": "proportion_reference_only", "license": "Project owned" },
+    { "id": "USER-SIDE-PROFILE-FEEDBACK", "title": "User side-profile feedback and proportion reference images supplied with the lane brief (viewed for proportion only, no pixels sampled)", "publisher": "Pocket Aquarium project", "url": "/tmp/pa-lanes/briefs/ocellaris.md", "accessedAt": "2026-09-03", "evidenceClass": "project_reference", "allowedUse": "proportion_reference_only", "license": "Project owned" }
+  ],
+  "referenceGradeRationale": "Species anatomy is well documented (FishBase counts and size, WoRMS taxonomy, openly licensed lateral photographs of wild-type A. ocellaris, the accepted project profile); no calibrated top/front orthographic references were available, so cross-sections are inferred from general Pomacentridae body plans.",
+  "palette": {
+    "skin": [0.95, 0.37, 0.02],
+    "fin": [0.96, 0.42, 0.04],
+    "iris": [0.50, 0.20, 0.04],
+    "cue": [0.58, 0.23, 0.08],
+    "adornment": [0.9, 0.9, 0.85]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.30, "finReliefStrength": 1.2 },
+  "morphology": {
+    "notes": "Wild-type Amphiprion ocellaris. Stations start from the Black Storm lane's corrected Ocellaris anatomy and are tuned toward the user's proportion reference: compact deep high-backed oval body (depth 0.50 SL, width/depth 0.45, SL 0.064 m of 0.080 m TL), fuller rounded forehead flowing into a blunt snout with a small terminal mouth, short defined caudal peduncle (0.15 SL, depth 0.16 SL), rounded fan caudal (~20% TL), dorsal lobe with spinous section, shallow notch and taller rounded soft lobe starting just behind the head bar, low rounded anal lobe below the soft dorsal, compact teardrop pectoral at the shoulder behind the head bar, small thoracic pelvics, eye seated in the head contour 8.5 mm behind the snout tip.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.031, "halfWidth": 0.0027, "dorsalHeight": 0.0047, "ventralDepth": 0.0043, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.0265, "halfWidth": 0.0032, "dorsalHeight": 0.0055, "ventralDepth": 0.005, "centerZ": 0.0002 },
+      { "id": "peduncle-end", "x": -0.0215, "halfWidth": 0.0043, "dorsalHeight": 0.0083, "ventralDepth": 0.0073, "centerZ": 0.0004 },
+      { "id": "posterior-a", "x": -0.0145, "halfWidth": 0.0057, "dorsalHeight": 0.0127, "ventralDepth": 0.0109, "centerZ": 0.0006 },
+      { "id": "posterior-b", "x": -0.0075, "halfWidth": 0.0066, "dorsalHeight": 0.0157, "ventralDepth": 0.0138, "centerZ": 0.0007 },
+      { "id": "mid-a", "x": 0.0, "halfWidth": 0.0072, "dorsalHeight": 0.0175, "ventralDepth": 0.0152, "centerZ": 0.0007 },
+      { "id": "mid-b", "x": 0.007, "halfWidth": 0.0073, "dorsalHeight": 0.0174, "ventralDepth": 0.0153, "centerZ": 0.0005 },
+      { "id": "anterior", "x": 0.0135, "halfWidth": 0.0069, "dorsalHeight": 0.0158, "ventralDepth": 0.0147, "centerZ": 0.0002 },
+      { "id": "operculum", "x": 0.019, "halfWidth": 0.0063, "dorsalHeight": 0.0136, "ventralDepth": 0.0132, "centerZ": -0.0004 },
+      { "id": "head", "x": 0.024, "halfWidth": 0.0057, "dorsalHeight": 0.0114, "ventralDepth": 0.0113, "centerZ": -0.0011 },
+      { "id": "forehead", "x": 0.0285, "halfWidth": 0.0047, "dorsalHeight": 0.0086, "ventralDepth": 0.0089, "centerZ": -0.0019 },
+      { "id": "snout", "x": 0.0312, "halfWidth": 0.0035, "dorsalHeight": 0.0058, "ventralDepth": 0.0063, "centerZ": -0.0026 },
+      { "id": "snout-b", "x": 0.0325, "halfWidth": 0.0023, "dorsalHeight": 0.0036, "ventralDepth": 0.0041, "centerZ": -0.003 },
+      { "id": "snout-tip", "x": 0.033, "halfWidth": 0.0011, "dorsalHeight": 0.0015, "ventralDepth": 0.0017, "centerZ": -0.0031 }
+    ],
+    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 1.75 },
+    "sampling": { "ringSegments": 48, "ringCount": 52 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0011, "edge": 0.00012 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.0215, "xEnd": 0.0145, "rows": 4, "columns": 18, "lean": -0.0035,
+        "heights": [[0.0, 0.0027], [0.10, 0.0066], [0.21, 0.0090], [0.32, 0.0086], [0.44, 0.0064], [0.54, 0.0066], [0.70, 0.0069], [0.84, 0.0062], [0.94, 0.0048], [1.0, 0.0030]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.0215, "xEnd": -0.0035, "rows": 4, "columns": 12, "lean": -0.0035,
+        "heights": [[0.0, 0.0025], [0.25, 0.0074], [0.5, 0.0077], [0.75, 0.0064], [1.0, 0.003]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0108, "spanBottom": 0.0104, "length": 0.016, "fork": 0.0, "forkPower": 1.6, "rounding": 0.5, "baseFraction": 0.92 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0125, "rootLength": 0.0075, "rootHeight": -0.12, "length": 0.0148, "sweepDegrees": 38, "droopDegrees": 18, "spread": 0.7, "taper": 0.4, "power": 0.6, "flare": 0.95, "rayCount": 17, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.009, "rootLength": 0.0045, "rootHeight": -0.9, "length": 0.0108, "sweepDegrees": 50, "droopDegrees": 50, "spread": 0.35, "taper": 0.35, "power": 0.8, "flare": 0.5, "rayCount": 6, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0245, "zFraction": 0.42, "radius": 0.0027, "protrude": 0.36, "aspect": 0.3, "pupilFraction": 0.62 },
+    "mouth": { "zOffset": -0.3, "width": 0.0016, "radius": 0.00028 },
+    "gill": { "x": 0.0145, "radius": 0.00022, "points": 11, "bulge": 0.03 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.028, 0.008, -0.004, -0.0148, -0.0245, -0.034] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [1.0, 2.0, 3.5, 5.5], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 16, "pectoralFrequency": 2, "median": 1.0, "gill": 1.6, "gillFrequency": 3, "jaw": 2.5, "jawFrequency": 3, "waddleRoll": 1.2, "hoverPitch": 1.0, "hoverFrequency": 1 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.2, 4.2, 7.5, 12.5], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 28, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2, "waddleRoll": 2.4, "hoverPitch": 0.0, "hoverFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [5.0, 9.0, 15.0, 24.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "median": 3.0, "gill": 2.0, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2, "waddleRoll": 2.0, "hoverPitch": 0.0, "hoverFrequency": 1 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 20 },
+  "visualDebt": [
+    "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays or the fine white outer rim seen on some wild fish.",
+    "Eye is a flattened ellipsoid seated in the head; no eyelid ring or corneal bulge.",
+    "Bar edges are bilaterally symmetric; live fish show small left/right differences in the middle-bar bulge.",
+    "Cross-sections are inferred from general Pomacentridae body plans; no calibrated top/front orthographic reference was available."
+  ]
+}

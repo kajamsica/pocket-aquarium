@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "rest": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_L",
+        "Arm_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eye_L",
+        "Eye_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "threat": {
+      "durationSeconds": 1.2000000476837158,
+      "targetedBones": [
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_L",
+        "Arm_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eye_L",
+        "Eye_R",
+        "Leg1_B_L",
+        "Leg1_B_R",
+        "Leg2_B_L",
+        "Leg2_B_R",
+        "Leg3_B_L",
+        "Leg3_B_R",
+        "Leg4_B_L",
+        "Leg4_B_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "walk": {
+      "durationSeconds": 1.600000023841858,
+      "targetedBones": [
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_L",
+        "Arm_R",
+        "Body",
+        "Eye_L",
+        "Eye_R",
+        "Leg1_A_L",
+        "Leg1_A_R",
+        "Leg1_B_L",
+        "Leg1_B_R",
+        "Leg2_A_L",
+        "Leg2_A_R",
+        "Leg2_B_L",
+        "Leg2_B_R",
+        "Leg3_A_L",
+        "Leg3_A_R",
+        "Leg3_B_L",
+        "Leg3_B_R",
+        "Leg4_A_L",
+        "Leg4_A_R",
+        "Leg4_B_L",
+        "Leg4_B_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 6760,
+    "materials": 5,
+    "nodes": 34,
+    "skinJoints": 28,
+    "images": 9,
+    "meshes": [
+      "PA_emerald_crab_Body",
+      "PA_emerald_crab_Chelae",
+      "PA_emerald_crab_Details",
+      "PA_emerald_crab_Legs"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.03956468118525214,
+      "loopSeamDegrees": 0.0
+    },
+    "walk": {
+      "maxBoneRotationErrorDegrees": 0.14265250287968312,
+      "loopSeamDegrees": 0.0
+    },
+    "threat": {
+      "maxBoneRotationErrorDegrees": 0.055952909680744456,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.015501808375120163,
+      -0.02250000275671482,
+      -5.824621895911264e-10
+    ],
+    "max": [
+      0.03182098641991615,
+      0.022499999031424522,
+      0.010446790605783463
+    ],
+    "deviationMeters": 7.508562643358995e-09
+  }
+}

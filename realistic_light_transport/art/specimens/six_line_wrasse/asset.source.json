@@ -7,57 +7,75 @@
   "category": "fish",
   "waterType": "saltwater",
   "bodyPlan": "fish",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.2.0",
   "referenceGrade": "B",
-  "referenceSize": { "meters": 0.075, "kind": "adult_total_length", "note": "FishBase max length 10 cm TL; 7.5 cm is a typical aquarium adult." },
+  "referenceSize": {
+    "meters": 0.075,
+    "kind": "adult_total_length",
+    "note": "FishBase max length 10.0 cm TL; 7.5 cm TL is a typical aquarium adult. Total length is measured snout tip to caudal-fin tip: standard length 5.95 cm plus a 1.55 cm caudal fin (caudal 3.9 in SL per the published diagnosis)."
+  },
   "origin": "anatomical_midbody",
   "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
-  "palette": { "skin": [0.7, 0.28, 0.14], "fin": [0.7, 0.35, 0.2], "iris": [0.5, 0.2, 0.05], "cue": [0.35, 0.12, 0.06], "adornment": [0.9, 0.9, 0.85] },
+  "palette": {
+    "skin": [0.9, 0.42, 0.2],
+    "fin": [0.9, 0.5, 0.35],
+    "iris": [0.66, 0.12, 0.05],
+    "cue": [0.5, 0.16, 0.12],
+    "adornment": [0.96, 0.96, 0.92]
+  },
   "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3 },
   "morphology": {
-    "notes": "Slender elongate wrasse: shallow body (~28% SL), pointed snout with small terminal mouth, long low dorsal and anal fins, rounded caudal fin, small paired fins; six horizontal blue lines on an orange-pink body, green tail.",
+    "notes": "Small labrid: body depth 2.9 in SL (published range 2.5-2.9), head 2.8 in SL with a straight dorsal head profile, pointed snout and small terminal mouth, large eye high in the head; long low dorsal fin IX,11 from above the opercle to the peduncle, anal III,9 under the soft dorsal, slightly rounded caudal 3.9 in SL, rounded fan pectorals, small pelvics; moderately compressed cross section (width 0.53 of depth).",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.0315, "halfWidth": 0.0016, "dorsalHeight": 0.0032, "ventralDepth": 0.0028, "centerZ": 0.0 },
-      { "id": "peduncle", "x": -0.027, "halfWidth": 0.0024, "dorsalHeight": 0.0048, "ventralDepth": 0.0042, "centerZ": 0.0 },
-      { "id": "posterior-a", "x": -0.02, "halfWidth": 0.0036, "dorsalHeight": 0.0068, "ventralDepth": 0.0058, "centerZ": 0.0002 },
-      { "id": "posterior-b", "x": -0.011, "halfWidth": 0.0044, "dorsalHeight": 0.0084, "ventralDepth": 0.0072, "centerZ": 0.0003 },
-      { "id": "mid-a", "x": 0.0, "halfWidth": 0.0049, "dorsalHeight": 0.0093, "ventralDepth": 0.0079, "centerZ": 0.0003 },
-      { "id": "mid-b", "x": 0.01, "halfWidth": 0.0049, "dorsalHeight": 0.0092, "ventralDepth": 0.0078, "centerZ": 0.0002 },
-      { "id": "anterior", "x": 0.018, "halfWidth": 0.0045, "dorsalHeight": 0.0082, "ventralDepth": 0.0072, "centerZ": -0.0002 },
-      { "id": "operculum", "x": 0.024, "halfWidth": 0.0038, "dorsalHeight": 0.0066, "ventralDepth": 0.006, "centerZ": -0.0006 },
-      { "id": "head", "x": 0.028, "halfWidth": 0.0028, "dorsalHeight": 0.0046, "ventralDepth": 0.0043, "centerZ": -0.001 },
-      { "id": "snout", "x": 0.0308, "halfWidth": 0.0015, "dorsalHeight": 0.0024, "ventralDepth": 0.0023, "centerZ": -0.0014 },
-      { "id": "snout-tip", "x": 0.0315, "halfWidth": 0.0006, "dorsalHeight": 0.0009, "ventralDepth": 0.0009, "centerZ": -0.0015 }
+      { "id": "caudal-base", "x": -0.02975, "halfWidth": 0.0019, "dorsalHeight": 0.0041, "ventralDepth": 0.0037, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.0255, "halfWidth": 0.0026, "dorsalHeight": 0.0053, "ventralDepth": 0.0047, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.019, "halfWidth": 0.0037, "dorsalHeight": 0.0076, "ventralDepth": 0.0066, "centerZ": 0.0002 },
+      { "id": "posterior-b", "x": -0.011, "halfWidth": 0.0047, "dorsalHeight": 0.0094, "ventralDepth": 0.0084, "centerZ": 0.0003 },
+      { "id": "mid-a", "x": -0.002, "halfWidth": 0.0054, "dorsalHeight": 0.0105, "ventralDepth": 0.0097, "centerZ": 0.0003 },
+      { "id": "mid-b", "x": 0.006, "halfWidth": 0.0055, "dorsalHeight": 0.0106, "ventralDepth": 0.01, "centerZ": 0.0002 },
+      { "id": "nape", "x": 0.012, "halfWidth": 0.0051, "dorsalHeight": 0.0097, "ventralDepth": 0.0093, "centerZ": 0.0 },
+      { "id": "operculum", "x": 0.017, "halfWidth": 0.0044, "dorsalHeight": 0.0074, "ventralDepth": 0.008, "centerZ": -0.0003 },
+      { "id": "orbit", "x": 0.0215, "halfWidth": 0.0036, "dorsalHeight": 0.0056, "ventralDepth": 0.006, "centerZ": -0.0006 },
+      { "id": "snout", "x": 0.025, "halfWidth": 0.0028, "dorsalHeight": 0.0033, "ventralDepth": 0.0044, "centerZ": -0.0008 },
+      { "id": "snout-b", "x": 0.028, "halfWidth": 0.0018, "dorsalHeight": 0.0019, "ventralDepth": 0.0028, "centerZ": -0.0009 },
+      { "id": "snout-tip", "x": 0.02975, "halfWidth": 0.0008, "dorsalHeight": 0.0011, "ventralDepth": 0.0013, "centerZ": -0.001 }
     ],
-    "crossSection": { "dorsalExponent": 2.0, "ventralExponent": 1.9 },
-    "sampling": { "ringSegments": 44, "ringCount": 50 },
+    "crossSection": { "dorsalExponent": 1.95, "ventralExponent": 1.85 },
+    "sampling": { "ringSegments": 48, "ringCount": 56 },
     "zoneFractions": [0.1, 0.28, 0.55, 0.78],
     "finThickness": { "base": 0.001, "edge": 0.00012 },
     "fins": [
-      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.026, "xEnd": 0.02, "rows": 3, "columns": 14, "lean": -0.0015,
-        "heights": [[0.0, 0.0015], [0.15, 0.0034], [0.5, 0.0036], [0.85, 0.0032], [1.0, 0.0015]] },
-      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.026, "xEnd": -0.004, "rows": 3, "columns": 10, "lean": -0.0015,
-        "heights": [[0.0, 0.0012], [0.25, 0.003], [0.7, 0.003], [1.0, 0.0012]] },
-      { "name": "caudal", "type": "caudal", "rows": 4, "columns": 9, "spanTop": 0.0045, "spanBottom": 0.0045, "length": 0.012, "fork": -0.22, "forkPower": 1.5, "rounding": 0.12, "baseFraction": 0.9 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.021, "rootLength": 0.005, "rootHeight": -0.1, "length": 0.0105, "sweepDegrees": 32, "droopDegrees": 15, "taper": 0.35, "power": 0.8, "rows": 3, "columns": 6 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.015, "rootLength": 0.0035, "rootHeight": -0.9, "length": 0.008, "sweepDegrees": 50, "droopDegrees": 55, "spread": 0.3, "taper": 0.3, "power": 0.8, "rows": 3, "columns": 5 }
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.0245, "xEnd": 0.0095, "rows": 4, "columns": 16, "lean": -0.0022, "rayCount": 20,
+        "heights": [[0.0, 0.0026], [0.1, 0.0048], [0.28, 0.0056], [0.45, 0.0048], [0.7, 0.004], [1.0, 0.003]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.0245, "xEnd": -0.0035, "rows": 4, "columns": 11, "lean": -0.002, "rayCount": 12,
+        "heights": [[0.0, 0.0024], [0.15, 0.0046], [0.4, 0.005], [0.7, 0.0042], [1.0, 0.0026]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0054, "spanBottom": 0.0054, "length": 0.0137, "fork": -0.12, "forkPower": 1.6, "rounding": 0.15, "baseFraction": 0.9, "rayCount": 13 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0078, "rootLength": 0.0045, "rootHeight": -0.05, "length": 0.0115, "sweepDegrees": 42, "droopDegrees": 18, "spread": 0.9, "taper": 0.45, "power": 0.6, "flare": 0.7, "rayCount": 15, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0045, "rootLength": 0.0028, "rootHeight": -0.82, "length": 0.007, "sweepDegrees": 50, "droopDegrees": 40, "spread": 0.55, "taper": 0.4, "power": 0.7, "flare": 0.45, "rayCount": 6, "rows": 3, "columns": 5 }
     ],
     "finAdjacency": [],
-    "eyes": { "x": 0.0245, "zFraction": 0.35, "radius": 0.0021, "protrude": 0.4, "aspect": 0.32, "pupilFraction": 0.55 },
-    "mouth": { "zOffset": -0.2, "width": 0.0012, "radius": 0.00025 },
-    "gill": { "x": 0.019, "radius": 0.00018, "points": 9, "bulge": 0.02 },
-    "adornments": []
+    "eyes": { "x": 0.0215, "zFraction": 0.5, "radius": 0.002, "protrude": 0.3, "aspect": 0.3, "pupilFraction": 0.5 },
+    "mouth": { "zOffset": -0.15, "width": 0.0013, "radius": 0.00026 },
+    "gill": { "x": 0.0085, "radius": 0.0002, "points": 11, "bulge": 0.022 },
+    "adornments": [
+      { "type": "sphere", "name": "eye_line_upper_L", "center": [0.0215, -0.00312, 0.00345], "radii": [0.0011, 0.00018, 0.00013], "material": "adornment", "bone": "Body" },
+      { "type": "sphere", "name": "eye_line_lower_L", "center": [0.0215, -0.00312, 0.00095], "radii": [0.0011, 0.00018, 0.00013], "material": "adornment", "bone": "Body" },
+      { "type": "sphere", "name": "eye_line_upper_R", "center": [0.0215, 0.00312, 0.00345], "radii": [0.0011, 0.00018, 0.00013], "material": "adornment", "bone": "Body" },
+      { "type": "sphere", "name": "eye_line_lower_R", "center": [0.0215, 0.00312, 0.00095], "radii": [0.0011, 0.00018, 0.00013], "material": "adornment", "bone": "Body" }
+    ]
   },
-  "rig": { "axialJoints": [0.026, 0.008, -0.006, -0.017, -0.026, -0.034] },
+  "rig": { "axialJoints": [0.0235, 0.008, -0.006, -0.0165, -0.0255, -0.0335] },
   "animation": {
-    "idle": { "frames": 90, "loop": true, "axial": [2.0, 4.0, 6.0, 8.0], "axialFrequency": 1, "axialLag": 0.6, "pectoral": 20, "pectoralFrequency": 3, "median": 1.5, "gill": 2.0, "gillFrequency": 3, "jaw": 3.0, "jawFrequency": 3 },
-    "swim": { "frames": 48, "loop": true, "axial": [5.0, 9.0, 13.0, 17.0], "axialFrequency": 2, "axialLag": 0.6, "pectoral": 28, "pectoralFrequency": 4, "median": 2.5, "gill": 2.0, "gillFrequency": 2, "jaw": 2.5, "jawFrequency": 2 },
-    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [8.0, 14.0, 22.0, 30.0], "axialFrequency": 2, "axialLag": 0.6, "pectoral": 32, "pectoralFrequency": 3, "median": 4.0, "gill": 2.5, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
+    "idle": { "frames": 96, "loop": true, "axial": [1.0, 2.0, 3.0, 4.5], "axialFrequency": 1, "axialLag": 0.6, "pectoral": 16, "pectoralFrequency": 2, "pelvic": 5, "pelvicFrequency": 2, "median": 1.2, "gill": 2.0, "gillFrequency": 3, "jaw": 3.0, "jawFrequency": 3 },
+    "swim": { "frames": 48, "loop": true, "axial": [2.5, 4.5, 7.0, 10.0], "axialFrequency": 2, "axialLag": 0.6, "pectoral": 30, "pectoralFrequency": 4, "pelvic": 8, "pelvicFrequency": 4, "median": 2.0, "gill": 2.0, "gillFrequency": 2, "jaw": 2.5, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [6.0, 11.0, 18.0, 26.0], "axialFrequency": 2, "axialLag": 0.6, "pectoral": 34, "pectoralFrequency": 3, "pelvic": 10, "pelvicFrequency": 3, "median": 3.0, "gill": 2.5, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
   },
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
-  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
+  "preview": { "frame": 12, "azimuthDegrees": -55, "elevationDegrees": 16 },
   "visualDebt": [
-    "Eye striping is painted onto the body texture rather than the iris.",
-    "Line count and spacing are approximations of the six lateral stripes."
+    "The two white eye lines are straight ellipsoid adornments across the iris, not curved iris markings, and the double pupil of the modified cornea is not modelled.",
+    "Head markings are the six body stripes continued and converging onto the head; the finer blue arabesques of the cheek are not painted.",
+    "Fin rays are normal-map relief only; membranes are single thin shells without modelled rays or the filamentous anterior anal spines.",
+    "Built against the committed shared lib: textures.write_image saves Non-Color images (roughness, normal) black, so renders show a glossier body than authored until the shared fix lands."
   ]
 }

@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "yellow_tang",
+  "variantId": null,
+  "scientificName": "Zebrasoma flavescens",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.2.0",
+  "referenceSizeMeters": 0.2,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "8490cb6b302f6eb38405b52dce14a75808b9c6d1917d6c9a350b694982c7d404",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Yellow Tang",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-219683",
+      "title": "Zebrasoma flavescens (Bennett, 1828) taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219683",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-ZEBRASOMA_FLAVESCENS",
+      "title": "Zebrasoma flavescens species summary (max length 20.0 cm TL)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Zebrasoma-flavescens.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "NOAA-FLAVESCENS",
+      "title": "Yellow tang fishery and life-history overview (Hawaii)",
+      "publisher": "NOAA Fisheries / PIFSC",
+      "url": "https://www.fisheries.noaa.gov/pacific-islands/science-data/yellow-tang-research",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-ZEBRASOMA_FLAVESCENS",
+      "title": "Category:Zebrasoma flavescens (openly licensed photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Zebrasoma_flavescens",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "2311aafd0766624783d4f8896bd3af1433c3ef751ac8dbf6eb7233fbfcb7f827",
+  "sourceReferencesSha256": "bb335f5237fd3c0ec5d95e36deee345b41de49a05ecf43317c678891f45599e7",
+  "sourceBlendSha256": "7dba173f212724542414451591367f3c1231f4dcfac7e75a083a5f5b311d3f98",
+  "builder": {
+    "entrypoint": "34b433bd1d76b0f1d4110b48d61d71fbb13b3803c31ade6a25f14ece2449b1b7",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "8d1064d6cbad8c46b15d1f1be5ae6fd2b0e5aa5de9653f5e1b418386c3843cd7",
+    "speciesBackend": "5bee200c3811e8490fbe0fb626cac6ab192a619c2ff6503c16af701b11384c95",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "0bfc25d9cd17e898bfec0b97ab0d7b3d61ef8ca9277e9f1760e58f501d304ea1"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "15e92d0b567dc88587b6431bbd73a122dd0be8b24099fd728a2ae9cb1e9772fe"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "0e4d72fb4ca2732b2a6ae3a86982ab531f25caad38aba78b19da9ceb5b438a74"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "6fbe40a952c636f631bf8d4fb74263d353230a181f792c8ac20d263d9c8b7454"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+    }
+  ],
+  "statistics": {
+    "triangles": 9056,
+    "materials": 7,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_yellow_tang_Body": 2834,
+      "PA_yellow_tang_Fins": 592,
+      "PA_yellow_tang_Details": 1200
+    },
+    "runtimeBytes": 981432
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.115001,
+      -0.032767,
+      -0.06176
+    ],
+    "max": [
+      0.085297,
+      0.032767,
+      0.072862
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

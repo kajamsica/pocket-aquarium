@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "turbo_snail",
+  "revision": 1,
+  "policy": "References informed shell proportions (whorl count, spire height, aperture size, sculpture layout), soft-body layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source; public seller descriptions guided trade-name identity only. The trade name 'Mexican turbo snail' is applied to several Turbo species, so the asset is labelled at genus level (Turbo sp.) with Turbo fluctuosus as the morphological model.",
+  "sources": [
+    {
+      "id": "WORMS-151576",
+      "title": "Turbo Linnaeus, 1758 genus record",
+      "publisher": "World Register of Marine Species (MolluscaBase)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=151576",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-413380",
+      "title": "Turbo fluctuosus W. Wood, 1828 taxon record (type of subgenus Callopoma)",
+      "publisher": "World Register of Marine Species (MolluscaBase)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=413380",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "TRYON-1888-MANUAL-X",
+      "title": "Manual of Conchology, vol. X (Turbinidae): Turbo fluctuosus description (shell 25 to 86 mm, ovate-conic, five whorls angulate and nodose at the shoulder, coarse subnodose revolving carinae, large iridescent aperture, white columella; operculum description)",
+      "publisher": "G. W. Tryon, Academy of Natural Sciences of Philadelphia (public domain, summarised on Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Turbo_fluctuosus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (1888 text); Wikipedia summary CC BY-SA 4.0"
+    },
+    {
+      "id": "EOL-620053",
+      "title": "Turbo fluctuosus (wavy turban) trait summary",
+      "publisher": "Encyclopedia of Life",
+      "url": "https://eol.org/pages/620053",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY (EOL aggregated data)"
+    },
+    {
+      "id": "COMMONS-TURBO_FLUCTUOSUS",
+      "title": "Category:Turbo fluctuosus (openly licensed shell photographs, proportion and sculpture study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Turbo_fluctuosus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-TURBINIDAE",
+      "title": "Category:Turbinidae (openly licensed photographs of living turban snails for foot, head and tentacle layout)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Turbinidae",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Shell proportions and sculpture come from a public-domain conchological description and openly licensed shell photographs (apertural and apical views are available). The extended soft body (foot outline, head, tentacle and eyestalk placement) is inferred from general Turbinidae/Trochoidea anatomy and living-animal photographs rather than calibrated side/top/front views."
+}

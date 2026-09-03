@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "emerald_crab",
+  "displayName": "Emerald Crab",
+  "scientificLabel": "Mithraculus sculptus",
+  "taxonomyConfidence": "species",
+  "category": "cleanup_crew",
+  "waterType": "saltwater",
+  "bodyPlan": "brachyuran_crab",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.045,
+    "kind": "adult_carapace_width_including_legs",
+    "note": "Leg-tip to leg-tip spread across the body (y axis) of a large aquarium adult. Wikipedia/Majidae accounts give about 4 cm body length; SeaLifeBase lists 1.2 cm CW for a Belize field record; aquarium adults carry a 2.5 to 3 cm carapace. The rest pose is normalised so the whole mesh spans exactly 4.5 cm along y, which places the carapace at about 2.5 cm wide."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "rest", "locomotion": "walk", "response": "threat" },
+  "palette": {
+    "carapace": [0.045, 0.30, 0.13],
+    "carapaceDeep": [0.020, 0.15, 0.075],
+    "underside": [0.60, 0.64, 0.46],
+    "crust": [0.74, 0.76, 0.62],
+    "leg": [0.23, 0.29, 0.13],
+    "legDark": [0.15, 0.13, 0.07],
+    "hair": [0.66, 0.58, 0.36],
+    "claw": [0.06, 0.31, 0.14],
+    "clawTip": [0.09, 0.07, 0.05],
+    "spoon": [0.80, 0.80, 0.70],
+    "eye": [0.012, 0.012, 0.014],
+    "stalk": [0.10, 0.14, 0.06]
+  },
+  "textures": { "carapaceResolution": [1024, 512], "legResolution": [512, 256], "clawResolution": [512, 256], "normalStrength": 0.9 },
+  "morphology": {
+    "notes": "Subhexagonal, flat, sculptured carapace slightly wider than long; eight stout walking legs bent down to the substrate in a wide lateral stance; two large chelipeds folded in front of the face with spoon-tipped fingers; short eyestalks in the anterolateral orbits; short antennae; abdomen folded flat under the sternum.",
+    "carapace": {
+      "halfLength": 0.0120, "halfWidth": 0.0135, "centerZ": 0.0065, "domeHeight": 0.0042, "ventralDepth": 0.0030,
+      "domeExponent": 2.5, "ventralExponent": 3.6, "segments": 36, "rings": 24,
+      "anteriorNarrowing": 0.16, "posteriorNarrowing": 0.08, "reliefMeters": 0.0011, "toothBulge": 0.03
+    },
+    "legs": {
+      "rootX": [0.0045, 0.0005, -0.0035, -0.0075],
+      "kneeDx": [0.0035, 0.0010, -0.0015, -0.0040],
+      "tipDx": [0.0075, 0.0020, -0.0035, -0.0090],
+      "merusLength": [0.0066, 0.0068, 0.0063, 0.0056],
+      "merusDegrees": [30.0, 32.0, 31.0, 28.0],
+      "carpusLength": 0.0026, "carpusDegrees": -22.0,
+      "propodusDegrees": -74.0, "dactylLength": 0.0034, "dactylDegrees": -80.0,
+      "rootRadius": 0.00125, "coxaRadius": 0.00140, "kneeRadius": 0.00125, "carpusRadius": 0.00112, "propodusEndRadius": 0.00088, "tipRadius": 0.00030,
+      "embed": 0.0030, "seam": 0.84, "segments": 10
+    },
+    "chelipeds": {
+      "root": [0.0060, 0.0070, 0.0000], "edge": [0.0105, 0.0088, 0.0005], "elbow": [0.0165, 0.0128, 0.0012], "wrist": [0.0200, 0.0110, 0.0012],
+      "armRadii": [0.0014, 0.0016, 0.0017, 0.0016],
+      "palm": [[0.0228, 0.0098, 0.0010, 0.0026], [0.0265, 0.0082, 0.0008, 0.0027], [0.0292, 0.0069, -0.0002, 0.0017], [0.0315, 0.0056, -0.0007, 0.0011], [0.0338, 0.0043, -0.0010, 0.0005]],
+      "dactyl": [[0.0278, 0.0071, 0.0014, 0.0012], [0.0300, 0.0061, 0.0033, 0.00105], [0.0320, 0.0052, 0.0028, 0.0009], [0.0332, 0.0046, 0.0019, 0.00085], [0.0341, 0.0042, 0.0006, 0.0004]],
+      "palmAspect": 0.82, "segments": 12
+    },
+    "eyes": {
+      "orbitInside": [0.0085, 0.0050, 0.0018], "orbit": [0.0100, 0.0058, 0.0022], "stalkMid": [0.0114, 0.0066, 0.0030], "stalkEnd": [0.0128, 0.0074, 0.0038],
+      "center": [0.0133, 0.0077, 0.0040], "radius": 0.0009, "stalkRadius": 0.0006
+    },
+    "antennae": {
+      "points": [[0.0090, 0.0022, 0.0016], [0.0118, 0.0026, 0.0022], [0.0135, 0.0031, 0.0032], [0.0155, 0.0038, 0.0037], [0.0175, 0.0045, 0.0038]],
+      "radii": [0.00035, 0.00035, 0.00030, 0.00022, 0.00010]
+    },
+    "abdomen": { "center": [-0.0025, 0.0, -0.0031], "radii": [0.0062, 0.0052, 0.0011] }
+  },
+  "animation": {
+    "rest": { "frames": 72, "loop": true, "eye": 4.0, "eyeFrequency": 1, "antenna": 7.0, "antennaFrequency": 2, "arm": 2.0, "armFrequency": 1, "dactyl": 4.0, "dactylFrequency": 2, "bodyBob": 0.00015, "bodyFrequency": 1 },
+    "walk": { "frames": 48, "loop": true, "stepFrequency": 2, "hipLift": 9.0, "hipDrop": 3.5, "kneeSwing": 12.0, "yaw": 2.0, "eye": 3.0, "eyeFrequency": 2, "antenna": 5.0, "antennaFrequency": 2, "arm": 3.0, "armFrequency": 2, "bodyBob": 0.0002, "bodyFrequency": 4 },
+    "threat": { "frames": 36, "loop": false, "envelope": "bell", "armRaise": 24.0, "armSpread": 12.0, "dactylOpen": 22.0, "bodyLift": 0.0016, "bodyPitch": 5.0, "legExtend": 5.0, "eye": 3.0, "antenna": 6.0 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 10, "azimuthDegrees": -50, "elevationDegrees": 30 },
+  "visualDebt": [
+    "Leg and cheliped setae (hair) are painted flecks in the albedo/roughness/normal maps, not modelled fibres.",
+    "Mouthparts (maxillipeds) and antennules are not modelled; the frontal region is the carapace margin plus eyestalks and antennae.",
+    "Carapace sculpture is a smooth lobe displacement plus a granular normal map rather than individually modelled tubercles.",
+    "Sideways walk is a kinematic loop with the body fixed in place; the runtime must translate the root along the crab's lateral axis to sell the gait."
+  ]
+}

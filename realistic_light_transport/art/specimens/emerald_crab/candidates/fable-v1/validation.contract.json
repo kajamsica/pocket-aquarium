@@ -1,0 +1,894 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "emerald_crab",
+  "rig": "PA_emerald_crab_Rig",
+  "root": "PA_emerald_crab_Root",
+  "meshes": [
+    "PA_emerald_crab_Body",
+    "PA_emerald_crab_Legs",
+    "PA_emerald_crab_Chelae",
+    "PA_emerald_crab_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_emerald_crab_Body",
+      "group": "part_carapace",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_emerald_crab_Body",
+      "group": "part_abdomen",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg1_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg2_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg3_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg4_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_arm_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_claw_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_dactyl_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eyestalk_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eye_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_antenna_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg1_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg2_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg3_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg4_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_arm_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_claw_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_dactyl_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eyestalk_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eye_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_antenna_R",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg2_L"
+      ],
+      "label": "leg1_leg2_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg2_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg3_L"
+      ],
+      "label": "leg2_leg3_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg3_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg4_L"
+      ],
+      "label": "leg3_leg4_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_L"
+      ],
+      "label": "arm_leg1_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_L"
+      ],
+      "label": "claw_leg1_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_dactyl_L",
+        "hinge_dactyl_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_L"
+      ],
+      "label": "dactyl_palm_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_L",
+        "attach_leg1_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg1_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg2_L",
+        "attach_leg2_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg2_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg3_L",
+        "attach_leg3_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg3_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg4_L",
+        "attach_leg4_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg4_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_L",
+        "attach_arm_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "arm_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "claw_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_dactyl_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "dactyl_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_eyestalk_L",
+        "attach_eyestalk_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "eyestalk_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_antenna_L",
+        "attach_antenna_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "antenna_carapace_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_antenna_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_L"
+      ],
+      "label": "antenna_arm_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_eye_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_L"
+      ],
+      "label": "eye_arm_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_eyestalk_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_L"
+      ],
+      "label": "eyestalk_arm_L"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg2_R"
+      ],
+      "label": "leg1_leg2_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg2_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg3_R"
+      ],
+      "label": "leg2_leg3_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg3_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg4_R"
+      ],
+      "label": "leg3_leg4_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_R"
+      ],
+      "label": "arm_leg1_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_R"
+      ],
+      "label": "claw_leg1_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_dactyl_R",
+        "hinge_dactyl_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_R"
+      ],
+      "label": "dactyl_palm_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg1_R",
+        "attach_leg1_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg1_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg2_R",
+        "attach_leg2_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg2_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg3_R",
+        "attach_leg3_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg3_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Legs",
+        "part_leg4_R",
+        "attach_leg4_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "leg4_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_R",
+        "attach_arm_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "arm_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "claw_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_dactyl_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "dactyl_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_eyestalk_R",
+        "attach_eyestalk_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "eyestalk_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_antenna_R",
+        "attach_antenna_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Body",
+        "part_carapace"
+      ],
+      "label": "antenna_carapace_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_antenna_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_R"
+      ],
+      "label": "antenna_arm_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_eye_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_R"
+      ],
+      "label": "eye_arm_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Details",
+        "part_eyestalk_R"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_arm_R"
+      ],
+      "label": "eyestalk_arm_R"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_claw_R"
+      ],
+      "label": "claw_claw"
+    },
+    {
+      "a": [
+        "PA_emerald_crab_Chelae",
+        "part_dactyl_L"
+      ],
+      "b": [
+        "PA_emerald_crab_Chelae",
+        "part_dactyl_R"
+      ],
+      "label": "dactyl_dactyl"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg1_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg1_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg2_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg2_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg3_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg3_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg4_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "group": "part_leg4_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_arm_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_arm_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_claw_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_claw_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_dactyl_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "group": "part_dactyl_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eyestalk_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eyestalk_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eye_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_eye_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_antenna_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "group": "part_antenna_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "y",
+    "meters": 0.045,
+    "tolerance": 0.03,
+    "kind": "adult_carapace_width_including_legs"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 72,
+      "bones": [
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_L",
+        "Arm_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eye_L",
+        "Eye_R"
+      ],
+      "shapeKeys": []
+    },
+    "walk": {
+      "loop": true,
+      "frames": 48,
+      "bones": [
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_L",
+        "Arm_R",
+        "Body",
+        "Eye_L",
+        "Eye_R",
+        "Leg1_A_L",
+        "Leg1_A_R",
+        "Leg1_B_L",
+        "Leg1_B_R",
+        "Leg2_A_L",
+        "Leg2_A_R",
+        "Leg2_B_L",
+        "Leg2_B_R",
+        "Leg3_A_L",
+        "Leg3_A_R",
+        "Leg3_B_L",
+        "Leg3_B_R",
+        "Leg4_A_L",
+        "Leg4_A_R",
+        "Leg4_B_L",
+        "Leg4_B_R"
+      ],
+      "shapeKeys": []
+    },
+    "threat": {
+      "loop": false,
+      "frames": 36,
+      "bones": [
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_L",
+        "Arm_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Eye_L",
+        "Eye_R",
+        "Leg1_B_L",
+        "Leg1_B_R",
+        "Leg2_B_L",
+        "Leg2_B_R",
+        "Leg3_B_L",
+        "Leg3_B_R",
+        "Leg4_B_L",
+        "Leg4_B_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "walk",
+    "response": "threat"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_emerald_crab_Legs",
+      "left": "part_leg1_L",
+      "right": "part_leg1_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "left": "part_leg2_L",
+      "right": "part_leg2_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "left": "part_leg3_L",
+      "right": "part_leg3_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Legs",
+      "left": "part_leg4_L",
+      "right": "part_leg4_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "left": "part_arm_L",
+      "right": "part_arm_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "left": "part_claw_L",
+      "right": "part_claw_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Chelae",
+      "left": "part_dactyl_L",
+      "right": "part_dactyl_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "left": "part_eyestalk_L",
+      "right": "part_eyestalk_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_emerald_crab_Details",
+      "left": "part_antenna_L",
+      "right": "part_antenna_R",
+      "tolerance": 0.0001
+    }
+  ],
+  "variantId": null,
+  "previewAction": "walk",
+  "restBounds": {
+    "min": [
+      -0.015502,
+      -0.0225,
+      -0.0
+    ],
+    "max": [
+      0.031821,
+      0.0225,
+      0.010447
+    ]
+  },
+  "textures": [
+    "textures/carapace-albedo.png",
+    "textures/carapace-roughness.png",
+    "textures/carapace-normal.png",
+    "textures/leg-albedo.png",
+    "textures/leg-roughness.png",
+    "textures/leg-normal.png",
+    "textures/claw-albedo.png",
+    "textures/claw-roughness.png",
+    "textures/claw-normal.png"
+  ],
+  "notes": {
+    "designScale": 0.9243519979871714,
+    "carapaceWidthMeters": 0.024957503945653627,
+    "carapaceLengthMeters": 0.022184447951692114,
+    "legs": [
+      "leg1",
+      "leg2",
+      "leg3",
+      "leg4"
+    ],
+    "chelae": [
+      "arm",
+      "claw",
+      "dactyl"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/emerald_crab/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/emerald_crab/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.015501802787184715,
+      -0.022499999031424522,
+      -1.1556049450689443e-09
+    ],
+    "boundsMax": [
+      0.031820978969335556,
+      0.022499999031424522,
+      0.010446791537106037
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

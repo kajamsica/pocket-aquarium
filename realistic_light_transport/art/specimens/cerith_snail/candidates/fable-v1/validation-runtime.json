@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "crawl": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 1.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    }
+  },
+  "inventory": {
+    "triangles": 14328,
+    "materials": 3,
+    "nodes": 13,
+    "skinJoints": 9,
+    "images": 6,
+    "meshes": [
+      "PA_cerith_snail_Body",
+      "PA_cerith_snail_Shell"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.24389311525432933,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.012500002048909664,
+      -0.003933650907129049,
+      -6.668438517236584e-19
+    ],
+    "max": [
+      0.01250000111758709,
+      0.005143756978213787,
+      0.0092944810166955
+    ],
+    "deviationMeters": 2.83250703024595e-09
+  }
+}

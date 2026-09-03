@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "black_storm_ocellaris",
+  "sourceSha256": "0b9567693c59195f1c61c59ebcc258c5525f4def318f14dbad3d93ec57c1f278",
+  "objects": [
+    {
+      "name": "PA_black_storm_ocellaris_Body",
+      "vertexCount": 2546,
+      "triangleCount": 5088,
+      "vertexDigest": "e3064fe3624dd313f5fe9b1a271ec2c95a6958feec1f8791a85ae3f2b8e5e86e",
+      "topologyDigest": "10b089c27b7d807cee1b1e7483f7459b4aa417881eff3fb6ab93b680d95634be",
+      "uvDigest": "fff9a46f4abdfc4276bacc296d659eaab5a223aa7ba24f9300404bc09312fc5f",
+      "weightDigest": "41dc53b572e5ffb2550630d58994aabbfc9fff4c6c003643ebaa976c5776b872",
+      "materials": [
+        "PA_black_storm_ocellaris_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_black_storm_ocellaris_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "3336a0d19229e704420631f639333420c774c0be22aacecee96828c419a955b1",
+      "topologyDigest": "bca2c4e023db246594c906f4b2a86c1a3d315f55e54cc3404041360ca5d616d9",
+      "uvDigest": "c8ff944897e573e693f932b312593f5c4dd777d7696db68d51fad84fd72508b6",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_black_storm_ocellaris_Cue",
+        "PA_black_storm_ocellaris_Eye",
+        "PA_black_storm_ocellaris_Glint",
+        "PA_black_storm_ocellaris_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_black_storm_ocellaris_Fins",
+      "vertexCount": 506,
+      "triangleCount": 872,
+      "vertexDigest": "7999a3e135a2a03c620aaad839a0ce922ee4c31ee81f644ec2c5e90916199833",
+      "topologyDigest": "8c234cc535150f3cccb710a623fdaece61080be53287f80b8479faf875e54e4c",
+      "uvDigest": "e30374dcb90df217c653771a6b207b2d3d962cb0a7b237fc6b594691e0268f99",
+      "weightDigest": "65ac2286be58f835753908efba1a533d95c2013c7954e5d2a6c7209823a15556",
+      "materials": [
+        "PA_black_storm_ocellaris_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_black_storm_ocellaris_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "8fe2d26d516328a4f365feb356e6490374aa2bf45fa2fb9f6316bdec043b514b"
+  },
+  "geometryDigest": "25dc999c59d569cf53eec6b929795c5c1d7e78cfc556cec6a183373f889c9b66",
+  "variantId": null
+}

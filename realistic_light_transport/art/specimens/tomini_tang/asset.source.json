@@ -7,7 +7,7 @@
   "category": "fish",
   "waterType": "saltwater",
   "bodyPlan": "fish",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.2.0",
   "referenceGrade": "C",
   "referenceSize": { "meters": 0.15, "kind": "adult_total_length", "note": "FishBase max length 16 cm TL." },
   "origin": "anatomical_midbody",
@@ -35,19 +35,19 @@
     "zoneFractions": [0.1, 0.28, 0.55, 0.78],
     "finThickness": { "base": 0.0011, "edge": 0.00012 },
     "fins": [
-      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.054, "xEnd": 0.04, "rows": 4, "columns": 14, "lean": -0.004,
-        "heights": [[0.0, 0.004], [0.12, 0.011], [0.35, 0.0142], [0.65, 0.0145], [0.88, 0.012], [1.0, 0.005]] },
-      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.054, "xEnd": 0.012, "rows": 4, "columns": 12, "lean": -0.004,
-        "heights": [[0.0, 0.0035], [0.18, 0.01], [0.5, 0.0125], [0.8, 0.011], [1.0, 0.0045]] },
-      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.02, "spanBottom": 0.02, "length": 0.028, "fork": 0.32, "forkPower": 1.6, "baseFraction": 0.86 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.037, "rootLength": 0.012, "rootHeight": -0.05, "length": 0.027, "sweepDegrees": 38, "droopDegrees": 20, "taper": 0.3, "power": 0.7, "rows": 4, "columns": 7 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.026, "rootLength": 0.008, "rootHeight": -0.9, "length": 0.017, "sweepDegrees": 55, "droopDegrees": 55, "spread": 0.3, "taper": 0.25, "power": 0.8, "rows": 3, "columns": 5 }
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.054, "xEnd": 0.04, "rows": 4, "columns": 14, "lean": -0.004, "heights": [[0.0, 0.004], [0.12, 0.011], [0.35, 0.0142], [0.65, 0.0145], [0.88, 0.012], [1.0, 0.005]], "rayCount": 20 },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.054, "xEnd": 0.012, "rows": 4, "columns": 12, "lean": -0.004, "heights": [[0.0, 0.0035], [0.18, 0.01], [0.5, 0.0125], [0.8, 0.011], [1.0, 0.0045]], "rayCount": 20 },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.02, "spanBottom": 0.02, "length": 0.028, "fork": 0.32, "forkPower": 1.6, "baseFraction": 0.86, "rayCount": 16 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.037, "rootLength": 0.012, "rootHeight": -0.05, "length": 0.027, "sweepDegrees": 46, "droopDegrees": 16, "taper": 0.42, "power": 0.55, "rows": 4, "columns": 7, "spread": 0.85, "flare": 0.7, "rayCount": 15 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.026, "rootLength": 0.008, "rootHeight": -0.9, "length": 0.017, "sweepDegrees": 55, "droopDegrees": 55, "spread": 0.3, "taper": 0.3, "power": 0.8, "rows": 3, "columns": 5, "flare": 0.4, "rayCount": 5 }
     ],
     "finAdjacency": [],
     "eyes": { "x": 0.046, "zFraction": 0.45, "radius": 0.0044, "protrude": 0.35, "aspect": 0.3, "pupilFraction": 0.55 },
     "mouth": { "zOffset": -0.3, "width": 0.0014, "radius": 0.0003 },
     "gill": { "x": 0.03, "radius": 0.0002, "points": 11, "bulge": 0.022 },
-    "adornments": [ { "type": "scalpel", "x": -0.058, "zFraction": 0.0, "length": 0.007 } ]
+    "adornments": [
+      { "type": "scalpel", "x": -0.058, "zFraction": 0.0, "length": 0.007 }
+    ]
   },
   "rig": { "axialJoints": [0.052, 0.016, -0.008, -0.03, -0.047, -0.066] },
   "animation": {
@@ -57,8 +57,5 @@
   },
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
-  "visualDebt": [
-    "Bristletooth mouth is a simple protruding tube; no comb-like teeth.",
-    "Reference grade C: fin colour extents approximated from descriptions."
-  ]
+  "visualDebt": ["Bristletooth mouth is a simple protruding tube; no comb-like teeth.", "Reference grade C: fin colour extents approximated from descriptions."]
 }

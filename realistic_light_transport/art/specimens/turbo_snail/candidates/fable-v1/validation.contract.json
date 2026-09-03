@@ -1,0 +1,235 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "turbo_snail",
+  "rig": "PA_turbo_snail_Rig",
+  "root": "PA_turbo_snail_Root",
+  "meshes": [
+    "PA_turbo_snail_Shell",
+    "PA_turbo_snail_Body"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_turbo_snail_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "group": "part_foot",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "group": "part_head",
+      "volumeFloor": 0.5
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_turbo_snail_Body",
+        "part_foot"
+      ],
+      "b": [
+        "PA_turbo_snail_Body",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "label": "foot_tentacle_L"
+    },
+    {
+      "a": [
+        "PA_turbo_snail_Body",
+        "part_foot"
+      ],
+      "b": [
+        "PA_turbo_snail_Body",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "label": "foot_tentacle_R"
+    },
+    {
+      "a": [
+        "PA_turbo_snail_Body",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "b": [
+        "PA_turbo_snail_Body",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "label": "tentacle_L_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_turbo_snail_Body",
+      "group": "part_tentacle_L",
+      "exclude": "attach_tentacle_L",
+      "side": -1
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "group": "part_tentacle_R",
+      "exclude": "attach_tentacle_R",
+      "side": 1
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "group": "part_eye_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "group": "part_eye_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "y",
+    "meters": 0.04,
+    "tolerance": 0.03,
+    "kind": "adult_shell_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 40,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_turbo_snail_Body",
+      "left": "part_tentacle_L",
+      "right": "part_tentacle_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "left": "part_eyestalk_L",
+      "right": "part_eyestalk_R",
+      "tolerance": 1e-05
+    },
+    {
+      "object": "PA_turbo_snail_Body",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 1e-05
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.031483,
+      -0.02,
+      0.0
+    ],
+    "max": [
+      0.036626,
+      0.02,
+      0.03941
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/soft-albedo.png",
+    "textures/soft-roughness.png",
+    "textures/soft-normal.png"
+  ],
+  "notes": {
+    "shellScaleMetersPerUnit": 0.015621164678447395,
+    "apertureCenter": [
+      -0.00014,
+      -0.002283,
+      0.016007
+    ],
+    "apertureRadiusMeters": 0.016402,
+    "axisDirection": [
+      -0.7083,
+      -0.5534,
+      0.4384
+    ],
+    "apertureNormal": [
+      0.056,
+      -0.3028,
+      -0.9514
+    ],
+    "footLengthMeters": 0.053
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/turbo_snail/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/turbo_snail/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.03148270025849342,
+      -0.019999999552965164,
+      0.0
+    ],
+    "boundsMax": [
+      0.03662551939487457,
+      0.019999999552965164,
+      0.03940986096858978
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

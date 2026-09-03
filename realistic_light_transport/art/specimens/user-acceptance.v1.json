@@ -1,0 +1,419 @@
+{
+  "schemaVersion": "pocket-aquarium.user-acceptance/v1",
+  "acceptedBy": "repository user (Bioscopics)",
+  "acceptedAt": "2026-09-03T17:44:00-04:00",
+  "statement": "Largely, these all look really good, so I'm going to batch approve/batch user accept all of the ones that you've made so far.",
+  "priorApprovals": [
+    {
+      "speciesId": "blue_hippo_tang",
+      "candidate": "approved-v2",
+      "at": "2026-09-03T16:29:00-04:00",
+      "statement": "The hippo tang is the perfect one. Specifically, the second Hippo Tang."
+    },
+    {
+      "speciesId": "tomini_tang",
+      "candidate": "fable-v1",
+      "at": "2026-09-03T16:50:00-04:00",
+      "statement": "I do like the Tomini Tang, too. That's good."
+    },
+    {
+      "speciesId": "brittle_star",
+      "candidate": "fable-v1",
+      "at": "2026-09-03T17:07:00-04:00",
+      "statement": "the Brittle star is freaking perfect."
+    },
+    {
+      "speciesId": "gem_tang",
+      "candidate": "round-v2",
+      "at": "2026-09-03T17:20:00-04:00",
+      "statement": "the gem thing looks pretty good."
+    }
+  ],
+  "scope": "Look approval of candidate packages by their candidateHash. Runtime promotion (asset registry, bundled GLB, accepted-hash gate) remains a separate explicit pipeline step and is not performed by this record.",
+  "excluded": [
+    "blue_hippo_tang/alt-v2 (concurrent session rebuild, not reviewed)",
+    "ocellaris/fable-baseline (pipeline regression proof)",
+    "gem_tang/fable-v2 (concurrent session build, superseded by round-v2)",
+    "six_line_wrasse/fable-v1 (failed size gate, superseded by fable-v2)"
+  ],
+  "entries": [
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v1-bushy_pink",
+      "candidateHash": "",
+      "glbSha256": "",
+      "geometryDigest": "ca3d70da2e0e8519c1fd6db5cc04000deac00f8736c850d3fd16b9ae620cee20",
+      "status": "user_accepted_pending_rebuild",
+      "note": "first build in progress; static-skeleton correction and fleshy-polyp variant queued"
+    },
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v1-staghorn_green_purple_tips",
+      "candidateHash": "34001ffff59827f7ac53704d60a735ce9875eb7d100668aad922a7a80d7c0a62",
+      "glbSha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
+      "geometryDigest": "e63571b79d18acd914ed977be5a2f3397e1c94731edda3068bad3824a65dc2d3",
+      "status": "user_accepted_pending_rebuild",
+      "note": "first build in progress; static-skeleton correction and fleshy-polyp variant queued"
+    },
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v1-table_blue",
+      "candidateHash": "2fbb341d315759c705143a0dc82e9cb0c65703a98ecfc78d5f4dc5bf0f691bad",
+      "glbSha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
+      "geometryDigest": "5d070f12467ad464c48ede484a5a47411049706368155c11321840134e16b737",
+      "status": "user_accepted_pending_rebuild",
+      "note": "first build in progress; static-skeleton correction and fleshy-polyp variant queued"
+    },
+    {
+      "speciesId": "anacropora",
+      "candidate": "fable-v1-brown_pink_tips",
+      "candidateHash": "",
+      "glbSha256": "",
+      "geometryDigest": "2f59c5572ae9aef9820fb8521c79bfe12bc327eee1deb135abf0a8bbbcdc9992",
+      "status": "user_accepted_pending_rebuild",
+      "note": "building"
+    },
+    {
+      "speciesId": "astrea_snail",
+      "candidate": "fable-v1",
+      "candidateHash": "ae31732e2b65cc728bd15da2ee889b0fb1e72c2e35513e10b481393d01fe5bba",
+      "glbSha256": "49bb4da3a596735277e8cebe8cba1ebfcff9ef29e54b54099bbc6ea555b83c13",
+      "geometryDigest": "0ae41e4c0ddfeff8fcc5eb3402d4ac05c9ae1b745ee901b33c6adc104dfecbe5",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "banggai_cardinal",
+      "candidate": "fable-v1",
+      "candidateHash": "34fa25b4963a426e7fa88328514533ead31cd56d08328f41cf357d478f81ce62",
+      "glbSha256": "2d9e21b87528977bf6d8d575dc7954da839dab6b7b00c167ecb5c2815627edd6",
+      "geometryDigest": "0f7bac2e48661a64ca71641723b26cc6c5e2f3e45f317c549a2c54fee8babea3",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "black_storm_ocellaris",
+      "candidate": "fable-v1",
+      "candidateHash": "789488b458e2ef59b87f50f4bb8c7f82ba1cf53b02389d7c0d4acc1e21019257",
+      "glbSha256": "76283052d28cc706cee922adb96ead1061c9eba73f985a4ace38abc1bc39c175",
+      "geometryDigest": "25dc999c59d569cf53eec6b929795c5c1d7e78cfc556cec6a183373f889c9b66",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "blue_hippo_tang",
+      "candidate": "approved-v2",
+      "candidateHash": "6a2ae581a253fd5a0674f421fa2e20bafe44df0be715e3dfd256d32c603b4ed1",
+      "glbSha256": "01f81984a1e5f734244076abf5e1abe6faaae8d6c5984378a5bdc731985924df",
+      "geometryDigest": "73468be36868c08818f2ffeffb9aa2951fe98404a6b9146346a5a3a854f97dcb",
+      "status": "user_accepted",
+      "userApprovedLook": true
+    },
+    {
+      "speciesId": "blue_linckia",
+      "candidate": "fable-v1",
+      "candidateHash": "757dc0c53ca8d5297942475b9fb2fc06590501a78777af9a8f6f91a36a90140c",
+      "glbSha256": "f72a764948a50c981082a2f2a177800fd93273dc531f38dc10968caa33cfeae1",
+      "geometryDigest": "eda6d565969d27a8270543a50e18e45cb3c0dcca6ce2e60e389da221c4210a77",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "brittle_star",
+      "candidate": "fable-v1",
+      "candidateHash": "6dc966b506d3d02ffb5e46d7f246b995712c71bb0796299895b0043dd2927830",
+      "glbSha256": "3eaee6c7d76f18e1b0a95eb06474bbff1940f132ccda059d02a8b2c641d2819e",
+      "geometryDigest": "f24ad62ff83eee476d931d7ca745f85101180874b7f4e19a54795ab6050d866e",
+      "status": "user_accepted",
+      "userApprovedLook": true
+    },
+    {
+      "speciesId": "cerith_snail",
+      "candidate": "fable-v1",
+      "candidateHash": "dd87504fdbbb17dfdf2c74b25beb8df3cdec0e816e21dd7d4d7abbfc33e2e9a0",
+      "glbSha256": "cde6b0f1fda6942b3b9e80aa0ef07f1a4c4dcfea478ff9906e43840e03275e49",
+      "geometryDigest": "0cfe81e63bf9e8c39bebc404c9d9bf16e282b28b8954989f4be9a1b5d16ef267",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "chalice_coral",
+      "candidate": "fable-v1-jelly_bean",
+      "candidateHash": "64789eb7c0f4970b599a737b921a0327fc42bc173f653fbd6c98f9a9941c240b",
+      "glbSha256": "e2dc5acfbee6673838dd56a2cf4f04c5fbefd1a5134678492d0c9514979e0276",
+      "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "chalice_coral",
+      "candidate": "fable-v1-purple_orange_eyes",
+      "candidateHash": "5d1f56b529e35acd9c78d8b7f806ad556cb6f21fd2603ddc8c5ed11a3bf5a142",
+      "glbSha256": "c33b0513c019d448c4767d48d0a8d5667ecb6e59d6dfaeead534b06a98d66912",
+      "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "chalice_coral",
+      "candidate": "fable-v1-red_green_eyes",
+      "candidateHash": "13e1b6af7f8c52c887ad639aa1b2bb91c80388168e4e84160f0fd2dfc154d4b9",
+      "glbSha256": "e13e9cfba773f55b7567cfa3ce1f7c20f4a272494244af23491eaed08113ce10",
+      "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "cleaner_shrimp",
+      "candidate": "fable-v1",
+      "candidateHash": "1d3d8d52617c21d7d2db53890656e979d5dba672324f5c2f5cb1288e5c54a300",
+      "glbSha256": "e6f2165f2af3ff61a60fa80dc061b07b8130ac9dbca5406491e978fd5adbf33a",
+      "geometryDigest": "a8fe8f832f2e05179600e39364a304448f55db8c51b4f7b4f4d6a6337d70fbbd",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "diamond_goby",
+      "candidate": "fable-v1",
+      "candidateHash": "c0e88fc5c04be2bfd311773af56e43f1e447cfd268386b518e2bf04db3ab96f6",
+      "glbSha256": "5e943d82d975689724557aad097635af9d6b28d54edd6b23923441bbf664d07b",
+      "geometryDigest": "fa5017a70c37f7c76340898e8f9be7a6c22b488fd805c20e37dcd5aa1b71e02a",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "emerald_crab",
+      "candidate": "fable-v1",
+      "candidateHash": "d08331585a010f29f95616e87565ad884ff9095ef102be25b71e977c11146912",
+      "glbSha256": "4ffb56f932b304bd4753e60cedc33b79a3dc4e4af56ece526e17b37b75065dd2",
+      "geometryDigest": "9a83c9840afda24167a7622ee14a9da77c8b0d7723a1c47a6ab37bd656edec05",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "epaulette_shark",
+      "candidate": "fable-v1",
+      "candidateHash": "17430884644285555b8d73082522e0f50b2b161af46514c7bee910fdf8a1e3ae",
+      "glbSha256": "7174c53ecceae5a42394b36086f2aa305e922a88250cfca80580258ccaec2ba1",
+      "geometryDigest": "2eec53d73f9e2de349a563c92cc7f81ad1e883b82fb388ca75f7b9c7cec54a90",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "fighting_conch",
+      "candidate": "fable-v1",
+      "candidateHash": "f10e379bb0f88dad6ea0b126d142347ebab6bdd4393e50b1aa2aa0a7de892a7e",
+      "glbSha256": "db5a28862bca7468cc8e8fa146f1c022ab1c5122f3caf4b7270cbe1ecd8fa93a",
+      "geometryDigest": "5e22bb0a19849bf0d3cb13a8f1495e63f549ebea841b835b884a15edfed67add",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "gem_tang",
+      "candidate": "fable-v1",
+      "candidateHash": "754253ab40b5702869d1307e0c8af65d0fec55c04c98098d767e09e3513d98a7",
+      "glbSha256": "9dc470a58d8a9b56213a2d0e5924b186db5c92131c31929ed199d29dbd1de53b",
+      "geometryDigest": "1bf2dcc1645c66525a16a98eea340b0e4ea776c7abac879a9fbf31057a4973c4",
+      "status": "user_accepted_pending_rebuild",
+      "note": "spot-row revision rebuilding (round body approved)"
+    },
+    {
+      "speciesId": "gem_tang",
+      "candidate": "round-v2",
+      "candidateHash": "b2e85afcf696ef10062ae40c14c69d4e082acbcf14cc1a0bae7e90f8b7330c4d",
+      "glbSha256": "5828c80cf2ee444c62b3c678f836dc362e76fe50c03660c4b99016f4711c9c8f",
+      "geometryDigest": "88bfbd8f51c84e523f69f7062c4fb9207473499788def105c54855b39771a824",
+      "status": "user_accepted_pending_rebuild",
+      "note": "spot-row revision rebuilding (round body approved)"
+    },
+    {
+      "speciesId": "goniopora",
+      "candidate": "fable-v1-green_pink",
+      "candidateHash": "d77e31dc2f81c36871ba35f540221c94b1a3cd2c347b08598c7c9eec2f41861f",
+      "glbSha256": "44d028d0810d606ea751f8fd407368bdd039a23b1966d5620e98d7e71ffbc64c",
+      "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "goniopora",
+      "candidate": "fable-v1-purple_green",
+      "candidateHash": "b7d135f611e6db9a356a7d79df5def5352731bec99e32f0d72b7146b5f01bde7",
+      "glbSha256": "13b8236f7267cf5fcc183199e2593f6502376e5f95ec4cf04228dc1962aa81b5",
+      "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "goniopora",
+      "candidate": "fable-v1-red_brown",
+      "candidateHash": "13c89a55f7e7675d68615eb4c92ee4daffc52a12791800ff435a16a832f7076d",
+      "glbSha256": "c8ed9059e590fc5f646ae0b0d7a71f08f0c62c2f813d514bce499f2a3cc83de3",
+      "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "nassarius_snail",
+      "candidate": "fable-v1",
+      "candidateHash": "a5c240c61b785b2b75a2ecc0c25fbab8a40dad60baca6850fdc6c28191a0e32a",
+      "glbSha256": "10a1352e15747c0dac17b225a04d15c022f47f295c7126f563f9e1c43353dcd9",
+      "geometryDigest": "aa693a3497b14f731b2a14f08de23ede46d4c7cc50145730c4ef022fbbb62940",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "ocellaris",
+      "candidate": "fable-v2",
+      "candidateHash": "5cd696fd0c4beccd7c91198f723ac2368c34480ace0a9e6462348913f6653f58",
+      "glbSha256": "dabfa037d0764a3c0abb1ab3c9ab3277adef8ef5301c8d56d34b9ffddd2bfae4",
+      "geometryDigest": "93126a478b8703f414f6d32ec308e4587f0d7cf27f9a71e5e1a61819468bab79",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "pistol_shrimp",
+      "candidate": "fable-v1",
+      "candidateHash": "7057e4cfb92c2615126f3ffec0f37e0b50f05f85438b5fdd69c35a0467ce892d",
+      "glbSha256": "019eea507f3cacb6de1eebb191fa04ce088612e7e8e41c09e307004ebf0382ae",
+      "geometryDigest": "d5f6f3e027b57cc54ffe08f868d0307eec41de6c230d405031f2eaebc7c4e4de",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "purple_tang",
+      "candidate": "fable-v1",
+      "candidateHash": "0139c3d5ae85ea2a1d831b5b68c612d30e4f7e5bcc88a3a5d73b5c0cc9c6ca6b",
+      "glbSha256": "a9d744a4d73bcdda1d30dcf91f87f83a51f0fcbc18e5130f72c02b3062b71841",
+      "geometryDigest": "e06f7aadb8f7aeb7eef3283046d9abf2bf533e8fac326f65f9ead6e915c5362e",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "purple_tang",
+      "candidate": "fable-v2",
+      "candidateHash": "ae3e7ea1e379e73073dbdcf7b316e24d669336f187e03634661674bb740e6592",
+      "glbSha256": "6946374e7e5dd1de013ea7e6ba92649a80e6dcad8e78c5584a2797f85ca6255d",
+      "geometryDigest": "5a6b7e3e35a531fc4e37d34bdd09ceecc776ce49ca0f52f86626a59c347c9b62",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "royal_gramma",
+      "candidate": "fable-v1",
+      "candidateHash": "356c9894ea59213f672a358627ced2240bbe6ba6c316a15723844363ddfcadba",
+      "glbSha256": "04e9b1e77d15116be3f4a893e03c2985857e168d8274dbda5f927f6783b2b6d1",
+      "geometryDigest": "26a265b30af48aae5e15969f37dc9df203729b2430f00846d2e1f585c4bbc81c",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "scarlet_hermit",
+      "candidate": "fable-v1",
+      "candidateHash": "e4bdd3cd4376568f1c0886c8f9378311a4f1c5968223fe7620189b41917a1ac6",
+      "glbSha256": "aa423ca2400e73c67ba5e1305e8fa6d146544df08e7f56b956bab5a1ced426da",
+      "geometryDigest": "5c69f691605504529df0850298979a06f1530e3d6cbd90ef6314bb3b7985e8a8",
+      "status": "user_accepted_pending_rebuild",
+      "note": "second pass (shell low, aperture around abdomen) rebuilding"
+    },
+    {
+      "speciesId": "six_line_wrasse",
+      "candidate": "fable-v2",
+      "candidateHash": "951269f5bae36edca45f04cb36b15e5d99ccab740c31a6af975209ccfe773cfe",
+      "glbSha256": "6a0adf444a079d4a572205216c1e80e2a656f1933791615512a86b0098364d3c",
+      "geometryDigest": "d1005a51c6df4ecc7ea0ae2f499e4d756c424d75870634a87e2b87f9f9b01b4f",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "tomini_tang",
+      "candidate": "fable-v1",
+      "candidateHash": "b5494746f9f0b8d62dcbc7d575c2f5f7161b253c6db11ba3235cf48a985dee2c",
+      "glbSha256": "02de75d52ad19b33ad262f268d6c8486881bbed50e963a1d70aade244bb1ef52",
+      "geometryDigest": "46023e82c8d3e0b0589d286feeec8a2c732eb80acecc5abae2b712e5e7684ab2",
+      "status": "user_accepted",
+      "userApprovedLook": true
+    },
+    {
+      "speciesId": "torch_coral",
+      "candidate": "fable-v1-gold_white_tips",
+      "candidateHash": "23af2b2065089eb76d751d2e361b952a148c38a8d58b30379eca63beb0a61f89",
+      "glbSha256": "c46c99600f3fa2be4e90d12f6ac5d282aea4b6e9abede919841b1197ba26774f",
+      "geometryDigest": "cc02e0cf997655e1efed1ab00fa6f07a1ab01202a549768deb8d24997266f59b",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "torch_coral",
+      "candidate": "fable-v1-green_pink_tips",
+      "candidateHash": "3fc8c788f93ac65295530335f7d1dde21521fe39a37047f01ba7be3ec75eb48b",
+      "glbSha256": "b65330873959b66400c9458f76050acfeecc67f56b14e5ceb025047de718ce56",
+      "geometryDigest": "021f16563a6dbab8bc35e55e38146fb99bbb4240509cc166ff64dc0d8cbb42b5",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "trochus_snail",
+      "candidate": "fable-v1",
+      "candidateHash": "7b5d500a78c9532a20faec6448c882af24fa96d65f0b955725235019dfc11cab",
+      "glbSha256": "e2a591004c4fb7cf0a0997ea699fb22086b5973e674e9c1e15a82b433e63a3e5",
+      "geometryDigest": "02c3e69addec58b8593a841bdcf8adbd8a3e3e5040a8e3375b222c877c9f8618",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "turbo_snail",
+      "candidate": "fable-v1",
+      "candidateHash": "22ebe34f1fbb41a1ff0cd3368381157b58f2c05d81d340662de6a0faa8f89102",
+      "glbSha256": "066f4edf6f390cca9b31db3e82fcc18a8dbdfe652c01fda9047fe084029c2efd",
+      "geometryDigest": "96bd05302d1acebfc568347e0143a9360788762d7bcbf745d63b98f45e270c56",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "watchman_goby",
+      "candidate": "fable-v1",
+      "candidateHash": "4fd2d920c5fdb84d00bdd1fdca33bf1f5102276eed2ffc8f8d707d78b467e2d2",
+      "glbSha256": "07ddb89826a22a1dbd4c35113e7de41afb740c3cac5b7a4379d89886979b19c6",
+      "geometryDigest": "07d42fd61ad58b47ab069acb2a71a4f0ce82577dc45c4e81ae0548a6540b4320",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "yellow_tang",
+      "candidate": "fable-v1",
+      "candidateHash": "fb011688a99d1a8cd43d23ac8cf7bdb711e1bc16184b01583d86ce7d73b524b2",
+      "glbSha256": "a38c46c93dc87ab5e101e644a4d61be56059746b2691b3781b65a2b585e3f6b5",
+      "geometryDigest": "84d145f12acd880af0cc32dcc9c1d4b78df0cff804c9197d31a5eed10d8cf9fe",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "yellow_tang",
+      "candidate": "fable-v2",
+      "candidateHash": "8490cb6b302f6eb38405b52dce14a75808b9c6d1917d6c9a350b694982c7d404",
+      "glbSha256": "15e92d0b567dc88587b6431bbd73a122dd0be8b24099fd728a2ae9cb1e9772fe",
+      "geometryDigest": "e5dd08f98c7411a4155f0bba3a17509b539f93a749e45a6423a0e0cb1053ae12",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "zoanthid",
+      "candidate": "fable-v1-blue_green",
+      "candidateHash": "d417b0019d65c276e58f6cd8cabeaa4839eff53558d795c50cd04ded187291fa",
+      "glbSha256": "85007ca578adc9087fe421f5f16a1bdae381bb37b18b9150b15f58629129d848",
+      "geometryDigest": "1934b5bd4dbe3743018e85dda6192180326deb1ae6eadaa1b0959d97810cf241",
+      "status": "user_accepted_pending_rebuild",
+      "note": "second pass (lower, crowded polyps) rebuilding"
+    },
+    {
+      "speciesId": "zoanthid",
+      "candidate": "fable-v1-orange_red",
+      "candidateHash": "afac61b7836809d63bf77ce0a83713d8553652dff8d0666a356b28ae2e2646f2",
+      "glbSha256": "42f160163845a16400be8de5934ff21bfcd8d79080080636f2526070c12324b5",
+      "geometryDigest": "f6a1f553007edcea7ffae8b888ba16ed421121c1dff137c7e08613281a333d58",
+      "status": "user_accepted_pending_rebuild",
+      "note": "second pass (lower, crowded polyps) rebuilding"
+    }
+  ]
+}

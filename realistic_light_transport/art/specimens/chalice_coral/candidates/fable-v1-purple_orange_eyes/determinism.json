@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+  "rebuildGeometryDigest": "75c36598f3d5ba1fc6f1c4f57ade57f87fe2c0bdca6641f0e5f43b8f60906fae",
+  "textureHashMatch": true,
+  "textures": {
+    "skeleton-albedo.png": "12adc7a56fd23d46698a787035e1027330da9563b417e353493eea335f68d6f6",
+    "skeleton-normal.png": "ce339d1fd989800774443d199c07e528c58451f0d5d06b1faddcd31dec9f88dc",
+    "skeleton-roughness.png": "27fd784e678b4179e19e92e53a69eb9ca90223a9942417eace70eb93fc8be2e4",
+    "tentacle-albedo.png": "fec4d4a490a3f717da44450b207c1696e2413c73bbecd74bd30831b11fe95af4",
+    "tentacle-normal.png": "cd847861de041462175ed8ca7bb4cba5047ad5b0dc912446c359ea4895254c83",
+    "tentacle-roughness.png": "2056faf7d74613f04ad17b764313159f07c8a503e20b3505e8416b9b6d784d44",
+    "tissue-albedo.png": "a87488644126695ddbdf752c5315fecf0a494f048d44c2d0abd599fb8e5e391d",
+    "tissue-normal.png": "b2f765b49e704fbfb5a3cf33bffbd7313d4f8bf565d18881de94932820dfc583",
+    "tissue-roughness.png": "b55783fe5ff369926bbb83a9bd8fb58617a314243c17291fc8415115d6387bbc"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

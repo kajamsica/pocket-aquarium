@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "emerald_crab",
+  "revision": 1,
+  "policy": "References informed taxonomy, size, proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source; public seller descriptions guided identity only.",
+  "sources": [
+    {
+      "id": "WORMS-421990",
+      "title": "Mithraculus sculptus (Lamarck, 1818) taxon record (accepted; Majoidea; original name Maia sculptus)",
+      "publisher": "World Register of Marine Species / DecaNet",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=421990",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-MITHRACULUS_SCULPTUS",
+      "title": "Mithraculus sculptus species summary, green clinging crab (benthic, 0 to 55 m, Western Atlantic; 1.2 cm CW field record)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Mithraculus-sculptus.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "WIKIPEDIA-MITHRACULUS_SCULPTUS",
+      "title": "Mithraculus sculptus article (flat, shiny, finely sculpted green carapace; spoon-shaped chelae with pale tips; hairy, paler walking legs; about 4 cm)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Mithraculus_sculptus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-MITHRACULUS_SCULPTUS",
+      "title": "Category:Mithraculus sculptus (openly licensed photograph, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Mithraculus_sculptus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Taxonomy and habitat are authoritative (WoRMS, SeaLifeBase). Only one openly licensed photograph is available on Commons, so carapace outline, leg stance and claw geometry are calibrated from general Majoidea/Mithracidae anatomy descriptions rather than measured side/top/front plates; adult size is reconciled between the small field record and aquarium adults."
+}

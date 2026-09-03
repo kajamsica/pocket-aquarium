@@ -63,8 +63,10 @@ def load_spec(asset_id: str, variant: str | None):
     spec = json.loads(source_path.read_text(encoding="utf-8"))
     if spec.get("schemaVersion") != SCHEMA or spec.get("id") != asset_id:
         raise ValueError(f"{source_path} is not a valid {SCHEMA} document for {asset_id}")
-    if asset_id == "ocellaris":
-        raise ValueError("The accepted Ocellaris asset is built by its own pipeline; refusing to author it here")
+    # The accepted Ocellaris v1.1.0 package (ocellaris.asset.json, ocellaris.blend, src/assets/...) is built
+    # by its own pipeline and is never written here: this entrypoint only writes inside
+    # art/specimens/<id>/candidates/<candidate>/, so refinement candidates for ocellaris are allowed and
+    # stay awaiting_user_acceptance like every other candidate.
     variants = spec.get("variants", {})
     if variant:
         if variant not in variants:

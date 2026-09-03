@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "goniopora",
+  "variantId": "purple_green",
+  "scientificName": "Goniopora sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.1,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "b7d135f611e6db9a356a7d79df5def5352731bec99e32f0d72b7146b5f01bde7",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Goniopora, purple polyps with green oral discs",
+  "bodyPlan": "lps_coral",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-205476",
+      "title": "Goniopora de Blainville, 1830 taxon record (genus, Poritidae, Scleractinia)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=205476",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207219",
+      "title": "Goniopora stokesi Milne Edwards & Haime, 1851 taxon record with Veron (1986) and Richmond (1997) descriptions: hemispherical colonies, calices 3-6 mm, very elongate polyps of mixed size, 24 tentacles, cluster-of-daisies appearance",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207219",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "NATURALIS-INDOMALAYAN-GONIOPORA",
+      "title": "Reef Corals of the Indo-Malayan Seas: Genus Goniopora (massive or columnar colonies, conspicuously long polyps with 24 tentacles, cream to light brown skeleton with rose, purple, yellow, green or white tentacles)",
+      "publisher": "Naturalis Biodiversity Center",
+      "url": "https://indo-malayan-reef-corals.linnaeus.naturalis.nl/linnaeus_ng/app/views/highertaxa/taxon.php?cat=TAB_DESCRIPTION&id=27716",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "ITIS-53214",
+      "title": "Goniopora Blainville, 1830 taxonomic serial record (valid genus, Poritidae)",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=53214",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (US federal government)"
+    },
+    {
+      "id": "COMMONS-GONIOPORA",
+      "title": "Category:Goniopora (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Goniopora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "ROOT-DATA-CORALS-GONIOPORA",
+      "title": "Pocket Aquarium root gameplay data js/data.js DATA.CORALS.goniopora (startPolyps 24, gentle flow band)",
+      "publisher": "Pocket Aquarium project",
+      "url": "repo:js/data.js#DATA.CORALS.goniopora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "project_data",
+      "allowedUse": "gameplay_consistency"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "950cccd9eda7c44689f8a765ddaf7acb7d981289956cca13f05f206eca0bb47a",
+  "sourceReferencesSha256": "d5741632deb7cd983bf7b2e8113ca13f941c5be222edb4a389238a154b12b088",
+  "sourceBlendSha256": "d97623830df883c9e636d08c4e65ca0596541411f77b326c21d6a45a239b96c6",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:e52d044a24d57c13ff9fc8aa1bf53bc537bc0b3a22d6f96d5be02254db739c60",
+    "speciesBackend": "e52d044a24d57c13ff9fc8aa1bf53bc537bc0b3a22d6f96d5be02254db739c60",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "13b8236f7267cf5fcc183199e2593f6502376e5f95ec4cf04228dc1962aa81b5"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/rock-albedo.png",
+      "sha256": "7badc7f50840d8aab8cf1343e0f1fcdfd1c435b687cc8a97985e10e1eb5af919"
+    },
+    {
+      "path": "textures/rock-normal.png",
+      "sha256": "7e317f91bec32e4727c55b121e7587ae07e214be0f96f113f284010f36c37eee"
+    },
+    {
+      "path": "textures/rock-roughness.png",
+      "sha256": "cd1d59e121832cf2effc09c1141eb9c5e6da71aca0dac04b4202620b13a48a0c"
+    },
+    {
+      "path": "textures/skeleton-albedo.png",
+      "sha256": "8633560ef7dfa7e569eaae6cba26e85c586a9710beebc75806f2bb68d91f8ee8"
+    },
+    {
+      "path": "textures/skeleton-normal.png",
+      "sha256": "f02373dfeddb85da54ef2353cb97bfaabe34fc3c0af9ec6b1f51709924d6e558"
+    },
+    {
+      "path": "textures/skeleton-roughness.png",
+      "sha256": "f4a622d305d20d29ef8f75b6414af5fd92077ca0799125fb093c0b355f273bdd"
+    },
+    {
+      "path": "textures/tentacle-albedo.png",
+      "sha256": "291ec0c83460e20fdbf36302083f829dd7a186da4fdb768e875dfca2223785d9"
+    },
+    {
+      "path": "textures/tentacle-roughness.png",
+      "sha256": "4cfbac0913abd6b8329fa8638af159be9e49d586355d337c40f25ac4f15bf6fd"
+    },
+    {
+      "path": "textures/tissue-albedo.png",
+      "sha256": "4bdd8f3b7b981b87b258418f060d574ce0408df08eb83502acf40ad7fc737f06"
+    },
+    {
+      "path": "textures/tissue-normal.png",
+      "sha256": "9aa2a0de4e4c23cc265a409f058357d6e403d46eeda5d83d11c77cfb4dcd24de"
+    },
+    {
+      "path": "textures/tissue-roughness.png",
+      "sha256": "da40c3ffe27b3cf81182ee1b43704a182899ae400826a83740226953d2ad9641"
+    }
+  ],
+  "statistics": {
+    "triangles": 17208,
+    "materials": 4,
+    "bones": 27,
+    "nodes": 32,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_goniopora_Skeleton": 548,
+      "PA_goniopora_Polyps": 9672
+    },
+    "runtimeBytes": 3935992
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "sway": true,
+    "flow": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.047517,
+      -0.050202,
+      0.0
+    ],
+    "max": [
+      0.045546,
+      0.049798,
+      0.054423
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

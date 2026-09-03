@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "turbo_snail",
+  "sourceSha256": "a38d355cdc04c55d046b9b7745ae6c28c2367ef7f7b4552c795dffd1c9ff0613",
+  "objects": [
+    {
+      "name": "PA_turbo_snail_Body",
+      "vertexCount": 1822,
+      "triangleCount": 3608,
+      "vertexDigest": "0d15bd3f6fcc505026c728f6ce6ef8de337295b217cb337e76d5cd6c153ab278",
+      "topologyDigest": "15f70102b3a1d39aef79ab514b2e38d7d8c00ea9e366ba50e186d64eb7379211",
+      "uvDigest": "72de4ad90c67b05115281ee46de443fdb8f51f646c7211ad5f2f4f7f973fa8a1",
+      "weightDigest": "d75c951dd24198296d3a2fcbde88d156507f0bc2932e38d60dd516e152e3124b",
+      "materials": [
+        "PA_turbo_snail_Eye",
+        "PA_turbo_snail_Operculum",
+        "PA_turbo_snail_Soft"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_turbo_snail_Shell",
+      "vertexCount": 5618,
+      "triangleCount": 11232,
+      "vertexDigest": "0b40c722900aab290e35fe04156c1d1f3124cd2749c73f29ee0f8b8c4b1e9a11",
+      "topologyDigest": "72fed29d76c405cda3d935793599d2df4fcaf502ff44db712e078215dec77fc5",
+      "uvDigest": "450a4b5b3335d253fc556daf71cbfb5ffb6c9893b12786933e07634e67e073ab",
+      "weightDigest": "bb0cab453c994d5a4d75422bb37d5bb03b49151869a1b9ce0c8b424d0e3e4b09",
+      "materials": [
+        "PA_turbo_snail_Nacre",
+        "PA_turbo_snail_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_turbo_snail_Rig",
+    "boneCount": 8,
+    "deformBoneCount": 7,
+    "boneDigest": "ac5274f68d8f183790a4381bd3ec6ad189550b50ae97db884bb9e83453b0f35d"
+  },
+  "geometryDigest": "96bd05302d1acebfc568347e0143a9360788762d7bcbf745d63b98f45e270c56",
+  "variantId": null
+}

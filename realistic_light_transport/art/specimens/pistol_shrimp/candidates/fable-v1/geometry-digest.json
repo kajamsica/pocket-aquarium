@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "pistol_shrimp",
+  "sourceSha256": "17ff2900f47d468c8f377899616f7abc2ea17486d3fd4a956c21a9f0dec77f2f",
+  "objects": [
+    {
+      "name": "PA_pistol_shrimp_Body",
+      "vertexCount": 3562,
+      "triangleCount": 7008,
+      "vertexDigest": "78ac93ba0e64973f2ca0a062a2f7d548ce0e36180954a8f3076527af296af6bd",
+      "topologyDigest": "b0f93f62d4d2fd5cb940c3494d991528b10c38683cb6997907862938faa338c6",
+      "uvDigest": "a7740ee34a42829e7be32770f9165631599ab91f7ce9dc38027c31e4b613fe9f",
+      "weightDigest": "89d71c831c263d2c94dbe6624feb36cf912dc9915bbe5cc1f731b0d50e700ff9",
+      "materials": [
+        "PA_pistol_shrimp_Eye",
+        "PA_pistol_shrimp_Shell"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_pistol_shrimp_Limbs",
+      "vertexCount": 2030,
+      "triangleCount": 3964,
+      "vertexDigest": "7d2d5cade1f3052f37ef4051bcf260c5164c25eca3a11573c31eb3d8bdc87eaa",
+      "topologyDigest": "dae3320bad28abdf8024d7ee854e2ea2383024a27ad0b6ec334afb20162550aa",
+      "uvDigest": "09d4999572da52d8f8a42ab6a7f88ec5716abac0a49884b9371d07e452c83cea",
+      "weightDigest": "d060b3442f47277ac300bca6e94e05e66f389103939b492cd60941ac17575fcf",
+      "materials": [
+        "PA_pistol_shrimp_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_pistol_shrimp_Rig",
+    "boneCount": 32,
+    "deformBoneCount": 31,
+    "boneDigest": "d8f7f33343479a9048956b5ca273c4bf7be5ffe409f518a65d5d34ec5428b93d"
+  },
+  "geometryDigest": "d5f6f3e027b57cc54ffe08f868d0307eec41de6c230d405031f2eaebc7c4e4de",
+  "variantId": null
+}

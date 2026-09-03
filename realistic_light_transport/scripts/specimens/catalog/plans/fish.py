@@ -421,9 +421,11 @@ def build(spec: dict, species, ctx) -> BuildResult:
     skin = mat.principled(f"{prefix}_Skin", palette.get("skin", (0.5, 0.5, 0.5)), 0.42, coat=0.12, specular=0.38)
     mat.attach_textures(skin, albedo=images.get("albedo"), roughness=images.get("roughness"), normal=images.get("normal"),
                         normal_strength=float(tex.get("normalStrength", 0.35)))
-    fin_material = mat.principled(f"{prefix}_Fin", palette.get("fin", (0.6, 0.6, 0.6)), 0.5, coat=0.04, specular=0.28)
+    # no clear-coat on fins: thin sheets are seen at grazing angles where coat Fresnel turns
+    # dark membranes grey
+    fin_material = mat.principled(f"{prefix}_Fin", palette.get("fin", (0.6, 0.6, 0.6)), 0.56, coat=0.0, specular=0.22)
     mat.attach_textures(fin_material, albedo=images["fin"], alpha_from_albedo=True, normal=images["finNormal"],
-                        normal_strength=float(tex.get("finNormalStrength", 0.55)))
+                        normal_strength=float(tex.get("finNormalStrength", 0.4)))
 
     # fin sheets: ray-supported thickness at the root, membrane-thin at the edge; roots are seated
     # inside the body so no fin reads as a detached plate

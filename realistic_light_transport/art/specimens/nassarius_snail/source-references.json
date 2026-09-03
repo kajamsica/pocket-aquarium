@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "nassarius_snail",
+  "revision": 1,
+  "policy": "References informed shell proportions (spire angle, whorl count, body-whorl fraction, aperture shape, sculpture type), soft-part layout (siphon length, foot outline, metapodial tails, tentacle and eye placement) and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source; public seller descriptions guided trade identity only.",
+  "taxonomyNote": "The trade name Nassarius snail (user spelling 'Nasseria') covers several nassariid species sold as sand-sifting cleanup crew (Nassarius vibex, now Phrontis vibex, N. distortus, N. coronatus and others). The asset is authored at genus/group level as Nassarius sp. with taxonomyConfidence 'genus'; SeaLifeBase size data for Phrontis vibex (the most common trade species) anchors the scale.",
+  "sources": [
+    {
+      "id": "WORMS-138235",
+      "title": "Nassarius Dumeril, 1805 genus record (Nassariidae, Neogastropoda)",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=138235",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-PHRONTIS_VIBEX",
+      "title": "Phrontis vibex (Say, 1822) species summary (max length 2.0 cm)",
+      "publisher": "SeaLifeBase",
+      "url": "https://sealifebase.ca/summary/Phrontis-vibex.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "NATURALIS-NASSARIUS_RETICULATUS",
+      "title": "Macrobenthos of the North Sea, Mollusca: Nassarius reticulatus (shell sculpture, siphon about half the shell length held aloft, foot with anterolateral horns and two metapodial tentacles, eyes on thickened tentacle bases)",
+      "publisher": "Naturalis Biodiversity Center",
+      "url": "https://ns-mollusca.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/taxon.php?id=121666",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "WIKIPEDIA-NASSARIUS",
+      "title": "Nassarius genus account (ovate ventricose shell, high cyrtoconoid spire, siphonal notch, ovate aperture with short anterior canal, long siphon, large foot bifurcate posteriorly)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Nassarius",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-NASSARIUS",
+      "title": "Category:Nassarius (openly licensed shell and live-animal photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Nassarius",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Shell proportions and sculpture are well documented for the genus and openly licensed shell photographs in apertural and dorsal views are available; the soft-part pose (siphon carriage, foot spread while crawling) is inferred from descriptive accounts and general nassariid behaviour rather than calibrated side/top/front photographs of a crawling animal, and the trade group spans several species."
+}

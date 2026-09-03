@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "brittle_star",
+  "revision": 1,
+  "policy": "References informed disc and arm proportions, segment and spine layout, and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source; public seller descriptions guided identity only.",
+  "taxonomyNote": "The aquarium trade name 'brittle star' covers several reef genera (Ophiocoma, Ophioderma, Ophiomastix and others). The asset is labelled at class/group level (Ophiuroidea) with taxonomyConfidence 'group'; proportions follow the Ophiocoma / Ophioderma group.",
+  "sources": [
+    {
+      "id": "WORMS-123084",
+      "title": "Ophiuroidea Gray, 1840 taxon record (class)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=123084",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-123592",
+      "title": "Ophiocoma L. Agassiz, 1836 taxon record (genus, Ophiocomidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=123592",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-123547",
+      "title": "Ophioderma Muller & Troschel, 1840 taxon record (genus, Ophiodermatidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=123547",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "ADW-OPHIOCOMA_ECHINATA",
+      "title": "Ophiocoma echinata species account (disk up to 32 mm, arms to 150 mm, dark mottled granular disk, banded arms, four spines per side of each arm joint)",
+      "publisher": "Animal Diversity Web, University of Michigan Museum of Zoology",
+      "url": "https://animaldiversity.org/accounts/Ophiocoma_echinata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 3.0 (text)"
+    },
+    {
+      "id": "STRI-BOCAS-OPHIOCOMA_ECHINATA",
+      "title": "Ophiocoma echinata, Bocas del Toro species database (32 mm disk, 150 mm arms, granule-covered disk, banded arms, coral rubble habitat)",
+      "publisher": "Smithsonian Tropical Research Institute",
+      "url": "https://panamabiota.org/stri/taxa/index.php?clid=46&taxauthid=1&taxon=52225",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "SEALIFEBASE-OPHIOCOMA_ECHINATA",
+      "title": "Ophiocoma echinata species summary (reef-associated, 0-24 m, Western Central Atlantic)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Ophiocoma-echinata.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "LANDER-OPHIODERMA",
+      "title": "Ophioderma brevispina laboratory anatomy account (disc sharply demarcated from snakelike arms, dermal granules, paired radial shields, short flat spines, pale oral surface)",
+      "publisher": "Lander University (R. Fox, Invertebrate Anatomy OnLine)",
+      "url": "https://lanwebs.lander.edu/faculty/rsfox/invertebrates/ophioderma.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "EOL-OPHIODERMA_BREVISPINUM",
+      "title": "Ophioderma brevispinum trait summary (total size to 70 mm, disc 15 mm)",
+      "publisher": "Encyclopedia of Life",
+      "url": "https://eol.org/pages/598311",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY (EOL aggregated data)"
+    },
+    {
+      "id": "COMMONS-OPHIOCOMA",
+      "title": "Category:Ophiocoma (openly licensed photographs, proportion and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Ophiocoma",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-OPHIODERMA",
+      "title": "Category:Ophioderma (openly licensed photographs, proportion and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Ophioderma",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Dorsal (top) photographs of reef Ophiocoma and Ophioderma are openly available and calibrate disc-to-arm ratio, banding and disc granulation; disc and arm sizes come from museum and university accounts. Side and front views of arm cross-sections and spine rows are inferred from anatomical descriptions rather than calibrated images."
+}

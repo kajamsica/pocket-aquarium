@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "fighting_conch",
+  "revision": 1,
+  "policy": "References informed taxonomy, adult shell size, shell proportions (spire angle, knob row, lip flare, stromboid notch, canal), soft-part layout (long eyestalks with the sensory filament, proboscis, sickle operculum) and the leaping gait only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source; the trade name Fighting Conch was used for identity only.",
+  "taxonomy": "Trade name covers Strombus alatus Gmelin, 1791 and Strombus pugilis Linnaeus, 1758. WoRMS/MolluscaBase (accessed 2026-09-03) lists S. alatus as a junior subjective synonym of S. pugilis; the asset therefore carries a genus-level scientificLabel (Strombus sp.) with taxonomyConfidence genus.",
+  "sources": [
+    {
+      "id": "WORMS-419695",
+      "title": "Strombus pugilis Linnaeus, 1758 taxon record (accepted; family Strombidae)",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=419695",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-419694",
+      "title": "Strombus alatus Gmelin, 1791 taxon record (junior subjective synonym of S. pugilis)",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=419694",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WIKIPEDIA-STROMBUS_ALATUS",
+      "title": "Strombus alatus (Florida fighting conch): description (shell to 112 mm, subsutural spines, projected outer lip), distribution, relationship to S. pugilis",
+      "publisher": "Wikipedia (citing Malacolog 4.1.1 and Simone 2005)",
+      "url": "https://en.wikipedia.org/wiki/Strombus_alatus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "GSMFC-STROMBUS_ALATUS",
+      "title": "Strombus alatus Gmelin, 1791 Florida Fighting Conch, in A Picture Guide to Shelf Invertebrates from the Northern Gulf of Mexico (Perry and Larsen 2004)",
+      "publisher": "Gulf States Marine Fisheries Commission",
+      "url": "https://www.gsmfc.org/publications/GSMFC%20Number%20150.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_proportion_reference_only",
+      "license": "US public agency publication; nothing copied"
+    },
+    {
+      "id": "COMMONS-STROMBUS_ALATUS",
+      "title": "Category:Strombus alatus (openly licensed shell and live-animal photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Strombus_alatus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-STROMBUS_PUGILIS",
+      "title": "Category:Strombus pugilis (openly licensed shell photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Strombus_pugilis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Taxonomy and maximum shell size are authoritative (WoRMS, Malacolog via Wikipedia, GSMFC guide). Shell proportions come from openly licensed apertural and dorsal shell photographs; the live soft-part layout (eyestalk length, proboscis, operculum) and the resting shell attitude are inferred from live-animal photographs and general strombid anatomy rather than calibrated side/top/front references."
+}

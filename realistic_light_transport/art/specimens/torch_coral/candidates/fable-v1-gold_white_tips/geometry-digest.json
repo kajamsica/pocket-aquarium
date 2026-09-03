@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "torch_coral",
+  "sourceSha256": "fc2f6327eb361d1b7eeee4462d7ec492706cca0441222df924988e2a8c1bfbcc",
+  "objects": [
+    {
+      "name": "PA_torch_coral_Polyps",
+      "vertexCount": 512,
+      "triangleCount": 992,
+      "vertexDigest": "f79b2f22e066e63ac7518748d56176d90eaa5afc1c158a9cf66358910a34ace1",
+      "topologyDigest": "27208484deab163d9e487c822c192cfb4f699d6a08bffc8585f6e583d50d96c0",
+      "uvDigest": "36f5e559a04b97b28843b58ec64e873aa3a596015cef8d72a73d0437c05308c0",
+      "weightDigest": "cdd1fff8fff888167952340f709459fb0543e85147960416ce0054685832d7e3",
+      "materials": [
+        "PA_torch_coral_Disc",
+        "PA_torch_coral_Mouth"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_torch_coral_Skeleton",
+      "vertexCount": 390,
+      "triangleCount": 760,
+      "vertexDigest": "054e09f8009022edfd5b0f6d5455800f1ab8e93a444b8c6b76d3cc62cbbe5fc9",
+      "topologyDigest": "074c73851ea4fcc0a1d965774a3fc0038ef5f607fad7fe7f3e0f47e6c8456953",
+      "uvDigest": "2b47f01937ffdf1143e7573d8b978d701135822c1775ebe54dc2f613b0059cb8",
+      "weightDigest": "ee3657d40df9d443dcae4847c70b0a62407bdb56cbde809886df7b3f3355bb8a",
+      "materials": [
+        "PA_torch_coral_Rock",
+        "PA_torch_coral_Skeleton"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_torch_coral_Tentacles",
+      "vertexCount": 8432,
+      "triangleCount": 16320,
+      "vertexDigest": "a6188d03403029946b18971db41a56a0b0043bc673dc6e25fbfe08f20b38304c",
+      "topologyDigest": "a96a438754002d966283161680a06d0b96270ca78d534d5e180bdd2c8af6933c",
+      "uvDigest": "c2affe3acb6a284bb19d030dd462ff278e0dfde17c827724c288a800982f023a",
+      "weightDigest": "c751b371e90fbe5689fea71a08815f95307d0e6071a6eea2a4a7bb7a66dd6732",
+      "materials": [
+        "PA_torch_coral_Tissue"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_torch_coral_Rig",
+    "boneCount": 30,
+    "deformBoneCount": 29,
+    "boneDigest": "de064003fce1014a7e1c86adfc2ed5d157863f7577c0b6b6001d1613ed5124bc"
+  },
+  "geometryDigest": "cc02e0cf997655e1efed1ab00fa6f07a1ab01202a549768deb8d24997266f59b",
+  "variantId": "gold_white_tips"
+}

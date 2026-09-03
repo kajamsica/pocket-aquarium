@@ -1,0 +1,54 @@
+{
+  "asset": "fighting_conch",
+  "variant": null,
+  "candidateDir": "art/specimens/fighting_conch/candidates/fable-v1",
+  "startedAt": "2026-09-03T21:28:55.163Z",
+  "pid": 3556,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 5031,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 7525,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 2894,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 2543,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 2888,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 2424,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1234,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:29:19.704Z",
+  "status": "passed",
+  "failure": null
+}

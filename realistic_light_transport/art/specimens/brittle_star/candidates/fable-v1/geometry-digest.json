@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "brittle_star",
+  "sourceSha256": "271757447734d7bdcb47ce6292fa39b1681bb8de9b997f6b23da8a267788531a",
+  "objects": [
+    {
+      "name": "PA_brittle_star_Arms",
+      "vertexCount": 7470,
+      "triangleCount": 13560,
+      "vertexDigest": "841ae27e8929d225686107053288c90cf7277560b52b5ba960e4e7e7e506d64a",
+      "topologyDigest": "bd8232d9cce0d009f258cc4a246a05eb836badc87e98030e1e10afaf718402b0",
+      "uvDigest": "4f061e90f4ce268a084b62d0bf974c9303c9b8136fa82fa46b6b3b4218f5bfa4",
+      "weightDigest": "5110d63ee6f466735c7d78fe6b6f43727831b05c34001277314020af68fe5b7c",
+      "materials": [
+        "PA_brittle_star_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_brittle_star_Disc",
+      "vertexCount": 402,
+      "triangleCount": 800,
+      "vertexDigest": "81f1919b03081e732f895616910fd2ba9ccd17b38553da46eb46f92794fc997c",
+      "topologyDigest": "755e3561076a1836b6c726b8d24ac68b8b326f7d5f0775be3ff378998ef6b79d",
+      "uvDigest": "a60a1170099a534bc550a262b90635ef94e444359c8b4adb9496899c602b6a43",
+      "weightDigest": "cbf63f985cb577251842d99314c6acb68349d8c462996cede37496cb583a6fff",
+      "materials": [
+        "PA_brittle_star_Skin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_brittle_star_Rig",
+    "boneCount": 27,
+    "deformBoneCount": 26,
+    "boneDigest": "db8cd8fe988c265582810ac46f59cb1b87ccaf953f865bc5c703ad722a1c0e31"
+  },
+  "geometryDigest": "f24ad62ff83eee476d931d7ca745f85101180874b7f4e19a54795ab6050d866e",
+  "variantId": null
+}

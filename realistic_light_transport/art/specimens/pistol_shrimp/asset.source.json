@@ -1,0 +1,1082 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "pistol_shrimp",
+  "displayName": "Tiger Pistol Shrimp",
+  "scientificLabel": "Alpheus bellulus",
+  "taxonomyConfidence": "species",
+  "category": "invertebrate",
+  "waterType": "saltwater",
+  "bodyPlan": "decapod_shrimp",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.05,
+    "kind": "adult_body_length",
+    "note": "Root DATA.SPECIES pistol_shrimp adultSizeCm 5. Miya & Miyake (1969) type series: total length 36.9 to 52.6 mm rostrum to telson, carapace 13.2 to 17.8 mm. The rest pose measures 50 mm along x from the forward-held major chela tips to the tail fan; rostrum to telson is about 41 mm and the antennae bow laterally so they add nothing to x."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "walk",
+    "response": "snap"
+  },
+  "palette": {
+    "cream": [
+      0.93,
+      0.86,
+      0.66
+    ],
+    "brownOrange": [
+      0.56,
+      0.24,
+      0.05
+    ],
+    "brownDark": [
+      0.27,
+      0.1,
+      0.03
+    ],
+    "antennaRed": [
+      0.78,
+      0.19,
+      0.11
+    ],
+    "eye": [
+      0.03,
+      0.02,
+      0.015
+    ]
+  },
+  "textures": {
+    "atlasResolution": [
+      1024,
+      512
+    ],
+    "normalStrength": 0.55
+  },
+  "morphology": {
+    "notes": "Design coordinates in metres before uniform scaling to referenceSize along x. Forward +X, up +Z, symmetry plane y = 0. Stout alpheid: carapace about 36 percent of rostrum-to-telson length, inflated orbital hoods roofing the eyes, sharp rostral carina, six telescoping abdominal somites, telson blade with biramous uropods, major snapping chela on y < 0 and slender minor chela on y > 0.",
+    "carapace": {
+      "segments": 32,
+      "ringCount": 26,
+      "dorsalExponent": 2.2,
+      "ventralExponent": 2.8,
+      "stations": [
+        {
+          "x": 0.004,
+          "halfWidth": 0.0034,
+          "dorsal": 0.0038,
+          "ventral": 0.0038,
+          "centerZ": 0.0
+        },
+        {
+          "x": 0.006,
+          "halfWidth": 0.004,
+          "dorsal": 0.0045,
+          "ventral": 0.0044,
+          "centerZ": 0.0
+        },
+        {
+          "x": 0.01,
+          "halfWidth": 0.0043,
+          "dorsal": 0.0049,
+          "ventral": 0.0046,
+          "centerZ": 0.0001
+        },
+        {
+          "x": 0.014,
+          "halfWidth": 0.0043,
+          "dorsal": 0.0049,
+          "ventral": 0.0046,
+          "centerZ": 0.0002
+        },
+        {
+          "x": 0.017,
+          "halfWidth": 0.004,
+          "dorsal": 0.0046,
+          "ventral": 0.0044,
+          "centerZ": 0.0003
+        },
+        {
+          "x": 0.019,
+          "halfWidth": 0.0034,
+          "dorsal": 0.004,
+          "ventral": 0.0038,
+          "centerZ": 0.0004
+        },
+        {
+          "x": 0.0205,
+          "halfWidth": 0.0026,
+          "dorsal": 0.003,
+          "ventral": 0.0028,
+          "centerZ": 0.0006
+        },
+        {
+          "x": 0.0215,
+          "halfWidth": 0.0014,
+          "dorsal": 0.0016,
+          "ventral": 0.0016,
+          "centerZ": 0.0008
+        },
+        {
+          "x": 0.022,
+          "halfWidth": 0.0005,
+          "dorsal": 0.0006,
+          "ventral": 0.0006,
+          "centerZ": 0.0009
+        }
+      ]
+    },
+    "rostrum": {
+      "points": [
+        [
+          0.0175,
+          0.0,
+          0.003
+        ],
+        [
+          0.02,
+          0.0,
+          0.0035
+        ],
+        [
+          0.0225,
+          0.0,
+          0.0031
+        ],
+        [
+          0.0248,
+          0.0,
+          0.0024
+        ]
+      ],
+      "radii": [
+        0.0011,
+        0.001,
+        0.0006,
+        0.00025
+      ],
+      "aspect": 0.7
+    },
+    "hoods": {
+      "center": [
+        0.0195,
+        -0.0024,
+        0.0022
+      ],
+      "radii": [
+        0.003,
+        0.0017,
+        0.0016
+      ]
+    },
+    "eyes": {
+      "center": [
+        0.021,
+        -0.0022,
+        0.001
+      ],
+      "radii": [
+        0.0011,
+        0.001,
+        0.001
+      ]
+    },
+    "somites": {
+      "segments": 24,
+      "dorsalExponent": 2.1,
+      "ventralExponent": 1.8,
+      "profileT": [
+        0.0,
+        0.12,
+        0.3,
+        0.55,
+        0.8,
+        0.92,
+        1.0
+      ],
+      "profileScale": [
+        0.84,
+        0.94,
+        1.0,
+        1.0,
+        0.99,
+        0.95,
+        0.88
+      ],
+      "list": [
+        {
+          "xFront": 0.005,
+          "xBack": 0.0016,
+          "halfWidth": 0.0037,
+          "dorsal": 0.0041,
+          "ventral": 0.003,
+          "centerZ": -0.0001
+        },
+        {
+          "xFront": 0.0024,
+          "xBack": -0.0012,
+          "halfWidth": 0.0035,
+          "dorsal": 0.0039,
+          "ventral": 0.0029,
+          "centerZ": -0.0002
+        },
+        {
+          "xFront": -0.0004,
+          "xBack": -0.004,
+          "halfWidth": 0.0033,
+          "dorsal": 0.0037,
+          "ventral": 0.0027,
+          "centerZ": -0.0004
+        },
+        {
+          "xFront": -0.0032,
+          "xBack": -0.0068,
+          "halfWidth": 0.0031,
+          "dorsal": 0.0034,
+          "ventral": 0.0025,
+          "centerZ": -0.0007
+        },
+        {
+          "xFront": -0.006,
+          "xBack": -0.0096,
+          "halfWidth": 0.0028,
+          "dorsal": 0.0031,
+          "ventral": 0.0022,
+          "centerZ": -0.001
+        },
+        {
+          "xFront": -0.0088,
+          "xBack": -0.0128,
+          "halfWidth": 0.0025,
+          "dorsal": 0.0027,
+          "ventral": 0.0019,
+          "centerZ": -0.0014
+        }
+      ]
+    },
+    "pleopods": {
+      "radii": [
+        0.0007,
+        0.0004,
+        0.0016
+      ],
+      "yOffset": 0.0014,
+      "tiltDegrees": 35
+    },
+    "tail": {
+      "telson": {
+        "points": [
+          [
+            -0.0118,
+            0.0,
+            -0.0015
+          ],
+          [
+            -0.016,
+            0.0,
+            -0.0017
+          ],
+          [
+            -0.02,
+            0.0,
+            -0.0019
+          ],
+          [
+            -0.0228,
+            0.0,
+            -0.0021
+          ]
+        ],
+        "halfThickness": [
+          0.0006,
+          0.0005,
+          0.0004,
+          0.0002
+        ],
+        "halfWidth": [
+          0.0017,
+          0.0015,
+          0.0012,
+          0.0006
+        ]
+      },
+      "protopod": {
+        "center": [
+          -0.0133,
+          -0.0026,
+          -0.0021
+        ],
+        "radii": [
+          0.0012,
+          0.0011,
+          0.0009
+        ]
+      },
+      "exopod": {
+        "center": [
+          -0.0178,
+          -0.0046,
+          -0.0025
+        ],
+        "radii": [
+          0.0044,
+          0.0019,
+          0.00035
+        ],
+        "yawDegrees": 8
+      },
+      "endopod": {
+        "center": [
+          -0.0175,
+          -0.0027,
+          -0.0028
+        ],
+        "radii": [
+          0.0038,
+          0.0012,
+          0.0003
+        ],
+        "yawDegrees": 3
+      }
+    },
+    "legs": {
+      "P2": {
+        "coxa": [
+          0.013,
+          -0.0019,
+          -0.003
+        ],
+        "knee": [
+          0.0148,
+          -0.0044,
+          -0.0062
+        ],
+        "foot": [
+          0.017,
+          -0.0038,
+          -0.009
+        ],
+        "radii": [
+          0.00045,
+          0.00042,
+          0.00036,
+          0.00028,
+          0.00012
+        ]
+      },
+      "P3": {
+        "coxa": [
+          0.01,
+          -0.002,
+          -0.0027
+        ],
+        "knee": [
+          0.0122,
+          -0.0056,
+          -0.006
+        ],
+        "foot": [
+          0.0138,
+          -0.0064,
+          -0.0098
+        ],
+        "radii": [
+          0.0006,
+          0.00062,
+          0.00052,
+          0.00042,
+          0.00016
+        ]
+      },
+      "P4": {
+        "coxa": [
+          0.0068,
+          -0.002,
+          -0.0027
+        ],
+        "knee": [
+          0.0066,
+          -0.006,
+          -0.0062
+        ],
+        "foot": [
+          0.006,
+          -0.007,
+          -0.01
+        ],
+        "radii": [
+          0.0006,
+          0.00062,
+          0.00052,
+          0.00042,
+          0.00016
+        ]
+      },
+      "P5": {
+        "coxa": [
+          0.0048,
+          -0.0019,
+          -0.0026
+        ],
+        "knee": [
+          0.0012,
+          -0.0056,
+          -0.006
+        ],
+        "foot": [
+          -0.0014,
+          -0.0064,
+          -0.0098
+        ],
+        "radii": [
+          0.00058,
+          0.0006,
+          0.0005,
+          0.0004,
+          0.00015
+        ]
+      }
+    },
+    "chelipeds": {
+      "major": {
+        "side": -1,
+        "arm": {
+          "points": [
+            [
+              0.0158,
+              -0.0021,
+              -0.0027
+            ],
+            [
+              0.0164,
+              -0.0027,
+              -0.0031
+            ],
+            [
+              0.0182,
+              -0.0042,
+              -0.0044
+            ],
+            [
+              0.02,
+              -0.0056,
+              -0.0056
+            ],
+            [
+              0.021,
+              -0.0062,
+              -0.006
+            ],
+            [
+              0.0218,
+              -0.0066,
+              -0.0062
+            ]
+          ],
+          "radii": [
+            0.0008,
+            0.0009,
+            0.0011,
+            0.001,
+            0.0011,
+            0.001
+          ]
+        },
+        "palm": {
+          "start": [
+            0.0212,
+            -0.0066,
+            -0.0064
+          ],
+          "end": [
+            0.0338,
+            -0.008,
+            -0.0053
+          ],
+          "t": [
+            0.0,
+            0.1,
+            0.3,
+            0.5,
+            0.72,
+            0.88,
+            1.0
+          ],
+          "halfHeight": [
+            0.0015,
+            0.003,
+            0.0038,
+            0.004,
+            0.0034,
+            0.0032,
+            0.0024
+          ],
+          "halfWidth": [
+            0.0012,
+            0.0022,
+            0.0027,
+            0.0028,
+            0.0026,
+            0.0022,
+            0.0017
+          ],
+          "segments": 20
+        },
+        "pollex": {
+          "points": [
+            [
+              0.0326,
+              -0.008,
+              -0.0069
+            ],
+            [
+              0.0348,
+              -0.0083,
+              -0.0065
+            ],
+            [
+              0.0372,
+              -0.0085,
+              -0.0061
+            ],
+            [
+              0.0405,
+              -0.0088,
+              -0.0055
+            ]
+          ],
+          "halfHeight": [
+            0.0016,
+            0.0014,
+            0.0011,
+            0.0004
+          ],
+          "halfWidth": [
+            0.0013,
+            0.0011,
+            0.0009,
+            0.0004
+          ]
+        },
+        "dactyl": {
+          "hinge": [
+            0.033,
+            -0.008,
+            -0.0031
+          ],
+          "points": [
+            [
+              0.0318,
+              -0.0079,
+              -0.0031
+            ],
+            [
+              0.0338,
+              -0.0081,
+              -0.0029
+            ],
+            [
+              0.0352,
+              -0.0083,
+              -0.0031
+            ],
+            [
+              0.0378,
+              -0.0086,
+              -0.0037
+            ],
+            [
+              0.0405,
+              -0.0089,
+              -0.0047
+            ]
+          ],
+          "halfHeight": [
+            0.0013,
+            0.0017,
+            0.0015,
+            0.0011,
+            0.0004
+          ],
+          "halfWidth": [
+            0.0011,
+            0.0014,
+            0.0012,
+            0.0009,
+            0.0004
+          ]
+        }
+      },
+      "minor": {
+        "side": 1,
+        "arm": {
+          "points": [
+            [
+              0.0158,
+              0.0021,
+              -0.0027
+            ],
+            [
+              0.0164,
+              0.0026,
+              -0.0031
+            ],
+            [
+              0.0182,
+              0.004,
+              -0.0043
+            ],
+            [
+              0.02,
+              0.005,
+              -0.0052
+            ],
+            [
+              0.0212,
+              0.0054,
+              -0.0054
+            ],
+            [
+              0.022,
+              0.0056,
+              -0.0055
+            ]
+          ],
+          "radii": [
+            0.0007,
+            0.0008,
+            0.0009,
+            0.0008,
+            0.0008,
+            0.0007
+          ]
+        },
+        "palm": {
+          "start": [
+            0.0216,
+            0.0056,
+            -0.0056
+          ],
+          "end": [
+            0.03,
+            0.0062,
+            -0.005
+          ],
+          "t": [
+            0.0,
+            0.15,
+            0.4,
+            0.7,
+            1.0
+          ],
+          "halfHeight": [
+            0.0009,
+            0.0014,
+            0.0016,
+            0.0015,
+            0.0012
+          ],
+          "halfWidth": [
+            0.0007,
+            0.0011,
+            0.0012,
+            0.0011,
+            0.0009
+          ],
+          "segments": 14
+        },
+        "pollex": {
+          "points": [
+            [
+              0.0294,
+              0.0062,
+              -0.0058
+            ],
+            [
+              0.033,
+              0.0064,
+              -0.0054
+            ],
+            [
+              0.0358,
+              0.0066,
+              -0.005
+            ]
+          ],
+          "halfHeight": [
+            0.0008,
+            0.0006,
+            0.0003
+          ],
+          "halfWidth": [
+            0.0007,
+            0.0005,
+            0.0003
+          ]
+        },
+        "dactyl": {
+          "hinge": [
+            0.0294,
+            0.0062,
+            -0.0042
+          ],
+          "points": [
+            [
+              0.0286,
+              0.0061,
+              -0.0042
+            ],
+            [
+              0.033,
+              0.0065,
+              -0.0042
+            ],
+            [
+              0.0358,
+              0.0067,
+              -0.0048
+            ]
+          ],
+          "halfHeight": [
+            0.0008,
+            0.0006,
+            0.0003
+          ],
+          "halfWidth": [
+            0.0007,
+            0.0005,
+            0.0003
+          ]
+        }
+      }
+    },
+    "antennae": {
+      "antenna": {
+        "points": [
+          [
+            0.0186,
+            -0.0024,
+            -0.001
+          ],
+          [
+            0.019,
+            -0.0031,
+            -0.001
+          ],
+          [
+            0.0198,
+            -0.0046,
+            -0.0008
+          ],
+          [
+            0.0215,
+            -0.0052,
+            -0.0005
+          ],
+          [
+            0.0245,
+            -0.0056,
+            -0.0002
+          ],
+          [
+            0.0285,
+            -0.0075,
+            0.0016
+          ],
+          [
+            0.0315,
+            -0.0105,
+            0.003
+          ],
+          [
+            0.033,
+            -0.014,
+            0.0038
+          ],
+          [
+            0.0325,
+            -0.0175,
+            0.0042
+          ],
+          [
+            0.03,
+            -0.0205,
+            0.0044
+          ],
+          [
+            0.026,
+            -0.0225,
+            0.0044
+          ],
+          [
+            0.021,
+            -0.0232,
+            0.0042
+          ],
+          [
+            0.0155,
+            -0.0228,
+            0.0038
+          ]
+        ],
+        "radii": [
+          0.0006,
+          0.0006,
+          0.00065,
+          0.0006,
+          0.00055,
+          0.0003,
+          0.00026,
+          0.00022,
+          0.00019,
+          0.00016,
+          0.00013,
+          0.00011,
+          9e-05
+        ],
+        "boneTail": [
+          0.0315,
+          -0.0105,
+          0.003
+        ]
+      },
+      "scaphocerite": {
+        "center": [
+          0.0232,
+          -0.0064,
+          -0.0002
+        ],
+        "radii": [
+          0.0034,
+          0.0011,
+          0.00028
+        ],
+        "yawDegrees": -12
+      },
+      "antennule": {
+        "points": [
+          [
+            0.0205,
+            -0.0011,
+            -0.001
+          ],
+          [
+            0.0212,
+            -0.0012,
+            -0.0009
+          ],
+          [
+            0.0232,
+            -0.0013,
+            -0.0006
+          ],
+          [
+            0.025,
+            -0.0014,
+            -0.0003
+          ],
+          [
+            0.029,
+            -0.003,
+            0.0008
+          ],
+          [
+            0.0322,
+            -0.0048,
+            0.0024
+          ],
+          [
+            0.0345,
+            -0.006,
+            0.004
+          ]
+        ],
+        "radii": [
+          0.00055,
+          0.00055,
+          0.0005,
+          0.00045,
+          0.00022,
+          0.00016,
+          0.0001
+        ],
+        "boneTail": [
+          0.0322,
+          -0.0048,
+          0.0024
+        ]
+      },
+      "antennule2": {
+        "points": [
+          [
+            0.025,
+            -0.0014,
+            -0.0003
+          ],
+          [
+            0.0268,
+            -0.0016,
+            0.0005
+          ],
+          [
+            0.029,
+            -0.002,
+            0.0016
+          ],
+          [
+            0.0315,
+            -0.0024,
+            0.003
+          ]
+        ],
+        "radii": [
+          0.0003,
+          0.00022,
+          0.00016,
+          0.0001
+        ]
+      }
+    },
+    "rig": {
+      "root": {
+        "head": [
+          0.006,
+          0.0,
+          0.001
+        ],
+        "tail": [
+          0.002,
+          0.0,
+          0.001
+        ]
+      },
+      "body": {
+        "head": [
+          0.004,
+          0.0,
+          0.0002
+        ],
+        "tail": [
+          0.0215,
+          0.0,
+          0.0008
+        ]
+      },
+      "abdomenJoints": [
+        [
+          0.004,
+          0.0,
+          0.0
+        ],
+        [
+          -0.0014,
+          0.0,
+          -0.0002
+        ],
+        [
+          -0.0068,
+          0.0,
+          -0.0007
+        ],
+        [
+          -0.0128,
+          0.0,
+          -0.0014
+        ],
+        [
+          -0.0228,
+          0.0,
+          -0.0021
+        ]
+      ],
+      "uropod": {
+        "head": [
+          -0.013,
+          -0.0026,
+          -0.0021
+        ],
+        "tail": [
+          -0.0222,
+          -0.0046,
+          -0.0025
+        ]
+      }
+    }
+  },
+  "animation": {
+    "rest": {
+      "frames": 90,
+      "loop": true,
+      "antennaSweep": 6,
+      "antennuleTwitch": 7,
+      "minorDactyl": 14,
+      "minorArm": 3,
+      "abdomen": [
+        0.6,
+        0.9,
+        1.2
+      ],
+      "uropodFan": 3,
+      "probeLegs": 4,
+      "bodyBob": 6e-05
+    },
+    "walk": {
+      "frames": 60,
+      "loop": true,
+      "strideFrequency": 2,
+      "legSwing": 12,
+      "legLift": 10,
+      "bodyBob": 0.0002,
+      "bodyPitch": 1.0,
+      "abdomen": [
+        1.0,
+        1.4,
+        1.8
+      ],
+      "abdomenSway": 0.5,
+      "uropodFan": 4,
+      "antennaSweep": 10,
+      "antennuleTwitch": 8,
+      "armBob": 2.5,
+      "probeLegs": 6,
+      "minorDactyl": 8
+    },
+    "snap": {
+      "frames": 40,
+      "loop": false,
+      "dactylOpen": 42,
+      "cockFraction": 0.58,
+      "cockExponent": 6,
+      "armLift": 5,
+      "recoilMeters": 0.0016,
+      "recoilCenter": 0.64,
+      "recoilPitch": 3,
+      "tailFlick": [
+        -4,
+        -6,
+        -8
+      ],
+      "antennaFlick": -12,
+      "legBrace": -4,
+      "uropodFlare": 8
+    }
+  },
+  "validation": {
+    "triangleBudget": [
+      5000,
+      20000
+    ]
+  },
+  "preview": {
+    "frame": 12,
+    "azimuthDegrees": -50,
+    "elevationDegrees": 24
+  },
+  "visualDebt": [
+    "Orbital hoods are smooth ellipsoids fused to the carapace rather than a sculpted anterior margin.",
+    "The major palm's dorsal saddle notch is only hinted by the loft profile and texture.",
+    "Setae and leg bristles are texture-only; pleopods do not beat.",
+    "Major chela proportions follow general Alpheus descriptions, not A. bellulus specific measurements; the rest pose includes the forward-held chela in the 50 mm x extent (rostrum to telson about 41 mm)."
+  ]
+}
