@@ -77,7 +77,16 @@ export interface PocketState {
   tier: string
   equipment: Record<string, string>
   water: PocketWater
-  cycle: { stage: string; filled: boolean; lifeSupport: boolean }
+  cycle: {
+    stage: string
+    filled: boolean
+    lifeSupport: boolean
+    ammoniaSource: boolean
+    inoculated: boolean
+    aob: number
+    nob: number
+    validationDays: number
+  }
   succession: { age: number; haze: number; diatom: number; greenFilm: number; cyano: number }
   livestock: PocketAnimal[]
   corals: PocketCoral[]
@@ -147,6 +156,16 @@ export interface PocketStoreOffer {
   readonly action: PocketAction
 }
 
+export interface PocketObjective {
+  readonly chapter: string
+  readonly title: string
+  readonly detail: string
+  readonly lesson: string
+  readonly destination: 'care' | 'store' | 'journal'
+  readonly actionLabel?: string
+  readonly action?: PocketAction
+}
+
 export interface PocketGameView {
   readonly authority: 'root_pa'
   readonly habitatName: string
@@ -155,6 +174,8 @@ export interface PocketGameView {
   readonly xp: number
   readonly cycleStage: string
   readonly cycled: boolean
+  readonly filled: boolean
+  readonly objective: PocketObjective
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
   readonly food: readonly FoodPellet[]
@@ -187,14 +208,10 @@ function commissionCycledReef(credits: number): PocketState {
   return state
 }
 
-/** First-run authoritative default: a cycled reef stocked with a clownfish pair so the
- *  physical feeding slice is demonstrable. This — not the workbench showcase — is what a
- *  player without a save opens into. */
+/** First-run authoritative default: an empty reef that must be commissioned and cycled.
+ * Existing saves still hydrate unchanged; only a player without a save starts here. */
 export function createStarterPocketState(): PocketState {
-  const state = commissionCycledReef(3000)
-  runtime.dispatch(state, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: 'ocellaris', count: 2 })
-  runtime.dispatch(state, { type: runtime.ACTIONS.WATER_TEST })
-  return state
+  return runtime.createState({ habitat: 'reef', credits: 180, seed: 0x51f15e })
 }
 
 /** Fully-stocked demo state — workbench/demo only, never the live game default. */
@@ -283,6 +300,63 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
   return [...livestock, ...corals, ...equipment, ...tiers]
 }
 
+function objectiveFor(state: PocketState, summary: ReturnType<PocketRuntime['snapshotSummary']>): PocketObjective {
+  const act = runtime.ACTIONS
+  if (!state.cycle.filled) return {
+    chapter: 'Commissioning · 1 of 4', title: 'Mix saltwater and fill',
+    detail: 'Bring the dry reef to its operating waterline at 35 ppt.',
+    lesson: 'Saltwater establishes the habitat, but it is not biologically safe yet. The filter still has no mature bacteria to process animal waste.',
+    destination: 'care', actionLabel: 'Fill the reef', action: { type: act.SETUP_FILL },
+  }
+  if (!state.cycle.lifeSupport) return {
+    chapter: 'Commissioning · 2 of 4', title: 'Start life support',
+    detail: 'Turn on filtration, heat, oxygenation, and circulation.',
+    lesson: 'Nitrifying bacteria live on wet filter and rock surfaces. Flow brings them oxygen and carries dissolved waste to the biofilter.',
+    destination: 'care', actionLabel: 'Start life support', action: { type: act.SETUP_LIFE_SUPPORT, on: true },
+  }
+  if (!state.cycle.ammoniaSource && !runtime.DATA.isCycled(state)) return {
+    chapter: 'Commissioning · 3 of 4', title: 'Feed the invisible filter',
+    detail: 'Add a measured ammonia source before any animal enters.',
+    lesson: 'Ammonia is toxic to fish, but a fishless dose is the fuel that grows the first bacterial colony. That colony converts ammonia into nitrite.',
+    destination: 'care', actionLabel: 'Add ammonia source', action: { type: act.ADD_AMMONIA_SOURCE, on: true },
+  }
+  if (!state.cycle.inoculated) return {
+    chapter: 'Commissioning · 4 of 4', title: 'Seed nitrifying bacteria',
+    detail: 'Inoculate the filter, then watch both bacterial colonies establish.',
+    lesson: 'The first colony oxidizes ammonia into nitrite. A second colony converts nitrite into nitrate—the safer end product removed by water changes and export.',
+    destination: 'care', actionLabel: 'Inoculate filter', action: { type: act.INOCULATE_BACTERIA },
+  }
+  if (!runtime.DATA.isCycled(state)) {
+    const stage = state.cycle.stage
+    const lesson = stage === 'Ammonia oxidation'
+      ? 'Ammonia is now feeding the first bacterial colony. A later nitrite rise proves that oxidation is happening.'
+      : stage === 'Nitrite oxidation'
+        ? 'Nitrite is the toxic middle step. The second bacterial colony must grow before nitrite falls and nitrate accumulates.'
+        : stage === 'Nitrate present'
+          ? 'Nitrate proves both oxidation steps are working. The tank still needs a sustained safe window before livestock unlocks.'
+          : 'The biofilter is establishing. Watch the three readings move in sequence rather than chasing a single number.'
+    const observing = state.speed >= 4
+    return {
+      chapter: `Fishless cycle · ${stage}`, title: stage === 'Nitrate present' ? 'Prove the safe window' : 'Watch the nitrogen cycle',
+      detail: `Ammonia ${state.water.ammonia.toFixed(2)} → nitrite ${state.water.nitrite.toFixed(2)} → nitrate ${state.water.nitrate.toFixed(1)} mg/L`,
+      lesson, destination: 'care', actionLabel: observing ? 'Test the water' : 'Observe at 4×',
+      action: observing ? { type: act.WATER_TEST } : { type: act.SET_SPEED, speed: 4 },
+    }
+  }
+  if (state.livestock.every((animal) => animal.alive === false)) return {
+    chapter: 'First stocking unlocked', title: 'Choose the first resident',
+    detail: 'The biofilter held ammonia and nitrite safe while nitrate remained present.',
+    lesson: 'Stock slowly. Every animal adds waste, so compatibility, adult size, social needs, and biofilter capacity all matter.',
+    destination: 'store',
+  }
+  return {
+    chapter: 'Living reef', title: summary?.nextAction?.title ?? 'Observe the reef',
+    detail: summary?.nextAction?.detail ?? 'Keep the water stable.',
+    lesson: 'Observe the animals and water together. Intervene only when the tank gives you a reason.',
+    destination: summary?.nextAction?.title.toLowerCase().includes('feed') ? 'journal' : 'care',
+  }
+}
+
 export function projectPocketState(state: PocketState): PocketGameView {
   const tier = runtime.DATA.TIERS[state.tier]
   const light = runtime.DATA.equipLevel('light', state.equipment.light)
@@ -334,15 +408,16 @@ export function projectPocketState(state: PocketState): PocketGameView {
       causalNote: 'Pocket Aquarium advances all gameplay state.', feedPulse: 0 },
   }
   const summary = runtime.snapshotSummary(state)
+  const objective = objectiveFor(state, summary)
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
-    cycled: runtime.DATA.isCycled(state), water: { ...state.water },
+    cycled: runtime.DATA.isCycled(state), filled: state.cycle.filled, objective, water: { ...state.water },
     specimens: living.map((animal) => { const species = runtime.DATA.SPECIES[animal.species]; return { ...animal,
       speciesId: animal.species, name: species.name, scientificName: species.sci,
       adultSizeCm: species.adultSizeCm, layer: species.layer } }),
     food: state.food.filter((pellet) => !pellet.consumed).map((pellet) => ({
       id: pellet.id, x: pellet.x, y: pellet.y, amount: pellet.amount, ageDays: pellet.ageDays, sunk: pellet.sunk })),
     storeOffers: storeOffers(state), reefSnapshot,
-    nextAction: summary?.nextAction ?? { title: 'Observe the reef', detail: 'Keep the water stable.' },
+    nextAction: { title: objective.title, detail: objective.detail },
     alerts: summary?.alerts ?? [] }
 }

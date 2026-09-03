@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import type { ReefSnapshot } from '../contracts'
 import type { PocketSpecimen } from '../integration/pocketAquariumBridge'
 import type { ScenePellet } from './feeding'
+import { REEF_ROCKS } from './reefLayout'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
@@ -18,6 +19,7 @@ const MARINE_SPECIES = new Set(['ocellaris', 'watchman_goby', 'pistol_shrimp', '
 /** Shared per-frame steering context so fish can separate and claim pellets exactly once. */
 interface SteerContext {
   readonly positions: Map<number, THREE.Vector3>
+  readonly assignments: ReadonlyMap<number, number>
   readonly claimed: Set<number>
   readonly pellets: readonly ScenePellet[]
   readonly consume: (foodId: number, eaterId: number) => void
@@ -181,6 +183,77 @@ function seededUnit(id: number, salt: number) {
   return value - Math.floor(value)
 }
 
+function fallbackPosition(specimen: PocketSpecimen, waterSurfaceY: number) {
+  const x = THREE.MathUtils.lerp(-TANK_HALF_WIDTH * .72, TANK_HALF_WIDTH * .72, specimen.x)
+  const benthic = specimen.layer === 'bottom' || specimen.speciesId === 'epaulette_shark'
+  const y = benthic ? SAND_Y + .16 : THREE.MathUtils.clamp(
+    THREE.MathUtils.lerp(SAND_Y + .48, waterSurfaceY - .34, 1 - specimen.y),
+    SAND_Y + .38,
+    waterSurfaceY - .28,
+  )
+  return new THREE.Vector3(x, y, benthic ? .55 : 1.02)
+}
+
+/** Distribute live portions before pursuit. Hunger outranks distance and one fish receives
+ * at most one portion per pass, so a faster clown cannot reserve an entire feeding. */
+export function assignPelletTargets(
+  specimens: readonly PocketSpecimen[], pellets: readonly ScenePellet[],
+  positions: ReadonlyMap<number, THREE.Vector3>, waterSurfaceY: number,
+) {
+  const assigned = new Map<number, number>()
+  const alreadyFed = new Set<number>()
+  for (const pellet of [...pellets].sort((a, b) => a.id - b.id)) {
+    const candidates = specimens
+      .filter((specimen) => specimen.kind !== 'invert' && specimen.alive && specimen.hunger > HUNGER_TO_PURSUE)
+      .filter((specimen) => specimen.layer !== 'bottom' || pellet.sunk)
+      .map((specimen) => {
+        const position = positions.get(specimen.id) ?? fallbackPosition(specimen, waterSurfaceY)
+        const distance = position.distanceTo(pellet)
+        const fairness = alreadyFed.has(specimen.id) ? -4 : 0
+        return { specimen, score: specimen.hunger * 5 - distance * .22 + fairness }
+      })
+      .sort((a, b) => b.score - a.score || a.specimen.id - b.specimen.id)
+    const winner = candidates[0]?.specimen
+    if (winner) { assigned.set(pellet.id, winner.id); alreadyFed.add(winner.id) }
+  }
+  return assigned
+}
+
+/** Approximate the irregular live rock as padded ellipsoids. Steering pushes early, then
+ * collision resolution guarantees the fish centre cannot remain inside rendered rock. */
+function avoidHardscape(pos: THREE.Vector3, desired: THREE.Vector3, bodyRadius: number, benthic: boolean) {
+  for (const rock of REEF_ROCKS) {
+    const rx = rock.scale.x * 1.08 + bodyRadius
+    const ry = rock.scale.y * 1.08 + bodyRadius
+    const rz = rock.scale.z * 1.08 + bodyRadius
+    const nx = (pos.x - rock.position.x) / rx
+    const ny = (pos.y - rock.position.y) / ry
+    const nz = (pos.z - rock.position.z) / rz
+    const d2 = nx * nx + ny * ny + nz * nz
+    if (d2 >= 2.4) continue
+    const force = (2.4 - d2) / 2.4
+    desired.x += nx * force * 1.4
+    desired.z += nz * force * 1.4
+    if (!benthic) desired.y += Math.max(.18, ny) * force * 1.25
+  }
+}
+
+function resolveHardscape(pos: THREE.Vector3, bodyRadius: number, benthic: boolean) {
+  for (const rock of REEF_ROCKS) {
+    const rx = rock.scale.x * 1.08 + bodyRadius
+    const ry = rock.scale.y * 1.08 + bodyRadius
+    const rz = rock.scale.z * 1.08 + bodyRadius
+    let nx = (pos.x - rock.position.x) / rx
+    let ny = (pos.y - rock.position.y) / ry
+    let nz = (pos.z - rock.position.z) / rz
+    let length = Math.sqrt(nx * nx + ny * ny + nz * nz)
+    if (length >= 1) continue
+    if (length < 1e-5) { nx = 0; ny = benthic ? 0 : 1; nz = 1; length = Math.sqrt(ny * ny + nz * nz) }
+    nx /= length; ny /= length; nz /= length
+    pos.set(rock.position.x + nx * rx, rock.position.y + ny * ry, rock.position.z + nz * rz)
+  }
+}
+
 type SpeciesSkins = Readonly<Record<'watchman_goby', THREE.Texture>>
 
 function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, steer }: {
@@ -206,6 +279,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
   const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / Math.max(snapshot.tank.widthMeters, .4)
   const lifeScale = specimen.stage === 'adult' ? 1 : .68
   const length = THREE.MathUtils.clamp(specimen.adultSizeCm / 100 * sceneUnitsPerMeter * lifeScale, .16, 3.7)
+  const bodyRadius = THREE.MathUtils.clamp(length * .24, .08, .34)
   const riggedAsset = specimenAssetFor(specimen.speciesId)
   // Persistent position/velocity give the fish real bounded steering (arrival, separation,
   // tank avoidance, depth preference, hunger-weighted food targeting) instead of a fixed path.
@@ -237,6 +311,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
       let best = Infinity
       for (const pellet of steer.pellets) {
         if (steer.claimed.has(pellet.id)) continue
+        if (steer.assignments.get(pellet.id) !== specimen.id) continue
         if (specimen.layer === 'bottom' && !pellet.sunk) continue
         const dx = pellet.x - pos.x, dy = pellet.y - pos.y, dz = pellet.z - pos.z
         const d2 = dx * dx + dy * dy + dz * dz
@@ -261,12 +336,17 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
         desired.x += dx * push * .6; desired.y += dy * push * .3; desired.z += dz * push * .6
       }
     }
+    avoidHardscape(pos, desired, bodyRadius, benthic)
     // integrate and keep inside the tank interior
     vel.lerp(desired, 1 - Math.exp(-dt * 4))
     pos.addScaledVector(vel, dt)
     pos.x = THREE.MathUtils.clamp(pos.x, -xBound, xBound)
     pos.y = THREE.MathUtils.clamp(pos.y, yFloor, yCeil)
-    pos.z = THREE.MathUtils.clamp(pos.z, -.45, 1.3)
+    pos.z = THREE.MathUtils.clamp(pos.z, benthic ? -.2 : .56, 1.04)
+    resolveHardscape(pos, bodyRadius, benthic)
+    pos.x = THREE.MathUtils.clamp(pos.x, -xBound, xBound)
+    pos.y = THREE.MathUtils.clamp(pos.y, yFloor, yCeil)
+    pos.z = THREE.MathUtils.clamp(pos.z, benthic ? -.2 : .56, 1.04)
     steer.positions.set(specimen.id, pos)
 
     // mouth/pellet contact dispatches CONSUME_FOOD exactly once (claimed guards duplicates)
@@ -319,8 +399,9 @@ export function SpecimenFish({ snapshot, waterSurfaceY, pellets, consume }: Spec
   // keeping the exactly-once guard bounded to live pellets.
   const liveIds = new Set(pellets.map((pellet) => pellet.id))
   for (const id of claimed) if (!liveIds.has(id)) claimed.delete(id)
-  const steer: SteerContext = { positions, claimed, pellets, consume }
   const marineRoster = roster.filter((specimen) => specimen.alive && MARINE_SPECIES.has(specimen.speciesId)).slice(0, MAX_SPECIMENS)
+  const assignments = assignPelletTargets(marineRoster, pellets, positions, waterSurfaceY)
+  const steer: SteerContext = { positions, assignments, claimed, pellets, consume }
   return <group name="root-pocket-aquarium-specimens">
     {marineRoster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
       waterSurfaceY={waterSurfaceY} geometry={geometry} skins={skins} steer={steer} />)}

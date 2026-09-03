@@ -48,7 +48,7 @@ export function PocketGameHUD({
   const [openSheet, setOpenSheet] = useState<SheetId | null>(null)
   const { clock } = view.reefSnapshot
   const water = view.water
-  const status = view.alerts.length ? view.alerts[0] : view.cycled ? 'Stable' : 'Cycling'
+  const status = !view.filled ? 'Dry' : !view.cycled ? 'Cycling' : view.alerts.length ? view.alerts[0] : 'Stable'
   const toggle = (id: SheetId) => setOpenSheet((current) => (current === id ? null : id))
 
   const waterCards: readonly { title: string; rows: readonly [string, string][] }[] = [
@@ -79,11 +79,12 @@ export function PocketGameHUD({
           <span className="pa-live-dot" data-paused={clock.paused} aria-hidden="true" />
           <span>{clock.paused ? 'Paused' : `${clock.speed}×`}</span>
         </div>
-        <div className="pa-rail-objective">
-          <span>Next</span>
+        <button className="pa-rail-objective" type="button" onClick={() => setOpenSheet(view.objective.destination)}
+          aria-label={`Open ${view.objective.destination}: ${view.objective.title}`}>
+          <span>{view.objective.chapter}</span>
           <strong>{view.nextAction.title}</strong>
           <small>{view.nextAction.detail}</small>
-        </div>
+        </button>
         <dl className="pa-rail-stats">
           <div data-alert={view.alerts.length > 0}><dt>Status</dt><dd>{status}</dd></div>
           <div><dt>Credits</dt><dd>{view.credits}</dd></div>
@@ -105,6 +106,20 @@ export function PocketGameHUD({
           <div className="pa-sheet-body">
             {openSheet === 'care' && (
               <>
+                <article className="pa-guide-card">
+                  <span>{view.objective.chapter}</span>
+                  <h3>{view.objective.title}</h3>
+                  <p>{view.objective.lesson}</p>
+                  {view.objective.action && view.objective.actionLabel && (
+                    <button className="hud-button pa-primary-action" type="button"
+                      onClick={() => dispatch(view.objective.action!)}>{view.objective.actionLabel}</button>
+                  )}
+                </article>
+                <ol className="pa-nitrogen-chain" aria-label="Nitrogen cycle">
+                  <li data-active={water.ammonia > 0.05}><span>1 · Waste</span><strong>Ammonia</strong><small>{reading(water.ammonia, 2, ' mg/L')} · toxic fuel</small></li>
+                  <li data-active={water.nitrite > 0.05}><span>2 · First colony</span><strong>Nitrite</strong><small>{reading(water.nitrite, 2, ' mg/L')} · toxic middle</small></li>
+                  <li data-active={water.nitrate > 1}><span>3 · Second colony</span><strong>Nitrate</strong><small>{reading(water.nitrate, 1, ' mg/L')} · exportable end</small></li>
+                </ol>
                 <div className="pa-card-grid">
                   {waterCards.map((card) => (
                     <div className="pa-card" key={card.title}>
@@ -191,6 +206,16 @@ export function PocketGameHUD({
                   <div><dt>Visible transmission</dt><dd>{telemetry(renderTelemetry?.optics.meanVisibleTransmittance === undefined ? undefined : renderTelemetry.optics.meanVisibleTransmittance * 100, 1, '%')}</dd></div>
                   <div><dt>Mean flow</dt><dd>{telemetry(renderTelemetry?.flow.meanSpeedMetersPerSecond, 3, ' m/s')}</dd></div>
                 </dl>
+                <div className="pa-new-tank">
+                  <strong>Test the first-run chapter</strong>
+                  <small>Clears this reef's livestock, water, and cycle state. Your current tank cannot be recovered afterward.</small>
+                  <button className="hud-button" type="button" onClick={() => {
+                    if (window.confirm('Start a new dry reef? This replaces the current aquarium save.')) {
+                      dispatch({ type: 'CHOOSE_HABITAT', habitat: 'reef' })
+                      setOpenSheet('care')
+                    }
+                  }}>Start new reef</button>
+                </div>
               </div>
             )}
           </div>
