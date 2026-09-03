@@ -1,0 +1,4432 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "zoanthid",
+  "rig": "PA_zoanthid_Rig",
+  "root": "PA_zoanthid_Root",
+  "meshes": [
+    "PA_zoanthid_Rock",
+    "PA_zoanthid_Polyp_00",
+    "PA_zoanthid_Polyp_01",
+    "PA_zoanthid_Polyp_02",
+    "PA_zoanthid_Polyp_03",
+    "PA_zoanthid_Polyp_04",
+    "PA_zoanthid_Polyp_05",
+    "PA_zoanthid_Polyp_06",
+    "PA_zoanthid_Polyp_07",
+    "PA_zoanthid_Polyp_08",
+    "PA_zoanthid_Polyp_09",
+    "PA_zoanthid_Polyp_10",
+    "PA_zoanthid_Polyp_11",
+    "PA_zoanthid_Polyp_12",
+    "PA_zoanthid_Polyp_13",
+    "PA_zoanthid_Polyp_14",
+    "PA_zoanthid_Polyp_15",
+    "PA_zoanthid_Polyp_16",
+    "PA_zoanthid_Polyp_17",
+    "PA_zoanthid_Polyp_18",
+    "PA_zoanthid_Polyp_19",
+    "PA_zoanthid_Polyp_20",
+    "PA_zoanthid_Polyp_21"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_zoanthid_Rock",
+      "group": "part_rock",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_00",
+      "group": "part_polyp_00",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_01",
+      "group": "part_polyp_01",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_02",
+      "group": "part_polyp_02",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_03",
+      "group": "part_polyp_03",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_04",
+      "group": "part_polyp_04",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_05",
+      "group": "part_polyp_05",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_06",
+      "group": "part_polyp_06",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_07",
+      "group": "part_polyp_07",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_08",
+      "group": "part_polyp_08",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_09",
+      "group": "part_polyp_09",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_10",
+      "group": "part_polyp_10",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_11",
+      "group": "part_polyp_11",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_12",
+      "group": "part_polyp_12",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_13",
+      "group": "part_polyp_13",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_14",
+      "group": "part_polyp_14",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_15",
+      "group": "part_polyp_15",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_16",
+      "group": "part_polyp_16",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_17",
+      "group": "part_polyp_17",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_18",
+      "group": "part_polyp_18",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_19",
+      "group": "part_polyp_19",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_20",
+      "group": "part_polyp_20",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_zoanthid_Polyp_21",
+      "group": "part_polyp_21",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00",
+        "embed_00"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_00_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_00_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_00_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "polyp_00_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_00_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "polyp_00_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "tentacles_00_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "polyp_00_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_00_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "polyp_00_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_00_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "polyp_00_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_tent_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_00_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_00_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01",
+        "embed_01"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_01_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_01_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "label": "tentacles_01_vs_polyp_00"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "tentacles_01_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "polyp_01_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_01_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "polyp_01_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_01_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "polyp_01_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_01_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "polyp_01_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_01_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "polyp_01_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_tent_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_01_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_01_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02",
+        "embed_02"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_02_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_02_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_02_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_02_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "polyp_02_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_02_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "polyp_02_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_02_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_02_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_02_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "polyp_02_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_tent_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_02_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_02_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03",
+        "embed_03"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_03_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_03_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "label": "tentacles_03_vs_polyp_00"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_03_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "tentacles_03_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "polyp_03_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_03_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "polyp_03_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_03_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "polyp_03_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_03_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "polyp_03_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_03_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_03_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_03_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "polyp_03_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_03_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "polyp_03_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_tent_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_03_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_03_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04",
+        "embed_04"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_04_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_04_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_04_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "tentacles_04_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_04_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "polyp_04_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_04_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "polyp_04_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_04_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_04_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_04_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "polyp_04_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_tent_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_04_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_04_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05",
+        "embed_05"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_05_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_05_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "label": "tentacles_05_vs_polyp_00"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_05_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_05_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "polyp_05_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_05_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "polyp_05_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_05_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "polyp_05_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_tent_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_05_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "polyp_05_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06",
+        "embed_06"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_06_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_06_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "label": "tentacles_06_vs_polyp_00"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_06_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_06_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_06_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "tentacles_06_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_06_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "polyp_06_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_06_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "polyp_06_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_06_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_06_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_06_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "polyp_06_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_06_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "polyp_06_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_06_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_06_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_06_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "polyp_06_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_06_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_06_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_tent_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_06_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_06_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07",
+        "embed_07"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_07_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_07_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "label": "tentacles_07_vs_polyp_00"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_07_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "tentacles_07_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_07_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_07_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_07_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_07_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "polyp_07_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_07_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "polyp_07_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_07_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_07_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_07_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_07_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_tent_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_07_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "polyp_07_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08",
+        "embed_08"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_08_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_08_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_08_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "tentacles_08_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_08_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_08_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_08_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_08_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "polyp_08_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_08_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "polyp_08_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_08_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "polyp_08_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_08_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_08_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_08_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_08_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_08_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "polyp_08_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_tent_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_08_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_08_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09",
+        "embed_09"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_09_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_09_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_00",
+        "part_polyp_00"
+      ],
+      "label": "tentacles_09_vs_polyp_00"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_01",
+        "part_polyp_01"
+      ],
+      "label": "tentacles_09_vs_polyp_01"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "tentacles_09_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_09_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_09_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_09_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_09_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_09_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_09_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "polyp_09_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_09_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "polyp_09_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_09_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_09_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_09_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "polyp_09_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_09_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_09_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_09_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_09_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_09_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "polyp_09_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_tent_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_09_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_09_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10",
+        "embed_10"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_10_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_10_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_10_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "tentacles_10_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_10_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_10_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_10_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_10_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_10_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_10_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_10_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "polyp_10_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_10_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_10_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_10_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_10_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_10_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "polyp_10_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_10_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_10_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_tent_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_10_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "polyp_10_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11",
+        "embed_11"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_11_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_11_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "tentacles_11_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_11_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_11_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_11_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_11_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_11_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "polyp_11_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_11_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_11_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_11_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "polyp_11_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_11_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_11_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_tent_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_11_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "polyp_11_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12",
+        "embed_12"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_12_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_12_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_02",
+        "part_polyp_02"
+      ],
+      "label": "tentacles_12_vs_polyp_02"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_04",
+        "part_polyp_04"
+      ],
+      "label": "tentacles_12_vs_polyp_04"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_12_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_12_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_12_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_12_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_12_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_12_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_12_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_12_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_12_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_12_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "polyp_12_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_12_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_12_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_tent_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_12_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "polyp_12_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13",
+        "embed_13"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_13_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_13_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_13_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_05",
+        "part_polyp_05"
+      ],
+      "label": "tentacles_13_vs_polyp_05"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_13_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_13_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_13_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_13_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_13_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "polyp_13_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_13_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_13_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_13_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "polyp_13_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_tent_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_13_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "polyp_13_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14",
+        "embed_14"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_14_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_14_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_03",
+        "part_polyp_03"
+      ],
+      "label": "tentacles_14_vs_polyp_03"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_14_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_14_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_14_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_14_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_14_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_14_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_14_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_14_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_14_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "polyp_14_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_14_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "polyp_14_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_14_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "polyp_14_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_14_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_14_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_14_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "polyp_14_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_14_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "polyp_14_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_tent_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "tentacles_14_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "polyp_14_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15",
+        "embed_15"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_15_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_15_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_06",
+        "part_polyp_06"
+      ],
+      "label": "tentacles_15_vs_polyp_06"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_15_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_15_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_15_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_15_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_15_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_15_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_15_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "polyp_15_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_15_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_15_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_15_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "polyp_15_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_tent_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "tentacles_15_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "polyp_15_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16",
+        "embed_16"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_16_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_16_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_16_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_16_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_16_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_16_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_16_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_16_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "polyp_16_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_tent_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_16_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "polyp_16_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17",
+        "embed_17"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_17_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_17_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_07",
+        "part_polyp_07"
+      ],
+      "label": "tentacles_17_vs_polyp_07"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_17_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_17_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_17_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_17_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_17_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "polyp_17_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_tent_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "tentacles_17_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "polyp_17_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18",
+        "embed_18"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_18_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_18_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_08",
+        "part_polyp_08"
+      ],
+      "label": "tentacles_18_vs_polyp_08"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_09",
+        "part_polyp_09"
+      ],
+      "label": "tentacles_18_vs_polyp_09"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_18_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_18_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_18_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_18_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_18_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_18_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_18_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "polyp_18_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_18_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "polyp_18_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_tent_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "tentacles_18_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "polyp_18_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19",
+        "embed_19"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_19_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_19_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_10",
+        "part_polyp_10"
+      ],
+      "label": "tentacles_19_vs_polyp_10"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_13",
+        "part_polyp_13"
+      ],
+      "label": "tentacles_19_vs_polyp_13"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_19_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_19_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_19_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_19_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_19_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "polyp_19_vs_polyp_20"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_tent_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "tentacles_19_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "polyp_19_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20",
+        "embed_20"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_20_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_20_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_11",
+        "part_polyp_11"
+      ],
+      "label": "tentacles_20_vs_polyp_11"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_12",
+        "part_polyp_12"
+      ],
+      "label": "tentacles_20_vs_polyp_12"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_20_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_16",
+        "part_polyp_16"
+      ],
+      "label": "tentacles_20_vs_polyp_16"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_20_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_20_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_tent_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "tentacles_20_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21"
+      ],
+      "label": "polyp_20_vs_polyp_21"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_polyp_21",
+        "embed_21"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "polyp_21_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Rock",
+        "part_rock"
+      ],
+      "label": "tentacles_21_vs_rock"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_14",
+        "part_polyp_14"
+      ],
+      "label": "tentacles_21_vs_polyp_14"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_15",
+        "part_polyp_15"
+      ],
+      "label": "tentacles_21_vs_polyp_15"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_17",
+        "part_polyp_17"
+      ],
+      "label": "tentacles_21_vs_polyp_17"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_18",
+        "part_polyp_18"
+      ],
+      "label": "tentacles_21_vs_polyp_18"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_19",
+        "part_polyp_19"
+      ],
+      "label": "tentacles_21_vs_polyp_19"
+    },
+    {
+      "a": [
+        "PA_zoanthid_Polyp_21",
+        "part_tent_21"
+      ],
+      "b": [
+        "PA_zoanthid_Polyp_20",
+        "part_polyp_20"
+      ],
+      "label": "tentacles_21_vs_polyp_20"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.08,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "open": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21"
+      ],
+      "shapeKeys": [
+        "shapekey:PA_zoanthid_Polyp_00/spread",
+        "shapekey:PA_zoanthid_Polyp_01/spread",
+        "shapekey:PA_zoanthid_Polyp_02/spread",
+        "shapekey:PA_zoanthid_Polyp_03/spread",
+        "shapekey:PA_zoanthid_Polyp_04/spread",
+        "shapekey:PA_zoanthid_Polyp_05/spread",
+        "shapekey:PA_zoanthid_Polyp_06/spread",
+        "shapekey:PA_zoanthid_Polyp_07/spread",
+        "shapekey:PA_zoanthid_Polyp_08/spread",
+        "shapekey:PA_zoanthid_Polyp_09/spread",
+        "shapekey:PA_zoanthid_Polyp_10/spread",
+        "shapekey:PA_zoanthid_Polyp_11/spread",
+        "shapekey:PA_zoanthid_Polyp_12/spread",
+        "shapekey:PA_zoanthid_Polyp_13/spread",
+        "shapekey:PA_zoanthid_Polyp_14/spread",
+        "shapekey:PA_zoanthid_Polyp_15/spread",
+        "shapekey:PA_zoanthid_Polyp_16/spread",
+        "shapekey:PA_zoanthid_Polyp_17/spread",
+        "shapekey:PA_zoanthid_Polyp_18/spread",
+        "shapekey:PA_zoanthid_Polyp_19/spread",
+        "shapekey:PA_zoanthid_Polyp_20/spread",
+        "shapekey:PA_zoanthid_Polyp_21/spread"
+      ]
+    },
+    "flow": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21"
+      ],
+      "shapeKeys": [
+        "shapekey:PA_zoanthid_Polyp_00/spread",
+        "shapekey:PA_zoanthid_Polyp_01/spread",
+        "shapekey:PA_zoanthid_Polyp_02/spread",
+        "shapekey:PA_zoanthid_Polyp_03/spread",
+        "shapekey:PA_zoanthid_Polyp_04/spread",
+        "shapekey:PA_zoanthid_Polyp_05/spread",
+        "shapekey:PA_zoanthid_Polyp_06/spread",
+        "shapekey:PA_zoanthid_Polyp_07/spread",
+        "shapekey:PA_zoanthid_Polyp_08/spread",
+        "shapekey:PA_zoanthid_Polyp_09/spread",
+        "shapekey:PA_zoanthid_Polyp_10/spread",
+        "shapekey:PA_zoanthid_Polyp_11/spread",
+        "shapekey:PA_zoanthid_Polyp_12/spread",
+        "shapekey:PA_zoanthid_Polyp_13/spread",
+        "shapekey:PA_zoanthid_Polyp_14/spread",
+        "shapekey:PA_zoanthid_Polyp_15/spread",
+        "shapekey:PA_zoanthid_Polyp_16/spread",
+        "shapekey:PA_zoanthid_Polyp_17/spread",
+        "shapekey:PA_zoanthid_Polyp_18/spread",
+        "shapekey:PA_zoanthid_Polyp_19/spread",
+        "shapekey:PA_zoanthid_Polyp_20/spread",
+        "shapekey:PA_zoanthid_Polyp_21/spread"
+      ]
+    },
+    "close": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21"
+      ],
+      "shapeKeys": [
+        "shapekey:PA_zoanthid_Polyp_00/close",
+        "shapekey:PA_zoanthid_Polyp_01/close",
+        "shapekey:PA_zoanthid_Polyp_02/close",
+        "shapekey:PA_zoanthid_Polyp_03/close",
+        "shapekey:PA_zoanthid_Polyp_04/close",
+        "shapekey:PA_zoanthid_Polyp_05/close",
+        "shapekey:PA_zoanthid_Polyp_06/close",
+        "shapekey:PA_zoanthid_Polyp_07/close",
+        "shapekey:PA_zoanthid_Polyp_08/close",
+        "shapekey:PA_zoanthid_Polyp_09/close",
+        "shapekey:PA_zoanthid_Polyp_10/close",
+        "shapekey:PA_zoanthid_Polyp_11/close",
+        "shapekey:PA_zoanthid_Polyp_12/close",
+        "shapekey:PA_zoanthid_Polyp_13/close",
+        "shapekey:PA_zoanthid_Polyp_14/close",
+        "shapekey:PA_zoanthid_Polyp_15/close",
+        "shapekey:PA_zoanthid_Polyp_16/close",
+        "shapekey:PA_zoanthid_Polyp_17/close",
+        "shapekey:PA_zoanthid_Polyp_18/close",
+        "shapekey:PA_zoanthid_Polyp_19/close",
+        "shapekey:PA_zoanthid_Polyp_20/close",
+        "shapekey:PA_zoanthid_Polyp_21/close"
+      ]
+    }
+  },
+  "clipRoles": {
+    "idle": "open",
+    "locomotion": "flow",
+    "response": "close"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "vertexColorAttribute": "Tint",
+  "variantId": "orange_red",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.039973,
+      -0.032278,
+      0.0
+    ],
+    "max": [
+      0.039973,
+      0.031111,
+      0.028704
+    ]
+  },
+  "textures": [
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png",
+    "textures/polyp-albedo.png",
+    "textures/polyp-roughness.png",
+    "textures/polyp-normal.png",
+    "textures/tentacle-albedo.png",
+    "textures/tentacle-roughness.png",
+    "textures/tentacle-normal.png"
+  ],
+  "notes": {
+    "polyps": 22,
+    "clusters": 5,
+    "tentacles": 476,
+    "sourceTriangles": 19008,
+    "rockHeightMeters": 0.0165,
+    "polypHeightsMeters": [
+      0.00631,
+      0.00509,
+      0.00723,
+      0.0052,
+      0.0052,
+      0.00731,
+      0.00489,
+      0.00642,
+      0.00457,
+      0.00494,
+      0.00406,
+      0.00388,
+      0.00496,
+      0.00645,
+      0.00441,
+      0.00624,
+      0.00611,
+      0.00838,
+      0.00446,
+      0.00673,
+      0.0069,
+      0.00597
+    ],
+    "discRadiiMeters": [
+      0.00367,
+      0.00407,
+      0.00362,
+      0.00331,
+      0.00374,
+      0.00373,
+      0.00343,
+      0.00406,
+      0.00355,
+      0.0042,
+      0.00328,
+      0.00325,
+      0.00365,
+      0.00434,
+      0.00354,
+      0.00404,
+      0.00372,
+      0.00372,
+      0.00348,
+      0.00334,
+      0.00377,
+      0.00329
+    ],
+    "variant": "orange_red"
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/zoanthid/candidates/fable-v1-orange_red/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/zoanthid/candidates/fable-v1-orange_red/renders/three-view.png",
+    "boundsMin": [
+      -0.0399734303355217,
+      -0.032277774065732956,
+      0.0
+    ],
+    "boundsMax": [
+      0.0399734303355217,
+      0.031111333519220352,
+      0.028704214841127396
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

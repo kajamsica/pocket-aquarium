@@ -1,0 +1,595 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "zoanthid",
+  "sourceSha256": "3dfb425ee6c4d731fd0c72174bb9dc9b5aff8778d3d7f8a0bf19d5991a52a1e9",
+  "objects": [
+    {
+      "name": "PA_zoanthid_Polyp_00",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "de59fb358c509db596dd0d144646533f367a6a1ff4eddc3f233ad4160bc9847c",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "5cc4c432d796517e04d968ca0bdc75c719214a8f0434c25200000712533f85b0",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "de59fb358c509db596dd0d144646533f367a6a1ff4eddc3f233ad4160bc9847c"
+        },
+        {
+          "name": "close",
+          "digest": "f7b0f1668102c91e181d05d5bdb84b78f188af5513466b781f6d319c88adf842"
+        },
+        {
+          "name": "spread",
+          "digest": "5d70db836068232ddd5db68663055c8a7205aab6707ba453f56e90c0ae4c471c"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_01",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "0c8c0aaf9f378e65a35588cc62ffc1c2a064f06c2d484fa0fbee645a56c64ceb",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "25fdc7c5da9d679059adc1d48059e3dda075761b1c67e31a65db7b810459bd8f",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "0c8c0aaf9f378e65a35588cc62ffc1c2a064f06c2d484fa0fbee645a56c64ceb"
+        },
+        {
+          "name": "close",
+          "digest": "34e1437dae727f5ee65f3759746c6dc5e1e94233329a34e77b93983dbb6a4b6d"
+        },
+        {
+          "name": "spread",
+          "digest": "7ab1f3d23bbf21507424f0534b0761162c0a37428b17038ec013e9de4f4d6477"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_02",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "9610b45a65038b0729fcfce94a091c565e7f520075673c9a721c3a5393319008",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "5647d89a622212178ec3d0712dd21c70eb260b19c7d79ce231945fc0ed120b5a",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "9610b45a65038b0729fcfce94a091c565e7f520075673c9a721c3a5393319008"
+        },
+        {
+          "name": "close",
+          "digest": "99bb59cdc1bd8a25afbfba4980a8d82aeb0b94fbc25f356b85fabc935838ae9e"
+        },
+        {
+          "name": "spread",
+          "digest": "f4b58082827eb361c4997e435b7db72457e6a7f02de4a8323b1e4bcd402064bd"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_03",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "3f3cfd0a71902cf259097f813941eda9b002573938e981781ea02be99ec28b1c",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "2d7f8169f767ad8f0e25671a6abd0edad3fc75dff32687ae9735fc1062462c51",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "3f3cfd0a71902cf259097f813941eda9b002573938e981781ea02be99ec28b1c"
+        },
+        {
+          "name": "close",
+          "digest": "67fdc39416e2f5cb16e223fa1d2b451db9caa8a6f85fe5af316725a1e64309df"
+        },
+        {
+          "name": "spread",
+          "digest": "5df18780f603b8b1eba99da92a732f906f1a0850ed1d059d03696ff19a103e1a"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_04",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "6b9f33f43462d83787644e2c6cbec3346dabce888e4ade13eb124a9733673584",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "67d8a6ddaa879f12cc3f1af979d327c147ec3a75617dc28fb6d8fb101d57d534",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "6b9f33f43462d83787644e2c6cbec3346dabce888e4ade13eb124a9733673584"
+        },
+        {
+          "name": "close",
+          "digest": "4095c47074d32ad77c20502363e3bfcc335e0451030f9e8309e446df7f1135a1"
+        },
+        {
+          "name": "spread",
+          "digest": "4cf0fc9aad2bdceb8dcc035a355e8edb363e460f81f5f6536d304d981c9b0251"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_05",
+      "vertexCount": 458,
+      "triangleCount": 816,
+      "vertexDigest": "5373885a6e54d9f7add9bf43373156fbfe3fc7e68ca56a1e347c4aef0814b1e9",
+      "topologyDigest": "58b3100e4f938e19dad9e3f22b069168ccef791512559bc5569299c18d13b7cb",
+      "uvDigest": "a6c991e646985afb90b92c67ef4566d4b695e7c353fb6c81d02724d354329cef",
+      "weightDigest": "5fcf4d474c94afd4d6bd19da9a80a4abf9be0a551034526aef072677a854effa",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "5373885a6e54d9f7add9bf43373156fbfe3fc7e68ca56a1e347c4aef0814b1e9"
+        },
+        {
+          "name": "close",
+          "digest": "69bad5a5f5e2d83663548e16753d935eecce75ad6b48d930fe6c07f331550d7b"
+        },
+        {
+          "name": "spread",
+          "digest": "9f7d0fde53fd2a5bc3dd74d3547c5923abec0ed70da21a142c8cc7697694f2aa"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_06",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "c0221bde73f6bc112a32736fd21e72f710d47b7de95b2b132e8203dce716556c",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "bfb91f42031a4d1b8091970b4cd3106d1cc8be74db1ebde4732f750bf4cfd46a",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "c0221bde73f6bc112a32736fd21e72f710d47b7de95b2b132e8203dce716556c"
+        },
+        {
+          "name": "close",
+          "digest": "fef57234c4e8330b04714bddabc18d9e2dae370c1d7d7bce19e0e7a117b1b578"
+        },
+        {
+          "name": "spread",
+          "digest": "eb4814f7aa2a9c2129d5e1d2bc41a14ec4d3213b4962ce8cab9d6434d4b5d88a"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_07",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "241901dba3f9609db5879d435e408e6d6dfd8a6706992e795898e53ccd9a46ad",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "b9bb033f27da954f2234a4719569cd5d4eafed3dd5d6cfd3de55fbc423627661",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "241901dba3f9609db5879d435e408e6d6dfd8a6706992e795898e53ccd9a46ad"
+        },
+        {
+          "name": "close",
+          "digest": "08a9f26b4b4a6bd1d7878a18c81d79a7cf990f62dbfbdbc92bc7f10e9ab4581f"
+        },
+        {
+          "name": "spread",
+          "digest": "273c980c5070ca56ffed55228246da1a824119451345235aa5711b94cac2a242"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_08",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "b437b59a0aa176c39900e5b7abdb0b859d317e3fbbdefc14b195a1994d39b4d1",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "6177ce48c3eea7dffef1b1ee38afe3cb2d30e34b74c64fc28ed871f4d422e7c0",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "b437b59a0aa176c39900e5b7abdb0b859d317e3fbbdefc14b195a1994d39b4d1"
+        },
+        {
+          "name": "close",
+          "digest": "86c001bb2fa60c007e4a332c26383fc7b5a1ac89d205ae85be81fddfbbf887cf"
+        },
+        {
+          "name": "spread",
+          "digest": "caa6aed6590f63238ded592b3546e0ac4e4ce09bc0fdfed95239342c4485506b"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_09",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "f22fea905592f65b546b10b5cdac104c186efb59de6de25773ba8594f38ce714",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "bdada48493a587e267b661f47879a22d1ca8b0bf7284ce0a3f6ac2244d24dc9b",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "f22fea905592f65b546b10b5cdac104c186efb59de6de25773ba8594f38ce714"
+        },
+        {
+          "name": "close",
+          "digest": "6556eb01e932592c8a63c3df80e86b0ee709118420b08603499f0a057bd8615b"
+        },
+        {
+          "name": "spread",
+          "digest": "3a8a283afca3e20a0bc5af499e96cf6c0a82275da76f6f1805e49de644f2eb44"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_10",
+      "vertexCount": 458,
+      "triangleCount": 816,
+      "vertexDigest": "aa87d9325d47122c77fa9f860f74af24f73952aae9945fc655549d8812b36e5f",
+      "topologyDigest": "58b3100e4f938e19dad9e3f22b069168ccef791512559bc5569299c18d13b7cb",
+      "uvDigest": "a6c991e646985afb90b92c67ef4566d4b695e7c353fb6c81d02724d354329cef",
+      "weightDigest": "2aeb0135224837efc9c85f506cda09f8510a09f265974a781f216adee4adf08e",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "aa87d9325d47122c77fa9f860f74af24f73952aae9945fc655549d8812b36e5f"
+        },
+        {
+          "name": "close",
+          "digest": "fae6e3a061dfbad10dd31b9b4cdc263b31f5a1281f48b4d3d76214c7dd63c406"
+        },
+        {
+          "name": "spread",
+          "digest": "5db6bad5c463b168fbdd768ad74a945fc52c9dca132e23c18edf3585de160ecf"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_11",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "868b717d0e7e905a6d3ba270b0675009764afa45b2ee6eb30f63132c1b5e93cc",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "76aeb26b236d96d90538492a77bf8d70ce3b7b9d3968e3bd18018a207b54887b",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "868b717d0e7e905a6d3ba270b0675009764afa45b2ee6eb30f63132c1b5e93cc"
+        },
+        {
+          "name": "close",
+          "digest": "f1d189f0b5068d55fab2d48289dac31bde8b845152f7cf5c32c06eb547c4be10"
+        },
+        {
+          "name": "spread",
+          "digest": "e0c7fe174ce7286f32e6839bcfe30d9096591d3fb7cf71efc8872307f12938a3"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_12",
+      "vertexCount": 458,
+      "triangleCount": 816,
+      "vertexDigest": "ce753b90e92530c3aaa444914105daa1cdab24f97e25b3495033247bec965831",
+      "topologyDigest": "58b3100e4f938e19dad9e3f22b069168ccef791512559bc5569299c18d13b7cb",
+      "uvDigest": "a6c991e646985afb90b92c67ef4566d4b695e7c353fb6c81d02724d354329cef",
+      "weightDigest": "ff1d264155b09c6a091b18d2c425474b9abb08604b546e64558801344edd9004",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "ce753b90e92530c3aaa444914105daa1cdab24f97e25b3495033247bec965831"
+        },
+        {
+          "name": "close",
+          "digest": "f8742c1ac7f2a95e8ceffeb9cf524da42801d2fe7be56aae05c84f34874bac43"
+        },
+        {
+          "name": "spread",
+          "digest": "c34e391bbdc86790772930333355c0e909666d5e23548f2eae00ea88cbf5def5"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_13",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "03857b230b1320f8a64b7d1c3eac0c095476afe2679a34d00cdd72adc06abd34",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "4dbd884a01b85037420bd39d9a64089408a5307d59b9f9e1e1311c9906abcac8",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "03857b230b1320f8a64b7d1c3eac0c095476afe2679a34d00cdd72adc06abd34"
+        },
+        {
+          "name": "close",
+          "digest": "c6e882d63aff92520799046d40b72409a58875d9b8786808b2d4288a893a3399"
+        },
+        {
+          "name": "spread",
+          "digest": "cfb4bdcdcc58b1250b85bc1c75be23249b7bfa467e8388738eb5c1f452bbbf8c"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_14",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "92eea67890a0d574432286a5d4ee2aedbbab5c8cfe854e85ebe89282a0b4b52f",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "39ba2993c0d05ce6f918c081014a5678ffecf3cca6f80543a2b99828785a73e5",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "92eea67890a0d574432286a5d4ee2aedbbab5c8cfe854e85ebe89282a0b4b52f"
+        },
+        {
+          "name": "close",
+          "digest": "5edcb7105fa13aebf73ebc5f795541cac6d636bbfcb67486da4398ad1b91d7b3"
+        },
+        {
+          "name": "spread",
+          "digest": "07c6e05b63ea27a36c611079957851e2276f9c09a05dd00674ea00588b5cadce"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_15",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "bb16ec6c1a89e4ce1a4240ffa1ba66cd222d8809ce1f90b17815accd1503a871",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "617357857eda20174215e82bc553be0ee8f55e7ebba8c628d36d10cd40f1d426",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "bb16ec6c1a89e4ce1a4240ffa1ba66cd222d8809ce1f90b17815accd1503a871"
+        },
+        {
+          "name": "close",
+          "digest": "6b21d6d9d127055a73d932701694134f14fcb66f7828284ffe9f2f726ec60d53"
+        },
+        {
+          "name": "spread",
+          "digest": "210362b0ae4c8ae03eece70a01a79703753a4b3e28987ede6dbdc1b053030521"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_16",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "7387351cb698aa5c2409137cd9d6737bbf3047483acd7728cb07359c04582c10",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "8e6743cda7340f92c566051772f5fb51c34dcaff5253e2db304d8126fc4c30de",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "7387351cb698aa5c2409137cd9d6737bbf3047483acd7728cb07359c04582c10"
+        },
+        {
+          "name": "close",
+          "digest": "f82f14232128d98a63fc9ebc40bc5a7bf8af9c5bed86446f5f04c238b335c4f0"
+        },
+        {
+          "name": "spread",
+          "digest": "8b4fd3fc64f26a90aad3878914c9bd2428091c4a81ce2f6b64429f49e13d943c"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_17",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "880b669206db73e5f4d814bbc10fd31384e8627663432dc9cb4dabea5a597405",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "4a7996febcb021b7052c44f2eaee7d68604bff75d5142fb44fa7b0b889843588",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "880b669206db73e5f4d814bbc10fd31384e8627663432dc9cb4dabea5a597405"
+        },
+        {
+          "name": "close",
+          "digest": "f1aab678ed37a0f48a2cd3807fd66aea857219f3b431a29569033709619a9e97"
+        },
+        {
+          "name": "spread",
+          "digest": "4dd21c824a998659c9d08d5ac4d88b5347c1bc814b49200db4526783ed9e3474"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_18",
+      "vertexCount": 430,
+      "triangleCount": 768,
+      "vertexDigest": "b0d6a15884945188e1916662d1aa3afd857b985669da292f33a05d2563b5ac86",
+      "topologyDigest": "b823f895b9015d7c7ef86356e806e3e774b9b4044c67adc4585721280799e6bd",
+      "uvDigest": "d6b5bb1923b50c4a30635caf9550532a251ec81cf57f2811d1e8acff5c57ce40",
+      "weightDigest": "db62feb4a739f5d90a49abbcb835d27e5e88a4e7c6e9216a73dc4440c854092b",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "b0d6a15884945188e1916662d1aa3afd857b985669da292f33a05d2563b5ac86"
+        },
+        {
+          "name": "close",
+          "digest": "5562617d8c2e3651b3dc68b7b887a9ebca90cc6d4bea4960a5740d0f5ee56a7e"
+        },
+        {
+          "name": "spread",
+          "digest": "eeef33e0da360be360fa72b8257b69acb90b30099a22b8f064936bdcc6bee75e"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_19",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "8b550946d7b224efa7fe26f700bebd67f46d4e5b81f2dfec1eca5c470bbdbce5",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "d0947254f130d1fb4941e377732dd7b366625f63cc3c69136ba078735b0493d0",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "8b550946d7b224efa7fe26f700bebd67f46d4e5b81f2dfec1eca5c470bbdbce5"
+        },
+        {
+          "name": "close",
+          "digest": "b426e834506ce113fc6c23fb2d8791b9fd1a8baa592ba7dd0e0faf00cc979391"
+        },
+        {
+          "name": "spread",
+          "digest": "57b654465e6863f3a33022fd3b82f61f94594adc2225b6dd324852f42947821a"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Polyp_20",
+      "vertexCount": 402,
+      "triangleCount": 720,
+      "vertexDigest": "926a33b19922f2e0bc2debc055bbd25faa167ddf7748cc2f80959e213e355185",
+      "topologyDigest": "9d7aef860621c1a6b8d6a3a9c84c6e4e1f86c4c31a8c364f496d2e65d6121c2e",
+      "uvDigest": "fd08d59746f7e96285d7a69404690bcda50d7a4df8a9a2c4b5b3dc91ce279042",
+      "weightDigest": "132565929b931a4d76a529c483057e5343f9f77ade9e56b22baf22d9f8c19e6c",
+      "materials": [
+        "PA_zoanthid_Polyp",
+        "PA_zoanthid_Tentacle"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "926a33b19922f2e0bc2debc055bbd25faa167ddf7748cc2f80959e213e355185"
+        },
+        {
+          "name": "close",
+          "digest": "8af1b6b79d5c0f48916caff9575d4a012d0b32eb7267314a86b6321abe0b0abd"
+        },
+        {
+          "name": "spread",
+          "digest": "c5c97c277fd9e40ade7b0917957302181f1c9342ab86be70c547a309915eac78"
+        }
+      ]
+    },
+    {
+      "name": "PA_zoanthid_Rock",
+      "vertexCount": 1154,
+      "triangleCount": 2304,
+      "vertexDigest": "9a4e9c37a894954f79d0ca557210ccbd1590a66a78f2f980db2429836d6371eb",
+      "topologyDigest": "8890cf7ef8f20a51fb83a107fbd3c1c1bb934faf3233665117c2975ae7992bf8",
+      "uvDigest": "bab95b6cc559a2dcdeb5d61c54f6281cdddc2b39ec22f9c80ad1b2009867464a",
+      "weightDigest": "3282bdf8bdfa0e4b5211b03041420d08aae1a12e4b5edef92d7de5335389dc30",
+      "materials": [
+        "PA_zoanthid_Rock"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_zoanthid_Rig",
+    "boneCount": 23,
+    "deformBoneCount": 22,
+    "boneDigest": "8012f002dd61ab34bacf5e4a0d1e7796bd8c0b0484d542709c389409d7fca493"
+  },
+  "geometryDigest": "b429b37e0a290835357911844d935d34b9f7f61fbe058abc7a8854e9d70957c1",
+  "variantId": "blue_green"
+}

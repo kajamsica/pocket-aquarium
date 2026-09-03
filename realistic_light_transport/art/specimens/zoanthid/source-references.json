@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "zoanthid",
+  "revision": 1,
+  "policy": "References informed polyp proportions (disc diameter, column width and height, tentacle count and length, mouth shape), colony layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source; the trade name 'zoanthid colony' is resolved to genus level (Zoanthus sp.) because aquarium colonies are rarely identified to species.",
+  "sources": [
+    {
+      "id": "WORMS-206284",
+      "title": "Zoanthus Lamarck, 1801 taxon record (Zoantharia: Brachycnemina: Zoanthidae; type species Zoanthus sociatus (Ellis, 1768))",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=206284",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "GONZALEZ-MUNOZ-2016-ZOANTHUS-SOCIATUS",
+      "title": "Sea anemones (Cnidaria: Actiniaria, Corallimorpharia, Ceriantharia, Zoanthidea) from marine shallow-water environments in Venezuela: Zoanthus sociatus account (column 25 to 40 mm tall and 4 to 6 mm wide, smooth, white to beige; oral disc slightly overhanging the distal column; slit-like mouth; about 48 to 60 tapering tentacles)",
+      "publisher": "Marine Biodiversity Records (Springer Nature)",
+      "url": "https://link.springer.com/article/10.1186/s41200-016-0016-7",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (open access article text)"
+    },
+    {
+      "id": "ALVAREZ-2021-TRINIDAD-ZOANTHARIA",
+      "title": "Shallow-water species diversity of common intertidal zoantharians along the northeastern coast of Trinidad: in situ oral disc diameters (5.2 to 10.3 mm) and tentacle counts (41 to 46) for Zoanthus sociatus and Zoanthus pulchellus colonies",
+      "publisher": "Oceans (MDPI)",
+      "url": "https://www.mdpi.com/2673-1924/2/3/27",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (open access article text)"
+    },
+    {
+      "id": "ITIS-52439",
+      "title": "Zoanthus Lamarck, 1801 (Taxonomic Serial No. 52439; Zoanthus sociatus 'green sea mat', Zoanthus pulchellus 'mat zoanthid')",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=52439",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "US federal public domain"
+    },
+    {
+      "id": "COMMONS-ZOANTHUS",
+      "title": "Category:Zoanthus (openly licensed photographs of colonies and polyps, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Zoanthus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "PA-ROOT-DATA-CORALS-ZOANTHID",
+      "title": "Pocket Aquarium root gameplay data DATA.CORALS.zoanthid (name 'Zoanthid colony', sci 'Zoanthus sp.', startPolyps 12)",
+      "publisher": "Pocket Aquarium project (js/data.js)",
+      "url": "repo:js/data.js#CORALS.zoanthid",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "project_identity",
+      "allowedUse": "identity_and_scale_only",
+      "license": "Project owned"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Published descriptions give measured column, disc, mouth and tentacle proportions for the type species, and openly licensed colony photographs exist for top and oblique views. Captive colonies are not identified to species and their column height varies with light, so column height and disc-to-column ratio are a genus-level compromise rather than a calibrated species measurement."
+}
