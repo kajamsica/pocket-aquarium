@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import type { ReefSceneProps } from '../contracts'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
+import { SpecimenFish } from './SpecimenFish'
 
 const TANK_HALF_WIDTH = 2.76
 const TANK_HALF_DEPTH = 1.18
@@ -13,10 +14,6 @@ const OPTICAL_INTERIOR_HEIGHT = 3.1
 const OPTICAL_SAND_FLOOR_Y = -1.56
 const MIN_OPTICAL_LEVEL_RATIO = 0.04
 const DYNAMIC_FLOOR_Y = SAND_Y + 0.06
-const CLOWNFISH_FLOOR_Y = SAND_Y + 0.28
-const SCHOOL_FLOOR_Y = SAND_Y + 0.19
-const CLOWNFISH_SURFACE_CLEARANCE = 0.32
-const SCHOOL_SURFACE_CLEARANCE = 0.22
 const PARTICLE_SURFACE_CLEARANCE = 0.05
 const MICROFAUNA_SURFACE_CLEARANCE = 0.09
 const UP = new THREE.Vector3(0, 1, 0)
@@ -525,208 +522,6 @@ function SoftCoral({
   )
 }
 
-function ClownfishModel({ mirrored = false }: { mirrored?: boolean }) {
-  return (
-    <group scale={mirrored ? [0.84, 0.84, -0.84] : 0.84}>
-      <mesh castShadow scale={[0.44, 0.2, 0.16]}>
-        <sphereGeometry args={[1, 18, 12]} />
-        <meshStandardMaterial color="#f26d21" roughness={0.42} />
-      </mesh>
-      <mesh position={[-0.39, 0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <coneGeometry args={[0.18, 0.31, 5]} />
-        <meshStandardMaterial color="#ef742b" roughness={0.48} />
-      </mesh>
-      <mesh position={[0.17, 0, 0]} scale={[0.055, 0.205, 0.165]}>
-        <sphereGeometry args={[1, 12, 8]} />
-        <meshStandardMaterial color="#f7f4e9" roughness={0.36} />
-      </mesh>
-      <mesh position={[-0.14, 0, 0]} scale={[0.052, 0.19, 0.16]}>
-        <sphereGeometry args={[1, 12, 8]} />
-        <meshStandardMaterial color="#f7f4e9" roughness={0.36} />
-      </mesh>
-      <mesh position={[0.37, 0.07, 0.12]} scale={[0.025, 0.025, 0.014]}>
-        <sphereGeometry args={[1, 8, 6]} />
-        <meshBasicMaterial color="#080707" />
-      </mesh>
-      <mesh position={[0.03, 0.2, 0]} rotation={[0.25, 0, -0.15]} scale={[0.12, 0.04, 0.11]}>
-        <sphereGeometry args={[1, 9, 5]} />
-        <meshStandardMaterial color="#c34818" roughness={0.62} />
-      </mesh>
-    </group>
-  )
-}
-
-function ClownfishPair({
-  count,
-  feedPulse,
-  satiation,
-  stress,
-  waterSurfaceY,
-}: {
-  count: number
-  feedPulse: number
-  satiation: number
-  stress: number
-  waterSurfaceY: number
-}) {
-  const first = useRef<THREE.Group>(null)
-  const second = useRef<THREE.Group>(null)
-  const fishRefs = useMemo(() => [first, second] as const, [])
-  const feedingDrive = THREE.MathUtils.clamp(feedPulse * (1.2 - THREE.MathUtils.clamp(satiation, 0, 1)), 0, 1)
-  const boundedStress = THREE.MathUtils.clamp(stress, 0, 1)
-
-  useFrame(({ clock }) => {
-    const elapsed = clock.getElapsedTime()
-
-    for (let index = 0; index < fishRefs.length; index += 1) {
-      const group = fishRefs[index].current
-      if (!group) continue
-      const phase = index * 2.6
-      const pathSpeed = 0.47 + index * 0.07 + feedingDrive * 0.85
-      const orbitX = 0.88 + Math.cos(elapsed * pathSpeed + phase) * (0.56 - boundedStress * 0.12)
-      const surfaceLimit = waterSurfaceY - CLOWNFISH_SURFACE_CLEARANCE
-      const orbitY = boundedPathY(
-        -0.18,
-        0.28,
-        Math.sin(elapsed * 0.62 + phase),
-        CLOWNFISH_FLOOR_Y,
-        surfaceLimit,
-      )
-      const orbitZ = 0.24 + Math.sin(elapsed * pathSpeed + phase) * 0.54
-      const feedX = 0.34 + Math.sin(elapsed * 2.1 + phase) * 0.18
-      const feedY = THREE.MathUtils.clamp(0.72 - index * 0.12, CLOWNFISH_FLOOR_Y, surfaceLimit)
-      const feedZ = Math.cos(elapsed * 1.7 + phase) * 0.16
-      const x = THREE.MathUtils.lerp(orbitX, feedX, feedingDrive)
-      const y = THREE.MathUtils.clamp(
-        THREE.MathUtils.lerp(orbitY, feedY, feedingDrive),
-        CLOWNFISH_FLOOR_Y,
-        surfaceLimit,
-      )
-      const z = THREE.MathUtils.lerp(orbitZ, feedZ, feedingDrive)
-      const dx = -Math.sin(elapsed * pathSpeed + phase) * pathSpeed
-      const dz = Math.cos(elapsed * pathSpeed + phase) * pathSpeed
-      group.position.set(x, y, z)
-      group.rotation.set(
-        Math.sin(elapsed * 1.3 + phase) * 0.055,
-        Math.atan2(-dz, dx),
-        Math.sin(elapsed * 1.7 + phase) * (0.1 + feedingDrive * 0.08),
-      )
-    }
-  })
-
-  return (
-    <>
-      <group ref={first} visible={count > 0}><ClownfishModel /></group>
-      <group ref={second} visible={count > 1}><ClownfishModel mirrored /></group>
-    </>
-  )
-}
-
-const SCHOOL_SIZE = 10
-
-function ReefFishSchool({
-  count,
-  feedPulse,
-  satiation,
-  waterSurfaceY,
-}: {
-  count: number
-  feedPulse: number
-  satiation: number
-  waterSurfaceY: number
-}) {
-  const bodyRef = useRef<THREE.InstancedMesh>(null)
-  const tailRef = useRef<THREE.InstancedMesh>(null)
-  const dummy = useMemo(() => new THREE.Object3D(), [])
-  const backward = useMemo(() => new THREE.Vector3(), [])
-  const color = useMemo(() => new THREE.Color(), [])
-  const feedingDrive = THREE.MathUtils.clamp(feedPulse * (1.28 - THREE.MathUtils.clamp(satiation, 0, 1)), 0, 1)
-  const visibleCount = THREE.MathUtils.clamp(Math.round(count), 0, SCHOOL_SIZE)
-
-  useLayoutEffect(() => {
-    const bodies = bodyRef.current
-    const tails = tailRef.current
-    if (!bodies || !tails) return
-    bodies.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    tails.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    for (let index = 0; index < SCHOOL_SIZE; index += 1) {
-      color.set(index % 3 === 0 ? '#f2cf55' : index % 2 === 0 ? '#48bcd1' : '#628bd2')
-      bodies.setColorAt(index, color)
-      tails.setColorAt(index, color)
-    }
-    if (bodies.instanceColor) bodies.instanceColor.needsUpdate = true
-    if (tails.instanceColor) tails.instanceColor.needsUpdate = true
-  }, [color])
-
-  useFrame(({ clock }) => {
-    const bodies = bodyRef.current
-    const tails = tailRef.current
-    if (!bodies || !tails) return
-    bodies.count = visibleCount
-    tails.count = visibleCount
-    const elapsed = clock.getElapsedTime()
-
-    for (let index = 0; index < visibleCount; index += 1) {
-      const phase = index * 0.68
-      const lane = index % 3
-      const speed = 0.32 + lane * 0.045 + feedingDrive * 0.46
-      const baseX = Math.sin(elapsed * speed + phase) * (1.76 - lane * 0.16)
-      const surfaceLimit = waterSurfaceY - SCHOOL_SURFACE_CLEARANCE
-      const baseY = boundedPathY(
-        0.22 + lane * 0.24,
-        0.15,
-        Math.sin(elapsed * 0.54 + phase),
-        SCHOOL_FLOOR_Y,
-        surfaceLimit,
-      )
-      const baseZ = -0.48 + lane * 0.32 + Math.cos(elapsed * speed + phase) * 0.31
-      const feedX = 0.28 + Math.sin(elapsed * 1.8 + phase) * 0.38
-      const feedY = THREE.MathUtils.clamp(0.72 - (index % 4) * 0.09, SCHOOL_FLOOR_Y, surfaceLimit)
-      const feedZ = Math.cos(elapsed * 1.46 + phase) * 0.28
-      const x = THREE.MathUtils.lerp(baseX, feedX, feedingDrive)
-      const y = THREE.MathUtils.clamp(
-        THREE.MathUtils.lerp(baseY, feedY, feedingDrive),
-        SCHOOL_FLOOR_Y,
-        surfaceLimit,
-      )
-      const z = THREE.MathUtils.lerp(baseZ, feedZ, feedingDrive)
-      const dx = Math.cos(elapsed * speed + phase) * speed
-      const dz = -Math.sin(elapsed * speed + phase) * speed * 0.31
-      const yaw = Math.atan2(-dz, dx)
-      const roll = Math.sin(elapsed * 1.1 + phase) * 0.11
-      const size = 0.76 + seededUnit(index, 70) * 0.3
-
-      dummy.position.set(x, y, z)
-      dummy.rotation.set(0, yaw, roll)
-      dummy.scale.set(0.28 * size, 0.11 * size, 0.085 * size)
-      dummy.updateMatrix()
-      bodies.setMatrixAt(index, dummy.matrix)
-
-      backward.set(-dx, 0, -dz).normalize()
-      dummy.position.set(x, y, z).addScaledVector(backward, 0.29 * size)
-      dummy.quaternion.setFromUnitVectors(UP, backward)
-      dummy.scale.set(0.11 * size, 0.17 * size, 0.055 * size)
-      dummy.updateMatrix()
-      tails.setMatrixAt(index, dummy.matrix)
-    }
-    bodies.instanceMatrix.needsUpdate = true
-    tails.instanceMatrix.needsUpdate = true
-  })
-
-  return (
-    <group>
-      <instancedMesh ref={bodyRef} args={[undefined, undefined, SCHOOL_SIZE]} castShadow>
-        <sphereGeometry args={[1, 12, 8]} />
-        <meshStandardMaterial roughness={0.38} vertexColors />
-      </instancedMesh>
-      <instancedMesh ref={tailRef} args={[undefined, undefined, SCHOOL_SIZE]} castShadow>
-        <coneGeometry args={[1, 1, 3]} />
-        <meshStandardMaterial roughness={0.44} vertexColors side={THREE.DoubleSide} />
-      </instancedMesh>
-    </group>
-  )
-}
-
 function SuspendedParticles({ flowField, waterSurfaceY }: {
   flowField: FlowFieldSource; waterSurfaceY: number
 }) {
@@ -950,23 +745,7 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
           waterSurfaceY={waterSurfaceY}
         />
       )}
-      {livestock.clownfishCount > 0 && (
-        <ClownfishPair
-          count={livestock.clownfishCount}
-          feedPulse={events.feedPulse}
-          satiation={livestock.fishSatiation}
-          stress={livestock.fishStress}
-          waterSurfaceY={waterSurfaceY}
-        />
-      )}
-      {livestock.smallReefFishCount > 0 && (
-        <ReefFishSchool
-          count={livestock.smallReefFishCount}
-          feedPulse={events.feedPulse}
-          satiation={livestock.fishSatiation}
-          waterSurfaceY={waterSurfaceY}
-        />
-      )}
+      <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} />
       <SuspendedParticles flowField={flowField} waterSurfaceY={waterSurfaceY} />
       <Microfauna activity={ecology.microfaunaActivity} waterSurfaceY={waterSurfaceY} />
       <FeedCloud pulse={events.feedPulse} satiation={livestock.fishSatiation} waterSurfaceY={waterSurfaceY} />
