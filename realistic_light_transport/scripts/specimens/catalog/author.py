@@ -94,8 +94,21 @@ def resolve_candidate_dir(asset_id: str, candidate_arg: str, allow_scratch: bool
     return candidate
 
 
-def import_plan(name: str):
-    return importlib.import_module(f"catalog.plans.{name}")
+def plan_path(name: str) -> Path:
+    return Path(__file__).resolve().parent / "plans" / f"{name}.py"
+
+
+def import_plan(name: str, species):
+    """Shared plan module when catalog/plans/<name>.py exists, otherwise the species module itself.
+
+    Body plans without a shared implementation yet (gastropod, decapod, coral, ...) live inside the
+    species backend, which must then define build(spec, species, ctx).
+    """
+    if plan_path(name).exists():
+        return importlib.import_module(f"catalog.plans.{name}")
+    if not hasattr(species, "build"):
+        raise ValueError(f"No shared plan catalog/plans/{name}.py and species backend defines no build()")
+    return species
 
 
 def import_species(spec: dict):
@@ -105,11 +118,13 @@ def import_species(spec: dict):
 
 def builder_hashes(spec: dict) -> dict:
     lib_dir = Path(__file__).resolve().parent / "lib"
+    species_file = Path(__file__).resolve().parent / "species" / f"{spec['id']}.py"
+    shared_plan = plan_path(spec["bodyPlan"])
     return {
         "entrypoint": digest.sha256_file(Path(__file__)),
         "validator": digest.sha256_file(Path(__file__).with_name("validate.py")),
-        "plan": digest.sha256_file(Path(__file__).resolve().parent / "plans" / f"{spec['bodyPlan']}.py"),
-        "speciesBackend": digest.sha256_file(Path(__file__).resolve().parent / "species" / f"{spec['id']}.py"),
+        "plan": digest.sha256_file(shared_plan) if shared_plan.exists() else f"species_local:{digest.sha256_file(species_file)}",
+        "speciesBackend": digest.sha256_file(species_file),
         "lib": {path.name: digest.sha256_file(path) for path in sorted(lib_dir.glob("*.py"))},
         "builderVersion": BUILDER_VERSION,
     }
@@ -117,8 +132,8 @@ def builder_hashes(spec: dict) -> dict:
 
 def author(asset_id: str, candidate_dir: Path, variant: str | None, render: bool):
     source_dir, source_path, spec = load_spec(asset_id, variant)
-    plan = import_plan(spec["bodyPlan"])
     species = import_species(spec)
+    plan = import_plan(spec["bodyPlan"], species)
     ctx = Context(asset_id, candidate_dir, variant)
     clear_scene()
     bpy.context.scene.render.fps = 30

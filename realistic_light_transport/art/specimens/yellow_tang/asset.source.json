@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "yellow_tang",
+  "displayName": "Yellow Tang",
+  "scientificLabel": "Zebrasoma flavescens",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": { "meters": 0.2, "kind": "adult_total_length", "note": "FishBase max length 20 cm TL." },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": { "skin": [0.85, 0.6, 0.03], "fin": [0.85, 0.6, 0.03], "iris": [0.05, 0.04, 0.03], "cue": [0.55, 0.36, 0.02], "adornment": [0.92, 0.92, 0.9] },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3 },
+  "morphology": {
+    "notes": "Zebrasoma disc: very deep compressed body, long projecting snout with a small terminal mouth, tall sail-like dorsal and anal fins nearly continuous with the outline, short peduncle, truncate yellow tail, white scalpel.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.085, "halfWidth": 0.0038, "dorsalHeight": 0.0085, "ventralDepth": 0.0078, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.078, "halfWidth": 0.0048, "dorsalHeight": 0.0125, "ventralDepth": 0.0112, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.066, "halfWidth": 0.0068, "dorsalHeight": 0.0225, "ventralDepth": 0.0198, "centerZ": 0.0005 },
+      { "id": "posterior-b", "x": -0.05, "halfWidth": 0.0088, "dorsalHeight": 0.0315, "ventralDepth": 0.0278, "centerZ": 0.001 },
+      { "id": "mid-a", "x": -0.03, "halfWidth": 0.0104, "dorsalHeight": 0.0365, "ventralDepth": 0.0325, "centerZ": 0.001 },
+      { "id": "mid-b", "x": -0.01, "halfWidth": 0.011, "dorsalHeight": 0.0375, "ventralDepth": 0.0335, "centerZ": 0.0008 },
+      { "id": "mid-c", "x": 0.012, "halfWidth": 0.0108, "dorsalHeight": 0.0355, "ventralDepth": 0.032, "centerZ": 0.0002 },
+      { "id": "anterior", "x": 0.032, "halfWidth": 0.0098, "dorsalHeight": 0.0305, "ventralDepth": 0.0275, "centerZ": -0.001 },
+      { "id": "operculum", "x": 0.048, "halfWidth": 0.0082, "dorsalHeight": 0.0235, "ventralDepth": 0.0215, "centerZ": -0.0025 },
+      { "id": "head", "x": 0.06, "halfWidth": 0.0062, "dorsalHeight": 0.0155, "ventralDepth": 0.0145, "centerZ": -0.0045 },
+      { "id": "snout", "x": 0.071, "halfWidth": 0.0042, "dorsalHeight": 0.0085, "ventralDepth": 0.0078, "centerZ": -0.0068 },
+      { "id": "snout-b", "x": 0.077, "halfWidth": 0.0028, "dorsalHeight": 0.0048, "ventralDepth": 0.0044, "centerZ": -0.0082 },
+      { "id": "snout-tip", "x": 0.08, "halfWidth": 0.0014, "dorsalHeight": 0.0022, "ventralDepth": 0.0022, "centerZ": -0.009 }
+    ],
+    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 1.75 },
+    "sampling": { "ringSegments": 48, "ringCount": 54 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0012, "edge": 0.00012 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.075, "xEnd": 0.046, "rows": 6, "columns": 16, "lean": -0.011,
+        "heights": [[0.0, 0.005], [0.15, 0.021], [0.4, 0.0305], [0.62, 0.031], [0.85, 0.023], [1.0, 0.007]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.075, "xEnd": 0.014, "rows": 5, "columns": 14, "lean": -0.009,
+        "heights": [[0.0, 0.0045], [0.2, 0.019], [0.5, 0.026], [0.8, 0.021], [1.0, 0.006]] },
+      { "name": "caudal", "type": "caudal", "rows": 4, "columns": 11, "spanTop": 0.0235, "spanBottom": 0.0235, "length": 0.035, "fork": 0.07, "forkPower": 1.6, "rounding": 0.04, "baseFraction": 0.88 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.04, "rootLength": 0.016, "rootHeight": -0.1, "length": 0.036, "sweepDegrees": 36, "droopDegrees": 22, "taper": 0.3, "power": 0.7, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.028, "rootLength": 0.01, "rootHeight": -0.9, "length": 0.022, "sweepDegrees": 50, "droopDegrees": 60, "spread": 0.3, "taper": 0.25, "power": 0.8, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.053, "zFraction": 0.5, "radius": 0.0054, "protrude": 0.35, "aspect": 0.3, "pupilFraction": 0.55 },
+    "mouth": { "zOffset": -0.3, "width": 0.0015, "radius": 0.00028 },
+    "gill": { "x": 0.033, "radius": 0.00022, "points": 11, "bulge": 0.02 },
+    "adornments": [ { "type": "scalpel", "x": -0.08, "zFraction": 0.0, "length": 0.0085 } ]
+  },
+  "rig": { "axialJoints": [0.066, 0.02, -0.01, -0.04, -0.064, -0.088] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [1.0, 2.0, 3.5, 5.5], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 15, "pectoralFrequency": 2, "median": 1.0, "gill": 1.6, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.0, 4.0, 7.5, 12.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 24, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [4.0, 8.0, 15.0, 24.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "median": 3.0, "gill": 2.0, "gillFrequency": 2, "jaw": 2.5, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
+  "visualDebt": [
+    "Sail fins are smooth thin shells; individual ray relief is only painted.",
+    "Scalpel is a smooth white ellipsoid, not a hinged spine."
+  ]
+}

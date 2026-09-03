@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "six_line_wrasse",
+  "displayName": "Six-Line Wrasse",
+  "scientificLabel": "Pseudocheilinus hexataenia",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": { "meters": 0.075, "kind": "adult_total_length", "note": "FishBase max length 10 cm TL; 7.5 cm is a typical aquarium adult." },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": { "skin": [0.7, 0.28, 0.14], "fin": [0.7, 0.35, 0.2], "iris": [0.5, 0.2, 0.05], "cue": [0.35, 0.12, 0.06], "adornment": [0.9, 0.9, 0.85] },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3 },
+  "morphology": {
+    "notes": "Slender elongate wrasse: shallow body (~28% SL), pointed snout with small terminal mouth, long low dorsal and anal fins, rounded caudal fin, small paired fins; six horizontal blue lines on an orange-pink body, green tail.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.0315, "halfWidth": 0.0016, "dorsalHeight": 0.0032, "ventralDepth": 0.0028, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.027, "halfWidth": 0.0024, "dorsalHeight": 0.0048, "ventralDepth": 0.0042, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.02, "halfWidth": 0.0036, "dorsalHeight": 0.0068, "ventralDepth": 0.0058, "centerZ": 0.0002 },
+      { "id": "posterior-b", "x": -0.011, "halfWidth": 0.0044, "dorsalHeight": 0.0084, "ventralDepth": 0.0072, "centerZ": 0.0003 },
+      { "id": "mid-a", "x": 0.0, "halfWidth": 0.0049, "dorsalHeight": 0.0093, "ventralDepth": 0.0079, "centerZ": 0.0003 },
+      { "id": "mid-b", "x": 0.01, "halfWidth": 0.0049, "dorsalHeight": 0.0092, "ventralDepth": 0.0078, "centerZ": 0.0002 },
+      { "id": "anterior", "x": 0.018, "halfWidth": 0.0045, "dorsalHeight": 0.0082, "ventralDepth": 0.0072, "centerZ": -0.0002 },
+      { "id": "operculum", "x": 0.024, "halfWidth": 0.0038, "dorsalHeight": 0.0066, "ventralDepth": 0.006, "centerZ": -0.0006 },
+      { "id": "head", "x": 0.028, "halfWidth": 0.0028, "dorsalHeight": 0.0046, "ventralDepth": 0.0043, "centerZ": -0.001 },
+      { "id": "snout", "x": 0.0308, "halfWidth": 0.0015, "dorsalHeight": 0.0024, "ventralDepth": 0.0023, "centerZ": -0.0014 },
+      { "id": "snout-tip", "x": 0.0315, "halfWidth": 0.0006, "dorsalHeight": 0.0009, "ventralDepth": 0.0009, "centerZ": -0.0015 }
+    ],
+    "crossSection": { "dorsalExponent": 2.0, "ventralExponent": 1.9 },
+    "sampling": { "ringSegments": 44, "ringCount": 50 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.001, "edge": 0.00012 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.026, "xEnd": 0.02, "rows": 3, "columns": 14, "lean": -0.0015,
+        "heights": [[0.0, 0.0015], [0.15, 0.0034], [0.5, 0.0036], [0.85, 0.0032], [1.0, 0.0015]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.026, "xEnd": -0.004, "rows": 3, "columns": 10, "lean": -0.0015,
+        "heights": [[0.0, 0.0012], [0.25, 0.003], [0.7, 0.003], [1.0, 0.0012]] },
+      { "name": "caudal", "type": "caudal", "rows": 4, "columns": 9, "spanTop": 0.0045, "spanBottom": 0.0045, "length": 0.012, "fork": -0.22, "forkPower": 1.5, "rounding": 0.12, "baseFraction": 0.9 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.021, "rootLength": 0.005, "rootHeight": -0.1, "length": 0.0105, "sweepDegrees": 32, "droopDegrees": 15, "taper": 0.35, "power": 0.8, "rows": 3, "columns": 6 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.015, "rootLength": 0.0035, "rootHeight": -0.9, "length": 0.008, "sweepDegrees": 50, "droopDegrees": 55, "spread": 0.3, "taper": 0.3, "power": 0.8, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0245, "zFraction": 0.35, "radius": 0.0021, "protrude": 0.4, "aspect": 0.32, "pupilFraction": 0.55 },
+    "mouth": { "zOffset": -0.2, "width": 0.0012, "radius": 0.00025 },
+    "gill": { "x": 0.019, "radius": 0.00018, "points": 9, "bulge": 0.02 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.026, 0.008, -0.006, -0.017, -0.026, -0.034] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [2.0, 4.0, 6.0, 8.0], "axialFrequency": 1, "axialLag": 0.6, "pectoral": 20, "pectoralFrequency": 3, "median": 1.5, "gill": 2.0, "gillFrequency": 3, "jaw": 3.0, "jawFrequency": 3 },
+    "swim": { "frames": 48, "loop": true, "axial": [5.0, 9.0, 13.0, 17.0], "axialFrequency": 2, "axialLag": 0.6, "pectoral": 28, "pectoralFrequency": 4, "median": 2.5, "gill": 2.0, "gillFrequency": 2, "jaw": 2.5, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [8.0, 14.0, 22.0, 30.0], "axialFrequency": 2, "axialLag": 0.6, "pectoral": 32, "pectoralFrequency": 3, "median": 4.0, "gill": 2.5, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
+  "visualDebt": [
+    "Eye striping is painted onto the body texture rather than the iris.",
+    "Line count and spacing are approximations of the six lateral stripes."
+  ]
+}

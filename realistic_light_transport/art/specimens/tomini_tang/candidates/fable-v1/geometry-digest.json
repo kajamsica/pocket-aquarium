@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "tomini_tang",
+  "sourceSha256": "59f7dfbf31f91ea90d1a3723232775a1ddf62b83db6532707a9e0bb4b153e17a",
+  "objects": [
+    {
+      "name": "PA_tomini_tang_Body",
+      "vertexCount": 2450,
+      "triangleCount": 4896,
+      "vertexDigest": "950d43a40c56f1937ba45f1a21c55eb17bea7ff9a220e5a161eb018e7918ed24",
+      "topologyDigest": "17d061f55aaaab44b13bcd7a30f5ee14c1998643640b7c0353bf0ab60c20d09b",
+      "uvDigest": "17a20c140189c6aa12b04e74c34f4e15503fe6bca26895ea255e5919fb82c45e",
+      "weightDigest": "4cc8a2676fefd69e7d471ebd17f5c3f19e38d0f330e5d73e2f40df16ac06308f",
+      "materials": [
+        "PA_tomini_tang_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_tomini_tang_Details",
+      "vertexCount": 1200,
+      "triangleCount": 2352,
+      "vertexDigest": "ad0954a0bec886e354708b4e650136d083666cfa1cc7f444a1950ca02fbcc276",
+      "topologyDigest": "82f0fa3fcff9dd99119e7fee0d254c6dccd8f0c25e0e182ddc139257ab56d4bf",
+      "uvDigest": "561ad76b410fc61e0ee6986fa0e9adef015a3739eb048eefb7adffb0db300791",
+      "weightDigest": "c92ffacaf9eaee432a66d42ff7e86da18897376054331c8474d1a140608c6a67",
+      "materials": [
+        "PA_tomini_tang_Adornment",
+        "PA_tomini_tang_Cue",
+        "PA_tomini_tang_Eye",
+        "PA_tomini_tang_Glint",
+        "PA_tomini_tang_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_tomini_tang_Fins",
+      "vertexCount": 490,
+      "triangleCount": 844,
+      "vertexDigest": "909d9867914a334dcd3a6bda98b8d02b584d909ea5268cc8344cec9350e0cdc1",
+      "topologyDigest": "654ebfabcaafc677843d8329a4a6f7894ab75574fc2bddb5aaba5d061905ab1c",
+      "uvDigest": "2924cd555debbbca039dc100a6b16de933f52a3459ff4884cfb4f8cd1d79e8ae",
+      "weightDigest": "4161168a0eb15762a4487cfad4c1f3f83e786b96a8d85b497e2e76ce856a1af1",
+      "materials": [
+        "PA_tomini_tang_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_tomini_tang_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "f24d7cc43635a781dc9dcefe4a8883cf968fe4744bd2fc16f860e7df211f6910"
+  },
+  "geometryDigest": "46023e82c8d3e0b0589d286feeec8a2c732eb80acecc5abae2b712e5e7684ab2",
+  "variantId": null
+}

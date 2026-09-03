@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "yellow_tang",
+  "revision": 1,
+  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
+  "sources": [
+    {
+      "id": "WORMS-219683",
+      "title": "Zebrasoma flavescens (Bennett, 1828) taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219683",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-ZEBRASOMA_FLAVESCENS",
+      "title": "Zebrasoma flavescens species summary (max length 20.0 cm TL)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Zebrasoma-flavescens.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "NOAA-FLAVESCENS",
+      "title": "Yellow tang fishery and life-history overview (Hawaii)",
+      "publisher": "NOAA Fisheries / PIFSC",
+      "url": "https://www.fisheries.noaa.gov/pacific-islands/science-data/yellow-tang-research",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-ZEBRASOMA_FLAVESCENS",
+      "title": "Category:Zebrasoma flavescens (openly licensed photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Zebrasoma_flavescens",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Lateral photographs are plentiful; dorsal/frontal proportions inferred from Zebrasoma descriptions."
+}

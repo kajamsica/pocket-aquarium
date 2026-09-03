@@ -1,0 +1,54 @@
+{
+  "asset": "yellow_tang",
+  "variant": null,
+  "candidateDir": "art/specimens/yellow_tang/candidates/fable-v1",
+  "startedAt": "2026-09-03T20:02:54.229Z",
+  "pid": 22735,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 26313,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 8607,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 2036,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1564,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1765,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 1071,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1073,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T20:03:36.662Z",
+  "status": "passed",
+  "failure": null
+}

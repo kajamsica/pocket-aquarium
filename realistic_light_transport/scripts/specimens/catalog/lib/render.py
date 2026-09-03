@@ -14,7 +14,7 @@ from .scene import scene_bounds
 from .textures import write_image
 
 
-def _studio(scene, background=(0.16, 0.17, 0.18), exposure=0.0):
+def _studio(scene, background=(0.36, 0.37, 0.38), exposure=0.0):
     scene.render.engine = "BLENDER_EEVEE"
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"

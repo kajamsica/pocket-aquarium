@@ -14,21 +14,27 @@ YELLOW = (0.93, 0.72, 0.04)
 NAVY = (0.006, 0.02, 0.10)
 
 
+def _ellipse(u, zeta, center, radii):
+    du = (u - center[0]) / radii[0]
+    dz = (zeta - center[1]) / radii[1]
+    return np.sqrt(du * du + dz * dz)
+
+
 def paint_body(ctx):
     U, Z, V = ctx.U, ctx.ZETA, ctx.V
-    wobble = (fbm(U * 9.0, V * 6.0, octaves=3, seed=17) - 0.5) * 0.06
+    # small organic wobble only: the palette edges are smooth curves, not noise-torn bands
+    wobble = (fbm(U * 22.0, V * 10.0, octaves=2, seed=17) - 0.5) * 0.02
     zeta = Z + wobble
-    # upper black band runs from the eye back along the dorsum to the peduncle
-    upper_center = 0.60 - 0.12 * smoothstep(0.55, 0.95, U)
-    upper_half = 0.20 + 0.10 * smoothstep(0.55, 0.85, U)
-    upper = paint.band(zeta - upper_center, 0.0, upper_half, 0.04)
-    upper *= 1.0 - smoothstep(0.86, 0.905, U)
-    upper *= smoothstep(0.06, 0.11, U)
-    # lower branch along the mid flank, joining the upper band at the peduncle and mid body
-    lower = paint.band(zeta + 0.04, 0.0, 0.14, 0.04) * paint.band(U, 0.31, 0.21, 0.03)
-    connector = paint.band(U, 0.535, 0.045, 0.02) * smoothstep(-0.2, -0.08, zeta) * (1.0 - smoothstep(0.55, 0.70, zeta))
-    peduncle = paint.band(U, 0.10, 0.06, 0.03) * smoothstep(-0.28, -0.14, zeta) * (1.0 - smoothstep(0.78, 0.92, zeta))
-    black_mask = np.clip(upper + lower + connector + peduncle, 0.0, 1.0)
+    edge = 0.035
+    # the "palette": a black ring on the flank (outer ellipse minus the blue window)
+    outer = 1.0 - smoothstep(1.0 - edge, 1.0 + edge, _ellipse(U, zeta, (0.33, 0.40), (0.31, 0.60)))
+    window = 1.0 - smoothstep(1.0 - edge, 1.0 + edge, _ellipse(U, zeta, (0.34, 0.31), (0.20, 0.36)))
+    ring = outer * (1.0 - window)
+    # dorsal band: continues from the ring forward along the back and tapers into the eye
+    lower_edge = 0.50 + 0.28 * smoothstep(0.55, 0.88, U)
+    dorsal_band = smoothstep(lower_edge - edge, lower_edge + edge, zeta) * (1.0 - smoothstep(0.86, 0.905, U)) * smoothstep(0.05, 0.10, U)
+    # the flank pattern lives on the sides; fade it out under the belly midline
+    black_mask = np.clip(ring + dorsal_band, 0.0, 1.0) * (1.0 - smoothstep(-0.72, -0.92, Z))
 
     base = textures.rgba(BLUE, 1.0, ctx.shape)
     belly = smoothstep(-0.55, -1.0, Z) * 0.35
@@ -36,7 +42,7 @@ def paint_body(ctx):
     sheen = fbm(U * 30.0, V * 16.0, octaves=3, seed=3)
     albedo = textures.scale_rgb(albedo, 0.9 + 0.2 * sheen)
     albedo = textures.mix(albedo, BLACK, black_mask)
-    # dark eye socket surround and a lighter snout
+    # lighter snout
     snout = smoothstep(0.93, 1.0, U) * (1.0 - black_mask)
     albedo = textures.mix(albedo, (0.05, 0.22, 0.75), snout * 0.5)
 
@@ -55,9 +61,10 @@ def paint_fin(ctx):
         black = smoothstep(-0.03, 0.03, wedge)
         albedo = textures.mix(yellow, BLACK, black)
     elif ctx.fin in ("dorsal", "anal"):
-        albedo = textures.rgba(NAVY, 1.0, ctx.shape)
-        albedo = textures.mix(albedo, BLUE, 0.35 * ray)
-        albedo = textures.mix(albedo, PALE_BLUE, smoothstep(0.86, 0.97, V))
+        albedo = textures.rgba((0.012, 0.05, 0.26), 1.0, ctx.shape)
+        albedo = textures.mix(albedo, BLUE, 0.4 * ray)
+        albedo = textures.mix(albedo, NAVY, smoothstep(0.55, 0.8, V) * (1.0 - smoothstep(0.84, 0.9, V)))
+        albedo = textures.mix(albedo, PALE_BLUE, smoothstep(0.88, 0.97, V))
     elif ctx.fin == "pectoral":
         albedo = textures.rgba(BLUE, 1.0, ctx.shape)
         albedo = textures.mix(albedo, YELLOW, smoothstep(0.42, 0.72, V))

@@ -77,9 +77,12 @@ def cells(x: np.ndarray, y: np.ndarray, seed: int = 0) -> tuple[np.ndarray, np.n
 
 
 def smoothstep(edge0: float, edge1: float, value: np.ndarray) -> np.ndarray:
+    """Hermite step from 0 at edge0 to 1 at edge1; reversed edges (edge0 > edge1) give a falling step."""
     edge0 = np.asarray(edge0, dtype=np.float64)
     edge1 = np.asarray(edge1, dtype=np.float64)
-    t = np.clip((np.asarray(value, dtype=np.float64) - edge0) / np.maximum(edge1 - edge0, 1e-12), 0.0, 1.0)
+    span = edge1 - edge0
+    span = np.where(np.abs(span) < 1e-12, 1e-12, span)
+    t = np.clip((np.asarray(value, dtype=np.float64) - edge0) / span, 0.0, 1.0)
     return t * t * (3.0 - 2.0 * t)
 
 

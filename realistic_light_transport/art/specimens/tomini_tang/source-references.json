@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "tomini_tang",
+  "revision": 1,
+  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
+  "sources": [
+    {
+      "id": "WORMS-277562",
+      "title": "Ctenochaetus tominiensis Randall, 1955 taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=277562",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-CTENOCHAETUS_TOMINIENSIS",
+      "title": "Ctenochaetus tominiensis species summary (max length 16.0 cm TL)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Ctenochaetus-tominiensis.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "COMMONS-CTENOCHAETUS_TOMINIENSIS",
+      "title": "Category:Ctenochaetus tominiensis (openly licensed photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Ctenochaetus_tominiensis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "C",
+  "referenceGradeRationale": "Limited open imagery; fin colouring and body depth follow Ctenochaetus descriptions."
+}

@@ -205,14 +205,15 @@ def fin_atlas_transform(index: int, columns: int = 4, rows: int = 2):
     return transform
 
 
-def median_rows(body: Body, fin: dict, scale: float):
+def median_rows(body: Body, fin: dict, scale: float, embed: float = 0.0):
+    """Rows of a dorsal/anal fin; the base row sits `embed` metres inside the ridge so the
+    fleshy root merges with the body instead of floating as a detached sheet."""
     dorsal = fin["side"] == "dorsal"
     rows_n = int(fin.get("rows", 4))
     cols_n = int(fin.get("columns", 10))
     heights = Profile([p[0] for p in fin["heights"]], [p[1] for p in fin["heights"]])
     lean = float(fin.get("lean", 0.0))
     pinch = float(fin.get("pinch", 0.0))
-    gap = 0.00015 * scale
     rows = []
     for r in range(rows_n):
         t = r / (rows_n - 1)
@@ -222,8 +223,8 @@ def median_rows(body: Body, fin: dict, scale: float):
             base_x = fin["xStart"] + s * (fin["xEnd"] - fin["xStart"])
             x = base_x + lean * t + (0.5 - s) * pinch * t
             ridge = body.ridge_z(base_x, dorsal)
-            height = heights(s) * t
-            z = ridge + (gap + height if dorsal else -(gap + height))
+            height = heights(s) * t - embed
+            z = ridge + (height if dorsal else -height)
             row.append((x, 0.0, z))
         rows.append(row)
     return rows
@@ -265,7 +266,11 @@ def caudal_rows(body: Body, fin: dict, scale: float):
     return rows
 
 
-def paired_rows(body: Body, fin: dict, scale: float, side: int):
+def paired_rows(body: Body, fin: dict, scale: float, side: int, embed: float = 0.0):
+    """Rows of a pectoral/pelvic fin: a compact fan whose root is seated in the flank.
+
+    `flare` widens the fin distally along its root axis so the outline reads as a rounded
+    fan or teardrop rather than a spear; `taper`/`power` shape the distal edge."""
     rows_n = int(fin.get("rows", 4))
     cols_n = int(fin.get("columns", 6))
     root_x = float(fin["rootX"])
@@ -277,6 +282,7 @@ def paired_rows(body: Body, fin: dict, scale: float, side: int):
     taper = float(fin.get("taper", 0.3))
     power = float(fin.get("power", 0.7))
     spread = float(fin.get("spread", 1.0))
+    flare = float(fin.get("flare", 0.6))
     rows = []
     for r in range(rows_n):
         t = r / (rows_n - 1)
@@ -286,12 +292,13 @@ def paired_rows(body: Body, fin: dict, scale: float, side: int):
             x = root_x - s * root_length
             cz = body.center_z(x)
             z = cz + root_height * (body.dorsal(x) if root_height >= 0 else body.ventral(x))
-            y = body.surface_y(x, z) + 0.00015 * scale
+            y = body.surface_y(x, z) - embed
             extension = taper + (1.0 - taper) * math.sin(math.pi * s) ** power
             direction = Vector((-math.sin(sweep), math.cos(sweep) * spread, -math.sin(droop)))
             direction.normalize()
             reach = length * extension * t
-            row.append((x + direction.x * reach - t * s * root_length * 0.15,
+            along = (0.5 - s) * root_length * flare * t
+            row.append((x + direction.x * reach + along,
                         side * (y + direction.y * reach),
                         z + direction.z * reach))
         rows.append(row)
@@ -344,6 +351,15 @@ def default_fin_paint(ctx: FinPaintContext):
     return np.stack([0.72 + 0.18 * ray, 0.72 + 0.18 * ray, 0.68 + 0.18 * ray, np.full(ctx.shape, 0.82)], axis=-1)
 
 
+def default_fin_height(ctx: FinPaintContext, fin: dict):
+    """Ray relief for the fin normal map: rounded ray ridges running base -> edge, softer at the root."""
+    count = float(fin.get("rayCount", 14))
+    ridges = (0.5 + 0.5 * np.cos(ctx.U * math.tau * count)) ** 1.6
+    membrane = noise.fbm(ctx.U * 18.0, ctx.V * 6.0, octaves=2, seed=41)
+    root_fade = 0.3 + 0.7 * noise.smoothstep(0.0, 0.3, ctx.V)
+    return np.clip(0.35 + 0.45 * ridges * root_fade + 0.1 * (membrane - 0.5), 0.0, 1.0)
+
+
 # ---------------------------------------------------------------- build
 
 def build(spec: dict, species, ctx) -> BuildResult:
@@ -372,27 +388,50 @@ def build(spec: dict, species, ctx) -> BuildResult:
         path = texture_dir / f"body-{key}.png"
         images[key] = textures.write_image(f"{prefix}_Body_{key}", path, pixels, non_color)
         written.append(path)
-    # fin atlas: each fin owns one tile
+    # fin atlas: each fin owns one tile; species paint_fin may return an RGBA array or
+    # {"albedo": rgba, "height": h} so the ray relief can follow the species' ray layout
     atlas_columns, atlas_rows = 4, 2
     if len(fins_spec) > atlas_columns * atlas_rows:
         raise ValueError("Fin atlas supports at most 8 fins")
     atlas = np.zeros((fin_h, fin_w, 4), dtype=np.float64)
+    height_atlas = np.full((fin_h, fin_w), 0.5, dtype=np.float64)
     tile_w, tile_h = fin_w // atlas_columns, fin_h // atlas_rows
     for index, fin in enumerate(fins_spec):
         fin_ctx = FinPaintContext(tile_w, tile_h, fin["name"], spec)
         tile = species.paint_fin(fin_ctx) if hasattr(species, "paint_fin") else default_fin_paint(fin_ctx)
+        height_tile = None
+        if isinstance(tile, dict):
+            height_tile = tile.get("height")
+            tile = tile["albedo"]
+        if height_tile is None:
+            height_tile = default_fin_height(fin_ctx, fin)
         col, row = index % atlas_columns, index // atlas_columns
-        atlas[row * tile_h:(row + 1) * tile_h, col * tile_w:(col + 1) * tile_w] = tile
+        window = (slice(row * tile_h, (row + 1) * tile_h), slice(col * tile_w, (col + 1) * tile_w))
+        atlas[window] = tile
+        height_atlas[window] = height_tile
     fin_path = texture_dir / "fin-atlas.png"
     images["fin"] = textures.write_image(f"{prefix}_FinAtlas", fin_path, atlas, False)
     written.append(fin_path)
+    fin_normal_path = texture_dir / "fin-normal.png"
+    images["finNormal"] = textures.write_image(f"{prefix}_FinNormal", fin_normal_path,
+                                               textures.normal_from_height(height_atlas, float(tex.get("finReliefStrength", 1.4))), True)
+    written.append(fin_normal_path)
 
     palette = spec.get("palette", {})
     skin = mat.principled(f"{prefix}_Skin", palette.get("skin", (0.5, 0.5, 0.5)), 0.42, coat=0.12, specular=0.38)
     mat.attach_textures(skin, albedo=images.get("albedo"), roughness=images.get("roughness"), normal=images.get("normal"),
                         normal_strength=float(tex.get("normalStrength", 0.35)))
     fin_material = mat.principled(f"{prefix}_Fin", palette.get("fin", (0.6, 0.6, 0.6)), 0.5, coat=0.04, specular=0.28)
-    mat.attach_textures(fin_material, albedo=images["fin"], alpha_from_albedo=True)
+    mat.attach_textures(fin_material, albedo=images["fin"], alpha_from_albedo=True, normal=images["finNormal"],
+                        normal_strength=float(tex.get("finNormalStrength", 0.55)))
+
+    # fin sheets: ray-supported thickness at the root, membrane-thin at the edge; roots are seated
+    # inside the body so no fin reads as a detached plate
+    thickness = morphology.get("finThickness", {"base": 0.0012, "edge": 0.00012})
+    t_base = float(thickness["base"]) * scale
+    t_edge = float(thickness["edge"]) * scale
+    embed_median = max(t_base * 0.6, 0.0006 * scale)
+    embed_paired = t_base * 0.4
     eye_material = mat.principled(f"{prefix}_Eye", palette.get("iris", (0.08, 0.05, 0.02)), 0.14, coat=0.6, subsurface=0.0)
     pupil_material = mat.principled(f"{prefix}_Pupil", (0.004, 0.003, 0.003), 0.3, coat=0.2, subsurface=0.0)
     glint_material = mat.principled(f"{prefix}_Glint", (0.85, 0.86, 0.84), 0.2, subsurface=0.0)
@@ -452,7 +491,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
                 x = fin["rootX"] - fin["rootLength"] * 0.5
                 z = body.center_z(x) + float(fin.get("rootHeight", 0.0)) * (body.dorsal(x) if fin.get("rootHeight", 0.0) >= 0 else body.ventral(x))
                 y = body.surface_y(x, z)
-                rows = paired_rows(body, fin, scale, side)
+                rows = paired_rows(body, fin, scale, side, embed_paired)
                 tip = Vector(rows[-1][len(rows[-1]) // 2])
                 bone_name = f"{fin.get('bone', fin['name'].capitalize())}_{suffix}"
                 rb.bone(bone_name, (x, side * y, z), tuple(Vector((x, side * y, z)).lerp(tip, 0.7)), axial_bone_at(x))
@@ -521,9 +560,6 @@ def build(spec: dict, species, ctx) -> BuildResult:
     body_obj["lod"] = 1
 
     # ---- fins
-    thickness = morphology.get("finThickness", {"base": 0.0012, "edge": 0.00012})
-    t_base = float(thickness["base"]) * scale
-    t_edge = float(thickness["edge"]) * scale
     fin_parts = []
     fin_group_names = []
     for index, fin in enumerate(fins_spec):
@@ -531,7 +567,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
         kind = fin["type"]
         transform = fin_atlas_transform(index)
         if kind == "median":
-            rows = median_rows(body, fin, scale)
+            rows = median_rows(body, fin, scale, embed_median)
             bone_name = fin_bones[name]
             geometry, attach, row_count, column_count, offset = thin_shell(rows, t_base, t_edge, Vector((0, 1, 0)))
 
@@ -559,7 +595,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
             fin_group_names.append(name)
         else:
             for side, suffix in ((-1, "L"), (1, "R")):
-                rows = paired_rows(body, fin, scale, side)
+                rows = paired_rows(body, fin, scale, side, embed_paired)
                 bone_name = f"{fin_bones[name]}_{suffix}"
                 base_bone = axial_bone_at(fin["rootX"] - fin["rootLength"] * 0.5)
                 geometry, attach, row_count, column_count, offset = thin_shell(rows, t_base, t_edge, Vector((0, side, 0)))
@@ -600,7 +636,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
                                                                 (pupil_r, pupil_r, pupil_t), 16, 10, rotation),
                               "pupil", lambda i, v: {"Body": 1.0}, closed=True)
         glint = msh.make_part(f"glint_{suffix}", msh.ellipsoid((eye_x + radius * 0.34, outer_y + side * pupil_t * 0.35, eye_z + radius * 0.34),
-                                                                (radius * 0.11, radius * 0.11, radius * 0.04), 10, 6, rotation),
+                                                                (radius * 0.065, radius * 0.065, radius * 0.03), 10, 6, rotation),
                               "glint", lambda i, v: {"Body": 1.0}, closed=True)
         detail_parts.extend([eyeball, pupil, glint])
     # mouth: short arc tube at the snout tip, skinned to Jaw

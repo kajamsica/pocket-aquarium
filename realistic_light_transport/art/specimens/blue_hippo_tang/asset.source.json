@@ -7,7 +7,7 @@
   "category": "fish",
   "waterType": "saltwater",
   "bodyPlan": "fish",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.2.0",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.25,
@@ -50,8 +50,8 @@
       { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.088, "xEnd": 0.02, "rows": 4, "columns": 12, "lean": -0.005,
         "heights": [[0.0, 0.004], [0.18, 0.012], [0.5, 0.015], [0.8, 0.013], [1.0, 0.005]] },
       { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.031, "spanBottom": 0.031, "length": 0.05, "fork": 0.28, "forkPower": 1.7, "baseFraction": 0.85 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.058, "rootLength": 0.02, "rootHeight": -0.05, "length": 0.045, "sweepDegrees": 40, "droopDegrees": 20, "taper": 0.3, "power": 0.7, "rows": 4, "columns": 7 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.04, "rootLength": 0.012, "rootHeight": -0.9, "length": 0.028, "sweepDegrees": 55, "droopDegrees": 55, "spread": 0.3, "taper": 0.25, "power": 0.8, "rows": 3, "columns": 5 }
+      { "name": "pectoral", "type": "paired", "rootX": 0.058, "rootLength": 0.02, "rootHeight": -0.05, "length": 0.04, "sweepDegrees": 48, "droopDegrees": 16, "spread": 0.85, "taper": 0.42, "power": 0.55, "flare": 0.7, "rayCount": 15, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.04, "rootLength": 0.012, "rootHeight": -0.9, "length": 0.028, "sweepDegrees": 55, "droopDegrees": 55, "spread": 0.3, "taper": 0.3, "power": 0.8, "flare": 0.4, "rayCount": 6, "rows": 3, "columns": 5 }
     ],
     "finAdjacency": [],
     "eyes": { "x": 0.073, "zFraction": 0.42, "radius": 0.0064, "protrude": 0.35, "aspect": 0.3, "pupilFraction": 0.55 },
@@ -69,6 +69,6 @@
   "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 20 },
   "visualDebt": [
     "Scalpel is a smooth ellipsoid rather than a hinged spine in a groove.",
-    "Fin membranes are single-sheet thin shells without individual ray relief."
+    "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays."
   ]
 }

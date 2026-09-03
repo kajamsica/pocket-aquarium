@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "purple_tang",
+  "revision": 1,
+  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
+  "sources": [
+    {
+      "id": "WORMS-219681",
+      "title": "Zebrasoma xanthurum (Blyth, 1852) taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219681",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-ZEBRASOMA_XANTHURUM",
+      "title": "Zebrasoma xanthurum species summary (max length 25.0 cm TL)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Zebrasoma-xanthurum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "COMMONS-ZEBRASOMA_XANTHURUM",
+      "title": "Category:Zebrasoma xanthurum (openly licensed photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Zebrasoma_xanthurum",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "User-supplied watermarked seller image was used only to understand silhouette preference; not a texture source."
+}
