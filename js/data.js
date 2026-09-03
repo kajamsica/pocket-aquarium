@@ -30,6 +30,7 @@
     SEED_MICROFAUNA: "SEED_MICROFAUNA",       // {culture} pods / infusoria culture
     // ---- interaction ----
     FEED: "FEED",                           // {x, y} normalized [0,1] tank coordinates
+    CONSUME_FOOD: "CONSUME_FOOD",           // {foodId, eaterId} after renderer-observed contact
     SELECT_ENTITY: "SELECT_ENTITY",         // {entityType, id} | {id:null} to clear
     REMOVE_DEAD: "REMOVE_DEAD",             // {id} remove decaying biomass
     // ---- time ----

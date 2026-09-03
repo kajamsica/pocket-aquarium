@@ -24,7 +24,7 @@
   var VALID_DAYS = 0.75;             // sustained-safe window before "Cycled"
   var YOUNG_DAYS = 8, MATURE_DAYS = 20; // tank-age biome gates (days since fill)
   var AMMONIA_DOSE = 0.7;            // fishless dosing mg/L per day (tops toward ~3)
-  var FOOD_DECAY_DAYS = 0.6, SINK_DELAY = 0.05;
+  var FOOD_DECAY_DAYS = 0.6, FOOD_BOTTOM = 0.82, FOOD_FALL_PER_DAY = 2.4;
   var FOOD_AMMONIA = 0.14;           // ammonia per decayed uneaten portion (before dilution)
   var METAB_AMMONIA = 0.045;         // ammonia per bioload-unit per day (before dilution)
   var DECAY_AMMONIA = 0.28;          // ammonia per size-unit per day from a corpse
@@ -346,29 +346,20 @@
 
   /* ============================ feeding ============================ */
   function stepFeeding(state, dt) {
-    var w = state.water, food = state.food, i, j;
-    // age + sink pellets
-    for (i = 0; i < food.length; i++) { food[i].ageDays += dt; if (food[i].ageDays > SINK_DELAY) food[i].sunk = true; }
-    // let the hungriest eligible alive fish claim each pellet
+    var w = state.water, food = state.food, i;
+    // Pellets fall through authoritative tank space. Feeding is completed only by
+    // CONSUME_FOOD after the renderer observes a fish make visual contact.
     for (i = 0; i < food.length; i++) {
-      var p = food[i]; if (p.consumed) continue;
-      var best = null, bestHunger = 0.05;
-      for (j = 0; j < state.livestock.length; j++) {
-        var a = state.livestock[j]; if (!a || a.alive === false) continue;
-        var sp = DATA.SPECIES[a.species]; if (!sp || sp.kind === "invert") continue;
-        // bottom feeders only take sunk food; mid/top take floating (before it sinks) or any
-        if (sp.layer === "bottom" && !p.sunk) continue;
-        if (sp.layer !== "bottom" && p.sunk && sp.diet !== "benthic-predator") { /* still allow, small penalty */ }
-        if (a.hunger > bestHunger) { bestHunger = a.hunger; best = { a: a, sp: sp }; }
-      }
-      if (best) { best.a.hunger = clamp(best.a.hunger - best.sp.mealSize, 0, 1.2); best.a.lastFedDay = state.time.days; p.consumed = true; }
+      food[i].ageDays += dt;
+      food[i].y = Math.min(FOOD_BOTTOM, food[i].y + FOOD_FALL_PER_DAY * dt);
+      food[i].sunk = food[i].y >= FOOD_BOTTOM - 1e-9;
     }
     // decompose uneaten pellets
     var kept = [];
     var dilute = 75 / Math.max(tierVol(state), 20);
     for (i = 0; i < food.length; i++) {
       if (food[i].consumed) continue;
-      if (food[i].ageDays >= FOOD_DECAY_DAYS) { w.ammonia += FOOD_AMMONIA * dilute; w.phosphate += 0.01 * dilute; continue; }
+      if (food[i].ageDays >= FOOD_DECAY_DAYS) { w.ammonia += FOOD_AMMONIA * food[i].amount * dilute; w.phosphate += 0.01 * food[i].amount * dilute; continue; }
       kept.push(food[i]);
     }
     state.food = kept;
@@ -690,6 +681,7 @@
 
       case ACT.FEED:
       case "FEED_AT": doFeed(state, action.x, action.y); break; // FEED_AT is the renderer's pointer-feed action
+      case ACT.CONSUME_FOOD: doConsumeFood(state, action.foodId, action.eaterId); break;
       case ACT.SELECT_ENTITY: state.selection = (action.id == null) ? null : { entityType: action.entityType || "livestock", id: action.id }; break;
       case ACT.REMOVE_DEAD: doRemoveDead(state, action.id); break;
 
@@ -824,8 +816,23 @@
   function doFeed(state, x, y) {
     var w = state.water;
     var dangerous = w.ammonia > (DATA.PARAMS.ammonia.good[1]) || w.nitrite > (DATA.PARAMS.nitrite.good[1]);
-    state.food.push({ x: clamp(num(x, 0.5), 0, 1), y: clamp(num(y, 0.4), 0, 1), amount: 1, ageDays: 0, sunk: false, consumed: false });
+    var level = clamp(w.levelL / Math.max(tierVol(state), 1), 0, 1);
+    var py = clamp(0.05 + (1 - level) * (FOOD_BOTTOM - 0.05), 0.05, FOOD_BOTTOM);
+    state.food.push({ id: state.nextId++, x: clamp(num(x, 0.5), 0, 1), y: py, amount: 1, ageDays: 0, sunk: py >= FOOD_BOTTOM, consumed: false });
+    void y; // vertical pointer position chooses the tank gesture; food enters at its surface
     if (dangerous) { state._feedWarning = true; log(state, "warn", "Careful — feeding while ammonia/nitrite is elevated worsens the water. Feed sparingly."); }
+  }
+  function doConsumeFood(state, foodId, eaterId) {
+    var fi = -1, eater = null, i;
+    for (i = 0; i < state.food.length; i++) if (String(state.food[i].id) === String(foodId)) { fi = i; break; }
+    for (i = 0; i < state.livestock.length; i++) if (String(state.livestock[i].id) === String(eaterId)) { eater = state.livestock[i]; break; }
+    if (fi < 0 || !eater || eater.alive === false || eater.hunger <= 0.05) return false;
+    var p = state.food[fi], sp = DATA.SPECIES[eater.species];
+    if (!sp || sp.kind === "invert" || (sp.layer === "bottom" && !p.sunk)) return false;
+    eater.hunger = clamp(eater.hunger - sp.mealSize * p.amount, 0, 1.2);
+    eater.lastFedDay = state.time.days;
+    state.food.splice(fi, 1);
+    return true;
   }
   function doRemoveDead(state, id) {
     var kept = [], removed = 0;
@@ -1003,6 +1010,22 @@
         else log(base, "quarantine", "Ignored an invalid saved coral.");
       }
     }
+    // Active pellets remain husbandry state across reloads so uneaten food still
+    // has its eventual nutrient consequence and renderer contact keeps identity.
+    if (Array.isArray(raw.food)) {
+      for (var fi = 0; fi < raw.food.length; fi++) {
+        var fp = raw.food[fi]; if (!fp || typeof fp !== "object" || fp.consumed) continue;
+        var fy = clamp(num(fp.y, 0.4), 0, FOOD_BOTTOM), fs = !!fp.sunk || fy >= FOOD_BOTTOM;
+        var fid = Math.floor(clamp(num(fp.id, base.nextId++), 1, 1e9));
+        while (idUsed(base, fid)) fid = base.nextId++;
+        base.food.push({
+          id: fid,
+          x: clamp(num(fp.x, 0.5), 0, 1), y: fs ? FOOD_BOTTOM : fy,
+          amount: clamp(num(fp.amount, 1), 0.1, 10), ageDays: clamp(num(fp.ageDays, 0), 0, FOOD_DECAY_DAYS),
+          sunk: fs, consumed: false
+        });
+      }
+    }
     if (raw.microfauna && typeof raw.microfauna === "object") {
       base.microfauna.pods = clamp(num(raw.microfauna.pods, base.microfauna.pods), 0, 1);
       base.microfauna.worms = clamp(num(raw.microfauna.worms, 0), 0, 1);
@@ -1033,7 +1056,13 @@
     var m = 0, i;
     for (i = 0; i < state.livestock.length; i++) m = Math.max(m, num(state.livestock[i].id, 0));
     for (i = 0; i < state.corals.length; i++) m = Math.max(m, num(state.corals[i].id, 0));
+    for (i = 0; i < state.food.length; i++) m = Math.max(m, num(state.food[i].id, 0));
     return m;
+  }
+  function idUsed(state, id) {
+    var groups = [state.livestock, state.corals, state.food];
+    for (var g = 0; g < groups.length; g++) for (var i = 0; i < groups[g].length; i++) if (groups[g][i].id === id) return true;
+    return false;
   }
   function sanitizeAnimal(state, a) {
     var sp = DATA.SPECIES[a.species];
