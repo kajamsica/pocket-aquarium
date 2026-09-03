@@ -135,6 +135,7 @@ export interface PocketState {
   tests: Record<string, PocketTestRecord>
   selection: { entityType: 'livestock' | 'coral'; id: number } | null
   log: Array<{ type: string; message: string }>
+  lastRealTimestamp: number
 }
 
 export interface CatalogSpecies {
@@ -157,6 +158,7 @@ interface Validation { ok: boolean; reasons: string[] }
 interface PocketRuntime {
   ACTIONS: Record<string, string>
   DATA: {
+    saveKey: string
     ACTIONS: Record<string, string>
     BUNDLES: Record<string, number>
     SPECIES: Record<string, CatalogSpecies>
@@ -174,6 +176,8 @@ interface PocketRuntime {
   step: (state: PocketState, seconds: number) => PocketState
   stepDays: (state: PocketState, days: number) => PocketState
   dispatch: (state: PocketState, action: PocketAction) => PocketState
+  sanitizeState: (raw: unknown) => PocketState
+  offlineCatchUp: (state: PocketState, elapsedMs: number) => unknown
   validatePurchase: (state: PocketState, request: Record<string, unknown>) => Validation
   sessionGuide: {
     project: (state: PocketState) => PocketGuideView
@@ -259,6 +263,21 @@ export function createPocketReefShowcase(): PocketState {
 
 export function createPocketNewGame(): PocketState {
   return runtime.createState({ habitat: 'reef', seed: 0x51f15e })
+}
+
+export const pocketSaveKey = runtime.DATA.saveKey
+
+export function restorePocketGame(raw: unknown, now = Date.now()): PocketState {
+  const state = runtime.sanitizeState(raw)
+  if (!state.habitat) return createPocketNewGame()
+  if (state.lastRealTimestamp && now > state.lastRealTimestamp) {
+    runtime.offlineCatchUp(state, now - state.lastRealTimestamp)
+  }
+  return state
+}
+
+export function serializePocketGame(state: PocketState, now = Date.now()): string {
+  return JSON.stringify({ ...state, lastRealTimestamp: now })
 }
 
 export function createPocketSpecimenPreview(speciesId: string, profileOverride?: CatalogSpecies): PocketState {

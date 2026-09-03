@@ -3,9 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReefRenderSettings, ReefRenderTelemetry } from './contracts'
 import {
   advancePocketState,
+  createPocketNewGame,
   createPocketReefShowcase,
   dispatchPocketAction,
+  pocketSaveKey,
   projectPocketState,
+  restorePocketGame,
+  serializePocketGame,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
 import { SpecimenRosterProvider } from './scene/SpecimenFish'
@@ -19,7 +23,9 @@ const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
   diagnosticView: 'beauty',
 }
-const WORKBENCH_SPECIES = new URLSearchParams(window.location.search).get('workbench')
+const SEARCH_PARAMS = new URLSearchParams(window.location.search)
+const WORKBENCH_SPECIES = SEARCH_PARAMS.get('workbench')
+const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
 
 if (WORKBENCH_SPECIES === 'ocellaris') {
   const icon = document.createElement('link')
@@ -29,11 +35,21 @@ if (WORKBENCH_SPECIES === 'ocellaris') {
 }
 
 function AquariumApp() {
-  const [pocketState, setPocketState] = useState(createPocketReefShowcase)
+  const [pocketState, setPocketState] = useState(() => {
+    if (SHOWCASE_MODE) return createPocketReefShowcase()
+    try {
+      const saved = window.localStorage.getItem(pocketSaveKey)
+      return saved ? restorePocketGame(JSON.parse(saved)) : createPocketNewGame()
+    } catch {
+      return createPocketNewGame()
+    }
+  })
+  const pocketStateRef = useRef(pocketState)
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const lastTelemetryUpdate = useRef(0)
   const view = projectPocketState(pocketState)
+  pocketStateRef.current = pocketState
 
   useEffect(() => {
     let previousUpdate = performance.now()
@@ -51,6 +67,19 @@ function AquariumApp() {
     return () => window.clearInterval(timer)
   }, [])
 
+  useEffect(() => {
+    if (SHOWCASE_MODE) return
+    const save = () => {
+      try { window.localStorage.setItem(pocketSaveKey, serializePocketGame(pocketStateRef.current)) } catch { /* storage is optional */ }
+    }
+    const timer = window.setInterval(save, 1000)
+    window.addEventListener('pagehide', save)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('pagehide', save)
+    }
+  }, [])
+
   const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
     setPocketState((current) => dispatchPocketAction(current, action))
   }, [])
@@ -64,7 +93,7 @@ function AquariumApp() {
 
   return (
     <main className="reef-app">
-      <SpecimenRosterProvider specimens={view.specimens}>
+      <SpecimenRosterProvider specimens={view.specimens} food={view.food} dispatch={dispatch}>
         <ReefScene
           snapshot={view.reefSnapshot}
           renderSettings={renderSettings}
