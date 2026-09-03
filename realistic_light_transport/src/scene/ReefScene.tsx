@@ -14,19 +14,80 @@ import {
 import { OpticalTank } from './OpticalTank'
 import { ReefHabitat } from './ReefHabitat'
 import type { SpectralTransportTelemetry } from './materials/spectralTransport'
+import { noteTankPointerDown, noteTankPointerUp } from './tankGestures'
 
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
   diagnosticView: 'beauty',
+  brightness: 1,
 }
 const MAX_FLOW_STEP_SECONDS = 0.1
 
+export function cameraDistanceForAspect(aspect: number) {
+  if (aspect < .72) return 8.55
+  if (aspect > 1.5) return 6.95
+  return 7.7
+}
+
 function CameraRig() {
+  const { gl, size } = useThree()
   const home = useMemo(() => new THREE.Vector3(0, 0.48, 7.7), [])
   const target = useMemo(() => new THREE.Vector3(0, -0.12, 0), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
+  const cameraDistance = useRef<number | null>(null)
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ distance: number; cameraDistance: number } | null>(null)
+
+  useEffect(() => {
+    const element = gl.domElement
+    const pointerDown = (event: PointerEvent) => {
+      noteTankPointerDown(event.pointerId, event.pointerType)
+      if (event.pointerType !== 'touch') return
+      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (touches.current.size === 2) {
+        const [a, b] = [...touches.current.values()]
+        pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? 7.7 }
+      }
+    }
+    const pointerMove = (event: PointerEvent) => {
+      if (!touches.current.has(event.pointerId)) return
+      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (touches.current.size !== 2 || !pinch.current) return
+      const [a, b] = [...touches.current.values()]
+      const distance = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 20)
+      cameraDistance.current = THREE.MathUtils.clamp(
+        pinch.current.cameraDistance * pinch.current.distance / distance,
+        5.35,
+        10.2,
+      )
+      event.preventDefault()
+    }
+    const pointerUp = (event: PointerEvent) => {
+      noteTankPointerUp(event.pointerId, event.pointerType)
+      touches.current.delete(event.pointerId)
+      if (touches.current.size < 2) pinch.current = null
+    }
+    const wheel = (event: WheelEvent) => {
+      const base = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
+      cameraDistance.current = THREE.MathUtils.clamp(base + event.deltaY * .006, 5.35, 10.2)
+      event.preventDefault()
+    }
+    element.addEventListener('pointerdown', pointerDown, { capture: true })
+    element.addEventListener('pointermove', pointerMove, { capture: true })
+    element.addEventListener('pointerup', pointerUp, { capture: true })
+    element.addEventListener('pointercancel', pointerUp, { capture: true })
+    element.addEventListener('wheel', wheel, { passive: false })
+    return () => {
+      element.removeEventListener('pointerdown', pointerDown, { capture: true })
+      element.removeEventListener('pointermove', pointerMove, { capture: true })
+      element.removeEventListener('pointerup', pointerUp, { capture: true })
+      element.removeEventListener('pointercancel', pointerUp, { capture: true })
+      element.removeEventListener('wheel', wheel)
+    }
+  }, [gl, size.height, size.width])
 
   useFrame(({ camera, pointer }, delta) => {
+    home.z = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
     desired.set(home.x + pointer.x * 0.22, home.y + pointer.y * 0.11, home.z)
     camera.position.lerp(desired, 1 - Math.exp(-delta * 2.8))
     camera.lookAt(target)
@@ -35,12 +96,12 @@ function CameraRig() {
   return null
 }
 
-function ExposureController({ lightPower }: { readonly lightPower: number }) {
+function ExposureController({ lightPower, brightness }: { readonly lightPower: number; readonly brightness: number }) {
   const { gl } = useThree()
 
   useEffect(() => {
-    gl.toneMappingExposure = THREE.MathUtils.lerp(0.82, 1.08, lightPower)
-  }, [gl, lightPower])
+    gl.toneMappingExposure = THREE.MathUtils.lerp(1.06, 1.28, lightPower) * THREE.MathUtils.clamp(brightness, .7, 1.45)
+  }, [brightness, gl, lightPower])
 
   return null
 }
@@ -152,7 +213,7 @@ function ReefWorld({
       keyLight.current.position.x = Math.sin(elapsed * 0.09) * 0.16
     }
     if (fillLight.current) {
-      fillLight.current.intensity = 3 + lightPower * 12
+      fillLight.current.intensity = 12 + lightPower * 18
     }
   })
 
@@ -160,7 +221,8 @@ function ReefWorld({
     <>
       <color attach="background" args={['#01080d']} />
       <fogExp2 attach="fog" args={['#061923', 0.055]} />
-      <hemisphereLight args={['#7cc8e8', '#071018', 0.38]} />
+      <hemisphereLight args={['#8bd5f2', '#0d1c24', 0.6]} />
+      <directionalLight color="#8fbfd0" intensity={0.42} position={[1.8, 2.5, 5]} />
       <spotLight
         ref={keyLight}
         castShadow
@@ -178,7 +240,7 @@ function ReefWorld({
       <pointLight
         ref={fillLight}
         color="#3dd9d0"
-        intensity={3 + lightPower * 12}
+        intensity={12 + lightPower * 18}
         decay={2}
         distance={7}
         position={[-3.4, 0.6, 3.2]}
@@ -206,7 +268,7 @@ function ReefWorld({
           visible={renderSettings.diagnosticView === 'flow'}
         />
       </group>
-      <ExposureController lightPower={lightPower} />
+      <ExposureController lightPower={lightPower} brightness={renderSettings.brightness} />
       <CameraRig />
     </>
   )

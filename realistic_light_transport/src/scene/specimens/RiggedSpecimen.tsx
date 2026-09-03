@@ -1,5 +1,5 @@
 import { useFrame, useLoader } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
@@ -12,7 +12,8 @@ export interface RiggedSpecimenProps {
   readonly targetLengthSceneUnits: number
   readonly stage: string
   readonly hunger: number
-  readonly feedPulse: number
+  /** Live 0..1 feeding-pursuit drive updated each frame by the fish's steering. */
+  readonly feedDrive: RefObject<number>
 }
 
 function phaseForId(id: number) {
@@ -20,7 +21,7 @@ function phaseForId(id: number) {
   return value - Math.floor(value)
 }
 
-export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedPulse }: RiggedSpecimenProps) {
+export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
   const root = useMemo(() => cloneSkinned(source.scene) as THREE.Group, [source.scene])
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
@@ -64,7 +65,7 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   }, [asset.clips, asset.speciesId, individualId, mixer, root, source.animations, stage])
 
   useFrame((_, delta) => {
-    const burstDrive = THREE.MathUtils.clamp(feedPulse * hunger, 0, 1)
+    const burstDrive = THREE.MathUtils.clamp(feedDrive.current, 0, 1)
     const swim = actions.current.swim
     const idle = actions.current.idle
     const burst = actions.current.burst

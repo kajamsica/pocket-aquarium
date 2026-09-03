@@ -20,7 +20,7 @@ This document describes the two ways Pocket Aquarium can reach an iPhone:
 
 ## 1. Install the live PWA on iPhone (works today)
 
-The game is a static, dependency-free Progressive Web App served over HTTPS by GitHub Pages.
+The game is a Vite-built React/Three.js Progressive Web App served over HTTPS by GitHub Pages.
 iOS Safari can install it to the Home Screen and run it full-screen ("Open as Web App").
 
 **This is a web app, not a signed native binary.** It installs through Safari's Home Screen
@@ -63,9 +63,8 @@ Enterprise Cloud). That is why this repository is public rather than private.
 
 - Live site: `https://kajamsica.github.io/pocket-aquarium/`
 - Build type: **GitHub Actions custom workflow** — `.github/workflows/pages.yml`
-- The workflow stages and publishes the **runtime app only** (`index.html`, `styles.css`,
-  `js/`, `assets/`, `manifest.webmanifest`, `sw.js`). `labs/`, `docs/`, `tests/`, and
-  `checkpoints/` are never published.
+- The workflow builds `realistic_light_transport/` and publishes its compiled **`dist/`
+  artifact only**. Source, docs, tests, labs, and checkpoints are never published.
 
 Primary sources: GitHub — *Using custom workflows with GitHub Pages*
 (<https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages>)
@@ -111,10 +110,11 @@ app bundle. The workflow itself uses the built-in `GITHUB_TOKEN` with least-priv
 
 ## 3. Native app host (Capacitor 8) — checked in under `native/`
 
-A native iOS app wraps this same static web app with **Capacitor 8**. The host is a **checked-in,
+A native iOS app wraps this same compiled web app with **Capacitor 8**. The host is a **checked-in,
 isolated** package at [`native/`](../native/): pinned Capacitor 8.5.1 toolchain, a deterministic
 staging boundary, and the generated **Swift Package Manager** Xcode project. It changes nothing
-about the web runtime or the Pages deployment — the game's source of truth stays at the repo root.
+about the web runtime or the Pages deployment — both hosts consume
+`realistic_light_transport/dist`.
 
 ### What is committed vs. regenerated
 
@@ -138,14 +138,11 @@ the generated `capacitor.config.json`/`config.xml` inside `ios/`, `native/ios/ca
 
 ### The staging boundary
 
-`native/scripts/stage-web.mjs` rebuilds `native/www` from an **explicit 16-file allowlist** that
-matches the GitHub Pages runtime artifact exactly (root shell + `js/` + validated `assets/`):
-`index.html`, `styles.css`, `manifest.webmanifest`, `sw.js`; `js/{data,sim,render,app}.js`;
-the two habitat plates; the three validated species sprites (clownfish **v2**, not the invalid
-v1); and the three runtime icons (**not** the app-icon master). It fails loudly if any
-allowlisted file is missing, removes stale destination bytes safely (never touching anything
-outside `native/www`), and prints a deterministic checksum receipt. `tests/native.test.js`
-locks all of this behavior.
+`native/scripts/stage-web.mjs` rebuilds `native/www` from the complete compiled Vite artifact.
+It requires `index.html` plus hashed JavaScript and CSS entrypoints, recursively includes runtime
+assets such as GLB models, rejects symlinks and unsafe paths, removes stale destination bytes
+safely, and prints a deterministic per-file checksum receipt. `tests/native.test.js` proves the
+staged tree is byte-identical to `realistic_light_transport/dist` and contains nothing extra.
 
 ### Reproduce the host from a clean checkout
 
@@ -157,8 +154,7 @@ locks all of this behavior.
 ```sh
 cd native
 npm ci                     # install the pinned Capacitor 8.5.1 toolchain (reproducible)
-npm run stage              # rebuild ./www from the root runtime allowlist (deterministic)
-npx cap sync ios           # copy ./www into ios/App/App/public and update the SPM manifest/wiring
+npm run sync:fresh         # build the 3D app, stage exact bytes, and sync native/SPM wiring
 npx cap open ios           # open native/ios/App/App.xcodeproj in Xcode (needs full Xcode 26+)
 ```
 
@@ -170,8 +166,8 @@ not during `cap sync`.
 - **macOS** on Apple hardware. Xcode 26.0–26.3 requires macOS Sequoia 15.6 or later;
   Apple's current Xcode 26.6 requires macOS Tahoe 26.2 or later. *This host is on Sonoma
   14.8.8 and must be upgraded before any Xcode 26 release can be installed.*
-- **Node.js 22 or higher** (this repo needs no build step of its own; Node is for the
-  Capacitor CLI). *Present here: Node v24.2.0.*
+- **Node.js 22 or higher** (used for the Vite build and Capacitor CLI). *Present here:
+  Node v24.2.0.*
 - **Xcode 26.0 or higher** — Capacitor 8 requires a minimum of Xcode 26.0. *Absent here.*
 - **Xcode Command Line Tools** — `xcode-select --install`. *Only the standalone Command Line
   Tools are present here; full Xcode is not.*
@@ -205,7 +201,7 @@ minimum (see [§4](#4-local-toolchain-evidence-recorded-2026-09-02)).
 ```sh
 # From native/: refresh the bundle and open the committed project.
 cd native
-npm ci && npm run stage && npx cap sync ios
+npm ci && npm run sync:fresh
 npx cap open ios
 # In Xcode: select the App target → Signing & Capabilities → choose your Team,
 # confirm the bundle identifier (com.kajamsica.pocketaquarium), and let Xcode manage
@@ -260,7 +256,7 @@ identity, and a provisioning profile are absent, so no local iPhone build or sig
 - Deterministic tests pass (`node tests/sim.test.js`, `node tests/pwa.test.js`,
   `node tests/native.test.js`).
 - The **native Capacitor 8 iOS host is generated and committed** under `native/`. With Node +
-  Command Line Tools only, `npm ci`, `npm run stage`, and `npx cap sync ios` all ran successfully
+  Command Line Tools only, `npm ci` and `npm run sync:fresh` ran successfully
   and are reproducible; the SPM project (`native/ios/App/CapApp-SPM/Package.swift`) pins
   `capacitor-swift-pm` to `8.5.1`, and the app icon is a derivative of the preserved master.
 - GitHub Actions has compiled the staged host as an **unsigned iOS Simulator app** on a macOS 26 /

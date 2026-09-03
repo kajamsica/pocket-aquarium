@@ -1,8 +1,8 @@
 # Pocket Aquarium — native iOS host (Capacitor 8)
 
-An **isolated** Capacitor 8.5.1 shell that packages the accepted root Pocket Aquarium
-PWA as a native iOS app. Nothing here changes the web runtime or the GitHub Pages
-deployment — the game's source of truth remains the repository root.
+An **isolated** Capacitor 8.5.1 shell that packages the accepted React/Three.js Pocket
+Aquarium build as a native iOS app. GitHub Pages and Capacitor both consume the same
+`realistic_light_transport/dist` artifact, so the browser and native hosts cannot drift.
 
 - **App name:** Pocket Aquarium
 - **App id:** `com.kajamsica.pocketaquarium`
@@ -29,15 +29,15 @@ Regenerated locally (git-ignored — see `.gitignore` and `ios/.gitignore`):
 ```sh
 cd native
 npm ci                     # install the pinned Capacitor toolchain
-npm run stage              # rebuild ./www from the root runtime allowlist
-npx cap sync ios           # copy ./www into the iOS host + update the SPM manifest/wiring
+npm run sync:fresh         # install/build the 3D app, stage it, and sync the iOS host
 npx cap open ios           # open App.xcodeproj in Xcode (requires full Xcode 26+; not run here)
 ```
 
-`npm run stage` runs `scripts/stage-web.mjs`, which copies exactly the 16-file root
-runtime allowlist (root shell + `js/` + validated `assets/`) into `www` and prints a
-checksum receipt to stdout. It fails loudly if any allowlisted file is missing and
-never copies the app-icon master, the invalid sprite, docs, tests, labs, or reef files.
+`npm run stage` is intentionally build-free: it copies every file in an existing
+`realistic_light_transport/dist` tree into `www` and prints a checksum receipt. It
+requires Vite's hashed JavaScript and CSS entries, rejects symlinks and unsafe paths,
+and never copies source, docs, tests, or repository metadata. Use `sync:fresh` from a
+clean checkout; use `stage` only when the 3D build already exists.
 
 ## Signing, device, and TestFlight — environment-gated
 

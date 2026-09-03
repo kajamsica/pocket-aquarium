@@ -19,6 +19,7 @@ const PHASE_LABELS: Readonly<Record<LifecyclePhase, string>> = {
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
   diagnosticView: 'beauty',
+  brightness: 1,
 }
 
 function clampUnit(value: number) {
