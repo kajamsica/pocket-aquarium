@@ -17,7 +17,8 @@ import {
   pelletDepthY,
   surfaceXToNormalizedX,
 } from '../scene/feeding'
-import { assignPelletTargets } from '../scene/SpecimenFish'
+import { assignPelletTargets, resolveReefHardscape } from '../scene/SpecimenFish'
+import { REEF_ROCKS } from '../scene/reefLayout'
 
 function memoryStorage(): Storage {
   const map = new Map<string, string>()
@@ -149,6 +150,19 @@ describe('fair physical targeting', () => {
     const hungriest = specimens.reduce((best, animal) => animal.hunger > best.hunger ? animal : best)
     expect(assignments.get(101)).toBe(hungriest.id)
     expect(new Set(assignments.values()).size).toBe(3)
+  })
+
+  it('projects fish centres out of every rendered live-rock collision volume', () => {
+    for (const source of REEF_ROCKS) {
+      const position = source.position.clone()
+      resolveReefHardscape(position, .12, false)
+      for (const rock of REEF_ROCKS) {
+        const nx = (position.x - rock.position.x) / (rock.scale.x * 1.08 + .12)
+        const ny = (position.y - rock.position.y) / (rock.scale.y * 1.08 + .12)
+        const nz = (position.z - rock.position.z) / (rock.scale.z * 1.08 + .12)
+        expect(nx * nx + ny * ny + nz * nz).toBeGreaterThanOrEqual(.999)
+      }
+    }
   })
 })
 

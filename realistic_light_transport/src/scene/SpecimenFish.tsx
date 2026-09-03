@@ -238,19 +238,24 @@ function avoidHardscape(pos: THREE.Vector3, desired: THREE.Vector3, bodyRadius: 
   }
 }
 
-function resolveHardscape(pos: THREE.Vector3, bodyRadius: number, benthic: boolean) {
-  for (const rock of REEF_ROCKS) {
-    const rx = rock.scale.x * 1.08 + bodyRadius
-    const ry = rock.scale.y * 1.08 + bodyRadius
-    const rz = rock.scale.z * 1.08 + bodyRadius
-    let nx = (pos.x - rock.position.x) / rx
-    let ny = (pos.y - rock.position.y) / ry
-    let nz = (pos.z - rock.position.z) / rz
-    let length = Math.sqrt(nx * nx + ny * ny + nz * nz)
-    if (length >= 1) continue
-    if (length < 1e-5) { nx = 0; ny = benthic ? 0 : 1; nz = 1; length = Math.sqrt(ny * ny + nz * nz) }
-    nx /= length; ny /= length; nz /= length
-    pos.set(rock.position.x + nx * rx, rock.position.y + ny * ry, rock.position.z + nz * rz)
+export function resolveReefHardscape(pos: THREE.Vector3, bodyRadius: number, benthic: boolean) {
+  // Several light passes handle overlapping boulders without tunnelling from one into the next.
+  for (let pass = 0; pass < 4; pass += 1) {
+    for (const rock of REEF_ROCKS) {
+      const rx = rock.scale.x * 1.08 + bodyRadius
+      const ry = rock.scale.y * 1.08 + bodyRadius
+      const rz = rock.scale.z * 1.08 + bodyRadius
+      let nx = (pos.x - rock.position.x) / rx
+      let ny = (pos.y - rock.position.y) / ry
+      let nz = (pos.z - rock.position.z) / rz
+      let length = Math.sqrt(nx * nx + ny * ny + nz * nz)
+      if (length >= 1) continue
+      if (length < 1e-5) { nx = 0; ny = benthic ? 0 : 1; nz = 1; length = Math.sqrt(ny * ny + nz * nz) }
+      // Open-water fish prefer lifting over rock; bottom dwellers route around it laterally.
+      if (!benthic) { ny += .7; length = Math.sqrt(nx * nx + ny * ny + nz * nz) }
+      nx /= length; ny /= length; nz /= length
+      pos.set(rock.position.x + nx * rx, rock.position.y + ny * ry, rock.position.z + nz * rz)
+    }
   }
 }
 
@@ -343,7 +348,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
     pos.x = THREE.MathUtils.clamp(pos.x, -xBound, xBound)
     pos.y = THREE.MathUtils.clamp(pos.y, yFloor, yCeil)
     pos.z = THREE.MathUtils.clamp(pos.z, benthic ? -.2 : .56, 1.04)
-    resolveHardscape(pos, bodyRadius, benthic)
+    resolveReefHardscape(pos, bodyRadius, benthic)
     pos.x = THREE.MathUtils.clamp(pos.x, -xBound, xBound)
     pos.y = THREE.MathUtils.clamp(pos.y, yFloor, yCeil)
     pos.z = THREE.MathUtils.clamp(pos.z, benthic ? -.2 : .56, 1.04)
