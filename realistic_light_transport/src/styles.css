@@ -2052,3 +2052,32 @@ input:focus-visible {
     max-width: 440px;
   }
 }
+
+/* The old diagnostic HUD intentionally became a scrolling document on short
+ * screens. The player HUD is a fixed world instead: keep its canvas, sheets,
+ * and dock inside the actual phone viewport at every orientation. */
+.pocket-reef-app {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-height: 599px) {
+  html:has(.pocket-reef-app),
+  body:has(.pocket-reef-app),
+  #root:has(.pocket-reef-app) {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .pocket-reef-app {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .pocket-reef-app .pa-sheet {
+    max-height: 50dvh;
+  }
+}

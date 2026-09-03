@@ -79,7 +79,7 @@ function AquariumApp() {
   }, [])
 
   return (
-    <main className="reef-app">
+    <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
         <SpecimenRosterProvider specimens={view.specimens}>
           <ReefScene
