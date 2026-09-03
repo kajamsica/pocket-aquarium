@@ -272,8 +272,8 @@ const clone = (state: PocketState): PocketState => structuredClone(state)
 function preparePocketReef(state: PocketState) {
   const act = runtime.ACTIONS
   const send = (action: PocketAction) => runtime.dispatch(state, action)
-  send({ type: act.SETUP_FILL })
   send({ type: act.PURCHASE_TIER, tier: 'mid151' })
+  send({ type: act.SETUP_FILL })
   ;([
     ['filter', 'canister'], ['heater', 'controller'], ['circulation', 'powerhead'],
     ['light', 'led'], ['ato', 'ato'],
