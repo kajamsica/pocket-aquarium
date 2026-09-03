@@ -15,3 +15,11 @@ createRoot(root).render(
   </StrictMode>,
 )
 
+// The native Capacitor build uses a custom URL scheme and bundles these same bytes.
+// Register only the production HTTP(S) host so Vite development and native loading can
+// never be pinned behind a stale web cache.
+if (import.meta.env.PROD && 'serviceWorker' in navigator && /^(https?:)$/.test(window.location.protocol)) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
+  })
+}
