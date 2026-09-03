@@ -1,11 +1,60 @@
 import '../../../js/specimenProfiles.js'
 import '../../../js/data.js'
 import '../../../js/sim.js'
+import '../../../js/sessionGuide.js'
 
 import type { LifecyclePhase, ReefSnapshot } from '../contracts'
 import { sampleSpectralTransmittance } from '../scene/materials/spectralTransport'
 
-type PocketAction = Readonly<{ type: string } & Record<string, unknown>>
+export type PocketAction = Readonly<{ type: string } & Record<string, unknown>>
+
+export interface PocketFoodPellet {
+  readonly id: number
+  readonly x: number
+  readonly y: number
+  readonly amount: number
+  readonly ageDays: number
+  readonly sunk: boolean
+}
+
+export interface PocketGuideView {
+  readonly stage: string
+  readonly title: string
+  readonly body: string
+  readonly nextAction: Readonly<{ type: string } & Record<string, unknown>> | null
+  readonly firstFeedPending: boolean
+  readonly testedAtDay: number | null
+  readonly readingAgeDays: number | null
+}
+
+export interface PocketTestedReading {
+  readonly key: string
+  readonly value: number | null
+  readonly known: boolean
+  readonly ageDays: number | null
+  readonly testedAtDay: number | null
+}
+
+export interface PocketTestFreshness {
+  readonly label: string
+  readonly stale: boolean
+  readonly testedAtDay: number | null
+  readonly readingAgeDays: number | null
+}
+
+export interface PocketSelectionView {
+  readonly entityType: 'livestock' | 'coral'
+  readonly id: number
+  readonly title: string
+  readonly facts: readonly string[]
+}
+
+export interface PocketClutchView {
+  readonly id: number
+  readonly speciesId: string
+  readonly stage: string
+  readonly ageDays: number
+}
 
 interface PocketWater {
   levelL: number
@@ -43,8 +92,24 @@ interface PocketCoral {
   id: number
   species: string
   health: number
+  tissue: number
   extension: number
   polyps: number
+  growth: number
+  stress: number
+}
+
+interface PocketClutch {
+  id: number
+  species: string
+  stage: string
+  ageDays: number
+}
+
+interface PocketTestRecord {
+  value: number
+  ageDays: number
+  known: boolean
 }
 
 export interface PocketState {
@@ -64,8 +129,11 @@ export interface PocketState {
   succession: { age: number; haze: number; diatom: number; greenFilm: number; cyano: number }
   livestock: PocketAnimal[]
   corals: PocketCoral[]
+  clutches: PocketClutch[]
   microfauna: { pods: number; worms: number; infusoria: number; biodiversity: number }
-  food: unknown[]
+  food: PocketFoodPellet[]
+  tests: Record<string, PocketTestRecord>
+  selection: { entityType: 'livestock' | 'coral'; id: number } | null
   log: Array<{ type: string; message: string }>
 }
 
@@ -95,6 +163,7 @@ interface PocketRuntime {
     CORALS: Record<string, CatalogCoral>
     TIERS: Record<string, CatalogTier>
     TIER_ORDER: string[]
+    HABITATS: Record<string, { params: string[] }>
     EQUIPMENT: Record<string, { label: string; levels: EquipmentLevel[] }>
     resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
     equipLevel: (category: string, id: string) => EquipmentLevel | null
@@ -106,6 +175,9 @@ interface PocketRuntime {
   stepDays: (state: PocketState, days: number) => PocketState
   dispatch: (state: PocketState, action: PocketAction) => PocketState
   validatePurchase: (state: PocketState, request: Record<string, unknown>) => Validation
+  sessionGuide: {
+    project: (state: PocketState) => PocketGuideView
+  }
 }
 
 export interface PocketSpecimen extends PocketAnimal {
@@ -137,11 +209,19 @@ export interface PocketGameView {
   readonly cycled: boolean
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
+  readonly food: readonly PocketFoodPellet[]
+  readonly guide: PocketGuideView
+  readonly testedWater: readonly PocketTestedReading[]
+  readonly testFreshness: PocketTestFreshness
+  readonly selection: PocketSelectionView | null
+  readonly clutches: readonly PocketClutchView[]
   readonly storeOffers: readonly PocketStoreOffer[]
+  readonly optics: Readonly<{ localPpfd: number; mode: 'read_only' }>
   readonly reefSnapshot: ReefSnapshot
 }
 
 const runtime = (globalThis as unknown as { PA: PocketRuntime }).PA
+export const pocketActions: Readonly<Record<string, string>> = Object.freeze({ ...runtime.ACTIONS })
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value))
 const clone = (state: PocketState): PocketState => structuredClone(state)
 
@@ -175,6 +255,10 @@ export function createPocketReefShowcase(): PocketState {
   runtime.stepDays(state, 0.02)
   send({ type: act.WATER_TEST })
   return state
+}
+
+export function createPocketNewGame(): PocketState {
+  return runtime.createState({ habitat: 'reef', seed: 0x51f15e })
 }
 
 export function createPocketSpecimenPreview(speciesId: string, profileOverride?: CatalogSpecies): PocketState {
@@ -252,6 +336,29 @@ export function projectPocketState(state: PocketState): PocketGameView {
   const lastFed = living.reduce((latest, animal) => Math.max(latest, animal.lastFedDay), -Infinity)
   const feedPulse = state.food.length ? 1 : clamp(1 - (state.time.days - lastFed) / 0.012)
   const saltFraction = clamp(state.water.salinity / 1000, 0, 0.2)
+  const guide = runtime.sessionGuide.project(state)
+  const habitatParameters = state.habitat ? runtime.DATA.HABITATS[state.habitat]?.params ?? [] : []
+  const testedWater = habitatParameters.map((key: string): PocketTestedReading => {
+    const reading = state.tests[key]
+    const known = Boolean(reading?.known)
+    const ageDays = known ? reading.ageDays : null
+    return { key, value: known ? reading.value : null, known, ageDays,
+      testedAtDay: ageDays === null ? null : Math.max(0, state.time.days - ageDays) }
+  })
+  let selection: PocketSelectionView | null = null
+  if (state.selection?.entityType === 'coral') {
+    const coral = state.corals.find((item) => item.id === state.selection?.id)
+    const profile = coral ? runtime.DATA.CORALS[coral.species] : null
+    if (coral && profile) selection = { entityType: 'coral', id: coral.id, title: profile.name,
+      facts: [`${Math.round(coral.polyps)} polyps`, `Health ${Math.round(coral.health * 100)}%`,
+        `Extension ${Math.round(coral.extension * 100)}%`] }
+  } else if (state.selection) {
+    const animal = state.livestock.find((item) => item.id === state.selection?.id)
+    const profile = animal ? runtime.DATA.resolveSpecies(state, animal.species) : null
+    if (animal && profile) selection = { entityType: 'livestock', id: animal.id, title: profile.name,
+      facts: [profile.sci, `${animal.stage} · ${animal.sex}`, `Health ${Math.round(animal.health * 100)}%`,
+        `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(animal.hunger * 100)}%`] }
+  }
   const reefSnapshot: ReefSnapshot = {
     namespace: 'marine_reef',
     clock: { elapsedHours: state.time.days * 24, day: Math.floor(state.time.days) + 1,
@@ -288,5 +395,13 @@ export function projectPocketState(state: PocketState): PocketGameView {
     specimens: living.map((animal) => { const species = runtime.DATA.resolveSpecies(state, animal.species); if (!species) throw new Error(`Unknown root PA specimen: ${animal.species}`); return { ...animal,
       speciesId: animal.species, name: species.name, scientificName: species.sci,
       adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species } }),
-    storeOffers: storeOffers(state), reefSnapshot }
+    food: state.food.map(({ id, x, y, amount, ageDays, sunk }) => ({ id, x, y, amount, ageDays, sunk })),
+    guide, testedWater,
+    testFreshness: { label: String(guide.nextAction?.freshness ?? 'Never tested'),
+      stale: Boolean(guide.nextAction?.stale ?? true), testedAtDay: guide.testedAtDay,
+      readingAgeDays: guide.readingAgeDays },
+    selection,
+    clutches: state.clutches.map(({ id, species, stage, ageDays }) => ({ id, speciesId: species, stage, ageDays })),
+    storeOffers: storeOffers(state), optics: { localPpfd: reefSnapshot.lightField.localPpfd, mode: 'read_only' },
+    reefSnapshot }
 }
