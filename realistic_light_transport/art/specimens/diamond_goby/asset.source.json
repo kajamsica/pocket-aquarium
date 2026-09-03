@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "diamond_goby",
+  "displayName": "Diamond Goby",
+  "scientificLabel": "Valenciennea puellaris",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.15,
+    "kind": "adult_total_length",
+    "note": "FishBase records a maximum of 20.0 cm SL (Hoese and Larson 1994); 15 cm total length is a typical aquarium adult. Measured along x over the whole mesh including the rounded caudal fin (FishBase: caudal 3.0 to 4.2 in SL)."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "sift" },
+  "palette": {
+    "skin": [0.78, 0.75, 0.68],
+    "fin": [0.86, 0.84, 0.78],
+    "iris": [0.40, 0.24, 0.06],
+    "cue": [0.55, 0.38, 0.26],
+    "adornment": [0.9, 0.9, 0.86]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.25, "finReliefStrength": 1.2, "finNormalStrength": 0.5 },
+  "morphology": {
+    "notes": "Elongate benthic gobiid; depth 4.8 to 6.0 in SL (FishBase), here 5.3 in SL; broad blunt head about as wide as deep with high-set dorsolateral eyes and a large oblique terminal mouth; flattened belly (ventral exponent 2.3) for the resting posture; two dorsal fins (VI + I,11-12), long anal fin (I,11-12), rounded caudal 3.0 to 4.2 in SL, large rounded fan pectorals and ventral pelvic fans just below them.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.06, "halfWidth": 0.0034, "dorsalHeight": 0.005, "ventralDepth": 0.0046, "centerZ": 0.0002 },
+      { "id": "peduncle", "x": -0.051, "halfWidth": 0.0042, "dorsalHeight": 0.006, "ventralDepth": 0.0056, "centerZ": 0.0002 },
+      { "id": "posterior-a", "x": -0.037, "halfWidth": 0.0058, "dorsalHeight": 0.0078, "ventralDepth": 0.0074, "centerZ": 0.0002 },
+      { "id": "posterior-b", "x": -0.02, "halfWidth": 0.0074, "dorsalHeight": 0.0094, "ventralDepth": 0.009, "centerZ": 0.0002 },
+      { "id": "mid-a", "x": -0.002, "halfWidth": 0.0088, "dorsalHeight": 0.0106, "ventralDepth": 0.01, "centerZ": 0.0002 },
+      { "id": "mid-b", "x": 0.014, "halfWidth": 0.0096, "dorsalHeight": 0.0114, "ventralDepth": 0.0106, "centerZ": 0.0002 },
+      { "id": "anterior", "x": 0.026, "halfWidth": 0.0104, "dorsalHeight": 0.0116, "ventralDepth": 0.0106, "centerZ": 0.0004 },
+      { "id": "operculum", "x": 0.036, "halfWidth": 0.0106, "dorsalHeight": 0.0114, "ventralDepth": 0.01, "centerZ": 0.0008 },
+      { "id": "head", "x": 0.045, "halfWidth": 0.01, "dorsalHeight": 0.0104, "ventralDepth": 0.0088, "centerZ": 0.0012 },
+      { "id": "snout", "x": 0.052, "halfWidth": 0.008, "dorsalHeight": 0.0078, "ventralDepth": 0.0064, "centerZ": 0.0014 },
+      { "id": "snout-front", "x": 0.055, "halfWidth": 0.0058, "dorsalHeight": 0.0056, "ventralDepth": 0.0048, "centerZ": 0.0013 },
+      { "id": "snout-tip", "x": 0.057, "halfWidth": 0.003, "dorsalHeight": 0.003, "ventralDepth": 0.0028, "centerZ": 0.0012 }
+    ],
+    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 2.3 },
+    "sampling": { "ringSegments": 48, "ringCount": 56 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.001, "edge": 0.00012 },
+    "fins": [
+      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": 0.01, "xEnd": 0.026, "rows": 4, "columns": 8, "lean": -0.004,
+        "heights": [[0.0, 0.005], [0.3, 0.01], [0.65, 0.0118], [0.9, 0.01], [1.0, 0.006]] },
+      { "name": "dorsal2", "type": "median", "side": "dorsal", "bone": "Dorsal2", "xStart": -0.052, "xEnd": 0.004, "rows": 4, "columns": 14, "lean": -0.004,
+        "heights": [[0.0, 0.0045], [0.12, 0.0085], [0.5, 0.0092], [0.9, 0.0088], [1.0, 0.006]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.052, "xEnd": 0.0, "rows": 4, "columns": 13, "lean": -0.004,
+        "heights": [[0.0, 0.004], [0.12, 0.0078], [0.5, 0.0085], [0.9, 0.008], [1.0, 0.005]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0082, "spanBottom": 0.0082, "length": 0.032, "fork": 0.0, "rounding": 0.55, "baseFraction": 0.9 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.026, "rootLength": 0.011, "rootHeight": -0.1, "length": 0.025, "sweepDegrees": 38, "droopDegrees": 12, "spread": 0.75, "taper": 0.5, "power": 0.6, "flare": 0.9, "rayCount": 19, "rows": 4, "columns": 8 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.024, "rootLength": 0.009, "rootHeight": -0.92, "length": 0.017, "sweepDegrees": 45, "droopDegrees": 20, "spread": 0.28, "taper": 0.4, "power": 0.7, "flare": 0.5, "rayCount": 6, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.046, "zFraction": 0.45, "radius": 0.003, "protrude": 0.28, "aspect": 0.32, "pupilFraction": 0.5 },
+    "mouth": { "zOffset": -0.15, "width": 0.003, "radius": 0.00045 },
+    "gill": { "x": 0.027, "radius": 0.00025, "points": 11, "bulge": 0.03 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.046, 0.012, -0.012, -0.036, -0.05, -0.064] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [0.8, 1.2, 2.0, 3.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 10, "pectoralFrequency": 2, "pelvic": 3.0, "median": 0.8, "gill": 2.5, "gillFrequency": 3, "jaw": 3.0, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.5, 4.0, 7.0, 10.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 26, "pectoralFrequency": 2, "pelvic": 6.0, "median": 1.5, "gill": 2.0, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "sift": { "frames": 72, "loop": false, "envelope": "hold", "axial": [1.0, 1.5, 2.0, 3.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 18, "pectoralFrequency": 3, "pelvic": 4.0, "median": 1.0, "gill": 4.0, "gillFrequency": 4, "jaw": 6.0, "jawFrequency": 4 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 8, "azimuthDegrees": -50, "elevationDegrees": 22 },
+  "visualDebt": [
+    "Pelvic fins are two separate ventral fans; the low frenum joining Valenciennea pelvic fins is not modelled.",
+    "The sift gape is a rigid downward tilt of the single mouth cue (the shared fish plan carries both lips on one Jaw bone); there is no separately hinged lower jaw.",
+    "Fin ray relief is a normal map only; membranes are single thin shells without modelled rays.",
+    "Eyes are flattened lateral discs seated in the head contour; the dorsolateral bulge of a goby eye above the head profile is only approximated."
+  ]
+}

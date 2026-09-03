@@ -1,0 +1,1665 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "chalice_coral",
+  "rig": "PA_chalice_coral_Rig",
+  "root": "PA_chalice_coral_Root",
+  "meshes": [
+    "PA_chalice_coral_Colony",
+    "PA_chalice_coral_Tentacles"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_chalice_coral_Colony",
+      "group": "part_plate",
+      "volumeFloor": 0.8
+    },
+    {
+      "object": "PA_chalice_coral_Colony",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_00_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "label": "tuft_00_tuft_01"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "label": "tuft_00_tuft_02"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "label": "tuft_00_tuft_03"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "label": "tuft_00_tuft_04"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "label": "tuft_00_tuft_05"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "label": "tuft_00_tuft_06"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_00_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_00_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_00_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_00_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_00_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_00_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_00_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_00_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_00"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_00_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_01_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "label": "tuft_01_tuft_02"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "label": "tuft_01_tuft_03"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "label": "tuft_01_tuft_04"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "label": "tuft_01_tuft_05"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "label": "tuft_01_tuft_06"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_01_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_01_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_01_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_01_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_01_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_01_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_01_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_01_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_01"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_01_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_02_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "label": "tuft_02_tuft_03"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "label": "tuft_02_tuft_04"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "label": "tuft_02_tuft_05"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "label": "tuft_02_tuft_06"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_02_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_02_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_02_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_02_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_02_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_02_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_02_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_02_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_02"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_02_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_03_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "label": "tuft_03_tuft_04"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "label": "tuft_03_tuft_05"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "label": "tuft_03_tuft_06"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_03_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_03_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_03_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_03_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_03_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_03_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_03_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_03_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_03"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_03_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_04_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "label": "tuft_04_tuft_05"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "label": "tuft_04_tuft_06"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_04_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_04_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_04_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_04_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_04_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_04_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_04_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_04_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_04"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_04_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_05_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "label": "tuft_05_tuft_06"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_05_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_05_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_05_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_05_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_05_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_05_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_05_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_05_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_05"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_05_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_06_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "label": "tuft_06_tuft_07"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_06_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_06_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_06_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_06_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_06_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_06_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_06_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_06"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_06_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_07_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "label": "tuft_07_tuft_08"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_07_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_07_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_07_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_07_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_07_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_07_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_07"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_07_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_08_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "label": "tuft_08_tuft_09"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_08_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_08_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_08_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_08_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_08_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_08"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_08_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_09_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "label": "tuft_09_tuft_10"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_09_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_09_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_09_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_09_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_09"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_09_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_10_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "label": "tuft_10_tuft_11"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_10_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_10_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_10_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_10"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_10_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_11_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "label": "tuft_11_tuft_12"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_11_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_11_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_11"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_11_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_12_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "label": "tuft_12_tuft_13"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_12_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_12"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_12_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_13_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "label": "tuft_13_tuft_14"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_13"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_13_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_14_rock"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_14"
+      ],
+      "b": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "label": "tuft_14_tuft_15"
+    },
+    {
+      "a": [
+        "PA_chalice_coral_Tentacles",
+        "tuft_15"
+      ],
+      "b": [
+        "PA_chalice_coral_Colony",
+        "part_rock"
+      ],
+      "label": "tuft_15_rock"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.12,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "variantId": "purple_orange_eyes",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.056772,
+      -0.057465,
+      -0.0
+    ],
+    "max": [
+      0.063228,
+      0.059065,
+      0.027736
+    ]
+  },
+  "textures": [
+    "textures/tissue-albedo.png",
+    "textures/tissue-roughness.png",
+    "textures/tissue-normal.png",
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/tentacle-albedo.png",
+    "textures/tentacle-roughness.png",
+    "textures/tentacle-normal.png"
+  ],
+  "notes": {
+    "corallites": 16,
+    "tentacles": 105,
+    "plateRadiusMaxMeters": 0.06470672793528658,
+    "sourceTrianglesEstimate": 15036,
+    "founderCorallite": {
+      "x": -0.010220806920283947,
+      "y": -0.004316493573517222,
+      "radius": 0.0075899999999999995
+    }
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes/renders/three-view.png",
+    "boundsMin": [
+      -0.05677225440740585,
+      -0.05746470019221306,
+      -2.3257015396496846e-16
+    ],
+    "boundsMax": [
+      0.06322773545980453,
+      0.05906539037823677,
+      0.027736440300941467
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

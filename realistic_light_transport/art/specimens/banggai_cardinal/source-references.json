@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "banggai_cardinal",
+  "revision": 1,
+  "policy": "References informed proportions, fin layout, size and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source.",
+  "sources": [
+    {
+      "id": "WORMS-282494",
+      "title": "Pterapogon kauderni Koumans, 1933 taxon record (accepted; Apogonidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=282494",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-PTERAPOGON_KAUDERNI",
+      "title": "Pterapogon kauderni species summary (max length 8.6 cm TL; D VIII + I,14; A II,13; short deep compressed body; tasseled first dorsal, spike-like second dorsal, deeply forked caudal, three white-edged black bars, white-spotted black fin margins)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Pterapogon-kauderni.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "NDOBE-2013-AIP-43-3",
+      "title": "Ndobe S. et al. 2013. Life history of Banggai cardinalfish, Pterapogon kauderni, from Banggai Islands and Palu Bay. Acta Ichthyologica et Piscatoria 43(3): 237-250. Table 4 morphometric ratios: TL/SL 150%, SL/BH 2.07, HH 37% SL, DF1 35% SL, DF2 67-74% SL, AF 38% SL, VF 45% SL, PF 26% SL, CF 47-50% SL",
+      "publisher": "Acta Ichthyologica et Piscatoria (open access)",
+      "url": "https://doi.org/10.3750/AIP2013.43.3.08",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "peer_reviewed_morphometrics",
+      "allowedUse": "facts_and_citation",
+      "license": "Open access article; numeric ratios cited only"
+    },
+    {
+      "id": "NOAA-BANGGAI-CARDINALFISH",
+      "title": "Banggai Cardinalfish species page (up to 3.4 in; tasseled first dorsal, elongated anal and second dorsal rays, deeply forked caudal, black and light bars with whitish spots over a silvery body)",
+      "publisher": "NOAA Fisheries",
+      "url": "https://www.fisheries.noaa.gov/species/banggai-cardinalfish",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "US Government public domain (text)"
+    },
+    {
+      "id": "COMMONS-PTERAPOGON_KAUDERNI",
+      "title": "Category:Pterapogon kauderni (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Pterapogon_kauderni",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Published morphometric ratios (Ndobe et al. 2013) and openly licensed lateral photographs calibrate the side profile and fin lengths; top and front cross-sections are inferred from the general compressed apogonid body plan and FishBase's compressed cross-section note."
+}

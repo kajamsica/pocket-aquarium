@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Polyp_00",
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 15036,
+    "materials": 3,
+    "nodes": 22,
+    "skinJoints": 18,
+    "images": 9,
+    "meshes": [
+      "PA_chalice_coral_Colony",
+      "PA_chalice_coral_Tentacles"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.03956468118525214,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.05677225813269615,
+      -0.05746469646692276,
+      -2.7815338921044486e-09
+    ],
+    "max": [
+      0.06322774291038513,
+      0.05906538665294647,
+      0.027736449614167213
+    ],
+    "deviationMeters": 1.249500351492198e-08
+  }
+}

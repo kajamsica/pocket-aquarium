@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "zoanthid",
+  "variantId": "blue_green",
+  "scientificName": "Zoanthus sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.08,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "eab6bc40c2abdf2aa8f8615f4c78d37b75be36d32beb709065e7b7a6f10c8646",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Zoanthid Colony (blue and green)",
+  "bodyPlan": "zoanthid_colony",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-206284",
+      "title": "Zoanthus Lamarck, 1801 taxon record (Zoantharia: Brachycnemina: Zoanthidae; type species Zoanthus sociatus (Ellis, 1768))",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=206284",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "GONZALEZ-MUNOZ-2016-ZOANTHUS-SOCIATUS",
+      "title": "Sea anemones (Cnidaria: Actiniaria, Corallimorpharia, Ceriantharia, Zoanthidea) from marine shallow-water environments in Venezuela: Zoanthus sociatus account (column 25 to 40 mm tall and 4 to 6 mm wide, smooth, white to beige; oral disc slightly overhanging the distal column; slit-like mouth; about 48 to 60 tapering tentacles)",
+      "publisher": "Marine Biodiversity Records (Springer Nature)",
+      "url": "https://link.springer.com/article/10.1186/s41200-016-0016-7",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (open access article text)"
+    },
+    {
+      "id": "ALVAREZ-2021-TRINIDAD-ZOANTHARIA",
+      "title": "Shallow-water species diversity of common intertidal zoantharians along the northeastern coast of Trinidad: in situ oral disc diameters (5.2 to 10.3 mm) and tentacle counts (41 to 46) for Zoanthus sociatus and Zoanthus pulchellus colonies",
+      "publisher": "Oceans (MDPI)",
+      "url": "https://www.mdpi.com/2673-1924/2/3/27",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (open access article text)"
+    },
+    {
+      "id": "ITIS-52439",
+      "title": "Zoanthus Lamarck, 1801 (Taxonomic Serial No. 52439; Zoanthus sociatus 'green sea mat', Zoanthus pulchellus 'mat zoanthid')",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=52439",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "US federal public domain"
+    },
+    {
+      "id": "COMMONS-ZOANTHUS",
+      "title": "Category:Zoanthus (openly licensed photographs of colonies and polyps, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Zoanthus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "PA-ROOT-DATA-CORALS-ZOANTHID",
+      "title": "Pocket Aquarium root gameplay data DATA.CORALS.zoanthid (name 'Zoanthid colony', sci 'Zoanthus sp.', startPolyps 12)",
+      "publisher": "Pocket Aquarium project (js/data.js)",
+      "url": "repo:js/data.js#CORALS.zoanthid",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "project_identity",
+      "allowedUse": "identity_and_scale_only",
+      "license": "Project owned"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "3dfb425ee6c4d731fd0c72174bb9dc9b5aff8778d3d7f8a0bf19d5991a52a1e9",
+  "sourceReferencesSha256": "5055ce82dea66b1da1e56067d78533273c1d168a1504f7f4d7c69aa37e7677ed",
+  "sourceBlendSha256": "4e1d44b8b256d910b6565c3794e14b1071c96f85331e73e6be40a6f429c41312",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:001bcaa229c493a0e890a3507485cabd01b78476fd1f1968a1568c1b8c85db77",
+    "speciesBackend": "001bcaa229c493a0e890a3507485cabd01b78476fd1f1968a1568c1b8c85db77",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "78d9e3db16fbe4e63a6a872f92c3f3477802fd150daad6367c8e2febb2b3f03b"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/polyp-albedo.png",
+      "sha256": "b058fda8d032a283f46ecadaef3a1ef9e2bef3d52e1debabf73ec13d25a35ef4"
+    },
+    {
+      "path": "textures/polyp-normal.png",
+      "sha256": "c9312394dffc1e3fdfc65e158bbfdf168315bb3cac83977a766d91570b31d714"
+    },
+    {
+      "path": "textures/polyp-roughness.png",
+      "sha256": "bfd633d154139b9d546504d56522de92db995d8df3f3ccc6096f264a22ad6fac"
+    },
+    {
+      "path": "textures/rock-albedo.png",
+      "sha256": "ddb606527ca355d40742617643d42763c7588733999313380501ee0ab06bb812"
+    },
+    {
+      "path": "textures/rock-normal.png",
+      "sha256": "9c8830b7435d90496ee737a53fd1d1fb8fdf0fa1e329c280c802ccc876354a0d"
+    },
+    {
+      "path": "textures/rock-roughness.png",
+      "sha256": "f54d0200058d1b6e805b373a3ad55933831c8e048e7640bd802d934b738acdbf"
+    },
+    {
+      "path": "textures/tentacle-albedo.png",
+      "sha256": "dd1d13726e4335dd8cd8abdfa1ee27d6f4eef48a5d09de1095690dcea10e4ba9"
+    },
+    {
+      "path": "textures/tentacle-normal.png",
+      "sha256": "7923452b2f150039eb55a740ee3fb2c4c6767228c329aab8639d8d6d3834fb63"
+    },
+    {
+      "path": "textures/tentacle-roughness.png",
+      "sha256": "c308e821ec89c687f1f0e2b9bb7a8f05eea836ee68ee8e5cafe0885a8161a87e"
+    }
+  ],
+  "statistics": {
+    "triangles": 18096,
+    "materials": 3,
+    "bones": 22,
+    "nodes": 47,
+    "skins": 1,
+    "morphTargets": 84,
+    "clips": [
+      "close",
+      "flow",
+      "open"
+    ],
+    "vertices": {
+      "PA_zoanthid_Rock": 1154,
+      "PA_zoanthid_Polyp_00": 402,
+      "PA_zoanthid_Polyp_01": 402,
+      "PA_zoanthid_Polyp_02": 402,
+      "PA_zoanthid_Polyp_03": 430,
+      "PA_zoanthid_Polyp_04": 402,
+      "PA_zoanthid_Polyp_05": 458,
+      "PA_zoanthid_Polyp_06": 430,
+      "PA_zoanthid_Polyp_07": 402,
+      "PA_zoanthid_Polyp_08": 430,
+      "PA_zoanthid_Polyp_09": 402,
+      "PA_zoanthid_Polyp_10": 458,
+      "PA_zoanthid_Polyp_11": 430,
+      "PA_zoanthid_Polyp_12": 458,
+      "PA_zoanthid_Polyp_13": 430,
+      "PA_zoanthid_Polyp_14": 430,
+      "PA_zoanthid_Polyp_15": 402,
+      "PA_zoanthid_Polyp_16": 430,
+      "PA_zoanthid_Polyp_17": 402,
+      "PA_zoanthid_Polyp_18": 430,
+      "PA_zoanthid_Polyp_19": 402,
+      "PA_zoanthid_Polyp_20": 402
+    },
+    "runtimeBytes": 2626196
+  },
+  "clipRoles": {
+    "idle": "open",
+    "locomotion": "flow",
+    "response": "close"
+  },
+  "clipLoops": {
+    "open": true,
+    "flow": true,
+    "close": false
+  },
+  "restBounds": {
+    "min": [
+      -0.03998,
+      -0.036745,
+      0.0
+    ],
+    "max": [
+      0.03998,
+      0.036745,
+      0.028472
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

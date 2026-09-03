@@ -1,0 +1,347 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "astrea_snail",
+  "rig": "PA_astrea_snail_Rig",
+  "root": "PA_astrea_snail_Root",
+  "meshes": [
+    "PA_astrea_snail_Shell",
+    "PA_astrea_snail_Body"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_astrea_snail_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_foot",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_body_column",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_head",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_tentacle_L",
+      "volumeFloor": 0.4
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_tentacle_R",
+      "volumeFloor": 0.4
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_astrea_snail_Body",
+        "part_foot"
+      ],
+      "label": "tentacle_L_foot"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_astrea_snail_Shell",
+        "part_shell"
+      ],
+      "minDistance": 0.0015,
+      "label": "tentacle_L_shell"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_astrea_snail_Body",
+        "part_body_column"
+      ],
+      "label": "tentacle_L_body_column"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_astrea_snail_Body",
+        "part_foot"
+      ],
+      "label": "tentacle_R_foot"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_astrea_snail_Shell",
+        "part_shell"
+      ],
+      "minDistance": 0.0015,
+      "label": "tentacle_R_shell"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_astrea_snail_Body",
+        "part_body_column"
+      ],
+      "label": "tentacle_R_body_column"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_astrea_snail_Body",
+        "part_tentacle_R"
+      ],
+      "minDistance": 0.0015,
+      "label": "tentacle_pair"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_head"
+      ],
+      "b": [
+        "PA_astrea_snail_Shell",
+        "part_shell"
+      ],
+      "minDistance": 0.0005,
+      "label": "head_shell"
+    },
+    {
+      "a": [
+        "PA_astrea_snail_Body",
+        "part_foot"
+      ],
+      "b": [
+        "PA_astrea_snail_Shell",
+        "part_shell"
+      ],
+      "label": "foot_shell"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_tentacle_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_eye_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_eyestalk_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_tentacle_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_eye_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "group": "part_eyestalk_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "y",
+    "meters": 0.025,
+    "tolerance": 0.03,
+    "kind": "adult_shell_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 36,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_astrea_snail_Body",
+      "left": "part_tentacle_L",
+      "right": "part_tentacle_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_astrea_snail_Body",
+      "left": "part_eyestalk_L",
+      "right": "part_eyestalk_R",
+      "tolerance": 2e-05
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.013,
+      -0.009113,
+      -0.0
+    ],
+    "max": [
+      0.016031,
+      0.016142,
+      0.022998
+    ]
+  },
+  "textures": [
+    "textures/shell-albedo.png",
+    "textures/shell-roughness.png",
+    "textures/shell-normal.png",
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png"
+  ],
+  "notes": {
+    "shellRings": 226,
+    "shellSegments": 24,
+    "shellScaleFactor": 0.0010782484040920825,
+    "apertureNormal": [
+      -0.7842,
+      0.2858,
+      -0.5507
+    ],
+    "apertureCenter": [
+      -0.004,
+      -0.0015,
+      0.00867
+    ],
+    "shellAxis": [
+      -0.2904,
+      0.1057,
+      0.9511
+    ],
+    "footExtentX": [
+      -0.013,
+      0.012
+    ],
+    "keyV": {
+      "shoulder": 0.0,
+      "face_a": 0.0883,
+      "face_b": 0.1841,
+      "carina": 0.2778,
+      "carina_base": 0.299,
+      "base_a": 0.3769,
+      "base_b": 0.4803,
+      "base_c": 0.5688,
+      "umbilicus": 0.6246,
+      "inner_a": 0.725,
+      "inner_top": 0.8339,
+      "shelf_a": 0.8908,
+      "shelf_b": 0.9498
+    }
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/astrea_snail/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/astrea_snail/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.013000000268220901,
+      -0.009113031439483166,
+      -8.59808234827299e-19
+    ],
+    "boundsMax": [
+      0.016030780971050262,
+      0.01614241860806942,
+      0.022998366504907608
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

@@ -1,0 +1,470 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "nassarius_snail",
+  "rig": "PA_nassarius_snail_Rig",
+  "root": "PA_nassarius_snail_Root",
+  "meshes": [
+    "PA_nassarius_snail_Shell",
+    "PA_nassarius_snail_Soft",
+    "PA_nassarius_snail_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_nassarius_snail_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_foot",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_head",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_siphon",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tentacle_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tentacle_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tail_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tail_R",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_foot"
+      ],
+      "label": "tentacle_L_foot"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_foot"
+      ],
+      "label": "tentacle_R_foot"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "label": "tentacle_L_R"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_siphon"
+      ],
+      "minDistance": 0.0004,
+      "label": "tentacle_L_siphon"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_siphon"
+      ],
+      "minDistance": 0.0004,
+      "label": "tentacle_R_siphon"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_horn_L"
+      ],
+      "label": "tentacle_L_horn"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_horn_R"
+      ],
+      "label": "tentacle_R_horn"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_head"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_siphon"
+      ],
+      "minDistance": 0.0003,
+      "label": "head_siphon"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Shell",
+        "part_shell"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_siphon",
+        "attach_siphon"
+      ],
+      "label": "shell_siphon"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Shell",
+        "part_shell"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_head"
+      ],
+      "minDistance": 0.0004,
+      "label": "shell_head"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Shell",
+        "part_shell"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_L",
+        "attach_tentacle_L"
+      ],
+      "label": "shell_tentacle_L"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Shell",
+        "part_shell"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_tentacle_R",
+        "attach_tentacle_R"
+      ],
+      "label": "shell_tentacle_R"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Shell",
+        "part_shell"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_tail_L",
+        "attach_tail_L"
+      ],
+      "label": "shell_tail_L"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Shell",
+        "part_shell"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_tail_R",
+        "attach_tail_R"
+      ],
+      "label": "shell_tail_R"
+    },
+    {
+      "a": [
+        "PA_nassarius_snail_Soft",
+        "part_tail_L",
+        "attach_tail_L"
+      ],
+      "b": [
+        "PA_nassarius_snail_Soft",
+        "part_tail_R",
+        "attach_tail_R"
+      ],
+      "label": "tail_L_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tentacle_L",
+      "exclude": "attach_tentacle_L",
+      "side": -1
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tentacle_R",
+      "exclude": "attach_tentacle_R",
+      "side": 1
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tail_L",
+      "exclude": "attach_tail_L",
+      "side": -1
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_tail_R",
+      "exclude": "attach_tail_R",
+      "side": 1
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_horn_L",
+      "exclude": "attach_horn_L",
+      "side": -1
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "group": "part_horn_R",
+      "exclude": "attach_horn_R",
+      "side": 1
+    },
+    {
+      "object": "PA_nassarius_snail_Details",
+      "group": "part_eye_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_nassarius_snail_Details",
+      "group": "part_eye_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.0334,
+    "tolerance": 0.03,
+    "kind": "adult_extended_length_crawling"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon_A",
+        "Siphon_B",
+        "Tail_L",
+        "Tail_R",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon_A",
+        "Siphon_B",
+        "Tail_L",
+        "Tail_R",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "siphon_probe": {
+      "loop": false,
+      "frames": 48,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon_A",
+        "Siphon_B",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "siphon_probe"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "left": "part_tentacle_L",
+      "right": "part_tentacle_R",
+      "tolerance": 1e-06
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "left": "part_tail_L",
+      "right": "part_tail_R",
+      "tolerance": 1e-06
+    },
+    {
+      "object": "PA_nassarius_snail_Soft",
+      "left": "part_horn_L",
+      "right": "part_horn_R",
+      "tolerance": 1e-06
+    },
+    {
+      "object": "PA_nassarius_snail_Details",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 1e-06
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.01724,
+      -0.0075,
+      -0.0
+    ],
+    "max": [
+      0.016042,
+      0.0075,
+      0.012302
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/soft-albedo.png",
+    "textures/soft-roughness.png",
+    "textures/soft-normal.png"
+  ],
+  "notes": {
+    "shellLengthMeters": 0.02,
+    "shellRings": 191,
+    "shellBounds": {
+      "min": [
+        -0.015,
+        -0.0058,
+        0.00166
+      ],
+      "max": [
+        0.00379,
+        0.00736,
+        0.0123
+      ]
+    },
+    "apex": [
+      -0.015,
+      0.00062,
+      0.01117
+    ],
+    "apertureCenter": [
+      -0.0025,
+      -0.0024,
+      0.0037
+    ],
+    "apertureSemiAxes": {
+      "radial": 0.00337,
+      "axial": 0.00631
+    },
+    "softParts": [
+      "foot",
+      "body_column",
+      "head",
+      "tentacle_L",
+      "tentacle_R",
+      "tail_L",
+      "tail_R",
+      "horn_L",
+      "horn_R",
+      "siphon"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/nassarius_snail/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/nassarius_snail/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.017240190878510475,
+      -0.007499999832361937,
+      -7.474423796899648e-26
+    ],
+    "boundsMax": [
+      0.016042154282331467,
+      0.007499999832361937,
+      0.01230162475258112
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

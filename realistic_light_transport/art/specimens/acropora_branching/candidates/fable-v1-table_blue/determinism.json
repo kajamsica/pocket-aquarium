@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "f6eca79dcff54709edc9dfd8971e840687d51b025da2f09a50d2c11e5c4127c7",
+  "rebuildGeometryDigest": "f6eca79dcff54709edc9dfd8971e840687d51b025da2f09a50d2c11e5c4127c7",
+  "textureHashMatch": true,
+  "textures": {
+    "base-albedo.png": "78d0e0e8ebcfda6e88ce28d1ddc9be6a658bbb45aeb89dab13ce83a462f084c8",
+    "base-normal.png": "947dcd11474aa9ae6566cf617074b86eaa8d6d7ff5bf4699717ea1b8f8c3a160",
+    "base-roughness.png": "a55b5470aed602e66b6be5351bd051ea35fe0ec8bbbc11fa07256cfaace2823f",
+    "polyp-albedo.png": "d348de2dc66244a91d5a975ace8b745d0f02b3cfcbbbd3b5ebecdecff79cfe5e",
+    "polyp-normal.png": "8023994cec3579de931271ab6e3e0b91b6d076009f084d37e747c92c3d270541",
+    "polyp-roughness.png": "5c7fb7e70eb09b7ab204e685e5dfe32bce7bf3278eb739a6106928e2f6d6241c",
+    "skeleton-albedo.png": "cb4be96bbb67bb09ec99011d0fff5b1354d1f0b648cf59ec89590ad08e711439",
+    "skeleton-normal.png": "e0ddf74f87abcdd8318fe299159ae350ae998a77c2e1d2cbf5a3512b7b5c63e2",
+    "skeleton-roughness.png": "16d9407530e388ebbc25db0e37ec19b79918c9b3139ef755929c98e97686fa11"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

@@ -45,7 +45,7 @@ function earnedCreditsIn(log: PocketState['log']) {
   }, 0)
 }
 
-if (WORKBENCH_SPECIES === 'ocellaris') {
+if (WORKBENCH_SPECIES !== null) {
   const icon = document.createElement('link')
   icon.rel = 'icon'
   icon.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23e87528'/%3E%3Cpath d='M10 4v24M21 4v24' stroke='white' stroke-width='5'/%3E%3C/svg%3E"
@@ -168,5 +168,6 @@ function AquariumApp() {
 }
 
 export default function App() {
-  return WORKBENCH_SPECIES === 'ocellaris' ? <SpecimenWorkbench /> : <AquariumApp />
+  // Any ?workbench=<catalog-id> opens the workbench; unknown ids fall back visibly to Ocellaris inside it.
+  return WORKBENCH_SPECIES !== null ? <SpecimenWorkbench /> : <AquariumApp />
 }

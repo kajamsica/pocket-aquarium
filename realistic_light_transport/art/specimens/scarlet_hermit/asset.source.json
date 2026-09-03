@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "scarlet_hermit",
+  "displayName": "Scarlet Reef Hermit Crab",
+  "scientificLabel": "Paguristes cadenati",
+  "taxonomyConfidence": "species",
+  "category": "cleanup_crew",
+  "waterType": "saltwater",
+  "bodyPlan": "anomuran_hermit",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.03,
+    "kind": "adult_total_length_including_borrowed_shell",
+    "note": "Naturalis Interactive Guide to Caribbean Diving: up to 3 cm; Wikipedia summary: about 3 cm; Forest (1954) holotype carapace 13 mm. Measured along +X from the rear of the borrowed shell to the antennal tips with the chelipeds extended."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "rest", "locomotion": "walk", "response": "retreat" },
+  "palette": {
+    "exoskeleton": [0.72, 0.035, 0.012],
+    "granule": [0.95, 0.42, 0.30],
+    "seam": [0.25, 0.01, 0.005],
+    "membrane": [0.85, 0.45, 0.38],
+    "tip": [0.30, 0.03, 0.02],
+    "eyestalk": [0.92, 0.70, 0.10],
+    "eyestalkBase": [0.90, 0.45, 0.08],
+    "antenna": [0.42, 0.02, 0.01],
+    "cornea": [0.04, 0.10, 0.04],
+    "shell": [0.64, 0.52, 0.36],
+    "shellBrown": [0.34, 0.20, 0.10],
+    "shellWorn": [0.80, 0.77, 0.70],
+    "shellAlgae": [0.32, 0.40, 0.24]
+  },
+  "textures": { "exoResolution": [1024, 512], "shellResolution": [1024, 512], "exoNormalStrength": 0.6, "shellNormalStrength": 0.7 },
+  "morphology": {
+    "designUnit": "millimetre",
+    "notes": "Diogenid hermit in a dextral turbinate shell. Shield a little longer than the posterior carapace with nearly parallel sides (Forest 1954). Long yellow eyestalks slightly swollen distally, bright red legs and chelae with fine pale granules, deep red antennae. Points marked [x, |y|, dz] are relative to the carapace axis height at x; leg tips are absolute (z = 0 substrate).",
+    "shell": {
+      "apertureRadius": 3.0, "turns": 4.0, "growth": 2.77, "whorlOffset": 1.0, "descent": 1.9,
+      "ringsPerTurn": 20, "ringSegments": 24, "shoulder": 0.08, "apertureDescent": 0.6, "lipTiltDegrees": 50,
+      "lipFlare": 1.07, "lipDepth": 0.25, "floorDepth": 0.25, "floorRadius": 0.97,
+      "apertureHeight": 3.1,
+      "apertureDirection": [0.82, 0.0, -0.57], "spireDirection": [-0.85, 0.5, 0.15]
+    },
+    "carapace": {
+      "exitDirection": [0.95, 0.0, -0.31],
+      "insideDepth": 3.2,
+      "throat": [-1.0, 0.8, 1.6],
+      "forward": [[0.6, -0.15], [1.5, -0.1], [1.5, -0.05], [1.0, 0.0], [0.3, -0.05]],
+      "radii": [1.1, 1.35, 1.5, 1.55, 1.6, 1.7, 1.66, 1.2, 0.55],
+      "aspect": 1.75, "exponents": [3.5, 2.0], "ringSegments": 24
+    },
+    "legs": [
+      { "name": "leg1", "base": [3.4, 1.85, -0.85], "knee": [5.7, 5.4, 2.3], "ankle": [7.2, 6.6, -0.5], "tip": [8.1, 7.0, 0.0],
+        "radii": [0.5, 0.45, 0.36], "tipRadius": 0.08, "ringSegments": 10 },
+      { "name": "leg2", "base": [2.6, 2.1, -0.5], "knee": [3.0, 5.2, 1.4], "ankle": [2.9, 6.8, -0.7], "tip": [2.8, 7.2, 0.0],
+        "radii": [0.5, 0.45, 0.36], "tipRadius": 0.08, "ringSegments": 10 }
+    ],
+    "chela": {
+      "coxa": [4.5, 2.2, -0.9], "merusEnd": [6.5, 3.5, -0.9], "wrist": [7.8, 3.5, -0.6],
+      "palmMid": [9.2, 3.1, -0.4], "fingerBase": [10.2, 2.75, -1.0], "fingerTip": [12.4, 2.15, -1.2],
+      "hinge": [9.7, 2.8, 0.15], "dactylMid": [11.0, 2.5, 0.9], "dactylTip": [12.4, 2.15, 0.6],
+      "armRadii": [0.55, 0.5], "palmRadii": [0.55, 0.9, 1.1, 1.0, 0.62, 0.42, 0.25, 0.1], "palmAspect": 0.8,
+      "dactylRadii": [0.42, 0.34], "dactylTipRadius": 0.1, "ringSegments": 10, "palmSegments": 12, "dactylSegments": 8,
+      "leftScale": 1.08
+    },
+    "eyes": { "base": [5.5, 1.1, 0.8], "tip": [8.4, 1.7, 1.05], "radius": 0.42, "corneaRadius": 0.48, "ringSegments": 10 },
+    "antennules": { "base": [5.4, 0.42, 0.15], "tip": [7.0, 0.42, 2.0], "radius": 0.24, "tipRadius": 0.09, "ringSegments": 8 },
+    "antennae": {
+      "base": [5.2, 1.65, 0.3],
+      "path": [[6.3, 2.5, 0.6], [7.7, 3.5, 1.1], [9.3, 4.6, 1.7], [10.9, 5.5, 2.1], [12.5, 6.2, 2.3]],
+      "radii": [0.24, 0.21, 0.17, 0.13, 0.1, 0.06], "ringSegments": 7
+    }
+  },
+  "animation": {
+    "rest": { "frames": 90, "loop": true, "antennaSway": 5.0, "antennaFrequency": 1, "antennuleFlick": 6.0, "antennuleFrequency": 3,
+              "eyeTwitch": 2.0, "eyeFrequency": 2, "dactyl": 2.5, "chelipedBob": 1.0 },
+    "walk": { "frames": 60, "loop": true, "stepFrequency": 2, "legSwing": 8.5, "legLift": 8.0, "propodusBend": 6.0, "dactylCurl": 5.0,
+              "shellRoll": 2.5, "shellPitch": 1.2, "shellBob": 0.1, "shellSurge": 0.15, "chelipedSwing": 3.0, "antennaSway": 6.0, "antennaFrequency": 2, "eyeTwitch": 1.0, "eyeFrequency": 2 },
+    "retreat": { "frames": 48, "loop": false, "envelope": "hold", "retractMillimetres": 1.2, "chelipedYaw": 5.0, "chelipedPitch": 14.0,
+                 "palmPitch": 6.0, "dactylClose": 12.0, "legLift": 4.0, "legFold": 14.0, "dactylTuck": -10.0,
+                 "eyeFold": 18.0, "eyeSplay": 4.0, "antennaSweep": 15.0, "antennaLift": 10.0, "antennuleFold": 15.0 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 12, "azimuthDegrees": 50, "elevationDegrees": 22 },
+  "visualDebt": [
+    "Abdomen and pleopods are not modelled (hidden inside the shell); the body ends as a capped loft inside the aperture.",
+    "Third maxillipeds and other mouthparts are absent; the anterior shield margin is rounded without a modelled rostrum or frontal teeth.",
+    "Each limb is one pinched tube per appendage, so articulations flex as skin rather than as true condylar joints; no setae or tubercles are modelled (granules are texture-only).",
+    "The borrowed shell is a generic authored turbinate form with a recessed aperture floor; no columella, inner lip or specific gastropod species is represented. It is carried low with the lower body whorl about half a millimetre above the substrate rather than touching it, and the walk clip rocks and surges it in place (clips do not translate along the ground).",
+    "The dextral carry has the spire pointing back, slightly up and to the crab's right rather than straight back: with the aperture facing forward-down, a straight-back spire would force the coil axis level with the ground or lifted.",
+    "The left chela is only 8 percent larger than the right; both chelae are smooth tubes without the tuberculate palm surface."
+  ]
+}

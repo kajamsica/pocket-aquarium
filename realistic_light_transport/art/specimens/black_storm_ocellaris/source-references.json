@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "black_storm_ocellaris",
+  "revision": 1,
+  "policy": "References informed proportions, fin layout and the placement of the black/white storm pattern only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source; public breeder descriptions guided identity only. Body stations were derived from the accepted Ocellaris morphology profile and corrected per the user's side-profile feedback.",
+  "sources": [
+    {
+      "id": "WORMS-278400",
+      "title": "Amphiprion ocellaris Cuvier, 1830 taxon record (AphiaID 278400, accepted)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=278400",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-AMPHIPRION_OCELLARIS",
+      "title": "Amphiprion ocellaris species summary (max length 11.0 cm TL; D X-XI,13-17; A II,11-13; body compressed)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Amphiprion-ocellaris",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "SALIS-2021-EVODEVO",
+      "title": "Variation on a theme: pigmentation variants and mutants of anemonefish (Salis et al., EvoDevo 2021), Black Storm listed among A. ocellaris designer strains derived from a spontaneous mutation",
+      "publisher": "EvoDevo (BioMed Central), indexed by PubMed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/34147131/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (open access article)"
+    },
+    {
+      "id": "CORAL-2017-BLACK-STORM",
+      "title": "A Black Storm (Clownfish) on the Horizon: strain origin and pattern description (black base, extensive irregular white markings, white extending deep into the face)",
+      "publisher": "CORAL Magazine",
+      "url": "https://www.coralmagazine.com/2017/10/26/black-storm-clownfish-on-the-horizon/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "identity_description",
+      "allowedUse": "identity_only",
+      "license": "Copyrighted editorial text; facts only, no imagery used"
+    },
+    {
+      "id": "ACCEPTED-OCELLARIS-PROFILE",
+      "title": "Pocket Aquarium accepted Ocellaris morphology profile (art/specimens/ocellaris/morphology.profile.json), station proportions read only",
+      "publisher": "Pocket Aquarium project",
+      "url": "art/specimens/ocellaris/morphology.profile.json",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "project_reference",
+      "allowedUse": "proportion_reference_only",
+      "license": "Project owned"
+    },
+    {
+      "id": "COMMONS-AMPHIPRION_OCELLARIS",
+      "title": "Category:Amphiprion ocellaris (openly licensed photographs, lateral proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Amphiprion_ocellaris",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Species anatomy is well documented (FishBase counts, accepted project profile, openly licensed lateral photographs of wild-type A. ocellaris); the Black Storm colour layout follows published breeder descriptions and the user's brief rather than calibrated imagery, and top/front views are inferred from general Pomacentridae body plans."
+}

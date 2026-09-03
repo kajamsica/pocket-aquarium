@@ -1,0 +1,54 @@
+{
+  "asset": "brittle_star",
+  "variant": null,
+  "candidateDir": "art/specimens/brittle_star/candidates/fable-v1",
+  "startedAt": "2026-09-03T21:00:16.336Z",
+  "pid": 66278,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 16047,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 20837,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 2442,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 8188,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 3232,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 1338,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 33518,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:01:41.944Z",
+  "status": "passed",
+  "failure": null
+}

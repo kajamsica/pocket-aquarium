@@ -1,0 +1,54 @@
+{
+  "asset": "astrea_snail",
+  "variant": null,
+  "candidateDir": "art/specimens/astrea_snail/candidates/fable-v1",
+  "startedAt": "2026-09-03T21:21:57.800Z",
+  "pid": 93626,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 4241,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 6436,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1348,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1034,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1506,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 917,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 821,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:22:14.107Z",
+  "status": "passed",
+  "failure": null
+}

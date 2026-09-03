@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "emerald_crab",
+  "sourceSha256": "c80dbf364a3969af884579a82568ea4a3c876b02ea907e574a1ff334ffdc0fe3",
+  "objects": [
+    {
+      "name": "PA_emerald_crab_Body",
+      "vertexCount": 1016,
+      "triangleCount": 2024,
+      "vertexDigest": "3d32cb2fa33b149f4acbe1172a7b8dc53c04a629943ab36c13e7c0a96a0aeb55",
+      "topologyDigest": "32b8e83379a0afe98e9ca7fea561a1f4d9ff108778cedc1fac8f737db9324bb7",
+      "uvDigest": "1a3ed5205a1736994b25d0e94ef7578d8bb8365cc5243c8b2010b138dc76d3cb",
+      "weightDigest": "a5d81a92b254fd068e8f17aa2850093ba60d31f7c2da6c4c83de91b7d9671831",
+      "materials": [
+        "PA_emerald_crab_Carapace"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_emerald_crab_Chelae",
+      "vertexCount": 540,
+      "triangleCount": 1056,
+      "vertexDigest": "c521859b249be6b4c3a0d6c4902b95ce6059bb28a8ec923892e0439ad043efbd",
+      "topologyDigest": "7cafd7cf556a9ac859203dcc407fd9bf3625e600e911d173be8a7229d0f27a53",
+      "uvDigest": "b5cc31aedb75797cdbddd3eb8e90ea87b7b264ffd17f100a60c9fab386de9df9",
+      "weightDigest": "a89a908b08392371f85dc7b4aa310b74df4d802dbe0b6ae3ecbc577f9f775d9f",
+      "materials": [
+        "PA_emerald_crab_Claw",
+        "PA_emerald_crab_Leg"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_emerald_crab_Details",
+      "vertexCount": 332,
+      "triangleCount": 640,
+      "vertexDigest": "59b1ca1bbd3558a7e8bb172c9c28fca34bd9a3054776265c14191c37d493429a",
+      "topologyDigest": "efb14bbdac460613a50b66294c78e71e93999b4fca7696136944fe64ec46d06c",
+      "uvDigest": "11ade08ee318cd556434472977da5d00591721e6f64625fcb4c40c085cb7dbed",
+      "weightDigest": "4e2c332eec8eb85d6775f39170753b72f81c129c5f16658f98433fc81367d3eb",
+      "materials": [
+        "PA_emerald_crab_Eye",
+        "PA_emerald_crab_Stalk"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_emerald_crab_Legs",
+      "vertexCount": 1536,
+      "triangleCount": 3040,
+      "vertexDigest": "75879256d1d5973a6256087d31aae4142987a0da2fae5408ec90639b0fb52212",
+      "topologyDigest": "4a54c8b399f086838ebf8919b5be99c18048ecfb4b774216822dbcf4486fa300",
+      "uvDigest": "9624c230d947d23d634cba5300198e19941f551dd728cb52b9eb291af7ed1040",
+      "weightDigest": "59ebe57ab2a218b31ecfefd4db285c58cfeae633ec0ddc27d7ae7293693431ff",
+      "materials": [
+        "PA_emerald_crab_Leg"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_emerald_crab_Rig",
+    "boneCount": 28,
+    "deformBoneCount": 27,
+    "boneDigest": "1034b965f91b641b7ce0ddc518804c1af10e493549d7638cc01ea45f513de80e"
+  },
+  "geometryDigest": "9a83c9840afda24167a7622ee14a9da77c8b0d7723a1c47a6ab37bd656edec05",
+  "variantId": null
+}

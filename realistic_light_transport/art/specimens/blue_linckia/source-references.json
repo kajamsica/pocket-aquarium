@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "blue_linckia",
+  "revision": 1,
+  "policy": "References informed taxonomy, adult size, disc-to-arm proportions, arm cross-section and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a reference, texture or tracing source.",
+  "sources": [
+    {
+      "id": "WORMS-207610",
+      "title": "Linckia laevigata (Linnaeus, 1758) taxon record (World Asteroidea Database)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207610",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-LINCKIA_LAEVIGATA",
+      "title": "Linckia laevigata, Blue linckia species summary (max length 40.0 cm WD)",
+      "publisher": "SeaLifeBase",
+      "url": "https://sealifebase.org/summary/Linckia-laevigata.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "GBRI-UQ-LINCKIA_LAEVIGATA",
+      "title": "Linckia laevigata, The Blue Sea Star fact sheet (size: adults over 20 cm, max 30 cm diameter; Heron Island disc diameter 30-40 mm, arm length 80-120 mm after Laxton 1974)",
+      "publisher": "Great Barrier Reef Invertebrates, The University of Queensland",
+      "url": "https://www.gbri.org.au/Species/Linckialaevigata.aspx?PageContentID=2428",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "ADW-LINCKIA_LAEVIGATA",
+      "title": "Linckia laevigata species account (five cylindrical arms, bright blue body, yellow tube feet, 30-40 cm across)",
+      "publisher": "Animal Diversity Web, University of Michigan Museum of Zoology",
+      "url": "https://animaldiversity.org/accounts/Linckia_laevigata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 3.0 (text)"
+    },
+    {
+      "id": "COMMONS-LINCKIA_LAEVIGATA",
+      "title": "Category:Linckia laevigata (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Linckia_laevigata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Top-view proportions are calibrated from published measurements (disc diameter and arm length, Laxton 1974 via the UQ fact sheet) and openly licensed aboral photographs; arm cross-section depth, disc dome height and the oral groove are inferred from general Ophidiasteridae form rather than measured side or front references."
+}

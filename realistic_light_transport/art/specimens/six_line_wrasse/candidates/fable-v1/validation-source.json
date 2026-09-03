@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 2,
+  "status": "failed",
+  "stage": "source",
+  "error": "Rest size 0.07783 m along x is outside 0.075 +/- 3%"
+}

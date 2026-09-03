@@ -1,0 +1,54 @@
+{
+  "asset": "chalice_coral",
+  "variant": "purple_orange_eyes",
+  "candidateDir": "art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes",
+  "startedAt": "2026-09-03T21:26:52.106Z",
+  "pid": 99161,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 16098,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 79018,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 6483,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 2684,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 9410,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 1120,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1078,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:28:48.000Z",
+  "status": "passed",
+  "failure": null
+}

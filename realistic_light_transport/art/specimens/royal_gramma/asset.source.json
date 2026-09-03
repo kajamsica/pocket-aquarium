@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "royal_gramma",
+  "displayName": "Royal Gramma",
+  "scientificLabel": "Gramma loreto",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.08,
+    "kind": "adult_total_length",
+    "note": "FishBase records a maximum length of 8.0 cm TL (Ref. 7251); modelled as an 8 cm adult with 6.4 cm standard length plus a 1.6 cm caudal fin. Root gameplay data does not yet carry this species."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": {
+    "skin": [0.22, 0.025, 0.6],
+    "fin": [0.9, 0.55, 0.05],
+    "iris": [0.14, 0.06, 0.02],
+    "cue": [0.09, 0.02, 0.18],
+    "adornment": [0.86, 0.88, 0.9]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3 },
+  "morphology": {
+    "notes": "Elongate-oval, moderately compressed basslet: depth ~SL/2.8, width behind head ~SL/6, head ~SL/2.85, large eye high in a short snout, small oblique terminal mouth, deep caudal peduncle. Dorsal XII,10 continuous with a rounded soft lobe; anal III,10 rounded; caudal slightly emarginate with rounded corners; rounded pectorals; long pointed pelvics.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.024, "halfWidth": 0.0022, "dorsalHeight": 0.0042, "ventralDepth": 0.004, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.019, "halfWidth": 0.0029, "dorsalHeight": 0.0052, "ventralDepth": 0.0048, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.012, "halfWidth": 0.0037, "dorsalHeight": 0.0078, "ventralDepth": 0.0066, "centerZ": 0.0002 },
+      { "id": "posterior-b", "x": -0.004, "halfWidth": 0.0044, "dorsalHeight": 0.0102, "ventralDepth": 0.0086, "centerZ": 0.0004 },
+      { "id": "mid-a", "x": 0.004, "halfWidth": 0.005, "dorsalHeight": 0.0119, "ventralDepth": 0.01, "centerZ": 0.0005 },
+      { "id": "mid-b", "x": 0.011, "halfWidth": 0.0053, "dorsalHeight": 0.0125, "ventralDepth": 0.0105, "centerZ": 0.0004 },
+      { "id": "anterior", "x": 0.017, "halfWidth": 0.0052, "dorsalHeight": 0.0117, "ventralDepth": 0.0102, "centerZ": 0.0001 },
+      { "id": "operculum", "x": 0.023, "halfWidth": 0.0046, "dorsalHeight": 0.0102, "ventralDepth": 0.0092, "centerZ": -0.0004 },
+      { "id": "head", "x": 0.029, "halfWidth": 0.0037, "dorsalHeight": 0.0082, "ventralDepth": 0.0078, "centerZ": -0.001 },
+      { "id": "eye-front", "x": 0.034, "halfWidth": 0.0028, "dorsalHeight": 0.0062, "ventralDepth": 0.006, "centerZ": -0.0016 },
+      { "id": "snout", "x": 0.0378, "halfWidth": 0.0018, "dorsalHeight": 0.0038, "ventralDepth": 0.0036, "centerZ": -0.0018 },
+      { "id": "snout-tip", "x": 0.04, "halfWidth": 0.0006, "dorsalHeight": 0.0012, "ventralDepth": 0.0011, "centerZ": -0.0016 }
+    ],
+    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 1.75 },
+    "sampling": { "ringSegments": 48, "ringCount": 52 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0009, "edge": 0.0001 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.018, "xEnd": 0.0165, "rows": 4, "columns": 16, "lean": -0.0035,
+        "heights": [[0.0, 0.003], [0.08, 0.0075], [0.2, 0.0092], [0.35, 0.008], [0.5, 0.0066], [0.65, 0.0057], [0.8, 0.0048], [0.92, 0.0038], [1.0, 0.0022]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.018, "xEnd": 0.004, "rows": 4, "columns": 12, "lean": -0.004,
+        "heights": [[0.0, 0.003], [0.12, 0.0072], [0.28, 0.008], [0.5, 0.0066], [0.75, 0.0052], [1.0, 0.0022]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0105, "spanBottom": 0.0105, "length": 0.0179, "fork": 0.12, "forkPower": 2.0, "rounding": 0.15, "baseFraction": 0.9 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0165, "rootLength": 0.0062, "rootHeight": -0.12, "length": 0.012, "sweepDegrees": 42, "droopDegrees": 14, "spread": 0.85, "taper": 0.45, "power": 0.6, "flare": 0.75, "rayCount": 16, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.016, "rootLength": 0.0045, "rootHeight": -0.93, "length": 0.016, "sweepDegrees": 66, "droopDegrees": 28, "spread": 0.3, "taper": 0.2, "power": 1.4, "flare": 0.3, "rayCount": 6, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0314, "zFraction": 0.4, "radius": 0.0032, "protrude": 0.3, "aspect": 0.32, "pupilFraction": 0.5 },
+    "mouth": { "zOffset": -0.15, "width": 0.0022, "radius": 0.00035 },
+    "gill": { "x": 0.0175, "radius": 0.00024, "points": 11, "bulge": 0.03 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.034, 0.01, -0.003, -0.013, -0.021, -0.028] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [1.0, 2.0, 3.5, 5.5], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 20, "pectoralFrequency": 3, "median": 1.2, "gill": 1.6, "gillFrequency": 3, "jaw": 2.5, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [3.0, 5.0, 8.0, 12.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 22, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [6.0, 10.0, 16.0, 24.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "median": 3.0, "gill": 2.0, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 20 },
+  "visualDebt": [
+    "Pelvic fin is a pointed fan peaked at its middle ray; the real first soft ray is a single trailing filament.",
+    "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays.",
+    "Eye-line and yellow head streaks are painted in body texture space and are slightly softened where the head tapers."
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "6306b40a2e62380a30f791f18c9519b3d54cc9170413561e02988bf5746ffaeb",
+  "rebuildGeometryDigest": "6306b40a2e62380a30f791f18c9519b3d54cc9170413561e02988bf5746ffaeb",
+  "textureHashMatch": true,
+  "textures": {
+    "polyp-albedo.png": "9e9f7ab134fba48bb640d252437a18a6e7ce305a7aaa81c15c601622ebfccba3",
+    "polyp-normal.png": "1763ce908112896c825a032271cbe0ce94e0ea86f06b8e2bbd7f920f35491b51",
+    "polyp-roughness.png": "eaaf1fe5c7178b77efab5b5c3d0dd89265bcb56f63b636a0d6cccbb1a9ed9e78",
+    "rock-albedo.png": "cd434799480b50bb2c20c47a6f02fc3309e52748316181faf986650c7aac1216",
+    "rock-normal.png": "80af945206e14e36c9f0a9e08ab9f7965023b59a77138efce868cffebbcd0b3b",
+    "rock-roughness.png": "a13e90e7aa2642e31a9266a98f569d81a6a5d8b03ccb7abc620172d9b5c784db",
+    "tentacle-albedo.png": "e15632fce1a05250513f4c6ed86038325a46af97abdcd0cd2c01f4a49cfd1621",
+    "tentacle-normal.png": "2a68b645629ddbb5a3bc77d723d044baeac583305c50052f92ad067fcd57aa36",
+    "tentacle-roughness.png": "e7617c59d32b38ee870abbaaa1408db5f57b4dfcdd5bf4df8d993e9ee8ffd2af"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

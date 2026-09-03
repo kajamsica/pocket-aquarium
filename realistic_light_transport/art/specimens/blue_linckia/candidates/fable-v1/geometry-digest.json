@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "blue_linckia",
+  "sourceSha256": "e7fcf9352388dcbd9df69db3e89139d5910a8f3702199a02691c7f04365198b9",
+  "objects": [
+    {
+      "name": "PA_blue_linckia_Body",
+      "vertexCount": 3852,
+      "triangleCount": 7680,
+      "vertexDigest": "b0d75b37c41058376b74e9b9cc0db4cb457103821253f8f7545ed1fea33cc40c",
+      "topologyDigest": "a43cca9bb8c4e1b7f7b9ecbfea49900564644c0ccb637f41ecc464aa192c704c",
+      "uvDigest": "0205d1fb9cdffd715fb4e72237b0bb8bfcac8232e512bbb1f054e53d2472b333",
+      "weightDigest": "caaaef8e06a3ca8557d76c2a047ded317bf3e829006948fe2c774a07253ac2c3",
+      "materials": [
+        "PA_blue_linckia_Skin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_blue_linckia_Rig",
+    "boneCount": 22,
+    "deformBoneCount": 21,
+    "boneDigest": "49fa9a2dbd383088dffe486c208f3e858039d2263f0378117189fad53a697890"
+  },
+  "geometryDigest": "eda6d565969d27a8270543a50e18e45cb3c0dcca6ce2e60e389da221c4210a77",
+  "variantId": null
+}

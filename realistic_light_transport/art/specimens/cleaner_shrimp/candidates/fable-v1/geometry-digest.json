@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "cleaner_shrimp",
+  "sourceSha256": "3d8923b1f01f6e46a1d7760251d712b78349c6f646c960216dbdfeb1c8e12342",
+  "objects": [
+    {
+      "name": "PA_cleaner_shrimp_Body",
+      "vertexCount": 1970,
+      "triangleCount": 3888,
+      "vertexDigest": "f0a668baf0755b2a215fa89ed376b9a65ddacb717111742281ac3d68366a531c",
+      "topologyDigest": "a60362372027f9ed66e44e4e7cd2356aa0e71d39fa3b245e8ab718734df52637",
+      "uvDigest": "a349a82eae4cf6ef41c41e2f8f9e05563b6d3c838a4b6cdd41501ee812a08711",
+      "weightDigest": "23f7d40191c60569b020af0872e0ef24eff79bcc7209eab6c5f65bc94d0567a3",
+      "materials": [
+        "PA_cleaner_shrimp_Shell"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_cleaner_shrimp_Head",
+      "vertexCount": 1104,
+      "triangleCount": 2144,
+      "vertexDigest": "de24aa2b33d16a04cfca5f8a1b40343fd8a20f63287c82dc6e6c07ec7f3ead04",
+      "topologyDigest": "00ad0355c2fc33e66bafe7bc043fead0a515950e67a676372a8e071f9ba4fca0",
+      "uvDigest": "f4c631912677f351a5d3eecb3101e8c099253d13eaca3bbaaf249d6f8102646a",
+      "weightDigest": "6a852f0b1c23aae349ae3a91e1e2dc2d4da52f3c048d1b629795b9d2b1747bbf",
+      "materials": [
+        "PA_cleaner_shrimp_Antenna",
+        "PA_cleaner_shrimp_Eye",
+        "PA_cleaner_shrimp_Shell"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_cleaner_shrimp_Limbs",
+      "vertexCount": 1192,
+      "triangleCount": 2272,
+      "vertexDigest": "731aeea8a39a4ec9a9c5fef11d56c768a53c07fee2f3cccd1a5c20b0305c342a",
+      "topologyDigest": "b49a38884226d1560bddecf56376c95c4967785dcc05ac44d3f52d970c848ac9",
+      "uvDigest": "a692c1e1ae936692985d207f64e428e234e200a70bb6372d10b23e9f61c809be",
+      "weightDigest": "16cc38d7efaa870d02a1e0a46d5a8db2d3316af097817dcdf591b68792c09e6e",
+      "materials": [
+        "PA_cleaner_shrimp_Antenna",
+        "PA_cleaner_shrimp_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_cleaner_shrimp_Rig",
+    "boneCount": 32,
+    "deformBoneCount": 31,
+    "boneDigest": "95b146d49e5e35d53a1245526f72e3db17b7a1b2f9653ce3f1a21d43a3a92a44"
+  },
+  "geometryDigest": "a8fe8f832f2e05179600e39364a304448f55db8c51b4f7b4f4d6a6337d70fbbd",
+  "variantId": null
+}

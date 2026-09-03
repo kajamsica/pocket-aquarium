@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "acropora_branching",
+  "revision": 1,
+  "policy": "References informed colony growth form, branch and corallite proportions, polyp anatomy and pigment placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used; trade names (staghorn, table, digitate, colour morphs) guided variant identity only. The asset is labelled at genus level (Acropora sp.) because the trade forms mix several species.",
+  "sources": [
+    {
+      "id": "WORMS-205469",
+      "title": "Acropora Oken, 1815 taxon record (Scleractinia: Acroporidae; type species Acropora muricata)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=205469",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-ACROPORA-MURICATA",
+      "title": "Acropora muricata species page: arborescent staghorn colonies, cylindrical tapering branches, tubular axial corallites, appressed tubular radial corallites",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-muricata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "COTW-ACROPORA-HYACINTHUS",
+      "title": "Acropora hyacinthus species page: flat tables and plates of fine anastomosing branches with short upright branchlets and rosette radial corallites",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-hyacinthus/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "COTW-ACROPORA-HUMILIS",
+      "title": "Acropora humilis species page: digitate colonies of thick tapering branches with large dome shaped axial corallites and large tubular radial corallites",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-humilis/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "AIMS-CORAL-FACT-SHEETS-ACROPORA",
+      "title": "Coral Fact Sheets: genus Acropora (growth forms, axial and radial corallites, polyp structure)",
+      "publisher": "Australian Institute of Marine Science",
+      "url": "https://www.aims.gov.au/research-topics/environmental-issues/coral-fact-sheets",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-ACROPORA",
+      "title": "Category:Acropora (openly licensed photographs; growth form and proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Acropora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Genus level identity: the trade forms (staghorn, table, digitate) map to several Acropora species whose growth forms and corallite structure are well documented in taxonomic references; exact branch counts, spacing and pigments of any single colony are not calibrated to one specimen and are authored from the genus descriptions."
+}

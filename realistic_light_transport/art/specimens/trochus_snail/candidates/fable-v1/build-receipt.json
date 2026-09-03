@@ -1,0 +1,54 @@
+{
+  "asset": "trochus_snail",
+  "variant": null,
+  "candidateDir": "art/specimens/trochus_snail/candidates/fable-v1",
+  "startedAt": "2026-09-03T21:09:28.999Z",
+  "pid": 82900,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 7235,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 6495,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1786,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1749,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 7189,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 1681,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1577,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:09:56.722Z",
+  "status": "passed",
+  "failure": null
+}

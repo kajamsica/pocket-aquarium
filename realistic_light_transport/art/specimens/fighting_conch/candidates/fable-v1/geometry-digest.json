@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "fighting_conch",
+  "sourceSha256": "67aed795ac9cd9b51c43ca80afcf0aa76de2cf8474be658d44cee6a03bf82a8c",
+  "objects": [
+    {
+      "name": "PA_fighting_conch_Body",
+      "vertexCount": 1034,
+      "triangleCount": 2024,
+      "vertexDigest": "e9e5e50bca2c3ac1c4180e1c74c238847874b995242321d21a5f79a5652d2f29",
+      "topologyDigest": "6251cc40fd5c1e74328b0bc7de9c213aa93efca016ce84573ed3d63a60515884",
+      "uvDigest": "adf0115978839b3910a292bb2206bc97920ed2aab1e53e19ea4f9872a8d5aa96",
+      "weightDigest": "a801d6ac70ad09cc497134fd3a25ddfab1ed6b347fd5d6c5362e2e0ecd1cce4e",
+      "materials": [
+        "PA_fighting_conch_Operculum",
+        "PA_fighting_conch_Soft"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_fighting_conch_Shell",
+      "vertexCount": 6554,
+      "triangleCount": 13104,
+      "vertexDigest": "44f1f356904405e078e623dfb23a9df03011f2f5f517d2ab08ba83aa9aa65152",
+      "topologyDigest": "354e098f225d4ccf7f3085066de8a0ad873b2029c4a02e95a4ec1321d3349ac9",
+      "uvDigest": "896b3c8f71e61683b482a6507d1f60d510ea57f6a2a110ef87595fb4f3267146",
+      "weightDigest": "498bdc4147e106244e16e953c707296f7f2b34c3668b2cea68d473fcb4307441",
+      "materials": [
+        "PA_fighting_conch_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_fighting_conch_Rig",
+    "boneCount": 11,
+    "deformBoneCount": 10,
+    "boneDigest": "b0e8af5a5d5a6a3d581792791207e36b33c55892a75c68ca96b46ef34f60c4d5"
+  },
+  "geometryDigest": "5e22bb0a19849bf0d3cb13a8f1495e63f549ebea841b835b884a15edfed67add",
+  "variantId": null
+}

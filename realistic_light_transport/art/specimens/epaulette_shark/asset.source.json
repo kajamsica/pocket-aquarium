@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "epaulette_shark",
+  "displayName": "Epaulette Shark",
+  "scientificLabel": "Hemiscyllium ocellatum",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.9,
+    "kind": "adult_total_length",
+    "note": "Root DATA.SPECIES epaulette_shark adultSizeCm 90. FishBase max 107 cm TL (Compagno 1984, Ref. 247); Australian Museum: grows to just over 1 m; Allen et al. 2016 examined 287-657 mm TL specimens."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": {
+    "skin": [0.56, 0.48, 0.37],
+    "fin": [0.46, 0.39, 0.30],
+    "iris": [0.30, 0.26, 0.16],
+    "cue": [0.10, 0.08, 0.07],
+    "adornment": [0.78, 0.72, 0.64]
+  },
+  "textures": { "bodyResolution": [1536, 768], "finResolution": [1024, 512], "normalStrength": 0.35, "finNormalStrength": 0.3, "finReliefStrength": 0.6 },
+  "morphology": {
+    "notes": "Long, slender benthic carpet shark (Hemiscylliidae). Proportions from Allen, Erdmann, White, Fahmi & Dudgeon 2016 (27 specimens, % TL): precaudal length 77, head length 12-16, head width 7-10 with head depth 0.9-1.5 in width (flattened head), eye length ~2 with a horizontally oval eye, snout to mouth ~2.5 (subterminal mouth), gill slits 1-5 at 11-16, pectoral origin ~13, pelvic origin ~28, first dorsal origin 33-38 with base ~8, interdorsal space 12-15, second dorsal origin ~57, anal origin ~74 with a long low base ending at the subcaudal origin ~83, preanal body depth 3-6, subcaudal length 15-18. Body is roughly cylindrical, slightly wider than deep in the head and trunk with a flat belly; the tail carries two similar dorsal fins and tapers to a low heterocercal caudal blade (no ventral lobe) whose fleshy root is modelled by the last three body stations rising dorsally. Snout tip is at x = 0.36; x = 0.36 - 0.9 * (fraction of TL).",
+    "controlStations": [
+      { "id": "tail-blade-end", "x": -0.387, "halfWidth": 0.006, "dorsalHeight": 0.024, "ventralDepth": 0.011, "centerZ": 0.009 },
+      { "id": "tail-blade", "x": -0.36, "halfWidth": 0.009, "dorsalHeight": 0.022, "ventralDepth": 0.013, "centerZ": 0.008 },
+      { "id": "caudal-origin", "x": -0.333, "halfWidth": 0.013, "dorsalHeight": 0.019, "ventralDepth": 0.015, "centerZ": 0.007 },
+      { "id": "anal-region", "x": -0.288, "halfWidth": 0.016, "dorsalHeight": 0.020, "ventralDepth": 0.017, "centerZ": 0.006 },
+      { "id": "tail-c", "x": -0.216, "halfWidth": 0.019, "dorsalHeight": 0.023, "ventralDepth": 0.019, "centerZ": 0.005 },
+      { "id": "second-dorsal", "x": -0.144, "halfWidth": 0.023, "dorsalHeight": 0.026, "ventralDepth": 0.022, "centerZ": 0.004 },
+      { "id": "tail-a", "x": -0.072, "halfWidth": 0.027, "dorsalHeight": 0.029, "ventralDepth": 0.025, "centerZ": 0.003 },
+      { "id": "first-dorsal", "x": -0.009, "halfWidth": 0.031, "dorsalHeight": 0.032, "ventralDepth": 0.028, "centerZ": 0.002 },
+      { "id": "post-pelvic", "x": 0.045, "halfWidth": 0.035, "dorsalHeight": 0.035, "ventralDepth": 0.031, "centerZ": 0.001 },
+      { "id": "pelvic", "x": 0.09, "halfWidth": 0.039, "dorsalHeight": 0.038, "ventralDepth": 0.034, "centerZ": 0.0005 },
+      { "id": "abdomen", "x": 0.126, "halfWidth": 0.042, "dorsalHeight": 0.040, "ventralDepth": 0.036, "centerZ": 0.0 },
+      { "id": "trunk-max", "x": 0.171, "halfWidth": 0.044, "dorsalHeight": 0.041, "ventralDepth": 0.037, "centerZ": 0.0 },
+      { "id": "shoulder", "x": 0.216, "halfWidth": 0.044, "dorsalHeight": 0.038, "ventralDepth": 0.035, "centerZ": 0.0 },
+      { "id": "gills", "x": 0.2475, "halfWidth": 0.042, "dorsalHeight": 0.034, "ventralDepth": 0.032, "centerZ": -0.0015 },
+      { "id": "post-orbital", "x": 0.2745, "halfWidth": 0.040, "dorsalHeight": 0.030, "ventralDepth": 0.030, "centerZ": -0.003 },
+      { "id": "orbit", "x": 0.3, "halfWidth": 0.038, "dorsalHeight": 0.025, "ventralDepth": 0.027, "centerZ": -0.005 },
+      { "id": "pre-orbital", "x": 0.3195, "halfWidth": 0.033, "dorsalHeight": 0.020, "ventralDepth": 0.022, "centerZ": -0.007 },
+      { "id": "snout", "x": 0.3375, "halfWidth": 0.028, "dorsalHeight": 0.016, "ventralDepth": 0.018, "centerZ": -0.009 },
+      { "id": "snout-front", "x": 0.352, "halfWidth": 0.02, "dorsalHeight": 0.012, "ventralDepth": 0.013, "centerZ": -0.011 },
+      { "id": "snout-nose", "x": 0.357, "halfWidth": 0.013, "dorsalHeight": 0.008, "ventralDepth": 0.0085, "centerZ": -0.0115 },
+      { "id": "snout-tip", "x": 0.36, "halfWidth": 0.005, "dorsalHeight": 0.0035, "ventralDepth": 0.0035, "centerZ": -0.012 }
+    ],
+    "crossSection": { "dorsalExponent": 2.2, "ventralExponent": 2.7 },
+    "sampling": { "ringSegments": 44, "ringCount": 66 },
+    "zoneFractions": [0.12, 0.3, 0.56, 0.82],
+    "finThickness": { "base": 0.0009, "edge": 0.00016 },
+    "fins": [
+      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": -0.087, "xEnd": -0.009, "rows": 5, "columns": 12, "lean": -0.03, "pinch": 0.02, "rayCount": 8,
+        "heights": [[0.0, 0.004], [0.1, 0.03], [0.22, 0.05], [0.34, 0.058], [0.46, 0.06], [0.6, 0.056], [0.74, 0.044], [0.88, 0.022], [1.0, 0.004]] },
+      { "name": "dorsal2", "type": "median", "side": "dorsal", "bone": "Dorsal2", "xStart": -0.216, "xEnd": -0.144, "rows": 5, "columns": 12, "lean": -0.028, "pinch": 0.018, "rayCount": 8,
+        "heights": [[0.0, 0.004], [0.1, 0.028], [0.22, 0.046], [0.34, 0.053], [0.46, 0.055], [0.6, 0.051], [0.74, 0.04], [0.88, 0.02], [1.0, 0.004]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.372, "xEnd": -0.294, "rows": 4, "columns": 10, "lean": -0.012, "pinch": 0.01, "rayCount": 6,
+        "heights": [[0.0, 0.003], [0.12, 0.014], [0.3, 0.02], [0.5, 0.021], [0.72, 0.017], [0.9, 0.009], [1.0, 0.003]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 9, "spanTop": 0.034, "spanBottom": 0.008, "tilt": 0.008, "length": 0.16, "fork": 0.0, "topLobeLength": 1.0, "bottomLobeLength": 0.94, "rounding": 0.1, "baseFraction": 0.95, "rayCount": 6 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.245, "rootLength": 0.055, "rootHeight": -0.45, "length": 0.1, "sweepDegrees": 32, "droopDegrees": 6, "spread": 1.0, "taper": 0.55, "power": 0.5, "flare": 0.55, "rayCount": 9, "rows": 5, "columns": 9 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.092, "rootLength": 0.045, "rootHeight": -0.78, "length": 0.085, "sweepDegrees": 40, "droopDegrees": 10, "spread": 1.0, "taper": 0.5, "power": 0.55, "flare": 0.5, "rayCount": 7, "rows": 4, "columns": 7 }
+    ],
+    "finAdjacency": [["anal", "caudal"]],
+    "eyes": { "x": 0.3, "zFraction": 0.6, "radius": 0.0075, "protrude": 0.3, "aspect": 0.3, "pupilFraction": 0.45 },
+    "mouth": { "zOffset": -0.6, "width": 0.0004, "radius": 0.00006 },
+    "gill": { "x": 0.222, "radius": 0.00017, "points": 9, "bulge": 0.005 },
+    "adornments": [
+      { "type": "sphere", "name": "barbel_L", "center": [0.354, -0.0085, -0.0235], "radii": [0.004, 0.0016, 0.0025], "material": "adornment", "bone": "Jaw" },
+      { "type": "sphere", "name": "barbel_R", "center": [0.354, 0.0085, -0.0235], "radii": [0.004, 0.0016, 0.0025], "material": "adornment", "bone": "Jaw" }
+    ]
+  },
+  "rig": { "axialJoints": [0.28, 0.06, -0.1, -0.24, -0.387, -0.52] },
+  "animation": {
+    "idle": { "frames": 120, "loop": true, "axial": [0.8, 1.2, 2.0, 3.0], "axialFrequency": 1, "axialLag": 0.55, "pectoral": 9, "pectoralFrequency": 1, "pelvic": 7, "pelvicFrequency": 1, "pelvicPhase": 3.14159, "median": 0.6, "gill": 2.0, "gillFrequency": 3, "jaw": 0.8, "jawFrequency": 2 },
+    "swim": { "frames": 72, "loop": true, "axial": [3.5, 6.5, 10.0, 15.0], "axialFrequency": 2, "axialLag": 0.55, "pectoral": 10, "pectoralFrequency": 2, "pelvic": 6, "pelvicFrequency": 2, "pelvicPhase": 3.14159, "median": 1.5, "gill": 2.0, "gillFrequency": 2, "jaw": 0.8, "jawFrequency": 2 },
+    "burst": { "frames": 36, "loop": false, "envelope": "bell", "axial": [7.0, 12.0, 18.0, 26.0], "axialFrequency": 2, "axialLag": 0.55, "pectoral": 20, "pectoralFrequency": 2, "pelvic": 12, "pelvicFrequency": 2, "median": 3.0, "gill": 2.5, "gillFrequency": 2, "jaw": 1.2, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 26 },
+  "visualDebt": [
+    "Eye is a round disc; the real eye is a horizontally oval slit with a raised supraorbital ridge.",
+    "Gill slits 1-4, spiracles, mouth, labial furrows and nostrils are painted cues; only the fifth gill slit has relief.",
+    "Caudal subterminal notch is not modelled; the caudal is a low rounded heterocercal blade.",
+    "Paired fins are single thin shells so the spotted dorsal pattern also appears on their ventral face.",
+    "Spot pattern is bilaterally mirrored (painted in a folded arc coordinate so the dorsal midline has no seam); real spotting is asymmetric."
+  ]
+}

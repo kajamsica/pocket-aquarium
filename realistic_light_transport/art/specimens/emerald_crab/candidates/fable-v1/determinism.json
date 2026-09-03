@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "9a83c9840afda24167a7622ee14a9da77c8b0d7723a1c47a6ab37bd656edec05",
+  "rebuildGeometryDigest": "9a83c9840afda24167a7622ee14a9da77c8b0d7723a1c47a6ab37bd656edec05",
+  "textureHashMatch": true,
+  "textures": {
+    "carapace-albedo.png": "b286bb19792c705a7987c0211f3dd0df5ade5db5fe6c333b82aefbb8ffeee8a0",
+    "carapace-normal.png": "39def992fb460e592caec0657e3147acacb4a88e732da130b641f0f82c955a3e",
+    "carapace-roughness.png": "599e82c165f074716ffba75efc98746e0c142278a5d30c7cc3f7a6da8613b703",
+    "claw-albedo.png": "f9290396d3b888336a88077e99e65f6f1a2892d27c4a2e11e1b77c19f07c4f51",
+    "claw-normal.png": "f39a756317d15148f6d71a89d612e7ea52e267c493aeb55e09c3ec07f454e199",
+    "claw-roughness.png": "ede1a0bc4099cb14fc007adae62225e9930e0dc88e6cb29078a716e17e5e5eb0",
+    "leg-albedo.png": "059880dfb19172ded296aecca4d408ec3fef9f12148de32b8efe544e1fc543f7",
+    "leg-normal.png": "6e3676eee34fe0ec3c9e22ccac10734e7bde5af848cc4ca305f55659f382d7b2",
+    "leg-roughness.png": "0bb071f5c324a704fbcb534e3de8fdfc066f67d9a9099e596ed6c5b4d8bd4b5c"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

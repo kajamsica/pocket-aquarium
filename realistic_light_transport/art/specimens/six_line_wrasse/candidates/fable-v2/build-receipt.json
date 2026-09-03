@@ -1,0 +1,54 @@
+{
+  "asset": "six_line_wrasse",
+  "variant": null,
+  "candidateDir": "art/specimens/six_line_wrasse/candidates/fable-v2",
+  "startedAt": "2026-09-03T21:56:44.477Z",
+  "pid": 26249,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 4930,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 9376,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1872,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1548,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 2327,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 1225,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 987,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:57:06.748Z",
+  "status": "passed",
+  "failure": null
+}

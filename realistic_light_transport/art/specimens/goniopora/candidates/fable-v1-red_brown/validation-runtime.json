@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21",
+        "Polyp_22",
+        "Polyp_23",
+        "Polyp_24",
+        "Polyp_25",
+        "Polyp_26"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21",
+        "Polyp_22",
+        "Polyp_23",
+        "Polyp_24",
+        "Polyp_25",
+        "Polyp_26"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Polyp_01",
+        "Polyp_02",
+        "Polyp_03",
+        "Polyp_04",
+        "Polyp_05",
+        "Polyp_06",
+        "Polyp_07",
+        "Polyp_08",
+        "Polyp_09",
+        "Polyp_10",
+        "Polyp_11",
+        "Polyp_12",
+        "Polyp_13",
+        "Polyp_14",
+        "Polyp_15",
+        "Polyp_16",
+        "Polyp_17",
+        "Polyp_18",
+        "Polyp_19",
+        "Polyp_20",
+        "Polyp_21",
+        "Polyp_22",
+        "Polyp_23",
+        "Polyp_24",
+        "Polyp_25",
+        "Polyp_26"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 17208,
+    "materials": 4,
+    "nodes": 32,
+    "skinJoints": 28,
+    "images": 11,
+    "meshes": [
+      "PA_goniopora_Polyps",
+      "PA_goniopora_Skeleton"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.03956468118525214,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.047516897320747375,
+      -0.05020236596465111,
+      0.0
+    ],
+    "max": [
+      0.04554551839828491,
+      0.049797654151916504,
+      0.05442263185977936
+    ],
+    "deviationMeters": 2.356080457693621e-08
+  }
+}

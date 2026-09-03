@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "astrea_snail",
+  "revision": 1,
+  "policy": "References informed taxonomy, adult size, shell proportions (apical angle, whorl count, fold count, carina, flat base, oblique aperture), soft-body layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source. The trade name Astrea covers several Lithopoma species, so the label is held at genus level.",
+  "sources": [
+    {
+      "id": "WORMS-419499",
+      "title": "Lithopoma tectum ([Lightfoot], 1786) taxon record (Turbinidae, Turbininae; synonyms Astraea tecta, Trochus tectus)",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=419499",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-240760",
+      "title": "Lithopoma Gray, 1850 genus record",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=240760",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-LITHOPOMA_TECTUM",
+      "title": "Lithopoma tectum species summary (max length 6.0 cm; benthic, 0 to 10 m, tropical western Atlantic)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.ca/summary/Lithopoma-tectum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "ITIS-70119",
+      "title": "Lithopoma tectum (Lightfoot, 1786), West Indian starsnail, TSN 70119",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=70119",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (US federal)"
+    },
+    {
+      "id": "WIKIPEDIA-LITHOPOMA_TECTUM",
+      "title": "Lithopoma tectum: shell description after Tryon (elevated-conic, 6.5 whorls, about 23 longitudinal folds on the body whorl projecting at the carinate periphery, two impressed spiral lines, nearly flat base with five subgranose lirae, oblique rhomboidal aperture)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Lithopoma_tectum",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text; description derives from public-domain Tryon 1888)"
+    },
+    {
+      "id": "COMMONS-LITHOPOMA_TECTUM",
+      "title": "Category:Lithopoma tectum (openly licensed shell photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Lithopoma_tectum",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Taxonomy, adult size and the classic shell description (whorl count, fold count, carina, flat base, oblique aperture) are authoritative; empty-shell photographs calibrate the shell profile. The extended soft body (foot outline, tentacle length, eye stalks) is inferred from general Turbinidae anatomy rather than calibrated live references, so the grade stays at B."
+}

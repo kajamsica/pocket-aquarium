@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "scarlet_hermit",
+  "variantId": null,
+  "scientificName": "Paguristes cadenati",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.03,
+  "referenceSizeKind": "adult_total_length_including_borrowed_shell",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "f07585465c7f0ee71c4488e4609517ab7784eaa1a675a23753f68f8a089a1c1c",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Scarlet Reef Hermit Crab",
+  "bodyPlan": "anomuran_hermit",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-368215",
+      "title": "Paguristes cadenati Forest, 1954 taxon record (Diogenidae; vernacular scarlet reef hermit crab, red reef hermit)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=368215",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-PAGURISTES_CADENATI",
+      "title": "Paguristes cadenati, Red reef hermit species summary (Malacostraca, Decapoda, Diogenidae)",
+      "publisher": "SeaLifeBase",
+      "url": "https://sealifebase.se/summary/Paguristes-cadenati.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "ITIS-98178",
+      "title": "ITIS report Paguristes cadenati Forest, 1954 (TSN 98178; Anomura, Paguroidea, Diogenidae, left-handed hermits)",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=98178",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "US government public domain"
+    },
+    {
+      "id": "FOREST-1954",
+      "title": "Forest, J. (1954). Sur un pagure littoral nouveau de la Martinique, Paguristes cadenati sp. nov. Bull. Mus. natl. Hist. nat. Paris ser. 2, 26(3): 353-357 (holotype carapace 13 mm; shield a little longer than the posterior carapace with nearly parallel sides; long rostrum; eyestalks subcylindrical, slightly swollen distally, a little less than twice the frontal width)",
+      "publisher": "Museum national d'Histoire naturelle, Paris (scan hosted by the Natural History Museum of Los Angeles County decapoda library)",
+      "url": "https://decapoda.nhm.org/pdfs/32126/32126.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "primary_description",
+      "allowedUse": "facts_and_proportions_only",
+      "license": "Original 1954 description; text consulted for measurements and proportions only, no figures reproduced"
+    },
+    {
+      "id": "NATURALIS-CARIBBEAN-6428",
+      "title": "Interactive Guide to Caribbean Diving: Paguristes cadenati, Red reef hermit (bright red legs and claws, pale yellow to green eyestalks and eyes, size up to 3 cm, 8 to 30 m on coral reefs)",
+      "publisher": "Naturalis Biodiversity Center",
+      "url": "https://caribbean-diving.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/taxon.php?id=6428",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "WIKIPEDIA-PAGURISTES_CADENATI",
+      "title": "Paguristes cadenati (about 3 cm; smooth hairless limbs and chelae, left chela slightly larger than the right; abdomen concealed in the gastropod shell; bright red except deep red antennae and yellow to yellowish-orange eyestalks with yellowish-green corneas)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Paguristes_cadenati",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-PAGURISTES_CADENATI",
+      "title": "Category:Paguristes cadenati (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Paguristes_cadenati",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "4f0f5232aeeaa9fb4be38a4136d11fb2bb08865194711b80a8dfc0e7704c67a4",
+  "sourceReferencesSha256": "9f807d4389bab7d1dc11a6b8722f8d5ed49ed847bbbc8458e66d0e486d165c59",
+  "sourceBlendSha256": "3be2ae189eb698991d7ac94b655dd4d0e59295f976cb867463cf207b181377c0",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:a39545b74ce43f3965f9f6198a2e2d410eceadd372278b908704e329da7e7970",
+    "speciesBackend": "a39545b74ce43f3965f9f6198a2e2d410eceadd372278b908704e329da7e7970",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "f277808a049f03147cedae15b203cc393f55a62ed6be1765fe34a71ac533995e"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/exo-albedo.png",
+      "sha256": "6f89b54cedd086e0bfe8176f08dd9fe7bf721061f68fa50a41d640a58aa005c0"
+    },
+    {
+      "path": "textures/exo-normal.png",
+      "sha256": "8f3b03b0184335b1fb46a65fabc8fa7ef9d43cb2ef3c23835a188557948ffedd"
+    },
+    {
+      "path": "textures/exo-roughness.png",
+      "sha256": "f463d9b602f49cedafdb9db4699da13d92d209b49b490cddeb390284deeef23e"
+    },
+    {
+      "path": "textures/shell-albedo.png",
+      "sha256": "229c03b69d85440ef1d66e0e1b0fb2481548a5f2bd000be8080a076d6cbd31c3"
+    },
+    {
+      "path": "textures/shell-normal.png",
+      "sha256": "5c2ce773598b530fe580742eaf77f95f2ea8bbee254a90d41b3a090a6ebd9dd1"
+    },
+    {
+      "path": "textures/shell-roughness.png",
+      "sha256": "0940266b18ac246b414f61edbeff2c770d7d61ef46fe9c58fa95365a040eb31c"
+    }
+  ],
+  "statistics": {
+    "triangles": 7856,
+    "materials": 3,
+    "bones": 28,
+    "nodes": 34,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "rest",
+      "retreat",
+      "walk"
+    ],
+    "vertices": {
+      "PA_scarlet_hermit_Shell": 2018,
+      "PA_scarlet_hermit_Body": 1466,
+      "PA_scarlet_hermit_Details": 484
+    },
+    "runtimeBytes": 2490600
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "walk",
+    "response": "retreat"
+  },
+  "clipLoops": {
+    "rest": true,
+    "walk": true,
+    "retreat": false
+  },
+  "restBounds": {
+    "min": [
+      -0.015,
+      -0.011531,
+      -0.0
+    ],
+    "max": [
+      0.015,
+      0.011531,
+      0.017465
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

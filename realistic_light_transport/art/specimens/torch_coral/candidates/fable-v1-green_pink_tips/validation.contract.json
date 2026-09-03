@@ -1,0 +1,714 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "torch_coral",
+  "rig": "PA_torch_coral_Rig",
+  "root": "PA_torch_coral_Root",
+  "meshes": [
+    "PA_torch_coral_Skeleton",
+    "PA_torch_coral_Polyps",
+    "PA_torch_coral_Tentacles"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_torch_coral_Skeleton",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_torch_coral_Skeleton",
+      "group": "part_corallite_0",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_disc_0",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_mouth_0",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Skeleton",
+      "group": "part_corallite_1",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_disc_1",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_mouth_1",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Skeleton",
+      "group": "part_corallite_2",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_disc_2",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_mouth_2",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Skeleton",
+      "group": "part_corallite_3",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_disc_3",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_torch_coral_Polyps",
+      "group": "part_mouth_3",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "hard"
+      ],
+      "minDistance": 0.0012,
+      "label": "tentacles_0_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_0"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "label": "tentacles_0_vs_disc_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_1"
+      ],
+      "label": "disc_0_vs_corallite_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_1"
+      ],
+      "label": "corallite_0_vs_corallite_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "label": "disc_0_vs_disc_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_0"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "label": "tentacles_0_vs_disc_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_2"
+      ],
+      "label": "disc_0_vs_corallite_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_2"
+      ],
+      "label": "corallite_0_vs_corallite_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "label": "disc_0_vs_disc_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_0"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "label": "tentacles_0_vs_disc_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_3"
+      ],
+      "label": "disc_0_vs_corallite_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_0"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_3"
+      ],
+      "label": "corallite_0_vs_corallite_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "label": "disc_0_vs_disc_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_1"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "hard"
+      ],
+      "minDistance": 0.0012,
+      "label": "tentacles_1_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_1"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "label": "tentacles_1_vs_disc_0"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_0"
+      ],
+      "label": "disc_1_vs_corallite_0"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_1"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "label": "tentacles_1_vs_disc_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_2"
+      ],
+      "label": "disc_1_vs_corallite_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_1"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_2"
+      ],
+      "label": "corallite_1_vs_corallite_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "label": "disc_1_vs_disc_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_1"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "label": "tentacles_1_vs_disc_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_3"
+      ],
+      "label": "disc_1_vs_corallite_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_1"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_3"
+      ],
+      "label": "corallite_1_vs_corallite_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "label": "disc_1_vs_disc_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_2"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "hard"
+      ],
+      "minDistance": 0.0012,
+      "label": "tentacles_2_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_2"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "label": "tentacles_2_vs_disc_0"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_0"
+      ],
+      "label": "disc_2_vs_corallite_0"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_2"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "label": "tentacles_2_vs_disc_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_1"
+      ],
+      "label": "disc_2_vs_corallite_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_2"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "label": "tentacles_2_vs_disc_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_3"
+      ],
+      "label": "disc_2_vs_corallite_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_2"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_3"
+      ],
+      "label": "corallite_2_vs_corallite_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "label": "disc_2_vs_disc_3"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_3"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "hard"
+      ],
+      "minDistance": 0.0012,
+      "label": "tentacles_3_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_3"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_0"
+      ],
+      "label": "tentacles_3_vs_disc_0"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_0"
+      ],
+      "label": "disc_3_vs_corallite_0"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_3"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_1"
+      ],
+      "label": "tentacles_3_vs_disc_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_1"
+      ],
+      "label": "disc_3_vs_corallite_1"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Tentacles",
+        "tentacles_3"
+      ],
+      "b": [
+        "PA_torch_coral_Polyps",
+        "disc_2"
+      ],
+      "label": "tentacles_3_vs_disc_2"
+    },
+    {
+      "a": [
+        "PA_torch_coral_Polyps",
+        "disc_3"
+      ],
+      "b": [
+        "PA_torch_coral_Skeleton",
+        "part_corallite_2"
+      ],
+      "label": "disc_3_vs_corallite_2"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.12,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 150,
+      "bones": [
+        "Disc_0",
+        "Disc_1",
+        "Disc_2",
+        "Disc_3",
+        "Tent_0_0_mid",
+        "Tent_0_0_root",
+        "Tent_0_0_tip",
+        "Tent_0_1_mid",
+        "Tent_0_1_root",
+        "Tent_0_1_tip",
+        "Tent_1_0_mid",
+        "Tent_1_0_root",
+        "Tent_1_0_tip",
+        "Tent_1_1_mid",
+        "Tent_1_1_root",
+        "Tent_1_1_tip",
+        "Tent_2_0_mid",
+        "Tent_2_0_root",
+        "Tent_2_0_tip",
+        "Tent_2_1_mid",
+        "Tent_2_1_root",
+        "Tent_2_1_tip",
+        "Tent_3_0_mid",
+        "Tent_3_0_root",
+        "Tent_3_0_tip",
+        "Tent_3_1_mid",
+        "Tent_3_1_root",
+        "Tent_3_1_tip"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Disc_0",
+        "Disc_1",
+        "Disc_2",
+        "Disc_3",
+        "Tent_0_0_mid",
+        "Tent_0_0_root",
+        "Tent_0_0_tip",
+        "Tent_0_1_mid",
+        "Tent_0_1_root",
+        "Tent_0_1_tip",
+        "Tent_1_0_mid",
+        "Tent_1_0_root",
+        "Tent_1_0_tip",
+        "Tent_1_1_mid",
+        "Tent_1_1_root",
+        "Tent_1_1_tip",
+        "Tent_2_0_mid",
+        "Tent_2_0_root",
+        "Tent_2_0_tip",
+        "Tent_2_1_mid",
+        "Tent_2_1_root",
+        "Tent_2_1_tip",
+        "Tent_3_0_mid",
+        "Tent_3_0_root",
+        "Tent_3_0_tip",
+        "Tent_3_1_mid",
+        "Tent_3_1_root",
+        "Tent_3_1_tip"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Disc_0",
+        "Disc_1",
+        "Disc_2",
+        "Disc_3",
+        "Tent_0_0_mid",
+        "Tent_0_0_root",
+        "Tent_0_0_tip",
+        "Tent_0_1_mid",
+        "Tent_0_1_root",
+        "Tent_0_1_tip",
+        "Tent_1_0_mid",
+        "Tent_1_0_root",
+        "Tent_1_0_tip",
+        "Tent_1_1_mid",
+        "Tent_1_1_root",
+        "Tent_1_1_tip",
+        "Tent_2_0_mid",
+        "Tent_2_0_root",
+        "Tent_2_0_tip",
+        "Tent_2_1_mid",
+        "Tent_2_1_root",
+        "Tent_2_1_tip",
+        "Tent_3_0_mid",
+        "Tent_3_0_root",
+        "Tent_3_0_tip",
+        "Tent_3_1_mid",
+        "Tent_3_1_root",
+        "Tent_3_1_tip"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "variantId": "green_pink_tips",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.06,
+      -0.058062,
+      0.0
+    ],
+    "max": [
+      0.06,
+      0.058062,
+      0.098373
+    ]
+  },
+  "textures": [
+    "textures/tissue-albedo.png",
+    "textures/tissue-roughness.png",
+    "textures/tissue-normal.png",
+    "textures/disc-albedo.png",
+    "textures/disc-roughness.png",
+    "textures/disc-normal.png",
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png"
+  ],
+  "notes": {
+    "heads": 4,
+    "tentacles": 136,
+    "nominalWidthMeters": 0.13279461860656738,
+    "colonyScale": 0.9036510760690221,
+    "avoidanceMoves": 1064,
+    "corallitesDiameterMeters": [
+      0.01807,
+      0.01717,
+      0.01807,
+      0.01627
+    ],
+    "tentacleLengthMeters": [
+      0.02566,
+      0.04006
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/torch_coral/candidates/fable-v1-green_pink_tips/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/torch_coral/candidates/fable-v1-green_pink_tips/renders/three-view.png",
+    "boundsMin": [
+      -0.05999999865889549,
+      -0.058061953634023666,
+      0.0
+    ],
+    "boundsMax": [
+      0.059999994933605194,
+      0.058061957359313965,
+      0.09837260097265244
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

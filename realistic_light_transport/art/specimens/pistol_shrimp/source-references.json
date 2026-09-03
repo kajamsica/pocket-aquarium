@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "pistol_shrimp",
+  "revision": 1,
+  "policy": "References informed body proportions, appendage layout, claw asymmetry and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source; public seller descriptions guided trade-name identity only.",
+  "sources": [
+    {
+      "id": "WORMS-514833",
+      "title": "Alpheus bellulus Miya & Miyake, 1969 taxon record (accepted, Alpheidae)",
+      "publisher": "World Register of Marine Species / DecaNet",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=514833",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "MIYA-MIYAKE-1969",
+      "title": "Description of Alpheus bellulus sp. nov. associated with gobies from Japan (Crustacea, Decapoda, Alpheidae). Publications of the Seto Marine Biological Laboratory 16(5): 307-314. Type series total length 36.9 to 52.6 mm, carapace length 13.2 to 17.8 mm, telson 2.3 to 2.5 times as long as its posterior breadth, stout body, inflated orbital hoods, sharp rostral carina, banded legs.",
+      "publisher": "Kyoto University Research Information Repository",
+      "url": "https://doi.org/10.5134/175556",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Open repository text; facts only, no figures reproduced"
+    },
+    {
+      "id": "PMC-9423611",
+      "title": "Repeated computed tomography scanning reveals morphological development of burrows produced by the tiger pistol shrimp Alpheus bellulus (carapace lengths 13.3 to 19.4 mm in adult study animals)",
+      "publisher": "PLOS ONE via PubMed Central",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9423611/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "WIKIPEDIA-TIGER_PISTOL_SHRIMP",
+      "title": "Tiger pistol shrimp (Alpheus bellulus) article: 4 to 5 cm body not including antennae, yellowish white body with irregular symmetric light brown to brownish orange pattern, banded legs and chelipeds, red antennae, enlarged snapping cheliped",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Tiger_pistol_shrimp",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "The original species description gives measured total length, carapace length and telson proportions and describes the stout body, triangular rostrum, inflated orbital hoods and banded legs; the Wikipedia account gives colour placement and the enlarged snapping cheliped. No imagery was consulted. Major chela proportions (about carapace length, roughly 2.3 times as long as high, dactyl about 40 percent of chela length) and the front silhouette follow the general Alpheus body plan rather than A. bellulus specific measurements."
+}

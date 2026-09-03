@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Antenna_L",
+        "Antenna_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Arm_minor",
+        "Body",
+        "Dactyl_minor",
+        "P2_L",
+        "P2_R",
+        "Uropod_L",
+        "Uropod_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "snap": {
+      "durationSeconds": 1.3333333730697632,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Antenna_L",
+        "Antenna_R",
+        "Arm_major",
+        "Body",
+        "Dactyl_major",
+        "P3_B_L",
+        "P3_B_R",
+        "P4_B_L",
+        "P4_B_R",
+        "P5_B_L",
+        "P5_B_R",
+        "Uropod_L",
+        "Uropod_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "walk": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Antenna_L",
+        "Antenna_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Arm_major",
+        "Arm_minor",
+        "Body",
+        "Dactyl_minor",
+        "P2_L",
+        "P2_R",
+        "P3_A_L",
+        "P3_A_R",
+        "P3_B_L",
+        "P3_B_R",
+        "P4_A_L",
+        "P4_A_R",
+        "P4_B_L",
+        "P4_B_R",
+        "P5_A_L",
+        "P5_A_R",
+        "P5_B_L",
+        "P5_B_R",
+        "Uropod_L",
+        "Uropod_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 10972,
+    "materials": 2,
+    "nodes": 36,
+    "skinJoints": 32,
+    "images": 3,
+    "meshes": [
+      "PA_pistol_shrimp_Body",
+      "PA_pistol_shrimp_Limbs"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "walk": {
+      "maxBoneRotationErrorDegrees": 0.055952909680744456,
+      "loopSeamDegrees": 0.0
+    },
+    "snap": {
+      "maxBoneRotationErrorDegrees": 0.08846931922527276,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.017976611852645874,
+      -0.018367106094956398,
+      -0.007913926616311073
+    ],
+    "max": [
+      0.03202340751886368,
+      0.018367107957601547,
+      0.004019639920443296
+    ],
+    "deviationMeters": 1.1926748300777466e-08
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "torch_coral",
+  "variantId": "green_pink_tips",
+  "scientificName": "Euphyllia glabrescens",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.12,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "3fc8c788f93ac65295530335f7d1dde21521fe39a37047f01ba7be3ec75eb48b",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Torch Coral (green, pink tips)",
+  "bodyPlan": "lps_coral",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-207617",
+      "title": "Euphyllia glabrescens (Chamisso & Eysenhardt, 1821) taxon record (accepted; family Euphylliidae). Description notes: polyps always extended except when disturbed, tentacles cylindrical with enlarged pale terminal knobs, coralla phaceloid, colonies up to nearly a metre across.",
+      "publisher": "World Register of Marine Species (World List of Scleractinia, Hoeksema & Cairns)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207617",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-EUPHYLLIA_GLABRESCENS",
+      "title": "Euphyllia glabrescens species factsheet: colonies phaceloid; corallites 20-30 mm diameter, 15-30 mm apart; walls thin with sharp edges; polyps with large tubular tentacles with knob-like tips; colour grey-blue to grey-green with cream, green, pink or white tentacle tips.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/euphyllia-glabrescens/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "PEERJ-LUZON-2017",
+      "title": "Luzon, Lin, Ablan Lagman, Licuanan, Chen (2017). Resurrecting a subgenus to genus: molecular phylogeny of Euphyllia and Fimbriaphyllia. PeerJ 5:e4074. E. glabrescens: phaceloid, long tubular tentacles with knob-like tips, hermaphroditic brooder; ancora-group species moved to Fimbriaphyllia.",
+      "publisher": "PeerJ",
+      "url": "https://doi.org/10.7717/peerj.4074",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "COMMONS-EUPHYLLIA_GLABRESCENS",
+      "title": "Category:Euphyllia glabrescens (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Euphyllia_glabrescens",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "fc2f6327eb361d1b7eeee4462d7ec492706cca0441222df924988e2a8c1bfbcc",
+  "sourceReferencesSha256": "62df8a595120cc57cc201c02d892db59c033835aa91ad6d010e7cdc7379115c8",
+  "sourceBlendSha256": "9113042f3954372733118f853e3dcbb1c1efa8cc23a5cb4671ea822e9b8c1dee",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:9a1a9720725ab91924dc33f1d1c393500822d09461f4138b356f4a2c092adbf8",
+    "speciesBackend": "9a1a9720725ab91924dc33f1d1c393500822d09461f4138b356f4a2c092adbf8",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "b65330873959b66400c9458f76050acfeecc67f56b14e5ceb025047de718ce56"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/disc-albedo.png",
+      "sha256": "6d112d74cd2a983d60078a31ef31aee9151c69829d658378c05962253797049e"
+    },
+    {
+      "path": "textures/disc-normal.png",
+      "sha256": "71afdf07cf23c974cdc55bdb5c14fce68ddef15c346f9f41b037c4a008a138a7"
+    },
+    {
+      "path": "textures/disc-roughness.png",
+      "sha256": "99080d8e0a8b4aa10e6cd44d182b149e573161dad72f4e46e63d5facd0439132"
+    },
+    {
+      "path": "textures/rock-albedo.png",
+      "sha256": "5a3dfd25b0c9ac6c1fa811927dc13ade2a88e2df935d9a394bb40c7764ed96cf"
+    },
+    {
+      "path": "textures/rock-normal.png",
+      "sha256": "b1532306e1bd634c9231177bcfe69497a34eaf97fe79fa64b5a193b19635f530"
+    },
+    {
+      "path": "textures/rock-roughness.png",
+      "sha256": "9552e2ba87fd8d7240733ab39f9e13834bf230c930e08510ed53ad06f02e4a8a"
+    },
+    {
+      "path": "textures/skeleton-albedo.png",
+      "sha256": "ec4ba21b36606557a7189af51b373d6808db2f874e0d326266b41796e024e945"
+    },
+    {
+      "path": "textures/skeleton-normal.png",
+      "sha256": "8c1c772ec3ca4a3b633dc0df0aa01f4ddfa9e0438bf113be1ab99fa2bb5563e9"
+    },
+    {
+      "path": "textures/skeleton-roughness.png",
+      "sha256": "4a85ed894b0c23aaa5257b11163726db53f2bfa39b03861dbcb5a5dbb5617793"
+    },
+    {
+      "path": "textures/tissue-albedo.png",
+      "sha256": "c5d6ae4307e51237e1774d771779a14bbfb693ed0a6ed24fbeb1c210349439b5"
+    },
+    {
+      "path": "textures/tissue-normal.png",
+      "sha256": "974c88635ab0b71a9a9367fa9c576f91eaabab1e396978fc8f37a1bc8b2b61f8"
+    },
+    {
+      "path": "textures/tissue-roughness.png",
+      "sha256": "5b2d8a8fc7c28fcb2c1526a2a6da45f2c85681d03838a681ca734005e92a1662"
+    }
+  ],
+  "statistics": {
+    "triangles": 18072,
+    "materials": 5,
+    "bones": 29,
+    "nodes": 35,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_torch_coral_Skeleton": 390,
+      "PA_torch_coral_Polyps": 512,
+      "PA_torch_coral_Tentacles": 8432
+    },
+    "runtimeBytes": 1900860
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "sway": true,
+    "flow": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.06,
+      -0.058062,
+      0.0
+    ],
+    "max": [
+      0.06,
+      0.058062,
+      0.098373
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

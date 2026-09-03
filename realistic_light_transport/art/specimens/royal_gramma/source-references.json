@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "royal_gramma",
+  "revision": 1,
+  "policy": "References informed proportions, meristics, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source.",
+  "sources": [
+    {
+      "id": "WORMS-280932",
+      "title": "Gramma loreto Poey, 1868 taxon record (accepted; Grammatidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=280932",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-GRAMMA_LORETO",
+      "title": "Gramma loreto species summary (max length 8.0 cm TL; dorsal XII, 10; purple in front, orange-yellow behind)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Gramma-loreto.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "STRI-SFGC-3566",
+      "title": "Shorefishes of the Greater Caribbean: Gramma loreto, Fairy Basslet (elongate compressed body, large eye, short snout, rounded pectorals, elongated first pelvic ray, colour account with dorsal spot and eye streaks)",
+      "publisher": "Smithsonian Tropical Research Institute",
+      "url": "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3566",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "NATURALIS-506115",
+      "title": "Bohlke and Randall, Three new species and six new records of small serranoid fishes from Curacao and Puerto Rico (Grammidae diagnosis: depth 2.5 to 3 in SL, width behind head 5 to 6.5 in SL, head 2.7 to 2.9 in SL, emarginate caudal, elongate first pelvic soft ray)",
+      "publisher": "Naturalis Biodiversity Center repository",
+      "url": "http://repository.naturalis.nl/record/506115",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-GRAMMA_LORETO",
+      "title": "Category:Gramma loreto (openly licensed photographs, proportion and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Gramma_loreto",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Published morphometric ranges (family diagnosis) and openly licensed lateral photographs are available; top and front views are inferred from the Grammatidae body plan, and the exact diagonal of the colour transition varies between individuals."
+}

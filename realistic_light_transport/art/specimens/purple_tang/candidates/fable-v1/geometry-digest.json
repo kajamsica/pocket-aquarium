@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "purple_tang",
+  "sourceSha256": "9a8d106398a4c548480c8fbe2b2ef778033b557a1aa28443f5ae6321bcd861b4",
+  "objects": [
+    {
+      "name": "PA_purple_tang_Body",
+      "vertexCount": 2594,
+      "triangleCount": 5184,
+      "vertexDigest": "249a0309a8be34350ff13ee98c1b6322bc6ff183101cb73bc026d8632e7ff4ae",
+      "topologyDigest": "8028a5a7fd59f16cdb89b19218a2e19af975aa9e53c74a79ef29f8de187de484",
+      "uvDigest": "23f840855930062a4915302bdcc283082456d69a24d6f7434653ab627aa84892",
+      "weightDigest": "84a0c5aab8e7a7f6e5845e3d7b9d94cffe9f3f48ed30cf9dd89af2af6e364ca0",
+      "materials": [
+        "PA_purple_tang_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_purple_tang_Details",
+      "vertexCount": 1200,
+      "triangleCount": 2352,
+      "vertexDigest": "9fd66bc8c0bebe87e73802304311a10d4e44a70862f4d2082f90f2423c2e31e8",
+      "topologyDigest": "82f0fa3fcff9dd99119e7fee0d254c6dccd8f0c25e0e182ddc139257ab56d4bf",
+      "uvDigest": "561ad76b410fc61e0ee6986fa0e9adef015a3739eb048eefb7adffb0db300791",
+      "weightDigest": "1f343ff715a3a821fbb4d77084a7b4b1a3c19bab93168f8d0a9ebfecc224e72c",
+      "materials": [
+        "PA_purple_tang_Adornment",
+        "PA_purple_tang_Cue",
+        "PA_purple_tang_Eye",
+        "PA_purple_tang_Glint",
+        "PA_purple_tang_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_purple_tang_Fins",
+      "vertexCount": 592,
+      "triangleCount": 1040,
+      "vertexDigest": "f816affc129a8c8befe817dcb8ab454d34aac5701dd888b5cc45f3047dd6c31a",
+      "topologyDigest": "c740ef366cf00941db321ff32e71e053be323a465f58d1d689b851939d06a95f",
+      "uvDigest": "82346d10b552d6c16c1d32e29e60083da57664abc21b1b73b72ff5aa7c94b843",
+      "weightDigest": "d13ecf33faa5e98182a2f81c9de5ac6e62191abaa0c460699eb75a3b0b8a010c",
+      "materials": [
+        "PA_purple_tang_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_purple_tang_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "825b5497dda956bcc5472bb0337d4de87490dc001ce272ba2cfa7ef1a12670d0"
+  },
+  "geometryDigest": "e06f7aadb8f7aeb7eef3283046d9abf2bf533e8fac326f65f9ead6e915c5362e",
+  "variantId": null
+}

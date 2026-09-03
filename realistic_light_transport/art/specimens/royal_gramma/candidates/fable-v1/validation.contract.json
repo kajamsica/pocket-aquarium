@@ -1,0 +1,610 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "royal_gramma",
+  "rig": "PA_royal_gramma_Rig",
+  "root": "PA_royal_gramma_Root",
+  "meshes": [
+    "PA_royal_gramma_Body",
+    "PA_royal_gramma_Fins",
+    "PA_royal_gramma_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_royal_gramma_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.0008,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_dorsal"
+      ],
+      "label": "fin_body_dorsal"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_royal_gramma_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal_anal"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal_caudal"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_caudal"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_royal_gramma_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_royal_gramma_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_royal_gramma_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_royal_gramma_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_royal_gramma_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_royal_gramma_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.08,
+    "tolerance": 0.03,
+    "kind": "adult_total_length"
+  },
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "burst": {
+      "loop": false,
+      "frames": 30,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_royal_gramma_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.00032
+    },
+    {
+      "object": "PA_royal_gramma_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.00032
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.039121,
+      -0.012901,
+      -0.01667
+    ],
+    "max": [
+      0.040918,
+      0.012901,
+      0.017715
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.064,
+    "fins": [
+      "dorsal",
+      "anal",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/royal_gramma/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/royal_gramma/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.03912080079317093,
+      -0.01290108636021614,
+      -0.01667046546936035
+    ],
+    "boundsMax": [
+      0.04091822728514671,
+      0.01290108636021614,
+      0.017714982852339745
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

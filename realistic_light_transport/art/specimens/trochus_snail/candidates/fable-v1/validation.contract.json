@@ -1,0 +1,386 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "trochus_snail",
+  "rig": "PA_trochus_snail_Rig",
+  "root": "PA_trochus_snail_Root",
+  "meshes": [
+    "PA_trochus_snail_Shell",
+    "PA_trochus_snail_Body",
+    "PA_trochus_snail_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_trochus_snail_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_foot",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_head",
+      "volumeFloor": 0.35
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_tentacle_L",
+      "volumeFloor": 0.2
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_tentacle_R",
+      "volumeFloor": 0.2
+    },
+    {
+      "object": "PA_trochus_snail_Details",
+      "group": "part_eye_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_trochus_snail_Details",
+      "group": "part_eye_R",
+      "volumeFloor": 0.5
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_foot"
+      ],
+      "label": "tentacle_L_foot"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Shell",
+        "part_shell"
+      ],
+      "label": "tentacle_L_shell"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Details",
+        "part_eye_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_L"
+      ],
+      "label": "eye_L_tentacle"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_foot"
+      ],
+      "label": "tentacle_R_foot"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_trochus_snail_Shell",
+        "part_shell"
+      ],
+      "label": "tentacle_R_shell"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Details",
+        "part_eye_R"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_R"
+      ],
+      "label": "eye_R_tentacle"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_tentacle_R"
+      ],
+      "minDistance": 0.001,
+      "label": "tentacle_L_R"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_epi1_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_epi1_R"
+      ],
+      "label": "epi1_L_R"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_epi2_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_epi2_R"
+      ],
+      "label": "epi2_L_R"
+    },
+    {
+      "a": [
+        "PA_trochus_snail_Body",
+        "part_epi3_L"
+      ],
+      "b": [
+        "PA_trochus_snail_Body",
+        "part_epi3_R"
+      ],
+      "label": "epi3_L_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_tentacle_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_trochus_snail_Details",
+      "group": "part_eye_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_epi1_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_epi2_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_epi3_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_tentacle_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_trochus_snail_Details",
+      "group": "part_eye_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_epi1_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_epi2_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "group": "part_epi3_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "y",
+    "meters": 0.03,
+    "tolerance": 0.03,
+    "kind": "adult_shell_diameter"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Epi1_L",
+        "Epi1_R",
+        "Epi2_L",
+        "Epi2_R",
+        "Epi3_L",
+        "Epi3_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Epi1_L",
+        "Epi1_R",
+        "Epi2_L",
+        "Epi2_R",
+        "Epi3_L",
+        "Epi3_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 36,
+      "bones": [
+        "Epi1_L",
+        "Epi1_R",
+        "Epi2_L",
+        "Epi2_R",
+        "Epi3_L",
+        "Epi3_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_trochus_snail_Body",
+      "left": "part_tentacle_L",
+      "right": "part_tentacle_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_trochus_snail_Details",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "left": "part_epi1_L",
+      "right": "part_epi1_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "left": "part_epi2_L",
+      "right": "part_epi2_R",
+      "tolerance": 0.0001
+    },
+    {
+      "object": "PA_trochus_snail_Body",
+      "left": "part_epi3_L",
+      "right": "part_epi3_R",
+      "tolerance": 0.0001
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.020123,
+      -0.016314,
+      0.0
+    ],
+    "max": [
+      0.019497,
+      0.013686,
+      0.031969
+    ]
+  },
+  "textures": [
+    "textures/shell-albedo.png",
+    "textures/shell-roughness.png",
+    "textures/shell-normal.png",
+    "textures/flesh-albedo.png",
+    "textures/flesh-roughness.png",
+    "textures/flesh-normal.png"
+  ],
+  "notes": {
+    "shellRadiusMeters": 0.01706873173132383,
+    "shellHeightMeters": 0.02840714001018749,
+    "shellWhorls": 7.5,
+    "shellExpansion": 1.42,
+    "shellRings": 169,
+    "apertureU": 0.9656747110659677,
+    "generatingCurvePoints": 33,
+    "footLengthMeters": 0.027000000000000003
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/trochus_snail/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/trochus_snail/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.020123004913330078,
+      -0.016313735395669937,
+      0.0
+    ],
+    "boundsMax": [
+      0.01949666626751423,
+      0.013686265796422958,
+      0.031969256699085236
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

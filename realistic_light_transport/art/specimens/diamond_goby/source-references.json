@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "diamond_goby",
+  "revision": 1,
+  "policy": "References informed proportions, fin layout, meristics and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source; trade names (Diamond Goby, Orange-spotted Sleeper Goby) were used for identity only.",
+  "sources": [
+    {
+      "id": "WORMS-219595",
+      "title": "Valenciennea puellaris (Tomiyama, 1956) taxon record (AphiaID 219595, accepted)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219595",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-VALENCIENNEA_PUELLARIS",
+      "title": "Valenciennea puellaris species summary: max length 20.0 cm SL; D VII (VI + I), 11-12; A I, 11-12; body depth 4.8-6.0 in SL; rounded caudal fin 3.0-4.2 in SL; 79-91 longitudinal scales; head scaleless; pale grey body with a row of large orange spots on the side, dash-like markings below, smaller orange spots on the back and blue to whitish streaks on the head",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Valenciennea-puellaris.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "HOESE-LARSON-1994",
+      "title": "Revision of the Indo-Pacific gobiid fish genus Valenciennea, with descriptions of seven new species. Indo-Pacific Fishes 23 (cited through FishBase as the source of the meristic and proportion data used here)",
+      "publisher": "Bishop Museum, Indo-Pacific Fishes",
+      "url": "https://www.fishbase.se/references/FBRefSummary.php?ID=8527",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "AM-VALENCIENNEA_PUELLARIS",
+      "title": "Orangespotted Glidergoby, Valenciennea puellaris species account: light brown to grey above and white below, blue-edged orange line along the lower side, orange dashes on the upper body, two rows of light blue dashes on the head",
+      "publisher": "Australian Museum",
+      "url": "https://australian.museum/learn/animals/fishes/orangespotted-glidergoby-valenciennea-puellaris/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "FOA-177",
+      "title": "Orangespotted Glidergoby, Valenciennea puellaris species page (colour description and habits)",
+      "publisher": "Fishes of Australia (Museums Victoria)",
+      "url": "https://fishesofaustralia.net.au/home/species/177",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-VALENCIENNEA_PUELLARIS",
+      "title": "Category:Valenciennea puellaris (16 openly licensed photographs, side and oblique views, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Valenciennea_puellaris",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "taxonomyNote": "Identity recorded as the western Pacific Valenciennea puellaris (Tomiyama, 1956); Indian Ocean populations formerly placed here are now treated as a distinct species, so the Pacific colour form (spots and dashes rather than a continuous lower stripe) is the one modelled.",
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Meristics, body depth and caudal proportions come from FishBase (Hoese and Larson 1994); openly licensed lateral and oblique photographs are available for proportion study; top and front views are inferred from general Valenciennea and Gobiinae body plans rather than calibrated dorsal photographs."
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "stylophora",
+  "sourceSha256": "1b7079e904181373c361ff210433a91591ca2e7074a1acc60ccdf18c344e0332",
+  "objects": [
+    {
+      "name": "PA_stylophora_Polyps",
+      "vertexCount": 9099,
+      "triangleCount": 12132,
+      "vertexDigest": "73c5f82fac21a318c6b13ce0b98bdd6f8d57d33a10ffe5a5f6fc85f08959f76b",
+      "topologyDigest": "f206af014629cea8aa8b0f816d7c49418763f6e63a851024b5151cc206f5f555",
+      "uvDigest": "ed7c22657737c7a8a82ae84366536f9f7d00b732d7918fab5c35e119377719f6",
+      "weightDigest": "5e784d9a6c5b996e6a67cfcabf360011e46855cfe8214fdfa198f7160a007fb4",
+      "materials": [
+        "PA_stylophora_Polyp"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_stylophora_Skeleton",
+      "vertexCount": 2076,
+      "triangleCount": 4064,
+      "vertexDigest": "f8814cc434740d47c4471eb48b83219c650b3f5db3a2fd8e6fe4457a6b4efb35",
+      "topologyDigest": "f03d7605a7b2e9a3951ca0c86bea92e0bf8793b7809b0f4333cfde2521935a7f",
+      "uvDigest": "24b45d031b35e9da1f75335f2eda0833b05118baee3a595cd14894427c5ca925",
+      "weightDigest": "76a474e322d843e7d22540d1d600d42cb3a7a71587108c41a94a394410c79b2e",
+      "materials": [
+        "PA_stylophora_Rock",
+        "PA_stylophora_Tissue"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_stylophora_Rig",
+    "boneCount": 22,
+    "deformBoneCount": 22,
+    "boneDigest": "fd6a01d9c8a17bb558f558a6418eb4280b0c5827d36f1909c24140c9bc9a3bf6"
+  },
+  "geometryDigest": "810c284006ad9e635440d3025db8c56d836cbe16cdc92629720dbf04aa4a8dbe",
+  "variantId": "pink"
+}

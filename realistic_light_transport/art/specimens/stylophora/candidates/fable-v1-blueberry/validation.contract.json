@@ -1,0 +1,4146 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "stylophora",
+  "rig": "PA_stylophora_Rig",
+  "root": "PA_stylophora_Root",
+  "meshes": [
+    "PA_stylophora_Skeleton",
+    "PA_stylophora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_mound",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_00",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_01",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_02",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_03",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_04",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_05",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_06",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_07",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_08",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_09",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_10",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_11",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_12",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_13",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_14",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_15",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_16",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_17",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_18",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_19",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_20",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_stylophora_Skeleton",
+      "group": "part_branch_21",
+      "volumeFloor": 0.9
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "label": "skeleton_rock_branch_00"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "label": "skeleton_rock_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "label": "skeleton_rock_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "label": "skeleton_rock_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_rock_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_rock_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_rock_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_rock_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_rock_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_rock_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_rock_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_rock_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_rock_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_rock_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_rock_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_rock_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_mound_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_mound_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_mound_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_mound_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_mound_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_mound_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "label": "skeleton_mound_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_mound_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_mound_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_mound_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_mound_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_mound",
+        "attach_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_mound_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "label": "skeleton_branch_00_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "label": "skeleton_branch_00_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "label": "skeleton_branch_00_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_branch_00_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_00_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_branch_00_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_00_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "label": "skeleton_branch_00_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_00_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_00_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_00_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_00_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_00_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_00_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_00_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_00_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00",
+        "attach_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_00_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "label": "skeleton_branch_01_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "label": "skeleton_branch_01_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_branch_01_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_01_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "label": "skeleton_branch_01_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_01_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_01_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_01_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_01_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_01_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_01_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_01_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_01_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01",
+        "attach_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_01_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "label": "skeleton_branch_02_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_branch_02_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_02_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_branch_02_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_02_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "label": "skeleton_branch_02_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "label": "skeleton_branch_02_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_02_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_02_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_02_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_02_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_02_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_02_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02",
+        "attach_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_02_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "label": "skeleton_branch_03_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_03_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_branch_03_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_03_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_03_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_03_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "label": "skeleton_branch_03_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "label": "skeleton_branch_03_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "label": "skeleton_branch_03_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_03_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_03_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_03_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_03_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03",
+        "attach_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_03_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "label": "skeleton_branch_04_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_branch_04_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_04_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "label": "skeleton_branch_04_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_04_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_04_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_04_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_04_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_04_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "label": "skeleton_branch_04_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_04_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_04_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04",
+        "attach_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_04_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "label": "skeleton_branch_05_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_05_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "label": "skeleton_branch_05_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_05_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_05_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_05_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "label": "skeleton_branch_05_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "label": "skeleton_branch_05_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_05_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_05_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "label": "skeleton_branch_05_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_05_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_05_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05",
+        "attach_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_05_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "label": "skeleton_branch_06_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "label": "skeleton_branch_06_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_06_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_06_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_06_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_06_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_06_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06",
+        "attach_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_06_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "label": "skeleton_branch_07_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_07_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_07_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_07_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_07_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_07_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_07_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07",
+        "attach_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_07_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "label": "skeleton_branch_08_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_08_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_08_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_08_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08",
+        "attach_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_08_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_09_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_09_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_09_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09",
+        "attach_branch_09"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_09_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "label": "skeleton_branch_10_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_10_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_10_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_10_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_10_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10",
+        "attach_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_10_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "label": "skeleton_branch_11_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "label": "skeleton_branch_11_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_11_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_11_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_11_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11",
+        "attach_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_11_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "label": "skeleton_branch_12_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_12_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_12_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_12_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12",
+        "attach_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_12_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "label": "skeleton_branch_13_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_13_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13",
+        "attach_branch_13"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_13_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "label": "skeleton_branch_14_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_14_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_14_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_14_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14",
+        "attach_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_14_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "label": "skeleton_branch_15_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_15_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_15_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_15_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_15_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15",
+        "attach_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_15_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "label": "skeleton_branch_16_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_16_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_16_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_16_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16",
+        "attach_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_16_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "label": "skeleton_branch_17_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_17_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_17_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17",
+        "attach_branch_17"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_17_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "label": "skeleton_branch_18_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_18_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18",
+        "attach_branch_18"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_18_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "label": "skeleton_branch_19_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19",
+        "attach_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_19_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20",
+        "attach_branch_20"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21",
+        "attach_branch_21"
+      ],
+      "label": "skeleton_branch_20_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_rock"
+      ],
+      "label": "polyps_mound_vs_rock"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00"
+      ],
+      "label": "polyps_mound_vs_branch_00"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01"
+      ],
+      "label": "polyps_mound_vs_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_mound_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03"
+      ],
+      "label": "polyps_mound_vs_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04"
+      ],
+      "label": "polyps_mound_vs_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_mound_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_mound_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_mound_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_mound_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01"
+      ],
+      "label": "polyps_branch_00_vs_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04"
+      ],
+      "label": "polyps_branch_00_vs_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_00_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_00_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18"
+      ],
+      "label": "polyps_branch_00_vs_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20"
+      ],
+      "label": "polyps_branch_00_vs_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_mound"
+      ],
+      "label": "polyps_branch_01_vs_mound"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00"
+      ],
+      "label": "polyps_branch_01_vs_branch_00"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_01_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06"
+      ],
+      "label": "polyps_branch_01_vs_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_01_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21"
+      ],
+      "label": "polyps_branch_01_vs_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_mound"
+      ],
+      "label": "polyps_branch_02_vs_mound"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03"
+      ],
+      "label": "polyps_branch_02_vs_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_02_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_02_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_02_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_02_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_branch_03_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_03_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_03_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_03_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_03_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_03_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20"
+      ],
+      "label": "polyps_branch_03_vs_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00"
+      ],
+      "label": "polyps_branch_04_vs_branch_00"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_04_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18"
+      ],
+      "label": "polyps_branch_04_vs_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19"
+      ],
+      "label": "polyps_branch_04_vs_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20"
+      ],
+      "label": "polyps_branch_04_vs_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_mound"
+      ],
+      "label": "polyps_branch_05_vs_mound"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_00"
+      ],
+      "label": "polyps_branch_05_vs_branch_00"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01"
+      ],
+      "label": "polyps_branch_05_vs_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_branch_05_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03"
+      ],
+      "label": "polyps_branch_05_vs_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04"
+      ],
+      "label": "polyps_branch_05_vs_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_05_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_05_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_05_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_05_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20"
+      ],
+      "label": "polyps_branch_05_vs_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21"
+      ],
+      "label": "polyps_branch_05_vs_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01"
+      ],
+      "label": "polyps_branch_06_vs_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_06"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_06_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_01"
+      ],
+      "label": "polyps_branch_07_vs_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_06"
+      ],
+      "label": "polyps_branch_07_vs_branch_06"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08"
+      ],
+      "label": "polyps_branch_07_vs_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09"
+      ],
+      "label": "polyps_branch_07_vs_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_07"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21"
+      ],
+      "label": "polyps_branch_07_vs_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_08_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_09"
+      ],
+      "label": "polyps_branch_08_vs_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21"
+      ],
+      "label": "polyps_branch_08_vs_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_09"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_09_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_09"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08"
+      ],
+      "label": "polyps_branch_09_vs_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_branch_10_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_10_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12"
+      ],
+      "label": "polyps_branch_10_vs_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13"
+      ],
+      "label": "polyps_branch_10_vs_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_10_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_branch_11_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_11_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_11_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21"
+      ],
+      "label": "polyps_branch_11_vs_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_12_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13"
+      ],
+      "label": "polyps_branch_12_vs_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_12_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_13"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_13_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_13"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12"
+      ],
+      "label": "polyps_branch_13_vs_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03"
+      ],
+      "label": "polyps_branch_14_vs_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_15"
+      ],
+      "label": "polyps_branch_14_vs_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16"
+      ],
+      "label": "polyps_branch_14_vs_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17"
+      ],
+      "label": "polyps_branch_14_vs_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_14"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19"
+      ],
+      "label": "polyps_branch_14_vs_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_02"
+      ],
+      "label": "polyps_branch_15_vs_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_03"
+      ],
+      "label": "polyps_branch_15_vs_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_10"
+      ],
+      "label": "polyps_branch_15_vs_branch_10"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_15_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_12"
+      ],
+      "label": "polyps_branch_15_vs_branch_12"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_13"
+      ],
+      "label": "polyps_branch_15_vs_branch_13"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_15_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_16_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_17"
+      ],
+      "label": "polyps_branch_16_vs_branch_17"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19"
+      ],
+      "label": "polyps_branch_16_vs_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_17"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_17_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_17"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16"
+      ],
+      "label": "polyps_branch_17_vs_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_18"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04"
+      ],
+      "label": "polyps_branch_18_vs_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_18"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19"
+      ],
+      "label": "polyps_branch_18_vs_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04"
+      ],
+      "label": "polyps_branch_19_vs_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_14"
+      ],
+      "label": "polyps_branch_19_vs_branch_14"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_16"
+      ],
+      "label": "polyps_branch_19_vs_branch_16"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18"
+      ],
+      "label": "polyps_branch_19_vs_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20"
+      ],
+      "label": "polyps_branch_19_vs_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_20"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_04"
+      ],
+      "label": "polyps_branch_20_vs_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_20"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_20_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_20"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_18"
+      ],
+      "label": "polyps_branch_20_vs_branch_18"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_20"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_19"
+      ],
+      "label": "polyps_branch_20_vs_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_20"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_21"
+      ],
+      "label": "polyps_branch_20_vs_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_21"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_05"
+      ],
+      "label": "polyps_branch_21_vs_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_21"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_07"
+      ],
+      "label": "polyps_branch_21_vs_branch_07"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_21"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_08"
+      ],
+      "label": "polyps_branch_21_vs_branch_08"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_21"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_11"
+      ],
+      "label": "polyps_branch_21_vs_branch_11"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_21"
+      ],
+      "b": [
+        "PA_stylophora_Skeleton",
+        "part_branch_20"
+      ],
+      "label": "polyps_branch_21_vs_branch_20"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "label": "polyps_mound_vs_polyps_branch_00"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "label": "polyps_mound_vs_polyps_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "label": "polyps_mound_vs_polyps_branch_02"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "label": "polyps_mound_vs_polyps_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_mound"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "label": "polyps_mound_vs_polyps_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "label": "polyps_branch_00_vs_polyps_branch_01"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_00"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_04"
+      ],
+      "label": "polyps_branch_00_vs_polyps_branch_04"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_01"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "label": "polyps_branch_01_vs_polyps_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_02"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "label": "polyps_branch_02_vs_polyps_branch_03"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_03"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_05"
+      ],
+      "label": "polyps_branch_03_vs_polyps_branch_05"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_08"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_09"
+      ],
+      "label": "polyps_branch_08_vs_polyps_branch_09"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_10"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "label": "polyps_branch_10_vs_polyps_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_11"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_21"
+      ],
+      "label": "polyps_branch_11_vs_polyps_branch_21"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_12"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_15"
+      ],
+      "label": "polyps_branch_12_vs_polyps_branch_15"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_16"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "label": "polyps_branch_16_vs_polyps_branch_19"
+    },
+    {
+      "a": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_19"
+      ],
+      "b": [
+        "PA_stylophora_Polyps",
+        "part_polyps_branch_20"
+      ],
+      "label": "polyps_branch_19_vs_polyps_branch_20"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.1,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_18",
+        "Br_19",
+        "Br_20",
+        "Br_21",
+        "Mound"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_18",
+        "Br_19",
+        "Br_20",
+        "Br_21",
+        "Mound"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 60,
+      "bones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_18",
+        "Br_19",
+        "Br_20",
+        "Br_21",
+        "Mound"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 4,
+  "variantId": "blueberry",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.061216,
+      -0.041368,
+      0.0
+    ],
+    "max": [
+      0.038854,
+      0.046607,
+      0.082688
+    ]
+  },
+  "textures": [
+    "textures/tissue-albedo.png",
+    "textures/tissue-roughness.png",
+    "textures/tissue-normal.png",
+    "textures/polyp-albedo.png",
+    "textures/polyp-roughness.png",
+    "textures/polyp-normal.png",
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png"
+  ],
+  "notes": {
+    "seed": 11,
+    "designExtentCm": 9.588971503815213,
+    "scaleMetersPerCm": 0.010428647114053108,
+    "branches": 22,
+    "terminalBranches": 14,
+    "polyps": 1136,
+    "clusterBones": [
+      "Mound",
+      "Br_00",
+      "Br_01",
+      "Br_02",
+      "Br_03",
+      "Br_04",
+      "Br_05",
+      "Br_06",
+      "Br_07",
+      "Br_10",
+      "Br_11",
+      "Br_14",
+      "Br_15",
+      "Br_18",
+      "Br_19",
+      "Br_20",
+      "Br_21",
+      "Br_08",
+      "Br_09",
+      "Br_12",
+      "Br_13",
+      "Br_16",
+      "Br_17"
+    ],
+    "branchThicknessMm": [
+      12.77,
+      12.49,
+      12.15,
+      13.48,
+      12.23,
+      11.47,
+      10.47,
+      10.47,
+      8.78,
+      8.78,
+      10.19,
+      10.19,
+      8.55,
+      8.55,
+      11.31,
+      11.31,
+      9.48,
+      9.48,
+      10.26,
+      10.26,
+      9.62,
+      9.62
+    ],
+    "triangles": 18116,
+    "clearancePairs": 313,
+    "staticSkeleton": "every skeleton vertex is weighted 1.0 to Base; Base has no animation channel in any clip"
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/stylophora/candidates/fable-v1-blueberry/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/stylophora/candidates/fable-v1-blueberry/renders/three-view.png",
+    "boundsMin": [
+      -0.06121566519141197,
+      -0.041367992758750916,
+      0.0
+    ],
+    "boundsMax": [
+      0.03885394334793091,
+      0.046606991440057755,
+      0.08268795907497406
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

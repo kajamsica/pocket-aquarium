@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "scarlet_hermit",
+  "revision": 1,
+  "policy": "References informed taxonomy, size, appendage layout, proportions and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source; the borrowed gastropod shell is an authored generic turbinate form, not a specific specimen.",
+  "sources": [
+    {
+      "id": "WORMS-368215",
+      "title": "Paguristes cadenati Forest, 1954 taxon record (Diogenidae; vernacular scarlet reef hermit crab, red reef hermit)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=368215",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-PAGURISTES_CADENATI",
+      "title": "Paguristes cadenati, Red reef hermit species summary (Malacostraca, Decapoda, Diogenidae)",
+      "publisher": "SeaLifeBase",
+      "url": "https://sealifebase.se/summary/Paguristes-cadenati.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "ITIS-98178",
+      "title": "ITIS report Paguristes cadenati Forest, 1954 (TSN 98178; Anomura, Paguroidea, Diogenidae, left-handed hermits)",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=98178",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "US government public domain"
+    },
+    {
+      "id": "FOREST-1954",
+      "title": "Forest, J. (1954). Sur un pagure littoral nouveau de la Martinique, Paguristes cadenati sp. nov. Bull. Mus. natl. Hist. nat. Paris ser. 2, 26(3): 353-357 (holotype carapace 13 mm; shield a little longer than the posterior carapace with nearly parallel sides; long rostrum; eyestalks subcylindrical, slightly swollen distally, a little less than twice the frontal width)",
+      "publisher": "Museum national d'Histoire naturelle, Paris (scan hosted by the Natural History Museum of Los Angeles County decapoda library)",
+      "url": "https://decapoda.nhm.org/pdfs/32126/32126.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "primary_description",
+      "allowedUse": "facts_and_proportions_only",
+      "license": "Original 1954 description; text consulted for measurements and proportions only, no figures reproduced"
+    },
+    {
+      "id": "NATURALIS-CARIBBEAN-6428",
+      "title": "Interactive Guide to Caribbean Diving: Paguristes cadenati, Red reef hermit (bright red legs and claws, pale yellow to green eyestalks and eyes, size up to 3 cm, 8 to 30 m on coral reefs)",
+      "publisher": "Naturalis Biodiversity Center",
+      "url": "https://caribbean-diving.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/taxon.php?id=6428",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "WIKIPEDIA-PAGURISTES_CADENATI",
+      "title": "Paguristes cadenati (about 3 cm; smooth hairless limbs and chelae, left chela slightly larger than the right; abdomen concealed in the gastropod shell; bright red except deep red antennae and yellow to yellowish-orange eyestalks with yellowish-green corneas)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Paguristes_cadenati",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-PAGURISTES_CADENATI",
+      "title": "Category:Paguristes cadenati (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Paguristes_cadenati",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Taxonomy, size and colour placement are authoritative (WoRMS, Naturalis, original description). Openly licensed in-situ photographs give oblique and dorsal views of the animal in its shell, but no calibrated side/top/front plates exist; limb segment proportions and the borrowed shell form are inferred from general Diogenidae anatomy and are therefore grade B rather than A."
+}

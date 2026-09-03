@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "millepora",
+  "variantId": "branching",
+  "scientificName": "Millepora sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.15,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "d9e7b00a86acd04d6ff662a37daea7660b99fb44d10347ea7fa6283c688db304",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Millepora (fire coral, branching form)",
+  "bodyPlan": "hydrocoral_colony",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-205902",
+      "title": "Millepora Linnaeus, 1758 genus record (accepted; Hydrozoa, Anthoathecata, Milleporidae)",
+      "publisher": "World Register of Marine Species (World Hydrozoa Database)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=205902",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-210726",
+      "title": "Millepora alcicornis Linnaeus, 1758 species record (accepted): the branching Caribbean fire coral",
+      "publisher": "World Register of Marine Species (World Hydrozoa Database)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=210726",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-287421",
+      "title": "Millepora complanata Lamarck, 1816 species record (accepted): the blade fire coral",
+      "publisher": "World Register of Marine Species (World Hydrozoa Database)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=287421",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "RAZAK-HOEKSEMA-2003",
+      "title": "Razak TB, Hoeksema BW (2003) The hydrocoral genus Millepora (Hydrozoa: Capitata: Milleporidae) in Indonesia. Zoologische Verhandelingen Leiden 345: 313-336. Coenosteum without corallites, minute scattered pores; gastropores with short knob-tentacled gastrozooids, dactylopores with elongated dactylozooids bearing capitate tentacles, usually arranged in cyclosystems of one gastropore ringed by five to seven dactylopores; growth forms branching, reticulate or upstanding plates, knobbed branches, columnar; M. platyphylla forms solid thick upstanding plates in parallel tiers or honeycombs.",
+      "publisher": "Naturalis Biodiversity Center repository",
+      "url": "https://repository.naturalis.nl/pub/220318/ZV345_313-336.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no plates used"
+    },
+    {
+      "id": "DEWEERDT-1981",
+      "title": "de Weerdt WH (1981) Taxonomic characters in Caribbean Millepora species (Hydrozoa, Coelenterata). Bijdragen tot de Dierkunde 51: 1-19. Growth form (branching M. alcicornis with laterally compressed, sometimes finger-like branches; plate-like M. complanata) and pore size and density as diagnostic characters.",
+      "publisher": "Brill (Bijdragen tot de Dierkunde)",
+      "url": "https://doi.org/10.1163/26660644-05402010",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only"
+    },
+    {
+      "id": "RUIZ-RAMOS-2014",
+      "title": "Ruiz-Ramos DV, Weil E, Schizas NV (2014) Morphological and genetic evaluation of the hydrocoral Millepora species complex in the Caribbean. Zoological Studies 53: 4. M. alcicornis: branching colonies with smooth surface, gastropores 0.15-0.30 mm, dactylopores 0.06-0.17 mm; M. complanata: simple plates from a common base or honeycomb-like interconnected plates, gastropores 0.22-0.36 mm, dactylopores 0.12-0.24 mm; branched and encrusting morphotypes form one species complex.",
+      "publisher": "Zoological Studies (Springer Open)",
+      "url": "https://doi.org/10.1186/1810-522X-53-4",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "WIKIPEDIA-MILLEPORA-ALCICORNIS",
+      "title": "Millepora alcicornis (encyclopaedia article summarising Lewis 2006): encrusting early growth, blades in surf, upright branched colonies to 50 cm tall in calm water, cylindrical branches usually in one plane, brown to pale cream-yellow with paler branch tips; gastrozooids with four to six tentacle stubs, dactylozooids with hair-like tentacles",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Millepora_alcicornis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-MILLEPORA",
+      "title": "Category:Millepora (openly licensed photographs, growth form, hair density and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Millepora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MILLEPORA-ALCICORNIS",
+      "title": "Category:Millepora alcicornis (openly licensed photographs, branch thickness, fork angle and tip colour study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Millepora_alcicornis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MILLEPORA-COMPLANATA",
+      "title": "Category:Millepora complanata (openly licensed photographs, blade height to thickness and margin lobing study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Millepora_complanata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "40f0bc43138b148b1434f3c988986519fcf816ebd3fa41b31d528686c7bb3fdc",
+  "sourceReferencesSha256": "2dc2b19451c7108f119d52b69ea8878dcfe39358db1bfa3ad391627f478b5472",
+  "sourceBlendSha256": "a9d5b82f8f9714860a62decbe1b0bd50c3e3205898b8d120a8b6efba57517b3e",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:c440a6e271da1af29ba1f6659782f6c7145c73c8878f4f34699bc9c8116902a0",
+    "speciesBackend": "c440a6e271da1af29ba1f6659782f6c7145c73c8878f4f34699bc9c8116902a0",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/base-albedo.png",
+      "sha256": "c54e0912d20954ca2a28745c128dc5fe038e26b17b221ff9ffa3153ee9dbe212"
+    },
+    {
+      "path": "textures/base-normal.png",
+      "sha256": "a342e5301221023a951f06e93444e9afd5305bd092181a3e7699bac8cc66cd41"
+    },
+    {
+      "path": "textures/base-roughness.png",
+      "sha256": "c385a5c8cecd76fb2c28963596e2fea920dcf6fcb1a10e5cf5719c5a55682089"
+    },
+    {
+      "path": "textures/hair-albedo.png",
+      "sha256": "d747364ec3c7dfbcbc30e176e27153ff68cbde37d38cbe8f20d7a0302bd294ca"
+    },
+    {
+      "path": "textures/hair-normal.png",
+      "sha256": "1cdfee6f782285d8e1d39e5bf71d9b55507b0c4a31a93012adabc69242d9b74e"
+    },
+    {
+      "path": "textures/hair-roughness.png",
+      "sha256": "c8600f4f35e557ef1f78c31d324770810a02316f3e684e28fedbb4c6dae092cf"
+    },
+    {
+      "path": "textures/skeleton-albedo.png",
+      "sha256": "a26ac32b637e02e7c8104a93f8a1bdb19c5c59d0ac1022ca2a724bb2548a07f6"
+    },
+    {
+      "path": "textures/skeleton-normal.png",
+      "sha256": "54d465ffb0aed44743d60a78e193f35c843c362d2c08013a30d2ad08223c9b70"
+    },
+    {
+      "path": "textures/skeleton-roughness.png",
+      "sha256": "05b4fc49e984e49e31636ea8111603a907cd33c03eb455ecbde2c32b720dda68"
+    }
+  ],
+  "statistics": {
+    "triangles": 13552,
+    "materials": 3,
+    "bones": 26,
+    "nodes": 31,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_millepora_Skeleton": 2272,
+      "PA_millepora_Polyps": 6072
+    },
+    "runtimeBytes": 3663452
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "sway": true,
+    "flow": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.067339,
+      -0.07508,
+      0.0
+    ],
+    "max": [
+      0.067365,
+      0.075038,
+      0.136084
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "cc02e0cf997655e1efed1ab00fa6f07a1ab01202a549768deb8d24997266f59b",
+  "rebuildGeometryDigest": "cc02e0cf997655e1efed1ab00fa6f07a1ab01202a549768deb8d24997266f59b",
+  "textureHashMatch": true,
+  "textures": {
+    "disc-albedo.png": "136d79ca98fe201c0ca4003eebf72a0234cc12421b6f0f5d0fbcbd2c784302b5",
+    "disc-normal.png": "8685b072dbc3643514e48c1cf376e0ada81a8610b6e62aa5e41727a893112172",
+    "disc-roughness.png": "25ed0af316e78017bb8b1a06cd71da7cbee93e8e1416235216de48062817fb83",
+    "rock-albedo.png": "04e8e614dfe75e5171b82ffcf805e5c77753991bc9b737b5f12dc02340e0cf91",
+    "rock-normal.png": "bd1097694f3ab79c97110355c9feaf49a7565aa3a53d50f1dd4047f00ab53965",
+    "rock-roughness.png": "3d34e17d39424195ff32eeb5dcfaab81ed366da5ed4d33425ee4a8c061408589",
+    "skeleton-albedo.png": "c66de51a2ac6e931c2c94323a81c68ea04bcad975dde9bbd12b04aa78458961e",
+    "skeleton-normal.png": "d6e3b3155ace56e4fb9bdc9c4380153091ddbf240f6dcf9c42f0a1586c8253e6",
+    "skeleton-roughness.png": "8d73dda4677f0d4943b8d0eaf190d417538c3c979ea4e90142267a62ecf31dc6",
+    "tissue-albedo.png": "c62c4d19f2dac00107dfb8b2a17541e2412ec8d298fae24593f5f90f8896d89a",
+    "tissue-normal.png": "8bd308c16003e7e87e4c4b175f689e5b23aa7462347279af119392c2e1423e4f",
+    "tissue-roughness.png": "593ab48f4254309d413c6fce075eeb0070b4d79e5fc9310658bbea1e39b1dad1"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

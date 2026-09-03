@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "anacropora",
+  "displayName": "Anacropora",
+  "scientificLabel": "Anacropora sp.",
+  "taxonomyConfidence": "genus",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "branching_sps_coral",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.12,
+    "kind": "colony_width",
+    "note": "Corals of the World gives Anacropora forbesi branches under 10 mm thick and A. puertogalerae under 13 mm, tapering to blunt or pointed tips; Wikipedia (after Veron) gives branches under 10 cm long forming small colonies and calices up to 1 mm across; Pillai (1973, CMFRI) measured 2.2 to 2.5 mm branches with corallites 2.5 to 3 mm apart in A. forbesi. 12 cm is a small aquarium display colony measured across the whole mesh including extended polyps; the branches land at roughly 4 to 5 mm diameter and the corallite lattice at 2.2 mm spacing after fitting."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "sway", "locomotion": "flow", "response": "retract" },
+  "palette": {
+    "body": [0.50, 0.37, 0.24],
+    "bodyDark": [0.30, 0.20, 0.12],
+    "tip": [0.78, 0.42, 0.68],
+    "tipCore": [0.90, 0.70, 0.88],
+    "pit": [0.20, 0.13, 0.09],
+    "rim": [0.66, 0.52, 0.38],
+    "polyp": [0.82, 0.72, 0.58],
+    "polypTip": [0.95, 0.91, 0.84],
+    "rock": [0.42, 0.38, 0.33],
+    "algae": [0.30, 0.36, 0.18],
+    "coralline": [0.55, 0.25, 0.42]
+  },
+  "textures": {
+    "branchResolution": [1024, 512],
+    "polypResolution": [128, 32],
+    "rockResolution": [512, 256],
+    "branchNormalStrength": 1.3,
+    "branchNormalMapStrength": 0.9,
+    "rockNormalStrength": 1.0
+  },
+  "morphology": {
+    "notes": "Design centimetres, scaled so the xy extent equals referenceSize. Rock plug with an encrusting tissue cap; five outer primaries plus one central upright primary rise from it, each forking once or twice at wide angles, daughters sometimes forking again; every branch keeps an even thickness and tapers only over its last third to a blunt, slightly pointed tip with no axial corallite. Radial corallites form a staggered lattice measured back from the tip (2.2 mm rows, five around); a subset carries a modelled polyp (column plus six tentacles). The skeleton is rigid (bone Base, never animated); only polyps move.",
+    "seed": 11,
+    "rock": { "radius": 1.7, "height": 1.0, "exponent": 2.2, "rimNoise": 0.08, "segments": 20, "rings": 7 },
+    "primaries": {
+      "count": 5, "central": true, "rootRadius": 0.8, "embed": 0.45,
+      "elevation": [36.0, 58.0], "centralElevation": [70.0, 80.0], "azimuthJitter": 14.0, "directionJitter": 18.0,
+      "length": [4.2, 5.6], "centralLength": 3.8, "radius": 0.20, "tipRadius": 0.12, "ringStep": 0.52,
+      "segments": 10, "curl": 7.0, "wobble": 1.6
+    },
+    "forks": {
+      "firstAt": [0.35, 0.60], "secondAt": [0.70, 0.84], "secondChance": 0.65, "angle": [30.0, 50.0],
+      "lengthFactor": [0.55, 0.80], "radiusFactor": 0.9, "tertiaryMinLength": 2.3, "tertiaryChance": 0.75,
+      "tertiaryAt": [0.48, 0.66], "tertiaryLengthFactor": [0.5, 0.66], "minRings": 5, "minElevation": 18.0, "curl": 9.0
+    },
+    "layout": { "minGap": 0.5, "attempts": 12, "minBranches": 10, "maxBranches": 28, "zFloor": 0.35 },
+    "tip": { "lengthFactor": 1.25, "exponent": 1.8, "taperStart": 0.45 },
+    "corallites": { "rowSpacing": 0.22, "perRow": 6, "firstFromTip": 0.30, "pitRadius": 0.038, "jitter": 0.22 },
+    "polyps": {
+      "rowStride": 2, "extraChance": 0.55, "exitMargin": 0.35, "embed": 0.035, "maxPolyps": 120,
+      "columnRadius": 0.032, "columnHeight": 0.08, "columnSegments": 5,
+      "tentacles": 6, "tentacleLength": [0.13, 0.18], "tentacleRadius": 0.011, "tentacleTipRadius": 0.0055,
+      "splay": [28.0, 42.0], "distalTilt": 18.0, "probeReach": 0.23, "probeSide": 0.13, "probeMargin": 0.28,
+      "neighbourGap": 0.55, "gain": [0.75, 1.0]
+    },
+    "clearanceNearCm": 0.5
+  },
+  "animation": {
+    "sway": {
+      "frames": 120, "loop": true,
+      "leanCm": 0.04, "leanFrequency": 1, "driftCm": 0.02, "driftFrequency": 1,
+      "rollDegrees": 5.0, "rollFrequency": 1, "bendDegrees": 0.5, "bendFrequency": 2, "pulse": 0.02, "pulseFrequency": 2,
+      "phaseSpread": 1.0
+    },
+    "flow": {
+      "frames": 90, "loop": true,
+      "leanCm": 0.05, "leanBiasCm": 0.04, "leanFrequency": 1, "waveNumber": 0.5, "driftCm": 0.025, "driftFrequency": 2,
+      "rollDegrees": 9.0, "rollFrequency": 2, "bendDegrees": 0.8, "bendFrequency": 1, "pulse": 0.05, "pulseFrequency": 3,
+      "phaseSpread": 0.35
+    },
+    "retract": {
+      "frames": 72, "loop": false, "envelope": "hold",
+      "contract": 0.46, "rollDegrees": 7.0, "bendDegrees": 0.8
+    }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 20, "azimuthDegrees": -50, "elevationDegrees": 24 },
+  "variants": {
+    "brown_pink_tips": {
+      "displayName": "Anacropora (tan brown, pink-purple tips)",
+      "overrides": {
+        "morphology": { "seed": 11 },
+        "palette": {
+          "body": [0.50, 0.37, 0.24],
+          "bodyDark": [0.30, 0.20, 0.12],
+          "tip": [0.78, 0.42, 0.68],
+          "tipCore": [0.90, 0.70, 0.88],
+          "pit": [0.20, 0.13, 0.09],
+          "rim": [0.66, 0.52, 0.38],
+          "polyp": [0.82, 0.72, 0.58],
+          "polypTip": [0.95, 0.91, 0.84]
+        }
+      }
+    },
+    "green": {
+      "displayName": "Anacropora (green, pale lime tips)",
+      "overrides": {
+        "morphology": { "seed": 23 },
+        "palette": {
+          "body": [0.36, 0.52, 0.18],
+          "bodyDark": [0.18, 0.28, 0.08],
+          "tip": [0.74, 0.86, 0.50],
+          "tipCore": [0.90, 0.95, 0.78],
+          "pit": [0.12, 0.18, 0.06],
+          "rim": [0.56, 0.68, 0.32],
+          "polyp": [0.74, 0.86, 0.56],
+          "polypTip": [0.94, 0.97, 0.84]
+        },
+        "preview": { "azimuthDegrees": -42, "elevationDegrees": 22 }
+      }
+    }
+  },
+  "visualDebt": [
+    "Polyps carry six tentacle tubes instead of the twelve of a real acroporid polyp (LOD1 triangle budget).",
+    "Only about one corallite in three carries a modelled polyp; the remaining corallites are painted pits with a raised lower lip in the branch texture.",
+    "Loose anastomosis (branches fusing where they touch) is not modelled; every branch is a separate closed tube kept clear of its neighbours.",
+    "Polyps of one branch share one cluster bone: lean, swirl and pulsing are uniform along the branch apart from a bend gradient toward the tip and per-polyp skin gain; retraction pulls polyps toward the branch axis, so on curved branches the retracted depth varies slightly along the branch.",
+    "The reticulate coenosteum and corallite septa are texture relief only."
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "epaulette_shark",
+  "revision": 1,
+  "policy": "References informed proportions, fin layout and colour placement only. Morphometric ranges were read from the open-access taxonomic revision and converted to metres; no pixels were sampled, traced, copied or redistributed. Seller imagery was not used.",
+  "sources": [
+    {
+      "id": "WORMS-281037",
+      "title": "Hemiscyllium ocellatum (Bonnaterre, 1788) taxon record (accepted; Orectolobiformes, Hemiscylliidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=281037",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-HEMISCYLLIUM_OCELLATUM",
+      "title": "Hemiscyllium ocellatum species summary (max length 107 cm TL; caudal fin with subterminal notch, no ventral lobe; lateral ocellus not surrounded by large spots)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Hemiscyllium-ocellatum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "ALLEN-2016-JOSF23",
+      "title": "Allen, Erdmann, White, Fahmi & Dudgeon (2016) Review of the bamboo shark genus Hemiscyllium. Journal of the Ocean Science Foundation 23: 51-97 (H. ocellatum morphometrics, 27 specimens, and colour-in-life description)",
+      "publisher": "Ocean Science Foundation / Zenodo (doi:10.5281/zenodo.164197)",
+      "url": "https://oceansciencefoundation.org/josf/josf23d.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Open access article; text measurements only, no figures reproduced"
+    },
+    {
+      "id": "AM-EPAULETTE_SHARK",
+      "title": "Epaulette Shark, Hemiscyllium ocellatum species account (ocellus above pectoral fin, two similar dorsal fins, anal fin just anterior to the tail, short nasal barbels, grows to just over 1 m)",
+      "publisher": "Australian Museum",
+      "url": "https://australian.museum/learn/animals/fishes/epaulette-shark-hemiscyllium-ocellatum/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-HEMISCYLLIUM_OCELLATUM",
+      "title": "Category:Hemiscyllium ocellatum (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Hemiscyllium_ocellatum",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Calibrated lateral proportions come from a published morphometric table (27 specimens) and openly licensed lateral photographs; head width and depth ranges are published, but top and front silhouettes between those stations are inferred from the Hemiscylliidae body plan rather than calibrated dorsal or frontal photographs."
+}

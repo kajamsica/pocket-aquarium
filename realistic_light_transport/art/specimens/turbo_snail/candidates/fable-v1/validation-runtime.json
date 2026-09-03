@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "crawl": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 1.3333333730697632,
+      "targetedBones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "morphTargets": [],
+      "loop": false
+    }
+  },
+  "inventory": {
+    "triangles": 14840,
+    "materials": 5,
+    "nodes": 12,
+    "skinJoints": 8,
+    "images": 6,
+    "meshes": [
+      "PA_turbo_snail_Body",
+      "PA_turbo_snail_Shell"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "crawl": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.03956468118525214,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.03148270025849342,
+      -0.02000000700354576,
+      -1.1641532182693481e-10
+    ],
+    "max": [
+      0.03662552684545517,
+      0.02000000700354576,
+      0.03940986096858978
+    ],
+    "deviationMeters": 1.0536712127723509e-08
+  }
+}

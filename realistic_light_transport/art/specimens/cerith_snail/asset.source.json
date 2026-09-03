@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "cerith_snail",
+  "displayName": "Cerith Snail",
+  "scientificLabel": "Cerithium sp.",
+  "taxonomyConfidence": "genus",
+  "category": "cleanup_crew",
+  "waterType": "saltwater",
+  "bodyPlan": "gastropod",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.025,
+    "kind": "adult_crawling_length",
+    "note": "Aquarium-trade Cerithium species carry adult shells of about 20-30 mm (SeaLifeBase records 3.4 cm maximum for C. litteratum; CIESM describes Cerithium shells as roughly three times as long as wide with 9-11 whorls). The size gate measures the whole crawling mesh along x, from the trailing shell apex to the extended tentacle tips, so 25 mm is the crawling length; the modelled shell itself is about 21 mm along its coiling axis (see notes.shellLengthMeters in the contract)."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "rest", "locomotion": "crawl", "response": "retract" },
+  "palette": {
+    "shell": [0.16, 0.12, 0.09],
+    "shellPale": [0.80, 0.74, 0.62],
+    "shellApex": [0.72, 0.66, 0.56],
+    "shellInterior": [0.78, 0.71, 0.60],
+    "skin": [0.13, 0.11, 0.09],
+    "skinPale": [0.44, 0.40, 0.34],
+    "sole": [0.50, 0.45, 0.38],
+    "eye": [0.02, 0.015, 0.012]
+  },
+  "textures": { "shellResolution": [1024, 512], "bodyResolution": [512, 512], "shellNormalStrength": 0.9, "bodyNormalStrength": 0.4 },
+  "morphology": {
+    "notes": "Slender turreted spire of 11 whorls with a 25 degree spire angle; four granulose spiral cords per whorl plus two marginal threads, beads aligned into weak axial ribs; body whorl slightly inflated; small oval constricted aperture with a thickened outer lip and short anterior canal notch; shell dragged behind with the coiling axis nearly horizontal, apex trailing low on the substrate and yawed to the animal's right. Small flat-soled foot, short broad snout, long slim cephalic tentacles with eyes on bulges at their outer bases, short inhalant siphon at the anterior canal.",
+    "shell": {
+      "whorls": 11,
+      "spireAngleDegrees": 25,
+      "exposedWhorlRatio": 0.5,
+      "axisOverlap": 0.35,
+      "columellaRadius": 0.06,
+      "whorlOverlap": 0.22,
+      "bodyWhorlHalfWidthMm": 4.0,
+      "sectionExponent": 2.3,
+      "segments": 24,
+      "coarseRingsPerWhorl": 12,
+      "fineRingsPerWhorl": 36,
+      "fineWhorls": 5,
+      "beadsPerWhorl": 12,
+      "cordAngles": [-45, -15, 15, 45],
+      "threadAngles": [-75, 75],
+      "cordRelief": 0.035,
+      "beadRelief": 0.07,
+      "bodyWhorlInflation": 0.06,
+      "apertureConstriction": 0.12,
+      "apertureDescent": 0.25,
+      "canalNotch": 0.3,
+      "canalAngleDegrees": 250,
+      "lipFlare": 1.03,
+      "lipThickness": 0.20,
+      "throatRecess": 0.5
+    },
+    "pose": {
+      "pitchDegrees": 15,
+      "yawDegrees": 12,
+      "rollDegrees": 25,
+      "shellRestZMm": 0.15
+    },
+    "foot": { "rearXMm": -4.0, "frontXMm": 5.6, "halfWidthMm": 2.3, "heightMm": 1.6, "soleDepthMm": 0.22, "humpMinMm": 0.6, "humpAboveApertureMm": 0.35, "humpCenter": 0.38, "humpWidth": 0.16, "rings": 24, "segments": 20 },
+    "head": { "rearXMm": 3.3, "frontXMm": 6.2, "halfWidthMm": 1.0, "dorsalMm": 0.72, "ventralMm": 0.6, "centerZMm": 1.65, "taper": 0.45, "rings": 11, "segments": 16 },
+    "tentacle": { "baseMm": [4.9, 0.6, 2.2], "direction": [0.55, 0.75, 0.36], "lengthMm": 3.9, "baseRadiusMm": 0.28, "tipRadiusMm": 0.12, "curl": 0.25, "points": 7, "segments": 8 },
+    "eye": { "centerMm": [5.0, 1.05, 2.4], "radiusMm": 0.25 },
+    "siphon": { "inset": 0.3, "direction": [0.7, 0.5, 0.5], "lengthMm": 2.2, "baseRadiusMm": 0.32, "tipRadiusMm": 0.22, "points": 5, "segments": 8 }
+  },
+  "animation": {
+    "rest": { "frames": 90, "loop": true, "footPulse": 0.025, "headYaw": 2.5, "tentacleYaw": 9, "tentaclePitch": 5, "siphonSway": 6 },
+    "crawl": { "frames": 60, "loop": true, "pedalScale": 0.05, "pedalShiftMm": 0.2, "pedalFrequency": 2, "pedalLag": 1.5, "headBob": 3.0, "headShiftMm": 0.2, "tentacleYaw": 7, "tentaclePitch": 4, "shellRock": 1.2, "siphonSway": 4 },
+    "retract": { "frames": 30, "loop": false, "envelope": "hold", "footScale": [-0.10, -0.08, -0.08], "footShiftMm": [0.0, -0.15, -0.15], "headShiftMm": -0.25, "headScale": -0.10, "headNod": -8, "tentacleYaw": 28, "tentaclePitch": -14, "tentacleScale": -0.35, "siphonScale": -0.5, "siphonPitch": -10, "shellLift": 0.5 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 10, "azimuthDegrees": -50, "elevationDegrees": 24 },
+  "visualDebt": [
+    "Spiral cords and beads are geometric only on the last five whorls; earlier whorls carry the sculpture in the normal map alone.",
+    "Whorls are a single swept tube that overlaps itself to form sutures, with a thin columella plug closing the axis; the shell wall has no modelled thickness and the aperture interior is a shallow recessed cap behind the neck.",
+    "The operculum is not modelled and the aperture is nearly circular rather than the slightly oblique oval of real Cerithium.",
+    "The rounded shell base reads dark in the front orthographic view; base flecking and lighting could be improved.",
+    "Soft-part proportions (foot, snout, siphon) are inferred from general cerithiid anatomy rather than calibrated live photographs, and the tentacles are straight tapered tubes without curl."
+  ]
+}

@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "cerith_snail",
+  "rig": "PA_cerith_snail_Rig",
+  "root": "PA_cerith_snail_Root",
+  "meshes": [
+    "PA_cerith_snail_Shell",
+    "PA_cerith_snail_Body"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_cerith_snail_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_cerith_snail_Body",
+      "group": "part_foot",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_cerith_snail_Body",
+      "group": "part_head",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_R"
+      ],
+      "minDistance": 0.0004353376282287251,
+      "label": "tentacle_L_vs_R"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_cerith_snail_Body",
+        "part_foot"
+      ],
+      "minDistance": 0.0003265032211715438,
+      "label": "tentacle_L_vs_foot"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_cerith_snail_Body",
+        "part_foot"
+      ],
+      "minDistance": 0.0003265032211715438,
+      "label": "tentacle_R_vs_foot"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_L"
+      ],
+      "b": [
+        "PA_cerith_snail_Shell",
+        "part_shell"
+      ],
+      "minDistance": 0.0005441720352859064,
+      "label": "tentacle_L_vs_shell"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_R"
+      ],
+      "b": [
+        "PA_cerith_snail_Shell",
+        "part_shell"
+      ],
+      "minDistance": 0.0005441720352859064,
+      "label": "tentacle_R_vs_shell"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_head"
+      ],
+      "b": [
+        "PA_cerith_snail_Shell",
+        "part_shell"
+      ],
+      "minDistance": 0.00021766881411436256,
+      "label": "head_vs_shell"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_siphon"
+      ],
+      "b": [
+        "PA_cerith_snail_Body",
+        "part_head"
+      ],
+      "minDistance": 0.0003265032211715438,
+      "label": "siphon_vs_head"
+    },
+    {
+      "a": [
+        "PA_cerith_snail_Body",
+        "part_siphon"
+      ],
+      "b": [
+        "PA_cerith_snail_Body",
+        "part_tentacle_R"
+      ],
+      "minDistance": 0.0003265032211715438,
+      "label": "siphon_vs_tentacle_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_cerith_snail_Body",
+      "group": "part_tentacle_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_cerith_snail_Body",
+      "group": "part_tentacle_R",
+      "exclude": null,
+      "side": 1
+    },
+    {
+      "object": "PA_cerith_snail_Body",
+      "group": "part_eye_L",
+      "exclude": null,
+      "side": -1
+    },
+    {
+      "object": "PA_cerith_snail_Body",
+      "group": "part_eye_R",
+      "exclude": null,
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.025,
+    "tolerance": 0.03,
+    "kind": "adult_crawling_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 30,
+      "bones": [
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Shell",
+        "Siphon",
+        "Tentacle_L",
+        "Tentacle_R"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_cerith_snail_Body",
+      "left": "part_tentacle_L",
+      "right": "part_tentacle_R",
+      "tolerance": 1e-06
+    },
+    {
+      "object": "PA_cerith_snail_Body",
+      "left": "part_eye_L",
+      "right": "part_eye_R",
+      "tolerance": 1e-06
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.0125,
+      -0.003934,
+      0.0
+    ],
+    "max": [
+      0.0125,
+      0.005144,
+      0.009294
+    ]
+  },
+  "textures": [
+    "textures/shell-albedo.png",
+    "textures/shell-roughness.png",
+    "textures/shell-normal.png",
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png"
+  ],
+  "notes": {
+    "shellLengthMeters": 0.021053,
+    "apertureCentreMeters": [
+      0.004851,
+      -7.4e-05,
+      0.003833
+    ],
+    "neckHumpMm": 2.3285,
+    "shellWhorls": 11,
+    "whorlExpansionRate": 1.22169,
+    "translationRate": 10.60016,
+    "generatingCurveElongation": 1.11586,
+    "designScale": 1.088344,
+    "footLengthMeters": 0.010448,
+    "shellMinZMeters": 0.000163,
+    "canalPointMeters": [
+      0.007736,
+      0.001502,
+      0.005132
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/cerith_snail/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/cerith_snail/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.01249999925494194,
+      -0.003933651372790337,
+      0.0
+    ],
+    "boundsMax": [
+      0.012499998323619366,
+      0.0051437565125525,
+      0.0092944810166955
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

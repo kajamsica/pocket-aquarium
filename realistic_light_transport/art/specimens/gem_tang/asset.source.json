@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "gem_tang",
+  "displayName": "Gem Tang",
+  "scientificLabel": "Zebrasoma gemmatum",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.2.0",
+  "referenceGrade": "B",
+  "referenceSize": { "meters": 0.2, "kind": "adult_total_length", "note": "FishBase max length 22 cm TL (Ref. 3145, Randall 1986); 20 cm is a large aquarium adult." },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": { "skin": [0.03, 0.022, 0.018], "fin": [0.03, 0.022, 0.018], "iris": [0.05, 0.04, 0.03], "cue": [0.02, 0.015, 0.012], "adornment": [0.9, 0.9, 0.88] },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3, "finNormalStrength": 0.45 },
+  "morphology": {
+    "notes": "fable-v2: the deepest Zebrasoma disc. Body depth 0.578 of standard length (v1 was 0.479), near-circular flank with a steep convex forehead, a short defined peduncle, and a distinct compressed proboscis-like snout that projects from the disc below a dished profile at eye level. Small terminal mouth, high-set eye, very tall dorsal and anal sails, dark brown-black skin densely covered in small white spots, pale yellow truncate caudal fin.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.082, "halfWidth": 0.0038, "dorsalHeight": 0.0092, "ventralDepth": 0.0084, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.075, "halfWidth": 0.005, "dorsalHeight": 0.0138, "ventralDepth": 0.0124, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.064, "halfWidth": 0.0074, "dorsalHeight": 0.0275, "ventralDepth": 0.0245, "centerZ": 0.0005 },
+      { "id": "posterior-b", "x": -0.049, "halfWidth": 0.0098, "dorsalHeight": 0.0395, "ventralDepth": 0.035, "centerZ": 0.001 },
+      { "id": "mid-a", "x": -0.03, "halfWidth": 0.0116, "dorsalHeight": 0.0472, "ventralDepth": 0.0418, "centerZ": 0.001 },
+      { "id": "mid-b", "x": -0.008, "halfWidth": 0.0125, "dorsalHeight": 0.0505, "ventralDepth": 0.0445, "centerZ": 0.0008 },
+      { "id": "mid-c", "x": 0.014, "halfWidth": 0.0123, "dorsalHeight": 0.0492, "ventralDepth": 0.0432, "centerZ": 0.0003 },
+      { "id": "anterior", "x": 0.033, "halfWidth": 0.0113, "dorsalHeight": 0.0438, "ventralDepth": 0.0382, "centerZ": -0.0005 },
+      { "id": "operculum", "x": 0.046, "halfWidth": 0.0096, "dorsalHeight": 0.0365, "ventralDepth": 0.0305, "centerZ": -0.002 },
+      { "id": "head", "x": 0.056, "halfWidth": 0.0078, "dorsalHeight": 0.0245, "ventralDepth": 0.0198, "centerZ": -0.0036 },
+      { "id": "brow", "x": 0.062, "halfWidth": 0.0062, "dorsalHeight": 0.0148, "ventralDepth": 0.0138, "centerZ": -0.005 },
+      { "id": "snout-base", "x": 0.067, "halfWidth": 0.0048, "dorsalHeight": 0.0102, "ventralDepth": 0.0096, "centerZ": -0.006 },
+      { "id": "snout", "x": 0.073, "halfWidth": 0.0038, "dorsalHeight": 0.0082, "ventralDepth": 0.0076, "centerZ": -0.0066 },
+      { "id": "snout-b", "x": 0.0785, "halfWidth": 0.0029, "dorsalHeight": 0.0062, "ventralDepth": 0.0058, "centerZ": -0.007 },
+      { "id": "snout-c", "x": 0.0815, "halfWidth": 0.0022, "dorsalHeight": 0.0048, "ventralDepth": 0.0046, "centerZ": -0.0072 },
+      { "id": "snout-tip", "x": 0.083, "halfWidth": 0.0015, "dorsalHeight": 0.0027, "ventralDepth": 0.0027, "centerZ": -0.0073 }
+    ],
+    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 1.75 },
+    "sampling": { "ringSegments": 48, "ringCount": 60 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0012, "edge": 0.00012 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.071, "xEnd": 0.044, "rows": 6, "columns": 16, "lean": -0.013, "rayCount": 24,
+        "heights": [[0.0, 0.005], [0.15, 0.025], [0.4, 0.037], [0.62, 0.0375], [0.85, 0.027], [1.0, 0.007]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.071, "xEnd": 0.012, "rows": 5, "columns": 14, "lean": -0.011, "rayCount": 22,
+        "heights": [[0.0, 0.0045], [0.2, 0.022], [0.5, 0.0315], [0.8, 0.025], [1.0, 0.006]] },
+      { "name": "caudal", "type": "caudal", "rows": 4, "columns": 11, "spanTop": 0.0225, "spanBottom": 0.0225, "length": 0.034, "fork": 0.05, "forkPower": 1.6, "rounding": 0.05, "baseFraction": 0.88, "rayCount": 16 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.041, "rootLength": 0.016, "rootHeight": -0.08, "length": 0.038, "sweepDegrees": 36, "droopDegrees": 22, "taper": 0.3, "power": 0.7, "rows": 4, "columns": 7, "rayCount": 15 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.03, "rootLength": 0.01, "rootHeight": -0.9, "length": 0.022, "sweepDegrees": 50, "droopDegrees": 60, "spread": 0.3, "taper": 0.25, "power": 0.8, "rows": 3, "columns": 5, "rayCount": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0595, "zFraction": 0.45, "radius": 0.0053, "protrude": 0.35, "aspect": 0.3, "pupilFraction": 0.55 },
+    "mouth": { "zOffset": -0.3, "width": 0.0015, "radius": 0.00028 },
+    "gill": { "x": 0.036, "radius": 0.00022, "points": 11, "bulge": 0.02 },
+    "adornments": [ { "type": "scalpel", "x": -0.077, "zFraction": 0.0, "length": 0.0085 } ]
+  },
+  "rig": { "axialJoints": [0.066, 0.02, -0.01, -0.038, -0.061, -0.085] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [1.0, 2.0, 3.5, 5.5], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 15, "pectoralFrequency": 2, "median": 1.0, "gill": 1.6, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.0, 4.0, 7.5, 12.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 24, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [4.0, 8.0, 15.0, 24.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "median": 3.0, "gill": 2.0, "gillFrequency": 2, "jaw": 2.5, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
+  "visualDebt": [
+    "Fin ray relief is painted (normal map) rather than modelled.",
+    "Spot pattern is mirrored left/right (one lattice shared by both flanks) to avoid a UV seam on the dorsal ridge.",
+    "Lips are a simple cue tube; the crenulated Zebrasoma lip margin is not modelled.",
+    "Roughness and normal PNGs are written blank by the shared lib/textures.py at the build commit (colorspace set after pixel upload); the candidate needs a rebuild once the shared fix lands (see /tmp/pa-lanes/gem_tang/shared-change-request.md)."
+  ]
+}

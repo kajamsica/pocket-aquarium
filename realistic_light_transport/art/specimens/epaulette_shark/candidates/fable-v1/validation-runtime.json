@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "burst": {
+      "durationSeconds": 1.2000000476837158,
+      "targetedBones": [
+        "Anal",
+        "Caudal",
+        "Dorsal1",
+        "Dorsal2",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "idle": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Anal",
+        "Caudal",
+        "Dorsal1",
+        "Dorsal2",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "swim": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Anal",
+        "Caudal",
+        "Dorsal1",
+        "Dorsal2",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 9614,
+    "materials": 7,
+    "nodes": 20,
+    "skinJoints": 15,
+    "images": 5,
+    "meshes": [
+      "PA_epaulette_shark_Body",
+      "PA_epaulette_shark_Details",
+      "PA_epaulette_shark_Fins"
+    ]
+  },
+  "parity": {
+    "idle": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "swim": {
+      "maxBoneRotationErrorDegrees": 0.055952909680744456,
+      "loopSeamDegrees": 0.0
+    },
+    "burst": {
+      "maxBoneRotationErrorDegrees": 0.42612491018779675,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.5351932644844055,
+      -0.12310126423835754,
+      -0.04000468924641609
+    ],
+    "max": [
+      0.36801469326019287,
+      0.12310124933719635,
+      0.08701056241989136
+    ],
+    "deviationMeters": 5.972094663188382e-08
+  }
+}

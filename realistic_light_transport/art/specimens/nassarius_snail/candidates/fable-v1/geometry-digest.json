@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "nassarius_snail",
+  "sourceSha256": "07dd71bf488e09dff42c11e6a25eb1d4515f7349fc0afcfeaa83e9bb3be05e24",
+  "objects": [
+    {
+      "name": "PA_nassarius_snail_Details",
+      "vertexCount": 172,
+      "triangleCount": 336,
+      "vertexDigest": "4d7f6e9ff6d9939b5ba7e4743c3a7b5ba30712956ee328cc30da48cf95a71423",
+      "topologyDigest": "36595f06bc4c7b8664bc09267e6585e1ec844846e2f56393972918e7bc3b2ff9",
+      "uvDigest": "9e21db71e45b2f654d50d8b497f09aedcdeeac011fd921dfca51a29ca97773e5",
+      "weightDigest": "10ea668488e1fd8c19823d314f120afffeb3ec9a748658828df1994c66af2966",
+      "materials": [
+        "PA_nassarius_snail_Eye"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_nassarius_snail_Shell",
+      "vertexCount": 5350,
+      "triangleCount": 10696,
+      "vertexDigest": "786bf0bea2a67b7cee17b9dcb2c87f54e7dd2a058f15b8e0fdf71525c254d8e1",
+      "topologyDigest": "f2a1aa93b1028755ed2696f6adeaf9fa0b7152bb672512a9a8b840338297b4ad",
+      "uvDigest": "719cbf1c1fb09cbfaef33e1e846f455fa4b53915251f40491c6697b701e323cf",
+      "weightDigest": "23c25ae5bfc654b84aaa4a091d54c7c38cc75ef26284fc645632b20de43b3d9f",
+      "materials": [
+        "PA_nassarius_snail_Shell"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_nassarius_snail_Soft",
+      "vertexCount": 2384,
+      "triangleCount": 4728,
+      "vertexDigest": "447ff7fb84a20268e28053b8835e2aa492f9d4179e9c58eebf5db0e41f5d120c",
+      "topologyDigest": "d8ca14712b9046089030a0b7cac3b1cff154dbc4755d9ea0987c26d50a8e7e27",
+      "uvDigest": "74ddc4121823e0ff80a3a58f524fb4c7e29aee88b37558662aeca774a337d4f9",
+      "weightDigest": "c0b74fc24c19989b7baa2827bb0f221b73c1cea7cf6b83b2cea467a166c72d80",
+      "materials": [
+        "PA_nassarius_snail_Soft"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_nassarius_snail_Rig",
+    "boneCount": 12,
+    "deformBoneCount": 11,
+    "boneDigest": "c6cf14e5ea06984801be111ba8ac61b3a00631e1934540b8282d8335b855eaf6"
+  },
+  "geometryDigest": "aa693a3497b14f731b2a14f08de23ede46d4c7cc50145730c4ef022fbbb62940",
+  "variantId": null
+}

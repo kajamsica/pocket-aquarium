@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "scarlet_hermit",
+  "sourceSha256": "4f0f5232aeeaa9fb4be38a4136d11fb2bb08865194711b80a8dfc0e7704c67a4",
+  "objects": [
+    {
+      "name": "PA_scarlet_hermit_Body",
+      "vertexCount": 1466,
+      "triangleCount": 2888,
+      "vertexDigest": "33d344f44acdc033b3cecac5c79d5b8fb65c4808b1988736a56daf7e69524b42",
+      "topologyDigest": "6c1e3d5b567ab102439e6653d313baad301a400a0ca26b76adad41de565ab526",
+      "uvDigest": "7d6e3518fe1681f601a2339eb1c101c6a669a87aa4ed2d5f7a67514ead380934",
+      "weightDigest": "41eb4a60dbb8373caecce1aef3393d72703b908d57f8659fd692d68595873d32",
+      "materials": [
+        "PA_scarlet_hermit_Exoskeleton"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_scarlet_hermit_Details",
+      "vertexCount": 484,
+      "triangleCount": 936,
+      "vertexDigest": "22b7ad41fd73c8ece896a6278f0f31cb06473f0757de3312b583ead0991bba2f",
+      "topologyDigest": "d30eafee378e42d8ae36345a35846b4644720145541029297c340638e070c106",
+      "uvDigest": "ad14f80706a18d261a2f89adce3a0e646d42edfb90d9ab0eaa4aa00863a7d52b",
+      "weightDigest": "f9c67f6b82dc924c76e41f57b2258b726e8f04e1f806171f5d99df1d7419573f",
+      "materials": [
+        "PA_scarlet_hermit_Cornea",
+        "PA_scarlet_hermit_Exoskeleton"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_scarlet_hermit_Shell",
+      "vertexCount": 2018,
+      "triangleCount": 4032,
+      "vertexDigest": "6340c6c5080c14f5eccbff6e21fa7205626ba2f61c0bb66cde59ddfbcacaee43",
+      "topologyDigest": "ed30237d4ab40df9a199ca63cee5f3624cf08ca98cfa95e0e623202a4c72b6ef",
+      "uvDigest": "a6b14647600f7b65b9ef5d9a08f97a85b1e7bea66891cbfc9ca66b02d1db6336",
+      "weightDigest": "14f4cb59c3b3ade17a6f55e92dee7f0d24c423e7a2b66be37ab10a7823abe33d",
+      "materials": [
+        "PA_scarlet_hermit_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_scarlet_hermit_Rig",
+    "boneCount": 29,
+    "deformBoneCount": 28,
+    "boneDigest": "1500acb0fd09702e19d91fb63b9b8c5deef4a3bc25b26b4eed77cce82ebe734b"
+  },
+  "geometryDigest": "50a38d6e7ebe049a2fe334d108d4cd2ffb2b11fe108b47da2f04de55af437eb5",
+  "variantId": null
+}

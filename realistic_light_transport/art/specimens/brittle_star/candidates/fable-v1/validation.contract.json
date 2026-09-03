@@ -1,0 +1,436 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "brittle_star",
+  "rig": "PA_brittle_star_Rig",
+  "root": "PA_brittle_star_Root",
+  "meshes": [
+    "PA_brittle_star_Disc",
+    "PA_brittle_star_Arms"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_brittle_star_Disc",
+      "group": "part_disc",
+      "volumeFloor": 0.7
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "part_arm_Lead",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "part_arm_A_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "part_arm_A_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "part_arm_B_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "part_arm_B_R",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_Lead",
+        "attach_Lead"
+      ],
+      "b": [
+        "PA_brittle_star_Disc",
+        "part_disc"
+      ],
+      "label": "arm_disc_Lead"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_L",
+        "attach_A_L"
+      ],
+      "b": [
+        "PA_brittle_star_Disc",
+        "part_disc"
+      ],
+      "label": "arm_disc_A_L"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_R",
+        "attach_A_R"
+      ],
+      "b": [
+        "PA_brittle_star_Disc",
+        "part_disc"
+      ],
+      "label": "arm_disc_A_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_B_L",
+        "attach_B_L"
+      ],
+      "b": [
+        "PA_brittle_star_Disc",
+        "part_disc"
+      ],
+      "label": "arm_disc_B_L"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_B_R",
+        "attach_B_R"
+      ],
+      "b": [
+        "PA_brittle_star_Disc",
+        "part_disc"
+      ],
+      "label": "arm_disc_B_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_Lead",
+        "attach_Lead"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_A_L",
+        "attach_A_L"
+      ],
+      "label": "arm_arm_Lead_A_L"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_Lead",
+        "attach_Lead"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_A_R",
+        "attach_A_R"
+      ],
+      "label": "arm_arm_Lead_A_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_Lead",
+        "attach_Lead"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_L",
+        "attach_B_L"
+      ],
+      "label": "arm_arm_Lead_B_L"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_Lead",
+        "attach_Lead"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_R",
+        "attach_B_R"
+      ],
+      "label": "arm_arm_Lead_B_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_L",
+        "attach_A_L"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_A_R",
+        "attach_A_R"
+      ],
+      "label": "arm_arm_A_L_A_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_L",
+        "attach_A_L"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_L",
+        "attach_B_L"
+      ],
+      "label": "arm_arm_A_L_B_L"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_L",
+        "attach_A_L"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_R",
+        "attach_B_R"
+      ],
+      "label": "arm_arm_A_L_B_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_R",
+        "attach_A_R"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_L",
+        "attach_B_L"
+      ],
+      "label": "arm_arm_A_R_B_L"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_A_R",
+        "attach_A_R"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_R",
+        "attach_B_R"
+      ],
+      "label": "arm_arm_A_R_B_R"
+    },
+    {
+      "a": [
+        "PA_brittle_star_Arms",
+        "arm_B_L",
+        "attach_B_L"
+      ],
+      "b": [
+        "PA_brittle_star_Arms",
+        "arm_B_R",
+        "attach_B_R"
+      ],
+      "label": "arm_arm_B_L_B_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "arm_A_L",
+      "exclude": "attach_A_L",
+      "side": -1
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "arm_A_R",
+      "exclude": "attach_A_R",
+      "side": 1
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "arm_B_L",
+      "exclude": "attach_B_L",
+      "side": -1
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "group": "arm_B_R",
+      "exclude": "attach_B_R",
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.15,
+    "tolerance": 0.03,
+    "kind": "adult_arm_span"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "ArmA_1_L",
+        "ArmA_1_R",
+        "ArmA_2_L",
+        "ArmA_2_R",
+        "ArmA_3_L",
+        "ArmA_3_R",
+        "ArmA_4_L",
+        "ArmA_4_R",
+        "ArmB_1_L",
+        "ArmB_1_R",
+        "ArmB_2_L",
+        "ArmB_2_R",
+        "ArmB_3_L",
+        "ArmB_3_R",
+        "ArmB_4_L",
+        "ArmB_4_R",
+        "ArmLead_1",
+        "ArmLead_2",
+        "ArmLead_3",
+        "ArmLead_4",
+        "Disc"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "ArmA_0_L",
+        "ArmA_0_R",
+        "ArmA_1_L",
+        "ArmA_1_R",
+        "ArmA_2_L",
+        "ArmA_2_R",
+        "ArmA_3_L",
+        "ArmA_3_R",
+        "ArmA_4_L",
+        "ArmA_4_R",
+        "ArmB_0_L",
+        "ArmB_0_R",
+        "ArmB_1_L",
+        "ArmB_1_R",
+        "ArmB_2_L",
+        "ArmB_2_R",
+        "ArmB_3_L",
+        "ArmB_3_R",
+        "ArmB_4_L",
+        "ArmB_4_R",
+        "ArmLead_1",
+        "ArmLead_2",
+        "ArmLead_3",
+        "ArmLead_4",
+        "Disc"
+      ],
+      "shapeKeys": []
+    },
+    "arm_recoil": {
+      "loop": false,
+      "frames": 36,
+      "bones": [
+        "ArmA_0_L",
+        "ArmA_0_R",
+        "ArmA_1_L",
+        "ArmA_1_R",
+        "ArmA_2_L",
+        "ArmA_2_R",
+        "ArmA_3_L",
+        "ArmA_3_R",
+        "ArmA_4_L",
+        "ArmA_4_R",
+        "ArmB_0_L",
+        "ArmB_0_R",
+        "ArmB_1_L",
+        "ArmB_1_R",
+        "ArmB_2_L",
+        "ArmB_2_R",
+        "ArmB_3_L",
+        "ArmB_3_R",
+        "ArmB_4_L",
+        "ArmB_4_R",
+        "ArmLead_0",
+        "ArmLead_1",
+        "ArmLead_2",
+        "ArmLead_3",
+        "ArmLead_4"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "arm_recoil"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_brittle_star_Arms",
+      "left": "arm_A_L",
+      "right": "arm_A_R",
+      "tolerance": 2e-05
+    },
+    {
+      "object": "PA_brittle_star_Arms",
+      "left": "arm_B_L",
+      "right": "arm_B_R",
+      "tolerance": 2e-05
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.065292,
+      -0.074273,
+      0.0
+    ],
+    "max": [
+      0.078158,
+      0.074273,
+      0.00745
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png"
+  ],
+  "notes": {
+    "armLengthMeters": 0.07415756099981904,
+    "discRadiusMeters": 0.0095,
+    "arms": [
+      "Lead",
+      "A_L",
+      "A_R",
+      "B_L",
+      "B_R"
+    ],
+    "segmentsPerArm": 26
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/brittle_star/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/brittle_star/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.06529214978218079,
+      -0.07427320629358292,
+      0.0
+    ],
+    "boundsMax": [
+      0.07815775275230408,
+      0.07427319884300232,
+      0.00744957709684968
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

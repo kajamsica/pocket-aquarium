@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_18",
+        "Br_19"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_18",
+        "Br_19"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Br_00",
+        "Br_01",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_18",
+        "Br_19"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 11208,
+    "materials": 3,
+    "nodes": 26,
+    "skinJoints": 22,
+    "images": 9,
+    "meshes": [
+      "PA_anacropora_Polyps",
+      "PA_anacropora_Skeleton"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.059842661023139954,
+      -0.05999999865889549,
+      -5.462780910412722e-25
+    ],
+    "max": [
+      0.059842661023139954,
+      0.05999999865889549,
+      0.08362673968076706
+    ],
+    "deviationMeters": 0.0
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "trochus_snail",
+  "revision": 1,
+  "policy": "References informed shell proportions (spire angle, whorl count, flat base, squarish aperture), soft-body layout (foot, snout, cephalic and epipodial tentacles, eyes at the tentacle bases) and colour placement (cream ground, oblique maroon flames, beaded basal cords) only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used. The aquarium trade name 'banded trochus' is taxonomically ambiguous (Trochus histrio, or Rochia nilotica sold as Trochus/Tectus niloticus), so the asset carries a genus-level label with taxonomyConfidence 'genus'.",
+  "sources": [
+    {
+      "id": "WORMS-1251282",
+      "title": "Rochia nilotica (Linnaeus, 1767) taxon record (accepted; Tegulidae; synonym Trochus/Tectus niloticus)",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=1251282",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-718918",
+      "title": "Trochus histrio Reeve, 1861 taxon record (accepted; Trochidae)",
+      "publisher": "World Register of Marine Species / MolluscaBase",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=718918",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-ROCHIA_NILOTICA",
+      "title": "Rochia nilotica species summary (max 15.0 cm shell height, common 11.0 cm; conical, flat base, squarish aperture, off-white with large irregular axial reddish stripes)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Rochia-nilotica.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "COMMONS-ROCHIA_NILOTICA",
+      "title": "Category:Rochia nilotica (openly licensed museum shell photographs incl. Naturalis RMNH.MOL series; proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Rochia_nilotica",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / CC0; nothing copied"
+    },
+    {
+      "id": "COMMONS-TROCHUS_HISTRIO",
+      "title": "Category:Trochus histrio (openly licensed shell photographs; proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Trochus_histrio",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY-SA; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Calibrated apertural, apical and basal museum photographs of empty shells are openly available for both candidate species, so shell proportions are well constrained. Soft-body proportions in life position (foot spread, tentacle length, epipodial tentacles) are inferred from general trochid anatomy rather than calibrated references."
+}

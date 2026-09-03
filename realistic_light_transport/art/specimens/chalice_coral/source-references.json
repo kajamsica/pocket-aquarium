@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "chalice_coral",
+  "revision": 1,
+  "policy": "References informed growth form, corallite size and spacing, calice inclination, colony size and pigment placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source; trade names (chalice, eyes) guided identity only.",
+  "taxonomyNote": "The aquarium trade name 'chalice coral' covers several laminar / encrusting genera. Echinophyllia and Oxypora are placed in Lobophylliidae and Mycedium in Merulinidae (WoRMS, following Huang et al. 2014 and 2016; the former family Pectiniidae was abolished). The asset therefore carries a group-level scientific label with taxonomyConfidence 'group'.",
+  "sources": [
+    {
+      "id": "WORMS-204799",
+      "title": "Echinophyllia Klunzinger, 1879 genus record (Lobophylliidae) with diagnosis: colonial, laminar; calice width medium to large (>= 4 mm), low to medium relief (<= 6 mm)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=204799",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207370",
+      "title": "Echinophyllia aspera (Ellis & Solander, 1786) species record: encrusting to foliaceous, sometimes 60 cm across; corallites mostly flush to protuberant, calices facing upwards; colonies hug the surface closely (Sheppard, 1998)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207370",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207373",
+      "title": "Mycedium elephantotus (Pallas, 1766) species record (Merulinidae): corallites clearly face towards the perimeter of the plates; septo-costae radiate to the colony perimeter (Richmond, 1997)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207373",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207374",
+      "title": "Oxypora lacera (Verrill, 1864) species record (Lobophylliidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207374",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "CTDB-594",
+      "title": "Echinophyllia aspera trait record: growth form laminar, corallite width 8.8 mm (min) to 10.9 mm (max)",
+      "publisher": "Coral Trait Database (Madin et al.)",
+      "url": "https://www.coraltraits.org/species/594",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "HUANG-2014-MERULINIDAE",
+      "title": "Huang D, Benzoni F, Fukami H, Knowlton N, Smith ND, Budd AF (2014) Taxonomic classification of the reef coral families Merulinidae, Montastraeidae, and Diploastraeidae. Zool J Linn Soc 171: 277-355",
+      "publisher": "Zoological Journal of the Linnean Society",
+      "url": "https://doi.org/10.1111/zoj.12140",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-ECHINOPHYLLIA",
+      "title": "Category:Echinophyllia (openly licensed photographs, growth form and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Echinophyllia",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MYCEDIUM",
+      "title": "Category:Mycedium (openly licensed photographs, corallite inclination study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Mycedium",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Growth form, colony size, corallite width and calice inclination are documented by WoRMS species descriptions and the Coral Trait Database; openly licensed top-view photographs exist for the genera. Plate thickness, margin lift and feeding-tentacle length are inferred from the group's general laminar habit rather than measured on a calibrated side view, and aquarium pigment variants are cultivar colour morphs without a taxonomic reference."
+}

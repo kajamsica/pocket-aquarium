@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "emerald_crab",
+  "variantId": null,
+  "scientificName": "Mithraculus sculptus",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.045,
+  "referenceSizeKind": "adult_carapace_width_including_legs",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "d08331585a010f29f95616e87565ad884ff9095ef102be25b71e977c11146912",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Emerald Crab",
+  "bodyPlan": "brachyuran_crab",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-421990",
+      "title": "Mithraculus sculptus (Lamarck, 1818) taxon record (accepted; Majoidea; original name Maia sculptus)",
+      "publisher": "World Register of Marine Species / DecaNet",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=421990",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "SEALIFEBASE-MITHRACULUS_SCULPTUS",
+      "title": "Mithraculus sculptus species summary, green clinging crab (benthic, 0 to 55 m, Western Atlantic; 1.2 cm CW field record)",
+      "publisher": "SeaLifeBase",
+      "url": "https://www.sealifebase.se/summary/Mithraculus-sculptus.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "WIKIPEDIA-MITHRACULUS_SCULPTUS",
+      "title": "Mithraculus sculptus article (flat, shiny, finely sculpted green carapace; spoon-shaped chelae with pale tips; hairy, paler walking legs; about 4 cm)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Mithraculus_sculptus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-MITHRACULUS_SCULPTUS",
+      "title": "Category:Mithraculus sculptus (openly licensed photograph, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Mithraculus_sculptus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "c80dbf364a3969af884579a82568ea4a3c876b02ea907e574a1ff334ffdc0fe3",
+  "sourceReferencesSha256": "065487ed056e4f90a7b4f450a5ebc5f1b009749efcbdf1037221fddef6b6ad20",
+  "sourceBlendSha256": "f9433cf14b342d106215afaf97b04dd555e6844034cf43d7a1021d52041c0311",
+  "builder": {
+    "entrypoint": "34b433bd1d76b0f1d4110b48d61d71fbb13b3803c31ade6a25f14ece2449b1b7",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:24eaef2889f56b3b4ed056db0ddce35360c40f256eb000b02f61265b9d7e69a5",
+    "speciesBackend": "24eaef2889f56b3b4ed056db0ddce35360c40f256eb000b02f61265b9d7e69a5",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "4ffb56f932b304bd4753e60cedc33b79a3dc4e4af56ece526e17b37b75065dd2"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/carapace-albedo.png",
+      "sha256": "b286bb19792c705a7987c0211f3dd0df5ade5db5fe6c333b82aefbb8ffeee8a0"
+    },
+    {
+      "path": "textures/carapace-normal.png",
+      "sha256": "39def992fb460e592caec0657e3147acacb4a88e732da130b641f0f82c955a3e"
+    },
+    {
+      "path": "textures/carapace-roughness.png",
+      "sha256": "599e82c165f074716ffba75efc98746e0c142278a5d30c7cc3f7a6da8613b703"
+    },
+    {
+      "path": "textures/claw-albedo.png",
+      "sha256": "f9290396d3b888336a88077e99e65f6f1a2892d27c4a2e11e1b77c19f07c4f51"
+    },
+    {
+      "path": "textures/claw-normal.png",
+      "sha256": "f39a756317d15148f6d71a89d612e7ea52e267c493aeb55e09c3ec07f454e199"
+    },
+    {
+      "path": "textures/claw-roughness.png",
+      "sha256": "ede1a0bc4099cb14fc007adae62225e9930e0dc88e6cb29078a716e17e5e5eb0"
+    },
+    {
+      "path": "textures/leg-albedo.png",
+      "sha256": "059880dfb19172ded296aecca4d408ec3fef9f12148de32b8efe544e1fc543f7"
+    },
+    {
+      "path": "textures/leg-normal.png",
+      "sha256": "6e3676eee34fe0ec3c9e22ccac10734e7bde5af848cc4ca305f55659f382d7b2"
+    },
+    {
+      "path": "textures/leg-roughness.png",
+      "sha256": "0bb071f5c324a704fbcb534e3de8fdfc066f67d9a9099e596ed6c5b4d8bd4b5c"
+    }
+  ],
+  "statistics": {
+    "triangles": 6760,
+    "materials": 5,
+    "bones": 27,
+    "nodes": 34,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "rest",
+      "threat",
+      "walk"
+    ],
+    "vertices": {
+      "PA_emerald_crab_Body": 1016,
+      "PA_emerald_crab_Legs": 1536,
+      "PA_emerald_crab_Chelae": 540,
+      "PA_emerald_crab_Details": 332
+    },
+    "runtimeBytes": 1918084
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "walk",
+    "response": "threat"
+  },
+  "clipLoops": {
+    "rest": true,
+    "walk": true,
+    "threat": false
+  },
+  "restBounds": {
+    "min": [
+      -0.015502,
+      -0.0225,
+      -0.0
+    ],
+    "max": [
+      0.031821,
+      0.0225,
+      0.010447
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

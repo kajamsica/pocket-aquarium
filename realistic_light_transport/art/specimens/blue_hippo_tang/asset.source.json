@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "blue_hippo_tang",
+  "displayName": "Blue Hippo Tang",
+  "scientificLabel": "Paracanthurus hepatus",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "saltwater",
+  "bodyPlan": "fish",
+  "assetVersion": "0.2.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.25,
+    "kind": "adult_total_length",
+    "note": "FishBase records a maximum length of 31 cm TL; 25 cm is a large aquarium adult. Root gameplay data does not yet carry this species."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": {
+    "skin": [0.02, 0.14, 0.72],
+    "fin": [0.03, 0.08, 0.4],
+    "iris": [0.06, 0.05, 0.03],
+    "cue": [0.02, 0.03, 0.08],
+    "adornment": [0.86, 0.88, 0.9]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3 },
+  "morphology": {
+    "notes": "Oval, strongly compressed surgeonfish body; depth ~45% of standard length; pointed snout with small terminal mouth; long-based dorsal and anal fins; lunate caudal fin; caudal-peduncle scalpel.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.1, "halfWidth": 0.0045, "dorsalHeight": 0.011, "ventralDepth": 0.01, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.09, "halfWidth": 0.0056, "dorsalHeight": 0.0155, "ventralDepth": 0.0135, "centerZ": 0.0 },
+      { "id": "posterior-a", "x": -0.075, "halfWidth": 0.0078, "dorsalHeight": 0.025, "ventralDepth": 0.021, "centerZ": 0.0005 },
+      { "id": "posterior-b", "x": -0.055, "halfWidth": 0.0102, "dorsalHeight": 0.035, "ventralDepth": 0.03, "centerZ": 0.001 },
+      { "id": "mid-a", "x": -0.03, "halfWidth": 0.0122, "dorsalHeight": 0.0435, "ventralDepth": 0.0375, "centerZ": 0.001 },
+      { "id": "mid-b", "x": -0.005, "halfWidth": 0.0132, "dorsalHeight": 0.047, "ventralDepth": 0.041, "centerZ": 0.0008 },
+      { "id": "mid-c", "x": 0.02, "halfWidth": 0.0134, "dorsalHeight": 0.0468, "ventralDepth": 0.0408, "centerZ": 0.0004 },
+      { "id": "anterior", "x": 0.045, "halfWidth": 0.0126, "dorsalHeight": 0.0425, "ventralDepth": 0.037, "centerZ": -0.0005 },
+      { "id": "operculum", "x": 0.065, "halfWidth": 0.011, "dorsalHeight": 0.0345, "ventralDepth": 0.03, "centerZ": -0.002 },
+      { "id": "head", "x": 0.08, "halfWidth": 0.0088, "dorsalHeight": 0.0245, "ventralDepth": 0.0225, "centerZ": -0.004 },
+      { "id": "snout", "x": 0.092, "halfWidth": 0.0058, "dorsalHeight": 0.0135, "ventralDepth": 0.0125, "centerZ": -0.0062 },
+      { "id": "snout-tip", "x": 0.1, "halfWidth": 0.002, "dorsalHeight": 0.004, "ventralDepth": 0.0038, "centerZ": -0.008 }
+    ],
+    "crossSection": { "dorsalExponent": 1.9, "ventralExponent": 1.75 },
+    "sampling": { "ringSegments": 48, "ringCount": 52 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0011, "edge": 0.00012 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.088, "xEnd": 0.06, "rows": 4, "columns": 14, "lean": -0.005,
+        "heights": [[0.0, 0.005], [0.12, 0.013], [0.35, 0.0165], [0.65, 0.017], [0.88, 0.014], [1.0, 0.006]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.088, "xEnd": 0.02, "rows": 4, "columns": 12, "lean": -0.005,
+        "heights": [[0.0, 0.004], [0.18, 0.012], [0.5, 0.015], [0.8, 0.013], [1.0, 0.005]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.031, "spanBottom": 0.031, "length": 0.05, "fork": 0.28, "forkPower": 1.7, "baseFraction": 0.85 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.058, "rootLength": 0.02, "rootHeight": -0.05, "length": 0.04, "sweepDegrees": 48, "droopDegrees": 16, "spread": 0.85, "taper": 0.42, "power": 0.55, "flare": 0.7, "rayCount": 15, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.04, "rootLength": 0.012, "rootHeight": -0.9, "length": 0.028, "sweepDegrees": 55, "droopDegrees": 55, "spread": 0.3, "taper": 0.3, "power": 0.8, "flare": 0.4, "rayCount": 6, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.073, "zFraction": 0.42, "radius": 0.0064, "protrude": 0.35, "aspect": 0.3, "pupilFraction": 0.55 },
+    "mouth": { "zOffset": -0.35, "width": 0.0018, "radius": 0.0003 },
+    "gill": { "x": 0.047, "radius": 0.00024, "points": 11, "bulge": 0.025 },
+    "adornments": [ { "type": "scalpel", "x": -0.093, "zFraction": 0.0, "length": 0.012 } ]
+  },
+  "rig": { "axialJoints": [0.084, 0.024, -0.012, -0.046, -0.074, -0.104] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [1.5, 2.5, 4.0, 6.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 14, "pectoralFrequency": 2, "median": 1.0, "gill": 1.6, "gillFrequency": 3, "jaw": 2.5, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [3.0, 5.0, 8.0, 12.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 22, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [6.0, 10.0, 16.0, 24.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "median": 3.0, "gill": 2.0, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 20 },
+  "visualDebt": [
+    "Scalpel is a smooth ellipsoid rather than a hinged spine in a groove.",
+    "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays."
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "asset": "anacropora",
+  "variant": "green",
+  "candidateDir": "art/specimens/anacropora/candidates/fable-v1-green",
+  "startedAt": "2026-09-03T21:56:45.695Z",
+  "pid": 27794,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 10061,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 10659,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1760,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1058,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 2276,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 886,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1092,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T21:57:13.491Z",
+  "status": "passed",
+  "failure": null
+}

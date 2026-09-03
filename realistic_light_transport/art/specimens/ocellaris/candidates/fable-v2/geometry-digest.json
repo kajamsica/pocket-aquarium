@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "ocellaris",
+  "sourceSha256": "60c05942425c12ee966be544b41d072f555e3cf3840deecf75593220c29966d4",
+  "objects": [
+    {
+      "name": "PA_ocellaris_Body",
+      "vertexCount": 2546,
+      "triangleCount": 5088,
+      "vertexDigest": "7e8a47ff2d51527626bf10f29a3429ed37845645a87749f8fb1fb270dcac5c53",
+      "topologyDigest": "10b089c27b7d807cee1b1e7483f7459b4aa417881eff3fb6ab93b680d95634be",
+      "uvDigest": "fff9a46f4abdfc4276bacc296d659eaab5a223aa7ba24f9300404bc09312fc5f",
+      "weightDigest": "d6629be9dea46a5d51144d2132032789496e8deb07e6a5fbc222a3da802a372a",
+      "materials": [
+        "PA_ocellaris_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_ocellaris_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "a0c7ec1b9ff318a8bf97559b2d99c2357e76f4fa1221310d5e5d95c867239c5b",
+      "topologyDigest": "bca2c4e023db246594c906f4b2a86c1a3d315f55e54cc3404041360ca5d616d9",
+      "uvDigest": "c8ff944897e573e693f932b312593f5c4dd777d7696db68d51fad84fd72508b6",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_ocellaris_Cue",
+        "PA_ocellaris_Eye",
+        "PA_ocellaris_Glint",
+        "PA_ocellaris_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_ocellaris_Fins",
+      "vertexCount": 522,
+      "triangleCount": 900,
+      "vertexDigest": "cc7ac625735f28757b9e8dea71359652ea685394f99607fe1570b592a57be194",
+      "topologyDigest": "54496d217dc9bf5ee7a287461e5a778fadd0711e015e65db109750309b675aaa",
+      "uvDigest": "72089264ffd7d59d9f5da7d65adf03c96925733a724016ca94bd26cce3d1e858",
+      "weightDigest": "a015ebe1622aaaa39e2ee72cc0d7099b46331c369b2769f0d7ba41c962e33ed2",
+      "materials": [
+        "PA_ocellaris_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_ocellaris_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "b2164f3ad9600953004385a3aea668cada0ce678601291e61aa724b12fd765a6"
+  },
+  "geometryDigest": "93126a478b8703f414f6d32ec308e4587f0d7cf27f9a71e5e1a61819468bab79",
+  "variantId": null
+}

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "goniopora",
+  "revision": 1,
+  "policy": "References informed colony form, polyp proportions, tentacle count and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source. The trade name flowerpot coral spans several Goniopora species, so the asset is labelled at genus level.",
+  "sources": [
+    {
+      "id": "WORMS-205476",
+      "title": "Goniopora de Blainville, 1830 taxon record (genus, Poritidae, Scleractinia)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=205476",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207219",
+      "title": "Goniopora stokesi Milne Edwards & Haime, 1851 taxon record with Veron (1986) and Richmond (1997) descriptions: hemispherical colonies, calices 3-6 mm, very elongate polyps of mixed size, 24 tentacles, cluster-of-daisies appearance",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207219",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "NATURALIS-INDOMALAYAN-GONIOPORA",
+      "title": "Reef Corals of the Indo-Malayan Seas: Genus Goniopora (massive or columnar colonies, conspicuously long polyps with 24 tentacles, cream to light brown skeleton with rose, purple, yellow, green or white tentacles)",
+      "publisher": "Naturalis Biodiversity Center",
+      "url": "https://indo-malayan-reef-corals.linnaeus.naturalis.nl/linnaeus_ng/app/views/highertaxa/taxon.php?cat=TAB_DESCRIPTION&id=27716",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "ITIS-53214",
+      "title": "Goniopora Blainville, 1830 taxonomic serial record (valid genus, Poritidae)",
+      "publisher": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=53214",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Public domain (US federal government)"
+    },
+    {
+      "id": "COMMONS-GONIOPORA",
+      "title": "Category:Goniopora (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Goniopora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "ROOT-DATA-CORALS-GONIOPORA",
+      "title": "Pocket Aquarium root gameplay data js/data.js DATA.CORALS.goniopora (startPolyps 24, gentle flow band)",
+      "publisher": "Pocket Aquarium project",
+      "url": "repo:js/data.js#DATA.CORALS.goniopora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "project_data",
+      "allowedUse": "gameplay_consistency"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Genus-level morphology (dome colony, elongate polyps, 24 tentacles, calice size, colour classes) is well described in authoritative taxonomic sources and openly licensed photographs show side and top views; exact stalk length to disc ratios vary by species and were set from those genus descriptions rather than a calibrated specimen."
+}

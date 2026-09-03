@@ -4,9 +4,9 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
-import type { SpecimenAsset } from '../scene/specimens/assetRegistry'
+import type { WorkbenchAsset } from './workbenchCatalog'
 
-export type WorkbenchClipName = SpecimenAsset['clips'][number]
+export type WorkbenchClipName = string
 
 export interface WorkbenchAssetStats {
   readonly triangles: number
@@ -14,11 +14,13 @@ export interface WorkbenchAssetStats {
   readonly bones: number
   readonly materials: number
   readonly clips: readonly { readonly name: string; readonly duration: number }[]
+  readonly bounds: { readonly size: THREE.Vector3Tuple; readonly center: THREE.Vector3Tuple }
 }
 
 interface WorkbenchSpecimenProps {
-  readonly asset: SpecimenAsset
+  readonly asset: WorkbenchAsset
   readonly clipName: WorkbenchClipName
+  readonly loop: boolean
   readonly playing: boolean
   readonly playbackRate: number
   readonly phase: number
@@ -38,6 +40,7 @@ function countTriangles(geometry: THREE.BufferGeometry) {
 export function WorkbenchSpecimen({
   asset,
   clipName,
+  loop,
   playing,
   playbackRate,
   phase,
@@ -54,7 +57,7 @@ export function WorkbenchSpecimen({
   const mounted = useRef(false)
   const root = useMemo(() => {
     const cloned = cloneSkinned(source.scene) as THREE.Group
-    cloned.name = `workbench-${asset.speciesId}`
+    cloned.name = `workbench-${asset.key}`
     cloned.traverse((node) => {
       if (!(node instanceof THREE.Mesh)) return
       node.material = Array.isArray(node.material)
@@ -62,7 +65,7 @@ export function WorkbenchSpecimen({
         : node.material.clone()
     })
     return cloned
-  }, [asset.speciesId, source.scene])
+  }, [asset.key, source.scene])
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
   const skeletonHelper = useMemo(() => {
     const helper = new THREE.SkeletonHelper(root)
@@ -94,6 +97,12 @@ export function WorkbenchSpecimen({
       const meshMaterials = Array.isArray(node.material) ? node.material : [node.material]
       meshMaterials.forEach((material) => runtimeMaterials.add(material.uuid))
     })
+    root.updateWorldMatrix(true, true)
+    const box = new THREE.Box3().setFromObject(root)
+    const size = new THREE.Vector3()
+    const center = new THREE.Vector3()
+    box.getSize(size)
+    box.getCenter(center)
 
     const parserJson = (source.parser as unknown as {
       readonly json?: { readonly nodes?: readonly unknown[]; readonly materials?: readonly unknown[] }
@@ -105,8 +114,9 @@ export function WorkbenchSpecimen({
       bones,
       materials: parserJson?.materials?.length ?? runtimeMaterials.size,
       clips: source.animations.map((clip) => ({ name: clip.name, duration: clip.duration })),
+      bounds: { size: size.toArray() as THREE.Vector3Tuple, center: center.toArray() as THREE.Vector3Tuple },
     })
-  }, [onReady, root, source.animations])
+  }, [onReady, root, source.animations, source.parser])
 
   useEffect(() => {
     root.traverse((node) => {
@@ -134,14 +144,14 @@ export function WorkbenchSpecimen({
       return
     }
     onMissingClip()
-    action.reset().setLoop(clipName === 'burst' ? THREE.LoopOnce : THREE.LoopRepeat, Infinity)
-    action.clampWhenFinished = clipName === 'burst'
+    action.reset().setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity)
+    action.clampWhenFinished = !loop
     action.play()
     mixer.setTime(phase * action.getClip().duration)
     return () => {
       action.stop()
     }
-  }, [action, clipName, mixer, onMissingClip])
+  }, [action, clipName, loop, mixer, onMissingClip])
 
   useEffect(() => {
     if (!playing && action) mixer.setTime(phase * action.getClip().duration)

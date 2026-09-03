@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "cerith_snail",
+  "sourceSha256": "ed3d00fc33a1a75e07831c1190e78cd1ad0451299b0ada0cea606ceec210ce62",
+  "objects": [
+    {
+      "name": "PA_cerith_snail_Body",
+      "vertexCount": 922,
+      "triangleCount": 1816,
+      "vertexDigest": "09188ecb7469cce9fb97ee61b8d517999ff2b4799a45afd22316e87e8749edae",
+      "topologyDigest": "2baca4ab0fc5160f2f54925b1c69cd315cef9b17c6677b8f9e5ef9ba0be18691",
+      "uvDigest": "32e7abba3285e3110e39bcac28eeffd74b14ecf382031203a468cd8899db1d1a",
+      "weightDigest": "983f7e355769d97e31824a5d615b146074f10fd695b69d7258e3bb27b943ea47",
+      "materials": [
+        "PA_cerith_snail_Body",
+        "PA_cerith_snail_Eye"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_cerith_snail_Shell",
+      "vertexCount": 6260,
+      "triangleCount": 12512,
+      "vertexDigest": "3a044b79103e603bbc168636b32affe70c1c38aaa76d7b33d4df5491de48e7b3",
+      "topologyDigest": "38daaed1b4a8c3d9451646a86dd4702112f5799be62bd94037fab60580701cd7",
+      "uvDigest": "bae711d7e4e9b2da37f0f2e131c1cfa526e61d4d2dc481bb8d1cecb38357a95a",
+      "weightDigest": "e6e19f22afbc5c5a0e2da08c7627769cf6d53984af24f50d9ab71f9aed73ef27",
+      "materials": [
+        "PA_cerith_snail_Shell"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_cerith_snail_Rig",
+    "boneCount": 9,
+    "deformBoneCount": 8,
+    "boneDigest": "9f68e67cf7890e986a37fad0f314eec466c7966c58e6f93c40ad28c89319ea79"
+  },
+  "geometryDigest": "0cfe81e63bf9e8c39bebc404c9d9bf16e282b28b8954989f4be9a1b5d16ef267",
+  "variantId": null
+}

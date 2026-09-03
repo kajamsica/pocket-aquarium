@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "stylophora",
+  "variantId": "pink",
+  "scientificName": "Stylophora pistillata",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.1,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "9775f46a6465020a3c76462dc5caaa976ce101afa9fecff00e6f68f4923c3b2e",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Pink Stylophora (pink-lilac wild form)",
+  "bodyPlan": "branching_sps_coral",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-206982",
+      "title": "Stylophora pistillata (Esper, 1792) taxon record (accepted; family Pocilloporidae; common names hood coral, pistillate coral). Description: branches stoutest in shallow water; calices 0.5 to 1.5 mm diameter, scattered irregularly and closely, usually hooded by a projection of coenosteum on the side of the calice towards the branch tip; six primary septa and a small columella; ends of branches blunt and often slightly club-shaped; colour cream, pink, blue or green; polyps extended only at night.",
+      "publisher": "World Register of Marine Species (World List of Scleractinia, Hoeksema, Cairns and Samimi-Namin)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=206982",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-STYLOPHORA_PISTILLATA",
+      "title": "Stylophora pistillata species factsheet: colonies branching with blunt-ended branches becoming thick and submassive; corallites immersed, conical or hooded; solid style-like columella, six primary septa; coenosteum covered by fine spinules; colour uniform cream, pink, blue (which may photograph pink) or green; shallow water exposed to strong wave action; a species complex.",
+      "publisher": "Corals of the World (Veron, Stafford-Smith, Turak, DeVantier; Australian Institute of Marine Science)",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/stylophora-pistillata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no imagery used"
+    },
+    {
+      "id": "CORALTRAITS-1441",
+      "title": "Coral Trait Database species page 1441, Stylophora pistillata: growth form branching_closed (Veron 2000 textual descriptions), corallite width 0.9 to 1.4 mm, colonial, zooxanthellate, brooder.",
+      "publisher": "Coral Trait Database (Madin et al.)",
+      "url": "https://www.coraltraits.org/species/1441",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "COMMSBIO-2022-MALIK",
+      "title": "Malik et al. (2022). Morpho-functional traits of the coral Stylophora pistillata enhance light capture for photosynthesis at mesophotic depths. Communications Biology 5:861. Shallow colonies: subspherical densely branched form, branch thickness about 30 percent greater than mesophotic colonies, larger closely spaced corallites (calyx diameter roughly 0.85 to 1.2 mm), spiny coenosteum.",
+      "publisher": "Nature Portfolio (Communications Biology)",
+      "url": "https://doi.org/10.1038/s42003-022-03829-4",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "COMMONS-STYLOPHORA_PISTILLATA",
+      "title": "Category:Stylophora pistillata (openly licensed photographs, proportion and colour placement study only: branch thickness to length ratio, fork angle, knob shape, polyp density)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Stylophora_pistillata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "1b7079e904181373c361ff210433a91591ca2e7074a1acc60ccdf18c344e0332",
+  "sourceReferencesSha256": "42634464d9de259342fc004e6707e236361341c37dc98d17779e49fb91801c28",
+  "sourceBlendSha256": "0c6f2f3fba6c42679936bdac9d44b02d316abd890ddcb4dcc93b2c802b48968b",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:e5c836d551680383d7d9f7f9389d4ae951e209a361432365a49e35d41b78f1ff",
+    "speciesBackend": "e5c836d551680383d7d9f7f9389d4ae951e209a361432365a49e35d41b78f1ff",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "bd7b9588ea9f8728577f3c965bfc74f1250fc6035d11cd6911418ed35bdfe79d"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/polyp-albedo.png",
+      "sha256": "d27dabfd8f77a27a5c2cd30024ed94f8c8f2fb8a9e90f45fd4a59bd5d140fe4e"
+    },
+    {
+      "path": "textures/polyp-normal.png",
+      "sha256": "0ebce9519b555b7b6c75cecf034664cfdd032650bd1fa15bc256378e2af45589"
+    },
+    {
+      "path": "textures/polyp-roughness.png",
+      "sha256": "1bcb36bda0435f484b43e8ee0b8aff5576b6775c270d2c1f571171b73e6983fd"
+    },
+    {
+      "path": "textures/rock-albedo.png",
+      "sha256": "bf256fcaa5fcac7c9c12da2111581199c100e6b1c06fa9683bcecef72e9425bd"
+    },
+    {
+      "path": "textures/rock-normal.png",
+      "sha256": "3ec641b37bbf1e223c84b10dd91a392cf0edf45cd1208a94d3ea10b8d1df19b5"
+    },
+    {
+      "path": "textures/rock-roughness.png",
+      "sha256": "b9f83b565a5ec561519bf65fca9ee7ed2e1d488422258fbc45e81e07bcfeceb8"
+    },
+    {
+      "path": "textures/tissue-albedo.png",
+      "sha256": "998ffc279f7408c3e6113ae8536ceb066886110eb220d4d1dd3dee0e9ca3c0ee"
+    },
+    {
+      "path": "textures/tissue-normal.png",
+      "sha256": "b0267ebafb44cac2f901ca1d3afc032e75d2aa08d87b69abdf2d21e8576b9609"
+    },
+    {
+      "path": "textures/tissue-roughness.png",
+      "sha256": "7da69d99b34fe71a215d87f34b583dd4fdc4589c944a4e84d18b10c32f62e2c8"
+    }
+  ],
+  "statistics": {
+    "triangles": 16196,
+    "materials": 3,
+    "bones": 22,
+    "nodes": 26,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_stylophora_Skeleton": 2076,
+      "PA_stylophora_Polyps": 9099
+    },
+    "runtimeBytes": 3449412
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "sway": true,
+    "flow": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.056914,
+      -0.047785,
+      0.0
+    ],
+    "max": [
+      0.043235,
+      0.040708,
+      0.090457
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

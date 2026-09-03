@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "acropora_branching",
+  "displayName": "Acropora (branching SPS)",
+  "scientificLabel": "Acropora sp.",
+  "taxonomyConfidence": "genus",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "branching_sps_coral",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.15,
+    "kind": "colony_width",
+    "note": "Aquarium colony width; wild Acropora colonies reach 1 m to several metres across (AIMS Coral Fact Sheets, Corals of the World), so 15 cm is a grown frag / small display colony. Measured across the whole mesh including corallites and extended polyps."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "sway", "locomotion": "flow", "response": "retract" },
+  "palette": {
+    "body": [0.30, 0.42, 0.14],
+    "tip": [0.44, 0.19, 0.60],
+    "corallite": [0.50, 0.60, 0.33],
+    "calice": [0.12, 0.16, 0.06],
+    "polyp": [0.55, 0.66, 0.36],
+    "polypTip": [0.85, 0.90, 0.72],
+    "rock": [0.40, 0.36, 0.31],
+    "algae": [0.30, 0.38, 0.17]
+  },
+  "textures": {
+    "skeletonResolution": [1024, 512],
+    "polypResolution": [256, 64],
+    "baseResolution": [512, 256],
+    "normalStrength": 0.9,
+    "skeletonNormalStrength": 0.8,
+    "rockNormalStrength": 1.0
+  },
+  "morphology": {
+    "notes": "Colony of closed branch tubes with axial corallites at every tip (swollen lip, recessed calice) and appressed radial corallites (small tubes, pointing distally) along the branches, each with a six tentacle polyp. Form is selected per variant: staghorn (arborescent), table (tabular plate with upright branchlets on a stalk), bushy (digitate fingers on a broad mound). Sizes below are design centimetres; the colony is scaled so the xy width equals referenceSize.",
+    "form": "staghorn",
+    "seed": 11,
+    "staghorn": {},
+    "table": {},
+    "bushy": {}
+  },
+  "animation": {
+    "note": "branchBend and branchLateral are degrees on the cluster bones, driven by a unipolar squared pulse (the colony surges downstream and returns to rest at the loop seam), so the polyp crowns can ride the same curve through their bend and sweep morph targets. Clip order matters: the looping sway clip is declared last so the validators leave the colony near its rest silhouette.",
+    "flow": {
+      "frames": 90, "loop": true,
+      "branchBend": 1.4, "branchLateral": 0.55, "bendFrequency": 1, "lateralFrequency": 2,
+      "polypLean": { "amplitude": 0.45, "bias": 0.5, "frequency": 1, "phase": 0.3 },
+      "polypRetract": { "amplitude": 0.12, "bias": 0.12, "frequency": 2, "waveform": "sin", "phase": 1.1 }
+    },
+    "retract": {
+      "frames": 60, "loop": false, "envelope": "hold",
+      "branchBend": 0.4, "branchLateral": 0.0, "bendFrequency": 1,
+      "polypRetract": { "amplitude": 1.0, "bias": 0.0, "frequency": 1, "waveform": "const", "envelope": "hold" }
+    },
+    "sway": {
+      "frames": 120, "loop": true,
+      "branchBend": 0.6, "branchLateral": 0.25, "bendFrequency": 1, "lateralFrequency": 1,
+      "polypLean": { "amplitude": 0.28, "bias": 0.3, "frequency": 1, "phase": 0.6 }
+    }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 24 },
+  "variants": {
+    "staghorn_green_purple_tips": {
+      "displayName": "Acropora staghorn, green with purple tips",
+      "overrides": {
+        "morphology": { "form": "staghorn", "seed": 11 },
+        "palette": {
+          "body": [0.30, 0.42, 0.14], "tip": [0.44, 0.19, 0.60], "corallite": [0.50, 0.60, 0.33], "calice": [0.12, 0.16, 0.06],
+          "polyp": [0.55, 0.66, 0.36], "polypTip": [0.85, 0.90, 0.72]
+        }
+      }
+    },
+    "staghorn_blue": {
+      "displayName": "Acropora staghorn, steel blue with pale tips",
+      "overrides": {
+        "morphology": { "form": "staghorn", "seed": 23 },
+        "palette": {
+          "body": [0.14, 0.27, 0.54], "tip": [0.44, 0.63, 0.92], "corallite": [0.28, 0.44, 0.72], "calice": [0.05, 0.09, 0.2],
+          "polyp": [0.34, 0.48, 0.70], "polypTip": [0.74, 0.83, 0.94]
+        },
+        "preview": { "azimuthDegrees": -40, "elevationDegrees": 22 }
+      }
+    },
+    "table_blue": {
+      "displayName": "Acropora table, blue",
+      "overrides": {
+        "morphology": { "form": "table", "seed": 5 },
+        "palette": {
+          "body": [0.15, 0.25, 0.54], "tip": [0.40, 0.58, 0.90], "corallite": [0.30, 0.44, 0.74], "calice": [0.05, 0.08, 0.2],
+          "polyp": [0.30, 0.45, 0.72], "polypTip": [0.70, 0.80, 0.94]
+        },
+        "preview": { "azimuthDegrees": -50, "elevationDegrees": 30 }
+      }
+    },
+    "table_green": {
+      "displayName": "Acropora table, green with cream tips",
+      "overrides": {
+        "morphology": { "form": "table", "seed": 17 },
+        "palette": {
+          "body": [0.31, 0.43, 0.14], "tip": [0.66, 0.68, 0.40], "corallite": [0.50, 0.58, 0.30], "calice": [0.12, 0.15, 0.05],
+          "polyp": [0.58, 0.66, 0.36], "polypTip": [0.84, 0.86, 0.66]
+        },
+        "preview": { "azimuthDegrees": -60, "elevationDegrees": 30 }
+      }
+    },
+    "bushy_pink": {
+      "displayName": "Acropora digitate, pink",
+      "overrides": {
+        "morphology": { "form": "bushy", "seed": 29 },
+        "palette": {
+          "body": [0.72, 0.36, 0.50], "tip": [0.88, 0.62, 0.74], "corallite": [0.90, 0.68, 0.80], "calice": [0.30, 0.10, 0.18],
+          "polyp": [0.86, 0.68, 0.76], "polypTip": [0.96, 0.90, 0.92]
+        },
+        "preview": { "azimuthDegrees": -55, "elevationDegrees": 26 }
+      }
+    }
+  },
+  "visualDebt": [
+    "Polyps carry six tentacle tubes instead of the twelve of a real Acropora polyp (LOD1 triangle budget).",
+    "Only the prominent radial corallites are modelled (up to eleven per branch, some dropped where a neighbouring branch is too close); the dense field of small radials is carried by the texture relief and roughness.",
+    "Corallites are flared tubes with a recessed calice; the nariform (longer lower lip) profile and the septa are texture only.",
+    "The tabular plate is a lobed, radially ridged solid lens rather than a perforated mesh of anastomosing horizontal branchlets.",
+    "Retraction folds the tentacles to about half length (mean crown pull-in 0.7 mm to 0.8 mm on a 15 cm colony) rather than fully into the calice.",
+    "Polyp crowns are one rigid unskinned mesh per branch cluster rather than skin-blended along the branch, and they follow the branch bend through a linearised morph target (error below 0.02 mm at these amplitudes). This works around a glTF importer and runtime-gate interaction, see the lane shared-change-request.",
+    "Branch sway is a stylised current response; a real Acropora skeleton is rigid and only the polyps move."
+  ]
+}

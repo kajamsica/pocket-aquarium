@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "banggai_cardinal",
+  "sourceSha256": "fc40d303211d51ed4aec55f1a6139604c9e81b841befa037d6056622b27b9bce",
+  "objects": [
+    {
+      "name": "PA_banggai_cardinal_Body",
+      "vertexCount": 2450,
+      "triangleCount": 4896,
+      "vertexDigest": "c53ddc474080298839874a2e844f642ce5ad1683c217648ccf22ce81ec8eb181",
+      "topologyDigest": "17d061f55aaaab44b13bcd7a30f5ee14c1998643640b7c0353bf0ab60c20d09b",
+      "uvDigest": "347b33bb2521b21e9881678d825692f598312e0502ab968a19d30ab53287aad3",
+      "weightDigest": "44ffcd9e9df3cd414973e9f651029e9b44dd6eb9d31a69a0609c4b8a83b27044",
+      "materials": [
+        "PA_banggai_cardinal_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_banggai_cardinal_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "24c8c3cfdbea51969044e96f7ff06897b57db91b5847fa8d3b1a95001ffbc512",
+      "topologyDigest": "bca2c4e023db246594c906f4b2a86c1a3d315f55e54cc3404041360ca5d616d9",
+      "uvDigest": "c8ff944897e573e693f932b312593f5c4dd777d7696db68d51fad84fd72508b6",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_banggai_cardinal_Cue",
+        "PA_banggai_cardinal_Eye",
+        "PA_banggai_cardinal_Glint",
+        "PA_banggai_cardinal_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_banggai_cardinal_Fins",
+      "vertexCount": 772,
+      "triangleCount": 1378,
+      "vertexDigest": "b607634f8f37f30239c5773a162327e21e4d6387fe0541b75250606de30a7662",
+      "topologyDigest": "86cb7052d9327850868a2f39582780333eb30797156ee9010645c87f9e6c941d",
+      "uvDigest": "2c2c4c824f0ba3d58fe95122ed2e4471f97f96c03787a1fa00c6b71795ae1638",
+      "weightDigest": "cb637f24808d891a1615a0ce0f7d5c4c7f93ed12435f66e7b0bc3e50f34566d2",
+      "materials": [
+        "PA_banggai_cardinal_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_banggai_cardinal_Rig",
+    "boneCount": 15,
+    "deformBoneCount": 14,
+    "boneDigest": "a54263dc2603b6608124a293f9966819b3938bc3539fc6604a72822459e187c1"
+  },
+  "geometryDigest": "0f7bac2e48661a64ca71641723b26cc6c5e2f3e45f317c549a2c54fee8babea3",
+  "variantId": null
+}

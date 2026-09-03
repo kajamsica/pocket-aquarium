@@ -1,0 +1,312 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "fighting_conch",
+  "rig": "PA_fighting_conch_Rig",
+  "root": "PA_fighting_conch_Root",
+  "meshes": [
+    "PA_fighting_conch_Shell",
+    "PA_fighting_conch_Body"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_fighting_conch_Shell",
+      "group": "part_shell",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_foot",
+      "volumeFloor": 0.55
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_head",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_proboscis",
+      "volumeFloor": 0.3
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_eyestalk_L",
+      "volumeFloor": 0.2
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_eyestalk_R",
+      "volumeFloor": 0.2
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_eye_L",
+      "volumeFloor": 0.2
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_eye_R",
+      "volumeFloor": 0.2
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_operculum",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "part_siphon",
+      "volumeFloor": 0.3
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "app_eyestalk_L",
+        "attach_eyestalk_L"
+      ],
+      "b": [
+        "PA_fighting_conch_Body",
+        "app_eyestalk_R",
+        "attach_eyestalk_R"
+      ],
+      "minDistance": 0.0015,
+      "label": "eyestalk_left_right"
+    },
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "app_eyestalk_L",
+        "attach_eyestalk_L"
+      ],
+      "b": [
+        "PA_fighting_conch_Body",
+        "part_foot"
+      ],
+      "label": "eyestalk_foot_L"
+    },
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "app_eyestalk_R",
+        "attach_eyestalk_R"
+      ],
+      "b": [
+        "PA_fighting_conch_Body",
+        "part_foot"
+      ],
+      "label": "eyestalk_foot_R"
+    },
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "app_eyestalk_L",
+        "attach_eyestalk_L"
+      ],
+      "b": [
+        "PA_fighting_conch_Body",
+        "part_proboscis"
+      ],
+      "label": "eyestalk_proboscis_L"
+    },
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "app_eyestalk_R",
+        "attach_eyestalk_R"
+      ],
+      "b": [
+        "PA_fighting_conch_Body",
+        "part_proboscis"
+      ],
+      "label": "eyestalk_proboscis_R"
+    },
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "part_proboscis",
+        "attach_proboscis"
+      ],
+      "b": [
+        "PA_fighting_conch_Body",
+        "part_foot"
+      ],
+      "label": "proboscis_foot"
+    },
+    {
+      "a": [
+        "PA_fighting_conch_Body",
+        "part_operculum",
+        "attach_operculum"
+      ],
+      "b": [
+        "PA_fighting_conch_Shell",
+        "part_shell"
+      ],
+      "label": "operculum_shell"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "app_eyestalk_L",
+      "exclude": "attach_eyestalk_L",
+      "side": -1
+    },
+    {
+      "object": "PA_fighting_conch_Body",
+      "group": "app_eyestalk_R",
+      "exclude": "attach_eyestalk_R",
+      "side": 1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.08,
+    "tolerance": 0.03,
+    "kind": "adult_shell_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Operculum",
+        "Proboscis",
+        "Shell",
+        "Siphon"
+      ],
+      "shapeKeys": []
+    },
+    "hop": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Operculum",
+        "Proboscis",
+        "Shell",
+        "Siphon"
+      ],
+      "shapeKeys": []
+    },
+    "withdraw": {
+      "loop": false,
+      "frames": 48,
+      "bones": [
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Operculum",
+        "Proboscis",
+        "Shell",
+        "Siphon"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "hop",
+    "response": "withdraw"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_fighting_conch_Body",
+      "left": "app_eyestalk_L",
+      "right": "app_eyestalk_R",
+      "tolerance": 0.0003
+    }
+  ],
+  "variantId": null,
+  "previewAction": "hop",
+  "restBounds": {
+    "min": [
+      -0.037417,
+      -0.016286,
+      0.0
+    ],
+    "max": [
+      0.043808,
+      0.028163,
+      0.044827
+    ]
+  },
+  "textures": [
+    "textures/shell-albedo.png",
+    "textures/shell-roughness.png",
+    "textures/shell-normal.png",
+    "textures/soft-albedo.png",
+    "textures/soft-roughness.png",
+    "textures/soft-normal.png"
+  ],
+  "notes": {
+    "shellRings": 179,
+    "shellSegments": 36,
+    "diagnostics": {
+      "canalTipX": 0.03742,
+      "aperturePosteriorX": -0.01669,
+      "apertureCenter": [
+        0.00503,
+        0.001,
+        0.01485
+      ],
+      "shellMinZ": 0.0035,
+      "footX": [
+        -0.01069,
+        0.02842
+      ],
+      "eyeMaxX": 0.04381,
+      "proboscisMaxX": 0.03912,
+      "minDistEyestalkShell": 0.01098,
+      "minDistEyestalkRShell": 0.00205,
+      "minDistEyestalkHead": 0.00575,
+      "minDistProboscisShell": 0.00155,
+      "minDistProboscisFoot": 0.00521,
+      "minDistOperculumShell": 0.00919,
+      "minDistHeadShell": 0.00077
+    },
+    "bodyPlan": "species_local_gastropod_strombid"
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/fighting_conch/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/fighting_conch/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.03741670027375221,
+      -0.01628613844513893,
+      0.0
+    ],
+    "boundsMax": [
+      0.0438079871237278,
+      0.028163159266114235,
+      0.04482664167881012
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

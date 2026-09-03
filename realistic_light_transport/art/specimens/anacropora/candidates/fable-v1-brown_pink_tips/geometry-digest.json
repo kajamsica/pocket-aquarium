@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "anacropora",
+  "sourceSha256": "b7608c2c2a01e6c50ef5e062247eff17b4617724759da45f366de2ec48f4a0fc",
+  "objects": [
+    {
+      "name": "PA_anacropora_Polyps",
+      "vertexCount": 4800,
+      "triangleCount": 7360,
+      "vertexDigest": "1da7b57364e8e9b04156fcdfb358313ee473dae73b798b00ac8e2ebd06599a3b",
+      "topologyDigest": "7ee9f57d735cc7c6e8145874e04f1c7042bd5c878360e527a6791f30b4bfe549",
+      "uvDigest": "9de44c11192ff2052f691dc8943cc47f3ac51a76dbe6afdc693428b2a20982a7",
+      "weightDigest": "15b3ff8ae9638eb95234cf0121c68253ce9e90a9ebc44656015eded37c328d29",
+      "materials": [
+        "PA_anacropora_Polyp"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_anacropora_Skeleton",
+      "vertexCount": 2824,
+      "triangleCount": 5540,
+      "vertexDigest": "242ab8d184c9be7c72b4c959e5cf1c9b0ac0441e2e461b93cc3ebe278e5ce46b",
+      "topologyDigest": "ea6ee482d820527b0053873bdd653c956aae27ffd55128abdcb1ce1a989bd5d9",
+      "uvDigest": "3bc7010ba9ce3c009d39e0ae8c754d0b159401955c9f3dc859eda192f0ac298c",
+      "weightDigest": "ee8268bcba6abccccdf83da617f3da8ae60a810c1e9709835cbf277f663b8921",
+      "materials": [
+        "PA_anacropora_Branch",
+        "PA_anacropora_Rock"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_anacropora_Rig",
+    "boneCount": 28,
+    "deformBoneCount": 27,
+    "boneDigest": "01176a4bbc73f5fcb879efb68c9005ac7c718ac668a2cb05aa72a6895083589c"
+  },
+  "geometryDigest": "94c6c6dea06b76ff5c2881e64e08f5e56e0e8908f4e7001af895aefaecda835f",
+  "variantId": "brown_pink_tips"
+}

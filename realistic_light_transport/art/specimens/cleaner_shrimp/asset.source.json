@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "cleaner_shrimp",
+  "displayName": "Skunk Cleaner Shrimp",
+  "scientificLabel": "Lysmata amboinensis",
+  "taxonomyConfidence": "species",
+  "category": "invertebrate",
+  "waterType": "saltwater",
+  "bodyPlan": "decapod_shrimp",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.06,
+    "kind": "adult_body_length",
+    "note": "Rostrum tip to tail-fan tip along x. Aquarium of the Pacific species account and the Wikipedia species page both give an adult body length of 5 to 6 cm; 6 cm is a large adult. Antennae are posed arcing up and back over the body so they do not extend the x bounds."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "hover", "locomotion": "walk", "response": "clean" },
+  "palette": {
+    "shell": [0.88, 0.62, 0.26],
+    "flank": [0.90, 0.60, 0.22],
+    "belly": [0.95, 0.86, 0.62],
+    "stripe": [0.75, 0.06, 0.03],
+    "white": [0.96, 0.95, 0.90],
+    "limb": [0.90, 0.78, 0.58],
+    "antenna": [0.93, 0.93, 0.88],
+    "eye": [0.02, 0.015, 0.012]
+  },
+  "textures": { "shellResolution": [1024, 512], "normalStrength": 0.45 },
+  "morphology": {
+    "notes": "Laterally compressed caridean shrimp. Cephalothorax about a quarter of body length (16 mm of 60 mm) and about 0.7 as deep as long, deeper than wide, blunt anterior margin with an upturned rostrum reaching a further 8.5 mm; abdomen of six telescoping pleomeres (the sixth elongated) about half the body length, with a dorsal hump at pleomere 2-3 descending to a flat telson with two pairs of uropod blades. Stalked eyes below the rostrum, forked antennules, antennal scales, and long white second antennae. Five pairs of slender pereiopods, pairs 1 and 2 chelate; third maxillipeds project forward under the mouth; five pairs of pleopod paddles under pleomeres 1 to 5.",
+    "carapace": {
+      "stations": [
+        [0.0055, 0.0036, 0.0060, 0.0052, 0.0002],
+        [0.0080, 0.0038, 0.0063, 0.0054, 0.0002],
+        [0.0120, 0.0038, 0.0063, 0.0054, 0.0001],
+        [0.0160, 0.0034, 0.0057, 0.0049, 0.0001],
+        [0.0190, 0.0026, 0.0046, 0.0038, 0.0003],
+        [0.0208, 0.0014, 0.0030, 0.0024, 0.0007],
+        [0.0215, 0.0004, 0.0010, 0.0007, 0.0012]
+      ],
+      "exponents": [2.3, 2.0],
+      "ringSegments": 28,
+      "ringCount": 22
+    },
+    "rostrum": {
+      "start": [0.0170, 0.0, 0.0040],
+      "end": [0.0300, 0.0, 0.0058],
+      "radius": [0.0013, 0.00022],
+      "aspect": 0.62,
+      "points": 7,
+      "segments": 8
+    },
+    "abdomen": {
+      "stations": [
+        [0.0060, 0.0033, 0.0056, 0.0046, 0.0002],
+        [0.0010, 0.0034, 0.0062, 0.0046, 0.0008],
+        [-0.0040, 0.0032, 0.0060, 0.0042, 0.0006],
+        [-0.0090, 0.0028, 0.0052, 0.0036, -0.0006],
+        [-0.0140, 0.0023, 0.0042, 0.0030, -0.0024],
+        [-0.0190, 0.0017, 0.0032, 0.0022, -0.0044],
+        [-0.0240, 0.0012, 0.0024, 0.0016, -0.0062]
+      ],
+      "boundaries": [0.0065, 0.0025, -0.0015, -0.0070, -0.0115, -0.0160, -0.0238],
+      "exponents": [2.2, 2.0],
+      "overlap": 0.0008,
+      "frontScale": 0.94,
+      "rearScale": 1.04,
+      "ringSegments": 24,
+      "ringsPerSegment": 6
+    },
+    "telson": {
+      "xStart": -0.0222, "xEnd": -0.0298,
+      "halfWidth": [0.0013, 0.0004], "dorsal": [0.0007, 0.00025], "ventral": [0.0005, 0.0002],
+      "centerZ": [-0.0064, -0.0078], "rings": 6, "ringSegments": 12
+    },
+    "uropods": {
+      "exopod": { "root": [-0.0222, 0.0012, -0.0060], "direction": [-1.0, 0.42, -0.10], "length": 0.0084, "width": 0.0040, "thickness": 0.0005 },
+      "endopod": { "root": [-0.0222, 0.0007, -0.0063], "direction": [-1.0, 0.18, -0.12], "length": 0.0076, "width": 0.0030, "thickness": 0.0004 }
+    },
+    "eyes": {
+      "stalk": [[0.0185, 0.0012, 0.0014], [0.0205, 0.0020, 0.0019], [0.0224, 0.0026, 0.0024]],
+      "stalkRadius": [0.00075, 0.0007, 0.0008],
+      "center": [0.0232, 0.0029, 0.0025],
+      "radius": 0.00100
+    },
+    "antennules": {
+      "peduncle": [[0.0180, 0.0010, 0.0026], [0.0222, 0.0014, 0.0040], [0.0254, 0.0018, 0.0058]],
+      "peduncleRadius": [0.0007, 0.0006, 0.0005],
+      "outer": [[0.0314, 0.0048, 0.0158], [0.0152, 0.0060, 0.0200], [0.0052, 0.0070, 0.0220]],
+      "inner": [[0.0294, 0.0028, 0.0148], [0.0172, 0.0022, 0.0170], [0.0102, 0.0030, 0.0180]],
+      "radius": [0.0003, 0.0001],
+      "points": 12,
+      "boneTip": 0.55
+    },
+    "antennae": {
+      "peduncle": [[0.0172, 0.0018, -0.0008], [0.0227, 0.0038, -0.0004]],
+      "peduncleRadius": [0.0009, 0.0007],
+      "scaphocerite": { "root": [0.0192, 0.0030, 0.0002], "direction": [1.0, 0.10, 0.04], "length": 0.0092, "width": 0.0022, "thickness": 0.0006 },
+      "flagellum": [[0.0292, 0.0110, 0.0110], [0.0042, 0.0130, 0.0260], [-0.0268, 0.0125, 0.0140]],
+      "radius": [0.0004, 0.00013],
+      "points": 22,
+      "boneSplit": 0.4
+    },
+    "legs": {
+      "coxaX": [0.0185, 0.0160, 0.0135, 0.0110, 0.0088],
+      "coxaY": 0.0016,
+      "coxaZ": -0.0034,
+      "splayDegrees": [46, 24, 0, -14, -20],
+      "lengthScale": [0.75, 1.00, 0.92, 0.92, 0.88],
+      "drop": [0.0, 0.0025, 0.0060, 0.0095, 0.0125],
+      "reach": [0.0, 0.0015, 0.0060, 0.0090, 0.0110],
+      "lateral": [0.0016, 0.0042, 0.0066, 0.0062, 0.0054],
+      "radius": [0.00055, 0.0005, 0.00045, 0.00035, 0.0002],
+      "segments": 8,
+      "chelipeds": 2,
+      "handRadius": [0.00045, 0.00052, 0.00045, 0.00016],
+      "dactylRadius": [0.00022, 0.00009]
+    },
+    "pleopods": {
+      "x": [0.0040, 0.0000, -0.0045, -0.0093, -0.0138],
+      "rootY": 0.0016,
+      "embed": 0.0010,
+      "direction": [-0.30, 0.22, -0.93],
+      "length": 0.0064,
+      "width": 0.0022,
+      "thickness": 0.0006,
+      "segments": 10,
+      "rings": 7
+    },
+    "maxillipeds": {
+      "points": [[0.0150, 0.0012, -0.0044], [0.0195, 0.0018, -0.0056], [0.0235, 0.0022, -0.0062]],
+      "radius": [0.0006, 0.0005, 0.0003]
+    }
+  },
+  "animation": {
+    "hover": {
+      "frames": 90, "loop": true,
+      "bob": 0.0004, "bobFrequency": 1,
+      "abdomen": [1.5, 2.0, 2.5], "tail": 4.0, "abdomenFrequency": 1,
+      "pleopod": 11.0, "pleopodFrequency": 3,
+      "antenna": [4.0, 7.0], "antennaSway": 3.0, "antennaFrequency": 1,
+      "antennule": 6.0, "antennuleFrequency": 2,
+      "leg": 2.0, "legFrequency": 1, "chelipedLeg": 3.0,
+      "hand": 4.0, "dactyl": 6.0
+    },
+    "walk": {
+      "frames": 60, "loop": true,
+      "bob": 0.0003, "bobFrequency": 4, "bodyPitch": 1.0, "bodyPitchFrequency": 2,
+      "abdomen": [1.0, 1.5, 2.0], "tail": 3.0, "abdomenFrequency": 2,
+      "pleopod": 8.0, "pleopodFrequency": 4,
+      "antenna": [3.0, 5.0], "antennaSway": 2.0, "antennaFrequency": 2,
+      "antennule": 4.0, "antennuleFrequency": 2,
+      "leg": 9.0, "legFrequency": 2, "chelipedLeg": 5.0,
+      "hand": 4.0, "dactyl": 5.0
+    },
+    "clean": {
+      "frames": 45, "loop": false, "envelope": "bell",
+      "bodyPitch": 3.0, "bodyPitchFrequency": 1, "bodyPitchWaveform": "const",
+      "abdomen": [1.0, 1.5, 2.0], "tail": 3.0, "abdomenFrequency": 2,
+      "pleopod": 6.0, "pleopodFrequency": 3,
+      "antenna": [10.0, 14.0], "antennaSway": 6.0, "antennaFrequency": 4,
+      "antennule": 14.0, "antennuleFrequency": 5,
+      "leg": 2.0, "legFrequency": 3, "cheliped": 10.0, "chelipedFrequency": 3,
+      "hand": 12.0, "dactyl": 16.0
+    }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 12, "azimuthDegrees": -42, "elevationDegrees": 16 },
+  "visualDebt": [
+    "Pleopods are single paddles per segment rather than biramous rami with setae.",
+    "Antennular flagella are two smooth tubes per side; the real outer flagellum forks with a setose thickened portion.",
+    "Rostral teeth and carapace spines are implied by the normal map, not modelled.",
+    "Legs use a single bone each except the chelipeds, so knees do not articulate while walking."
+  ]
+}

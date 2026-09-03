@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "royal_gramma",
+  "variantId": null,
+  "scientificName": "Gramma loreto",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.08,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "356c9894ea59213f672a358627ced2240bbe6ba6c316a15723844363ddfcadba",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Royal Gramma",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-280932",
+      "title": "Gramma loreto Poey, 1868 taxon record (accepted; Grammatidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=280932",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-GRAMMA_LORETO",
+      "title": "Gramma loreto species summary (max length 8.0 cm TL; dorsal XII, 10; purple in front, orange-yellow behind)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Gramma-loreto.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "STRI-SFGC-3566",
+      "title": "Shorefishes of the Greater Caribbean: Gramma loreto, Fairy Basslet (elongate compressed body, large eye, short snout, rounded pectorals, elongated first pelvic ray, colour account with dorsal spot and eye streaks)",
+      "publisher": "Smithsonian Tropical Research Institute",
+      "url": "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3566",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "NATURALIS-506115",
+      "title": "Bohlke and Randall, Three new species and six new records of small serranoid fishes from Curacao and Puerto Rico (Grammidae diagnosis: depth 2.5 to 3 in SL, width behind head 5 to 6.5 in SL, head 2.7 to 2.9 in SL, emarginate caudal, elongate first pelvic soft ray)",
+      "publisher": "Naturalis Biodiversity Center repository",
+      "url": "http://repository.naturalis.nl/record/506115",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-GRAMMA_LORETO",
+      "title": "Category:Gramma loreto (openly licensed photographs, proportion and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Gramma_loreto",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "b4997616283eaa6b6346fb152c3e7dbb2c708953c2468d376eb0a2199ef57133",
+  "sourceReferencesSha256": "497008be9b2e17471a5d57ac3fae2b022af6908e58271b6ac06c50efb3454eb4",
+  "sourceBlendSha256": "af5f92150745e79796ee813dc7d34cac3d10420457900af004cccf4a18f66447",
+  "builder": {
+    "entrypoint": "34b433bd1d76b0f1d4110b48d61d71fbb13b3803c31ade6a25f14ece2449b1b7",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "f61594826c115ed6b6c14fcdd3534578652f64d835a7593b782a6fd991fe17dd",
+    "speciesBackend": "473603de94e613091f3764368f026390db5f443c8aa7d827477540cafb83ff79",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "04e9b1e77d15116be3f4a893e03c2985857e168d8274dbda5f927f6783b2b6d1"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "3a2f801801eb18b73fef015ae78ef538edf431a108a94203c22ba88349599c14"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "8e9a2a41d39aa55566be28873dfce0ebc5693906bfaf995c0cde28871d189641"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "426fdbb83370781a70e2934a3ff73b210b019500fb2cd7d7648bc5d01de094d9"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "6da389931919276b8b61e4ad68fe1390e0e19b34b63500c1ffcaa120f04888f7"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "0974e6b3c50d0fb9ec8860f3c00afab6398950e133e0838958a2e70631025321"
+    }
+  ],
+  "statistics": {
+    "triangles": 7784,
+    "materials": 6,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_royal_gramma_Body": 2450,
+      "PA_royal_gramma_Fins": 506,
+      "PA_royal_gramma_Details": 1028
+    },
+    "runtimeBytes": 1712912
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.039121,
+      -0.012901,
+      -0.01667
+    ],
+    "max": [
+      0.040918,
+      0.012901,
+      0.017715
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

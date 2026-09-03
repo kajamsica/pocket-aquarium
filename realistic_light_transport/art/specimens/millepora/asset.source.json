@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "millepora",
+  "displayName": "Millepora (fire coral)",
+  "scientificLabel": "Millepora sp.",
+  "taxonomyConfidence": "genus",
+  "taxonomyNotes": "Millepora Linnaeus, 1758 is a hydrocoral (Cnidaria: Hydrozoa: Anthoathecata: Milleporidae; WoRMS AphiaID 205902), not a scleractinian stony coral. The trade name 'fire coral' covers several species whose growth forms overlap (blades: M. complanata, M. platyphylla; branching: M. alcicornis, M. tenera, M. dichotoma), so the asset carries a genus-level label and models the two habits as variants.",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "hydrocoral_colony",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.15,
+    "kind": "colony_width",
+    "note": "Branching Millepora alcicornis colonies reach about 50 cm tall in sheltered water and M. platyphylla plates exceed a metre across (Razak & Hoeksema 2003; Lewis 2006 via WoRMS/Wikipedia). 15 cm is the width, dactylozooids extended, of a small aquarium colony, which is what this candidate depicts. Gastropores measure 0.15 to 0.36 mm and dactylopores 0.06 to 0.24 mm (de Weerdt 1981; Ruiz-Ramos et al. 2014); at this scale they are sub-texel and are painted as cyclosystem speckle rather than modelled."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "sway", "locomotion": "flow", "response": "retract" },
+  "palette": {
+    "body": [0.82, 0.60, 0.16],
+    "bodyDark": [0.50, 0.33, 0.09],
+    "bodyLight": [0.92, 0.76, 0.30],
+    "tip": [0.95, 0.92, 0.84],
+    "pore": [0.34, 0.24, 0.10],
+    "rock": [0.32, 0.29, 0.25],
+    "coralline": [0.55, 0.28, 0.40],
+    "hairRoot": [0.86, 0.78, 0.60],
+    "hair": [0.93, 0.92, 0.86],
+    "hairTip": [0.99, 0.98, 0.95]
+  },
+  "textures": {
+    "skeletonResolution": [1024, 512],
+    "baseResolution": [512, 256],
+    "hairResolution": [128, 32],
+    "poreFrequency": { "blade": 170.0, "branching": 70.0 },
+    "poreVRatio": { "blade": 1.3, "branching": 1.0 },
+    "skeletonHeightStrength": 1.2,
+    "skeletonNormalStrength": 0.9,
+    "baseNormalStrength": 1.0
+  },
+  "morphology": {
+    "seed": 5,
+    "form": "blade",
+    "notes": "Smooth calcareous coenosteum without corallites, pierced by minute pores (painted). Blade form: upright wavy plates with lobed pale upper margins on an encrusting base. Branching form: stout laterally compressed stems forking dichotomously into blunt pale-tipped branchlets. Hair-like dactylozooids protrude everywhere from the tissue-covered surface.",
+    "mound": {
+      "blade": { "radius": 0.070, "height": 0.013, "exponent": 3.0, "tissueFrom": 0.42, "segments": 32, "rings": 7, "undulation": 0.05, "outline": [0.07, 0.05, 0.03, 0.015], "hairSectors": 4 },
+      "branching": { "radius": 0.040, "height": 0.014, "exponent": 2.6, "tissueFrom": 0.40, "segments": 26, "rings": 7, "undulation": 0.06, "outline": [0.08, 0.05, 0.03, 0.02], "hairSectors": 3 }
+    },
+    "blade": {
+      "defaults": {
+        "waveFrequency": 1.6, "lobes": 3.0, "lobeAmplitude": 0.07, "lean": 0.05, "twistDegrees": 8.0, "embed": 0.001,
+        "topCap": 0.16, "topThin": 0.38, "relief": 0.07, "ringsAlong": 44,
+        "faceLevels": [0.04, 0.2, 0.4, 0.58, 0.72, 0.82, 0.89, 0.935, 0.965, 0.985],
+        "sections": 2
+      },
+      "blades": [
+        { "x": 0.0, "y": 0.002, "azimuthDegrees": 4.0, "halfLength": 0.064, "height": 0.078, "thickness": 0.012, "wave": 0.005, "sections": 3, "lobes": 3.5 },
+        { "x": 0.006, "y": 0.040, "azimuthDegrees": -12.0, "halfLength": 0.046, "height": 0.056, "thickness": 0.010, "wave": 0.004, "twistDegrees": -7.0 },
+        { "x": -0.008, "y": -0.041, "azimuthDegrees": 14.0, "halfLength": 0.042, "height": 0.050, "thickness": 0.010, "wave": 0.0035, "lobes": 2.5 }
+      ]
+    },
+    "branching": {
+      "stems": 4, "stemAzimuthJitter": 20.0, "stemRootRadius": 0.016, "stemEmbed": 0.005, "stemElevation": 62.0, "stemElevationJitter": 9.0,
+      "stemRadius": 0.0084, "segments": 10, "aspect": 0.78, "wobble": 3.0,
+      "length": [0.036, 0.034, 0.025], "lengthJitter": 0.16, "rings": [6, 6, 5], "curl": [10.0, 14.0, 12.0], "taper": [0.88, 0.86, 0.80],
+      "forkStart": 0.78, "forkHalfAngle": [26.0, 25.0], "forkAngleJitter": 4.0, "forkSkew": 6.0, "childRadiusFactor": 0.9,
+      "secondaryForkChance": 0.7, "planeTwistDegrees": 70.0, "minGap": 0.003
+    },
+    "hairs": {
+      "count": 1400, "length": [0.0019, 0.0030], "radius": 0.00025, "tipRadiusFactor": 0.35, "embed": 0.0003,
+      "lean": 0.45, "upBias": 0.12, "gain": [0.6, 1.0], "clearMargin": 0.0025,
+      "edgeFrom": 0.86, "edgeDepth": 0.006, "moundDepth": 0.006, "tubeTop": 0.9, "nearMeters": 0.012
+    }
+  },
+  "animation": {
+    "sway": { "frames": 150, "loop": true, "frequency": 1, "driftMeters": 0.0005, "wobbleFraction": 0.45, "wobbleFrequencyOffset": 1, "twistDegrees": 1.5 },
+    "flow": { "frames": 120, "loop": true, "frequency": 2, "driftMeters": 0.0007, "leanMeters": 0.0005, "keepNormal": 0.35, "waveNumber": 30.0, "flutterMeters": 0.00025, "flutterFrequency": 3, "twistDegrees": 1.0 },
+    "retract": { "frames": 72, "loop": false, "envelope": "hold", "residualFraction": 0.15 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "sampleStride": 3 },
+  "preview": { "frame": 30, "azimuthDegrees": -35, "elevationDegrees": 22 },
+  "variants": {
+    "blade": {
+      "displayName": "Millepora (fire coral, blade form)",
+      "overrides": {
+        "morphology": { "form": "blade", "seed": 5 },
+        "preview": { "frame": 30, "azimuthDegrees": -35, "elevationDegrees": 22 }
+      }
+    },
+    "branching": {
+      "displayName": "Millepora (fire coral, branching form)",
+      "overrides": {
+        "morphology": { "form": "branching", "seed": 9, "hairs": { "count": 1900 } },
+        "palette": {
+          "body": [0.74, 0.56, 0.22],
+          "bodyDark": [0.48, 0.33, 0.13],
+          "bodyLight": [0.86, 0.72, 0.36],
+          "tip": [0.95, 0.93, 0.86]
+        },
+        "preview": { "frame": 30, "azimuthDegrees": -40, "elevationDegrees": 24 }
+      }
+    }
+  },
+  "visualDebt": [
+    "Dactylozooids are drawn about twice their real diameter (0.28 mm radius) and at a fraction of their real density so they read at LOD1; real colonies carry thousands of finer hairs per square centimetre.",
+    "Gastropores and dactylopores are painted as cyclosystem speckle in the albedo and normal maps, not modelled as holes.",
+    "Hairs in one cluster share a bone: bending comes from root-to-tip weight blending plus baked per-hair lean and gain, so hairs within a cluster move in step with a small twist gradient; hair-vs-hair clearance is not proven.",
+    "Branching form: dichotomous forks are fused intersecting tubes (parent knuckle plus two children) rather than a single smoothed junction; sibling branches are not clearance-checked against each other at the fork.",
+    "Blade form: blades are separate lofts that root in the encrusting base and do not fuse into the honeycomb plates seen in M. platyphylla."
+  ]
+}

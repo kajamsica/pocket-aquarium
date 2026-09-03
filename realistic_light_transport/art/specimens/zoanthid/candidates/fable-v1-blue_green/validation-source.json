@@ -1,0 +1,5230 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "retainedActions": [
+    "close",
+    "flow",
+    "open"
+  ],
+  "deformBones": 22,
+  "gates": [
+    "finite_vertices_and_weights",
+    "triangle_budget",
+    "reference_size",
+    "closed_parts_watertight_manifold",
+    "animated_clearance_bvh",
+    "closed_part_orientation_and_volume",
+    "clip_targets_move",
+    "clip_roles_resolve"
+  ],
+  "clips": {
+    "open": {
+      "frameRange": [
+        1.0,
+        90.0
+      ],
+      "loop": true,
+      "metrics": {
+        "samples": 46,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999722,
+                -0.019883,
+                0.000197,
+                0.012639
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999985,
+                0.004521,
+                4.1e-05,
+                -0.002938
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999909,
+                0.007326,
+                -1.4e-05,
+                -0.011306
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999727,
+                -0.021274,
+                -7.3e-05,
+                -0.00967
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999758,
+                -0.01367,
+                -5.7e-05,
+                -0.017254
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999514,
+                0.027036,
+                -0.000203,
+                0.015514
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999903,
+                -0.012018,
+                -2e-06,
+                0.007017
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999849,
+                -0.01573,
+                -5.8e-05,
+                -0.007382
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999829,
+                0.017522,
+                4.7e-05,
+                -0.005865
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999721,
+                -0.017388,
+                -0.000164,
+                -0.016018
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999972,
+                0.005401,
+                1.5e-05,
+                0.005123
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999953,
+                0.006818,
+                -0.000142,
+                0.00692
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.99987,
+                -0.016105,
+                -1.4e-05,
+                -0.000527
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999547,
+                0.027047,
+                0.000212,
+                -0.013212
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.99973,
+                0.02197,
+                0.000245,
+                -0.007567
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999909,
+                -0.003597,
+                0.000214,
+                0.01299
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999835,
+                -0.013393,
+                -5.5e-05,
+                -0.012273
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.999931,
+                -0.010463,
+                9.1e-05,
+                0.005348
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999865,
+                0.009004,
+                -5.8e-05,
+                -0.013787
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999869,
+                0.010286,
+                -0.000244,
+                0.01246
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999687,
+                0.015992,
+                -0.000337,
+                0.019217
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.23608,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.23608,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.23608,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.23608,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.23608,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.35247,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.35247,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.35247,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.35247,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.00441,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.00441,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.00441,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.00441,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.0098,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.0098,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.0098,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.0098,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.0,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.0,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.0,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.0
+          }
+        },
+        "0.25": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999999,
+                -0.001318,
+                -0.0,
+                -4.5e-05
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999792,
+                0.017414,
+                -8.6e-05,
+                0.010606
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999884,
+                0.01392,
+                -0.000141,
+                0.006268
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999935,
+                -0.006155,
+                0.00019,
+                0.009554
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999767,
+                -0.020262,
+                -0.000227,
+                -0.007417
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999799,
+                -0.01928,
+                3e-05,
+                0.005552
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999519,
+                0.027689,
+                0.000214,
+                -0.013939
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999903,
+                -0.00958,
+                -0.000177,
+                -0.010156
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999352,
+                -0.030439,
+                -0.000401,
+                -0.019189
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999837,
+                -0.016869,
+                0.000156,
+                0.006467
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.99988,
+                0.011826,
+                0.000201,
+                -0.009989
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999876,
+                0.013515,
+                -2e-06,
+                -0.008102
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999823,
+                0.007517,
+                0.000305,
+                -0.017241
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999933,
+                0.005138,
+                -0.000168,
+                0.010407
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999837,
+                -0.001233,
+                -0.000209,
+                -0.018013
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999753,
+                -0.022199,
+                -1.4e-05,
+                -0.001506
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999874,
+                -0.01403,
+                0.000172,
+                0.007484
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.999857,
+                -0.013169,
+                -6.9e-05,
+                -0.010581
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999649,
+                -0.026407,
+                2.7e-05,
+                0.002086
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999656,
+                0.023607,
+                0.000163,
+                -0.011408
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999732,
+                -0.02243,
+                0.000136,
+                0.005679
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.00028,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.00028,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.00028,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.00028,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.00028,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.03959,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.03959,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.03959,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.03959,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.18066,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.18066,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.18066,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.18066,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.15931,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.15931,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.15931,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.15931,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.22629,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.22629,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.22629,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.22629
+          }
+        },
+        "0.50": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999799,
+                0.015551,
+                0.000251,
+                -0.012631
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999901,
+                -0.013797,
+                1.3e-05,
+                0.002939
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999935,
+                0.00127,
+                8.3e-05,
+                0.011306
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999925,
+                0.007555,
+                -0.000206,
+                0.009668
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999846,
+                0.003287,
+                -0.000236,
+                0.017252
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999794,
+                -0.013094,
+                -0.000419,
+                -0.01551
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999975,
+                -0.000339,
+                8.4e-05,
+                -0.007017
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999942,
+                0.007889,
+                -0.000116,
+                0.007381
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999951,
+                -0.007983,
+                0.000103,
+                0.005864
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.99982,
+                0.010207,
+                -0.000279,
+                0.016016
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999983,
+                0.00293,
+                -2.8e-05,
+                -0.005123
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999764,
+                -0.020586,
+                -4.7e-05,
+                -0.006922
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999655,
+                0.026255,
+                -8e-06,
+                0.000527
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999784,
+                -0.016031,
+                0.000357,
+                0.013209
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999448,
+                -0.032353,
+                0.000166,
+                0.00757
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.99978,
+                0.016496,
+                4.7e-05,
+                -0.012991
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999915,
+                0.004469,
+                -0.000164,
+                0.012272
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.99984,
+                0.017077,
+                5.6e-05,
+                -0.005349
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999896,
+                0.004233,
+                0.000124,
+                0.013786
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999731,
+                -0.019579,
+                -0.000128,
+                -0.012462
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999661,
+                -0.017542,
+                -0.000307,
+                -0.019218
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.21392,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.21392,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.21392,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.21392,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.21392,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.09753,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.09753,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.09753,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.09753,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.44559,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.44559,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.44559,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.44559,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.4402,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.4402,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.4402,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.4402,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.44989,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.44989,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.44989,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.44989
+          }
+        },
+        "0.75": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999984,
+                0.00565,
+                -0.0,
+                4.5e-05
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999911,
+                -0.008141,
+                -0.000185,
+                -0.010605
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999727,
+                -0.022515,
+                -8.7e-05,
+                -0.006269
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999757,
+                0.019874,
+                5.9e-05,
+                -0.009556
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999503,
+                0.030644,
+                -0.00015,
+                0.007418
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.99997,
+                0.005335,
+                0.000107,
+                -0.005551
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999785,
+                -0.015338,
+                0.000386,
+                0.013936
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999797,
+                0.017421,
+                -9.7e-05,
+                0.010157
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999597,
+                0.020904,
+                -0.000584,
+                0.019184
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.99969,
+                0.024049,
+                0.000109,
+                -0.006468
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999747,
+                -0.020156,
+                0.000118,
+                0.00999
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999967,
+                0.000254,
+                0.00011,
+                0.008102
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999695,
+                -0.017667,
+                0.00013,
+                0.017238
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999815,
+                -0.016156,
+                -5.3e-05,
+                -0.010408
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.99977,
+                0.011618,
+                -2.2e-05,
+                0.018014
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999956,
+                0.009302,
+                -3.3e-05,
+                0.001506
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999708,
+                0.022966,
+                0.000105,
+                -0.007486
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.999923,
+                0.006554,
+                -0.000139,
+                0.01058
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999911,
+                0.013158,
+                5.5e-05,
+                -0.002085
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999832,
+                -0.014315,
+                0.000269,
+                0.011406
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999696,
+                0.02398,
+                0.000127,
+                -0.005679
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.4498,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.4498,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.4498,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.4498,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.4498,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.41041,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.41041,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.41041,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.41041,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.26934,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.26934,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.26934,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.26934,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.29069,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.29069,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.29069,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.29069,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.22371,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.22371,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.22371,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.22371
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.0399799607694149,
+          -0.036744553595781326,
+          0.0
+        ],
+        "max": [
+          0.0399799607694149,
+          0.036744553595781326,
+          0.02864070236682892
+        ]
+      }
+    },
+    "flow": {
+      "frameRange": [
+        1.0,
+        60.0
+      ],
+      "loop": true,
+      "metrics": {
+        "samples": 31,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999944,
+                -0.005086,
+                -4.7e-05,
+                -0.009267
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999917,
+                -0.004742,
+                5.7e-05,
+                0.011997
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999784,
+                -0.016066,
+                0.000212,
+                0.013221
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999518,
+                -0.027921,
+                0.00038,
+                0.013595
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.99972,
+                -0.023083,
+                -0.000121,
+                -0.00524
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999456,
+                -0.030043,
+                0.000408,
+                0.013587
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999488,
+                -0.029432,
+                0.00037,
+                0.01257
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999227,
+                -0.036968,
+                0.000495,
+                0.01338
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999255,
+                -0.038535,
+                -8.2e-05,
+                -0.002133
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999147,
+                -0.038936,
+                -0.000535,
+                -0.013737
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999218,
+                -0.039028,
+                0.000248,
+                0.006342
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999163,
+                -0.038469,
+                0.000536,
+                0.01393
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999231,
+                -0.039137,
+                -9.8e-05,
+                -0.002513
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999148,
+                -0.039057,
+                0.000522,
+                0.013354
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999235,
+                -0.038254,
+                -0.000311,
+                -0.008123
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.99935,
+                -0.035403,
+                0.000238,
+                0.006731
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999456,
+                -0.032859,
+                -8.8e-05,
+                -0.002673
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.999443,
+                -0.032849,
+                0.000194,
+                0.005912
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999776,
+                -0.019467,
+                0.000161,
+                0.008281
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999787,
+                -0.01524,
+                0.000212,
+                0.013931
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999987,
+                0.000941,
+                5e-06,
+                -0.005015
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.20729,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.20729,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.20729,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.20729,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.20729,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.05729,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.05729,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.05729,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.05729,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.0,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.0,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.0,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.0,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.05729,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.05729,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.05729,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.05729,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.20729,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.20729,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.20729,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.20729
+          }
+        },
+        "0.25": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.99702,
+                0.076581,
+                -0.00071,
+                0.009239
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.996979,
+                0.076746,
+                0.000922,
+                -0.011961
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.997482,
+                0.069674,
+                0.000916,
+                -0.013193
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.998268,
+                0.057236,
+                0.000779,
+                -0.013583
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.997988,
+                0.06319,
+                -0.000331,
+                0.005231
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.998445,
+                0.054056,
+                0.000738,
+                -0.013592
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.998406,
+                0.055018,
+                0.00069,
+                -0.012551
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999174,
+                0.038374,
+                0.000514,
+                -0.013377
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999511,
+                0.031197,
+                -6.7e-05,
+                0.002134
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999512,
+                0.028061,
+                -0.000386,
+                0.013746
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999612,
+                0.027119,
+                0.000172,
+                -0.006345
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999831,
+                0.012035,
+                0.000168,
+                -0.013883
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999836,
+                0.017949,
+                -4.6e-05,
+                0.002515
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999768,
+                0.016877,
+                0.000226,
+                -0.013375
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999909,
+                0.010779,
+                -8.8e-05,
+                0.008129
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999977,
+                0.00045,
+                2e-06,
+                -0.006735
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999982,
+                -0.005413,
+                1.3e-05,
+                0.002674
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.999968,
+                -0.005433,
+                -3.2e-05,
+                -0.005915
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999696,
+                -0.023204,
+                -0.000194,
+                -0.008281
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999545,
+                -0.026739,
+                -0.000373,
+                -0.013933
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999354,
+                -0.035586,
+                0.000178,
+                0.005012
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.58532,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.58532,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.58532,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.58532,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.58532,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.47634,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.47634,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.47634,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.47634,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.3,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.3,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.3,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.3,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.12366,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.12366,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.12366,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.12366,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.01468,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.01468,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.01468,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.01468
+          }
+        },
+        "0.50": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.998771,
+                0.048699,
+                0.000451,
+                -0.009255
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.998758,
+                0.048353,
+                -0.00058,
+                0.011983
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.998131,
+                0.05966,
+                -0.000789,
+                0.013198
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.997348,
+                0.071493,
+                -0.000966,
+                0.0136
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.997761,
+                0.066669,
+                0.000349,
+                -0.00523
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.997194,
+                0.07361,
+                -0.001,
+                0.013591
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.997253,
+                0.073001,
+                -0.000918,
+                0.012534
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.996663,
+                0.080519,
+                -0.00108,
+                0.013349
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.996623,
+                0.082087,
+                0.000175,
+                -0.002128
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.996493,
+                0.082531,
+                0.001137,
+                -0.013733
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.996562,
+                0.082611,
+                -0.000524,
+                0.006325
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.996534,
+                0.082015,
+                -0.001136,
+                0.01387
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.996572,
+                0.082696,
+                0.000208,
+                -0.002506
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.996491,
+                0.08263,
+                -0.001108,
+                0.013322
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.996616,
+                0.081797,
+                0.000665,
+                -0.008102
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.996855,
+                0.078961,
+                -0.000532,
+                0.006714
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.997072,
+                0.076423,
+                0.000204,
+                -0.002666
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.997059,
+                0.076412,
+                -0.000452,
+                0.005898
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.997976,
+                0.063058,
+                -0.000522,
+                0.008266
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.998171,
+                0.058835,
+                -0.000819,
+                0.013888
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999076,
+                0.042679,
+                0.000213,
+                -0.00501
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.39271,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.39271,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.39271,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.39271,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.39271,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.5427,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.5427,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.5427,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.5427,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.59957,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.59957,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.59957,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.59957,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.5427,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.5427,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.5427,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.5427,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.39271,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.39271,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.39271,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.39271
+          }
+        },
+        "0.75": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999412,
+                -0.033019,
+                0.000306,
+                0.009262
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999377,
+                -0.033185,
+                -0.000399,
+                -0.011992
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999572,
+                -0.026098,
+                -0.000345,
+                -0.01321
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999814,
+                -0.013638,
+                -0.000185,
+                -0.013616
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999794,
+                -0.019598,
+                0.000103,
+                0.005241
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999853,
+                -0.010453,
+                -0.000142,
+                -0.013597
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999856,
+                -0.011416,
+                -0.000144,
+                -0.012573
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999896,
+                0.005246,
+                7e-05,
+                -0.013405
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.99992,
+                0.012431,
+                -2.6e-05,
+                0.002135
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999784,
+                0.015563,
+                -0.000214,
+                0.01378
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999844,
+                0.016509,
+                0.000105,
+                -0.006346
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999404,
+                0.031589,
+                0.000441,
+                -0.013934
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999667,
+                0.02568,
+                -6.5e-05,
+                0.002514
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999553,
+                0.026749,
+                0.000357,
+                -0.013356
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999427,
+                0.032847,
+                -0.000267,
+                0.008125
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999045,
+                0.043169,
+                0.000291,
+                -0.006729
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.998794,
+                0.049027,
+                -0.000131,
+                0.002671
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.998779,
+                0.049046,
+                0.00029,
+                -0.005908
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.997733,
+                0.066788,
+                0.000553,
+                -0.008264
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.997428,
+                0.070313,
+                0.000984,
+                -0.013852
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.996851,
+                0.079141,
+                -0.000397,
+                0.004999
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.01468,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.01468,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.01468,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.01468,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.01468,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.12366,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.12366,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.12366,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.12366,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.3,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.3,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.3,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.3,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.47634,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.47634,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.47634,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.47634,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.58532,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.58532,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.58532,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.58532
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.0399799607694149,
+          -0.036744553595781326,
+          0.0
+        ],
+        "max": [
+          0.0399799607694149,
+          0.036744553595781326,
+          0.02864704467356205
+        ]
+      }
+    },
+    "close": {
+      "frameRange": [
+        1.0,
+        72.0
+      ],
+      "loop": false,
+      "metrics": {
+        "samples": 37,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.0,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.0,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.0,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.0,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.0,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.0,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.0,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.0,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.0,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.0,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.0,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.0,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.0,
+            "PA_zoanthid_Polyp_13/close": 0.0,
+            "PA_zoanthid_Polyp_13/spread": 0.0,
+            "PA_zoanthid_Polyp_14/close": 0.0,
+            "PA_zoanthid_Polyp_14/spread": 0.0,
+            "PA_zoanthid_Polyp_15/close": 0.0,
+            "PA_zoanthid_Polyp_15/spread": 0.0,
+            "PA_zoanthid_Polyp_16/close": 0.0,
+            "PA_zoanthid_Polyp_16/spread": 0.0,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.0,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.0,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.0,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.0
+          }
+        },
+        "0.25": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999447,
+                0.03125,
+                0.0,
+                -0.011398
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.790319,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999447,
+                0.033243,
+                0.0,
+                0.001156
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.790319,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999447,
+                0.026362,
+                0.0,
+                -0.020285
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.790319,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999447,
+                0.032543,
+                0.0,
+                0.006883
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.790319,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999447,
+                0.02546,
+                0.0,
+                0.021406
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.790319,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999674,
+                0.012809,
+                0.0,
+                -0.022089
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.839054,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999674,
+                0.017138,
+                0.0,
+                -0.018928
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.839054,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999674,
+                0.00884,
+                -0.0,
+                0.023955
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.839054,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999674,
+                0.004045,
+                0.0,
+                0.025212
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.839054,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999906,
+                0.003773,
+                -0.0,
+                -0.013178
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.913603,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999906,
+                0.007608,
+                0.0,
+                0.011403
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.913603,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999906,
+                -0.003496,
+                0.0,
+                0.013255
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.913603,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999906,
+                -0.001408,
+                -0.0,
+                -0.013635
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.913603,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999998,
+                -0.00034,
+                0.0,
+                0.002009
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.987156,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999998,
+                -0.000604,
+                0.0,
+                -0.001946
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.987156,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999998,
+                -0.001953,
+                0.0,
+                0.000582
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.987156,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999998,
+                -0.001323,
+                0.0,
+                0.00155
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.987156,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.9531,
+            "PA_zoanthid_Polyp_00/spread": 0.0,
+            "PA_zoanthid_Polyp_01/close": 0.9531,
+            "PA_zoanthid_Polyp_01/spread": 0.0,
+            "PA_zoanthid_Polyp_02/close": 0.9531,
+            "PA_zoanthid_Polyp_02/spread": 0.0,
+            "PA_zoanthid_Polyp_03/close": 0.9531,
+            "PA_zoanthid_Polyp_03/spread": 0.0,
+            "PA_zoanthid_Polyp_04/close": 0.9531,
+            "PA_zoanthid_Polyp_04/spread": 0.0,
+            "PA_zoanthid_Polyp_05/close": 0.73157,
+            "PA_zoanthid_Polyp_05/spread": 0.0,
+            "PA_zoanthid_Polyp_06/close": 0.73157,
+            "PA_zoanthid_Polyp_06/spread": 0.0,
+            "PA_zoanthid_Polyp_07/close": 0.73157,
+            "PA_zoanthid_Polyp_07/spread": 0.0,
+            "PA_zoanthid_Polyp_08/close": 0.73157,
+            "PA_zoanthid_Polyp_08/spread": 0.0,
+            "PA_zoanthid_Polyp_09/close": 0.39272,
+            "PA_zoanthid_Polyp_09/spread": 0.0,
+            "PA_zoanthid_Polyp_10/close": 0.39272,
+            "PA_zoanthid_Polyp_10/spread": 0.0,
+            "PA_zoanthid_Polyp_11/close": 0.39272,
+            "PA_zoanthid_Polyp_11/spread": 0.0,
+            "PA_zoanthid_Polyp_12/close": 0.39272,
+            "PA_zoanthid_Polyp_12/spread": 0.0,
+            "PA_zoanthid_Polyp_13/close": 0.05838,
+            "PA_zoanthid_Polyp_13/spread": 0.0,
+            "PA_zoanthid_Polyp_14/close": 0.05838,
+            "PA_zoanthid_Polyp_14/spread": 0.0,
+            "PA_zoanthid_Polyp_15/close": 0.05838,
+            "PA_zoanthid_Polyp_15/spread": 0.0,
+            "PA_zoanthid_Polyp_16/close": 0.05838,
+            "PA_zoanthid_Polyp_16/spread": 0.0,
+            "PA_zoanthid_Polyp_17/close": 0.0,
+            "PA_zoanthid_Polyp_17/spread": 0.0,
+            "PA_zoanthid_Polyp_18/close": 0.0,
+            "PA_zoanthid_Polyp_18/spread": 0.0,
+            "PA_zoanthid_Polyp_19/close": 0.0,
+            "PA_zoanthid_Polyp_19/spread": 0.0,
+            "PA_zoanthid_Polyp_20/close": 0.0,
+            "PA_zoanthid_Polyp_20/spread": 0.0
+          }
+        },
+        "0.50": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                0.999938,
+                0.010433,
+                0.0,
+                -0.003805
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.93001,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                0.999938,
+                0.011098,
+                0.0,
+                0.000386
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.93001,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                0.999938,
+                0.008801,
+                0.0,
+                -0.006772
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.93001,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                0.999938,
+                0.010865,
+                0.0,
+                0.002298
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.93001,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                0.999938,
+                0.0085,
+                -0.0,
+                0.007146
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.93001,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                0.999728,
+                0.011697,
+                0.0,
+                -0.020172
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.853021,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                0.999728,
+                0.015651,
+                0.0,
+                -0.017285
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.853021,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                0.999728,
+                0.008073,
+                0.0,
+                0.021876
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.853021,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                0.999728,
+                0.003694,
+                0.0,
+                0.023024
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.853021,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                0.999483,
+                0.008848,
+                0.0,
+                -0.030905
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.797359,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                0.999483,
+                0.017842,
+                0.0,
+                0.026741
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.797359,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                0.999483,
+                -0.008199,
+                -0.0,
+                0.031084
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.797359,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                0.999483,
+                -0.003301,
+                0.0,
+                -0.031977
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.797359,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999392,
+                -0.005817,
+                0.0,
+                0.034369
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.780262,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999392,
+                -0.01034,
+                0.0,
+                -0.033289
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.780262,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999392,
+                -0.033404,
+                0.0,
+                0.009964
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.780262,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999392,
+                -0.022628,
+                0.0,
+                0.026516
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.780262,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.99953,
+                -0.015217,
+                0.0,
+                0.026601
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.806822,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.99953,
+                -0.029959,
+                0.0,
+                -0.006455
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.806822,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.99953,
+                -0.028688,
+                0.0,
+                0.010778
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.806822,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.99953,
+                -0.03064,
+                0.0,
+                0.000609
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.806822,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.31814,
+            "PA_zoanthid_Polyp_00/spread": 0.0,
+            "PA_zoanthid_Polyp_01/close": 0.31814,
+            "PA_zoanthid_Polyp_01/spread": 0.0,
+            "PA_zoanthid_Polyp_02/close": 0.31814,
+            "PA_zoanthid_Polyp_02/spread": 0.0,
+            "PA_zoanthid_Polyp_03/close": 0.31814,
+            "PA_zoanthid_Polyp_03/spread": 0.0,
+            "PA_zoanthid_Polyp_04/close": 0.31814,
+            "PA_zoanthid_Polyp_04/spread": 0.0,
+            "PA_zoanthid_Polyp_05/close": 0.66808,
+            "PA_zoanthid_Polyp_05/spread": 0.0,
+            "PA_zoanthid_Polyp_06/close": 0.66808,
+            "PA_zoanthid_Polyp_06/spread": 0.0,
+            "PA_zoanthid_Polyp_07/close": 0.66808,
+            "PA_zoanthid_Polyp_07/spread": 0.0,
+            "PA_zoanthid_Polyp_08/close": 0.66808,
+            "PA_zoanthid_Polyp_08/spread": 0.0,
+            "PA_zoanthid_Polyp_09/close": 0.9211,
+            "PA_zoanthid_Polyp_09/spread": 0.0,
+            "PA_zoanthid_Polyp_10/close": 0.9211,
+            "PA_zoanthid_Polyp_10/spread": 0.0,
+            "PA_zoanthid_Polyp_11/close": 0.9211,
+            "PA_zoanthid_Polyp_11/spread": 0.0,
+            "PA_zoanthid_Polyp_12/close": 0.9211,
+            "PA_zoanthid_Polyp_12/spread": 0.0,
+            "PA_zoanthid_Polyp_13/close": 0.99881,
+            "PA_zoanthid_Polyp_13/spread": 0.0,
+            "PA_zoanthid_Polyp_14/close": 0.99881,
+            "PA_zoanthid_Polyp_14/spread": 0.0,
+            "PA_zoanthid_Polyp_15/close": 0.99881,
+            "PA_zoanthid_Polyp_15/spread": 0.0,
+            "PA_zoanthid_Polyp_16/close": 0.99881,
+            "PA_zoanthid_Polyp_16/spread": 0.0,
+            "PA_zoanthid_Polyp_17/close": 0.87808,
+            "PA_zoanthid_Polyp_17/spread": 0.0,
+            "PA_zoanthid_Polyp_18/close": 0.87808,
+            "PA_zoanthid_Polyp_18/spread": 0.0,
+            "PA_zoanthid_Polyp_19/close": 0.87808,
+            "PA_zoanthid_Polyp_19/spread": 0.0,
+            "PA_zoanthid_Polyp_20/close": 0.87808,
+            "PA_zoanthid_Polyp_20/spread": 0.0
+          }
+        },
+        "0.75": {
+          "bones": {
+            "Polyp_00": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_01": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_02": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_03": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_04": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_05": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_06": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_07": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_08": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_09": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_10": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_11": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_12": {
+              "rotation": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "Polyp_13": {
+              "rotation": [
+                0.999991,
+                -0.000718,
+                0.0,
+                0.00424
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.972899,
+                1.0
+              ]
+            },
+            "Polyp_14": {
+              "rotation": [
+                0.999991,
+                -0.001276,
+                0.0,
+                -0.004106
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.972899,
+                1.0
+              ]
+            },
+            "Polyp_15": {
+              "rotation": [
+                0.999991,
+                -0.004121,
+                0.0,
+                0.001229
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.972899,
+                1.0
+              ]
+            },
+            "Polyp_16": {
+              "rotation": [
+                0.999991,
+                -0.002791,
+                0.0,
+                0.003271
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.972899,
+                1.0
+              ]
+            },
+            "Polyp_17": {
+              "rotation": [
+                0.999864,
+                -0.008196,
+                -0.0,
+                0.014327
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.895969,
+                1.0
+              ]
+            },
+            "Polyp_18": {
+              "rotation": [
+                0.999864,
+                -0.016135,
+                -0.0,
+                -0.003477
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.895969,
+                1.0
+              ]
+            },
+            "Polyp_19": {
+              "rotation": [
+                0.999864,
+                -0.015451,
+                -0.0,
+                0.005805
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.895969,
+                1.0
+              ]
+            },
+            "Polyp_20": {
+              "rotation": [
+                0.999864,
+                -0.016502,
+                0.0,
+                0.000328
+              ],
+              "location": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scale": [
+                1.0,
+                0.895969,
+                1.0
+              ]
+            }
+          },
+          "shapeKeys": {
+            "PA_zoanthid_Polyp_00/close": 0.0,
+            "PA_zoanthid_Polyp_00/spread": 0.0,
+            "PA_zoanthid_Polyp_01/close": 0.0,
+            "PA_zoanthid_Polyp_01/spread": 0.0,
+            "PA_zoanthid_Polyp_02/close": 0.0,
+            "PA_zoanthid_Polyp_02/spread": 0.0,
+            "PA_zoanthid_Polyp_03/close": 0.0,
+            "PA_zoanthid_Polyp_03/spread": 0.0,
+            "PA_zoanthid_Polyp_04/close": 0.0,
+            "PA_zoanthid_Polyp_04/spread": 0.0,
+            "PA_zoanthid_Polyp_05/close": 0.0,
+            "PA_zoanthid_Polyp_05/spread": 0.0,
+            "PA_zoanthid_Polyp_06/close": 0.0,
+            "PA_zoanthid_Polyp_06/spread": 0.0,
+            "PA_zoanthid_Polyp_07/close": 0.0,
+            "PA_zoanthid_Polyp_07/spread": 0.0,
+            "PA_zoanthid_Polyp_08/close": 0.0,
+            "PA_zoanthid_Polyp_08/spread": 0.0,
+            "PA_zoanthid_Polyp_09/close": 0.0,
+            "PA_zoanthid_Polyp_09/spread": 0.0,
+            "PA_zoanthid_Polyp_10/close": 0.0,
+            "PA_zoanthid_Polyp_10/spread": 0.0,
+            "PA_zoanthid_Polyp_11/close": 0.0,
+            "PA_zoanthid_Polyp_11/spread": 0.0,
+            "PA_zoanthid_Polyp_12/close": 0.0,
+            "PA_zoanthid_Polyp_12/spread": 0.0,
+            "PA_zoanthid_Polyp_13/close": 0.12318,
+            "PA_zoanthid_Polyp_13/spread": 0.0,
+            "PA_zoanthid_Polyp_14/close": 0.12318,
+            "PA_zoanthid_Polyp_14/spread": 0.0,
+            "PA_zoanthid_Polyp_15/close": 0.12318,
+            "PA_zoanthid_Polyp_15/spread": 0.0,
+            "PA_zoanthid_Polyp_16/close": 0.12318,
+            "PA_zoanthid_Polyp_16/spread": 0.0,
+            "PA_zoanthid_Polyp_17/close": 0.47287,
+            "PA_zoanthid_Polyp_17/spread": 0.0,
+            "PA_zoanthid_Polyp_18/close": 0.47287,
+            "PA_zoanthid_Polyp_18/spread": 0.0,
+            "PA_zoanthid_Polyp_19/close": 0.47287,
+            "PA_zoanthid_Polyp_19/spread": 0.0,
+            "PA_zoanthid_Polyp_20/close": 0.47287,
+            "PA_zoanthid_Polyp_20/spread": 0.0
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.0399799607694149,
+          -0.036744553595781326,
+          0.0
+        ],
+        "max": [
+          0.0399799607694149,
+          0.036744553595781326,
+          0.028471695259213448
+        ]
+      }
+    }
+  },
+  "sourceTriangles": 18096,
+  "restSizeMeters": 0.0799599215388298,
+  "restBounds": {
+    "min": [
+      -0.0399799607694149,
+      -0.036744553595781326,
+      0.0
+    ],
+    "max": [
+      0.0399799607694149,
+      0.036744553595781326,
+      0.028471695259213448
+    ]
+  }
+}

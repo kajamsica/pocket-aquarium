@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "clean": {
+      "durationSeconds": 1.5,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Ant_A_L",
+        "Ant_A_R",
+        "Ant_B_L",
+        "Ant_B_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Hand1_L",
+        "Hand1_R",
+        "Hand2_L",
+        "Hand2_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_A_L",
+        "Pleo_A_R",
+        "Pleo_B_L",
+        "Pleo_B_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "hover": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Ant_A_L",
+        "Ant_A_R",
+        "Ant_B_L",
+        "Ant_B_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Hand1_L",
+        "Hand1_R",
+        "Hand2_L",
+        "Hand2_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_A_L",
+        "Pleo_A_R",
+        "Pleo_B_L",
+        "Pleo_B_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "walk": {
+      "durationSeconds": 2.0,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Abd_C",
+        "Ant_A_L",
+        "Ant_A_R",
+        "Ant_B_L",
+        "Ant_B_R",
+        "Antennule_L",
+        "Antennule_R",
+        "Body",
+        "Dactyl_L",
+        "Dactyl_R",
+        "Hand1_L",
+        "Hand1_R",
+        "Hand2_L",
+        "Hand2_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_A_L",
+        "Pleo_A_R",
+        "Pleo_B_L",
+        "Pleo_B_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 8304,
+    "materials": 3,
+    "nodes": 37,
+    "skinJoints": 32,
+    "images": 3,
+    "meshes": [
+      "PA_cleaner_shrimp_Body",
+      "PA_cleaner_shrimp_Head",
+      "PA_cleaner_shrimp_Limbs"
+    ]
+  },
+  "parity": {
+    "hover": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "walk": {
+      "maxBoneRotationErrorDegrees": 0.08846931922527276,
+      "loopSeamDegrees": 0.0
+    },
+    "clean": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.029912080615758896,
+      -0.012720510363578796,
+      -0.01595325767993927
+    ],
+    "max": [
+      0.030030161142349243,
+      0.012720514088869095,
+      0.022097676992416382
+    ],
+    "deviationMeters": 1.0690349975438224e-07
+  }
+}

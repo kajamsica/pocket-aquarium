@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "royal_gramma",
+  "sourceSha256": "b4997616283eaa6b6346fb152c3e7dbb2c708953c2468d376eb0a2199ef57133",
+  "objects": [
+    {
+      "name": "PA_royal_gramma_Body",
+      "vertexCount": 2450,
+      "triangleCount": 4896,
+      "vertexDigest": "cc2052603e5609b08416739ea0b347516103ce3666a07d3f0b6ed19adbdb29ea",
+      "topologyDigest": "17d061f55aaaab44b13bcd7a30f5ee14c1998643640b7c0353bf0ab60c20d09b",
+      "uvDigest": "854d4d18921c2755e6b2dfa2c131ab555ca9fee08a25d7541bea00d3bba962ea",
+      "weightDigest": "6eb48b3bb9bca5a15755bca526f7c53c5f6fd4ece64dbc54a7adc0a0430a14ed",
+      "materials": [
+        "PA_royal_gramma_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_royal_gramma_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "0ee809ab062e952b4f338ff88fc0b8b448e2cdd2856daf2a4bab4ca162352d8c",
+      "topologyDigest": "af5d890e334b2cd282952f0a44dae55bd4ac9e200ce5af8c2c8b4ca427ae9d1a",
+      "uvDigest": "faa6d14466565dda8bc493f5bfafe6418526a05591b15255928b2720248e6183",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_royal_gramma_Cue",
+        "PA_royal_gramma_Eye",
+        "PA_royal_gramma_Glint",
+        "PA_royal_gramma_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_royal_gramma_Fins",
+      "vertexCount": 506,
+      "triangleCount": 872,
+      "vertexDigest": "f6368acd0683b05a0cc5b4766db74d58f88e8c620ce8193d9d09f28dcfef90b0",
+      "topologyDigest": "2dd16313deb5d1c71b2f455d35c0c774cdda727f1bcd857cefffee49daf02537",
+      "uvDigest": "e30374dcb90df217c653771a6b207b2d3d962cb0a7b237fc6b594691e0268f99",
+      "weightDigest": "0684d9ead71b01a2bbb793b6b7bee02d9ffbee030af1ba3ae044dc3d45d8ccaa",
+      "materials": [
+        "PA_royal_gramma_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_royal_gramma_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "60620575def810ec36e1e2a5413030385a0c70dae7d3aeca1272f0f45fd0c4af"
+  },
+  "geometryDigest": "26a265b30af48aae5e15969f37dc9df203729b2430f00846d2e1f585c4bbc81c",
+  "variantId": null
+}

@@ -1,0 +1,359 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "blue_linckia",
+  "rig": "PA_blue_linckia_Rig",
+  "root": "PA_blue_linckia_Root",
+  "meshes": [
+    "PA_blue_linckia_Body"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_disc",
+      "volumeFloor": 0.8
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm0",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm1_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm2_R",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm2_L",
+      "volumeFloor": 0.6
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm1_L",
+      "volumeFloor": 0.6
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm0",
+        "root_arm0"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm1_R",
+        "root_arm1_R"
+      ],
+      "label": "arm_arm_arm0_arm1_R",
+      "minDistance": 0.0015
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm0",
+        "root_arm0"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm2_R",
+        "root_arm2_R"
+      ],
+      "label": "arm_arm_arm0_arm2_R"
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm0",
+        "root_arm0"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm2_L",
+        "root_arm2_L"
+      ],
+      "label": "arm_arm_arm0_arm2_L"
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm0",
+        "root_arm0"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm1_L",
+        "root_arm1_L"
+      ],
+      "label": "arm_arm_arm0_arm1_L",
+      "minDistance": 0.0015
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm1_R",
+        "root_arm1_R"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm2_R",
+        "root_arm2_R"
+      ],
+      "label": "arm_arm_arm1_R_arm2_R",
+      "minDistance": 0.0015
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm1_R",
+        "root_arm1_R"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm2_L",
+        "root_arm2_L"
+      ],
+      "label": "arm_arm_arm1_R_arm2_L"
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm1_R",
+        "root_arm1_R"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm1_L",
+        "root_arm1_L"
+      ],
+      "label": "arm_arm_arm1_R_arm1_L"
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm2_R",
+        "root_arm2_R"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm2_L",
+        "root_arm2_L"
+      ],
+      "label": "arm_arm_arm2_R_arm2_L",
+      "minDistance": 0.0015
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm2_R",
+        "root_arm2_R"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm1_L",
+        "root_arm1_L"
+      ],
+      "label": "arm_arm_arm2_R_arm1_L"
+    },
+    {
+      "a": [
+        "PA_blue_linckia_Body",
+        "part_arm2_L",
+        "root_arm2_L"
+      ],
+      "b": [
+        "PA_blue_linckia_Body",
+        "part_arm1_L",
+        "root_arm1_L"
+      ],
+      "label": "arm_arm_arm2_L_arm1_L",
+      "minDistance": 0.0015
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm1_R",
+      "exclude": "root_arm1_R",
+      "side": 1
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm2_R",
+      "exclude": "root_arm2_R",
+      "side": 1
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm2_L",
+      "exclude": "root_arm2_L",
+      "side": -1
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "group": "part_arm1_L",
+      "exclude": "root_arm1_L",
+      "side": -1
+    }
+  ],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.25,
+    "tolerance": 0.03,
+    "kind": "adult_arm_span"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Arm0_B",
+        "Arm0_C",
+        "Arm0_D",
+        "Arm1_B_L",
+        "Arm1_B_R",
+        "Arm1_C_L",
+        "Arm1_C_R",
+        "Arm1_D_L",
+        "Arm1_D_R",
+        "Arm2_B_L",
+        "Arm2_B_R",
+        "Arm2_C_L",
+        "Arm2_C_R",
+        "Arm2_D_L",
+        "Arm2_D_R"
+      ],
+      "shapeKeys": []
+    },
+    "crawl": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Arm0_A",
+        "Arm0_B",
+        "Arm0_C",
+        "Arm0_D",
+        "Arm1_A_L",
+        "Arm1_A_R",
+        "Arm1_B_L",
+        "Arm1_B_R",
+        "Arm1_C_L",
+        "Arm1_C_R",
+        "Arm1_D_L",
+        "Arm1_D_R",
+        "Arm2_A_L",
+        "Arm2_A_R",
+        "Arm2_B_L",
+        "Arm2_B_R",
+        "Arm2_C_L",
+        "Arm2_C_R",
+        "Arm2_D_L",
+        "Arm2_D_R",
+        "Disc"
+      ],
+      "shapeKeys": []
+    },
+    "arm_curl": {
+      "loop": false,
+      "frames": 60,
+      "bones": [
+        "Arm0_A",
+        "Arm0_B",
+        "Arm0_C",
+        "Arm0_D",
+        "Arm1_A_L",
+        "Arm1_B_L",
+        "Arm1_C_L",
+        "Arm1_D_L"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "crawl",
+    "response": "arm_curl"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_blue_linckia_Body",
+      "left": "part_arm1_L",
+      "right": "part_arm1_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_blue_linckia_Body",
+      "left": "part_arm2_L",
+      "right": "part_arm2_R",
+      "tolerance": 0.0002
+    }
+  ],
+  "variantId": null,
+  "previewAction": "crawl",
+  "restBounds": {
+    "min": [
+      -0.112933,
+      -0.125,
+      0.0
+    ],
+    "max": [
+      0.134157,
+      0.125,
+      0.025759
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png"
+  ],
+  "notes": {
+    "normalisationScale": 1.02438,
+    "restLiftMeters": 0.0,
+    "armReachMeters": [
+      0.13419,
+      0.13084,
+      0.13688
+    ],
+    "discRadiusMeters": 0.02459,
+    "armRadiusMeters": 0.0128,
+    "arms": [
+      "arm0",
+      "arm1_R",
+      "arm2_R",
+      "arm2_L",
+      "arm1_L"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/blue_linckia/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/blue_linckia/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.11293335258960724,
+      -0.125,
+      0.0
+    ],
+    "boundsMax": [
+      0.13415655493736267,
+      0.125,
+      0.025759002193808556
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

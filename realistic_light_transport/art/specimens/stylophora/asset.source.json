@@ -1,0 +1,253 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "stylophora",
+  "displayName": "Blueberry Stylophora",
+  "scientificLabel": "Stylophora pistillata",
+  "taxonomyConfidence": "species",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "branching_sps_coral",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.1,
+    "kind": "colony_width",
+    "note": "Aquarium colony width. Wild Stylophora pistillata colonies reach about 30 cm across (WoRMS / Veron descriptions; Corals of the World: blunt-ended branches becoming thick and submassive), so 10 cm is a grown frag or small display colony. Measured across the whole mesh including the rock plug and extended polyps; branch thickness lands at 9 to 15 mm after fitting."
+  },
+  "origin": "base_center",
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "palette": {
+    "body": [
+      0.27,
+      0.21,
+      0.66
+    ],
+    "tip": [
+      0.6,
+      0.53,
+      0.86
+    ],
+    "hood": [
+      0.44,
+      0.37,
+      0.82
+    ],
+    "calice": [
+      0.15,
+      0.1,
+      0.42
+    ],
+    "polyp": [
+      0.5,
+      0.44,
+      0.82
+    ],
+    "polypTip": [
+      0.62,
+      0.58,
+      0.88
+    ],
+    "fuzz": 0.45,
+    "rock": [
+      0.4,
+      0.36,
+      0.31
+    ],
+    "algae": [
+      0.3,
+      0.38,
+      0.17
+    ],
+    "coralline": [
+      0.46,
+      0.18,
+      0.34
+    ]
+  },
+  "textures": {
+    "tissueResolution": [
+      1024,
+      512
+    ],
+    "polypResolution": [
+      128,
+      32
+    ],
+    "rockResolution": [
+      512,
+      256
+    ],
+    "tissueNormalStrength": 1.0,
+    "tissueMapStrength": 0.9,
+    "rockNormalStrength": 1.0
+  },
+  "morphology": {
+    "notes": "Compact subspherical colony: rock plug, thick tissue covered base mound, five stout primaries plus a central leader that fork dichotomously (widened elliptical fork blades) into blunt club shaped terminal branches with rounded knobs. Corallites (0.5 to 1.5 mm, hooded toward the branch tip) are painted; the extended polyps are modelled as dense short nubs. Sizes are design centimetres; the colony is scaled so the xy width equals referenceSize.",
+    "seed": 11,
+    "primaries": 5,
+    "primaryElevation": 55.0,
+    "primaryLength": 2.0,
+    "secondaryLength": 2.3,
+    "tertiaryProbability": 0.45,
+    "polyp": {
+      "spacing": 0.28,
+      "length": 0.1,
+      "radius": 0.038,
+      "flare": 1.1,
+      "segments": 4,
+      "retractScale": 0.75
+    },
+    "secondaryCurl": 16.0,
+    "forkHalfAngle": 25.0,
+    "minGap": 0.22
+  },
+  "animation": {
+    "sway": {
+      "frames": 120,
+      "loop": true,
+      "lean": 0.045,
+      "leanFrequency": 1,
+      "wobble": 0.03,
+      "wobbleFrequency": 2,
+      "pulse": 0.05,
+      "pulseFrequency": 1,
+      "twist": 1.5,
+      "twistFrequency": 1,
+      "phaseSpread": 1.0
+    },
+    "flow": {
+      "frames": 90,
+      "loop": true,
+      "lean": 0.08,
+      "leanBias": 0.05,
+      "leanFrequency": 1,
+      "wobble": 0.03,
+      "wobbleFrequency": 2,
+      "pulse": 0.08,
+      "pulseFrequency": 2,
+      "twist": 3.0,
+      "twistFrequency": 1,
+      "waveNumber": 30.0,
+      "phaseSpread": 0.15
+    },
+    "retract": {
+      "frames": 60,
+      "loop": false,
+      "envelope": "hold",
+      "retract": 1.0
+    }
+  },
+  "validation": {
+    "triangleBudget": [
+      5000,
+      20000
+    ]
+  },
+  "preview": {
+    "frame": 10,
+    "azimuthDegrees": -55,
+    "elevationDegrees": 24
+  },
+  "variants": {
+    "blueberry": {
+      "displayName": "Blueberry Stylophora (blue-violet, lavender polyps)",
+      "overrides": {
+        "morphology": {
+          "seed": 11
+        },
+        "palette": {
+          "body": [
+            0.27,
+            0.21,
+            0.66
+          ],
+          "tip": [
+            0.6,
+            0.53,
+            0.86
+          ],
+          "hood": [
+            0.44,
+            0.37,
+            0.82
+          ],
+          "calice": [
+            0.15,
+            0.1,
+            0.42
+          ],
+          "polyp": [
+            0.5,
+            0.44,
+            0.82
+          ],
+          "polypTip": [
+            0.62,
+            0.58,
+            0.88
+          ],
+          "fuzz": 0.45
+        }
+      }
+    },
+    "pink": {
+      "displayName": "Pink Stylophora (pink-lilac wild form)",
+      "overrides": {
+        "morphology": {
+          "seed": 23
+        },
+        "palette": {
+          "body": [
+            0.86,
+            0.5,
+            0.64
+          ],
+          "tip": [
+            0.95,
+            0.76,
+            0.84
+          ],
+          "hood": [
+            0.92,
+            0.62,
+            0.74
+          ],
+          "calice": [
+            0.5,
+            0.2,
+            0.36
+          ],
+          "polyp": [
+            0.88,
+            0.7,
+            0.8
+          ],
+          "polypTip": [
+            0.94,
+            0.84,
+            0.88
+          ],
+          "fuzz": 0.45
+        },
+        "preview": {
+          "azimuthDegrees": -48,
+          "elevationDegrees": 24
+        }
+      }
+    }
+  },
+  "visualDebt": [
+    "Modelled polyps are the prominent fraction of the real dense field (about one nub per 3 mm of tissue); the remaining corallites and their tiny polyps are suggested by the painted calices, hoods and polyp speckle.",
+    "Each polyp is a four sided nub with a slightly flared crown and recessed mouth; the six short tentacles of a real Stylophora polyp are painted as crown grooves, not modelled, so polyps read as small pale blocks at close range.",
+    "Polyps are shown extended; in the wild Stylophora pistillata extends its polyps mainly at night (WoRMS description), the aquarium blueberry morph is commonly seen with polyps out by day.",
+    "Retraction pulls each crown toward its branch axis, so polyps on the rounded knob within about 40 degrees of the apex only partially retract and slide slightly toward the branch axis.",
+    "Fork blades are elliptical tube sections; the flattened, slightly spatulate tips of some wild colonies are not modelled.",
+    "The mound apex cap keeps the polar fan UV of the dome loft, so its tissue texture streaks radially at the very top (mostly hidden under the central leader).",
+    "The pink seed keeps three primaries unforked because the compact layout leaves less than the 2.2 mm minimum branch gap for their forks; the blueberry seed forks all primaries but one.",
+    "Skeleton is static by design (user rule for stony corals): no branch flex in any clip."
+  ]
+}

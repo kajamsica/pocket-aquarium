@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "chalice_coral",
+  "displayName": "Chalice Coral",
+  "scientificLabel": "aquarium \"chalice\" corals (Echinophyllia / Mycedium / Oxypora group; Lobophylliidae and Merulinidae)",
+  "taxonomyConfidence": "group",
+  "category": "coral",
+  "waterType": "saltwater",
+  "bodyPlan": "encrusting_coral",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.12,
+    "kind": "colony_width",
+    "note": "WoRMS / Sheppard (1998) describe Echinophyllia aspera as encrusting to foliaceous plates that always hug the substrate, reaching 50 to 60 cm across in the wild; aquarium chalice colonies are typically 3 to 15 cm. 12 cm is a mature display colony. Corallite (calice) width for E. aspera is 8.8 to 10.9 mm (Coral Trait Database), modelled here as 8 to 14 mm mounds."
+  },
+  "origin": "base_center",
+  "clipRoles": { "idle": "sway", "locomotion": "flow", "response": "retract" },
+  "palette": {
+    "tissue": [0.62, 0.10, 0.16],
+    "tissueDark": [0.35, 0.05, 0.10],
+    "tissueLight": [0.80, 0.25, 0.22],
+    "eye": [0.40, 0.95, 0.30],
+    "mouth": [0.10, 0.45, 0.15],
+    "eyeHalo": [0.98, 0.72, 0.20],
+    "edge": [0.98, 0.72, 0.20],
+    "tentacle": [0.85, 0.55, 0.45],
+    "tentacleTip": [0.95, 0.90, 0.70],
+    "skeleton": [0.66, 0.62, 0.55],
+    "coralline": [0.62, 0.26, 0.45]
+  },
+  "textures": {
+    "tissueResolution": 1024,
+    "skeletonResolution": 512,
+    "tentacleResolution": [256, 64],
+    "tissueNormalStrength": 1.0,
+    "skeletonNormalStrength": 1.0
+  },
+  "morphology": {
+    "notes": "Encrusting / plating stony colony on a small rock: thick undulating plate with a slightly free, lifted margin; irregularly scattered raised corallites (eyes) with an off-centre calice pit inclined toward the margin; thin calice lip; fine tissue relief and septocostal striations; short feeding-tentacle tufts around each mouth.",
+    "seed": 7,
+    "outline": { "orders": [2, 3, 5, 9, 14], "amplitudes": [0.07, 0.045, 0.025, 0.014, 0.007], "rimBulge": 0.02 },
+    "sampling": { "segments": 120, "topRings": 26, "rimRings": 3, "bottomRings": 6 },
+    "rock": { "radius": 0.032, "height": 0.011, "segments": 24, "rings": 7, "roughness": 0.18 },
+    "plate": {
+      "centerThickness": 0.008,
+      "edgeThickness": 0.0035,
+      "marginLift": 0.006,
+      "undulationAmplitude": 0.0045,
+      "undulationScale": 18.0,
+      "tissueRelief": 0.0007,
+      "tissueReliefScale": 80.0,
+      "rockEmbed": 0.002,
+      "tissueWeight": 0.3
+    },
+    "corallites": {
+      "count": 16,
+      "radius": [0.0042, 0.0066],
+      "moundHeight": [0.0028, 0.0042],
+      "pitRadiusFraction": 0.38,
+      "pitDepthFraction": 0.55,
+      "pitOffsetFraction": 0.22,
+      "maxRadiusFraction": 0.82,
+      "spacing": 0.7,
+      "gap": 0.010
+    },
+    "polypBoneDepth": 0.0015,
+    "tentacles": {
+      "count": [5, 8],
+      "length": [0.0035, 0.0052],
+      "radius": [0.0005, 0.0007],
+      "leanDegrees": [12.0, 26.0],
+      "embed": 0.0009,
+      "ringFactor": 1.05
+    }
+  },
+  "animation": {
+    "sway": { "frames": 120, "loop": true, "tilt": 3.0, "tiltFrequency": 1, "flutter": 1.6, "flutterFrequency": 2, "phaseSpread": 1.0 },
+    "flow": { "frames": 90, "loop": true, "tilt": 11.0, "tiltFrequency": 2, "lean": 5.0, "flutter": 4.0, "flutterFrequency": 3, "phaseSpread": 0.35 },
+    "retract": { "frames": 72, "loop": false, "envelope": "hold", "shrink": [0.35, 0.82, 0.35], "sink": 0.0015, "curl": 5.0 }
+  },
+  "validation": { "triangleBudget": [5000, 20000] },
+  "preview": { "frame": 20, "azimuthDegrees": -50, "elevationDegrees": 34 },
+  "variants": {
+    "red_green_eyes": {
+      "displayName": "Chalice Coral (red plate, green eyes)",
+      "overrides": {
+        "palette": {
+          "tissue": [0.62, 0.10, 0.16],
+          "tissueDark": [0.35, 0.05, 0.10],
+          "tissueLight": [0.80, 0.25, 0.22],
+          "eye": [0.40, 0.95, 0.30],
+          "mouth": [0.10, 0.45, 0.15],
+          "eyeHalo": [0.98, 0.72, 0.20],
+          "edge": [0.98, 0.72, 0.20],
+          "tentacle": [0.85, 0.55, 0.45],
+          "tentacleTip": [0.95, 0.90, 0.70]
+        }
+      }
+    },
+    "purple_orange_eyes": {
+      "displayName": "Chalice Coral (purple plate, orange eyes)",
+      "overrides": {
+        "palette": {
+          "tissue": [0.36, 0.16, 0.55],
+          "tissueDark": [0.20, 0.08, 0.35],
+          "tissueLight": [0.55, 0.30, 0.72],
+          "eye": [1.0, 0.55, 0.12],
+          "mouth": [0.75, 0.30, 0.05],
+          "eyeHalo": [0.95, 0.80, 0.30],
+          "edge": [0.25, 0.85, 0.80],
+          "tentacle": [0.70, 0.55, 0.85],
+          "tentacleTip": [0.95, 0.85, 0.95]
+        }
+      }
+    },
+    "jelly_bean": {
+      "displayName": "Chalice Coral (jelly bean: dark plate, candy blotches)",
+      "overrides": {
+        "palette": {
+          "tissue": [0.08, 0.02, 0.15],
+          "tissueDark": [0.03, 0.01, 0.06],
+          "tissueLight": [0.15, 0.05, 0.25],
+          "eye": [0.45, 1.0, 0.35],
+          "mouth": [0.15, 0.55, 0.20],
+          "eyeHalo": [0.98, 0.88, 0.30],
+          "edge": [0.25, 0.75, 0.95],
+          "tentacle": [0.75, 0.65, 0.90],
+          "tentacleTip": [0.95, 0.95, 0.85]
+        },
+        "pattern": {
+          "blotches": {
+            "colors": [[1.0, 0.25, 0.60], [1.0, 0.50, 0.05], [0.35, 1.0, 0.25], [0.20, 0.55, 1.0], [1.0, 0.92, 0.15]],
+            "scale": 200.0,
+            "coverage": 0.6,
+            "radius": [0.22, 0.45],
+            "smallScale": 480.0,
+            "smallCoverage": 0.3,
+            "smallRadius": [0.18, 0.36]
+          }
+        }
+      }
+    }
+  },
+  "visualDebt": [
+    "Septa inside the calice are painted (albedo and normal map) rather than modelled as ridges.",
+    "Feeding tentacles are simple tapered tubes without a bulbous acrosphere; retraction scales them into the calice instead of morphing tissue over them.",
+    "Undulation of the plate is a smooth noise field; real chalice margins fold and lobe more sharply."
+  ]
+}

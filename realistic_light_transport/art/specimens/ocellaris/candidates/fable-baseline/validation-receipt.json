@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "pocket-aquarium.specimen-validation/v1",
+  "speciesId": "ocellaris",
+  "status": "passed",
+  "state": "awaiting_user_acceptance",
+  "candidateHash": "36476776f027bc80c8a62bf970e5f32f2696c73b6a9c57a39b2bed6f546effa8",
+  "sourceJsonHash": "32dd0d9b925db12fd6793a18b01860a4805a61f1902ecdc554994fcb81fcf503",
+  "candidateGlbHash": "6a8cae395ac88d77d37c53e645620e34edc89aae992983016e7b567032ff43bc",
+  "geometryDigest": "ed88d64ef40c35e650c2245588ace9154bf91deea6cf860713c67e0a9ea86042",
+  "builderVersion": {
+    "entrypoint": "7392cd2e49afd9ee07993c61f974cb99ac42700c3da8c7148541460ac4eb5c09",
+    "speciesBackend": "755bb4bf3dd8a2783fa01d066695fb8b5ef687bd361be0d32bf3e9a50a369785"
+  },
+  "blenderVersion": "5.2.1 LTS",
+  "baseAcceptedHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+  "sourceJsonFiles": {
+    "package": "9720431075a9c3e3a70f43753828fbff7f8ae6266cee90b33275e677a55b7416",
+    "biology": "fe8a4a1e280afce93f39b577dab445d54881bd455493634265b9407a26b862dd",
+    "calibration": "ca521e39d6aa0a33f6394980f4b843905c48610e1c5dfde44814fdd2ae6cc4d2",
+    "morphology": "ea4d3feb589c98313e55022f51d377b86267578ebcfdf5b422332e2fbb0c5b32",
+    "sources": "685817941c86fff8ce4e90e4521d06e42b7a0a621debf2a632c372a7895a015e"
+  },
+  "morphologySha256": "ea4d3feb589c98313e55022f51d377b86267578ebcfdf5b422332e2fbb0c5b32",
+  "stages": {
+    "source": {
+      "status": "passed",
+      "report": "validation-source.json",
+      "sha256": "57f236d2f881f3b58522f34979a73739261c5ce95cfa448da4ba4dff7bbbc7e9"
+    },
+    "runtime": {
+      "status": "passed",
+      "report": "validation-runtime.json",
+      "sha256": "ce977471157170c57f2d901e8da8c4cc1c50381b2a0330baea5b01f4056f0f4a"
+    }
+  },
+  "acceptance": {
+    "performed": false,
+    "requiredAction": "explicit_accept_candidate"
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "purple_tang",
+  "variantId": null,
+  "scientificName": "Zebrasoma xanthurum",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.2.0",
+  "referenceSizeMeters": 0.22,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "1d02fde2627e7ce632d74717c85efcaf4a6718c1e9a6077185d3398b70eb3212",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Purple Tang",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-219681",
+      "title": "Zebrasoma xanthurum (Blyth, 1852) taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219681",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-ZEBRASOMA_XANTHURUM",
+      "title": "Zebrasoma xanthurum species summary (max length 36.7 cm TL, Ref. 97602; common length 10 cm TL, Ref. 5450)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Zebrasoma-xanthurum.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "COMMONS-ZEBRASOMA_XANTHURUM",
+      "title": "Category:Zebrasoma xanthurum (openly licensed photographs, proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Zebrasoma_xanthurum",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-FORD-1866-FISHES-OF-ZANZIBAR",
+      "title": "File:Zebrasoma xanthurum.jpg, G. H. Ford lithograph from Fishes of Zanzibar: Acanthopterygii (1866), lateral view with fins spread",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Zebrasoma_xanthurum.jpg",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Public domain (author died more than 70 years ago)"
+    },
+    {
+      "id": "COMMONS-LIBERT-2014-MARSA-ALAM",
+      "title": "File:Yellowtail Tang - Zebrasoma xanthurum.jpg, Francois Libert, Marsa Alam, Egypt, 2014, lateral photograph",
+      "publisher": "Wikimedia Commons (from Flickr)",
+      "url": "https://commons.wikimedia.org/wiki/File:Yellowtail_Tang_-_Zebrasoma_xanthurum.jpg",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 2.0; nothing copied, proportion and colour placement only"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "5b7b37f33b8f13e4271568d795c1e367c976e38326b1430e368be9e9e8710e67",
+  "sourceReferencesSha256": "ed0d5ac899b15e31a3c7f79dd5988d38495a6ee2128fa4fe67f68f11226ff397",
+  "sourceBlendSha256": "4073101501eaac6eaa6825b95ebc669ee6edc07f698461636acb826d2dea8ae3",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "f61594826c115ed6b6c14fcdd3534578652f64d835a7593b782a6fd991fe17dd",
+    "speciesBackend": "604164c7bc6a7943553c9bb7ecef68f0f8dcf3128c10873a461e132d14be08d3",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "3da76e8badbcd31565ce7154906834482c051e5443d56b6369f7c75033a309af"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "603b54cef229ef2e912f8c7b62199d7d1241b2f485e7ebbc10bcb1a2b2fa37f6"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "5d1962a8cce3b61c650e7b8ddb55d541ca1bb8d37e9fda5c5d73015e56367d80"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "152004b90cb88e4d22a51eb20255b96f8e4e59468bacd9fa7d555a144e4efecd"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "8eb93d8b23271bb075766392b861cdd7fb3c3093998015d38020c8b141d6dc8c"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "56159375d9c0a127c2dfbdcb22f46580b366a4f02cb80e936b744de927ea7169"
+    }
+  ],
+  "statistics": {
+    "triangles": 9232,
+    "materials": 7,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_purple_tang_Body": 2882,
+      "PA_purple_tang_Fins": 636,
+      "PA_purple_tang_Details": 1200
+    },
+    "runtimeBytes": 2148908
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.128997,
+      -0.039893,
+      -0.067733
+    ],
+    "max": [
+      0.090927,
+      0.039893,
+      0.081019
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

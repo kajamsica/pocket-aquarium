@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "six_line_wrasse",
+  "sourceSha256": "e67bdd872df9b4c32578f502124e7eee977a2cc5096643cfbcb43ff5ad74b8cf",
+  "objects": [
+    {
+      "name": "PA_six_line_wrasse_Body",
+      "vertexCount": 2690,
+      "triangleCount": 5376,
+      "vertexDigest": "1928c6d533e429628079914cadfe7b0f288f343b484307475acb63ea9cd516bb",
+      "topologyDigest": "3c709fb2e4b3f9185104af416cabcbed0e381ea53d1a05ea80c9415d37cf3026",
+      "uvDigest": "2df026526025b6c7ed10f7f0a03b0c83d69f306e9235998b644354c65bd9d5fb",
+      "weightDigest": "3022ab5493778d98c41aef2e014a1a91aaffe63479f0b887e9d471389061f686",
+      "materials": [
+        "PA_six_line_wrasse_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_six_line_wrasse_Details",
+      "vertexCount": 1372,
+      "triangleCount": 2688,
+      "vertexDigest": "c2a4a4c3fa530e92774dd223cc55049cac43b1fe92f33c4d51c87c3b47d15fe3",
+      "topologyDigest": "3434160f2a7aa7ae4ee437adfec70aedbb0f3d6ab86606bfc0d750e4b058fe44",
+      "uvDigest": "a3dbfb09ab901557ddd50ac9d1e864ebcc07a8e5b9e375e5c7f5490c5b26ec7d",
+      "weightDigest": "1729a3e347646a3330616a1849d93d98acd8e32c5a4682aaa91524be3d96209a",
+      "materials": [
+        "PA_six_line_wrasse_Adornment",
+        "PA_six_line_wrasse_Cue",
+        "PA_six_line_wrasse_Eye",
+        "PA_six_line_wrasse_Glint",
+        "PA_six_line_wrasse_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_six_line_wrasse_Fins",
+      "vertexCount": 498,
+      "triangleCount": 858,
+      "vertexDigest": "9427c0ad393e1c36d70f2c2161944ffdec9f64fdcf42238290f17112b4d16b30",
+      "topologyDigest": "a24f2369968ef08e499a222870db5a23863eb0616377913463232ce263eac5f5",
+      "uvDigest": "80c6d6cb6189ffa4859cfce5afbc002aea55eeb2dade7ce5d34ee88aa9795f07",
+      "weightDigest": "dc46c4ecb864eaf1a7fde69d25a54ece7b7b41ce0f5866ef673831c31cef6878",
+      "materials": [
+        "PA_six_line_wrasse_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_six_line_wrasse_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "8e8e6f6770723211716294fe14109377d8f313d104596a1dd192f11639479054"
+  },
+  "geometryDigest": "d1005a51c6df4ecc7ea0ae2f499e4d756c424d75870634a87e2b87f9f9b01b4f",
+  "variantId": null
+}

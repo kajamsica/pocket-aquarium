@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "hop": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Operculum",
+        "Proboscis",
+        "Shell",
+        "Siphon"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "rest": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Operculum",
+        "Proboscis",
+        "Shell",
+        "Siphon"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "withdraw": {
+      "durationSeconds": 1.600000023841858,
+      "targetedBones": [
+        "Eyestalk_L",
+        "Eyestalk_R",
+        "Foot_A",
+        "Foot_B",
+        "Foot_C",
+        "Head",
+        "Operculum",
+        "Proboscis",
+        "Shell",
+        "Siphon"
+      ],
+      "morphTargets": [],
+      "loop": false
+    }
+  },
+  "inventory": {
+    "triangles": 15128,
+    "materials": 3,
+    "nodes": 15,
+    "skinJoints": 11,
+    "images": 6,
+    "meshes": [
+      "PA_fighting_conch_Body",
+      "PA_fighting_conch_Shell"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "hop": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "withdraw": {
+      "maxBoneRotationErrorDegrees": 0.06852804166478502,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.037416696548461914,
+      -0.01628613844513893,
+      2.2932900059027336e-19
+    ],
+    "max": [
+      0.0438079833984375,
+      0.028163157403469086,
+      0.04482664167881012
+    ],
+    "deviationMeters": 4.16500117164066e-09
+  }
+}
