@@ -805,32 +805,33 @@
         var speedScale = 1, chase = false;
         var benthic = (arch.layer === "bottom" || arch.layer === "benthic" || arch.layer === "burrow" || arch.layer === "burrow2");
 
-        // Food attraction eases in and out via a forage gain (0..1) so a pellet
-        // blends into the steering over ~0.5s instead of instantly hijacking the
-        // fish; interest fades as the fish is fed or the pellet drifts off.
+        // A valid pellet is the fish's primary intent until contact. Turning and
+        // speed remain bounded, while forage eases the urgency in/out.
         var pellet = nearestFood(view, a, rec);
         var wantForage = pellet ? hungerOf(ent) : 0;
         a.forage += clamp(wantForage - a.forage, -dts / 900, dts / 500);
-        if (pellet && a.forage > 0.02) {
+        if (pellet) {
           var fdx = pellet.x - a.x, fdy = pellet.y - a.y, fd = Math.hypot(fdx, fdy) || 1e-4;
-          var fg = a.forage * 2.6;
-          Sx += fdx / fd * fg; Sy += fdy / fd * fg;
-          chase = a.forage > 0.5; speedScale = 1 + a.forage * 0.6;
+          var fg = 1.4 + a.forage * 2.6;
+          Sx = fdx / fd * fg; Sy = fdy / fd * fg;
+          chase = true; speedScale = 1 + a.forage * 0.6;
         }
 
         // Smooth wander: a slowly-evolving lateral bias giving gentle S-curves —
         // never a jump or interpolation to a random target point.
         a.wander += dts * arch.wanderRate;
         var wob = Math.sin(a.wander) * 0.7 + Math.sin(a.wander * 0.53 + a.phase) * 0.3;
-        Sx += Math.cos(a.hd + Math.PI / 2) * wob * 0.55;
-        Sy += Math.sin(a.hd + Math.PI / 2) * wob * 0.55;
+        if (!pellet) {
+          Sx += Math.cos(a.hd + Math.PI / 2) * wob * 0.55;
+          Sy += Math.sin(a.hd + Math.PI / 2) * wob * 0.55;
+        }
 
         // Low-frequency intent: a slow burst/glide bias so cruising speed drifts
         // (visible coasting) instead of holding one mechanical velocity forever.
         a.intent += dts * arch.wanderRate * 0.32;
 
         // Schooling: cohesion + alignment + short-range separation.
-        if (arch.school) {
+        if (arch.school && !pellet) {
           var s = schools[rec.kind];
           if (s && s.n > 1) {
             var cdx = s.x - a.x, cdy = s.y - a.y, cd = Math.hypot(cdx, cdy) || 1e-4;
@@ -845,7 +846,7 @@
         }
 
         // Clownfish: compact host territory with hesitant excursions.
-        if (rec.kind === "clown" && view.hostPresent) {
+        if (rec.kind === "clown" && view.hostPresent && !pellet) {
           var hc = hostAnchor(), hdx = hc.x - a.x, hdy = (hc.y - 0.04) - a.y, hdd = Math.hypot(hdx, hdy) || 1e-4;
           var radius = 0.06 + 0.05 * (0.5 + 0.5 * Math.sin(a.wander * 0.25)); // slowly breathing territory
           if (hdd > radius) { var pull = 1.2 + clamp((hdd - radius) / 0.12, 0, 1.5); Sx += hdx / hdd * pull; Sy += hdy / hdd * pull; }
@@ -853,7 +854,7 @@
         }
 
         // Goby / pistol shrimp: stay tied to the shared burrow.
-        if ((rec.kind === "goby" || rec.kind === "shrimp") && view.burrow) {
+        if ((rec.kind === "goby" || rec.kind === "shrimp") && view.burrow && !pellet) {
           var bA = burrowAnchor(), gdx = bA.x - a.x, gdy = (bA.y - (rec.kind === "goby" ? 0.03 : 0)) - a.y, gdd = Math.hypot(gdx, gdy) || 1e-4;
           if (gdd > 0.08) { Sx += gdx / gdd * 1.8; Sy += gdy / gdd * 1.8; }
         }

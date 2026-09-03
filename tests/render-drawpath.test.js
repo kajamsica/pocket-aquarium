@@ -322,6 +322,37 @@ group("feeding physics: every empty-water tap drops; starter fish pursues and ea
   eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 1, "overlap emits contact once the acknowledgement floor passes");
 })();
 
+/* Clownfish host affinity must yield to a feeding target, then resume when food is absent. */
+group("reef clownfish: food outranks host pull across identities and simulation speeds");
+[11, 17, 23, 29, 37, 47, 59, 71, 83, 97].forEach(function (id) {
+  [1, 4, 8].forEach(function (speed) {
+    var s = PA.createState({ habitat: "reef", seed: id }); PA.dispatch(s, { type: "SETUP_FILL" }); s.speed = speed;
+    var fish = { id: id, species: "ocellaris", kind: "fish", ageDays: 12, stage: "juvenile", sex: "unknown",
+      hunger: 0.2, condition: 1, health: 1, alive: true, causeOfDeath: null, decayDays: 0, lastFedDay: 0, x: 0.72, y: 0.72 };
+    s.livestock.push(fish); s.nextId = 100;
+    PA.dispatch(s, { type: "FEED_AT", x: 0.16 });
+    var sent = [], r = PA.createRenderer(makeCanvas(makeCtx([])), function () { return s; }, function (a) { sent.push(a); PA.dispatch(s, a); });
+    r.draw(1000);
+    for (var frame = 1; frame <= 220 && s.food.length; frame++) { PA.step(s, 0.05); r.draw(1000 + frame * 50); }
+    r.destroy();
+    var eats = sent.filter(function (a) { return a.type === "CONSUME_FOOD"; });
+    eq(eats.length, 1, "clown " + id + " eats before decay at " + speed + "x");
+    ok(fish.hunger < 0.2, "clown " + id + " receives contact nutrition at " + speed + "x");
+  });
+});
+(function () {
+  var VOL = PA.DATA.TIERS.nano20.volumeL, log = [];
+  var s = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOL, par: 0, flow: 0 }, food: [],
+    livestock: [{ id: 97, species: "ocellaris", x: 0.18, y: 0.35, hunger: 0.2, health: 1 }] };
+  var r = PA.createRenderer(makeCanvas(makeCtx(log)), function () { return s; }, function () {}), first = null, last = null;
+  for (var frame = 0; frame < 160; frame++) {
+    log.length = 0; r.draw(1000 + frame * 50);
+    var x = clownTranslateX(log); if (x != null) { if (first == null) first = x; last = x; }
+  }
+  r.destroy();
+  ok(first != null && last > first + 20, "without food, clownfish still returns toward its host territory");
+})();
+
 /* -------- report -------- */
 console.log("\n=============== Pocket Aquarium renderer draw-path tests ===============");
 console.log("passed: " + passed + "   failed: " + failed + "   total: " + (passed + failed));
