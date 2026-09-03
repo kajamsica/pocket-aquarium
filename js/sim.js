@@ -138,6 +138,29 @@
     return st;
   }
 
+  function createSpecimenPreviewState(opts) {
+    opts = opts || {};
+    var speciesId = opts.speciesId;
+    var accepted = DATA.resolveSpecies(null, speciesId);
+    if (!accepted) throw new Error("Unsupported specimen preview species: " + speciesId);
+    var st = createState({ habitat: accepted.habitat, credits: opts.credits, seed: opts.seed, now: opts.now });
+    st.mode = "specimen_preview";
+    st.previewSpeciesId = speciesId;
+    st.profileOverrides = {};
+    if (opts.profileOverride !== undefined) {
+      var override = DATA.sanitizeProfileOverride(speciesId, opts.profileOverride);
+      if (override) {
+        st.profileOverrides[speciesId] = override;
+        st.profileOverrideStatus = "valid";
+      } else {
+        st.profileOverrideStatus = "invalid_accepted_fallback";
+      }
+    } else {
+      st.profileOverrideStatus = "accepted";
+    }
+    return st;
+  }
+
   /* ============================ logging / awards ============================ */
   function log(state, type, message) {
     state.log.push({ day: Math.floor(state.time.days), t: +(state.time.days).toFixed(3), type: type, message: message });
@@ -228,7 +251,7 @@
     // fish metabolism
     for (var i = 0; i < state.livestock.length; i++) {
       var a = state.livestock[i];
-      var sp = DATA.SPECIES[a.species]; if (!sp) continue;
+      var sp = DATA.resolveSpecies(state, a.species); if (!sp) continue;
       if (a.alive !== false) {
         w.ammonia += sp.bioload * METAB_AMMONIA * (0.6 + 0.6 * (1 - a.hunger)) * dt * dilute;
       } else {
@@ -355,7 +378,7 @@
       var best = null, bestHunger = 0.05;
       for (j = 0; j < state.livestock.length; j++) {
         var a = state.livestock[j]; if (!a || a.alive === false) continue;
-        var sp = DATA.SPECIES[a.species]; if (!sp || sp.kind === "invert") continue;
+        var sp = DATA.resolveSpecies(state, a.species); if (!sp || sp.kind === "invert") continue;
         // bottom feeders only take sunk food; mid/top take floating (before it sinks) or any
         if (sp.layer === "bottom" && !p.sunk) continue;
         if (sp.layer !== "bottom" && p.sunk && sp.diet !== "benthic-predator") { /* still allow, small penalty */ }
@@ -392,7 +415,7 @@
   function stepLivestock(state, dt) {
     var i, ls = state.livestock;
     for (i = 0; i < ls.length; i++) {
-      var a = ls[i]; var sp = DATA.SPECIES[a.species]; if (!sp) continue;
+      var a = ls[i]; var sp = DATA.resolveSpecies(state, a.species); if (!sp) continue;
       if (a.alive === false) { a.decayDays = (a.decayDays || 0) + dt; continue; }
       a.ageDays += dt;
       if (a.stage !== "adult" && a.ageDays >= sp.maturityDays && a.health > 0.4) {
@@ -425,7 +448,7 @@
 
   function killAnimal(state, a, cause) {
     a.alive = false; a.health = 0; a.causeOfDeath = cause; a.decayDays = 0;
-    var sp = DATA.SPECIES[a.species];
+    var sp = DATA.resolveSpecies(state, a.species);
     log(state, "death", (sp ? sp.name : a.species) + " died — proximate cause: " + cause + ". Remove the body before it fouls the water.");
     state.memorial.push({ species: a.species, name: sp ? sp.name : a.species, ageDays: +a.ageDays.toFixed(1), cause: cause, day: Math.floor(state.time.days) });
   }
@@ -485,7 +508,7 @@
     var predation = 0, i;
     for (i = 0; i < state.livestock.length; i++) {
       var a = state.livestock[i]; if (!a || a.alive === false) continue;
-      var sp = DATA.SPECIES[a.species]; if (!sp) continue;
+      var sp = DATA.resolveSpecies(state, a.species); if (!sp) continue;
       if (sp.diet === "micro-omnivore" || sp.diet === "benthic-omnivore" || sp.diet === "carnivore") predation += 0.02;
     }
     // detritus feeds worms; pods and infusoria are pure logistic populations so an
@@ -510,7 +533,7 @@
   function stepBreeding(state, dt) {
     var w = state.water;
     // ---------- clownfish (pair, protandrous, male tends eggs 6-8 days) ----------
-    var cb = state.breeding.clown, def = DATA.SPECIES.ocellaris.breeding;
+    var cb = state.breeding.clown, def = DATA.resolveSpecies(state, "ocellaris").breeding;
     var clowns = adultsOf(state, "ocellaris");
     cb.spawnCooldown = Math.max(0, cb.spawnCooldown - dt);
     if (clowns.length >= 2) {
@@ -528,7 +551,7 @@
           cb.paired = true; award(state, "clown_pair", 30, 20, "Clownfish formed a bonded breeding pair.", true);
         }
         if (cb.paired && cb.spawnCooldown <= 0) {
-          spawnClutch(state, "ocellaris", 20, def.incubationDays, "pods");
+          spawnClutch(state, "ocellaris", 20, def.incubationDays, def.frySurvivalFeature);
           cb.spawnCooldown = 10;
         }
       } else {
@@ -537,7 +560,7 @@
     } else { cb.paired = false; cb.bondDays = 0; }
 
     // ---------- neon tetra (school spawn, short incubation, microfood-dependent fry) ----------
-    var tb = state.breeding.tetra, tdef = DATA.SPECIES.neon_tetra.breeding;
+    var tb = state.breeding.tetra, tdef = DATA.resolveSpecies(state, "neon_tetra").breeding;
     tb.spawnCooldown = Math.max(0, tb.spawnCooldown - dt);
     var tetras = adultsOf(state, "neon_tetra");
     var dim = EQ(state).light.parCeiling <= 80; // subdued lighting (basic strip / shaded blackwater)
@@ -561,7 +584,7 @@
   function spawnClutch(state, species, count, incubation, fryFeature) {
     var id = state.nextId++;
     state.clutches.push({ id: id, species: species, stage: "eggs", ageDays: 0, count: count, incubation: incubation, fryFeature: fryFeature, tended: true });
-    var sp = DATA.SPECIES[species];
+    var sp = DATA.resolveSpecies(state, species);
     award(state, "spawn_" + species, 25, 12, sp.name + " spawned a clutch of eggs.", true);
     log(state, "breeding", sp.name + " laid " + count + " eggs.");
   }
@@ -569,7 +592,7 @@
   function stepClutches(state, dt) {
     var keep = [], w = state.water;
     for (var i = 0; i < state.clutches.length; i++) {
-      var cl = state.clutches[i]; var sp = DATA.SPECIES[cl.species];
+      var cl = state.clutches[i]; var sp = DATA.resolveSpecies(state, cl.species);
       cl.ageDays += dt;
       var stable = DATA.waterSafeForLife(state) && Math.abs(w.tempC - 26) < 4;
       if (cl.stage === "eggs") {
@@ -772,8 +795,8 @@
   }
   function doBuyLivestock(state, species, cnt) {
     var v = PA.validatePurchase(state, { kind: "livestock", id: species, count: cnt });
-    if (!v.ok) { log(state, "store", "Cannot add " + (DATA.SPECIES[species] ? DATA.SPECIES[species].name : species) + ": " + v.reasons.join(" ")); return false; }
-    var sp = DATA.SPECIES[species];
+    if (!v.ok) { var denied = DATA.resolveSpecies(state, species); log(state, "store", "Cannot add " + (denied ? denied.name : species) + ": " + v.reasons.join(" ")); return false; }
+    var sp = DATA.resolveSpecies(state, species);
     var n = Math.max(1, Math.floor(cnt || DATA.BUNDLES[species] || 1));
     state.credits -= sp.price * n;
     for (var i = 0; i < n; i++) state.livestock.push(makeAnimal(state, species));
@@ -788,7 +811,7 @@
   function aliveSpecies(state, id) { var n = 0; for (var i = 0; i < state.livestock.length; i++) if (state.livestock[i].alive !== false && state.livestock[i].species === id) n++; return n; }
 
   function makeAnimal(state, species) {
-    var sp = DATA.SPECIES[species];
+    var sp = DATA.resolveSpecies(state, species);
     return {
       id: state.nextId++, species: species, kind: sp.kind,
       ageDays: sp.maturityDays * 0.4, stage: "juvenile", sex: "unknown",
@@ -888,7 +911,7 @@
 
     var healthSum = 0, n = 0, dead = 0;
     for (i = 0; i < state.livestock.length; i++) {
-      var a = state.livestock[i], sp = DATA.SPECIES[a.species];
+      var a = state.livestock[i], sp = DATA.resolveSpecies(state, a.species);
       var alerts = [];
       if (a.alive === false) { dead++; alerts.push("dead — remove body"); }
       else { healthSum += a.health; n++; if (a.hunger > 0.85) alerts.push("hungry"); if (a.health < 0.5) alerts.push("unhealthy"); }
@@ -989,7 +1012,8 @@
     if (Array.isArray(raw.livestock)) {
       for (var li = 0; li < raw.livestock.length; li++) {
         var a = raw.livestock[li];
-        if (a && typeof a === "object" && DATA.SPECIES[a.species] && DATA.SPECIES[a.species].habitat === base.habitat) {
+        var savedSpecies = a && typeof a === "object" ? DATA.resolveSpecies(base, a.species) : null;
+        if (savedSpecies && savedSpecies.habitat === base.habitat) {
           base.livestock.push(sanitizeAnimal(base, a));
         } else {
           log(base, "quarantine", "Ignored an invalid saved animal" + (a && a.species ? " (" + a.species + ")" : "") + ".");
@@ -1009,8 +1033,9 @@
       base.microfauna.infusoria = clamp(num(raw.microfauna.infusoria, base.microfauna.infusoria), 0, 1);
       base.microfauna.biodiversity = clamp(num(raw.microfauna.biodiversity, 0), 0, 1);
     }
-    if (Array.isArray(raw.clutches)) base.clutches = raw.clutches.filter(function (c) { return c && DATA.SPECIES[c.species] && ["eggs", "hatched", "fry"].indexOf(c.stage) >= 0; }).map(function (c) {
-      return { id: num(c.id, base.nextId++), species: c.species, stage: c.stage, ageDays: clamp(num(c.ageDays, 0), 0, 100), count: clamp(num(c.count, 0), 0, 1000), incubation: clamp(num(c.incubation, 3), 0.1, 30), fryFeature: c.fryFeature === "infusoria" ? "infusoria" : "pods", tended: true };
+    if (Array.isArray(raw.clutches)) base.clutches = raw.clutches.filter(function (c) { return c && DATA.resolveSpecies(base, c.species) && ["eggs", "hatched", "fry"].indexOf(c.stage) >= 0; }).map(function (c) {
+      var fryFeature = ["infusoria", "pods", "larval_system"].indexOf(c.fryFeature) >= 0 ? c.fryFeature : "pods";
+      return { id: num(c.id, base.nextId++), species: c.species, stage: c.stage, ageDays: clamp(num(c.ageDays, 0), 0, 100), count: clamp(num(c.count, 0), 0, 1000), incubation: clamp(num(c.incubation, 3), 0.1, 30), fryFeature: fryFeature, tended: true };
     });
     if (Array.isArray(raw.memorial)) base.memorial = raw.memorial.filter(function (m) { return m && typeof m === "object"; }).slice(-40);
     if (Array.isArray(raw.log)) base.log = raw.log.filter(function (l) { return l && typeof l.message === "string"; }).slice(-100).concat(base.log);
@@ -1036,7 +1061,7 @@
     return m;
   }
   function sanitizeAnimal(state, a) {
-    var sp = DATA.SPECIES[a.species];
+    var sp = DATA.resolveSpecies(state, a.species);
     return {
       id: num(a.id, state.nextId++), species: a.species, kind: sp.kind,
       ageDays: clamp(num(a.ageDays, sp.maturityDays * 0.4), 0, 1e5),
@@ -1062,6 +1087,7 @@
 
   /* ============================ exports ============================ */
   PA.createState = createState;
+  PA.createSpecimenPreviewState = createSpecimenPreviewState;
   PA.step = step;
   PA.stepDays = stepDays;           // deterministic day-advance (used by step and by tests)
   PA.dispatch = dispatch;

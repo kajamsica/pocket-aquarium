@@ -1,3 +1,4 @@
+import '../../../js/specimenProfiles.js'
 import '../../../js/data.js'
 import '../../../js/sim.js'
 
@@ -47,6 +48,10 @@ interface PocketCoral {
 }
 
 export interface PocketState {
+  mode?: 'specimen_preview'
+  previewSpeciesId?: string
+  profileOverrides?: Record<string, CatalogSpecies>
+  profileOverrideStatus?: 'accepted' | 'valid' | 'invalid_accepted_fallback'
   habitat: 'reef' | 'amazon' | null
   time: { days: number }
   speed: number
@@ -64,7 +69,7 @@ export interface PocketState {
   log: Array<{ type: string; message: string }>
 }
 
-interface CatalogSpecies {
+export interface CatalogSpecies {
   id: string
   name: string
   sci: string
@@ -73,6 +78,7 @@ interface CatalogSpecies {
   adultSizeCm: number
   price: number
   layer: 'bottom' | 'mid' | 'top'
+  profileRevision?: Readonly<{ package: number; biology: number; calibration: number; morphology: number; asset: string }>
 }
 
 interface CatalogCoral { id: string; name: string; price: number }
@@ -90,10 +96,12 @@ interface PocketRuntime {
     TIERS: Record<string, CatalogTier>
     TIER_ORDER: string[]
     EQUIPMENT: Record<string, { label: string; levels: EquipmentLevel[] }>
+    resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
     equipLevel: (category: string, id: string) => EquipmentLevel | null
     isCycled: (state: PocketState) => boolean
   }
   createState: (options: Record<string, unknown>) => PocketState
+  createSpecimenPreviewState: (options: Record<string, unknown>) => PocketState
   step: (state: PocketState, seconds: number) => PocketState
   stepDays: (state: PocketState, days: number) => PocketState
   dispatch: (state: PocketState, action: PocketAction) => PocketState
@@ -106,6 +114,7 @@ export interface PocketSpecimen extends PocketAnimal {
   readonly scientificName: string
   readonly adultSizeCm: number
   readonly layer: CatalogSpecies['layer']
+  readonly runtimeProfile: Readonly<CatalogSpecies>
 }
 
 export interface PocketStoreOffer {
@@ -136,11 +145,11 @@ const runtime = (globalThis as unknown as { PA: PocketRuntime }).PA
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value))
 const clone = (state: PocketState): PocketState => structuredClone(state)
 
-export function createPocketReefShowcase(): PocketState {
-  const state = runtime.createState({ habitat: 'reef', credits: 3000, seed: 0x51f15e })
+function preparePocketReef(state: PocketState) {
   const act = runtime.ACTIONS
   const send = (action: PocketAction) => runtime.dispatch(state, action)
   send({ type: act.SETUP_FILL })
+  send({ type: act.PURCHASE_TIER, tier: 'mid151' })
   ;([
     ['filter', 'canister'], ['heater', 'controller'], ['circulation', 'powerhead'],
     ['light', 'led'], ['ato', 'ato'],
@@ -151,11 +160,29 @@ export function createPocketReefShowcase(): PocketState {
   runtime.stepDays(state, 21.5)
   send({ type: act.ADD_AMMONIA_SOURCE, on: false })
   send({ type: act.SEED_MICROFAUNA, culture: 'pods' })
+  return send
+}
+
+export function createPocketReefShowcase(): PocketState {
+  const state = runtime.createState({ habitat: 'reef', credits: 3000, seed: 0x51f15e })
+  const send = preparePocketReef(state)
+  const act = runtime.ACTIONS
   send({ type: act.PURCHASE_LIVESTOCK, species: 'ocellaris', count: 2 })
   send({ type: act.PURCHASE_LIVESTOCK, species: 'watchman_goby', count: 1 })
   send({ type: act.PURCHASE_LIVESTOCK, species: 'pistol_shrimp', count: 1 })
   send({ type: act.PURCHASE_CORAL, coral: 'zoanthid' })
   send({ type: act.PURCHASE_CORAL, coral: 'goniopora' })
+  runtime.stepDays(state, 0.02)
+  send({ type: act.WATER_TEST })
+  return state
+}
+
+export function createPocketSpecimenPreview(speciesId: string, profileOverride?: CatalogSpecies): PocketState {
+  const state = runtime.createSpecimenPreviewState({ habitat: 'reef', credits: 3000, seed: 0x51f15e,
+    speciesId, profileOverride })
+  const send = preparePocketReef(state)
+  const act = runtime.ACTIONS
+  send({ type: act.PURCHASE_LIVESTOCK, species: speciesId, count: 1 })
   runtime.stepDays(state, 0.02)
   send({ type: act.WATER_TEST })
   return state
@@ -185,7 +212,8 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
     const result = runtime.validatePurchase(state, request)
     return { kind, id, name, price, allowed: result.ok, reasons: result.reasons, action }
   }
-  const livestock = Object.values(runtime.DATA.SPECIES).filter((item) => item.habitat === 'reef').map((item) => {
+  const livestock = Object.keys(runtime.DATA.SPECIES).map((id) => runtime.DATA.resolveSpecies(state, id))
+    .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === 'reef')).map((item) => {
     const count = runtime.DATA.BUNDLES[item.id] ?? 1
     return offer('livestock', item.id, item.name, item.price * count,
       { kind: 'livestock', id: item.id, count }, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: item.id, count })
@@ -257,8 +285,8 @@ export function projectPocketState(state: PocketState): PocketGameView {
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
     cycled: runtime.DATA.isCycled(state), water: { ...state.water },
-    specimens: living.map((animal) => { const species = runtime.DATA.SPECIES[animal.species]; return { ...animal,
+    specimens: living.map((animal) => { const species = runtime.DATA.resolveSpecies(state, animal.species); if (!species) throw new Error(`Unknown root PA specimen: ${animal.species}`); return { ...animal,
       speciesId: animal.species, name: species.name, scientificName: species.sci,
-      adultSizeCm: species.adultSizeCm, layer: species.layer } }),
+      adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species } }),
     storeOffers: storeOffers(state), reefSnapshot }
 }
