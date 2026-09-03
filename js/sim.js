@@ -201,7 +201,19 @@
     state.milestones[key] = (state.milestones[key] || 0) + 1;
     state.xp += xp; state.credits += credits;
     if (message) log(state, "milestone", message + (credits ? " (+" + credits + "c" : " (") + (xp ? " +" + xp + "xp)" : ")"));
+    grantKeeperRankRewards(state);
     return true;
+  }
+  function grantKeeperRankRewards(state) {
+    var ranks = DATA.KEEPER_RANKS || [];
+    for (var i = 0; i < ranks.length; i++) {
+      var rank = ranks[i], rankKey = "keeper_rank_" + rank.id;
+      if (rank.minXp > 0 && state.xp >= rank.minXp && !state.milestones[rankKey]) {
+        state.milestones[rankKey] = 1;
+        state.credits += rank.rewardCredits;
+        log(state, "milestone", "Keeper rank achieved: " + rank.name + " (+" + rank.rewardCredits + " tank credits).");
+      }
+    }
   }
 
   /* ============================ chemistry / cycling ============================ */

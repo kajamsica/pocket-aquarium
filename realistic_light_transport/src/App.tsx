@@ -14,6 +14,7 @@ import {
   restorePocketGame,
   serializePocketGame,
   type PocketPreventedDeath,
+  type PocketState,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
@@ -35,6 +36,14 @@ const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
 const DEV_SAFE = isDevSafeActive()
 const SAVE_KEY = DEV_SAFE ? devSafeSaveKey : pocketSaveKey
 const MAX_PREVENTED = 20
+
+function earnedCreditsIn(log: PocketState['log']) {
+  return log.reduce((total, entry) => {
+    const compactAward = entry.message.match(/\(\+(\d+)c(?:\s|\))/)
+    const rankAward = entry.message.match(/\(\+(\d+) tank credits\)/)
+    return total + Number(compactAward?.[1] ?? rankAward?.[1] ?? 0)
+  }, 0)
+}
 
 if (WORKBENCH_SPECIES === 'ocellaris') {
   const icon = document.createElement('link')
@@ -105,10 +114,11 @@ function AquariumApp() {
   const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
     setPocketState((current) => {
       // God mode: validate/apply the action with unlimited credits, then restore the real
-      // dev-save balance so purchases and refills install for free without touching economy.
+      // dev-save balance so purchases/refills are free. Real milestone rewards earned by
+      // the action still accrue, so toggling God mode off cannot erase a keeper-rank payout.
       if (DEV_SAFE && protectionRef.current) {
         const next = dispatchPocketAction({ ...current, credits: Number.MAX_SAFE_INTEGER }, action)
-        next.credits = current.credits
+        next.credits = current.credits + earnedCreditsIn(next.log.slice(current.log.length))
         return next
       }
       return dispatchPocketAction(current, action)
