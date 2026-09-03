@@ -127,6 +127,10 @@ export interface PocketState {
   xp: number
   tier: string
   equipment: Record<string, string>
+  automation: {
+    feeder: { enabled: boolean; intervalDays: number; portionsPerDispense: number; hopperPortions: number; capacity: number; nextFeedDay: number; status: string }
+    ato: { reservoirL: number; capacityL: number }
+  }
   water: PocketWater
   cycle: {
     stage: string
@@ -164,7 +168,7 @@ export interface CatalogSpecies {
 
 interface CatalogCoral { id: string; name: string; price: number }
 interface CatalogTier { id: string; name: string; volumeL: number; price: number }
-interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean }
+interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
 interface Validation { ok: boolean; reasons: string[] }
 
 interface PocketRuntime {
@@ -207,12 +211,25 @@ export interface PocketSpecimen extends PocketAnimal {
 
 export interface PocketStoreOffer {
   readonly kind: 'livestock' | 'coral' | 'equipment' | 'tier'
+  /** Store-drawer filter group. Livestock/coral/tank map straight from kind. */
+  readonly group: 'equipment' | 'livestock' | 'coral' | 'tank'
   readonly id: string
   readonly name: string
   readonly price: number
   readonly allowed: boolean
   readonly reasons: readonly string[]
   readonly action: PocketAction
+  /** Equipment-only causal copy so a card can explain itself without a content framework. */
+  readonly category?: string
+  readonly problemSolved?: string
+  readonly durableEffect?: string
+  readonly operatingResource?: string
+  /** True when this exact equipment level is already installed (shown, never repurchased). */
+  readonly installed?: boolean
+  /** True when a live care recommendation points at this offer. */
+  readonly recommended?: boolean
+  /** Livestock-only fact line: scientific name · adult size · water layer. */
+  readonly detail?: string
 }
 
 export interface PocketObjective {
@@ -235,11 +252,36 @@ export interface PocketCareRecommendation {
   readonly suggestedOfferName?: string
 }
 
+export interface PocketDeadResident {
+  readonly id: number
+  readonly name: string
+  readonly cause: string | null
+}
+
+export interface PocketFeederView {
+  readonly installed: boolean
+  readonly enabled: boolean
+  readonly intervalDays: number
+  readonly portionsPerDispense: number
+  readonly hopperPortions: number
+  readonly capacity: number
+  readonly status: string
+}
+
+export interface PocketAtoView {
+  readonly installed: boolean
+  readonly reservoirL: number
+  readonly capacityL: number
+  readonly topping: boolean
+}
+
 export interface PocketGameView {
   readonly authority: 'root_pa'
   readonly habitatName: string
   readonly tierName: string
   readonly credits: number
+  /** True when God mode is active: Store treats credits as unlimited and the pill shows ∞. */
+  readonly unlimitedCredits: boolean
   readonly xp: number
   readonly cycleStage: string
   readonly cycled: boolean
@@ -258,6 +300,9 @@ export interface PocketGameView {
   readonly clutches: readonly PocketClutchView[]
   readonly storeOffers: readonly PocketStoreOffer[]
   readonly careRecommendations: readonly PocketCareRecommendation[]
+  readonly deadResidents: readonly PocketDeadResident[]
+  readonly feeder: PocketFeederView
+  readonly ato: PocketAtoView
   readonly nextAction: Readonly<{ title: string; detail: string }>
   readonly alerts: readonly string[]
   readonly optics: Readonly<{ localPpfd: number; mode: 'read_only' }>
@@ -353,6 +398,62 @@ export function advancePocketState(state: PocketState, elapsedSeconds: number): 
   return runtime.step(next, elapsedSeconds)
 }
 
+/** Developer safe/watch mode: a dev-only overlay that never touches the normal player key. */
+export const devSafeSaveKey = `${pocketSaveKey}:dev-safe-v1`
+const DEV_SAFE_HEALTH_FLOOR = 0.02
+
+export interface PocketPreventedDeath {
+  readonly id: number
+  readonly species: string
+  readonly cause: string
+  readonly day: number
+}
+
+/** True only under a Vite dev build served from a loopback host with an explicit `?dev=1`. */
+export function isDevSafeActive(env?: {
+  readonly dev?: boolean
+  readonly hostname?: string
+  readonly search?: string
+}): boolean {
+  const dev = env?.dev ?? Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV)
+  if (!dev) return false
+  const hostname = env?.hostname ?? (typeof location !== 'undefined' ? location.hostname : '')
+  const loopback =
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname === '127.0.0.1' ||
+    hostname === '[::1]' ||
+    hostname === '::1'
+  if (!loopback) return false
+  const search = env?.search ?? (typeof location !== 'undefined' ? location.search : '')
+  return new URLSearchParams(search).get('dev') === '1'
+}
+
+/**
+ * Advance the authoritative simulation normally, then keep any previously living animal alive.
+ * Death is captured honestly (id/species/cause/day) and reversed only by restoring `alive` plus
+ * the smallest health floor — water, hunger, condition, age, food, credits, ecology, and time are
+ * whatever the real tick produced.
+ */
+export function advancePocketStateDevSafe(
+  state: PocketState,
+  elapsedSeconds: number,
+): { readonly state: PocketState; readonly prevented: readonly PocketPreventedDeath[] } {
+  const wasAlive = new Set<number>()
+  for (const animal of state.livestock) if (animal.alive !== false) wasAlive.add(animal.id)
+  const next = advancePocketState(state, elapsedSeconds)
+  const prevented: PocketPreventedDeath[] = []
+  for (const animal of next.livestock) {
+    if (animal.alive === false && wasAlive.has(animal.id)) {
+      prevented.push({ id: animal.id, species: animal.species, cause: animal.causeOfDeath ?? 'unknown', day: next.time.days })
+      animal.alive = true
+      animal.causeOfDeath = null
+      if (!(animal.health >= DEV_SAFE_HEALTH_FLOOR)) animal.health = DEV_SAFE_HEALTH_FLOOR
+    }
+  }
+  return { state: next, prevented }
+}
+
 export function dispatchPocketAction(state: PocketState, action: PocketAction): PocketState {
   const next = clone(state)
   return runtime.dispatch(next, action)
@@ -373,28 +474,55 @@ function biologicalCycleEstablished(state: PocketState) {
     || state.cycle.stage === 'Mature biome'
 }
 
+/** Causal, non-cosmetic copy for each equipment level so a Store card explains what it solves,
+ *  the durable simulation effect it applies, and the ongoing resource/maintenance it costs. */
+const EQUIPMENT_COPY: Readonly<Record<string, Readonly<{ problem: string; effect: string; resource: string }>>> = {
+  'filter:sponge': { problem: 'No mechanical or biological filtration', effect: 'Baseline biofilter surface and trickle flow', resource: 'Rinse the sponge during water changes' },
+  'filter:hob': { problem: 'Ammonia and nitrite climb faster than the sponge clears', effect: 'Nearly 2× biofilter surface and stronger flow', resource: 'Replace cartridge media periodically' },
+  'filter:canister': { problem: 'Heavy stocking overruns hang-on filtration', effect: 'Over 3× biofilter surface with the highest flow', resource: 'Deep-clean canister media on a schedule' },
+  'heater:basic': { problem: 'Temperature drifts with the room', effect: 'Holds ~26 °C with moderate stability', resource: 'Draws power continuously' },
+  'heater:controller': { problem: 'Preset heaters overshoot and stress corals', effect: 'Tight ~26 °C control at high stability', resource: 'Draws power; verify probe calibration' },
+  'circulation:powerhead': { problem: 'Stagnant zones starve oxygen and let detritus settle', effect: 'Adds directed flow and oxygenation, shrinks dead zones', resource: 'Draws power; clear impeller of buildup' },
+  'circulation:gyre': { problem: 'Large tanks need broad, tuned water movement', effect: 'Highest flow and oxygenation, near-zero dead zones', resource: 'Draws power; periodic impeller service' },
+  'light:led': { problem: 'Basic strip caps PAR too low for most corals', effect: 'Raises PAR ceiling to 160 with photoperiod control', resource: 'Draws power on the programmed photoperiod' },
+  'light:pro_led': { problem: 'Demanding corals need intense, tunable light', effect: 'Raises PAR ceiling to 340 with full photoperiod control', resource: 'Higher power draw on the programmed photoperiod' },
+  'skimmer:hob': { problem: 'Dissolved organics accumulate before the biofilter can export them', effect: 'Exports organics (0.4) to ease nutrient load', resource: 'Empty and rinse the collection cup' },
+  'skimmer:cone': { problem: 'Heavily fed reefs export organics slowly', effect: 'Strong organic export (0.8) for low nutrients', resource: 'Draws power; empty the cup regularly' },
+  'refugium:refugium': { problem: 'Nitrate lingers with only water changes to export it', effect: 'Macroalgae export nitrate (0.5) and grow pod habitat', resource: 'Harvest macroalgae; runs a refugium light' },
+  'ato:ato': { problem: 'Evaporation concentrates salt between top-offs', effect: 'Auto-replaces evaporated freshwater to hold salinity', resource: 'Refill the finite freshwater reservoir' },
+  'feeder:auto': { problem: 'Fish miss feedings when unattended', effect: 'Dispenses scheduled portions to the surface', resource: 'Refill the hopper; tune interval and portions' },
+}
+
 function storeOffers(state: PocketState): PocketStoreOffer[] {
-  const offer = (kind: PocketStoreOffer['kind'], id: string, name: string, price: number,
-    request: Record<string, unknown>, action: PocketAction): PocketStoreOffer => {
+  const offer = (kind: PocketStoreOffer['kind'], group: PocketStoreOffer['group'], id: string, name: string,
+    price: number, request: Record<string, unknown>, action: PocketAction,
+    extra?: Partial<PocketStoreOffer>): PocketStoreOffer => {
     const result = runtime.validatePurchase(state, request)
-    return { kind, id, name, price, allowed: result.ok, reasons: result.reasons, action }
+    return { kind, group, id, name, price, allowed: result.ok, reasons: result.reasons, action, ...extra }
   }
   const livestock = Object.keys(runtime.DATA.SPECIES).map((id) => runtime.DATA.resolveSpecies(state, id))
     .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === 'reef')).map((item) => {
     const count = runtime.DATA.BUNDLES[item.id] ?? 1
-    return offer('livestock', item.id, item.name, item.price * count,
-      { kind: 'livestock', id: item.id, count }, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: item.id, count })
+    const detail = `${item.sci} · ${item.adultSizeCm} cm adult · ${item.layer} layer`
+    return offer('livestock', 'livestock', item.id, item.name, item.price * count,
+      { kind: 'livestock', id: item.id, count }, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: item.id, count },
+      { detail })
   })
-  const corals = Object.values(runtime.DATA.CORALS).map((item) => offer('coral', item.id, item.name, item.price,
+  const corals = Object.values(runtime.DATA.CORALS).map((item) => offer('coral', 'coral', item.id, item.name, item.price,
     { kind: 'coral', id: item.id }, { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id }))
   const equipment = Object.entries(runtime.DATA.EQUIPMENT).flatMap(([category, item]) => item.levels
-    .filter((level) => state.equipment[category] !== level.id)
-    .map((level) => offer('equipment', `${category}:${level.id}`, level.name, level.price,
-      { kind: 'equipment', category, levelId: level.id },
-      { type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id })))
+    .map((level) => {
+      const installed = state.equipment[category] === level.id
+      const copy = EQUIPMENT_COPY[`${category}:${level.id}`]
+      return offer('equipment', 'equipment', `${category}:${level.id}`, level.name, level.price,
+        { kind: 'equipment', category, levelId: level.id },
+        { type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id },
+        { installed, category: item.label,
+          problemSolved: copy?.problem, durableEffect: copy?.effect, operatingResource: copy?.resource })
+    }))
   const tiers = runtime.DATA.TIER_ORDER.filter((id) => id !== state.tier).map((id) => {
     const item = runtime.DATA.TIERS[id]
-    return offer('tier', id, item.name, item.price, { kind: 'tier', id },
+    return offer('tier', 'tank', id, item.name, item.price, { kind: 'tier', id },
       { type: runtime.ACTIONS.PURCHASE_TIER, tier: id })
   })
   return [...livestock, ...corals, ...equipment, ...tiers]
@@ -421,7 +549,7 @@ function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjecti
   const dead = state.livestock.filter((animal) => animal.alive === false)
   if (dead.length) return { chapter: 'Tank care · urgent', title: `Remove ${dead.length} dead ${dead.length === 1 ? 'resident' : 'residents'}`,
     detail: 'Dead livestock keeps decomposing until it is removed.',
-    lesson: 'Prompt removal limits the ammonia pulse.', destination: 'journal' }
+    lesson: 'Prompt removal limits the ammonia pulse.', destination: 'care' }
   if (biologicalCycleEstablished(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) return {
     chapter: 'Tank care · urgent', title: 'Dilute toxic nitrogen now',
     detail: `Ammonia ${state.water.ammonia.toFixed(2)} · nitrite ${state.water.nitrite.toFixed(2)} mg/L`,
@@ -465,10 +593,26 @@ function careRecommendations(state: PocketState, offers: readonly PocketStoreOff
   return result.slice(0, 4)
 }
 
-export function projectPocketState(state: PocketState): PocketGameView {
+/** God-mode credit ceiling used only for Store validation/projection, never persisted. */
+const GOD_MODE_CREDITS = Number.MAX_SAFE_INTEGER
+
+export function projectPocketState(
+  state: PocketState,
+  options?: { readonly unlimitedCredits?: boolean },
+): PocketGameView {
+  const unlimitedCredits = Boolean(options?.unlimitedCredits)
   const tier = runtime.DATA.TIERS[state.tier]
   const light = runtime.DATA.equipLevel('light', state.equipment.light)
   const ato = runtime.DATA.equipLevel('ato', state.equipment.ato)
+  const feederLevel = runtime.DATA.equipLevel('feeder', state.equipment.feeder)
+  const automation = state.automation
+  const atoInstalled = Boolean(ato?.autoTopOff)
+  const atoTopping = atoInstalled && automation.ato.reservoirL > 0 && state.water.levelL < tier.volumeL - 0.05
+  const feeder: PocketFeederView = { installed: Boolean(feederLevel?.autoFeed), enabled: automation.feeder.enabled,
+    intervalDays: automation.feeder.intervalDays, portionsPerDispense: automation.feeder.portionsPerDispense,
+    hopperPortions: automation.feeder.hopperPortions, capacity: automation.feeder.capacity, status: automation.feeder.status }
+  const atoView: PocketAtoView = { installed: atoInstalled, reservoirL: automation.ato.reservoirL,
+    capacityL: automation.ato.capacityL, topping: atoTopping }
   const living = state.livestock.filter((animal) => animal.alive !== false)
   const fish = living.filter((animal) => animal.kind === 'fish')
   const corals = state.corals
@@ -513,7 +657,19 @@ export function projectPocketState(state: PocketState): PocketGameView {
     return { ...animal, speciesId: animal.species, name: species.name, scientificName: species.sci,
       adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species }
   })
-  const offers = storeOffers(state)
+  // God mode validates and prices Store actions as if credits were unlimited, without ever
+  // mutating the real dev-save balance the pill falls back to when the toggle is off.
+  const validationState = unlimitedCredits ? { ...state, credits: GOD_MODE_CREDITS } : state
+  const rawOffers = storeOffers(validationState)
+  const recommendations = careRecommendations(validationState, rawOffers)
+  const recommendedIds = new Set(recommendations.map((rec) => rec.suggestedOfferId).filter(Boolean) as string[])
+  const offers = recommendedIds.size
+    ? rawOffers.map((item) => recommendedIds.has(item.id) ? { ...item, recommended: true } : item)
+    : rawOffers
+  const deadResidents: PocketDeadResident[] = state.livestock
+    .filter((animal) => animal.alive === false)
+    .map((animal) => ({ id: animal.id, name: residents.find((r) => r.id === animal.id)?.name ?? animal.species,
+      cause: animal.causeOfDeath ?? null }))
   const objective = objectiveFor(state, guide)
   const reefSnapshot: ReefSnapshot = {
     namespace: 'marine_reef',
@@ -530,8 +686,15 @@ export function projectPocketState(state: PocketState): PocketGameView {
       totalAmmoniaNitrogenMgPerLiter: state.water.ammonia, nitriteNitrogenMgPerLiter: state.water.nitrite,
       nitrateNitrogenMgPerLiter: state.water.nitrate, phosphatePhosphorusMgPerLiter: state.water.phosphate,
       temperatureCelsius: state.water.tempC, ph: state.water.pH, alkalinityDkh: state.water.alkalinity },
-    equipment: { atoEnabled: Boolean(ato?.autoTopOff), atoReservoirLiters: 0, atoSetpointLiters: tier.volumeL,
-      atoPumpLitersPerHour: 0, lightPower: clamp(state.water.par / Math.max(light?.parCeiling ?? 1, 1)), flowPower: clamp(state.water.flow) },
+    equipment: { atoEnabled: Boolean(ato?.autoTopOff), atoReservoirLiters: automation.ato.reservoirL,
+      atoReservoirCapacityLiters: automation.ato.capacityL, atoEmpty: atoInstalled && automation.ato.reservoirL <= 0.05,
+      atoSetpointLiters: tier.volumeL, atoPumpLitersPerHour: atoTopping ? tier.volumeL * 0.012 / 24 : 0,
+      feederInstalled: feeder.installed, feederEnabled: feeder.enabled,
+      feederDispensing: feeder.enabled && feeder.status === 'dispensed' && state.food.length > 0,
+      feederEmpty: feeder.installed && feeder.hopperPortions <= 0,
+      filterLevel: state.equipment.filter, circulationLevel: state.equipment.circulation,
+      lightLevel: state.equipment.light, skimmerLevel: state.equipment.skimmer, refugiumLevel: state.equipment.refugium,
+      lightPower: clamp(state.water.par / Math.max(light?.parCeiling ?? 1, 1)), flowPower: clamp(state.water.flow) },
     ecology: { phase: lifecycleFor(state), maturity: clamp(state.succession.age / 20), diatomCoverage: state.succession.diatom,
       greenAlgaeCoverage: state.succession.greenFilm, cyanobacteriaCoverage: state.succession.cyano,
       microfaunaActivity: state.microfauna.biodiversity,
@@ -546,7 +709,7 @@ export function projectPocketState(state: PocketState): PocketGameView {
       causalNote: feedPulse > 0 ? 'Root livestock hunger and the optical feed response share the same action.' : 'Pocket Aquarium advances all gameplay state.', feedPulse },
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
-    credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
+    credits: Math.floor(state.credits), unlimitedCredits, xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
     cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
     objective, residents, selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
     specimens: residents.filter((animal) => animal.alive !== false),
@@ -557,7 +720,8 @@ export function projectPocketState(state: PocketState): PocketGameView {
       readingAgeDays: guide.readingAgeDays },
     selection,
     clutches: state.clutches.map(({ id, species, stage, ageDays }) => ({ id, speciesId: species, stage, ageDays })),
-    storeOffers: offers, careRecommendations: careRecommendations(state, offers),
+    storeOffers: offers, careRecommendations: recommendations, deadResidents,
+    feeder, ato: atoView,
     nextAction: { title: objective.title, detail: objective.detail }, alerts: [],
     optics: { localPpfd: reefSnapshot.lightField.localPpfd, mode: 'read_only' }, reefSnapshot }
 }

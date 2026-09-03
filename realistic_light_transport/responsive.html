@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Responsive Preview — PocketAquarium (dev)</title>
+<style>
+  :root {
+    --bg: #02090d;
+    --panel: #041218;
+    --line: rgba(96, 200, 220, 0.18);
+    --ink: #cfe9ef;
+    --muted: #5e8a94;
+    --cyan: #38d6ec;
+    --cyan-dim: rgba(56, 214, 236, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  body { display: flex; flex-direction: column; }
+  header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 10px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin: 0;
+    color: var(--cyan);
+    text-transform: uppercase;
+  }
+  .group { display: flex; align-items: center; gap: 6px; }
+  .group + .group { border-left: 1px solid var(--line); padding-left: 14px; }
+  label { color: var(--muted); }
+  button {
+    font: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--cyan); color: var(--cyan); }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+  button[aria-pressed="true"] {
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+  input[type="number"] {
+    font: inherit;
+    width: 66px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 4px 6px;
+  }
+  input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+  .dims {
+    margin-left: auto;
+    color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+  }
+  .dims .muted { color: var(--muted); }
+  main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    overflow: auto;
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 24px 24px;
+  }
+  .frame {
+    position: relative;
+    background: #000;
+    border: 1px solid var(--line);
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.6);
+  }
+  iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: var(--bg);
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Responsive Preview</h1>
+    <div class="group" role="group" aria-label="Device presets" id="presets"></div>
+    <div class="group">
+      <label for="w">W</label>
+      <input id="w" type="number" min="120" max="4000" step="1" aria-label="Width in CSS pixels" />
+      <label for="h">H</label>
+      <input id="h" type="number" min="120" max="4000" step="1" aria-label="Height in CSS pixels" />
+    </div>
+    <div class="group">
+      <button id="rotate" type="button" aria-label="Rotate orientation">⟳ Rotate</button>
+      <button id="fit" type="button" aria-pressed="false" aria-label="Fit frame to window">Fit</button>
+    </div>
+    <div class="dims" aria-live="polite" id="dims">— × —</div>
+  </header>
+  <main>
+    <div class="frame" id="frame">
+      <iframe id="game" title="Live aquarium (dev)" src="./?dev=1"></iframe>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var PRESETS = [
+        { id: "ip-p", label: "iPhone ▯", w: 390, h: 844 },
+        { id: "ip-l", label: "iPhone ▭", w: 844, h: 390 },
+        { id: "tablet", label: "Tablet", w: 820, h: 1180 },
+        { id: "laptop", label: "Laptop", w: 1280, h: 800 }
+      ];
+      var frame = document.getElementById("frame");
+      var main = frame.parentElement;
+      var dims = document.getElementById("dims");
+      var wIn = document.getElementById("w");
+      var hIn = document.getElementById("h");
+      var fitBtn = document.getElementById("fit");
+      var presetHost = document.getElementById("presets");
+      // Logical device size; may differ from rendered when fit-to-window scales down.
+      var state = { w: 390, h: 844, fit: false };
+      var presetBtns = PRESETS.map(function (p) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = p.label + " " + p.w + "×" + p.h;
+        b.setAttribute("aria-pressed", "false");
+        b.setAttribute("aria-label", p.label + " " + p.w + " by " + p.h);
+        b.addEventListener("click", function () { apply(p.w, p.h, false); });
+        presetHost.appendChild(b);
+        return { preset: p, el: b };
+      });
+
+      function render() {
+        var vw = Math.max(0, main.clientWidth - 32);
+        var vh = Math.max(0, main.clientHeight - 32);
+        var w = state.w, h = state.h;
+        if (state.fit && vw > 0 && vh > 0) {
+          var scale = Math.min(1, vw / state.w, vh / state.h);
+          w = Math.round(state.w * scale);
+          h = Math.round(state.h * scale);
+        }
+        // Resize the frame only; iframe src is never reassigned, so game state persists.
+        frame.style.width = w + "px";
+        frame.style.height = h + "px";
+        dims.innerHTML = state.w + " × " + state.h +
+          '<span class="muted"> css px' +
+          (w !== state.w || h !== state.h ? " · shown " + w + "×" + h : "") +
+          "</span>";
+        if (document.activeElement !== wIn) wIn.value = state.w;
+        if (document.activeElement !== hIn) hIn.value = state.h;
+        fitBtn.setAttribute("aria-pressed", String(state.fit));
+        presetBtns.forEach(function (pb) {
+          var on = !state.fit && pb.preset.w === state.w && pb.preset.h === state.h;
+          pb.el.setAttribute("aria-pressed", String(on));
+        });
+      }
+
+      function apply(w, h, keepFit) {
+        state.w = clamp(w);
+        state.h = clamp(h);
+        if (!keepFit) state.fit = false;
+        render();
+      }
+
+      function clamp(n) {
+        n = Math.round(Number(n) || 0);
+        return Math.min(4000, Math.max(120, n));
+      }
+
+      wIn.addEventListener("input", function () {
+        if (wIn.value === "") return;
+        apply(wIn.value, state.h, false);
+      });
+      hIn.addEventListener("input", function () {
+        if (hIn.value === "") return;
+        apply(state.w, hIn.value, false);
+      });
+      document.getElementById("rotate").addEventListener("click", function () {
+        apply(state.h, state.w, state.fit);
+      });
+      fitBtn.addEventListener("click", function () {
+        state.fit = !state.fit;
+        render();
+      });
+      window.addEventListener("resize", function () { if (state.fit) render(); });
+
+      apply(390, 844, false);
+    })();
+  </script>
+</body>
+</html>

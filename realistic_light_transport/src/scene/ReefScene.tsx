@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 import type { ReefRenderSettings, ReefSceneProps } from '../contracts'
@@ -14,7 +14,7 @@ import {
 import { OpticalTank } from './OpticalTank'
 import { ReefHabitat } from './ReefHabitat'
 import type { SpectralTransportTelemetry } from './materials/spectralTransport'
-import { noteTankPointerDown, noteTankPointerUp } from './tankGestures'
+import { endTankDrag, noteTankDrag, noteTankPointerDown, noteTankPointerUp } from './tankGestures'
 
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
@@ -29,41 +29,106 @@ export function cameraDistanceForAspect(aspect: number) {
   return 7.7
 }
 
+/** Orbit look target and framing constants. Radius comes from the aspect/zoom distance so
+ *  the default yaw/pitch reproduces the prior head-on framing (0, 0.48, ~7.7). */
+export const ORBIT_TARGET = { x: 0, y: -0.12, z: 0 } as const
+export const ORBIT_DEFAULT_PITCH = 0.0778
+export const ORBIT_MIN_PITCH = -0.15
+export const ORBIT_MAX_PITCH = 1.05
+const ORBIT_YAW_PER_PX = 0.006
+const ORBIT_PITCH_PER_PX = 0.005
+const ORBIT_DRAG_THRESHOLD_PX = 6
+const ORBIT_YAW_PER_KEY = 0.12
+const ORBIT_PITCH_PER_KEY = 0.08
+/** Amplify pinch so a single gesture crosses more of the zoom range; bounded by clamp. */
+const PINCH_ZOOM_EXPONENT = 3
+
+export const clampOrbitPitch = (pitch: number) =>
+  THREE.MathUtils.clamp(pitch, ORBIT_MIN_PITCH, ORBIT_MAX_PITCH)
+
+/** Pure orbit placement: spherical yaw/pitch around the tank at a bounded radius. A full
+ *  2π yaw returns to the same point, so horizontal drag revolves through 360 degrees. */
+export function orbitCameraPosition(
+  out: THREE.Vector3,
+  radius: number,
+  yaw: number,
+  pitch: number,
+  target: { x: number; y: number; z: number } = ORBIT_TARGET,
+) {
+  const cosPitch = Math.cos(pitch)
+  return out.set(
+    target.x + radius * cosPitch * Math.sin(yaw),
+    target.y + radius * Math.sin(pitch),
+    target.z + radius * cosPitch * Math.cos(yaw),
+  )
+}
+
 function CameraRig() {
   const { gl, size } = useThree()
-  const home = useMemo(() => new THREE.Vector3(0, 0.48, 7.7), [])
-  const target = useMemo(() => new THREE.Vector3(0, -0.12, 0), [])
+  const target = useMemo(() => new THREE.Vector3(ORBIT_TARGET.x, ORBIT_TARGET.y, ORBIT_TARGET.z), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
   const cameraDistance = useRef<number | null>(null)
+  const yaw = useRef(0)
+  const pitch = useRef(ORBIT_DEFAULT_PITCH)
   const touches = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef<{ distance: number; cameraDistance: number } | null>(null)
+  const drag = useRef<{ id: number; x: number; y: number; ox: number; oy: number; moved: boolean } | null>(null)
 
   useEffect(() => {
     const element = gl.domElement
     const pointerDown = (event: PointerEvent) => {
       noteTankPointerDown(event.pointerId, event.pointerType)
-      if (event.pointerType !== 'touch') return
-      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-      if (touches.current.size === 2) {
-        const [a, b] = [...touches.current.values()]
-        pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? 7.7 }
+      if (event.pointerType === 'touch') {
+        touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+        if (touches.current.size === 2) {
+          drag.current = null
+          const [a, b] = [...touches.current.values()]
+          pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? 7.7 }
+          return
+        }
       }
+      // Single pointer (mouse/pen or one finger) is an orbit candidate until it feeds/selects.
+      if (!pinch.current) drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, ox: event.clientX, oy: event.clientY, moved: false }
     }
     const pointerMove = (event: PointerEvent) => {
-      if (!touches.current.has(event.pointerId)) return
-      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-      if (touches.current.size !== 2 || !pinch.current) return
-      const [a, b] = [...touches.current.values()]
-      const distance = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 20)
-      cameraDistance.current = THREE.MathUtils.clamp(
-        pinch.current.cameraDistance * pinch.current.distance / distance,
-        5.35,
-        10.2,
-      )
-      event.preventDefault()
+      if (touches.current.has(event.pointerId)) {
+        touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      }
+      if (touches.current.size === 2 && pinch.current) {
+        const [a, b] = [...touches.current.values()]
+        const distance = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 20)
+        cameraDistance.current = THREE.MathUtils.clamp(
+          pinch.current.cameraDistance * (pinch.current.distance / distance) ** PINCH_ZOOM_EXPONENT,
+          5.35,
+          10.2,
+        )
+        event.preventDefault()
+        return
+      }
+      const active = drag.current
+      if (!active || active.id !== event.pointerId) return
+      const dx = event.clientX - active.x
+      const dy = event.clientY - active.y
+      active.x = event.clientX
+      active.y = event.clientY
+      yaw.current -= dx * ORBIT_YAW_PER_PX
+      // Vertical drag reversed per player expectation; horizontal direction unchanged.
+      pitch.current = clampOrbitPitch(pitch.current + dy * ORBIT_PITCH_PER_PX)
+      // Cumulative travel from the press origin, so a slow drag still cancels the tap/feed.
+      if (!active.moved && Math.hypot(event.clientX - active.ox, event.clientY - active.oy) > ORBIT_DRAG_THRESHOLD_PX) {
+        active.moved = true
+      }
+      if (active.moved) {
+        noteTankDrag()
+        event.preventDefault()
+      }
     }
     const pointerUp = (event: PointerEvent) => {
       noteTankPointerUp(event.pointerId, event.pointerType)
+      if (drag.current?.id === event.pointerId) {
+        if (drag.current.moved) endTankDrag()
+        drag.current = null
+      }
       touches.current.delete(event.pointerId)
       if (touches.current.size < 2) pinch.current = null
     }
@@ -72,23 +137,46 @@ function CameraRig() {
       cameraDistance.current = THREE.MathUtils.clamp(base + event.deltaY * .006, 5.35, 10.2)
       event.preventDefault()
     }
+    const resetView = () => {
+      yaw.current = 0
+      pitch.current = ORBIT_DEFAULT_PITCH
+      cameraDistance.current = null
+    }
+    const keydown = (event: KeyboardEvent) => {
+      const node = event.target as HTMLElement | null
+      const tag = node?.tagName
+      // Never steal keystrokes destined for form controls or editable content.
+      if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || node?.isContentEditable) return
+      switch (event.key) {
+        case 'ArrowLeft': yaw.current += ORBIT_YAW_PER_KEY; break
+        case 'ArrowRight': yaw.current -= ORBIT_YAW_PER_KEY; break
+        case 'ArrowUp': pitch.current = clampOrbitPitch(pitch.current - ORBIT_PITCH_PER_KEY); break
+        case 'ArrowDown': pitch.current = clampOrbitPitch(pitch.current + ORBIT_PITCH_PER_KEY); break
+        default: return
+      }
+      event.preventDefault()
+    }
     element.addEventListener('pointerdown', pointerDown, { capture: true })
     element.addEventListener('pointermove', pointerMove, { capture: true })
     element.addEventListener('pointerup', pointerUp, { capture: true })
     element.addEventListener('pointercancel', pointerUp, { capture: true })
     element.addEventListener('wheel', wheel, { passive: false })
+    element.addEventListener('dblclick', resetView)
+    window.addEventListener('keydown', keydown)
     return () => {
       element.removeEventListener('pointerdown', pointerDown, { capture: true })
       element.removeEventListener('pointermove', pointerMove, { capture: true })
       element.removeEventListener('pointerup', pointerUp, { capture: true })
       element.removeEventListener('pointercancel', pointerUp, { capture: true })
       element.removeEventListener('wheel', wheel)
+      element.removeEventListener('dblclick', resetView)
+      window.removeEventListener('keydown', keydown)
     }
   }, [gl, size.height, size.width])
 
-  useFrame(({ camera, pointer }, delta) => {
-    home.z = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
-    desired.set(home.x + pointer.x * 0.22, home.y + pointer.y * 0.11, home.z)
+  useFrame(({ camera }, delta) => {
+    const radius = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
+    orbitCameraPosition(desired, radius, yaw.current, pitch.current, target)
     camera.position.lerp(desired, 1 - Math.exp(-delta * 2.8))
     camera.lookAt(target)
   })
@@ -279,8 +367,11 @@ export function ReefScene({
   renderSettings = DEFAULT_RENDER_SETTINGS,
   onRenderTelemetry,
 }: ReefSceneProps) {
+  const [hintDismissed, setHintDismissed] = useState(false)
   return (
     <div className="canvas-shell" aria-label="Interactive three-dimensional marine reef aquarium">
+      {!hintDismissed ? <button type="button" className="tank-orbit-hint" onClick={() => setHintDismissed(true)}
+        aria-label="Dismiss camera hint">Drag to orbit · Pinch/wheel to zoom · Arrow keys ×</button> : null}
       <Canvas
         camera={{ position: [0, 0.48, 7.7], fov: 43, near: 0.1, far: 60 }}
         dpr={[1, renderSettings.quality === 'cinematic' ? 2 : 1.5]}

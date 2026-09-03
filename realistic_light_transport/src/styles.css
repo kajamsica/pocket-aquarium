@@ -78,6 +78,26 @@ input:focus-visible {
   inset: 0;
 }
 
+/* Tiny, dismissible orbit hint — never a large overlay. */
+.tank-orbit-hint {
+  position: absolute;
+  top: clamp(70px, 9vh, 92px);
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 6px 12px;
+  border: 1px solid rgba(150, 220, 235, 0.18);
+  border-radius: 999px;
+  color: rgba(234, 247, 251, 0.82);
+  background: rgba(3, 17, 23, 0.62);
+  backdrop-filter: blur(12px);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 .webgl-fallback {
   display: grid;
   width: 100%;
@@ -1452,7 +1472,17 @@ input:focus-visible {
     height: 36px;
   }
 
-  .hud-namespace small {
+  /* On phones the desktop namespace code and run-state clip the brand, leaving a
+     truncated GUID. Drop the nonessential header metadata so "Pocket Reef Lab" /
+     the compact PA identity reads cleanly; Tank credits and DEV SAFE live in
+     .pocket-utility below and stay fully visible. */
+  .hud-topbar {
+    grid-template-areas: "brand";
+    grid-template-columns: 1fr;
+  }
+
+  .hud-run-state,
+  .hud-namespace {
     display: none;
   }
 
@@ -1797,6 +1827,17 @@ input:focus-visible {
   padding: 10px;
 }
 
+.hud-ecology-panel {
+  container-type: inline-size;
+}
+
+@container (min-width: 620px) {
+  .pocket-store-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
 .pocket-store-offer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1839,6 +1880,332 @@ input:focus-visible {
   color: #88efcf;
 }
 
+/* Store category filters. */
+.pocket-store-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 0;
+}
+
+.pocket-store-filters button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.56rem;
+  text-transform: capitalize;
+}
+
+.pocket-store-filters button[aria-pressed="true"] {
+  color: #f3feff;
+  background: rgba(68, 183, 198, 0.17);
+}
+
+.pocket-store-filters button:disabled {
+  opacity: 0.4;
+}
+
+.pocket-store-offer-head {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.pocket-store-offer-head > .pocket-offer-visual {
+  grid-row: 1 / span 4;
+}
+
+.pocket-store-offer-head > span:not(.pocket-offer-tag),
+.pocket-store-offer-head > strong {
+  grid-column: 2;
+}
+
+.pocket-store-offer-head > small,
+.pocket-store-offer-head > .pocket-offer-tag {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.pocket-store-offer-head strong {
+  font-size: 0.72rem;
+}
+
+.pocket-offer-visual {
+  position: relative;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  overflow: hidden;
+  place-items: end start;
+  border: 1px solid rgba(132, 220, 231, 0.18);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 68% 30%, rgba(109, 226, 229, 0.2), transparent 30%),
+    linear-gradient(145deg, rgba(14, 58, 69, 0.88), rgba(3, 20, 27, 0.96));
+}
+
+.pocket-offer-visual span {
+  position: relative;
+  z-index: 1;
+  padding: 5px 6px;
+  color: rgba(221, 247, 249, 0.58) !important;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.4rem !important;
+  letter-spacing: 0.08em;
+}
+
+.pocket-offer-visual i,
+.pocket-offer-visual i::after {
+  position: absolute;
+  display: block;
+  content: "";
+}
+
+.pocket-offer-visual i {
+  top: 13px;
+  left: 14px;
+  width: 27px;
+  height: 14px;
+  border: 1px solid rgba(177, 240, 243, 0.58);
+  border-radius: 55% 42% 48% 55%;
+  box-shadow: inset 0 0 12px rgba(94, 217, 222, 0.18), 0 0 12px rgba(89, 220, 226, 0.12);
+}
+
+.pocket-offer-visual i::after {
+  top: 2px;
+  left: -8px;
+  width: 9px;
+  height: 10px;
+  background: rgba(177, 240, 243, 0.44);
+  clip-path: polygon(100% 50%, 0 0, 0 100%);
+}
+
+.pocket-offer-visual[data-kind="equipment"] i {
+  top: 10px;
+  left: 16px;
+  width: 20px;
+  height: 22px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 4px rgba(68, 173, 187, 0.12), 0 0 12px rgba(89, 220, 226, 0.12);
+}
+
+.pocket-offer-visual[data-kind="equipment"] i::after {
+  top: 5px;
+  left: 4px;
+  width: 10px;
+  height: 1px;
+  background: rgba(177, 240, 243, 0.56);
+  box-shadow: 0 4px rgba(177, 240, 243, 0.36), 0 8px rgba(177, 240, 243, 0.24);
+  clip-path: none;
+}
+
+.pocket-offer-visual[data-kind="coral"] i {
+  top: 8px;
+  left: 24px;
+  width: 2px;
+  height: 25px;
+  border: 0;
+  border-radius: 2px;
+  background: rgba(177, 240, 243, 0.55);
+  box-shadow: -8px 7px rgba(177, 240, 243, 0.34), 8px 5px rgba(177, 240, 243, 0.42), -13px 15px rgba(177, 240, 243, 0.24), 13px 14px rgba(177, 240, 243, 0.28);
+}
+
+.pocket-offer-visual[data-kind="coral"] i::after,
+.pocket-offer-visual[data-kind="tier"] i::after {
+  display: none;
+}
+
+.pocket-offer-visual[data-kind="tier"] i {
+  top: 10px;
+  left: 8px;
+  width: 36px;
+  height: 24px;
+  border-radius: 2px;
+  box-shadow: inset 0 -7px rgba(62, 174, 196, 0.14), 0 0 14px rgba(89, 220, 226, 0.1);
+}
+
+.pocket-offer-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.46rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pocket-offer-tag[data-tone="rec"] {
+  color: #052018;
+  background: #6fe6bd;
+}
+
+.pocket-offer-tag[data-tone="installed"] {
+  color: #eaf7ff;
+  background: rgba(96, 150, 176, 0.5);
+}
+
+.pocket-offer-detail {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-style: italic;
+}
+
+.pocket-offer-facts {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+
+.pocket-offer-facts div {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.pocket-offer-facts dt {
+  color: var(--dim);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pocket-offer-facts dd {
+  margin: 0;
+  color: rgba(235, 251, 253, 0.86);
+  font-size: 0.56rem;
+  line-height: 1.35;
+}
+
+.pocket-store-offer[data-recommended="true"] {
+  border-color: rgba(111, 230, 189, 0.4);
+}
+
+.pocket-store-offer[data-installed="true"] {
+  opacity: 0.72;
+}
+
+.pocket-store-offer[data-focused="true"] {
+  border-color: #6fe6bd;
+  box-shadow: 0 0 0 1px #6fe6bd, 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.pocket-store-empty {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 0.58rem;
+  text-align: center;
+}
+
+/* Care: test -> diagnosis -> action loop. */
+.pocket-care-test {
+  width: 100%;
+  min-height: 44px;
+}
+
+.pocket-care-freshness {
+  display: block;
+  margin: 4px 0 8px;
+  color: var(--dim);
+  font-size: 0.54rem;
+}
+
+.pocket-care-recs {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.pocket-care-rec {
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: rgba(3, 17, 23, 0.5);
+}
+
+.pocket-care-rec[data-severity="urgent"] {
+  border-color: rgba(239, 120, 106, 0.5);
+}
+
+.pocket-care-rec-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pocket-care-rec-head strong {
+  font-size: 0.66rem;
+}
+
+.pocket-care-rec p {
+  margin: 4px 0 6px;
+  color: var(--muted);
+  font-size: 0.56rem;
+  line-height: 1.4;
+}
+
+.pocket-care-sev {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.46rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #eaf7ff;
+  background: rgba(96, 150, 176, 0.4);
+}
+
+.pocket-care-sev[data-severity="urgent"] {
+  color: #2a0a06;
+  background: #ef786a;
+}
+
+.pocket-care-sev[data-severity="stable"] {
+  color: #052018;
+  background: #6fe6bd;
+}
+
+.pocket-care-rec-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pocket-care-dead ul {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.pocket-dead-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgba(239, 120, 106, 0.4);
+  border-radius: 10px;
+}
+
+.pocket-dead-row small {
+  display: block;
+  color: var(--dim);
+  font-size: 0.5rem;
+}
+
+.hud-button-danger {
+  color: #2a0a06;
+  background: #ef786a;
+}
+
 .pocket-game-hud .hud-render-lab-heading h2 {
   margin: 2px 0 0;
   font-size: 0.67rem;
@@ -1864,12 +2231,246 @@ input:focus-visible {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
-.pocket-sheet-tabs {
-  display: none;
+/* ===== Unified tank-first panel model (all viewports) =====================
+ * Water / Store / Care are CLOSED by default at every width and open as one
+ * translucent drawer from the compact dock, so the aquarium stays visible.
+ * Laptop/desktop: a right-side drawer (<=420px, <=72vh). Phone (<=860px, below):
+ * one bottom sheet (<=52vh). Only the open drawer captures pointer events. */
+.pocket-game-hud .pocket-sheet-tabs {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: clamp(16px, 2.4vw, 34px);
+  z-index: 12;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: rgba(3, 17, 23, 0.9);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
 }
 
-.pocket-control-deck {
-  grid-template-columns: minmax(0, 1fr) auto;
+.pocket-game-hud .pocket-sheet-tabs button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--muted);
+  background: transparent;
+  text-transform: capitalize;
+}
+
+.pocket-game-hud .pocket-sheet-tabs button[aria-pressed="true"] {
+  color: #f3feff;
+  background: rgba(68, 183, 198, 0.17);
+}
+
+/* Every panel becomes a fixed right-side drawer, hidden until its tab opens it. */
+.pocket-game-hud .pocket-drawer {
+  position: fixed;
+  top: clamp(96px, 13vh, 128px);
+  right: clamp(16px, 2.4vw, 34px);
+  bottom: auto;
+  left: auto;
+  z-index: 11;
+  display: block;
+  width: min(420px, calc(100% - 32px));
+  max-width: 420px;
+  max-height: 72vh;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  opacity: 0;
+  transform: translateX(18px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.pocket-game-hud .pocket-drawer[data-mobile-open="true"] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Care drawer stacks vertically so it is never a giant horizontal slab. */
+.pocket-game-hud .pocket-control-deck.pocket-drawer {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  align-items: stretch;
+  width: min(420px, calc(100% - 32px));
+}
+
+/* Desktop/laptop: Care returns to a compact, content-sized bottom tray centered over the
+   tank (Water and Store stay right-side drawers). It never spans a giant dead slab — it is
+   width-capped, height-capped, scrolls, and leaves most of the tank visible. */
+@media (min-width: 861px) {
+  .pocket-game-hud .hud-topbar,
+  .pocket-game-hud .pocket-utility,
+  .pocket-game-hud .pocket-sheet-tabs {
+    position: fixed;
+    z-index: 10000;
+  }
+
+  .pocket-game-hud .hud-topbar {
+    top: clamp(18px, 2.4vw, 34px);
+    right: clamp(18px, 2.4vw, 34px);
+    left: clamp(18px, 2.4vw, 34px);
+  }
+
+  .pocket-game-hud .pocket-specimen-card {
+    z-index: 10001;
+  }
+
+  .pocket-game-hud .pocket-care-tray.pocket-drawer {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: clamp(74px, 9vh, 104px);
+    width: min(900px, calc(100% - 48px));
+    max-width: 900px;
+    max-height: 42vh;
+    overflow: auto;
+    transform: translateX(-50%) translateY(18px);
+  }
+
+  .pocket-game-hud .pocket-care-tray.pocket-drawer[data-mobile-open="true"] {
+    transform: translateX(-50%);
+  }
+}
+
+.pocket-drawer-close {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  align-self: end;
+  justify-self: end;
+  margin: 8px 8px 0 auto;
+  padding: 4px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(3, 17, 23, 0.82);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.pocket-control-deck.pocket-drawer .pocket-drawer-close {
+  margin-left: auto;
+}
+
+/* Top utility pills: always-labeled credits + local God mode toggle. */
+.pocket-game-hud .pocket-utility {
+  position: fixed;
+  top: clamp(70px, 9vh, 92px);
+  left: clamp(16px, 2.4vw, 34px);
+  z-index: 12;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.pocket-credit-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(3, 17, 23, 0.82);
+  backdrop-filter: blur(14px);
+}
+
+.pocket-credit-pill small {
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pocket-credit-pill strong {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+/* Floating specimen card: compact, translucent, over the tank, independent of Store. */
+.pocket-specimen-card {
+  position: fixed;
+  top: clamp(118px, 20vh, 200px);
+  left: clamp(16px, 2.4vw, 34px);
+  z-index: 13;
+  width: min(300px, calc(100% - 24px));
+  padding: 12px 14px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(4, 18, 25, 0.9), rgba(4, 24, 31, 0.82));
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(18px) saturate(115%);
+  pointer-events: auto;
+}
+
+.pocket-specimen-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pocket-specimen-card-head strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 620;
+}
+
+.pocket-specimen-card-head small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-style: italic;
+}
+
+.pocket-card-close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(3, 17, 23, 0.7);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.pocket-automation-details {
+  margin: 8px 0 4px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: rgba(12, 20, 28, 0.4);
+}
+
+.pocket-automation-details > summary {
+  padding: 8px 12px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pocket-automation-details[open] > summary {
+  border-bottom: 1px solid rgba(176, 228, 235, 0.09);
+}
+
+.pocket-automation-details .pocket-automation {
+  padding: 8px;
 }
 
 .pocket-care-controls {
@@ -1880,10 +2481,65 @@ input:focus-visible {
   grid-template-columns: repeat(4, minmax(44px, auto));
 }
 
+.pocket-automation {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.pocket-automation-device {
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: rgba(12, 20, 28, 0.55);
+}
+
+.pocket-automation-device[data-empty="true"] {
+  border-color: rgba(224, 138, 47, 0.6);
+}
+
+.pocket-automation-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.pocket-automation-head span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.pocket-automation-head strong {
+  font-size: 0.82rem;
+}
+
+.pocket-automation-device small {
+  display: block;
+  margin: 3px 0 6px;
+  opacity: 0.72;
+  font-size: 0.72rem;
+}
+
+.pocket-automation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.pocket-automation-actions .hud-button {
+  padding: 4px 8px;
+  font-size: 0.72rem;
+}
+
 @media (max-width: 860px) {
   .pocket-game-hud {
     overflow: hidden;
     background: transparent;
+    pointer-events: none;
   }
 
   .pocket-sheet-tabs {
@@ -1919,18 +2575,24 @@ input:focus-visible {
   .pocket-game-hud .hud-panel,
   .pocket-game-hud .pocket-control-deck {
     position: fixed;
+    top: auto;
     right: 14px;
     bottom: 73px;
     left: 14px;
     z-index: 10;
     width: auto;
-    max-height: min(68vh, 620px);
+    max-width: none;
+    max-height: 52vh;
     margin: 0;
     overflow: auto;
     opacity: 0;
     transform: translateY(calc(100% + 90px));
     pointer-events: none;
     transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .pocket-game-hud .pocket-control-deck.pocket-drawer {
+    width: auto;
   }
 
   .pocket-game-hud [data-mobile-open="true"] {
@@ -1941,6 +2603,15 @@ input:focus-visible {
 
   .pocket-control-deck {
     grid-template-columns: 1fr;
+  }
+
+  /* Keep the floating pills and specimen card clear of the taller phone topbar. */
+  .pocket-game-hud .pocket-utility {
+    top: clamp(108px, 17vh, 140px);
+  }
+
+  .pocket-specimen-card {
+    top: clamp(152px, 24vh, 210px);
   }
 }
 
@@ -2522,6 +3193,269 @@ input:focus-visible {
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
+}
+
+/* ===== Aquarium workspace ==================================================
+ * On laptop/desktop the aquarium is the desktop. Care, water, shopping,
+ * guidance, view controls, and pinned readings are independent glass windows.
+ * Their geometry lives in a UI-only local save and never affects tank state. */
+.pocket-window-bar {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 8px 7px 13px;
+  border-bottom: 1px solid rgba(176, 228, 235, 0.12);
+  background: rgba(2, 14, 20, 0.74);
+  user-select: none;
+  touch-action: none;
+}
+
+.pocket-window-bar > div:first-child {
+  min-width: 0;
+}
+
+.pocket-window-bar small,
+.pocket-window-bar strong {
+  display: block;
+}
+
+.pocket-window-bar small {
+  overflow: hidden;
+  color: var(--dim);
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pocket-window-bar strong {
+  color: rgba(239, 252, 253, 0.96);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.pocket-window-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.pocket-window-actions button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(169, 226, 235, 0.13);
+  border-radius: 7px;
+  color: var(--muted);
+  background: rgba(13, 35, 43, 0.68);
+  line-height: 1;
+}
+
+.pocket-window-actions button:hover {
+  color: #f4feff;
+  border-color: rgba(122, 224, 234, 0.38);
+  background: rgba(43, 103, 115, 0.45);
+}
+
+.pocket-window-content {
+  height: calc(100% - 42px);
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(126, 210, 221, 0.28) transparent;
+}
+
+.pocket-metric-pin {
+  float: right;
+  margin: -2px 0 0 6px;
+  padding: 2px 5px;
+  border: 1px solid rgba(169, 226, 235, 0.14);
+  border-radius: 999px;
+  color: var(--dim);
+  background: transparent;
+  font-size: 0.42rem;
+}
+
+.pocket-metric-pin[aria-pressed="true"] {
+  color: #061d19;
+  border-color: #71e6c5;
+  background: #71e6c5;
+}
+
+.pocket-pinned-reading {
+  display: grid;
+  height: 100%;
+  min-height: 72px;
+  padding: 14px;
+  align-content: center;
+}
+
+.pocket-pinned-reading strong {
+  color: #eefeff;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 1.3rem;
+}
+
+.pocket-pinned-reading small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.54rem;
+}
+
+.pocket-god-mode {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid rgba(160, 174, 184, 0.24);
+  border-radius: 999px;
+  color: rgba(198, 208, 214, 0.58);
+  background: rgba(14, 22, 27, 0.84);
+  backdrop-filter: blur(14px);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.pocket-god-mode > span {
+  color: rgba(159, 170, 177, 0.55);
+  font-size: 0.5rem;
+}
+
+.pocket-god-mode[aria-pressed="true"] {
+  color: #ffe98f;
+  border-color: rgba(255, 204, 45, 0.78);
+  background: rgba(69, 51, 4, 0.82);
+  box-shadow: 0 0 24px rgba(255, 196, 23, 0.16);
+}
+
+.pocket-god-mode[aria-pressed="true"] > span {
+  color: #ffd63d;
+}
+
+@media (min-width: 861px) {
+  .pocket-game-hud .pocket-window.pocket-drawer {
+    position: fixed;
+    right: auto;
+    bottom: auto;
+    display: block;
+    box-sizing: border-box;
+    min-width: 220px;
+    min-height: 116px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 84px);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.98);
+    transform-origin: top left;
+    resize: both;
+    border: 1px solid rgba(169, 226, 235, 0.21);
+    border-radius: 15px;
+    background: linear-gradient(145deg, rgba(3, 17, 23, 0.94), rgba(4, 25, 32, 0.9));
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(120%);
+    pointer-events: none;
+  }
+
+  .pocket-game-hud .pocket-window.pocket-drawer[data-desktop-open="true"] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .pocket-game-hud .pocket-window.pocket-drawer[data-minimized="true"] {
+    min-height: 0;
+    resize: none;
+  }
+
+  .pocket-window[data-minimized="true"] .pocket-window-bar {
+    border-bottom: 0;
+  }
+
+  .pocket-window[data-minimized="true"] .pocket-window-content {
+    display: none;
+  }
+
+  .pocket-game-hud .pocket-care-tray.pocket-drawer,
+  .pocket-game-hud .pocket-care-tray.pocket-drawer[data-mobile-open="true"] {
+    right: auto;
+    bottom: auto;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 84px);
+    transform: scale(0.98);
+  }
+
+  .pocket-game-hud .pocket-care-tray.pocket-drawer[data-desktop-open="true"] {
+    transform: none;
+  }
+
+  .pocket-window-bar {
+    cursor: grab;
+  }
+
+  .pocket-window-bar:active {
+    cursor: grabbing;
+  }
+
+  .pocket-care-tray .pocket-window-content,
+  .pocket-view-panel .pocket-window-content {
+    padding: 10px 12px 14px;
+  }
+
+  .pocket-guide-window .pocket-guide {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .pocket-metric-window {
+    min-width: 180px !important;
+    min-height: 116px !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .pocket-game-hud .pocket-sheet-tabs {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .pocket-game-hud .pocket-sheet-tabs button {
+    min-height: 38px;
+    padding: 0 3px;
+    font-size: 0.55rem;
+  }
+
+  .pocket-game-hud .pocket-window.pocket-drawer {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .pocket-window-content {
+    height: auto;
+    max-height: calc(52vh - 42px);
+  }
+
+  .pocket-window-minimize {
+    display: none !important;
+  }
+
+  .pocket-care-tray .pocket-window-content,
+  .pocket-view-panel .pocket-window-content {
+    padding: 9px 10px 12px;
+  }
+
+  .pocket-metric-window {
+    display: none !important;
+  }
 }
 
 @media (max-height: 599px) {

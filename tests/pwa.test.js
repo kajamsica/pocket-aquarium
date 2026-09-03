@@ -26,6 +26,52 @@ function pngSize(buf) {
 }
 function relative(u) { return typeof u === "string" && u.charAt(0) !== "/" && !/^https?:/i.test(u); }
 
+/* ---------------- shared-guide authority harness (PR #8) ----------------
+   PR #8 moved the single source of truth for care/toxic/elevated/stocking PRIORITY out of
+   js/app.js and into js/sessionGuide.js. app.js now only adapts the shared GuideView. So the
+   care-contract tests below execute the SHIPPED guide in-process — data.js -> sim.js ->
+   sessionGuide.js, the documented Node load order (global.window = global lets those IIFEs
+   attach PA to the shared global) — and read its REAL projected behavior. Nothing here
+   re-implements care logic; it drives the shipped guide and asserts the stages/badges it emits. */
+global.window = global;
+try {
+  require(path.join(ROOT, "js/data.js"));
+  require(path.join(ROOT, "js/sim.js"));
+  require(path.join(ROOT, "js/sessionGuide.js"));
+} catch (e) { /* absence is asserted where the guide is used */ }
+var PA = global.PA || {};
+var GUIDE = PA.sessionGuide;
+var GDATA = PA.DATA;
+function gMetric(key, value, severity) { return { key: key, value: value, severity: severity }; }
+// A fully in-range freshwater snapshot; pass override(s) to push one parameter out of band.
+function guideSnap(overrides) {
+  var water = [
+    gMetric("level", 100, "ok"), gMetric("tempC", 26, "ok"), gMetric("pH", 7, "ok"),
+    gMetric("ammonia", 0, "ok"), gMetric("nitrite", 0, "ok"), gMetric("nitrate", 5, "ok"),
+    gMetric("salinity", 35, "ok")
+  ];
+  var list = !overrides ? [] : (overrides.length === undefined ? [overrides] : overrides);
+  water = water.map(function (m) {
+    for (var i = 0; i < list.length; i++) if (list[i].key === m.key) return list[i];
+    return m;
+  });
+  return { water: water, welfare: "ok", corals: [] };
+}
+// A cycled, empty tank: all cycle gates cleared, nothing stocked, readings fresh.
+function guideCycledEmptyState() {
+  var tests = {}, params = (GDATA && GDATA.HABITATS.amazon.params) || [];
+  params.forEach(function (p) { tests[p] = { known: true, ageDays: 0 }; });
+  return { habitat: "amazon", time: { days: 10 },
+    cycle: { filled: true, lifeSupport: true, stage: "Cycled", ammoniaSource: true, inoculated: true },
+    water: { ammonia: 0, nitrite: 0, nitrate: 5 }, livestock: [], tests: tests };
+}
+// A filled, life-supported tank with one live fish (an "eater"), so the toxic/elevated care
+// branches — which require residents — are reachable.
+function guideEaterState() {
+  return { habitat: "amazon", time: { days: 3 }, cycle: { filled: true, lifeSupport: true },
+    water: {}, tests: {}, livestock: [{ species: "neon_tetra", alive: true, hunger: 0 }] };
+}
+
 /* ------------------------------ 1. required files ------------------------------ */
 group("files present");
 var REQUIRED = [
@@ -189,10 +235,17 @@ ok(/water-verdict/.test(css) && /water-verdict/.test(app), "Water panel leads wi
 ok(/wtool.{0,3}is-rec/.test(css) && /is-rec/.test(app), "Water tools emphasise the one contextually-correct operation");
 // The truthful-priority fix: the empty-tank READY branch is evaluated AFTER environment and
 // staleness, so an empty cycled tank with bad salinity/level fixes the environment first.
-var careAdviceSrc = (app.match(/function careAdvice[\s\S]*?\n  \}/) || [""])[0];
-var idxEnv = careAdviceSrc.indexOf("environmentIssue(snap)");
-var idxReady = careAdviceSrc.indexOf('"READY"');
-ok(idxEnv > -1 && idxReady > -1 && idxEnv < idxReady, "careAdvice checks environment before recommending stocking an empty tank");
+// PR #8 moved this priority into the shared guide (js/sessionGuide.js). Prove it behaviorally:
+// a cycled but empty tank whose environment is out of range must fix the environment
+// (correct_environment) BEFORE it invites stocking (stock_first_community / READY).
+ok(typeof (GUIDE && GUIDE.project) === "function", "shipped sessionGuide.project authority is loaded");
+if (GUIDE && GUIDE.project) {
+  var emptyTank = guideCycledEmptyState();
+  var inRangeStage = GUIDE.project(emptyTank, { snapshot: guideSnap() }).stage;
+  var outOfRangeStage = GUIDE.project(emptyTank, { snapshot: guideSnap(gMetric("tempC", 31, "danger")) }).stage;
+  ok(inRangeStage === "stock_first_community", "a cycled, in-range empty tank is invited to stock (stock_first_community)");
+  ok(outOfRangeStage === "correct_environment", "the guide corrects the environment before recommending stocking an empty tank");
+}
 
 group("water panel: exactly one care-matched recommendation");
 // Regression guard (PAR5-01A browser finding): a reef fishless cycle badged Test + water
@@ -265,17 +318,23 @@ group("toxic-waste care matches the visible meter severity (PAR5-01F)");
 // (a) the raw/good[1] comparator is gone; care now reads snapshot severity, not raw chemistry.
 ok(!/waterDangerous/.test(app), "the raw-value waterDangerous() comparator is removed");
 ok(!/\bw\.ammonia\s*>\s*DATA\.PARAMS\.ammonia\.good/.test(app), "no raw ammonia-vs-good[1] comparison remains in js/app.js");
-var toxicSrc = (app.match(/function waterToxic\([\s\S]*?\n  \}/) || [""])[0];
-var elevSrc = (app.match(/function waterElevated\([\s\S]*?\n  \}/) || [""])[0];
-ok(/waterByKey\(/.test(toxicSrc) && /severity === "danger"/.test(toxicSrc), "waterToxic reads snapshot severity 'danger' (the toxic contract), not raw chemistry");
-ok(/waterByKey\(/.test(elevSrc) && /severity === "warn"/.test(elevSrc), "waterElevated reads snapshot severity 'warn' (elevated-but-not-toxic)");
-// (b) careAdvice splits toxic (CRITICAL) from elevated (WATCH) and checks toxic first.
-var careSrc = (app.match(/function careAdvice[\s\S]*?\n  \}/) || [""])[0];
-var iTox = careSrc.indexOf("waterToxic(snap)"), iElev = careSrc.indexOf("waterElevated(snap)");
-ok(iTox > -1 && iElev > -1 && iTox < iElev, "careAdvice checks toxic before elevated");
-ok(/waterToxic\(snap\)[\s\S]*?"CRITICAL"[\s\S]*?toxic level/.test(careSrc), "the toxic branch stays CRITICAL and says 'toxic level'");
-ok(/waterElevated\(snap\)[\s\S]*?"WATCH"[\s\S]*?elevated/.test(careSrc), "the elevated branch is WATCH and says 'elevated', not toxic");
-ok(/waterElevated\(snap\)[\s\S]*?isn't toxic yet/.test(careSrc), "the elevated branch explicitly denies toxicity");
+// (b) The shared guide reads snapshot SEVERITY (never raw chemistry): danger -> toxic (CRITICAL),
+// warn -> elevated (WATCH), and it checks toxic before elevated. Execute it over a resident tank.
+if (GUIDE && GUIDE.project) {
+  var es = guideEaterState();
+  var toxicView = GUIDE.project(es, { snapshot: guideSnap(gMetric("ammonia", 0.7, "danger")) });
+  var elevView = GUIDE.project(es, { snapshot: guideSnap(gMetric("ammonia", 0.3, "warn")) });
+  // danger severity + warn severity together must still resolve to toxic (toxic checked first).
+  var bothView = GUIDE.project(es, { snapshot: guideSnap([gMetric("ammonia", 0.7, "danger"), gMetric("nitrite", 0.3, "warn")]) });
+  ok(toxicView.stage === "toxic_water" && toxicView.nextAction && toxicView.nextAction.badge === "CRITICAL" && toxicView.nextAction.tone === "critical",
+     "danger severity gives the CRITICAL toxic branch (reads snapshot severity, not raw chemistry)");
+  ok(/toxic level/.test(toxicView.title), "the toxic branch says 'toxic level'");
+  ok(bothView.stage === "toxic_water", "the guide checks toxic before elevated (danger+warn resolves to toxic)");
+  ok(elevView.stage === "elevated_waste" && elevView.nextAction && elevView.nextAction.badge === "WATCH",
+     "warn severity gives the WATCH elevated branch (elevated-but-not-toxic)");
+  ok(/elevated/.test(elevView.title) && !/toxic level/.test(elevView.title), "the elevated branch says 'elevated', not toxic");
+  ok(/isn't toxic yet/.test(elevView.body), "the elevated branch explicitly denies toxicity");
+}
 
 // (c) the ammonia/nitrite toxic contract in js/data.js the meter severity splits on.
 var dataSrc = readText("js/data.js");
@@ -295,26 +354,33 @@ var simSrc = readText("js/sim.js");
 var numSrc = (simSrc.match(/function num\(v, d\) \{[^\n]*\}/) || [""])[0];
 var r3Src = (simSrc.match(/function r3\(v\) \{[^\n]*\}/) || [""])[0];
 var sevSrc = (simSrc.match(/function severityOf\([\s\S]*?\n  \}/) || [""])[0];
-var byKeySrc = (app.match(/function waterByKey\(snap\) \{[^\n]*\}/) || [""])[0];
-ok(numSrc && r3Src && sevSrc && byKeySrc && toxicSrc && elevSrc, "shipped r3/severityOf + waterByKey/waterToxic/waterElevated sources located");
+ok(numSrc && r3Src && sevSrc && typeof (GUIDE && GUIDE.project) === "function",
+   "shipped r3/severityOf (js/sim.js) + sessionGuide.project (js/sessionGuide.js) authority located");
 var api = null;
 try {
-  api = new Function(
-    numSrc + "\n" + r3Src + "\n" + sevSrc + "\n" +
-    "function currentSnap(){ return { water: [] }; }\n" +
-    byKeySrc + "\n" + toxicSrc + "\n" + elevSrc + "\n" +
-    "return { r3: r3, severityOf: severityOf, waterToxic: waterToxic, waterElevated: waterElevated };"
-  )();
+  api = new Function(numSrc + "\n" + r3Src + "\n" + sevSrc + "\nreturn { r3: r3, severityOf: severityOf };")();
 } catch (e) { api = null; }
-ok(api && typeof api.waterToxic === "function" && typeof api.waterElevated === "function", "shipped severity + care helpers evaluate in isolation");
-if (api && bandA && bandN) {
+// Care wording is decided by the SHARED guide, not re-implemented here: build the meter metric
+// with the shipped r3+severityOf, hand that snapshot to the shipped guide over a resident tank,
+// and read which care branch it actually chooses. Displayed value, severity and care wording
+// therefore all descend from one rounded number and cannot contradict at any threshold.
+var guideEaters = (GUIDE && GUIDE.project) ? guideEaterState() : null;
+function guideCare(snap) {
+  var stage = GUIDE.project(guideEaters, { snapshot: snap }).stage;
+  return stage === "toxic_water" ? "toxic" : (stage === "elevated_waste" ? "elevated" : "clear");
+}
+ok(api && typeof api.r3 === "function" && typeof api.severityOf === "function" && !!guideEaters &&
+   guideCare({ water: [gMetric("ammonia", 0.7, "danger")] }) === "toxic" &&
+   guideCare({ water: [gMetric("ammonia", 0.3, "warn")] }) === "elevated",
+   "shipped severity + shared guide classify toxic/elevated in isolation");
+if (api && guideEaters && bandA && bandN) {
   var RANK = { ok: 0, warn: 1, danger: 2 };
   function metric(key, raw, band) { var shown = api.r3(raw); return { key: key, value: shown, severity: api.severityOf(band, shown) }; }
   function run(aRaw, nRaw) {
     var snap = { water: [metric("ammonia", aRaw, bandA), metric("nitrite", nRaw, bandN)] };
     var worst = snap.water[0].severity;
     if (RANK[snap.water[1].severity] > RANK[worst]) worst = snap.water[1].severity;
-    var care = api.waterToxic(snap) ? "toxic" : (api.waterElevated(snap) ? "elevated" : "clear");
+    var care = guideCare(snap);
     return { care: care, worst: worst, aShown: snap.water[0].value, nShown: snap.water[1].value };
   }
   var MAP = { danger: "toxic", warn: "elevated", ok: "clear" };

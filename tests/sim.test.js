@@ -66,6 +66,7 @@ function cycledReef(seed, opts) {
   w.tempC = 26; w.pH = 8.2; w.oxygen = 7;
   s.equipment.heater = "basic";               // hold temperature at ~26
   s.equipment.ato = "ato";                     // hold volume/salinity steady (realistic reef care)
+  s.automation.ato.capacityL = s.automation.ato.reservoirL = D.EQUIPMENT.ato.levels[1].reservoirCapacityL; // finite reservoir, kept topped
   if (opts.light) s.equipment.light = opts.light;
   if (opts.circ) s.equipment.circulation = opts.circ;
   return s;
@@ -244,7 +245,10 @@ group("reef evaporation / top-off / ATO");
   approx(s.water.levelL, lvl0, 0.001, "top-off restores volume");
 
   var a = reefBase(3); a.equipment.ato = "ato";
+  PA.dispatch(a, { type: "REFILL_RESERVOIR" }); // finite reservoir must be filled to top off
   PA.stepDays(a, 6);
+  gt(a.automation.ato.reservoirL, 0, "ATO reservoir still has freshwater after topping off");
+  lt(a.automation.ato.reservoirL, D.EQUIPMENT.ato.levels[1].reservoirCapacityL, "ATO consumed some reservoir water");
   approx(a.water.salinity, 35, 0.1, "ATO holds salinity steady across evaporation");
   approx(a.water.levelL, a.water.levelL, 0.001, "ATO holds volume");
   approx(a.water.levelL, lvl0, 0.001, "ATO keeps the tank full");

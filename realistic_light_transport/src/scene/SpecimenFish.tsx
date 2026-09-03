@@ -14,6 +14,9 @@ import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
 const MAX_SPECIMENS = 24
 const TANK_HALF_WIDTH = 2.76
+// Believable inner water depth (front/back glass). Mirrors the width inset from the
+// rendered tank so fish swim the full depth band without clipping the glass panels.
+const TANK_HALF_DEPTH = 1.2
 const SAND_Y = -1.44
 const MARINE_SPECIES = new Set(['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark'])
 interface SpecimenRosterValue {
@@ -224,13 +227,18 @@ export function assignPelletTargets(specimens: readonly PocketSpecimen[], food: 
   return assignments
 }
 
+/** Padding over the raw rock scale: the rendered icosahedron hardscape is irregular
+ *  and carries pores/coral spillover, so the exclusion ellipsoid is inflated past the
+ *  visual hull, plus the fish body radius, to keep fish from clipping into rock. */
+const REEF_ROCK_PAD = 1.2
+
 /** Resolve against the same padded ellipsoids that render the live-rock hardscape. */
 export function resolveReefHardscape(position: THREE.Vector3, bodyRadius: number, benthic: boolean) {
-  for (let pass = 0; pass < 4; pass += 1) {
+  for (let pass = 0; pass < 6; pass += 1) {
     for (const rock of REEF_ROCKS) {
-      const rx = rock.scale.x * 1.08 + bodyRadius
-      const ry = rock.scale.y * 1.08 + bodyRadius
-      const rz = rock.scale.z * 1.08 + bodyRadius
+      const rx = rock.scale.x * REEF_ROCK_PAD + bodyRadius
+      const ry = rock.scale.y * REEF_ROCK_PAD + bodyRadius
+      const rz = rock.scale.z * REEF_ROCK_PAD + bodyRadius
       let nx = (position.x - rock.position.x) / rx
       let ny = (position.y - rock.position.y) / ry
       let nz = (position.z - rock.position.z) / rz
@@ -337,13 +345,23 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
     const y = THREE.MathUtils.lerp(ambientY, targetPosition?.y ?? ambientY, forage.current)
     const z = THREE.MathUtils.lerp(ambientZ, targetPosition?.z ?? ambientZ, forage.current)
     const bodyRadius = THREE.MathUtils.clamp(length * .24, .08, .34)
-    node.position.set(x, Math.min(y, waterSurfaceY - .2),
-      THREE.MathUtils.clamp(z, benthic ? -.2 : .56, 1.04))
-    resolveReefHardscape(node.position, bodyRadius, benthic)
-    node.position.x = THREE.MathUtils.clamp(node.position.x, -TANK_HALF_WIDTH + bodyRadius, TANK_HALF_WIDTH - bodyRadius)
-    node.position.y = THREE.MathUtils.clamp(node.position.y, benthic ? SAND_Y + clearance : SAND_Y + bodyRadius,
-      waterSurfaceY - bodyRadius)
-    node.position.z = THREE.MathUtils.clamp(node.position.z, benthic ? -.2 : .56, 1.04)
+    // Depth band: keep the whole body inside the front/back glass while covering the full
+    // pellet depth range (food z spans about -.62..+.62) so fish can make visible contact.
+    const zLimit = TANK_HALF_DEPTH - bodyRadius
+    const clampToTankGlass = () => {
+      node.position.x = THREE.MathUtils.clamp(node.position.x, -TANK_HALF_WIDTH + bodyRadius, TANK_HALF_WIDTH - bodyRadius)
+      node.position.y = THREE.MathUtils.clamp(node.position.y, benthic ? SAND_Y + clearance : SAND_Y + bodyRadius,
+        waterSurfaceY - bodyRadius)
+      node.position.z = THREE.MathUtils.clamp(node.position.z, -zLimit, zLimit)
+    }
+    node.position.set(x, Math.min(y, waterSurfaceY - .2), THREE.MathUtils.clamp(z, -zLimit, zLimit))
+    // Alternate rock exclusion and glass clamping a few times so the final position both
+    // clears the hardscape and stays inside the tank; end on a glass clamp so a rock
+    // resolve can never push a fish through the front/back glass.
+    for (let i = 0; i < 3; i++) {
+      resolveReefHardscape(node.position, bodyRadius, benthic)
+      clampToTankGlass()
+    }
     node.rotation.set(benthic ? -.03 : Math.sin(wave * .53) * .04, THREE.MathUtils.clamp(-Math.sin(wave * .61) * .24, -.26, .26), benthic ? 0 : Math.sin(wave * .67) * .055)
     node.scale.set(direction * (riggedAsset ? 1 : length), riggedAsset ? 1 : length, riggedAsset ? 1 : length)
     if (tail.current) {
@@ -351,8 +369,20 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
       tail.current.rotation.y = Math.sin(wave * 8.2) * tailAmplitude * (1 + forage.current * .45)
     }
     const rigMouth = riggedAsset ? node.getObjectByName(`PA_${specimen.speciesId}_Mouth`) : undefined
-    if (rigMouth) rigMouth.getWorldPosition(mouthPosition)
-    else node.localToWorld(mouthPosition.copy(fallbackMouth.set(.5, 0, 0)))
+    let usableRigMouth = false
+    if (rigMouth) {
+      rigMouth.getWorldPosition(mouthPosition)
+      // Food and steering coordinates are local to the habitat. Keep the sampled mouth
+      // in that same space; the habitat itself is translated slightly inside ReefScene.
+      node.parent?.worldToLocal(mouthPosition)
+      // The current clown asset contains a named mouth node at its root origin. Treat
+      // that zero-length authoring marker as missing so pursuit reaches the visible snout.
+      usableRigMouth = mouthPosition.distanceTo(node.position) > length * .1
+    }
+    if (!usableRigMouth) {
+      node.localToWorld(mouthPosition.copy(fallbackMouth.set(riggedAsset ? mouthLead : .5, 0, 0)))
+      node.parent?.worldToLocal(mouthPosition)
+    }
     mouths.set(specimen.id, mouthPosition)
   })
 

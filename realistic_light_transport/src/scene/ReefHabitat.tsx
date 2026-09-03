@@ -11,7 +11,7 @@ import {
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
 import { REEF_ROCKS as ROCKS, seededUnit } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
-import { tankPinchInProgress } from './tankGestures'
+import { tankDragInProgress, tankPinchInProgress } from './tankGestures'
 
 const TANK_HALF_WIDTH = 2.76
 const TANK_HALF_DEPTH = 1.18
@@ -699,7 +699,7 @@ function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed:
           }
           return false
         })
-        if (hitSpecimen || tankPinchInProgress()) return
+        if (hitSpecimen || tankPinchInProgress() || tankDragInProgress()) return
         event.stopPropagation()
         feed(surfaceXToNormalizedX(event.point.x))
       }}
@@ -707,6 +707,168 @@ function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed:
       <planeGeometry args={[TANK_HALF_WIDTH * 2, columnHeight]} />
       <meshBasicMaterial transparent opacity={0} colorWrite={false} depthWrite={false} />
     </mesh>
+  )
+}
+
+/** Physical auto-feeder mounted on the rim above the water. Emissive status ring reads
+ *  green (armed), dim grey (off / not installed), amber (empty). A short chute points at
+ *  the surface where dispensed pellets enter through the authoritative feed path. */
+function AutoFeederHardware({ equipment, waterSurfaceY }: {
+  equipment: ReefSceneProps['snapshot']['equipment']; waterSurfaceY: number
+}) {
+  const ringRef = useRef<THREE.MeshStandardMaterial>(null)
+  const installed = Boolean(equipment.feederInstalled)
+  const enabled = Boolean(equipment.feederEnabled)
+  const empty = Boolean(equipment.feederEmpty)
+  const dispensing = Boolean(equipment.feederDispensing)
+  const tone = !installed || !enabled ? '#3a4048' : empty ? '#c9821f' : '#39d29a'
+  useFrame(({ clock }) => {
+    if (!ringRef.current) return
+    const pulse = dispensing ? 0.55 + Math.abs(Math.sin(clock.getElapsedTime() * 6)) * 0.8 : enabled && !empty ? 0.42 : 0.12
+    ringRef.current.emissiveIntensity = pulse
+  })
+  const mountY = waterSurfaceY + 0.62
+  return (
+    <group name="auto-feeder" position={[-1.62, mountY, TANK_HALF_DEPTH - 0.18]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.46, 0.24, 0.34]} />
+        <meshStandardMaterial color="#20262d" roughness={0.6} metalness={0.35} />
+      </mesh>
+      <mesh position={[0, 0.12, 0.13]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.12, 0.028, 8, 20]} />
+        <meshStandardMaterial ref={ringRef} color={tone} emissive={tone} emissiveIntensity={0.3} roughness={0.4} />
+      </mesh>
+      <mesh position={[0.02, -0.26, 0.02]}>
+        <cylinderGeometry args={[0.07, 0.11, 0.3, 12, 1, true]} />
+        <meshStandardMaterial color="#161b20" roughness={0.7} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[-0.29, 0, 0]}>
+        <boxGeometry args={[0.12, 0.05, 0.3]} />
+        <meshStandardMaterial color="#2b3138" roughness={0.8} />
+      </mesh>
+    </group>
+  )
+}
+
+/** Finite freshwater ATO: a reservoir jug beside the tank, a supply line over the rim, and
+ *  a sensor float at the waterline. The jug's inner column scales to remaining reservoir and
+ *  turns red when empty; the sensor glows while topping off. */
+function AtoHardware({ equipment, waterSurfaceY }: {
+  equipment: ReefSceneProps['snapshot']['equipment']; waterSurfaceY: number
+}) {
+  const sensorRef = useRef<THREE.MeshStandardMaterial>(null)
+  const installed = Boolean(equipment.atoEnabled)
+  const capacity = Math.max(equipment.atoReservoirCapacityLiters ?? 0, 0.001)
+  const fill = THREE.MathUtils.clamp(equipment.atoReservoirLiters / capacity, 0, 1)
+  const empty = Boolean(equipment.atoEmpty)
+  const topping = equipment.atoPumpLitersPerHour > 0
+  const jugHeight = 1.1
+  const waterColor = empty ? '#7a2530' : '#2f9fd8'
+  useFrame(({ clock }) => {
+    if (!sensorRef.current) return
+    sensorRef.current.emissiveIntensity = topping ? 0.4 + Math.abs(Math.sin(clock.getElapsedTime() * 4)) * 0.8 : installed ? 0.25 : 0.05
+  })
+  if (!installed) return null
+  return (
+    <group name="ato-system">
+      <group position={[TANK_HALF_WIDTH + 0.62, SAND_Y + jugHeight / 2 - 0.1, TANK_HALF_DEPTH - 0.4]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.52, jugHeight, 0.52]} />
+          <meshStandardMaterial color="#cfe4ee" transparent opacity={0.22} roughness={0.1} metalness={0.1} />
+        </mesh>
+        <mesh position={[0, -jugHeight / 2 + (jugHeight * 0.94 * fill) / 2 + 0.03, 0]}>
+          <boxGeometry args={[0.44, Math.max(jugHeight * 0.94 * fill, 0.01), 0.44]} />
+          <meshStandardMaterial color={waterColor} emissive={waterColor} emissiveIntensity={empty ? 0.25 : 0.12} transparent opacity={0.72} roughness={0.2} />
+        </mesh>
+      </group>
+      {/* supply line from the reservoir over the rim to the waterline */}
+      <mesh position={[TANK_HALF_WIDTH + 0.2, waterSurfaceY + 0.2, TANK_HALF_DEPTH - 0.4]} rotation={[0, 0, Math.PI / 2.2]}>
+        <cylinderGeometry args={[0.018, 0.018, 1.1, 8]} />
+        <meshStandardMaterial color="#20272e" roughness={0.6} />
+      </mesh>
+      {/* optical water-level sensor float at the surface */}
+      <mesh position={[TANK_HALF_WIDTH - 0.28, waterSurfaceY, TANK_HALF_DEPTH - 0.42]}>
+        <sphereGeometry args={[0.06, 12, 10]} />
+        <meshStandardMaterial ref={sensorRef} color="#8fe0ff" emissive="#3fbdf0" emissiveIntensity={0.25} roughness={0.35} />
+      </mesh>
+    </group>
+  )
+}
+
+/** Restrained procedural cues for installed, non-default filtration, circulation, skimmer,
+ *  refugium, and upgraded LED fixtures. Decorative only — none participate in collision, and
+ *  the feeder/ATO keep their own dedicated hardware. */
+function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
+  equipment: ReefSceneProps['snapshot']['equipment']; waterSurfaceY: number
+}) {
+  const rimY = waterSurfaceY + 0.12
+  const filter = equipment.filterLevel
+  const circulation = equipment.circulationLevel
+  const skimmer = equipment.skimmerLevel
+  const refugium = equipment.refugiumLevel
+  const light = equipment.lightLevel
+  return (
+    <group name="installed-equipment">
+      {/* Hang-on / canister filtration on the back rim; canister is the taller body. */}
+      {filter && filter !== 'sponge' ? (
+        <group position={[1.9, rimY, -TANK_HALF_DEPTH + 0.12]}>
+          <mesh castShadow>
+            <boxGeometry args={filter === 'canister' ? [0.4, 0.5, 0.3] : [0.5, 0.34, 0.22]} />
+            <meshStandardMaterial color="#2a3138" roughness={0.6} metalness={0.3} />
+          </mesh>
+          <mesh position={[-0.18, -0.2, 0.06]}>
+            <cylinderGeometry args={[0.03, 0.03, 0.4, 8]} />
+            <meshStandardMaterial color="#151a1f" roughness={0.7} />
+          </mesh>
+        </group>
+      ) : null}
+      {/* Circulation powerhead/gyre nozzle on the side wall, just below the surface. */}
+      {circulation && circulation !== 'none' ? (
+        <mesh castShadow position={[-TANK_HALF_WIDTH + 0.14, waterSurfaceY - 0.35, -TANK_HALF_DEPTH + 0.5]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={circulation === 'gyre' ? [0.11, 0.11, 0.34, 12] : [0.08, 0.08, 0.2, 12]} />
+          <meshStandardMaterial color="#20262d" roughness={0.5} metalness={0.4} />
+        </mesh>
+      ) : null}
+      {/* Protein skimmer column on the back rim. */}
+      {skimmer && skimmer !== 'none' ? (
+        <group position={[-1.7, rimY - 0.1, -TANK_HALF_DEPTH + 0.1]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.12, 0.15, skimmer === 'cone' ? 0.72 : 0.5, 16]} />
+            <meshStandardMaterial color="#e8f2f7" transparent opacity={0.5} roughness={0.2} metalness={0.1} />
+          </mesh>
+          <mesh position={[0, skimmer === 'cone' ? 0.42 : 0.31, 0]}>
+            <cylinderGeometry args={[0.09, 0.12, 0.16, 16]} />
+            <meshStandardMaterial color="#20262d" roughness={0.6} />
+          </mesh>
+        </group>
+      ) : null}
+      {/* Refugium macroalgae clump beside the tank. */}
+      {refugium && refugium !== 'none' ? (
+        <group position={[-TANK_HALF_WIDTH - 0.5, SAND_Y + 0.28, -TANK_HALF_DEPTH + 0.5]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.5, 0.56, 0.4]} />
+            <meshStandardMaterial color="#c7d9de" transparent opacity={0.24} roughness={0.15} />
+          </mesh>
+          <mesh position={[0, -0.06, 0]}>
+            <icosahedronGeometry args={[0.18, 0]} />
+            <meshStandardMaterial color="#3f7d32" emissive="#1c3a16" emissiveIntensity={0.2} roughness={0.8} />
+          </mesh>
+        </group>
+      ) : null}
+      {/* Upgraded LED fixture suspended over the tank. */}
+      {light && light !== 'basic' ? (
+        <group position={[0, waterSurfaceY + 1.1, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={light === 'pro_led' ? [2.6, 0.12, 0.8] : [2.2, 0.1, 0.6]} />
+            <meshStandardMaterial color="#161b20" roughness={0.5} metalness={0.5} />
+          </mesh>
+          <mesh position={[0, -0.07, 0]}>
+            <boxGeometry args={light === 'pro_led' ? [2.4, 0.02, 0.6] : [2.0, 0.02, 0.44]} />
+            <meshStandardMaterial color="#dfe9ff" emissive="#bcd2ff" emissiveIntensity={0.5} roughness={0.3} />
+          </mesh>
+        </group>
+      ) : null}
+    </group>
   )
 }
 
@@ -772,6 +934,9 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
       <SuspendedParticles flowField={flowField} waterSurfaceY={waterSurfaceY} />
       <Microfauna activity={ecology.microfaunaActivity} waterSurfaceY={waterSurfaceY} />
       <FoodPellets pellets={scenePellets} />
+      <AutoFeederHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
+      <AtoHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
+      <InstalledEquipmentHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />
     </group>
   )
