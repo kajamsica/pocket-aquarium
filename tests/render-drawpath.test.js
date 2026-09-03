@@ -21,6 +21,7 @@ Object.defineProperty(MockImage.prototype, "src", {
 global.Image = MockImage;
 
 require("../js/data.js");
+require("../js/sim.js");
 require("../js/render.js");
 var PA = global.PA || (typeof globalThis !== "undefined" ? globalThis.PA : null);
 
@@ -44,12 +45,12 @@ function makeCtx(log) {
   });
 }
 var CW = 600, CH = 400;
-function makeCanvas(ctx) {
+function makeCanvas(ctx, listeners) {
   return {
     getContext: function () { return ctx; },
     getBoundingClientRect: function () { return { width: CW, height: CH, left: 0, top: 0 }; },
     width: 0, height: 0, clientWidth: CW, clientHeight: CH,
-    style: {}, addEventListener: function () {}, removeEventListener: function () {}
+    style: {}, addEventListener: function (type, fn) { if (listeners) listeners[type] = fn; }, removeEventListener: function () {}
   };
 }
 
@@ -57,6 +58,8 @@ function makeCanvas(ctx) {
 var passed = 0, failed = 0, failures = [], curr = "";
 function group(name) { curr = name; }
 function ok(cond, msg) { if (cond) { passed++; } else { failed++; failures.push(curr + " :: " + msg); } }
+function eq(a, b, msg) { ok(a === b, msg + " (got " + JSON.stringify(a) + ", want " + JSON.stringify(b) + ")"); }
+function lt(a, b, msg) { ok(a < b, msg + " (got " + a + " < " + b + "?)"); }
 function near(a, b, eps) { return Math.abs(a - b) <= (eps == null ? 0.75 : eps); }
 
 // Contract geometry (documented, matches waterlineY in js/render.js): the waterline spans
@@ -184,16 +187,17 @@ ok(dryPlate.pIdx >= 0 && dryPlate.before === "clip", "the photographic-plate cli
 // frames (spaced wider than MAX_DT to simulate fast transport / slow frames): the fish
 // must visibly change position (frame-driven locomotion) yet never escape the tank bounds.
 group("live locomotion: sprite fish moves across frames, stays inside the tank");
-function clownTranslateX(log) {
+function spriteTranslateX(log, srcPattern) {
   var di = -1;
   for (var i = 0; i < log.length; i++) {
     var e = log[i];
-    if (e.op === "drawImage" && e.args[0] && /ocellaris|clownfish/.test(String(e.args[0]._src || ""))) di = i;
+    if (e.op === "drawImage" && e.args[0] && srcPattern.test(String(e.args[0]._src || ""))) di = i;
   }
   if (di < 0) return null;
   for (var j = di - 1; j >= 0; j--) if (log[j].op === "translate") return log[j].args[0]; // fish x in px
   return null;
 }
+function clownTranslateX(log) { return spriteTranslateX(log, /ocellaris|clownfish/); }
 (function () {
   var VOL = PA.DATA.TIERS.nano20.volumeL;
   var state = {
@@ -230,7 +234,7 @@ group("feeding emphasis lifecycle (createRenderer draw path)");
 var VOLF = PA.DATA.TIERS.nano20.volumeL;
 var FPX = 0.5 * CW, FPY = 0.4 * CH; // pellet pixel center (cssW==CW, cssH==CH; see waterline geometry)
 function foodStateAt(n) {
-  var food = []; for (var i = 0; i < n; i++) food.push({ x: 0.5, y: 0.4, amount: 1 });
+  var food = []; for (var i = 0; i < n; i++) food.push({ id: i + 1, x: 0.5, y: 0.4, amount: 1, ageDays: 0, sunk: false });
   return { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOLF, par: 0, flow: 0 }, food: food };
 }
 function arcsAt(log, x, y) {
@@ -243,16 +247,19 @@ function arcsAt(log, x, y) {
   var r = PA.createRenderer(makeCanvas(makeCtx(flog)), function () { return st; }, function () {});
   r.draw(1000);
   ok(arcsAt(flog, FPX, FPY) === 1, "first ready frame with existing food draws the pellet only — no false flash");
-  flog.length = 0; st.food.push({ x: 0.5, y: 0.4, amount: 1 }); // a real feed: 1 -> 2
+  flog.length = 0; st.food.push({ id: 2, x: 0.5, y: 0.4, amount: 1 }); // a real feed: 1 -> 2
   r.draw(1100);
-  ok(arcsAt(flog, FPX, FPY) === 4, "a later feed (count increase) flashes: halo + pellet for each of the two pellets");
-  flog.length = 0; st.food.push({ x: 0.5, y: 0.4, amount: 1 }); // a second real feed: 2 -> 3
+  ok(arcsAt(flog, FPX, FPY) === 3, "a later feed flashes only its new stable pellet id");
+  flog.length = 0; st.food.push({ id: 3, x: 0.5, y: 0.4, amount: 1 }); // a second real feed: 2 -> 3
   r.draw(1200);
-  ok(arcsAt(flog, FPX, FPY) === 6, "a second feed before the pellets clear retriggers the flash (halo + pellet x3)");
+  ok(arcsAt(flog, FPX, FPY) === 5, "a second stable pellet id retriggers its own flash");
   flog.length = 0; r.draw(1200 + 2 * 1100); // well past the emphasis window
   ok(arcsAt(flog, FPX, FPY) === 3, "the emphasis expires: three pellets drawn without halos");
   flog.length = 0; r.resize(); r.draw(1200 + 2 * 1100 + 1); // resize must not fabricate a feed
   ok(arcsAt(flog, FPX, FPY) === 3, "resize does not retrigger the flash (still three plain pellets)");
+  flog.length = 0; st.food.shift(); st.food.push({ id: 4, x: 0.5, y: 0.4, amount: 1 });
+  r.draw(1200 + 2 * 1100 + 100);
+  ok(arcsAt(flog, FPX, FPY) === 4, "a new id flashes even when total pellet count is unchanged");
   r.destroy();
 
   var rlog = []; // a recreated renderer over a save that already has pellets
@@ -260,6 +267,59 @@ function arcsAt(log, x, y) {
   r2.draw(1000);
   ok(arcsAt(rlog, FPX, FPY) === 2, "a recreated renderer with existing food draws pellets only — no false flash on its first frame");
   r2.destroy();
+})();
+
+/* ----- real feeding loop: input -> fall -> pursuit -> visual contact -> nutrition ----- */
+group("feeding physics: every empty-water tap drops; starter fish pursues and eats on contact");
+(function () {
+  var s = PA.createState({ habitat: "amazon", seed: 77 });
+  PA.dispatch(s, { type: "SETUP_FILL" });
+  var fish = { id: s.nextId++, species: "neon_tetra", kind: "fish", ageDays: 8, stage: "juvenile", sex: "unknown",
+    hunger: 0.2, condition: 1, health: 1, alive: true, causeOfDeath: null, decayDays: 0, lastFedDay: 0, x: 0.18, y: 0.35 };
+  s.livestock.push(fish);
+  var sent = [], listeners = {}, log = [];
+  var r = PA.createRenderer(makeCanvas(makeCtx(log), listeners), function () { return s; }, function (a) { sent.push(a); PA.dispatch(s, a); });
+  r.draw(1000); // establish an empty renderer baseline before feeding
+  listeners.pointerdown({ clientX: CW * 0.82, clientY: CH * 0.2 });
+  eq(sent[0].type, "FEED_AT", "empty-water pointer dispatches FEED_AT");
+  eq(s.food.length, 1, "the valid pointer creates one visible pellet");
+  var foodId = s.food[0].id, h0 = fish.hunger, firstX = null, towardX = null, consumedAt = null;
+  for (var i = 1; i <= 180 && s.food.length; i++) {
+    PA.step(s, 0.05);
+    log.length = 0; r.draw(1000 + i * 50);
+    var tx = spriteTranslateX(log, /neon|tetra/);
+    if (tx != null && firstX == null) firstX = tx;
+    if (tx != null && i === 20) towardX = tx;
+    if (sent.some(function (a) { return a.type === "CONSUME_FOOD"; })) consumedAt = 1000 + i * 50;
+  }
+  r.destroy();
+  ok(consumedAt == null || consumedAt >= 1600, "contact cannot consume before the 600ms acknowledgement floor");
+  ok(towardX != null && firstX != null && towardX > firstX, "a starter-hunger fish visibly pursues the pellet");
+  var eats = sent.filter(function (a) { return a.type === "CONSUME_FOOD"; });
+  eq(eats.length, 1, "visual contact emits exactly one consume action");
+  eq(eats.length ? eats[0].foodId : null, String(foodId), "contact names the stable pellet id");
+  eq(s.food.length, 0, "contact removes the pellet from the next authoritative frame");
+  lt(fish.hunger, h0, "hunger drops only when contact nutrition is applied");
+})();
+(function () {
+  var s = PA.createState({ habitat: "reef", seed: 78 }); PA.dispatch(s, { type: "SETUP_FILL" });
+  var sent = [], listeners = {}, r = PA.createRenderer(makeCanvas(makeCtx([]), listeners), function () { return s; }, function (a) { sent.push(a); PA.dispatch(s, a); });
+  r.draw(1000);
+  for (var i = 0; i < 3; i++) listeners.pointerdown({ clientX: 80 + i * 90, clientY: 70 });
+  r.draw(1050); r.destroy();
+  eq(sent.filter(function (a) { return a.type === "FEED_AT"; }).length, 3, "three valid empty-water taps dispatch three drops");
+  eq(s.food.length, 3, "no valid rapid tap is silently lost before paint");
+})();
+(function () {
+  var VOL = PA.DATA.TIERS.nano20.volumeL, sent = [];
+  var s = { habitat: "reef", tier: "nano20", time: { days: 5.57 }, water: { levelL: VOL, par: 0, flow: 0 }, food: [],
+    livestock: [{ id: 9, species: "ocellaris", x: 0.5, y: 0.4, hunger: 0.2, health: 1 }] };
+  var r = PA.createRenderer(makeCanvas(makeCtx([])), function () { return s; }, function (a) { sent.push(a); });
+  r.draw(1000); s.food.push({ id: 10, x: 0.5, y: 0.4, amount: 1, ageDays: 0, sunk: false });
+  r.draw(1050); r.draw(1599);
+  eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 0, "even immediate overlap remains visible for the full acknowledgement floor");
+  r.draw(1650); r.destroy();
+  eq(sent.filter(function (a) { return a.type === "CONSUME_FOOD"; }).length, 1, "overlap emits contact once the acknowledgement floor passes");
 })();
 
 /* -------- report -------- */

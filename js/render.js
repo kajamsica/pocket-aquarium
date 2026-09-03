@@ -5,9 +5,9 @@
  *
  * Design rules honoured here:
  *   - Reads the simulation via getState(); NEVER mutates authoritative state.
- *   - The only writes to the world happen through dispatch(), and only from an
- *     explicit pointer gesture: {type:'SELECT_ENTITY', id} on a hit, otherwise
- *     {type:'FEED_AT', x, y} with x/y in normalized [0,1] tank space.
+ *   - The only writes to the world happen through dispatch(): pointer gestures
+ *     select or drop food, and renderer-observed fish/pellet contact emits the
+ *     explicit CONSUME_FOOD event that applies nutrition in the simulation.
  *   - All animal/coral/microfauna motion lives in a renderer-owned visual layer
  *     keyed by stable entity id; positions are seeded deterministically from the
  *     id so a given creature keeps a stable home across reloads.
@@ -69,6 +69,7 @@
   // easing linearly to 0 across `dur` ms, then staying 0. Renderer lifecycle (first-frame baseline,
   // real-feed retrigger, expiry) is proven through PA.createRenderer in tests/render-drawpath.test.js.
   var FEED_FLASH_MS = 1100;
+  var FOOD_ACK_MS = 600;
   function feedFlash(now, until, dur) {
     if (!(dur > 0) || !(until > now)) return 0;
     var t = (until - now) / dur;
@@ -509,8 +510,10 @@
     var burrow = habitat === "marine" && (hasGoby || hasShrimp);
 
     // Food / detritus particles.
-    var food = asArray(firstVal(st, ["food", "pellets", "feed"])).filter(function (p) { return p && typeof p === "object"; }).map(function (p) {
-      return { x: to01n(firstNum(p, ["x", "pos.x"], NaN)), y: to01n(firstNum(p, ["y", "pos.y"], NaN)), amt: firstNum(p, ["amount", "size", "mass"], 1) };
+    var food = asArray(firstVal(st, ["food", "pellets", "feed"])).filter(function (p) { return p && typeof p === "object"; }).map(function (p, i) {
+      var id = firstVal(p, ["id", "uid", "key"]);
+      return { id: String(id == null ? "legacy:" + i : id), x: to01n(firstNum(p, ["x", "pos.x"], NaN)), y: to01n(firstNum(p, ["y", "pos.y"], NaN)),
+        amt: firstNum(p, ["amount", "size", "mass"], 1), ageDays: firstNum(p, ["ageDays", "age"], 0), sunk: !!firstVal(p, ["sunk", "settled"]) };
     }).filter(function (p) { return p.x != null && p.y != null; });
 
     // Eggs and fry: counts are enough; positions derived deterministically.
@@ -563,7 +566,8 @@
     var levelHist = [];                 // visual-only trend smoothing
     var hitTargets = [];                // rebuilt each frame for pointer routing
     var prevNow = null, lastRenderAt = -1e9, rafId = 0, destroyed = false;
-    var lastFoodCount = 0, feedFlashUntil = 0, foodBaselined = false; // runtime-only feeding emphasis (never persisted)
+    var foodSeenAt = Object.create(null), foodFlashUntil = Object.create(null), consumeSent = Object.create(null);
+    var foodBaselined = false; // runtime-only acknowledgement/contact state (never persisted)
 
     var reducedMQ = (typeof window !== "undefined" && window.matchMedia)
       ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -762,7 +766,7 @@
       return bd < 0.2 ? best : null;
     }
 
-    function updateActors(view, dt) {
+    function updateActors(view, dt, now) {
       var dts = clamp(dt, 0, MAX_DT);
       // Ease the global stage scale so size changes across a resize interpolate.
       renderScale = renderScale > 0 ? renderScale + (scale - renderScale) * Math.min(1, dts / 260) : scale;
@@ -785,10 +789,14 @@
         }
 
         if (reduced) {
-          // Static but meaningful layout: settle onto seeded homes / anchors.
+          // Reduced motion still preserves the feeding interaction with one calm,
+          // linear approach; it removes ambient motion, not husbandry semantics.
           var home = homeFor(rec, a, view);
-          a.x += (home.x - a.x) * 0.5; a.y += (home.y - a.y) * 0.5;
+          var quietFood = nearestFood(view, a, rec);
+          if (quietFood) { home = quietFood; }
+          a.x += (home.x - a.x) * Math.min(0.5, dts / 700); a.y += (home.y - a.y) * Math.min(0.5, dts / 700);
           a.faceTarget = a.face = home.x >= 0.5 ? -1 : 1;
+          maybeConsume(rec, a, quietFood, arch, now);
           continue;
         }
 
@@ -800,8 +808,8 @@
         // Food attraction eases in and out via a forage gain (0..1) so a pellet
         // blends into the steering over ~0.5s instead of instantly hijacking the
         // fish; interest fades as the fish is fed or the pellet drifts off.
-        var pellet = nearestFood(view, a, arch);
-        var wantForage = (pellet && hungerOf(ent) > 0.25) ? hungerOf(ent) : 0;
+        var pellet = nearestFood(view, a, rec);
+        var wantForage = pellet ? hungerOf(ent) : 0;
         a.forage += clamp(wantForage - a.forage, -dts / 900, dts / 500);
         if (pellet && a.forage > 0.02) {
           var fdx = pellet.x - a.x, fdy = pellet.y - a.y, fd = Math.hypot(fdx, fdy) || 1e-4;
@@ -894,6 +902,7 @@
         a.swim += dts * (0.006 + a.eff * 0.013);              // tailbeat frequency rises with effort
 
         updateFace(a, dts);
+        maybeConsume(rec, a, pellet, arch, now);
       }
     }
 
@@ -918,17 +927,24 @@
       return { x: a.homeX, y: a.homeY };
     }
 
-    function nearestFood(view, a, arch) {
+    function nearestFood(view, a, rec) {
       if (!view.food.length) return null;
+      var sp = PA.DATA && PA.DATA.SPECIES && PA.DATA.SPECIES[rec.ent.species];
+      if (!sp || sp.kind !== "fish" || hungerOf(rec.ent) <= 0.05) return null;
       var best = null, bd = Infinity;
       for (var i = 0; i < view.food.length; i++) {
         var p = view.food[i];
-        // bottom feeders only chase food that has sunk low
-        if ((arch.layer === "bottom" || arch.layer === "benthic") && p.y < SUB_TOP - 0.2) continue;
+        if (sp.layer === "bottom" && !p.sunk) continue;
         var d = Math.hypot(p.x - a.x, p.y - a.y);
         if (d < bd) { bd = d; best = p; }
       }
-      return bd < 0.5 ? best : null;
+      return best;
+    }
+    function maybeConsume(rec, a, pellet, arch, now) {
+      if (!pellet || consumeSent[pellet.id] || now - foodSeenAt[pellet.id] < FOOD_ACK_MS) return;
+      if (Math.hypot(pellet.x - a.x, pellet.y - a.y) > 0.025 + arch.rel * 0.18) return;
+      consumeSent[pellet.id] = true;
+      send({ type: "CONSUME_FOOD", foodId: pellet.id, eaterId: rec.id });
     }
 
     function updateAmbient(view, dt) {
@@ -959,8 +975,9 @@
       // record water level for a visual trend arrow when the sim gives none
       levelHist.push(view.level); if (levelHist.length > 90) levelHist.shift();
 
+      syncFood(view, now);
       reconcile(view);
-      updateActors(view, dt);
+      updateActors(view, dt, now);
       updateAmbient(view, dt);
 
       var pal = PAL[view.habitat];
@@ -1577,20 +1594,19 @@
     }
 
     /* ------------------------------ food --------------------------------- */
-    function drawFood(view, now) {
-      // A fresh pellet (food count rose since last frame) opens a brief, runtime-only emphasis
-      // window so a cold player sees the food land and the fish turn to it. Purely visual —
-      // FEED_AT stays the authoritative feeding action and nothing here touches state or the save.
-      // The FIRST ready frame only BASELINES the count (adopting any pellets a save already holds),
-      // so loading a save or recreating the renderer never fabricates a feed response; only a later
-      // increase flashes.
-      var fc = view.food.length;
+    function syncFood(view, now) {
+      var live = Object.create(null);
+      for (var i = 0; i < view.food.length; i++) {
+        var id = view.food[i].id; live[id] = true;
+        if (foodSeenAt[id] == null) { foodSeenAt[id] = now; if (foodBaselined) foodFlashUntil[id] = now + FEED_FLASH_MS; }
+      }
+      for (var k in foodSeenAt) if (!live[k]) { delete foodSeenAt[k]; delete foodFlashUntil[k]; delete consumeSent[k]; }
       if (!foodBaselined) foodBaselined = true;
-      else if (fc > lastFoodCount) feedFlashUntil = now + FEED_FLASH_MS;
-      lastFoodCount = fc;
-      var flash = feedFlash(now, feedFlashUntil, FEED_FLASH_MS); // 1 at the drop, easing to 0
+    }
+    function drawFood(view, now) {
       for (var i = 0; i < view.food.length; i++) {
         var p = view.food[i], x = p.x * cssW, y = p.y * cssH;
+        var flash = feedFlash(now, foodFlashUntil[p.id] || 0, FEED_FLASH_MS);
         if (flash > 0) {
           var hr = (7 + 9 * (1 - flash)) * scale; // an expanding, fading halo
           var hg = ctx.createRadialGradient(x, y, 0.5, x, y, hr);

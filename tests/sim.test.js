@@ -301,27 +301,59 @@ group("equipment + tier purchases change coefficients/outcomes");
  * 6. Feeding, uneaten decay, hunger->condition->health->death,
  *    corpse ammonia, dead removal
  * ============================================================ */
-group("feeding + FEED_AT alias + uneaten decay");
+group("feeding: drop, fall, explicit contact nutrition, decay, persistence");
 (function () {
-  var s = cycledFresh(60); addAdult(s, "neon_tetra", 6);
-  s.livestock.forEach(function (a) { a.hunger = 0.9; });
-  var before = s.livestock.reduce(function (n, a) { return n + a.hunger; }, 0);
-  for (var i = 0; i < 6; i++) PA.dispatch(s, { type: "FEED", x: 0.5, y: 0.4 });
+  var s = cycledReef(60); addAdult(s, "ocellaris", 1);
+  s.livestock[0].hunger = 0.2;
+  var before = s.livestock[0].hunger, lastFed = s.livestock[0].lastFedDay;
+  PA.dispatch(s, { type: "FEED_AT", x: 0.8, y: 0.7 });
+  var pellet = s.food[0], y0 = pellet.y;
+  ok(pellet.id > 0, "FEED_AT creates a stable pellet id");
+  approx(pellet.x, 0.8, 1e-9, "pellet enters at tapped horizontal position");
+  ok(y0 < 0.1, "pellet enters at the water surface, not the tapped depth");
+  eq(s.livestock[0].hunger, before, "dropping food does not change hunger");
   PA.stepDays(s, 0.1);
-  var after = s.livestock.reduce(function (n, a) { return n + a.hunger; }, 0);
-  lt(after, before, "fed fish claim pellets and get less hungry");
+  gt(pellet.y, y0, "pellet falls monotonically through authoritative tank space");
+  ok(s.livestock[0].hunger >= before, "time and distance alone never lower hunger as if the pellet were eaten");
+  eq(s.livestock[0].lastFedDay, lastFed, "last-fed time waits for contact");
 
-  // FEED_AT (renderer's action type) must work identically
-  var r = cycledReef(61); var fc = r.food.length;
-  PA.dispatch(r, { type: "FEED_AT", x: 0.5, y: 0.4 });
-  gt(r.food.length, fc, "renderer-sent FEED_AT adds food to the water");
+  PA.dispatch(s, { type: D.ACTIONS.CONSUME_FOOD, foodId: pellet.id, eaterId: s.livestock[0].id });
+  eq(s.food.length, 0, "a valid visual-contact action removes exactly its pellet");
+  lt(s.livestock[0].hunger, before, "nutrition occurs only on explicit contact");
+  gt(s.livestock[0].lastFedDay, lastFed, "contact updates last-fed time");
+  var fedHunger = s.livestock[0].hunger;
+  PA.dispatch(s, { type: D.ACTIONS.CONSUME_FOOD, foodId: pellet.id, eaterId: s.livestock[0].id });
+  eq(s.livestock[0].hunger, fedHunger, "duplicate contact is a no-op");
 
-  // uneaten food decays into ammonia in an unstocked tank
-  var u = cycledFresh(62); var amm0 = u.water.ammonia;
-  for (var j = 0; j < 3; j++) PA.dispatch(u, { type: "FEED", x: 0.5, y: 0.4 });
-  PA.stepDays(u, 0.8);
-  gt(u.water.ammonia, amm0, "uneaten food decomposes into ammonia");
-  eq(u.food.length, 0, "decomposed pellets are removed from the water");
+  var bottom = cycledFresh(61); addAdult(bottom, "pygmy_cory", 1); bottom.livestock[0].hunger = 0.8;
+  PA.dispatch(bottom, { type: "FEED_AT", x: 0.5 });
+  PA.dispatch(bottom, { type: D.ACTIONS.CONSUME_FOOD, foodId: bottom.food[0].id, eaterId: bottom.livestock[0].id });
+  eq(bottom.food.length, 1, "bottom feeder cannot consume a floating pellet");
+  PA.stepDays(bottom, 0.4); ok(bottom.food[0].sunk, "falling pellet settles on the substrate");
+  PA.dispatch(bottom, { type: D.ACTIONS.CONSUME_FOOD, foodId: bottom.food[0].id, eaterId: bottom.livestock[0].id });
+  eq(bottom.food.length, 0, "bottom feeder can consume the settled pellet");
+
+  // Uneaten amount has proportional chemistry consequences; consumed food has none.
+  function decayTank(n) {
+    var u = freshBase(62); u.cycle.lifeSupport = false;
+    for (var j = 0; j < n; j++) PA.dispatch(u, { type: "FEED", x: 0.5 });
+    PA.stepDays(u, 0.61); return u;
+  }
+  var one = decayTank(1), three = decayTank(3);
+  eq(one.food.length + three.food.length, 0, "expired uneaten pellets are removed");
+  approx(three.water.ammonia / one.water.ammonia, 3, 0.01, "three uneaten portions create three times the ammonia");
+  approx(three.water.phosphate / one.water.phosphate, 3, 0.01, "three uneaten portions create three times the phosphate");
+
+  var saved = cycledReef(63); PA.dispatch(saved, { type: "FEED_AT", x: 0.37 }); PA.stepDays(saved, 0.1);
+  var restored = PA.sanitizeState(JSON.parse(JSON.stringify(saved)));
+  eq(restored.food.length, 1, "active food survives a save/sanitize round trip");
+  eq(restored.food[0].id, saved.food[0].id, "food identity survives reload");
+  approx(restored.food[0].y, saved.food[0].y, 1e-9, "food fall position survives reload");
+  gt(restored.nextId, restored.food[0].id, "nextId cannot collide with restored food");
+
+  var a = JSON.parse(JSON.stringify(restored)), b = JSON.parse(JSON.stringify(restored));
+  PA.stepDays(a, 0.17); PA.stepDays(b, 0.17);
+  eq(JSON.stringify(a), JSON.stringify(b), "pellet physics remains deterministic for identical state and elapsed time");
 })();
 
 group("starvation -> condition -> health -> death -> corpse -> removal");
