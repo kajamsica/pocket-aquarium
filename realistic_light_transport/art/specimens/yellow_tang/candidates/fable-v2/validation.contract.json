@@ -589,8 +589,8 @@
     ]
   },
   "render": {
-    "preview": "/private/tmp/pocket-aquarium-lane-yellow-tang/realistic_light_transport/art/specimens/yellow_tang/candidates/fable-v2/renders/author-preview.png",
-    "threeView": "/private/tmp/pocket-aquarium-lane-yellow-tang/realistic_light_transport/art/specimens/yellow_tang/candidates/fable-v2/renders/three-view.png",
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/yellow_tang/candidates/fable-v2/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/yellow_tang/candidates/fable-v2/renders/three-view.png",
     "boundsMin": [
       -0.11500149220228195,
       -0.032767441123723984,

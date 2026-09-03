@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "gem_tang",
+  "sourceSha256": "0830c3a69c457aaac7dc3c8b8fa9811c235122063d6437b6f379d371624d159f",
+  "objects": [
+    {
+      "name": "PA_gem_tang_Body",
+      "vertexCount": 2930,
+      "triangleCount": 5856,
+      "vertexDigest": "0f37164669edcb63b6570a05cd0f751752c763511e120db423676419f09c762f",
+      "topologyDigest": "11abda2bca295cfc934a172006f797e502b885fa929c9621867decccbdef352b",
+      "uvDigest": "f9b75db3f26c511bc22270854fd9b843601259b13764d1a3ef1f742a3bc7f6f0",
+      "weightDigest": "88c7e36a74ac74a7a17e5232ec5dd29d7a5c90c2aa5aacd05a676f0ba9934b10",
+      "materials": [
+        "PA_gem_tang_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_gem_tang_Details",
+      "vertexCount": 1200,
+      "triangleCount": 2352,
+      "vertexDigest": "30fe591d748f81acdf8e53c3f4fcd132f7bfbb72b21d1f64c41a6cad0d2bb925",
+      "topologyDigest": "95853ef4acab2c2b1ce8f2fa751cd11eafef2e14722d0fe2059258e63936b9ac",
+      "uvDigest": "ac0e8a61319daebae9d310b55cff91305df201d9907724226320ac3080d08ca0",
+      "weightDigest": "1f343ff715a3a821fbb4d77084a7b4b1a3c19bab93168f8d0a9ebfecc224e72c",
+      "materials": [
+        "PA_gem_tang_Adornment",
+        "PA_gem_tang_Cue",
+        "PA_gem_tang_Eye",
+        "PA_gem_tang_Glint",
+        "PA_gem_tang_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_gem_tang_Fins",
+      "vertexCount": 592,
+      "triangleCount": 1040,
+      "vertexDigest": "012cbf1b1ead19882ac31503b605dfceee66c5d9a46fc084e6be4a1406196e82",
+      "topologyDigest": "6121c1380422560ea66f8d62b46031f67329d1c8ff603dc1c3545e254873e146",
+      "uvDigest": "82346d10b552d6c16c1d32e29e60083da57664abc21b1b73b72ff5aa7c94b843",
+      "weightDigest": "efb0dae454346e201daea01b86ed99d2ec3ac2704149f0b92944094d128a6630",
+      "materials": [
+        "PA_gem_tang_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_gem_tang_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "1a3d04d88cef65ed622b571f5ffd02e144bc0a956270526bd7a82ecda757e9fe"
+  },
+  "geometryDigest": "88bfbd8f51c84e523f69f7062c4fb9207473499788def105c54855b39771a824",
+  "variantId": null
+}

@@ -15,7 +15,7 @@
   "candidate": {
     "state": "awaiting_user_acceptance",
     "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
-    "candidateHash": "8490cb6b302f6eb38405b52dce14a75808b9c6d1917d6c9a350b694982c7d404",
+    "candidateHash": "d3984423eed3eafca444e0bace7792a85a861ee20e2dadddd58376b0c0508df0",
     "validationReceipt": "validation-receipt.json",
     "determinism": "passed"
   },
@@ -77,11 +77,11 @@
   },
   "sourceSha256": "2311aafd0766624783d4f8896bd3af1433c3ef751ac8dbf6eb7233fbfcb7f827",
   "sourceReferencesSha256": "bb335f5237fd3c0ec5d95e36deee345b41de49a05ecf43317c678891f45599e7",
-  "sourceBlendSha256": "7dba173f212724542414451591367f3c1231f4dcfac7e75a083a5f5b311d3f98",
+  "sourceBlendSha256": "44363fc805e79bdcbaa03b699c329ec3312747325e6d94973018e2c622e7e2a5",
   "builder": {
-    "entrypoint": "34b433bd1d76b0f1d4110b48d61d71fbb13b3803c31ade6a25f14ece2449b1b7",
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
     "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
-    "plan": "8d1064d6cbad8c46b15d1f1be5ae6fd2b0e5aa5de9653f5e1b418386c3843cd7",
+    "plan": "f61594826c115ed6b6c14fcdd3534578652f64d835a7593b782a6fd991fe17dd",
     "speciesBackend": "5bee200c3811e8490fbe0fb626cac6ab192a619c2ff6503c16af701b11384c95",
     "lib": {
       "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
@@ -96,12 +96,12 @@
       "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
       "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
       "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
-      "textures.py": "0bfc25d9cd17e898bfec0b97ab0d7b3d61ef8ca9277e9f1760e58f501d304ea1"
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
     },
     "builderVersion": "catalog-author/1.0.0"
   },
   "runtimeGlbSha256": {
-    "lod1": "15e92d0b567dc88587b6431bbd73a122dd0be8b24099fd728a2ae9cb1e9772fe"
+    "lod1": "0fe62d2b8bf45ce6cbced5fc574de2d210658208946b56b74bd6ef40e60902b1"
   },
   "coordinateContract": {
     "unitMeters": 1,
@@ -122,11 +122,11 @@
     },
     {
       "path": "textures/body-normal.png",
-      "sha256": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+      "sha256": "7959434014c7d1ff84912871e4e33bcd0745937ffaa4551c42674dad42a9b414"
     },
     {
       "path": "textures/body-roughness.png",
-      "sha256": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+      "sha256": "c4728e00e77e7dd2e868121518a6c3fd11d700ea4b9c89f47a576704cadfc746"
     },
     {
       "path": "textures/fin-atlas.png",
@@ -134,7 +134,7 @@
     },
     {
       "path": "textures/fin-normal.png",
-      "sha256": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+      "sha256": "b60620189462f71bbf6a3d2fd246771618ad909c05c774967a5b5797939f7c14"
     }
   ],
   "statistics": {
@@ -154,7 +154,7 @@
       "PA_yellow_tang_Fins": 592,
       "PA_yellow_tang_Details": 1200
     },
-    "runtimeBytes": 981432
+    "runtimeBytes": 1880668
   },
   "clipRoles": {
     "idle": "idle",

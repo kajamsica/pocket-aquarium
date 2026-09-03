@@ -1,12 +1,12 @@
 {
   "schemaVersion": "pocket-aquarium.source-references/v1",
   "speciesId": "gem_tang",
-  "revision": 1,
-  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source.",
+  "revision": 2,
+  "policy": "References informed proportions, appendage layout and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture or tracing source. fable-v2 body depth (about 0.58 of standard length) and the distinct proboscis-like snout follow the user's 2026-09-03 refinement notes and the Zebrasoma genus descriptions (body depth 1.4 to 1.75 in SL) summarised on FishBase.",
   "sources": [
     {
       "id": "WORMS-219680",
-      "title": "Zebrasoma gemmatum (Valenciennes, 1835) taxon record",
+      "title": "Zebrasoma gemmatum (Valenciennes, 1835) taxon record (accepted; vernacular spotted tang)",
       "publisher": "World Register of Marine Species",
       "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219680",
       "accessedAt": "2026-09-03",
@@ -16,7 +16,7 @@
     },
     {
       "id": "FISHBASE-ZEBRASOMA_GEMMATUM",
-      "title": "Zebrasoma gemmatum species summary (max length 22.0 cm TL)",
+      "title": "Zebrasoma gemmatum species summary (max length 22.0 cm TL, Ref. 3145 Randall 1986; dorsal spines 4, soft rays 27-28; anal spines 3, soft rays 24-25; body shape short and/or deep)",
       "publisher": "FishBase",
       "url": "https://www.fishbase.se/summary/Zebrasoma-gemmatum.html",
       "accessedAt": "2026-09-03",
@@ -26,15 +26,35 @@
     },
     {
       "id": "COMMONS-ZEBRASOMA_GEMMATUM",
-      "title": "Category:Zebrasoma gemmatum (openly licensed photographs, proportion study only)",
+      "title": "Category:Zebrasoma gemmatum (9 openly licensed files; side-view proportion study only: disc depth, forehead, snout projection, eye position, fin outline, spot size and density)",
       "publisher": "Wikimedia Commons",
       "url": "https://commons.wikimedia.org/wiki/Category:Zebrasoma_gemmatum",
       "accessedAt": "2026-09-03",
       "evidenceClass": "open_reference_imagery",
       "allowedUse": "proportion_reference_only",
       "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-FMIB-46907",
+      "title": "File:FMIB 46907 Acanthure a pierreries.jpeg (Cuvier and Valenciennes plate of Acanthurus gemmatus via the Freshwater and Marine Image Bank; erect-fin side profile, proportion only)",
+      "publisher": "Wikimedia Commons / University of Washington Freshwater and Marine Image Bank",
+      "url": "https://commons.wikimedia.org/wiki/File:FMIB_46907_Acanthure_a_pierreries.jpeg",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Public domain (pre-1929 plate); nothing copied"
+    },
+    {
+      "id": "COMMONS-GEM-TANG-PHOTO",
+      "title": "File:Gem Tang - Zebrasoma gemmatum.jpg (in situ adult, side view; body depth, snout and spot scale checked, proportion only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Gem_Tang_-_Zebrasoma_gemmatum.jpg",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Creative Commons per file page; nothing copied"
     }
   ],
-  "referenceGrade": "C",
-  "referenceGradeRationale": "Few openly licensed calibrated photographs exist; spot pattern and depth are approximated from descriptions."
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Openly licensed side-view references (a public-domain plate with erect fins and an in situ photograph) were consulted for disc depth, snout projection, eye position and spot scale; no calibrated top or front references exist, so lateral width and cross-section follow the Zebrasoma genus pattern. Size from FishBase (22 cm TL max)."
 }

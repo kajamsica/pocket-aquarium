@@ -2,53 +2,53 @@
   "asset": "purple_tang",
   "variant": null,
   "candidateDir": "art/specimens/purple_tang/candidates/fable-v2",
-  "startedAt": "2026-09-03T21:15:50.434Z",
-  "pid": 88550,
+  "startedAt": "2026-09-03T21:55:47.522Z",
+  "pid": 26249,
   "stages": [
     {
       "stage": "author",
       "exitCode": 0,
-      "durationMs": 106161,
+      "durationMs": 4133,
       "tail": "Blender quit"
     },
     {
       "stage": "source",
       "exitCode": 0,
-      "durationMs": 154896,
+      "durationMs": 6392,
       "tail": "Blender quit"
     },
     {
       "stage": "export",
       "exitCode": 0,
-      "durationMs": 23194,
+      "durationMs": 1676,
       "tail": "Blender quit"
     },
     {
       "stage": "runtime",
       "exitCode": 0,
-      "durationMs": 1247,
+      "durationMs": 1469,
       "tail": "Blender quit"
     },
     {
       "stage": "determinism",
       "exitCode": 0,
-      "durationMs": 1537,
+      "durationMs": 3569,
       "tail": "Blender quit"
     },
     {
       "stage": "determinism-compare",
       "exitCode": 0,
-      "durationMs": 15021,
+      "durationMs": 2108,
       "tail": "Blender quit"
     },
     {
       "stage": "receipt",
       "exitCode": 0,
-      "durationMs": 1683,
+      "durationMs": 1382,
       "tail": "Blender quit"
     }
   ],
-  "finishedAt": "2026-09-03T21:20:54.191Z",
+  "finishedAt": "2026-09-03T21:56:08.255Z",
   "status": "passed",
   "failure": null
 }

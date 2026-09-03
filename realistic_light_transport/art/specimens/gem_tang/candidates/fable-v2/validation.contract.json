@@ -1,16 +1,16 @@
 {
   "schemaVersion": "pocket-aquarium.validation-contract/v1",
-  "speciesId": "purple_tang",
-  "rig": "PA_purple_tang_Rig",
-  "root": "PA_purple_tang_Root",
+  "speciesId": "gem_tang",
+  "rig": "PA_gem_tang_Rig",
+  "root": "PA_gem_tang_Root",
   "meshes": [
-    "PA_purple_tang_Body",
-    "PA_purple_tang_Fins",
-    "PA_purple_tang_Details"
+    "PA_gem_tang_Body",
+    "PA_gem_tang_Fins",
+    "PA_gem_tang_Details"
   ],
   "closedParts": [
     {
-      "object": "PA_purple_tang_Body",
+      "object": "PA_gem_tang_Body",
       "group": "part_body",
       "volumeFloor": 0.7
     }
@@ -18,84 +18,84 @@
   "clearance": [
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_head"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_midbody"
       ]
     },
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_head"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_peduncle"
       ]
     },
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_head"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_caudal"
       ]
     },
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_anterior"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_peduncle"
       ]
     },
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_anterior"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_caudal"
       ]
     },
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_midbody"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_caudal"
       ]
     },
     {
       "a": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "zone_head"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal"
       ],
-      "minDistance": 0.00225625,
+      "minDistance": 0.0020625,
       "label": "head_tail_clearance"
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_dorsal"
       ],
@@ -103,12 +103,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_anal"
       ],
@@ -116,12 +116,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_caudal"
       ],
@@ -129,12 +129,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_L",
         "attach_pectoral_L"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_pectoral_L"
       ],
@@ -142,12 +142,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_R",
         "attach_pectoral_R"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_pectoral_R"
       ],
@@ -155,12 +155,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_L",
         "attach_pelvic_L"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_pelvic_L"
       ],
@@ -168,12 +168,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_R",
         "attach_pelvic_R"
       ],
       "b": [
-        "PA_purple_tang_Body",
+        "PA_gem_tang_Body",
         "part_body",
         "attach_pelvic_R"
       ],
@@ -181,12 +181,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
@@ -194,12 +194,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
@@ -207,12 +207,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_L",
         "attach_pectoral_L"
       ],
@@ -220,12 +220,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_R",
         "attach_pectoral_R"
       ],
@@ -233,12 +233,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_L",
         "attach_pelvic_L"
       ],
@@ -246,12 +246,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_dorsal",
         "attach_dorsal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_R",
         "attach_pelvic_R"
       ],
@@ -259,12 +259,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
@@ -272,12 +272,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_L",
         "attach_pectoral_L"
       ],
@@ -285,12 +285,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_R",
         "attach_pectoral_R"
       ],
@@ -298,12 +298,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_L",
         "attach_pelvic_L"
       ],
@@ -311,12 +311,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_anal",
         "attach_anal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_R",
         "attach_pelvic_R"
       ],
@@ -324,12 +324,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_L",
         "attach_pectoral_L"
       ],
@@ -337,12 +337,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_R",
         "attach_pectoral_R"
       ],
@@ -350,12 +350,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_L",
         "attach_pelvic_L"
       ],
@@ -363,12 +363,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_caudal",
         "attach_caudal"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_R",
         "attach_pelvic_R"
       ],
@@ -376,12 +376,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_L",
         "attach_pectoral_L"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_L",
         "attach_pelvic_L"
       ],
@@ -389,12 +389,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_L",
         "attach_pectoral_L"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_R",
         "attach_pelvic_R"
       ],
@@ -402,12 +402,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_R",
         "attach_pectoral_R"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_L",
         "attach_pelvic_L"
       ],
@@ -415,12 +415,12 @@
     },
     {
       "a": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pectoral_R",
         "attach_pectoral_R"
       ],
       "b": [
-        "PA_purple_tang_Fins",
+        "PA_gem_tang_Fins",
         "fin_pelvic_R",
         "attach_pelvic_R"
       ],
@@ -429,25 +429,25 @@
   ],
   "centerPlane": [
     {
-      "object": "PA_purple_tang_Fins",
+      "object": "PA_gem_tang_Fins",
       "group": "fin_pectoral_L",
       "exclude": "attach_pectoral_L",
       "side": -1
     },
     {
-      "object": "PA_purple_tang_Fins",
+      "object": "PA_gem_tang_Fins",
       "group": "fin_pectoral_R",
       "exclude": "attach_pectoral_R",
       "side": 1
     },
     {
-      "object": "PA_purple_tang_Fins",
+      "object": "PA_gem_tang_Fins",
       "group": "fin_pelvic_L",
       "exclude": "attach_pelvic_L",
       "side": -1
     },
     {
-      "object": "PA_purple_tang_Fins",
+      "object": "PA_gem_tang_Fins",
       "group": "fin_pelvic_R",
       "exclude": "attach_pelvic_R",
       "side": 1
@@ -467,7 +467,7 @@
   },
   "size": {
     "axis": "x",
-    "meters": 0.22,
+    "meters": 0.2,
     "tolerance": 0.03,
     "kind": "adult_total_length"
   },
@@ -543,30 +543,30 @@
   "sampleStride": 2,
   "symmetry": [
     {
-      "object": "PA_purple_tang_Fins",
+      "object": "PA_gem_tang_Fins",
       "left": "fin_pectoral_L",
       "right": "fin_pectoral_R",
-      "tolerance": 0.0009025000000000001
+      "tolerance": 0.000825
     },
     {
-      "object": "PA_purple_tang_Fins",
+      "object": "PA_gem_tang_Fins",
       "left": "fin_pelvic_L",
       "right": "fin_pelvic_R",
-      "tolerance": 0.0009025000000000001
+      "tolerance": 0.000825
     }
   ],
   "variantId": null,
   "previewAction": "swim",
   "restBounds": {
     "min": [
-      -0.128997,
-      -0.039893,
-      -0.067733
+      -0.112851,
+      -0.039076,
+      -0.071459
     ],
     "max": [
-      0.090927,
-      0.039893,
-      0.081019
+      0.08522,
+      0.039076,
+      0.087225
     ]
   },
   "textures": [
@@ -577,7 +577,7 @@
     "textures/fin-normal.png"
   ],
   "notes": {
-    "bodyLengthMeters": 0.1805,
+    "bodyLengthMeters": 0.165,
     "fins": [
       "dorsal",
       "anal",
@@ -589,17 +589,17 @@
     ]
   },
   "render": {
-    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/purple_tang/candidates/fable-v2/renders/author-preview.png",
-    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/purple_tang/candidates/fable-v2/renders/three-view.png",
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/gem_tang/candidates/fable-v2/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/gem_tang/candidates/fable-v2/renders/three-view.png",
     "boundsMin": [
-      -0.12899664044380188,
-      -0.039893098175525665,
-      -0.0677332729101181
+      -0.11285120248794556,
+      -0.039076268672943115,
+      -0.07145877182483673
     ],
     "boundsMax": [
-      0.09092721343040466,
-      0.039893101900815964,
-      0.08101874589920044
+      0.08522024750709534,
+      0.039076268672943115,
+      0.08722510188817978
     ],
     "panelOrder": [
       "side",

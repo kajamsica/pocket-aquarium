@@ -6,10 +6,10 @@
   "textureHashMatch": true,
   "textures": {
     "body-albedo.png": "603b54cef229ef2e912f8c7b62199d7d1241b2f485e7ebbc10bcb1a2b2fa37f6",
-    "body-normal.png": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94",
-    "body-roughness.png": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94",
+    "body-normal.png": "5d1962a8cce3b61c650e7b8ddb55d541ca1bb8d37e9fda5c5d73015e56367d80",
+    "body-roughness.png": "152004b90cb88e4d22a51eb20255b96f8e4e59468bacd9fa7d555a144e4efecd",
     "fin-atlas.png": "8eb93d8b23271bb075766392b861cdd7fb3c3093998015d38020c8b141d6dc8c",
-    "fin-normal.png": "c91d60fe34e96e9baec401cf9697e2aba48cadac021e69623c5a09e4602b3d94"
+    "fin-normal.png": "56159375d9c0a127c2dfbdcb22f46580b366a4f02cb80e936b744de927ea7169"
   },
   "rigDigestMatch": true,
   "status": "passed"
