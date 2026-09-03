@@ -636,34 +636,46 @@ function Microfauna({ activity, waterSurfaceY }: { activity: number; waterSurfac
 
 /** Authoritative food pellets: one mesh per live pellet, entering at the waterline, sinking
  *  with the sim, settling on the substrate, and fading as it decays. No feed heuristic. */
+function FoodFlakeCluster({ pellet }: { readonly pellet: ScenePellet }) {
+  const cluster = useRef<THREE.Group>(null)
+  const decay = THREE.MathUtils.clamp(1 - pellet.ageDays / 0.6, 0, 1)
+  const phase = seededUnit(pellet.id, 72) * Math.PI
+  useFrame(({ clock }) => {
+    if (!cluster.current || pellet.sunk) return
+    const elapsed = clock.getElapsedTime()
+    cluster.current.rotation.set(
+      phase * .2 + Math.sin(elapsed * 2.1 + phase) * .28,
+      phase + elapsed * (.55 + seededUnit(pellet.id, 77) * .45),
+      phase * .37 + Math.cos(elapsed * 1.6 + phase) * .38,
+    )
+  })
+  return (
+    <group ref={cluster} position={[pellet.x, pellet.y, pellet.z]} rotation={[phase * .2, phase, phase * .37]}>
+      {[0, 1, 2].map((flake) => (
+        <mesh key={flake}
+          position={[(seededUnit(pellet.id + flake, 73) - .5) * .07, (flake - 1) * .025, (seededUnit(pellet.id + flake, 74) - .5) * .045]}
+          rotation={[phase + flake * 1.4, phase * .3 + flake, flake * .8]}
+          scale={[1 + seededUnit(pellet.id + flake, 75) * .55, .6 + seededUnit(pellet.id + flake, 76) * .35, 1]}>
+          <circleGeometry args={[0.029, 5]} />
+          <meshStandardMaterial
+            color={pellet.sunk ? '#9b6331' : flake === 1 ? '#d98f42' : '#e7b967'}
+            emissive="#3a230c"
+            emissiveIntensity={0.22}
+            roughness={0.86}
+            side={THREE.DoubleSide}
+            transparent
+            opacity={0.42 + decay * 0.58}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
 function FoodPellets({ pellets }: { pellets: readonly ScenePellet[] }) {
   return (
     <group name="authoritative-food">
-      {pellets.map((pellet) => {
-        const decay = THREE.MathUtils.clamp(1 - pellet.ageDays / 0.6, 0, 1)
-        const phase = seededUnit(pellet.id, 72) * Math.PI
-        return (
-          <group key={pellet.id} position={[pellet.x, pellet.y, pellet.z]} rotation={[phase * .2, phase, phase * .37]}>
-            {[0, 1, 2].map((flake) => (
-              <mesh key={flake}
-                position={[(seededUnit(pellet.id + flake, 73) - .5) * .07, (flake - 1) * .025, (seededUnit(pellet.id + flake, 74) - .5) * .045]}
-                rotation={[phase + flake * 1.4, phase * .3 + flake, flake * .8]}
-                scale={[1 + seededUnit(pellet.id + flake, 75) * .55, .6 + seededUnit(pellet.id + flake, 76) * .35, 1]}>
-                <circleGeometry args={[0.029, 5]} />
-                <meshStandardMaterial
-                  color={pellet.sunk ? '#9b6331' : flake === 1 ? '#d98f42' : '#e7b967'}
-                  emissive="#3a230c"
-                  emissiveIntensity={0.22}
-                  roughness={0.86}
-                  side={THREE.DoubleSide}
-                  transparent
-                  opacity={0.42 + decay * 0.58}
-                />
-              </mesh>
-            ))}
-          </group>
-        )
-      })}
+      {pellets.map((pellet) => <FoodFlakeCluster key={pellet.id} pellet={pellet} />)}
     </group>
   )
 }

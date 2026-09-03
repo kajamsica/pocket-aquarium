@@ -48,6 +48,7 @@ export function PocketGameHUD({
   const [openSheet, setOpenSheet] = useState<SheetId | null>(null)
   const { clock } = view.reefSnapshot
   const water = view.water
+  const hungryCount = view.specimens.filter((specimen) => specimen.kind === 'fish' && specimen.hunger > .12).length
   const status = !view.filled ? 'Dry' : !view.cycled ? 'Cycling' : view.alerts.length ? view.alerts[0] : 'Stable'
   const toggle = (id: SheetId) => setOpenSheet((current) => (current === id ? null : id))
 
@@ -93,7 +94,9 @@ export function PocketGameHUD({
       </header>
 
       <div className="pa-spacer">
-        <p className="pa-feed-hint" aria-hidden="true">Tap the water to feed</p>
+        <p className="pa-feed-hint" aria-hidden="true">
+          {hungryCount > 0 ? `Tap to feed · ${hungryCount} ${hungryCount === 1 ? 'fish' : 'fish'} waiting` : 'Observe the aquarium'}
+        </p>
       </div>
 
       <div className="pa-bottom">
@@ -178,7 +181,7 @@ export function PocketGameHUD({
                   {view.specimens.map((specimen) => (
                     <li key={specimen.id}>
                       <strong>{specimen.name}</strong>
-                      <small>hunger {Math.round(specimen.hunger * 100)}% · health {Math.round(specimen.health * 100)}%</small>
+                      <small>needs food {Math.round(specimen.hunger * 100)}% · health {Math.round(specimen.health * 100)}%</small>
                     </li>
                   ))}
                   {view.specimens.length === 0 && <li><small>No livestock yet — stock the tank once it is cycled.</small></li>}
