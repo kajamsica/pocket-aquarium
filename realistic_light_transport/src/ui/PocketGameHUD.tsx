@@ -22,6 +22,9 @@ const READING_META: Readonly<Record<string, readonly [string, string, number]>> 
 }
 type StoreFilter = 'recommended' | 'equipment' | 'livestock' | 'coral' | 'tank'
 const STORE_FILTERS = ['recommended', 'equipment', 'livestock', 'coral', 'tank'] as const satisfies readonly StoreFilter[]
+const STORE_FILTER_META: Readonly<Record<StoreFilter, readonly [string, string]>> = {
+  recommended: ['For you', '✦'], equipment: ['Equipment', '⚙'], livestock: ['Fish', '◁'], coral: ['Coral', '⌁'], tank: ['Aquariums', '□'],
+}
 
 interface PocketGameHUDProps {
   readonly view: PocketGameView
@@ -36,11 +39,43 @@ function telemetry(value: number | undefined, digits: number, unit = '') {
   return value === undefined || !Number.isFinite(value) ? 'Sampling' : `${value.toFixed(digits)}${unit}`
 }
 
-function offerMark(offer: PocketStoreOffer): string {
-  if (offer.kind === 'livestock') return 'FISH'
-  if (offer.kind === 'coral') return 'CORAL'
-  if (offer.kind === 'tier') return 'TANK'
-  return (offer.category ?? 'GEAR').split(/\s|\//).filter(Boolean).map((word) => word[0]).join('').slice(0, 4).toUpperCase()
+function merchandisedOffers(offers: readonly PocketStoreOffer[], filter: StoreFilter): PocketStoreOffer[] {
+  if (filter === 'recommended') return offers.filter((offer) => offer.recommended)
+  const inGroup = offers.filter((offer) => offer.group === filter)
+  if (filter === 'tank') return inGroup.filter((offer) => offer.levelIndex === (offer.installedLevelIndex ?? -1) + 1)
+  if (filter !== 'equipment') return inGroup
+
+  const categories = new Map<string, PocketStoreOffer[]>()
+  inGroup.forEach((offer) => {
+    const key = offer.categoryId ?? offer.category ?? offer.id
+    categories.set(key, [...(categories.get(key) ?? []), offer])
+  })
+  return Array.from(categories.values()).map((categoryOffers) => {
+    const ordered = [...categoryOffers].sort((a, b) => (a.levelIndex ?? 0) - (b.levelIndex ?? 0))
+    const installed = ordered.find((offer) => offer.installed)
+    return ordered.find((offer) => offer.levelIndex === (offer.installedLevelIndex ?? -1) + 1) ?? installed ?? ordered[0]
+  }).filter((offer): offer is PocketStoreOffer => Boolean(offer))
+}
+
+function StoreArtwork({ offer }: { readonly offer: PocketStoreOffer }) {
+  const key = offer.kind === 'equipment' ? offer.categoryId : offer.kind
+  let drawing: React.ReactNode
+  switch (key) {
+    case 'heater': drawing = <><path d="M18 8v27a9 9 0 1 0 12 0V8" /><path d="M24 14v25" /><circle cx="24" cy="40" r="3" /></>; break
+    case 'circulation': drawing = <><circle cx="24" cy="24" r="15" /><circle cx="24" cy="24" r="3" /><path d="M24 21c-2-9 3-12 7-10 3 2 1 8-7 10ZM27 24c9-2 12 3 10 7-2 3-8 1-10-7ZM24 27c2 9-3 12-7 10-3-2-1-8 7-10Z" /></>; break
+    case 'light': drawing = <><path d="M8 16h32v7H8zM12 28l-4 10m14-10-2 10m16-10 4 10" /><circle cx="15" cy="19.5" r="1" /><circle cx="24" cy="19.5" r="1" /><circle cx="33" cy="19.5" r="1" /></>; break
+    case 'skimmer': drawing = <><path d="M16 9h16l-2 8v21c0 3-2 5-6 5s-6-2-6-5V17Z" /><path d="M15 17h18M20 29c4-5 8-5 12 0" /><circle cx="23" cy="23" r="1" /><circle cx="28" cy="20" r="1" /></>; break
+    case 'refugium': drawing = <><path d="M8 12h32v28H8zM8 32h32" /><path d="M19 32c-1-8 2-13 7-16m-7 9-5-5m6 1 7-4m1 15c0-6 3-9 7-11" /></>; break
+    case 'ato': drawing = <><path d="M13 9h22v34H13zM17 14h14" /><path d="M24 19c5 7 7 10 7 14a7 7 0 0 1-14 0c0-4 2-7 7-14Z" /></>; break
+    case 'feeder': drawing = <><path d="M13 8h22l-3 20H16Z" /><path d="M20 28h8v6h-8zM24 34v7" /><circle cx="18" cy="42" r="1" /><circle cx="24" cy="44" r="1" /><circle cx="30" cy="41" r="1" /></>; break
+    case 'filter': drawing = <><rect x="12" y="7" width="24" height="36" rx="3" /><path d="M17 14h14M17 20h14M17 26h14M17 35c5-5 9-5 14 0" /></>; break
+    case 'coral': drawing = <><path d="M24 42V17m0 9-9-9m9 15 10-11m-10 4 7-12m-16 29h20" /><circle cx="15" cy="17" r="3" /><circle cx="31" cy="13" r="3" /><circle cx="34" cy="21" r="3" /></>; break
+    case 'tier': drawing = <><path d="M5 10h38v31H5zM8 14h32v22H8z" /><path d="M9 30c7-5 13 4 20-1s8 2 11 0" /><circle cx="17" cy="23" r="3" /></>; break
+    default: drawing = <><path d="M8 25c7-11 20-13 29-4l6-5-1 13-7-4C25 34 14 32 8 25Z" /><circle cx="31" cy="21" r="1.5" /><path d="M17 29l-4 7" /></>
+  }
+  return <div className="pocket-offer-visual" data-kind={offer.kind} data-category={offer.categoryId} aria-hidden="true">
+    <svg viewBox="0 0 48 48" role="presentation">{drawing}</svg><span>{offer.category ?? (offer.kind === 'tier' ? 'Aquarium' : offer.kind)}</span>
+  </div>
 }
 
 function guideCommand(type: string | undefined): { action?: PocketAction; sheet?: HudPanelId } | null {
@@ -84,8 +119,9 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     setFocusedOfferId(offerId)
     workspace.openPanel('store')
   }
-  const visibleOffers = useMemo(() => view.storeOffers.filter((offer) =>
-    storeFilter === 'recommended' ? offer.recommended : offer.group === storeFilter), [view.storeOffers, storeFilter])
+  const visibleOffers = useMemo(() => merchandisedOffers(view.storeOffers, storeFilter), [view.storeOffers, storeFilter])
+  const storeCounts = useMemo(() => Object.fromEntries(STORE_FILTERS.map((filter) =>
+    [filter, merchandisedOffers(view.storeOffers, filter).length])) as Record<StoreFilter, number>, [view.storeOffers])
   const { clock, tank, lightField, events } = view.reefSnapshot
   const hungryFishCount = view.specimens.filter((specimen) => specimen.kind === 'fish' && specimen.alive && specimen.hunger > .12).length
   const levelRatio = Math.min(1, Math.max(0, view.water.levelL / tank.targetWaterVolumeLiters))
@@ -102,6 +138,10 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   useEffect(() => {
     try { window.localStorage.setItem('pocket-aquarium-pinned-readings-v1', JSON.stringify(pinnedReadings)) } catch { /* optional UI preference */ }
   }, [pinnedReadings])
+
+  useEffect(() => {
+    if (storeFilter === 'recommended' && !hasRecommendedOffers) setStoreFilter('equipment')
+  }, [hasRecommendedOffers, storeFilter])
 
   return <div className="reef-hud pocket-game-hud">
     <header className="hud-topbar">
@@ -201,26 +241,30 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </HudWindow>
 
     <HudWindow id="store" title="Store" eyebrow="Livestock and equipment" className="hud-panel hud-ecology-panel" workspace={workspace}>
-      <section className="pocket-store" aria-labelledby="pocket-store-heading"><div className="hud-panel-heading"><div><p>Root catalog and validation</p>
-        <h2 id="pocket-store-heading">Store</h2></div><span className="hud-day-chip">{visibleOffers.length} offers</span></div>
+      <section className="pocket-store" aria-labelledby="pocket-store-heading"><div className="hud-panel-heading pocket-store-heading"><div><p>Build a healthier reef</p>
+        <h2 id="pocket-store-heading">Aquarium supply</h2></div><span className="pocket-store-wallet"><small>Tank credits</small><strong>{view.unlimitedCredits ? '∞' : view.credits}</strong></span></div>
         <div className="pocket-store-filters" role="group" aria-label="Store category">
           {STORE_FILTERS.map((filter) => <button key={filter} type="button" aria-pressed={storeFilter === filter}
             disabled={filter === 'recommended' && !hasRecommendedOffers}
-            onClick={() => { setStoreFilter(filter); setFocusedOfferId(null) }}>{filter}</button>)}
+            onClick={() => { setStoreFilter(filter); setFocusedOfferId(null) }}><span aria-hidden="true">{STORE_FILTER_META[filter][1]}</span>
+            {STORE_FILTER_META[filter][0]} <small>{storeCounts[filter]}</small></button>)}
         </div>
+        {storeFilter === 'equipment' ? <p className="pocket-store-context">Each card shows what is installed now and the next meaningful upgrade. Purchased and obsolete levels stay out of your way.</p> : null}
         <ul className="pocket-store-list">{visibleOffers.map((offer) => {
           const focused = offer.id === focusedOfferId
+          const maxed = Boolean(offer.installed && offer.levelIndex === (offer.levelCount ?? 1) - 1)
+          const upgradeStep = offer.levelIndex === undefined ? null : `${offer.levelIndex + 1} / ${offer.levelCount}`
           return <li className="hud-event pocket-store-offer" key={`${offer.kind}:${offer.id}`}
             data-locked={!offer.allowed} data-installed={offer.installed} data-recommended={offer.recommended} data-focused={focused}
             ref={focused ? (node) => node?.scrollIntoView({ block: 'nearest' }) : undefined}>
             <div className="pocket-store-offer-head">
-              <div className="pocket-offer-visual" data-kind={offer.kind} data-category={offer.category?.toLowerCase()} aria-hidden="true">
-                <i /><span>{offerMark(offer)}</span>
-              </div>
-              <span>{offer.category ?? offer.kind}</span><strong>{offer.name}</strong>
-              <small>{offer.price} credits</small>
-              {offer.recommended ? <span className="pocket-offer-tag" data-tone="rec">Recommended</span> : null}
-              {offer.installed ? <span className="pocket-offer-tag" data-tone="installed">Installed</span> : null}</div>
+              <StoreArtwork offer={offer} />
+              <div className="pocket-offer-title"><span>{offer.category ?? offer.kind}{upgradeStep ? ` · ${upgradeStep}` : ''}</span><strong>{offer.name}</strong>
+                {offer.installedName && !offer.installed ? <small>Installed now · {offer.installedName}</small> : null}</div>
+              <div className="pocket-offer-price"><strong>{offer.installed ? 'Owned' : offer.price}</strong><small>{offer.installed ? (maxed ? 'System complete' : 'Installed') : 'tank credits'}</small></div>
+              <div className="pocket-offer-tags">{offer.recommended ? <span className="pocket-offer-tag" data-tone="rec">Recommended</span> : null}
+                {offer.installed ? <span className="pocket-offer-tag" data-tone="installed">Installed</span> : null}
+                {offer.kind === 'equipment' && !offer.installed ? <span className="pocket-offer-tag" data-tone="upgrade">Next upgrade</span> : null}</div></div>
             {offer.detail ? <p className="pocket-offer-detail">{offer.detail}</p> : null}
             {offer.problemSolved ? <dl className="pocket-offer-facts">
               <div><dt>Solves</dt><dd>{offer.problemSolved}</dd></div>
@@ -228,7 +272,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
               {offer.operatingResource ? <div><dt>Upkeep</dt><dd>{offer.operatingResource}</dd></div> : null}
             </dl> : null}
             <button className="hud-button" type="button" disabled={offer.installed || !offer.allowed} onClick={() => dispatch(offer.action)}>
-              {offer.installed ? 'Installed' : offer.allowed ? `Buy · ${offer.price}` : 'Locked'}</button>
+              {offer.installed ? (maxed ? 'Fully upgraded' : 'Installed') : offer.allowed ? `Install for ${offer.price}` : 'Unavailable'}</button>
             {offer.reasons.length ? <ul className="pocket-lock-reasons" aria-label={`${offer.name} lock reasons`}>
               {offer.reasons.map((reason, index) => <li key={`${index}:${reason}`}>{reason}</li>)}</ul>
               : offer.installed ? null : <p className="pocket-offer-ready">Eligible under current root rules.</p>}
