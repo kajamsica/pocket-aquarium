@@ -669,14 +669,14 @@ function coldFilled(hab) {
   eq(repeat.length, 0, "a repeat inoculate click runs no further fast-forward");
 
   group("first-delight: interrupted boost resumes only its remaining days (" + hab + ")");
-  var interrupted = coldFilled(hab), d1 = interrupted.time.days, thrownCalls = 0, prior = PA.stepDays;
-  PA.stepDays = function (st, d) { thrownCalls++; if (thrownCalls === 3) throw new Error("interrupted"); return prior(st, d); };
+  var interrupted = coldFilled(hab), d1 = interrupted.time.days, thrownCalls = 0, prior = PA.stepDays, failAt = hab === "reef" ? 4 : 3;
+  PA.stepDays = function (st, d) { thrownCalls++; if (thrownCalls === failAt) throw new Error("interrupted"); return prior(st, d); };
   try { APP.inoculate(); } finally { PA.stepDays = prior; }
-  eq(thrownCalls, 3, "the third public step can interrupt the guided boost");
-  approx(interrupted.time.days - d1, 2, 1e-6, "only completed authoritative days remain after interruption");
+  eq(thrownCalls, failAt, "a later public step can interrupt the guided boost");
+  approx(interrupted.time.days - d1, failAt - 1, 1e-6, "only completed authoritative days remain after interruption");
   eq(APP.recommendedAction(), "inoculate", "the command flow surfaces a retry, not an unretryable test action");
   var remaining = spyStepDays(function () { APP.inoculate(); });
-  eq(remaining.length, 6, "retry advances only the six uncompleted guided days");
+  eq(remaining.length, 9 - failAt, "retry advances only the uncompleted guided days");
   approx(interrupted.time.days - d1, 8, 1e-6, "interruption plus retry advances exactly eight days, never more");
 
   group("first-delight: validated first purchase opens the feed beat; feed emits FEED_AT (" + hab + ")");
@@ -695,6 +695,17 @@ function coldFilled(hab) {
   ok(!APP.isPendingFirstFeed(), "the first-feed prompt clears once a feed executes");
   ok(APP.recommendedAction() !== "feed", "after feeding, the guide surfaces the next care action");
 });
+
+(function () {
+  group("first-delight: a throwing step still counts its authoritative day");
+  var s = coldFilled("reef"), d0 = s.time.days, calls = 0, prior = PA.stepDays;
+  PA.stepDays = function (st, d) { var out = prior(st, d); if (++calls === 3) throw new Error("after mutation"); return out; };
+  try { APP.inoculate(); } finally { PA.stepDays = prior; }
+  approx(s.time.days - d0, 3, 1e-6, "the throwing public step's completed day remains authoritative");
+  eq(APP.recommendedAction(), "inoculate", "a reef that cycles mid-boost still exposes retry");
+  eq(spyStepDays(function () { APP.inoculate(); }).length, 5, "retry excludes the already-mutated third day");
+  approx(s.time.days - d0, 8, 1e-6, "the repaired boost finishes at exactly eight days");
+})();
 
 (function () {
   group("first-delight: load / resume / render never replay the boost; no persisted prompt");

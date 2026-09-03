@@ -299,13 +299,13 @@
       pendingCycleBoostDays = FAST_FORWARD_DAYS;
     }
     if (!state.cycle.inoculated || pendingCycleBoostDays <= 0) return;
+    var boostStartDay = state.time.days, boostDays = pendingCycleBoostDays;
     try {
       fastForwardAfterInoculation(state, pendingCycleBoostDays, function () { pendingCycleBoostDays--; });
     } catch (e) {
-      // Keep the authoritative progress PA.stepDays already made. The runtime-only remainder
-      // leaves the same command action available for a retry, without inventing persisted state.
+      pendingCycleBoostDays = Math.max(0, boostDays - Math.floor(state.time.days - boostStartDay + 1e-9));
       markDirty(); renderNow();
-      toast("Cycle boost paused — retry inoculating bacteria to continue.", "warn");
+      if (pendingCycleBoostDays) toast("Cycle boost paused — retry inoculating bacteria to continue.", "warn");
       return;
     }
     markDirty(); renderNow();
@@ -478,6 +478,8 @@
       return advice("critical", "CRITICAL", "A dead animal is decaying in the tank.", "Remove the body before it spikes ammonia — find it under Livestock.", "Review livestock", "open-livestock", null, fresh);
     if (snap.welfare === "critical")
       return advice("critical", "CRITICAL", "Residents are in critical condition.", "Open the Water tab and stabilise chemistry and feeding before anything else.", "Review water", "open-water", null, fresh);
+    if (pendingCycleBoostDays > 0 && aliveEaters() === 0)
+      return advice("watch", "CYCLING", "The bacteria boost was interrupted.", "Retry inoculating bacteria to finish the remaining guided cycle days through the normal simulation.", "Retry inoculation", "inoculate", null, fresh);
     if (!DATA.isCycled(state)) {
       if (!c.ammoniaSource && aliveEaters() === 0)
         return advice("watch", "CYCLING", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", null, fresh);
@@ -485,8 +487,6 @@
       // the fishless cycle (see doInoculate) so a cold player reaches a stockable tank quickly.
       if (!c.inoculated && aliveEaters() === 0)
         return advice("watch", "CYCLING", "Seed the filter to finish the cycle.", "Add bottled nitrifying bacteria — it establishes the biofilter and fast-forwards the fishless cycle so the tank is ready to stock.", "Inoculate bacteria", "inoculate", null, fresh);
-      if (pendingCycleBoostDays > 0 && aliveEaters() === 0)
-        return advice("watch", "CYCLING", "The bacteria boost was interrupted.", "Retry inoculating bacteria to finish the remaining guided cycle days through the normal simulation.", "Retry inoculation", "inoculate", null, fresh);
       return advice("watch", "CYCLING", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", null, fresh);
     }
     // Ordinary care, highest-priority first. An empty cycled tank still passes through the
