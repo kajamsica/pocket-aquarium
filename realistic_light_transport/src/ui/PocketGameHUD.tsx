@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import type { DiagnosticView, ReefRenderSettings, ReefRenderTelemetry, RenderQuality } from '../contracts'
-import type { PocketGameView, PocketStoreOffer } from '../integration/pocketAquariumBridge'
+import type { PocketAction, PocketGameView, PocketStoreOffer } from '../integration/pocketAquariumBridge'
 
 const SPEEDS = [0, 1, 4, 8] as const
 const QUALITIES = ['balanced', 'cinematic'] as const satisfies readonly RenderQuality[]
@@ -24,7 +24,7 @@ const OFFER_EFFECT: Record<PocketStoreOffer['kind'], string> = {
 
 interface PocketGameHUDProps {
   readonly view: PocketGameView
-  readonly dispatch: (action: PocketStoreOffer['action']) => void
+  readonly dispatch: (action: PocketAction) => void
   readonly renderSettings: ReefRenderSettings
   readonly renderTelemetry?: ReefRenderTelemetry
   readonly onRenderSettingsChange: (settings: ReefRenderSettings) => void
@@ -49,7 +49,14 @@ export function PocketGameHUD({
   const { clock } = view.reefSnapshot
   const water = view.water
   const hungryCount = view.specimens.filter((specimen) => specimen.kind === 'fish' && specimen.hunger > .12).length
-  const status = !view.filled ? 'Dry' : !view.cycled ? 'Cycling' : view.alerts.length ? view.alerts[0] : 'Stable'
+  const deadCount = view.residents.filter((specimen) => !specimen.alive).length
+  const recommendedOffers = new Set(view.careRecommendations.map((item) => item.suggestedOfferId).filter(Boolean))
+  const actionableStatus = view.careRecommendations.find((item) => item.severity !== 'stable')?.severity
+  const status = !view.filled ? 'Dry'
+    : !view.cycled && view.residents.length === 0 ? 'Cycling'
+      : actionableStatus === 'urgent' ? 'Critical'
+        : actionableStatus === 'watch' ? 'Watch'
+          : view.alerts.length ? 'Watch' : 'Stable'
   const toggle = (id: SheetId) => setOpenSheet((current) => (current === id ? null : id))
 
   const waterCards: readonly { title: string; rows: readonly [string, string][] }[] = [
@@ -93,6 +100,26 @@ export function PocketGameHUD({
         </dl>
       </header>
 
+      {view.selectedSpecimen && (
+        <aside className="pa-inspector" aria-label={`${view.selectedSpecimen.name} details`}>
+          <button className="pa-close" type="button" aria-label="Close fish details"
+            onClick={() => dispatch({ type: 'SELECT_ENTITY', id: null })}>✕</button>
+          <span>{view.selectedSpecimen.alive ? `${view.selectedSpecimen.stage} · ${view.selectedSpecimen.sex}` : 'Deceased'}</span>
+          <strong>{view.selectedSpecimen.name}</strong>
+          <em>{view.selectedSpecimen.scientificName}</em>
+          <dl>
+            <div><dt>Age</dt><dd>{view.selectedSpecimen.ageDays.toFixed(1)} days</dd></div>
+            <div><dt>Needs food</dt><dd>{Math.round(view.selectedSpecimen.hunger * 100)}%</dd></div>
+            <div><dt>Condition</dt><dd>{Math.round(view.selectedSpecimen.condition * 100)}%</dd></div>
+            <div><dt>Health</dt><dd>{Math.round(view.selectedSpecimen.health * 100)}%</dd></div>
+          </dl>
+          {!view.selectedSpecimen.alive && (
+            <button className="hud-button pa-danger-action" type="button"
+              onClick={() => dispatch({ type: 'REMOVE_DEAD', id: view.selectedSpecimen!.id })}>Remove remains</button>
+          )}
+        </aside>
+      )}
+
       <div className="pa-spacer">
         <p className="pa-feed-hint" aria-hidden="true">
           {hungryCount > 0 ? `Tap to feed · ${hungryCount} ${hungryCount === 1 ? 'fish' : 'fish'} waiting` : 'Observe the aquarium'}
@@ -109,6 +136,19 @@ export function PocketGameHUD({
           <div className="pa-sheet-body">
             {openSheet === 'care' && (
               <>
+                <section className="pa-diagnosis" aria-label="Recommended tank care">
+                  {view.careRecommendations.map((item) => (
+                    <article key={item.title} data-severity={item.severity}>
+                      <div><span>{item.severity === 'stable' ? 'Observation' : item.severity}</span><strong>{item.title}</strong></div>
+                      <p>{item.cause}</p>
+                      <div className="pa-diagnosis-actions">
+                        {item.action && item.actionLabel && <button className="hud-button" type="button" onClick={() => dispatch(item.action!)}>{item.actionLabel}</button>}
+                        {item.suggestedOfferId && <button className="hud-button" type="button" onClick={() => setOpenSheet('store')}>Durable fix · {item.suggestedOfferName}</button>}
+                        {item.title.startsWith('Remove') && <button className="hud-button" type="button" onClick={() => setOpenSheet('journal')}>Review remains</button>}
+                      </div>
+                    </article>
+                  ))}
+                </section>
                 <article className="pa-guide-card">
                   <span>{view.objective.chapter}</span>
                   <h3>{view.objective.title}</h3>
@@ -153,9 +193,10 @@ export function PocketGameHUD({
             {openSheet === 'store' && (
               <ul className="pa-store">
                 {view.storeOffers.map((offer) => (
-                  <li className="pa-offer" key={`${offer.kind}:${offer.id}`} data-locked={!offer.allowed}>
+                  <li className="pa-offer" key={`${offer.kind}:${offer.id}`} data-locked={!offer.allowed}
+                    data-recommended={recommendedOffers.has(offer.id)}>
                     <div className="pa-offer-head">
-                      <div><span>{offer.kind}</span><strong>{offer.name}</strong></div>
+                      <div><span>{recommendedOffers.has(offer.id) ? 'Recommended for this tank' : offer.kind}</span><strong>{offer.name}</strong></div>
                       <button className="hud-button" type="button" disabled={!offer.allowed} onClick={() => dispatch(offer.action)}>
                         {offer.allowed ? `${offer.price}c` : 'Locked'}
                       </button>
@@ -178,14 +219,24 @@ export function PocketGameHUD({
                   <strong>{view.reefSnapshot.events.lastEvent}</strong>
                 </div>
                 <ul className="pa-residents">
-                  {view.specimens.map((specimen) => (
-                    <li key={specimen.id}>
-                      <strong>{specimen.name}</strong>
-                      <small>needs food {Math.round(specimen.hunger * 100)}% · health {Math.round(specimen.health * 100)}%</small>
+                  {view.residents.map((specimen) => (
+                    <li key={specimen.id} data-dead={!specimen.alive}>
+                      <button className="pa-resident-info" type="button"
+                        onClick={() => dispatch({ type: 'SELECT_ENTITY', entityType: 'livestock', id: specimen.id })}>
+                        <strong>{specimen.name}</strong>
+                        <small>{specimen.alive
+                          ? `needs food ${Math.round(specimen.hunger * 100)}% · health ${Math.round(specimen.health * 100)}%`
+                          : `${specimen.causeOfDeath ?? 'unknown cause'} · decaying ${(specimen.decayDays ?? 0).toFixed(1)} days`}</small>
+                      </button>
+                      {!specimen.alive && <button className="hud-button pa-danger-action" type="button"
+                        onClick={() => dispatch({ type: 'REMOVE_DEAD', id: specimen.id })}>Remove</button>}
                     </li>
                   ))}
-                  {view.specimens.length === 0 && <li><small>No livestock yet — stock the tank once it is cycled.</small></li>}
+                  {view.residents.length === 0 && <li><small>No livestock yet — stock the tank once it is cycled.</small></li>}
                 </ul>
+                {deadCount > 1 && <button className="hud-button pa-danger-action" type="button"
+                  onClick={() => view.residents.filter((specimen) => !specimen.alive)
+                    .forEach((specimen) => dispatch({ type: 'REMOVE_DEAD', id: specimen.id }))}>Remove all {deadCount} remains</button>}
               </>
             )}
 
@@ -205,6 +256,13 @@ export function PocketGameHUD({
                       onClick={() => onRenderSettingsChange({ ...renderSettings, diagnosticView })}>{diagnosticView}</button>
                   ))}
                 </div>
+                <label className="pa-brightness">
+                  <span>Viewing brightness <small>visual only · PAR unchanged</small></span>
+                  <output>{Math.round(renderSettings.brightness * 100)}%</output>
+                  <input type="range" min="0.75" max="1.35" step="0.05" value={renderSettings.brightness}
+                    onChange={(event) => onRenderSettingsChange({ ...renderSettings, brightness: Number(event.target.value) })} />
+                </label>
+                <p className="pa-gesture-note">Pinch on the aquarium to zoom. Use the mouse wheel on desktop.</p>
                 <dl className="pa-telemetry">
                   <div><dt>Visible transmission</dt><dd>{telemetry(renderTelemetry?.optics.meanVisibleTransmittance === undefined ? undefined : renderTelemetry.optics.meanVisibleTransmittance * 100, 1, '%')}</dd></div>
                   <div><dt>Mean flow</dt><dd>{telemetry(renderTelemetry?.flow.meanSpeedMetersPerSecond, 3, ' m/s')}</dd></div>

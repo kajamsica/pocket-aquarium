@@ -15,6 +15,7 @@ const RENDER_TELEMETRY_INTERVAL_MS = 250
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
   diagnosticView: 'beauty',
+  brightness: 1,
 }
 const WORKBENCH_SPECIES = new URLSearchParams(window.location.search).get('workbench')
 
@@ -81,7 +82,8 @@ function AquariumApp() {
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
-        <SpecimenRosterProvider specimens={view.specimens}>
+        <SpecimenRosterProvider specimens={view.specimens}
+          select={(id) => controller.dispatch({ type: 'SELECT_ENTITY', entityType: 'livestock', id })}>
           <ReefScene
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}

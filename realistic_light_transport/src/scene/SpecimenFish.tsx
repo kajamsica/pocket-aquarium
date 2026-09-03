@@ -24,7 +24,11 @@ interface SteerContext {
   readonly pellets: readonly ScenePellet[]
   readonly consume: (foodId: number, eaterId: number) => void
 }
-const SpecimenRosterContext = createContext<readonly PocketSpecimen[]>([])
+interface SpecimenRosterApi {
+  readonly specimens: readonly PocketSpecimen[]
+  readonly select: (id: number) => void
+}
+const SpecimenRosterContext = createContext<SpecimenRosterApi>({ specimens: [], select: () => {} })
 const VISUAL_SKINS = {
   watchman_goby: {
     url: new URL('../../../assets/animals/yellow-watchman-goby-v1.png', import.meta.url).href,
@@ -32,11 +36,13 @@ const VISUAL_SKINS = {
   },
 } as const
 
-export function SpecimenRosterProvider({ specimens, children }: {
+export function SpecimenRosterProvider({ specimens, select, children }: {
   readonly specimens: readonly PocketSpecimen[]
+  readonly select: (id: number) => void
   readonly children: ReactNode
 }) {
-  return <SpecimenRosterContext.Provider value={specimens}>{children}</SpecimenRosterContext.Provider>
+  const value = useMemo(() => ({ specimens, select }), [specimens, select])
+  return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
 }
 
 export interface SpecimenFishProps {
@@ -269,6 +275,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
   readonly skins: SpeciesSkins
   readonly steer: SteerContext
 }) {
+  const roster = useContext(SpecimenRosterContext)
   const group = useRef<THREE.Group>(null)
   const tail = useRef<THREE.Group>(null)
   const feedDriveRef = useRef(0)
@@ -380,6 +387,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
   })
 
   return <group ref={group} name={`root-specimen-${specimen.speciesId}-${specimen.id}`}
+    onPointerDown={(event) => { event.stopPropagation(); roster.select(specimen.id) }}
     userData={{ rootSpecimenId: specimen.id, speciesId: specimen.speciesId }}>
     {riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
@@ -391,7 +399,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, geometry, skins, 
 }
 
 export function SpecimenFish({ snapshot, waterSurfaceY, pellets, consume }: SpecimenFishProps) {
-  const roster = useContext(SpecimenRosterContext)
+  const { specimens: roster } = useContext(SpecimenRosterContext)
   const geometry = useSpecimenGeometry()
   const gobySource = useLoader(THREE.TextureLoader, VISUAL_SKINS.watchman_goby.url)
   const skins = useMemo(() => ({

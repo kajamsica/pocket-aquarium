@@ -16,6 +16,8 @@ export type DiagnosticView = 'beauty' | 'spectral' | 'flow'
 export interface ReefRenderSettings {
   readonly quality: RenderQuality
   readonly diagnosticView: DiagnosticView
+  /** Display exposure only. Biological PAR remains authoritative simulation state. */
+  readonly brightness: number
 }
 
 export interface ReefRenderTelemetry {

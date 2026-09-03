@@ -4,7 +4,7 @@ import '../../../js/sim.js'
 import type { LifecyclePhase, ReefSnapshot } from '../contracts'
 import { sampleSpectralTransmittance } from '../scene/materials/spectralTransport'
 
-type PocketAction = Readonly<{ type: string } & Record<string, unknown>>
+export type PocketAction = Readonly<{ type: string } & Record<string, unknown>>
 
 interface PocketWater {
   levelL: number
@@ -33,6 +33,8 @@ interface PocketAnimal {
   condition: number
   health: number
   alive: boolean
+  causeOfDeath?: string | null
+  decayDays?: number
   lastFedDay: number
   x: number
   y: number
@@ -93,6 +95,8 @@ export interface PocketState {
   microfauna: { pods: number; worms: number; infusoria: number; biodiversity: number }
   food: PocketFood[]
   log: Array<{ type: string; message: string }>
+  selection?: { entityType: string; id: number } | null
+  milestones?: Record<string, number>
 }
 
 interface CatalogSpecies {
@@ -166,6 +170,16 @@ export interface PocketObjective {
   readonly action?: PocketAction
 }
 
+export interface PocketCareRecommendation {
+  readonly severity: 'urgent' | 'watch' | 'stable'
+  readonly title: string
+  readonly cause: string
+  readonly actionLabel?: string
+  readonly action?: PocketAction
+  readonly suggestedOfferId?: string
+  readonly suggestedOfferName?: string
+}
+
 export interface PocketGameView {
   readonly authority: 'root_pa'
   readonly habitatName: string
@@ -178,8 +192,11 @@ export interface PocketGameView {
   readonly objective: PocketObjective
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
+  readonly residents: readonly PocketSpecimen[]
+  readonly selectedSpecimen?: PocketSpecimen
   readonly food: readonly FoodPellet[]
   readonly storeOffers: readonly PocketStoreOffer[]
+  readonly careRecommendations: readonly PocketCareRecommendation[]
   readonly reefSnapshot: ReefSnapshot
   readonly nextAction: { readonly title: string; readonly detail: string }
   readonly alerts: readonly string[]
@@ -274,6 +291,11 @@ function lifecycleFor(state: PocketState): LifecyclePhase {
   return state.cycle.stage === 'Mature biome' ? 'young_reef' : 'stabilizing'
 }
 
+function biologicalCycleEstablished(state: PocketState) {
+  return Boolean(state.milestones?.cycle_cycled)
+    || state.cycle.stage === 'Cycled' || state.cycle.stage === 'Young biome' || state.cycle.stage === 'Mature biome'
+}
+
 function storeOffers(state: PocketState): PocketStoreOffer[] {
   const offer = (kind: PocketStoreOffer['kind'], id: string, name: string, price: number,
     request: Record<string, unknown>, action: PocketAction): PocketStoreOffer => {
@@ -314,7 +336,7 @@ function objectiveFor(state: PocketState, summary: ReturnType<PocketRuntime['sna
     lesson: 'Nitrifying bacteria live on wet filter and rock surfaces. Flow brings them oxygen and carries dissolved waste to the biofilter.',
     destination: 'care', actionLabel: 'Start life support', action: { type: act.SETUP_LIFE_SUPPORT, on: true },
   }
-  if (!state.cycle.ammoniaSource && !runtime.DATA.isCycled(state)) return {
+  if (!state.cycle.ammoniaSource && !runtime.DATA.isCycled(state) && !biologicalCycleEstablished(state)) return {
     chapter: 'Commissioning · 3 of 4', title: 'Feed the invisible filter',
     detail: 'Add a measured ammonia source before any animal enters.',
     lesson: 'Ammonia is toxic to fish, but a fishless dose is the fuel that grows the first bacterial colony. That colony converts ammonia into nitrite.',
@@ -325,6 +347,19 @@ function objectiveFor(state: PocketState, summary: ReturnType<PocketRuntime['sna
     detail: 'Inoculate the filter, then watch both bacterial colonies establish.',
     lesson: 'The first colony oxidizes ammonia into nitrite. A second colony converts nitrite into nitrate—the safer end product removed by water changes and export.',
     destination: 'care', actionLabel: 'Inoculate filter', action: { type: act.INOCULATE_BACTERIA },
+  }
+  const dead = state.livestock.filter((animal) => animal.alive === false)
+  if (dead.length > 0) return {
+    chapter: 'Tank care · urgent', title: `Remove ${dead.length} dead ${dead.length === 1 ? 'resident' : 'residents'}`,
+    detail: 'Dead livestock continues decomposing and adding ammonia until it is removed.',
+    lesson: 'Prompt removal limits the ammonia pulse. Then test ammonia and nitrite before adding or feeding anything else.',
+    destination: 'journal',
+  }
+  if (biologicalCycleEstablished(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) return {
+    chapter: 'Tank care · urgent', title: 'Dilute toxic nitrogen now',
+    detail: `Ammonia ${state.water.ammonia.toFixed(2)} · nitrite ${state.water.nitrite.toFixed(2)} mg/L`,
+    lesson: 'Ammonia burns gills and nitrite blocks oxygen transport. A water change lowers both immediately; stronger biological filtration reduces repeat spikes.',
+    destination: 'care', actionLabel: 'Change 25% water', action: { type: act.WATER_CHANGE, fraction: .25 },
   }
   if (!runtime.DATA.isCycled(state)) {
     const stage = state.cycle.stage
@@ -355,6 +390,52 @@ function objectiveFor(state: PocketState, summary: ReturnType<PocketRuntime['sna
     lesson: 'Observe the animals and water together. Intervene only when the tank gives you a reason.',
     destination: summary?.nextAction?.title.toLowerCase().includes('feed') ? 'journal' : 'care',
   }
+}
+
+function careRecommendations(state: PocketState, offers: readonly PocketStoreOffer[]): PocketCareRecommendation[] {
+  const act = runtime.ACTIONS
+  const recommendations: PocketCareRecommendation[] = []
+  // Commissioning/fishless cycling has its own ordered teaching card. Treating the
+  // deliberate ammonia dose as an emergency would teach the exact wrong intervention.
+  if (!state.cycle.filled || (!biologicalCycleEstablished(state) && state.livestock.length === 0)) return recommendations
+  const tier = runtime.DATA.TIERS[state.tier]
+  const levelPercent = state.water.levelL / Math.max(tier.volumeL, 1) * 100
+  const add = (recommendation: PocketCareRecommendation) => recommendations.push(recommendation)
+  const suggest = (id: string) => offers.find((offer) => offer.kind === 'equipment' && offer.id === id)
+  const withUpgrade = (base: PocketCareRecommendation, id: string): PocketCareRecommendation => {
+    const offer = suggest(id)
+    return offer ? { ...base, suggestedOfferId: id, suggestedOfferName: offer.name } : base
+  }
+
+  const deadCount = state.livestock.filter((animal) => animal.alive === false).length
+  if (deadCount) add({ severity: 'urgent', title: `Remove ${deadCount} dead ${deadCount === 1 ? 'resident' : 'residents'}`,
+    cause: 'Decomposition releases ammonia continuously. Remove the remains, then test ammonia and nitrite.' })
+  if (biologicalCycleEstablished(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) add(withUpgrade({
+    severity: 'urgent', title: 'Toxic nitrogen detected',
+    cause: `Ammonia ${state.water.ammonia.toFixed(2)} and nitrite ${state.water.nitrite.toFixed(2)} mg/L stress gills. Dilute them now and pause feeding.`,
+    actionLabel: 'Change 25% water', action: { type: act.WATER_CHANGE, fraction: .25 },
+  }, state.equipment.filter === 'sponge' ? 'filter:hob' : 'filter:canister'))
+  if (state.water.nitrate > 15) add(withUpgrade({ severity: 'watch', title: 'Nitrate is accumulating',
+    cause: `${state.water.nitrate.toFixed(1)} mg/L is the end product of the nitrogen cycle. Export it with a water change.`,
+    actionLabel: 'Change 25% water', action: { type: act.WATER_CHANGE, fraction: .25 },
+  }, 'refugium:chaeto'))
+  if (levelPercent < 92 || state.water.salinity > 36) add(withUpgrade({ severity: state.water.salinity > 38 ? 'urgent' : 'watch',
+    title: 'Evaporation is concentrating salt',
+    cause: `Water level is ${levelPercent.toFixed(0)}% and salinity is ${state.water.salinity.toFixed(1)} ppt. Freshwater top-off restores volume without adding salt.`,
+    actionLabel: 'Top off freshwater', action: { type: act.WATER_TOP_OFF },
+  }, 'ato:ato'))
+  if (state.water.tempC < 24 || state.water.tempC > 28) add(withUpgrade({ severity: 'watch', title: 'Temperature is outside the reef range',
+    cause: `${state.water.tempC.toFixed(1)} °C can suppress appetite and immunity. Stabilize near 26 °C.`,
+  }, 'heater:controller'))
+  if (state.water.flow < .3 || state.succession.cyano > .4) add(withUpgrade({ severity: 'watch', title: 'Low-flow zones are developing',
+    cause: `Flow ${state.water.flow.toFixed(2)} and cyanobacteria ${Math.round(state.succession.cyano * 100)}% suggest waste is settling in dead spots.`,
+  }, state.equipment.circulation === 'none' ? 'circulation:powerhead' : 'circulation:gyre'))
+  if (state.corals.length > 0 && state.water.par < 40) add(withUpgrade({ severity: 'watch', title: 'Corals need more usable light',
+    cause: `PAR ${state.water.par.toFixed(0)} is below the broad coral range. Upgrade the reef light; viewing brightness does not change PAR.`,
+  }, state.equipment.light === 'basic' ? 'light:led' : 'light:pro_led'))
+  if (!recommendations.length) add({ severity: 'stable', title: 'No intervention needed',
+    cause: 'Ammonia and nitrite are safe, salinity and temperature are stable, and routine observation is the right move.' })
+  return recommendations.slice(0, 4)
 }
 
 export function projectPocketState(state: PocketState): PocketGameView {
@@ -409,15 +490,18 @@ export function projectPocketState(state: PocketState): PocketGameView {
   }
   const summary = runtime.snapshotSummary(state)
   const objective = objectiveFor(state, summary)
+  const offers = storeOffers(state)
+  const residents = state.livestock.map((animal) => { const species = runtime.DATA.SPECIES[animal.species]; return { ...animal,
+    speciesId: animal.species, name: species.name, scientificName: species.sci,
+    adultSizeCm: species.adultSizeCm, layer: species.layer } })
+  const selectedSpecimen = residents.find((animal) => animal.id === state.selection?.id)
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), xp: Math.floor(state.xp), cycleStage: state.cycle.stage,
-    cycled: runtime.DATA.isCycled(state), filled: state.cycle.filled, objective, water: { ...state.water },
-    specimens: living.map((animal) => { const species = runtime.DATA.SPECIES[animal.species]; return { ...animal,
-      speciesId: animal.species, name: species.name, scientificName: species.sci,
-      adultSizeCm: species.adultSizeCm, layer: species.layer } }),
+    cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, objective, water: { ...state.water },
+    specimens: residents.filter((animal) => animal.alive !== false), residents, selectedSpecimen,
     food: state.food.filter((pellet) => !pellet.consumed).map((pellet) => ({
       id: pellet.id, x: pellet.x, y: pellet.y, amount: pellet.amount, ageDays: pellet.ageDays, sunk: pellet.sunk })),
-    storeOffers: storeOffers(state), reefSnapshot,
+    storeOffers: offers, careRecommendations: careRecommendations(state, offers), reefSnapshot,
     nextAction: { title: objective.title, detail: objective.detail },
     alerts: summary?.alerts ?? [] }
 }

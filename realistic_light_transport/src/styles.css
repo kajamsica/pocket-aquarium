@@ -69,6 +69,9 @@ input:focus-visible {
   width: 100%;
   height: 100%;
 }
+.pocket-reef-app .canvas-shell canvas {
+  touch-action: none;
+}
 
 .canvas-shell {
   position: absolute;
@@ -1789,6 +1792,50 @@ input:focus-visible {
   min-height: 0;
   pointer-events: none;
 }
+.pa-inspector {
+  position: absolute;
+  top: max(82px, calc(env(safe-area-inset-top) + 72px));
+  right: max(10px, env(safe-area-inset-right));
+  width: min(290px, calc(100vw - 20px));
+  pointer-events: auto;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(150, 220, 235, 0.24);
+  border-radius: 13px;
+  background: linear-gradient(150deg, rgba(4, 20, 27, 0.82), rgba(4, 26, 34, 0.68));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34);
+}
+.pa-inspector .pa-close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 32px;
+  height: 32px;
+}
+.pa-inspector > span {
+  padding-right: 34px;
+  font-size: 0.52rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #86e7d1;
+}
+.pa-inspector > strong { font-size: .9rem; }
+.pa-inspector > em {
+  font-size: .62rem;
+  color: rgba(218, 242, 246, .58);
+}
+.pa-inspector dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 12px;
+  margin: 5px 0 0;
+}
+.pa-inspector dl div { display: flex; justify-content: space-between; gap: 6px; }
+.pa-inspector dt { font-size: .58rem; color: rgba(218, 242, 246, .55); }
+.pa-inspector dd { margin: 0; font-size: .6rem; font-weight: 650; }
 .pa-feed-hint {
   margin: 0;
   padding: 4px 12px;
@@ -1876,6 +1923,37 @@ input:focus-visible {
   color: rgba(226, 245, 248, 0.75);
 }
 .pa-primary-action { justify-self: start; }
+.pa-diagnosis {
+  display: grid;
+  gap: 7px;
+}
+.pa-diagnosis article {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(150, 220, 235, .16);
+  border-left: 3px solid #75e5ef;
+  border-radius: 9px;
+  background: rgba(3, 17, 23, .46);
+}
+.pa-diagnosis article[data-severity="urgent"] { border-left-color: #ff8f70; }
+.pa-diagnosis article[data-severity="watch"] { border-left-color: #f4b96c; }
+.pa-diagnosis article[data-severity="stable"] { border-left-color: #65efcb; }
+.pa-diagnosis article > div:first-child { display: grid; gap: 2px; }
+.pa-diagnosis span {
+  font-size: .5rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: rgba(218, 242, 246, .55);
+}
+.pa-diagnosis strong { font-size: .76rem; }
+.pa-diagnosis p {
+  margin: 0;
+  font-size: .62rem;
+  line-height: 1.45;
+  color: rgba(226, 245, 248, .72);
+}
+.pa-diagnosis-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .pa-nitrogen-chain {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1987,6 +2065,10 @@ input:focus-visible {
 .pa-offer[data-locked="true"] {
   opacity: 0.72;
 }
+.pa-offer[data-recommended="true"] {
+  border-color: rgba(101, 239, 203, .46);
+  box-shadow: inset 0 0 20px rgba(101, 239, 203, .05);
+}
 .pa-offer-head {
   display: flex;
   align-items: center;
@@ -2045,10 +2127,21 @@ input:focus-visible {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  align-items: baseline;
+  align-items: center;
   padding: 6px 8px;
   border-radius: 8px;
   background: rgba(3, 17, 23, 0.32);
+}
+.pa-residents li[data-dead="true"] { border: 1px solid rgba(255, 143, 112, .3); }
+.pa-resident-info {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 2px;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
 }
 .pa-residents strong {
   font-size: 0.72rem;
@@ -2062,6 +2155,18 @@ input:focus-visible {
   display: grid;
   gap: 10px;
 }
+.pa-brightness {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 10px;
+  align-items: center;
+}
+.pa-brightness > span { font-size: .66rem; font-weight: 620; }
+.pa-brightness small { display: block; margin-top: 2px; font-size: .52rem; font-weight: 400; color: rgba(218, 242, 246, .52); }
+.pa-brightness output { font-size: .62rem; font-variant-numeric: tabular-nums; }
+.pa-brightness input { grid-column: 1 / -1; width: 100%; accent-color: #75e5ef; }
+.pa-gesture-note { margin: 0; font-size: .58rem; color: rgba(218, 242, 246, .56); }
+.pa-danger-action { border-color: rgba(255, 143, 112, .45); color: #ffc0aa; }
 .pa-telemetry {
   display: grid;
   gap: 4px;

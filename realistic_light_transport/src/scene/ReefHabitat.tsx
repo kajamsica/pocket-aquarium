@@ -11,6 +11,7 @@ import {
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
 import { REEF_ROCKS as ROCKS, seededUnit } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
+import { tankPinchInProgress } from './tankGestures'
 
 const TANK_HALF_WIDTH = 2.76
 const TANK_HALF_DEPTH = 1.18
@@ -687,7 +688,21 @@ function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed:
   return (
     <mesh
       position={[0, (SAND_Y + waterSurfaceY) / 2, TANK_HALF_DEPTH]}
-      onPointerDown={(event) => { event.stopPropagation(); feed(surfaceXToNormalizedX(event.point.x)) }}
+      onPointerUp={(event) => {
+        // The invisible water plane is nearest the camera. Let a ray that also hit a
+        // specimen continue to that fish; otherwise this is an intentional feed tap.
+        const hitSpecimen = event.intersections.some((hit) => {
+          let node: THREE.Object3D | null = hit.object
+          while (node) {
+            if (typeof node.userData.rootSpecimenId === 'number') return true
+            node = node.parent
+          }
+          return false
+        })
+        if (hitSpecimen || tankPinchInProgress()) return
+        event.stopPropagation()
+        feed(surfaceXToNormalizedX(event.point.x))
+      }}
     >
       <planeGeometry args={[TANK_HALF_WIDTH * 2, columnHeight]} />
       <meshBasicMaterial transparent opacity={0} colorWrite={false} depthWrite={false} />
