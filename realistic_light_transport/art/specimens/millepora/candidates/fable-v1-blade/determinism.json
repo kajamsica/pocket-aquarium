@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "cb6ab153ddc685be23268ebc5d22851819f944c846534fb101ffd772e0a1d6ae",
+  "rebuildGeometryDigest": "cb6ab153ddc685be23268ebc5d22851819f944c846534fb101ffd772e0a1d6ae",
+  "textureHashMatch": true,
+  "textures": {
+    "base-albedo.png": "8de1fa8a4f0d185908c7630dfede90e14fbdf0930b11d1b0d403a7589479cbf6",
+    "base-normal.png": "20eedf85249f5d6b9457b28d77d079f1f7b329e497b7ce2a173340aaa7bff725",
+    "base-roughness.png": "4fbf873221e3c7645d27eb93c615b9f03024479c4ad0f4fd28c2eb4af48b54cb",
+    "hair-albedo.png": "003d01d5e166cdd348a1e17b16c24d41d34504723e126033e2e8652d305676a1",
+    "hair-normal.png": "3a903a0d99237b86388a1a57151b92e253625e86c74297e356fa3c1123e8d1f8",
+    "hair-roughness.png": "0523286f4b53e79e509495a66f28358a7aa9b04149f24fffa6dfa57878c793b7",
+    "skeleton-albedo.png": "f565fe5e95d7e51d0f866c90152c6d6a6e7d48d45b5c2a32e70daaaa7dc4a64b",
+    "skeleton-normal.png": "f011022c91be4ccf870f4b8a279717d388cdefb127ee3a3ae9cb96e335a191b1",
+    "skeleton-roughness.png": "7df0de215d4be0ddcd815bba081be198704d82991308139b8c520b1fcceec3eb"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}

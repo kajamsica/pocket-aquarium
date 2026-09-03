@@ -1,0 +1,597 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "millepora",
+  "rig": "PA_millepora_Rig",
+  "root": "PA_millepora_Root",
+  "meshes": [
+    "PA_millepora_Skeleton",
+    "PA_millepora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_mound",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_blade_0",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_blade_1",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_blade_2",
+      "volumeFloor": 0.9
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_0",
+        "attach_blade_0"
+      ],
+      "label": "skeleton_mound_vs_blade_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_1",
+        "attach_blade_1"
+      ],
+      "label": "skeleton_mound_vs_blade_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_2",
+        "attach_blade_2"
+      ],
+      "label": "skeleton_mound_vs_blade_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_blade_0",
+        "attach_blade_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_1",
+        "attach_blade_1"
+      ],
+      "label": "skeleton_blade_0_vs_blade_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0E0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0E0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0N0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0N0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0N1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0N1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0N2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0N2_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0P0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0P0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0P1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0P1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0P2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B0P2_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B0P2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_1"
+      ],
+      "label": "hairs_B0P2_vs_blade_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1E0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B1E0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1E1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B1E1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1N0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B1N0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1N1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B1N1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1N1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_0"
+      ],
+      "label": "hairs_B1N1_vs_blade_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1P0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B1P0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B1P1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B1P1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B2E1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B2E1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B2N0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B2N0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B2N1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B2N1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B2P0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B2P0_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_B2P1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_B2P1_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_0"
+      ],
+      "label": "hairs_Md_0_vs_blade_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_1"
+      ],
+      "label": "hairs_Md_0_vs_blade_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_0"
+      ],
+      "label": "hairs_Md_1_vs_blade_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_1"
+      ],
+      "label": "hairs_Md_1_vs_blade_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_0"
+      ],
+      "label": "hairs_Md_2_vs_blade_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_2"
+      ],
+      "label": "hairs_Md_2_vs_blade_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_3"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_0"
+      ],
+      "label": "hairs_Md_3_vs_blade_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_3"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_blade_2"
+      ],
+      "label": "hairs_Md_3_vs_blade_2"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.15,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 150,
+      "bones": [
+        "B0E0",
+        "B0E1",
+        "B0E2",
+        "B0N0",
+        "B0N1",
+        "B0N2",
+        "B0P0",
+        "B0P1",
+        "B0P2",
+        "B1E0",
+        "B1E1",
+        "B1N0",
+        "B1N1",
+        "B1P0",
+        "B1P1",
+        "B2E0",
+        "B2E1",
+        "B2N0",
+        "B2N1",
+        "B2P0",
+        "B2P1",
+        "Md_0",
+        "Md_1",
+        "Md_2",
+        "Md_3"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "B0E0",
+        "B0E1",
+        "B0E2",
+        "B0N0",
+        "B0N1",
+        "B0N2",
+        "B0P0",
+        "B0P1",
+        "B0P2",
+        "B1E0",
+        "B1E1",
+        "B1N0",
+        "B1N1",
+        "B1P0",
+        "B1P1",
+        "B2E0",
+        "B2E1",
+        "B2N0",
+        "B2N1",
+        "B2P0",
+        "B2P1",
+        "Md_0",
+        "Md_1",
+        "Md_2",
+        "Md_3"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "B0E0",
+        "B0E1",
+        "B0E2",
+        "B0N0",
+        "B0N1",
+        "B0N2",
+        "B0P0",
+        "B0P1",
+        "B0P2",
+        "B1E0",
+        "B1E1",
+        "B1N0",
+        "B1N1",
+        "B1P0",
+        "B1P1",
+        "B2E0",
+        "B2E1",
+        "B2N0",
+        "B2N1",
+        "B2P0",
+        "B2P1",
+        "Md_0",
+        "Md_1",
+        "Md_2",
+        "Md_3"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 3,
+  "variantId": "blade",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.065181,
+      -0.075,
+      0.0
+    ],
+    "max": [
+      0.065181,
+      0.075,
+      0.082451
+    ]
+  },
+  "textures": [
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/base-albedo.png",
+    "textures/base-roughness.png",
+    "textures/base-normal.png",
+    "textures/hair-albedo.png",
+    "textures/hair-roughness.png",
+    "textures/hair-normal.png"
+  ],
+  "notes": {
+    "form": "blade",
+    "seed": 5,
+    "nominalWidthMeters": 0.15096965601579776,
+    "colonyScale": 0.9935771462862955,
+    "skeletonParts": [
+      "mound",
+      "blade_0",
+      "blade_1",
+      "blade_2"
+    ],
+    "hairs": 837,
+    "hairsRejected": 351,
+    "clusters": {
+      "Md_0": 54,
+      "Md_1": 76,
+      "Md_2": 78,
+      "Md_3": 99,
+      "B0P0": 24,
+      "B0N0": 21,
+      "B0E0": 12,
+      "B0P1": 74,
+      "B0N1": 69,
+      "B0E1": 30,
+      "B0P2": 25,
+      "B0N2": 33,
+      "B0E2": 10,
+      "B1P0": 22,
+      "B1N0": 29,
+      "B1E0": 13,
+      "B1P1": 26,
+      "B1N1": 24,
+      "B1E1": 15,
+      "B2P0": 19,
+      "B2N0": 21,
+      "B2E0": 9,
+      "B2P1": 21,
+      "B2N1": 22,
+      "B2E1": 11
+    },
+    "deformBones": 26,
+    "meanHairLengthMeters": 0.002417,
+    "triangles": 16300,
+    "clearancePairs": 32
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/millepora/candidates/fable-v1-blade/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/millepora/candidates/fable-v1-blade/renders/three-view.png",
+    "boundsMin": [
+      -0.06518097966909409,
+      -0.07499999552965164,
+      0.0
+    ],
+    "boundsMax": [
+      0.06518097966909409,
+      0.07499999552965164,
+      0.08245087414979935
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

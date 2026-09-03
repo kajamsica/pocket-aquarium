@@ -1,0 +1,1831 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "millepora",
+  "rig": "PA_millepora_Rig",
+  "root": "PA_millepora_Root",
+  "meshes": [
+    "PA_millepora_Skeleton",
+    "PA_millepora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_mound",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0a",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0aa",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0ab",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0b",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0ba",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_0bb",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_1",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_1a",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_1b",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_1ba",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_1bb",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_2",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_2a",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_2b",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_2ba",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_2bb",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3a",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3aa",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3ab",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3b",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3ba",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_millepora_Skeleton",
+      "group": "part_stem_3bb",
+      "volumeFloor": 0.9
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0",
+        "attach_stem_0"
+      ],
+      "label": "skeleton_mound_vs_stem_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1",
+        "attach_stem_1"
+      ],
+      "label": "skeleton_mound_vs_stem_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2",
+        "attach_stem_2"
+      ],
+      "label": "skeleton_mound_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3",
+        "attach_stem_3"
+      ],
+      "label": "skeleton_mound_vs_stem_3"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a",
+        "attach_stem_0a"
+      ],
+      "label": "skeleton_stem_0_vs_stem_0a"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0",
+        "attach_stem_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab",
+        "attach_stem_0ab"
+      ],
+      "label": "skeleton_stem_0_vs_stem_0ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b",
+        "attach_stem_0b"
+      ],
+      "label": "skeleton_stem_0_vs_stem_0b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0",
+        "attach_stem_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1",
+        "attach_stem_1"
+      ],
+      "label": "skeleton_stem_0_vs_stem_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0",
+        "attach_stem_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3",
+        "attach_stem_3"
+      ],
+      "label": "skeleton_stem_0_vs_stem_3"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0aa",
+        "attach_stem_0aa"
+      ],
+      "label": "skeleton_stem_0a_vs_stem_0aa"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab",
+        "attach_stem_0ab"
+      ],
+      "label": "skeleton_stem_0a_vs_stem_0ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a",
+        "attach_stem_0a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba",
+        "attach_stem_0ba"
+      ],
+      "label": "skeleton_stem_0a_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a",
+        "attach_stem_0a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb",
+        "attach_stem_0bb"
+      ],
+      "label": "skeleton_stem_0a_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0aa",
+        "attach_stem_0aa"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b",
+        "attach_stem_0b"
+      ],
+      "label": "skeleton_stem_0aa_vs_stem_0b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0aa",
+        "attach_stem_0aa"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba",
+        "attach_stem_0ba"
+      ],
+      "label": "skeleton_stem_0aa_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0aa",
+        "attach_stem_0aa"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb",
+        "attach_stem_0bb"
+      ],
+      "label": "skeleton_stem_0aa_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab",
+        "attach_stem_0ab"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b",
+        "attach_stem_0b"
+      ],
+      "label": "skeleton_stem_0ab_vs_stem_0b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab",
+        "attach_stem_0ab"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba",
+        "attach_stem_0ba"
+      ],
+      "label": "skeleton_stem_0ab_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab",
+        "attach_stem_0ab"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb",
+        "attach_stem_0bb"
+      ],
+      "label": "skeleton_stem_0ab_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba",
+        "attach_stem_0ba"
+      ],
+      "label": "skeleton_stem_0b_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb",
+        "attach_stem_0bb"
+      ],
+      "label": "skeleton_stem_0b_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1a",
+        "attach_stem_1a"
+      ],
+      "label": "skeleton_stem_1_vs_stem_1a"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b",
+        "attach_stem_1b"
+      ],
+      "label": "skeleton_stem_1_vs_stem_1b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1",
+        "attach_stem_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2",
+        "attach_stem_2"
+      ],
+      "label": "skeleton_stem_1_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1a",
+        "attach_stem_1a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1ba",
+        "attach_stem_1ba"
+      ],
+      "label": "skeleton_stem_1a_vs_stem_1ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1a",
+        "attach_stem_1a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1bb",
+        "attach_stem_1bb"
+      ],
+      "label": "skeleton_stem_1a_vs_stem_1bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1ba",
+        "attach_stem_1ba"
+      ],
+      "label": "skeleton_stem_1b_vs_stem_1ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1bb",
+        "attach_stem_1bb"
+      ],
+      "label": "skeleton_stem_1b_vs_stem_1bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2a",
+        "attach_stem_2a"
+      ],
+      "label": "skeleton_stem_2_vs_stem_2a"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b",
+        "attach_stem_2b"
+      ],
+      "label": "skeleton_stem_2_vs_stem_2b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2",
+        "attach_stem_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3",
+        "attach_stem_3"
+      ],
+      "label": "skeleton_stem_2_vs_stem_3"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2a",
+        "attach_stem_2a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2ba",
+        "attach_stem_2ba"
+      ],
+      "label": "skeleton_stem_2a_vs_stem_2ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2a",
+        "attach_stem_2a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2bb",
+        "attach_stem_2bb"
+      ],
+      "label": "skeleton_stem_2a_vs_stem_2bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2ba",
+        "attach_stem_2ba"
+      ],
+      "label": "skeleton_stem_2b_vs_stem_2ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2bb",
+        "attach_stem_2bb"
+      ],
+      "label": "skeleton_stem_2b_vs_stem_2bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a",
+        "attach_stem_3a"
+      ],
+      "label": "skeleton_stem_3_vs_stem_3a"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b",
+        "attach_stem_3b"
+      ],
+      "label": "skeleton_stem_3_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3aa",
+        "attach_stem_3aa"
+      ],
+      "label": "skeleton_stem_3a_vs_stem_3aa"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab",
+        "attach_stem_3ab"
+      ],
+      "label": "skeleton_stem_3a_vs_stem_3ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a",
+        "attach_stem_3a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba",
+        "attach_stem_3ba"
+      ],
+      "label": "skeleton_stem_3a_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a",
+        "attach_stem_3a"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb",
+        "attach_stem_3bb"
+      ],
+      "label": "skeleton_stem_3a_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3aa",
+        "attach_stem_3aa"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b",
+        "attach_stem_3b"
+      ],
+      "label": "skeleton_stem_3aa_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3aa",
+        "attach_stem_3aa"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba",
+        "attach_stem_3ba"
+      ],
+      "label": "skeleton_stem_3aa_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3aa",
+        "attach_stem_3aa"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb",
+        "attach_stem_3bb"
+      ],
+      "label": "skeleton_stem_3aa_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab",
+        "attach_stem_3ab"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b",
+        "attach_stem_3b"
+      ],
+      "label": "skeleton_stem_3ab_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab",
+        "attach_stem_3ab"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba",
+        "attach_stem_3ba"
+      ],
+      "label": "skeleton_stem_3ab_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab",
+        "attach_stem_3ab"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb",
+        "attach_stem_3bb"
+      ],
+      "label": "skeleton_stem_3ab_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba",
+        "attach_stem_3ba"
+      ],
+      "label": "skeleton_stem_3b_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb",
+        "attach_stem_3bb"
+      ],
+      "label": "skeleton_stem_3b_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_00"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_Br_00_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_00"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a"
+      ],
+      "label": "hairs_Br_00_vs_stem_0a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_00"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b"
+      ],
+      "label": "hairs_Br_00_vs_stem_0b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_02"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab"
+      ],
+      "label": "hairs_Br_02_vs_stem_0ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_03"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a"
+      ],
+      "label": "hairs_Br_03_vs_stem_0a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_03"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0aa"
+      ],
+      "label": "hairs_Br_03_vs_stem_0aa"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_03"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba"
+      ],
+      "label": "hairs_Br_03_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_03"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb"
+      ],
+      "label": "hairs_Br_03_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_04"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0"
+      ],
+      "label": "hairs_Br_04_vs_stem_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_04"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0a"
+      ],
+      "label": "hairs_Br_04_vs_stem_0a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_04"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0aa"
+      ],
+      "label": "hairs_Br_04_vs_stem_0aa"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_04"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ab"
+      ],
+      "label": "hairs_Br_04_vs_stem_0ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_04"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba"
+      ],
+      "label": "hairs_Br_04_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_04"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb"
+      ],
+      "label": "hairs_Br_04_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_05"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0bb"
+      ],
+      "label": "hairs_Br_05_vs_stem_0bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_06"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0b"
+      ],
+      "label": "hairs_Br_06_vs_stem_0b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_06"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0ba"
+      ],
+      "label": "hairs_Br_06_vs_stem_0ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_07"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_mound"
+      ],
+      "label": "hairs_Br_07_vs_mound"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_07"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1a"
+      ],
+      "label": "hairs_Br_07_vs_stem_1a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_07"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b"
+      ],
+      "label": "hairs_Br_07_vs_stem_1b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_08"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b"
+      ],
+      "label": "hairs_Br_08_vs_stem_1b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_08"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1ba"
+      ],
+      "label": "hairs_Br_08_vs_stem_1ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_08"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1bb"
+      ],
+      "label": "hairs_Br_08_vs_stem_1bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_09"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1"
+      ],
+      "label": "hairs_Br_09_vs_stem_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_09"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1a"
+      ],
+      "label": "hairs_Br_09_vs_stem_1a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_09"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1ba"
+      ],
+      "label": "hairs_Br_09_vs_stem_1ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_09"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1bb"
+      ],
+      "label": "hairs_Br_09_vs_stem_1bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_10"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b"
+      ],
+      "label": "hairs_Br_10_vs_stem_1b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_10"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1bb"
+      ],
+      "label": "hairs_Br_10_vs_stem_1bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_11"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1b"
+      ],
+      "label": "hairs_Br_11_vs_stem_1b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_11"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1ba"
+      ],
+      "label": "hairs_Br_11_vs_stem_1ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_12"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2a"
+      ],
+      "label": "hairs_Br_12_vs_stem_2a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_12"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b"
+      ],
+      "label": "hairs_Br_12_vs_stem_2b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_13"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "label": "hairs_Br_13_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_13"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b"
+      ],
+      "label": "hairs_Br_13_vs_stem_2b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_13"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2ba"
+      ],
+      "label": "hairs_Br_13_vs_stem_2ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_13"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2bb"
+      ],
+      "label": "hairs_Br_13_vs_stem_2bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_14"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "label": "hairs_Br_14_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_14"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2a"
+      ],
+      "label": "hairs_Br_14_vs_stem_2a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_14"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2ba"
+      ],
+      "label": "hairs_Br_14_vs_stem_2ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_14"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2bb"
+      ],
+      "label": "hairs_Br_14_vs_stem_2bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_15"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b"
+      ],
+      "label": "hairs_Br_15_vs_stem_2b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_15"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2bb"
+      ],
+      "label": "hairs_Br_15_vs_stem_2bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_16"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2b"
+      ],
+      "label": "hairs_Br_16_vs_stem_2b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_16"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2ba"
+      ],
+      "label": "hairs_Br_16_vs_stem_2ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_17"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a"
+      ],
+      "label": "hairs_Br_17_vs_stem_3a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_17"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b"
+      ],
+      "label": "hairs_Br_17_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_19"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a"
+      ],
+      "label": "hairs_Br_19_vs_stem_3a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_19"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab"
+      ],
+      "label": "hairs_Br_19_vs_stem_3ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_20"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a"
+      ],
+      "label": "hairs_Br_20_vs_stem_3a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_20"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3aa"
+      ],
+      "label": "hairs_Br_20_vs_stem_3aa"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_20"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b"
+      ],
+      "label": "hairs_Br_20_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_20"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba"
+      ],
+      "label": "hairs_Br_20_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_20"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb"
+      ],
+      "label": "hairs_Br_20_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_21"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3a"
+      ],
+      "label": "hairs_Br_21_vs_stem_3a"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_21"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3aa"
+      ],
+      "label": "hairs_Br_21_vs_stem_3aa"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_21"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab"
+      ],
+      "label": "hairs_Br_21_vs_stem_3ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_21"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba"
+      ],
+      "label": "hairs_Br_21_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_21"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb"
+      ],
+      "label": "hairs_Br_21_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_22"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab"
+      ],
+      "label": "hairs_Br_22_vs_stem_3ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_22"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b"
+      ],
+      "label": "hairs_Br_22_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_22"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3bb"
+      ],
+      "label": "hairs_Br_22_vs_stem_3bb"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_23"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ab"
+      ],
+      "label": "hairs_Br_23_vs_stem_3ab"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_23"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3b"
+      ],
+      "label": "hairs_Br_23_vs_stem_3b"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Br_23"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3ba"
+      ],
+      "label": "hairs_Br_23_vs_stem_3ba"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0"
+      ],
+      "label": "hairs_Md_0_vs_stem_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1"
+      ],
+      "label": "hairs_Md_0_vs_stem_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_0"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "label": "hairs_Md_0_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0"
+      ],
+      "label": "hairs_Md_1_vs_stem_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_1"
+      ],
+      "label": "hairs_Md_1_vs_stem_1"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "label": "hairs_Md_1_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_1"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3"
+      ],
+      "label": "hairs_Md_1_vs_stem_3"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_0"
+      ],
+      "label": "hairs_Md_2_vs_stem_0"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_2"
+      ],
+      "label": "hairs_Md_2_vs_stem_2"
+    },
+    {
+      "a": [
+        "PA_millepora_Polyps",
+        "part_hairs_Md_2"
+      ],
+      "b": [
+        "PA_millepora_Skeleton",
+        "part_stem_3"
+      ],
+      "label": "hairs_Md_2_vs_stem_3"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.15,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 150,
+      "bones": [
+        "Br_00",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_19",
+        "Br_20",
+        "Br_21",
+        "Br_22",
+        "Br_23",
+        "Md_0",
+        "Md_1",
+        "Md_2"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Br_00",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_19",
+        "Br_20",
+        "Br_21",
+        "Br_22",
+        "Br_23",
+        "Md_0",
+        "Md_1",
+        "Md_2"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Br_00",
+        "Br_02",
+        "Br_03",
+        "Br_04",
+        "Br_05",
+        "Br_06",
+        "Br_07",
+        "Br_08",
+        "Br_09",
+        "Br_10",
+        "Br_11",
+        "Br_12",
+        "Br_13",
+        "Br_14",
+        "Br_15",
+        "Br_16",
+        "Br_17",
+        "Br_19",
+        "Br_20",
+        "Br_21",
+        "Br_22",
+        "Br_23",
+        "Md_0",
+        "Md_1",
+        "Md_2"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 3,
+  "variantId": "branching",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.067339,
+      -0.07508,
+      0.0
+    ],
+    "max": [
+      0.067365,
+      0.075038,
+      0.136084
+    ]
+  },
+  "textures": [
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/base-albedo.png",
+    "textures/base-roughness.png",
+    "textures/base-normal.png",
+    "textures/hair-albedo.png",
+    "textures/hair-roughness.png",
+    "textures/hair-normal.png"
+  ],
+  "notes": {
+    "form": "branching",
+    "seed": 9,
+    "nominalWidthMeters": 0.11138897761702538,
+    "colonyScale": 1.346632343782937,
+    "skeletonParts": [
+      "mound",
+      "stem_0",
+      "stem_0a",
+      "stem_0aa",
+      "stem_0ab",
+      "stem_0b",
+      "stem_0ba",
+      "stem_0bb",
+      "stem_1",
+      "stem_1a",
+      "stem_1b",
+      "stem_1ba",
+      "stem_1bb",
+      "stem_2",
+      "stem_2a",
+      "stem_2b",
+      "stem_2ba",
+      "stem_2bb",
+      "stem_3",
+      "stem_3a",
+      "stem_3aa",
+      "stem_3ab",
+      "stem_3b",
+      "stem_3ba",
+      "stem_3bb"
+    ],
+    "hairs": 759,
+    "hairsRejected": 637,
+    "clusters": {
+      "Md_0": 69,
+      "Md_1": 110,
+      "Md_2": 96,
+      "Br_00": 58,
+      "Br_02": 16,
+      "Br_03": 36,
+      "Br_04": 4,
+      "Br_05": 16,
+      "Br_06": 16,
+      "Br_07": 15,
+      "Br_08": 44,
+      "Br_09": 6,
+      "Br_10": 11,
+      "Br_11": 27,
+      "Br_12": 42,
+      "Br_13": 44,
+      "Br_14": 11,
+      "Br_15": 15,
+      "Br_16": 15,
+      "Br_17": 17,
+      "Br_19": 32,
+      "Br_20": 32,
+      "Br_21": 8,
+      "Br_22": 9,
+      "Br_23": 10
+    },
+    "deformBones": 26,
+    "meanHairLengthMeters": 0.003303,
+    "triangles": 13552,
+    "clearancePairs": 124,
+    "branchExits": {
+      "stem_0": 0.358,
+      "stem_0a": 0.708,
+      "stem_0aa": 0.641,
+      "stem_0ab": 0.433,
+      "stem_0b": 0.538,
+      "stem_0ba": 0.646,
+      "stem_0bb": 0.639,
+      "stem_1": 0.526,
+      "stem_1a": 0.516,
+      "stem_1b": 0.536,
+      "stem_1ba": 0.624,
+      "stem_1bb": 0.434,
+      "stem_2": 0.358,
+      "stem_2a": 0.518,
+      "stem_2b": 0.546,
+      "stem_2ba": 0.642,
+      "stem_2bb": 0.643,
+      "stem_3": 0.527,
+      "stem_3a": 0.535,
+      "stem_3aa": 0.438,
+      "stem_3ab": 0.439,
+      "stem_3b": 0.544,
+      "stem_3ba": 0.632,
+      "stem_3bb": 0.631
+    },
+    "minBranchGapMeters": 0.00122
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/millepora/candidates/fable-v1-branching/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/millepora/candidates/fable-v1-branching/renders/three-view.png",
+    "boundsMin": [
+      -0.06733933836221695,
+      -0.0750795304775238,
+      0.0
+    ],
+    "boundsMax": [
+      0.06736549735069275,
+      0.07503760606050491,
+      0.13608448207378387
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

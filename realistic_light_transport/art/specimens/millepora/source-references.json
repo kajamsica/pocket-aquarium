@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "millepora",
+  "revision": 1,
+  "policy": "References informed growth form, colony size, pore anatomy, zooid morphology and colour placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source; the trade name 'fire coral' guided identity only.",
+  "taxonomyNote": "Millepora Linnaeus, 1758 is the only genus of Milleporidae, a hydrozoan family (Cnidaria: Hydrozoa: Anthoathecata), so fire corals are hydrocorals rather than scleractinians: the coenosteum lacks corallites and is pierced by gastropores and dactylopores. Species are delimited mainly by growth form and pore metrics and show strong phenotypic plasticity (Razak & Hoeksema 2003; Ruiz-Ramos et al. 2014), so the asset carries a genus-level label with taxonomyConfidence 'genus' and depicts the blade (M. complanata / M. platyphylla) and branching (M. alcicornis) habits as variants.",
+  "sources": [
+    {
+      "id": "WORMS-205902",
+      "title": "Millepora Linnaeus, 1758 genus record (accepted; Hydrozoa, Anthoathecata, Milleporidae)",
+      "publisher": "World Register of Marine Species (World Hydrozoa Database)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=205902",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-210726",
+      "title": "Millepora alcicornis Linnaeus, 1758 species record (accepted): the branching Caribbean fire coral",
+      "publisher": "World Register of Marine Species (World Hydrozoa Database)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=210726",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-287421",
+      "title": "Millepora complanata Lamarck, 1816 species record (accepted): the blade fire coral",
+      "publisher": "World Register of Marine Species (World Hydrozoa Database)",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=287421",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "RAZAK-HOEKSEMA-2003",
+      "title": "Razak TB, Hoeksema BW (2003) The hydrocoral genus Millepora (Hydrozoa: Capitata: Milleporidae) in Indonesia. Zoologische Verhandelingen Leiden 345: 313-336. Coenosteum without corallites, minute scattered pores; gastropores with short knob-tentacled gastrozooids, dactylopores with elongated dactylozooids bearing capitate tentacles, usually arranged in cyclosystems of one gastropore ringed by five to seven dactylopores; growth forms branching, reticulate or upstanding plates, knobbed branches, columnar; M. platyphylla forms solid thick upstanding plates in parallel tiers or honeycombs.",
+      "publisher": "Naturalis Biodiversity Center repository",
+      "url": "https://repository.naturalis.nl/pub/220318/ZV345_313-336.pdf",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only; no plates used"
+    },
+    {
+      "id": "DEWEERDT-1981",
+      "title": "de Weerdt WH (1981) Taxonomic characters in Caribbean Millepora species (Hydrozoa, Coelenterata). Bijdragen tot de Dierkunde 51: 1-19. Growth form (branching M. alcicornis with laterally compressed, sometimes finger-like branches; plate-like M. complanata) and pore size and density as diagnostic characters.",
+      "publisher": "Brill (Bijdragen tot de Dierkunde)",
+      "url": "https://doi.org/10.1163/26660644-05402010",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Text facts cited only"
+    },
+    {
+      "id": "RUIZ-RAMOS-2014",
+      "title": "Ruiz-Ramos DV, Weil E, Schizas NV (2014) Morphological and genetic evaluation of the hydrocoral Millepora species complex in the Caribbean. Zoological Studies 53: 4. M. alcicornis: branching colonies with smooth surface, gastropores 0.15-0.30 mm, dactylopores 0.06-0.17 mm; M. complanata: simple plates from a common base or honeycomb-like interconnected plates, gastropores 0.22-0.36 mm, dactylopores 0.12-0.24 mm; branched and encrusting morphotypes form one species complex.",
+      "publisher": "Zoological Studies (Springer Open)",
+      "url": "https://doi.org/10.1186/1810-522X-53-4",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "WIKIPEDIA-MILLEPORA-ALCICORNIS",
+      "title": "Millepora alcicornis (encyclopaedia article summarising Lewis 2006): encrusting early growth, blades in surf, upright branched colonies to 50 cm tall in calm water, cylindrical branches usually in one plane, brown to pale cream-yellow with paler branch tips; gastrozooids with four to six tentacle stubs, dactylozooids with hair-like tentacles",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Millepora_alcicornis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "secondary_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-SA 4.0 (text)"
+    },
+    {
+      "id": "COMMONS-MILLEPORA",
+      "title": "Category:Millepora (openly licensed photographs, growth form, hair density and colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Millepora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MILLEPORA-ALCICORNIS",
+      "title": "Category:Millepora alcicornis (openly licensed photographs, branch thickness, fork angle and tip colour study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Millepora_alcicornis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MILLEPORA-COMPLANATA",
+      "title": "Category:Millepora complanata (openly licensed photographs, blade height to thickness and margin lobing study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Millepora_complanata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Taxonomy, growth forms, pore anatomy and pore sizes are documented by WoRMS and peer-reviewed revisions (Razak & Hoeksema 2003, de Weerdt 1981, Ruiz-Ramos et al. 2014); colony size comes from a secondary summary of Lewis 2006. Blade height to thickness, fork angles, branch compression and dactylozooid length and density are read from openly licensed field photographs rather than calibrated side, top and front plates, and the two variants are habit-level composites of a species complex rather than one measured specimen."
+}

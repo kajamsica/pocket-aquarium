@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "millepora",
+  "sourceSha256": "40f0bc43138b148b1434f3c988986519fcf816ebd3fa41b31d528686c7bb3fdc",
+  "objects": [
+    {
+      "name": "PA_millepora_Polyps",
+      "vertexCount": 6072,
+      "triangleCount": 9108,
+      "vertexDigest": "58a3c4b51d41d2def1425961455d57c9e325ea7d210bba027c886eeb2addc015",
+      "topologyDigest": "95aa30fb935465b937b8558898a64717a7b841859dcc64e44b73df54357f31c5",
+      "uvDigest": "efdd4f2fed2091d5234f46fe06056cfc84fb0e24b5bc995a628eddfac78e8d41",
+      "weightDigest": "a7ef12eaadc8ba01380554df4988e3c47a6704b379318fb98bf9427461d16fd9",
+      "materials": [
+        "PA_millepora_Hair"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_millepora_Skeleton",
+      "vertexCount": 2272,
+      "triangleCount": 4444,
+      "vertexDigest": "49c089b5db8fd7a58794cdec4ac001e988ac72f370ee5493abc13bedcf1744bf",
+      "topologyDigest": "d187f9178946598b55070f7c3c3d6c2dafb42b7e6fe9cc22765ec49136b19b6f",
+      "uvDigest": "641b8736524bae46c75482ea3fe094a161e75d4af7a6fbc3092924e39f246c9d",
+      "weightDigest": "b13e87a6f272bff0dc674ec20f4f79eac43dbcad563ec17b4a8488c14c32f60a",
+      "materials": [
+        "PA_millepora_Base",
+        "PA_millepora_Skeleton"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_millepora_Rig",
+    "boneCount": 27,
+    "deformBoneCount": 26,
+    "boneDigest": "0a39d25055c532a1207a3532ea3b05648dedc7f348e2339c2a7626e196b7bd7a"
+  },
+  "geometryDigest": "93925401aec570f1d3eed9931020348203d0a6f9a6a92a3334fcf40c88dca1c5",
+  "variantId": "branching"
+}
