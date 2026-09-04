@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { specimenAssetFor } from '../scene/specimens/assetRegistry'
+import { ACCEPTED_SPECIES_IDS, specimenAssetFor } from '../scene/specimens/assetRegistry'
 import {
   ASSET_STATUSES,
   KNOWN_CATEGORIES,
@@ -57,16 +57,21 @@ describe('committed visual catalog', () => {
     expect(visualCatalog.summary.rows).toBe(visualCatalog.rows.length)
   })
 
-  it('never lets a candidate resolve through the runtime registry', () => {
+  it('pairs every catalog row with its accepted registry default without resolving candidate keys', () => {
     const accepted = acceptedSpecimenAssets()
-    expect(accepted.map(({ row }) => row.id)).toEqual(['ocellaris'])
+    expect(accepted).toHaveLength(33)
+    expect(accepted.map(({ row }) => row.id).sort()).toEqual([...ACCEPTED_SPECIES_IDS].sort())
+    for (const { row, asset } of accepted) {
+      expect(asset, row.id).toBe(specimenAssetFor(row.id))
+    }
     for (const row of visualCatalog.rows) {
-      if (row.assetStatus === 'accepted') continue
-      expect(specimenAssetFor(row.id), row.id).toBeUndefined()
       for (const candidate of row.candidates) expect(specimenAssetFor(`${row.id}@${candidate.name}`)).toBeUndefined()
     }
+    expect(specimenAssetFor('ocellaris', 'fable-v2')).toBeUndefined()
+    expect(specimenAssetFor('blue_hippo_tang', 'alt-v2')).toBeUndefined()
+    expect(specimenAssetFor('six_line_wrasse', 'fable-v1')).toBeUndefined()
     // A row claiming acceptance is not enough: the registry table is the gate.
-    const impostor = sizeRow('blue_hippo_tang', 0.25, { assetStatus: 'accepted', accepted: { glb: 'x', sha256: 'y', clips: [], statistics: null } })
+    const impostor = sizeRow('not_in_registry', 0.25, { assetStatus: 'accepted', accepted: { glb: 'x', sha256: 'y', clips: [], statistics: null } })
     expect(acceptedSpecimenAssets([impostor])).toEqual([])
   })
 })

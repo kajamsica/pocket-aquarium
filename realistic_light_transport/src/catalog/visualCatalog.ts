@@ -135,7 +135,6 @@ export function catalogRow(speciesId: string, rows: readonly CatalogRow[] = visu
 export function acceptedSpecimenAssets(rows: readonly CatalogRow[] = visualCatalog.rows): readonly { readonly row: CatalogRow; readonly asset: SpecimenAsset }[] {
   const accepted: { row: CatalogRow; asset: SpecimenAsset }[] = []
   for (const row of rows) {
-    if (row.assetStatus !== 'accepted') continue
     const asset = specimenAssetFor(row.id)
     if (asset) accepted.push({ row, asset })
   }
