@@ -10,6 +10,7 @@
   var DATA = PA.DATA;
   var ACT = DATA.ACTIONS;
   var STAGES = DATA.CYCLE_STAGES;
+  var LOCK_CORAL_PLACEMENT = ACT.LOCK_CORAL_PLACEMENT || "LOCK_CORAL_PLACEMENT";
 
   /* ============================ tuning ============================ *
    * Broad, documented coefficients — a readable game model, not a
@@ -36,6 +37,44 @@
   function num(v, d) { return (typeof v === "number" && isFinite(v)) ? v : d; }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function approach(cur, target, rate, dt) { return cur + (target - cur) * clamp(rate * dt, 0, 1); }
+  function coralIsPlaced(coral) { return !!(coral && coral.placement); }
+  function placedCoralCount(state) {
+    var count = 0, corals = state.corals || [];
+    for (var i = 0; i < corals.length; i++) if (coralIsPlaced(corals[i])) count++;
+    return count;
+  }
+
+  var CORAL_ROCK_SURFACES = 13, CORAL_SAND_MOUNDS = 22;
+  function validSurfaceIndex(id, prefix, count) {
+    if (typeof id !== "string" || id.indexOf(prefix) !== 0) return false;
+    var tail = id.slice(prefix.length);
+    return /^(0|[1-9][0-9]*)$/.test(tail) && +tail < count;
+  }
+  function knownCoralSurface(surface, id) {
+    if (surface === "rock") return validSurfaceIndex(id, "rock:", CORAL_ROCK_SURFACES);
+    return surface === "sand" && (id === "sand:base" || validSurfaceIndex(id, "sand:mound:", CORAL_SAND_MOUNDS));
+  }
+  function sanitizeCoralPlacement(value) {
+    if (!value || typeof value !== "object" || value.version !== 1 ||
+        !knownCoralSurface(value.surface, value.surfaceId) ||
+        !Array.isArray(value.position) || value.position.length !== 3 ||
+        !Array.isArray(value.normal) || value.normal.length !== 3 ||
+        typeof value.yaw !== "number" || !isFinite(value.yaw) || Math.abs(value.yaw) > Math.PI) return null;
+    var p = value.position, n = value.normal;
+    for (var i = 0; i < 3; i++) if (typeof p[i] !== "number" || !isFinite(p[i]) ||
+      typeof n[i] !== "number" || !isFinite(n[i]) || Math.abs(n[i]) > 1) return null;
+    if (p[0] < -1 || p[0] > 1 || p[1] < 0 || p[1] > 1 || p[2] < -1 || p[2] > 1) return null;
+    var normalLength = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    if (Math.abs(normalLength - 1) > 0.05 || n[1] <= 0) return null;
+    return { version: 1, surface: value.surface, surfaceId: value.surfaceId,
+      position: p.slice(), normal: n.slice(), yaw: value.yaw };
+  }
+  function legacyCoralPlacement(coral) {
+    var x = clamp(num(coral.x, 0.5), 0, 1), z = clamp(num(coral.y, 0.7), 0, 1);
+    return { version: 1, surface: "sand", surfaceId: "sand:base",
+      position: [x * 2 - 1, 0, z * 2 - 1], normal: [0, 1, 0], yaw: (x * 2 - 1) * Math.PI };
+  }
+  function coralVariant(value) { return typeof value === "string" && value ? value : null; }
 
   /* seeded mulberry32 — advances and returns a value in [0,1). state carries the int. */
   function rng(state) {
@@ -338,6 +377,7 @@
       var draw = 0;
       for (var ci = 0; ci < state.corals.length; ci++) {
         var co = state.corals[ci], cd = DATA.CORALS[co.species];
+        if (!coralIsPlaced(co)) continue;
         if (cd && co.health > 0.2) draw += cd.calcification * (0.4 + 0.6 * co.growth);
       }
       w.alkalinity = Math.max(0, w.alkalinity - draw * 0.35 * dt);
@@ -541,6 +581,7 @@
     var dayF = daylight(frac); // day feeders open in light
     for (i = 0; i < state.corals.length; i++) {
       var co = state.corals[i], cd = DATA.CORALS[co.species]; if (!cd) continue;
+      if (!coralIsPlaced(co)) continue;
       var parS = bandScore(w.par, cd.par);
       var flowS = bandScore(w.flow, cd.flow);
       var openScore = clamp(Math.min(parS, flowS) * (0.4 + 0.6 * dayF) * (0.6 + 0.4 * stabF), 0, 1);
@@ -588,7 +629,7 @@
     m.pods = clamp(m.pods + (0.6 * m.pods * (1 - m.pods / Math.max(podCap, 0.05)) - predation) * dt, 0, 1);
     m.worms = clamp(m.worms + (0.5 * (detritus * 0.5 + 0.05) * (1 - m.worms / 0.8)) * dt, 0, 1);
     m.infusoria = clamp(m.infusoria + (0.7 * m.infusoria * (1 - m.infusoria / Math.max(infuCap, 0.05)) - predation * 0.5) * dt, 0, 1);
-    m.biodiversity = clamp(0.35 * m.pods + 0.25 * m.worms + 0.25 * m.infusoria + 0.15 * clamp(state.corals.length / 3, 0, 1), 0, 1);
+    m.biodiversity = clamp(0.35 * m.pods + 0.25 * m.worms + 0.25 * m.infusoria + 0.15 * clamp(placedCoralCount(state) / 3, 0, 1), 0, 1);
   }
 
   /* ============================ breeding ============================ */
@@ -798,7 +839,8 @@
       case ACT.PURCHASE_TIER: doBuyTier(state, action.tier); break;
       case ACT.PURCHASE_LIVESTOCK: doBuyLivestock(state, action.species, action.count, action.acceptRisk); break;
       case ACT.SELL_LIVESTOCK: doSellLivestock(state, action.ids); break;
-      case ACT.PURCHASE_CORAL: doBuyCoral(state, action.coral); break;
+      case ACT.PURCHASE_CORAL: doBuyCoral(state, action.coral, action.variantId); break;
+      case LOCK_CORAL_PLACEMENT: doLockCoralPlacement(state, action.coralId, action.placement); break;
       case ACT.SEED_MICROFAUNA: doSeedMicrofauna(state, action.culture); break;
 
       case ACT.FEED:
@@ -1015,17 +1057,26 @@
       x: rrange(state, 0.15, 0.85), y: rrange(state, 0.2, 0.8)
     };
   }
-  function doBuyCoral(state, coral) {
+  function doBuyCoral(state, coral, variantId) {
     var v = PA.validatePurchase(state, { kind: "coral", id: coral });
     if (!v.ok) { log(state, "store", "Cannot add coral: " + v.reasons.join(" ")); return false; }
     var cd = DATA.CORALS[coral]; state.credits -= cd.price;
     state.corals.push({
-      id: state.nextId++, species: coral, health: 0.9, tissue: 0.9, polyps: cd.startPolyps,
-      extension: 0.4, growth: 0.1, feedingReserve: 0.4, stress: 0.1,
-      x: rrange(state, 0.2, 0.8), y: rrange(state, 0.55, 0.85)
+      id: state.nextId++, species: coral, variantId: coralVariant(variantId), placement: null,
+      health: 0.9, tissue: 0.9, polyps: cd.startPolyps,
+      extension: 0.4, growth: 0.1, feedingReserve: 0.4, stress: 0.1
     });
-    log(state, "store", "Added a " + cd.name + " to the reef.");
-    award(state, "first_coral", 15, 0, "First coral colony added.", true);
+    log(state, "store", "Purchased a " + cd.name + " for the coral tray.");
+    award(state, "first_coral", 15, 0, "First coral colony purchased.", true);
+    return true;
+  }
+  function doLockCoralPlacement(state, coralId, requestedPlacement) {
+    var coral = null;
+    for (var i = 0; i < state.corals.length; i++) if (state.corals[i].id === coralId) { coral = state.corals[i]; break; }
+    var placement = sanitizeCoralPlacement(requestedPlacement);
+    if (!coral || coral.placement !== null || !placement) return false;
+    coral.placement = placement;
+    log(state, "coral", "Locked " + DATA.CORALS[coral.species].name + " placement.");
     return true;
   }
   function doSeedMicrofauna(state, culture) {
@@ -1160,12 +1211,15 @@
         hunger: r3(a.hunger), condition: r3(a.condition), health: r3(a.health), alive: a.alive !== false, alerts: alerts
       });
     }
+    var activeCorals = 0;
     for (i = 0; i < state.corals.length; i++) {
       var co = state.corals[i], cd = DATA.CORALS[co.species];
+      if (!coralIsPlaced(co)) continue;
+      activeCorals++;
       out.corals.push({ id: co.id, species: co.species, name: cd ? cd.name : co.species, extension: r3(co.extension), health: r3(co.health), polyps: Math.round(co.polyps), growth: r3(co.growth), stress: r3(co.stress), tissue: r3(co.tissue) });
     }
     out.clutches = state.clutches.map(function (c) { return { species: c.species, stage: c.stage, count: Math.round(c.count), ageDays: r3(c.ageDays) }; });
-    out.welfare = n === 0 ? (state.corals.length ? "reef only" : "empty") : welfareLabel(healthSum / n);
+    out.welfare = n === 0 ? (activeCorals ? "reef only" : "empty") : welfareLabel(healthSum / n);
     out.nextAction = nextBestAction(state, out);
     if (dead > 0) out.alerts.unshift(dead + " animal(s) need removing");
     return out;
@@ -1365,12 +1419,16 @@
   }
   function sanitizeCoral(state, co) {
     var cd = DATA.CORALS[co.species];
+    var hasPlacement = Object.prototype.hasOwnProperty.call(co, "placement");
+    var placement = hasPlacement ? sanitizeCoralPlacement(co.placement) : legacyCoralPlacement(co);
+    if (hasPlacement && co.placement !== null && !placement)
+      log(state, "quarantine", "Ignored an invalid saved coral placement (" + co.species + ").");
     return {
-      id: num(co.id, state.nextId++), species: co.species,
+      id: num(co.id, state.nextId++), species: co.species, variantId: coralVariant(co.variantId), placement: placement,
       health: clamp(num(co.health, 0.9), 0, 1), tissue: clamp(num(co.tissue, 0.9), 0, 1),
       polyps: clamp(num(co.polyps, cd.startPolyps), 0, 5000), extension: clamp(num(co.extension, 0.4), 0, 1),
       growth: clamp(num(co.growth, 0.1), 0, 1), feedingReserve: clamp(num(co.feedingReserve, 0.4), 0, 1),
-      stress: clamp(num(co.stress, 0.1), 0, 1), x: clamp(num(co.x, 0.5), 0, 1), y: clamp(num(co.y, 0.7), 0, 1)
+      stress: clamp(num(co.stress, 0.1), 0, 1)
     };
   }
 

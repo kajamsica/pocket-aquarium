@@ -98,6 +98,7 @@
     var par = finite(state.water && state.water.par, 0);
     var dim = 0, bright = 0, corals = state.corals || [];
     for (var i = 0; i < corals.length; i++) {
+      if (!corals[i] || !corals[i].placement) continue;
       var profile = DATA.CORALS[corals[i].species];
       if (!profile || !profile.par) continue;
       if (par > profile.par.high) bright++;
