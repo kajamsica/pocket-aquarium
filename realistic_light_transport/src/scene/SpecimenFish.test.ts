@@ -22,13 +22,22 @@ import {
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
   sampleSpecimenMotionRoute,
+  specimenMotionProfile,
+  specimenSurfaceProgress,
   specimenBehaviorProfile,
   specimenCollisionEnvelope,
   specimenDirectionInterval,
   specimenReversalThreshold,
   specimenSelectionAction,
   steerSpecimenHeading,
+  updateUprightSpecimenOrientation,
 } from './SpecimenFish'
+import {
+  isSurfaceBoundLocomotion,
+  resolveSpecimenLocomotionPlan,
+  speciesBehaviorPolicyFor,
+} from './speciesBehavior'
+import { createSurfaceCircuit, sampleSurfaceCircuit } from './surfaceLocomotion'
 
 const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
 const neighbor = (x: number, z: number, velocityX: number, velocityZ: number,
@@ -36,6 +45,96 @@ const neighbor = (x: number, z: number, velocityX: number, velocityZ: number,
   position: new THREE.Vector3(x, 0, z), velocity: new THREE.Vector3(velocityX, 0, velocityZ),
   profile, ...TEST_ENVELOPE, verticalClearance: .2,
 })
+
+describe('authoritative species locomotion', () => {
+  const animals = createAcceptedShowcaseCatalog().animalAssets
+
+  it('classifies every accepted animal before it reaches the runtime integrator', () => {
+    const classes = animals.map(({ speciesId }) => resolveSpecimenLocomotionPlan(speciesId))
+    expect(animals).toHaveLength(25)
+    expect(classes.filter((mode) => mode.endsWith('_fish'))).toHaveLength(13)
+    expect(classes.filter(isSurfaceBoundLocomotion)).toHaveLength(12)
+    expect(new Set(classes)).toEqual(new Set([
+      'open_water_fish', 'rock_fish', 'benthic_fish', 'sand_crawler',
+      'hard_surface_crawler', 'burrow_crawler', 'cleaner_station_crawler',
+    ]))
+  })
+
+  it('moves every accepted invert only along its seeded attached-surface circuit', () => {
+    const delta = 1 / 60
+    for (const { speciesId } of animals.filter(({ speciesId }) =>
+      isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(speciesId)))) {
+      const profile = specimenMotionProfile(speciesId)
+      const circuit = createSurfaceCircuit(speciesId, 19)
+      const pose = sampleSurfaceCircuit(circuit, 0)
+      const previous = pose.position.clone()
+      let maximumStep = 0
+      let maximumNormalTangentDot = 0
+      for (let frame = 1; frame <= 180; frame += 1) {
+        sampleSurfaceCircuit(circuit, frame * profile.cruiseSpeed * delta / circuit.totalLength, pose)
+        maximumStep = Math.max(maximumStep, pose.position.distanceTo(previous))
+        maximumNormalTangentDot = Math.max(maximumNormalTangentDot, Math.abs(pose.normal.dot(pose.tangent)))
+        previous.copy(pose.position)
+      }
+      expect(maximumStep).toBeLessThanOrEqual(profile.cruiseSpeed * delta * 1.01)
+      expect(pose.normal.length()).toBeCloseTo(1, 5)
+      expect(maximumNormalTangentDot).toBeLessThan(1e-5)
+      if (circuit.mode === 'sand' || circuit.mode === 'sand_burrow') {
+        expect(previous.y).toBeCloseTo(-1.44, 5)
+      }
+    }
+  })
+
+  it('keeps all fish upright with bounded pitch, roll, and per-frame rotation', () => {
+    const delta = 1 / 60
+    for (const { speciesId } of animals.filter(({ speciesId }) =>
+      !isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(speciesId)))) {
+      const profile = specimenMotionProfile(speciesId)
+      const orientation = new THREE.Quaternion()
+      const previous = new THREE.Quaternion()
+      let maximumFrameTurn = 0
+      let minimumWorldUp = 1
+      let maximumPitch = 0
+      for (let frame = 0; frame < 180; frame += 1) {
+        const yaw = frame * .023 + speciesId.length
+        const heading = new THREE.Vector3(Math.cos(yaw), Math.sin(frame * .031) * .42, Math.sin(yaw)).normalize()
+        previous.copy(orientation)
+        updateUprightSpecimenOrientation(orientation, heading, Math.sin(frame * .07) * .3,
+          profile.turnRate * delta)
+        const up = new THREE.Vector3(0, 1, 0).applyQuaternion(orientation)
+        const forward = new THREE.Vector3(1, 0, 0).applyQuaternion(orientation)
+        maximumFrameTurn = Math.max(maximumFrameTurn, previous.angleTo(orientation))
+        minimumWorldUp = Math.min(minimumWorldUp, up.y)
+        maximumPitch = Math.max(maximumPitch, Math.abs(forward.y))
+      }
+      expect(maximumFrameTurn).toBeLessThanOrEqual(profile.turnRate * delta + 1e-6)
+      expect(minimumWorldUp).toBeGreaterThan(.95)
+      expect(maximumPitch).toBeLessThanOrEqual(Math.sin(THREE.MathUtils.degToRad(12)) + 1e-6)
+    }
+  })
+
+  it('preserves natural relative speeds and smooth tang bursts', () => {
+    expect(specimenMotionProfile('yellow_tang').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('ocellaris').cruiseSpeed)
+    expect(specimenMotionProfile('six_line_wrasse').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('royal_gramma').cruiseSpeed)
+    expect(specimenMotionProfile('royal_gramma').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('diamond_goby').cruiseSpeed)
+    expect(specimenMotionProfile('diamond_goby').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('turbo_snail').cruiseSpeed)
+    expect(speciesBehaviorPolicyFor('yellow_tang').fishHabitat?.pace.surgeMultiplier).toBe(1.38)
+    expect(speciesBehaviorPolicyFor('epaulette_shark').fishHabitat?.pace.surgeMultiplier).toBe(.4)
+  })
+
+  it('anchors cleaner shrimp to a local, repeatable rock station', () => {
+    const circuit = createSurfaceCircuit('cleaner_shrimp', 23)
+    const samples = Array.from({ length: 181 }, (_, frame) => sampleSurfaceCircuit(circuit,
+      specimenSurfaceProgress('cleaner_shrimp', circuit, 23, frame / 10, .052)).position.clone())
+    expect(Math.max(...samples.map((point) => point.distanceTo(samples[0])))).toBeLessThan(.45)
+    expect(samples.at(-1)?.distanceTo(samples[0])).toBeLessThan(1e-6)
+  })
+})
+
 describe('specimen motion continuity', () => {
   it('caps travel at the frame delta and at 50 ms after a stall', () => {
     const regularFrame = new THREE.Vector3(10, 0, 0)

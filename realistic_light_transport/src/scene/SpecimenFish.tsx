@@ -12,11 +12,19 @@ import { FOOD_CONTACT_RADIUS, type ScenePoint, visibleFoodContact } from './food
 import type { FlowFieldSource } from './ReefHabitat'
 import { REEF_ROCKS } from './reefLayout'
 import {
+  fishPaceMultiplier,
+  fishRouteWaypoints,
+  isSurfaceBoundLocomotion,
+  resolveSpecimenLocomotionPlan,
+  speciesBehaviorPolicyFor,
+} from './speciesBehavior'
+import {
   ACCEPTED_SPECIES_IDS,
   specimenAssetFor,
   type SpecimenAsset,
 } from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
+import { createSurfaceCircuit, sampleSurfaceCircuit, type SurfaceCircuit, type SurfacePose } from './surfaceLocomotion'
 
 const MAX_SPECIMENS = 25
 const TANK_HALF_WIDTH = 2.76
@@ -677,28 +685,80 @@ interface FishPhysicsState {
   readonly previousPosition: THREE.Vector3
   readonly previousForward: THREE.Vector3
   readonly orientation: THREE.Quaternion
+  readonly targetOrientation: THREE.Quaternion
+  readonly orientationMatrix: THREE.Matrix4
+  readonly orientationUp: THREE.Vector3
+  readonly orientationSide: THREE.Vector3
   initialized: boolean
   nextRoamAt: number
   roamIndex: number
 }
 
-function motionProfile(speciesId: string): MotionProfile {
+export function specimenMotionProfile(speciesId: string): MotionProfile {
   if (speciesId === 'epaulette_shark') return {
     cruiseSpeed: .28, pursuitSpeed: .38, acceleration: .48, turnRate: .62,
     arrivalRadius: .8, lookAhead: .82, retargetSeconds: 5.2, roamX: 1.65, roamY: .025, roamZ: .48,
   }
-  if (speciesId === 'pistol_shrimp') return {
-    cruiseSpeed: .105, pursuitSpeed: .52, acceleration: .8, turnRate: 2.0,
-    arrivalRadius: .3, lookAhead: .42, retargetSeconds: 4.6, roamX: .34, roamY: .012, roamZ: .3,
+  if (resolveSpecimenLocomotionPlan(speciesId)?.endsWith('_crawler')) return {
+    cruiseSpeed: speciesId === 'cleaner_shrimp' ? .052 : speciesId.includes('shrimp') || speciesId.includes('crab') ? .04 : .024,
+    pursuitSpeed: .06, acceleration: .12, turnRate: 1.1,
+    arrivalRadius: .12, lookAhead: .15, retargetSeconds: 12, roamX: 0, roamY: 0, roamZ: 0,
   }
-  if (speciesId === 'watchman_goby') return {
-    cruiseSpeed: .2, pursuitSpeed: .72, acceleration: 1.15, turnRate: 2.2,
+  if (speciesId === 'watchman_goby' || speciesId === 'diamond_goby') return {
+    cruiseSpeed: speciesId === 'watchman_goby' ? .16 : .2, pursuitSpeed: .48, acceleration: .7, turnRate: 1.6,
     arrivalRadius: .42, lookAhead: .48, retargetSeconds: 3.7, roamX: .52, roamY: .035, roamZ: .4,
+  }
+  if (speciesId.endsWith('_tang') || speciesId === 'six_line_wrasse') return {
+    cruiseSpeed: speciesId === 'six_line_wrasse' ? .48 : .52, pursuitSpeed: .78, acceleration: 1.25,
+    turnRate: 2.15, arrivalRadius: .7, lookAhead: .62, retargetSeconds: 3.6, roamX: 1.7, roamY: .16, roamZ: .78,
+  }
+  if (speciesId === 'ocellaris' || speciesId === 'black_storm_ocellaris' ||
+    speciesId === 'banggai_cardinal' || speciesId === 'royal_gramma') return {
+    cruiseSpeed: .3, pursuitSpeed: .58, acceleration: .9, turnRate: 1.9,
+    arrivalRadius: .48, lookAhead: .38, retargetSeconds: 4.2, roamX: .62, roamY: .12, roamZ: .45,
   }
   return {
     cruiseSpeed: .42, pursuitSpeed: .72, acceleration: 1.35, turnRate: 2.4,
     arrivalRadius: .62, lookAhead: .45, retargetSeconds: 2.8, roamX: 1.15, roamY: .22, roamZ: .42,
   }
+}
+
+/** Cleaner shrimp patrol a short repeatable section of one rock instead of crossing the tank. */
+export function specimenSurfaceProgress(speciesId: string, circuit: SurfaceCircuit, seed: number,
+  elapsedSeconds: number, speed: number) {
+  if (speciesId !== 'cleaner_shrimp') {
+    return THREE.MathUtils.euclideanModulo(seededUnit(seed, 901) +
+      elapsedSeconds * speed / Math.max(circuit.totalLength, .01), 1)
+  }
+  let prefix = 0
+  const station = circuit.segments.find((segment) => {
+    if (segment.kind === 'rock') return true
+    prefix += segment.length
+    return false
+  })
+  if (!station) return 0
+  const patrol = .5 + Math.sin((elapsedSeconds / 18 + seededUnit(seed, 902)) * Math.PI * 2) * .035
+  return (prefix + station.length * patrol) / circuit.totalLength
+}
+
+/** Keep authored +X-forward fish upright while allowing a small, smoothly capped turn bank. */
+export function updateUprightSpecimenOrientation(current: THREE.Quaternion, forward: THREE.Vector3,
+  bankRadians: number, maximumTurnRadians: number, target = new THREE.Quaternion()) {
+  const horizontal = Math.hypot(forward.x, forward.z)
+  const maximumVertical = horizontal * Math.tan(THREE.MathUtils.degToRad(11.5))
+  const xAxis = new THREE.Vector3(forward.x,
+    THREE.MathUtils.clamp(forward.y, -maximumVertical, maximumVertical), forward.z)
+  if (xAxis.lengthSq() < 1e-8) xAxis.set(1, 0, 0)
+  xAxis.normalize()
+  const zAxis = new THREE.Vector3().crossVectors(xAxis, WORLD_UP)
+  if (zAxis.lengthSq() < 1e-8) zAxis.set(0, 0, 1)
+  else zAxis.normalize()
+  const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize()
+  target.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis))
+  target.multiply(new THREE.Quaternion().setFromAxisAngle(LOCAL_FORWARD,
+    THREE.MathUtils.clamp(bankRadians, -.14, .14)))
+  current.rotateTowards(target, Math.max(0, maximumTurnRadians)).normalize()
+  return current
 }
 
 function clampBetween(value: number, minimum: number, maximum: number) {
@@ -926,9 +986,12 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const forage = useRef(0)
   const tailPhase = useRef(seededUnit(specimen.id, 2) * Math.PI * 2)
   const phase = seededUnit(specimen.id, 1) * Math.PI * 2
+  const behaviorPolicy = speciesBehaviorPolicyFor(specimen.speciesId)
+  const locomotion = resolveSpecimenLocomotionPlan(specimen.speciesId)
+  const surfaceBound = isSurfaceBoundLocomotion(locomotion)
   const rootX = THREE.MathUtils.lerp(-TANK_HALF_WIDTH * .72, TANK_HALF_WIDTH * .72, specimen.x)
-  const benthic = specimen.layer === 'bottom' || specimen.speciesId === 'epaulette_shark'
-  const clearance = specimen.speciesId === 'pistol_shrimp' ? .055 : specimen.speciesId === 'epaulette_shark' ? .14 : .18
+  const benthic = locomotion === 'benthic_fish'
+  const clearance = specimen.speciesId === 'epaulette_shark' ? .14 : .08
   const openWaterY = THREE.MathUtils.lerp(SAND_Y + .48, waterSurfaceY - .34, 1 - specimen.y)
   const rootY = benthic ? SAND_Y + clearance : THREE.MathUtils.clamp(openWaterY, SAND_Y + .38, waterSurfaceY - .28)
   const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / Math.max(snapshot.tank.widthMeters, .4)
@@ -941,7 +1004,19 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const visualPlan = resolveSpecimenVisualPlan(specimen.speciesId, Boolean(riggedAsset))
   const targetFood = food.find((pellet) => assignments.get(pellet.id) === specimen.id)
   const targetPosition = targetFood ?? null
-  const profile = motionProfile(specimen.speciesId)
+  const profile = specimenMotionProfile(specimen.speciesId)
+  const verticalBounds = specimenVerticalBounds(specimen.layer, waterSurfaceY, bodyRadius)
+  const habitatPolicy = behaviorPolicy.fishHabitat
+  const habitatWaypoints = useMemo(() => surfaceBound || !habitatPolicy ? [] : fishRouteWaypoints(habitatPolicy, specimen.id, {
+    x: [-TANK_HALF_WIDTH + bodyRadius + length * .34, TANK_HALF_WIDTH - bodyRadius - length * .34],
+    z: [-TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius],
+  }, verticalBounds, REEF_ROCKS.map((rock) => new THREE.Vector3(...rock.position.toArray()))),
+  [bodyRadius, habitatPolicy, length, specimen.id, surfaceBound, verticalBounds])
+  const surfaceCircuit = useMemo(() => surfaceBound ? createSurfaceCircuit(
+    specimen.speciesId, specimen.id, TANK_HALF_WIDTH - bodyRadius, TANK_HALF_DEPTH - bodyRadius, SAND_Y) : undefined,
+  [bodyRadius, specimen.id, specimen.speciesId, surfaceBound])
+  const surfacePose = useMemo<SurfacePose>(() => ({ position: new THREE.Vector3(),
+    normal: new THREE.Vector3(), tangent: new THREE.Vector3() }), [])
   const motion = useMemo<FishPhysicsState>(() => ({
     position: new THREE.Vector3(),
     velocity: new THREE.Vector3(),
@@ -957,6 +1032,10 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     previousPosition: new THREE.Vector3(),
     previousForward: new THREE.Vector3(1, 0, 0),
     orientation: new THREE.Quaternion(),
+    targetOrientation: new THREE.Quaternion(),
+    orientationMatrix: new THREE.Matrix4(),
+    orientationUp: new THREE.Vector3(0, 1, 0),
+    orientationSide: new THREE.Vector3(0, 0, 1),
     initialized: false,
     nextRoamAt: 0,
     roamIndex: 0,
@@ -985,7 +1064,40 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const now = clock.getElapsedTime()
     const step = Math.min(Math.max(delta, 0), .05)
     const mouthLead = riggedAsset ? length * .53 : length * .5
-    const bodyHalfSpan = Math.max(length * .34, bodyRadius * .55)
+    const bodyHalfSpan = Math.max(length * (shark ? .48 : .34), bodyRadius * .55)
+
+    if (surfaceBound && surfaceCircuit) {
+      motion.previousPosition.copy(motion.position)
+      motion.previousForward.copy(motion.forward)
+      sampleSurfaceCircuit(surfaceCircuit, specimenSurfaceProgress(specimen.speciesId, surfaceCircuit,
+        specimen.id, now, profile.cruiseSpeed), surfacePose)
+      motion.desired.copy(surfacePose.position).addScaledVector(surfacePose.normal,
+        Math.min(.045, bodyRadius * .42))
+      if (!motion.initialized) {
+        motion.position.copy(motion.desired)
+        motion.previousPosition.copy(motion.position)
+        motion.orientation.identity()
+        motion.initialized = true
+      } else {
+        limitSpecimenFrameTravel(motion.position, motion.desired, profile.cruiseSpeed, step)
+        motion.position.copy(motion.desired)
+      }
+      motion.velocity.copy(motion.position).sub(motion.previousPosition).divideScalar(Math.max(step, 1e-4))
+      motion.forward.copy(surfacePose.tangent).normalize()
+      motion.orientationUp.copy(surfacePose.normal).normalize()
+      motion.orientationSide.crossVectors(motion.forward, motion.orientationUp).normalize()
+      motion.orientationUp.crossVectors(motion.orientationSide, motion.forward).normalize()
+      motion.targetOrientation.setFromRotationMatrix(motion.orientationMatrix.makeBasis(
+        motion.forward, motion.orientationUp, motion.orientationSide))
+      motion.orientation.rotateTowards(motion.targetOrientation, profile.turnRate * step)
+      node.position.copy(motion.position)
+      node.quaternion.copy(motion.orientation)
+      node.scale.setScalar(riggedAsset ? 1 : length)
+      positions.set(specimen.id, positionEntry)
+      mouths.set(specimen.id, mouthPosition.copy(motion.position).addScaledVector(motion.forward, mouthLead))
+      forage.current += (0 - forage.current) * (1 - Math.exp(-step * 4.5))
+      return
+    }
 
     if (!motion.initialized) {
       const initialDirection = seededUnit(specimen.id, 4) > .5 ? 1 : -1
@@ -1008,15 +1120,10 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       // separates by where it goes and not by yaw alone. An uncrowded resident reads zero
       // pressure, so the seeded roam pattern is unchanged.
       const crowd = measureSpecimenCrowd(motion.position, specimen.id, collisionEnvelope.longitudinal, positions)
-      const angle = seededUnit(specimen.id, 20 + index * 3) * Math.PI * 2
-      const radius = .58 + seededUnit(specimen.id, 21 + index * 3) * .42
-      const centerX = clown ? rootX * .25 : benthic ? rootX * .28 : rootX
-      const centerZ = clown ? .48 : benthic ? .22 : 0
-      motion.roamTarget.set(
-        centerX + Math.cos(angle) * profile.roamX * radius + crowd.awayX * crowd.pressure * profile.roamX * .5,
-        rootY + (seededUnit(specimen.id, 22 + index * 3) - .5) * profile.roamY * 2,
-        centerZ + Math.sin(angle) * profile.roamZ * radius + crowd.awayZ * crowd.pressure * profile.roamZ * .5,
-      )
+      const habitatTarget = habitatWaypoints[index % habitatWaypoints.length]
+      motion.roamTarget.copy(habitatTarget ?? motion.position)
+      motion.roamTarget.x += crowd.awayX * crowd.pressure * Math.min(profile.roamX, .35)
+      motion.roamTarget.z += crowd.awayZ * crowd.pressure * Math.min(profile.roamZ, .25)
       resolveReefHardscape(motion.roamTarget, bodyRadius, benthic)
       clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
       motion.roamIndex += 1
@@ -1043,7 +1150,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
 
     const arrivalDistance = motion.desired.length()
-    const maximumSpeed = targetPosition ? profile.pursuitSpeed : profile.cruiseSpeed
+    const maximumSpeed = targetPosition ? profile.pursuitSpeed : profile.cruiseSpeed *
+      fishPaceMultiplier(habitatPolicy!, specimen.id, now)
     let desiredSpeed = maximumSpeed * Math.min(1, Math.sqrt(arrivalDistance / profile.arrivalRadius))
     const mouthDistance = targetPosition ? motion.position.distanceTo(targetPosition) - mouthLead : 0
     if (targetPosition && mouthDistance > FOOD_CONTACT_RADIUS * .55) desiredSpeed = Math.max(desiredSpeed, .065)
@@ -1117,10 +1225,11 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const normalizedSpeed = THREE.MathUtils.clamp(actualSpeed / Math.max(profile.cruiseSpeed, .01), 0, 1.8)
     const turnAngle = motion.previousForward.angleTo(motion.forward)
     const turnSign = Math.sign(motion.previousForward.z * motion.forward.x - motion.previousForward.x * motion.forward.z)
-    motion.orientation.setFromUnitVectors(LOCAL_FORWARD, motion.forward)
+    updateUprightSpecimenOrientation(motion.orientation, motion.forward,
+      turnSign * Math.min(turnAngle / Math.max(step, .001), profile.turnRate) / profile.turnRate * .09,
+      profile.turnRate * step, motion.targetOrientation)
     node.position.copy(motion.position)
     node.quaternion.copy(motion.orientation)
-    node.rotateX(turnSign * Math.min(turnAngle / Math.max(step, .001), profile.turnRate) / profile.turnRate * .09)
     node.scale.setScalar(riggedAsset ? 1 : length)
 
     const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 + turnAngle / Math.max(profile.turnRate * step, .001) * .16, 0, .3)
