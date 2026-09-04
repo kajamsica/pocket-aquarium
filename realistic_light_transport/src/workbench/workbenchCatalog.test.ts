@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CatalogCandidate, CatalogRow, VisualCatalog } from '../catalog/visualCatalog'
-import { specimenAssetFor } from '../scene/specimens/assetRegistry'
+import { specimenAssetFor, type SpecimenAsset } from '../scene/specimens/assetRegistry'
 import {
   BADGE_LABELS,
   acceptedWorkbenchAssets,
@@ -166,6 +166,23 @@ describe('runtime asset registry stays accepted-only', () => {
     expect(assets.map((asset) => asset.key)).toEqual(['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark'])
     expect(ocellaris.referenceSizeMeters).toBe(0.08)
     expect(ocellaris.clipLoops).toEqual({ idle: true, swim: true, burst: false })
+  })
+
+  it('preserves promoted keys and source candidates without duplicate candidate rows', async () => {
+    const base = specimenAssetFor('ocellaris')!
+    const promoted = [
+      { ...base, key: 'blue_hippo_tang', speciesId: 'blue_hippo_tang', displayName: 'Blue Hippo Tang', sourceCandidate: 'fable-v2', defaultForSpecies: true, category: 'fish', bodyPlan: 'fish', referenceSizeKind: 'adult_total_length', sha256: 'v2' },
+      { ...base, key: 'blue_hippo_tang@fable-v1', speciesId: 'blue_hippo_tang', displayName: 'Blue Hippo Tang classic', sourceCandidate: 'fable-v1', defaultForSpecies: false, variantId: 'classic', category: 'fish', bodyPlan: 'fish', referenceSizeKind: 'adult_total_length', sha256: 'v1' },
+    ] as unknown as readonly SpecimenAsset[]
+    const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG, acceptedAssets: promoted })
+    const tangs = catalog.assets.filter((asset) => asset.speciesId === 'blue_hippo_tang')
+    expect(tangs).toHaveLength(2)
+    expect(tangs[1]).toMatchObject({ key: 'blue_hippo_tang@fable-v1', state: 'accepted', candidate: 'fable-v1', sourceCandidate: 'fable-v1', variantId: 'classic', category: 'fish', bodyPlan: 'fish', referenceSizeKind: 'adult_total_length', glbSha256: 'v1' })
+    const options = workbenchOptionGroups(catalog).flatMap((group) => group.options).filter((option) => option.speciesId === 'blue_hippo_tang')
+    expect(options.map((option) => option.key)).toEqual(['blue_hippo_tang', 'blue_hippo_tang@fable-v1'])
+    expect(options.every((option) => !option.disabled && option.badge === 'accepted')).toBe(true)
+    expect(selectWorkbenchAsset(tangs, 'blue_hippo_tang', 'fable-v1').asset?.state).toBe('accepted')
+    expect(workbenchSearch(tangs[1], 'shared', '')).toBe('?workbench=blue_hippo_tang&candidate=fable-v1&scale=shared')
   })
 })
 
