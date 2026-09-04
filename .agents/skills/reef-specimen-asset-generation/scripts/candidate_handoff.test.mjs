@@ -13,7 +13,6 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT = path.join(here, "candidate_handoff.mjs");
 const REAL_RLT = path.resolve(here, "..", "..", "..", "..", "realistic_light_transport");
-const BRANCH_BASE = "9379fab4c7d35291d0bd29070440d96f7891c871";
 const ASSET = "ocellaris";
 const CANDIDATE = "fable-v2";
 // Formally excluded package with no acceptance entry under its own name (see user-acceptance.v1.json#excluded).
@@ -64,10 +63,13 @@ test("real: every formally excluded candidate fails with excluded", () => {
   }
 });
 
-test("real: --base with the branch base resolves and audits committed changes", () => {
-  const result = forCandidate(["--base", BRANCH_BASE]);
+test("real: --base HEAD resolves the symbolic ref to a commit and audits an empty range", () => {
+  // HEAD keeps this independent of future acceptance/runtime commits; the fixture covers a real
+  // committed protected-path change since HEAD~1.
+  const head = execFileSync("git", ["-C", REAL_RLT, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const result = forCandidate(["--base", "HEAD"]);
   assert.equal(result.code, 0, result.stdout);
-  assert.match(result.stdout, /commits since 9379fab4c7d3/);
+  assert.match(result.stdout, new RegExp(`commits since ${head.slice(0, 12)}\\)`));
 });
 
 test("base: nonexistent commit fails the boundary audit", () => {
