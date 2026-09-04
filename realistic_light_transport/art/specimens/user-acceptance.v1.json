@@ -27,6 +27,12 @@
       "candidate": "round-v2",
       "at": "2026-09-03T17:20:00-04:00",
       "statement": "the gem thing looks pretty good."
+    },
+    {
+      "speciesId": "regal_angelfish",
+      "candidate": "fable-v1",
+      "at": "2026-09-04T10:43:00-04:00",
+      "statement": "great! Add that in"
     }
   ],
   "scope": "Look approval of candidate packages by their candidateHash. Runtime promotion (asset registry, bundled GLB, accepted-hash gate) remains a separate explicit pipeline step and is not performed by this record.",
@@ -342,6 +348,17 @@
       "geometryDigest": "5a6b7e3e35a531fc4e37d34bdd09ceecc776ce49ca0f52f86626a59c347c9b62",
       "status": "user_accepted",
       "userApprovedLook": false
+    },
+    {
+      "speciesId": "regal_angelfish",
+      "candidate": "fable-v1",
+      "candidateHash": "770a88317baad4974e8a56ed801c77ec1d3d153a7a7b074802e937e19596acc0",
+      "glbSha256": "056f4ea5d4e7de7a033d9b1de9f6eb6006896e4222f556889b6f01109a5a220f",
+      "geometryDigest": "3421189ddb4403d8dd5f56d0a6bff053eb3923472dc6d7a4d20169eee3a37c57",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-04T10:43:00-04:00",
+      "statement": "great! Add that in"
     },
     {
       "speciesId": "royal_gramma",
