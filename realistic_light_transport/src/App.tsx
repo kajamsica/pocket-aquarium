@@ -146,7 +146,7 @@ function AquariumApp() {
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const lastTelemetryUpdate = useRef(0)
   const godModeOn = DEV_SAFE && protectionOn
-  const view = projectPocketState(pocketState, { unlimitedCredits: godModeOn })
+  const view = projectPocketState(pocketState, { godMode: godModeOn })
   // The ref is advanced by whichever writer produced the state (dispatch or a tick), never during
   // render, so a discarded Strict Mode/concurrent render pass cannot roll it back behind an action.
 
@@ -223,12 +223,14 @@ function AquariumApp() {
   // updaters, from executing the same gameplay action twice.
   const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
     const current = pocketStateRef.current
-    // God mode: validate/apply the action with unlimited credits, then restore the real
-    // dev-save balance so purchases/refills are free. Real milestone rewards earned by
-    // the action still accrue, so toggling God mode off cannot erase a keeper-rank payout.
+    // God mode: apply the action with unlimited credits and the root's purchase gates bypassed —
+    // the same bypass the Store used to paint every offer purchasable, so an enabled button is
+    // never refused — then restore the real dev-save balance so purchases/refills are free. Real
+    // milestone rewards earned by the action still accrue, so toggling God mode off cannot erase
+    // a keeper-rank payout.
     let next: PocketState
     if (DEV_SAFE && protectionRef.current) {
-      next = dispatchPocketAction({ ...current, credits: Number.MAX_SAFE_INTEGER }, action)
+      next = dispatchPocketAction({ ...current, credits: Number.MAX_SAFE_INTEGER }, action, { godMode: true })
       next.credits = current.credits + earnedCreditsIn(next.log.slice(current.log.length))
     } else {
       next = dispatchPocketAction(current, action)

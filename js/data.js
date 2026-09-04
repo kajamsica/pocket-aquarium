@@ -38,6 +38,7 @@
     CONSUME_FOOD: "CONSUME_FOOD",           // {foodId, eaterId} after renderer-observed contact
     SELECT_ENTITY: "SELECT_ENTITY",         // {entityType, id} | {id:null} to clear
     REMOVE_DEAD: "REMOVE_DEAD",             // {id} remove decaying biomass
+    RENAME_LIVESTOCK: "RENAME_LIVESTOCK",   // {id, name} custom name for one resident; empty name restores the species name
     // ---- time ----
     SET_SPEED: "SET_SPEED",                 // {speed: 0|1|4|8}
     TOGGLE_PAUSE: "TOGGLE_PAUSE"            // pause <-> last speed
@@ -281,6 +282,133 @@
       diet: "benthic-predator", feedIntervalDays: 2.5, mealSize: 0.9, metabolic: 2.0,
       maturityDays: 120, breeding: null,
       teachNote: "An epaulette shark is an expert-only benthic predator that outgrows nano tanks; it needs the 757 L tier, deep sand, and strong filtration and will hunt nano fish and inverts."
+    },
+    /* Remaining accepted saltwater fish (runtime-acceptance.v1.json, category "fish").
+       Husbandry is authored conservatively against published adult sizes and the
+       recommended-minimum display volumes: every value is consumed by the existing
+       validatePurchase gates and sim.js loops — no new fields, features, or logic.
+       `diet` is behavioural: "herbivore" grazers add no microfauna predation pressure
+       (sim.js stepMicrofauna), unlike the carnivore/benthic-omnivore micropredators.
+       `breeding` is null throughout because sim.js only drives the clown and tetra
+       projects; a breeding block here would promise reproduction the sim never runs. */
+    banggai_cardinal: {
+      id: "banggai_cardinal", kind: "fish", name: "Banggai cardinalfish", sci: "Pterapogon kauderni",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Banggai Archipelago shallows, sheltering among urchin spines and branching coral",
+      adultSizeCm: 8, price: 26, bioload: 2.2,
+      minTier: "mid151", minVolumeL: 150, minFootprintCm2: 3500,
+      socialMin: 1, socialMax: 6, layer: "mid", territoriality: 0.35,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "carnivore", feedIntervalDays: 1.1, mealSize: 0.8, metabolic: 1.0,
+      maturityDays: 35, breeding: null,
+      teachNote: "Banggai cardinalfish are hovering group fish: keep one, or introduce five or more at once. A pair or trio reliably produces one dominant fish that harasses the rest."
+    },
+    black_storm_ocellaris: {
+      id: "black_storm_ocellaris", kind: "fish", name: "Black Storm ocellaris", sci: "Amphiprion ocellaris",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Captive-bred designer morph of the Indo-Pacific lagoon clownfish",
+      adultSizeCm: 11, price: 190, bioload: 3.0,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 2, layer: "mid", territoriality: 0.4,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "omnivore", feedIntervalDays: 1.0, mealSize: 0.85, metabolic: 1.4,
+      maturityDays: 30, breeding: null,
+      teachNote: "Black Storm is a designer Amphiprion ocellaris, so it fights other clownfish as a conspecific rival: keep one individual or one bonded pair, never a second clown of any morph."
+    },
+    royal_gramma: {
+      id: "royal_gramma", kind: "fish", name: "Royal gramma", sci: "Gramma loreto",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean reef ledges and cave overhangs",
+      adultSizeCm: 8, price: 34, bioload: 1.8,
+      minTier: "mid151", minVolumeL: 114, minFootprintCm2: 3000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.4,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "carnivore", feedIntervalDays: 1.0, mealSize: 0.8, metabolic: 1.1,
+      maturityDays: 30, breeding: null
+    },
+    six_line_wrasse: {
+      id: "six_line_wrasse", kind: "fish", name: "Six-line wrasse", sci: "Pseudocheilinus hexataenia",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef rubble and dense branching rockwork",
+      adultSizeCm: 7.5, price: 32, bioload: 2.0,
+      minTier: "mid151", minVolumeL: 114, minFootprintCm2: 3000,
+      socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0.55,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: false, requiredFeature: null, expert: false,
+      diet: "carnivore", feedIntervalDays: 0.9, mealSize: 0.75, metabolic: 1.3,
+      maturityDays: 30, breeding: null,
+      teachNote: "A six-line wrasse hunts pods and small shrimp and grows more territorial with age, harassing burrowing gobies and later additions. Add it last, into rock-dense cover."
+    },
+    diamond_goby: {
+      id: "diamond_goby", kind: "fish", name: "Diamond goby", sci: "Valenciennea puellaris",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sand flats, sifting open substrate beside rock",
+      adultSizeCm: 15, price: 28, bioload: 4.0,
+      minTier: "mid151", minVolumeL: 150, minFootprintCm2: 3500,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.45,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", expert: false,
+      diet: "benthic-omnivore", feedIntervalDays: 0.9, mealSize: 0.8, metabolic: 1.3,
+      maturityDays: 45, breeding: null,
+      teachNote: "A diamond goby feeds by sifting sand for meiofauna and starves in a young or bare-bottom tank: it needs a broad established sand bed plus deliberate supplemental feeding."
+    },
+    tomini_tang: {
+      id: "tomini_tang", kind: "fish", name: "Tomini tang", sci: "Ctenochaetus tominiensis",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Western Pacific reef slopes, combing film algae and detritus",
+      adultSizeCm: 15, price: 70, bioload: 6.5,
+      minTier: "large284", minVolumeL: 280, minFootprintCm2: 5500,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.5,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "herbivore", feedIntervalDays: 0.9, mealSize: 0.85, metabolic: 1.35,
+      maturityDays: 80, breeding: null,
+      teachNote: "The smallest accepted tang still needs 280 L of open swimming length and near-continuous grazing food, and will not share a system with another tang."
+    },
+    yellow_tang: {
+      id: "yellow_tang", kind: "fish", name: "Yellow tang", sci: "Zebrasoma flavescens",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Hawaiian and Central Pacific reef flats, grazing turf algae",
+      adultSizeCm: 20, price: 130, bioload: 9,
+      minTier: "xl757", minVolumeL: 450, minFootprintCm2: 7400,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.6,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.45,
+      maturityDays: 95, breeding: null,
+      teachNote: "A yellow tang grazes all day and reaches 20 cm: it needs 450 L with long open swimming lanes, and a second tang in the same tank means constant fighting."
+    },
+    purple_tang: {
+      id: "purple_tang", kind: "fish", name: "Purple tang", sci: "Zebrasoma xanthurum",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Red Sea and Arabian Gulf reefs, grazing exposed rock faces",
+      adultSizeCm: 22, price: 260, bioload: 11,
+      minTier: "xl757", minVolumeL: 470, minFootprintCm2: 8400,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.65,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.5,
+      maturityDays: 100, breeding: null,
+      teachNote: "Purple tangs are among the most aggressive Zebrasoma: one per system, in at least 470 L, and never alongside another tang."
+    },
+    gem_tang: {
+      id: "gem_tang", kind: "fish", name: "Gem tang", sci: "Zebrasoma gemmatum",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Western Indian Ocean rocky reef slopes, Madagascar to Mozambique",
+      adultSizeCm: 20, price: 950, bioload: 10,
+      minTier: "xl757", minVolumeL: 680, minFootprintCm2: 11000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.7,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: true,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.5,
+      maturityDays: 100, breeding: null,
+      teachNote: "A gem tang is a rare, expensive Zebrasoma that claims the whole water column and tolerates no other tang; buy it only into a mature 680 L reef."
+    },
+    blue_hippo_tang: {
+      id: "blue_hippo_tang", kind: "fish", name: "Blue hippo tang", sci: "Paracanthurus hepatus",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef slopes, open water above branching coral",
+      adultSizeCm: 25, price: 85, bioload: 12,
+      minTier: "xl757", minVolumeL: 680, minFootprintCm2: 11000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.55,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.9, metabolic: 1.55,
+      maturityDays: 110, breeding: null,
+      teachNote: "A blue hippo tang reaches 25 cm and needs a 680 L system with long open swimming lanes; it keeps growing whether or not the tank can hold it."
     }
   };
 
@@ -319,7 +447,10 @@
   var BUNDLES = {
     neon_tetra: 6,
     pygmy_cory: 6,
-    ocellaris: 1
+    ocellaris: 1,
+    /* Banggai cardinalfish are the only accepted reef fish with a group policy:
+       a simultaneous cohort spreads dominance, while a pair or trio does not. */
+    banggai_cardinal: 5
   };
 
   /* Keeper XP is cumulative husbandry experience, never a spendable currency.
@@ -437,6 +568,18 @@
   }
   DATA.sanitizeProfileOverride = sanitizeProfileOverride;
   DATA.resolveSpecies = resolveSpecies;
+
+  /* A resident's custom name is player text, so it is stored as one compact single-line label:
+     non-strings, control characters, and runs of whitespace collapse away, and the result is
+     capped. An empty result means "no custom name" — which is how a rename resets a resident to
+     its species name, and why an old save with no name field restores unchanged. */
+  var RESIDENT_NAME_MAX = 24;
+  function sanitizeResidentName(value) {
+    if (typeof value !== "string") return "";
+    return value.replace(/[\u0000-\u001F\u007F]+/g, " ").replace(/\s+/g, " ").trim().slice(0, RESIDENT_NAME_MAX).trim();
+  }
+  DATA.residentNameMaxLength = RESIDENT_NAME_MAX;
+  DATA.sanitizeResidentName = sanitizeResidentName;
 
   /* ------------------------------------------------------------------ *
    * validatePurchase(state, request) -> { ok, reasons[] }

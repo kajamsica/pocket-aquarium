@@ -5,6 +5,7 @@ import '../../../js/sessionGuide.js'
 
 import type { LifecyclePhase, ReefSnapshot } from '../contracts'
 import { sampleSpectralTransmittance } from '../scene/materials/spectralTransport'
+import { specimenAssetFor } from '../scene/specimens/assetRegistry'
 
 export type PocketAction = Readonly<{ type: string } & Record<string, unknown>>
 
@@ -76,6 +77,8 @@ interface PocketWater {
 interface PocketAnimal {
   id: number
   species: string
+  /** Player-authored label, absent unless the resident has been renamed. */
+  customName?: string
   kind: 'fish' | 'invert'
   ageDays: number
   stage: string
@@ -172,7 +175,20 @@ interface CatalogCoral { id: string; name: string; price: number; maturityGate: 
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
-interface Validation { ok: boolean; reasons: string[] }
+interface Validation { ok: boolean; reasons: string[]; conflicts?: PocketPurchaseConflict[] }
+
+/** One structured compatibility risk from the root's `livestockConflicts`, grouped per existing
+ *  species and risk. `residentIds` are the exact living residents the risk is about, so a decision
+ *  acts on them rather than on a species name. */
+export interface PocketPurchaseConflict {
+  readonly riskTag: 'predation' | 'territoriality' | 'invert_safety'
+  readonly message: string
+  readonly residentSpeciesId: string
+  readonly residentName: string
+  readonly residentIds: readonly number[]
+  /** Sum of the root's own 50% sell-back for those residents. */
+  readonly refundCredits: number
+}
 
 interface PocketRuntime {
   ACTIONS: Record<string, string>
@@ -189,6 +205,7 @@ interface PocketRuntime {
     HABITATS: Record<string, { params: string[] }>
     EQUIPMENT: Record<string, { label: string; levels: EquipmentLevel[] }>
     KEEPER_RANKS: CatalogKeeperRank[]
+    residentNameMaxLength: number
     resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
     equipLevel: (category: string, id: string) => EquipmentLevel | null
     paramBand: (habitat: string, key: string) => { target?: number } | null
@@ -210,7 +227,10 @@ interface PocketRuntime {
 
 export interface PocketSpecimen extends PocketAnimal {
   readonly speciesId: string
+  /** What to call this resident: its custom name when it has one, otherwise the species name. */
   readonly name: string
+  /** Always the catalog species name, so a renamed resident never loses its species identity. */
+  readonly speciesName: string
   readonly scientificName: string
   readonly adultSizeCm: number
   readonly layer: CatalogSpecies['layer']
@@ -246,6 +266,15 @@ export interface PocketStoreOffer {
   readonly recommended?: boolean
   /** Livestock-only fact line: scientific name · adult size · water layer. */
   readonly detail?: string
+  /** Accepted-package display name, present only for species with an accepted visual. */
+  readonly acceptedName?: string
+  /** Authoring render of the accepted package, when its source candidate rendered one. */
+  readonly acceptedPreviewUrl?: string
+  /** Livestock-only: the structured compatibility risks standing between the player and this
+   *  purchase, present only when compatibility is the *sole* thing blocking it. A physical or
+   *  husbandry requirement is never negotiable, so an offer that also fails one of those keeps
+   *  this absent and stays hard-locked with its `reasons`. */
+  readonly conflicts?: readonly PocketPurchaseConflict[]
 }
 
 export interface PocketObjective {
@@ -296,7 +325,7 @@ export interface PocketGameView {
   readonly habitatName: string
   readonly tierName: string
   readonly credits: number
-  /** True when God mode is active: Store treats credits as unlimited and the pill shows ∞. */
+  /** True when God mode is active: every Store offer is free and purchasable, and the pill shows ∞. */
   readonly unlimitedCredits: boolean
   readonly xp: number
   readonly progression: PocketProgressionView
@@ -340,6 +369,9 @@ export interface PocketProgressionView {
 
 const runtime = (globalThis as unknown as { PA: PocketRuntime }).PA
 export const pocketActions: Readonly<Record<string, string>> = Object.freeze({ ...runtime.ACTIONS })
+/** The root's own cap on a resident's custom name, so a rename field cannot accept more text than
+ *  `RENAME_LIVESTOCK` would keep. */
+export const residentNameMaxLength = runtime.DATA.residentNameMaxLength
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value))
 const clone = (state: PocketState): PocketState => structuredClone(state)
 
@@ -500,7 +532,9 @@ function stepDaysDevSafe(state: PocketState, gameDays: number): PocketPreventedD
       // again, so the revival restores the same health `stabilizeDevSafe` re-asserts after the step.
       animal.health = 1
       revivedSpecies.push(animal.species)
-      revivedNames.push(runtime.DATA.resolveSpecies(state, animal.species)?.name ?? animal.species)
+      // Must be the same label `killAnimal` logs, custom name included, or a renamed resident's
+      // prevented death would leave its death line behind in the log.
+      revivedNames.push(animal.customName || runtime.DATA.resolveSpecies(state, animal.species)?.name || animal.species)
     }
     if (!revivedSpecies.length) continue
     // Drop only the records this step appended for these prevented deaths; earlier memorial/log
@@ -610,9 +644,24 @@ export function restorePocketGameDevSafe(
   return done(state, prevented)
 }
 
-export function dispatchPocketAction(state: PocketState, action: PocketAction): PocketState {
+export function dispatchPocketAction(
+  state: PocketState,
+  action: PocketAction,
+  options?: { readonly godMode?: boolean },
+): PocketState {
   const next = clone(state)
-  return runtime.dispatch(next, action)
+  if (!options?.godMode) return runtime.dispatch(next, action)
+  // God Mode paints every Store offer purchasable, so the same dispatch must not be refused by the
+  // validator that painted it — an enabled button the root rejects is the bug this closes. The
+  // bypass is installed on the root's own `PA.validatePurchase` seam (which `js/sim.js` reads at
+  // call time) for exactly this one synchronous dispatch, and `finally` always restores it: normal
+  // play, every other caller, and the projection's own validation keep the unmodified gates.
+  const validate = runtime.validatePurchase
+  runtime.validatePurchase = (validated, request) => {
+    const result = validate(validated, request)
+    return result.ok ? result : { ok: true, reasons: [], conflicts: [] }
+  }
+  try { return runtime.dispatch(next, action) } finally { runtime.validatePurchase = validate }
 }
 
 function lifecycleFor(state: PocketState): LifecyclePhase {
@@ -673,12 +722,43 @@ const EQUIPMENT_COPY: Readonly<Record<string, Readonly<{ problem: string; effect
   'feeder:auto': { problem: 'Fish miss feedings when unattended', effect: 'Dispenses scheduled portions to the surface', resource: 'Refill the hopper; tune interval and portions' },
 }
 
-function storeOffers(state: PocketState): PocketStoreOffer[] {
+/* Accepted specimen packages bundle only the GLB, so a Store card's still image is the authoring
+ * render that produced it. The eager glob imports URL strings over a superset the way the runtime
+ * asset registry already does with `**\/lod1.glb`, and the accepted registry — not the glob —
+ * decides which one a species may show. A candidate that never rendered a preview (or whose
+ * accepted `sourceCandidate` predates the render step) keeps the card's SVG glyph. */
+const acceptedPreviewUrls = import.meta.glob('../../art/specimens/*/candidates/*/renders/author-preview.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Readonly<Record<string, string>>
+
+/** Accepted visual metadata for a gameplay species; empty when the species has no accepted asset. */
+function acceptedArtwork(speciesId: string): Partial<PocketStoreOffer> {
+  const asset = specimenAssetFor(speciesId)
+  if (!asset) return {}
+  const preview = acceptedPreviewUrls[`../../art/specimens/${asset.speciesId}/candidates/${asset.sourceCandidate}/renders/author-preview.png`]
+  return { acceptedName: asset.displayName, ...(preview ? { acceptedPreviewUrl: preview } : {}) }
+}
+
+function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
   const offer = (kind: PocketStoreOffer['kind'], group: PocketStoreOffer['group'], id: string, name: string,
     price: number, request: Record<string, unknown>, action: PocketAction,
     extra?: Partial<PocketStoreOffer>): PocketStoreOffer => {
+    // God Mode is a sandbox store: every offer is free and purchasable whatever the tank's cycle,
+    // water, maturity, PAR, volume, capacity, equipment, compatibility, or balance says.
+    // `dispatchPocketAction` installs the matching bypass, so the root validator cannot refuse
+    // what this card promised. Normal mode never reaches this branch.
+    if (godMode) return { kind, group, id, name, price: 0, allowed: true, reasons: [], action, ...extra }
     const result = runtime.validatePurchase(state, request)
-    return { kind, group, id, name, price, allowed: result.ok, reasons: result.reasons, action, ...extra }
+    // A compatibility conflict is a husbandry judgement the player is entitled to make, so when
+    // every remaining reason is one of those conflict messages the card carries the structured
+    // risks and offers a choice instead of a lock. Any other reason keeps the offer hard-locked.
+    const conflicts = result.conflicts ?? []
+    const negotiable = new Set(conflicts.map((item) => item.message))
+    const riskOnly = conflicts.length > 0 && result.reasons.every((reason) => negotiable.has(reason))
+    return { kind, group, id, name, price, allowed: result.ok, reasons: result.reasons, action,
+      ...(riskOnly ? { conflicts } : {}), ...extra }
   }
   const livestock = Object.keys(runtime.DATA.SPECIES).map((id) => runtime.DATA.resolveSpecies(state, id))
     .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === 'reef')).map((item) => {
@@ -686,7 +766,7 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
     const detail = `${item.sci} · ${item.adultSizeCm} cm adult · ${item.layer} layer`
     return offer('livestock', 'livestock', item.id, item.name, item.price * count,
       { kind: 'livestock', id: item.id, count }, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: item.id, count },
-      { detail })
+      { detail, ...acceptedArtwork(item.id) })
   })
   const corals = Object.values(runtime.DATA.CORALS).map((item) => offer('coral', 'coral', item.id, item.name, item.price,
     { kind: 'coral', id: item.id }, { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id },
@@ -777,7 +857,7 @@ function careRecommendations(state: PocketState, offers: readonly PocketStoreOff
       cause: `Worst hunger ${pct(worstHunger)}% (feed above 85%) · worst body condition ${pct(worstCondition)}% (target above 30%). Body condition rebuilds gradually over small, repeated feedings; food left uneaten decays into ammonia.`,
       ...(worstHunger > .85 ? { actionLabel: 'Feed one portion', action: { type: 'FEED', x: .5 } } : {}) })
     else if (frailest.health < .30) result.push({ severity: 'urgent',
-      title: `${runtime.DATA.resolveSpecies(state, frailest.species)?.name ?? frailest.species} is in failing health`,
+      title: `${frailest.customName || runtime.DATA.resolveSpecies(state, frailest.species)?.name || frailest.species} is in failing health`,
       cause: `Health ${pct(frailest.health)}% (critical below 30%) with hunger ${pct(frailest.hunger)}% and body condition ${pct(frailest.condition)}%, so feeding does not explain it. Open that resident under Livestock and read its details.` })
   }
   if (!state.habitat || !state.cycle.filled) return result
@@ -899,14 +979,11 @@ function careRecommendations(state: PocketState, offers: readonly PocketStoreOff
   return result.slice(0, 4)
 }
 
-/** God-mode credit ceiling used only for Store validation/projection, never persisted. */
-const GOD_MODE_CREDITS = Number.MAX_SAFE_INTEGER
-
 export function projectPocketState(
   state: PocketState,
-  options?: { readonly unlimitedCredits?: boolean },
+  options?: { readonly godMode?: boolean },
 ): PocketGameView {
-  const unlimitedCredits = Boolean(options?.unlimitedCredits)
+  const godMode = Boolean(options?.godMode)
   const tier = runtime.DATA.TIERS[state.tier]
   const light = runtime.DATA.equipLevel('light', state.equipment.light)
   const ato = runtime.DATA.equipLevel('ato', state.equipment.ato)
@@ -953,21 +1030,26 @@ export function projectPocketState(
   } else if (state.selection) {
     const animal = state.livestock.find((item) => item.id === state.selection?.id)
     const profile = animal ? runtime.DATA.resolveSpecies(state, animal.species) : null
-    if (animal && profile) selection = { entityType: 'livestock', id: animal.id, title: profile.name,
-      facts: [profile.sci, `${animal.stage} · ${animal.sex}`, `Health ${Math.round(animal.health * 100)}%`,
+    // A renamed resident leads with its name and keeps the species name as its first fact.
+    if (animal && profile) selection = { entityType: 'livestock', id: animal.id,
+      title: animal.customName || profile.name,
+      facts: [...(animal.customName ? [profile.name] : []), profile.sci,
+        `${animal.stage} · ${animal.sex}`, `Health ${Math.round(animal.health * 100)}%`,
         `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(clamp(animal.hunger) * 100)}%`] }
   }
   const residents = state.livestock.map((animal) => {
     const species = runtime.DATA.resolveSpecies(state, animal.species)
     if (!species) throw new Error(`Unknown root PA specimen: ${animal.species}`)
-    return { ...animal, speciesId: animal.species, name: species.name, scientificName: species.sci,
+    // A custom name replaces only what the resident is *called*; species name, scientific name,
+    // size, layer, and the runtime profile stay the species' own, so identity survives a rename.
+    return { ...animal, speciesId: animal.species, name: animal.customName || species.name,
+      speciesName: species.name, scientificName: species.sci,
       adultSizeCm: species.adultSizeCm, layer: species.layer, runtimeProfile: species }
   })
-  // God mode validates and prices Store actions as if credits were unlimited, without ever
-  // mutating the real dev-save balance the pill falls back to when the toggle is off.
-  const validationState = unlimitedCredits ? { ...state, credits: GOD_MODE_CREDITS } : state
-  const rawOffers = storeOffers(validationState)
-  const recommendations = careRecommendations(validationState, rawOffers)
+  // God mode projects the Store as a sandbox without ever mutating the real dev-save balance the
+  // pill falls back to when the toggle is off. Care advice still reads the true tank.
+  const rawOffers = storeOffers(state, godMode)
+  const recommendations = careRecommendations(state, rawOffers)
   const recommendedIds = new Set(recommendations.map((rec) => rec.suggestedOfferId).filter(Boolean) as string[])
   const offers = recommendedIds.size
     ? rawOffers.map((item) => recommendedIds.has(item.id) ? { ...item, recommended: true } : item)
@@ -1017,7 +1099,7 @@ export function projectPocketState(
       causalNote: 'Pocket Aquarium advances all gameplay state.', feedPulse },
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
-    credits: Math.floor(state.credits), unlimitedCredits, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,
+    credits: Math.floor(state.credits), unlimitedCredits: godMode, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,
     cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
     objective, residents, selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
     specimens: residents.filter((animal) => animal.alive !== false),

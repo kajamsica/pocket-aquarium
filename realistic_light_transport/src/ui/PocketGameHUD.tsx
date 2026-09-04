@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { DiagnosticView, ReefRenderSettings, ReefRenderTelemetry, RenderQuality } from '../contracts'
+import { residentNameMaxLength } from '../integration/pocketAquariumBridge'
 import type { PocketAction, PocketGameView, PocketPreventedDeath, PocketStoreOffer } from '../integration/pocketAquariumBridge'
 import { REEF_CAMERA_RESET_EVENT } from '../scene/ReefScene'
 import type { AcceptedShowcaseCatalog } from '../scene/SpecimenFish'
@@ -86,6 +87,17 @@ function merchandisedOffers(offers: readonly PocketStoreOffer[], filter: StoreFi
   }).filter((offer): offer is PocketStoreOffer => Boolean(offer))
 }
 
+/* What a compatibility decision costs, read straight off the root's structured conflicts: the
+ * exact living residents involved (deduplicated, because one animal must never be sold twice in
+ * one action), how to name them, and the aggregate sell-back the root would actually pay. */
+function conflictDecision(conflicts: NonNullable<PocketStoreOffer['conflicts']>) {
+  return {
+    residentIds: [...new Set(conflicts.flatMap((item) => item.residentIds))],
+    residents: conflicts.map((item) => `${item.residentIds.length} × ${item.residentName}`).join(', '),
+    refund: conflicts.reduce((total, item) => total + item.refundCredits, 0),
+  }
+}
+
 function StoreArtwork({ offer }: { readonly offer: PocketStoreOffer }) {
   const key = offer.kind === 'equipment' ? offer.categoryId : offer.kind
   let drawing: React.ReactNode
@@ -103,7 +115,10 @@ function StoreArtwork({ offer }: { readonly offer: PocketStoreOffer }) {
     default: drawing = <><path d="M8 25c7-11 20-13 29-4l6-5-1 13-7-4C25 34 14 32 8 25Z" /><circle cx="31" cy="21" r="1.5" /><path d="M17 29l-4 7" /></>
   }
   return <div className="pocket-offer-visual" data-kind={offer.kind} data-category={offer.categoryId} aria-hidden="true">
-    <svg viewBox="0 0 48 48" role="presentation">{drawing}</svg><span>{offer.category ?? (offer.kind === 'tier' ? 'Aquarium' : offer.kind)}</span>
+    {offer.acceptedPreviewUrl
+      ? <img src={offer.acceptedPreviewUrl} alt={offer.acceptedName ?? offer.name} loading="lazy" decoding="async" />
+      : <svg viewBox="0 0 48 48" role="presentation">{drawing}</svg>}
+    <span>{offer.category ?? (offer.kind === 'tier' ? 'Aquarium' : offer.kind)}</span>
   </div>
 }
 
@@ -150,6 +165,15 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   const hasRecommendedOffers = view.storeOffers.some((offer) => offer.recommended)
   const [storeFilter, setStoreFilter] = useState<StoreFilter>(hasRecommendedOffers ? 'recommended' : 'equipment')
   const [focusedOfferId, setFocusedOfferId] = useState<string | null>(null)
+  /* The one offer whose compatibility decision is open, and the one inline rename currently being
+   * drafted. Both are transient UI intent: neither exists in the authoritative save. */
+  const [decidingOfferId, setDecidingOfferId] = useState<string | null>(null)
+  const [renameDraft, setRenameDraft] = useState<{
+    readonly residentId: number
+    readonly surface: 'selected' | 'roster'
+    readonly value: string
+  } | null>(null)
+  const rosterSelectionTimer = useRef<number | null>(null)
   const seeInStore = (offerId: string, group: StoreFilter) => {
     setStoreFilter(group)
     setFocusedOfferId(offerId)
@@ -170,6 +194,31 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   const command = guideCommand(view.guide.nextAction?.type)
   const guideLabel = typeof view.guide.nextAction?.label === 'string' ? view.guide.nextAction.label : 'Continue'
   const selectedSpecimen = view.selectedSpecimen
+  const beginRename = (resident: PocketGameView['residents'][number], surface: 'selected' | 'roster') => {
+    if (rosterSelectionTimer.current !== null) window.clearTimeout(rosterSelectionTimer.current)
+    rosterSelectionTimer.current = null
+    setRenameDraft({ residentId: resident.id, surface, value: resident.customName ?? '' })
+  }
+  const commitRename = (residentId: number) => {
+    if (renameDraft?.residentId !== residentId) return
+    dispatch({ type: 'RENAME_LIVESTOCK', id: residentId, name: renameDraft.value })
+    setRenameDraft(null)
+  }
+  const renameInput = (resident: PocketGameView['residents'][number], surface: 'selected' | 'roster') =>
+    renameDraft?.residentId === resident.id && renameDraft.surface === surface
+      ? <input className="pocket-inline-name-input" type="text" autoComplete="off" autoFocus
+          maxLength={residentNameMaxLength} value={renameDraft.value} aria-label={`Rename ${resident.name}`}
+          placeholder={resident.speciesName} onFocus={(event) => event.currentTarget.select()}
+          onChange={(event) => setRenameDraft({ ...renameDraft, value: event.target.value })}
+          onBlur={() => setRenameDraft(null)} onKeyDown={(event) => {
+            if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); commitRename(resident.id) }
+            if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setRenameDraft(null) }
+          }} />
+      : <button className="pocket-inline-name" type="button" aria-label={`Rename ${resident.name}`}
+          title="Double-click or press Enter to rename" onDoubleClick={() => beginRename(resident, surface)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === 'F2') { event.preventDefault(); beginRename(resident, surface) }
+          }}>{resident.name}</button>
   /* A reading window must exist in the saved layout to hold a rail slot, and must give the
    * slot back when unpinned, so the compact reading rail never keeps a phantom gap. */
   const toggleReading = (key: string) => {
@@ -211,7 +260,14 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   const openPanel = workspace.openPanel
   useEffect(() => {
     if (selectedSpecimen?.id !== undefined) openPanel('specimen')
+    // An unsaved name belongs to the resident that was open, so it is dropped rather than carried
+    // onto whichever fish the player selects next.
+    setRenameDraft(null)
   }, [openPanel, selectedSpecimen?.id])
+
+  useEffect(() => () => {
+    if (rosterSelectionTimer.current !== null) window.clearTimeout(rosterSelectionTimer.current)
+  }, [])
 
   return <div className="reef-hud pocket-game-hud" data-arranging={workspace.isArranging}>
     <header className="hud-topbar">
@@ -244,7 +300,9 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     {selectedSpecimen ? <HudWindow id="specimen" title={selectedSpecimen.name} eyebrow={selectedSpecimen.stage || 'Resident'}
       className="hud-panel pocket-specimen-panel" workspace={workspace}
       onClose={() => dispatch({ type: 'SELECT_ENTITY', id: null })}>
-      <small>{selectedSpecimen.scientificName}</small>
+      {/* Editing replaces this one identity line, so the inspector never grows a permanent form. */}
+      <div className="pocket-selected-identity">{renameInput(selectedSpecimen, 'selected')}
+        <small>{selectedSpecimen.customName ? `${selectedSpecimen.speciesName} · ` : ''}{selectedSpecimen.scientificName}</small></div>
       <div className="pocket-condition-signals">{signal('Health', selectedSpecimen.health)}
         {signal('Hunger', selectedSpecimen.hunger, true)}{signal('Condition', selectedSpecimen.condition)}</div>
     </HudWindow> : null}
@@ -356,8 +414,14 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
           const focused = offer.id === focusedOfferId
           const maxed = Boolean(offer.installed && offer.levelIndex === (offer.levelCount ?? 1) - 1)
           const upgradeStep = offer.levelIndex === undefined ? null : `${offer.levelIndex + 1} / ${offer.levelCount}`
+          /* Compatibility is the only lock the player may overrule, so this card trades its
+           * one-click purchase for a deliberate choice. Every other lock stays a lock. */
+          const conflicts = offer.conflicts?.length ? offer.conflicts : null
+          const deciding = conflicts !== null && offer.id === decidingOfferId
+          const decision = conflicts ? conflictDecision(conflicts) : null
           return <li className="hud-event pocket-store-offer" key={`${offer.kind}:${offer.id}`}
-            data-locked={!offer.allowed} data-installed={offer.installed} data-recommended={offer.recommended} data-focused={focused}
+            data-locked={!offer.allowed} data-risk={Boolean(conflicts)}
+            data-installed={offer.installed} data-recommended={offer.recommended} data-focused={focused}
             ref={focused ? (node) => node?.scrollIntoView({ block: 'nearest' }) : undefined}>
             <div className="pocket-store-offer-head">
               <StoreArtwork offer={offer} />
@@ -365,19 +429,43 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
                 {offer.installedName && !offer.installed ? <small>Installed now · {offer.installedName}</small> : null}</div>
               <div className="pocket-offer-price"><strong>{offer.installed ? 'Owned' : offer.price}</strong><small>{offer.installed ? (maxed ? 'System complete' : 'Installed') : 'tank credits'}</small></div>
               <div className="pocket-offer-tags">{offer.recommended ? <span className="pocket-offer-tag" data-tone="rec">Recommended</span> : null}
+                {conflicts ? <span className="pocket-offer-tag" data-tone="risk">Compatibility risk</span> : null}
                 {offer.installed ? <span className="pocket-offer-tag" data-tone="installed">Installed</span> : null}
                 {offer.kind === 'equipment' && !offer.installed ? <span className="pocket-offer-tag" data-tone="upgrade">Next upgrade</span> : null}</div></div>
             {offer.durableEffect ? <p className="pocket-offer-outcome">{offer.durableEffect}</p> : offer.detail ? <p className="pocket-offer-outcome">{offer.detail}</p> : null}
-            <button className="hud-button" type="button" disabled={offer.installed || !offer.allowed} onClick={() => dispatch(offer.action)}>
-              {offer.installed ? (maxed ? 'Fully upgraded' : 'Installed') : offer.allowed ? `Install for ${offer.price}` : 'Unavailable'}</button>
+            {conflicts
+              ? deciding ? null : <button className="hud-button" type="button" aria-expanded={false}
+                  onClick={() => setDecidingOfferId(offer.id)}>Decide · {offer.price}</button>
+              : <button className="hud-button" type="button" disabled={offer.installed || !offer.allowed} onClick={() => dispatch(offer.action)}>
+                  {offer.installed ? (maxed ? 'Fully upgraded' : 'Installed') : offer.allowed ? `Install for ${offer.price}` : 'Unavailable'}</button>}
+            {deciding && conflicts && decision ? <div className="pocket-offer-decision" role="group"
+              aria-labelledby={`pocket-decision-${offer.id}`}
+              onKeyDown={(event) => { if (event.key === 'Escape') setDecidingOfferId(null) }}>
+              <strong id={`pocket-decision-${offer.id}`}>{offer.name} is incompatible with residents you already keep</strong>
+              <ul>{conflicts.map((item) => <li key={`${item.riskTag}:${item.residentSpeciesId}`}>{item.message}</li>)}</ul>
+              <p>Selling {decision.residents} refunds {decision.refund} tank credits and cannot be undone.
+                Accepting stocks {offer.name} anyway: both stay in the tank and the incompatibility
+                remains a husbandry warning the simulation does not act out.</p>
+              <div className="pocket-offer-decision-actions">
+                <button className="hud-button hud-button-danger" type="button"
+                  onClick={() => { dispatch({ type: 'SELL_LIVESTOCK', ids: decision.residentIds }); setDecidingOfferId(null) }}>
+                  Sell conflicting fish</button>
+                <button className="hud-button" type="button"
+                  onClick={() => { dispatch({ ...offer.action, acceptRisk: true }); setDecidingOfferId(null) }}>
+                  Accept risk</button>
+                <button className="hud-button" type="button" autoFocus
+                  onClick={() => setDecidingOfferId(null)}>Cancel</button>
+              </div>
+            </div> : null}
             {offer.detail || offer.problemSolved || offer.operatingResource || offer.reasons.length ? <details className="pocket-offer-more">
-              <summary>{offer.reasons.length ? 'Why unavailable' : 'Why this upgrade'}</summary>
+              <summary>{conflicts ? 'Compatibility risk' : offer.reasons.length ? 'Why unavailable' : 'Why this upgrade'}</summary>
               {offer.detail && offer.detail !== offer.durableEffect ? <p className="pocket-offer-detail">{offer.detail}</p> : null}
               {offer.problemSolved ? <dl className="pocket-offer-facts">
                 <div><dt>Solves</dt><dd>{offer.problemSolved}</dd></div>
                 {offer.operatingResource ? <div><dt>Upkeep</dt><dd>{offer.operatingResource}</dd></div> : null}
               </dl> : null}
-              {offer.reasons.length ? <ul className="pocket-lock-reasons" aria-label={`${offer.name} lock reasons`}>
+              {offer.reasons.length ? <ul className="pocket-lock-reasons"
+                aria-label={`${offer.name} ${conflicts ? 'compatibility risks' : 'lock reasons'}`}>
                 {offer.reasons.map((reason, index) => <li key={`${index}:${reason}`}>{reason}</li>)}</ul> : null}
             </details> : offer.installed ? null : <p className="pocket-offer-ready">Ready to install.</p>}
           </li>
@@ -501,19 +589,38 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
 
     <HudWindow id="residents" title="Residents" eyebrow="Tank roster" className="hud-panel pocket-residents-panel" workspace={workspace}>
       <ul className="pocket-resident-list" aria-label="Tank residents">
-        {view.residents.map((resident) => <li key={resident.id}>
-          <button type="button" className="pocket-resident-row" data-dead={resident.alive === false}
-            aria-pressed={selectedSpecimen?.id === resident.id} title={`Inspect ${resident.name}`}
-            onClick={() => dispatch({ type: 'SELECT_ENTITY', entityType: 'livestock', id: resident.id })}>
-            <span className="pocket-resident-identity"><strong>{resident.name}</strong>
-              <small>{resident.alive === false ? 'Deceased' : resident.stage}</small></span>
+        {view.residents.map((resident) => {
+          const editing = renameDraft?.residentId === resident.id && renameDraft.surface === 'roster'
+          return <li key={resident.id}>
+          {editing ? <div className="pocket-resident-row" data-dead={resident.alive === false} data-editing="true">
+            <span className="pocket-resident-identity">{renameInput(resident, 'roster')}
+              <small>{resident.customName ? `${resident.speciesName} · ` : ''}{resident.alive === false ? 'Deceased' : resident.stage}</small></span>
             <span className="pocket-resident-vitals">
               <span data-tone={tone(resident.health)}>Health <b>{Math.round(resident.health * 100)}%</b></span>
               <span data-tone={tone(resident.hunger, true)}>Hunger <b>{Math.round(Math.min(1, Math.max(0, resident.hunger)) * 100)}%</b></span>
               <span data-tone={tone(resident.condition)}>Condition <b>{Math.round(resident.condition * 100)}%</b></span>
             </span>
-          </button>
-        </li>)}
+          </div> : <button type="button" className="pocket-resident-row" data-dead={resident.alive === false}
+            aria-pressed={selectedSpecimen?.id === resident.id} title={`Inspect ${resident.name}; double-click or press Enter to rename`}
+            onClick={() => {
+              if (rosterSelectionTimer.current !== null) window.clearTimeout(rosterSelectionTimer.current)
+              rosterSelectionTimer.current = window.setTimeout(() => {
+                dispatch({ type: 'SELECT_ENTITY', entityType: 'livestock', id: resident.id })
+                rosterSelectionTimer.current = null
+              }, 220)
+            }} onDoubleClick={() => beginRename(resident, 'roster')}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === 'F2') { event.preventDefault(); beginRename(resident, 'roster') }
+            }}>
+            <span className="pocket-resident-identity"><strong>{resident.name}</strong>
+              <small>{resident.customName ? `${resident.speciesName} · ` : ''}{resident.alive === false ? 'Deceased' : resident.stage}</small></span>
+            <span className="pocket-resident-vitals">
+              <span data-tone={tone(resident.health)}>Health <b>{Math.round(resident.health * 100)}%</b></span>
+              <span data-tone={tone(resident.hunger, true)}>Hunger <b>{Math.round(Math.min(1, Math.max(0, resident.hunger)) * 100)}%</b></span>
+              <span data-tone={tone(resident.condition)}>Condition <b>{Math.round(resident.condition * 100)}%</b></span>
+            </span>
+          </button>}
+        </li>})}
         {view.residents.length ? null : <li className="pocket-store-empty">No residents yet. Add livestock in the Store.</li>}
       </ul>
     </HudWindow>
