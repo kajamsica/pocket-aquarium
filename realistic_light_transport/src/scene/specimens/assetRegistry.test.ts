@@ -22,12 +22,12 @@ function sha256(path: string): string {
 }
 
 describe('accepted specimen asset registry', () => {
-  it('enumerates 46 unique accepted assets across 33 species', () => {
+  it('enumerates 47 unique accepted assets across 33 species', () => {
     const assets = acceptedSpecimenAssetList()
 
-    expect(assets).toHaveLength(46)
+    expect(assets).toHaveLength(47)
     expect(listSpecimenAssets()).toBe(assets)
-    expect(new Set(assets.map((asset) => asset.key))).toHaveProperty('size', 46)
+    expect(new Set(assets.map((asset) => asset.key))).toHaveProperty('size', 47)
     expect(ACCEPTED_SPECIES_IDS).toHaveLength(33)
     expect(new Set(ACCEPTED_SPECIES_IDS)).toHaveProperty('size', 33)
   })
@@ -74,7 +74,7 @@ describe('accepted specimen asset registry', () => {
   })
 
   it('matches every accepted source and bundled GLB to its exact receipt hash', () => {
-    expect(runtimeAcceptance.assets).toHaveLength(46)
+    expect(runtimeAcceptance.assets).toHaveLength(47)
     for (const entry of runtimeAcceptance.assets) {
       expect(sha256(entry.sourceCandidateGlbPath), `${entry.key} source`).toBe(entry.sha256)
       expect(sha256(entry.bundledGlbPath), `${entry.key} bundle`).toBe(entry.sha256)
@@ -97,7 +97,7 @@ describe('accepted specimen asset registry', () => {
       .map((entry) => [`${entry.speciesId}/${entry.candidate}`, entry]))
     const promotions = runtimeAcceptance.assets
 
-    expect(promotions).toHaveLength(46)
+    expect(promotions).toHaveLength(47)
     for (const promotion of promotions) {
       const key = `${promotion.speciesId}/${promotion.sourceCandidate}`
       const formal = formallyAccepted.get(key)
@@ -131,8 +131,8 @@ describe('accepted specimen asset registry', () => {
 
   it('records the seven newly formalized variant approvals with exact hashes', () => {
     const expected = [
-      ['acropora_branching', 'fable-v1-staghorn_blue', '49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee'],
-      ['acropora_branching', 'fable-v1-table_green', 'a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc'],
+      ['acropora_branching', 'fable-v2-staghorn_blue', 'ae219eb3c58c38129d948c979a9be99ff03863a9b8a856a46887a0cbba9bbe6a'],
+      ['acropora_branching', 'fable-v2-table_green', '374f523f2b097c0cf97a583ae2c9c2d81395bc7c2197af6d6885804023925745'],
       ['anacropora', 'fable-v1-green', 'd2240c0653653ca8a9a07d31215d6523bce1f414146689f7ec06ad4259b34b2a'],
       ['millepora', 'fable-v1-blade', '77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780'],
       ['millepora', 'fable-v1-branching', '9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634'],

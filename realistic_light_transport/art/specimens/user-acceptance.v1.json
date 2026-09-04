@@ -33,6 +33,12 @@
       "candidate": "fable-v1",
       "at": "2026-09-04T10:43:00-04:00",
       "statement": "great! Add that in"
+    },
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v2-*",
+      "at": "2026-09-04T11:30:00-04:00",
+      "statement": "we want to use/keep the later validated one not the initial reference"
     }
   ],
   "scope": "Look approval of candidate packages by their candidateHash. Runtime promotion (asset registry, bundled GLB, accepted-hash gate) remains a separate explicit pipeline step and is not performed by this record.",
@@ -40,53 +46,79 @@
     "blue_hippo_tang/alt-v2 (concurrent session rebuild, not reviewed)",
     "ocellaris/fable-baseline (pipeline regression proof)",
     "gem_tang/fable-v2 (concurrent session build, superseded by round-v2)",
-    "six_line_wrasse/fable-v1 (failed size gate, superseded by fable-v2)"
+    "six_line_wrasse/fable-v1 (failed size gate, superseded by fable-v2)",
+    "acropora_branching/fable-v1-bushy_pink (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
+    "acropora_branching/fable-v1-staghorn_blue (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
+    "acropora_branching/fable-v1-staghorn_green_purple_tips (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
+    "acropora_branching/fable-v1-table_blue (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
+    "acropora_branching/fable-v1-table_green (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)"
   ],
   "entries": [
     {
       "speciesId": "acropora_branching",
-      "candidate": "fable-v1-bushy_pink",
-      "candidateHash": "2b98f1742fbdd2d98c2007487d9b189234c85079ffb9b1f12bf82f6d0a720946",
-      "glbSha256": "566806a6801b1c7cebe2dfd5d697bb14570471553bcfbed594ee6ad2ca40e805",
-      "geometryDigest": "062bb8fe567801c916fa5badc02ee6f118fc549d6a5b117ccf5b805d8dd4c24d",
+      "candidate": "fable-v2-bushy_pink",
+      "candidateHash": "0b590f475324d3f968171220070d2ac59f113dc3842ccb2e2412bd8a1169dca8",
+      "glbSha256": "56a32b5a34a52ade2e6057166b43a0206650d817e6ba59d175b779a277d9e00b",
+      "geometryDigest": "89bfd16ef75625947e477527db560ba491c3982cdaaa7a2d16490d36f27a8eee",
       "status": "user_accepted",
-      "userApprovedLook": false
+      "userApprovedLook": false,
+      "acceptedAt": "2026-09-04T11:30:00-04:00",
+      "note": "static-skeleton rebuild (skeleton rigid, polyps animate) supersedes the initial fable-v1 build"
     },
     {
       "speciesId": "acropora_branching",
-      "candidate": "fable-v1-staghorn_blue",
-      "candidateHash": "b5214e70e735390c59d45a79d7501e9ffdbf9514639507fc68b41ded82a18fab",
-      "glbSha256": "49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee",
-      "geometryDigest": "03f867d4118f8772c2aaf20fc2269ad8d20a4c7aaaeda170c5192e0e4bcdf179",
+      "candidate": "fable-v2-hairy_green",
+      "candidateHash": "a76e37885e0665a646721935fa8dc44c9cfdd035d34aee0de29e44d357b61840",
+      "glbSha256": "38a83d4b0776a5649f4cc7f795680b9795590f146e0021037fa5a2f00ce3c745",
+      "geometryDigest": "f88b8a619ec4df9eec0cd1f9dfe3036792d4bc21729249b61d8417822860348a",
       "status": "user_accepted",
-      "userApprovedLook": false
+      "userApprovedLook": false,
+      "acceptedAt": "2026-09-04T11:30:00-04:00",
+      "note": "static-skeleton rebuild (skeleton rigid, polyps animate) supersedes the initial fable-v1 build"
     },
     {
       "speciesId": "acropora_branching",
-      "candidate": "fable-v1-staghorn_green_purple_tips",
-      "candidateHash": "0753aceb73c24aa4cb79bd0f66c275367a3486ed6cfe8c2a679e5f6b93115e7a",
-      "glbSha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
-      "geometryDigest": "d1ae2dd481bd2521ae77d609c9e285fac23b1c6ee00e99138dddb005aee8d6ac",
+      "candidate": "fable-v2-staghorn_blue",
+      "candidateHash": "6203f09cf03cc0e7e4b949feba657c60145eb571498d1cb4dc09296c370012e6",
+      "glbSha256": "ae219eb3c58c38129d948c979a9be99ff03863a9b8a856a46887a0cbba9bbe6a",
+      "geometryDigest": "72e786e405e6dd412b7aed1a96aec28d4f6ee10ef43221d6f1b706d462eaf7c2",
       "status": "user_accepted",
-      "userApprovedLook": false
+      "userApprovedLook": false,
+      "acceptedAt": "2026-09-04T11:30:00-04:00",
+      "note": "static-skeleton rebuild (skeleton rigid, polyps animate) supersedes the initial fable-v1 build"
     },
     {
       "speciesId": "acropora_branching",
-      "candidate": "fable-v1-table_blue",
-      "candidateHash": "2d77529136f5dcc6e68ce4c56d77bdc4f2a61959cb0bae5fdad0207d8efa0e20",
-      "glbSha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
-      "geometryDigest": "f6eca79dcff54709edc9dfd8971e840687d51b025da2f09a50d2c11e5c4127c7",
+      "candidate": "fable-v2-staghorn_green_purple_tips",
+      "candidateHash": "01017c3e6ecee73f13043002b3d5daaefdb4816f312462f28e334ecee15f6b38",
+      "glbSha256": "da4e2e161ccde509f1cda538b1ec0670c76cd294ac4617835ee9aab07e2434a6",
+      "geometryDigest": "ee70627afa805ffd6b854ae0e317a3b3492494344899c7755aee54a6cf68b059",
       "status": "user_accepted",
-      "userApprovedLook": false
+      "userApprovedLook": false,
+      "acceptedAt": "2026-09-04T11:30:00-04:00",
+      "note": "static-skeleton rebuild (skeleton rigid, polyps animate) supersedes the initial fable-v1 build"
     },
     {
       "speciesId": "acropora_branching",
-      "candidate": "fable-v1-table_green",
-      "candidateHash": "ed080015537b754425b5a274e1668f64ec136f1c874c95a45a384093bb319b94",
-      "glbSha256": "a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc",
-      "geometryDigest": "9b982f9e3847d59785eb28b5b2ef3296f358775a34e4ff4f5ab42010477ea8c7",
+      "candidate": "fable-v2-table_blue",
+      "candidateHash": "78053fdbf37c87d0103330a1ca002eddbf43ccd2dc0726dbda2191b1cd229d07",
+      "glbSha256": "4562b73471b21fd17570aaa593ba939167b3048ba0e8fbd992a10d469eda938e",
+      "geometryDigest": "dd6778a32ef5379555e19b8ecb0f33ff51d93fb48fa573d6c9792498a5cef4df",
       "status": "user_accepted",
-      "userApprovedLook": false
+      "userApprovedLook": false,
+      "acceptedAt": "2026-09-04T11:30:00-04:00",
+      "note": "static-skeleton rebuild (skeleton rigid, polyps animate) supersedes the initial fable-v1 build"
+    },
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v2-table_green",
+      "candidateHash": "751bbe1d89e0085a69dddd18a9b05241c92b31416430a513e8f81168908be44f",
+      "glbSha256": "374f523f2b097c0cf97a583ae2c9c2d81395bc7c2197af6d6885804023925745",
+      "geometryDigest": "3fce1f64910131ca422e8b978e907847cdbc102a20c158930919864aef6e6a17",
+      "status": "user_accepted",
+      "userApprovedLook": false,
+      "acceptedAt": "2026-09-04T11:30:00-04:00",
+      "note": "static-skeleton rebuild (skeleton rigid, polyps animate) supersedes the initial fable-v1 build"
     },
     {
       "speciesId": "anacropora",
