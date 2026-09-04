@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 import type { ReefRenderSettings, ReefSceneProps } from '../contracts'
+import type { PocketCoralView } from '../integration/pocketAquariumBridge'
 import {
   createFlowField,
   diagnoseFlowField,
@@ -12,6 +13,7 @@ import {
   type FlowFieldState,
 } from '../sim/flowField'
 import { OpticalTank } from './OpticalTank'
+import type { CoralPlacementCandidate } from './CoralPlacement'
 import { ReefHabitat } from './ReefHabitat'
 import type { SpectralTransportTelemetry } from './materials/spectralTransport'
 import { endTankDrag, noteTankDrag, noteTankPointerDown, noteTankPointerUp } from './tankGestures'
@@ -74,7 +76,7 @@ export function orbitCameraPosition(
   )
 }
 
-function CameraRig() {
+function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
   const { gl, size } = useThree()
   const target = useMemo(() => new THREE.Vector3(ORBIT_TARGET.x, ORBIT_TARGET.y, ORBIT_TARGET.z), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
@@ -86,6 +88,12 @@ function CameraRig() {
   const drag = useRef<{ id: number; x: number; y: number; ox: number; oy: number; moved: boolean } | null>(null)
 
   useEffect(() => {
+    if (disabled) {
+      touches.current.clear()
+      pinch.current = null
+      drag.current = null
+      return
+    }
     const element = gl.domElement
     const pointerDown = (event: PointerEvent) => {
       noteTankPointerDown(event.pointerId, event.pointerType)
@@ -189,7 +197,7 @@ function CameraRig() {
       window.removeEventListener(REEF_CAMERA_RESET_EVENT, resetView)
       window.removeEventListener('keydown', keydown)
     }
-  }, [gl, size.height, size.width])
+  }, [disabled, gl, size.height, size.width])
 
   useFrame(({ camera }, delta) => {
     const radius = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
@@ -260,11 +268,24 @@ function FlowVectorField({
   )
 }
 
+interface ReefPlacementSceneProps {
+  readonly placedCorals: readonly PocketCoralView[]
+  readonly activeCoral?: PocketCoralView
+  readonly previewCandidate: CoralPlacementCandidate | null
+  readonly onPlacementCandidate: (candidate: CoralPlacementCandidate | null) => void
+}
+
+type ReefWorldProps = ReefSceneProps & ReefPlacementSceneProps
+
 function ReefWorld({
   snapshot,
   renderSettings = DEFAULT_RENDER_SETTINGS,
   onRenderTelemetry,
-}: ReefSceneProps) {
+  placedCorals,
+  activeCoral,
+  previewCandidate,
+  onPlacementCandidate,
+}: ReefWorldProps) {
   const keyLight = useRef<THREE.SpotLight>(null)
   const fillLight = useRef<THREE.PointLight>(null)
   const flowField = useRef(createFlowField({ quality: renderSettings.quality }))
@@ -361,7 +382,9 @@ function ReefWorld({
       </mesh>
 
       <group position={[0, 0.03, 0]}>
-        <ReefHabitat snapshot={snapshot} flowField={flowField} />
+        <ReefHabitat snapshot={snapshot} flowField={flowField} placedCorals={placedCorals}
+          activeCoral={activeCoral} previewCandidate={previewCandidate}
+          onPlacementCandidate={onPlacementCandidate} />
         <OpticalTank
           snapshot={snapshot}
           renderSettings={renderSettings}
@@ -374,7 +397,7 @@ function ReefWorld({
         />
       </group>
       <ExposureController lightPower={lightPower} brightness={renderSettings.brightness} />
-      <CameraRig />
+      <CameraRig disabled={Boolean(activeCoral)} />
     </>
   )
 }
@@ -383,7 +406,11 @@ export function ReefScene({
   snapshot,
   renderSettings = DEFAULT_RENDER_SETTINGS,
   onRenderTelemetry,
-}: ReefSceneProps) {
+  placedCorals,
+  activeCoral,
+  previewCandidate,
+  onPlacementCandidate,
+}: ReefWorldProps) {
   const [hintDismissed, setHintDismissed] = useState(false)
   return (
     <div className="canvas-shell" aria-label="Interactive three-dimensional marine reef aquarium">
@@ -400,6 +427,7 @@ export function ReefScene({
           toneMapping: THREE.ACESFilmicToneMapping,
         }}
         shadows="basic"
+        onPointerMissed={() => { if (activeCoral) onPlacementCandidate(null) }}
         fallback={
           <div className="webgl-fallback" role="alert">
             This aquarium needs WebGL to render. Enable hardware acceleration and reload Reef Room.
@@ -410,6 +438,10 @@ export function ReefScene({
           snapshot={snapshot}
           renderSettings={renderSettings}
           onRenderTelemetry={onRenderTelemetry}
+          placedCorals={placedCorals}
+          activeCoral={activeCoral}
+          previewCandidate={previewCandidate}
+          onPlacementCandidate={onPlacementCandidate}
         />
       </Canvas>
     </div>

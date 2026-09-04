@@ -97,12 +97,23 @@ interface PocketAnimal {
 interface PocketCoral {
   id: number
   species: string
+  variantId: string | null
+  placement: PocketCoralPlacement | null
   health: number
   tissue: number
   extension: number
   polyps: number
   growth: number
   stress: number
+}
+
+export interface PocketCoralPlacement {
+  readonly version: 1
+  readonly surface: 'sand' | 'rock'
+  readonly surfaceId: string
+  readonly position: readonly [number, number, number]
+  readonly normal: readonly [number, number, number]
+  readonly yaw: number
 }
 
 interface PocketClutch {
@@ -170,8 +181,16 @@ export interface CatalogSpecies {
   profileRevision?: Readonly<{ package: number; biology: number; calibration: number; morphology: number; asset: string }>
 }
 
-interface CatalogCoral { id: string; name: string; price: number; maturityGate: string;
-  par: { min: number; max: number }; flow: { min: number; max: number } }
+interface CatalogCoral {
+  id: string
+  name: string
+  price: number
+  maturityGate: string
+  par: { min: number; max: number }
+  flow: { min: number; max: number }
+  defaultVariantId: string
+  variants: readonly Readonly<{ id: string; displayName: string }>[]
+}
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
@@ -246,7 +265,6 @@ export interface PocketStoreOffer {
   readonly price: number
   readonly allowed: boolean
   readonly reasons: readonly string[]
-  readonly conflicts?: readonly PocketPurchaseConflict[]
   readonly action: PocketAction
   /** Equipment-only causal copy so a card can explain itself without a content framework. */
   readonly category?: string
@@ -338,6 +356,8 @@ export interface PocketGameView {
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
   readonly residents: readonly PocketSpecimen[]
+  readonly coralInventory: readonly PocketCoralView[]
+  readonly placedCorals: readonly PocketCoralView[]
   readonly selectedSpecimen?: PocketSpecimen
   readonly food: readonly PocketFoodPellet[]
   readonly guide: PocketGuideView
@@ -354,6 +374,16 @@ export interface PocketGameView {
   readonly alerts: readonly string[]
   readonly optics: Readonly<{ localPpfd: number; mode: 'read_only' }>
   readonly reefSnapshot: ReefSnapshot
+}
+
+export interface PocketCoralView {
+  readonly id: number
+  readonly speciesId: string
+  readonly variantId: string
+  readonly speciesName: string
+  readonly variantDisplayName: string
+  readonly health: number
+  readonly placement: PocketCoralPlacement | null
 }
 
 export interface PocketProgressionView {
@@ -769,10 +799,12 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
       { kind: 'livestock', id: item.id, count }, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: item.id, count },
       { detail, ...acceptedArtwork(item.id) })
   })
-  const corals = Object.values(runtime.DATA.CORALS).map((item) => offer('coral', 'coral', item.id, item.name, item.price,
-    { kind: 'coral', id: item.id }, { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id },
-    { detail: `PAR ${item.par.min}–${item.par.max} µmol · flow ${item.flow.min}–${item.flow.max}`
-      + ` · needs a ${item.maturityGate === 'mature' ? 'mature' : 'cycled'} biome` }))
+  const corals = Object.values(runtime.DATA.CORALS).flatMap((item) => item.variants.map((variant) =>
+    offer('coral', 'coral', `${item.id}@${variant.id}`, variant.displayName, item.price,
+      { kind: 'coral', id: item.id, variantId: variant.id },
+      { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id, variantId: variant.id },
+      { detail: `${item.name} · PAR ${item.par.min}–${item.par.max} µmol · flow ${item.flow.min}–${item.flow.max}`
+        + ` · needs a ${item.maturityGate === 'mature' ? 'mature' : 'cycled'} biome` })))
   const equipment = Object.entries(runtime.DATA.EQUIPMENT).flatMap(([category, item]) => {
     const installedLevelIndex = item.levels.findIndex((level) => level.id === state.equipment[category])
     const installedName = item.levels[installedLevelIndex]?.name
@@ -1000,6 +1032,16 @@ export function projectPocketState(
   const living = state.livestock.filter((animal) => animal.alive !== false)
   const fish = living.filter((animal) => animal.kind === 'fish')
   const corals = state.corals
+  const coralViews: PocketCoralView[] = state.corals.map((coral) => {
+    const species = runtime.DATA.CORALS[coral.species]
+    const variantId = coral.variantId || species.defaultVariantId
+    const variant = species.variants.find((item) => item.id === variantId)
+    return { id: coral.id, speciesId: coral.species, variantId, speciesName: species.name,
+      variantDisplayName: variant?.displayName ?? species.name, health: coral.health,
+      placement: coral.placement }
+  })
+  const coralInventory = coralViews.filter((coral) => coral.placement === null)
+  const placedCorals = coralViews.filter((coral) => coral.placement !== null)
   const depth = 0.28
   const shading = clamp(0.18 + state.succession.diatom * 0.09 + state.succession.greenFilm * 0.16 + state.succession.cyano * 0.13)
   const attenuation = clamp(0.78 + state.succession.haze * 0.4 + state.succession.greenFilm * 0.22, 0.2, 2.4)
@@ -1087,7 +1129,8 @@ export function projectPocketState(
     ecology: { phase: lifecycleFor(state), maturity: clamp(state.succession.age / 20), diatomCoverage: state.succession.diatom,
       greenAlgaeCoverage: state.succession.greenFilm, cyanobacteriaCoverage: state.succession.cyano,
       microfaunaActivity: state.microfauna.biodiversity,
-      polypExtension: corals.length ? corals.reduce((sum, coral) => sum + coral.extension, 0) / corals.length : 0 },
+      polypExtension: placedCorals.length ? state.corals.filter((coral) => coral.placement)
+        .reduce((sum, coral) => sum + coral.extension, 0) / placedCorals.length : 0 },
     livestock: { clownfishCount: fish.filter((animal) => animal.species === 'ocellaris').length,
       smallReefFishCount: fish.filter((animal) => animal.species !== 'ocellaris').length,
       fishSatiation: clamp(1 - hunger), fishStress: clamp(1 - health),
@@ -1102,7 +1145,8 @@ export function projectPocketState(
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), unlimitedCredits: godMode, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,
     cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
-    objective, residents, selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
+    objective, residents, coralInventory, placedCorals,
+    selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
     specimens: residents.filter((animal) => animal.alive !== false),
     food: state.food.map(({ id, x, y, amount, ageDays, sunk }) => ({ id, x, y, amount, ageDays, sunk })),
     guide, testedWater,

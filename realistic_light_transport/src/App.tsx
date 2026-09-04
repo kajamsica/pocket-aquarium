@@ -9,6 +9,7 @@ import {
   devSafeSaveKey,
   dispatchPocketAction,
   isDevSafeActive,
+  pocketActions,
   pocketSaveKey,
   projectPocketState,
   restorePocketGame,
@@ -18,9 +19,11 @@ import {
   type PocketState,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
+import type { CoralPlacementCandidate } from './scene/CoralPlacement'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
 import { createAcceptedShowcaseCatalog, SpecimenRosterProvider } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
+import { CoralInventoryTray } from './ui/CoralInventoryTray'
 import { SpecimenWorkbench } from './workbench/SpecimenWorkbench'
 
 const UPDATE_INTERVAL_MS = 250
@@ -144,9 +147,12 @@ function AquariumApp() {
   protectionRef.current = protectionOn
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
+  const [activeCoralId, setActiveCoralId] = useState<number | null>(null)
+  const [previewCandidate, setPreviewCandidate] = useState<CoralPlacementCandidate | null>(null)
   const lastTelemetryUpdate = useRef(0)
   const godModeOn = DEV_SAFE && protectionOn
   const view = projectPocketState(pocketState, { godMode: godModeOn })
+  const activeCoral = view.coralInventory.find((coral) => coral.id === activeCoralId)
   // The ref is advanced by whichever writer produced the state (dispatch or a tick), never during
   // render, so a discarded Strict Mode/concurrent render pass cannot roll it back behind an action.
 
@@ -215,6 +221,16 @@ function AquariumApp() {
     }
   }, [adoptSave])
 
+  useEffect(() => {
+    const tray = document.querySelector<HTMLDetailsElement>('.coral-tray-disclosure')
+    if (!tray) return
+    const mobile = window.matchMedia('(max-width: 860px)')
+    const syncTray = () => { tray.open = !mobile.matches }
+    syncTray()
+    mobile.addEventListener('change', syncTray)
+    return () => mobile.removeEventListener('change', syncTray)
+  }, [view.coralInventory.length])
+
   // A completed player action commits as one immediate unit: the ref, React state, and the active
   // save key all take the exact resulting state before control returns to the browser, so a reload
   // or background transition inside the one-second save window cannot erase it. Accepted and
@@ -265,6 +281,27 @@ function AquariumApp() {
     setRenderTelemetry(telemetry)
   }, [])
 
+  const armCoral = useCallback((coralId: number) => {
+    setActiveCoralId(coralId)
+    setPreviewCandidate(null)
+  }, [])
+  const cancelCoral = useCallback(() => {
+    setActiveCoralId(null)
+    setPreviewCandidate(null)
+  }, [])
+  const lockCoral = useCallback(() => {
+    if (!activeCoral || !previewCandidate?.valid) return
+    dispatch({ type: pocketActions.LOCK_CORAL_PLACEMENT, coralId: activeCoral.id,
+      placement: previewCandidate.placement })
+    setActiveCoralId(null)
+    setPreviewCandidate(null)
+  }, [activeCoral, dispatch, previewCandidate])
+  const candidateStatus = previewCandidate ? {
+    valid: previewCandidate.valid,
+    message: previewCandidate.valid ? 'Valid placement. Select Lock here to confirm.'
+      : `Choose another position (${previewCandidate.reason ?? 'invalid surface'}).`,
+  } : null
+
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
@@ -274,6 +311,10 @@ function AquariumApp() {
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}
             onRenderTelemetry={updateRenderTelemetry}
+            placedCorals={view.placedCorals}
+            activeCoral={activeCoral}
+            previewCandidate={previewCandidate}
+            onPlacementCandidate={setPreviewCandidate}
           />
         </SpecimenRosterProvider>
       </FeedingProvider>
@@ -286,6 +327,9 @@ function AquariumApp() {
         godMode={godMode}
         showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
       />
+      <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
+        candidate={candidateStatus} onArm={armCoral} onPointerArm={(coralId) => armCoral(coralId)}
+        onCancel={cancelCoral} onLock={lockCoral} />
     </main>
   )
 }
