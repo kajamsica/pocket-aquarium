@@ -330,7 +330,7 @@
       needsStrongFiltration: true,
       diet: "benthic-predator", feedIntervalDays: 2.5, mealSize: 0.9, metabolic: 2.0,
       maturityDays: 120, breeding: null,
-      teachNote: "An epaulette shark is an expert-only benthic predator that can reach 107 cm; it needs at least 1,363 L, a roughly 3.2 m-long footprint, deep sand, and strong filtration and will hunt nano fish and inverts."
+      teachNote: "An epaulette shark is an expert-only benthic predator modeled at 90 cm; it needs at least 1,363 L, a roughly 3.2 m-long footprint, deep sand, and strong filtration and will hunt nano fish and inverts."
     },
     gem_tang: {
       id: "gem_tang", kind: "fish", name: "Gem Tang", sci: "Zebrasoma gemmatum",
