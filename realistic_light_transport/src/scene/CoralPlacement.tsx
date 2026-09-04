@@ -56,13 +56,13 @@ export interface CandidateOptions {
 
 export function localTankPointToNormalized(point: THREE.Vector3, space: TankPlacementSpace): Vec3Tuple {
   const waterHeight = space.waterlineY - space.floorY
-  return [point.x / space.halfWidth, ((point.y - space.floorY) / waterHeight) * 2 - 1,
+  return [point.x / space.halfWidth, (point.y - space.floorY) / waterHeight,
     point.z / space.halfDepth]
 }
 
 export function normalizedTankPointToLocal(point: Vec3Tuple, space: TankPlacementSpace): THREE.Vector3 {
   return new THREE.Vector3(point[0] * space.halfWidth,
-    space.floorY + ((point[1] + 1) / 2) * (space.waterlineY - space.floorY),
+    space.floorY + point[1] * (space.waterlineY - space.floorY),
     point[2] * space.halfDepth)
 }
 

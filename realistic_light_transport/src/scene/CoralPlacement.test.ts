@@ -25,7 +25,9 @@ describe('coral placement coordinates', () => {
   it('round-trips normalized tank-local positions and aligns the specimen to the stored normal', () => {
     const point = new THREE.Vector3(1, 1.5, -.5)
     const normalized = localTankPointToNormalized(point, SPACE)
-    expect(normalized).toEqual([.5, 0, -.5])
+    expect(normalized).toEqual([.5, .5, -.5])
+    expect(localTankPointToNormalized(new THREE.Vector3(0, SPACE.floorY, 0), SPACE)[1]).toBe(0)
+    expect(localTankPointToNormalized(new THREE.Vector3(0, SPACE.waterlineY, 0), SPACE)[1]).toBe(1)
     expect(normalizedTankPointToLocal(normalized, SPACE).toArray()).toEqual(point.toArray())
 
     const placement = evaluateCoralPlacement({ ...UP_HIT, point, normal: new THREE.Vector3(1, 1, 0) },
