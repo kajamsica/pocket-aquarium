@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "regal_angelfish",
+  "variantId": null,
+  "scientificName": "Pygoplites diacanthus",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.25,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "770a88317baad4974e8a56ed801c77ec1d3d153a7a7b074802e937e19596acc0",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Regal Angelfish",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-211773",
+      "title": "Pygoplites diacanthus (Boddaert, 1772) taxon record (AphiaID 211773, accepted; family Pomacanthidae, monotypic genus Pygoplites)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=211773",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-PYGOPLITES_DIACANTHUS",
+      "title": "Pygoplites diacanthus species summary (max length 25.0 cm SL, Ref. 30573; D XIV,17-19; A III,17-19; body short and deep, cross section compressed; rounded caudal fin)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Pygoplites-diacanthus.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "AM-PYGOPLITES_DIACANTHUS",
+      "title": "Regal Angelfish, Pygoplites diacanthus (Boddaert, 1772) species account (grows to 25 cm; alternating yellow and dark-edged white bars; soft dorsal blue with dark markings; anal fin yellow and blue stripes; caudal yellow; strong preopercular spine)",
+      "publisher": "Australian Museum",
+      "url": "https://australian.museum/learn/animals/fishes/regal-angelfish-pygoplites-diacanthus-boddaert-1772/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "FOA-658",
+      "title": "Regal Angelfish, Pygoplites diacanthus species page (D XIV,17-19; A III,17-19; P 16-17; longitudinal scale series 48-50; dark-edged bluish-white bars on head and sides extending onto the dorsal and anal fins; dark patch around the eye in adults)",
+      "publisher": "Fishes of Australia (Museums Victoria)",
+      "url": "https://fishesofaustralia.net.au/home/species/658",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-PYGOPLITES_DIACANTHUS",
+      "title": "Category:Pygoplites diacanthus (openly licensed photographs, lateral proportion, fin outline and bar-layout study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Pygoplites_diacanthus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "9abf04156c83a02b04e2e9c9579345618c46a6de06298f33aec69c89f5b2c90b",
+  "sourceReferencesSha256": "908e70b70fbf490ee50521b9dfdc30bcc6d45ceafffc9240a913a5303b329cc0",
+  "sourceBlendSha256": "b341da1ee67522e5824a55ebed8e3f7b78d213e26b77369d6157a5d04056b881",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "f61594826c115ed6b6c14fcdd3534578652f64d835a7593b782a6fd991fe17dd",
+    "speciesBackend": "972d2d34294e9ef64573f58564aac33e0f3c085e5dfe3f05391c5f3edee09c20",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "056f4ea5d4e7de7a033d9b1de9f6eb6006896e4222f556889b6f01109a5a220f"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "bfa8e1e71d33873b4a412203d79c22737dfe3d70e84d2fcbf65afafb799ed173"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "5056bc3e5e73c7a0c9553141011641ad3e301446d93495fe0ed2783f30665617"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "3536b31da46ce873ed0630823ce056cc5abcecb3ac4a7475e94d219c0c7f015a"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "82314067bc0d25527c293711d67ba664ee8601ac4ce78e248bf409836cf30acc"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "007ee298c6a8023dc12169b7a3fa2d56c627560e06de011d9a0b5ae65eed7850"
+    }
+  ],
+  "statistics": {
+    "triangles": 10576,
+    "materials": 7,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_regal_angelfish_Body": 3026,
+      "PA_regal_angelfish_Fins": 658,
+      "PA_regal_angelfish_Details": 1716
+    },
+    "runtimeBytes": 2119476
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.142953,
+      -0.043003,
+      -0.072699
+    ],
+    "max": [
+      0.10776,
+      0.043003,
+      0.084334
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

@@ -1,0 +1,654 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "acropora_branching",
+  "sourceSha256": "61d4080b93b55647adabfbd37ffbc0bdab73ee54f10b9c7ebd980561831b2921",
+  "objects": [
+    {
+      "name": "PA_acropora_branching_Corallites",
+      "vertexCount": 3708,
+      "triangleCount": 6696,
+      "vertexDigest": "b359d3801467774008c01c5f7355285a0da6b81c3229ad731b8f4dbc12d58f3a",
+      "topologyDigest": "8435ccee25a0721fbdcb5c940186d6b6a6b858ff4e16bfd0794f67908c8c4caf",
+      "uvDigest": "65bada3d445b855cd42506162930504ac79f997668dfcf50ff96c82395249c34",
+      "weightDigest": "87536b51df7f7a646262f89ba6d4ba1dd694053cd9ca2e6530a3ce6d6d668d17",
+      "materials": [
+        "PA_acropora_branching_Skeleton"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_00",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "5ed48b7fc7763088699a90a3abe351b17ec3adfe191172b7f389e6e0a76713fa",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "c5718f4d598565d1f45b4c4d8ebcbeb166d438fba2e7b5f248cfff440d581b09",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "5ed48b7fc7763088699a90a3abe351b17ec3adfe191172b7f389e6e0a76713fa"
+        },
+        {
+          "name": "retract",
+          "digest": "ab61614e6a6ed341feb4ef9a586e54a807b7ab7ab1725cb5bfe70e1c1bb06134"
+        },
+        {
+          "name": "lean",
+          "digest": "4c05e9a994f6c1b10c60b24fa06f21ce69ef9bacfffe258039daf0246a58ecf4"
+        },
+        {
+          "name": "flutterA",
+          "digest": "638c2d9436c5e20167685ecfd04b2f636952e90249e20966e8b523ec8e6a0e04"
+        },
+        {
+          "name": "flutterB",
+          "digest": "ab38c8f103bf9561fc030f86744b04b0b64f627d53820c4f4f69014879e7ac89"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_01",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "1686361ddafd3a15a21411554ddec2b38450f3ae79f702e2074b85ad256f896f",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "f5d44c11f51eef8be399ab0376268bf0d008e2cec207014c57262717c281f05d",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "1686361ddafd3a15a21411554ddec2b38450f3ae79f702e2074b85ad256f896f"
+        },
+        {
+          "name": "retract",
+          "digest": "c253ca8585593ab22f23b15f429a471bdaf372e004784fecb7204b2f4f2002f5"
+        },
+        {
+          "name": "lean",
+          "digest": "445fa671623341e4862f3664edf281826b7b6d7749560788af6f2ec973c4cda1"
+        },
+        {
+          "name": "flutterA",
+          "digest": "367efdc32cb62244563335e827f92571bc3e46911e0900fbbc55024a3414c3b4"
+        },
+        {
+          "name": "flutterB",
+          "digest": "803008e4d9872592e6cc83748ef3ca9ffb87b29aea4112d5b8b45632778ddef3"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_02",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "c690b015b294a6dccfa6ecc9d130a5e4f2d645872cc25bbeec17133b8a0c4726",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "ffe32f9cfded5e5b76074b0ae2c64c3a3a0715e5922cef2dcf222e107e6a21af",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "c690b015b294a6dccfa6ecc9d130a5e4f2d645872cc25bbeec17133b8a0c4726"
+        },
+        {
+          "name": "retract",
+          "digest": "7d13a4df0cdbce25b0866019a1fce09a00255ddf0e834ff84c9bb94f698f0fd7"
+        },
+        {
+          "name": "lean",
+          "digest": "df2327894095524acd217e159ac65b496051d1df0b2ff26bf6d98ba97c065a8f"
+        },
+        {
+          "name": "flutterA",
+          "digest": "a600e9cd88ce448bc39836e8906a885fc40d2edad682599784bf97527c17beda"
+        },
+        {
+          "name": "flutterB",
+          "digest": "a0d34ea313e14fdcbeb0c0b3c98da6e8d30821e51a505a79d67690010e39ba2b"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_03",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "da6a263458b0f378906c36ee0960e32b396e920f85b6c480174ea9d01db1c83d",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "a124ac6a3b54d292ee6eb4496166deefa903d9a5f99c03e527e4e6c62e7e56fc",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "da6a263458b0f378906c36ee0960e32b396e920f85b6c480174ea9d01db1c83d"
+        },
+        {
+          "name": "retract",
+          "digest": "06ef2050654019ed4c62be96170ce1b151b06c20c57586b710dec279897b6c86"
+        },
+        {
+          "name": "lean",
+          "digest": "a08e99facdd38df479f11a97b21b68d5b0578190acf8782774d6ae1927945db8"
+        },
+        {
+          "name": "flutterA",
+          "digest": "021bc436903956987313285f99dbdea6e9efb637fd5070cfec168cedfb3abfb2"
+        },
+        {
+          "name": "flutterB",
+          "digest": "a045e94320f2bb03c05b3ccf0a92fe13b347568ba1a409efcf0b40f71206bfb4"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_04",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "22ce848d570e80ec2dffaf63394e38878b5885955c949dec0b2b61eed9db7445",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "bb6ea767db5894e2ec42dfda4831700617ef48586f3a16038f48909053198ce8",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "22ce848d570e80ec2dffaf63394e38878b5885955c949dec0b2b61eed9db7445"
+        },
+        {
+          "name": "retract",
+          "digest": "16f69011754c2e4755be9672b8f24b065a06fae2f90a5770f2854869b4c4b05c"
+        },
+        {
+          "name": "lean",
+          "digest": "8a9007c9631324e5cc39f9ef7ddb56327f6470affb0c98367e585e21a9d366b0"
+        },
+        {
+          "name": "flutterA",
+          "digest": "204e324d69eaddc9ef6a2b3e02e2ce68fab03ceef979c2a9a60bb58d8ef6a2bc"
+        },
+        {
+          "name": "flutterB",
+          "digest": "ca301d7cf227edf0805e006c2790db473357ae37d8db4c5fabdc311972f3fdaa"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_05",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "a32bd6cae3de53658f0844aef0e1cf2b9f3b62bd3b93e57135aaeb5456d5f719",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "d863fa5d804d095c5d6138d2120e6ee177b16bdc821e2772edc16ac050f4ed2d",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "a32bd6cae3de53658f0844aef0e1cf2b9f3b62bd3b93e57135aaeb5456d5f719"
+        },
+        {
+          "name": "retract",
+          "digest": "8a3889439387db735338f3391ff91e6f2c68723b882979222f9407f35dbf17cb"
+        },
+        {
+          "name": "lean",
+          "digest": "b70311997244140d94b6613fe3c5b86af50b40f6ea0aa3524de1eafd917382e0"
+        },
+        {
+          "name": "flutterA",
+          "digest": "607bf69ed135755d53e617d17b1f96e4d45248f7008db9282accb57ca6f29c18"
+        },
+        {
+          "name": "flutterB",
+          "digest": "c6db4ded6e75a0948b0c455621ade3e83c386a3cbd11767ce4151c21aba6de04"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_06",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "b9b0c584ef03ccefb1c5c4dda1bf02caaf32ec9931012be2c18ee0bfd4c4c346",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "f37cd50174497134c167eb36288822a82a76be5d8c6eb99d8ecdb130869014a2",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "b9b0c584ef03ccefb1c5c4dda1bf02caaf32ec9931012be2c18ee0bfd4c4c346"
+        },
+        {
+          "name": "retract",
+          "digest": "cf103c2ec38fee4c53e85eb78bfbe7177e84582db713bb5900662309029cd556"
+        },
+        {
+          "name": "lean",
+          "digest": "437d3bd85a43e8548209e6354605f2ba0a2991daf4c97d74ba235b4726180b97"
+        },
+        {
+          "name": "flutterA",
+          "digest": "c4502575970b2d06cbc676ba2d91369f29e7c3b539e644478af6a3bdb01b4512"
+        },
+        {
+          "name": "flutterB",
+          "digest": "fb978cac5429fa5f0b5957d1256580e5c8d100b492cbff042d1f5becfecd3ff1"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_07",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "8353cb0f539eb9d7630f489a0085b0e29841f1190b405b834cb24b867c456770",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "e9067f30c803a4be9b093cd9e8f819f838e205f6873109274025aeafe5cf1515",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "8353cb0f539eb9d7630f489a0085b0e29841f1190b405b834cb24b867c456770"
+        },
+        {
+          "name": "retract",
+          "digest": "ebcee0135518b8d4443edc753e0d5b66514f7271cf78d91abb6954332f181f51"
+        },
+        {
+          "name": "lean",
+          "digest": "8fcad0fd6df6f9960220a0ccccd414c2bbf7afaffc19316631dc0fb52492100a"
+        },
+        {
+          "name": "flutterA",
+          "digest": "b58976782850b11925b3cbd8e74eaaa0c5114bee41aaa26f58c50a27d5744227"
+        },
+        {
+          "name": "flutterB",
+          "digest": "61ec02c2248f574118dad6ad16762863be7957dd027118541fad28bb608fb384"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_08",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "95a88b17e5fef777f4b684cf104868a68588299ad92b73653dc890fb124d92fe",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "cbf1348aa2fd95da48839c11fc10a465cd9cbecd89b09ea6a5d55db31b56c5fd",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "95a88b17e5fef777f4b684cf104868a68588299ad92b73653dc890fb124d92fe"
+        },
+        {
+          "name": "retract",
+          "digest": "ebf22018372769cbc3208f66db22d6407e28f0ec188aa5fa4111a192929cf7a1"
+        },
+        {
+          "name": "lean",
+          "digest": "7e376491724d1300525b531c98a9717f969cccfa246adc1d909e3ee3a30e9c5b"
+        },
+        {
+          "name": "flutterA",
+          "digest": "95c4c8fa726cd6c56ed1c405661204c321966de8419a35fb96ea6d8a3f284122"
+        },
+        {
+          "name": "flutterB",
+          "digest": "2bd514885adac4ed7ba9d200820c8e5c02761d655f37acd915f4ffb184f75563"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_09",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "833494b98a7cc0f7d3029a1d0bb1dd0a0df28d0009790026088b6a7d4b6b2570",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "4e86b6d1d3ac882acff6fa62ad4d1510a02832e03f6573ae487794edbc4616cd",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "833494b98a7cc0f7d3029a1d0bb1dd0a0df28d0009790026088b6a7d4b6b2570"
+        },
+        {
+          "name": "retract",
+          "digest": "dc173ec1a3330dde3c64214d1ad402d628c7e49b9785c088afa3abad55546496"
+        },
+        {
+          "name": "lean",
+          "digest": "682909327e6b5ebba3e1323547c5d19db6d2fb4849dfbc7d0cc310f46e12a910"
+        },
+        {
+          "name": "flutterA",
+          "digest": "7d7f3057f7f6373beb516c9043ddfddeae2126d00fb9140a1e6dec327f72f950"
+        },
+        {
+          "name": "flutterB",
+          "digest": "0e1110a2cfbdf23f8b2a3310dc4204463509f96a91401e3b12c0dd59d25c31db"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_10",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "960fad6c4daa20c0d1a8468b3792a6d32b8b2137b25b7275d26cc3df1fc29666",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "a11d86104e8e5c68e985ef8fab584e8b8287ee842d6d8a0fc617cc97d9b147d3",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "960fad6c4daa20c0d1a8468b3792a6d32b8b2137b25b7275d26cc3df1fc29666"
+        },
+        {
+          "name": "retract",
+          "digest": "321a255617d3d3b391b75c1991a2408ff494e9a018f9d4b355b019611a657962"
+        },
+        {
+          "name": "lean",
+          "digest": "f2c015857ac2a8490413450467ac414bea246bb8956319e9b7e5341b72e85dad"
+        },
+        {
+          "name": "flutterA",
+          "digest": "1fa4733f93cbf8f762a4e95a00738ba40f334dcaae75d5ce0726fb94ed05c930"
+        },
+        {
+          "name": "flutterB",
+          "digest": "7d9d03c872d908d083d713274ed7ded8d5bcca32b1eb15b4ea6da65525a14990"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_11",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "d52048102a66fe6b74e2854cf8fc0106b47a860331bde36623b76d2ef09b3765",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "c702a9cb1fa266cb7aad118bccd46ac53b8fb3da8ea8f92a2ea925cc8c4b3cab",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "d52048102a66fe6b74e2854cf8fc0106b47a860331bde36623b76d2ef09b3765"
+        },
+        {
+          "name": "retract",
+          "digest": "69e5edd34bf394f06ac67dd51a426c3e33b02d8b6331371bed33b5764a279628"
+        },
+        {
+          "name": "lean",
+          "digest": "91a10740878ea27f106620f12b250ba5e532c4e50fc2ff56432df3d7ca421982"
+        },
+        {
+          "name": "flutterA",
+          "digest": "248084a4bef00b1931621f7cb7ad60996ea56a583141332d97752161b5c3da60"
+        },
+        {
+          "name": "flutterB",
+          "digest": "93ad5061945da5bc4b89c90ea50345ddffdad79a05f47f31954bfc74f3e9500a"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_12",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "2704c6f04100a6383dd13575ca5afa91ccf6b2bda8f2f7f283b9189841009987",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "395c46b6a9fb6eff7e486adb13315f606b2914bdfdf2d41a4149ef55492909e2",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "2704c6f04100a6383dd13575ca5afa91ccf6b2bda8f2f7f283b9189841009987"
+        },
+        {
+          "name": "retract",
+          "digest": "c2b25ff6dd38e74690706dd94b43a6f8c3e366e5e034204159d4aaed2bada38b"
+        },
+        {
+          "name": "lean",
+          "digest": "0fe4c7f188b901ced0f0e786217a126dc5187658170b4be88ff7de0df9e7304f"
+        },
+        {
+          "name": "flutterA",
+          "digest": "42399721a010bdcfe36df934bc9ffe1942d9c18acad0a74cff02e5ff665b3fbf"
+        },
+        {
+          "name": "flutterB",
+          "digest": "6e606762892ee1aad364a5b70d0875bbd4bd3cfd27551b3a10e7f6befbca09ba"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_13",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "1212181438445830dc86dfa863a24135556ae94c70327a4284affb99e22d43f6",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "95bec1e14568eab0f05eec8884e7a05e09c63a7acf1be4fc5aca14055fe7efd3",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "1212181438445830dc86dfa863a24135556ae94c70327a4284affb99e22d43f6"
+        },
+        {
+          "name": "retract",
+          "digest": "34a4e2dd8512f55bdb373939ee53a0757fbc4ef11ea2c970a3bb3a2f0a3039a0"
+        },
+        {
+          "name": "lean",
+          "digest": "533ec5e20b637ffbdddc4b4d5d004eb63c284f57f8d708aa1e82b8dc010d4222"
+        },
+        {
+          "name": "flutterA",
+          "digest": "1490c8c5b0b8716f044486dba40c9abc2b3abe58dcaa43a477afa0de4add689a"
+        },
+        {
+          "name": "flutterB",
+          "digest": "fdd375528270479a3b873db26bddb426756b634e6f0e3af52ab061785b935f4a"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_14",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "67fa0d603af273621c38fad36b30ce9a83d1395ebccd1f2b6a1cf63afe613f46",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "0799a17f27c8a2cdc5111f734b6eba9c3f01bfd4c87e88c295498d83b15406b8",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "67fa0d603af273621c38fad36b30ce9a83d1395ebccd1f2b6a1cf63afe613f46"
+        },
+        {
+          "name": "retract",
+          "digest": "368f18d94d2eaa09b6b1e515ce9261165cba8bc77da9a2904b1b4e061c36b625"
+        },
+        {
+          "name": "lean",
+          "digest": "37a78256bec454b914c06900e3fcc018f64c623c26cf475e04e58778cb563ef7"
+        },
+        {
+          "name": "flutterA",
+          "digest": "c3d08a6a0df472d5ab1e19dd8cca56b0f8a250915939278e4576021188b51724"
+        },
+        {
+          "name": "flutterB",
+          "digest": "602c69f991df92220db7df4eb82f2c024ce11ff7fb6c70cccab3545ee067a7d2"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_15",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "64cb5a8dc8ba861cf76bb43fa43f1643ef19c35b88eaef49b174800e759792f2",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "b8a6942d8228f5d0fa068c088c6fe0463a2087c4b478f8d38e864eddbdcea466",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "64cb5a8dc8ba861cf76bb43fa43f1643ef19c35b88eaef49b174800e759792f2"
+        },
+        {
+          "name": "retract",
+          "digest": "61df2466b7d8c930b4a45f15065dd37be0fd55544c56e2f2baa372a08e0effc4"
+        },
+        {
+          "name": "lean",
+          "digest": "341b0b1642f66d285620e781d9ef31d76539bc2827612a957d22aa508423fe59"
+        },
+        {
+          "name": "flutterA",
+          "digest": "7d6725d827ace5a8f21021d53521b2624c1a6d2c083b05e8324c7ea607996883"
+        },
+        {
+          "name": "flutterB",
+          "digest": "c201f0b3bc5225f9c5b242fc9887411641877c227dc3271927fd428138d59582"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_16",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "ba5f3c4c16671085c26a8e17d0585f25e5a5c353748be72523e7c9df09ef3c91",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "48226d68dbddc2cf933c23920ad7d1ab844880c3830ef4d290cf5c6c1a15df89",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "ba5f3c4c16671085c26a8e17d0585f25e5a5c353748be72523e7c9df09ef3c91"
+        },
+        {
+          "name": "retract",
+          "digest": "2edc55410c89afa2107ec4a1631e17f2b11057366a35e5d342675c68b50ce119"
+        },
+        {
+          "name": "lean",
+          "digest": "5a4b659675aeb53b8013b0ba5a8bb2c6e7cfafe349278c85dfce2216f4a0bb03"
+        },
+        {
+          "name": "flutterA",
+          "digest": "2acb3ae202e23c1e8808d37fb623c29eddc9f1f29d33711417a7a9ef126deca8"
+        },
+        {
+          "name": "flutterB",
+          "digest": "e189fe5b291c77e216056fee3e4f8245f482f3df677d3c010bab081156bef967"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Polyps_Br_17",
+      "vertexCount": 420,
+      "triangleCount": 540,
+      "vertexDigest": "f9da783612c2cfab551a3147563f100714508383b21ffa08f178c76d130325ca",
+      "topologyDigest": "56114b5194d9d1c178b13908f16575ceed050c482b8a40fd8799581280a374fc",
+      "uvDigest": "b91c8fefd71b076608c58ef3580c43cad0c5539575f98b7cc17ca8237a1bf71a",
+      "weightDigest": "198762b280ea809035f39947cb4afe1869f4cd4399edae3ff63e75666fe9dc3d",
+      "materials": [
+        "PA_acropora_branching_Polyp"
+      ],
+      "shapeKeys": [
+        {
+          "name": "Basis",
+          "digest": "f9da783612c2cfab551a3147563f100714508383b21ffa08f178c76d130325ca"
+        },
+        {
+          "name": "retract",
+          "digest": "2615d1608dc526623e0982a04252cfd13ef5896242a8c8d50e3eee8fa9f0ef7f"
+        },
+        {
+          "name": "lean",
+          "digest": "a8f7a92c35a3ddb45a1a1e3cc31e8a663bb96469427e7391f7d57f1169dc3a2a"
+        },
+        {
+          "name": "flutterA",
+          "digest": "604860dfb79c733d21a6c19b1523c136cedfba9b0e8ee28ef720d415f2e9f017"
+        },
+        {
+          "name": "flutterB",
+          "digest": "005240eee3e63676fe910684c5aa94d39b80abe26910c243fa83d16cfdbd1c82"
+        }
+      ]
+    },
+    {
+      "name": "PA_acropora_branching_Skeleton",
+      "vertexCount": 890,
+      "triangleCount": 1704,
+      "vertexDigest": "e7622f7de088f53393bf3a2b9cc0a1799e335166d11db0ade7cc4da756e2e278",
+      "topologyDigest": "69e1a386b738a471c52d1bb4aa6342a044dcd436a92216299ffaf91cb84d68a0",
+      "uvDigest": "6a090734f7bc5758df4ea95cba42c2b40d5fdb26f1d73b772d1dcccee7d89231",
+      "weightDigest": "23404f5104c39d7ad39f81eef134b59034bcb3f4d871a9f75f6969085a71a22b",
+      "materials": [
+        "PA_acropora_branching_Rock",
+        "PA_acropora_branching_Skeleton"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_acropora_branching_Rig",
+    "boneCount": 1,
+    "deformBoneCount": 1,
+    "boneDigest": "b3a1026b6685bbf2bcf0f3e42c02110f8cdd1b5925dc02213c3685d5b411e03b"
+  },
+  "geometryDigest": "f88b8a619ec4df9eec0cd1f9dfe3036792d4bc21729249b61d8417822860348a",
+  "variantId": "hairy_green"
+}

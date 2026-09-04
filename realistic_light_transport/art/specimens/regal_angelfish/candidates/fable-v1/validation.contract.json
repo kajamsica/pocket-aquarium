@@ -1,0 +1,613 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "regal_angelfish",
+  "rig": "PA_regal_angelfish_Rig",
+  "root": "PA_regal_angelfish_Root",
+  "meshes": [
+    "PA_regal_angelfish_Body",
+    "PA_regal_angelfish_Fins",
+    "PA_regal_angelfish_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_regal_angelfish_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.0025625000000000005,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_dorsal"
+      ],
+      "label": "fin_body_dorsal"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_regal_angelfish_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal_anal"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal_caudal"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_caudal"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_regal_angelfish_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_regal_angelfish_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_regal_angelfish_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_regal_angelfish_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_regal_angelfish_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_regal_angelfish_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.25,
+    "tolerance": 0.03,
+    "kind": "adult_total_length"
+  },
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "burst": {
+      "loop": false,
+      "frames": 30,
+      "bones": [
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_regal_angelfish_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.001025
+    },
+    {
+      "object": "PA_regal_angelfish_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.001025
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.142953,
+      -0.043003,
+      -0.072699
+    ],
+    "max": [
+      0.10776,
+      0.043003,
+      0.084334
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.20500000000000002,
+    "fins": [
+      "dorsal",
+      "anal",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/regal_angelfish/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/regal_angelfish/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.1429530680179596,
+      -0.04300301522016525,
+      -0.07269949465990067
+    ],
+    "boundsMax": [
+      0.10776006430387497,
+      0.04300301522016525,
+      0.08433426916599274
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

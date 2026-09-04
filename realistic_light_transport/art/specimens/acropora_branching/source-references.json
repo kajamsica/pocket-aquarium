@@ -1,7 +1,7 @@
 {
   "schemaVersion": "pocket-aquarium.source-references/v1",
   "speciesId": "acropora_branching",
-  "revision": 1,
+  "revision": 2,
   "policy": "References informed colony growth form, branch and corallite proportions, polyp anatomy and pigment placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used; trade names (staghorn, table, digitate, colour morphs) guided variant identity only. The asset is labelled at genus level (Acropora sp.) because the trade forms mix several species.",
   "sources": [
     {
@@ -45,6 +45,16 @@
       "license": "CC BY-NC-SA 4.0 (text)"
     },
     {
+      "id": "COTW-ACROPORA-MILLEPORA",
+      "title": "Acropora millepora species page: corymbose cushions of short uniform branchlets with scale-like radial corallites and long tentacles extended by day (the fleshy, hairy look of the trade form)",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-millepora/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
       "id": "AIMS-CORAL-FACT-SHEETS-ACROPORA",
       "title": "Coral Fact Sheets: genus Acropora (growth forms, axial and radial corallites, polyp structure)",
       "publisher": "Australian Institute of Marine Science",
@@ -65,5 +75,5 @@
     }
   ],
   "referenceGrade": "B",
-  "referenceGradeRationale": "Genus level identity: the trade forms (staghorn, table, digitate) map to several Acropora species whose growth forms and corallite structure are well documented in taxonomic references; exact branch counts, spacing and pigments of any single colony are not calibrated to one specimen and are authored from the genus descriptions."
+  "referenceGradeRationale": "Genus level identity: the trade forms (staghorn, table, digitate, hairy millepora style) map to several Acropora species whose growth forms and corallite structure are well documented in taxonomic references; exact branch counts, spacing and pigments of any single colony are not calibrated to one specimen and are authored from the genus descriptions."
 }

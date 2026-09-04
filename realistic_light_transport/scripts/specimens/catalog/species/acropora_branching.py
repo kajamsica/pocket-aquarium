@@ -9,19 +9,26 @@ Anatomy choices (source space: metres, up +Z, flow direction +X, origin base_cen
 - Radial corallites: small appressed tubes (pointing distally, as in Acropora) embedded in the branch wall with a
   recessed calice. Each corallite carries a polyp: a crown of six short tentacle tubes rising from the calice
   (real Acropora polyps carry twelve tentacles; six is the LOD1 stylisation, listed as visual debt).
-- Three morphologies selected by `morphology.form`:
+- Four morphologies selected by `morphology.form`:
     staghorn: arborescent (A. muricata / A. formosa habit): short trunk, long curving primaries with secondaries
               and one upright leader.
     table:    tabular / corymbose (A. hyacinthus habit): stalk, lobed horizontal plate, phyllotaxis field of
               short upright branchlets.
     bushy:    digitate (A. humilis / A. gemmifera habit): broad mound with a bouquet of thick fingers.
+    hairy:    fleshy corymbose cushion (A. millepora habit): short thick branchlets on a broad low base carrying
+              a dense field of long extended polyps, so the colony reads fuzzy.
   Pigments come from `spec.palette`; variants override form, seed and palette.
-- Rig (<= 32 deform bones): `Base` (static), `Trunk` (trunk / stalk + plate), one bone per branch cluster
-  (primary branch, plate sector or finger). Roots stay with the parent bone and tips blend to the cluster bone so
-  the (very subtle, skeletons are rigid) sway is a smooth bend. Secondaries share their parent's bone.
-- Clips: `sway` (idle loop: faint skeleton flex, polyps lean with the flow), `flow` (locomotion loop: stronger
-  rhythmic current response with a little polyp pulsing), `retract` (response, hold envelope: polyps pull into
-  their corallites via the `retract` shape key, then re-extend).
+- Stony coral rule: the skeleton never moves. Base, trunk / stalk, plate, branches and every corallite tube are
+  weighted 1.0 to the single deform bone `Base`, which is never a channel target in any clip. The rig has no
+  other bones.
+- Only the polyps move. The crowns are unskinned rigid meshes (one object per branch cluster, plain children of
+  the rig) whose motion is entirely morph targets: `lean` (tentacle tips bend downstream, roots stay in the
+  calice), `flutterA` / `flutterB` (two interleaved halves of the crown field flick sideways, each polyp along
+  its own seeded direction), `retract` (tentacles fold into the calice). Each cluster and each half drive their
+  own phase so no two crowns move alike.
+- Clips: `sway` (idle loop: gentle unipolar surges of lean and flutter, exactly at rest at the seam), `flow`
+  (locomotion loop: steady downstream lean with rhythmic flutter and a little pulsing), `retract` (response,
+  hold envelope: polyps pull into their corallites, then re-extend).
 
 Everything is derived from asset.source.json with fixed seeds (noise.scalar_hash); no random module, no imagery.
 """
@@ -33,7 +40,7 @@ from dataclasses import dataclass, field
 
 import bpy
 import numpy as np
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Vector
 
 from ..lib import materials as mat
 from ..lib import meshing as msh
@@ -41,7 +48,7 @@ from ..lib import textures
 from ..lib.animation import Channel, ClipSpec, bake_clip, shape_key_target
 from ..lib.contract import BuildResult, base_contract, register_clips
 from ..lib.noise import cells, fbm, scalar_hash, smoothstep
-from ..lib.rigging import RigBuilder, identity_pose
+from ..lib.rigging import RigBuilder
 
 UP = Vector((0.0, 0.0, 1.0))
 FLOW = Vector((1.0, 0.0, 0.0))
@@ -83,6 +90,20 @@ DEFAULTS = {
         "wobble": 3.0, "corallite": {"radius": 0.115, "length": 0.21, "tilt": 50.0},
         "polyp": {"length": 0.18, "radius": 0.024, "spread": 50.0, "axialLength": 0.23, "axialRadius": 0.028},
         "minGap": 0.35,
+    },
+    "hairy": {
+        # A. millepora habit: a broad low cushion of short, thick, blunt branchlets packed closely together, every
+        # one carrying a dense field of long extended polyps (the "hairy" look). Polyps are placed with a shorter
+        # probe (probeReach) so crowns survive between neighbouring branchlets; the clearance gate proves them.
+        "baseRadius": 3.3, "baseHeight": 0.8, "baseSegments": 22, "baseRings": 6,
+        "fingers": 18, "fieldRadius": 2.4, "fieldSpacing": 0.45, "fieldCentre": True, "fingerLength": 2.2,
+        "fingerLengthJitter": 0.35, "fingerCentreBonus": 0.7, "fingerTilt": 30.0, "rootEmbed": 0.4,
+        "fingerRadius": 0.45, "fingerTipRadius": 0.3, "fingerRings": 5, "fingerSegments": 8, "fingerCurl": 5.0,
+        "fingerCorallites": 9, "coralliteStart": 0.06,
+        "wobble": 3.0, "corallite": {"radius": 0.085, "length": 0.12, "tilt": 48.0},
+        "polyp": {"length": 0.33, "radius": 0.024, "spread": 60.0, "axialLength": 0.38, "axialRadius": 0.027,
+                  "probeReach": 0.7, "retractScale": 0.3},
+        "minGap": 0.3,
     },
 }
 
@@ -190,11 +211,15 @@ def segment_distance(p1: Vector, q1: Vector, p2: Vector, q2: Vector) -> float:
 
 
 def spiral_field(count: int, field_radius: float, jitter_degrees: float, min_spacing: float, seed: int, key: str,
-                 iterations: int = 24) -> list[tuple[float, float]]:
-    """Phyllotactic field of root positions, relaxed so no two roots sit closer than `min_spacing`."""
+                 iterations: int = 24, centre: bool = False) -> list[tuple[float, float]]:
+    """Phyllotactic field of root positions, relaxed so no two roots sit closer than `min_spacing`.
+    With `centre` the first root sits on the axis so a packed cushion has no bald middle."""
     points = []
     for k in range(count):
-        r = field_radius * math.sqrt((k + 0.55) / count)
+        if centre and k == 0:
+            points.append([0.0, 0.0])
+            continue
+        r = field_radius * math.sqrt((k + (0.15 if centre else 0.55)) / count)
         angle = k * GOLDEN_ANGLE + math.radians(jitter_degrees) * jit(seed, key, k)
         points.append([math.cos(angle) * r, math.sin(angle) * r])
     for _ in range(iterations):
@@ -256,20 +281,17 @@ class Node:
 
     name: str
     kind: str  # dome | plate | tube
-    bone: str
+    cluster: str  # polyp crown cluster this solid's corallites belong to (one crown object per cluster)
     material: str = "skeleton"
     parent: "Node | None" = None
-    root_weights: dict = field(default_factory=lambda: {"Base": 1.0})
     points: list = field(default_factory=list)
     radii: list = field(default_factory=list)
     segments: int = 10
     dome: tuple = ()  # (radius, height, exponent, rim_noise)
     plate: tuple = ()  # (z0, thickness, radius, dome_height)
     is_branch: bool = False
-    cluster: bool = False
     corallites: int = 0
     s_exit: float = 0.0
-    blend_span: float = 0.38
     geometry: tuple = ()
     attach: set = field(default_factory=set)
     length: float = 0.0
@@ -322,12 +344,6 @@ class Node:
         index = min(int(position), len(self.points) - 2)
         t = position - index
         return self.radii[index] + (self.radii[index + 1] - self.radii[index]) * t
-
-    def weights_at(self, s: float) -> dict:
-        if self.kind != "tube":
-            return dict(self.root_weights)
-        t = sstep((s - self.s_exit) / self.blend_span)
-        return msh.blend_weights(self.root_weights, {self.bone: 1.0}, t)
 
     def s_of_vertex(self, index: int) -> float:
         rings = len(self.points)
@@ -447,13 +463,12 @@ def attach_group(node: Node) -> set[int]:
 
 def layout_staghorn(P: dict, seed: int) -> list[Node]:
     nodes = []
-    base = Node("base", "dome", "Base", material="rock", dome=(P["baseRadius"], P["baseHeight"], 2.2, 0.08),
+    base = Node("base", "dome", "base", material="rock", dome=(P["baseRadius"], P["baseHeight"], 2.2, 0.08),
                 segments=P["baseSegments"])
     nodes.append(base)
     trunk_pts = grow(Vector((0.0, 0.0, 0.35)), direction_from(0.0, 86.0), P["trunkTop"] - 0.35, 5, 0.0, 2.0, seed, "trunk")
     trunk_radii = [P["trunkRadius"], P["trunkRadius"] * 0.95, P["trunkRadius"] * 0.85, P["trunkRadius"] * 0.7, P["trunkTipRadius"]]
-    trunk = Node("trunk", "tube", "Trunk", parent=base, root_weights={"Base": 1.0}, points=trunk_pts, radii=trunk_radii,
-                 segments=12, blend_span=0.5)
+    trunk = Node("trunk", "tube", "trunk", parent=base, points=trunk_pts, radii=trunk_radii, segments=12)
     nodes.append(trunk)
     count = int(P["primaries"])
     primaries = []
@@ -467,16 +482,16 @@ def layout_staghorn(P: dict, seed: int) -> list[Node]:
         points = grow(root, direction_from(azimuth, elevation), length, int(P["primaryRings"]), P["primaryCurl"] + 6.0 * jit(seed, "pcurl", i),
                       P["wobble"], seed, ("primary", i))
         radii = taper(P["primaryRadius"] * (1.0 + 0.08 * jit(seed, "prad", i)), P["primaryTipRadius"], int(P["primaryRings"]))
-        node = Node(f"branch_{i:02d}", "tube", f"Br_{i:02d}", parent=trunk, root_weights={"Trunk": 1.0}, points=points, radii=radii,
-                    segments=int(P["primarySegments"]), is_branch=True, cluster=True, corallites=int(P["primaryCorallites"]))
+        node = Node(f"branch_{i:02d}", "tube", f"Br_{i:02d}", parent=trunk, points=points, radii=radii,
+                    segments=int(P["primarySegments"]), is_branch=True, corallites=int(P["primaryCorallites"]))
         nodes.append(node)
         primaries.append(node)
     leader_root = trunk.point_at(0.82)
-    leader = Node("leader", "tube", "Br_leader", parent=trunk, root_weights={"Trunk": 1.0},
+    leader = Node("leader", "tube", "Br_leader", parent=trunk,
                   points=grow(leader_root, direction_from(200.0 + 40.0 * jit(seed, "laz"), 79.0), P["leaderLength"], int(P["primaryRings"]),
                               5.0, P["wobble"], seed, "leader"),
                   radii=taper(P["leaderRadius"], P["leaderTipRadius"], int(P["primaryRings"])), segments=int(P["primarySegments"]),
-                  is_branch=True, cluster=True, corallites=int(P["primaryCorallites"]))
+                  is_branch=True, corallites=int(P["primaryCorallites"]))
     nodes.append(leader)
     for i, parent in enumerate(primaries):
         secondaries = 2 if i % 3 == 0 else 1
@@ -492,7 +507,7 @@ def layout_staghorn(P: dict, seed: int) -> list[Node]:
             direction = (tangent * math.cos(theta) + (up_perp * math.cos(psi) + side * math.sin(psi)) * math.sin(theta)).normalized()
             length = P["secondaryLength"] * (1.0 + 0.2 * jit(seed, "slen", i, k))
             r0 = parent.radius_at(s) * P["secondaryRadiusFactor"]
-            node = Node(f"branch_{i:02d}{'ab'[k]}", "tube", parent.bone, parent=parent, root_weights=parent.weights_at(s),
+            node = Node(f"branch_{i:02d}{'ab'[k]}", "tube", parent.cluster, parent=parent,
                         points=grow(junction, direction, length, int(P["secondaryRings"]), 20.0, P["wobble"], seed, ("secondary", i, k)),
                         radii=taper(r0, P["secondaryTipRadius"], int(P["secondaryRings"])), segments=int(P["secondarySegments"]),
                         is_branch=True, corallites=int(P["secondaryCorallites"]))
@@ -502,14 +517,13 @@ def layout_staghorn(P: dict, seed: int) -> list[Node]:
 
 def layout_table(P: dict, seed: int) -> list[Node]:
     nodes = []
-    base = Node("base", "dome", "Base", material="rock", dome=(P["baseRadius"], P["baseHeight"], 2.2, 0.08), segments=P["baseSegments"])
+    base = Node("base", "dome", "base", material="rock", dome=(P["baseRadius"], P["baseHeight"], 2.2, 0.08), segments=P["baseSegments"])
     nodes.append(base)
     stalk_pts = grow(Vector((0.0, 0.0, 0.3)), direction_from(30.0, 85.0), P["stalkTop"] - 0.3, 5, 3.0, 1.5, seed, "stalk")
     stalk_radii = [P["stalkRadius"], P["stalkRadius"] * 0.96, P["stalkRadius"] * 0.9, P["stalkTipRadius"], P["stalkTipRadius"] * 0.95]
-    stalk = Node("stalk", "tube", "Trunk", parent=base, root_weights={"Base": 1.0}, points=stalk_pts, radii=stalk_radii, segments=14,
-                 blend_span=0.5)
+    stalk = Node("stalk", "tube", "stalk", parent=base, points=stalk_pts, radii=stalk_radii, segments=14)
     nodes.append(stalk)
-    plate = Node("plate", "plate", "Trunk", parent=stalk, root_weights={"Trunk": 1.0},
+    plate = Node("plate", "plate", "plate", parent=stalk,
                  plate=(P["plateBottom"], P["plateThickness"], P["plateRadius"], P["plateDome"]), segments=int(P["plateSegments"]))
     nodes.append(plate)
     count = int(P["branchlets"])
@@ -527,41 +541,47 @@ def layout_table(P: dict, seed: int) -> list[Node]:
         direction = (UP * math.cos(tilt) + radial * math.sin(tilt)).normalized()
         length = P["branchletLength"] + P["branchletRimExtra"] * rel + P["branchletLengthJitter"] * jit(seed, "blen", k)
         sector = int((angle % math.tau) / math.tau * sectors) % sectors
-        node = Node(f"branchlet_{k:02d}", "tube", f"Sector_{sector}", parent=plate, root_weights={"Trunk": 1.0},
+        node = Node(f"branchlet_{k:02d}", "tube", f"Sector_{sector}", parent=plate,
                     points=grow(root, direction, length, int(P["branchletRings"]), 4.0, P["wobble"], seed, ("branchlet", k)),
                     radii=taper(P["branchletRadius"] * (1.0 + 0.1 * jit(seed, "brad", k)), P["branchletTipRadius"], int(P["branchletRings"])),
-                    segments=int(P["branchletSegments"]), is_branch=True, corallites=int(P["branchletCorallites"]), blend_span=0.5)
+                    segments=int(P["branchletSegments"]), is_branch=True, corallites=int(P["branchletCorallites"]))
         nodes.append(node)
     return nodes
 
 
-def layout_bushy(P: dict, seed: int) -> list[Node]:
+def layout_bushy(P: dict, seed: int, label: str = "finger", cluster_prefix: str = "Finger") -> list[Node]:
     nodes = []
-    base = Node("base", "dome", "Base", material="rock", dome=(P["baseRadius"], P["baseHeight"], 2.3, 0.07), segments=P["baseSegments"])
+    base = Node("base", "dome", "base", material="rock", dome=(P["baseRadius"], P["baseHeight"], 2.3, 0.07), segments=P["baseSegments"])
     nodes.append(base)
     count = int(P["fingers"])
     radius, height, exponent, _ = base.dome
-    field = spiral_field(count, P["fieldRadius"], 8.0, 2.0 * P["fingerRadius"] + P["fieldSpacing"], seed, "fang")
+    field = spiral_field(count, P["fieldRadius"], 8.0, 2.0 * P["fingerRadius"] + P["fieldSpacing"], seed, "fang",
+                         centre=bool(P.get("fieldCentre", False)))
     for k, (fx, fy) in enumerate(field):
         r = math.hypot(fx, fy)
         angle = math.atan2(fy, fx)
         radial = Vector((math.cos(angle), math.sin(angle), 0.0))
         rel = r / P["fieldRadius"]
         surface_z = height * (1.0 - clamp(r / radius) ** exponent) ** (1.0 / exponent)
-        root = radial * r + Vector((0.0, 0.0, surface_z - 0.75))
+        root = radial * r + Vector((0.0, 0.0, surface_z - float(P.get("rootEmbed", 0.75))))
         tilt = math.radians(P["fingerTilt"] * rel + 6.0 * jit(seed, "ftilt", k))
         direction = (UP * math.cos(tilt) + radial * math.sin(tilt)).normalized()
         # the middle of a digitate colony carries the longest digits
         length = P["fingerLength"] + P["fingerLengthJitter"] * jit(seed, "flen", k) + P["fingerCentreBonus"] * (1.0 - rel)
-        node = Node(f"finger_{k:02d}", "tube", f"Finger_{k:02d}", parent=base, root_weights={"Base": 1.0},
+        node = Node(f"{label}_{k:02d}", "tube", f"{cluster_prefix}_{k:02d}", parent=base,
                     points=grow(root, direction, length, int(P["fingerRings"]), P["fingerCurl"], P["wobble"], seed, ("finger", k)),
                     radii=taper(P["fingerRadius"] * (1.0 + 0.1 * jit(seed, "frad", k)), P["fingerTipRadius"], int(P["fingerRings"])),
-                    segments=int(P["fingerSegments"]), is_branch=True, cluster=True, corallites=int(P["fingerCorallites"]), blend_span=0.45)
+                    segments=int(P["fingerSegments"]), is_branch=True, corallites=int(P["fingerCorallites"]))
         nodes.append(node)
     return nodes
 
 
-LAYOUTS = {"staghorn": layout_staghorn, "table": layout_table, "bushy": layout_bushy}
+def layout_hairy(P: dict, seed: int) -> list[Node]:
+    """Corymbose cushion: the digitate layout with short, thick, closely packed branchlets."""
+    return layout_bushy(P, seed, label="branchlet", cluster_prefix="Br")
+
+
+LAYOUTS = {"staghorn": layout_staghorn, "table": layout_table, "bushy": layout_bushy, "hairy": layout_hairy}
 
 
 def check_layout(nodes: list[Node], min_gap: float):
@@ -600,7 +620,6 @@ class Corallite:
     name: str
     node: Node
     geometry: tuple
-    weights: dict
     calice: Vector
     axis: Vector
     axial: bool = False
@@ -611,12 +630,12 @@ def place_corallites(node: Node, nodes: list[Node], P: dict, seed: int) -> list[
     rotated to another azimuth (deterministically) or dropped."""
     out = []
     c = P["corallite"]
-    reach = P["polyp"]["length"] * 1.1 + c["radius"] * 1.2
+    reach = P["polyp"]["length"] * float(P["polyp"].get("probeReach", 1.1)) + c["radius"] * 1.2
     others = [other for other in nodes if other is not node]
     frames = msh.frames_along([tuple(p) for p in node.points])
     rings = len(node.points)
     count = node.corallites
-    s_min = min(node.s_exit + 0.2, 0.7)
+    s_min = min(node.s_exit + float(P.get("coralliteStart", 0.2)), 0.7)
     s_max = 0.9
     for k in range(count):
         s_base = s_min + (s_max - s_min) * (k + 0.5 + 0.3 * jit(seed, node.name, "cs", k)) / count
@@ -645,7 +664,7 @@ def place_corallites(node: Node, nodes: list[Node], P: dict, seed: int) -> list[
                 continue
             geometry = msh.tube([tuple(p) for p in points], [rc * 0.82, rc, rc * 1.15], 6, u_values=[0.0, 0.55, 0.9], up_hint=tuple(tangent))
             geometry = recess_end_cap(geometry, points, rc * 0.5, 6)
-            out.append(Corallite(f"{node.name}_c{k:02d}", node, geometry, node.weights_at(s), points[-1], direction))
+            out.append(Corallite(f"{node.name}_c{k:02d}", node, geometry, points[-1], direction))
             placed = True
             break
         if not placed:
@@ -664,13 +683,31 @@ def axial_corallite(node: Node, P: dict) -> Corallite:
     radii = [radius * 1.02, radius, radius * 1.1]
     geometry = msh.tube([tuple(p) for p in points], radii, 8, u_values=[0.0, 0.5, 0.9], up_hint=tuple(axis))
     geometry = recess_end_cap(geometry, points, radius * 0.62, 8)
-    return Corallite(f"{node.name}_axial", node, geometry, node.weights_at(1.0), points[-1], axis, axial=True)
+    return Corallite(f"{node.name}_axial", node, geometry, points[-1], axis, axial=True)
 
 
-def polyp_geometry(centre: Vector, axis: Vector, count: int, length: float, radius: float, spread_deg: float, seed: int, key):
-    """Crown of tentacle tubes rising from a calice; returns geometry plus retract and lean target positions."""
+@dataclass
+class Crown:
+    """One polyp crown: rest geometry plus its morph target positions (same vertex order)."""
+
+    geometry: tuple
+    retract: list
+    lean: list
+    flutter: list
+    bucket: int  # 0 -> flutterA, 1 -> flutterB (interleaved halves of the crown field move out of step)
+
+
+def polyp_geometry(centre: Vector, axis: Vector, count: int, length: float, radius: float, spread_deg: float, seed: int, key,
+                   retract_scale: float = 0.4) -> Crown:
+    """Crown of tentacle tubes rising from a calice. Tentacle roots never move; the targets move the tips:
+    retract folds them into the calice, lean bends them downstream, flutter flicks them sideways along a
+    direction seeded per polyp."""
     normal, binormal = perpendicular_frame(axis)
-    pieces, retract, lean = [], [], []
+    pieces, retract, lean, flutter = [], [], [], []
+    psi = math.tau * hash01(seed, key, "fside")
+    side = (normal * math.cos(psi) + binormal * math.sin(psi)).normalized()
+    flick = 0.30 * (0.75 + 0.5 * hash01(seed, key, "famp"))
+    bucket = 0 if hash01(seed, key, "bucket") < 0.5 else 1
     for k in range(count):
         theta = math.tau * k / count + math.radians(14.0) * jit(seed, key, "pt", k)
         tilt = math.radians(spread_deg + 10.0 * jit(seed, key, "ptilt", k))
@@ -682,15 +719,20 @@ def polyp_geometry(centre: Vector, axis: Vector, count: int, length: float, radi
         geometry = msh.tube([tuple(base), tuple(tip)], [radius, radius * 0.5], 3, cap_start=False, cap_end=True)
         pieces.append(geometry)
         stub = base + tdir * 0.02
+        # tentacles on the leading side of the flick fold a little less than the trailing side, so the crown
+        # skews rather than translating as a block
+        lead = 0.7 + 0.3 * clamp(0.5 + 0.5 * radial.dot(side))
         for index, p in enumerate(geometry[0]):
             P = Vector(p)
             if index < 3:
                 retract.append(tuple(P))
                 lean.append(tuple(P))
+                flutter.append(tuple(P))
             else:
-                retract.append(tuple(stub + (P - tip) * 0.4))
+                retract.append(tuple(stub + (P - tip) * retract_scale))
                 lean.append(tuple(P + FLOW * (0.38 * L) - axis * (0.05 * L)))
-    return concat_geometry(pieces), retract, lean
+                flutter.append(tuple(P + side * (flick * L * lead) - axis * (0.04 * L)))
+    return Crown(concat_geometry(pieces), retract, lean, flutter, bucket)
 
 
 # ---------------------------------------------------------------- textures
@@ -814,24 +856,30 @@ def build(spec: dict, species, ctx) -> BuildResult:
         if node.is_branch:
             corallites.extend(place_corallites(node, nodes, P, seed))
             corallites.append(axial_corallite(node, P))
-    polyp_parts = []  # (branch node, geometry, retract, lean)
+    # every branch's crowns, with per-vertex targets: rest, retract, lean, flutterA, flutterB
+    polyp_parts: list[tuple[Node, tuple, dict[str, list]]] = []
     pp = P["polyp"]
+    retract_scale = float(pp.get("retractScale", 0.4))
     for node in nodes:
         if not node.is_branch:
             continue
-        pieces, retract, lean = [], [], []
+        pieces = []
+        targets: dict[str, list] = {"retract": [], "lean": [], "flutterA": [], "flutterB": []}
         for cor in corallites:
             if cor.node is not node:
                 continue
             count = 6
             length = pp["axialLength"] if cor.axial else pp["length"]
             radius = pp["axialRadius"] if cor.axial else pp["radius"]
-            geometry, r_pos, l_pos = polyp_geometry(cor.calice - cor.axis * (0.0 if cor.axial else 0.02), cor.axis, count, length, radius,
-                                                    pp["spread"], seed, cor.name)
-            pieces.append(geometry)
-            retract.extend(r_pos)
-            lean.extend(l_pos)
-        polyp_parts.append((node, concat_geometry(pieces), retract, lean))
+            crown = polyp_geometry(cor.calice - cor.axis * (0.0 if cor.axial else 0.02), cor.axis, count, length, radius,
+                                   pp["spread"], seed, cor.name, retract_scale)
+            pieces.append(crown.geometry)
+            rest = [tuple(v) for v in crown.geometry[0]]
+            targets["retract"].extend(crown.retract)
+            targets["lean"].extend(crown.lean)
+            targets["flutterA"].extend(crown.flutter if crown.bucket == 0 else rest)
+            targets["flutterB"].extend(crown.flutter if crown.bucket == 1 else rest)
+        polyp_parts.append((node, concat_geometry(pieces), targets))
 
     # ---- normalise the colony width to the reference size (axis xy) and convert cm -> m
     xs, ys = [], []
@@ -842,7 +890,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
         if cor.geometry:
             xs.extend(v[0] for v in cor.geometry[0])
             ys.extend(v[1] for v in cor.geometry[0])
-    for _node, geometry, _r, _l in polyp_parts:
+    for _node, geometry, _targets in polyp_parts:
         xs.extend(v[0] for v in geometry[0])
         ys.extend(v[1] for v in geometry[0])
     extent_cm = max(max(xs) - min(xs), max(ys) - min(ys))
@@ -870,50 +918,27 @@ def build(spec: dict, species, ctx) -> BuildResult:
                         normal_strength=float(tex.get("rockNormalStrength", 1.0)))
     material_map = {"skeleton": skeleton_mat, "polyp": polyp_mat, "rock": rock_mat}
 
-    # ---- rig
+    # ---- rig: a single static deform bone. Stony coral rule: the skeleton never moves, so nothing else exists
+    # for the skeleton to follow, and Base is never a channel target in any clip.
     rb = RigBuilder(f"{prefix}_Rig", spec["id"])
     base_node = by_name["base"]
     rb.bone("Base", (0.0, 0.0, 0.0), S((0.0, 0.0, base_node.dome[1])))
-    trunk_node = next((n for n in nodes if n.bone == "Trunk" and n.kind == "tube"), None)
-    if trunk_node is not None:
-        top = trunk_node.points[-1]
-        plate_node = by_name.get("plate")
-        if plate_node is not None:
-            top = Vector((0.0, 0.0, plate_node.plate[0] + plate_node.plate[1] + plate_node.plate[3]))
-        rb.bone("Trunk", S(trunk_node.points[0]), S(top), "Base")
-    cluster_bones = []
-    if form == "table":
-        plate_node = by_name["plate"]
-        centre = Vector((0.0, 0.0, plate_node.plate[0] + plate_node.plate[1] + plate_node.plate[3]))
-        for k in range(int(P["sectors"])):
-            angle = (k + 0.5) / int(P["sectors"]) * math.tau
-            tail = centre + Vector((math.cos(angle), math.sin(angle), 0.0)) * plate_node.plate[2] + Vector((0.0, 0.0, 1.2))
-            rb.bone(f"Sector_{k}", S(centre), S(tail), "Trunk")
-            cluster_bones.append(f"Sector_{k}")
-    for node in nodes:
-        if node.cluster:
-            parent_bone = "Trunk" if trunk_node is not None else "Base"
-            rb.bone(node.bone, S(node.points[0]), S(node.points[-1]), parent_bone)
-            cluster_bones.append(node.bone)
     rig = rb.finish()
+    static_weights = {"Base": 1.0}
 
-    # ---- skeleton object
+    # ---- skeleton object (every solid weighted 1.0 to Base)
     skeleton_parts = []
     for node in nodes:
         vertices, faces, uvs, face_uvs = node.geometry
         geometry = ([S(v) for v in vertices], faces, uvs, face_uvs)
-        if node.kind == "tube":
-            weight_fn = (lambda i, v, n=node: n.weights_at(n.s_of_vertex(i)))
-        else:
-            weight_fn = (lambda i, v, n=node: dict(n.root_weights))
         transform = (lambda u, v: (u, v * 0.72)) if node.material == "skeleton" else None
-        skeleton_parts.append(msh.make_part(node.name, geometry, node.material, weight_fn, closed=True,
+        skeleton_parts.append(msh.make_part(node.name, geometry, node.material, lambda i, v: dict(static_weights), closed=True,
                                             groups={f"attach_{node.name}": set(node.attach)}, uv_transform=transform))
     skeleton_obj = msh.assemble(f"{prefix}_Skeleton", skeleton_parts, material_map, rig, f"{prefix}_Armature")
     skeleton_obj["lod"] = 1
     skeleton_obj["colonyWidthMeters"] = spec["referenceSize"]["meters"]
 
-    # ---- corallites object (one vertex group per carrying branch, for the clearance contract)
+    # ---- corallites object (static too; one vertex group per carrying branch, for the clearance contract)
     corallite_parts = []
     corallite_members: dict[str, set[int]] = {}
     offset = 0
@@ -922,7 +947,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
             continue
         vertices, faces, uvs, face_uvs = cor.geometry
         geometry = ([S(v) for v in vertices], faces, uvs, face_uvs)
-        corallite_parts.append(msh.make_part(cor.name, geometry, "skeleton", lambda i, v, w=cor.weights: dict(w), closed=True,
+        corallite_parts.append(msh.make_part(cor.name, geometry, "skeleton", lambda i, v: dict(static_weights), closed=True,
                                              uv_transform=lambda u, v: (u, 0.76 + v * 0.24)))
         corallite_members.setdefault(cor.node.name, set()).update(range(offset, offset + len(vertices)))
         offset += len(vertices)
@@ -932,167 +957,109 @@ def build(spec: dict, species, ctx) -> BuildResult:
         group = corallites_obj.vertex_groups.new(name=f"cor_{node_name}")
         group.add(sorted(members), 1.0, "REPLACE")
 
-    # ---- polyp objects: one per branch cluster, rigid unskinned children of the rig.
-    # Why not skinned: the glTF importer splits a skinned node that carries animated morph targets into an empty
-    # plus a renamed mesh (and it does not preserve bone lengths, so bone parenting shifts too), which breaks the
-    # runtime import-parity gate. See /tmp/pa-lanes/acropora_branching/shared-change-request.md. Instead every
-    # polyp motion, including the branch bend the crowns ride on, is a morph target driven in lockstep with the
-    # matching bone channel, so the crowns stay on their corallites.
+    # ---- polyp crown objects: one per branch cluster, rigid unskinned children of the rig, all motion in morph
+    # targets. Not skinned because the glTF importer splits a skinned node that carries animated morph targets into
+    # an empty plus a renamed mesh, which breaks the runtime import-parity gate (see the lane shared-change-request).
     branch_nodes = [node for node in nodes if node.is_branch]
+    clusters: list[str] = []
+    for node in branch_nodes:
+        if node.cluster not in clusters:
+            clusters.append(node.cluster)
+    polyp_groups: dict[str, list[tuple[Node, tuple, dict[str, list]]]] = {}
+    for node, geometry, targets in polyp_parts:
+        polyp_groups.setdefault(node.cluster, []).append((node, geometry, targets))
     polyp_objects = []
-    polyp_groups: dict[str, list[tuple[Node, tuple, list, list]]] = {}
-    for node, geometry, retract, lean in polyp_parts:
-        polyp_groups.setdefault(node.bone, []).append((node, geometry, retract, lean))
     polyp_world: dict[tuple[str, str], np.ndarray] = {}
-    polyp_rest: dict[str, list[Vector]] = {}
-    polyp_targets: dict[str, dict[str, list[tuple]]] = {}
-    for bone_name in [b for b in cluster_bones if b in polyp_groups]:
-        parts, retract_all, lean_all, rest_all = [], [], [], []
-        for node, geometry, retract, lean in polyp_groups[bone_name]:
+    target_names = ("retract", "lean", "flutterA", "flutterB")
+    for cluster in [c for c in clusters if c in polyp_groups]:
+        parts = []
+        merged: dict[str, list[tuple]] = {name: [] for name in target_names}
+        for node, geometry, targets in polyp_groups[cluster]:
             vertices, faces, uvs, face_uvs = geometry
-            scaled = [S(v) for v in vertices]
-            parts.append(msh.make_part(f"polyps_{node.name}", (scaled, faces, uvs, face_uvs), "polyp", lambda i, v: {}, closed=False))
-            retract_all.extend(S(p) for p in retract)
-            lean_all.extend(S(p) for p in lean)
-            rest_all.extend(Vector(v) for v in scaled)
-            polyp_world[(bone_name, node.name)] = np.asarray(vertices, dtype=np.float64)
-        obj = msh.assemble(f"{prefix}_Polyps_{bone_name}", parts, material_map, None)
+            parts.append(msh.make_part(f"polyps_{node.name}", ([S(v) for v in vertices], faces, uvs, face_uvs), "polyp",
+                                       lambda i, v: {}, closed=False))
+            for name in target_names:
+                merged[name].extend(S(p) for p in targets[name])
+            polyp_world[(cluster, node.name)] = np.asarray(vertices, dtype=np.float64)
+        obj = msh.assemble(f"{prefix}_Polyps_{cluster}", parts, material_map, None)
         obj["lod"] = 1
         obj.parent = rig
-        polyp_rest[bone_name] = rest_all
-        polyp_targets[bone_name] = {"retract": retract_all, "lean": lean_all}
+        obj.shape_key_add(name="Basis", from_mix=False)
+        for name in target_names:
+            block = obj.shape_key_add(name=name, from_mix=False)
+            for index, position in enumerate(merged[name]):
+                block.data[index].co = position
+            block.value = 0.0
         polyp_objects.append(obj)
 
-    # ---- animation
-    def bone_local_axis(bone_name: str, world_axis: Vector) -> tuple:
-        rest = rig.data.bones[bone_name].matrix_local.to_3x3()
-        local = rest.transposed() @ world_axis
-        return tuple(local.normalized())
-
-    bend_axes = {}
-    for bone_name in cluster_bones:
-        bone = rig.data.bones[bone_name]
-        d = (bone.tail_local - bone.head_local).normalized()
-        bend_world = d.cross(FLOW)
-        if bend_world.length < 0.2:
-            bend_world = Vector((0.0, 1.0, 0.0))
-        bend_world.normalize()
-        lateral_world = d.cross(bend_world).normalized()
-        bend_axes[bone_name] = (bone_local_axis(bone_name, bend_world), bone_local_axis(bone_name, lateral_world))
-
+    # ---- animation: morph channels only. Loop clips use unipolar pulses whose phases live in (pi, 2pi) so every
+    # channel is exactly zero at both ends of the loop (the colony is at rest at the seam and each cluster / half
+    # surges at its own moment), or sinusoids with integer frequency; response clips use a hold envelope.
     clip_specs = {name: clip for name, clip in spec["animation"].items() if isinstance(clip, dict)}
-    bend_ref = max(float(c.get("branchBend", 0.0)) for c in clip_specs.values())
-    sweep_ref = max(float(c.get("branchLateral", 0.0)) for c in clip_specs.values())
-    bend_scale = {name: 1.0 + 0.3 * jit(seed, "amp", name) for name in cluster_bones}
-    # phases live in (pi, 2pi) so every unipolar pulse is exactly zero at both ends of a loop: the colony returns
-    # to its rest silhouette at the seam and each cluster surges at its own moment inside the cycle
     span = math.pi - 0.7
 
     def phase_of(index: int, offset: float, name: str) -> float:
         return math.pi + 0.35 + ((0.85 * index + offset + 0.6 * jit(seed, "phase", name)) % span)
 
-    bend_phase = {name: phase_of(index, 0.0, name) for index, name in enumerate(cluster_bones)}
-    sweep_phase = {name: phase_of(index, 1.3, name) for index, name in enumerate(cluster_bones)}
-
-    def cluster_deformation(axis_index: int, degrees: float) -> dict[str, Matrix]:
-        """Armature-space transform each cluster bone applies at `degrees` on its bend (0) or sweep (1) axis."""
-        identity_pose(rig)
-        for name in cluster_bones:
-            axis = Vector(bend_axes[name][axis_index])
-            rig.pose.bones[name].rotation_quaternion = Quaternion(axis, math.radians(degrees * bend_scale[name]))
-        bpy.context.view_layer.update()
-        result = {name: rig.pose.bones[name].matrix @ rig.data.bones[name].matrix_local.inverted() for name in cluster_bones}
-        identity_pose(rig)
-        bpy.context.view_layer.update()
-        return result
-
-    bend_deform = cluster_deformation(0, bend_ref) if bend_ref > 0.0 else {}
-    sweep_deform = cluster_deformation(1, sweep_ref) if sweep_ref > 0.0 else {}
-    for obj in polyp_objects:
-        bone_name = obj.name.rsplit("_Polyps_", 1)[1]
-        rest = polyp_rest[bone_name]
-        targets = polyp_targets[bone_name]
-        if bend_deform:
-            targets["bend"] = [tuple(bend_deform[bone_name] @ p) for p in rest]
-        if sweep_deform:
-            targets["sweep"] = [tuple(sweep_deform[bone_name] @ p) for p in rest]
-        obj.shape_key_add(name="Basis", from_mix=False)
-        for key_name in ("bend", "sweep", "lean", "retract"):
-            positions = targets.get(key_name)
-            if positions is None:
-                continue
-            block = obj.shape_key_add(name=key_name, from_mix=False)
-            for index, position in enumerate(positions):
-                block.data[index].co = position
-            block.value = 0.0
-
     clips = []
     for clip_name, clip in clip_specs.items():
         env = None if clip["loop"] else clip.get("envelope", "hold")
         channels: list[Channel] = []
-        bend = float(clip.get("branchBend", 0.0))
-        lateral = float(clip.get("branchLateral", 0.0))
-        bend_frequency = float(clip.get("bendFrequency", 1.0))
-        lateral_frequency = float(clip.get("lateralFrequency", 1.0))
-        # branches surge downstream and return (unipolar pulse) so the polyp morph can ride along exactly
-        for bone_name in cluster_bones:
-            phase = bend_phase[bone_name]
-            bend_axis, lateral_axis = bend_axes[bone_name]
-            if bend > 0.0:
-                channels.append(Channel(bone_name, "rotation", bend_axis, bend * bend_scale[bone_name], bend_frequency, phase,
-                                        waveform="pulse", exponent=2.0, envelope=env))
-            if lateral > 0.0:
-                channels.append(Channel(bone_name, "rotation", lateral_axis, lateral * bend_scale[bone_name], lateral_frequency,
-                                        sweep_phase[bone_name], waveform="pulse", exponent=2.0, envelope=env))
-        for obj in polyp_objects:
-            bone_name = obj.name.rsplit("_Polyps_", 1)[1]
-            phase = bend_phase[bone_name]
-            if bend > 0.0 and bend_ref > 0.0:
-                channels.append(Channel(shape_key_target(obj.name, "bend"), "value", amplitude=bend / bend_ref,
-                                        frequency=bend_frequency, phase=phase, waveform="pulse", exponent=2.0, envelope=env))
-            if lateral > 0.0 and sweep_ref > 0.0:
-                channels.append(Channel(shape_key_target(obj.name, "sweep"), "value", amplitude=lateral / sweep_ref,
-                                        frequency=lateral_frequency, phase=sweep_phase[bone_name], waveform="pulse",
-                                        exponent=2.0, envelope=env))
-            # each cluster's crowns lean and close slightly out of step with its neighbours
+        for index, obj in enumerate(polyp_objects):
+            cluster = obj.name.rsplit("_Polyps_", 1)[1]
             offset_phase = 0.7 * jit(seed, "polypphase", obj.name)
-            lean_spec = clip.get("polypLean")
-            if lean_spec:
-                channels.append(Channel(shape_key_target(obj.name, "lean"), "value", amplitude=float(lean_spec.get("amplitude", 0.3)),
-                                        frequency=float(lean_spec.get("frequency", 1.0)),
-                                        phase=float(lean_spec.get("phase", 0.0)) + offset_phase,
-                                        waveform=lean_spec.get("waveform", "sin"), bias=float(lean_spec.get("bias", 0.35)),
-                                        envelope=lean_spec.get("envelope", env)))
+            pulse_phase = phase_of(index, 0.0, cluster)
+            for key_name, spec_name, offset in (("lean", "polypLean", 0.0), ("flutterA", "polypFlutter", 0.9), ("flutterB", "polypFlutter", 2.1)):
+                key_spec = clip.get(spec_name)
+                if not key_spec:
+                    continue
+                waveform_name = key_spec.get("waveform", "sin")
+                if waveform_name == "pulse":
+                    phase = phase_of(index, offset, cluster)
+                else:
+                    phase = float(key_spec.get("phase", 0.0)) + offset_phase + offset
+                channels.append(Channel(shape_key_target(obj.name, key_name), "value", amplitude=float(key_spec.get("amplitude", 0.3)),
+                                        frequency=float(key_spec.get("frequency", 1.0)), phase=phase, waveform=waveform_name,
+                                        exponent=float(key_spec.get("exponent", 2.0 if waveform_name == "pulse" else 1.0)),
+                                        bias=float(key_spec.get("bias", 0.0)), envelope=key_spec.get("envelope", env)))
             retract_spec = clip.get("polypRetract")
             if retract_spec:
+                waveform_name = retract_spec.get("waveform", "const")
+                phase = pulse_phase if waveform_name == "pulse" else float(retract_spec.get("phase", 0.0)) + (offset_phase if waveform_name == "sin" else 0.0)
                 channels.append(Channel(shape_key_target(obj.name, "retract"), "value", amplitude=float(retract_spec.get("amplitude", 1.0)),
-                                        frequency=float(retract_spec.get("frequency", 1.0)),
-                                        phase=float(retract_spec.get("phase", 0.0)) + (offset_phase if retract_spec.get("waveform") == "sin" else 0.0),
-                                        waveform=retract_spec.get("waveform", "const"), bias=float(retract_spec.get("bias", 0.0)),
-                                        envelope=retract_spec.get("envelope", env)))
+                                        frequency=float(retract_spec.get("frequency", 1.0)), phase=phase, waveform=waveform_name,
+                                        exponent=float(retract_spec.get("exponent", 2.0 if waveform_name == "pulse" else 1.0)),
+                                        bias=float(retract_spec.get("bias", 0.0)), envelope=retract_spec.get("envelope", env)))
         clips.append(ClipSpec(clip_name, int(clip["frames"]), bool(clip["loop"]), channels))
     mesh_lookup = {obj.name: obj for obj in polyp_objects}
     for clip in clips:
         bake_clip(rig, clip, mesh_objects=mesh_lookup)
-    # The glTF exporter (ACTIONS mode) only exports shape-key actions that are active or sit in an NLA strip on the
-    # shape-key datablock; otherwise it bakes an extra animation named after the object. Register every clip as a
-    # single-strip track on a muted track (Blender's own evaluation and the validator are unaffected) so the weights
-    # channels are exported under the clip name and merged into the action's animation.
-    for obj in polyp_objects:
-        key = obj.data.shape_keys
-        key.animation_data_create()
+    # The glTF exporter (ACTIONS mode) only exports actions that are active or sit in a single-strip NLA track;
+    # otherwise it bakes an extra animation named after the object (for the armature: every bone over the scene
+    # range). Register every clip as a single-strip track on a muted track (Blender's own evaluation and the
+    # validator are unaffected) on each crown's shape-key datablock and on the rig, so the weights channels are
+    # exported under the clip name and the rig contributes its (static) joints to the same animation.
+    def stash_clips(id_block, id_type: str):
+        id_block.animation_data_create()
         for clip in clips:
             action = bpy.data.actions[clip.name]
-            key.animation_data.action = action
-            slot = key.animation_data.action_slot
-            key.animation_data.action = None
+            id_block.animation_data.action = action
+            slot = id_block.animation_data.action_slot
             if slot is None:
-                continue
-            track = key.animation_data.nla_tracks.new()
+                # no keyframes were written for this datablock (the rig has no animated bones): give the action an
+                # empty slot of the right type so the exporter still attaches the clip to the armature
+                slot = action.slots.new(id_type=id_type, name=id_block.name)
+                id_block.animation_data.action_slot = slot
+            id_block.animation_data.action = None
+            track = id_block.animation_data.nla_tracks.new()
             track.name = f"export_{clip.name}"
             strip = track.strips.new(clip.name, 1, action)
             strip.action_slot = slot
             track.mute = True
+
+    for obj in polyp_objects:
+        stash_clips(obj.data.shape_keys, "KEY")
+    stash_clips(rig, "OBJECT")
 
     # ---- contract
     meshes = [skeleton_obj, corallites_obj, *polyp_objects]
@@ -1103,9 +1070,9 @@ def build(spec: dict, species, ctx) -> BuildResult:
         if cor.geometry is not None:
             contract["closedParts"].append({"object": corallites_obj.name, "group": f"part_{cor.name}", "volumeFloor": 0.6})
 
-    # Clearance pairs. Every unrelated pair of solids that could plausibly meet under the (small) branch motion is
-    # proven; pairs that are provably far apart at rest (static gap well beyond the animated travel) are omitted so
-    # the gate stays fast. `near_margin` is in design centimetres.
+    # Clearance pairs. The skeleton is static, so skeleton pairs only need proving where they are close at rest;
+    # crowns move, so every crown field is checked against each solid within reach. `near_margin` is in design
+    # centimetres and comfortably exceeds the largest morph travel (flutter, about 0.3 polyp lengths).
     near_margin = 1.2
     cor_points = {name: np.asarray([v for cor in corallites if cor.geometry is not None and cor.node.name == name
                                     for v in cor.geometry[0]], dtype=np.float64) for name in corallite_members}
@@ -1153,8 +1120,9 @@ def build(spec: dict, species, ctx) -> BuildResult:
             contract["clearance"].append({"a": [corallites_obj.name, f"cor_{carrier_name}"], "b": [skeleton_obj.name, f"part_{node.name}"],
                                           "label": f"corallites_{carrier_name}_vs_{node.name}"})
     for obj in polyp_objects:
-        for (owner_bone, carrier_name), points in polyp_world.items():
-            if owner_bone != obj.parent_bone or len(points) == 0:
+        cluster = obj.name.rsplit("_Polyps_", 1)[1]
+        for (owner, carrier_name), points in polyp_world.items():
+            if owner != cluster or len(points) == 0:
                 continue
             for node in nodes:
                 if node.name == carrier_name or cloud_gap(points, node) > near_margin:
@@ -1170,9 +1138,11 @@ def build(spec: dict, species, ctx) -> BuildResult:
         triangles += len(obj.data.loop_triangles)
     notes = {"form": form, "seed": seed, "designExtentCm": extent_cm, "scaleMetersPerCm": scale, "branches": len(branch_nodes),
              "corallites": sum(1 for c in corallites if c.geometry is not None), "polyps": len(corallites),
-             "clusterBones": cluster_bones, "polypObjects": [obj.name for obj in polyp_objects], "triangles": triangles,
-             "clearancePairs": len(contract["clearance"]),
+             "staticSkeleton": {"bone": "Base", "channelTargetInAnyClip": False, "skinnedObjects": [skeleton_obj.name, corallites_obj.name]},
+             "crownClusters": clusters, "polypObjects": [obj.name for obj in polyp_objects], "morphTargets": list(target_names),
+             "triangles": triangles, "clearancePairs": len(contract["clearance"]),
              "layoutExits": {node.name: round(node.s_exit, 3) for node in nodes if node.kind == "tube"}}
-    print(f"[acropora] form={form} triangles={triangles} branches={len(branch_nodes)} corallites={notes['corallites']} bones={len(rb.deform_names)}")
+    print(f"[acropora] form={form} triangles={triangles} branches={len(branch_nodes)} corallites={notes['corallites']} "
+          f"bones={len(rb.deform_names)} crownObjects={len(polyp_objects)}")
     return BuildResult(rig=rig, root=None, meshes=meshes, clips=clips, contract=contract,
                        preview_action=spec["clipRoles"]["locomotion"], textures=written, notes=notes)

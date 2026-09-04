@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "montipora",
+  "revision": 1,
+  "policy": "References informed growth form, colony size, corallite size and spacing, plate and finger proportions and pigment placement only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, tracing or proportion source; trade names (plating, digitata, encrusting, 'green polyp', 'rainbow') guided identity only.",
+  "taxonomyNote": "Aquarium Montipora are sold under trade names that mix several species and undescribed colour morphs, so the asset carries the genus label Montipora Blainville, 1830 (Acroporidae) with taxonomyConfidence 'genus'. The three morphology variants follow the documented habits of M. capricornis Veron, 1985 (thin whorling plates), M. digitata (Dana, 1846) (digitate upright blunt branches) and the encrusting habit shared by many Montipora (e.g. M. spongodes, M. setosa, M. confusa) without claiming species identity.",
+  "sources": [
+    {
+      "id": "WORMS-203834",
+      "title": "Montipora Blainville, 1830 genus record (Acroporidae): colonial zooxanthellate stony corals with very small immersed corallites and a porous, often tuberculate or papillate coenosteum",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=203834",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-287698",
+      "title": "Montipora capricornis Veron, 1985 species record (original description Veron 1985, Records of the Western Australian Museum 12: 147-183; Corals of the World vol. 1 pp. 80-81): thin plates and whorls forming tiers and vase shapes",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=287698",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207185",
+      "title": "Montipora digitata (Dana, 1846) species record: colonies digitate or arborescent with anastomosing upright branches, corallites immersed and small, colour pale cream or brown (Veron 1986); digitate colonies forming subspherical mounds over 40 cm across, corallites slightly sunken giving a pitted surface (Richmond 1997)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207185",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "CTDB-1005",
+      "title": "Montipora digitata trait record: growth form branching_open, corallite width 0.8 mm (min) to 0.9 mm (max), colonial, zooxanthellate",
+      "publisher": "Coral Trait Database (Madin et al.)",
+      "url": "https://www.coraltraits.org/species/1005",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "VERON-2000-COTW-1",
+      "title": "Veron JEN (2000) Corals of the World, Volume 1: Family Acroporidae (Montipora growth forms: encrusting, laminar and whorled plates, digitate and branching colonies; tuberculae and papillae of the coenosteum; corallites under 1.5 mm)",
+      "publisher": "Australian Institute of Marine Science, Townsville",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-MONTIPORA",
+      "title": "Category:Montipora (openly licensed photographs; encrusting and plating habit, tubercle and polyp scale, growth-margin colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Montipora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MONTIPORA-DIGITATA",
+      "title": "Category:Montipora digitata (openly licensed photographs; finger diameter to height ratio, blunt tips, forking, pale tip colour study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Montipora_digitata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MONTIPORA-CAPRICORNIS",
+      "title": "Category:Montipora capricornis (openly licensed photographs; whorl pitch, plate flare and margin ripple study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Montipora_capricornis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Growth forms, colony sizes and corallite widths are documented by WoRMS species descriptions, the Coral Trait Database and Corals of the World, and openly licensed photographs of the genus exist for proportion study. Plate thickness, whorl pitch, finger radius and polyp extension were inferred from those descriptions and photographs rather than measured on calibrated side, top and front views, and the aquarium pigment combinations (red with green polyps, orange with green polyps, purple with green polyps) are cultivar colour morphs without a taxonomic reference."
+}

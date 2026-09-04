@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "regal_angelfish",
+  "revision": 1,
+  "policy": "References informed proportions, fin layout, colour placement and bar count only. No pixels were sampled, traced, copied or redistributed. Seller imagery was not used as a texture, proportion or tracing source. The Indo-Pacific colour form (pale grey-blue thorax) is modelled; the Red Sea and Indian Ocean form has a yellow thorax.",
+  "sources": [
+    {
+      "id": "WORMS-211773",
+      "title": "Pygoplites diacanthus (Boddaert, 1772) taxon record (AphiaID 211773, accepted; family Pomacanthidae, monotypic genus Pygoplites)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=211773",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-PYGOPLITES_DIACANTHUS",
+      "title": "Pygoplites diacanthus species summary (max length 25.0 cm SL, Ref. 30573; D XIV,17-19; A III,17-19; body short and deep, cross section compressed; rounded caudal fin)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Pygoplites-diacanthus.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "AM-PYGOPLITES_DIACANTHUS",
+      "title": "Regal Angelfish, Pygoplites diacanthus (Boddaert, 1772) species account (grows to 25 cm; alternating yellow and dark-edged white bars; soft dorsal blue with dark markings; anal fin yellow and blue stripes; caudal yellow; strong preopercular spine)",
+      "publisher": "Australian Museum",
+      "url": "https://australian.museum/learn/animals/fishes/regal-angelfish-pygoplites-diacanthus-boddaert-1772/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "FOA-658",
+      "title": "Regal Angelfish, Pygoplites diacanthus species page (D XIV,17-19; A III,17-19; P 16-17; longitudinal scale series 48-50; dark-edged bluish-white bars on head and sides extending onto the dorsal and anal fins; dark patch around the eye in adults)",
+      "publisher": "Fishes of Australia (Museums Victoria)",
+      "url": "https://fishesofaustralia.net.au/home/species/658",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-PYGOPLITES_DIACANTHUS",
+      "title": "Category:Pygoplites diacanthus (openly licensed photographs, lateral proportion, fin outline and bar-layout study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Pygoplites_diacanthus",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Taxonomy, size, fin counts and colour pattern are documented by WoRMS, FishBase, the Australian Museum and Fishes of Australia, and openly licensed lateral photographs are available for proportion study; no calibrated top or front orthographic references were available, so cross-sections are inferred from general Pomacanthidae body plans."
+}

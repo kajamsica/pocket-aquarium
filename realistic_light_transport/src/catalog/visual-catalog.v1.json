@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-04T01:09:46.516Z",
+  "generatedAt": "2026-09-04T15:35:02.081Z",
   "categories": [
     "fish",
     "coral",
@@ -18,28 +18,29 @@
     "blue_hippo_tang": "approved-v2",
     "brittle_star": "fable-v1",
     "gem_tang": "round-v2",
+    "regal_angelfish": "fable-v1",
     "tomini_tang": "fable-v1"
   },
   "summary": {
-    "rows": 33,
+    "rows": 35,
     "byCategory": {
-      "fish": 13,
-      "coral": 8,
+      "fish": 14,
+      "coral": 9,
       "invertebrate": 3,
       "cleanup_crew": 9
     },
     "byStatus": {
       "accepted": 1,
-      "candidate": 32,
+      "candidate": 34,
       "provisional": 0,
       "failed": 0,
       "missing": 0
     },
     "candidates": {
-      "total": 52,
-      "loadable": 51,
+      "total": 57,
+      "loadable": 56,
       "missing": 1,
-      "userApproved": 3
+      "userApproved": 4
     }
   },
   "rows": [
@@ -886,6 +887,90 @@
       ]
     },
     {
+      "id": "regal_angelfish",
+      "displayName": "Regal Angelfish",
+      "scientificLabel": "Pygoplites diacanthus",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "saltwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.25,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Regal Angelfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/regal_angelfish/candidates/fable-v1/lod1.glb",
+          "glbSha256": "056f4ea5d4e7de7a033d9b1de9f6eb6006896e4222f556889b6f01109a5a220f",
+          "glbSha256Verified": true,
+          "geometryDigest": "3421189ddb4403d8dd5f56d0a6bff053eb3923472dc6d7a4d20169eee3a37c57",
+          "statistics": {
+            "triangles": 10576,
+            "materials": 7,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.25,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/regal_angelfish/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/regal_angelfish/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/regal_angelfish/asset.source.json",
+        "sourceReferences": "art/specimens/regal_angelfish/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Preopercular spine is four overlapping axis-aligned ellipsoids (the shared plan's sphere adornment has no rotation), so the spike tapers in steps instead of as one smooth cone.",
+        "Fin ray relief is painted (normal map) rather than modelled; the dorsal spines are not individually raised.",
+        "Bars are bilaterally symmetric; live fish show small left/right differences in bar count and curvature.",
+        "Cross-sections are inferred from general Pomacanthidae body plans; no calibrated top/front orthographic reference was available."
+      ]
+    },
+    {
       "id": "royal_gramma",
       "displayName": "Royal Gramma",
       "scientificLabel": "Gramma loreto",
@@ -1393,7 +1478,7 @@
       },
       "candidates": [
         {
-          "name": "fable-v1-bushy_pink",
+          "name": "fable-v2-bushy_pink",
           "variantId": "bushy_pink",
           "displayName": "Acropora digitate, pink",
           "state": "awaiting_user_acceptance",
@@ -1403,14 +1488,14 @@
           "buildFailedStage": null,
           "assetVersion": "0.1.0",
           "loadable": true,
-          "glb": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/lod1.glb",
-          "glbSha256": "566806a6801b1c7cebe2dfd5d697bb14570471553bcfbed594ee6ad2ca40e805",
+          "glb": "art/specimens/acropora_branching/candidates/fable-v2-bushy_pink/lod1.glb",
+          "glbSha256": "56a32b5a34a52ade2e6057166b43a0206650d817e6ba59d175b779a277d9e00b",
           "glbSha256Verified": true,
-          "geometryDigest": "062bb8fe567801c916fa5badc02ee6f118fc549d6a5b117ccf5b805d8dd4c24d",
+          "geometryDigest": "89bfd16ef75625947e477527db560ba491c3982cdaaa7a2d16490d36f27a8eee",
           "statistics": {
             "triangles": 12276,
             "materials": 3,
-            "bones": 12,
+            "bones": 1,
             "clips": [
               "flow",
               "retract",
@@ -1430,12 +1515,54 @@
           "referenceSizeMeters": 0.15,
           "userApproved": false,
           "renders": {
-            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/renders/author-preview.png",
-            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/renders/three-view.png"
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v2-bushy_pink/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v2-bushy_pink/renders/three-view.png"
           }
         },
         {
-          "name": "fable-v1-staghorn_blue",
+          "name": "fable-v2-hairy_green",
+          "variantId": "hairy_green",
+          "displayName": "Acropora millepora style, green with pale-green polyps",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/acropora_branching/candidates/fable-v2-hairy_green/lod1.glb",
+          "glbSha256": "38a83d4b0776a5649f4cc7f795680b9795590f146e0021037fa5a2f00ce3c745",
+          "glbSha256Verified": true,
+          "geometryDigest": "f88b8a619ec4df9eec0cd1f9dfe3036792d4bc21729249b61d8417822860348a",
+          "statistics": {
+            "triangles": 18120,
+            "materials": 3,
+            "bones": 1,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v2-hairy_green/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v2-hairy_green/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2-staghorn_blue",
           "variantId": "staghorn_blue",
           "displayName": "Acropora staghorn, steel blue with pale tips",
           "state": "awaiting_user_acceptance",
@@ -1445,14 +1572,14 @@
           "buildFailedStage": null,
           "assetVersion": "0.1.0",
           "loadable": true,
-          "glb": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/lod1.glb",
-          "glbSha256": "49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee",
+          "glb": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_blue/lod1.glb",
+          "glbSha256": "ae219eb3c58c38129d948c979a9be99ff03863a9b8a856a46887a0cbba9bbe6a",
           "glbSha256Verified": true,
-          "geometryDigest": "03f867d4118f8772c2aaf20fc2269ad8d20a4c7aaaeda170c5192e0e4bcdf179",
+          "geometryDigest": "72e786e405e6dd412b7aed1a96aec28d4f6ee10ef43221d6f1b706d462eaf7c2",
           "statistics": {
             "triangles": 14960,
             "materials": 3,
-            "bones": 9,
+            "bones": 1,
             "clips": [
               "flow",
               "retract",
@@ -1472,12 +1599,12 @@
           "referenceSizeMeters": 0.15,
           "userApproved": false,
           "renders": {
-            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/renders/author-preview.png",
-            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/renders/three-view.png"
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_blue/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_blue/renders/three-view.png"
           }
         },
         {
-          "name": "fable-v1-staghorn_green_purple_tips",
+          "name": "fable-v2-staghorn_green_purple_tips",
           "variantId": "staghorn_green_purple_tips",
           "displayName": "Acropora staghorn, green with purple tips",
           "state": "awaiting_user_acceptance",
@@ -1487,14 +1614,14 @@
           "buildFailedStage": null,
           "assetVersion": "0.1.0",
           "loadable": true,
-          "glb": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/lod1.glb",
-          "glbSha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
+          "glb": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_green_purple_tips/lod1.glb",
+          "glbSha256": "da4e2e161ccde509f1cda538b1ec0670c76cd294ac4617835ee9aab07e2434a6",
           "glbSha256Verified": true,
-          "geometryDigest": "d1ae2dd481bd2521ae77d609c9e285fac23b1c6ee00e99138dddb005aee8d6ac",
+          "geometryDigest": "ee70627afa805ffd6b854ae0e317a3b3492494344899c7755aee54a6cf68b059",
           "statistics": {
             "triangles": 14960,
             "materials": 3,
-            "bones": 9,
+            "bones": 1,
             "clips": [
               "flow",
               "retract",
@@ -1514,12 +1641,12 @@
           "referenceSizeMeters": 0.15,
           "userApproved": false,
           "renders": {
-            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/renders/author-preview.png",
-            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/renders/three-view.png"
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_green_purple_tips/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_green_purple_tips/renders/three-view.png"
           }
         },
         {
-          "name": "fable-v1-table_blue",
+          "name": "fable-v2-table_blue",
           "variantId": "table_blue",
           "displayName": "Acropora table, blue",
           "state": "awaiting_user_acceptance",
@@ -1529,14 +1656,14 @@
           "buildFailedStage": null,
           "assetVersion": "0.1.0",
           "loadable": true,
-          "glb": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/lod1.glb",
-          "glbSha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
+          "glb": "art/specimens/acropora_branching/candidates/fable-v2-table_blue/lod1.glb",
+          "glbSha256": "4562b73471b21fd17570aaa593ba939167b3048ba0e8fbd992a10d469eda938e",
           "glbSha256Verified": true,
-          "geometryDigest": "f6eca79dcff54709edc9dfd8971e840687d51b025da2f09a50d2c11e5c4127c7",
+          "geometryDigest": "dd6778a32ef5379555e19b8ecb0f33ff51d93fb48fa573d6c9792498a5cef4df",
           "statistics": {
             "triangles": 17248,
             "materials": 3,
-            "bones": 10,
+            "bones": 1,
             "clips": [
               "flow",
               "retract",
@@ -1556,12 +1683,12 @@
           "referenceSizeMeters": 0.15,
           "userApproved": false,
           "renders": {
-            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/renders/author-preview.png",
-            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/renders/three-view.png"
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v2-table_blue/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v2-table_blue/renders/three-view.png"
           }
         },
         {
-          "name": "fable-v1-table_green",
+          "name": "fable-v2-table_green",
           "variantId": "table_green",
           "displayName": "Acropora table, green with cream tips",
           "state": "awaiting_user_acceptance",
@@ -1571,14 +1698,14 @@
           "buildFailedStage": null,
           "assetVersion": "0.1.0",
           "loadable": true,
-          "glb": "art/specimens/acropora_branching/candidates/fable-v1-table_green/lod1.glb",
-          "glbSha256": "a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc",
+          "glb": "art/specimens/acropora_branching/candidates/fable-v2-table_green/lod1.glb",
+          "glbSha256": "374f523f2b097c0cf97a583ae2c9c2d81395bc7c2197af6d6885804023925745",
           "glbSha256Verified": true,
-          "geometryDigest": "9b982f9e3847d59785eb28b5b2ef3296f358775a34e4ff4f5ab42010477ea8c7",
+          "geometryDigest": "3fce1f64910131ca422e8b978e907847cdbc102a20c158930919864aef6e6a17",
           "statistics": {
             "triangles": 17248,
             "materials": 3,
-            "bones": 10,
+            "bones": 1,
             "clips": [
               "flow",
               "retract",
@@ -1598,8 +1725,8 @@
           "referenceSizeMeters": 0.15,
           "userApproved": false,
           "renders": {
-            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v1-table_green/renders/author-preview.png",
-            "threeView": "art/specimens/acropora_branching/candidates/fable-v1-table_green/renders/three-view.png"
+            "authorPreview": "art/specimens/acropora_branching/candidates/fable-v2-table_green/renders/author-preview.png",
+            "threeView": "art/specimens/acropora_branching/candidates/fable-v2-table_green/renders/three-view.png"
           }
         }
       ],
@@ -1607,6 +1734,10 @@
         {
           "id": "bushy_pink",
           "displayName": "Acropora digitate, pink"
+        },
+        {
+          "id": "hairy_green",
+          "displayName": "Acropora millepora style, green with pale-green polyps"
         },
         {
           "id": "staghorn_blue",
@@ -1640,9 +1771,9 @@
         "Only the prominent radial corallites are modelled (up to eleven per branch, some dropped where a neighbouring branch is too close); the dense field of small radials is carried by the texture relief and roughness.",
         "Corallites are flared tubes with a recessed calice; the nariform (longer lower lip) profile and the septa are texture only.",
         "The tabular plate is a lobed, radially ridged solid lens rather than a perforated mesh of anastomosing horizontal branchlets.",
-        "Retraction folds the tentacles to about half length (mean crown pull-in 0.7 mm to 0.8 mm on a 15 cm colony) rather than fully into the calice.",
-        "Polyp crowns are one rigid unskinned mesh per branch cluster rather than skin-blended along the branch, and they follow the branch bend through a linearised morph target (error below 0.02 mm at these amplitudes). This works around a glTF importer and runtime-gate interaction, see the lane shared-change-request.",
-        "Branch sway is a stylised current response; a real Acropora skeleton is rigid and only the polyps move."
+        "Retraction folds the tentacles to about half length (0.3 of the length on the hairy form) rather than fully into the calice.",
+        "Polyp crowns are one rigid unskinned mesh per branch cluster with morph targets rather than skinned geometry; this works around a glTF importer and runtime-gate interaction, see the lane shared-change-request. Per-polyp variation comes from seeded tentacle geometry, per-polyp flutter directions and two interleaved flutter halves per cluster, not from independent per-polyp phases.",
+        "The hairy form is the digitate layout with short thick branchlets; A. millepora's plate-like fused base and the coenosteum spinules are texture only."
       ]
     },
     {
@@ -2415,6 +2546,190 @@
         "Hairs in one cluster share a bone: bending comes from root-to-tip weight blending plus baked per-hair lean and gain, so hairs within a cluster move in step with a small twist gradient; hair-vs-hair clearance is not proven.",
         "Branching form: dichotomous forks are fused intersecting tubes (parent knuckle plus two children) rather than a single smoothed junction; sibling branches are not clearance-checked against each other at the fork.",
         "Blade form: blades are separate lofts that root in the encrusting base and do not fuse into the honeycomb plates seen in M. platyphylla."
+      ]
+    },
+    {
+      "id": "montipora",
+      "displayName": "Montipora",
+      "scientificLabel": "Montipora sp. (Acroporidae)",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "montipora_colony",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-capricornis_plating",
+          "variantId": "capricornis_plating",
+          "displayName": "Montipora capricornis (orange whorling plate, green polyps)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/lod1.glb",
+          "glbSha256": "b620a9ca160cd9d53275e29ee0dad2620f437e2ee5dfbf70a6085f597da3bc9c",
+          "glbSha256Verified": true,
+          "geometryDigest": "35519f71ce94339337f29f1b45d6df1f3dfc33c562cd979fef4eac752d022f6b",
+          "statistics": {
+            "triangles": 15514,
+            "materials": 4,
+            "bones": 29,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/renders/author-preview.png",
+            "threeView": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-digitata_branching",
+          "variantId": "digitata_branching",
+          "displayName": "Montipora digitata (purple fingers, green polyps)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/montipora/candidates/fable-v1-digitata_branching/lod1.glb",
+          "glbSha256": "ff210f0308c01b258470f69863c17c09885a89b3fcb16c675a3a59668af00cf6",
+          "glbSha256Verified": true,
+          "geometryDigest": "fba29a2a7ecc421c708182f2bd5279abad3773ad8759aa6132f6d325d66ad3dd",
+          "statistics": {
+            "triangles": 13296,
+            "materials": 4,
+            "bones": 31,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/author-preview.png",
+            "threeView": "art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-encrusting",
+          "variantId": "encrusting",
+          "displayName": "Montipora encrusting (red sheet, green polyps)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/montipora/candidates/fable-v1-encrusting/lod1.glb",
+          "glbSha256": "a2dfc83c5b6dde3b23d0c1dae80749f8b727359aab10e10c54839d3d65740428",
+          "glbSha256Verified": true,
+          "geometryDigest": "c30cb965b72e2d58a7c2c6bb688efde7e2f0928e4d12655d9347766807287e4b",
+          "statistics": {
+            "triangles": 18160,
+            "materials": 4,
+            "bones": 29,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/author-preview.png",
+            "threeView": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "capricornis_plating",
+          "displayName": "Montipora capricornis (orange whorling plate, green polyps)"
+        },
+        {
+          "id": "digitata_branching",
+          "displayName": "Montipora digitata (purple fingers, green polyps)"
+        },
+        {
+          "id": "encrusting",
+          "displayName": "Montipora encrusting (red sheet, green polyps)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/montipora/asset.source.json",
+        "sourceReferences": "art/specimens/montipora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Polyp density is far below reality (220 to 270 modelled polyps per colony versus thousands of 0.5 to 1.5 mm corallites); the remaining corallites are painted as pits in the tissue textures.",
+        "Each polyp is a six-sided tube with a flared crown; the twelve tentacles of a real Montipora polyp are painted on the crown, not modelled.",
+        "Polyp tubes are 1.8 to 2.6 mm in design space and scale with the colony normalisation (the digitata variant lands at 2.2 to 3.1 mm, 1.7 to 2.6 mm exposed), slightly above the 1 to 2 mm of live polyps.",
+        "Tuberculae are modelled on the encrusting sheet only and its polyps keep to slopes under 17 degrees (tubercle flanks carry painted corallites only); on the plate and fingers tuberculae are normal-map relief.",
+        "Retraction translates polyps along their cluster axis into the corallite (tips stop about 0.5 mm above the surface) instead of morphing tissue over them; finger polyps between the four sector directions retract to 70 to 100 percent of the pull.",
+        "The whorling plate is one continuous 2.6-turn scroll; real M. capricornis colonies often stack several separate tiers and fuse plates.",
+        "Finger forks stay fused to their parent for part of their length (anastomosing habit) and carry polyps only on their free side."
       ]
     },
     {

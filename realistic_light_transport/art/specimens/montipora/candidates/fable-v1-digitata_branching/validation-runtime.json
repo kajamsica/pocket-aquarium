@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Pol_0_ax",
+        "Pol_0_s0",
+        "Pol_0_s1",
+        "Pol_0_s2",
+        "Pol_0_s3",
+        "Pol_1_ax",
+        "Pol_1_s0",
+        "Pol_1_s1",
+        "Pol_1_s2",
+        "Pol_1_s3",
+        "Pol_2_ax",
+        "Pol_2_s0",
+        "Pol_2_s1",
+        "Pol_2_s2",
+        "Pol_2_s3",
+        "Pol_3_ax",
+        "Pol_3_s0",
+        "Pol_3_s1",
+        "Pol_3_s2",
+        "Pol_3_s3",
+        "Pol_4_ax",
+        "Pol_4_s0",
+        "Pol_4_s1",
+        "Pol_4_s2",
+        "Pol_4_s3",
+        "Pol_5_ax",
+        "Pol_5_s0",
+        "Pol_5_s1",
+        "Pol_5_s2",
+        "Pol_5_s3"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Pol_0_ax",
+        "Pol_0_s0",
+        "Pol_0_s1",
+        "Pol_0_s2",
+        "Pol_0_s3",
+        "Pol_1_ax",
+        "Pol_1_s0",
+        "Pol_1_s1",
+        "Pol_1_s2",
+        "Pol_1_s3",
+        "Pol_2_ax",
+        "Pol_2_s0",
+        "Pol_2_s1",
+        "Pol_2_s2",
+        "Pol_2_s3",
+        "Pol_3_ax",
+        "Pol_3_s0",
+        "Pol_3_s1",
+        "Pol_3_s2",
+        "Pol_3_s3",
+        "Pol_4_ax",
+        "Pol_4_s0",
+        "Pol_4_s1",
+        "Pol_4_s2",
+        "Pol_4_s3",
+        "Pol_5_ax",
+        "Pol_5_s0",
+        "Pol_5_s1",
+        "Pol_5_s2",
+        "Pol_5_s3"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Pol_0_ax",
+        "Pol_0_s0",
+        "Pol_0_s1",
+        "Pol_0_s2",
+        "Pol_0_s3",
+        "Pol_1_ax",
+        "Pol_1_s0",
+        "Pol_1_s1",
+        "Pol_1_s2",
+        "Pol_1_s3",
+        "Pol_2_ax",
+        "Pol_2_s0",
+        "Pol_2_s1",
+        "Pol_2_s2",
+        "Pol_2_s3",
+        "Pol_3_ax",
+        "Pol_3_s0",
+        "Pol_3_s1",
+        "Pol_3_s2",
+        "Pol_3_s3",
+        "Pol_4_ax",
+        "Pol_4_s0",
+        "Pol_4_s1",
+        "Pol_4_s2",
+        "Pol_4_s3",
+        "Pol_5_ax",
+        "Pol_5_s0",
+        "Pol_5_s1",
+        "Pol_5_s2",
+        "Pol_5_s3"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 13296,
+    "materials": 4,
+    "nodes": 36,
+    "skinJoints": 32,
+    "images": 12,
+    "meshes": [
+      "PA_montipora_Polyps",
+      "PA_montipora_Skeleton"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.06889666616916656,
+      -0.07499999552965164,
+      -2.3582322761228625e-09
+    ],
+    "max": [
+      0.06889666616916656,
+      0.07469964027404785,
+      0.08814814686775208
+    ],
+    "deviationMeters": 1.2904784139758924e-08
+  }
+}

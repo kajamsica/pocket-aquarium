@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "montipora",
+  "sourceSha256": "92502cb8b585ecbe2c3301748e66b1e605710018338821a5e3ab14dc8aa56d49",
+  "objects": [
+    {
+      "name": "PA_montipora_Polyps",
+      "vertexCount": 4400,
+      "triangleCount": 7920,
+      "vertexDigest": "721b864b625294d72c7893c184ad2ee70d64e9834509f403a65eadbfa459db83",
+      "topologyDigest": "fd9a4e357d3a6f28b1f5171c4a48639f09137f75c54b8e297c101068a2965244",
+      "uvDigest": "d83203ca8395b98a504c05d06394b8ebd148bac9f8ee088023cc950119ff85b7",
+      "weightDigest": "a6562686dc9e4677a509d19f4bec250ae93bff19608d39a1ab8d2aba51353a04",
+      "materials": [
+        "PA_montipora_Polyp"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_montipora_Skeleton",
+      "vertexCount": 5124,
+      "triangleCount": 10240,
+      "vertexDigest": "9b228ec2bc30fd0f61d9ff40975482783522ba3f8de633e798420c5fd4d1905f",
+      "topologyDigest": "0fdb5b38a3d1b8d0b013b17ff14def7aae84ac20467e6134e42941be95de359c",
+      "uvDigest": "cdd8269a5318f076e817813576202a168abf9276e60524ccfba35b7fce8191e1",
+      "weightDigest": "fdd4fc5d89331e03f9dcca910361ff957e1994389f53bd036601947be223c176",
+      "materials": [
+        "PA_montipora_Rock",
+        "PA_montipora_Skeleton",
+        "PA_montipora_Tissue"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_montipora_Rig",
+    "boneCount": 30,
+    "deformBoneCount": 29,
+    "boneDigest": "beaf193ce729b8fd99f7fea2ff0b830bebdb2334ea2434d523f95f7e284df5bd"
+  },
+  "geometryDigest": "c30cb965b72e2d58a7c2c6bb688efde7e2f0928e4d12655d9347766807287e4b",
+  "variantId": "encrusting"
+}

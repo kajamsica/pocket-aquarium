@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "montipora",
+  "variantId": "digitata_branching",
+  "scientificName": "Montipora sp. (Acroporidae)",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.15,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "62e8fa53ed0d2840bcfed1055709995e11bbd7b57bb3466783db392c4ac67520",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Montipora digitata (purple fingers, green polyps)",
+  "bodyPlan": "montipora_colony",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-203834",
+      "title": "Montipora Blainville, 1830 genus record (Acroporidae): colonial zooxanthellate stony corals with very small immersed corallites and a porous, often tuberculate or papillate coenosteum",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=203834",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-287698",
+      "title": "Montipora capricornis Veron, 1985 species record (original description Veron 1985, Records of the Western Australian Museum 12: 147-183; Corals of the World vol. 1 pp. 80-81): thin plates and whorls forming tiers and vase shapes",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=287698",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "WORMS-207185",
+      "title": "Montipora digitata (Dana, 1846) species record: colonies digitate or arborescent with anastomosing upright branches, corallites immersed and small, colour pale cream or brown (Veron 1986); digitate colonies forming subspherical mounds over 40 cm across, corallites slightly sunken giving a pitted surface (Richmond 1997)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207185",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "CTDB-1005",
+      "title": "Montipora digitata trait record: growth form branching_open, corallite width 0.8 mm (min) to 0.9 mm (max), colonial, zooxanthellate",
+      "publisher": "Coral Trait Database (Madin et al.)",
+      "url": "https://www.coraltraits.org/species/1005",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "VERON-2000-COTW-1",
+      "title": "Veron JEN (2000) Corals of the World, Volume 1: Family Acroporidae (Montipora growth forms: encrusting, laminar and whorled plates, digitate and branching colonies; tuberculae and papillae of the coenosteum; corallites under 1.5 mm)",
+      "publisher": "Australian Institute of Marine Science, Townsville",
+      "url": "https://www.coralsoftheworld.org/species_factsheets/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-MONTIPORA",
+      "title": "Category:Montipora (openly licensed photographs; encrusting and plating habit, tubercle and polyp scale, growth-margin colour placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Montipora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MONTIPORA-DIGITATA",
+      "title": "Category:Montipora digitata (openly licensed photographs; finger diameter to height ratio, blunt tips, forking, pale tip colour study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Montipora_digitata",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    },
+    {
+      "id": "COMMONS-MONTIPORA-CAPRICORNIS",
+      "title": "Category:Montipora capricornis (openly licensed photographs; whorl pitch, plate flare and margin ripple study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Montipora_capricornis",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "92502cb8b585ecbe2c3301748e66b1e605710018338821a5e3ab14dc8aa56d49",
+  "sourceReferencesSha256": "8714d44d2b2d9f9994a21dd1bb19a5cb34020159b3a9affb0ecd67f56cef3f3e",
+  "sourceBlendSha256": "2e236f7e2a26ca1b8b45afc108c843511bdd094178b42c26fad5a4fdfaf8b581",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:b045fe15c2411330716c3560e5dbbd1b0230e5ca841b7a222aa7fab3aea6d374",
+    "speciesBackend": "b045fe15c2411330716c3560e5dbbd1b0230e5ca841b7a222aa7fab3aea6d374",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "ff210f0308c01b258470f69863c17c09885a89b3fcb16c675a3a59668af00cf6"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/base-albedo.png",
+      "sha256": "79f803259e5aa385683c6227663de998d64b475dd4a0fc906a23104cc25d3660"
+    },
+    {
+      "path": "textures/base-normal.png",
+      "sha256": "9e5cd87028af93813abfaf92ee7464cb572ae188b67344ab2e7bbcc7876b1165"
+    },
+    {
+      "path": "textures/base-roughness.png",
+      "sha256": "1105f3dfd641c1a3f5747d3c87d4f7c71549f13c64596e22d70cdc3033612c7f"
+    },
+    {
+      "path": "textures/polyp-albedo.png",
+      "sha256": "8fdd30e5d55cc48901cc47d4cf82833193179221778eda99e333d8754ad8f051"
+    },
+    {
+      "path": "textures/polyp-normal.png",
+      "sha256": "3b6470b6352f7b24a285729d4f93ae684e4a6e2b51469a66bd1f3fc019d88f63"
+    },
+    {
+      "path": "textures/polyp-roughness.png",
+      "sha256": "2064a2b0599643fd0ddd265e46b1f73baaba360bc8f4bab43224c77b9cc5ee6b"
+    },
+    {
+      "path": "textures/rock-albedo.png",
+      "sha256": "6c66ae6cb38c15aab0843de34971edf76e5d536b3a4d665cd4a933fa83300151"
+    },
+    {
+      "path": "textures/rock-normal.png",
+      "sha256": "6abac823277a08db803bb66301553f7edcb208727234445114ab168d8fd850e4"
+    },
+    {
+      "path": "textures/rock-roughness.png",
+      "sha256": "bc1eae784cb0adcf39d08d308022180d63e95c14a4b6aed567eef405b29a35a6"
+    },
+    {
+      "path": "textures/tissue-albedo.png",
+      "sha256": "8a794d15712e7709114b5fae60e31b44b39989fb4aab3ce64ce78c5d2d9d9dd8"
+    },
+    {
+      "path": "textures/tissue-normal.png",
+      "sha256": "f0178bee6dbdd058421300a4bd45e94cd6b8c64d707fc50be47cf8ea446fdf8d"
+    },
+    {
+      "path": "textures/tissue-roughness.png",
+      "sha256": "a934ced3fde4bb169d834ff86932fefdebee9e83c80f18e9e59e40c76b3bd4df"
+    }
+  ],
+  "statistics": {
+    "triangles": 13296,
+    "materials": 4,
+    "bones": 31,
+    "nodes": 36,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_montipora_Skeleton": 2244,
+      "PA_montipora_Polyps": 4920
+    },
+    "runtimeBytes": 8043532
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "sway": true,
+    "flow": true,
+    "retract": false
+  },
+  "restBounds": {
+    "min": [
+      -0.068897,
+      -0.075,
+      0.0
+    ],
+    "max": [
+      0.068897,
+      0.0747,
+      0.088148
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

@@ -39,16 +39,16 @@
       "variantId": "bushy_pink",
       "category": "coral",
       "bodyPlan": "branching_sps_coral",
-      "sourceCandidate": "fable-v1-bushy_pink",
-      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/acropora_branching/v1/lod1.glb",
+      "sourceCandidate": "fable-v2-bushy_pink",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v2-bushy_pink/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/v2/lod1.glb",
       "version": "0.1.0",
       "referenceSize": {
         "meters": 0.15,
         "kind": "colony_width"
       },
       "displayName": "Acropora digitate, pink",
-      "sha256": "566806a6801b1c7cebe2dfd5d697bb14570471553bcfbed594ee6ad2ca40e805",
+      "sha256": "56a32b5a34a52ade2e6057166b43a0206650d817e6ba59d175b779a277d9e00b",
       "clips": [
         "flow",
         "retract",
@@ -67,21 +67,54 @@
       "defaultForSpecies": true
     },
     {
+      "key": "acropora_branching@hairy_green",
+      "speciesId": "acropora_branching",
+      "variantId": "hairy_green",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v2-hairy_green",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v2-hairy_green/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/hairy_green/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Acropora millepora style, green with pale-green polyps",
+      "sha256": "38a83d4b0776a5649f4cc7f795680b9795590f146e0021037fa5a2f00ce3c745",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "flow": true,
+        "retract": false,
+        "sway": true
+      },
+      "defaultForSpecies": false
+    },
+    {
       "key": "acropora_branching@staghorn_blue",
       "speciesId": "acropora_branching",
       "variantId": "staghorn_blue",
       "category": "coral",
       "bodyPlan": "branching_sps_coral",
-      "sourceCandidate": "fable-v1-staghorn_blue",
-      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/acropora_branching/staghorn_blue/v1/lod1.glb",
+      "sourceCandidate": "fable-v2-staghorn_blue",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_blue/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/staghorn_blue/v2/lod1.glb",
       "version": "0.1.0",
       "referenceSize": {
         "meters": 0.15,
         "kind": "colony_width"
       },
       "displayName": "Acropora staghorn, steel blue with pale tips",
-      "sha256": "49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee",
+      "sha256": "ae219eb3c58c38129d948c979a9be99ff03863a9b8a856a46887a0cbba9bbe6a",
       "clips": [
         "flow",
         "retract",
@@ -105,16 +138,16 @@
       "variantId": "staghorn_green_purple_tips",
       "category": "coral",
       "bodyPlan": "branching_sps_coral",
-      "sourceCandidate": "fable-v1-staghorn_green_purple_tips",
-      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/acropora_branching/staghorn_green_purple_tips/v1/lod1.glb",
+      "sourceCandidate": "fable-v2-staghorn_green_purple_tips",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_green_purple_tips/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/staghorn_green_purple_tips/v2/lod1.glb",
       "version": "0.1.0",
       "referenceSize": {
         "meters": 0.15,
         "kind": "colony_width"
       },
       "displayName": "Acropora staghorn, green with purple tips",
-      "sha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
+      "sha256": "da4e2e161ccde509f1cda538b1ec0670c76cd294ac4617835ee9aab07e2434a6",
       "clips": [
         "flow",
         "retract",
@@ -138,16 +171,16 @@
       "variantId": "table_blue",
       "category": "coral",
       "bodyPlan": "branching_sps_coral",
-      "sourceCandidate": "fable-v1-table_blue",
-      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/acropora_branching/table_blue/v1/lod1.glb",
+      "sourceCandidate": "fable-v2-table_blue",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v2-table_blue/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/table_blue/v2/lod1.glb",
       "version": "0.1.0",
       "referenceSize": {
         "meters": 0.15,
         "kind": "colony_width"
       },
       "displayName": "Acropora table, blue",
-      "sha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
+      "sha256": "4562b73471b21fd17570aaa593ba939167b3048ba0e8fbd992a10d469eda938e",
       "clips": [
         "flow",
         "retract",
@@ -171,16 +204,16 @@
       "variantId": "table_green",
       "category": "coral",
       "bodyPlan": "branching_sps_coral",
-      "sourceCandidate": "fable-v1-table_green",
-      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-table_green/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/acropora_branching/table_green/v1/lod1.glb",
+      "sourceCandidate": "fable-v2-table_green",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v2-table_green/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/table_green/v2/lod1.glb",
       "version": "0.1.0",
       "referenceSize": {
         "meters": 0.15,
         "kind": "colony_width"
       },
       "displayName": "Acropora table, green with cream tips",
-      "sha256": "a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc",
+      "sha256": "374f523f2b097c0cf97a583ae2c9c2d81395bc7c2197af6d6885804023925745",
       "clips": [
         "flow",
         "retract",
