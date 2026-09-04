@@ -3958,3 +3958,94 @@ input:focus-visible {
     overflow: hidden;
   }
 }
+
+/* Controlled inventory for purchased corals that are not placed yet. */
+.coral-inventory-tray {
+  position: fixed;
+  right: clamp(16px, 2.4vw, 34px);
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 10002;
+  width: min(360px, calc(100vw - 32px));
+  color: #ecfbff;
+  pointer-events: auto;
+}
+
+.coral-tray-disclosure > summary { display: none; }
+.coral-tray-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: min(54vh, 460px);
+  gap: 10px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(169, 226, 235, 0.24);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(3, 17, 23, 0.95), rgba(4, 25, 32, 0.91));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(20px) saturate(120%);
+}
+.coral-tray-panel header { display: grid; gap: 3px; }
+.coral-tray-panel header div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.coral-tray-panel header span { color: #78e3c5; font-size: .54rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.coral-tray-panel header strong { font-size: .7rem; }
+.coral-tray-panel header small { color: rgba(218, 242, 246, .62); font-size: .58rem; }
+.coral-tray-panel ul { display: grid; gap: 7px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.coral-tray-panel li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border: 1px solid rgba(150, 220, 235, .14);
+  border-radius: 11px;
+  background: rgba(3, 17, 23, .5);
+}
+.coral-tray-panel li[data-active="true"] { border-color: rgba(111, 230, 189, .58); }
+.coral-tray-identity { display: grid; min-width: 0; gap: 2px; }
+.coral-tray-identity span { overflow: hidden; color: rgba(218, 242, 246, .58); font-size: .52rem; text-overflow: ellipsis; white-space: nowrap; }
+.coral-tray-identity strong { overflow: hidden; font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.coral-tray-actions { display: flex; gap: 6px; }
+.coral-tray-actions button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 11px;
+  border: 1px solid rgba(150, 220, 235, .25);
+  border-radius: 9px;
+  color: #eaf7fb;
+  background: rgba(20, 55, 65, .72);
+  cursor: pointer;
+}
+.coral-tray-actions .coral-tray-place { touch-action: none; }
+.coral-tray-actions .coral-tray-lock { border-color: rgba(111, 230, 189, .5); background: rgba(45, 142, 117, .5); }
+.coral-tray-actions button:disabled { opacity: .42; cursor: not-allowed; }
+.coral-tray-status { display: flex; align-items: center; gap: 7px; margin: 0; color: rgba(218, 242, 246, .68); font-size: .58rem; }
+.coral-tray-status > span { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #8aa3aa; }
+.coral-tray-status[data-state="valid"] { color: #8ff2d3; }
+.coral-tray-status[data-state="valid"] > span { background: #65efcb; }
+.coral-tray-status[data-state="invalid"] { color: #ffb39f; }
+.coral-tray-status[data-state="invalid"] > span { background: #ef786a; }
+
+@media (max-width: 860px) {
+  .coral-inventory-tray { right: 14px; bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px)); width: calc(100vw - 28px); }
+  .coral-tray-disclosure { position: relative; }
+  .coral-tray-disclosure > summary {
+    display: flex;
+    width: fit-content;
+    min-height: 44px;
+    margin-left: auto;
+    padding: 0 13px;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid rgba(169, 226, 235, .24);
+    border-radius: 999px;
+    background: rgba(3, 17, 23, .94);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .34);
+    list-style: none;
+    cursor: pointer;
+  }
+  .coral-tray-disclosure > summary::-webkit-details-marker { display: none; }
+  .coral-tray-disclosure > summary span { font-size: .64rem; font-weight: 650; }
+  .coral-tray-disclosure > summary strong { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; color: #062019; background: #78e3c5; font-size: .62rem; }
+  .coral-tray-disclosure:not([open]) > .coral-tray-panel { display: none; }
+  .coral-tray-panel { position: absolute; right: 0; bottom: calc(100% + 8px); width: min(362px, calc(100vw - 28px)); max-height: min(46vh, 390px); }
+}
