@@ -25,9 +25,9 @@ import {
 } from './SpecimenFish'
 
 const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
-const neighbor = (x: number, z: number, headingX: number, headingZ: number,
+const neighbor = (x: number, z: number, velocityX: number, velocityZ: number,
   profile: ReturnType<typeof specimenBehaviorProfile> = 'reef_cruise') => ({
-  position: new THREE.Vector3(x, 0, z), heading: new THREE.Vector3(headingX, 0, headingZ),
+  position: new THREE.Vector3(x, 0, z), velocity: new THREE.Vector3(velocityX, 0, velocityZ),
   profile, ...TEST_ENVELOPE, verticalClearance: .2,
 })
 describe('specimen motion continuity', () => {
@@ -82,18 +82,49 @@ describe('specimen motion continuity', () => {
   it('does not avoid a diverging neighbor', () => {
     const position = new THREE.Vector3(-.2, .07, 0)
     const heading = new THREE.Vector3(-1, 0, 0)
-    expect(steerSpecimenHeading(heading, heading.clone(), position, 1, .2, TEST_ENVELOPE,
+    expect(steerSpecimenHeading(heading, heading.clone(), heading.clone(), position, 1, .2, TEST_ENVELOPE,
       new Map([[2, neighbor(.2, 0, 1, 0)]]), 'reef_cruise', 1 / 60)).toBe(0)
     expect(position).toEqual(new THREE.Vector3(-.2, .07, 0))
+  })
+  it('does not falsely avoid an equal-speed parallel neighbor', () => {
+    const heading = new THREE.Vector3(1, 0, 0)
+    const velocity = new THREE.Vector3(.4, 0, 0)
+    expect(steerSpecimenHeading(heading, heading.clone(), velocity, new THREE.Vector3(-.4, 0, 0),
+      1, .2, TEST_ENVELOPE, new Map([[2, neighbor(.4, 0, .4, 0)]]), 'reef_cruise', 1 / 60)).toBe(0)
+  })
+  it('lets a faster follower pass without overlap and releases avoidance after divergence', () => {
+    const routeHeading = new THREE.Vector3(1, 0, 0)
+    const leader = new THREE.Vector3(0, 0, 0)
+    const follower = new THREE.Vector3(-.7, 0, 0)
+    const followerHeading = routeHeading.clone()
+    const leaderSpeed = .2
+    const followerSpeed = .6
+    const delta = .05
+    let minimumDistance = Infinity
+    let maximumTurn = 0
+    for (let frame = 0; frame < 160; frame += 1) {
+      maximumTurn = Math.max(maximumTurn, steerSpecimenHeading(followerHeading, routeHeading,
+        followerHeading.clone().multiplyScalar(followerSpeed), follower, 1, .2, TEST_ENVELOPE,
+        new Map([[2, neighbor(leader.x, leader.z, leaderSpeed, 0)]]), 'reef_cruise', delta))
+      follower.addScaledVector(followerHeading, followerSpeed * delta)
+      leader.x += leaderSpeed * delta
+      minimumDistance = Math.min(minimumDistance, follower.distanceTo(leader))
+    }
+    expect(maximumTurn).toBeGreaterThan(0)
+    expect(minimumDistance).toBeGreaterThanOrEqual(TEST_ENVELOPE.lateral * 2)
+    expect(follower.x).toBeGreaterThan(leader.x)
+    expect(steerSpecimenHeading(followerHeading, routeHeading,
+      followerHeading.clone().multiplyScalar(followerSpeed), follower, 1, .2, TEST_ENVELOPE,
+      new Map([[2, neighbor(leader.x, leader.z, leaderSpeed, 0)]]), 'reef_cruise', delta)).toBe(0)
   })
   it('turns a head-on pair reciprocally without moving position or reversing forward progress', () => {
     const left = new THREE.Vector3(-.2, .07, 0)
     const right = new THREE.Vector3(.2, .07, 0)
     const leftHeading = new THREE.Vector3(1, 0, 0)
     const rightHeading = new THREE.Vector3(-1, 0, 0)
-    const leftTurn = steerSpecimenHeading(leftHeading, new THREE.Vector3(1, 0, 0), left, 1, .2,
+    const leftTurn = steerSpecimenHeading(leftHeading, new THREE.Vector3(1, 0, 0), leftHeading.clone(), left, 1, .2,
       TEST_ENVELOPE, new Map([[2, neighbor(.2, 0, -1, 0)]]), 'reef_cruise', 1 / 60)
-    steerSpecimenHeading(rightHeading, new THREE.Vector3(-1, 0, 0), right, 2, .2,
+    steerSpecimenHeading(rightHeading, new THREE.Vector3(-1, 0, 0), rightHeading.clone(), right, 2, .2,
       TEST_ENVELOPE, new Map([[1, neighbor(-.2, 0, 1, 0)]]), 'reef_cruise', 1 / 60)
     expect(Math.sign(leftHeading.z)).toBe(-Math.sign(rightHeading.z))
     expect(leftTurn).toBeLessThanOrEqual(3.2 / 60 + Number.EPSILON)
@@ -105,11 +136,11 @@ describe('specimen motion continuity', () => {
     const independentHeading = new THREE.Vector3(1, 0, 0)
     const collisionHeading = new THREE.Vector3(1, 0, 0)
     const compatible = new Map([[2, neighbor(.7, .1, .8, -.6, profile)]])
-    const socialTurn = steerSpecimenHeading(socialHeading, socialHeading.clone(), new THREE.Vector3(),
+    const socialTurn = steerSpecimenHeading(socialHeading, socialHeading.clone(), socialHeading.clone(), new THREE.Vector3(),
       1, .2, TEST_ENVELOPE, compatible, profile, 1, 100)
-    const independentTurn = steerSpecimenHeading(independentHeading, independentHeading.clone(), new THREE.Vector3(),
+    const independentTurn = steerSpecimenHeading(independentHeading, independentHeading.clone(), independentHeading.clone(), new THREE.Vector3(),
       1, .2, TEST_ENVELOPE, compatible, 'reef_cruise', 1, 100)
-    const collisionTurn = steerSpecimenHeading(collisionHeading, collisionHeading.clone(), new THREE.Vector3(-.2, 0, 0),
+    const collisionTurn = steerSpecimenHeading(collisionHeading, collisionHeading.clone(), collisionHeading.clone(), new THREE.Vector3(-.2, 0, 0),
       1, .2, TEST_ENVELOPE, new Map([[2, neighbor(.2, 0, -1, 0)]]), profile, 1, 100)
     expect(socialTurn).toBeLessThan(independentTurn)
     expect(independentTurn).toBeLessThan(collisionTurn)
@@ -131,7 +162,7 @@ describe('specimen motion continuity', () => {
     const heading = new THREE.Vector3(1, 0, 0)
     expect(.4).toBeGreaterThan(.1 + .1)
     expect(.4).toBeLessThan(envelope.longitudinal * 2)
-    steerSpecimenHeading(heading, heading.clone(), target, 1, .1, envelope,
+    steerSpecimenHeading(heading, heading.clone(), heading.clone(), target, 1, .1, envelope,
       new Map([[2, { ...neighbor(.2, 0, -1, 0), ...envelope, verticalClearance: .1 }]]), 'reef_cruise', 1, 100)
     expect(heading.z).not.toBe(0)
     expect(target).toEqual(new THREE.Vector3(-.2, 0, 0))

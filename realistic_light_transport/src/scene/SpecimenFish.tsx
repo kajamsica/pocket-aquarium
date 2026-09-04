@@ -254,7 +254,7 @@ export interface SpecimenCrowd {
 const NO_SPECIMEN_CROWD: SpecimenCrowd = { pressure: 0, awayX: 0, awayZ: 0 }
 export interface SpecimenPosition {
   readonly position: THREE.Vector3
-  readonly heading: THREE.Vector3
+  readonly velocity: THREE.Vector3
   readonly profile: SpecimenBehaviorProfile
   longitudinal: number
   lateral: number
@@ -357,7 +357,7 @@ export function sampleSpecimenMotionRoute(route: SpecimenMotionRoute, progress: 
 }
 /** Turn the desired heading toward a passing arc without directly correcting position. */
 export function steerSpecimenHeading(heading: THREE.Vector3, routeHeading: THREE.Vector3,
-  position: THREE.Vector3, specimenId: number, bodyRadius: number, envelope: SpecimenCollisionEnvelope,
+  velocity: THREE.Vector3, position: THREE.Vector3, specimenId: number, bodyRadius: number, envelope: SpecimenCollisionEnvelope,
   positions: ReadonlyMap<number, SpecimenPosition>, profile: SpecimenBehaviorProfile, deltaSeconds: number,
   maxTurnRadiansPerSecond = 3.2) {
   let avoidance = 0
@@ -369,8 +369,8 @@ export function steerSpecimenHeading(heading: THREE.Vector3, routeHeading: THREE
     const dz = other.position.z - position.z
     const distance = Math.hypot(dx, dz)
     const socialClearance = envelope.lateral + other.lateral
-    const velocityX = other.heading.x - heading.x
-    const velocityZ = other.heading.z - heading.z
+    const velocityX = other.velocity.x - velocity.x
+    const velocityZ = other.velocity.z - velocity.z
     const velocitySquared = velocityX * velocityX + velocityZ * velocityZ
     const closing = dx * velocityX + dz * velocityZ
     const verticalOverlap = Math.abs(position.y - other.position.y) < bodyRadius + other.verticalClearance
@@ -390,12 +390,14 @@ export function steerSpecimenHeading(heading: THREE.Vector3, routeHeading: THREE
       const corridorDistance = Math.hypot(
         (closestX * forwardX + closestZ * forwardZ) / longitudinalReach,
         (closestX * sideX + closestZ * sideZ) / lateralReach)
-      if (closestTime <= 1.25) {
+      if (closestTime <= 1.3) {
         const comfort = profile === 'territorial_cave' ? 1.8 : profile === 'territorial_cruise' ? 1.65 :
           profile === 'reef_cruise' ? 1.45 : 1.2
         let urgency = corridorDistance < 1 ? 1 - corridorDistance * .35 :
           Math.max(0, 1 - corridorDistance / comfort) * .45
-        const compatible = (profile === 'pair' || profile === 'shoal') && heading.dot(other.heading) > .5
+        const otherSpeed = Math.hypot(other.velocity.x, other.velocity.z)
+        const compatible = (profile === 'pair' || profile === 'shoal') && otherSpeed > 1e-5 &&
+          (heading.x * other.velocity.x + heading.z * other.velocity.z) / otherSpeed > .5
         if (compatible && corridorDistance >= 1) urgency *= .35
         const sideDot = sideX * closestX + sideZ * closestZ
         const pairSeed = Math.min(specimenId, otherId) * 131 + Math.max(specimenId, otherId)
@@ -405,8 +407,9 @@ export function steerSpecimenHeading(heading: THREE.Vector3, routeHeading: THREE
     }
     const socialNeighbor = profile === 'pair' ? other.profile === 'pair' : profile === 'shoal' && other.profile === 'shoal'
     if (socialNeighbor && distance > socialClearance * 1.5) {
-      socialX += dx / distance + (profile === 'shoal' ? other.heading.x * .55 : 0)
-      socialZ += dz / distance + (profile === 'shoal' ? other.heading.z * .55 : 0)
+      const otherSpeed = Math.hypot(other.velocity.x, other.velocity.z)
+      socialX += dx / distance + (profile === 'shoal' && otherSpeed > 1e-5 ? other.velocity.x / otherSpeed * .55 : 0)
+      socialZ += dz / distance + (profile === 'shoal' && otherSpeed > 1e-5 ? other.velocity.z / otherSpeed * .55 : 0)
     }
   }
   const routeYaw = Math.atan2(routeHeading.z, routeHeading.x)
@@ -623,7 +626,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
   const steeredHeading = useMemo(() => new THREE.Vector3(), [])
   const foodPosition = useMemo(() => new THREE.Vector3(), [])
   const foodDirection = useMemo(() => new THREE.Vector3(), [])
-  const positionEntry = useMemo<SpecimenPosition>(() => ({ position: new THREE.Vector3(), heading: new THREE.Vector3(),
+  const positionEntry = useMemo<SpecimenPosition>(() => ({ position: new THREE.Vector3(), velocity: new THREE.Vector3(),
     profile: behavior, ...collisionEnvelope, verticalClearance: bodyRadius }), [behavior, bodyRadius, collisionEnvelope])
   const riggedAsset = specimenAssetFor(specimen.speciesId)
   const visualPlan = resolveSpecimenVisualPlan(specimen.speciesId, Boolean(riggedAsset))
@@ -683,10 +686,10 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
       const guideY = routePosition.y
       foodDirection.copy(routePosition).sub(node.position).setY(0)
       if (positionSeeded.current && foodDirection.lengthSq() > 1e-5) routeTangent.lerp(foodDirection.normalize(), .18).normalize()
-      if (!positionSeeded.current) steeredHeading.copy(routeTangent)
-      else steerSpecimenHeading(steeredHeading, routeTangent, node.position, specimen.id, bodyRadius,
-        collisionEnvelope, positions, behavior, delta)
       const travelSpeed = Math.max(.55, length * 1.8) * (1 + forage.current)
+      if (!positionSeeded.current) steeredHeading.copy(routeTangent)
+      else steerSpecimenHeading(steeredHeading, routeTangent, positionEntry.velocity, node.position, specimen.id,
+        bodyRadius, collisionEnvelope, positions, behavior, delta)
       if (positionSeeded.current) routePosition.set(
         node.position.x + steeredHeading.x * THREE.MathUtils.lerp(route.speed * route.curve.getLength(), travelSpeed, forage.current) * delta,
         guideY,
@@ -695,10 +698,13 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
       routePosition.y = THREE.MathUtils.clamp(routePosition.y, SAND_Y + bodyRadius, waterSurfaceY - bodyRadius)
       routePosition.z = THREE.MathUtils.clamp(routePosition.z, -zLimit, zLimit)
       if (positionSeeded.current) limitSpecimenFrameTravel(node.position, routePosition, travelSpeed, delta)
+      if (positionSeeded.current && delta > 0) positionEntry.velocity.set(
+        (routePosition.x - node.position.x) / delta, 0, (routePosition.z - node.position.z) / delta)
+      else positionEntry.velocity.copy(steeredHeading).multiplyScalar(
+        THREE.MathUtils.lerp(route.speed * route.curve.getLength(), travelSpeed, forage.current))
       node.position.copy(routePosition)
       positionSeeded.current = true
       positionEntry.position.copy(node.position)
-      positionEntry.heading.copy(steeredHeading)
       positionEntry.longitudinal = collisionEnvelope.longitudinal
       positionEntry.lateral = collisionEnvelope.lateral
       positionEntry.verticalClearance = bodyRadius
@@ -789,7 +795,7 @@ function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY, positio
   const routeTangent = useMemo(() => new THREE.Vector3(), [])
   const steeredHeading = useMemo(() => new THREE.Vector3(), [])
   const guideDirection = useMemo(() => new THREE.Vector3(), [])
-  const positionEntry = useMemo<SpecimenPosition>(() => ({ position: new THREE.Vector3(), heading: new THREE.Vector3(),
+  const positionEntry = useMemo<SpecimenPosition>(() => ({ position: new THREE.Vector3(), velocity: new THREE.Vector3(),
     profile: behavior, ...collisionEnvelope, verticalClearance: bodyRadius }), [behavior, bodyRadius, collisionEnvelope])
   useEffect(() => () => { positions.delete(specimenId) }, [positions, specimenId])
 
@@ -810,10 +816,10 @@ function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY, positio
       const guideY = routePosition.y
       guideDirection.copy(routePosition).sub(node.position).setY(0)
       if (positionSeeded.current && guideDirection.lengthSq() > 1e-5) routeTangent.lerp(guideDirection.normalize(), .18).normalize()
-      if (!positionSeeded.current) steeredHeading.copy(routeTangent)
-      else steerSpecimenHeading(steeredHeading, routeTangent, node.position, specimenId, bodyRadius,
-        collisionEnvelope, positions, behavior, delta)
       const travelSpeed = Math.max(.35, length * 1.8)
+      if (!positionSeeded.current) steeredHeading.copy(routeTangent)
+      else steerSpecimenHeading(steeredHeading, routeTangent, positionEntry.velocity, node.position, specimenId,
+        bodyRadius, collisionEnvelope, positions, behavior, delta)
       if (positionSeeded.current) routePosition.set(
         node.position.x + steeredHeading.x * route.speed * route.curve.getLength() * delta, guideY,
         node.position.z + steeredHeading.z * route.speed * route.curve.getLength() * delta)
@@ -822,10 +828,12 @@ function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY, positio
       routePosition.z = THREE.MathUtils.clamp(routePosition.z, -TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius)
       if (positionSeeded.current) limitSpecimenFrameTravel(node.position, routePosition,
         Math.max(.35, length * 1.8), delta)
+      if (positionSeeded.current && delta > 0) positionEntry.velocity.set(
+        (routePosition.x - node.position.x) / delta, 0, (routePosition.z - node.position.z) / delta)
+      else positionEntry.velocity.copy(steeredHeading).multiplyScalar(route.speed * route.curve.getLength())
       node.position.copy(routePosition)
       positionSeeded.current = true
       positionEntry.position.copy(node.position)
-      positionEntry.heading.copy(steeredHeading)
       positionEntry.longitudinal = collisionEnvelope.longitudinal
       positionEntry.lateral = collisionEnvelope.lateral
       positionEntry.verticalClearance = bodyRadius
