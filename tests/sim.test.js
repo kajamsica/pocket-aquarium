@@ -473,40 +473,40 @@ group("compatibility + capacity blockers");
 
 group("livestock conflict choices");
 (function () {
-  function sharkReady(seed, shrimpCount) {
+  function wrasseReady(seed, hermitCount) {
     var s = cycledReef(seed); s.tier = "xl757"; s.equipment.filter = "canister"; s.credits = 5000;
-    addAdult(s, "pistol_shrimp", shrimpCount || 2); return s;
+    addAdult(s, "scarlet_hermit", hermitCount || 2); return s;
   }
 
-  var blocked = sharkReady(79, 2), beforeCredits = blocked.credits, beforeCount = blocked.livestock.length;
-  var risk = PA.validatePurchase(blocked, { kind: "livestock", id: "epaulette_shark", count: 1 });
+  var blocked = wrasseReady(79, 2), beforeCredits = blocked.credits, beforeCount = blocked.livestock.length;
+  var risk = PA.validatePurchase(blocked, { kind: "livestock", id: "six_line_wrasse", count: 1 });
   eq(risk.ok, false, "risk-only purchase needs an explicit choice");
   eq(risk.conflicts.length, 1, "same-species conflicts are grouped");
   eq(risk.conflicts[0].riskTag, "predation", "risk is classified");
   eq(risk.conflicts[0].residentIds.length, 2, "every affected living resident is listed");
-  eq(risk.conflicts[0].refundCredits, 22, "refund rounds half-price per resident");
-  PA.dispatch(blocked, { type: "PURCHASE_LIVESTOCK", species: "epaulette_shark", count: 1 });
+  eq(risk.conflicts[0].refundCredits, 6, "refund rounds half-price per resident");
+  PA.dispatch(blocked, { type: "PURCHASE_LIVESTOCK", species: "six_line_wrasse", count: 1 });
   eq(blocked.livestock.length, beforeCount, "unaccepted risk changes no residents");
   eq(blocked.credits, beforeCredits, "unaccepted risk changes no credits");
 
-  var accepted = sharkReady(80, 2), acceptedIds = accepted.livestock.map(function (a) { return a.id; });
-  PA.dispatch(accepted, { type: "PURCHASE_LIVESTOCK", species: "epaulette_shark", count: 1, acceptRisk: true });
-  eq(accepted.livestock.filter(function (a) { return a.species === "epaulette_shark"; }).length, 1, "accept risk adds the requested animal");
+  var accepted = wrasseReady(80, 2), acceptedIds = accepted.livestock.map(function (a) { return a.id; });
+  PA.dispatch(accepted, { type: "PURCHASE_LIVESTOCK", species: "six_line_wrasse", count: 1, acceptRisk: true });
+  eq(accepted.livestock.filter(function (a) { return a.species === "six_line_wrasse"; }).length, 1, "accept risk adds the requested animal");
   eq(acceptedIds.every(function (id) { return accepted.livestock.some(function (a) { return a.id === id; }); }), true, "accept risk retains every resident");
 
-  var sold = sharkReady(81, 2), livingIds = sold.livestock.map(function (a) { return a.id; });
-  addAdult(sold, "pistol_shrimp", 1); var deadId = sold.livestock[sold.livestock.length - 1].id; sold.livestock[sold.livestock.length - 1].alive = false;
+  var sold = wrasseReady(81, 2), livingIds = sold.livestock.map(function (a) { return a.id; });
+  addAdult(sold, "scarlet_hermit", 1); var deadId = sold.livestock[sold.livestock.length - 1].id; sold.livestock[sold.livestock.length - 1].alive = false;
   sold.selection = { entityType: "livestock", id: livingIds[0] };
-  var soldRisk = PA.validatePurchase(sold, { kind: "livestock", id: "epaulette_shark", count: 1 });
+  var soldRisk = PA.validatePurchase(sold, { kind: "livestock", id: "six_line_wrasse", count: 1 });
   PA.dispatch(sold, { type: "SELL_LIVESTOCK", ids: soldRisk.conflicts[0].residentIds.concat([deadId, 99999]) });
-  eq(sold.credits, 5022, "sell credits exact per-resident refund");
+  eq(sold.credits, 5006, "sell credits exact per-resident refund");
   eq(sold.selection, null, "selling the selected resident clears selection");
   eq(sold.livestock.length, 1, "only listed living residents are removed");
   eq(sold.livestock[0].id, deadId, "dead or unlisted residents are retained");
   ok(sold.log.some(function (entry) { return entry.type === "store" && /Sold 2 living residents/.test(entry.message); }), "sale is logged");
-  PA.dispatch(sold, { type: "PURCHASE_LIVESTOCK", species: "epaulette_shark", count: 1 });
-  eq(sold.livestock.filter(function (a) { return a.species === "epaulette_shark"; }).length, 1, "ordinary purchase succeeds after conflicts are sold");
-  eq(sold.credits, 4122, "sale refund and purchase remain separate deterministic transactions");
+  PA.dispatch(sold, { type: "PURCHASE_LIVESTOCK", species: "six_line_wrasse", count: 1 });
+  eq(sold.livestock.filter(function (a) { return a.species === "six_line_wrasse"; }).length, 1, "ordinary purchase succeeds after conflicts are sold");
+  eq(sold.credits, 4968, "sale refund and purchase remain separate deterministic transactions");
 
   var hardBlocked = cycledReef(82); addAdult(hardBlocked, "pistol_shrimp", 1); var hardCount = hardBlocked.livestock.length;
   PA.dispatch(hardBlocked, { type: "PURCHASE_LIVESTOCK", species: "epaulette_shark", count: 1, acceptRisk: true });
