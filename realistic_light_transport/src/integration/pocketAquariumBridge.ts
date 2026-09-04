@@ -246,6 +246,7 @@ export interface PocketStoreOffer {
   readonly price: number
   readonly allowed: boolean
   readonly reasons: readonly string[]
+  readonly conflicts?: readonly PocketPurchaseConflict[]
   readonly action: PocketAction
   /** Equipment-only causal copy so a card can explain itself without a content framework. */
   readonly category?: string
