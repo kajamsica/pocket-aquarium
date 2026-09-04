@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "regal_angelfish",
+  "sourceSha256": "9abf04156c83a02b04e2e9c9579345618c46a6de06298f33aec69c89f5b2c90b",
+  "objects": [
+    {
+      "name": "PA_regal_angelfish_Body",
+      "vertexCount": 3026,
+      "triangleCount": 6048,
+      "vertexDigest": "c1bfae53611c9261bf7ff6435750b9ec1bdfd89157a849ca64725c4bdcb80b62",
+      "topologyDigest": "687d70b795dcdf536e4e12bc379709fceca04376f8d73a4bce523cd533a55ce7",
+      "uvDigest": "a65ab86386853d60d94a2a14c1d9f79dc0bac7025ff14e809115558f8eab2797",
+      "weightDigest": "cd3c70b6a82f547d50873b615b03cc734e44bb40f85a026488c795f375e03634",
+      "materials": [
+        "PA_regal_angelfish_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_regal_angelfish_Details",
+      "vertexCount": 1716,
+      "triangleCount": 3360,
+      "vertexDigest": "217cad54c7457de04b831a4763a460aa586f9a87386318011e3af26122aa30f0",
+      "topologyDigest": "14fdfc046ba9fc0d22e35b1d4662a2d76611414663f1eed71263c2d1b8fefcb4",
+      "uvDigest": "59fdd9e57f202afd65d9c37e3f03cf56dedf4469eba21359a917877e7903bfaa",
+      "weightDigest": "f6190f4a1fd49740ea6dbd62d6d91ff0bc6a612c7324787136f4dad81e1fd4e0",
+      "materials": [
+        "PA_regal_angelfish_Adornment",
+        "PA_regal_angelfish_Cue",
+        "PA_regal_angelfish_Eye",
+        "PA_regal_angelfish_Glint",
+        "PA_regal_angelfish_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_regal_angelfish_Fins",
+      "vertexCount": 658,
+      "triangleCount": 1168,
+      "vertexDigest": "c941b94b29f6fead7457522a92024c69fc9d188bb1536467332110aae3e66c62",
+      "topologyDigest": "a15a8dc25ab01bb2b50954c143cc28861ff1ecfcfd397a339bb79a1042dacbeb",
+      "uvDigest": "7920dbb1916376ee1f6e05cca5594d90e5701bdf94b1c4fd87d9ec62230dac95",
+      "weightDigest": "93e2ef7b78018c34526fce9b886b6c0e3a9832ca84f04be0ce14fd51cd594b9c",
+      "materials": [
+        "PA_regal_angelfish_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_regal_angelfish_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "5e6cb9bf23ebdd39556dccfc1435d01a1d06030b5698ebc3b80a7d694fa73c9a"
+  },
+  "geometryDigest": "3421189ddb4403d8dd5f56d0a6bff053eb3923472dc6d7a4d20169eee3a37c57",
+  "variantId": null
+}
