@@ -129,6 +129,47 @@ describe('integrated reef showcase mechanics', () => {
     expect(projectPocketState(refilled).nori).toEqual({ installed: true, remaining: 8,
       capacity: 8, lastBiteCycle: -1 })
   })
+
+  it('projects and persists the authoritative 13-rock lifecycle and transform state', () => {
+    const state = createPocketReefShowcase()
+    Object.assign(state.rockscape.rocks[0].biology,
+      { diatom: .11, nuisanceAlgae: .22, coralline: .33, encruster: .44 })
+    const beforeOther = structuredClone(state.rockscape.rocks[1])
+    const moved = dispatchPocketAction(state, { type: pocketActions.UPDATE_ROCK_TRANSFORM, rockId: 0,
+      position: [99, 99, -99], rotation: [99, -99, 0], scale: [99, 0, .5] })
+    const view = projectPocketState(moved)
+
+    expect(view.rockscape).toHaveLength(13)
+    expect(view.rockscape.map(({ id, index }) => [id, index]))
+      .toEqual(Array.from({ length: 13 }, (_, index) => [index, index]))
+    expect(view.rockscape[0]).toMatchObject({ position: [2.2, .5, -.9],
+      rotation: [Math.PI, -Math.PI, 0], scale: [.9, .18, .5],
+      biology: { diatom: .11, nuisanceAlgae: .22, coralline: .33, encruster: .44 } })
+    expect(view.rockscape[1]).toEqual(beforeOther)
+    expect(projectPocketState(restorePocketGame(JSON.parse(serializePocketGame(moved)))).rockscape)
+      .toEqual(view.rockscape)
+
+    const legacy = JSON.parse(serializePocketGame(state)) as Record<string, unknown>
+    delete legacy.rockscape
+    expect(projectPocketState(restorePocketGame(legacy)).rockscape.map(({ id }) => id))
+      .toEqual(Array.from({ length: 13 }, (_, index) => index))
+  })
+
+  it('projects and restores the authoritative normalized sand ecology', () => {
+    const state = createPocketReefShowcase()
+    state.substrate = { version: 1, detritus: .48, surfaceFilm: .36, turnover: .27, cleanliness: .57 }
+
+    expect(projectPocketState(state).sand).toEqual({ detritus: .48, surfaceFilm: .36,
+      turnover: .27, cleanliness: .57 })
+    expect(projectPocketState(restorePocketGame(JSON.parse(serializePocketGame(state)))).sand)
+      .toEqual(projectPocketState(state).sand)
+
+    const legacy = JSON.parse(serializePocketGame(state)) as Record<string, unknown>
+    delete legacy.substrate
+    expect(projectPocketState(restorePocketGame(legacy)).sand)
+      .toEqual({ detritus: 0, surfaceFilm: 0, turnover: 0, cleanliness: 1 })
+  })
+
   it('projects accepted showcase defaults from root state with ordinary interactions available', () => {
     const state = createPocketReefShowcase()
     const view = projectPocketState(state)
