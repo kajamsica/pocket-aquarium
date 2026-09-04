@@ -123,8 +123,7 @@ describe('mouth-contact consumption', () => {
   it('rejects a duplicate contact — a second fish cannot re-consume the same pellet', () => {
     const state = createPocketReefShowcase()
     const firstClown = state.livestock.find((animal) => animal.species === 'ocellaris')!
-    state.livestock.push({ ...firstClown, id: Math.max(...state.livestock.map(({ id }) => id)) + 1,
-      name: 'Second Ocellaris' })
+    state.livestock.push({ ...firstClown, id: Math.max(...state.livestock.map(({ id }) => id)) + 1 })
     const fed = dispatchPocketAction(state, { type: 'FEED', x: 0.5 })
     const pelletId = projectPocketState(fed).food[0].id
     const clowns = fed.livestock.filter((a) => a.species === 'ocellaris' && a.alive !== false)
