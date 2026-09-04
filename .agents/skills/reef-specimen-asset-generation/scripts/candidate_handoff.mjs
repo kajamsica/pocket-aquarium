@@ -369,6 +369,45 @@ if (runtime) {
   }
 }
 
+// ----------------------------------------------------------------- relabel against on-disk packages
+// build-receipt.json#candidateDir is outside candidateHash and can be rewritten, so the hash-covered
+// identity (lod1.glb bytes, candidateHash) is compared with every formally excluded package that
+// still exists and with every sibling candidate: an identical package under another name is a relabel.
+const currentGlbHash = packagePresent && fs.existsSync(candidateFile("lod1.glb")) && fs.statSync(candidateFile("lod1.glb")).isFile() ? sha256(candidateFile("lod1.glb")) : null;
+const currentCandidateHash = receipt ? receipt.candidateHash : null;
+function packageIdentity(dir) {
+  const glb = path.join(dir, "lod1.glb");
+  let candidateHash = null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(dir, "validation-receipt.json"), "utf8"));
+    if (isObj(parsed) && isHex(parsed.candidateHash)) candidateHash = parsed.candidateHash;
+  } catch { /* legacy or unreadable receipt: the GLB bytes still bind */ }
+  return { glbHash: fs.existsSync(glb) && fs.statSync(glb).isFile() ? sha256(glb) : null, candidateHash };
+}
+const compared = new Set([key]);
+function compareIdentity(otherKey, dir, what, remedy) {
+  if (compared.has(otherKey) || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return;
+  compared.add(otherKey);
+  const other = packageIdentity(dir);
+  const sameGlb = currentGlbHash !== null && other.glbHash === currentGlbHash;
+  const sameHash = currentCandidateHash !== null && other.candidateHash === currentCandidateHash;
+  if (sameGlb || sameHash) fail("relabel", `${sameGlb && sameHash ? "lod1.glb and candidateHash" : sameGlb ? "lod1.glb" : "candidateHash"} identical to ${what} ${otherKey}; ${remedy}`);
+}
+if (acceptance) {
+  for (const line of acceptance.excluded) {
+    const otherKey = line.split(/[\s(]/)[0];
+    const [otherSpecies, otherName] = otherKey.split("/");
+    if (!SAFE_SEGMENT.test(otherSpecies ?? "") || !SAFE_SEGMENT.test(otherName ?? "")) continue;
+    compareIdentity(otherKey, path.join(root, "art", "specimens", otherSpecies, "candidates", otherName), "excluded package", "a formally excluded build cannot be handed off under another name");
+  }
+}
+if (fs.existsSync(candidatesRoot) && fs.statSync(candidatesRoot).isDirectory()) {
+  for (const sibling of fs.readdirSync(candidatesRoot).sort()) {
+    if (!SAFE_SEGMENT.test(sibling)) continue;
+    compareIdentity(`${asset}/${sibling}`, path.join(candidatesRoot, sibling), "sibling candidate", "a successor must be a different build, and an existing build is handed off under its original name");
+  }
+}
+
 // ----------------------------------------------------------------- dirty forbidden paths
 const dirty = [];
 let boundaryNote = "boundary audit FAILED";

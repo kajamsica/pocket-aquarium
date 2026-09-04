@@ -1,4 +1,5 @@
-// Tests for candidate_handoff.mjs. Run: node --test .agents/skills/reef-specimen-asset-generation/scripts/
+// Tests for candidate_handoff.mjs. Run from the repository root:
+//   node --test .agents/skills/reef-specimen-asset-generation/scripts/candidate_handoff.test.mjs
 // Uses the committed catalog for positive cases and a throwaway git fixture under os.tmpdir() for
 // mutations; never writes inside the repository.
 import assert from "node:assert/strict";
@@ -15,6 +16,9 @@ const REAL_RLT = path.resolve(here, "..", "..", "..", "..", "realistic_light_tra
 const BRANCH_BASE = "9379fab4c7d35291d0bd29070440d96f7891c871";
 const ASSET = "ocellaris";
 const CANDIDATE = "fable-v2";
+// Formally excluded package with no acceptance entry under its own name (see user-acceptance.v1.json#excluded).
+const EXCLUDED_ASSET = "gem_tang";
+const EXCLUDED_CANDIDATE = "fable-v2";
 const LEGACY_SCRIPTS = ["build_ocellaris.sh", "author_specimen.py", "author_ocellaris.py", "validate_specimen.py",
   "validate_ocellaris.py", "promote_specimen.mjs", "compile_profiles.mjs"];
 const REQUIRED_DOCS = ["candidate.manifest.json", "validation-receipt.json", "validation-source.json", "validation-runtime.json",
@@ -115,8 +119,11 @@ before(() => {
     `art/specimens/${ASSET}/asset.source.json`, `art/specimens/${ASSET}/source-references.json`, `art/specimens/${ASSET}/specimen.package.json`,
     `art/specimens/${ASSET}/candidates/${CANDIDATE}`, "art/specimens/user-acceptance.v1.json", "art/toolchain.json",
     "src/assets/specimens/runtime-acceptance.v1.json", "src/assets/specimens/ocellaris/v1/lod1.glb",
+    `art/specimens/${EXCLUDED_ASSET}/asset.source.json`, `art/specimens/${EXCLUDED_ASSET}/source-references.json`,
+    `art/specimens/${EXCLUDED_ASSET}/candidates/${EXCLUDED_CANDIDATE}`,
   ]) copy(relative);
   fs.rmSync(path.join(cdir, "build.log"), { force: true });
+  fs.rmSync(inRlt("art", "specimens", EXCLUDED_ASSET, "candidates", EXCLUDED_CANDIDATE, "build.log"), { force: true });
   write(path.join(work, "js", "specimenProfiles.js"), "// fixture\n");
   write(inRlt("art", "specimens", ASSET, "ocellaris.asset.json"), "{}\n");
   write(inRlt("art", "specimens", ASSET, "textures", "body.png"), "png\n");
@@ -211,7 +218,54 @@ test("fixture: an excluded package copied under a successor name fails", () => {
   })();
   assert.equal(unrecorded.code, 1, unrecorded.stdout);
   assert.ok(has(unrecorded, "FAIL:identity"), unrecorded.codes.join(" "));
-  assert.ok(!has(unrecorded, "FAIL:relabel"));
+  // Same, with candidateDir rewritten to the new name: the sibling with identical bytes still binds it.
+  const rewritten = (() => {
+    try {
+      copyPackage();
+      editJson(acceptanceFile, (data) => { data.entries = data.entries.filter((entry) => !(entry.speciesId === ASSET && entry.candidate === CANDIDATE)); });
+      editJson(path.join(path.dirname(cdir), successor, "build-receipt.json"), (data) => { data.candidateDir = `art/specimens/${ASSET}/candidates/${successor}`; });
+      return run(["--asset", ASSET, "--candidate", successor], rlt);
+    } finally { reset(); }
+  })();
+  assert.equal(rewritten.code, 1, rewritten.stdout);
+  assert.ok(!has(rewritten, "FAIL:identity"), rewritten.codes.join(" "));
+  assert.ok(has(rewritten, "FAIL:relabel"), rewritten.codes.join(" "));
+  assert.match(rewritten.stdout, /identical to sibling candidate ocellaris\/fable-v2/);
+});
+
+test("fixture: excluded package copied to a successor with only candidateDir rewritten fails relabel", () => {
+  // Exact reviewer repro: gem_tang/fable-v2 is excluded, has no acceptance entry, and is copied to
+  // fable-v3 with build-receipt.json#candidateDir (outside candidateHash) pointing at the new name.
+  const successor = "fable-v3";
+  const excludedDir = inRlt("art", "specimens", EXCLUDED_ASSET, "candidates", EXCLUDED_CANDIDATE);
+  const acceptance = readJson(inRlt("art", "specimens", "user-acceptance.v1.json"));
+  assert.ok(acceptance.excluded.some((line) => line.startsWith(`${EXCLUDED_ASSET}/${EXCLUDED_CANDIDATE}`)));
+  assert.ok(!acceptance.entries.some((entry) => entry.speciesId === EXCLUDED_ASSET && [EXCLUDED_CANDIDATE, successor].includes(entry.candidate)));
+  const original = run(["--asset", EXCLUDED_ASSET, "--candidate", EXCLUDED_CANDIDATE], rlt);
+  assert.deepEqual(original.codes, ["FAIL:excluded"], original.stdout);
+  const result = (() => {
+    try {
+      fs.cpSync(excludedDir, path.join(path.dirname(excludedDir), successor), { recursive: true });
+      editJson(path.join(path.dirname(excludedDir), successor, "build-receipt.json"), (data) => { data.candidateDir = `art/specimens/${EXCLUDED_ASSET}/candidates/${successor}`; });
+      return run(["--asset", EXCLUDED_ASSET, "--candidate", successor], rlt);
+    } finally { reset(); }
+  })();
+  assert.equal(result.code, 1, result.stdout);
+  assert.ok(has(result, "FAIL:relabel"), result.codes.join(" "));
+  assert.ok(!has(result, "FAIL:identity"), result.codes.join(" "));
+  assert.ok(!has(result, "FAIL:excluded"), result.codes.join(" "));
+  assert.match(result.stdout, new RegExp(`lod1\\.glb and candidateHash identical to excluded package ${EXCLUDED_ASSET}/${EXCLUDED_CANDIDATE}`));
+  // Deleting the copied package's receipt still fails through the GLB bytes alone.
+  const bytesOnly = (() => {
+    try {
+      fs.cpSync(excludedDir, path.join(path.dirname(excludedDir), successor), { recursive: true });
+      editJson(path.join(path.dirname(excludedDir), successor, "build-receipt.json"), (data) => { data.candidateDir = `art/specimens/${EXCLUDED_ASSET}/candidates/${successor}`; });
+      fs.writeFileSync(path.join(path.dirname(excludedDir), successor, "validation-receipt.json"), "{}");
+      return run(["--asset", EXCLUDED_ASSET, "--candidate", successor], rlt);
+    } finally { reset(); }
+  })();
+  assert.ok(has(bytesOnly, "FAIL:relabel") && has(bytesOnly, "FAIL:schema"), bytesOnly.codes.join(" "));
+  assert.match(bytesOnly.stdout, /lod1\.glb identical to excluded package/);
 });
 
 test("fixture: a symlinked candidate directory fails", () => {

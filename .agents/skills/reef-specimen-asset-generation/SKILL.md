@@ -140,8 +140,10 @@ by design), that the requested name is the one the package was built under
 accepted Ocellaris hash, the exclusion/acceptance/runtime records, and that no acceptance or
 runtime-promotion path is dirty (`--base <ref>` also scans commits since a verified base;
 `--scope <species_id>` declares other species whose candidates are legitimately in scope). A
-boundary audit that cannot complete is a FAIL. Exit 1 on any FAIL, 2 on bad arguments. Its
-tests run with `node --test ../.agents/skills/reef-specimen-asset-generation/scripts/`.
+package whose `lod1.glb` bytes or `candidateHash` equal a formally excluded package or a sibling
+candidate fails `relabel`. A boundary audit that cannot complete is a FAIL. Exit 1 on any FAIL,
+2 on bad arguments. Its tests run from the repository root with
+`node --test .agents/skills/reef-specimen-asset-generation/scripts/candidate_handoff.test.mjs`.
 
 ## Stopping conditions
 
