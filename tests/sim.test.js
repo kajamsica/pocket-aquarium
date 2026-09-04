@@ -71,6 +71,12 @@ function cycledReef(seed, opts) {
   if (opts.circ) s.equipment.circulation = opts.circ;
   return s;
 }
+function coralReadyReef(seed, opts) {
+  var s = cycledReef(seed, opts);
+  s.time.days = 0.57; s.water.par = 100;
+  PA.dispatch(s, { type: "WATER_TEST", param: "par" });
+  return s;
+}
 function addAdult(s, species, n) {
   var sp = D.SPECIES[species];
   for (var i = 0; i < n; i++) s.livestock.push({
@@ -436,6 +442,8 @@ group("compatibility + capacity blockers");
   // unstable water for coral (out-of-band salinity)
   var badReef = cycledReef(74); badReef.water.salinity = 29; badReef.water.alkalinity = 5.5;
   has(PA.validatePurchase(badReef, { kind: "coral", id: "zoanthid" }).reasons, "stable", "coral needs stable salinity/alkalinity");
+  has(PA.validatePurchase(cycledReef(741), { kind: "coral", id: "zoanthid", variantId: "blue_green" }).reasons,
+    "fresh PAR", "coral purchase still requires PR19 peak-light test evidence");
 
   // territoriality + predator/prey + invert safety + expert/feature: epaulette shark vs nano reef w/ clownfish
   var nano = cycledReef(75); addAdult(nano, "ocellaris", 1);
@@ -516,7 +524,7 @@ group("coral inventory + write-once placement");
   eq(rejected.corals.length, 0, "invalid coral variant creates no inventory entry");
   eq(rejected.credits, rejectedCredits, "invalid coral variant does not debit credits");
 
-  var s = cycledReef(79, { light: "led", circ: "powerhead" });
+  var s = coralReadyReef(79, { light: "led", circ: "powerhead" });
   var credits = s.credits;
   PA.dispatch(s, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "blue_green" });
   var coral = s.corals[0];
@@ -539,7 +547,7 @@ group("coral inventory + write-once placement");
   eq(JSON.stringify(coral.placement), locked, "placement is write-once");
   eq(s.log.length, logCount, "repeated lock is a complete no-op");
 
-  var invalid = cycledReef(78); PA.dispatch(invalid, { type: "PURCHASE_CORAL", coral: "zoanthid" });
+  var invalid = coralReadyReef(78); PA.dispatch(invalid, { type: "PURCHASE_CORAL", coral: "zoanthid" });
   [
     coralPlacement("rock", "rock:13", [0, 0.3, 0], [0, 1, 0], 0),
     coralPlacement("sand", "sand:base", [1.1, 0, 0], [0, 1, 0], 0),
@@ -554,8 +562,8 @@ group("coral inventory + write-once placement");
 
 group("inventory coral stays outside simulation and guidance");
 (function () {
-  var inventory = cycledReef(76, { light: "led", circ: "powerhead" });
-  var control = cycledReef(76, { light: "led", circ: "powerhead" });
+  var inventory = coralReadyReef(76, { light: "led", circ: "powerhead" });
+  var control = coralReadyReef(76, { light: "led", circ: "powerhead" });
   PA.dispatch(inventory, { type: "PURCHASE_CORAL", coral: "zoanthid" });
   inventory.water.par = control.water.par = 300;
   var biology = JSON.stringify(inventory.corals[0]);
@@ -571,7 +579,7 @@ group("inventory coral stays outside simulation and guidance");
 
 group("coral placement save migration");
 (function () {
-  var locked = cycledReef(77); PA.dispatch(locked, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "orange_red" });
+  var locked = coralReadyReef(77); PA.dispatch(locked, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "orange_red" });
   var exact = coralPlacement("sand", "sand:mound:21", [-0.25, 0.1, 0.8], [0, 1, 0], -0.4);
   lockCoral(locked, 0, exact);
   eq(locked.corals[0].variantId, "orange_red", "valid non-default variant persists through purchase and lock");
@@ -586,7 +594,7 @@ group("coral placement save migration");
   ok(repairedImport.log.some(function (entry) { return entry.type === "quarantine" && /coral variant/.test(entry.message); }),
     "invalid imported variant records a quarantine event");
 
-  var inventory = cycledReef(75); PA.dispatch(inventory, { type: "PURCHASE_CORAL", coral: "zoanthid" });
+  var inventory = coralReadyReef(75); PA.dispatch(inventory, { type: "PURCHASE_CORAL", coral: "zoanthid" });
   var restoredInventory = PA.sanitizeState(JSON.parse(JSON.stringify(inventory)));
   eq(restoredInventory.corals[0].placement, null,
     "explicit null remains inventory after restore");
@@ -611,7 +619,7 @@ group("coral polyp extension + growth chemistry");
 (function () {
   // PAR response: identical tanks differing only in light
   function extAt(light, circ, unstable) {
-    var s = cycledReef(80, { light: light, circ: circ });
+    var s = coralReadyReef(80, { light: light, circ: circ });
     PA.dispatch(s, { type: "PURCHASE_CORAL", coral: "zoanthid" });
     lockCoral(s);
     s.time.days = 0.5;
@@ -624,10 +632,10 @@ group("coral polyp extension + growth chemistry");
   gt(extAt("led", "powerhead", true).stress, extAt("led", "powerhead").stress, "unstable chemistry stresses coral");
 
   // Growth consumes reef chemistry: coral present vs absent (ATO cancels evaporation)
-  var withC = cycledReef(81, { light: "led", circ: "powerhead" });
+  var withC = coralReadyReef(81, { light: "led", circ: "powerhead" });
   PA.dispatch(withC, { type: "PURCHASE_CORAL", coral: "zoanthid" });
   lockCoral(withC);
-  var noC = cycledReef(81, { light: "led", circ: "powerhead" });
+  var noC = coralReadyReef(81, { light: "led", circ: "powerhead" });
   var g0 = withC.corals[0].growth, p0 = withC.corals[0].polyps;
   PA.stepDays(withC, 12); PA.stepDays(noC, 12);
   gt(withC.corals[0].growth, g0, "healthy coral grows over time");
@@ -638,7 +646,7 @@ group("coral polyp extension + growth chemistry");
   lt(withC.water.magnesium, noC.water.magnesium, "coral growth draws down magnesium");
 
   // a mature colony milestone is reachable under sustained good care
-  var m = cycledReef(82, { light: "led", circ: "powerhead" });
+  var m = coralReadyReef(82, { light: "led", circ: "powerhead" });
   PA.dispatch(m, { type: "PURCHASE_CORAL", coral: "zoanthid" });
   lockCoral(m);
   PA.stepDays(m, 55);
