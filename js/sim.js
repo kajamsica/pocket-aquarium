@@ -1421,10 +1421,15 @@
     var cd = DATA.CORALS[co.species];
     var hasPlacement = Object.prototype.hasOwnProperty.call(co, "placement");
     var placement = hasPlacement ? sanitizeCoralPlacement(co.placement) : legacyCoralPlacement(co);
+    var savedVariant = coralVariant(co.variantId), variantId = cd.defaultVariantId || null, variantKnown = !savedVariant;
+    for (var vi = 0; savedVariant && vi < (cd.variants || []).length; vi++) {
+      if (cd.variants[vi].id === savedVariant) { variantId = savedVariant; variantKnown = true; break; }
+    }
+    if (!variantKnown) log(state, "quarantine", "Replaced an invalid saved coral variant (" + co.species + ":" + savedVariant + ").");
     if (hasPlacement && co.placement !== null && !placement)
       log(state, "quarantine", "Ignored an invalid saved coral placement (" + co.species + ").");
     return {
-      id: num(co.id, state.nextId++), species: co.species, variantId: coralVariant(co.variantId), placement: placement,
+      id: num(co.id, state.nextId++), species: co.species, variantId: variantId, placement: placement,
       health: clamp(num(co.health, 0.9), 0, 1), tissue: clamp(num(co.tissue, 0.9), 0, 1),
       polyps: clamp(num(co.polyps, cd.startPolyps), 0, 5000), extension: clamp(num(co.extension, 0.4), 0, 1),
       growth: clamp(num(co.growth, 0.1), 0, 1), feedingReserve: clamp(num(co.feedingReserve, 0.4), 0, 1),

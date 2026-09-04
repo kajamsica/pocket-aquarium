@@ -579,9 +579,18 @@ group("coral placement save migration");
   eq(roundTrip.corals[0].variantId, "orange_red", "non-default variant survives serialize and sanitize");
   eq(JSON.stringify(roundTrip.corals[0].placement), JSON.stringify(exact), "locked placement round-trips exactly");
 
+  var imported = JSON.parse(JSON.stringify(locked)); imported.corals[0].variantId = "candidate_only";
+  var repairedImport = PA.sanitizeState(imported);
+  eq(repairedImport.corals[0].variantId, D.CORALS.zoanthid.defaultVariantId, "invalid imported variant falls back to the accepted default");
+  eq(PA.snapshotSummary(repairedImport).corals.length, 1, "repaired locked coral remains active with a renderable variant");
+  ok(repairedImport.log.some(function (entry) { return entry.type === "quarantine" && /coral variant/.test(entry.message); }),
+    "invalid imported variant records a quarantine event");
+
   var inventory = cycledReef(75); PA.dispatch(inventory, { type: "PURCHASE_CORAL", coral: "zoanthid" });
-  eq(PA.sanitizeState(JSON.parse(JSON.stringify(inventory))).corals[0].placement, null,
+  var restoredInventory = PA.sanitizeState(JSON.parse(JSON.stringify(inventory)));
+  eq(restoredInventory.corals[0].placement, null,
     "explicit null remains inventory after restore");
+  eq(restoredInventory.corals[0].variantId, D.CORALS.zoanthid.defaultVariantId, "missing variant restores to the accepted default");
 
   var legacy = JSON.parse(JSON.stringify(inventory)); delete legacy.corals[0].placement;
   legacy.corals[0].x = 0.25; legacy.corals[0].y = 0.75;
