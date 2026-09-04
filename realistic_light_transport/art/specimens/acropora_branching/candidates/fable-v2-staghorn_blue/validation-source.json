@@ -1,0 +1,514 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "retainedActions": [
+    "flow",
+    "retract",
+    "sway"
+  ],
+  "deformBones": 1,
+  "gates": [
+    "finite_vertices_and_weights",
+    "triangle_budget",
+    "reference_size",
+    "closed_parts_watertight_manifold",
+    "animated_clearance_bvh",
+    "closed_part_orientation_and_volume",
+    "clip_targets_move",
+    "clip_roles_resolve"
+  ],
+  "clips": {
+    "flow": {
+      "frameRange": [
+        1.0,
+        90.0
+      ],
+      "loop": true,
+      "metrics": {
+        "samples": 24,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.23661,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.67771,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.74409,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.67498,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.1744,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.38675,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.50154,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.77809,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.23067,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.62783,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.71429,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.71296,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.16765,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.3664,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.4786,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.775,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.20313,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.48784,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.60354,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.77284,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.23463,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.65869,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.73344,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.69069,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.16982,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.37283,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.48594,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.77614
+          }
+        },
+        "0.25": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.00339,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.80153,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.05589,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.12502,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0656,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.83117,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.29846,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.02194,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.00933,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.82582,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.08572,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.08704,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.07235,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.8235,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.3214,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.02475,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.03687,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.84975,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.19646,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0272,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.00539,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.81196,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.06656,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.10931,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.07018,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.82608,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.31406,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.02369
+          }
+        },
+        "0.50": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.23659,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.32229,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.74411,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.67498,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.1744,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.61325,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.50154,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.77834,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.23068,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.37217,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.71429,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.71296,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.16765,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.6336,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.4786,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.77524,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.20313,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.51216,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.60354,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.77288,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.23461,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.34131,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.73344,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.6907,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.16982,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.62717,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.48594,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.77671
+          }
+        },
+        "0.75": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.00343,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.19847,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.05591,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.12502,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0656,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.16883,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.29846,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.02138,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.00932,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.17418,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.08571,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.08704,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.07235,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.1765,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.3214,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.02497,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.03687,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.15015,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.19646,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.02701,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.00537,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.18804,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.06657,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.10931,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.07018,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.17392,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.31406,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.02379
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.06707417219877243,
+          -0.07679559290409088,
+          0.0
+        ],
+        "max": [
+          0.07585728913545609,
+          0.07340081036090851,
+          0.1317935734987259
+        ]
+      }
+    },
+    "retract": {
+      "frameRange": [
+        1.0,
+        60.0
+      ],
+      "loop": false,
+      "metrics": {
+        "samples": 16,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.0
+          }
+        },
+        "0.25": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.0
+          }
+        },
+        "0.50": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 1.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.18,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.0
+          }
+        },
+        "0.75": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.96793,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.17423,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.0
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.06728187948465347,
+          -0.07681052386760712,
+          0.0
+        ],
+        "max": [
+          0.07510759681463242,
+          0.07318947464227676,
+          0.13187697529792786
+        ]
+      }
+    },
+    "sway": {
+      "frameRange": [
+        1.0,
+        120.0
+      ],
+      "loop": true,
+      "metrics": {
+        "samples": 31,
+        "maxJointDegrees": 0.0,
+        "maxCumulativeDegrees": 0.0,
+        "minClearanceMeters": 1.0
+      },
+      "phases": {
+        "0.00": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.0
+          }
+        },
+        "0.25": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.58041,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.16461,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.5766,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.15219,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.42096,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.4738,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.33702,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.56434,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.20092,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.50516,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.27165,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.04598,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.08151,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.59903,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.33912,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.38686,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.42991
+          }
+        },
+        "0.50": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.12196,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.32099,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.12904,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.0933,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.42767,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.50402,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.21088,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.0
+          }
+        },
+        "0.75": {
+          "bones": {},
+          "shapeKeys": {
+            "PA_acropora_branching_Polyps_Br_00/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_00/lean": 0.42804,
+            "PA_acropora_branching_Polyps_Br_00/flutterA": 0.58068,
+            "PA_acropora_branching_Polyps_Br_00/flutterB": 0.16461,
+            "PA_acropora_branching_Polyps_Br_01/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_01/lean": 0.22901,
+            "PA_acropora_branching_Polyps_Br_01/flutterA": 0.57651,
+            "PA_acropora_branching_Polyps_Br_01/flutterB": 0.15219,
+            "PA_acropora_branching_Polyps_Br_02/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_02/flutterA": 0.47379,
+            "PA_acropora_branching_Polyps_Br_02/flutterB": 0.33702,
+            "PA_acropora_branching_Polyps_Br_03/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_03/lean": 0.4567,
+            "PA_acropora_branching_Polyps_Br_03/flutterA": 0.56423,
+            "PA_acropora_branching_Polyps_Br_03/flutterB": 0.20092,
+            "PA_acropora_branching_Polyps_Br_04/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_04/lean": 0.12233,
+            "PA_acropora_branching_Polyps_Br_04/flutterA": 0.50515,
+            "PA_acropora_branching_Polyps_Br_04/flutterB": 0.27165,
+            "PA_acropora_branching_Polyps_Br_05/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_05/flutterA": 0.08151,
+            "PA_acropora_branching_Polyps_Br_05/flutterB": 0.59826,
+            "PA_acropora_branching_Polyps_Br_leader/retract": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/lean": 0.0,
+            "PA_acropora_branching_Polyps_Br_leader/flutterA": 0.38686,
+            "PA_acropora_branching_Polyps_Br_leader/flutterB": 0.42991
+          }
+        }
+      },
+      "animatedBounds": {
+        "min": [
+          -0.06728187948465347,
+          -0.07683391869068146,
+          0.0
+        ],
+        "max": [
+          0.07560739666223526,
+          0.07358241826295853,
+          0.13187697529792786
+        ]
+      }
+    }
+  },
+  "sourceTriangles": 14960,
+  "restSizeMeters": 0.15000000596046448,
+  "restBounds": {
+    "min": [
+      -0.06728187948465347,
+      -0.07681052386760712,
+      0.0
+    ],
+    "max": [
+      0.07510759681463242,
+      0.07318947464227676,
+      0.13187697529792786
+    ]
+  }
+}

@@ -1,0 +1,1838 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "montipora",
+  "rig": "PA_montipora_Rig",
+  "root": "PA_montipora_Root",
+  "meshes": [
+    "PA_montipora_Skeleton",
+    "PA_montipora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_sheet",
+      "volumeFloor": 0.8
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_00_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_01_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_02_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_03_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_04_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_05_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_06_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_07_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_08_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_09_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_10_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_11_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_12_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_13_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_14_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_15_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_16_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_17",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_17_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_18",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_18_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_19",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_19_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_20_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_21",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_21_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_22",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_22_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_23",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_23_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_24",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_24_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_25",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_25_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_26_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_27",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_27_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_07"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_08"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_09"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_10"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_11"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_06"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_07"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_08"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_11"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_12"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_13"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_06"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_07"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_08"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_14"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_15"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_16"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_26"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_08"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_09"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_10"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_16"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_17",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_17"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_18",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_18"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_09"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_10"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_11"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_19",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_19"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_20"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_06"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_10"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_11"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_12"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_13"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_20"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_21",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_21"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_22",
+        "polyp_root"
+      ],
+      "label": "polyps_05_vs_22"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "label": "polyps_06_vs_07"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "label": "polyps_06_vs_12"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "label": "polyps_06_vs_13"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "label": "polyps_06_vs_14"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_22",
+        "polyp_root"
+      ],
+      "label": "polyps_06_vs_22"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_06",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_23",
+        "polyp_root"
+      ],
+      "label": "polyps_06_vs_23"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "label": "polyps_07_vs_08"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "label": "polyps_07_vs_14"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "label": "polyps_07_vs_15"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_25",
+        "polyp_root"
+      ],
+      "label": "polyps_07_vs_25"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_07",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "label": "polyps_07_vs_26"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "label": "polyps_08_vs_09"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "label": "polyps_08_vs_15"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "label": "polyps_08_vs_16"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "label": "polyps_08_vs_26"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_08",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_27",
+        "polyp_root"
+      ],
+      "label": "polyps_08_vs_27"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "label": "polyps_09_vs_10"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "label": "polyps_09_vs_16"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_17",
+        "polyp_root"
+      ],
+      "label": "polyps_09_vs_17"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_09",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_18",
+        "polyp_root"
+      ],
+      "label": "polyps_09_vs_18"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "label": "polyps_10_vs_11"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_18",
+        "polyp_root"
+      ],
+      "label": "polyps_10_vs_18"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_19",
+        "polyp_root"
+      ],
+      "label": "polyps_10_vs_19"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_10",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "label": "polyps_10_vs_20"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "label": "polyps_11_vs_12"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_19",
+        "polyp_root"
+      ],
+      "label": "polyps_11_vs_19"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "label": "polyps_11_vs_20"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_11",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_21",
+        "polyp_root"
+      ],
+      "label": "polyps_11_vs_21"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "label": "polyps_12_vs_13"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_21",
+        "polyp_root"
+      ],
+      "label": "polyps_12_vs_21"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_12",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_22",
+        "polyp_root"
+      ],
+      "label": "polyps_12_vs_22"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "label": "polyps_13_vs_14"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_22",
+        "polyp_root"
+      ],
+      "label": "polyps_13_vs_22"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_13",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_23",
+        "polyp_root"
+      ],
+      "label": "polyps_13_vs_23"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "label": "polyps_14_vs_15"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_23",
+        "polyp_root"
+      ],
+      "label": "polyps_14_vs_23"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_24",
+        "polyp_root"
+      ],
+      "label": "polyps_14_vs_24"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_14",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_25",
+        "polyp_root"
+      ],
+      "label": "polyps_14_vs_25"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_25",
+        "polyp_root"
+      ],
+      "label": "polyps_15_vs_25"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_15",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "label": "polyps_15_vs_26"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "label": "polyps_16_vs_26"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_16",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_27",
+        "polyp_root"
+      ],
+      "label": "polyps_16_vs_27"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_17",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_18",
+        "polyp_root"
+      ],
+      "label": "polyps_17_vs_18"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_19",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "label": "polyps_19_vs_20"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_20",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_21",
+        "polyp_root"
+      ],
+      "label": "polyps_20_vs_21"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_21",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_22",
+        "polyp_root"
+      ],
+      "label": "polyps_21_vs_22"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_24",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_25",
+        "polyp_root"
+      ],
+      "label": "polyps_24_vs_25"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_26",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_27",
+        "polyp_root"
+      ],
+      "label": "polyps_26_vs_27"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.15,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Pol_00",
+        "Pol_01",
+        "Pol_02",
+        "Pol_03",
+        "Pol_04",
+        "Pol_05",
+        "Pol_06",
+        "Pol_07",
+        "Pol_08",
+        "Pol_09",
+        "Pol_10",
+        "Pol_11",
+        "Pol_12",
+        "Pol_13",
+        "Pol_14",
+        "Pol_15",
+        "Pol_16",
+        "Pol_17",
+        "Pol_18",
+        "Pol_19",
+        "Pol_20",
+        "Pol_21",
+        "Pol_22",
+        "Pol_23",
+        "Pol_24",
+        "Pol_25",
+        "Pol_26",
+        "Pol_27"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Pol_00",
+        "Pol_01",
+        "Pol_02",
+        "Pol_03",
+        "Pol_04",
+        "Pol_05",
+        "Pol_06",
+        "Pol_07",
+        "Pol_08",
+        "Pol_09",
+        "Pol_10",
+        "Pol_11",
+        "Pol_12",
+        "Pol_13",
+        "Pol_14",
+        "Pol_15",
+        "Pol_16",
+        "Pol_17",
+        "Pol_18",
+        "Pol_19",
+        "Pol_20",
+        "Pol_21",
+        "Pol_22",
+        "Pol_23",
+        "Pol_24",
+        "Pol_25",
+        "Pol_26",
+        "Pol_27"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Pol_00",
+        "Pol_01",
+        "Pol_02",
+        "Pol_03",
+        "Pol_04",
+        "Pol_05",
+        "Pol_06",
+        "Pol_07",
+        "Pol_08",
+        "Pol_09",
+        "Pol_10",
+        "Pol_11",
+        "Pol_12",
+        "Pol_13",
+        "Pol_14",
+        "Pol_15",
+        "Pol_16",
+        "Pol_17",
+        "Pol_18",
+        "Pol_19",
+        "Pol_20",
+        "Pol_21",
+        "Pol_22",
+        "Pol_23",
+        "Pol_24",
+        "Pol_25",
+        "Pol_26",
+        "Pol_27"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 3,
+  "variantId": "encrusting",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.075,
+      -0.073142,
+      0.0
+    ],
+    "max": [
+      0.075,
+      0.073142,
+      0.022233
+    ]
+  },
+  "textures": [
+    "textures/tissue-albedo.png",
+    "textures/tissue-roughness.png",
+    "textures/tissue-normal.png",
+    "textures/skeleton-albedo.png",
+    "textures/skeleton-roughness.png",
+    "textures/skeleton-normal.png",
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png",
+    "textures/polyp-albedo.png",
+    "textures/polyp-roughness.png",
+    "textures/polyp-normal.png"
+  ],
+  "notes": {
+    "form": "encrusting",
+    "seed": 5,
+    "designExtentMeters": 0.15897861538264982,
+    "scale": 0.9435231250376728,
+    "polyps": 220,
+    "clusterBones": 28,
+    "pullMeters": 0.001601547577914288,
+    "polypLengthMeters": [
+      0.0017,
+      0.00245
+    ],
+    "triangles": 18160,
+    "clearancePairs": 127,
+    "tubercles": 90,
+    "sheetRadiusMeters": 0.07,
+    "polypAttempts": 429
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/montipora/candidates/fable-v1-encrusting/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/montipora/candidates/fable-v1-encrusting/renders/three-view.png",
+    "boundsMin": [
+      -0.07500000298023224,
+      -0.07314228266477585,
+      0.0
+    ],
+    "boundsMax": [
+      0.07500000298023224,
+      0.07314228266477585,
+      0.022233465686440468
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

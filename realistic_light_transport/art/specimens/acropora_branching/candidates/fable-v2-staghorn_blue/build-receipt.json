@@ -1,0 +1,54 @@
+{
+  "asset": "acropora_branching",
+  "variant": "staghorn_blue",
+  "candidateDir": "art/specimens/acropora_branching/candidates/fable-v2-staghorn_blue",
+  "startedAt": "2026-09-03T22:59:32.933Z",
+  "pid": 73633,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 4735,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 12716,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1678,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 1431,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 2178,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 1089,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 1027,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-03T22:59:57.791Z",
+  "status": "passed",
+  "failure": null
+}

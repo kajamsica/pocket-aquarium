@@ -1,0 +1,1192 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "montipora",
+  "rig": "PA_montipora_Rig",
+  "root": "PA_montipora_Root",
+  "meshes": [
+    "PA_montipora_Skeleton",
+    "PA_montipora_Polyps"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_rock",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_mound",
+      "volumeFloor": 0.85
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_finger_00",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_finger_01",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_finger_02",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_finger_03",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_finger_04",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_finger_05",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_fork_00",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_fork_01",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_fork_02",
+      "volumeFloor": 0.9
+    },
+    {
+      "object": "PA_montipora_Skeleton",
+      "group": "part_fork_04",
+      "volumeFloor": 0.9
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "finger_00_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "label": "finger_00_vs_finger_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "label": "finger_00_vs_finger_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "label": "finger_00_vs_finger_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "label": "finger_00_vs_finger_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "label": "finger_00_vs_finger_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_00",
+        "attach_fork_00"
+      ],
+      "label": "finger_00_vs_fork_00"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "label": "finger_00_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "finger_00_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "finger_00_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "finger_01_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "label": "finger_01_vs_finger_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "label": "finger_01_vs_finger_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "label": "finger_01_vs_finger_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "label": "finger_01_vs_finger_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "label": "finger_01_vs_fork_00"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01",
+        "attach_fork_01"
+      ],
+      "label": "finger_01_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "finger_01_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "finger_01_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "finger_02_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "label": "finger_02_vs_finger_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "label": "finger_02_vs_finger_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "label": "finger_02_vs_finger_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "label": "finger_02_vs_fork_00"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "label": "finger_02_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02",
+        "attach_fork_02"
+      ],
+      "label": "finger_02_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "finger_02_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "finger_03_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "label": "finger_03_vs_finger_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "label": "finger_03_vs_finger_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "label": "finger_03_vs_fork_00"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "label": "finger_03_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "finger_03_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_03"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "finger_03_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "finger_04_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "label": "finger_04_vs_finger_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "label": "finger_04_vs_fork_00"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "label": "finger_04_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "finger_04_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04",
+        "attach_fork_04"
+      ],
+      "label": "finger_04_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "finger_05_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "label": "finger_05_vs_fork_00"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "label": "finger_05_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "finger_05_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_finger_05"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "finger_05_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "fork_00_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "label": "fork_00_vs_fork_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "fork_00_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_00"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "fork_00_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "fork_01_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "label": "fork_01_vs_fork_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_01"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "fork_01_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "fork_02_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_02"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "label": "fork_02_vs_fork_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Skeleton",
+        "part_fork_04"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "part_rock"
+      ],
+      "label": "fork_04_vs_rock"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_00_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_01_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_02_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_03_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_04_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Skeleton",
+        "skeleton_all"
+      ],
+      "label": "polyps_05_vs_skeleton"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_01"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_00",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_00_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_02"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_01",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_01_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_03"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_02",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_02_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_04"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_03",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_03_vs_05"
+    },
+    {
+      "a": [
+        "PA_montipora_Polyps",
+        "cl_04",
+        "polyp_root"
+      ],
+      "b": [
+        "PA_montipora_Polyps",
+        "cl_05",
+        "polyp_root"
+      ],
+      "label": "polyps_04_vs_05"
+    }
+  ],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "xy",
+    "meters": 0.15,
+    "tolerance": 0.03,
+    "kind": "colony_width"
+  },
+  "clips": {
+    "sway": {
+      "loop": true,
+      "frames": 120,
+      "bones": [
+        "Pol_0_ax",
+        "Pol_0_s0",
+        "Pol_0_s1",
+        "Pol_0_s2",
+        "Pol_0_s3",
+        "Pol_1_ax",
+        "Pol_1_s0",
+        "Pol_1_s1",
+        "Pol_1_s2",
+        "Pol_1_s3",
+        "Pol_2_ax",
+        "Pol_2_s0",
+        "Pol_2_s1",
+        "Pol_2_s2",
+        "Pol_2_s3",
+        "Pol_3_ax",
+        "Pol_3_s0",
+        "Pol_3_s1",
+        "Pol_3_s2",
+        "Pol_3_s3",
+        "Pol_4_ax",
+        "Pol_4_s0",
+        "Pol_4_s1",
+        "Pol_4_s2",
+        "Pol_4_s3",
+        "Pol_5_ax",
+        "Pol_5_s0",
+        "Pol_5_s1",
+        "Pol_5_s2",
+        "Pol_5_s3"
+      ],
+      "shapeKeys": []
+    },
+    "flow": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Pol_0_ax",
+        "Pol_0_s0",
+        "Pol_0_s1",
+        "Pol_0_s2",
+        "Pol_0_s3",
+        "Pol_1_ax",
+        "Pol_1_s0",
+        "Pol_1_s1",
+        "Pol_1_s2",
+        "Pol_1_s3",
+        "Pol_2_ax",
+        "Pol_2_s0",
+        "Pol_2_s1",
+        "Pol_2_s2",
+        "Pol_2_s3",
+        "Pol_3_ax",
+        "Pol_3_s0",
+        "Pol_3_s1",
+        "Pol_3_s2",
+        "Pol_3_s3",
+        "Pol_4_ax",
+        "Pol_4_s0",
+        "Pol_4_s1",
+        "Pol_4_s2",
+        "Pol_4_s3",
+        "Pol_5_ax",
+        "Pol_5_s0",
+        "Pol_5_s1",
+        "Pol_5_s2",
+        "Pol_5_s3"
+      ],
+      "shapeKeys": []
+    },
+    "retract": {
+      "loop": false,
+      "frames": 72,
+      "bones": [
+        "Pol_0_ax",
+        "Pol_0_s0",
+        "Pol_0_s1",
+        "Pol_0_s2",
+        "Pol_0_s3",
+        "Pol_1_ax",
+        "Pol_1_s0",
+        "Pol_1_s1",
+        "Pol_1_s2",
+        "Pol_1_s3",
+        "Pol_2_ax",
+        "Pol_2_s0",
+        "Pol_2_s1",
+        "Pol_2_s2",
+        "Pol_2_s3",
+        "Pol_3_ax",
+        "Pol_3_s0",
+        "Pol_3_s1",
+        "Pol_3_s2",
+        "Pol_3_s3",
+        "Pol_4_ax",
+        "Pol_4_s0",
+        "Pol_4_s1",
+        "Pol_4_s2",
+        "Pol_4_s3",
+        "Pol_5_ax",
+        "Pol_5_s0",
+        "Pol_5_s1",
+        "Pol_5_s2",
+        "Pol_5_s3"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 3,
+  "variantId": "digitata_branching",
+  "previewAction": "flow",
+  "restBounds": {
+    "min": [
+      -0.068897,
+      -0.075,
+      0.0
+    ],
+    "max": [
+      0.068897,
+      0.0747,
+      0.088148
+    ]
+  },
+  "textures": [
+    "textures/tissue-albedo.png",
+    "textures/tissue-roughness.png",
+    "textures/tissue-normal.png",
+    "textures/base-albedo.png",
+    "textures/base-roughness.png",
+    "textures/base-normal.png",
+    "textures/rock-albedo.png",
+    "textures/rock-roughness.png",
+    "textures/rock-normal.png",
+    "textures/polyp-albedo.png",
+    "textures/polyp-roughness.png",
+    "textures/polyp-normal.png"
+  ],
+  "notes": {
+    "form": "digitata",
+    "seed": 21,
+    "designExtentMeters": 0.12599285093776946,
+    "scale": 1.1905437402483112,
+    "polyps": 246,
+    "clusterBones": 30,
+    "pullMeters": 0.002630251485177228,
+    "polypLengthMeters": [
+      0.00216,
+      0.00309
+    ],
+    "triangles": 13296,
+    "clearancePairs": 75,
+    "fingers": 6,
+    "forks": 4,
+    "gapsMm": {
+      "finger_00/finger_01": 21.87,
+      "finger_00/finger_02": 52.29,
+      "finger_00/finger_03": 36.52,
+      "finger_00/finger_04": 11.84,
+      "finger_00/finger_05": 37.71,
+      "finger_00/fork_00": 0.5,
+      "finger_00/fork_01": 30.73,
+      "finger_00/fork_02": 61.61,
+      "finger_00/fork_04": 17.33,
+      "finger_01/finger_02": 20.55,
+      "finger_01/finger_03": 40.5,
+      "finger_01/finger_04": 26.02,
+      "finger_01/finger_05": 21.09,
+      "finger_01/fork_00": 29.15,
+      "finger_01/fork_01": 1000000000000.0,
+      "finger_01/fork_02": 28.64,
+      "finger_01/fork_04": 35.14,
+      "finger_02/finger_03": 45.36,
+      "finger_02/finger_04": 45.27,
+      "finger_02/finger_05": 15.21,
+      "finger_02/fork_00": 59.76,
+      "finger_02/fork_01": 27.04,
+      "finger_02/fork_02": 1.83,
+      "finger_02/fork_04": 54.2,
+      "finger_03/finger_04": 12.2,
+      "finger_03/finger_05": 15.74,
+      "finger_03/fork_00": 43.68,
+      "finger_03/fork_01": 50.27,
+      "finger_03/fork_02": 52.85,
+      "finger_03/fork_04": 13.96,
+      "finger_04/finger_05": 21.46,
+      "finger_04/fork_00": 17.13,
+      "finger_04/fork_01": 36.52,
+      "finger_04/fork_02": 54.45,
+      "finger_04/fork_04": 0.97,
+      "finger_05/fork_00": 45.92,
+      "finger_05/fork_01": 30.84,
+      "finger_05/fork_02": 19.97,
+      "finger_05/fork_04": 30.94,
+      "fork_00/fork_01": 31.46,
+      "fork_00/fork_02": 64.7,
+      "fork_00/fork_04": 16.92,
+      "fork_01/fork_02": 28.76,
+      "fork_01/fork_04": 37.45,
+      "fork_02/fork_04": 57.43
+    },
+    "exits": {
+      "finger_00": 0.222,
+      "finger_01": 0.222,
+      "finger_02": 0.222,
+      "finger_03": 0.222,
+      "finger_04": 0.222,
+      "finger_05": 0.222,
+      "fork_00": 1.0,
+      "fork_01": 1.0,
+      "fork_02": 1.0,
+      "fork_04": 1.0
+    }
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fable-species-assets/realistic_light_transport/art/specimens/montipora/candidates/fable-v1-digitata_branching/renders/three-view.png",
+    "boundsMin": [
+      -0.06889667361974716,
+      -0.07500000298023224,
+      0.0
+    ],
+    "boundsMax": [
+      0.06889667361974716,
+      0.07469963282346725,
+      0.08814815431833267
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

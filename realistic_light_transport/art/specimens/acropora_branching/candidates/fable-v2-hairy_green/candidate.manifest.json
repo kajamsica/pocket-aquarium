@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "acropora_branching",
+  "variantId": "hairy_green",
+  "scientificName": "Acropora sp.",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.15,
+  "referenceSizeKind": "colony_width",
+  "origin": "base_center",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "a76e37885e0665a646721935fa8dc44c9cfdd035d34aee0de29e44d357b61840",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Acropora millepora style, green with pale-green polyps",
+  "bodyPlan": "branching_sps_coral",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-205469",
+      "title": "Acropora Oken, 1815 taxon record (Scleractinia: Acroporidae; type species Acropora muricata)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=205469",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "COTW-ACROPORA-MURICATA",
+      "title": "Acropora muricata species page: arborescent staghorn colonies, cylindrical tapering branches, tubular axial corallites, appressed tubular radial corallites",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-muricata/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "COTW-ACROPORA-HYACINTHUS",
+      "title": "Acropora hyacinthus species page: flat tables and plates of fine anastomosing branches with short upright branchlets and rosette radial corallites",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-hyacinthus/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "COTW-ACROPORA-HUMILIS",
+      "title": "Acropora humilis species page: digitate colonies of thick tapering branches with large dome shaped axial corallites and large tubular radial corallites",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-humilis/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "COTW-ACROPORA-MILLEPORA",
+      "title": "Acropora millepora species page: corymbose cushions of short uniform branchlets with scale-like radial corallites and long tentacles extended by day (the fleshy, hairy look of the trade form)",
+      "publisher": "Corals of the World (Veron et al.)",
+      "url": "http://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/acropora-millepora/",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC-SA 4.0 (text)"
+    },
+    {
+      "id": "AIMS-CORAL-FACT-SHEETS-ACROPORA",
+      "title": "Coral Fact Sheets: genus Acropora (growth forms, axial and radial corallites, polyp structure)",
+      "publisher": "Australian Institute of Marine Science",
+      "url": "https://www.aims.gov.au/research-topics/environmental-issues/coral-fact-sheets",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-ACROPORA",
+      "title": "Category:Acropora (openly licensed photographs; growth form and proportion study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Acropora",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "61d4080b93b55647adabfbd37ffbc0bdab73ee54f10b9c7ebd980561831b2921",
+  "sourceReferencesSha256": "e649d86eb0d45546952b035f646821d506da8e9ea3dafde45b2a99c27248ac3c",
+  "sourceBlendSha256": "e34388ddf23315baf0637ebab1b9c74ac1844cf2bb494485cd3a438abfc6179d",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:bb23fab49af6b7e9f6c937e395e6ec3fd2de2651b514c6ba5115e2a1a77825de",
+    "speciesBackend": "bb23fab49af6b7e9f6c937e395e6ec3fd2de2651b514c6ba5115e2a1a77825de",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "38a83d4b0776a5649f4cc7f795680b9795590f146e0021037fa5a2f00ce3c745"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "base_center"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/base-albedo.png",
+      "sha256": "75eb5c6e09eeb4c576182063d23f79d50b4092ff2e0792844972672d0528c011"
+    },
+    {
+      "path": "textures/base-normal.png",
+      "sha256": "d81ffdd931590008b1e38e77e3bab3236784371d1aefad6f569217c7047805a3"
+    },
+    {
+      "path": "textures/base-roughness.png",
+      "sha256": "7620f009eb76269b40fce694e7e46174e028ff66dad135c9939dad25f95eb433"
+    },
+    {
+      "path": "textures/polyp-albedo.png",
+      "sha256": "da85561d4d104e406afcfebd47d3c4cd8c9abe66aa0eddea086830053501ec96"
+    },
+    {
+      "path": "textures/polyp-normal.png",
+      "sha256": "b25eda3fb5c3b2232eaeb29f94b6ed9c529f6fb41a373a2c373912ecfbacdcf8"
+    },
+    {
+      "path": "textures/polyp-roughness.png",
+      "sha256": "df4b5402963188bd8242e6e2511fcd3cd0ee91f45009468cf1fb83d89b270d36"
+    },
+    {
+      "path": "textures/skeleton-albedo.png",
+      "sha256": "30999d0e2b6c1aba0a69a21db3f40158bb64695aa11b9ccfa01d60be5c48c669"
+    },
+    {
+      "path": "textures/skeleton-normal.png",
+      "sha256": "5246a59499f3f58c577d3be55e05004c1381b8a0abf2dbba52942610dc573769"
+    },
+    {
+      "path": "textures/skeleton-roughness.png",
+      "sha256": "e41b9ec569feedbe5d4929359dbe6c3042fe6eb4d357add886755c0b9117ad3d"
+    }
+  ],
+  "statistics": {
+    "triangles": 18120,
+    "materials": 3,
+    "bones": 1,
+    "nodes": 23,
+    "skins": 1,
+    "morphTargets": 72,
+    "clips": [
+      "flow",
+      "retract",
+      "sway"
+    ],
+    "vertices": {
+      "PA_acropora_branching_Skeleton": 890,
+      "PA_acropora_branching_Corallites": 3708,
+      "PA_acropora_branching_Polyps_Br_00": 420,
+      "PA_acropora_branching_Polyps_Br_01": 420,
+      "PA_acropora_branching_Polyps_Br_02": 420,
+      "PA_acropora_branching_Polyps_Br_03": 420,
+      "PA_acropora_branching_Polyps_Br_04": 420,
+      "PA_acropora_branching_Polyps_Br_05": 420,
+      "PA_acropora_branching_Polyps_Br_06": 420,
+      "PA_acropora_branching_Polyps_Br_07": 420,
+      "PA_acropora_branching_Polyps_Br_08": 420,
+      "PA_acropora_branching_Polyps_Br_09": 420,
+      "PA_acropora_branching_Polyps_Br_10": 420,
+      "PA_acropora_branching_Polyps_Br_11": 420,
+      "PA_acropora_branching_Polyps_Br_12": 420,
+      "PA_acropora_branching_Polyps_Br_13": 420,
+      "PA_acropora_branching_Polyps_Br_14": 420,
+      "PA_acropora_branching_Polyps_Br_15": 420,
+      "PA_acropora_branching_Polyps_Br_16": 420,
+      "PA_acropora_branching_Polyps_Br_17": 420
+    },
+    "runtimeBytes": 4173436
+  },
+  "clipRoles": {
+    "idle": "sway",
+    "locomotion": "flow",
+    "response": "retract"
+  },
+  "clipLoops": {
+    "flow": true,
+    "retract": false,
+    "sway": true
+  },
+  "restBounds": {
+    "min": [
+      -0.073808,
+      -0.075743,
+      -0.001188
+    ],
+    "max": [
+      0.073692,
+      0.074257,
+      0.07138
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

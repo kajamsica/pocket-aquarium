@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "flow": {
+      "durationSeconds": 3.0,
+      "targetedBones": [
+        "Pol_00",
+        "Pol_01",
+        "Pol_02",
+        "Pol_03",
+        "Pol_04",
+        "Pol_05",
+        "Pol_06",
+        "Pol_07",
+        "Pol_08",
+        "Pol_09",
+        "Pol_10",
+        "Pol_11",
+        "Pol_12",
+        "Pol_13",
+        "Pol_14",
+        "Pol_15",
+        "Pol_16",
+        "Pol_17",
+        "Pol_18",
+        "Pol_19",
+        "Pol_20",
+        "Pol_21",
+        "Pol_22",
+        "Pol_23",
+        "Pol_24",
+        "Pol_25",
+        "Pol_26",
+        "Pol_27"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "retract": {
+      "durationSeconds": 2.4000000953674316,
+      "targetedBones": [
+        "Pol_00",
+        "Pol_01",
+        "Pol_02",
+        "Pol_03",
+        "Pol_04",
+        "Pol_05",
+        "Pol_06",
+        "Pol_07",
+        "Pol_08",
+        "Pol_09",
+        "Pol_10",
+        "Pol_11",
+        "Pol_12",
+        "Pol_13",
+        "Pol_14",
+        "Pol_15",
+        "Pol_16",
+        "Pol_17",
+        "Pol_18",
+        "Pol_19",
+        "Pol_20",
+        "Pol_21",
+        "Pol_22",
+        "Pol_23",
+        "Pol_24",
+        "Pol_25",
+        "Pol_26",
+        "Pol_27"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "sway": {
+      "durationSeconds": 4.0,
+      "targetedBones": [
+        "Pol_00",
+        "Pol_01",
+        "Pol_02",
+        "Pol_03",
+        "Pol_04",
+        "Pol_05",
+        "Pol_06",
+        "Pol_07",
+        "Pol_08",
+        "Pol_09",
+        "Pol_10",
+        "Pol_11",
+        "Pol_12",
+        "Pol_13",
+        "Pol_14",
+        "Pol_15",
+        "Pol_16",
+        "Pol_17",
+        "Pol_18",
+        "Pol_19",
+        "Pol_20",
+        "Pol_21",
+        "Pol_22",
+        "Pol_23",
+        "Pol_24",
+        "Pol_25",
+        "Pol_26",
+        "Pol_27"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 15514,
+    "materials": 4,
+    "nodes": 34,
+    "skinJoints": 30,
+    "images": 12,
+    "meshes": [
+      "PA_montipora_Polyps",
+      "PA_montipora_Skeleton"
+    ]
+  },
+  "parity": {
+    "sway": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "flow": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "retract": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.07499998807907104,
+      -0.07022359222173691,
+      -1.063281129809468e-09
+    ],
+    "max": [
+      0.07499998807907104,
+      0.07022359222173691,
+      0.09541790187358856
+    ],
+    "deviationMeters": 2.2351741790771484e-08
+  }
+}
