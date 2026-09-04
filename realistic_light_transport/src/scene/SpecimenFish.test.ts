@@ -23,12 +23,15 @@ import {
   limitSpecimenFrameTurn,
   measureSpecimenCrowd,
   minimumSpecimenHardscapeClearance,
+  NORI_GRAZE_POSITION,
+  noriGrazeAction,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
   resolveVisualTravelDirection,
   resolveFoodAnimationDrive,
   resolveFoodPursuitMotion,
   sampleBurrowResidentTarget,
+  selectNoriGrazer,
   sampleSpecimenMotionRoute,
   specimenMotionProfile,
   specimenSurfaceProgress,
@@ -337,6 +340,33 @@ describe('cleaner-shrimp station intent', () => {
       near, station.servicePosition)).toBe(false)
     expect(shouldDispatchCleaningTreatment(approach, approach.cycleNumber - 1,
       near, station.servicePosition)).toBe(false)
+  })
+})
+
+describe('wall nori grazing intent', () => {
+  it('rotates eligible hungry tangs and leaves an already assigned pellet eater free', () => {
+    const specimens = projectPocketState(createPocketReefShowcase()).specimens
+    const tangs = specimens.filter(({ speciesId }) => speciesId.endsWith('_tang'))
+      .sort((a, b) => a.id - b.id)
+    expect(selectNoriGrazer(specimens, 0)).toBe(tangs[0].id)
+    expect(selectNoriGrazer(specimens, 1)).toBe(tangs[1].id)
+
+    const pellet = { id: 701, x: 0, y: 0, z: 0, sunk: false, ageDays: 0 }
+    const assignments = assignPelletTargets(tangs, [pellet], new Map(), .86)
+    const pelletEater = assignments.get(pellet.id)
+    expect(selectNoriGrazer(tangs.filter(({ id }) => id !== pelletEater), 0)).not.toBe(pelletEater)
+    expect(selectNoriGrazer(specimens.map((specimen) => ({ ...specimen,
+      hunger: specimen.speciesId.endsWith('_tang') ? 0 : 1 })), 0)).toBeNull()
+  })
+
+  it('emits one current-hour action only at physical mouth contact', () => {
+    const near = NORI_GRAZE_POSITION.clone()
+    const far = near.clone().add(new THREE.Vector3(.12, 0, 0))
+    expect(noriGrazeAction(far, 17, 7.4, false, 6)).toBeNull()
+    expect(noriGrazeAction(near, 17, 7.4, true, 6)).toBeNull()
+    expect(noriGrazeAction(near, 17, 7.4, false, 7)).toBeNull()
+    expect(noriGrazeAction(near, 17, 7.4, false, 6))
+      .toEqual({ type: 'CONSUME_NORI', eaterId: 17, biteCycle: 7 })
   })
 })
 

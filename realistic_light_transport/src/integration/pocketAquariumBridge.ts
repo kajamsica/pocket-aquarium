@@ -148,6 +148,7 @@ export interface PocketState {
   automation: {
     feeder: { enabled: boolean; intervalDays: number; portionsPerDispense: number; hopperPortions: number; capacity: number; nextFeedDay: number; status: string }
     ato: { reservoirL: number; capacityL: number }
+    nori: { remaining: number; capacity: number; lastBiteCycle: number }
   }
   water: PocketWater
   cycle: {
@@ -184,6 +185,7 @@ export interface CatalogSpecies {
   price: number
   layer: 'bottom' | 'mid' | 'top'
   maturityDays: number
+  diet: string
   profileRevision?: Readonly<{ package: number; biology: number; calibration: number; morphology: number; asset: string }>
 }
 
@@ -200,7 +202,7 @@ interface CatalogCoral {
 }
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number; form?: 'rectangular' | 'cylinder' }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
-interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
+interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number; noriCapacity?: number }
 interface Validation { ok: boolean; reasons: string[]; conflicts?: PocketPurchaseConflict[] }
 
 /** One structured compatibility risk from the root's `livestockConflicts`, grouped per existing
@@ -346,6 +348,13 @@ export interface PocketAtoView {
   readonly topping: boolean
 }
 
+export interface PocketNoriView {
+  readonly installed: boolean
+  readonly remaining: number
+  readonly capacity: number
+  readonly lastBiteCycle: number
+}
+
 export interface PocketGameView {
   readonly authority: typeof pocketShowcasePopulationAuthority
   readonly habitatName: string
@@ -377,6 +386,7 @@ export interface PocketGameView {
   readonly deadResidents: readonly PocketDeadResident[]
   readonly feeder: PocketFeederView
   readonly ato: PocketAtoView
+  readonly nori: PocketNoriView
   readonly nextAction: Readonly<{ title: string; detail: string }>
   readonly alerts: readonly string[]
   readonly optics: Readonly<{ localPpfd: number; mode: 'read_only' }>
@@ -805,6 +815,7 @@ const EQUIPMENT_COPY: Readonly<Record<string, Readonly<{ problem: string; effect
   'refugium:refugium': { problem: 'Nitrate lingers with only water changes to export it', effect: 'Macroalgae export nitrate (0.5) and grow pod habitat', resource: 'Harvest macroalgae; runs a refugium light' },
   'ato:ato': { problem: 'Evaporation concentrates salt between top-offs', effect: 'Auto-replaces evaporated freshwater to hold salinity', resource: 'Refill the finite freshwater reservoir' },
   'feeder:auto': { problem: 'Fish miss feedings when unattended', effect: 'Dispenses scheduled portions to the surface', resource: 'Refill the hopper; tune interval and portions' },
+  'algae_clip:clip': { problem: 'Herbivorous tangs need repeated grazing opportunities', effect: 'Holds a visible nori sheet on the tank wall', resource: 'Refill the clip when the sheet is eaten' },
 }
 
 /* Accepted specimen packages bundle only the GLB, so a Store card's still image is the authoring
@@ -1075,7 +1086,9 @@ export function projectPocketState(
   const light = runtime.DATA.equipLevel('light', state.equipment.light)
   const ato = runtime.DATA.equipLevel('ato', state.equipment.ato)
   const feederLevel = runtime.DATA.equipLevel('feeder', state.equipment.feeder)
+  const noriLevel = runtime.DATA.equipLevel('algae_clip', state.equipment.algae_clip)
   const automation = state.automation
+  const noriResource = automation.nori ?? { remaining: 0, capacity: 0, lastBiteCycle: -1 }
   const atoInstalled = Boolean(ato?.autoTopOff)
   const atoTopping = atoInstalled && automation.ato.reservoirL > 0 && state.water.levelL < tier.volumeL - 0.05
   const feeder: PocketFeederView = { installed: Boolean(feederLevel?.autoFeed), enabled: automation.feeder.enabled,
@@ -1083,6 +1096,9 @@ export function projectPocketState(
     hopperPortions: automation.feeder.hopperPortions, capacity: automation.feeder.capacity, status: automation.feeder.status }
   const atoView: PocketAtoView = { installed: atoInstalled, reservoirL: automation.ato.reservoirL,
     capacityL: automation.ato.capacityL, topping: atoTopping }
+  const nori: PocketNoriView = { installed: Boolean(noriLevel?.noriCapacity),
+    remaining: noriResource.remaining, capacity: noriResource.capacity,
+    lastBiteCycle: noriResource.lastBiteCycle }
   const living = state.livestock.filter((animal) => animal.alive !== false)
   const fish = living.filter((animal) => animal.kind === 'fish')
   const corals = state.corals
@@ -1212,7 +1228,7 @@ export function projectPocketState(
     selection,
     clutches: state.clutches.map(({ id, species, stage, ageDays }) => ({ id, speciesId: species, stage, ageDays })),
     storeOffers: offers, careRecommendations: recommendations, deadResidents,
-    feeder, ato: atoView,
+    feeder, ato: atoView, nori,
     nextAction: { title: objective.title, detail: objective.detail }, alerts: [],
     optics: { localPpfd: reefSnapshot.lightField.localPpfd, mode: 'read_only' }, reefSnapshot }
 }

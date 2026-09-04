@@ -100,18 +100,20 @@
       skimmer: equipLevel("skimmer", e.skimmer) || DATA.EQUIPMENT.skimmer.levels[0],
       refugium: equipLevel("refugium", e.refugium) || DATA.EQUIPMENT.refugium.levels[0],
       ato: equipLevel("ato", e.ato) || DATA.EQUIPMENT.ato.levels[0],
-      feeder: equipLevel("feeder", e.feeder) || DATA.EQUIPMENT.feeder.levels[0]
+      feeder: equipLevel("feeder", e.feeder) || DATA.EQUIPMENT.feeder.levels[0],
+      algaeClip: equipLevel("algae_clip", e.algae_clip) || DATA.EQUIPMENT.algae_clip.levels[0]
     };
   }
 
-  /* Compact automation state for installed physical equipment (one object, no
-     generic scheduler framework). Only the auto feeder and ATO live here. */
-  var FEEDER_REFILL_COST = 8;         // tank credits to top up the hopper
+  /* Compact resource state for installed physical equipment (one object, no
+     generic scheduler framework). */
+  var FEEDER_REFILL_COST = 8, NORI_REFILL_COST = 6;
   var MIN_FEED_INTERVAL = 0.25;       // guards nextFeedDay from ever stalling
   function freshAutomation() {
     return {
       feeder: { enabled: false, intervalDays: 1, portionsPerDispense: 1, hopperPortions: 0, capacity: 0, nextFeedDay: 0, status: "idle" },
-      ato: { reservoirL: 0, capacityL: 0 }
+      ato: { reservoirL: 0, capacityL: 0 },
+      nori: { remaining: 0, capacity: 0, lastBiteCycle: -1 }
     };
   }
   /* Mirror installed-equipment capacities into automation state. On a fresh install
@@ -119,15 +121,18 @@
      immediately; refills are needed only after it runs down. */
   function syncAutomationCapacity(state, freshInstall) {
     var a = (state.automation = state.automation || freshAutomation());
+    a.nori = a.nori || freshAutomation().nori;
     var eq = EQ(state);
     a.feeder.capacity = eq.feeder.hopperCapacity || 0;
     a.ato.capacityL = eq.ato.reservoirCapacityL || 0;
+    a.nori.capacity = eq.algaeClip.noriCapacity || 0;
     if (freshInstall) {
       if (eq.feeder.autoFeed) a.feeder.hopperPortions = a.feeder.capacity;
       if (eq.ato.autoTopOff) a.ato.reservoirL = a.ato.capacityL;
     }
     a.feeder.hopperPortions = clamp(a.feeder.hopperPortions, 0, a.feeder.capacity);
     a.ato.reservoirL = clamp(a.ato.reservoirL, 0, a.ato.capacityL);
+    a.nori.remaining = clamp(a.nori.remaining, 0, a.nori.capacity);
   }
   function isReef(state) { return state.habitat === "reef"; }
 
@@ -157,7 +162,7 @@
       speed: 1, lastSpeed: 1,
       credits: (credits == null ? 120 : credits), xp: 0,
       tier: "nano20",
-      equipment: { filter: "sponge", heater: "none", circulation: "none", light: "basic", skimmer: "none", refugium: "none", ato: "none", feeder: "none" },
+      equipment: { filter: "sponge", heater: "none", circulation: "none", light: "basic", skimmer: "none", refugium: "none", ato: "none", feeder: "none", algae_clip: "none" },
       automation: freshAutomation(),
       water: emptyWater(),
       cycle: { stage: "Setup", aob: 0.02, nob: 0.01, ammoniaSource: false, inoculated: false, lifeSupport: false, filled: false, validationDays: 0 },
@@ -835,6 +840,7 @@
 
       case ACT.SET_FEEDER: doSetFeeder(state, action); break;
       case ACT.REFILL_FEEDER: doRefillFeeder(state); break;
+      case ACT.REFILL_NORI: doRefillNori(state); break;
       case ACT.REFILL_RESERVOIR: doRefillReservoir(state); break;
 
       case ACT.PURCHASE_EQUIPMENT: doBuyEquipment(state, action.category, action.levelId); break;
@@ -849,6 +855,7 @@
       case "FEED_AT": doFeed(state, action.x, action.y); break; // FEED_AT is the renderer's pointer-feed action
       case ACT.CONSUME_FOOD: doConsumeFood(state, action.foodId, action.eaterId); break;
       case CLEAN_PARASITES: doCleanParasites(state, action.id, action.cycleNumber); break;
+      case ACT.CONSUME_NORI: doConsumeNori(state, action.eaterId, action.biteCycle); break;
       case ACT.SELECT_ENTITY: state.selection = (action.id == null) ? null : { entityType: action.entityType || "livestock", id: action.id }; break;
       case ACT.REMOVE_DEAD: doRemoveDead(state, action.id); break;
       case ACT.RENAME_LIVESTOCK: doRenameLivestock(state, action.id, action.name); break;
@@ -932,6 +939,18 @@
     log(state, "feeder", "Refilled the feeder hopper to " + f.capacity + " portions (-" + FEEDER_REFILL_COST + "c).");
     return true;
   }
+  function doRefillNori(state) {
+    var eq = EQ(state), automation = state.automation = state.automation || freshAutomation();
+    var nori = automation.nori = automation.nori || freshAutomation().nori;
+    if (!eq.algaeClip.noriCapacity) { log(state, "feed", "Install a wall algae clip before adding nori."); return false; }
+    nori.capacity = eq.algaeClip.noriCapacity;
+    if (nori.remaining >= nori.capacity) { log(state, "feed", "The algae clip already has a full nori sheet."); return false; }
+    if (state.credits < NORI_REFILL_COST) { log(state, "store", "Not enough credits for nori (need " + NORI_REFILL_COST + ")."); return false; }
+    state.credits -= NORI_REFILL_COST;
+    nori.remaining = nori.capacity;
+    log(state, "feed", "Clipped in a fresh nori sheet (-" + NORI_REFILL_COST + "c).");
+    return true;
+  }
   /* Refill the finite freshwater ATO reservoir. Freshwater is free (like a manual
      top-off); the point is the reservoir is finite and must be replenished. */
   function doRefillReservoir(state) {
@@ -964,7 +983,8 @@
     skimmer: ["nitrate", "phosphate"],
     refugium: ["nitrate", "phosphate"],
     ato: [],
-    feeder: []
+    feeder: [],
+    algae_clip: []
   };
   /* An install changes the water immediately, so the sample taken before it no longer describes
      the tank. The measured values are preserved — the player still sees what they read — but the
@@ -992,7 +1012,8 @@
     if (!v.ok) { log(state, "store", "Cannot buy equipment: " + v.reasons.join(" ")); return false; }
     var lvl = equipLevel(category, levelId);
     state.credits -= lvl.price; state.equipment[category] = levelId;
-    if (category === "feeder" || category === "ato") syncAutomationCapacity(state, true);
+    if (category === "feeder" || category === "ato" || category === "algae_clip")
+      syncAutomationCapacity(state, true);
     // Runs only past the validation gate above, so a rejected or repurchase action never
     // invalidates a reading.
     var stale = invalidateEquipmentReadings(state, category);
@@ -1123,6 +1144,21 @@
     target.parasiteLoad = Math.max(0, before - 0.25);
     cleaner.lastParasiteCleaningCycle = cycleNumber;
     log(state, "care", residentLabel(state, cleaner) + " treated " + residentLabel(state, target) + " for parasites.");
+    return true;
+  }
+  function doConsumeNori(state, eaterId, biteCycle) {
+    if (num(state.speed, 0) <= 0 || typeof biteCycle !== "number" || !isFinite(biteCycle) ||
+        biteCycle < 0 || Math.floor(biteCycle) !== biteCycle || biteCycle !== Math.floor(state.time.days * 24)) return false;
+    var nori = state.automation && state.automation.nori, eater = null, i;
+    if (!nori || nori.remaining <= 0 || biteCycle <= num(nori.lastBiteCycle, -1)) return false;
+    for (i = 0; i < state.livestock.length; i++) if (state.livestock[i].id === eaterId) { eater = state.livestock[i]; break; }
+    var sp = eater && DATA.resolveSpecies(state, eater.species);
+    if (!eater || eater.alive === false || eater.hunger <= 0.05 || !sp || sp.kind !== "fish" ||
+        sp.diet !== "herbivore" || !/_tang$/.test(sp.id)) return false;
+    eater.hunger = clamp(eater.hunger - Math.min(0.22, sp.mealSize * 0.3), 0, 1.2);
+    eater.lastFedDay = state.time.days;
+    nori.remaining = Math.max(0, nori.remaining - 1);
+    nori.lastBiteCycle = biteCycle;
     return true;
   }
   function doConsumeFood(state, foodId, eaterId) {
@@ -1297,7 +1333,7 @@
         if (equipLevel(cat, raw.equipment[cat])) base.equipment[cat] = raw.equipment[cat];
       }
     }
-    // automation: one compact object for the auto feeder + finite ATO reservoir.
+    // automation: one compact object for feeder, ATO, and wall-clip resources.
     // Capacities always follow the installed equipment; contents are clamped to them.
     base.automation = freshAutomation();
     var rawAuto = raw.automation;
@@ -1313,6 +1349,14 @@
       }
       if (rawAuto.ato && typeof rawAuto.ato === "object") {
         base.automation.ato.reservoirL = clamp(num(rawAuto.ato.reservoirL, 0), 0, 1e4);
+      }
+      if (rawAuto.nori && typeof rawAuto.nori === "object") {
+        base.automation.nori.remaining = clamp(num(rawAuto.nori.remaining, 0), 0, 1e4);
+        base.automation.nori.lastBiteCycle = clamp(
+          Math.floor(num(rawAuto.nori.lastBiteCycle, -1)),
+          -1,
+          Math.floor(base.time.days * 24)
+        );
       }
       syncAutomationCapacity(base, false);
     } else {

@@ -331,7 +331,7 @@ function AquariumApp() {
       <FeedingProvider value={feeding}>
         {/* Root `view.selection` stays the single selection authority: the tank marks whichever
           * resident it names, whether the tank or the Residents roster made that selection. */}
-        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}
+        <SpecimenRosterProvider specimens={view.specimens} nori={view.nori} dispatch={dispatch}
           selectedSpecimenId={view.selection?.entityType === 'livestock' ? view.selection.id : null}
           onHoverSpecimen={setHoveredSpecimen}>
           <ReefScene

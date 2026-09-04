@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode, 
 import * as THREE from 'three'
 
 import type { ReefSnapshot } from '../contracts'
-import type { PocketAction, PocketSpecimen } from '../integration/pocketAquariumBridge'
+import type { PocketAction, PocketNoriView, PocketSpecimen } from '../integration/pocketAquariumBridge'
 import { sampleFlowField } from '../sim/flowField'
 import type { MorphologyProfileV1 } from '../specimens/specimenProfile'
 import { evaluateMorphology } from '../workbench/geometry/evaluateMorphology'
@@ -69,8 +69,11 @@ export interface SpecimenHover {
   readonly y: number
 }
 const CLEANING_CLIENT_OFFSET = new THREE.Vector3(.24, .1, .18)
+export const NORI_GRAZE_POSITION = new THREE.Vector3(1.65, -.28, -1.06)
+const EMPTY_NORI: PocketNoriView = { installed: false, remaining: 0, capacity: 0, lastBiteCycle: -1 }
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
+  readonly nori?: PocketNoriView
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
   /** Root `view.selection` is the only selection authority; this is that answer, not a second store. */
@@ -107,17 +110,18 @@ export function createAcceptedShowcaseCatalog(): AcceptedShowcaseCatalog {
   }
 }
 
-export function SpecimenRosterProvider({ specimens, morphologyOverride, dispatch,
+export function SpecimenRosterProvider({ specimens, nori, morphologyOverride, dispatch,
   selectedSpecimenId, onHoverSpecimen, children }: {
   readonly specimens: readonly PocketSpecimen[]
+  readonly nori?: PocketNoriView
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
   readonly selectedSpecimenId?: number | null
   readonly onHoverSpecimen?: (hover: SpecimenHover | null) => void
   readonly children: ReactNode
 }) {
-  const value = useMemo(() => ({ specimens, morphologyOverride, dispatch, selectedSpecimenId, onHoverSpecimen }),
-    [dispatch, morphologyOverride, onHoverSpecimen, selectedSpecimenId, specimens])
+  const value = useMemo(() => ({ specimens, nori, morphologyOverride, dispatch, selectedSpecimenId, onHoverSpecimen }),
+    [dispatch, morphologyOverride, nori, onHoverSpecimen, selectedSpecimenId, specimens])
   return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
 }
 
@@ -528,6 +532,22 @@ export function limitSpecimenFrameTurn(current: number, target: number,
 type SpeciesSkins = Readonly<Record<'watchman_goby', THREE.Texture>>
 type MouthPositions = Map<number, THREE.Vector3>
 type FoodAssignments = ReadonlyMap<number, number>
+
+export function selectNoriGrazer(specimens: readonly PocketSpecimen[], biteCycle: number) {
+  const eligible = specimens.filter((specimen) => specimen.alive && specimen.kind === 'fish' &&
+    specimen.hunger > .05 && specimen.runtimeProfile.diet === 'herbivore' && specimen.speciesId.endsWith('_tang'))
+    .sort((a, b) => a.id - b.id)
+  return eligible.length ? eligible[Math.max(0, Math.floor(biteCycle)) % eligible.length].id : null
+}
+
+export function noriGrazeAction(mouth: ScenePoint | undefined, clientId: number | null,
+  elapsedHours: number, paused: boolean, lastBiteCycle: number): PocketAction | null {
+  const biteCycle = Math.floor(elapsedHours)
+  if (!mouth || clientId === null || paused || !Number.isFinite(elapsedHours) || biteCycle <= lastBiteCycle) return null
+  const distance = Math.hypot(mouth.x - NORI_GRAZE_POSITION.x,
+    mouth.y - NORI_GRAZE_POSITION.y, mouth.z - NORI_GRAZE_POSITION.z)
+  return distance <= FOOD_CONTACT_RADIUS ? { type: 'CONSUME_NORI', eaterId: clientId, biteCycle } : null
+}
 
 export type ProceduralSpecimenFallback = 'watchman_goby' | 'pistol_shrimp' | 'epaulette_shark'
 
@@ -1046,6 +1066,41 @@ function FoodContactDriver({ food, specimens, mouths, assignments, paused, consu
   return <group name="root-food-contact-driver" userData={{ contactDriver: 'root-food-contact-v1' }} />
 }
 
+function NoriContactDriver({ snapshot, nori, clientId, mouths, dispatch }: {
+  readonly snapshot: ReefSnapshot
+  readonly nori: PocketNoriView
+  readonly clientId: number | null
+  readonly mouths: MouthPositions
+  readonly dispatch?: (action: PocketAction) => void
+}) {
+  const sentCycle = useRef(-1)
+  useFrame(() => {
+    if (!nori.installed || nori.remaining <= 0) return
+    const lastCycle = Math.max(sentCycle.current, nori.lastBiteCycle)
+    const action = noriGrazeAction(clientId === null ? undefined : mouths.get(clientId), clientId,
+      snapshot.clock.elapsedHours, snapshot.clock.paused, lastCycle)
+    if (!action) return
+    sentCycle.current = Math.floor(snapshot.clock.elapsedHours)
+    dispatch?.(action)
+  }, FOOD_CONTACT_FRAME_PRIORITY)
+  return <group name="root-nori-contact-driver" userData={{ contactDriver: 'root-nori-contact-v1' }} />
+}
+
+function NoriClipHardware({ nori }: { readonly nori: PocketNoriView }) {
+  if (!nori.installed) return null
+  const ratio = nori.capacity > 0 ? THREE.MathUtils.clamp(nori.remaining / nori.capacity, 0, 1) : 0
+  return <group name="wall-algae-clip" position={NORI_GRAZE_POSITION} userData={{ remainingNori: nori.remaining }}>
+    <mesh name="nori-clip" position={[0, .27, -.025]} raycast={MARKER_NO_RAYCAST}>
+      <boxGeometry args={[.16, .1, .06]} /><meshStandardMaterial color="#272b2b" roughness={.58} />
+    </mesh>
+    {nori.remaining > 0 ? <mesh name="nori-sheet" scale={[1, Math.max(.08, ratio), 1]}
+      raycast={MARKER_NO_RAYCAST}>
+      <planeGeometry args={[.42, .48]} />
+      <meshStandardMaterial color="#416f32" roughness={.82} side={THREE.DoubleSide} />
+    </mesh> : null}
+  </group>
+}
+
 /** Dev-only physical feed-path trace on `window.__PA_FEED_TRACE__`, written only in a Vite dev
  *  build opened with `?feedDebug=1`. `import.meta.env.DEV` folds to `false` in the production
  *  bundle, so every guarded write below is eliminated from shipped output. */
@@ -1078,7 +1133,7 @@ const publishFeedTrace = () => {
   node.textContent = JSON.stringify(feedTraceStore())
 }
 
-function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, assignments, mouths, positions, cleaningIntent, dispatch, geometry, skins, morphologyOverride }: {
+function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, assignments, mouths, positions, cleaningIntent, noriClientId, dispatch, geometry, skins, morphologyOverride }: {
   readonly specimen: PocketSpecimen
   readonly snapshot: ReefSnapshot
   readonly waterSurfaceY: number
@@ -1088,6 +1143,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   readonly mouths: MouthPositions
   readonly positions: SpecimenPositions
   readonly cleaningIntent: RefObject<CleaningVisitIntent | null>
+  readonly noriClientId: number | null
   readonly dispatch?: (action: PocketAction) => void
   readonly geometry: SpecimenGeometry
   readonly skins: SpeciesSkins
@@ -1203,6 +1259,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const visit = cleaningIntent.current?.clientId === specimen.id ? cleaningIntent.current : null
     const cleaningTarget = reachableFood ? null : visit
     const targetPosition = reachableFood ?? cleaningTarget?.targetPosition ?? null
+    const noriTarget = !targetFood && noriClientId === specimen.id ? NORI_GRAZE_POSITION : null
+    const activeTarget = targetPosition ?? noriTarget
 
     if (surfaceBound && surfaceCircuit) {
       motion.previousPosition.copy(motion.position)
@@ -1264,7 +1322,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     if (diamondGoby) {
       diamondGobyMode = sampleDiamondGobyHabitatTarget(specimen.id + motion.roamIndex, now, interactionTarget)
       sifting = diamondGobyMode === 'sand_sift'
-      if (!targetPosition && now >= motion.nextRoamAt) {
+      if (!activeTarget && now >= motion.nextRoamAt) {
         const targetDistanceSq = motion.position.distanceToSquared(interactionTarget)
         const previousDistanceSq = motion.previousPosition.distanceToSquared(interactionTarget)
         motion.nextRoamAt = now + 1.5
@@ -1280,19 +1338,19 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
         }
       }
     }
-    const habitatBenthic = benthic && (Boolean(targetPosition) || diamondGobyMode !== 'rock_excursion')
+    const habitatBenthic = benthic && (Boolean(activeTarget) || diamondGobyMode !== 'rock_excursion')
 
-    if (!targetPosition && diamondGobyMode) {
+    if (!activeTarget && diamondGobyMode) {
       motion.roamTarget.copy(interactionTarget)
       clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius,
         habitatBenthic, clearance, waterSurfaceY)
-    } else if (!targetPosition && interactionSite) {
+    } else if (!activeTarget && interactionSite) {
       motion.roamTarget.copy(interactionTarget)
       const sandLevel = motion.roamTarget.y
       resolveReefHardscape(motion.roamTarget, bodyRadius, benthic)
       motion.roamTarget.y = sandLevel
       clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
-    } else if (!targetPosition && (now >= motion.nextRoamAt || motion.position.distanceToSquared(motion.roamTarget) < .04)) {
+    } else if (!activeTarget && (now >= motion.nextRoamAt || motion.position.distanceToSquared(motion.roamTarget) < .04)) {
       const index = motion.roamIndex
       // Same neighbor measurement the showcase route uses for its crowd decisions: under
       // pressure the next roam target is offset down the away vector, so a crowded resident
@@ -1310,14 +1368,14 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
 
     motion.previousForward.copy(motion.forward)
-    if (targetPosition) {
-      // Aim the authored +X snout at the pellet, then steer the root toward the point
+    if (activeTarget) {
+      // Aim the authored +X snout at the food target, then steer the root toward the point
       // that places the mouth anchor on it. This preserves renderer-observed contact.
       // A bottom resident is clamped to the sand, so chasing a still-falling portion's live
       // height burns pursuit authority on an unreachable climb; preposition under its lateral
       // route instead and take the real height once it has settled.
-      motion.desired.set(targetPosition.x,
-        benthic && reachableFood && !reachableFood.sunk ? rootY : targetPosition.y, targetPosition.z)
+      motion.desired.set(activeTarget.x,
+        benthic && reachableFood && !reachableFood.sunk ? rootY : activeTarget.y, activeTarget.z)
       motion.desiredDirection.copy(motion.desired).sub(motion.position)
       if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
       else motion.desiredDirection.copy(motion.forward)
@@ -1329,13 +1387,15 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
 
     const arrivalDistance = motion.desired.length()
-    const pursuitMotion = resolveFoodPursuitMotion(profile, Boolean(targetPosition))
-    const maximumSpeed = targetPosition ? pursuitMotion.maximumSpeed * (cleaningTarget ?
+    const pursuitMotion = resolveFoodPursuitMotion(profile, Boolean(activeTarget))
+    const maximumSpeed = activeTarget ? pursuitMotion.maximumSpeed * (cleaningTarget ?
       cleaningVisitPace(cleaningTarget, mouthPosition) : 1) : profile.cruiseSpeed *
       fishPaceMultiplier(habitatPolicy!, specimen.id, now)
     let desiredSpeed = maximumSpeed * Math.min(1, Math.sqrt(arrivalDistance / profile.arrivalRadius))
-    const mouthDistance = targetPosition ? motion.position.distanceTo(targetPosition) - mouthLead : 0
-    if (reachableFood && mouthDistance > FOOD_CONTACT_RADIUS * .55) desiredSpeed = Math.max(desiredSpeed, .065)
+    const mouthDistance = activeTarget ? motion.position.distanceTo(activeTarget) - mouthLead : 0
+    if ((reachableFood || noriTarget) && mouthDistance > FOOD_CONTACT_RADIUS * .55) {
+      desiredSpeed = Math.max(desiredSpeed, .065)
+    }
     // Reuse the shared crowd separation the accepted showcase population already runs, so
     // authoritative residents pass one another instead of interpenetrating. Only the yaw of
     // the desired direction comes from it (`steerSpecimenHeading` reads the route heading as
@@ -1355,8 +1415,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     // parks a benthic eater in orbit, so fade it out over the final approach; the hardscape and
     // tank projections below remain the authoritative collision guard.
     motion.desiredDirection.addScaledVector(motion.avoidance,
-      targetPosition ? .92 * Math.min(1, Math.max(mouthDistance, 0) / profile.arrivalRadius) : 1.18)
-    if (habitatBenthic && !targetPosition) motion.desiredDirection.y *= .16
+      activeTarget ? .92 * Math.min(1, Math.max(mouthDistance, 0) / profile.arrivalRadius) : 1.18)
+    if (habitatBenthic && !activeTarget) motion.desiredDirection.y *= .16
     if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
     else motion.desiredDirection.copy(motion.forward)
     if (riggedAsset?.category === 'fish') {
@@ -1383,7 +1443,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
     motion.velocity.add(motion.correction)
     if (motion.velocity.lengthSq() > maximumSpeed * maximumSpeed) motion.velocity.setLength(maximumSpeed)
-    if (habitatBenthic && !targetPosition) motion.velocity.y *= Math.exp(-step * 8)
+    if (habitatBenthic && !activeTarget) motion.velocity.y *= Math.exp(-step * 8)
     if (motion.velocity.lengthSq() > MOTION_HEADING_SPEED_EPSILON * MOTION_HEADING_SPEED_EPSILON) {
       motion.forward.copy(motion.velocity).normalize()
     }
@@ -1441,7 +1501,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       estimatedMouthDistance, now)
     const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 +
       turnAngle / Math.max(pursuitMotion.turnRate * step, .001) * .16, 0, .3)
-    const feedDrive = responsePulse || (sifting && !reachableFood) ? 1 : reachableFood
+    const feedDrive = responsePulse || (sifting && !activeTarget) ? 1 : reachableFood || noriTarget
       ? resolveFoodAnimationDrive(true, false, normalizedSpeed)
       : motionDrive
     forage.current += (THREE.MathUtils.clamp(feedDrive, 0, 1) - forage.current) * (1 - Math.exp(-step * 4.5))
@@ -1534,9 +1594,10 @@ export function resolveSpecimenPopulations(roster: readonly PocketSpecimen[]) {
   }
 }
 
-function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flowField, consume, roster, positions, morphologyOverride, dispatch }: SpecimenFishProps & {
+function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flowField, consume, roster, positions, nori, morphologyOverride, dispatch }: SpecimenFishProps & {
   readonly roster: readonly PocketSpecimen[]
   readonly positions: SpecimenPositions
+  readonly nori: PocketNoriView
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
 }) {
@@ -1548,6 +1609,7 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
   }), [gobySource])
   useEffect(() => () => Object.values(skins).forEach((skin) => skin.dispose()), [skins])
   const assignments = assignPelletTargets(roster, pellets, mouths, waterSurfaceY)
+  const feedingResidents = new Set(assignments.values())
   const cleaner = roster.find((specimen) => specimen.speciesId === 'cleaner_shrimp')
   const station = useMemo(() => cleaner ? cleaningStation(cleaner.id) : null, [cleaner?.id])
   const activeStation = useMemo<CleaningStation | null>(() => station ? {
@@ -1570,7 +1632,6 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
     activeStation.approachPosition.copy(station.approachPosition).add(stationOffset)
     activeStation.servicePosition.copy(station.servicePosition).add(stationOffset)
     activeStation.departurePosition.copy(station.departurePosition).add(stationOffset)
-    const feedingResidents = new Set(assignments.values())
     const animals = roster.flatMap((resident) => {
       const entry = positions.get(resident.id)
       return entry ? [{ id: resident.id, speciesId: resident.speciesId, isFish: resident.kind === 'fish',
@@ -1586,20 +1647,27 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
       dispatch?.({ type: 'CLEAN_PARASITES', id: intent.clientId, cycleNumber: intent.cycleNumber })
     }
   }, FISH_MOTION_FRAME_PRIORITY - 1)
+  const biteCycle = Math.floor(snapshot.clock.elapsedHours)
+  const noriClientId = nori.installed && nori.remaining > 0 && !snapshot.clock.paused &&
+    nori.lastBiteCycle < biteCycle
+    ? selectNoriGrazer(roster.filter((resident) => !feedingResidents.has(resident.id)), biteCycle) : null
   return <group name="root-pocket-aquarium-specimens">
     <FoodContactDriver food={pellets} specimens={roster} mouths={mouths} assignments={assignments}
       paused={snapshot.clock.paused} consume={consume} />
+    <NoriContactDriver snapshot={snapshot} nori={nori} clientId={noriClientId} mouths={mouths} dispatch={dispatch} />
+    <NoriClipHardware nori={nori} />
     {roster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
       waterSurfaceY={waterSurfaceY} food={pellets} flowField={flowField} mouths={mouths} assignments={assignments}
-      positions={positions} cleaningIntent={cleaningIntent} dispatch={dispatch} geometry={geometry} skins={skins}
+      positions={positions} cleaningIntent={cleaningIntent} noriClientId={noriClientId} dispatch={dispatch}
+      geometry={geometry} skins={skins}
       morphologyOverride={morphologyOverride?.speciesId === specimen.speciesId ? morphologyOverride : undefined} />)}
   </group>
 }
 
 export function SpecimenFish(props: SpecimenFishProps) {
-  const { specimens, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
+  const { specimens, nori = EMPTY_NORI, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
   const populations = resolveSpecimenPopulations(specimens)
   const positions = useMemo<SpecimenPositions>(() => new Map(), [])
   return <AuthoritativeSpecimenPopulation {...props} roster={populations.authoritative} positions={positions}
-    morphologyOverride={morphologyOverride} dispatch={dispatch} />
+    nori={nori} morphologyOverride={morphologyOverride} dispatch={dispatch} />
 }

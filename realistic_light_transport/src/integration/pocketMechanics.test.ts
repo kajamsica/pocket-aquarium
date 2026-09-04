@@ -116,6 +116,19 @@ describe('integrated reef showcase mechanics', () => {
       .toMatchObject({ health: .61, tissue: .47, extension: .32, polyps: 37, growth: .76 })
   })
 
+  it('projects the wall algae clip store upgrade and refill resource', () => {
+    const state = createPocketReefShowcase()
+    const offer = projectPocketState(state).storeOffers.find(({ id }) => id === 'algae_clip:clip')
+    expect(offer).toMatchObject({ name: 'Magnetic nori grazing clip', allowed: true,
+      action: { type: pocketActions.PURCHASE_EQUIPMENT, category: 'algae_clip', levelId: 'clip' } })
+
+    const installed = dispatchPocketAction(state, offer!.action)
+    expect(projectPocketState(installed).nori).toEqual({ installed: true, remaining: 0,
+      capacity: 8, lastBiteCycle: -1 })
+    const refilled = dispatchPocketAction(installed, { type: pocketActions.REFILL_NORI })
+    expect(projectPocketState(refilled).nori).toEqual({ installed: true, remaining: 8,
+      capacity: 8, lastBiteCycle: -1 })
+  })
   it('projects accepted showcase defaults from root state with ordinary interactions available', () => {
     const state = createPocketReefShowcase()
     const view = projectPocketState(state)
