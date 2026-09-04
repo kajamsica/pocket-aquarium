@@ -14,10 +14,16 @@ export interface SpecimenAsset {
   readonly key: string
   readonly speciesId: string
   readonly variantId?: string
+  readonly category: string
+  readonly bodyPlan?: string
+  readonly sourceCandidate: string
+  readonly defaultForSpecies: boolean
   readonly displayName: string
   readonly url: string
   readonly assetVersion: string
   readonly referenceAdultLengthMeters: number
+  readonly referenceSizeKind: string
+  readonly sha256: string
   readonly clips: readonly string[]
   readonly clipRoles: SpecimenClipRoles
   readonly clipLoops: Readonly<Record<string, boolean>>
@@ -27,6 +33,9 @@ interface RuntimeAcceptanceEntry {
   readonly key: string
   readonly speciesId: string
   readonly variantId?: string
+  readonly category: string
+  readonly bodyPlan?: string
+  readonly sourceCandidate: string
   readonly bundledGlbPath: string
   readonly version: string
   readonly referenceSize: {
@@ -34,6 +43,7 @@ interface RuntimeAcceptanceEntry {
     readonly kind: string
   }
   readonly displayName: string
+  readonly sha256: string
   readonly clips: readonly string[]
   readonly clipRoles: SpecimenClipRoles
   readonly clipLoops: Readonly<Record<string, boolean>>
@@ -58,10 +68,16 @@ const SPECIMEN_ASSET_LIST: readonly SpecimenAsset[] = Object.freeze(runtimeEntri
   key: entry.key,
   speciesId: entry.speciesId,
   ...(entry.variantId ? { variantId: entry.variantId } : {}),
+  category: entry.category,
+  ...(entry.bodyPlan !== undefined ? { bodyPlan: entry.bodyPlan } : {}),
+  sourceCandidate: entry.sourceCandidate,
+  defaultForSpecies: entry.defaultForSpecies,
   displayName: entry.displayName,
   url: acceptedUrl(entry),
   assetVersion: entry.version,
   referenceAdultLengthMeters: entry.referenceSize.meters,
+  referenceSizeKind: entry.referenceSize.kind,
+  sha256: entry.sha256,
   clips: entry.clips,
   clipRoles: entry.clipRoles,
   clipLoops: entry.clipLoops,

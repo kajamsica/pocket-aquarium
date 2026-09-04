@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CatalogCandidate, CatalogRow, VisualCatalog } from '../catalog/visualCatalog'
-import { acceptedSpecimenAssetList, specimenAssetFor, type SpecimenAsset } from '../scene/specimens/assetRegistry'
+import { acceptedSpecimenAssetList, specimenAssetFor } from '../scene/specimens/assetRegistry'
 import {
   BADGE_LABELS,
   acceptedWorkbenchAssets,
@@ -173,20 +173,20 @@ describe('runtime asset registry stays accepted-only', () => {
   })
 
   it('preserves promoted keys and source candidates without duplicate candidate rows', async () => {
-    const base = specimenAssetFor('ocellaris')!
-    const promoted = [
-      { ...base, key: 'blue_hippo_tang', speciesId: 'blue_hippo_tang', displayName: 'Blue Hippo Tang', sourceCandidate: 'fable-v2', defaultForSpecies: true, category: 'fish', bodyPlan: 'fish', referenceSizeKind: 'adult_total_length', sha256: 'v2' },
-      { ...base, key: 'blue_hippo_tang@fable-v1', speciesId: 'blue_hippo_tang', displayName: 'Blue Hippo Tang classic', sourceCandidate: 'fable-v1', defaultForSpecies: false, variantId: 'classic', category: 'fish', bodyPlan: 'fish', referenceSizeKind: 'adult_total_length', sha256: 'v1' },
-    ] as unknown as readonly SpecimenAsset[]
-    const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG, acceptedAssets: promoted })
-    const tangs = catalog.assets.filter((asset) => asset.speciesId === 'blue_hippo_tang')
-    expect(tangs).toHaveLength(2)
-    expect(tangs[1]).toMatchObject({ key: 'blue_hippo_tang@fable-v1', state: 'accepted', candidate: 'fable-v1', sourceCandidate: 'fable-v1', variantId: 'classic', category: 'fish', bodyPlan: 'fish', referenceSizeKind: 'adult_total_length', glbSha256: 'v1' })
-    const options = workbenchOptionGroups(catalog).flatMap((group) => group.options).filter((option) => option.speciesId === 'blue_hippo_tang')
-    expect(options.map((option) => option.key)).toEqual(['blue_hippo_tang', 'blue_hippo_tang@fable-v1'])
-    expect(options.every((option) => !option.disabled && option.badge === 'accepted')).toBe(true)
-    expect(selectWorkbenchAsset(tangs, 'blue_hippo_tang', 'fable-v1').asset?.state).toBe('accepted')
-    expect(workbenchSearch(tangs[1], 'shared', '')).toBe('?workbench=blue_hippo_tang&candidate=fable-v1&scale=shared')
+    const promoted = acceptedSpecimenAssetList().filter((asset) => asset.key === 'blue_hippo_tang' || asset.speciesId === 'millepora')
+    const discovered = { candidates: promoted.map((asset) => indexEntry(asset.speciesId, asset.sourceCandidate, { variantId: asset.variantId ?? null })) }
+    const catalog = await loadWorkbenchCatalog(fakeFetch(discovered))
+    expect(catalog.assets).toHaveLength(46)
+    expect(catalog.assets.every((asset) => asset.state === 'accepted')).toBe(true)
+    const acceptedOptions = workbenchOptionGroups(catalog).flatMap((group) => group.options).filter((option) => option.badge === 'accepted')
+    expect(acceptedOptions).toHaveLength(46)
+    expect(new Set(acceptedOptions.map((option) => option.key))).toHaveProperty('size', 46)
+    const branching = catalog.assets.find((asset) => asset.key === 'millepora@branching')!
+    expect(branching).toMatchObject({ state: 'accepted', candidate: 'fable-v1-branching', sourceCandidate: 'fable-v1-branching', variantId: 'branching', category: 'coral', bodyPlan: 'hydrocoral_colony', referenceSizeKind: 'colony_width' })
+    expect(selectWorkbenchAsset(catalog.assets, 'millepora', null).asset?.key).toBe('millepora@blade')
+    expect(selectWorkbenchAsset(catalog.assets, 'millepora', 'fable-v1-branching').asset?.key).toBe(branching.key)
+    expect(selectWorkbenchAsset(catalog.assets, 'blue_hippo_tang', null).asset?.state).toBe('accepted')
+    expect(workbenchSearch(branching, 'shared', '')).toBe('?workbench=millepora&candidate=fable-v1-branching&scale=shared')
   })
 })
 

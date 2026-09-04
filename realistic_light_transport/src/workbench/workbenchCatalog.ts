@@ -118,35 +118,29 @@ export function rowStatusText(row: Pick<CatalogRow, 'assetStatus' | 'candidates'
 }
 
 function acceptedFromRow(row: CatalogRow | undefined, asset: SpecimenAsset): WorkbenchAsset {
-  const registryAsset = asset as SpecimenAsset & Partial<{
-    key: string; variantId: string; category: string; bodyPlan: string; referenceSizeKind: string
-    sourceCandidate: string; sha256: string; defaultForSpecies: boolean
-  }>
-  const key = registryAsset.key ?? asset.speciesId
-  const isDefault = registryAsset.defaultForSpecies ?? key === asset.speciesId
   return {
-    key,
+    key: asset.key,
     state: 'accepted',
     speciesId: asset.speciesId,
-    candidate: isDefault ? undefined : registryAsset.sourceCandidate,
-    sourceCandidate: registryAsset.sourceCandidate,
-    variantId: registryAsset.variantId,
+    candidate: asset.defaultForSpecies ? undefined : asset.sourceCandidate,
+    sourceCandidate: asset.sourceCandidate,
+    variantId: asset.variantId,
     displayName: asset.displayName,
     scientificName: row?.scientificLabel ?? undefined,
     url: asset.url,
     assetVersion: asset.assetVersion,
     referenceSizeMeters: row?.referenceSize.meters ?? asset.referenceAdultLengthMeters,
-    referenceSizeKind: registryAsset.referenceSizeKind ?? row?.referenceSize.kind ?? 'adult_total_length',
+    referenceSizeKind: asset.referenceSizeKind,
     clips: asset.clips,
     clipRoles: asset.clipRoles,
     clipLoops: asset.clipLoops,
     referenceGrade: row?.referenceGrade ?? undefined,
-    bodyPlan: registryAsset.bodyPlan ?? row?.bodyPlan ?? undefined,
-    category: registryAsset.category ?? row?.category,
+    bodyPlan: asset.bodyPlan ?? row?.bodyPlan ?? undefined,
+    category: asset.category,
     waterType: row?.waterType ?? undefined,
     taxonomyConfidence: row?.taxonomyConfidence ?? undefined,
     assetStatus: 'accepted',
-    glbSha256: registryAsset.sha256 ?? row?.accepted.sha256 ?? undefined,
+    glbSha256: asset.sha256,
     visualDebt: row?.visualDebt,
   }
 }
@@ -267,8 +261,10 @@ export function selectWorkbenchAsset(
   const fallback = catalog.find((asset) => asset.key === DEFAULT_WORKBENCH_SPECIES)
   if (!speciesId) return { asset: fallback, invalid: undefined, unavailable: undefined }
   const key = candidate ? candidateKey(speciesId, candidate) : speciesId
-  const exact = catalog.find((asset) => asset.key === key)
+  const exact = catalog.find((asset) => asset.key === key || (candidate && asset.speciesId === speciesId && asset.sourceCandidate === candidate))
   if (exact) return { asset: exact, invalid: undefined, unavailable: undefined }
+  const acceptedDefault = candidate ? undefined : catalog.find((asset) => asset.state === 'accepted' && asset.speciesId === speciesId && !asset.candidate)
+  if (acceptedDefault) return { asset: acceptedDefault, invalid: undefined, unavailable: undefined }
   // A species without an accepted asset: fall through to its best loadable candidate.
   const preferred = candidate ? undefined : preferredCandidate(catalog, speciesId)
   if (preferred) return { asset: preferred, invalid: undefined, unavailable: undefined }

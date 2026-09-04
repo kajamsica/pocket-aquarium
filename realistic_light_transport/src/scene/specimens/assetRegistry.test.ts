@@ -74,8 +74,16 @@ describe('accepted specimen asset registry', () => {
     for (const entry of runtimeAcceptance.assets) {
       expect(sha256(entry.sourceCandidateGlbPath), `${entry.key} source`).toBe(entry.sha256)
       expect(sha256(entry.bundledGlbPath), `${entry.key} bundle`).toBe(entry.sha256)
-      expect(specimenAssetFor(entry.speciesId, entry.variantId)?.url, entry.key)
-        .toContain(`/${entry.bundledGlbPath}`)
+      const asset = specimenAssetFor(entry.speciesId, entry.variantId)
+      expect(asset?.url, entry.key).toContain(`/${entry.bundledGlbPath}`)
+      expect(asset, entry.key).toMatchObject({
+        sourceCandidate: entry.sourceCandidate,
+        defaultForSpecies: entry.defaultForSpecies,
+        category: entry.category,
+        bodyPlan: entry.bodyPlan,
+        referenceSizeKind: entry.referenceSize.kind,
+        sha256: entry.sha256,
+      })
     }
   })
 
