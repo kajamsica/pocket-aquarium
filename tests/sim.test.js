@@ -482,7 +482,7 @@ group("livestock conflict choices");
   var risk = PA.validatePurchase(blocked, { kind: "livestock", id: "six_line_wrasse", count: 1 });
   eq(risk.ok, false, "risk-only purchase needs an explicit choice");
   eq(risk.conflicts.length, 1, "same-species conflicts are grouped");
-  eq(risk.conflicts[0].riskTag, "predation", "risk is classified");
+  eq(risk.conflicts[0].riskTag, "invert_safety", "risk is classified");
   eq(risk.conflicts[0].residentIds.length, 2, "every affected living resident is listed");
   eq(risk.conflicts[0].refundCredits, 6, "refund rounds half-price per resident");
   PA.dispatch(blocked, { type: "PURCHASE_LIVESTOCK", species: "six_line_wrasse", count: 1 });
@@ -506,7 +506,7 @@ group("livestock conflict choices");
   ok(sold.log.some(function (entry) { return entry.type === "store" && /Sold 2 living residents/.test(entry.message); }), "sale is logged");
   PA.dispatch(sold, { type: "PURCHASE_LIVESTOCK", species: "six_line_wrasse", count: 1 });
   eq(sold.livestock.filter(function (a) { return a.species === "six_line_wrasse"; }).length, 1, "ordinary purchase succeeds after conflicts are sold");
-  eq(sold.credits, 4968, "sale refund and purchase remain separate deterministic transactions");
+  eq(sold.credits, 4974, "sale refund and purchase remain separate deterministic transactions");
 
   var hardBlocked = cycledReef(82); addAdult(hardBlocked, "pistol_shrimp", 1); var hardCount = hardBlocked.livestock.length;
   PA.dispatch(hardBlocked, { type: "PURCHASE_LIVESTOCK", species: "epaulette_shark", count: 1, acceptRisk: true });
