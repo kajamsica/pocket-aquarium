@@ -39,6 +39,17 @@ export interface ReefRenderTelemetry {
   }
 }
 
+/** One authoritative coral colony record, projected so the reef can render the species the
+ *  player actually bought instead of an average. */
+export interface ReefCoralColony {
+  readonly id: number
+  readonly species: string
+  readonly health: number
+  readonly extension: number
+  readonly polyps: number
+  readonly growth: number
+}
+
 export interface ReefSnapshot {
   readonly namespace: typeof ACTIVE_AQUARIUM_NAMESPACE
   readonly clock: {
@@ -110,6 +121,8 @@ export interface ReefSnapshot {
     readonly fishSatiation: number
     readonly fishStress: number
     readonly coralHealth: number
+    /** Every living coral colony (optional: only the pocket bridge fills these). */
+    readonly corals?: readonly ReefCoralColony[]
   }
   readonly lightField: {
     readonly surfacePpfd: number

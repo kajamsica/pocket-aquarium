@@ -1,7 +1,7 @@
 import type { PocketFoodPellet } from '../integration/pocketAquariumBridge'
 
 export const FOOD_ACKNOWLEDGEMENT_MS = 600
-export const FOOD_CONTACT_RADIUS = 0.075
+export const FOOD_CONTACT_RADIUS = 0.11
 
 const TANK_FOOD_HALF_WIDTH = 2.44
 const SAND_CONTACT_Y = -1.36

@@ -518,17 +518,43 @@
   }
 
   function isCycled(state) {
-    // Stocking gate: stage at least Cycled AND ammonia/nitrite safe AND nitrate present AND life support on.
-    var w = state && state.water;
+    // Stocking gate: stage at least Cycled AND ammonia/nitrite safe AND life support on.
+    // Nitrate is evidence that the initial cycle completed, not the biofilter itself: once the
+    // stage is established, dilution (water change / matched-water transfer) must not un-cycle it.
     var ls = state && state.cycle && state.cycle.lifeSupport;
     return stageIndex(state) >= CYCLE_STAGES.indexOf("Cycled") &&
-      waterSafeForLife(state) && !!ls && w && w.nitrate > 1;
+      waterSafeForLife(state) && !!ls;
   }
 
   function aliveOf(state, speciesId) {
     var n = 0, ls = (state && state.livestock) || [];
     for (var i = 0; i < ls.length; i++) if (ls[i] && ls[i].alive !== false && ls[i].species === speciesId) n++;
     return n;
+  }
+
+  /* Coral light readiness. The only evidence the store accepts is the player's own
+     PAR test: still fresh (Care's 0.75-day window) and captured near the schedule's
+     peak, which is where reef PAR is specified — dawn/dusk are programmed ramps, not
+     fixture faults. The representative window is derived from the same triangular
+     photoperiod sim.js lights the tank on: daylight() at PEAK_DAYLIGHT_FLOOR or more,
+     i.e. day fractions .4975-.6425 (about 11:56-15:25 game time). Returns the measured
+     peak-window PAR, or null when no such reading exists. */
+  var PAR_READING_STALE_DAYS = 0.75, PHOTOPERIOD_START = 0.28, PHOTOPERIOD_END = 0.86;
+  var PEAK_DAYLIGHT_FLOOR = 0.75;
+  var PEAK_MID = (PHOTOPERIOD_START + PHOTOPERIOD_END) / 2;
+  var PEAK_HALF = ((PHOTOPERIOD_END - PHOTOPERIOD_START) / 2) * (1 - PEAK_DAYLIGHT_FLOOR);
+  /* Inclusive on both edges (1e-9 for the derivation's float drift): a reading captured
+     exactly on a boundary is as representative as one at the peak itself. */
+  function isPeakPhotoperiod(frac) {
+    return isFinite(frac) && frac >= PEAK_MID - PEAK_HALF - 1e-9 && frac <= PEAK_MID + PEAK_HALF + 1e-9;
+  }
+  DATA.isPeakPhotoperiod = isPeakPhotoperiod; // shared with the Guide and Care so the window cannot drift
+  function measuredDayPar(state) {
+    var test = state && state.tests && state.tests.par;
+    if (!test || !test.known || !isFinite(test.value) || !(test.ageDays < PAR_READING_STALE_DAYS)) return null;
+    var days = state.time && isFinite(state.time.days) ? state.time.days : 0;
+    var at = days - Math.max(0, test.ageDays), frac = at - Math.floor(at);
+    return isPeakPhotoperiod(frac) ? test.value : null;
   }
 
   function validatePurchase(state, request) {
@@ -580,6 +606,15 @@
       var wantMature = coral.maturityGate === "mature";
       if (wantMature && stageIndex(state) < CYCLE_STAGES.indexOf("Mature biome"))
         reasons.push(coral.name + " needs a mature biome (let the tank age and stabilize first).");
+      // Suitability decides on the zero-decimal PAR Water displays, so a shown boundary
+      // reading is never rejected against the range printed beside it. Raw PAR is untouched.
+      var rawDayPar = measuredDayPar(state), dayPar = rawDayPar === null ? null : Math.round(rawDayPar);
+      if (dayPar === null)
+        reasons.push("Run a fresh PAR test near peak light (about 11:56–15:25 game time) before adding " + coral.name +
+          " — dawn and dusk ramps read below the fixture's output.");
+      else if (dayPar < coral.par.min || dayPar > coral.par.max)
+        reasons.push(coral.name + " needs " + coral.par.min + "–" + coral.par.max + " µmol PAR, but your peak-light reading is " +
+          dayPar + " µmol — " + (dayPar < coral.par.min ? "install stronger lighting" : "dim or raise the light") + ", then retest.");
       if ((state.credits || 0) < coral.price)
         reasons.push("Not enough credits (need " + coral.price + ", have " + Math.floor(state.credits || 0) + ").");
       // stability: recent water must be within warn bands for salinity/alk if reef

@@ -32,14 +32,22 @@
     for (var i = 0; i < livestock.length; i++) if (livestock[i] && livestock[i].alive === false) count++;
     return count;
   }
-  function hungryCount(state) {
-    var count = 0, livestock = state && state.livestock || [];
+  /* Worst value on each welfare axis across living residents: one failing animal must not be
+     averaged away by healthy tankmates the way snapshot welfare is. */
+  function worstWelfare(state) {
+    var livestock = state && state.livestock || [], worst = null;
     for (var i = 0; i < livestock.length; i++) {
       var animal = livestock[i];
-      if (animal && animal.alive !== false && animal.hunger > 0.85) count++;
+      if (!animal || animal.alive === false) continue;
+      var hunger = finite(animal.hunger, 0), condition = finite(animal.condition, 1), health = finite(animal.health, 1);
+      worst = worst
+        ? { hunger: Math.max(worst.hunger, hunger), condition: Math.min(worst.condition, condition), health: Math.min(worst.health, health) }
+        : { hunger: hunger, condition: condition, health: health };
     }
-    return count;
+    return worst;
   }
+  /* Hunger rises past 1 as the sim's overdue-feeding reserve, so percentages are bounded for display. */
+  function pct(v) { return Math.round(Math.min(1, Math.max(0, v)) * 100); }
   function readingFreshness(state) {
     var habitat = state && DATA.HABITATS[state.habitat];
     var expected = habitat && habitat.params || [];
@@ -61,7 +69,7 @@
   }
   function environmentIssue(state, snap) {
     var water = waterByKey(snap), level = water.level, salinity = water.salinity;
-    var temperature = water.tempC, ph = water.pH;
+    var temperature = water.tempC, ph = water.pH, alk = water.alkalinity;
     if (level && level.value < (level.good ? level.good[0] : 92))
       return ["The water level has dropped from evaporation.", isReef(state)
         ? "A freshwater top-off restores volume and lowers salinity back toward target; it does not remove nitrate."
@@ -70,25 +78,33 @@
       return ["Salinity has risen above the target range.", "Evaporation concentrates salt — top off with fresh (salt-free) water to dilute it back toward 35 ppt.", "Freshwater top-off", "topoff"];
     if (temperature && temperature.severity !== "ok")
       return ["Temperature is outside the safe band.", "Check the heater/controller in the Water tab and let it stabilise before stocking or feeding.", "Review water", "open-water"];
+    if (ph && ph.severity !== "ok" && isReef(state))
+      return alk && alk.severity !== "ok"
+        ? ["Reef pH and its carbonate buffer are both out of band.", "Alkalinity is the buffer that holds pH steady — a 25% change with matched water pulls it back toward 8.5 dKH. Retest afterward.", "25% water change", "wc25"]
+        : ["Reef pH is outside the target band.", "Alkalinity is in range, so the buffer is adequate — keep life support running at 4× and pH settles toward its alkalinity-buffered equilibrium. Retest afterward.", "Stabilize at 4×", "speed4"];
     if (ph && ph.severity !== "ok")
       return ["pH is outside the target band.", "Review chemistry in the Water tab; correct it gradually because sharp swings stress residents.", "Review water", "open-water"];
     if (salinity && isReef(state) && salinity.severity !== "ok")
       return ["Salinity is outside the target range.", "Review salinity in the Water tab and adjust it gradually.", "Review water", "open-water"];
     return null;
   }
+  /* Coral light is only diagnosable at the schedule's peak — the same representative window
+     the store qualifies PAR tests in (DATA.isPeakPhotoperiod). Dawn and dusk ramps are
+     programmed, so a dim or bright ramp moment is not a lighting problem to report. */
   function coralLightIssue(state, snap) {
     if (!isReef(state) || !snap.corals || !snap.corals.length) return null;
     var days = finite(state.time && state.time.days, 0), frac = days - Math.floor(days);
-    var daylight = frac > 0.28 && frac < 0.86, par = finite(state.water && state.water.par, 0);
+    if (!DATA.isPeakPhotoperiod(frac)) return null;
+    var par = finite(state.water && state.water.par, 0);
     var dim = 0, bright = 0, corals = state.corals || [];
     for (var i = 0; i < corals.length; i++) {
       var profile = DATA.CORALS[corals[i].species];
       if (!profile || !profile.par) continue;
       if (par > profile.par.high) bright++;
-      else if (daylight && par < profile.par.low) dim++;
+      else if (par < profile.par.low) dim++;
     }
-    if (bright) return ["Daytime PAR is stronger than your coral can use.", "Too much usable light bleaches coral tissue — dim the fixture or raise it, then re-check PAR in the Water tab.", "Review water", "open-water"];
-    if (dim) return ["Daytime PAR is too dim for your coral.", "Coral needs enough usable light (PAR) at its spot during the photoperiod to grow — check PAR and the fixture in the Water tab.", "Review water", "open-water"];
+    if (bright) return ["Peak-photoperiod PAR is stronger than your coral can use.", "Too much usable light bleaches coral tissue — dim the fixture or raise it, then re-check PAR in the Water tab.", "Review water", "open-water"];
+    if (dim) return ["Peak-photoperiod PAR is too dim for your coral.", "Coral needs enough usable light (PAR) at its spot at peak light to grow — check PAR and the fixture in the Water tab.", "Review water", "open-water"];
     return null;
   }
   function result(stage, title, body, label, type, tone, badge, freshness, pending) {
@@ -115,15 +131,16 @@
     if (toxic && eaters) return view("toxic_water", "Ammonia or nitrite is at a toxic level.", "A 25% water change dilutes the toxins now; don't feed heavily until it clears.", "25% water change", "wc25", "critical", "CRITICAL");
     if (elevated && eaters) return view("elevated_waste", "Ammonia or nitrite is elevated.", "It isn't toxic yet, but a 25% water change and lighter feeding keep it from climbing.", "25% water change", "wc25", "watch", "WATCH");
     if (deadCount(state)) return view("remove_dead", "A dead animal is decaying in the tank.", "Remove the body before it spikes ammonia — find it under Livestock.", "Review livestock", "open-livestock", "critical", "CRITICAL");
-    if (snap.welfare === "critical") return view("critical_welfare", "Residents are in critical condition.", "Open the Water tab and stabilise chemistry and feeding before anything else.", "Review water", "open-water", "critical", "CRITICAL");
+    var worst = worstWelfare(state);
+    if (worst && (worst.hunger > 0.85 || worst.condition < 0.30)) return view("resident_starving", "A resident is starving — worst hunger " + pct(worst.hunger) + "%, worst body condition " + pct(worst.condition) + "%.", "Feed small portions: body condition rebuilds gradually over repeated feedings, and food they don't eat rots into ammonia.", "Feed the tank", "feed", "critical", "CRITICAL");
+    if (worst && worst.health < 0.30) return view("resident_failing", "A resident's health has fallen to " + pct(worst.health) + "%.", "Hunger and body condition don't explain it — open Livestock and read that resident's details before treating the water.", "Review livestock", "open-livestock", "critical", "CRITICAL");
     if (boostDays && !eaters) return view("resume_inoculation", "The bacteria boost was interrupted.", "Retry inoculating bacteria to finish the remaining guided cycle days through the normal simulation.", "Retry inoculation", "inoculate", "watch", "CYCLING");
     if (!DATA.isCycled(state)) {
       if (!cycle.ammoniaSource && !eaters) return view("start_fishless_cycle", "The fishless cycle hasn't started.", "An ammonia source feeds the nitrifying bacteria that make the tank safe.", "Add ammonia source", "ammonia-on", "watch", "CYCLING");
       if (!cycle.inoculated && !eaters) return view("inoculate_filter", "Seed the filter to finish the cycle.", "Add bottled nitrifying bacteria — it establishes the biofilter and fast-forwards the fishless cycle so the tank is ready to stock.", "Inoculate bacteria", "inoculate", "watch", "CYCLING");
       return view("test_cycle", "The tank is still cycling — not safe to stock.", "Test the water to see when ammonia and nitrite have fallen safe with nitrate present.", "Test the water", "test", "watch", "CYCLING");
     }
-    var hungry = hungryCount(state);
-    if (hungry || pending) return view("feed_fish", hungry ? hungry + (hungry === 1 ? " resident is" : " residents are") + " hungry." : "Your first fish has settled in.", hungry ? "Tap the water to feed; uneaten food decays into ammonia, so feed sparingly." : "Tap the water to drop a pellet and watch it respond — then keep the water clean.", "Feed the tank", "feed", "watch", "WATCH");
+    if (pending) return view("feed_fish", "Your first fish has settled in.", "Tap the water to drop a pellet and watch it respond — then keep the water clean.", "Feed the tank", "feed", "watch", "WATCH");
     var issue = environmentIssue(state, snap);
     if (issue) return view("correct_environment", issue[0], issue[1], issue[2], issue[3], "watch", "WATCH");
     issue = coralLightIssue(state, snap);

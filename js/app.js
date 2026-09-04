@@ -265,6 +265,7 @@
       case "inoculate": doInoculate(); break;
       case "test": dispatchAction({ type: ACT.WATER_TEST }); toast("Water tested — readings and freshness updated.", "water"); break;
       case "wc25": dispatchAction({ type: ACT.WATER_CHANGE, fraction: 0.25 }); break;
+      case "speed4": dispatchAction({ type: ACT.SET_SPEED, speed: 4 }); break;
       case "topoff": dispatchAction({ type: ACT.WATER_TOP_OFF }); break;
       case "buy-equip": dispatchAction({ type: ACT.PURCHASE_EQUIPMENT, category: ds.category, levelId: ds.level }); break;
       case "buy-tier": dispatchAction({ type: ACT.PURCHASE_TIER, tier: ds.tier }); break;

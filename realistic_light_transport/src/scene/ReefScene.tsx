@@ -35,13 +35,24 @@ export const ORBIT_TARGET = { x: 0, y: -0.12, z: 0 } as const
 export const ORBIT_DEFAULT_PITCH = 0.0778
 export const ORBIT_MIN_PITCH = -0.15
 export const ORBIT_MAX_PITCH = 1.05
+/** UI-to-scene reset signal. The View panel dispatches this so its button reaches the same
+ *  `resetView` closure double-click uses, with no second reset path or shared camera state. */
+export const REEF_CAMERA_RESET_EVENT = 'pocket-aquarium:reset-camera'
 const ORBIT_YAW_PER_PX = 0.006
 const ORBIT_PITCH_PER_PX = 0.005
 const ORBIT_DRAG_THRESHOLD_PX = 6
 const ORBIT_YAW_PER_KEY = 0.12
 const ORBIT_PITCH_PER_KEY = 0.08
 /** Amplify pinch so a single gesture crosses more of the zoom range; bounded by clamp. */
-const PINCH_ZOOM_EXPONENT = 3
+const PINCH_ZOOM_EXPONENT = 4.5
+/** Wheel/trackpad scene units per deltaY unit; one notch (~100) moves a fifth of the range. */
+const WHEEL_ZOOM_PER_DELTA = 0.02
+/** Near bound sits inside the front glass (habitat half-depth 1.18) so the camera enters the
+ *  water volume, and stays far enough from the orbit target to clear the 0.1 near plane. */
+const MIN_CAMERA_DISTANCE = 0.95
+const MAX_CAMERA_DISTANCE = 10.2
+/** Exponential convergence rate toward the requested orbit position: prompt, still smoothed. */
+const CAMERA_CONVERGENCE = 6.5
 
 export const clampOrbitPitch = (pitch: number) =>
   THREE.MathUtils.clamp(pitch, ORBIT_MIN_PITCH, ORBIT_MAX_PITCH)
@@ -99,8 +110,8 @@ function CameraRig() {
         const distance = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 20)
         cameraDistance.current = THREE.MathUtils.clamp(
           pinch.current.cameraDistance * (pinch.current.distance / distance) ** PINCH_ZOOM_EXPONENT,
-          5.35,
-          10.2,
+          MIN_CAMERA_DISTANCE,
+          MAX_CAMERA_DISTANCE,
         )
         event.preventDefault()
         return
@@ -134,7 +145,11 @@ function CameraRig() {
     }
     const wheel = (event: WheelEvent) => {
       const base = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
-      cameraDistance.current = THREE.MathUtils.clamp(base + event.deltaY * .006, 5.35, 10.2)
+      cameraDistance.current = THREE.MathUtils.clamp(
+        base + event.deltaY * WHEEL_ZOOM_PER_DELTA,
+        MIN_CAMERA_DISTANCE,
+        MAX_CAMERA_DISTANCE,
+      )
       event.preventDefault()
     }
     const resetView = () => {
@@ -162,6 +177,7 @@ function CameraRig() {
     element.addEventListener('pointercancel', pointerUp, { capture: true })
     element.addEventListener('wheel', wheel, { passive: false })
     element.addEventListener('dblclick', resetView)
+    window.addEventListener(REEF_CAMERA_RESET_EVENT, resetView)
     window.addEventListener('keydown', keydown)
     return () => {
       element.removeEventListener('pointerdown', pointerDown, { capture: true })
@@ -170,6 +186,7 @@ function CameraRig() {
       element.removeEventListener('pointercancel', pointerUp, { capture: true })
       element.removeEventListener('wheel', wheel)
       element.removeEventListener('dblclick', resetView)
+      window.removeEventListener(REEF_CAMERA_RESET_EVENT, resetView)
       window.removeEventListener('keydown', keydown)
     }
   }, [gl, size.height, size.width])
@@ -177,7 +194,7 @@ function CameraRig() {
   useFrame(({ camera }, delta) => {
     const radius = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
     orbitCameraPosition(desired, radius, yaw.current, pitch.current, target)
-    camera.position.lerp(desired, 1 - Math.exp(-delta * 2.8))
+    camera.position.lerp(desired, 1 - Math.exp(-delta * CAMERA_CONVERGENCE))
     camera.lookAt(target)
   })
 
