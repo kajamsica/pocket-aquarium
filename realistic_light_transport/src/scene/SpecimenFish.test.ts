@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { createPocketReefShowcase, dispatchPocketAction, projectPocketState } from '../integration/pocketAquariumBridge'
 import { FOOD_CONTACT_RADIUS } from './foodContact'
 import { specimenAssetFor } from './specimens/assetRegistry'
-import { REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
+import { materializeReefRocks, REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
 import { cleaningStation, cleaningStationScheduleTime, cleaningVisitIntent, cleaningVisitPace, shouldDispatchCleaningTreatment,
   type InteractionAnimal } from './speciesInteractions'
 import {
@@ -25,6 +25,7 @@ import {
   minimumSpecimenHardscapeClearance,
   NORI_GRAZE_POSITION,
   noriGrazeAction,
+  resolveReefHardscape,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
   resolveVisualTravelDirection,
@@ -49,7 +50,7 @@ import {
   resolveSpecimenLocomotionPlan,
   speciesBehaviorPolicyFor,
 } from './speciesBehavior'
-import { sampleDiamondGobyHabitatTarget, sharedBurrowSite } from './speciesInteractions'
+import { diamondGobyBurrowSite, sampleDiamondGobyHabitatTarget, sharedBurrowSite } from './speciesInteractions'
 import { createSurfaceCircuit, sampleSurfaceCircuit } from './surfaceLocomotion'
 
 const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
@@ -149,6 +150,16 @@ describe('authoritative species locomotion', () => {
       specimenSurfaceProgress('cleaner_shrimp', circuit, 23, frame / 10, .052)).position.clone())
     expect(Math.max(...samples.map((point) => point.distanceTo(samples[0])))).toBeLessThan(.45)
     expect(samples.at(-1)?.distanceTo(samples[0])).toBeLessThan(1e-6)
+  })
+
+  it('derives the Diamond Goby burrow from an injected saved rock', () => {
+    const rocks = materializeReefRocks([{
+      id: 901, index: 4, position: [0, -1.2, .3], rotation: [0, .4, 0], scale: [.45, .5, .35],
+    }])
+    const burrow = diamondGobyBurrowSite(8, rocks)
+
+    expect(burrow.rockId).toBe(901)
+    expect(burrow.position.distanceTo(rocks[0].position)).toBeLessThan(1)
   })
 
   it('keeps Diamond Goby rock excursions between four and six percent long-term', () => {
@@ -371,6 +382,20 @@ describe('wall nori grazing intent', () => {
 })
 
 describe('specimen motion continuity', () => {
+  it('projects against an injected moved rock without consulting the fixed default layout', () => {
+    const rocks = materializeReefRocks([{
+      id: 777, index: 9, position: [2.34, -.68, -.86], rotation: [.1, .2, .3], scale: [.3, .36, .28],
+    }])
+    const position = rocks[0].position.clone()
+    const heading = new THREE.Vector3(1, 0, 0)
+
+    expect(minimumSpecimenHardscapeClearance(position, heading, 0, .08, [])).toBe(Infinity)
+    expect(minimumSpecimenHardscapeClearance(position, heading, 0, .08, rocks)).toBeLessThan(1)
+    resolveReefHardscape(position, .08, false, rocks)
+    expect(minimumSpecimenHardscapeClearance(position, heading, 0, .08, rocks))
+      .toBeGreaterThanOrEqual(-1e-8)
+  })
+
   it('normalizes visual travel into the supplied reusable target without mutating source vectors', () => {
     const position = new THREE.Vector3(4, 3, -1)
     const previousPosition = new THREE.Vector3(1, 1, -1)
