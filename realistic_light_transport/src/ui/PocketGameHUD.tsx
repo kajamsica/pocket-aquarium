@@ -286,8 +286,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </header>
 
     <div className="pocket-utility" aria-label="Tank utilities">
-      {showcaseCatalog ? <span className="pocket-credit-pill" title="Accepted defaults rendered without entering root gameplay">
-        <small>Accepted catalog</small><strong>{showcaseCatalog.acceptedSpeciesCount} species · {showcaseCatalog.animalAssets.length} visual animals · {showcaseCatalog.coralAssets.length} corals</strong>
+      {showcaseCatalog ? <span className="pocket-credit-pill" title="Accepted catalog seeded through root gameplay">
+        <small>Accepted catalog</small><strong>{showcaseCatalog.acceptedSpeciesCount} species · {showcaseCatalog.animalAssets.length} animals · {showcaseCatalog.coralAssets.length} corals</strong>
       </span> : null}
       <span className="pocket-credit-pill" title="Available tank credits">
         <small>Tank credits</small><strong>{godMode?.on ? '∞' : view.credits}</strong></span>
@@ -417,8 +417,11 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
           /* Compatibility is the only lock the player may overrule, so this card trades its
            * one-click purchase for a deliberate choice. Every other lock stays a lock. */
           const conflicts = offer.conflicts?.length ? offer.conflicts : null
-          const deciding = conflicts !== null && offer.id === decidingOfferId
-          const decision = conflicts ? conflictDecision(conflicts) : null
+          const conflictMessages = new Set(conflicts?.map((conflict) => conflict.message) ?? [])
+          const hardReasons = offer.reasons.filter((reason) => !conflictMessages.has(reason))
+          const riskOnly = conflicts !== null && hardReasons.length === 0
+          const deciding = riskOnly && offer.id === decidingOfferId
+          const decision = riskOnly && conflicts ? conflictDecision(conflicts) : null
           return <li className="hud-event pocket-store-offer" key={`${offer.kind}:${offer.id}`}
             data-locked={!offer.allowed} data-risk={Boolean(conflicts)}
             data-installed={offer.installed} data-recommended={offer.recommended} data-focused={focused}
@@ -433,7 +436,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
                 {offer.installed ? <span className="pocket-offer-tag" data-tone="installed">Installed</span> : null}
                 {offer.kind === 'equipment' && !offer.installed ? <span className="pocket-offer-tag" data-tone="upgrade">Next upgrade</span> : null}</div></div>
             {offer.durableEffect ? <p className="pocket-offer-outcome">{offer.durableEffect}</p> : offer.detail ? <p className="pocket-offer-outcome">{offer.detail}</p> : null}
-            {conflicts
+            {riskOnly
               ? deciding ? null : <button className="hud-button" type="button" aria-expanded={false}
                   onClick={() => setDecidingOfferId(offer.id)}>Decide · {offer.price}</button>
               : <button className="hud-button" type="button" disabled={offer.installed || !offer.allowed} onClick={() => dispatch(offer.action)}>
@@ -448,11 +451,15 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
                 remains a husbandry warning the simulation does not act out.</p>
               <div className="pocket-offer-decision-actions">
                 <button className="hud-button hud-button-danger" type="button"
-                  onClick={() => { dispatch({ type: 'SELL_LIVESTOCK', ids: decision.residentIds }); setDecidingOfferId(null) }}>
-                  Sell conflicting fish</button>
+                  onClick={() => {
+                    dispatch({ type: 'SELL_LIVESTOCK', ids: decision.residentIds })
+                    dispatch(offer.action)
+                    setDecidingOfferId(null)
+                  }}>
+                  Sell conflicting residents (+{decision.refund} credits), then add</button>
                 <button className="hud-button" type="button"
                   onClick={() => { dispatch({ ...offer.action, acceptRisk: true }); setDecidingOfferId(null) }}>
-                  Accept risk</button>
+                  Accept risk and add</button>
                 <button className="hud-button" type="button" autoFocus
                   onClick={() => setDecidingOfferId(null)}>Cancel</button>
               </div>

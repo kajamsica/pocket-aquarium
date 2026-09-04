@@ -24,42 +24,137 @@ export interface FishRouteBounds {
   readonly z: readonly [minimum: number, maximum: number]
 }
 
-const DEFAULT_POLICY: FishHabitatPolicy = {
-  habitat: 'reef_cruise', verticalBand: [.08, .92], xCoverage: .72, zCoverage: .64,
-  structureRadius: 0, pace: { cruiseMultiplier: 1, surgeMultiplier: 1, cycleSeconds: [18, 24] },
+export const ACCEPTED_ANIMAL_SPECIES_IDS = [
+  'astrea_snail', 'banggai_cardinal', 'black_storm_ocellaris', 'blue_hippo_tang',
+  'blue_linckia', 'brittle_star', 'cerith_snail', 'cleaner_shrimp', 'diamond_goby',
+  'emerald_crab', 'epaulette_shark', 'fighting_conch', 'gem_tang', 'nassarius_snail',
+  'ocellaris', 'pistol_shrimp', 'purple_tang', 'royal_gramma', 'scarlet_hermit',
+  'six_line_wrasse', 'tomini_tang', 'trochus_snail', 'turbo_snail', 'watchman_goby',
+  'yellow_tang',
+] as const
+
+export type AcceptedAnimalSpeciesId = (typeof ACCEPTED_ANIMAL_SPECIES_IDS)[number]
+export type SpecimenLocomotionClass = 'open_water_fish' | 'rock_fish' | 'benthic_fish' |
+  'sand_crawler' | 'hard_surface_crawler' | 'burrow_crawler' | 'cleaner_station_crawler'
+export type SpecimenSpeedClass = 'slow_crawl' | 'crawl' | 'benthic' | 'hover' | 'cruise' |
+  'fast_cruise'
+
+export interface SpeciesBehaviorPolicy {
+  readonly locomotion: SpecimenLocomotionClass
+  readonly speedClass: SpecimenSpeedClass
+  readonly fishHabitat?: FishHabitatPolicy
 }
+
+const SPEED_MULTIPLIERS = {
+  slow_crawl: .14,
+  crawl: .28,
+  benthic: .46,
+  hover: .68,
+  cruise: 1,
+  fast_cruise: 1.18,
+} as const satisfies Readonly<Record<SpecimenSpeedClass, number>>
 
 const TANG_POLICY: FishHabitatPolicy = {
   habitat: 'open_water', verticalBand: [.32, .68], xCoverage: .9, zCoverage: .82,
   structureRadius: 0, pace: { cruiseMultiplier: 1, surgeMultiplier: 1.38, cycleSeconds: [15, 23] },
 }
 
-const SPECIES_POLICIES = {
+const OCELLARIS_POLICY: FishHabitatPolicy = {
+  habitat: 'reef_cruise', verticalBand: [.2, .75], xCoverage: .68, zCoverage: .58,
+  structureRadius: 0, pace: { cruiseMultiplier: .88, surgeMultiplier: 1.04, cycleSeconds: [18, 25] },
+}
+
+const SPECIES_BEHAVIOR_POLICIES = {
+  astrea_snail: { locomotion: 'hard_surface_crawler', speedClass: 'slow_crawl' },
   banggai_cardinal: {
-    habitat: 'structure_hover', verticalBand: [.3, .65], xCoverage: 0, zCoverage: 0,
-    structureRadius: .44, pace: { cruiseMultiplier: .68, surgeMultiplier: .68, cycleSeconds: [18, 24] },
+    locomotion: 'rock_fish', speedClass: 'hover', fishHabitat: {
+      habitat: 'structure_hover', verticalBand: [.3, .65], xCoverage: 0, zCoverage: 0,
+      structureRadius: .44, pace: { cruiseMultiplier: .68, surgeMultiplier: .68, cycleSeconds: [18, 24] },
+    },
   },
-  royal_gramma: {
-    habitat: 'rock_shelter', verticalBand: [.25, .62], xCoverage: 0, zCoverage: 0,
-    structureRadius: .52, pace: { cruiseMultiplier: .78, surgeMultiplier: .78, cycleSeconds: [18, 24] },
+  black_storm_ocellaris: {
+    locomotion: 'rock_fish', speedClass: 'cruise', fishHabitat: OCELLARIS_POLICY,
   },
+  blue_hippo_tang: { locomotion: 'open_water_fish', speedClass: 'fast_cruise', fishHabitat: TANG_POLICY },
+  blue_linckia: { locomotion: 'hard_surface_crawler', speedClass: 'slow_crawl' },
+  brittle_star: { locomotion: 'hard_surface_crawler', speedClass: 'crawl' },
+  cerith_snail: { locomotion: 'hard_surface_crawler', speedClass: 'slow_crawl' },
+  cleaner_shrimp: { locomotion: 'cleaner_station_crawler', speedClass: 'crawl' },
   diamond_goby: {
-    habitat: 'sand_sift', verticalBand: [0, .16], xCoverage: .64, zCoverage: .5,
-    structureRadius: .38, pace: { cruiseMultiplier: .54, surgeMultiplier: .54, cycleSeconds: [18, 24] },
+    locomotion: 'benthic_fish', speedClass: 'benthic', fishHabitat: {
+      habitat: 'sand_sift', verticalBand: [0, .16], xCoverage: .64, zCoverage: .5,
+      structureRadius: .38, pace: { cruiseMultiplier: .54, surgeMultiplier: .54, cycleSeconds: [18, 24] },
+    },
   },
-  watchman_goby: {
-    habitat: 'burrow_guard', verticalBand: [0, .14], xCoverage: 0, zCoverage: 0,
-    structureRadius: .34, pace: { cruiseMultiplier: .46, surgeMultiplier: .46, cycleSeconds: [18, 24] },
-  },
+  emerald_crab: { locomotion: 'hard_surface_crawler', speedClass: 'crawl' },
   epaulette_shark: {
-    habitat: 'benthic_walk', verticalBand: [0, .18], xCoverage: .8, zCoverage: .68,
-    structureRadius: 0, pace: { cruiseMultiplier: .4, surgeMultiplier: .4, cycleSeconds: [18, 24] },
+    locomotion: 'benthic_fish', speedClass: 'benthic', fishHabitat: {
+      habitat: 'benthic_walk', verticalBand: [0, .18], xCoverage: .8, zCoverage: .68,
+      structureRadius: 0, pace: { cruiseMultiplier: .4, surgeMultiplier: .4, cycleSeconds: [18, 24] },
+    },
   },
-} satisfies Readonly<Record<string, FishHabitatPolicy>>
+  fighting_conch: { locomotion: 'sand_crawler', speedClass: 'slow_crawl' },
+  gem_tang: { locomotion: 'open_water_fish', speedClass: 'fast_cruise', fishHabitat: TANG_POLICY },
+  nassarius_snail: { locomotion: 'sand_crawler', speedClass: 'slow_crawl' },
+  ocellaris: { locomotion: 'rock_fish', speedClass: 'cruise', fishHabitat: OCELLARIS_POLICY },
+  pistol_shrimp: { locomotion: 'burrow_crawler', speedClass: 'crawl' },
+  purple_tang: { locomotion: 'open_water_fish', speedClass: 'fast_cruise', fishHabitat: TANG_POLICY },
+  royal_gramma: {
+    locomotion: 'rock_fish', speedClass: 'hover', fishHabitat: {
+      habitat: 'rock_shelter', verticalBand: [.25, .62], xCoverage: 0, zCoverage: 0,
+      structureRadius: .52, pace: { cruiseMultiplier: .78, surgeMultiplier: .78, cycleSeconds: [18, 24] },
+    },
+  },
+  scarlet_hermit: { locomotion: 'hard_surface_crawler', speedClass: 'crawl' },
+  six_line_wrasse: {
+    locomotion: 'rock_fish', speedClass: 'fast_cruise', fishHabitat: {
+      habitat: 'rock_shelter', verticalBand: [.2, .72], xCoverage: 0, zCoverage: 0,
+      structureRadius: .68, pace: { cruiseMultiplier: 1.04, surgeMultiplier: 1.3, cycleSeconds: [14, 21] },
+    },
+  },
+  tomini_tang: { locomotion: 'open_water_fish', speedClass: 'fast_cruise', fishHabitat: TANG_POLICY },
+  trochus_snail: { locomotion: 'hard_surface_crawler', speedClass: 'slow_crawl' },
+  turbo_snail: { locomotion: 'hard_surface_crawler', speedClass: 'slow_crawl' },
+  watchman_goby: {
+    locomotion: 'benthic_fish', speedClass: 'benthic', fishHabitat: {
+      habitat: 'burrow_guard', verticalBand: [0, .14], xCoverage: 0, zCoverage: 0,
+      structureRadius: .34, pace: { cruiseMultiplier: .46, surgeMultiplier: .46, cycleSeconds: [18, 24] },
+    },
+  },
+  yellow_tang: { locomotion: 'open_water_fish', speedClass: 'fast_cruise', fishHabitat: TANG_POLICY },
+} as const satisfies Readonly<Record<AcceptedAnimalSpeciesId, SpeciesBehaviorPolicy>>
+
+export function isAcceptedAnimalSpeciesId(speciesId: string): speciesId is AcceptedAnimalSpeciesId {
+  return Object.hasOwn(SPECIES_BEHAVIOR_POLICIES, speciesId)
+}
+
+export function speciesBehaviorPolicyFor(speciesId: string): SpeciesBehaviorPolicy {
+  if (!isAcceptedAnimalSpeciesId(speciesId)) {
+    throw new Error(`No accepted animal behavior policy for species: ${speciesId}`)
+  }
+  return SPECIES_BEHAVIOR_POLICIES[speciesId]
+}
+
+export function resolveSpecimenLocomotionPlan(speciesId: string): SpecimenLocomotionClass {
+  return speciesBehaviorPolicyFor(speciesId).locomotion
+}
+
+export function specimenSpeedClassFor(speciesId: string): SpecimenSpeedClass {
+  return speciesBehaviorPolicyFor(speciesId).speedClass
+}
+
+export function specimenSpeedMultiplierFor(speciesId: string): number {
+  return SPEED_MULTIPLIERS[specimenSpeedClassFor(speciesId)]
+}
+
+export function isSurfaceBoundLocomotion(locomotion: SpecimenLocomotionClass) {
+  return locomotion.endsWith('_crawler')
+}
 
 export function fishHabitatPolicyFor(speciesId: string): FishHabitatPolicy {
-  if (speciesId.endsWith('_tang')) return TANG_POLICY
-  return SPECIES_POLICIES[speciesId as keyof typeof SPECIES_POLICIES] ?? DEFAULT_POLICY
+  const policy = speciesBehaviorPolicyFor(speciesId).fishHabitat
+  if (!policy) throw new Error(`Species does not have fish habitat policy: ${speciesId}`)
+  return policy
 }
 
 /** Smooth seeded pace pulse. Equal cruise and surge values produce a constant pace. */

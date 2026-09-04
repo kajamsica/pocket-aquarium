@@ -1,28 +1,43 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 
-import { createPocketReefShowcase, projectPocketState } from '../integration/pocketAquariumBridge'
+import { createPocketReefShowcase, dispatchPocketAction, projectPocketState } from '../integration/pocketAquariumBridge'
 import { specimenAssetFor } from './specimens/assetRegistry'
+import { REEF_ROCKS } from './reefLayout'
 import {
   advanceSpecimenMotionState,
   assignPelletTargets,
   createSpecimenMotionState,
   createSpecimenMotionRoute,
   createAcceptedShowcaseCatalog,
+  constrainSpecimenHardscapeTravel,
+  constrainSpecimenHardscapeTurn,
   decideSpecimenDirection,
   isRenderableLivestockSpecies,
+  guideSpecimenAroundHardscape,
   limitSpecimenFrameTravel,
   limitSpecimenFrameTurn,
   measureSpecimenCrowd,
+  minimumSpecimenHardscapeClearance,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
   sampleSpecimenMotionRoute,
+  specimenMotionProfile,
+  specimenSurfaceProgress,
   specimenBehaviorProfile,
   specimenCollisionEnvelope,
   specimenDirectionInterval,
   specimenReversalThreshold,
+  specimenSelectionAction,
   steerSpecimenHeading,
+  updateUprightSpecimenOrientation,
 } from './SpecimenFish'
+import {
+  isSurfaceBoundLocomotion,
+  resolveSpecimenLocomotionPlan,
+  speciesBehaviorPolicyFor,
+} from './speciesBehavior'
+import { createSurfaceCircuit, sampleSurfaceCircuit } from './surfaceLocomotion'
 
 const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
 const neighbor = (x: number, z: number, velocityX: number, velocityZ: number,
@@ -30,6 +45,107 @@ const neighbor = (x: number, z: number, velocityX: number, velocityZ: number,
   position: new THREE.Vector3(x, 0, z), velocity: new THREE.Vector3(velocityX, 0, velocityZ),
   profile, ...TEST_ENVELOPE, verticalClearance: .2,
 })
+
+describe('authoritative species locomotion', () => {
+  const animals = createAcceptedShowcaseCatalog().animalAssets
+
+  it('classifies every accepted animal before it reaches the runtime integrator', () => {
+    const classes = animals.map(({ speciesId }) => resolveSpecimenLocomotionPlan(speciesId))
+    expect(animals).toHaveLength(25)
+    expect(classes.filter((mode) => mode.endsWith('_fish'))).toHaveLength(13)
+    expect(classes.filter(isSurfaceBoundLocomotion)).toHaveLength(12)
+    expect(new Set(classes)).toEqual(new Set([
+      'open_water_fish', 'rock_fish', 'benthic_fish', 'sand_crawler',
+      'hard_surface_crawler', 'burrow_crawler', 'cleaner_station_crawler',
+    ]))
+  })
+
+  it('moves every accepted invert only along its seeded attached-surface circuit', () => {
+    const delta = 1 / 60
+    for (const { speciesId } of animals.filter(({ speciesId }) =>
+      isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(speciesId)))) {
+      const profile = specimenMotionProfile(speciesId)
+      const circuit = createSurfaceCircuit(speciesId, 19)
+      const pose = sampleSurfaceCircuit(circuit, 0)
+      const previous = pose.position.clone()
+      let maximumStep = 0
+      let maximumNormalTangentDot = 0
+      for (let frame = 1; frame <= 180; frame += 1) {
+        sampleSurfaceCircuit(circuit, frame * profile.cruiseSpeed * delta / circuit.totalLength, pose)
+        maximumStep = Math.max(maximumStep, pose.position.distanceTo(previous))
+        maximumNormalTangentDot = Math.max(maximumNormalTangentDot, Math.abs(pose.normal.dot(pose.tangent)))
+        previous.copy(pose.position)
+      }
+      expect(maximumStep).toBeLessThanOrEqual(profile.cruiseSpeed * delta * 1.01)
+      expect(pose.normal.length()).toBeCloseTo(1, 5)
+      expect(maximumNormalTangentDot).toBeLessThan(1e-5)
+      if (circuit.mode === 'sand' || circuit.mode === 'sand_burrow') {
+        expect(previous.y).toBeCloseTo(-1.44, 5)
+      }
+    }
+  })
+
+  it('keeps all fish upright with bounded pitch, roll, and per-frame rotation', () => {
+    const delta = 1 / 60
+    for (const { speciesId } of animals.filter(({ speciesId }) =>
+      !isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(speciesId)))) {
+      const profile = specimenMotionProfile(speciesId)
+      const orientation = new THREE.Quaternion()
+      const previous = new THREE.Quaternion()
+      let maximumFrameTurn = 0
+      let minimumWorldUp = 1
+      let maximumPitch = 0
+      for (let frame = 0; frame < 180; frame += 1) {
+        const yaw = frame * .023 + speciesId.length
+        const heading = new THREE.Vector3(Math.cos(yaw), Math.sin(frame * .031) * .42, Math.sin(yaw)).normalize()
+        previous.copy(orientation)
+        updateUprightSpecimenOrientation(orientation, heading, Math.sin(frame * .07) * .3,
+          profile.turnRate * delta)
+        const up = new THREE.Vector3(0, 1, 0).applyQuaternion(orientation)
+        const forward = new THREE.Vector3(1, 0, 0).applyQuaternion(orientation)
+        maximumFrameTurn = Math.max(maximumFrameTurn, previous.angleTo(orientation))
+        minimumWorldUp = Math.min(minimumWorldUp, up.y)
+        maximumPitch = Math.max(maximumPitch, Math.abs(forward.y))
+      }
+      expect(maximumFrameTurn).toBeLessThanOrEqual(profile.turnRate * delta + 1e-6)
+      expect(minimumWorldUp).toBeGreaterThan(.95)
+      expect(maximumPitch).toBeLessThanOrEqual(Math.sin(THREE.MathUtils.degToRad(12)) + 1e-6)
+    }
+  })
+
+  it('preserves natural relative speeds and smooth tang bursts', () => {
+    expect(specimenMotionProfile('yellow_tang').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('ocellaris').cruiseSpeed)
+    expect(specimenMotionProfile('six_line_wrasse').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('royal_gramma').cruiseSpeed)
+    expect(specimenMotionProfile('royal_gramma').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('diamond_goby').cruiseSpeed)
+    expect(specimenMotionProfile('diamond_goby').cruiseSpeed)
+      .toBeGreaterThan(specimenMotionProfile('turbo_snail').cruiseSpeed)
+    expect(speciesBehaviorPolicyFor('yellow_tang').fishHabitat?.pace.surgeMultiplier).toBe(1.38)
+    expect(speciesBehaviorPolicyFor('epaulette_shark').fishHabitat?.pace.surgeMultiplier).toBe(.4)
+  })
+
+  it('anchors cleaner shrimp to a local, repeatable rock station', () => {
+    const circuit = createSurfaceCircuit('cleaner_shrimp', 23)
+    const samples = Array.from({ length: 181 }, (_, frame) => sampleSurfaceCircuit(circuit,
+      specimenSurfaceProgress('cleaner_shrimp', circuit, 23, frame / 10, .052)).position.clone())
+    expect(Math.max(...samples.map((point) => point.distanceTo(samples[0])))).toBeLessThan(.45)
+    expect(samples.at(-1)?.distanceTo(samples[0])).toBeLessThan(1e-6)
+  })
+
+  it('reserves sunk food for a benthic goby instead of a non-pursuing cleaner shrimp', () => {
+    const state = createPocketReefShowcase()
+    state.livestock.find(({ species }) => species === 'diamond_goby')!.hunger = .65
+    state.livestock.find(({ species }) => species === 'cleaner_shrimp')!.hunger = 1
+    const specimens = projectPocketState(state).specimens.filter(({ speciesId }) =>
+      speciesId === 'diamond_goby' || speciesId === 'cleaner_shrimp')
+    const pellet = { id: 501, x: 0, y: -1.44, z: 0, sunk: true, ageDays: 0 }
+    expect(assignPelletTargets(specimens, [pellet], new Map(), .86).get(pellet.id))
+      .toBe(specimens.find(({ speciesId }) => speciesId === 'diamond_goby')?.id)
+  })
+})
+
 describe('specimen motion continuity', () => {
   it('caps travel at the frame delta and at 50 ms after a stall', () => {
     const regularFrame = new THREE.Vector3(10, 0, 0)
@@ -182,6 +298,64 @@ describe('specimen motion continuity', () => {
     }
     expect(Math.max(...sampled[0].map(({ y }) => y))).toBeLessThan(Math.min(...sampled[1].map(({ y }) => y)))
   })
+
+  it.each([
+    ['diamond_goby', 'bottom', .34],
+    ['watchman_goby', 'bottom', .31],
+    ['epaulette_shark', 'bottom', .72],
+    ['royal_gramma', 'mid', .30],
+    ['banggai_cardinal', 'mid', .36],
+  ] as const)('%s keeps its whole body outside every rock without changing Y guidance',
+  (speciesId, layer, length) => {
+    const bodyRadius = THREE.MathUtils.clamp(length * .24, .05, .18)
+    const halfSpan = length * .52
+    const route = createSpecimenMotionRoute(37, layer, .86, bodyRadius)
+    const profile = specimenBehaviorProfile(speciesId)
+    const envelope = specimenCollisionEnvelope(length, bodyRadius)
+    const delta = 1 / 60
+    const speed = Math.max(.35, length * 1.8)
+
+    for (const [rockIndex, rock] of REEF_ROCKS.entries()) {
+      const guideY = THREE.MathUtils.clamp(rock.position.y, route.yBounds[0], route.yBounds[1])
+      const radius = Math.max(rock.scale.x, rock.scale.z) * 1.2 + halfSpan + bodyRadius + .34
+      let position = new THREE.Vector3()
+      let bestClearance = -Infinity
+      for (let spoke = 0; spoke < 24; spoke += 1) {
+        const angle = spoke / 24 * Math.PI * 2
+        const candidate = new THREE.Vector3(rock.position.x + Math.cos(angle) * radius, guideY,
+          rock.position.z + Math.sin(angle) * radius)
+        const clearance = minimumSpecimenHardscapeClearance(candidate,
+          new THREE.Vector3(-Math.cos(angle), 0, -Math.sin(angle)), halfSpan, bodyRadius)
+        if (clearance > bestClearance) { bestClearance = clearance; position = candidate }
+      }
+      expect(bestClearance, `${speciesId} rock ${rockIndex} start`).toBeGreaterThanOrEqual(1)
+      const goal = rock.position.clone().multiplyScalar(2).sub(position).setY(guideY)
+      const heading = goal.clone().sub(position).setY(0).normalize()
+      const velocity = heading.clone().multiplyScalar(speed)
+
+      for (let frame = 0; frame < 180; frame += 1) {
+        const desired = goal.clone().sub(position).setY(0).normalize()
+        guideSpecimenAroundHardscape(desired, heading, position,
+          1000 + rockIndex, halfSpan, bodyRadius)
+        const beforeHeading = heading.clone()
+        steerSpecimenHeading(heading, desired, velocity, position, 1000 + rockIndex,
+          bodyRadius, envelope, new Map(), profile, delta)
+        constrainSpecimenHardscapeTurn(position, beforeHeading, heading, halfSpan, bodyRadius)
+        const proposed = position.clone().addScaledVector(heading, speed * delta).setY(guideY)
+        limitSpecimenFrameTravel(position, proposed, speed, delta)
+        constrainSpecimenHardscapeTravel(position, proposed, heading, halfSpan, bodyRadius)
+        expect(position.distanceTo(proposed), `${speciesId} rock ${rockIndex} frame ${frame} travel`)
+          .toBeLessThanOrEqual(speed * delta + 1e-8)
+        expect(beforeHeading.angleTo(heading), `${speciesId} rock ${rockIndex} frame ${frame} turn`)
+          .toBeLessThanOrEqual(3.2 * delta + 1e-8)
+        expect(proposed.y).toBe(guideY)
+        expect(minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius),
+          `${speciesId} rock ${rockIndex} frame ${frame} clearance`).toBeGreaterThanOrEqual(1 - 1e-8)
+        velocity.copy(proposed).sub(position).divideScalar(delta)
+        position.copy(proposed)
+      }
+    }
+  })
 })
 describe('specimen primary visual selection', () => {
   it.each(['watchman_goby', 'pistol_shrimp', 'epaulette_shark'])('suppresses the %s procedural body when its accepted GLB exists', (speciesId) => {
@@ -208,7 +382,7 @@ describe('specimen primary visual selection', () => {
 })
 
 describe('accepted catalog showcase boundary', () => {
-  it('presents one default per 33 species and all 25 non-coral animals as visual-only entries', () => {
+  it('presents HUD counts for one default per 33 species and all 25 non-coral animals', () => {
     const catalog = createAcceptedShowcaseCatalog()
 
     expect(catalog.acceptedSpeciesCount).toBe(33)
@@ -224,17 +398,21 @@ describe('accepted catalog showcase boundary', () => {
     expect(catalog.coralAssets).toHaveLength(8)
   })
 
-  it('replaces authoritative occupants only in the renderer and leaves no feeding targets or root mutations', () => {
-    const state = createPocketReefShowcase()
-    const before = structuredClone(state)
-    const catalog = createAcceptedShowcaseCatalog()
-    const populations = resolveSpecimenPopulations(projectPocketState(state).specimens, catalog)
-    const assignments = assignPelletTargets(populations.authoritative,
-      [{ id: 1, x: 0, y: 0, z: 0, sunk: true, ageDays: 0 }], new Map(), 1)
+  it('renders and selects all 25 root residents through authoritative dispatch', () => {
+    let state = createPocketReefShowcase()
+    const projected = projectPocketState(state).specimens
+    const populations = resolveSpecimenPopulations(projected)
 
-    expect(populations.authoritative).toHaveLength(0)
-    expect(populations.visualOnly).toEqual(catalog.animalAssets)
-    expect(assignments).toHaveProperty('size', 0)
-    expect(state).toEqual(before)
+    expect(populations.authoritative).toHaveLength(state.livestock.length)
+    expect(populations.authoritative.map(({ id }) => id)).toEqual(state.livestock.map(({ id }) => id))
+    for (const specimen of populations.authoritative) {
+      state = dispatchPocketAction(state, specimenSelectionAction(specimen.id))
+    }
+    expect(state.selection).toEqual({ entityType: 'livestock', id: populations.authoritative.at(-1)?.id })
+  })
+
+  it('keeps an ordinary dev roster authoritative without showcase substitution', () => {
+    const specimens = projectPocketState(createPocketReefShowcase()).specimens.slice(0, 3)
+    expect(resolveSpecimenPopulations(specimens)).toEqual({ authoritative: specimens })
   })
 })

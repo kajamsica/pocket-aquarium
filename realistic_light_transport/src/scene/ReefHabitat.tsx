@@ -1,9 +1,19 @@
-import { useFrame } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useFrame, type ThreeEvent } from '@react-three/fiber'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
-import type { LifecyclePhase, ReefCoralColony, ReefSceneProps } from '../contracts'
+import type { LifecyclePhase, ReefSceneProps } from '../contracts'
+import type { PocketCoralView } from '../integration/pocketAquariumBridge'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
+import {
+  CORAL_PLACEMENT_SURFACE_ID_KEY,
+  CORAL_PLACEMENT_SURFACE_KEY,
+  CoralPlacement,
+  coralSurfaceHitFromIntersection,
+  evaluateCoralPlacement,
+  resolveCoralRenderPlan,
+  type CoralPlacementCandidate,
+} from './CoralPlacement'
 import {
   normalizedXToSurfaceX, pelletDepthY, pelletLateralZ, surfaceXToNormalizedX,
   useFeeding, type ScenePellet,
@@ -30,7 +40,6 @@ const FOOD_SAFE_HALF_DEPTH = TANK_HALF_DEPTH - 0.1
 const PELLET_ADVECTION_FRAME_PRIORITY = -3
 const FOOD_RENDER_SYNC_FRAME_PRIORITY = 0
 const MICROFAUNA_SURFACE_CLEARANCE = 0.09
-const UP = new THREE.Vector3(0, 1, 0)
 const MAX_SUSPENDED_PARTICLES = 180
 
 interface SuspendedParticleProfile {
@@ -110,12 +119,16 @@ export interface FlowFieldSource {
 
 interface ReefHabitatProps extends ReefSceneProps {
   readonly flowField: FlowFieldSource
+  readonly placedCorals: readonly PocketCoralView[]
+  readonly activeCoral?: PocketCoralView
+  readonly previewCandidate: CoralPlacementCandidate | null
+  readonly onPlacementCandidate: (candidate: CoralPlacementCandidate | null,
+    intent?: 'follow' | 'freeze') => void
 }
 
 interface HabitatMaterials {
   readonly rock: ProceduralMaterialTextures
   readonly sand: ProceduralMaterialTextures
-  readonly coral: ProceduralMaterialTextures
 }
 
 function waterSurfaceFor(tank: ReefSceneProps['snapshot']['tank']) {
@@ -180,87 +193,6 @@ const PORE_PATCHES = Array.from({ length: 32 }, (_, index) => {
   }
 })
 
-/** Coral settles on the shared live-rock layout: one seating point per authoritative colony
- *  record, resolved onto the host rock's own surface so a colony never floats over it. Host
- *  rocks are ordered most-visible first and spaced so no two colonies crowd each other. */
-const CORAL_SITE_ROCKS = [3, 0, 5, 12, 8] as const
-const CORAL_SITE_SEATING = 0.02
-const CORAL_SITES = CORAL_SITE_ROCKS.map((rockIndex, siteIndex) => {
-  const host = ROCKS[rockIndex]
-  const offsetX = (seededUnit(siteIndex, 50) - 0.5) * 0.34
-  const offsetZ = (seededUnit(siteIndex, 51) - 0.5) * 0.34
-  const surface = Math.sqrt(Math.max(1 - offsetX * offsetX - offsetZ * offsetZ, 0))
-  return new THREE.Vector3(
-    host.position.x + offsetX * host.scale.x,
-    host.position.y + surface * host.scale.y - CORAL_SITE_SEATING,
-    host.position.z + offsetZ * host.scale.z,
-  )
-})
-
-const MAX_COLONY_POLYPS = 48
-
-/** Colony form per catalog coral. Zoanthus encrusts as a low mat of short, stiff, tightly
- *  clustered polyps; Goniopora builds a massive flowerpot skeleton whose long flower polyps
- *  stream with the flow. Only catalogued species have a form, so none is ever invented. */
-interface CoralColonyProfile {
-  readonly skeletonRadius: number
-  readonly skeletonHeight: number
-  readonly skeletonLift: number
-  readonly polypFieldRadius: number
-  readonly stemLength: number
-  readonly stemExtension: number
-  readonly stemRadius: number
-  readonly discRadius: number
-  readonly tentacleArms: number
-  readonly tentacleReach: number
-  readonly tentacleRise: number
-  readonly sway: number
-  readonly skeletonColor: string
-  readonly stemColor: string
-  readonly discColor: string
-  readonly discEmissive: string
-}
-
-const CORAL_COLONY_PROFILES: Record<string, CoralColonyProfile | undefined> = {
-  zoanthid: {
-    skeletonRadius: 0.3, skeletonHeight: 0.06, skeletonLift: 0, polypFieldRadius: 0.26,
-    stemLength: 0.026, stemExtension: 0.05, stemRadius: 0.016,
-    discRadius: 0.026, tentacleArms: 10, tentacleReach: 0.015, tentacleRise: 0.004,
-    sway: 0.3,
-    skeletonColor: '#59653f', stemColor: '#7c8a4a', discColor: '#d3e262', discEmissive: '#3f5410',
-  },
-  goniopora: {
-    skeletonRadius: 0.23, skeletonHeight: 0.19, skeletonLift: 0.02, polypFieldRadius: 0.17,
-    stemLength: 0.05, stemExtension: 0.3, stemRadius: 0.008,
-    discRadius: 0.018, tentacleArms: 6, tentacleReach: 0.03, tentacleRise: 0.013,
-    sway: 1,
-    skeletonColor: '#c1ac92', stemColor: '#b6849f', discColor: '#f0c6de', discEmissive: '#5e1f45',
-  },
-}
-
-const BLEACHED_TISSUE = new THREE.Color('#e9e2d6')
-
-/** Tissue pales toward bare skeleton as this colony's authoritative health falls. */
-function colonyTissueColor(hex: string, health: number) {
-  return new THREE.Color(hex).lerp(BLEACHED_TISSUE, (1 - THREE.MathUtils.clamp(health, 0, 1)) * 0.85)
-}
-
-/** Colony-local phyllotaxis polyp field seated on the colony's own skeleton surface. Authoritative
- *  polyp count fills the field outward, so a freshly bought colony is small and densely clustered. */
-function colonyPolypField(site: THREE.Vector3, profile: CoralColonyProfile, seed: number) {
-  return Array.from({ length: MAX_COLONY_POLYPS }, (_, index) => {
-    const spread = Math.sqrt((index + 0.5) / MAX_COLONY_POLYPS)
-    const angle = index * 2.399963 + seededUnit(index, seed) * 0.18
-    const radius = profile.polypFieldRadius * spread
-    const acrossSkeleton = Math.min(radius / profile.skeletonRadius, 1)
-    const x = Math.cos(angle) * radius
-    const y = profile.skeletonLift
-      + profile.skeletonHeight * Math.sqrt(1 - acrossSkeleton * acrossSkeleton) * 0.94
-    const z = Math.sin(angle) * radius * 0.82
-    return { x, y, z, flowX: site.x + x, flowY: site.y + y, phase: seededUnit(index, seed + 1) * Math.PI * 2 }
-  })
-}
-
 type FilmKind = 'diatom' | 'green' | 'cyano'
 
 function SandBed({ material }: { readonly material: ProceduralMaterialTextures }) {
@@ -291,7 +223,9 @@ function SandBed({ material }: { readonly material: ProceduralMaterialTextures }
 
   return (
     <group>
-      <mesh position={[0, SAND_Y - 0.055, 0]} receiveShadow>
+      <mesh position={[0, SAND_Y - 0.055, 0]} receiveShadow userData={{
+        [CORAL_PLACEMENT_SURFACE_KEY]: 'sand', [CORAL_PLACEMENT_SURFACE_ID_KEY]: 'sand:base',
+      }}>
         <boxGeometry args={[5.55, 0.12, 2.34]} />
         <meshStandardMaterial
           color="#c7b991"
@@ -302,7 +236,9 @@ function SandBed({ material }: { readonly material: ProceduralMaterialTextures }
           metalness={0}
         />
       </mesh>
-      <instancedMesh ref={moundRef} args={[undefined, undefined, 22]} receiveShadow>
+      <instancedMesh ref={moundRef} args={[undefined, undefined, 22]} receiveShadow userData={{
+        [CORAL_PLACEMENT_SURFACE_KEY]: 'sand', [CORAL_PLACEMENT_SURFACE_ID_KEY]: 'sand:mound',
+      }}>
         <sphereGeometry args={[1, 12, 7]} />
         <meshStandardMaterial
           color="#d6c8a1"
@@ -352,7 +288,9 @@ function Rockwork({ material }: { readonly material: ProceduralMaterialTextures 
 
   return (
     <group>
-      <instancedMesh ref={rockRef} args={[undefined, undefined, ROCKS.length]} castShadow receiveShadow>
+      <instancedMesh ref={rockRef} args={[undefined, undefined, ROCKS.length]} castShadow receiveShadow userData={{
+        [CORAL_PLACEMENT_SURFACE_KEY]: 'rock', [CORAL_PLACEMENT_SURFACE_ID_KEY]: 'rock',
+      }}>
         <icosahedronGeometry args={[1, 2]} />
         <meshStandardMaterial
           color="#635d54"
@@ -438,135 +376,6 @@ function BenthicFilm({ kind, coverage, flowPower }: { kind: FilmKind; coverage: 
         depthWrite={false}
       />
     </instancedMesh>
-  )
-}
-
-/** One authoritative coral record rendered as its own species-appropriate procedural colony. */
-function CoralColony({
-  colony,
-  profile,
-  site,
-  flowField,
-  material,
-  waterSurfaceY,
-}: {
-  colony: ReefCoralColony; profile: CoralColonyProfile; site: THREE.Vector3
-  flowField: FlowFieldSource; material: ProceduralMaterialTextures; waterSurfaceY: number
-}) {
-  const stemRef = useRef<THREE.InstancedMesh>(null)
-  const discRef = useRef<THREE.InstancedMesh>(null)
-  const tentacleRef = useRef<THREE.InstancedMesh>(null)
-  const dummy = useMemo(() => new THREE.Object3D(), [])
-  const direction = useMemo(() => new THREE.Vector3(), [])
-  const center = useMemo(() => new THREE.Vector3(), [])
-  const polyps = useMemo(() => colonyPolypField(site, profile, colony.id), [colony.id, profile, site])
-  const tissue = useMemo(() => ({
-    skeleton: colonyTissueColor(profile.skeletonColor, colony.health),
-    stem: colonyTissueColor(profile.stemColor, colony.health),
-    disc: colonyTissueColor(profile.discColor, colony.health),
-  }), [colony.health, profile])
-  const boundedExtension = THREE.MathUtils.clamp(colony.extension, 0, 1)
-  const openPolyps = THREE.MathUtils.clamp(Math.round(colony.polyps), 1, MAX_COLONY_POLYPS)
-  // Authoritative growth is skeletal mass: the whole colony scales about its seating point.
-  const colonyScale = 0.72 + THREE.MathUtils.clamp(colony.growth, 0, 1) * 0.42
-
-  // Only the authoritative polyp count is drawn out of the shared allocation.
-  useLayoutEffect(() => {
-    for (const mesh of [stemRef.current, discRef.current, tentacleRef.current]) {
-      if (mesh) mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    }
-    if (stemRef.current) stemRef.current.count = openPolyps
-    if (discRef.current) discRef.current.count = openPolyps
-    if (tentacleRef.current) tentacleRef.current.count = openPolyps * profile.tentacleArms
-  }, [openPolyps, profile.tentacleArms])
-
-  useFrame(({ clock }) => {
-    const stems = stemRef.current
-    const discs = discRef.current
-    const tentacles = tentacleRef.current
-    if (!stems || !discs || !tentacles) return
-
-    const elapsed = clock.getElapsedTime()
-    const stemLength = profile.stemLength + boundedExtension * profile.stemExtension
-    const radialReach = profile.tentacleReach * (0.35 + boundedExtension * 0.65)
-    const tentacleRise = profile.tentacleRise * (0.6 + boundedExtension * 0.8)
-
-    for (let polypIndex = 0; polypIndex < openPolyps; polypIndex += 1) {
-      const polyp = polyps[polypIndex]
-      const flow = sampleSceneFlow(flowField, polyp.flowX, polyp.flowY, waterSurfaceY)
-      const flowAmplitude = (0.004 + flow.speedMetersPerSecond * 0.18) * profile.sway
-      const flowRate = 0.9 + flow.speedMetersPerSecond * 5
-      const swayX = flow.xMetersPerSecond * 0.2 * profile.sway
-        + Math.sin(elapsed * flowRate + polyp.phase) * flowAmplitude
-      const swayY = flow.yMetersPerSecond * 0.16 * profile.sway
-      const swayZ = Math.cos(elapsed * flowRate * 0.82 + polyp.phase) * flowAmplitude * 0.72
-      center.set(polyp.x + swayX, polyp.y + stemLength + swayY, polyp.z + swayZ)
-
-      dummy.position.set(polyp.x + swayX * 0.45, polyp.y + stemLength * 0.5, polyp.z + swayZ * 0.45)
-      dummy.rotation.set(swayZ * 1.9, 0, -swayX * 1.9)
-      dummy.scale.set(profile.stemRadius, stemLength, profile.stemRadius)
-      dummy.updateMatrix()
-      stems.setMatrixAt(polypIndex, dummy.matrix)
-
-      dummy.position.copy(center)
-      dummy.rotation.set(0, polyp.phase, 0)
-      const discRadius = profile.discRadius + boundedExtension * 0.01
-      dummy.scale.set(discRadius, profile.discRadius * 0.6, discRadius)
-      dummy.updateMatrix()
-      discs.setMatrixAt(polypIndex, dummy.matrix)
-
-      for (let arm = 0; arm < profile.tentacleArms; arm += 1) {
-        const angle = (arm / profile.tentacleArms) * Math.PI * 2 + polyp.phase * 0.12
-        direction.set(
-          Math.cos(angle) * radialReach + swayX * 0.7,
-          tentacleRise,
-          Math.sin(angle) * radialReach + swayZ * 0.7,
-        )
-        const length = direction.length()
-        direction.normalize()
-        dummy.position.copy(center).addScaledVector(direction, length * 0.5)
-        dummy.quaternion.setFromUnitVectors(UP, direction)
-        dummy.scale.set(profile.stemRadius * 0.4, length, profile.stemRadius * 0.4)
-        dummy.updateMatrix()
-        tentacles.setMatrixAt(polypIndex * profile.tentacleArms + arm, dummy.matrix)
-      }
-    }
-
-    stems.instanceMatrix.needsUpdate = true
-    discs.instanceMatrix.needsUpdate = true
-    tentacles.instanceMatrix.needsUpdate = true
-  })
-
-  return (
-    <group position={site} scale={colonyScale}>
-      <mesh
-        position={[0, profile.skeletonLift, 0]}
-        scale={[profile.skeletonRadius, profile.skeletonHeight, profile.skeletonRadius]}
-        castShadow
-      >
-        <sphereGeometry args={[1, 18, 12]} />
-        <meshStandardMaterial
-          color={tissue.skeleton}
-          map={material.albedoMap}
-          normalMap={material.normalMap}
-          roughnessMap={material.roughnessMap}
-          roughness={0.78}
-        />
-      </mesh>
-      <instancedMesh ref={stemRef} args={[undefined, undefined, MAX_COLONY_POLYPS]}>
-        <cylinderGeometry args={[1, 1.1, 1, 5]} />
-        <meshStandardMaterial color={tissue.stem} map={material.albedoMap} normalMap={material.normalMap} roughness={0.52} />
-      </instancedMesh>
-      <instancedMesh ref={discRef} args={[undefined, undefined, MAX_COLONY_POLYPS]}>
-        <sphereGeometry args={[1, 7, 5]} />
-        <meshStandardMaterial color={tissue.disc} map={material.albedoMap} emissive={profile.discEmissive}
-          emissiveMap={material.emissiveMap ?? undefined} emissiveIntensity={0.16} roughness={0.48} />
-      </instancedMesh>
-      <instancedMesh ref={tentacleRef} args={[undefined, undefined, MAX_COLONY_POLYPS * profile.tentacleArms]}>
-        <cylinderGeometry args={[1, 0.72, 1, 4]} />
-        <meshStandardMaterial color={tissue.disc} map={material.albedoMap} normalMap={material.normalMap} roughness={0.52} />
-      </instancedMesh>
-    </group>
   )
 }
 
@@ -963,9 +772,38 @@ function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
   )
 }
 
-export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
-  const { ecology, equipment, livestock } = snapshot
+export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, previewCandidate,
+  onPlacementCandidate }: ReefHabitatProps) {
+  const { ecology, equipment } = snapshot
+  const habitatRef = useRef<THREE.Group>(null)
+  const placementRaycaster = useMemo(() => new THREE.Raycaster(), [])
   const waterSurfaceY = waterSurfaceFor(snapshot.tank)
+  const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / snapshot.tank.widthMeters
+  const placementSpace = useMemo(() => ({ halfWidth: TANK_HALF_WIDTH, halfDepth: TANK_HALF_DEPTH,
+    floorY: SAND_Y, waterlineY: waterSurfaceY }), [waterSurfaceY])
+  const activePlan = activeCoral
+    ? resolveCoralRenderPlan(activeCoral.speciesId, activeCoral.variantId, sceneUnitsPerMeter, 'preview')
+    : undefined
+  const occupied = useMemo(() => placedCorals.flatMap((coral) => {
+    const plan = resolveCoralRenderPlan(coral.speciesId, coral.variantId, sceneUnitsPerMeter, 'locked')
+    return coral.placement && plan ? [{ placement: coral.placement, radius: plan.targetWidth * .45 }] : []
+  }), [placedCorals, sceneUnitsPerMeter])
+  const updatePlacementCandidate = useCallback((event: ThreeEvent<PointerEvent | MouseEvent>,
+    intent: 'follow' | 'freeze') => {
+    if (!activeCoral || !activePlan || !habitatRef.current) return
+    event.stopPropagation()
+    placementRaycaster.ray.copy(event.ray)
+    const intersections = placementRaycaster.intersectObject(habitatRef.current, true)
+    const hit = intersections.map((intersection) => coralSurfaceHitFromIntersection(
+      intersection as THREE.Intersection, habitatRef.current!.matrixWorld)).find(Boolean)
+    onPlacementCandidate(hit ? evaluateCoralPlacement(hit, placementSpace, {
+      footprintRadius: activePlan.targetWidth * .45,
+      colonyHeight: activePlan.targetWidth,
+      minimumClearance: .06,
+      occupied,
+      yaw: ((activeCoral.id * 2.399963 + Math.PI) % (Math.PI * 2)) - Math.PI,
+    }) : null, intent)
+  }, [activeCoral, activePlan, occupied, onPlacementCandidate, placementRaycaster, placementSpace])
   const tankFillRatio = snapshot.tank.waterVolumeLiters
     / Math.max(snapshot.tank.targetWaterVolumeLiters, 0.001)
   const particleProfile = suspendedParticleProfile(
@@ -1024,7 +862,6 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
     const created = {
       rock: createProceduralMaterialTextures('reef-rock', { seed: 29 }),
       sand: createProceduralMaterialTextures('aragonite-sand', { seed: 47 }),
-      coral: createProceduralMaterialTextures('coral-tissue', { seed: 71 }),
     }
     for (const material of Object.values(created)) {
       for (const texture of [material.albedoMap, material.normalMap, material.roughnessMap, material.emissiveMap]) {
@@ -1037,30 +874,23 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
   useEffect(() => () => {
     materials.rock.dispose()
     materials.sand.dispose()
-    materials.coral.dispose()
   }, [materials])
 
   return (
-    <group name="living-reef-habitat">
+    <group ref={habitatRef} name="living-reef-habitat">
       <SandBed material={materials.sand} />
       <BenthicFilm kind="diatom" coverage={ecology.diatomCoverage} flowPower={equipment.flowPower} />
       <BenthicFilm kind="cyano" coverage={ecology.cyanobacteriaCoverage} flowPower={equipment.flowPower} />
       <Rockwork material={materials.rock} />
       <BenthicFilm kind="green" coverage={ecology.greenAlgaeCoverage} flowPower={equipment.flowPower} />
-      {(livestock.corals ?? []).map((colony, index) => {
-        const profile = CORAL_COLONY_PROFILES[colony.species]
-        return profile ? (
-          <CoralColony
-            key={colony.id}
-            colony={colony}
-            profile={profile}
-            site={CORAL_SITES[index % CORAL_SITES.length]}
-            flowField={flowField}
-            material={materials.coral}
-            waterSurfaceY={waterSurfaceY}
-          />
-        ) : null
-      })}
+      {placedCorals.map((coral) => coral.placement ? <CoralPlacement key={coral.id}
+        speciesId={coral.speciesId} variantId={coral.variantId} individualId={coral.id}
+        placement={coral.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
+        mode="locked" /> : null)}
+      {activeCoral && previewCandidate ? <CoralPlacement speciesId={activeCoral.speciesId}
+        variantId={activeCoral.variantId} individualId={activeCoral.id}
+        placement={previewCandidate.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
+        mode="preview" valid={previewCandidate.valid} active /> : null}
       <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} pellets={scenePellets}
         flowField={flowField} consume={feeding.consume} />
       <SuspendedParticles flowField={flowField} profile={particleProfile} waterSurfaceY={waterSurfaceY} />
@@ -1069,7 +899,13 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
       <AutoFeederHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       <AtoHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       <InstalledEquipmentHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
-      <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />
+      {!activeCoral && <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />}
+      {activeCoral && <mesh name="coral-placement-input" position={[0, (SAND_Y + waterSurfaceY) / 2,
+        TANK_HALF_DEPTH + .035]} onPointerMove={(event) => updatePlacementCandidate(event, 'follow')}
+        onClick={(event) => updatePlacementCandidate(event, 'freeze')} renderOrder={100}>
+        <planeGeometry args={[TANK_HALF_WIDTH * 2, waterSurfaceY - SAND_Y]} />
+        <meshBasicMaterial transparent opacity={0} colorWrite={false} depthWrite={false} />
+      </mesh>}
     </group>
   )
 }

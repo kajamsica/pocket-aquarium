@@ -31,7 +31,8 @@
     PURCHASE_TIER: "PURCHASE_TIER",           // {tier}
     PURCHASE_LIVESTOCK: "PURCHASE_LIVESTOCK", // {species, count?, acceptRisk?}
     SELL_LIVESTOCK: "SELL_LIVESTOCK",         // {ids}
-    PURCHASE_CORAL: "PURCHASE_CORAL",         // {coral}
+    PURCHASE_CORAL: "PURCHASE_CORAL",         // {coral, variantId?}
+    LOCK_CORAL_PLACEMENT: "LOCK_CORAL_PLACEMENT", // {coralId, placement}
     SEED_MICROFAUNA: "SEED_MICROFAUNA",       // {culture} pods / infusoria culture
     // ---- interaction ----
     FEED: "FEED",                           // {x, y} normalized [0,1] tank coordinates
@@ -230,13 +231,13 @@
       maturityDays: 24, breeding: null
     },
     ocellaris: {
-      id: "ocellaris", kind: "fish", name: "Ocellaris clownfish", sci: "Amphiprion ocellaris",
+      id: "ocellaris", kind: "fish", name: "Ocellaris Clownfish", sci: "Amphiprion ocellaris",
       waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef lagoons, host anemones",
       adultSizeCm: 8, price: 28, bioload: 3.0,
       minTier: "nano20", minVolumeL: 60, minFootprintCm2: 1500,
       socialMin: 1, socialMax: 2, layer: "mid", territoriality: 0.4,
       predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: [], expert: false,
       diet: "omnivore", feedIntervalDays: 1.0, mealSize: 0.85, metabolic: 1.4,
       maturityDays: 30,
       breeding: {
@@ -248,167 +249,280 @@
         note: "Protandrous pair: largest becomes female. Male tends adhesive eggs 6-8 days."
       }
     },
-    watchman_goby: {
-      id: "watchman_goby", kind: "fish", name: "Yellow watchman goby", sci: "Cryptocentrus cinctus",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sandy lagoon burrows",
-      adultSizeCm: 8, price: 30, bioload: 2.6,
-      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
-      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.5,
-      predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", expert: false,
-      diet: "carnivore", feedIntervalDays: 1.0, mealSize: 0.8, metabolic: 1.2,
-      maturityDays: 30, symbiosisWith: "pistol_shrimp", breeding: null
-    },
-    pistol_shrimp: {
-      id: "pistol_shrimp", kind: "invert", name: "Tiger pistol shrimp", sci: "Alpheus bellulus",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sand burrows",
-      adultSizeCm: 5, price: 22, bioload: 0.8,
-      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
-      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.3,
-      predator: false, preysOn: [], preyTags: ["invert"],
-      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", expert: false,
-      diet: "detritivore", feedIntervalDays: 1.4, mealSize: 0.7, metabolic: 0.6,
-      maturityDays: 20, symbiosisWith: "watchman_goby", breeding: null
-    },
-    epaulette_shark: {
-      id: "epaulette_shark", kind: "fish", name: "Epaulette shark", sci: "Hemiscyllium ocellatum",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Great Barrier Reef benthic flats",
-      adultSizeCm: 90, price: 900, bioload: 40,
-      minTier: "xl757", minVolumeL: 757, minFootprintCm2: 10000,
-      socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0.6,
-      predator: true, preysOn: ["nano_fish", "small_fish", "invert"], preyTags: [],
-      coralSafe: true, invertSafe: false, requiredFeature: "deep_sand", expert: true,
-      needsStrongFiltration: true,
-      diet: "benthic-predator", feedIntervalDays: 2.5, mealSize: 0.9, metabolic: 2.0,
-      maturityDays: 120, breeding: null,
-      teachNote: "An epaulette shark is an expert-only benthic predator that outgrows nano tanks; it needs the 757 L tier, deep sand, and strong filtration and will hunt nano fish and inverts."
-    },
-    /* Remaining accepted saltwater fish (runtime-acceptance.v1.json, category "fish").
-       Husbandry is authored conservatively against published adult sizes and the
-       recommended-minimum display volumes: every value is consumed by the existing
-       validatePurchase gates and sim.js loops — no new fields, features, or logic.
-       `diet` is behavioural: "herbivore" grazers add no microfauna predation pressure
-       (sim.js stepMicrofauna), unlike the carnivore/benthic-omnivore micropredators.
-       `breeding` is null throughout because sim.js only drives the clown and tetra
-       projects; a breeding block here would promise reproduction the sim never runs. */
     banggai_cardinal: {
-      id: "banggai_cardinal", kind: "fish", name: "Banggai cardinalfish", sci: "Pterapogon kauderni",
+      id: "banggai_cardinal", kind: "fish", name: "Banggai Cardinalfish", sci: "Pterapogon kauderni",
       waterType: "salt", habitat: "reef", nativeHabitat: "Banggai Archipelago shallows, sheltering among urchin spines and branching coral",
       adultSizeCm: 8, price: 26, bioload: 2.2,
       minTier: "mid151", minVolumeL: 150, minFootprintCm2: 3500,
       socialMin: 1, socialMax: 6, layer: "mid", territoriality: 0.35,
       predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: [], expert: false,
       diet: "carnivore", feedIntervalDays: 1.1, mealSize: 0.8, metabolic: 1.0,
       maturityDays: 35, breeding: null,
       teachNote: "Banggai cardinalfish are hovering group fish: keep one, or introduce five or more at once. A pair or trio reliably produces one dominant fish that harasses the rest."
     },
     black_storm_ocellaris: {
-      id: "black_storm_ocellaris", kind: "fish", name: "Black Storm ocellaris", sci: "Amphiprion ocellaris",
+      id: "black_storm_ocellaris", kind: "fish", name: "Black Storm Ocellaris", sci: "Amphiprion ocellaris",
       waterType: "salt", habitat: "reef", nativeHabitat: "Captive-bred designer morph of the Indo-Pacific lagoon clownfish",
-      adultSizeCm: 11, price: 190, bioload: 3.0,
+      adultSizeCm: 8, price: 190, bioload: 3,
       minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
       socialMin: 1, socialMax: 2, layer: "mid", territoriality: 0.4,
       predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
-      diet: "omnivore", feedIntervalDays: 1.0, mealSize: 0.85, metabolic: 1.4,
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: [], expert: false,
+      diet: "omnivore", feedIntervalDays: 1, mealSize: 0.85, metabolic: 1.4,
       maturityDays: 30, breeding: null,
       teachNote: "Black Storm is a designer Amphiprion ocellaris, so it fights other clownfish as a conspecific rival: keep one individual or one bonded pair, never a second clown of any morph."
     },
-    royal_gramma: {
-      id: "royal_gramma", kind: "fish", name: "Royal gramma", sci: "Gramma loreto",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean reef ledges and cave overhangs",
-      adultSizeCm: 8, price: 34, bioload: 1.8,
-      minTier: "mid151", minVolumeL: 114, minFootprintCm2: 3000,
-      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.4,
-      predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
-      diet: "carnivore", feedIntervalDays: 1.0, mealSize: 0.8, metabolic: 1.1,
-      maturityDays: 30, breeding: null
-    },
-    six_line_wrasse: {
-      id: "six_line_wrasse", kind: "fish", name: "Six-line wrasse", sci: "Pseudocheilinus hexataenia",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef rubble and dense branching rockwork",
-      adultSizeCm: 7.5, price: 32, bioload: 2.0,
-      minTier: "mid151", minVolumeL: 114, minFootprintCm2: 3000,
-      socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0.55,
-      predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: false, requiredFeature: null, expert: false,
-      diet: "carnivore", feedIntervalDays: 0.9, mealSize: 0.75, metabolic: 1.3,
-      maturityDays: 30, breeding: null,
-      teachNote: "A six-line wrasse hunts pods and small shrimp and grows more territorial with age, harassing burrowing gobies and later additions. Add it last, into rock-dense cover."
-    },
-    diamond_goby: {
-      id: "diamond_goby", kind: "fish", name: "Diamond goby", sci: "Valenciennea puellaris",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sand flats, sifting open substrate beside rock",
-      adultSizeCm: 15, price: 28, bioload: 4.0,
-      minTier: "mid151", minVolumeL: 150, minFootprintCm2: 3500,
-      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.45,
-      predator: false, preysOn: [], preyTags: ["small_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", expert: false,
-      diet: "benthic-omnivore", feedIntervalDays: 0.9, mealSize: 0.8, metabolic: 1.3,
-      maturityDays: 45, breeding: null,
-      teachNote: "A diamond goby feeds by sifting sand for meiofauna and starves in a young or bare-bottom tank: it needs a broad established sand bed plus deliberate supplemental feeding."
-    },
-    tomini_tang: {
-      id: "tomini_tang", kind: "fish", name: "Tomini tang", sci: "Ctenochaetus tominiensis",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Western Pacific reef slopes, combing film algae and detritus",
-      adultSizeCm: 15, price: 70, bioload: 6.5,
-      minTier: "large284", minVolumeL: 280, minFootprintCm2: 5500,
-      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.5,
-      predator: false, preysOn: [], preyTags: [],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
-      diet: "herbivore", feedIntervalDays: 0.9, mealSize: 0.85, metabolic: 1.35,
-      maturityDays: 80, breeding: null,
-      teachNote: "The smallest accepted tang still needs 280 L of open swimming length and near-continuous grazing food, and will not share a system with another tang."
-    },
-    yellow_tang: {
-      id: "yellow_tang", kind: "fish", name: "Yellow tang", sci: "Zebrasoma flavescens",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Hawaiian and Central Pacific reef flats, grazing turf algae",
-      adultSizeCm: 20, price: 130, bioload: 9,
-      minTier: "xl757", minVolumeL: 450, minFootprintCm2: 7400,
-      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.6,
-      predator: false, preysOn: [], preyTags: [],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
-      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.45,
-      maturityDays: 95, breeding: null,
-      teachNote: "A yellow tang grazes all day and reaches 20 cm: it needs 450 L with long open swimming lanes, and a second tang in the same tank means constant fighting."
-    },
-    purple_tang: {
-      id: "purple_tang", kind: "fish", name: "Purple tang", sci: "Zebrasoma xanthurum",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Red Sea and Arabian Gulf reefs, grazing exposed rock faces",
-      adultSizeCm: 22, price: 260, bioload: 11,
-      minTier: "xl757", minVolumeL: 470, minFootprintCm2: 8400,
-      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.65,
-      predator: false, preysOn: [], preyTags: [],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
-      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.5,
-      maturityDays: 100, breeding: null,
-      teachNote: "Purple tangs are among the most aggressive Zebrasoma: one per system, in at least 470 L, and never alongside another tang."
-    },
-    gem_tang: {
-      id: "gem_tang", kind: "fish", name: "Gem tang", sci: "Zebrasoma gemmatum",
-      waterType: "salt", habitat: "reef", nativeHabitat: "Western Indian Ocean rocky reef slopes, Madagascar to Mozambique",
-      adultSizeCm: 20, price: 950, bioload: 10,
-      minTier: "xl757", minVolumeL: 680, minFootprintCm2: 11000,
-      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.7,
-      predator: false, preysOn: [], preyTags: [],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: true,
-      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.5,
-      maturityDays: 100, breeding: null,
-      teachNote: "A gem tang is a rare, expensive Zebrasoma that claims the whole water column and tolerates no other tang; buy it only into a mature 680 L reef."
-    },
     blue_hippo_tang: {
-      id: "blue_hippo_tang", kind: "fish", name: "Blue hippo tang", sci: "Paracanthurus hepatus",
+      id: "blue_hippo_tang", kind: "fish", name: "Blue Hippo Tang", sci: "Paracanthurus hepatus",
       waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef slopes, open water above branching coral",
       adultSizeCm: 25, price: 85, bioload: 12,
       minTier: "xl757", minVolumeL: 680, minFootprintCm2: 11000,
       socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.55,
       predator: false, preysOn: [], preyTags: [],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: ["algae_grazing"], expert: false,
       diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.9, metabolic: 1.55,
       maturityDays: 110, breeding: null,
       teachNote: "A blue hippo tang reaches 25 cm and needs a 680 L system with long open swimming lanes; it keeps growing whether or not the tank can hold it."
+    },
+    diamond_goby: {
+      id: "diamond_goby", kind: "fish", name: "Diamond Goby", sci: "Valenciennea puellaris",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sand flats, sifting open substrate beside rock",
+      adultSizeCm: 15, price: 28, bioload: 4,
+      minTier: "mid151", minVolumeL: 150, minFootprintCm2: 3500,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.45,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", cleanupRoles: ["sand_sifting", "detritus_turnover"], expert: false,
+      diet: "benthic-omnivore", feedIntervalDays: 0.9, mealSize: 0.8, metabolic: 1.3,
+      maturityDays: 45, breeding: null,
+      teachNote: "A diamond goby feeds by sifting sand for meiofauna and starves in a young or bare-bottom tank: it needs a broad established sand bed plus deliberate supplemental feeding."
+    },
+    watchman_goby: {
+      id: "watchman_goby", kind: "fish", name: "Yellow Watchman Goby", sci: "Cryptocentrus cinctus",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sandy lagoon burrows",
+      adultSizeCm: 8, price: 30, bioload: 2.6,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.5,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", cleanupRoles: [], expert: false,
+      diet: "carnivore", feedIntervalDays: 1.0, mealSize: 0.8, metabolic: 1.2,
+      maturityDays: 30, symbiosisWith: "pistol_shrimp", breeding: null
+    },
+    pistol_shrimp: {
+      id: "pistol_shrimp", kind: "invert", name: "Tiger Pistol Shrimp", sci: "Alpheus bellulus",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific sand burrows",
+      adultSizeCm: 5, price: 22, bioload: 0.8,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.3,
+      predator: false, preysOn: [], preyTags: ["invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_burrow", cleanupRoles: [], expert: false,
+      diet: "detritivore", feedIntervalDays: 1.4, mealSize: 0.7, metabolic: 0.6,
+      maturityDays: 20, symbiosisWith: "watchman_goby", breeding: null
+    },
+    epaulette_shark: {
+      id: "epaulette_shark", kind: "fish", name: "Epaulette Shark", sci: "Hemiscyllium ocellatum",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Great Barrier Reef benthic flats",
+      adultSizeCm: 90, price: 900, bioload: 40,
+      minTier: "xl757", minVolumeL: 1363, minFootprintCm2: 32000,
+      socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0.6,
+      predator: true, preysOn: ["nano_fish", "small_fish", "invert"], preyTags: [],
+      coralSafe: true, invertSafe: false, requiredFeature: "deep_sand", cleanupRoles: [], expert: true,
+      needsStrongFiltration: true,
+      diet: "benthic-predator", feedIntervalDays: 2.5, mealSize: 0.9, metabolic: 2.0,
+      maturityDays: 120, breeding: null,
+      teachNote: "An epaulette shark is an expert-only benthic predator modeled at 90 cm; it needs at least 1,363 L, a roughly 3.2 m-long footprint, deep sand, and strong filtration and will hunt nano fish and inverts."
+    },
+    gem_tang: {
+      id: "gem_tang", kind: "fish", name: "Gem Tang", sci: "Zebrasoma gemmatum",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Western Indian Ocean rocky reef slopes, Madagascar to Mozambique",
+      adultSizeCm: 20, price: 950, bioload: 10,
+      minTier: "xl757", minVolumeL: 680, minFootprintCm2: 11000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.7,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: ["algae_grazing"], expert: true,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.5,
+      maturityDays: 100, breeding: null,
+      teachNote: "A gem tang is a rare, expensive Zebrasoma that claims the whole water column and tolerates no other tang; buy it only into a mature 680 L reef."
+    },
+    purple_tang: {
+      id: "purple_tang", kind: "fish", name: "Purple Tang", sci: "Zebrasoma xanthurum",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Red Sea and Arabian Gulf reefs, grazing exposed rock faces",
+      adultSizeCm: 22, price: 260, bioload: 11,
+      minTier: "xl757", minVolumeL: 470, minFootprintCm2: 8400,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.65,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: ["algae_grazing"], expert: false,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.5,
+      maturityDays: 100, breeding: null,
+      teachNote: "Purple tangs are among the most aggressive Zebrasoma: one per system, in at least 470 L, and never alongside another tang."
+    },
+    royal_gramma: {
+      id: "royal_gramma", kind: "fish", name: "Royal Gramma", sci: "Gramma loreto",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean reef ledges and cave overhangs",
+      adultSizeCm: 8, price: 34, bioload: 1.8,
+      minTier: "mid151", minVolumeL: 114, minFootprintCm2: 3000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.4,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: [], expert: false,
+      diet: "carnivore", feedIntervalDays: 1, mealSize: 0.8, metabolic: 1.1,
+      maturityDays: 30, breeding: null
+    },
+    six_line_wrasse: {
+      id: "six_line_wrasse", kind: "fish", name: "Six-Line Wrasse", sci: "Pseudocheilinus hexataenia",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef rubble and dense branching rockwork",
+      adultSizeCm: 7.5, price: 32, bioload: 2,
+      minTier: "mid151", minVolumeL: 114, minFootprintCm2: 3000,
+      socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0.55,
+      predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: false, requiredFeature: null, cleanupRoles: ["pest_worm_control"], expert: false,
+      diet: "carnivore", feedIntervalDays: 0.9, mealSize: 0.75, metabolic: 1.3,
+      maturityDays: 30, breeding: null,
+      teachNote: "A six-line wrasse hunts pods and small shrimp and grows more territorial with age, harassing burrowing gobies and later additions. Add it last, into rock-dense cover."
+    },
+    tomini_tang: {
+      id: "tomini_tang", kind: "fish", name: "Tomini Tang", sci: "Ctenochaetus tominiensis",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Western Pacific reef slopes, combing film algae and detritus",
+      adultSizeCm: 15, price: 70, bioload: 6.5,
+      minTier: "large284", minVolumeL: 280, minFootprintCm2: 5500,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.5,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: ["film_algae_grazing"], expert: false,
+      diet: "herbivore", feedIntervalDays: 0.9, mealSize: 0.85, metabolic: 1.35,
+      maturityDays: 80, breeding: null,
+      teachNote: "The smallest accepted tang still needs 280 L of open swimming length and near-continuous grazing food, and will not share a system with another tang."
+    },
+    yellow_tang: {
+      id: "yellow_tang", kind: "fish", name: "Yellow Tang", sci: "Zebrasoma flavescens",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Hawaiian and Central Pacific reef flats, grazing turf algae",
+      adultSizeCm: 20, price: 130, bioload: 9,
+      minTier: "xl757", minVolumeL: 450, minFootprintCm2: 7400,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.6,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: true, invertSafe: true, requiredFeature: null, cleanupRoles: ["algae_grazing"], expert: false,
+      diet: "herbivore", feedIntervalDays: 0.85, mealSize: 0.85, metabolic: 1.45,
+      maturityDays: 95, breeding: null,
+      teachNote: "A yellow tang grazes all day and reaches 20 cm: it needs 450 L with long open swimming lanes, and a second tang in the same tank means constant fighting."
+    },
+    astrea_snail: {
+      id: "astrea_snail", kind: "invert", name: "Astrea Snail", sci: "Lithopoma sp.",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean shallow hard-bottom reefs",
+      adultSizeCm: 2.5, price: 5, bioload: 0.12,
+      minTier: "nano20", minVolumeL: 38, minFootprintCm2: 900,
+      socialMin: 1, socialMax: 20, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: [], preyTags: ["invert", "small_invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "hard_surface", cleanupRoles: ["film_algae", "diatoms"], expert: false,
+      diet: "herbivore", feedIntervalDays: 1.5, mealSize: 0.25, metabolic: 0.25,
+      maturityDays: 18, breeding: null
+    },
+    blue_linckia: {
+      id: "blue_linckia", kind: "invert", name: "Blue Linckia Starfish", sci: "Linckia laevigata",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific mature reef flats and live rock",
+      adultSizeCm: 25, price: 45, bioload: 2,
+      minTier: "large284", minVolumeL: 284, minFootprintCm2: 6000,
+      socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: ["microfauna"], preyTags: ["invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "mature_live_rock", cleanupRoles: ["biofilm", "detritus"], expert: false,
+      diet: "biofilm-grazer", feedIntervalDays: 1.5, mealSize: 0.5, metabolic: 0.45,
+      maturityDays: 60, breeding: null
+    },
+    brittle_star: {
+      id: "brittle_star", kind: "invert", name: "Brittle Star", sci: "Ophiuroidea (reef brittle star, Ophiocoma / Ophioderma group)",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Tropical reef rubble, crevices, and live rock",
+      adultSizeCm: 15, price: 20, bioload: 0.8,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 4, layer: "bottom", territoriality: 0.05,
+      predator: false, preysOn: ["microfauna"], preyTags: ["invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "rock_shelter", cleanupRoles: ["detritus", "leftover_food"], expert: false,
+      diet: "detritivore", feedIntervalDays: 1.5, mealSize: 0.45, metabolic: 0.4,
+      maturityDays: 30, breeding: null
+    },
+    cerith_snail: {
+      id: "cerith_snail", kind: "invert", name: "Cerith Snail", sci: "Cerithium sp.",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Tropical reef sand, seagrass, and rock surfaces",
+      adultSizeCm: 2.5, price: 4, bioload: 0.1,
+      minTier: "nano20", minVolumeL: 20, minFootprintCm2: 900,
+      socialMin: 1, socialMax: 30, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: [], preyTags: ["invert", "small_invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_bed", cleanupRoles: ["film_algae", "diatoms", "detritus"], expert: false,
+      diet: "herbivore-detritivore", feedIntervalDays: 1.6, mealSize: 0.2, metabolic: 0.2,
+      maturityDays: 16, breeding: null
+    },
+    cleaner_shrimp: {
+      id: "cleaner_shrimp", kind: "invert", name: "Skunk Cleaner Shrimp", sci: "Lysmata amboinensis",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific reef cleaning stations and caves",
+      adultSizeCm: 6, price: 40, bioload: 0.7,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.1,
+      predator: false, preysOn: ["microfauna"], preyTags: ["invert", "ornamental_shrimp"],
+      coralSafe: true, invertSafe: true, requiredFeature: "rock_shelter", cleanupRoles: ["fish_cleaning", "leftover_food"], expert: false,
+      diet: "omnivore", feedIntervalDays: 1.2, mealSize: 0.45, metabolic: 0.5,
+      maturityDays: 24, breeding: null
+    },
+    emerald_crab: {
+      id: "emerald_crab", kind: "invert", name: "Emerald Crab", sci: "Mithraculus sculptus",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean reef rock and rubble",
+      adultSizeCm: 4.5, price: 20, bioload: 0.6,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0.4,
+      predator: true, preysOn: ["small_invert"], preyTags: ["invert", "small_invert"],
+      coralSafe: false, invertSafe: false, requiredFeature: "hard_surface", cleanupRoles: ["bubble_algae", "detritus"], expert: false,
+      diet: "benthic-omnivore", feedIntervalDays: 1.3, mealSize: 0.4, metabolic: 0.45,
+      maturityDays: 24, breeding: null
+    },
+    fighting_conch: {
+      id: "fighting_conch", kind: "invert", name: "Fighting Conch", sci: "Strombus sp.",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean open sand and seagrass flats",
+      adultSizeCm: 8, price: 25, bioload: 0.5,
+      minTier: "mid151", minVolumeL: 151, minFootprintCm2: 3000,
+      socialMin: 1, socialMax: 2, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: [], preyTags: ["invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_bed", cleanupRoles: ["sand_algae", "detritus"], expert: false,
+      diet: "herbivore-detritivore", feedIntervalDays: 1.5, mealSize: 0.4, metabolic: 0.35,
+      maturityDays: 30, breeding: null
+    },
+    nassarius_snail: {
+      id: "nassarius_snail", kind: "invert", name: "Nassarius Snail", sci: "Nassarius sp.",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Marine sand beds and intertidal sediment",
+      adultSizeCm: 3.34, price: 5, bioload: 0.12,
+      minTier: "nano20", minVolumeL: 20, minFootprintCm2: 900,
+      socialMin: 1, socialMax: 25, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: [], preyTags: ["invert", "small_invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "sand_bed", cleanupRoles: ["carrion", "leftover_food", "sand_turnover"], expert: false,
+      diet: "detritivore", feedIntervalDays: 1.6, mealSize: 0.2, metabolic: 0.2,
+      maturityDays: 18, breeding: null
+    },
+    scarlet_hermit: {
+      id: "scarlet_hermit", kind: "invert", name: "Scarlet Reef Hermit Crab", sci: "Paguristes cadenati",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean reef rubble and shallow rock",
+      adultSizeCm: 3, price: 7, bioload: 0.2,
+      minTier: "nano20", minVolumeL: 38, minFootprintCm2: 900,
+      socialMin: 1, socialMax: 12, layer: "bottom", territoriality: 0.2,
+      predator: false, preysOn: [], preyTags: ["invert", "small_invert"],
+      coralSafe: true, invertSafe: false, requiredFeature: "spare_shells", cleanupRoles: ["film_algae", "detritus", "leftover_food"], expert: false,
+      diet: "herbivore-detritivore", feedIntervalDays: 1.5, mealSize: 0.25, metabolic: 0.25,
+      maturityDays: 20, breeding: null
+    },
+    trochus_snail: {
+      id: "trochus_snail", kind: "invert", name: "Trochus Snail", sci: "Trochus / Rochia sp.",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific shallow reef rock",
+      adultSizeCm: 3, price: 6, bioload: 0.12,
+      minTier: "nano20", minVolumeL: 38, minFootprintCm2: 900,
+      socialMin: 1, socialMax: 20, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: [], preyTags: ["invert", "small_invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "hard_surface", cleanupRoles: ["film_algae", "diatoms"], expert: false,
+      diet: "herbivore", feedIntervalDays: 1.5, mealSize: 0.25, metabolic: 0.25,
+      maturityDays: 18, breeding: null
+    },
+    turbo_snail: {
+      id: "turbo_snail", kind: "invert", name: "Turbo Snail", sci: "Turbo sp.",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Tropical shallow reef rock and surge zones",
+      adultSizeCm: 4, price: 8, bioload: 0.18,
+      minTier: "nano20", minVolumeL: 75, minFootprintCm2: 1500,
+      socialMin: 1, socialMax: 12, layer: "bottom", territoriality: 0,
+      predator: false, preysOn: [], preyTags: ["invert", "small_invert"],
+      coralSafe: true, invertSafe: true, requiredFeature: "hard_surface", cleanupRoles: ["turf_algae", "film_algae"], expert: false,
+      diet: "herbivore", feedIntervalDays: 1.4, mealSize: 0.3, metabolic: 0.3,
+      maturityDays: 20, breeding: null
     }
   };
 
@@ -423,9 +537,57 @@
    * Corals (reef only). PAR/flow preference and maturity gate.
    * ------------------------------------------------------------------ */
   var CORALS = {
+    acropora_branching: {
+      id: "acropora_branching", kind: "coral", name: "Acropora (branching SPS)", sci: "Acropora sp.",
+      waterType: "salt", habitat: "reef", price: 95, referenceSizeCm: 15, referenceSizeKind: "colony_width",
+      defaultVariantId: "bushy_pink", variants: [
+        { id: "bushy_pink", displayName: "Acropora digitate, pink" },
+        { id: "hairy_green", displayName: "Acropora millepora style, green with pale-green polyps" },
+        { id: "staghorn_blue", displayName: "Acropora staghorn, steel blue with pale tips" },
+        { id: "staghorn_green_purple_tips", displayName: "Acropora staghorn, green with purple tips" },
+        { id: "table_blue", displayName: "Acropora table, blue" },
+        { id: "table_green", displayName: "Acropora table, green with cream tips" }
+      ],
+      par: { min: 150, max: 350, low: 200, high: 300 },
+      flow: { min: 0.5, max: 1, low: 0.65, high: 0.9 },
+      dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 7,
+      calcification: 0.85, startPolyps: 80,
+      note: "Demanding SPS colony; strong variable flow, high PAR, and stable alkalinity are essential."
+    },
+    anacropora: {
+      id: "anacropora", kind: "coral", name: "Anacropora", sci: "Anacropora sp.",
+      waterType: "salt", habitat: "reef", price: 75, referenceSizeCm: 12, referenceSizeKind: "colony_width",
+      defaultVariantId: "brown_pink_tips", variants: [
+        { id: "brown_pink_tips", displayName: "Anacropora (tan brown, pink-purple tips)" },
+        { id: "green", displayName: "Anacropora (green, pale lime tips)" }
+      ],
+      par: { min: 130, max: 300, low: 170, high: 260 },
+      flow: { min: 0.45, max: 0.9, low: 0.55, high: 0.8 },
+      dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 6,
+      calcification: 0.7, startPolyps: 65,
+      note: "Branching SPS that rewards mature water, steady alkalinity, and brisk indirect flow."
+    },
+    chalice_coral: {
+      id: "chalice_coral", kind: "coral", name: "Chalice Coral", sci: "aquarium \"chalice\" corals (Echinophyllia / Mycedium / Oxypora group; Lobophylliidae and Merulinidae)",
+      waterType: "salt", habitat: "reef", price: 85, referenceSizeCm: 12, referenceSizeKind: "colony_width",
+      defaultVariantId: "jelly_bean", variants: [
+        { id: "jelly_bean", displayName: "Chalice Coral (jelly bean: dark plate, candy blotches)" },
+        { id: "purple_orange_eyes", displayName: "Chalice Coral (purple plate, orange eyes)" },
+        { id: "red_green_eyes", displayName: "Chalice Coral (red plate, green eyes)" }
+      ],
+      par: { min: 40, max: 180, low: 70, high: 130 },
+      flow: { min: 0.2, max: 0.6, low: 0.3, high: 0.5 },
+      dayFeeder: false, maturityGate: "mature", stabilityDaysGate: 4,
+      calcification: 0.45, startPolyps: 18,
+      note: "Low-to-moderate light LPS; leave room for sweeper tentacles and avoid direct flow."
+    },
     zoanthid: {
-      id: "zoanthid", kind: "coral", name: "Zoanthid colony", sci: "Zoanthus sp.",
-      waterType: "salt", habitat: "reef", price: 35,
+      id: "zoanthid", kind: "coral", name: "Zoanthid Colony", sci: "Zoanthus sp.",
+      waterType: "salt", habitat: "reef", price: 35, referenceSizeCm: 8, referenceSizeKind: "colony_width",
+      defaultVariantId: "blue_green", variants: [
+        { id: "blue_green", displayName: "Zoanthid Colony (blue and green)" },
+        { id: "orange_red", displayName: "Zoanthid Colony (orange and red)" }
+      ],
       par: { min: 40, max: 200, low: 60, high: 150 },
       flow: { min: 0.2, max: 0.8, low: 0.3, high: 0.7 },
       dayFeeder: true, maturityGate: "cycled", stabilityDaysGate: 1,
@@ -433,13 +595,57 @@
       note: "Hardy first coral; polyps open across a broad PAR band with moderate flow."
     },
     goniopora: {
-      id: "goniopora", kind: "coral", name: "Goniopora (flowerpot)", sci: "Goniopora sp.",
-      waterType: "salt", habitat: "reef", price: 70,
+      id: "goniopora", kind: "coral", name: "Goniopora (flowerpot coral)", sci: "Goniopora sp.",
+      waterType: "salt", habitat: "reef", price: 70, referenceSizeCm: 10, referenceSizeKind: "colony_width",
+      defaultVariantId: "green_pink", variants: [
+        { id: "green_pink", displayName: "Goniopora, green polyps with pink oral discs" },
+        { id: "purple_green", displayName: "Goniopora, purple polyps with green oral discs" },
+        { id: "red_brown", displayName: "Goniopora, red-brown polyps with pale green oral discs" }
+      ],
       par: { min: 50, max: 160, low: 70, high: 110 },
       flow: { min: 0.25, max: 0.6, low: 0.3, high: 0.55 },
       dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 4,
       calcification: 0.35, startPolyps: 24,
       note: "Demands a mature, chemically stable system, target PAR and gentle flow, and regular feeding."
+    },
+    millepora: {
+      id: "millepora", kind: "coral", name: "Millepora (fire coral)", sci: "Millepora sp.",
+      waterType: "salt", habitat: "reef", price: 85, referenceSizeCm: 15, referenceSizeKind: "colony_width",
+      defaultVariantId: "blade", variants: [
+        { id: "blade", displayName: "Millepora (fire coral, blade form)" },
+        { id: "branching", displayName: "Millepora (fire coral, branching form)" }
+      ],
+      par: { min: 140, max: 320, low: 180, high: 280 },
+      flow: { min: 0.5, max: 0.95, low: 0.6, high: 0.85 },
+      dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 6,
+      calcification: 0.7, startPolyps: 70,
+      note: "Fast-calcifying hydrocoral with a potent sting; provide bright light and vigorous flow."
+    },
+    stylophora: {
+      id: "stylophora", kind: "coral", name: "Blueberry Stylophora", sci: "Stylophora pistillata",
+      waterType: "salt", habitat: "reef", price: 65, referenceSizeCm: 10, referenceSizeKind: "colony_width",
+      defaultVariantId: "blueberry", variants: [
+        { id: "blueberry", displayName: "Blueberry Stylophora (blue-violet, lavender polyps)" },
+        { id: "pink", displayName: "Pink Stylophora (pink-lilac wild form)" }
+      ],
+      par: { min: 100, max: 280, low: 140, high: 230 },
+      flow: { min: 0.4, max: 0.85, low: 0.5, high: 0.75 },
+      dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 5,
+      calcification: 0.6, startPolyps: 60,
+      note: "Relatively forgiving SPS, but still needs mature chemistry and broad turbulent flow."
+    },
+    torch_coral: {
+      id: "torch_coral", kind: "coral", name: "Torch Coral", sci: "Euphyllia glabrescens",
+      waterType: "salt", habitat: "reef", price: 85, referenceSizeCm: 12, referenceSizeKind: "colony_width",
+      defaultVariantId: "gold_white_tips", variants: [
+        { id: "gold_white_tips", displayName: "Torch Coral (gold, white tips)" },
+        { id: "green_pink_tips", displayName: "Torch Coral (green, pink tips)" }
+      ],
+      par: { min: 60, max: 200, low: 90, high: 160 },
+      flow: { min: 0.2, max: 0.65, low: 0.3, high: 0.55 },
+      dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 4,
+      calcification: 0.5, startPolyps: 6,
+      note: "Long-tentacled LPS; use indirect moderate flow and generous spacing from neighboring colonies."
     }
   };
 
@@ -612,6 +818,9 @@
     if (hab === "reef") {
       feats.sand_burrow = true; feats.deep_sand = tierIndex(currentTierId(state)) >= tierIndex("large284");
       feats.host = true; // live rock / host territory available on a reef
+      feats.sand_bed = true; feats.hard_surface = true; feats.rock_shelter = true;
+      feats.spare_shells = true; feats.open_swim = tierIndex(currentTierId(state)) >= tierIndex("large284");
+      feats.mature_live_rock = stageIndex(state) >= CYCLE_STAGES.indexOf("Mature biome");
       feats.pods = hasMicrofauna(state, "pods");
     }
     var eq = state && state.equipment;
@@ -744,6 +953,13 @@
     if (kind === "coral") {
       var coral = CORALS[request.id];
       if (!coral) { reasons.push("Unknown coral."); return { ok: false, reasons: reasons }; }
+      if (request.variantId != null) {
+        var knownVariant = false;
+        for (var cv = 0; cv < coral.variants.length; cv++) {
+          if (coral.variants[cv].id === request.variantId) { knownVariant = true; break; }
+        }
+        if (!knownVariant) { reasons.push("Unknown coral variant."); return { ok: false, reasons: reasons }; }
+      }
       if (state.habitat !== "reef") reasons.push(coral.name + " needs a saltwater reef habitat.");
       if (!isCycled(state)) reasons.push("The tank must be cycled and stable before adding coral.");
       var wantMature = coral.maturityGate === "mature";
@@ -840,7 +1056,10 @@
     var map = {
       fine_sand: "fine sand bottom", sand_burrow: "open sand for burrowing",
       deep_sand: "a deep sand bed", host: "a host anemone / live rock",
-      cover: "planted cover", strong_filtration: "strong filtration"
+      cover: "planted cover", strong_filtration: "strong filtration",
+      sand_bed: "an open sand bed", hard_surface: "established reef rock",
+      rock_shelter: "reef-rock shelter", spare_shells: "spare empty shells",
+      open_swim: "open swimming room", mature_live_rock: "mature live rock"
     };
     return map[f] || f;
   }

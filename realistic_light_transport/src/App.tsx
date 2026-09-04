@@ -9,6 +9,7 @@ import {
   devSafeSaveKey,
   dispatchPocketAction,
   isDevSafeActive,
+  pocketActions,
   pocketSaveKey,
   projectPocketState,
   restorePocketGame,
@@ -18,9 +19,17 @@ import {
   type PocketState,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
+import type { CoralPlacementCandidate } from './scene/CoralPlacement'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
 import { createAcceptedShowcaseCatalog, SpecimenRosterProvider } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
+import {
+  advanceCoralDraft,
+  beginCoralDraft,
+  CoralInventoryTray,
+  lockableCoralDraft,
+  type CoralDraftState,
+} from './ui/CoralInventoryTray'
 import { SpecimenWorkbench } from './workbench/SpecimenWorkbench'
 
 const UPDATE_INTERVAL_MS = 250
@@ -144,9 +153,13 @@ function AquariumApp() {
   protectionRef.current = protectionOn
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
+  const [activeCoralId, setActiveCoralId] = useState<number | null>(null)
+  const [coralDraft, setCoralDraft] = useState<CoralDraftState<CoralPlacementCandidate> | null>(null)
+  const previewCandidate = coralDraft?.candidate ?? null
   const lastTelemetryUpdate = useRef(0)
   const godModeOn = DEV_SAFE && protectionOn
   const view = projectPocketState(pocketState, { godMode: godModeOn })
+  const activeCoral = view.coralInventory.find((coral) => coral.id === activeCoralId)
   // The ref is advanced by whichever writer produced the state (dispatch or a tick), never during
   // render, so a discarded Strict Mode/concurrent render pass cannot roll it back behind an action.
 
@@ -215,6 +228,16 @@ function AquariumApp() {
     }
   }, [adoptSave])
 
+  useEffect(() => {
+    const tray = document.querySelector<HTMLDetailsElement>('.coral-tray-disclosure')
+    if (!tray) return
+    const mobile = window.matchMedia('(max-width: 860px)')
+    const syncTray = () => { tray.open = !mobile.matches }
+    syncTray()
+    mobile.addEventListener('change', syncTray)
+    return () => mobile.removeEventListener('change', syncTray)
+  }, [view.coralInventory.length])
+
   // A completed player action commits as one immediate unit: the ref, React state, and the active
   // save key all take the exact resulting state before control returns to the browser, so a reload
   // or background transition inside the one-second save window cannot erase it. Accepted and
@@ -265,15 +288,46 @@ function AquariumApp() {
     setRenderTelemetry(telemetry)
   }, [])
 
+  const armCoral = useCallback((coralId: number) => {
+    setActiveCoralId(coralId)
+    setCoralDraft(beginCoralDraft())
+  }, [])
+  const cancelCoral = useCallback(() => {
+    setActiveCoralId(null)
+    setCoralDraft(null)
+  }, [])
+  const lockCoral = useCallback(() => {
+    const candidate = lockableCoralDraft(coralDraft)
+    if (!activeCoral || !candidate) return
+    dispatch({ type: pocketActions.LOCK_CORAL_PLACEMENT, coralId: activeCoral.id,
+      placement: candidate.placement })
+    setActiveCoralId(null)
+    setCoralDraft(null)
+  }, [activeCoral, coralDraft, dispatch])
+  const updateCoralDraft = useCallback((candidate: CoralPlacementCandidate | null,
+    intent: 'follow' | 'freeze' = 'follow') => {
+    setCoralDraft((draft) => draft ? advanceCoralDraft(draft, candidate, intent) : null)
+  }, [])
+  const candidateStatus = previewCandidate ? {
+    valid: previewCandidate.valid,
+    frozen: coralDraft?.phase === 'frozen',
+    message: coralDraft?.phase === 'frozen' ? 'Temporary position selected. Select Lock here to confirm.'
+      : previewCandidate.valid ? 'Valid preview. Click sand or rock to select this temporary position.'
+      : `Choose another position (${previewCandidate.reason ?? 'invalid surface'}).`,
+  } : null
+
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
-        <SpecimenRosterProvider specimens={view.specimens} showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
-          dispatch={SHOWCASE_MODE ? undefined : dispatch}>
+        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}>
           <ReefScene
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}
             onRenderTelemetry={updateRenderTelemetry}
+            placedCorals={view.placedCorals}
+            activeCoral={activeCoral}
+            previewCandidate={previewCandidate}
+            onPlacementCandidate={updateCoralDraft}
           />
         </SpecimenRosterProvider>
       </FeedingProvider>
@@ -286,6 +340,9 @@ function AquariumApp() {
         godMode={godMode}
         showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
       />
+      <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
+        candidate={candidateStatus} onArm={armCoral} onPointerArm={(coralId) => armCoral(coralId)}
+        onCancel={cancelCoral} onLock={lockCoral} />
     </main>
   )
 }
