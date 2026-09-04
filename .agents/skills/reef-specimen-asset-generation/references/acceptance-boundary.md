@@ -42,10 +42,12 @@ that cannot be fixed by a rebuild, so `scripts/candidate_handoff.mjs` checks it 
 | `scripts/specimens/catalog/species/<id>.py` | `src/assets/specimens/**` |
 | `scripts/specimens/catalog/{lib,plans}/**` only with authorization (rehashes every dependent candidate) | `src/scene/specimens/assetRegistry.ts`, `src/scene/SpecimenFish.tsx` and their tests |
 | `src/catalog/visual-catalog.v1.json` via `build_visual_catalog.mjs` | `../js/specimenProfiles.js`, `scripts/specimens/{build_ocellaris.sh,author_specimen.py,author_ocellaris.py,validate_specimen.py,validate_ocellaris.py,promote_specimen.mjs,compile_profiles.mjs}` |
-| | another species' candidates, unless that species is in scope |
+| | another species' candidates, unless that species is declared in scope (`--scope <id>`) |
 
-`candidate_handoff.mjs` fails when `git status` shows any path in the right-hand column dirty
-and warns on shared `lib/`/`plans/` changes.
+`candidate_handoff.mjs` fails when `git status` (plus `git diff <base> HEAD` with `--base`)
+shows any path in the right-hand column added, modified, deleted, or renamed, fails when the
+audit itself cannot run (no worktree, unresolvable base), and warns on shared `lib/`/`plans/`
+changes.
 
 ## Exclusion history
 

@@ -135,9 +135,13 @@ node ../.agents/skills/reef-specimen-asset-generation/scripts/candidate_handoff.
 `src/catalog/visual-catalog.v1.json` is the only generated file under `src/` a generation lane
 may change. `candidate_handoff.mjs` is read-only: it verifies package/hash coherence (including
 that `asset.source.json` still matches the build, so superseded candidates fail `stale_source`
-by design), the accepted Ocellaris hash, the exclusion record, the acceptance/runtime records,
-and that no acceptance or runtime-promotion path is dirty (`--base <ref>` also scans commits
-since a branch base). It exits non-zero on any FAIL and prints the handoff block.
+by design), that the requested name is the one the package was built under
+(`build-receipt.json#candidateDir`, GLB extras), a passed and coherent determinism stage, the
+accepted Ocellaris hash, the exclusion/acceptance/runtime records, and that no acceptance or
+runtime-promotion path is dirty (`--base <ref>` also scans commits since a verified base;
+`--scope <species_id>` declares other species whose candidates are legitimately in scope). A
+boundary audit that cannot complete is a FAIL. Exit 1 on any FAIL, 2 on bad arguments. Its
+tests run with `node --test ../.agents/skills/reef-specimen-asset-generation/scripts/`.
 
 ## Stopping conditions
 
