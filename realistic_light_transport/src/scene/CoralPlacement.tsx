@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import * as THREE from 'three'
 
+import { useSpecimenDispatch } from './SpecimenFish'
 import { specimenAssetFor, type SpecimenAsset } from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
@@ -161,15 +162,25 @@ function stopPlacementEvent(event: { stopPropagation(): void }) { event.stopProp
 /** Controlled renderer only. Persistence and placement-mode ownership remain above the scene. */
 export function CoralPlacement({ speciesId, variantId, individualId, placement, space,
   sceneUnitsPerMeter, mode, valid = true, active = false }: CoralPlacementProps) {
+  const dispatch = useSpecimenDispatch()
   const feedDrive = useRef(0)
   const plan = resolveCoralRenderPlan(speciesId, variantId, sceneUnitsPerMeter, mode, valid)
   if (!plan) return null
   const transform = coralPlacementTransform(placement, space)
   const stop = active ? stopPlacementEvent : undefined
+  // A locked colony is a placed resident of the tank, so it answers the same root selection
+  // action a fish does. A preview is still being positioned and stays a placement target only.
+  // `rootCoralId` is how the water feed target recognizes the click as a selection, not a feed.
+  const selectable = mode === 'locked'
   const ringRadius = plan.targetWidth * 0.62
   return (
     <group name={`coral-${mode}-${individualId}`} position={transform.position} quaternion={transform.quaternion}
-      onPointerDown={stop} onPointerMove={stop} onPointerUp={stop} onClick={stop} onDoubleClick={stop} onWheel={stop}>
+      userData={selectable ? { rootCoralId: individualId } : {}}
+      onPointerDown={stop} onPointerMove={stop} onPointerUp={stop} onDoubleClick={stop} onWheel={stop}
+      onClick={selectable ? (event) => {
+        stopPlacementEvent(event)
+        dispatch?.({ type: 'SELECT_ENTITY', entityType: 'coral', id: individualId })
+      } : stop}>
       <RiggedSpecimen asset={plan.asset} individualId={individualId} targetLengthSceneUnits={plan.targetWidth}
         stage="adult" hunger={0} feedDrive={feedDrive} />
       {plan.ringColor && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .006, 0]} renderOrder={20}>

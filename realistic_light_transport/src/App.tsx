@@ -14,6 +14,7 @@ import {
   projectPocketState,
   restorePocketGame,
   restorePocketGameDevSafe,
+  savedRecordSupersedes,
   serializePocketGame,
   type PocketPreventedDeath,
   type PocketState,
@@ -21,7 +22,7 @@ import {
 import { ReefScene } from './scene/ReefScene'
 import type { CoralPlacementCandidate } from './scene/CoralPlacement'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
-import { createAcceptedShowcaseCatalog, SpecimenRosterProvider } from './scene/SpecimenFish'
+import { createAcceptedShowcaseCatalog, SpecimenRosterProvider, type SpecimenHover } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
 import {
   advanceCoralDraft,
@@ -71,8 +72,9 @@ function earnedCreditsIn(log: PocketState['log']) {
  * Multi-view save coherence. Every write stamps a monotonic `saveSeq` next to the state, and this
  * view remembers the highest record it has written or adopted. A periodic/pagehide writer that
  * finds a higher `saveSeq` in storage is holding stale state, so it yields and adopts instead of
- * overwriting; a player action always writes, one above whatever is stored, and so becomes
- * authoritative immediately. Wall-clock stamps cannot do this job — every view stamps
+ * overwriting. A player action never overwrites either: it rebases onto that newer save first and
+ * then writes one above it, so it becomes authoritative without discarding the peer action it
+ * arrived after. Wall-clock stamps cannot do this job — every view stamps
  * `lastRealTimestamp` with its own `now`, so a stale view looks newer than the action that beat it.
  * `saveSeq` is save-envelope metadata only: the root sanitizer keeps just the fields it knows, so
  * it never reaches simulation state, and a save written without it still restores unchanged.
@@ -99,10 +101,10 @@ function readSaveRecord(): SaveRecord | null {
   } catch { return null }
 }
 
-/** True when storage holds a save this view has not accounted for. An unsequenced save is only
- *  safe to overwrite while it is still the exact bytes this view read or wrote. */
+/** True when storage holds a save this view has not accounted for. The ordering rule itself lives
+ *  with the save contract in the bridge, so both routes that share this key agree on it. */
 function holdsNewerSave(record: SaveRecord) {
-  return record.seq === null ? record.raw !== seenRaw : record.seq > seenSeq
+  return savedRecordSupersedes(record, { seq: seenSeq, raw: seenRaw })
 }
 
 /** Restore a stored record and mark it as seen, so this view stops treating its own state as newer. */
@@ -116,11 +118,26 @@ function restoreSaveRecord(record: SaveRecord): PocketState {
     ? restorePocketGameDevSafe(record.parsed).state : restorePocketGame(record.parsed)
 }
 
-/** The one local save writer: showcase stays nonpersistent and storage stays optional. Callers pass
- *  the record they just read so the new sequence clears both this view's and storage's high mark. */
-function persistPocketState(state: PocketState, record: SaveRecord | null) {
+/**
+ * The state an intentional action must apply to. This view can be holding an aquarium a peer view
+ * has already superseded — a rename committed in the other route, with no adoption sweep run here
+ * yet. Applying the action to that stale copy and stamping the result one sequence above storage
+ * would erase the peer's action instead of ordering after it, so the action is rebased onto the
+ * restored newer save first. The action still wins: it lands on top of the peer's aquarium, keeping
+ * fields like `customName`, and persists one sequence above it. Exported because the commit path is
+ * what the cross-view tests drive; this module's component cannot be mounted without a DOM.
+ */
+export function rebaseOnStoredSave(local: PocketState): PocketState {
+  const record = readSaveRecord()
+  return record && holdsNewerSave(record) ? restoreSaveRecord(record) : local
+}
+
+/** The one local save writer: showcase stays nonpersistent and storage stays optional. The new
+ *  sequence clears both this view's and storage's high mark. Callers reach here only after yielding
+ *  to or rebasing onto anything newer, so this always writes rather than losing a race. */
+export function persistPocketState(state: PocketState) {
   if (SHOWCASE_MODE) return
-  const stamped = { ...state, saveSeq: Math.max(record?.seq ?? 0, seenSeq) + 1 }
+  const stamped = { ...state, saveSeq: Math.max(readSaveRecord()?.seq ?? 0, seenSeq) + 1 }
   const payload = serializePocketGame(stamped)
   try { window.localStorage.setItem(SAVE_KEY, payload) } catch { return } // storage is optional
   seenSeq = stamped.saveSeq
@@ -151,6 +168,7 @@ function AquariumApp() {
   const [protectionOn, setProtectionOn] = useState(godModePreferred)
   const protectionRef = useRef(protectionOn)
   protectionRef.current = protectionOn
+  const [hoveredSpecimen, setHoveredSpecimen] = useState<SpecimenHover | null>(null)
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const [activeCoralId, setActiveCoralId] = useState<number | null>(null)
@@ -208,7 +226,7 @@ function AquariumApp() {
     const save = () => {
       const record = readSaveRecord()
       if (record && holdsNewerSave(record)) { adoptSave(record); return }
-      persistPocketState(pocketStateRef.current, record)
+      persistPocketState(pocketStateRef.current)
     }
     const timer = window.setInterval(save, 1000)
     window.addEventListener('pagehide', save)
@@ -245,7 +263,9 @@ function AquariumApp() {
   // action here rather than inside a state updater also keeps Strict Mode, which double-invokes
   // updaters, from executing the same gameplay action twice.
   const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
-    const current = pocketStateRef.current
+    // Rebase before applying: a peer view's newer save becomes the state this action runs on, so
+    // the commit orders after that peer instead of overwriting it.
+    const current = rebaseOnStoredSave(pocketStateRef.current)
     // God mode: apply the action with unlimited credits and the root's purchase gates bypassed —
     // the same bypass the Store used to paint every offer purchasable, so an enabled button is
     // never refused — then restore the real dev-save balance so purchases/refills are free. Real
@@ -259,9 +279,9 @@ function AquariumApp() {
       next = dispatchPocketAction(current, action)
     }
     pocketStateRef.current = next
-    // Unguarded on purpose: the action was taken on what this view showed, so it wins over whatever
-    // is stored and lands one sequence above it, where every other view will adopt it.
-    persistPocketState(next, readSaveRecord())
+    // The action wins: it lands one sequence above the save it was just rebased onto, where every
+    // other view will adopt it.
+    persistPocketState(next)
     setPocketState(next)
   }, [])
 
@@ -319,7 +339,11 @@ function AquariumApp() {
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
-        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}>
+        {/* Root `view.selection` stays the single selection authority: the tank marks whichever
+          * resident it names, whether the tank or the Residents roster made that selection. */}
+        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}
+          selectedSpecimenId={view.selection?.entityType === 'livestock' ? view.selection.id : null}
+          onHoverSpecimen={setHoveredSpecimen}>
           <ReefScene
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}
@@ -339,6 +363,7 @@ function AquariumApp() {
         onRenderSettingsChange={setRenderSettings}
         godMode={godMode}
         showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
+        hoveredSpecimen={hoveredSpecimen}
       />
       <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
         candidate={candidateStatus} onArm={armCoral} onPointerArm={(coralId) => armCoral(coralId)}

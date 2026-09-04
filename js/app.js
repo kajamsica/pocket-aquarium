@@ -14,8 +14,8 @@
 
    Rendering cadence: the sim advances on requestAnimationFrame with a bounded real delta;
    the DOM re-renders at ~6 Hz (or immediately on an action), never per Canvas frame; the
-   renderer animates the Canvas on its own internal loop. Autosave is throttled to <=1 write
-   per 2 s (plus an immediate flush on pagehide). */
+   renderer animates the Canvas on its own internal loop. The clock autosave is throttled to <=1
+   write per 2 s; a player action writes immediately, as does the flush on pagehide. */
 (function (global) {
   "use strict";
 
@@ -113,16 +113,61 @@
   var DOM_INTERVAL = 170; // ~6 Hz DOM cadence (not per Canvas frame)
 
   /* ============================ persistence ============================ */
-  function load() {
+  /* One save key, two routes: this page and the 3D view (realistic_light_transport/src/App.tsx)
+     both write DATA.saveKey, so both obey one ordering. Every write stamps a monotonic saveSeq
+     one above whatever is stored, and a writer that finds a higher saveSeq is holding stale state,
+     so it adopts the stored aquarium instead of overwriting it. Every writer yields that way,
+     player actions included: dispatchAction adopts first and then applies the action to the adopted
+     aquarium, so an action is authoritative without ever having to overwrite a newer peer save. An
+     unsequenced save — a legacy save, or an older build — is adoptable only before this route has
+     sequenced one of its own; after that, adopting it would roll back actions already committed
+     here. saveSeq is envelope metadata only: sanitizeState keeps just the fields it knows, so it
+     never reaches simulation state, and a save written without it still restores unchanged. */
+  var seenSeq = 0, seenRaw = null;
+  function readRecord() {
     var raw = null;
     try { raw = global.localStorage.getItem(DATA.saveKey); } catch (e) { return null; }
     if (!raw) return null;
-    try { return JSON.parse(raw); } catch (e) { return null; }
+    var parsed = null;
+    try { parsed = JSON.parse(raw); } catch (e) { return null; }
+    var seq = parsed ? parsed.saveSeq : null;
+    return { raw: raw, parsed: parsed, seq: (typeof seq === "number" && isFinite(seq)) ? seq : null };
   }
+  // Mirror of savedRecordSupersedes() in realistic_light_transport/src/integration/pocketAquariumBridge.ts.
+  function supersedes(record) {
+    return record.seq === null ? (seenSeq === 0 && record.raw !== seenRaw) : record.seq > seenSeq;
+  }
+  function markSeen(record) {
+    seenSeq = (record.seq == null) ? seenSeq : record.seq;
+    seenRaw = record.raw;
+  }
+  // Adopting replaces this route's aquarium wholesale — the record is the whole tank, exactly as
+  // it is for the 3D view — so the next autosave carries the adopted state rather than a stale one.
+  function adoptRecord(record) {
+    markSeen(record);
+    state = PA.sanitizeState(record.parsed);
+    logCursor = state.log.length;                            // adopted history is not new activity to toast
+    pendingFirstFeed = false; pendingCycleBoostDays = 0;     // transient guide beats never survive a swap
+    pendingSave = false; lastSaveAt = Date.now();
+    applyTheme(); renderNow();
+  }
+  function load() {
+    var record = readRecord();
+    if (record) markSeen(record);
+    return record ? record.parsed : null;
+  }
+  /* One writer for every caller: a stored save that supersedes this route's own is adopted rather
+     than overwritten. Player actions need no exemption — dispatchAction rebases onto the adopted
+     aquarium first, so by the time it saves there is nothing newer left to yield to. */
   function save() {
     try {
+      var record = readRecord();
+      if (record && supersedes(record)) { adoptRecord(record); return; }
       state.lastRealTimestamp = Date.now(); // accurate wall-clock for the next offline catch-up
-      global.localStorage.setItem(DATA.saveKey, JSON.stringify(state)); // never touches DATA.arcadeKey
+      var seq = Math.max((record && record.seq != null) ? record.seq : 0, seenSeq) + 1;
+      var payload = JSON.stringify(Object.assign({}, state, { saveSeq: seq }));
+      global.localStorage.setItem(DATA.saveKey, payload); // never touches DATA.arcadeKey
+      seenSeq = seq; seenRaw = payload;
       lastSaveAt = Date.now(); pendingSave = false;
     } catch (e) { /* storage unavailable (private mode / quota) — degrade quietly */ }
   }
@@ -152,6 +197,14 @@
   // transport buttons, the keyboard, and every rendered action button.
   function dispatchAction(action) {
     if (!action || !action.type) return;
+    // Rebase before the action runs. This route can be holding a roster a peer view has already
+    // superseded; applying the action to that stale copy and then stamping the result one sequence
+    // above storage would erase the peer's action (a rename is the visible one) instead of ordering
+    // after it. Adopting first lands the action on the newest aquarium, keeping the peer's fields
+    // and this action's authority. Everything below reads the adopted state, so the feed warnings
+    // and the eater counts describe the tank the action actually ran on.
+    var incoming = readRecord();
+    if (incoming && supersedes(incoming)) adoptRecord(incoming);
     var t = action.type;
     var aliveFishBefore = (t === "FEED" || t === "FEED_AT") ? aliveEaters() : 0;
     PA.dispatch(state, action);
@@ -162,6 +215,10 @@
       pendingFirstFeed = false; // the first-feed beat is satisfied once a feed actually executes
     }
     markDirty();
+    // A completed player action is authoritative immediately, like the 3D view's own dispatch: it
+    // writes now rather than waiting for the throttled clock autosave, one sequence above the save
+    // it was just rebased onto, so a peer route ticking in another tab can never swallow it.
+    save();
     renderNow();
   }
   function aliveEaters() {
@@ -227,8 +284,7 @@
   }
   function chooseHabitat(value) {
     dispatchAction({ type: ACT.CHOOSE_HABITAT, habitat: value }); // sim normalizes freshwater->amazon
-    applyTheme();
-    save();
+    applyTheme(); // dispatchAction already persisted the choice
   }
   function applyTheme() {
     if (!appEl) return;
@@ -326,6 +382,8 @@
   // (what careAdvice would surface). Nothing here is persisted or added to the save schema.
   PA._app = {
     setState: function (s) { state = s; pendingFirstFeed = false; pendingCycleBoostDays = 0; },
+    getState: function () { return state; },
+    save: save,
     isPendingFirstFeed: function () { return pendingFirstFeed; },
     inoculate: doInoculate,
     buyLivestock: doBuyLivestock,
@@ -357,7 +415,7 @@
     try { global.localStorage.removeItem(DATA.saveKey); } catch (e) {} // arcadeKey untouched
     state = PA.createState({ now: Date.now() });
     logCursor = state.log.length; lastToastMsg = ""; pendingFirstFeed = false; pendingCycleBoostDays = 0;
-    applyTheme(); save(); renderNow();
+    applyTheme(); save(); renderNow(); // the key was just cleared, so there is nothing to yield to
     openHabitatDialog();
     toast("Started a fresh ecosystem. Choose a habitat to begin.", "care");
   }
@@ -1149,7 +1207,7 @@
     // pause with the page; resume the prior speed only if it was running
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) {
-        if (state && state.speed > 0) { visibilityPaused = true; dispatchAction({ type: ACT.TOGGLE_PAUSE }); save(); }
+        if (state && state.speed > 0) { visibilityPaused = true; dispatchAction({ type: ACT.TOGGLE_PAUSE }); }
       } else if (visibilityPaused) {
         visibilityPaused = false;
         if (state && state.speed === 0) dispatchAction({ type: ACT.TOGGLE_PAUSE });
@@ -1213,4 +1271,4 @@
     else bootstrap();
   }
 
-})(typeof window !== "undefined" ? window : this);
+})(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this));

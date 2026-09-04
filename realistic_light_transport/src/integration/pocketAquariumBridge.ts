@@ -477,6 +477,23 @@ export const createStarterPocketState = createPocketNewGame
 
 export const pocketSaveKey = runtime.DATA.saveKey
 
+/**
+ * Cross-view ordering for one stored save. `saveSeq` is the only proof that another view's state
+ * is newer than this one's, so a sequenced record wins by sequence alone. An unsequenced record —
+ * a legacy save, or an older build of a route that writes this same key without the envelope —
+ * holds no position in that ordering, so it may only be adopted before this view has sequenced a
+ * save of its own. Afterwards it is a peer holding an older roster, and adopting it would roll back
+ * player actions this view already committed and sequenced (a rename being the visible one), so the
+ * caller re-asserts its sequenced state over it instead. Both routes that share this key call this,
+ * so neither can drift into its own ordering rule.
+ */
+export function savedRecordSupersedes(
+  record: Readonly<{ seq: number | null; raw: string }>,
+  seen: Readonly<{ seq: number; raw: string | null }>,
+): boolean {
+  return record.seq === null ? seen.seq === 0 && record.raw !== seen.raw : record.seq > seen.seq
+}
+
 export function restorePocketGame(raw: unknown, now = Date.now()): PocketState {
   const state = runtime.sanitizeState(raw)
   if (!state.habitat) return createPocketNewGame()
@@ -1099,7 +1116,7 @@ export function projectPocketState(
     const profile = coral ? runtime.DATA.CORALS[coral.species] : null
     if (coral && profile) selection = { entityType: 'coral', id: coral.id, title: profile.name,
       facts: [`${Math.round(coral.polyps)} polyps`, `Health ${Math.round(coral.health * 100)}%`,
-        `Extension ${Math.round(coral.extension * 100)}%`] }
+        `Growth ${Math.round(coral.growth * 100)}%`, `Extension ${Math.round(coral.extension * 100)}%`] }
   } else if (state.selection) {
     const animal = state.livestock.find((item) => item.id === state.selection?.id)
     const profile = animal ? runtime.DATA.resolveSpecies(state, animal.species) : null

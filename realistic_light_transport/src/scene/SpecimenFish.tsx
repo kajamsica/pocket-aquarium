@@ -37,10 +37,23 @@ const MAX_POSITION_FRAME_SECONDS = .05
 const MAX_FISH_FLOW_STEP = 0.025
 const FISH_MOTION_FRAME_PRIORITY = -2
 const FOOD_CONTACT_FRAME_PRIORITY = -1
+/** The selected marker is presentation only: it must never become a click or feed-tap target. */
+const MARKER_NO_RAYCAST = () => null
+/** Transient pointer presentation only. It carries an id and viewport point; the HUD reads the
+ *  live name and health for that id out of the authoritative root view, so a hover label can
+ *  never drift from the projected resident it names. */
+export interface SpecimenHover {
+  readonly id: number
+  readonly x: number
+  readonly y: number
+}
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
+  /** Root `view.selection` is the only selection authority; this is that answer, not a second store. */
+  readonly selectedSpecimenId?: number | null
+  readonly onHoverSpecimen?: (hover: SpecimenHover | null) => void
 }
 const SpecimenRosterContext = createContext<SpecimenRosterValue>({ specimens: [] })
 const VISUAL_SKINS = {
@@ -72,15 +85,23 @@ export function createAcceptedShowcaseCatalog(): AcceptedShowcaseCatalog {
   }
 }
 
-export function SpecimenRosterProvider({ specimens, morphologyOverride, dispatch, children }: {
+export function SpecimenRosterProvider({ specimens, morphologyOverride, dispatch,
+  selectedSpecimenId, onHoverSpecimen, children }: {
   readonly specimens: readonly PocketSpecimen[]
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
+  readonly selectedSpecimenId?: number | null
+  readonly onHoverSpecimen?: (hover: SpecimenHover | null) => void
   readonly children: ReactNode
 }) {
-  const value = useMemo(() => ({ specimens, morphologyOverride, dispatch }),
-    [dispatch, morphologyOverride, specimens])
+  const value = useMemo(() => ({ specimens, morphologyOverride, dispatch, selectedSpecimenId, onHoverSpecimen }),
+    [dispatch, morphologyOverride, onHoverSpecimen, selectedSpecimenId, specimens])
   return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
+}
+
+/** The tank's root dispatch, for any other selectable entity rendered inside this provider. */
+export function useSpecimenDispatch() {
+  return useContext(SpecimenRosterContext).dispatch
 }
 
 export interface SpecimenFishProps {
@@ -982,7 +1003,9 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   readonly skins: SpeciesSkins
   readonly morphologyOverride?: MorphologyProfileV1
 }) {
+  const { selectedSpecimenId, onHoverSpecimen } = useContext(SpecimenRosterContext)
   const group = useRef<THREE.Group>(null)
+  const marker = useRef<THREE.Mesh>(null)
   const tail = useRef<THREE.Group>(null)
   const mouthPosition = useMemo(() => new THREE.Vector3(), [])
   const fallbackMouth = useMemo(() => new THREE.Vector3(), [])
@@ -1004,6 +1027,9 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const behavior = specimenBehaviorProfile(specimen.speciesId)
   const collisionEnvelope = useMemo(() => specimenCollisionEnvelope(length, bodyRadius), [bodyRadius, length])
   const riggedAsset = specimenAssetFor(specimen.speciesId)
+  // A rigged asset renders at group scale 1 while the procedural fallback is scaled by `length`,
+  // so the marker radius is stated in whichever space this specimen's group already uses.
+  const markerRadius = (riggedAsset ? length : 1) * .62
   const visualPlan = resolveSpecimenVisualPlan(specimen.speciesId, Boolean(riggedAsset))
   const targetFood = food.find((pellet) => assignments.get(pellet.id) === specimen.id)
   const targetPosition = targetFood ?? null
@@ -1058,9 +1084,12 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     if (FEED_TRACE_ENABLED) { delete feedTraceStore()[specimen.id]; publishFeedTrace() }
   }, [mouths, positions, specimen.id])
 
-  useFrame(({ clock }, delta) => {
+  useFrame(({ camera, clock }, delta) => {
     const node = group.current
     if (!node) return
+    // Face the ring at the camera through the resident's own yaw and roll, so the marker stays a
+    // readable flat halo instead of turning edge-on whenever the fish banks or swims away.
+    const billboardMarker = () => marker.current?.quaternion.copy(node.quaternion).invert().multiply(camera.quaternion)
     const shark = specimen.speciesId === 'epaulette_shark'
     const shrimp = specimen.speciesId === 'pistol_shrimp'
     const clown = specimen.speciesId === 'ocellaris'
@@ -1096,6 +1125,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       node.position.copy(motion.position)
       node.quaternion.copy(motion.orientation)
       node.scale.setScalar(riggedAsset ? 1 : length)
+      billboardMarker()
       positions.set(specimen.id, positionEntry)
       mouths.set(specimen.id, mouthPosition.copy(motion.position).addScaledVector(motion.forward, mouthLead))
       forage.current += (0 - forage.current) * (1 - Math.exp(-step * 4.5))
@@ -1234,6 +1264,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     node.position.copy(motion.position)
     node.quaternion.copy(motion.orientation)
     node.scale.setScalar(riggedAsset ? 1 : length)
+    billboardMarker()
 
     const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 + turnAngle / Math.max(profile.turnRate * step, .001) * .16, 0, .3)
     const feedDrive = targetPosition ? .58 + normalizedSpeed * .22 : motionDrive
@@ -1291,7 +1322,19 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     onClick={(event) => {
       event.stopPropagation()
       dispatch?.(specimenSelectionAction(specimen.id))
-    }}>
+    }}
+    onPointerOver={(event) => {
+      // Nearest resident wins, and only inside the renderer's own hit graph: the native event is
+      // untouched, so tank drag, pinch, and feed taps keep every gesture they had before.
+      event.stopPropagation()
+      onHoverSpecimen?.({ id: specimen.id, x: event.clientX, y: event.clientY })
+    }}
+    onPointerOut={() => onHoverSpecimen?.(null)}>
+    {selectedSpecimenId === specimen.id ? <mesh ref={marker} raycast={MARKER_NO_RAYCAST}>
+      <ringGeometry args={[markerRadius * .9, markerRadius, 44]} />
+      <meshBasicMaterial color="#78e6ff" transparent opacity={.78} depthWrite={false}
+        side={THREE.DoubleSide} toneMapped={false} />
+    </mesh> : null}
     {visualPlan.renderAcceptedAsset && riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
       feedDrive={forage} />}
