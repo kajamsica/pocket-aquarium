@@ -9,7 +9,11 @@ import { evaluateMorphology } from '../workbench/geometry/evaluateMorphology'
 import type { ScenePellet } from './feeding'
 import { visibleFoodContact } from './foodContact'
 import { REEF_ROCKS } from './reefLayout'
-import { specimenAssetFor } from './specimens/assetRegistry'
+import {
+  ACCEPTED_SPECIES_IDS,
+  specimenAssetFor,
+  type SpecimenAsset,
+} from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
 const MAX_SPECIMENS = 24
@@ -20,6 +24,7 @@ const TANK_HALF_DEPTH = 1.2
 const SAND_Y = -1.44
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
+  readonly showcaseCatalog?: AcceptedShowcaseCatalog
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
 }
@@ -31,13 +36,37 @@ const VISUAL_SKINS = {
   },
 } as const
 
-export function SpecimenRosterProvider({ specimens, morphologyOverride, dispatch, children }: {
+export interface AcceptedShowcaseCatalog {
+  readonly acceptedSpeciesCount: number
+  readonly defaultAssets: readonly SpecimenAsset[]
+  readonly animalAssets: readonly SpecimenAsset[]
+  readonly coralAssets: readonly SpecimenAsset[]
+}
+
+/** Registry-derived presentation data only. These assets never become root PA residents. */
+export function createAcceptedShowcaseCatalog(): AcceptedShowcaseCatalog {
+  const defaults = ACCEPTED_SPECIES_IDS.map((speciesId) => {
+    const asset = specimenAssetFor(speciesId)
+    if (!asset) throw new Error(`Accepted default is missing from the registry: ${speciesId}`)
+    return asset
+  })
+  return {
+    acceptedSpeciesCount: defaults.length,
+    defaultAssets: defaults,
+    animalAssets: defaults.filter((asset) => asset.category !== 'coral'),
+    coralAssets: defaults.filter((asset) => asset.category === 'coral'),
+  }
+}
+
+export function SpecimenRosterProvider({ specimens, showcaseCatalog, morphologyOverride, dispatch, children }: {
   readonly specimens: readonly PocketSpecimen[]
+  readonly showcaseCatalog?: AcceptedShowcaseCatalog
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
   readonly children: ReactNode
 }) {
-  const value = useMemo(() => ({ specimens, morphologyOverride, dispatch }), [dispatch, morphologyOverride, specimens])
+  const value = useMemo(() => ({ specimens, showcaseCatalog, morphologyOverride, dispatch }),
+    [dispatch, morphologyOverride, showcaseCatalog, specimens])
   return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
 }
 
@@ -425,8 +454,66 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, assignments
   </group>
 }
 
-export function SpecimenFish({ snapshot, waterSurfaceY, pellets, consume }: SpecimenFishProps) {
-  const { specimens: roster, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
+function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY }: {
+  readonly asset: SpecimenAsset
+  readonly index: number
+  readonly snapshot: ReefSnapshot
+  readonly waterSurfaceY: number
+}) {
+  const group = useRef<THREE.Group>(null)
+  const feedDrive = useRef(0)
+  const phase = seededUnit(index + 1, 91) * Math.PI * 2
+  const column = index % 5
+  const row = Math.floor(index / 5)
+  const benthic = asset.category !== 'fish'
+  const anchorX = THREE.MathUtils.lerp(-2.2, 2.2, column / 4)
+  const anchorY = benthic ? SAND_Y + .12 : THREE.MathUtils.lerp(SAND_Y + .48, waterSurfaceY - .38, row / 4)
+  const anchorZ = THREE.MathUtils.lerp(-.72, .72, ((index * 3) % 5) / 4)
+  const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / Math.max(snapshot.tank.widthMeters, .4)
+  const length = THREE.MathUtils.clamp(asset.referenceAdultLengthMeters * sceneUnitsPerMeter, .12, .72)
+
+  useFrame(({ clock }) => {
+    const node = group.current
+    if (!node) return
+    const wave = clock.getElapsedTime() * (.24 + seededUnit(index + 1, 92) * .1) + phase
+    const direction = Math.cos(wave) >= 0 ? 1 : -1
+    node.position.set(
+      anchorX + Math.sin(wave) * (benthic ? .1 : .2),
+      benthic ? anchorY : anchorY + Math.sin(wave * .73) * .08,
+      anchorZ + Math.cos(wave * .61) * .1,
+    )
+    resolveReefHardscape(node.position, THREE.MathUtils.clamp(length * .24, .05, .18), benthic)
+    node.position.x = THREE.MathUtils.clamp(node.position.x, -TANK_HALF_WIDTH + .12, TANK_HALF_WIDTH - .12)
+    node.position.y = THREE.MathUtils.clamp(node.position.y, SAND_Y + .08, waterSurfaceY - .18)
+    node.position.z = THREE.MathUtils.clamp(node.position.z, -TANK_HALF_DEPTH + .12, TANK_HALF_DEPTH - .12)
+    node.rotation.set(benthic ? 0 : Math.sin(wave * .53) * .035, Math.sin(wave * .61) * .18, 0)
+    node.scale.x = direction
+  })
+
+  return <group ref={group} name={`accepted-showcase-${asset.speciesId}`}
+    userData={{ authority: 'accepted-catalog-visual-only', speciesId: asset.speciesId }}>
+    <RiggedSpecimen asset={asset} individualId={-(index + 1)} targetLengthSceneUnits={length}
+      stage="adult" hunger={0} feedDrive={feedDrive} />
+  </group>
+}
+
+export function resolveSpecimenPopulations(
+  roster: readonly PocketSpecimen[],
+  showcaseCatalog?: AcceptedShowcaseCatalog,
+) {
+  if (showcaseCatalog) return { authoritative: [] as readonly PocketSpecimen[], visualOnly: showcaseCatalog.animalAssets }
+  return {
+    authoritative: roster.filter((specimen) => specimen.alive &&
+      isRenderableLivestockSpecies(specimen.speciesId, Boolean(specimenAssetFor(specimen.speciesId)))).slice(0, MAX_SPECIMENS),
+    visualOnly: [] as readonly SpecimenAsset[],
+  }
+}
+
+function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, consume, roster, morphologyOverride, dispatch }: SpecimenFishProps & {
+  readonly roster: readonly PocketSpecimen[]
+  readonly morphologyOverride?: MorphologyProfileV1
+  readonly dispatch?: (action: PocketAction) => void
+}) {
   const mouths = useMemo<MouthPositions>(() => new Map(), [])
   const geometry = useSpecimenGeometry()
   const gobySource = useLoader(THREE.TextureLoader, VISUAL_SKINS.watchman_goby.url)
@@ -434,15 +521,26 @@ export function SpecimenFish({ snapshot, waterSurfaceY, pellets, consume }: Spec
     watchman_goby: cropSkin(gobySource, VISUAL_SKINS.watchman_goby),
   }), [gobySource])
   useEffect(() => () => Object.values(skins).forEach((skin) => skin.dispose()), [skins])
-  const marineRoster = roster.filter((specimen) => specimen.alive &&
-    isRenderableLivestockSpecies(specimen.speciesId, Boolean(specimenAssetFor(specimen.speciesId)))).slice(0, MAX_SPECIMENS)
-  const assignments = assignPelletTargets(marineRoster, pellets, mouths, waterSurfaceY)
+  const assignments = assignPelletTargets(roster, pellets, mouths, waterSurfaceY)
   return <group name="root-pocket-aquarium-specimens">
-    <FoodContactDriver food={pellets} specimens={marineRoster} mouths={mouths} assignments={assignments}
+    <FoodContactDriver food={pellets} specimens={roster} mouths={mouths} assignments={assignments}
       consume={consume} />
-    {marineRoster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
+    {roster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
       waterSurfaceY={waterSurfaceY} food={pellets} mouths={mouths} assignments={assignments}
       dispatch={dispatch} geometry={geometry} skins={skins}
       morphologyOverride={morphologyOverride?.speciesId === specimen.speciesId ? morphologyOverride : undefined} />)}
   </group>
+}
+
+export function SpecimenFish(props: SpecimenFishProps) {
+  const { specimens, showcaseCatalog, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
+  const populations = resolveSpecimenPopulations(specimens, showcaseCatalog)
+  if (showcaseCatalog) return <group name="accepted-showcase-specimens"
+    userData={{ authority: 'accepted-catalog-visual-only', acceptedSpeciesCount: showcaseCatalog.acceptedSpeciesCount,
+      visibleAnimalCount: populations.visualOnly.length }}>
+    {populations.visualOnly.map((asset, index) => <AcceptedShowcaseAnimal key={asset.key} asset={asset} index={index}
+      snapshot={props.snapshot} waterSurfaceY={props.waterSurfaceY} />)}
+  </group>
+  return <AuthoritativeSpecimenPopulation {...props} roster={populations.authoritative}
+    morphologyOverride={morphologyOverride} dispatch={dispatch} />
 }

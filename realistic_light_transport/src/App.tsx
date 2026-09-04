@@ -18,7 +18,7 @@ import {
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
-import { SpecimenRosterProvider } from './scene/SpecimenFish'
+import { createAcceptedShowcaseCatalog, SpecimenRosterProvider } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
 import { SpecimenWorkbench } from './workbench/SpecimenWorkbench'
 
@@ -36,6 +36,7 @@ const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
 const DEV_SAFE = isDevSafeActive()
 const SAVE_KEY = DEV_SAFE ? devSafeSaveKey : pocketSaveKey
 const MAX_PREVENTED = 20
+const ACCEPTED_SHOWCASE_CATALOG = SHOWCASE_MODE ? createAcceptedShowcaseCatalog() : undefined
 
 function earnedCreditsIn(log: PocketState['log']) {
   return log.reduce((total, entry) => {
@@ -147,7 +148,8 @@ function AquariumApp() {
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
-        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}>
+        <SpecimenRosterProvider specimens={view.specimens} showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
+          dispatch={SHOWCASE_MODE ? undefined : dispatch}>
           <ReefScene
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}
@@ -162,6 +164,7 @@ function AquariumApp() {
         renderTelemetry={renderTelemetry}
         onRenderSettingsChange={setRenderSettings}
         godMode={godMode}
+        showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
       />
     </main>
   )
