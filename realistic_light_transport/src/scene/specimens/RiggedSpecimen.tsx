@@ -41,6 +41,33 @@ export function resolveSemanticAnimationPlan(asset: SpecimenAsset): SemanticAnim
   }
 }
 
+export type SemanticAnimationActions = Partial<Record<string, THREE.AnimationAction>>
+
+export function initializeSemanticActions(actions: SemanticAnimationActions, plan: SemanticAnimationPlan) {
+  for (const action of Object.values(actions)) action?.stop().setEffectiveWeight(0)
+  actions[plan.idle.clipName]?.setEffectiveWeight(0.22).play()
+  actions[plan.locomotion.clipName]?.setEffectiveWeight(0.78).play()
+}
+
+export function applySemanticAnimationDrive(actions: SemanticAnimationActions, plan: SemanticAnimationPlan,
+  hunger: number, feedDrive: number) {
+  const burstDrive = THREE.MathUtils.clamp(feedDrive, 0, 1)
+  const responseActive = burstDrive > 0.12
+  const responseWeight = responseActive ? burstDrive : 0
+  const baseWeight = 1 - responseWeight
+  const locomotion = actions[plan.locomotion.clipName]
+  const idle = actions[plan.idle.clipName]
+  const response = actions[plan.response.clipName]
+  locomotion?.setEffectiveWeight(0.78 * baseWeight)
+  locomotion?.setEffectiveTimeScale(0.92 + hunger * 0.28 + burstDrive * 0.34)
+  idle?.setEffectiveWeight(0.22 * baseWeight)
+  if (!response) return
+  response.setEffectiveWeight(responseWeight)
+  response.setEffectiveTimeScale(1.15 + burstDrive * 0.45)
+  if (responseActive && !response.isRunning()) response.reset().play()
+  else if (!responseActive && response.isRunning()) response.stop().setEffectiveWeight(0)
+}
+
 export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
   const root = useMemo(() => cloneSkinned(source.scene) as THREE.Group, [source.scene])
@@ -71,9 +98,9 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
       action.enabled = true
       action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1)
       action.clampWhenFinished = !loop
-      action.play()
       actions.current[clipName] = action
     }
+    initializeSemanticActions(actions.current, animationPlan)
     const firstLoop = actions.current[animationPlan.locomotion.clipName] ?? actions.current[animationPlan.idle.clipName]
     if (firstLoop && !seeded.current) {
       mixer.setTime(firstLoop.getClip().duration * phaseForId(individualId))
@@ -87,20 +114,7 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   }, [animationPlan, asset.clipLoops, asset.clips, asset.speciesId, individualId, mixer, root, source.animations, stage])
 
   useFrame((_, delta) => {
-    const burstDrive = THREE.MathUtils.clamp(feedDrive.current, 0, 1)
-    const locomotion = actions.current[animationPlan.locomotion.clipName]
-    const idle = actions.current[animationPlan.idle.clipName]
-    const response = actions.current[animationPlan.response.clipName]
-    if (locomotion) {
-      locomotion.setEffectiveWeight(0.78 - burstDrive * 0.54)
-      locomotion.setEffectiveTimeScale(0.92 + hunger * 0.28 + burstDrive * 0.34)
-    }
-    idle?.setEffectiveWeight(0.22 - burstDrive * 0.14)
-    if (response) {
-      response.setEffectiveWeight(burstDrive)
-      response.setEffectiveTimeScale(1.15 + burstDrive * 0.45)
-      if (burstDrive > 0.12 && !response.isRunning()) response.reset().play()
-    }
+    applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current)
     mixer.update(Math.min(delta, 0.05))
   })
 
