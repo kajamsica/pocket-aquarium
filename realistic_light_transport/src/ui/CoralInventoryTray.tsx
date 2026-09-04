@@ -8,7 +8,32 @@ export interface CoralInventoryItem {
 
 export interface CoralPlacementCandidateState {
   readonly valid: boolean
+  readonly frozen: boolean
   readonly message?: string
+}
+
+export type CoralDraftPhase = 'armed' | 'following' | 'frozen'
+
+export interface CoralDraftState<T extends { readonly valid: boolean }> {
+  readonly phase: CoralDraftPhase
+  readonly candidate: T | null
+}
+
+export function beginCoralDraft<T extends { readonly valid: boolean }>(): CoralDraftState<T> {
+  return { phase: 'armed', candidate: null }
+}
+
+export function advanceCoralDraft<T extends { readonly valid: boolean }>(draft: CoralDraftState<T>,
+  candidate: T | null, intent: 'follow' | 'freeze'): CoralDraftState<T> {
+  if (intent === 'follow') {
+    return draft.phase === 'frozen' ? draft : { phase: candidate ? 'following' : 'armed', candidate }
+  }
+  if (candidate?.valid) return { phase: 'frozen', candidate }
+  return draft.phase === 'frozen' ? draft : { phase: 'following', candidate }
+}
+
+export function lockableCoralDraft<T extends { readonly valid: boolean }>(draft: CoralDraftState<T> | null): T | null {
+  return draft?.phase === 'frozen' && draft.candidate?.valid ? draft.candidate : null
 }
 
 export interface CoralInventoryTrayProps {
@@ -37,7 +62,8 @@ export function CoralInventoryTray({
   const status = !active
     ? `${inventory.length} unplaced coral${inventory.length === 1 ? '' : 's'} ready.`
     : candidate?.message ?? (candidate?.valid
-      ? 'Valid placement. Select Lock here to confirm.'
+      ? candidate.frozen ? 'Temporary position selected. Select Lock here to confirm.'
+        : 'Valid preview. Select a temporary position in the tank.'
       : candidate ? 'This position is not valid. Choose another surface.' : 'Tap sand or rock to preview a placement.')
 
   return (
@@ -59,7 +85,8 @@ export function CoralInventoryTray({
                 <div className="coral-tray-actions">
                   {isActive ? <>
                     <button type="button" onClick={onCancel}>Cancel</button>
-                    <button type="button" className="coral-tray-lock" disabled={!candidate?.valid} onClick={onLock}>Lock here</button>
+                    <button type="button" className="coral-tray-lock" disabled={!candidate?.valid || !candidate.frozen}
+                      onClick={onLock}>Lock here</button>
                   </> : <button type="button" className="coral-tray-place" aria-label={`Place ${coral.variantDisplayName}`}
                     onPointerDown={(event) => { if (event.isPrimary && event.button === 0) onPointerArm?.(coral.id, event) }}
                     onClick={() => onArm(coral.id)}>Place</button>}

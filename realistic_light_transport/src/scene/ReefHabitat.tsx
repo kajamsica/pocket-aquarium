@@ -122,7 +122,8 @@ interface ReefHabitatProps extends ReefSceneProps {
   readonly placedCorals: readonly PocketCoralView[]
   readonly activeCoral?: PocketCoralView
   readonly previewCandidate: CoralPlacementCandidate | null
-  readonly onPlacementCandidate: (candidate: CoralPlacementCandidate | null) => void
+  readonly onPlacementCandidate: (candidate: CoralPlacementCandidate | null,
+    intent?: 'follow' | 'freeze') => void
 }
 
 interface HabitatMaterials {
@@ -787,7 +788,8 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
     const plan = resolveCoralRenderPlan(coral.speciesId, coral.variantId, sceneUnitsPerMeter, 'locked')
     return coral.placement && plan ? [{ placement: coral.placement, radius: plan.targetWidth * .45 }] : []
   }), [placedCorals, sceneUnitsPerMeter])
-  const updatePlacementCandidate = useCallback((event: ThreeEvent<PointerEvent>) => {
+  const updatePlacementCandidate = useCallback((event: ThreeEvent<PointerEvent | MouseEvent>,
+    intent: 'follow' | 'freeze') => {
     if (!activeCoral || !activePlan || !habitatRef.current) return
     event.stopPropagation()
     placementRaycaster.ray.copy(event.ray)
@@ -800,7 +802,7 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
       minimumClearance: .06,
       occupied,
       yaw: ((activeCoral.id * 2.399963 + Math.PI) % (Math.PI * 2)) - Math.PI,
-    }) : null)
+    }) : null, intent)
   }, [activeCoral, activePlan, occupied, onPlacementCandidate, placementRaycaster, placementSpace])
   const tankFillRatio = snapshot.tank.waterVolumeLiters
     / Math.max(snapshot.tank.targetWaterVolumeLiters, 0.001)
@@ -899,8 +901,8 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
       <InstalledEquipmentHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       {!activeCoral && <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />}
       {activeCoral && <mesh name="coral-placement-input" position={[0, (SAND_Y + waterSurfaceY) / 2,
-        TANK_HALF_DEPTH + .035]} onPointerMove={updatePlacementCandidate}
-        onPointerUp={updatePlacementCandidate} onClick={updatePlacementCandidate} renderOrder={100}>
+        TANK_HALF_DEPTH + .035]} onPointerMove={(event) => updatePlacementCandidate(event, 'follow')}
+        onClick={(event) => updatePlacementCandidate(event, 'freeze')} renderOrder={100}>
         <planeGeometry args={[TANK_HALF_WIDTH * 2, waterSurfaceY - SAND_Y]} />
         <meshBasicMaterial transparent opacity={0} colorWrite={false} depthWrite={false} />
       </mesh>}

@@ -23,7 +23,13 @@ import type { CoralPlacementCandidate } from './scene/CoralPlacement'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
 import { createAcceptedShowcaseCatalog, SpecimenRosterProvider } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
-import { CoralInventoryTray } from './ui/CoralInventoryTray'
+import {
+  advanceCoralDraft,
+  beginCoralDraft,
+  CoralInventoryTray,
+  lockableCoralDraft,
+  type CoralDraftState,
+} from './ui/CoralInventoryTray'
 import { SpecimenWorkbench } from './workbench/SpecimenWorkbench'
 
 const UPDATE_INTERVAL_MS = 250
@@ -148,7 +154,8 @@ function AquariumApp() {
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const [activeCoralId, setActiveCoralId] = useState<number | null>(null)
-  const [previewCandidate, setPreviewCandidate] = useState<CoralPlacementCandidate | null>(null)
+  const [coralDraft, setCoralDraft] = useState<CoralDraftState<CoralPlacementCandidate> | null>(null)
+  const previewCandidate = coralDraft?.candidate ?? null
   const lastTelemetryUpdate = useRef(0)
   const godModeOn = DEV_SAFE && protectionOn
   const view = projectPocketState(pocketState, { godMode: godModeOn })
@@ -283,22 +290,29 @@ function AquariumApp() {
 
   const armCoral = useCallback((coralId: number) => {
     setActiveCoralId(coralId)
-    setPreviewCandidate(null)
+    setCoralDraft(beginCoralDraft())
   }, [])
   const cancelCoral = useCallback(() => {
     setActiveCoralId(null)
-    setPreviewCandidate(null)
+    setCoralDraft(null)
   }, [])
   const lockCoral = useCallback(() => {
-    if (!activeCoral || !previewCandidate?.valid) return
+    const candidate = lockableCoralDraft(coralDraft)
+    if (!activeCoral || !candidate) return
     dispatch({ type: pocketActions.LOCK_CORAL_PLACEMENT, coralId: activeCoral.id,
-      placement: previewCandidate.placement })
+      placement: candidate.placement })
     setActiveCoralId(null)
-    setPreviewCandidate(null)
-  }, [activeCoral, dispatch, previewCandidate])
+    setCoralDraft(null)
+  }, [activeCoral, coralDraft, dispatch])
+  const updateCoralDraft = useCallback((candidate: CoralPlacementCandidate | null,
+    intent: 'follow' | 'freeze' = 'follow') => {
+    setCoralDraft((draft) => draft ? advanceCoralDraft(draft, candidate, intent) : null)
+  }, [])
   const candidateStatus = previewCandidate ? {
     valid: previewCandidate.valid,
-    message: previewCandidate.valid ? 'Valid placement. Select Lock here to confirm.'
+    frozen: coralDraft?.phase === 'frozen',
+    message: coralDraft?.phase === 'frozen' ? 'Temporary position selected. Select Lock here to confirm.'
+      : previewCandidate.valid ? 'Valid preview. Click sand or rock to select this temporary position.'
       : `Choose another position (${previewCandidate.reason ?? 'invalid surface'}).`,
   } : null
 
@@ -314,7 +328,7 @@ function AquariumApp() {
             placedCorals={view.placedCorals}
             activeCoral={activeCoral}
             previewCandidate={previewCandidate}
-            onPlacementCandidate={setPreviewCandidate}
+            onPlacementCandidate={updateCoralDraft}
           />
         </SpecimenRosterProvider>
       </FeedingProvider>
