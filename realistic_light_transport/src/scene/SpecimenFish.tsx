@@ -18,7 +18,7 @@ import {
 } from './specimens/assetRegistry'
 import { RiggedSpecimen } from './specimens/RiggedSpecimen'
 
-const MAX_SPECIMENS = 24
+const MAX_SPECIMENS = 25
 const TANK_HALF_WIDTH = 2.76
 // Believable inner water depth (front/back glass). Mirrors the width inset from the
 // rendered tank so fish swim the full depth band without clipping the glass panels.
@@ -28,12 +28,8 @@ const MAX_POSITION_FRAME_SECONDS = .05
 const MAX_FISH_FLOW_STEP = 0.025
 const FISH_MOTION_FRAME_PRIORITY = -2
 const FOOD_CONTACT_FRAME_PRIORITY = -1
-const SHOWCASE_FISH_LAYERS: Readonly<Partial<Record<string, PocketSpecimen['layer']>>> = {
-  diamond_goby: 'bottom', epaulette_shark: 'bottom', watchman_goby: 'bottom', six_line_wrasse: 'top',
-}
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
-  readonly showcaseCatalog?: AcceptedShowcaseCatalog
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
 }
@@ -67,15 +63,14 @@ export function createAcceptedShowcaseCatalog(): AcceptedShowcaseCatalog {
   }
 }
 
-export function SpecimenRosterProvider({ specimens, showcaseCatalog, morphologyOverride, dispatch, children }: {
+export function SpecimenRosterProvider({ specimens, morphologyOverride, dispatch, children }: {
   readonly specimens: readonly PocketSpecimen[]
-  readonly showcaseCatalog?: AcceptedShowcaseCatalog
   readonly morphologyOverride?: MorphologyProfileV1
   readonly dispatch?: (action: PocketAction) => void
   readonly children: ReactNode
 }) {
-  const value = useMemo(() => ({ specimens, showcaseCatalog, morphologyOverride, dispatch }),
-    [dispatch, morphologyOverride, showcaseCatalog, specimens])
+  const value = useMemo(() => ({ specimens, morphologyOverride, dispatch }),
+    [dispatch, morphologyOverride, specimens])
   return <SpecimenRosterContext.Provider value={value}>{children}</SpecimenRosterContext.Provider>
 }
 
@@ -1183,7 +1178,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     userData={{ rootSpecimenId: specimen.id, speciesId: specimen.speciesId, mouthAnchor: riggedAsset ? 'rig-node-or-fallback' : 'body-fallback' }}
     onClick={(event) => {
       event.stopPropagation()
-      dispatch?.({ type: 'SELECT_ENTITY', entityType: 'livestock', id: specimen.id })
+      dispatch?.(specimenSelectionAction(specimen.id))
     }}>
     {visualPlan.renderAcceptedAsset && riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
@@ -1197,124 +1192,14 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   </group>
 }
 
-function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY, positions }: {
-  readonly asset: SpecimenAsset
-  readonly index: number
-  readonly snapshot: ReefSnapshot
-  readonly waterSurfaceY: number
-  readonly positions: SpecimenPositions
-}) {
-  const group = useRef<THREE.Group>(null)
-  const feedDrive = useRef(0)
-  const positionSeeded = useRef(false)
-  const facingSeeded = useRef(false)
-  const phase = seededUnit(index + 1, 91) * Math.PI * 2
-  const column = index % 5
-  const row = Math.floor(index / 5)
-  const fish = asset.category === 'fish'
-  const layer = SHOWCASE_FISH_LAYERS[asset.speciesId] ?? 'mid'
-  const benthic = !fish
-  const anchorX = THREE.MathUtils.lerp(-2.2, 2.2, column / 4)
-  const anchorY = benthic ? SAND_Y + .12 : THREE.MathUtils.lerp(SAND_Y + .48, waterSurfaceY - .38, row / 4)
-  const anchorZ = THREE.MathUtils.lerp(-.72, .72, ((index * 3) % 5) / 4)
-  const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / Math.max(snapshot.tank.widthMeters, .4)
-  const length = THREE.MathUtils.clamp(asset.referenceAdultLengthMeters * sceneUnitsPerMeter, .12, .72)
-  const bodyRadius = THREE.MathUtils.clamp(length * .24, .05, .18)
-  const behavior = specimenBehaviorProfile(asset.speciesId)
-  const collisionEnvelope = useMemo(() => specimenCollisionEnvelope(length, bodyRadius), [bodyRadius, length])
-  const specimenId = -(index + 1)
-  const route = useMemo(() => createSpecimenMotionRoute(specimenId, layer, waterSurfaceY, bodyRadius),
-    [bodyRadius, index, layer, waterSurfaceY])
-  const motionState = useMemo(() => createSpecimenMotionState(route), [route])
-  const routePosition = useMemo(() => new THREE.Vector3(), [])
-  const routeTangent = useMemo(() => new THREE.Vector3(), [])
-  const steeredHeading = useMemo(() => new THREE.Vector3(), [])
-  const guideDirection = useMemo(() => new THREE.Vector3(), [])
-  const positionEntry = useMemo<SpecimenPosition>(() => ({ position: new THREE.Vector3(), velocity: new THREE.Vector3(),
-    profile: behavior, ...collisionEnvelope, verticalClearance: bodyRadius }), [behavior, bodyRadius, collisionEnvelope])
-  useEffect(() => () => { positions.delete(specimenId) }, [positions, specimenId])
-
-  useFrame(({ clock }, delta) => {
-    const node = group.current
-    if (!node) return
-    const wave = clock.getElapsedTime() * (.24 + seededUnit(index + 1, 92) * .1) + phase
-    const direction = Math.cos(wave) >= 0 ? 1 : -1
-    if (fish) {
-      const territorial = behavior === 'territorial_cruise' || behavior === 'territorial_cave'
-      const crowd = territorial && delta >= motionState.secondsUntilSwitch
-        ? measureSpecimenCrowd(node.position, specimenId, collisionEnvelope.longitudinal, positions,
-          behavior === 'territorial_cave' ? 3.5 : 3) : NO_SPECIMEN_CROWD
-      const progress = advanceSpecimenMotionState(motionState, route, delta, crowd)
-      sampleSpecimenMotionRoute(route, progress, bodyRadius, routePosition)
-      route.curve.getTangentAt(THREE.MathUtils.euclideanModulo(progress, 1), routeTangent)
-        .multiplyScalar(motionState.direction).normalize()
-      const guideY = routePosition.y
-      guideDirection.copy(routePosition).sub(node.position).setY(0)
-      if (positionSeeded.current && guideDirection.lengthSq() > 1e-5) routeTangent.lerp(guideDirection.normalize(), .18).normalize()
-      guideSpecimenAroundHardscape(routeTangent,
-        positionSeeded.current ? steeredHeading : routeTangent, node.position, specimenId,
-        collisionEnvelope.longitudinal, bodyRadius)
-      const travelSpeed = Math.max(.35, length * 1.8)
-      if (!positionSeeded.current) steeredHeading.copy(routeTangent)
-      else {
-        guideDirection.copy(steeredHeading)
-        steerSpecimenHeading(steeredHeading, routeTangent, positionEntry.velocity, node.position, specimenId,
-          bodyRadius, collisionEnvelope, positions, behavior, delta)
-        constrainSpecimenHardscapeTurn(node.position, guideDirection, steeredHeading,
-          collisionEnvelope.longitudinal, bodyRadius)
-      }
-      if (positionSeeded.current) routePosition.set(
-        node.position.x + steeredHeading.x * route.speed * route.curve.getLength() * delta, guideY,
-        node.position.z + steeredHeading.z * route.speed * route.curve.getLength() * delta)
-      routePosition.x = THREE.MathUtils.clamp(routePosition.x, -TANK_HALF_WIDTH + bodyRadius, TANK_HALF_WIDTH - bodyRadius)
-      routePosition.y = THREE.MathUtils.clamp(routePosition.y, route.yBounds[0], route.yBounds[1])
-      routePosition.z = THREE.MathUtils.clamp(routePosition.z, -TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius)
-      if (positionSeeded.current) limitSpecimenFrameTravel(node.position, routePosition,
-        Math.max(.35, length * 1.8), delta)
-      if (positionSeeded.current) constrainSpecimenHardscapeTravel(node.position, routePosition,
-        steeredHeading, collisionEnvelope.longitudinal, bodyRadius)
-      if (positionSeeded.current && delta > 0) positionEntry.velocity.set(
-        (routePosition.x - node.position.x) / delta, 0, (routePosition.z - node.position.z) / delta)
-      else positionEntry.velocity.copy(steeredHeading).multiplyScalar(route.speed * route.curve.getLength())
-      node.position.copy(routePosition)
-      positionSeeded.current = true
-      positionEntry.position.copy(node.position)
-      positionEntry.longitudinal = collisionEnvelope.longitudinal
-      positionEntry.lateral = collisionEnvelope.lateral
-      positionEntry.verticalClearance = bodyRadius
-      positions.set(specimenId, positionEntry)
-      const facingYaw = Math.atan2(-steeredHeading.z, steeredHeading.x)
-      node.rotation.set(Math.sin(wave * .53) * .035,
-        facingSeeded.current ? limitSpecimenFrameTurn(node.rotation.y, facingYaw, 5.2, delta) : facingYaw, 0)
-      facingSeeded.current = true
-      node.scale.x = 1
-    } else {
-      node.position.set(anchorX + Math.sin(wave) * .1, anchorY, anchorZ + Math.cos(wave * .61) * .1)
-      resolveReefHardscape(node.position, bodyRadius, true)
-      node.position.x = THREE.MathUtils.clamp(node.position.x, -TANK_HALF_WIDTH + .12, TANK_HALF_WIDTH - .12)
-      node.position.y = THREE.MathUtils.clamp(node.position.y, SAND_Y + .08, waterSurfaceY - .18)
-      node.position.z = THREE.MathUtils.clamp(node.position.z, -TANK_HALF_DEPTH + .12, TANK_HALF_DEPTH - .12)
-      node.rotation.set(0, Math.sin(wave * .61) * .18, 0)
-      node.scale.x = direction
-    }
-  })
-
-  return <group ref={group} name={`accepted-showcase-${asset.speciesId}`}
-    userData={{ authority: 'accepted-catalog-visual-only', speciesId: asset.speciesId }}>
-    <RiggedSpecimen asset={asset} individualId={-(index + 1)} targetLengthSceneUnits={length}
-      stage="adult" hunger={0} feedDrive={feedDrive} />
-  </group>
+export function specimenSelectionAction(id: number): PocketAction {
+  return { type: 'SELECT_ENTITY', entityType: 'livestock', id }
 }
 
-export function resolveSpecimenPopulations(
-  roster: readonly PocketSpecimen[],
-  showcaseCatalog?: AcceptedShowcaseCatalog,
-) {
-  if (showcaseCatalog) return { authoritative: [] as readonly PocketSpecimen[], visualOnly: showcaseCatalog.animalAssets }
+export function resolveSpecimenPopulations(roster: readonly PocketSpecimen[]) {
   return {
     authoritative: roster.filter((specimen) => specimen.alive &&
       isRenderableLivestockSpecies(specimen.speciesId, Boolean(specimenAssetFor(specimen.speciesId)))).slice(0, MAX_SPECIMENS),
-    visualOnly: [] as readonly SpecimenAsset[],
   }
 }
 
@@ -1343,15 +1228,9 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
 }
 
 export function SpecimenFish(props: SpecimenFishProps) {
-  const { specimens, showcaseCatalog, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
-  const populations = resolveSpecimenPopulations(specimens, showcaseCatalog)
+  const { specimens, morphologyOverride, dispatch } = useContext(SpecimenRosterContext)
+  const populations = resolveSpecimenPopulations(specimens)
   const positions = useMemo<SpecimenPositions>(() => new Map(), [])
-  if (showcaseCatalog) return <group name="accepted-showcase-specimens"
-    userData={{ authority: 'accepted-catalog-visual-only', acceptedSpeciesCount: showcaseCatalog.acceptedSpeciesCount,
-      visibleAnimalCount: populations.visualOnly.length }}>
-    {populations.visualOnly.map((asset, index) => <AcceptedShowcaseAnimal key={asset.key} asset={asset} index={index}
-      snapshot={props.snapshot} waterSurfaceY={props.waterSurfaceY} positions={positions} />)}
-  </group>
   return <AuthoritativeSpecimenPopulation {...props} roster={populations.authoritative} positions={positions}
     morphologyOverride={morphologyOverride} dispatch={dispatch} />
 }

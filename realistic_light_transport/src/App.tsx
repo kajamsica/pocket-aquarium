@@ -319,8 +319,7 @@ function AquariumApp() {
   return (
     <main className="reef-app pocket-reef-app">
       <FeedingProvider value={feeding}>
-        <SpecimenRosterProvider specimens={view.specimens} showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
-          dispatch={SHOWCASE_MODE ? undefined : dispatch}>
+        <SpecimenRosterProvider specimens={view.specimens} dispatch={dispatch}>
           <ReefScene
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}

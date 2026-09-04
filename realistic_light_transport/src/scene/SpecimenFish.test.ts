@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 
-import { createPocketReefShowcase, projectPocketState } from '../integration/pocketAquariumBridge'
+import { createPocketReefShowcase, dispatchPocketAction, projectPocketState } from '../integration/pocketAquariumBridge'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import { REEF_ROCKS } from './reefLayout'
 import {
@@ -26,6 +26,7 @@ import {
   specimenCollisionEnvelope,
   specimenDirectionInterval,
   specimenReversalThreshold,
+  specimenSelectionAction,
   steerSpecimenHeading,
 } from './SpecimenFish'
 
@@ -271,7 +272,7 @@ describe('specimen primary visual selection', () => {
 })
 
 describe('accepted catalog showcase boundary', () => {
-  it('presents one default per 33 species and all 25 non-coral animals as visual-only entries', () => {
+  it('presents HUD counts for one default per 33 species and all 25 non-coral animals', () => {
     const catalog = createAcceptedShowcaseCatalog()
 
     expect(catalog.acceptedSpeciesCount).toBe(33)
@@ -287,17 +288,21 @@ describe('accepted catalog showcase boundary', () => {
     expect(catalog.coralAssets).toHaveLength(8)
   })
 
-  it('replaces authoritative occupants only in the renderer and leaves no feeding targets or root mutations', () => {
-    const state = createPocketReefShowcase()
-    const before = structuredClone(state)
-    const catalog = createAcceptedShowcaseCatalog()
-    const populations = resolveSpecimenPopulations(projectPocketState(state).specimens, catalog)
-    const assignments = assignPelletTargets(populations.authoritative,
-      [{ id: 1, x: 0, y: 0, z: 0, sunk: true, ageDays: 0 }], new Map(), 1)
+  it('renders and selects all 25 root residents through authoritative dispatch', () => {
+    let state = createPocketReefShowcase()
+    const projected = projectPocketState(state).specimens
+    const populations = resolveSpecimenPopulations(projected)
 
-    expect(populations.authoritative).toHaveLength(0)
-    expect(populations.visualOnly).toEqual(catalog.animalAssets)
-    expect(assignments).toHaveProperty('size', 0)
-    expect(state).toEqual(before)
+    expect(populations.authoritative).toHaveLength(25)
+    expect(populations.authoritative.map(({ id }) => id)).toEqual(state.livestock.map(({ id }) => id))
+    for (const specimen of populations.authoritative) {
+      state = dispatchPocketAction(state, specimenSelectionAction(specimen.id))
+    }
+    expect(state.selection).toEqual({ entityType: 'livestock', id: populations.authoritative.at(-1)?.id })
+  })
+
+  it('keeps an ordinary dev roster authoritative without showcase substitution', () => {
+    const specimens = projectPocketState(createPocketReefShowcase()).specimens.slice(0, 3)
+    expect(resolveSpecimenPopulations(specimens)).toEqual({ authoritative: specimens })
   })
 })
