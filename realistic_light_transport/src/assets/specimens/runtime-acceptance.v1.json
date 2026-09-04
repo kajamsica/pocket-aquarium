@@ -6,20 +6,20 @@
       "speciesId": "ocellaris",
       "category": "fish",
       "bodyPlan": "fish",
-      "sourceCandidate": "existing-accepted-v1.1.0",
-      "sourceCandidateGlbPath": "src/assets/specimens/ocellaris/v1/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/ocellaris/v1/lod1.glb",
-      "version": "1.1.0",
+      "sourceCandidate": "fable-v2",
+      "sourceCandidateGlbPath": "art/specimens/ocellaris/candidates/fable-v2/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/ocellaris/v2/lod1.glb",
+      "version": "2.0.0-candidate",
       "referenceSize": {
         "meters": 0.08,
         "kind": "adult_total_length"
       },
       "displayName": "Ocellaris Clownfish",
-      "sha256": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+      "sha256": "dabfa037d0764a3c0abb1ab3c9ab3277adef8ef5301c8d56d34b9ffddd2bfae4",
       "clips": [
+        "burst",
         "idle",
-        "swim",
-        "burst"
+        "swim"
       ],
       "clipRoles": {
         "idle": "idle",

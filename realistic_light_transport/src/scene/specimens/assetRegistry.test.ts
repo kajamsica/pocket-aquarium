@@ -14,7 +14,8 @@ import {
   specimenAssetFor,
 } from './assetRegistry'
 
-const ACCEPTED_OCELLARIS_SHA = 'ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0'
+const ACCEPTED_OCELLARIS_SHA = 'dabfa037d0764a3c0abb1ab3c9ab3277adef8ef5301c8d56d34b9ffddd2bfae4'
+const ROLLBACK_OCELLARIS_SHA = 'ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0'
 
 function sha256(path: string): string {
   return createHash('sha256').update(readFileSync(new URL(`../../../${path}`, import.meta.url))).digest('hex')
@@ -47,6 +48,7 @@ describe('accepted specimen asset registry', () => {
   it('keeps the fixed final non-variant candidate choices', () => {
     const bySpecies = new Map(runtimeAcceptance.assets.map((entry) => [entry.speciesId, entry]))
 
+    expect(bySpecies.get('ocellaris')?.sourceCandidate).toBe('fable-v2')
     expect(bySpecies.get('blue_hippo_tang')?.sourceCandidate).toBe('approved-v2')
     expect(bySpecies.get('gem_tang')?.sourceCandidate).toBe('round-v2')
     expect(bySpecies.get('purple_tang')?.sourceCandidate).toBe('fable-v2')
@@ -54,19 +56,21 @@ describe('accepted specimen asset registry', () => {
     expect(bySpecies.get('six_line_wrasse')?.sourceCandidate).toBe('fable-v2')
   })
 
-  it('preserves the accepted Ocellaris binary and semantic clips', () => {
+  it('promotes the accepted Ocellaris v2 binary while preserving v1 for rollback', () => {
     const ocellaris = runtimeAcceptance.assets.find((entry) => entry.key === 'ocellaris')
 
     expect(ocellaris).toMatchObject({
-      sourceCandidate: 'existing-accepted-v1.1.0',
-      bundledGlbPath: 'src/assets/specimens/ocellaris/v1/lod1.glb',
-      version: '1.1.0',
+      sourceCandidate: 'fable-v2',
+      sourceCandidateGlbPath: 'art/specimens/ocellaris/candidates/fable-v2/lod1.glb',
+      bundledGlbPath: 'src/assets/specimens/ocellaris/v2/lod1.glb',
+      version: '2.0.0-candidate',
       sha256: ACCEPTED_OCELLARIS_SHA,
-      clips: ['idle', 'swim', 'burst'],
+      clips: ['burst', 'idle', 'swim'],
       clipRoles: { idle: 'idle', locomotion: 'swim', response: 'burst' },
       clipLoops: { idle: true, swim: true, burst: false },
     })
     expect(sha256(ocellaris!.bundledGlbPath)).toBe(ACCEPTED_OCELLARIS_SHA)
+    expect(sha256('src/assets/specimens/ocellaris/v1/lod1.glb')).toBe(ROLLBACK_OCELLARIS_SHA)
   })
 
   it('matches every accepted source and bundled GLB to its exact receipt hash', () => {
@@ -91,9 +95,9 @@ describe('accepted specimen asset registry', () => {
     const formallyAccepted = new Map(userAcceptance.entries
       .filter((entry) => entry.status === 'user_accepted')
       .map((entry) => [`${entry.speciesId}/${entry.candidate}`, entry]))
-    const promotions = runtimeAcceptance.assets.filter((entry) => entry.speciesId !== 'ocellaris')
+    const promotions = runtimeAcceptance.assets
 
-    expect(promotions).toHaveLength(45)
+    expect(promotions).toHaveLength(46)
     for (const promotion of promotions) {
       const key = `${promotion.speciesId}/${promotion.sourceCandidate}`
       const formal = formallyAccepted.get(key)
@@ -148,13 +152,11 @@ describe('accepted specimen asset registry', () => {
 
   it('does not resolve excluded or superseded candidates', () => {
     expect(specimenAssetFor('ocellaris', 'fable-baseline')).toBeUndefined()
-    expect(specimenAssetFor('ocellaris', 'fable-v2')).toBeUndefined()
     expect(specimenAssetFor('blue_hippo_tang', 'alt-v2')).toBeUndefined()
     expect(specimenAssetFor('six_line_wrasse', 'fable-v1')).toBeUndefined()
     expect(runtimeAcceptance.assets).not.toContainEqual(expect.objectContaining({ sourceCandidate: 'alt-v2' }))
     expect(runtimeAcceptance.assets).not.toContainEqual(expect.objectContaining({ sourceCandidate: 'fable-baseline' }))
     for (const [speciesId, sourceCandidate] of [
-      ['ocellaris', 'fable-v2'],
       ['blue_hippo_tang', 'alt-v2'],
       ['gem_tang', 'fable-v1'],
       ['gem_tang', 'fable-v2'],
