@@ -2,7 +2,16 @@ import * as THREE from 'three'
 
 import { REEF_ROCKS, REEF_SAND_Y, seededUnit } from './reefLayout'
 
-export type SurfaceMode = 'sand' | 'sand_glass' | 'sand_rock' | 'glass_rock'
+export type SurfaceMode = 'sand' | 'sand_glass' | 'sand_rock' | 'glass_rock' |
+  'sand_burrow' | 'rock_station'
+
+export const SURFACE_SPECIES_IDS = [
+  'astrea_snail', 'blue_linckia', 'brittle_star', 'cerith_snail', 'cleaner_shrimp',
+  'emerald_crab', 'fighting_conch', 'nassarius_snail', 'pistol_shrimp', 'scarlet_hermit',
+  'trochus_snail', 'turbo_snail',
+] as const
+
+export type SurfaceSpeciesId = (typeof SURFACE_SPECIES_IDS)[number]
 
 export interface SurfacePose {
   readonly position: THREE.Vector3
@@ -37,15 +46,30 @@ export interface SurfaceCircuit {
   readonly totalLength: number
 }
 
-const GLASS_ROCK_SPECIES = new Set(['astrea_snail', 'turbo_snail', 'trochus_snail'])
-const SAND_GLASS_SPECIES = new Set(['cerith_snail'])
-const SAND_SPECIES = new Set(['nassarius_snail', 'fighting_conch'])
+const SURFACE_MODES = {
+  astrea_snail: 'glass_rock',
+  blue_linckia: 'sand_rock',
+  brittle_star: 'sand_rock',
+  cerith_snail: 'sand_glass',
+  cleaner_shrimp: 'rock_station',
+  emerald_crab: 'sand_rock',
+  fighting_conch: 'sand',
+  nassarius_snail: 'sand',
+  pistol_shrimp: 'sand_burrow',
+  scarlet_hermit: 'sand_rock',
+  trochus_snail: 'glass_rock',
+  turbo_snail: 'glass_rock',
+} as const satisfies Readonly<Record<SurfaceSpeciesId, SurfaceMode>>
 
 export function surfaceModeForSpecies(speciesId: string): SurfaceMode {
-  if (GLASS_ROCK_SPECIES.has(speciesId)) return 'glass_rock'
-  if (SAND_GLASS_SPECIES.has(speciesId)) return 'sand_glass'
-  if (SAND_SPECIES.has(speciesId)) return 'sand'
-  return 'sand_rock'
+  if (!isSurfaceSpeciesId(speciesId)) {
+    throw new Error(`No surface locomotion mode for species: ${speciesId}`)
+  }
+  return SURFACE_MODES[speciesId]
+}
+
+export function isSurfaceSpeciesId(speciesId: string): speciesId is SurfaceSpeciesId {
+  return Object.hasOwn(SURFACE_MODES, speciesId)
 }
 
 function line(kind: LineSegment['kind'], start: THREE.Vector3, end: THREE.Vector3,
@@ -133,7 +157,7 @@ export function createSurfaceCircuit(speciesId: string, seed: number, halfWidth 
   const segments: SurfaceSegment[] = []
   const rock = mode.includes('rock') ? createRockSegment(seed, sandY, rocks) : undefined
 
-  if (mode === 'sand') addSandLoop(segments, seed, width, depth, sandY)
+  if (mode === 'sand' || mode === 'sand_burrow') addSandLoop(segments, seed, width, depth, sandY)
   else if (mode === 'sand_glass') {
     const { baseA, baseB, glass } = createGlassExcursion(seed, width, depth, sandY)
     const inner = new THREE.Vector3(0, sandY, depth * .7)
