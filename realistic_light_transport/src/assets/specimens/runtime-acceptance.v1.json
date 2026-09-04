@@ -752,8 +752,8 @@
       "speciesId": "gem_tang",
       "category": "fish",
       "bodyPlan": "fish",
-      "sourceCandidate": "fable-v2",
-      "sourceCandidateGlbPath": "art/specimens/gem_tang/candidates/fable-v2/lod1.glb",
+      "sourceCandidate": "round-v2",
+      "sourceCandidateGlbPath": "src/assets/specimens/gem_tang/v1/lod1.glb",
       "bundledGlbPath": "src/assets/specimens/gem_tang/v1/lod1.glb",
       "version": "0.2.0",
       "referenceSize": {
@@ -761,7 +761,7 @@
         "kind": "adult_total_length"
       },
       "displayName": "Gem Tang",
-      "sha256": "af65712b54f44682c627998e3a16bfc132bba649c50b63961cdf7b18bde31d74",
+      "sha256": "5828c80cf2ee444c62b3c678f836dc362e76fe50c03660c4b99016f4711c9c8f",
       "clips": [
         "burst",
         "idle",

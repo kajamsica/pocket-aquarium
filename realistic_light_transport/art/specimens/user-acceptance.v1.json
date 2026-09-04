@@ -40,38 +40,65 @@
     {
       "speciesId": "acropora_branching",
       "candidate": "fable-v1-bushy_pink",
-      "candidateHash": "",
-      "glbSha256": "",
-      "geometryDigest": "ca3d70da2e0e8519c1fd6db5cc04000deac00f8736c850d3fd16b9ae620cee20",
-      "status": "user_accepted_pending_rebuild",
-      "note": "first build in progress; static-skeleton correction and fleshy-polyp variant queued"
+      "candidateHash": "2b98f1742fbdd2d98c2007487d9b189234c85079ffb9b1f12bf82f6d0a720946",
+      "glbSha256": "566806a6801b1c7cebe2dfd5d697bb14570471553bcfbed594ee6ad2ca40e805",
+      "geometryDigest": "062bb8fe567801c916fa5badc02ee6f118fc549d6a5b117ccf5b805d8dd4c24d",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v1-staghorn_blue",
+      "candidateHash": "b5214e70e735390c59d45a79d7501e9ffdbf9514639507fc68b41ded82a18fab",
+      "glbSha256": "49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee",
+      "geometryDigest": "03f867d4118f8772c2aaf20fc2269ad8d20a4c7aaaeda170c5192e0e4bcdf179",
+      "status": "user_accepted",
+      "userApprovedLook": false
     },
     {
       "speciesId": "acropora_branching",
       "candidate": "fable-v1-staghorn_green_purple_tips",
-      "candidateHash": "34001ffff59827f7ac53704d60a735ce9875eb7d100668aad922a7a80d7c0a62",
+      "candidateHash": "0753aceb73c24aa4cb79bd0f66c275367a3486ed6cfe8c2a679e5f6b93115e7a",
       "glbSha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
-      "geometryDigest": "e63571b79d18acd914ed977be5a2f3397e1c94731edda3068bad3824a65dc2d3",
-      "status": "user_accepted_pending_rebuild",
-      "note": "first build in progress; static-skeleton correction and fleshy-polyp variant queued"
+      "geometryDigest": "d1ae2dd481bd2521ae77d609c9e285fac23b1c6ee00e99138dddb005aee8d6ac",
+      "status": "user_accepted",
+      "userApprovedLook": false
     },
     {
       "speciesId": "acropora_branching",
       "candidate": "fable-v1-table_blue",
-      "candidateHash": "2fbb341d315759c705143a0dc82e9cb0c65703a98ecfc78d5f4dc5bf0f691bad",
+      "candidateHash": "2d77529136f5dcc6e68ce4c56d77bdc4f2a61959cb0bae5fdad0207d8efa0e20",
       "glbSha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
-      "geometryDigest": "5d070f12467ad464c48ede484a5a47411049706368155c11321840134e16b737",
-      "status": "user_accepted_pending_rebuild",
-      "note": "first build in progress; static-skeleton correction and fleshy-polyp variant queued"
+      "geometryDigest": "f6eca79dcff54709edc9dfd8971e840687d51b025da2f09a50d2c11e5c4127c7",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "acropora_branching",
+      "candidate": "fable-v1-table_green",
+      "candidateHash": "ed080015537b754425b5a274e1668f64ec136f1c874c95a45a384093bb319b94",
+      "glbSha256": "a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc",
+      "geometryDigest": "9b982f9e3847d59785eb28b5b2ef3296f358775a34e4ff4f5ab42010477ea8c7",
+      "status": "user_accepted",
+      "userApprovedLook": false
     },
     {
       "speciesId": "anacropora",
       "candidate": "fable-v1-brown_pink_tips",
-      "candidateHash": "",
-      "glbSha256": "",
-      "geometryDigest": "2f59c5572ae9aef9820fb8521c79bfe12bc327eee1deb135abf0a8bbbcdc9992",
-      "status": "user_accepted_pending_rebuild",
-      "note": "building"
+      "candidateHash": "22c47bc1b52f7bb8f83dfd427424709f1a28fccea5ee91e185ce506b5aad6a1e",
+      "glbSha256": "d6325876d75889611df0fc1c04e49a1a47cf13c7d7ccdf1795c4cb465461d3ae",
+      "geometryDigest": "94c6c6dea06b76ff5c2881e64e08f5e56e0e8908f4e7001af895aefaecda835f",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "anacropora",
+      "candidate": "fable-v1-green",
+      "candidateHash": "39f94027bc3698c5aa215817da1a75f008a5345ea5cbe6711ae70fbe9a7578bd",
+      "glbSha256": "d2240c0653653ca8a9a07d31215d6523bce1f414146689f7ec06ad4259b34b2a",
+      "geometryDigest": "86d7665705bdcfaa59ca68a0dbd34a654ff0e0930426abf92269f366183c445c",
+      "status": "user_accepted",
+      "userApprovedLook": false
     },
     {
       "speciesId": "astrea_snail",
@@ -223,8 +250,8 @@
       "candidateHash": "b2e85afcf696ef10062ae40c14c69d4e082acbcf14cc1a0bae7e90f8b7330c4d",
       "glbSha256": "5828c80cf2ee444c62b3c678f836dc362e76fe50c03660c4b99016f4711c9c8f",
       "geometryDigest": "88bfbd8f51c84e523f69f7062c4fb9207473499788def105c54855b39771a824",
-      "status": "user_accepted_pending_rebuild",
-      "note": "spot-row revision rebuilding (round body approved)"
+      "status": "user_accepted",
+      "userApprovedLook": true
     },
     {
       "speciesId": "goniopora",
@@ -250,6 +277,24 @@
       "candidateHash": "13c89a55f7e7675d68615eb4c92ee4daffc52a12791800ff435a16a832f7076d",
       "glbSha256": "c8ed9059e590fc5f646ae0b0d7a71f08f0c62c2f813d514bce499f2a3cc83de3",
       "geometryDigest": "257bd2bd52255d202a90c035b9e7b7e9b1331be7fc3e1ade879e9e63be878a74",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "millepora",
+      "candidate": "fable-v1-blade",
+      "candidateHash": "2f2e291774d56da2370aa6c0ae97640bb124ca9e0ea90a10061ffbcdb3c148ca",
+      "glbSha256": "77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780",
+      "geometryDigest": "cb6ab153ddc685be23268ebc5d22851819f944c846534fb101ffd772e0a1d6ae",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "millepora",
+      "candidate": "fable-v1-branching",
+      "candidateHash": "d9e7b00a86acd04d6ff662a37daea7660b99fb44d10347ea7fa6283c688db304",
+      "glbSha256": "9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634",
+      "geometryDigest": "93925401aec570f1d3eed9931020348203d0a6f9a6a92a3334fcf40c88dca1c5",
       "status": "user_accepted",
       "userApprovedLook": false
     },
@@ -292,8 +337,8 @@
     {
       "speciesId": "purple_tang",
       "candidate": "fable-v2",
-      "candidateHash": "ae3e7ea1e379e73073dbdcf7b316e24d669336f187e03634661674bb740e6592",
-      "glbSha256": "6946374e7e5dd1de013ea7e6ba92649a80e6dcad8e78c5584a2797f85ca6255d",
+      "candidateHash": "1d02fde2627e7ce632d74717c85efcaf4a6718c1e9a6077185d3398b70eb3212",
+      "glbSha256": "3da76e8badbcd31565ce7154906834482c051e5443d56b6369f7c75033a309af",
       "geometryDigest": "5a6b7e3e35a531fc4e37d34bdd09ceecc776ce49ca0f52f86626a59c347c9b62",
       "status": "user_accepted",
       "userApprovedLook": false
@@ -310,18 +355,36 @@
     {
       "speciesId": "scarlet_hermit",
       "candidate": "fable-v1",
-      "candidateHash": "e4bdd3cd4376568f1c0886c8f9378311a4f1c5968223fe7620189b41917a1ac6",
-      "glbSha256": "aa423ca2400e73c67ba5e1305e8fa6d146544df08e7f56b956bab5a1ced426da",
-      "geometryDigest": "5c69f691605504529df0850298979a06f1530e3d6cbd90ef6314bb3b7985e8a8",
-      "status": "user_accepted_pending_rebuild",
-      "note": "second pass (shell low, aperture around abdomen) rebuilding"
+      "candidateHash": "f07585465c7f0ee71c4488e4609517ab7784eaa1a675a23753f68f8a089a1c1c",
+      "glbSha256": "f277808a049f03147cedae15b203cc393f55a62ed6be1765fe34a71ac533995e",
+      "geometryDigest": "50a38d6e7ebe049a2fe334d108d4cd2ffb2b11fe108b47da2f04de55af437eb5",
+      "status": "user_accepted",
+      "userApprovedLook": false
     },
     {
       "speciesId": "six_line_wrasse",
       "candidate": "fable-v2",
-      "candidateHash": "951269f5bae36edca45f04cb36b15e5d99ccab740c31a6af975209ccfe773cfe",
-      "glbSha256": "6a0adf444a079d4a572205216c1e80e2a656f1933791615512a86b0098364d3c",
+      "candidateHash": "bea23dcb9fa2713d34ee433a87483b661762ade6241dae18ca3101279fae66f6",
+      "glbSha256": "fab550f5d40505a19147aa2d2f54cda7a76779f967c64490dcdde494fc53ea9c",
       "geometryDigest": "d1005a51c6df4ecc7ea0ae2f499e4d756c424d75870634a87e2b87f9f9b01b4f",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "stylophora",
+      "candidate": "fable-v1-blueberry",
+      "candidateHash": "b26c97fefb0cb140a0e95041e7e6713514dd70346db1d00231a5564aa5a55ba5",
+      "glbSha256": "d61420f0a95f375723687b4ab747e8b1a1f637ac227719aa7bbc89606689a6e1",
+      "geometryDigest": "ca6436c9bea22781fdaae9f2574687eba047d2c87f95c8c8a1f889a53587c0c1",
+      "status": "user_accepted",
+      "userApprovedLook": false
+    },
+    {
+      "speciesId": "stylophora",
+      "candidate": "fable-v1-pink",
+      "candidateHash": "9775f46a6465020a3c76462dc5caaa976ce101afa9fecff00e6f68f4923c3b2e",
+      "glbSha256": "bd7b9588ea9f8728577f3c965bfc74f1250fc6035d11cd6911418ed35bdfe79d",
+      "geometryDigest": "810c284006ad9e635440d3025db8c56d836cbe16cdc92629720dbf04aa4a8dbe",
       "status": "user_accepted",
       "userApprovedLook": false
     },
@@ -391,8 +454,8 @@
     {
       "speciesId": "yellow_tang",
       "candidate": "fable-v2",
-      "candidateHash": "8490cb6b302f6eb38405b52dce14a75808b9c6d1917d6c9a350b694982c7d404",
-      "glbSha256": "15e92d0b567dc88587b6431bbd73a122dd0be8b24099fd728a2ae9cb1e9772fe",
+      "candidateHash": "d3984423eed3eafca444e0bace7792a85a861ee20e2dadddd58376b0c0508df0",
+      "glbSha256": "0fe62d2b8bf45ce6cbced5fc574de2d210658208946b56b74bd6ef40e60902b1",
       "geometryDigest": "e5dd08f98c7411a4155f0bba3a17509b539f93a749e45a6423a0e0cb1053ae12",
       "status": "user_accepted",
       "userApprovedLook": false
@@ -400,20 +463,20 @@
     {
       "speciesId": "zoanthid",
       "candidate": "fable-v1-blue_green",
-      "candidateHash": "d417b0019d65c276e58f6cd8cabeaa4839eff53558d795c50cd04ded187291fa",
-      "glbSha256": "85007ca578adc9087fe421f5f16a1bdae381bb37b18b9150b15f58629129d848",
-      "geometryDigest": "1934b5bd4dbe3743018e85dda6192180326deb1ae6eadaa1b0959d97810cf241",
-      "status": "user_accepted_pending_rebuild",
-      "note": "second pass (lower, crowded polyps) rebuilding"
+      "candidateHash": "eab6bc40c2abdf2aa8f8615f4c78d37b75be36d32beb709065e7b7a6f10c8646",
+      "glbSha256": "78d9e3db16fbe4e63a6a872f92c3f3477802fd150daad6367c8e2febb2b3f03b",
+      "geometryDigest": "b429b37e0a290835357911844d935d34b9f7f61fbe058abc7a8854e9d70957c1",
+      "status": "user_accepted",
+      "userApprovedLook": false
     },
     {
       "speciesId": "zoanthid",
       "candidate": "fable-v1-orange_red",
-      "candidateHash": "afac61b7836809d63bf77ce0a83713d8553652dff8d0666a356b28ae2e2646f2",
-      "glbSha256": "42f160163845a16400be8de5934ff21bfcd8d79080080636f2526070c12324b5",
-      "geometryDigest": "f6a1f553007edcea7ffae8b888ba16ed421121c1dff137c7e08613281a333d58",
-      "status": "user_accepted_pending_rebuild",
-      "note": "second pass (lower, crowded polyps) rebuilding"
+      "candidateHash": "292e2bd1efe67a0b2f8fa22125168e30f07bac2df615bb85dddc1728382b9578",
+      "glbSha256": "c403b75a2795b33a1a2e1df8deee5595f0ead0875e5e45ea5604e3a7ab7d78b6",
+      "geometryDigest": "6306b40a2e62380a30f791f18c9519b3d54cc9170413561e02988bf5746ffaeb",
+      "status": "user_accepted",
+      "userApprovedLook": false
     }
   ]
 }
