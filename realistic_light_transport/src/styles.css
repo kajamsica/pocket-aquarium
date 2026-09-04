@@ -3239,6 +3239,35 @@ input:focus-visible {
   font-size: 0.78rem;
 }
 
+/* Hover identity: a compact read-only companion to the pointer, not a window. It takes no
+ * pointer input at all, so feeding taps, camera drag, and pinch keep working underneath it,
+ * and it stays clear of the viewport edges so it never covers the reef it is describing. */
+.pocket-hover-tag {
+  position: fixed;
+  z-index: 200;
+  max-width: min(46vw, 176px);
+  padding: 5px 9px;
+  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  background: rgba(3, 16, 22, 0.88);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px));
+}
+
+.pocket-hover-tag[data-below="true"] {
+  transform: translate(-50%, 14px);
+}
+
+.pocket-hover-tag > strong {
+  display: block;
+  overflow: hidden;
+  font-size: 0.66rem;
+  font-weight: 640;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Specimen inspector and roster are ordinary workspace windows: the tank stays
  * the screen, and a resident hidden behind rockwork is still reachable by name. */
 .pocket-specimen-panel .pocket-window-content,
@@ -3349,11 +3378,6 @@ input:focus-visible {
   width: 100%;
   border-bottom: 1px solid #6fe6bd;
   outline: none;
-}
-
-.pocket-selected-identity > .pocket-inline-name,
-.pocket-selected-identity > .pocket-inline-name-input {
-  flex: 1 1 auto;
 }
 
 .pocket-resident-identity > .pocket-inline-name-input {
@@ -3839,6 +3863,21 @@ input:focus-visible {
   color: rgba(239, 252, 253, 0.96);
   font-size: 0.72rem;
   font-weight: 650;
+}
+
+/* An editable title is still the window title: it inherits the bar's type, and the bar's
+ * drag-proofing (user-select/touch-action: none) is lifted for the field being typed into. */
+.pocket-window-bar .pocket-inline-name,
+.pocket-window-bar .pocket-inline-name-input {
+  width: 100%;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.pocket-window-bar .pocket-inline-name-input {
+  touch-action: auto;
+  user-select: text;
 }
 
 .pocket-window-actions {

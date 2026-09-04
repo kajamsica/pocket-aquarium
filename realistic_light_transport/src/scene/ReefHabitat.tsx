@@ -588,18 +588,18 @@ function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed:
         const gesture = tap.current
         tap.current = null
         // The invisible water plane is nearest the camera. Let a ray that also hit a
-        // specimen continue to that fish; otherwise this is an intentional feed tap.
-        const hitSpecimen = event.intersections.some((hit) => {
+        // selectable resident continue to that entity; otherwise this is an intentional feed tap.
+        const hitSelectionTarget = event.intersections.some((hit) => {
           let node: THREE.Object3D | null = hit.object
           while (node) {
-            if (typeof node.userData.rootSpecimenId === 'number') return true
+            if (typeof node.userData.rootSpecimenId === 'number' || typeof node.userData.rootCoralId === 'number') return true
             node = node.parent
           }
           return false
         })
         if (!gesture || gesture.id !== event.pointerId) return
         if (Math.max(gesture.moved, Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y)) > TAP_FEED_SLOP_PX) return
-        if (hitSpecimen || tankPinchInProgress() || tankDragInProgress()) return
+        if (hitSelectionTarget || tankPinchInProgress() || tankDragInProgress()) return
         event.stopPropagation()
         feed(surfaceXToNormalizedX(event.point.x))
       }}

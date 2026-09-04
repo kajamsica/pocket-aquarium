@@ -4,7 +4,7 @@ import type { DiagnosticView, ReefRenderSettings, ReefRenderTelemetry, RenderQua
 import { residentNameMaxLength } from '../integration/pocketAquariumBridge'
 import type { PocketAction, PocketGameView, PocketPreventedDeath, PocketStoreOffer } from '../integration/pocketAquariumBridge'
 import { REEF_CAMERA_RESET_EVENT } from '../scene/ReefScene'
-import type { AcceptedShowcaseCatalog } from '../scene/SpecimenFish'
+import type { AcceptedShowcaseCatalog, SpecimenHover } from '../scene/SpecimenFish'
 import { HudWindow, useHudWorkspace, type HudDeviceProfile, type HudPanelId } from './HudWorkspace'
 
 export interface GodModeControls {
@@ -45,6 +45,7 @@ interface PocketGameHUDProps {
   readonly onRenderSettingsChange: (settings: ReefRenderSettings) => void
   readonly godMode?: GodModeControls
   readonly showcaseCatalog?: AcceptedShowcaseCatalog
+  readonly hoveredSpecimen?: SpecimenHover | null
 }
 
 /* Which readings are pinned is a per-profile preference like window geometry: the phone rail
@@ -157,7 +158,7 @@ function signal(label: string, value: number, inverted = false) {
   </div>
 }
 
-export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog }: PocketGameHUDProps) {
+export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
   const [launcherCollapsed, setLauncherCollapsed] = useState(false)
   const [pinnedByProfile, setPinnedByProfile] = useState<PinnedReadings>(readPinnedReadings)
@@ -193,7 +194,13 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   const levelRatio = Math.min(1, Math.max(0, view.water.levelL / tank.targetWaterVolumeLiters))
   const command = guideCommand(view.guide.nextAction?.type)
   const guideLabel = typeof view.guide.nextAction?.label === 'string' ? view.guide.nextAction.label : 'Continue'
-  const selectedSpecimen = view.selectedSpecimen
+  /* One authoritative selection, two kinds of inspected entity. `view.selectedSpecimen` is keyed
+   * by id alone, so it must be read through the selection's own type or a coral would surface a
+   * resident that happens to share its id. */
+  const selectedSpecimen = view.selection?.entityType === 'livestock' ? view.selectedSpecimen : undefined
+  const selectedCoral = view.selection?.entityType === 'coral' ? view.selection : null
+  const selectedEntityKey = view.selection ? `${view.selection.entityType}:${view.selection.id}` : null
+  const hoveredResident = hoveredSpecimen ? view.residents.find((resident) => resident.id === hoveredSpecimen.id) : undefined
   const beginRename = (resident: PocketGameView['residents'][number], surface: 'selected' | 'roster') => {
     if (rosterSelectionTimer.current !== null) window.clearTimeout(rosterSelectionTimer.current)
     rosterSelectionTimer.current = null
@@ -259,11 +266,11 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
    * closed stays closed while the simulation keeps re-rendering the same selection. */
   const openPanel = workspace.openPanel
   useEffect(() => {
-    if (selectedSpecimen?.id !== undefined) openPanel('specimen')
+    if (selectedEntityKey !== null) openPanel('specimen')
     // An unsaved name belongs to the resident that was open, so it is dropped rather than carried
     // onto whichever fish the player selects next.
     setRenameDraft(null)
-  }, [openPanel, selectedSpecimen?.id])
+  }, [openPanel, selectedEntityKey])
 
   useEffect(() => () => {
     if (rosterSelectionTimer.current !== null) window.clearTimeout(rosterSelectionTimer.current)
@@ -297,15 +304,35 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       </button> : null}
     </div>
 
-    {selectedSpecimen ? <HudWindow id="specimen" title={selectedSpecimen.name} eyebrow={selectedSpecimen.stage || 'Resident'}
+    {/* The resident's own editable name is the window title, so the inspector shows it once.
+      * Editing replaces that one line in place; it never grows a permanent form. */}
+    {selectedSpecimen ? <HudWindow id="specimen" title={selectedSpecimen.name} titleContent={renameInput(selectedSpecimen, 'selected')}
+      eyebrow={selectedSpecimen.stage || 'Resident'}
       className="hud-panel pocket-specimen-panel" workspace={workspace}
       onClose={() => dispatch({ type: 'SELECT_ENTITY', id: null })}>
-      {/* Editing replaces this one identity line, so the inspector never grows a permanent form. */}
-      <div className="pocket-selected-identity">{renameInput(selectedSpecimen, 'selected')}
+      <div className="pocket-selected-identity">
         <small>{selectedSpecimen.customName ? `${selectedSpecimen.speciesName} · ` : ''}{selectedSpecimen.scientificName}</small></div>
       <div className="pocket-condition-signals">{signal('Health', selectedSpecimen.health)}
         {signal('Hunger', selectedSpecimen.hunger, true)}{signal('Condition', selectedSpecimen.condition)}</div>
+    </HudWindow> : selectedCoral ? <HudWindow id="specimen" title="Colony details" eyebrow="Coral health"
+      className="hud-panel pocket-specimen-panel" workspace={workspace}
+      onClose={() => dispatch({ type: 'SELECT_ENTITY', id: null })}>
+      <div className="pocket-selected-identity"><strong>{selectedCoral.title}</strong></div>
+      <div className="pocket-resident-vitals">{selectedCoral.facts.map((fact) => <span key={fact}>{fact}</span>)}</div>
     </HudWindow> : null}
+
+    {/* Identity under the pointer, read from the same projected residents the roster shows. It is
+      * decoration for a mouse hover the tank already resolved, so it is hidden from assistive
+      * technology and takes no pointer input: every feed, drag, and pinch passes straight through. */}
+    {hoveredSpecimen && hoveredResident ? <div className="pocket-hover-tag" aria-hidden="true"
+      data-below={hoveredSpecimen.y < 96} style={{
+        left: Math.min(Math.max(hoveredSpecimen.x, 92), Math.max(92, window.innerWidth - 92)),
+        top: hoveredSpecimen.y,
+      }}>
+      <strong>{hoveredResident.name}</strong>
+      <span className="pocket-resident-vitals"><span data-tone={tone(hoveredResident.health)}>
+        Health <b>{Math.round(hoveredResident.health * 100)}%</b></span></span>
+    </div> : null}
 
     <nav className="pocket-window-launcher" aria-label="Aquarium windows" data-collapsed={launcherCollapsed}>
       <button type="button" className="pocket-window-launcher-toggle" aria-expanded={!launcherCollapsed}

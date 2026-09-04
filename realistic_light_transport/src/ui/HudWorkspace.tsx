@@ -423,7 +423,10 @@ export function useHudWorkspace(): HudWorkspaceController {
 
 interface HudWindowProps {
   readonly id: HudPanelId
+  /** Always a plain string: every window control label is built from it, so an interactive
+   *  title still announces as text. `titleContent` only replaces what the bar renders. */
   readonly title: string
+  readonly titleContent?: ReactNode
   readonly eyebrow?: string
   readonly className?: string
   readonly workspace: HudWorkspaceController
@@ -431,7 +434,7 @@ interface HudWindowProps {
   readonly children: ReactNode
 }
 
-export function HudWindow({ id, title, eyebrow, className = '', workspace, onClose, children }: HudWindowProps) {
+export function HudWindow({ id, title, titleContent, eyebrow, className = '', workspace, onClose, children }: HudWindowProps) {
   const layout = workspace.layoutFor(id)
   const arranging = workspace.isArranging
   const rootRef = useRef<HTMLElement>(null)
@@ -488,7 +491,7 @@ export function HudWindow({ id, title, eyebrow, className = '', workspace, onClo
   }
 
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!arranging || (event.target as HTMLElement).closest('button')) return
+    if (!arranging || (event.target as HTMLElement).closest('button, input')) return
     event.preventDefault()
     cleanupInteractionRef.current?.()
     workspace.bringToFront(id)
@@ -581,7 +584,7 @@ export function HudWindow({ id, title, eyebrow, className = '', workspace, onClo
       data-open={layout.open} data-minimized={layout.minimized} data-snapped={layout.snap ?? undefined}
       style={style} onPointerDown={() => workspace.bringToFront(id)}>
       <div className="pocket-window-bar" onPointerDown={startDrag}>
-        <div>{eyebrow ? <small>{eyebrow}</small> : null}<strong>{title}</strong></div>
+        <div>{eyebrow ? <small>{eyebrow}</small> : null}<strong>{titleContent ?? title}</strong></div>
         <div className="pocket-window-actions">
           {arranging ? <button type="button" aria-label={`Reset ${title} position and size`} title="Reset this window"
             onClick={() => workspace.resetPanel(id)}>↺</button> : null}
