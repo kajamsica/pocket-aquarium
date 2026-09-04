@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-03T22:26:11.261Z",
+  "generatedAt": "2026-09-04T01:09:46.516Z",
   "categories": [
     "fish",
     "coral",
@@ -17,29 +17,29 @@
   "userApprovals": {
     "blue_hippo_tang": "approved-v2",
     "brittle_star": "fable-v1",
-    "gem_tang": "fable-v2",
+    "gem_tang": "round-v2",
     "tomini_tang": "fable-v1"
   },
   "summary": {
-    "rows": 32,
+    "rows": 33,
     "byCategory": {
       "fish": 13,
-      "coral": 7,
+      "coral": 8,
       "invertebrate": 3,
       "cleanup_crew": 9
     },
     "byStatus": {
       "accepted": 1,
-      "candidate": 31,
+      "candidate": 32,
       "provisional": 0,
       "failed": 0,
       "missing": 0
     },
     "candidates": {
-      "total": 50,
-      "loadable": 49,
+      "total": 52,
+      "loadable": 51,
       "missing": 1,
-      "userApproved": 4
+      "userApproved": 3
     }
   },
   "rows": [
@@ -604,7 +604,7 @@
             "swim": true
           },
           "referenceSizeMeters": 0.2,
-          "userApproved": true,
+          "userApproved": false,
           "renders": {
             "authorPreview": "art/specimens/gem_tang/candidates/fable-v2/renders/author-preview.png",
             "threeView": "art/specimens/gem_tang/candidates/fable-v2/renders/three-view.png"
@@ -2279,6 +2279,142 @@
         "Tentacles gather toward the oral axis through the head's radial deflation only; the authored fold shape key is not baked because the pinned glTF importer renames animated skinned meshes and the runtime parity gate rejects that.",
         "Corallite calices and septa are painted (albedo/normal) rather than modelled as recessed cups.",
         "Tentacles are 3-segment tubes with a single shared bone per polyp; no per-tentacle motion."
+      ]
+    },
+    {
+      "id": "millepora",
+      "displayName": "Millepora (fire coral)",
+      "scientificLabel": "Millepora sp.",
+      "taxonomyConfidence": "genus",
+      "category": "coral",
+      "waterType": "saltwater",
+      "bodyPlan": "hydrocoral_colony",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1-blade",
+          "variantId": "blade",
+          "displayName": "Millepora (fire coral, blade form)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/millepora/candidates/fable-v1-blade/lod1.glb",
+          "glbSha256": "77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780",
+          "glbSha256Verified": true,
+          "geometryDigest": "cb6ab153ddc685be23268ebc5d22851819f944c846534fb101ffd772e0a1d6ae",
+          "statistics": {
+            "triangles": 16300,
+            "materials": 3,
+            "bones": 26,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/millepora/candidates/fable-v1-blade/renders/author-preview.png",
+            "threeView": "art/specimens/millepora/candidates/fable-v1-blade/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v1-branching",
+          "variantId": "branching",
+          "displayName": "Millepora (fire coral, branching form)",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/millepora/candidates/fable-v1-branching/lod1.glb",
+          "glbSha256": "9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634",
+          "glbSha256Verified": true,
+          "geometryDigest": "93925401aec570f1d3eed9931020348203d0a6f9a6a92a3334fcf40c88dca1c5",
+          "statistics": {
+            "triangles": 13552,
+            "materials": 3,
+            "bones": 26,
+            "clips": [
+              "flow",
+              "retract",
+              "sway"
+            ]
+          },
+          "clipRoles": {
+            "idle": "sway",
+            "locomotion": "flow",
+            "response": "retract"
+          },
+          "clipLoops": {
+            "flow": true,
+            "retract": false,
+            "sway": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/millepora/candidates/fable-v1-branching/renders/author-preview.png",
+            "threeView": "art/specimens/millepora/candidates/fable-v1-branching/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [
+        {
+          "id": "blade",
+          "displayName": "Millepora (fire coral, blade form)"
+        },
+        {
+          "id": "branching",
+          "displayName": "Millepora (fire coral, branching form)"
+        }
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "provenance": {
+        "source": "art/specimens/millepora/asset.source.json",
+        "sourceReferences": "art/specimens/millepora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Dactylozooids are drawn about twice their real diameter (0.28 mm radius) and at a fraction of their real density so they read at LOD1; real colonies carry thousands of finer hairs per square centimetre.",
+        "Gastropores and dactylopores are painted as cyclosystem speckle in the albedo and normal maps, not modelled as holes.",
+        "Hairs in one cluster share a bone: bending comes from root-to-tip weight blending plus baked per-hair lean and gain, so hairs within a cluster move in step with a small twist gradient; hair-vs-hair clearance is not proven.",
+        "Branching form: dichotomous forks are fused intersecting tubes (parent knuckle plus two children) rather than a single smoothed junction; sibling branches are not clearance-checked against each other at the fork.",
+        "Blade form: blades are separate lofts that root in the encrusting base and do not fuse into the honeycomb plates seen in M. platyphylla."
       ]
     },
     {

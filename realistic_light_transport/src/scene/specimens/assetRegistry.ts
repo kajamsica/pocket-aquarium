@@ -1,38 +1,110 @@
-import ocellarisLod1Url from '../../assets/specimens/ocellaris/v1/lod1.glb?url'
+import runtimeAcceptance from '../../assets/specimens/runtime-acceptance.v1.json'
 
-// Runtime asset registry. Only user-accepted packages are bundled and listed here; visual-catalog
-// candidates (art/specimens/*/candidates/*) are inspected through the workbench dev service and never
-// resolve through specimenAssetFor. The types are open so more accepted species can be added without
-// touching consumers, but the table itself is the acceptance gate.
+// Runtime asset registry. Only user-accepted packages are discoverable here. The eager glob
+// imports URL strings, so GLB payloads remain network-loaded only when a renderer requests one.
+export type SemanticAnimationRole = 'idle' | 'locomotion' | 'response'
+
+export interface SpecimenClipRoles {
+  readonly idle: string
+  readonly locomotion: string
+  readonly response: string
+}
+
 export interface SpecimenAsset {
+  readonly key: string
   readonly speciesId: string
+  readonly variantId?: string
+  readonly category: string
+  readonly bodyPlan?: string
+  readonly sourceCandidate: string
+  readonly defaultForSpecies: boolean
+  readonly displayName: string
   readonly url: string
   readonly assetVersion: string
   readonly referenceAdultLengthMeters: number
+  readonly referenceSizeKind: string
+  readonly sha256: string
   readonly clips: readonly string[]
+  readonly clipRoles: SpecimenClipRoles
+  readonly clipLoops: Readonly<Record<string, boolean>>
 }
 
-export const ACCEPTED_SPECIES_IDS = ['ocellaris'] as const
+interface RuntimeAcceptanceEntry {
+  readonly key: string
+  readonly speciesId: string
+  readonly variantId?: string
+  readonly category: string
+  readonly bodyPlan?: string
+  readonly sourceCandidate: string
+  readonly bundledGlbPath: string
+  readonly version: string
+  readonly referenceSize: {
+    readonly meters: number
+    readonly kind: string
+  }
+  readonly displayName: string
+  readonly sha256: string
+  readonly clips: readonly string[]
+  readonly clipRoles: SpecimenClipRoles
+  readonly clipLoops: Readonly<Record<string, boolean>>
+  readonly defaultForSpecies: boolean
+}
+
+const runtimeEntries = runtimeAcceptance.assets as unknown as readonly RuntimeAcceptanceEntry[]
+const acceptedAssetUrls = import.meta.glob('../../assets/specimens/**/lod1.glb', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Readonly<Record<string, string>>
+
+function acceptedUrl(entry: RuntimeAcceptanceEntry): string {
+  const globKey = entry.bundledGlbPath.replace(/^src\/assets\/specimens\//, '../../assets/specimens/')
+  const url = acceptedAssetUrls[globKey]
+  if (!url) throw new Error(`Accepted specimen asset is missing from the bundle: ${entry.bundledGlbPath}`)
+  return url
+}
+
+const SPECIMEN_ASSET_LIST: readonly SpecimenAsset[] = Object.freeze(runtimeEntries.map((entry) => ({
+  key: entry.key,
+  speciesId: entry.speciesId,
+  ...(entry.variantId ? { variantId: entry.variantId } : {}),
+  category: entry.category,
+  ...(entry.bodyPlan !== undefined ? { bodyPlan: entry.bodyPlan } : {}),
+  sourceCandidate: entry.sourceCandidate,
+  defaultForSpecies: entry.defaultForSpecies,
+  displayName: entry.displayName,
+  url: acceptedUrl(entry),
+  assetVersion: entry.version,
+  referenceAdultLengthMeters: entry.referenceSize.meters,
+  referenceSizeKind: entry.referenceSize.kind,
+  sha256: entry.sha256,
+  clips: entry.clips,
+  clipRoles: entry.clipRoles,
+  clipLoops: entry.clipLoops,
+})))
+
+const SPECIMEN_ASSETS_BY_KEY = new Map(SPECIMEN_ASSET_LIST.map((asset) => [asset.key, asset]))
+const DEFAULT_SPECIMEN_ASSETS = new Map(
+  runtimeEntries.flatMap((entry, index) => entry.defaultForSpecies
+    ? [[entry.speciesId, SPECIMEN_ASSET_LIST[index]] as const]
+    : []),
+)
+
+export const ACCEPTED_SPECIES_IDS = Object.freeze([...DEFAULT_SPECIMEN_ASSETS.keys()])
 export type AcceptedSpeciesId = (typeof ACCEPTED_SPECIES_IDS)[number]
 
-const SPECIMEN_ASSETS: Readonly<Record<AcceptedSpeciesId, SpecimenAsset>> = {
-  ocellaris: {
-    speciesId: 'ocellaris',
-    url: ocellarisLod1Url,
-    assetVersion: '1.1.0',
-    referenceAdultLengthMeters: 0.08,
-    clips: ['idle', 'swim', 'burst'],
-  },
-}
-
 export function isAcceptedSpeciesId(speciesId: string): speciesId is AcceptedSpeciesId {
-  return Object.prototype.hasOwnProperty.call(SPECIMEN_ASSETS, speciesId)
+  return DEFAULT_SPECIMEN_ASSETS.has(speciesId)
 }
 
-export function specimenAssetFor(speciesId: string): SpecimenAsset | undefined {
-  return isAcceptedSpeciesId(speciesId) ? SPECIMEN_ASSETS[speciesId] : undefined
+export function specimenAssetFor(speciesId: string, variantId?: string): SpecimenAsset | undefined {
+  return variantId === undefined
+    ? DEFAULT_SPECIMEN_ASSETS.get(speciesId)
+    : SPECIMEN_ASSETS_BY_KEY.get(`${speciesId}@${variantId}`)
 }
 
 export function acceptedSpecimenAssetList(): readonly SpecimenAsset[] {
-  return ACCEPTED_SPECIES_IDS.map((speciesId) => SPECIMEN_ASSETS[speciesId])
+  return SPECIMEN_ASSET_LIST
 }
+
+export const listSpecimenAssets = acceptedSpecimenAssetList

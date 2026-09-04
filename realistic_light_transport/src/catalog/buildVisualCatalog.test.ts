@@ -127,6 +127,15 @@ function makeFixture(root: string) {
       'Bad Species': 'nope',
     },
   })
+  json(join(specimens, 'user-acceptance.v1.json'), {
+    schemaVersion: 'pocket-aquarium.user-acceptance/v1',
+    excluded: ['gem_tang/fable-v2 (superseded by round-v2)'],
+    entries: [
+      { speciesId: 'blue_hippo_tang', candidate: 'approved-v2', status: 'user_accepted', userApprovedLook: true },
+      { speciesId: 'gem_tang', candidate: 'round-v2', status: 'user_accepted', userApprovedLook: true },
+      { speciesId: 'gem_tang', candidate: 'fable-v2', status: 'user_accepted', userApprovedLook: true },
+    ],
+  })
   return { glbSha }
 }
 
@@ -233,6 +242,18 @@ describe('build_visual_catalog.mjs', () => {
     expect(byId.get('kelp')).toMatchObject({ category: 'plant', waterType: 'freshwater', assetStatus: 'missing', candidates: [] })
   })
 
+  it('uses formal acceptance by default and excludes superseded approvals', () => {
+    const root = fixtureRoot()
+    makeFixture(root)
+    const out = join(root, 'out', 'visual-catalog.v1.json')
+    const result = run(root, ['--out', out])
+    expect(result.code, result.stderr).toBe(0)
+
+    const catalog = readCatalog(out)
+    expect(catalog.userApprovals).toEqual({ blue_hippo_tang: 'approved-v2', gem_tang: 'round-v2' })
+    expect(catalog.rows.find((row) => row.id === 'blue_hippo_tang').candidates[0].userApproved).toBe(true)
+  })
+
   it('is deterministic apart from generatedAt and reports staleness through --check', () => {
     const root = fixtureRoot()
     makeFixture(root)
@@ -252,10 +273,11 @@ describe('build_visual_catalog.mjs', () => {
     expect(rerun.stdout).toContain('unchanged:')
     expect(readFileSync(first, 'utf8')).toBe(before)
 
-    // Without the lane registry the recorded approvals are reused, so the check still passes elsewhere.
+    // Without an approval source, stale approvals are not recycled from generated output.
     const noRegistry = run(root, ['--out', first, '--registry', join(root, 'missing-registry.json'), '--check'])
-    expect(noRegistry.code, noRegistry.stderr).toBe(0)
-    expect(noRegistry.stdout).toContain('reusing 2 recorded approval(s)')
+    expect(noRegistry.code).toBe(1)
+    expect(noRegistry.stdout).toContain('no user approvals recorded')
+    expect(noRegistry.stderr).toContain('~ userApprovals')
 
     // A lane finishes a candidate: the committed catalog is now stale.
     json(join(root, 'art', 'specimens', 'trochus_snail', 'candidates', 'fable-v1', 'candidate.manifest.json'), manifest('trochus_snail', { referenceSizeMeters: 0.03 }))

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { DiagnosticView, ReefRenderSettings, ReefRenderTelemetry, RenderQuality } from '../contracts'
 import type { PocketAction, PocketGameView, PocketPreventedDeath, PocketStoreOffer } from '../integration/pocketAquariumBridge'
+import type { AcceptedShowcaseCatalog } from '../scene/SpecimenFish'
 import { HudWindow, useHudWorkspace, type HudPanelId } from './HudWorkspace'
 
 export interface GodModeControls {
@@ -36,6 +37,7 @@ interface PocketGameHUDProps {
   readonly renderTelemetry?: ReefRenderTelemetry
   readonly onRenderSettingsChange: (settings: ReefRenderSettings) => void
   readonly godMode?: GodModeControls
+  readonly showcaseCatalog?: AcceptedShowcaseCatalog
 }
 
 function telemetry(value: number | undefined, digits: number, unit = '') {
@@ -109,7 +111,7 @@ function signal(label: string, value: number, inverted = false) {
   </div>
 }
 
-export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode }: PocketGameHUDProps) {
+export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
   const [pinnedReadings, setPinnedReadings] = useState<readonly string[]>(() => {
     try { return JSON.parse(window.localStorage.getItem('pocket-aquarium-pinned-readings-v1') ?? '[]') as string[] } catch { return [] }
@@ -162,6 +164,9 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </header>
 
     <div className="pocket-utility" aria-label="Tank utilities">
+      {showcaseCatalog ? <span className="pocket-credit-pill" title="Accepted defaults rendered without entering root gameplay">
+        <small>Accepted catalog</small><strong>{showcaseCatalog.acceptedSpeciesCount} species · {showcaseCatalog.animalAssets.length} visual animals · {showcaseCatalog.coralAssets.length} corals</strong>
+      </span> : null}
       <span className="pocket-credit-pill" title="Available tank credits">
         <small>Tank credits</small><strong>{godMode?.on ? '∞' : view.credits}</strong></span>
       {godMode ? <button type="button" className="pocket-god-mode" aria-pressed={godMode.on} onClick={godMode.toggle}

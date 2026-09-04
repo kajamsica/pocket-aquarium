@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import type { CatalogCandidate, CatalogRow, VisualCatalog } from '../catalog/visualCatalog'
-import { specimenAssetFor } from '../scene/specimens/assetRegistry'
+import userAcceptance from '../../art/specimens/user-acceptance.v1.json'
+import { visualCatalog, type CatalogCandidate, type CatalogRow, type VisualCatalog } from '../catalog/visualCatalog'
+import { acceptedSpecimenAssetList, specimenAssetFor } from '../scene/specimens/assetRegistry'
 import {
   BADGE_LABELS,
   acceptedWorkbenchAssets,
@@ -94,6 +95,9 @@ const CATALOG: Pick<VisualCatalog, 'rows' | 'userApprovals' | 'generatedAt'> = {
   generatedAt: '2026-09-03T00:00:00.000Z',
 }
 
+const ACCEPTED_FIXTURE = ['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark']
+  .map((speciesId) => specimenAssetFor(speciesId)!)
+
 function indexEntry(speciesId: string, name: string, overrides: Record<string, unknown> = {}) {
   return {
     speciesId,
@@ -143,32 +147,69 @@ function fakeFetch(payload: unknown, ok = true): typeof fetch {
 }
 
 describe('runtime asset registry stays accepted-only', () => {
-  it('resolves the accepted Ocellaris and nothing else', () => {
-    expect(specimenAssetFor('ocellaris')?.assetVersion).toBe('1.1.0')
-    for (const candidateOnly of ['blue_hippo_tang', 'yellow_tang', 'purple_tang', 'gem_tang', 'black_storm_ocellaris', 'constructor', '__proto__']) {
-      expect(specimenAssetFor(candidateOnly)).toBeUndefined()
+  it('resolves all 46 accepted assets across 33 species without treating compound keys as species ids', () => {
+    const registry = acceptedSpecimenAssetList()
+    expect(registry).toHaveLength(46)
+    expect(new Set(registry.map((asset) => asset.speciesId))).toHaveProperty('size', 33)
+    expect(acceptedWorkbenchAssets([]).map((asset) => asset.key)).toEqual(registry.map((asset) => asset.key))
+    for (const candidateKey of ['blue_hippo_tang@approved-v2', 'millepora@fable-v1-blade', 'constructor', '__proto__']) {
+      expect(specimenAssetFor(candidateKey)).toBeUndefined()
     }
   })
 
   it('exposes only accepted assets when the candidate service is unavailable', async () => {
     const catalog = await loadWorkbenchCatalog(fakeFetch({}, false), { catalog: CATALOG })
     expect(catalog.candidateSource).toBe('unavailable')
-    expect(catalog.assets.map((asset) => asset.key)).toEqual(['ocellaris'])
+    expect(catalog.assets.map((asset) => asset.key)).toEqual(acceptedSpecimenAssetList().map((asset) => asset.key))
     expect(acceptedWorkbenchAssets(ROWS).every((asset) => asset.state === 'accepted')).toBe(true)
     expect(catalog.rows).toHaveLength(ROWS.length)
   })
 
-  it('keeps Ocellaris inspectable from the registry even when the catalog has no accepted row', () => {
-    const [ocellaris] = acceptedWorkbenchAssets([])
-    expect(ocellaris.key).toBe('ocellaris')
+  it('keeps every runtime asset inspectable even when the catalog has no accepted rows', () => {
+    const assets = acceptedWorkbenchAssets([])
+    const ocellaris = assets.find((asset) => asset.key === 'ocellaris')!
+    expect(assets).toHaveLength(46)
     expect(ocellaris.referenceSizeMeters).toBe(0.08)
     expect(ocellaris.clipLoops).toEqual({ idle: true, swim: true, burst: false })
+  })
+
+  it('preserves promoted keys and source candidates without duplicate candidate rows', async () => {
+    const promoted = acceptedSpecimenAssetList().filter((asset) => asset.key === 'blue_hippo_tang' || asset.speciesId === 'millepora')
+    const discovered = { candidates: promoted.map((asset) => indexEntry(asset.speciesId, asset.sourceCandidate, { variantId: asset.variantId ?? null })) }
+    const catalog = await loadWorkbenchCatalog(fakeFetch(discovered))
+    expect(catalog.assets).toHaveLength(46)
+    expect(catalog.assets.every((asset) => asset.state === 'accepted')).toBe(true)
+    const acceptedOptions = workbenchOptionGroups(catalog).flatMap((group) => group.options).filter((option) => option.badge === 'accepted')
+    expect(acceptedOptions).toHaveLength(46)
+    expect(new Set(acceptedOptions.map((option) => option.key))).toHaveProperty('size', 46)
+    const branching = catalog.assets.find((asset) => asset.key === 'millepora@branching')!
+    expect(branching).toMatchObject({ state: 'accepted', candidate: 'fable-v1-branching', sourceCandidate: 'fable-v1-branching', variantId: 'branching', category: 'coral', bodyPlan: 'hydrocoral_colony', referenceSizeKind: 'colony_width' })
+    expect(selectWorkbenchAsset(catalog.assets, 'millepora', null).asset?.key).toBe('millepora@blade')
+    expect(selectWorkbenchAsset(catalog.assets, 'millepora', 'fable-v1-branching').asset?.key).toBe(branching.key)
+    expect(selectWorkbenchAsset(catalog.assets, 'blue_hippo_tang', null).asset?.state).toBe('accepted')
+    expect(workbenchSearch(branching, 'shared', '')).toBe('?workbench=millepora&candidate=fable-v1-branching&scale=shared')
+  })
+
+  it('never gives formally excluded candidates a user-approved badge', async () => {
+    const excluded = userAcceptance.excluded.map((entry) => {
+      const [speciesId, candidate] = entry.split(/[\s/]/)
+      return { speciesId, candidate, label: entry }
+    })
+    const catalog = await loadWorkbenchCatalog(fakeFetch({
+      candidates: excluded.map(({ speciesId, candidate }) => indexEntry(speciesId, candidate)),
+    }))
+    const options = workbenchOptionGroups(catalog).flatMap((group) => group.options)
+
+    expect(visualCatalog.userApprovals.gem_tang).toBe('round-v2')
+    for (const { speciesId, candidate, label } of excluded) {
+      expect(options.find((option) => option.key === candidateKey(speciesId, candidate))?.badge, label).not.toBe('approved')
+    }
   })
 })
 
 describe('workbench candidate catalog', () => {
   it('loads validated candidates for explicit review, enriches them from the catalog row and reports unloadable ones', async () => {
-    const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG })
+    const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG, acceptedAssets: ACCEPTED_FIXTURE })
     expect(catalog.candidateSource).toBe('dev-service')
     const keys = catalog.assets.map((asset) => asset.key)
     expect(keys[0]).toBe('ocellaris')
@@ -185,7 +226,7 @@ describe('workbench candidate catalog', () => {
   })
 
   it('selects by species and candidate, falling back visibly to the accepted Ocellaris', async () => {
-    const { assets, rows } = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG })
+    const { assets, rows } = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG, acceptedAssets: ACCEPTED_FIXTURE })
     expect(selectWorkbenchAsset(assets, null, null).asset?.key).toBe('ocellaris')
     expect(selectWorkbenchAsset(assets, 'blue_hippo_tang', 'fable-v1').asset?.key).toBe('blue_hippo_tang@fable-v1')
     // No candidate named: the user-approved look wins over other validated builds.
@@ -201,17 +242,16 @@ describe('workbench candidate catalog', () => {
     expect(missingCandidate.asset?.key).toBe('ocellaris')
     expect(missingCandidate.invalid).toBe('blue_hippo_tang / fable-v9')
 
-    // Known catalog rows without a loadable asset fall back with a reason instead of an unknown-id notice.
+    // Runtime-accepted species resolve directly even when the visual catalog still calls the row missing.
     const shark = selectWorkbenchAsset(assets, 'epaulette_shark', null, rows)
-    expect(shark.asset?.key).toBe('ocellaris')
+    expect(shark.asset?.key).toBe('epaulette_shark')
     expect(shark.invalid).toBeUndefined()
-    expect(shark.unavailable?.row.id).toBe('epaulette_shark')
-    expect(shark.unavailable?.reason).toBe('no candidate yet')
+    expect(shark.unavailable).toBeUndefined()
     const wrasse = selectWorkbenchAsset(assets, 'six_line_wrasse', 'fable-v1', rows)
     expect(wrasse.unavailable?.reason).toBe('build failed at source')
 
-    // Without rows the legacy behaviour is unchanged.
-    expect(selectWorkbenchAsset(assets, 'epaulette_shark', null).invalid).toBe('epaulette_shark')
+    // Runtime identities do not require a catalog row to remain selectable.
+    expect(selectWorkbenchAsset(assets, 'epaulette_shark', null).asset?.key).toBe('epaulette_shark')
   })
 
   it('derives clip looping from the manifest, defaulting the response clip to one-shot', () => {
@@ -239,7 +279,7 @@ describe('workbench candidate catalog', () => {
   })
 
   it('builds the categorized picker with accepted rows first and unloadable rows disabled', async () => {
-    const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG })
+    const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG, acceptedAssets: ACCEPTED_FIXTURE })
     const groups = workbenchOptionGroups(catalog)
     expect(groups.map((group) => group.category)).toEqual(['fish', 'coral', 'cleanup_crew', 'uncatalogued'])
     const fish = groups[0].options
@@ -248,11 +288,11 @@ describe('workbench candidate catalog', () => {
       'ocellaris',
       'blue_hippo_tang@fable-v1',
       'blue_hippo_tang@fable-v2',
-      'row:epaulette_shark',
+      'epaulette_shark',
       'row:six_line_wrasse@fable-v1',
     ])
     expect(fish.find((option) => option.key === 'blue_hippo_tang@fable-v2')).toMatchObject({ badge: 'approved', label: 'Blue Hippo Tang (fable-v2, user approved)' })
-    expect(fish.find((option) => option.key === 'row:epaulette_shark')).toMatchObject({ disabled: true, status: 'no candidate yet' })
+    expect(fish.find((option) => option.key === 'epaulette_shark')).toMatchObject({ disabled: false, badge: 'accepted' })
     expect(fish.find((option) => option.key === 'row:six_line_wrasse@fable-v1')).toMatchObject({ disabled: true, status: 'build failed at source' })
 
     const coral = groups[1].options
@@ -263,11 +303,11 @@ describe('workbench candidate catalog', () => {
     const cleanup = groups[2].options
     expect(cleanup.map((option) => option.key)).toEqual(['trochus_snail@fable-v1', 'trochus_snail@fable-v2'])
     expect(cleanup[1].label).toContain('not in catalog yet')
-    expect(groups[3].options.map((option) => option.key)).toEqual(['zoanthid@fable-v1-blue_green'])
+    expect(groups[3].options.map((option) => option.key)).toEqual(['watchman_goby', 'pistol_shrimp', 'zoanthid@fable-v1-blue_green'])
   })
 
   it('marks candidates as dev-server-only when the candidate service is unavailable', async () => {
-    const catalog = await loadWorkbenchCatalog(fakeFetch({}, false), { catalog: CATALOG })
+    const catalog = await loadWorkbenchCatalog(fakeFetch({}, false), { catalog: CATALOG, acceptedAssets: ACCEPTED_FIXTURE })
     const groups = workbenchOptionGroups(catalog)
     const tang = groups[0].options.find((option) => option.key === 'row:blue_hippo_tang@fable-v2')
     expect(tang).toMatchObject({ disabled: true, status: 'dev server only' })
@@ -275,7 +315,8 @@ describe('workbench candidate catalog', () => {
     expect(selection.asset?.key).toBe('ocellaris')
     expect(selection.unavailable?.reason).toBe('candidate GLBs load through the dev server only')
     expect(selectWorkbenchAsset(catalog.assets, 'blue_hippo_tang', 'fable-v2', catalog.rows, catalog.candidateSource).unavailable?.reason).toBe('dev server only')
-    expect(groups.every((group) => group.options.filter((option) => !option.disabled).every((option) => option.key === 'ocellaris'))).toBe(true)
+    const accepted = new Set(['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark'])
+    expect(groups.every((group) => group.options.filter((option) => !option.disabled).every((option) => accepted.has(option.key)))).toBe(true)
   })
 
   it('persists species, candidate and scale mode in the URL without reloading', () => {
