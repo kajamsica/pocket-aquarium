@@ -439,7 +439,8 @@ export function createPocketReefShowcase(): PocketState {
     if (!asset) throw new Error(`Accepted showcase default is missing: ${speciesId}`)
     return asset
   })
-  const animalDefaults = acceptedDefaults.filter((asset) => asset.category !== 'coral')
+  const animalDefaults = acceptedDefaults.filter((asset) => asset.category !== 'coral'
+    && asset.speciesId !== 'epaulette_shark')
   state.livestock = animalDefaults.map((asset, index) => {
     const profile = runtime.DATA.resolveSpecies(state, asset.speciesId)
     if (!profile || profile.habitat !== 'reef')

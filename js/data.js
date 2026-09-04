@@ -323,14 +323,14 @@
       id: "epaulette_shark", kind: "fish", name: "Epaulette Shark", sci: "Hemiscyllium ocellatum",
       waterType: "salt", habitat: "reef", nativeHabitat: "Great Barrier Reef benthic flats",
       adultSizeCm: 90, price: 900, bioload: 40,
-      minTier: "xl757", minVolumeL: 757, minFootprintCm2: 10000,
+      minTier: "xl757", minVolumeL: 1363, minFootprintCm2: 32000,
       socialMin: 1, socialMax: 1, layer: "bottom", territoriality: 0.6,
       predator: true, preysOn: ["nano_fish", "small_fish", "invert"], preyTags: [],
       coralSafe: true, invertSafe: false, requiredFeature: "deep_sand", cleanupRoles: [], expert: true,
       needsStrongFiltration: true,
       diet: "benthic-predator", feedIntervalDays: 2.5, mealSize: 0.9, metabolic: 2.0,
       maturityDays: 120, breeding: null,
-      teachNote: "An epaulette shark is an expert-only benthic predator that outgrows nano tanks; it needs the 757 L tier, deep sand, and strong filtration and will hunt nano fish and inverts."
+      teachNote: "An epaulette shark is an expert-only benthic predator that can reach 107 cm; it needs at least 1,363 L, a roughly 3.2 m-long footprint, deep sand, and strong filtration and will hunt nano fish and inverts."
     },
     gem_tang: {
       id: "gem_tang", kind: "fish", name: "Gem Tang", sci: "Zebrasoma gemmatum",

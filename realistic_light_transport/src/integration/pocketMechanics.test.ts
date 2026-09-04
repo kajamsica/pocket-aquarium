@@ -8,7 +8,7 @@ import {
   pocketShowcasePopulationAuthority,
   projectPocketState,
 } from './pocketAquariumBridge'
-import { specimenAssetFor } from '../scene/specimens/assetRegistry'
+import { ACCEPTED_SPECIES_IDS, specimenAssetFor } from '../scene/specimens/assetRegistry'
 
 describe('integrated reef showcase mechanics', () => {
   it('fills the upgraded tank with reef-strength saltwater before livestock', () => {
@@ -38,10 +38,14 @@ describe('integrated reef showcase mechanics', () => {
 
     expect(pocketShowcasePopulationAuthority).toBe('root_pa')
     expect(view.authority).toBe(pocketShowcasePopulationAuthority)
-    expect(state.livestock).toHaveLength(25)
-    expect(view.specimens).toHaveLength(25)
+    const acceptedAnimals = ACCEPTED_SPECIES_IDS.filter((speciesId) => specimenAssetFor(speciesId)?.category !== 'coral')
+    expect(acceptedAnimals).toHaveLength(25)
+    expect(acceptedAnimals).toContain('epaulette_shark')
+    expect(state.livestock).toHaveLength(24)
+    expect(view.specimens).toHaveLength(24)
     expect(view.specimens.map((animal) => animal.id)).toEqual(state.livestock.map((animal) => animal.id))
-    expect(new Set(view.specimens.map((animal) => animal.speciesId))).toHaveProperty('size', 25)
+    expect(new Set(view.specimens.map((animal) => animal.speciesId))).toHaveProperty('size', 24)
+    expect(view.specimens.some((animal) => animal.speciesId === 'epaulette_shark')).toBe(false)
     expect(view.specimens.every((animal) => animal.stage === 'adult' && animal.health === 1
       && animal.condition === 1 && animal.hunger <= .15 && animal.runtimeProfile.id === animal.speciesId)).toBe(true)
     expect(view.specimens.every((animal) => animal.x >= 0 && animal.x <= 1 && animal.y >= 0 && animal.y <= 1)).toBe(true)
@@ -49,6 +53,20 @@ describe('integrated reef showcase mechanics', () => {
     expect(animalOffers).toHaveLength(25)
     expect(coralOffers).toHaveLength(22)
     expect(new Set(coralOffers.map((offer) => offer.id)).size).toBe(22)
+    const sharkOffer = animalOffers.find((offer) => offer.id === 'epaulette_shark')
+    expect(sharkOffer).toMatchObject({
+      allowed: false,
+      reasons: expect.arrayContaining([
+        expect.stringContaining('at least 1363 L of water (this tank holds 757 L)'),
+        expect.stringContaining('at least 32000 cm²'),
+      ]),
+    })
+    const sharkAttempt = dispatchPocketAction(state, {
+      ...sharkOffer!.action,
+      acceptRisk: true,
+    })
+    expect(sharkAttempt.livestock).toHaveLength(24)
+    expect(sharkAttempt.livestock.some((animal) => animal.species === 'epaulette_shark')).toBe(false)
     expect(coralOffers.every((offer) => typeof offer.action.variantId === 'string')).toBe(true)
     expect(view.coralInventory).toHaveLength(8)
     expect(view.coralInventory.every((coral) => specimenAssetFor(coral.speciesId)?.variantId === coral.variantId)).toBe(true)
