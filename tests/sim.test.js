@@ -511,6 +511,11 @@ group("livestock conflict choices");
  * ============================================================ */
 group("coral inventory + write-once placement");
 (function () {
+  var rejected = cycledReef(790), rejectedCredits = rejected.credits;
+  PA.dispatch(rejected, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "not_accepted" });
+  eq(rejected.corals.length, 0, "invalid coral variant creates no inventory entry");
+  eq(rejected.credits, rejectedCredits, "invalid coral variant does not debit credits");
+
   var s = cycledReef(79, { light: "led", circ: "powerhead" });
   var credits = s.credits;
   PA.dispatch(s, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "blue_green" });
@@ -569,8 +574,9 @@ group("coral placement save migration");
   var locked = cycledReef(77); PA.dispatch(locked, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "orange_red" });
   var exact = coralPlacement("sand", "sand:mound:21", [-0.25, 0.1, 0.8], [0, 1, 0], -0.4);
   lockCoral(locked, 0, exact);
+  eq(locked.corals[0].variantId, "orange_red", "valid non-default variant persists through purchase and lock");
   var roundTrip = PA.sanitizeState(JSON.parse(JSON.stringify(locked)));
-  eq(roundTrip.corals[0].variantId, "orange_red", "variant survives save sanitization");
+  eq(roundTrip.corals[0].variantId, "orange_red", "non-default variant survives serialize and sanitize");
   eq(JSON.stringify(roundTrip.corals[0].placement), JSON.stringify(exact), "locked placement round-trips exactly");
 
   var inventory = cycledReef(75); PA.dispatch(inventory, { type: "PURCHASE_CORAL", coral: "zoanthid" });
