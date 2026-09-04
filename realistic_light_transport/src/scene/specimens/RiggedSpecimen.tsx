@@ -43,6 +43,16 @@ export function resolveSemanticAnimationPlan(asset: SpecimenAsset): SemanticAnim
 
 export type SemanticAnimationActions = Partial<Record<string, THREE.AnimationAction>>
 
+const BASE_ROOT_SPECIES = new Set(['acropora_branching', 'stylophora'])
+
+/** Clone an authored clip and remove only translation owned by the rig root. */
+export function makeAnimationClipInPlace(clip: THREE.AnimationClip, speciesId: string): THREE.AnimationClip {
+  const rigRootName = BASE_ROOT_SPECIES.has(speciesId) ? 'Base' : 'Root'
+  const inPlaceClip = clip.clone()
+  inPlaceClip.tracks = inPlaceClip.tracks.filter((track) => track.name !== `${rigRootName}.position`)
+  return inPlaceClip
+}
+
 export function initializeSemanticActions(actions: SemanticAnimationActions, plan: SemanticAnimationPlan) {
   for (const action of Object.values(actions)) action?.stop().setEffectiveWeight(0)
   actions[plan.idle.clipName]?.setEffectiveWeight(0.22).play()
@@ -93,7 +103,7 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
     for (const clipName of asset.clips) {
       const clip = THREE.AnimationClip.findByName(source.animations, clipName)
       if (!clip) continue
-      const action = mixer.clipAction(clip, root)
+      const action = mixer.clipAction(makeAnimationClipInPlace(clip, asset.speciesId), root)
       const loop = asset.clipLoops[clipName]
       action.enabled = true
       action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1)

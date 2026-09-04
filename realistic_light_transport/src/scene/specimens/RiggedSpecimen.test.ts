@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import * as THREE from 'three'
 
 import { specimenAssetFor } from './assetRegistry'
-import { applySemanticAnimationDrive, initializeSemanticActions, resolveSemanticAnimationPlan,
+import { applySemanticAnimationDrive, initializeSemanticActions, makeAnimationClipInPlace, resolveSemanticAnimationPlan,
   type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
 
 function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
@@ -12,6 +12,34 @@ function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
 }
 
 describe('rigged specimen semantic animation plan', () => {
+  it('removes only cloned rig-root translation and leaves the source clip unchanged', () => {
+    const source = new THREE.AnimationClip('swim', 1, [
+      new THREE.VectorKeyframeTrack('Root.position', [0, 1], [0, 0, 0, 1, 2, 3]),
+      new THREE.VectorKeyframeTrack('Body.position', [0, 1], [0, 0, 0, 0.1, 0, 0]),
+      new THREE.QuaternionKeyframeTrack('Spine_A.quaternion', [0, 1], [0, 0, 0, 1, 0, 0.1, 0, 0.995]),
+    ])
+    const sourceTrackNames = source.tracks.map((track) => track.name)
+    const sourceRootValues = [...source.tracks[0].values]
+
+    const inPlace = makeAnimationClipInPlace(source, 'ocellaris')
+
+    expect(inPlace).not.toBe(source)
+    expect(inPlace.tracks.map((track) => track.name)).toEqual(['Body.position', 'Spine_A.quaternion'])
+    expect(inPlace.tracks.every((track) => !source.tracks.includes(track))).toBe(true)
+    expect(source.tracks.map((track) => track.name)).toEqual(sourceTrackNames)
+    expect([...source.tracks[0].values]).toEqual(sourceRootValues)
+  })
+
+  it('recognizes accepted species whose rig root is named Base', () => {
+    const source = new THREE.AnimationClip('sway', 1, [
+      new THREE.VectorKeyframeTrack('Base.position', [0, 1], [0, 0, 0, 0, 0.1, 0]),
+      new THREE.VectorKeyframeTrack('Br_00.position', [0, 1], [0, 0, 0, 0.1, 0, 0]),
+    ])
+
+    expect(makeAnimationClipInPlace(source, 'stylophora').tracks.map((track) => track.name))
+      .toEqual(['Br_00.position'])
+  })
+
   it.each(['ocellaris', 'watchman_goby', 'epaulette_shark'])('maps %s fish behavior to idle, swim, and burst', (speciesId) => {
     const asset = specimenAssetFor(speciesId)
     expect(asset).toBeDefined()
