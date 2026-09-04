@@ -286,8 +286,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </header>
 
     <div className="pocket-utility" aria-label="Tank utilities">
-      {showcaseCatalog ? <span className="pocket-credit-pill" title="Accepted defaults rendered without entering root gameplay">
-        <small>Accepted catalog</small><strong>{showcaseCatalog.acceptedSpeciesCount} species · {showcaseCatalog.animalAssets.length} visual animals · {showcaseCatalog.coralAssets.length} corals</strong>
+      {showcaseCatalog ? <span className="pocket-credit-pill" title="Accepted catalog seeded through root gameplay">
+        <small>Accepted catalog</small><strong>{showcaseCatalog.acceptedSpeciesCount} species · {showcaseCatalog.animalAssets.length} animals · {showcaseCatalog.coralAssets.length} corals</strong>
       </span> : null}
       <span className="pocket-credit-pill" title="Available tank credits">
         <small>Tank credits</small><strong>{godMode?.on ? '∞' : view.credits}</strong></span>
