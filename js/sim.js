@@ -1058,7 +1058,7 @@
     };
   }
   function doBuyCoral(state, coral, variantId) {
-    var v = PA.validatePurchase(state, { kind: "coral", id: coral });
+    var v = PA.validatePurchase(state, { kind: "coral", id: coral, variantId: variantId });
     if (!v.ok) { log(state, "store", "Cannot add coral: " + v.reasons.join(" ")); return false; }
     var cd = DATA.CORALS[coral]; state.credits -= cd.price;
     state.corals.push({
