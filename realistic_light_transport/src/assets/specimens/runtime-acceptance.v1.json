@@ -1,0 +1,1498 @@
+{
+  "schemaVersion": "pocket-aquarium.runtime-acceptance/v1",
+  "assets": [
+    {
+      "key": "ocellaris",
+      "speciesId": "ocellaris",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "existing-accepted-v1.1.0",
+      "sourceCandidateGlbPath": "src/assets/specimens/ocellaris/v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/ocellaris/v1/lod1.glb",
+      "version": "1.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Ocellaris Clownfish",
+      "sha256": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+      "clips": [
+        "idle",
+        "swim",
+        "burst"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "acropora_branching@bushy_pink",
+      "speciesId": "acropora_branching",
+      "variantId": "bushy_pink",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-bushy_pink",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-bushy_pink/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Acropora digitate, pink",
+      "sha256": "566806a6801b1c7cebe2dfd5d697bb14570471553bcfbed594ee6ad2ca40e805",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "flow": true,
+        "retract": false,
+        "sway": true
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "acropora_branching@staghorn_blue",
+      "speciesId": "acropora_branching",
+      "variantId": "staghorn_blue",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-staghorn_blue",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_blue/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/staghorn_blue/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Acropora staghorn, steel blue with pale tips",
+      "sha256": "49c9507cf0ee263c112a72c73bf48a094567081dcfd5cecb9262094840a956ee",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "flow": true,
+        "retract": false,
+        "sway": true
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "acropora_branching@staghorn_green_purple_tips",
+      "speciesId": "acropora_branching",
+      "variantId": "staghorn_green_purple_tips",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-staghorn_green_purple_tips",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-staghorn_green_purple_tips/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/staghorn_green_purple_tips/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Acropora staghorn, green with purple tips",
+      "sha256": "9133cbcb74adc09aadc5773a3fa6fa84e13743967a8c86c6e531d1c552ba11b5",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "flow": true,
+        "retract": false,
+        "sway": true
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "acropora_branching@table_blue",
+      "speciesId": "acropora_branching",
+      "variantId": "table_blue",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-table_blue",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-table_blue/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/table_blue/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Acropora table, blue",
+      "sha256": "cbc57a5ad5b4931aec4438150223633cb111b65e8655030a61af2d0aa9215fd1",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "flow": true,
+        "retract": false,
+        "sway": true
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "acropora_branching@table_green",
+      "speciesId": "acropora_branching",
+      "variantId": "table_green",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-table_green",
+      "sourceCandidateGlbPath": "art/specimens/acropora_branching/candidates/fable-v1-table_green/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/acropora_branching/table_green/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Acropora table, green with cream tips",
+      "sha256": "a9ed92fae67049d58cd75f9cb68e3f4ee42717de054fc4e09b54ed6c59ea52bc",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "flow": true,
+        "retract": false,
+        "sway": true
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "anacropora@brown_pink_tips",
+      "speciesId": "anacropora",
+      "variantId": "brown_pink_tips",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-brown_pink_tips",
+      "sourceCandidateGlbPath": "art/specimens/anacropora/candidates/fable-v1-brown_pink_tips/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/anacropora/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Anacropora (tan brown, pink-purple tips)",
+      "sha256": "d6325876d75889611df0fc1c04e49a1a47cf13c7d7ccdf1795c4cb465461d3ae",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "anacropora@green",
+      "speciesId": "anacropora",
+      "variantId": "green",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-green",
+      "sourceCandidateGlbPath": "art/specimens/anacropora/candidates/fable-v1-green/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/anacropora/green/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Anacropora (green, pale lime tips)",
+      "sha256": "d2240c0653653ca8a9a07d31215d6523bce1f414146689f7ec06ad4259b34b2a",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "astrea_snail",
+      "speciesId": "astrea_snail",
+      "category": "cleanup_crew",
+      "bodyPlan": "gastropod",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/astrea_snail/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/astrea_snail/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.025,
+        "kind": "adult_shell_length"
+      },
+      "displayName": "Astrea Snail",
+      "sha256": "49bb4da3a596735277e8cebe8cba1ebfcff9ef29e54b54099bbc6ea555b83c13",
+      "clips": [
+        "crawl",
+        "rest",
+        "retract"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "banggai_cardinal",
+      "speciesId": "banggai_cardinal",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/banggai_cardinal/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/banggai_cardinal/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Banggai Cardinalfish",
+      "sha256": "2d9e21b87528977bf6d8d575dc7954da839dab6b7b00c167ecb5c2815627edd6",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "black_storm_ocellaris",
+      "speciesId": "black_storm_ocellaris",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/black_storm_ocellaris/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/black_storm_ocellaris/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Black Storm Ocellaris",
+      "sha256": "76283052d28cc706cee922adb96ead1061c9eba73f985a4ace38abc1bc39c175",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "blue_hippo_tang",
+      "speciesId": "blue_hippo_tang",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "approved-v2",
+      "sourceCandidateGlbPath": "art/specimens/blue_hippo_tang/candidates/approved-v2/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/blue_hippo_tang/v1/lod1.glb",
+      "version": "0.2.0",
+      "referenceSize": {
+        "meters": 0.25,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Blue Hippo Tang",
+      "sha256": "01f81984a1e5f734244076abf5e1abe6faaae8d6c5984378a5bdc731985924df",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "blue_linckia",
+      "speciesId": "blue_linckia",
+      "category": "invertebrate",
+      "bodyPlan": "asteroid",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/blue_linckia/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/blue_linckia/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.25,
+        "kind": "adult_arm_span"
+      },
+      "displayName": "Blue Linckia Starfish",
+      "sha256": "f72a764948a50c981082a2f2a177800fd93273dc531f38dc10968caa33cfeae1",
+      "clips": [
+        "arm_curl",
+        "crawl",
+        "rest"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "arm_curl"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "arm_curl": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "brittle_star",
+      "speciesId": "brittle_star",
+      "category": "cleanup_crew",
+      "bodyPlan": "ophiuroid",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/brittle_star/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/brittle_star/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_arm_span"
+      },
+      "displayName": "Brittle Star",
+      "sha256": "3eaee6c7d76f18e1b0a95eb06474bbff1940f132ccda059d02a8b2c641d2819e",
+      "clips": [
+        "arm_recoil",
+        "crawl",
+        "rest"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "arm_recoil"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "arm_recoil": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "cerith_snail",
+      "speciesId": "cerith_snail",
+      "category": "cleanup_crew",
+      "bodyPlan": "gastropod",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/cerith_snail/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/cerith_snail/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.025,
+        "kind": "adult_crawling_length"
+      },
+      "displayName": "Cerith Snail",
+      "sha256": "cde6b0f1fda6942b3b9e80aa0ef07f1a4c4dcfea478ff9906e43840e03275e49",
+      "clips": [
+        "crawl",
+        "rest",
+        "retract"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "chalice_coral@jelly_bean",
+      "speciesId": "chalice_coral",
+      "variantId": "jelly_bean",
+      "category": "coral",
+      "bodyPlan": "encrusting_coral",
+      "sourceCandidate": "fable-v1-jelly_bean",
+      "sourceCandidateGlbPath": "art/specimens/chalice_coral/candidates/fable-v1-jelly_bean/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/chalice_coral/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Chalice Coral (jelly bean: dark plate, candy blotches)",
+      "sha256": "e2dc5acfbee6673838dd56a2cf4f04c5fbefd1a5134678492d0c9514979e0276",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "chalice_coral@purple_orange_eyes",
+      "speciesId": "chalice_coral",
+      "variantId": "purple_orange_eyes",
+      "category": "coral",
+      "bodyPlan": "encrusting_coral",
+      "sourceCandidate": "fable-v1-purple_orange_eyes",
+      "sourceCandidateGlbPath": "art/specimens/chalice_coral/candidates/fable-v1-purple_orange_eyes/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/chalice_coral/purple_orange_eyes/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Chalice Coral (purple plate, orange eyes)",
+      "sha256": "c33b0513c019d448c4767d48d0a8d5667ecb6e59d6dfaeead534b06a98d66912",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "chalice_coral@red_green_eyes",
+      "speciesId": "chalice_coral",
+      "variantId": "red_green_eyes",
+      "category": "coral",
+      "bodyPlan": "encrusting_coral",
+      "sourceCandidate": "fable-v1-red_green_eyes",
+      "sourceCandidateGlbPath": "art/specimens/chalice_coral/candidates/fable-v1-red_green_eyes/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/chalice_coral/red_green_eyes/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Chalice Coral (red plate, green eyes)",
+      "sha256": "e13e9cfba773f55b7567cfa3ce1f7c20f4a272494244af23491eaed08113ce10",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "cleaner_shrimp",
+      "speciesId": "cleaner_shrimp",
+      "category": "invertebrate",
+      "bodyPlan": "decapod_shrimp",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/cleaner_shrimp/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/cleaner_shrimp/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.06,
+        "kind": "adult_body_length"
+      },
+      "displayName": "Skunk Cleaner Shrimp",
+      "sha256": "e6f2165f2af3ff61a60fa80dc061b07b8130ac9dbca5406491e978fd5adbf33a",
+      "clips": [
+        "clean",
+        "hover",
+        "walk"
+      ],
+      "clipRoles": {
+        "idle": "hover",
+        "locomotion": "walk",
+        "response": "clean"
+      },
+      "clipLoops": {
+        "hover": true,
+        "walk": true,
+        "clean": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "diamond_goby",
+      "speciesId": "diamond_goby",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/diamond_goby/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/diamond_goby/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Diamond Goby",
+      "sha256": "5e943d82d975689724557aad097635af9d6b28d54edd6b23923441bbf664d07b",
+      "clips": [
+        "idle",
+        "sift",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "sift"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "sift": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "emerald_crab",
+      "speciesId": "emerald_crab",
+      "category": "cleanup_crew",
+      "bodyPlan": "brachyuran_crab",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/emerald_crab/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/emerald_crab/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.045,
+        "kind": "adult_carapace_width_including_legs"
+      },
+      "displayName": "Emerald Crab",
+      "sha256": "4ffb56f932b304bd4753e60cedc33b79a3dc4e4af56ece526e17b37b75065dd2",
+      "clips": [
+        "rest",
+        "threat",
+        "walk"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "walk",
+        "response": "threat"
+      },
+      "clipLoops": {
+        "rest": true,
+        "walk": true,
+        "threat": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "epaulette_shark",
+      "speciesId": "epaulette_shark",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/epaulette_shark/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/epaulette_shark/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.9,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Epaulette Shark",
+      "sha256": "7174c53ecceae5a42394b36086f2aa305e922a88250cfca80580258ccaec2ba1",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "fighting_conch",
+      "speciesId": "fighting_conch",
+      "category": "cleanup_crew",
+      "bodyPlan": "gastropod_strombid",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/fighting_conch/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/fighting_conch/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_shell_length"
+      },
+      "displayName": "Fighting Conch",
+      "sha256": "db5a28862bca7468cc8e8fa146f1c022ab1c5122f3caf4b7270cbe1ecd8fa93a",
+      "clips": [
+        "hop",
+        "rest",
+        "withdraw"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "hop",
+        "response": "withdraw"
+      },
+      "clipLoops": {
+        "rest": true,
+        "hop": true,
+        "withdraw": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "gem_tang",
+      "speciesId": "gem_tang",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v2",
+      "sourceCandidateGlbPath": "art/specimens/gem_tang/candidates/fable-v2/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/gem_tang/v1/lod1.glb",
+      "version": "0.2.0",
+      "referenceSize": {
+        "meters": 0.2,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Gem Tang",
+      "sha256": "af65712b54f44682c627998e3a16bfc132bba649c50b63961cdf7b18bde31d74",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "goniopora@green_pink",
+      "speciesId": "goniopora",
+      "variantId": "green_pink",
+      "category": "coral",
+      "bodyPlan": "lps_coral",
+      "sourceCandidate": "fable-v1-green_pink",
+      "sourceCandidateGlbPath": "art/specimens/goniopora/candidates/fable-v1-green_pink/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/goniopora/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "displayName": "Goniopora, green polyps with pink oral discs",
+      "sha256": "44d028d0810d606ea751f8fd407368bdd039a23b1966d5620e98d7e71ffbc64c",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "goniopora@purple_green",
+      "speciesId": "goniopora",
+      "variantId": "purple_green",
+      "category": "coral",
+      "bodyPlan": "lps_coral",
+      "sourceCandidate": "fable-v1-purple_green",
+      "sourceCandidateGlbPath": "art/specimens/goniopora/candidates/fable-v1-purple_green/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/goniopora/purple_green/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "displayName": "Goniopora, purple polyps with green oral discs",
+      "sha256": "13b8236f7267cf5fcc183199e2593f6502376e5f95ec4cf04228dc1962aa81b5",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "goniopora@red_brown",
+      "speciesId": "goniopora",
+      "variantId": "red_brown",
+      "category": "coral",
+      "bodyPlan": "lps_coral",
+      "sourceCandidate": "fable-v1-red_brown",
+      "sourceCandidateGlbPath": "art/specimens/goniopora/candidates/fable-v1-red_brown/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/goniopora/red_brown/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "displayName": "Goniopora, red-brown polyps with pale green oral discs",
+      "sha256": "c8ed9059e590fc5f646ae0b0d7a71f08f0c62c2f813d514bce499f2a3cc83de3",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "millepora@blade",
+      "speciesId": "millepora",
+      "variantId": "blade",
+      "category": "coral",
+      "bodyPlan": "hydrocoral_colony",
+      "sourceCandidate": "fable-v1-blade",
+      "sourceCandidateGlbPath": "art/specimens/millepora/candidates/fable-v1-blade/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/millepora/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Millepora (fire coral, blade form)",
+      "sha256": "77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "millepora@branching",
+      "speciesId": "millepora",
+      "variantId": "branching",
+      "category": "coral",
+      "bodyPlan": "hydrocoral_colony",
+      "sourceCandidate": "fable-v1-branching",
+      "sourceCandidateGlbPath": "art/specimens/millepora/candidates/fable-v1-branching/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/millepora/branching/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Millepora (fire coral, branching form)",
+      "sha256": "9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "nassarius_snail",
+      "speciesId": "nassarius_snail",
+      "category": "cleanup_crew",
+      "bodyPlan": "gastropod",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/nassarius_snail/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/nassarius_snail/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.0334,
+        "kind": "adult_extended_length_crawling"
+      },
+      "displayName": "Nassarius Snail",
+      "sha256": "10a1352e15747c0dac17b225a04d15c022f47f295c7126f563f9e1c43353dcd9",
+      "clips": [
+        "crawl",
+        "rest",
+        "siphon_probe"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "siphon_probe"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "siphon_probe": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "pistol_shrimp",
+      "speciesId": "pistol_shrimp",
+      "category": "invertebrate",
+      "bodyPlan": "decapod_shrimp",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/pistol_shrimp/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/pistol_shrimp/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.05,
+        "kind": "adult_body_length"
+      },
+      "displayName": "Tiger Pistol Shrimp",
+      "sha256": "019eea507f3cacb6de1eebb191fa04ce088612e7e8e41c09e307004ebf0382ae",
+      "clips": [
+        "rest",
+        "snap",
+        "walk"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "walk",
+        "response": "snap"
+      },
+      "clipLoops": {
+        "rest": true,
+        "walk": true,
+        "snap": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "purple_tang",
+      "speciesId": "purple_tang",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v2",
+      "sourceCandidateGlbPath": "art/specimens/purple_tang/candidates/fable-v2/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/purple_tang/v1/lod1.glb",
+      "version": "0.2.0",
+      "referenceSize": {
+        "meters": 0.22,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Purple Tang",
+      "sha256": "3da76e8badbcd31565ce7154906834482c051e5443d56b6369f7c75033a309af",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "royal_gramma",
+      "speciesId": "royal_gramma",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/royal_gramma/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/royal_gramma/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Royal Gramma",
+      "sha256": "04e9b1e77d15116be3f4a893e03c2985857e168d8274dbda5f927f6783b2b6d1",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "scarlet_hermit",
+      "speciesId": "scarlet_hermit",
+      "category": "cleanup_crew",
+      "bodyPlan": "anomuran_hermit",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/scarlet_hermit/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/scarlet_hermit/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.03,
+        "kind": "adult_total_length_including_borrowed_shell"
+      },
+      "displayName": "Scarlet Reef Hermit Crab",
+      "sha256": "f277808a049f03147cedae15b203cc393f55a62ed6be1765fe34a71ac533995e",
+      "clips": [
+        "rest",
+        "retreat",
+        "walk"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "walk",
+        "response": "retreat"
+      },
+      "clipLoops": {
+        "rest": true,
+        "walk": true,
+        "retreat": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "six_line_wrasse",
+      "speciesId": "six_line_wrasse",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v2",
+      "sourceCandidateGlbPath": "art/specimens/six_line_wrasse/candidates/fable-v2/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/six_line_wrasse/v1/lod1.glb",
+      "version": "0.2.0",
+      "referenceSize": {
+        "meters": 0.075,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Six-Line Wrasse",
+      "sha256": "fab550f5d40505a19147aa2d2f54cda7a76779f967c64490dcdde494fc53ea9c",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "stylophora@blueberry",
+      "speciesId": "stylophora",
+      "variantId": "blueberry",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-blueberry",
+      "sourceCandidateGlbPath": "art/specimens/stylophora/candidates/fable-v1-blueberry/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/stylophora/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "displayName": "Blueberry Stylophora (blue-violet, lavender polyps)",
+      "sha256": "d61420f0a95f375723687b4ab747e8b1a1f637ac227719aa7bbc89606689a6e1",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "stylophora@pink",
+      "speciesId": "stylophora",
+      "variantId": "pink",
+      "category": "coral",
+      "bodyPlan": "branching_sps_coral",
+      "sourceCandidate": "fable-v1-pink",
+      "sourceCandidateGlbPath": "art/specimens/stylophora/candidates/fable-v1-pink/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/stylophora/pink/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.1,
+        "kind": "colony_width"
+      },
+      "displayName": "Pink Stylophora (pink-lilac wild form)",
+      "sha256": "bd7b9588ea9f8728577f3c965bfc74f1250fc6035d11cd6911418ed35bdfe79d",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "tomini_tang",
+      "speciesId": "tomini_tang",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/tomini_tang/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/tomini_tang/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Tomini Tang",
+      "sha256": "02de75d52ad19b33ad262f268d6c8486881bbed50e963a1d70aade244bb1ef52",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "torch_coral@gold_white_tips",
+      "speciesId": "torch_coral",
+      "variantId": "gold_white_tips",
+      "category": "coral",
+      "bodyPlan": "lps_coral",
+      "sourceCandidate": "fable-v1-gold_white_tips",
+      "sourceCandidateGlbPath": "art/specimens/torch_coral/candidates/fable-v1-gold_white_tips/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/torch_coral/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Torch Coral (gold, white tips)",
+      "sha256": "c46c99600f3fa2be4e90d12f6ac5d282aea4b6e9abede919841b1197ba26774f",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "torch_coral@green_pink_tips",
+      "speciesId": "torch_coral",
+      "variantId": "green_pink_tips",
+      "category": "coral",
+      "bodyPlan": "lps_coral",
+      "sourceCandidate": "fable-v1-green_pink_tips",
+      "sourceCandidateGlbPath": "art/specimens/torch_coral/candidates/fable-v1-green_pink_tips/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/torch_coral/green_pink_tips/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.12,
+        "kind": "colony_width"
+      },
+      "displayName": "Torch Coral (green, pink tips)",
+      "sha256": "b65330873959b66400c9458f76050acfeecc67f56b14e5ceb025047de718ce56",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "trochus_snail",
+      "speciesId": "trochus_snail",
+      "category": "cleanup_crew",
+      "bodyPlan": "gastropod",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/trochus_snail/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/trochus_snail/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.03,
+        "kind": "adult_shell_diameter"
+      },
+      "displayName": "Trochus Snail",
+      "sha256": "e2a591004c4fb7cf0a0997ea699fb22086b5973e674e9c1e15a82b433e63a3e5",
+      "clips": [
+        "crawl",
+        "rest",
+        "retract"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "turbo_snail",
+      "speciesId": "turbo_snail",
+      "category": "cleanup_crew",
+      "bodyPlan": "gastropod",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/turbo_snail/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/turbo_snail/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.04,
+        "kind": "adult_shell_length"
+      },
+      "displayName": "Turbo Snail",
+      "sha256": "066f4edf6f390cca9b31db3e82fcc18a8dbdfe652c01fda9047fe084029c2efd",
+      "clips": [
+        "crawl",
+        "rest",
+        "retract"
+      ],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "crawl",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "rest": true,
+        "crawl": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "watchman_goby",
+      "speciesId": "watchman_goby",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/watchman_goby/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/watchman_goby/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Yellow Watchman Goby",
+      "sha256": "07ddb89826a22a1dbd4c35113e7de41afb740c3cac5b7a4379d89886979b19c6",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "yellow_tang",
+      "speciesId": "yellow_tang",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v2",
+      "sourceCandidateGlbPath": "art/specimens/yellow_tang/candidates/fable-v2/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/yellow_tang/v1/lod1.glb",
+      "version": "0.2.0",
+      "referenceSize": {
+        "meters": 0.2,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Yellow Tang",
+      "sha256": "0fe62d2b8bf45ce6cbced5fc574de2d210658208946b56b74bd6ef40e60902b1",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "zoanthid@blue_green",
+      "speciesId": "zoanthid",
+      "variantId": "blue_green",
+      "category": "coral",
+      "bodyPlan": "zoanthid_colony",
+      "sourceCandidate": "fable-v1-blue_green",
+      "sourceCandidateGlbPath": "art/specimens/zoanthid/candidates/fable-v1-blue_green/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/zoanthid/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "colony_width"
+      },
+      "displayName": "Zoanthid Colony (blue and green)",
+      "sha256": "78d9e3db16fbe4e63a6a872f92c3f3477802fd150daad6367c8e2febb2b3f03b",
+      "clips": [
+        "close",
+        "flow",
+        "open"
+      ],
+      "clipRoles": {
+        "idle": "open",
+        "locomotion": "flow",
+        "response": "close"
+      },
+      "clipLoops": {
+        "open": true,
+        "flow": true,
+        "close": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "zoanthid@orange_red",
+      "speciesId": "zoanthid",
+      "variantId": "orange_red",
+      "category": "coral",
+      "bodyPlan": "zoanthid_colony",
+      "sourceCandidate": "fable-v1-orange_red",
+      "sourceCandidateGlbPath": "art/specimens/zoanthid/candidates/fable-v1-orange_red/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/zoanthid/orange_red/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.08,
+        "kind": "colony_width"
+      },
+      "displayName": "Zoanthid Colony (orange and red)",
+      "sha256": "c403b75a2795b33a1a2e1df8deee5595f0ead0875e5e45ea5604e3a7ab7d78b6",
+      "clips": [
+        "close",
+        "flow",
+        "open"
+      ],
+      "clipRoles": {
+        "idle": "open",
+        "locomotion": "flow",
+        "response": "close"
+      },
+      "clipLoops": {
+        "open": true,
+        "flow": true,
+        "close": false
+      },
+      "defaultForSpecies": false
+    }
+  ]
+}
