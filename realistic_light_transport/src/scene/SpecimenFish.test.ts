@@ -1,15 +1,157 @@
 import { describe, expect, it } from 'vitest'
+import * as THREE from 'three'
 
 import { createPocketReefShowcase, projectPocketState } from '../integration/pocketAquariumBridge'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import {
+  advanceSpecimenMotionState,
   assignPelletTargets,
+  createSpecimenMotionState,
+  createSpecimenMotionRoute,
   createAcceptedShowcaseCatalog,
+  decideSpecimenDirection,
   isRenderableLivestockSpecies,
+  limitSpecimenFrameTravel,
+  limitSpecimenFrameTurn,
+  measureSpecimenCrowd,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
+  sampleSpecimenMotionRoute,
+  specimenBehaviorProfile,
+  specimenCollisionEnvelope,
+  specimenDirectionInterval,
+  specimenReversalThreshold,
+  steerSpecimenHeading,
 } from './SpecimenFish'
 
+const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
+const neighbor = (x: number, z: number, headingX: number, headingZ: number,
+  profile: ReturnType<typeof specimenBehaviorProfile> = 'reef_cruise') => ({
+  position: new THREE.Vector3(x, 0, z), heading: new THREE.Vector3(headingX, 0, headingZ),
+  profile, ...TEST_ENVELOPE, verticalClearance: .2,
+})
+describe('specimen motion continuity', () => {
+  it('caps travel at the frame delta and at 50 ms after a stall', () => {
+    const regularFrame = new THREE.Vector3(10, 0, 0)
+    const stalledFrame = new THREE.Vector3(10, 0, 0)
+    expect(limitSpecimenFrameTravel(new THREE.Vector3(), regularFrame, 2, 1 / 60)).toBeCloseTo(2 / 60)
+    expect(regularFrame.x).toBeCloseTo(2 / 60)
+    expect(limitSpecimenFrameTravel(new THREE.Vector3(), stalledFrame, 2, .18)).toBeCloseTo(.1)
+    expect(stalledFrame.x).toBeCloseTo(.1)
+  })
+  it('caps a 180 degree turn and crosses the wrap boundary by the shortest arc', () => {
+    expect(limitSpecimenFrameTurn(0, Math.PI, 5.2, 1 / 60)).toBeCloseTo(5.2 / 60)
+    expect(limitSpecimenFrameTurn(Math.PI - .01, -Math.PI + .01, 5.2, 1 / 60)).toBeCloseTo(Math.PI + .01)
+  })
+  it('replays identical seeds and varies route, phase, and speed across seeds', () => {
+    const first = createSpecimenMotionRoute(7, 'mid', .86, .16)
+    const replay = createSpecimenMotionRoute(7, 'mid', .86, .16)
+    const other = createSpecimenMotionRoute(8, 'mid', .86, .16)
+    const samples = (route: ReturnType<typeof createSpecimenMotionRoute>) => [0, .2, .4, .6, .8]
+      .map((progress) => sampleSpecimenMotionRoute(route, progress, .16, new THREE.Vector3()).toArray())
+    expect(samples(replay)).toEqual(samples(first))
+    expect({ phase: replay.phase, speed: replay.speed, direction: replay.direction })
+      .toEqual({ phase: first.phase, speed: first.speed, direction: first.direction })
+    expect(samples(other)).not.toEqual(samples(first))
+    expect([other.phase, other.speed]).not.toEqual([first.phase, first.speed])
+    expect([0, 1, 2].map((index) => specimenDirectionInterval(other, index)))
+      .not.toEqual([0, 1, 2].map((index) => specimenDirectionInterval(first, index)))
+  })
+  it('makes a direction decision without changing progress at the boundary', () => {
+    const route = createSpecimenMotionRoute(7, 'mid', .86, .16)
+    const state = createSpecimenMotionState(route)
+    const initialProgress = state.progress
+    const initialDirection = state.direction
+    const switchAfter = state.secondsUntilSwitch
+    advanceSpecimenMotionState(state, route, switchAfter)
+    expect(state.progress).toBeCloseTo(THREE.MathUtils.euclideanModulo(
+      initialProgress + switchAfter * route.speed * initialDirection, 1))
+    expect(state.direction).toBe(initialDirection)
+    expect(state.secondsUntilSwitch).toBeGreaterThanOrEqual(8)
+    expect(state.secondsUntilSwitch).toBeLessThanOrEqual(20)
+  })
+  it('seeds mixed initial and later directions while retaining distinct phase and speed', () => {
+    const routes = [1, 2, 3, 4].map((seed) => createSpecimenMotionRoute(seed, 'mid', .86, .16))
+    const states = routes.map(createSpecimenMotionState)
+    expect(new Set(routes.map((route) => route.direction))).toEqual(new Set([-1, 1]))
+    expect(new Set(routes.map((route) => route.phase))).toHaveProperty('size', routes.length)
+    expect(new Set(routes.map((route) => route.speed))).toHaveProperty('size', routes.length)
+    states.forEach((state, index) => advanceSpecimenMotionState(state, routes[index], state.secondsUntilSwitch))
+    expect(new Set(states.map((state) => state.direction))).toEqual(new Set([-1, 1]))
+  })
+  it('does not avoid a diverging neighbor', () => {
+    const position = new THREE.Vector3(-.2, .07, 0)
+    const heading = new THREE.Vector3(-1, 0, 0)
+    expect(steerSpecimenHeading(heading, heading.clone(), position, 1, .2, TEST_ENVELOPE,
+      new Map([[2, neighbor(.2, 0, 1, 0)]]), 'reef_cruise', 1 / 60)).toBe(0)
+    expect(position).toEqual(new THREE.Vector3(-.2, .07, 0))
+  })
+  it('turns a head-on pair reciprocally without moving position or reversing forward progress', () => {
+    const left = new THREE.Vector3(-.2, .07, 0)
+    const right = new THREE.Vector3(.2, .07, 0)
+    const leftHeading = new THREE.Vector3(1, 0, 0)
+    const rightHeading = new THREE.Vector3(-1, 0, 0)
+    const leftTurn = steerSpecimenHeading(leftHeading, new THREE.Vector3(1, 0, 0), left, 1, .2,
+      TEST_ENVELOPE, new Map([[2, neighbor(.2, 0, -1, 0)]]), 'reef_cruise', 1 / 60)
+    steerSpecimenHeading(rightHeading, new THREE.Vector3(-1, 0, 0), right, 2, .2,
+      TEST_ENVELOPE, new Map([[1, neighbor(-.2, 0, 1, 0)]]), 'reef_cruise', 1 / 60)
+    expect(Math.sign(leftHeading.z)).toBe(-Math.sign(rightHeading.z))
+    expect(leftTurn).toBeLessThanOrEqual(3.2 / 60 + Number.EPSILON)
+    expect(leftHeading.x).toBeGreaterThan(0)
+    expect(left).toEqual(new THREE.Vector3(-.2, .07, 0))
+  })
+  it.each(['pair', 'shoal'] as const)('lets compatible %s turn less than independent comfort and contact', (profile) => {
+    const socialHeading = new THREE.Vector3(1, 0, 0)
+    const independentHeading = new THREE.Vector3(1, 0, 0)
+    const collisionHeading = new THREE.Vector3(1, 0, 0)
+    const compatible = new Map([[2, neighbor(.7, .1, .8, -.6, profile)]])
+    const socialTurn = steerSpecimenHeading(socialHeading, socialHeading.clone(), new THREE.Vector3(),
+      1, .2, TEST_ENVELOPE, compatible, profile, 1, 100)
+    const independentTurn = steerSpecimenHeading(independentHeading, independentHeading.clone(), new THREE.Vector3(),
+      1, .2, TEST_ENVELOPE, compatible, 'reef_cruise', 1, 100)
+    const collisionTurn = steerSpecimenHeading(collisionHeading, collisionHeading.clone(), new THREE.Vector3(-.2, 0, 0),
+      1, .2, TEST_ENVELOPE, new Map([[2, neighbor(.2, 0, -1, 0)]]), profile, 1, 100)
+    expect(socialTurn).toBeLessThan(independentTurn)
+    expect(independentTurn).toBeLessThan(collisionTurn)
+  })
+  it('uses crowd for territorial decisions without applying direct positional pressure', () => {
+    const route = createSpecimenMotionRoute(7, 'mid', .86, .16)
+    const target = new THREE.Vector3()
+    const positions = new Map([[2, { ...neighbor(.2, 0, 1, 0, 'territorial_cruise'), position: new THREE.Vector3(.2, 10, 0) }]])
+    const crowd = measureSpecimenCrowd(target, 1, .2, positions, 3)
+    expect(target).toEqual(new THREE.Vector3())
+    expect(decideSpecimenDirection(1, new THREE.Vector3(1, 0, 0), crowd, .5)).toBe(-1)
+    expect(decideSpecimenDirection(1, new THREE.Vector3(1, 0, 0), { pressure: 0, awayX: 0, awayZ: 0 }, .5)).toBe(1)
+    expect(specimenDirectionInterval(route, 1, crowd.pressure)).toBeLessThan(specimenDirectionInterval(route, 1, 0))
+    expect(specimenReversalThreshold(crowd.pressure)).toBeGreaterThan(specimenReversalThreshold(0))
+  })
+  it('anticipates contact for elongated fish before narrow body radii overlap', () => {
+    const envelope = specimenCollisionEnvelope(1, .1)
+    const target = new THREE.Vector3(-.2, 0, 0)
+    const heading = new THREE.Vector3(1, 0, 0)
+    expect(.4).toBeGreaterThan(.1 + .1)
+    expect(.4).toBeLessThan(envelope.longitudinal * 2)
+    steerSpecimenHeading(heading, heading.clone(), target, 1, .1, envelope,
+      new Map([[2, { ...neighbor(.2, 0, -1, 0), ...envelope, verticalClearance: .1 }]]), 'reef_cruise', 1, 100)
+    expect(heading.z).not.toBe(0)
+    expect(target).toEqual(new THREE.Vector3(-.2, 0, 0))
+  })
+  it('covers both tank axes inside the glass and separates bottom and mid-water bands', () => {
+    const bodyRadius = .16
+    const routes = (['bottom', 'mid', 'top'] as const)
+      .map((layer) => createSpecimenMotionRoute(7, layer, .86, bodyRadius))
+    const sampled = routes.map((route) => Array.from({ length: 240 }, (_, index) =>
+      sampleSpecimenMotionRoute(route, index / 240, bodyRadius, new THREE.Vector3())))
+    for (const points of sampled) {
+      expect(Math.min(...points.map(({ x }) => x))).toBeLessThan(-1.7)
+      expect(Math.max(...points.map(({ x }) => x))).toBeGreaterThan(1.7)
+      expect(Math.min(...points.map(({ z }) => z))).toBeLessThan(-.65)
+      expect(Math.max(...points.map(({ z }) => z))).toBeGreaterThan(.65)
+      expect(points.every(({ x, z }) => Math.abs(x) <= 2.76 - bodyRadius && Math.abs(z) <= 1.2 - bodyRadius)).toBe(true)
+    }
+    expect(Math.max(...sampled[0].map(({ y }) => y))).toBeLessThan(Math.min(...sampled[1].map(({ y }) => y)))
+  })
+})
 describe('specimen primary visual selection', () => {
   it.each(['watchman_goby', 'pistol_shrimp', 'epaulette_shark'])('suppresses the %s procedural body when its accepted GLB exists', (speciesId) => {
     const plan = resolveSpecimenVisualPlan(speciesId, Boolean(specimenAssetFor(speciesId)))
