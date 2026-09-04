@@ -150,7 +150,8 @@ export interface PocketState {
   food: PocketFoodPellet[]
   tests: Record<string, PocketTestRecord>
   selection: { entityType: 'livestock' | 'coral'; id: number } | null
-  log: Array<{ type: string; message: string }>
+  log: Array<{ day?: number; t?: number; type: string; message: string }>
+  memorial: Array<{ species: string; name: string; ageDays: number; cause: string; day: number }>
   lastRealTimestamp: number
 }
 
@@ -166,7 +167,8 @@ export interface CatalogSpecies {
   profileRevision?: Readonly<{ package: number; biology: number; calibration: number; morphology: number; asset: string }>
 }
 
-interface CatalogCoral { id: string; name: string; price: number }
+interface CatalogCoral { id: string; name: string; price: number; maturityGate: string;
+  par: { min: number; max: number }; flow: { min: number; max: number } }
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
@@ -176,6 +178,8 @@ interface PocketRuntime {
   ACTIONS: Record<string, string>
   DATA: {
     saveKey: string
+    secondsPerGameDay1x: number
+    offlineCapDays: number
     ACTIONS: Record<string, string>
     BUNDLES: Record<string, number>
     SPECIES: Record<string, CatalogSpecies>
@@ -187,7 +191,9 @@ interface PocketRuntime {
     KEEPER_RANKS: CatalogKeeperRank[]
     resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
     equipLevel: (category: string, id: string) => EquipmentLevel | null
+    paramBand: (habitat: string, key: string) => { target?: number } | null
     isCycled: (state: PocketState) => boolean
+    isPeakPhotoperiod: (dayFraction: number) => boolean
   }
   createState: (options: Record<string, unknown>) => PocketState
   createSpecimenPreviewState: (options: Record<string, unknown>) => PocketState
@@ -362,6 +368,7 @@ export function createPocketReefShowcase(): PocketState {
   send({ type: act.PURCHASE_LIVESTOCK, species: 'ocellaris', count: 2 })
   send({ type: act.PURCHASE_LIVESTOCK, species: 'watchman_goby', count: 1 })
   send({ type: act.PURCHASE_LIVESTOCK, species: 'pistol_shrimp', count: 1 })
+  send({ type: act.WATER_TEST })  // the store needs a peak-light PAR reading on file before it sells coral
   send({ type: act.PURCHASE_CORAL, coral: 'zoanthid' })
   send({ type: act.PURCHASE_CORAL, coral: 'goniopora' })
   runtime.stepDays(state, 0.02)
@@ -423,7 +430,8 @@ export function advancePocketState(state: PocketState, elapsedSeconds: number): 
 
 /** Developer safe/watch mode: a dev-only overlay that never touches the normal player key. */
 export const devSafeSaveKey = `${pocketSaveKey}:dev-safe-v1`
-const DEV_SAFE_HEALTH_FLOOR = 0.02
+/** Matches the root simulator's fixed sub-step so protection lands inside every tick. */
+const DEV_SAFE_STEP_DAYS = 0.05
 
 export interface PocketPreventedDeath {
   readonly id: number
@@ -452,29 +460,154 @@ export function isDevSafeActive(env?: {
   return new URLSearchParams(search).get('dev') === '1'
 }
 
+/** Removes one pooled match so only as many artifacts as prevented deaths are dropped. */
+function takeMatch(pool: string[], matches: (value: string) => boolean): boolean {
+  const index = pool.findIndex(matches)
+  if (index < 0) return false
+  pool.splice(index, 1)
+  return true
+}
+
 /**
- * Advance the authoritative simulation normally, then keep any previously living animal alive.
- * Death is captured honestly (id/species/cause/day) and reversed only by restoring `alive` plus
- * the smallest health floor — water, hunger, condition, age, food, credits, ecology, and time are
- * whatever the real tick produced.
+ * Advance the authoritative simulation in the root's own fixed sub-step, mutating `state` in place,
+ * and reverse each death inside the step that produced it — before a later step can treat the body
+ * as decaying biomass. Death is captured honestly (id/species/cause/day) and reversed only by
+ * restoring `alive` plus the smallest health floor, then dropping the death log and memorial rows
+ * that same step appended for it. Water, hunger, condition, age, food, credits, ecology, equipment,
+ * and time are whatever the real ticks produced.
+ */
+function stepDaysDevSafe(state: PocketState, gameDays: number): PocketPreventedDeath[] {
+  const prevented: PocketPreventedDeath[] = []
+  let remaining = gameDays
+  let guard = 0
+  while (remaining > 1e-9 && guard++ < 200000) {
+    const chunk = Math.min(remaining, DEV_SAFE_STEP_DAYS)
+    remaining -= chunk
+    const wasAlive = new Set<number>()
+    for (const animal of state.livestock) if (animal.alive !== false) wasAlive.add(animal.id)
+    const priorLog = new Set(state.log)
+    const memorialBefore = state.memorial.length
+    runtime.stepDays(state, chunk)
+    const revivedSpecies: string[] = []
+    const revivedNames: string[] = []
+    for (const animal of state.livestock) {
+      if (animal.alive !== false || !wasAlive.has(animal.id)) continue
+      prevented.push({ id: animal.id, species: animal.species, cause: animal.causeOfDeath ?? 'unknown', day: state.time.days })
+      animal.alive = true
+      animal.causeOfDeath = null
+      // The optimum is the only welfare policy here, and `killAnimal` zeroes health: leaving a
+      // revived resident at 0 would re-kill it on the very next sub-step and log the same death
+      // again, so the revival restores the same health `stabilizeDevSafe` re-asserts after the step.
+      animal.health = 1
+      revivedSpecies.push(animal.species)
+      revivedNames.push(runtime.DATA.resolveSpecies(state, animal.species)?.name ?? animal.species)
+    }
+    if (!revivedSpecies.length) continue
+    // Drop only the records this step appended for these prevented deaths; earlier memorial/log
+    // history and every non-death entry survive untouched.
+    state.memorial = state.memorial.filter((entry, index) =>
+      index < memorialBefore || !takeMatch(revivedSpecies, (species) => species === entry.species))
+    state.log = state.log.filter((entry) =>
+      priorLog.has(entry) || entry.type !== 'death'
+      || !takeMatch(revivedNames, (name) => entry.message.startsWith(`${name} died`)))
+  }
+  return prevented
+}
+
+/**
+ * Restore the tank to the catalog's own declared optimum, so a protected aquarium stops accruing
+ * care hazards instead of merely surviving them. A filled tank returns to its current tier's volume,
+ * which is also how `level` reads, so evaporation has no visible or chemical effect. Declared water
+ * targets are pinned only once `isCycled` holds, leaving setup and fishless cycling meaningful, and
+ * reuse `paramBand` rather than a second set of magic values. Elapsed time, age, growth, breeding,
+ * food, equipment, credits, and setup/cycle progression are whatever the real ticks produced.
+ */
+function stabilizeDevSafe(state: PocketState): void {
+  const fullVolumeL = runtime.DATA.TIERS[state.tier]?.volumeL
+  if (state.cycle.filled && fullVolumeL) state.water.levelL = fullVolumeL
+  if (state.habitat && runtime.DATA.isCycled(state)) {
+    const water = state.water as unknown as Record<string, number>
+    for (const key of runtime.DATA.HABITATS[state.habitat]?.params ?? []) {
+      if (key === 'level') continue // held by volume above, not stored as its own reading
+      const target = runtime.DATA.paramBand(state.habitat, key)?.target
+      if (typeof target === 'number') water[key] = target
+    }
+  }
+  // Only residents this tick left living are restored; the memorial keeps every earlier loss.
+  for (const animal of state.livestock) {
+    if (animal.alive === false) continue
+    animal.health = 1
+    animal.condition = 1
+    animal.hunger = 0
+    animal.alive = true
+    animal.causeOfDeath = null
+  }
+  for (const coral of state.corals) {
+    coral.health = 1
+    coral.tissue = 1
+    coral.extension = 1
+    coral.stress = 0
+  }
+}
+
+/**
+ * Live dev tick: same paused/speed and commissioning contract as `runtime.step`, run through the
+ * protected path. A pre-commissioning tank with no water or no running life support advances zero
+ * game time; setup dispatches stay immediate. The optimal-state pass runs even on a zero-day tick,
+ * so enabling God Mode normalizes an established tank immediately rather than on the next step.
  */
 export function advancePocketStateDevSafe(
   state: PocketState,
   elapsedSeconds: number,
 ): { readonly state: PocketState; readonly prevented: readonly PocketPreventedDeath[] } {
-  const wasAlive = new Set<number>()
-  for (const animal of state.livestock) if (animal.alive !== false) wasAlive.add(animal.id)
-  const next = advancePocketState(state, elapsedSeconds)
-  const prevented: PocketPreventedDeath[] = []
-  for (const animal of next.livestock) {
-    if (animal.alive === false && wasAlive.has(animal.id)) {
-      prevented.push({ id: animal.id, species: animal.species, cause: animal.causeOfDeath ?? 'unknown', day: next.time.days })
-      animal.alive = true
-      animal.causeOfDeath = null
-      if (!(animal.health >= DEV_SAFE_HEALTH_FLOOR)) animal.health = DEV_SAFE_HEALTH_FLOOR
-    }
-  }
+  const next = clone(state)
+  const days = next.speed > 0 && elapsedSeconds > 0 && next.cycle.filled && next.cycle.lifeSupport
+    ? (elapsedSeconds * next.speed) / runtime.DATA.secondsPerGameDay1x
+    : 0
+  const prevented = stepDaysDevSafe(next, days)
+  stabilizeDevSafe(next)
   return { state: next, prevented }
+}
+
+/**
+ * Dev-only counterpart to `restorePocketGame`: identical sanitize and fresh/no-habitat fallback, but
+ * away time is applied through the protected fixed step. Requested/applied days, the timestamp
+ * advance, and the `offline` log line reuse the root's own `secondsPerGameDay1x`/`offlineCapDays`,
+ * so an unprotected resident sees exactly the away time `runtime.offlineCatchUp` would have applied.
+ */
+export function restorePocketGameDevSafe(
+  raw: unknown,
+  now = Date.now(),
+): { readonly state: PocketState; readonly prevented: readonly PocketPreventedDeath[] } {
+  // Every exit normalizes, so a restored or adopted protected save paints at the optimum instead of
+  // waiting for the first live tick -- including the throttled and background views that may not
+  // tick for a while. Normal restore is a separate function and is untouched.
+  const done = (state: PocketState, prevented: readonly PocketPreventedDeath[] = []) => {
+    stabilizeDevSafe(state)
+    return { state, prevented }
+  }
+  const state = runtime.sanitizeState(raw)
+  if (!state.habitat) return done(createPocketNewGame())
+  const elapsedMs = state.lastRealTimestamp ? now - state.lastRealTimestamp : 0
+  if (!(elapsedMs > 1000)) return done(state)
+  // Same freeze contract as `runtime.offlineCatchUp`: a paused save, or a pre-commissioning tank
+  // with no water or no running life support, consumes the elapsed wall clock and accrues no away
+  // time, so nothing steps, dies, or reaches the offline log — and nothing is deferred to the
+  // resume or applied retroactively once life support starts.
+  if (!(state.speed > 0) || !state.cycle.filled || !state.cycle.lifeSupport) {
+    state.lastRealTimestamp += elapsedMs
+    return done(state)
+  }
+  const cap = runtime.DATA.offlineCapDays
+  const requested = elapsedMs / 1000 / runtime.DATA.secondsPerGameDay1x
+  const applied = Math.min(Math.max(requested, 0), cap)
+  const prevented = stepDaysDevSafe(state, applied)
+  state.lastRealTimestamp += elapsedMs
+  state.log.push({
+    day: Math.floor(state.time.days), t: +state.time.days.toFixed(3), type: 'offline',
+    message: `Away ${+applied.toFixed(3)} game day(s)${requested > cap ? ` (capped at ${cap})` : ''}.`,
+  })
+  return done(state, prevented)
 }
 
 export function dispatchPocketAction(state: PocketState, action: PocketAction): PocketState {
@@ -556,7 +689,9 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
       { detail })
   })
   const corals = Object.values(runtime.DATA.CORALS).map((item) => offer('coral', 'coral', item.id, item.name, item.price,
-    { kind: 'coral', id: item.id }, { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id }))
+    { kind: 'coral', id: item.id }, { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id },
+    { detail: `PAR ${item.par.min}–${item.par.max} µmol · flow ${item.flow.min}–${item.flow.max}`
+      + ` · needs a ${item.maturityGate === 'mature' ? 'mature' : 'cycled'} biome` }))
   const equipment = Object.entries(runtime.DATA.EQUIPMENT).flatMap(([category, item]) => {
     const installedLevelIndex = item.levels.findIndex((level) => level.id === state.equipment[category])
     const installedName = item.levels[installedLevelIndex]?.name
@@ -577,7 +712,9 @@ function storeOffers(state: PocketState): PocketStoreOffer[] {
       { type: runtime.ACTIONS.PURCHASE_TIER, tier: id }, { levelIndex: runtime.DATA.TIER_ORDER.indexOf(id),
         levelCount: runtime.DATA.TIER_ORDER.length, installedLevelIndex: runtime.DATA.TIER_ORDER.indexOf(state.tier),
         installedName: runtime.DATA.TIERS[state.tier]?.name,
-        detail: `${item.volumeL} L · ${item.bioloadCap} bioload capacity · ${item.hardscapeSlots} hardscape slots` })
+        detail: `${item.volumeL} L · ${item.bioloadCap} bioload capacity · ${item.hardscapeSlots} hardscape slots`
+          + ' · arrives filled with habitat-matched conditioned water: salinity, alkalinity, calcium, and magnesium hold,'
+          + ' accumulated nutrients dilute into the larger volume, and every water test needs a retest.' })
   })
   return [...livestock, ...corals, ...equipment, ...tiers]
 }
@@ -623,27 +760,142 @@ function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjecti
 
 function careRecommendations(state: PocketState, offers: readonly PocketStoreOffer[]): PocketCareRecommendation[] {
   const result: PocketCareRecommendation[] = []
-  if (!state.cycle.filled || (!biologicalCycleEstablished(state) && state.livestock.length === 0)) return result
   const deadCount = state.livestock.filter((animal) => animal.alive === false).length
   if (deadCount) result.push({ severity: 'urgent', title: `Remove ${deadCount} dead ${deadCount === 1 ? 'resident' : 'residents'}`,
     cause: 'Decomposition releases ammonia continuously.' })
-  if (biologicalCycleEstablished(state) && (state.water.ammonia > .25 || state.water.nitrite > .25)) {
-    const upgradeId = state.equipment.filter === 'sponge' ? 'filter:hob' : 'filter:canister'
-    const upgrade = offers.find((offer) => offer.id === upgradeId)
-    result.push({ severity: 'urgent', title: 'Toxic nitrogen detected',
-      cause: `Ammonia ${state.water.ammonia.toFixed(2)} and nitrite ${state.water.nitrite.toFixed(2)} mg/L stress gills.`,
-      actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 },
-      suggestedOfferId: upgradeId, suggestedOfferName: upgrade?.name })
+  // Welfare is read per living resident (one failing animal, not the tank average) and ranks
+  // ahead of the water findings below, so a starving fish is never sent to clean water first.
+  const living = state.livestock.filter((animal) => animal.alive !== false)
+  if (living.length) {
+    // Hunger rises past 1 as the overdue-feeding reserve; the percentage shown stays 0–100.
+    const pct = (value: number) => Math.round(clamp(value) * 100)
+    const worstHunger = Math.max(...living.map((animal) => animal.hunger))
+    const worstCondition = Math.min(...living.map((animal) => animal.condition))
+    const frailest = living.reduce((worst, animal) => animal.health < worst.health ? animal : worst)
+    if (worstHunger > .85 || worstCondition < .30) result.push({ severity: 'urgent',
+      title: 'Residents are underfed',
+      cause: `Worst hunger ${pct(worstHunger)}% (feed above 85%) · worst body condition ${pct(worstCondition)}% (target above 30%). Body condition rebuilds gradually over small, repeated feedings; food left uneaten decays into ammonia.`,
+      ...(worstHunger > .85 ? { actionLabel: 'Feed one portion', action: { type: 'FEED', x: .5 } } : {}) })
+    else if (frailest.health < .30) result.push({ severity: 'urgent',
+      title: `${runtime.DATA.resolveSpecies(state, frailest.species)?.name ?? frailest.species} is in failing health`,
+      cause: `Health ${pct(frailest.health)}% (critical below 30%) with hunger ${pct(frailest.hunger)}% and body condition ${pct(frailest.condition)}%, so feeding does not explain it. Open that resident under Livestock and read its details.` })
   }
-  const tier = runtime.DATA.TIERS[state.tier]
-  if (state.water.levelL / Math.max(tier.volumeL, 1) < .92 || state.water.salinity > 36) {
-    const upgrade = offers.find((offer) => offer.id === 'ato:ato')
-    result.push({ severity: state.water.salinity > 38 ? 'urgent' : 'watch', title: 'Evaporation is concentrating salt',
-      cause: 'Freshwater top-off restores volume without adding salt.', actionLabel: 'Top off freshwater',
-      action: { type: 'WATER_TOP_OFF' }, suggestedOfferId: 'ato:ato', suggestedOfferName: upgrade?.name })
+  if (!state.habitat || !state.cycle.filled) return result
+
+  const expected = runtime.DATA.HABITATS[state.habitat]?.params ?? []
+  const readingsCurrent = expected.length > 0 && expected.every((key) => {
+    const reading = state.tests[key]
+    return Boolean(reading?.known && Number.isFinite(reading.ageDays) && reading.ageDays < .75)
+  })
+  if (!readingsCurrent) {
+    result.push({ severity: 'watch', title: 'Test the water before intervening',
+      cause: 'Run a complete water test so care advice uses current measured water rather than hidden chemistry.',
+      actionLabel: 'Test the water', action: { type: 'WATER_TEST' } })
+    return result.slice(0, 4)
+  }
+
+  const reading = (key: string) => state.tests[key]?.value ?? Number.NaN
+  const suggestedOffers = new Set<string>()
+  const recommend = (recommendation: PocketCareRecommendation, category?: string) => {
+    const installedIndex = category
+      ? offers.find((offer) => offer.kind === 'equipment' && offer.categoryId === category)?.installedLevelIndex ?? -1
+      : -1
+    const upgrade = category ? offers
+      .filter((offer) => offer.kind === 'equipment' && offer.categoryId === category && !offer.installed
+        && (offer.levelIndex ?? -1) > installedIndex)
+      .sort((a, b) => (a.levelIndex ?? 0) - (b.levelIndex ?? 0))[0] : undefined
+    if (upgrade && !suggestedOffers.has(upgrade.id)) {
+      suggestedOffers.add(upgrade.id)
+      result.push({ ...recommendation, suggestedOfferId: upgrade.id, suggestedOfferName: upgrade.name })
+    } else result.push(recommendation)
+  }
+
+  const ammonia = reading('ammonia')
+  const nitrite = reading('nitrite')
+  const nitrate = reading('nitrate')
+  const level = reading('level')
+  const oxygen = reading('oxygen')
+  const flow = reading('flow')
+  const temperature = Math.round(reading('tempC') * 10) / 10 // Temperature decisions use the one decimal Water displays
+  const reef = state.habitat === 'reef'
+  const salinity = reef ? reading('salinity') : Number.NaN
+  // An unstocked tank that has not finished cycling is supposed to read ammonia and nitrite: that is
+  // the fishless dose feeding the two colonies, and no gills are exposed to it. Diluting it here would
+  // strip the substrate the player is growing, so this phase teaches the sequence and points at the
+  // same observe/test step the objective gives. Cycled, or anything alive in the water, keeps the
+  // protective emergency below.
+  const fishlessCycle = !biologicalCycleEstablished(state) && !living.length && !state.corals.length
+
+  if (ammonia > .25 || nitrite > .25) {
+    if (fishlessCycle) recommend({ severity: 'watch', title: 'Fishless cycle is processing nitrogen',
+      cause: `Ammonia ${ammonia.toFixed(2)} → nitrite ${nitrite.toFixed(2)} → nitrate ${nitrate.toFixed(1)} mg/L. Expected while the tank cycles unstocked: one colony converts ammonia to nitrite, a second converts nitrite to nitrate. Keep observing and retesting until ammonia and nitrite fall back to zero — a water change now would dilute the food those colonies are growing on.`,
+      actionLabel: state.speed >= 4 ? 'Test the water' : 'Observe at 4×',
+      action: state.speed >= 4 ? { type: 'WATER_TEST' } : { type: 'SET_SPEED', speed: 4 } })
+    else recommend({ severity: 'urgent', title: 'Toxic nitrogen detected',
+      cause: `Ammonia ${ammonia.toFixed(2)} and nitrite ${nitrite.toFixed(2)} mg/L; target is 0–0.25 mg/L. Elevated nitrogen burns gills and impairs respiration.`,
+      actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } }, 'filter')
+  }
+  if (level < 92 || (reef && salinity > 36)) recommend({ severity: salinity > 38 || level < 80 ? 'urgent' : 'watch',
+    title: reef ? 'Evaporation is concentrating salt' : 'Water level is below target',
+    cause: reef
+      ? `Water level ${level.toFixed(0)}% (target 92–100%) · salinity ${salinity.toFixed(1)} ppt (target 33–36). Low volume concentrates salt and stresses osmoregulation.`
+      : `Water level ${level.toFixed(0)}%; target is 92–100%. Evaporation reduces swimming volume and concentrates dissolved waste.`,
+    actionLabel: 'Top off freshwater', action: { type: 'WATER_TOP_OFF' } }, 'ato')
+  if (oxygen < 6 || flow < .3) recommend({ severity: oxygen < 4.5 ? 'urgent' : 'watch',
+    title: 'Oxygen or circulation is too low',
+    cause: reef
+      ? `Oxygen ${oxygen.toFixed(1)} mg/L (target at least 6) · flow ${flow.toFixed(2)} (target at least 0.30). Stagnant, oxygen-poor water stresses gills and creates detritus dead zones.`
+      : `Oxygen ${oxygen.toFixed(1)} mg/L; target is at least 6. Oxygen-poor water stresses gills and limits the biofilter.` }, 'circulation')
+  if (temperature < 24 || temperature > 28) recommend({ severity: temperature < 22 || temperature > 30 ? 'urgent' : 'watch',
+    title: reef ? 'Temperature is outside the reef range' : 'Temperature is outside the habitat range',
+    cause: `Temperature ${temperature.toFixed(1)} °C; target 24–28 °C. Thermal drift disrupts metabolism and compounds oxygen stress.` }, 'heater')
+  const pH = Math.round(reading('pH') * 100) / 100 // pH decisions use the two decimals Water displays
+  if (reef) {
+    const phosphate = reading('phosphate')
+    const alkalinity = reading('alkalinity')
+    const par = Math.round(reading('par')) // PAR decisions use the zero decimals Water displays
+    const parTestedFraction = Math.max(0, state.time.days - (state.tests.par?.ageDays ?? 0)) % 1
+    // Reef PAR is specified at the schedule's peak, so only a reading captured inside the store's
+    // representative window judges the fixture. Lights-off and the programmed dawn/dusk ramp are
+    // neutral context: explain them and ask for a peak retest instead of selling a light.
+    const parTestedOffPeak = !runtime.DATA.isPeakPhotoperiod(parTestedFraction)
+    if (nitrate > 15) recommend({ severity: nitrate > 40 ? 'urgent' : 'watch', title: 'Nitrate is accumulating',
+      cause: `Nitrate ${nitrate.toFixed(1)} mg/L; reef target is 0–15 mg/L. Chronic excess fuels nuisance growth and stresses coral tissue.`,
+      actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } }, 'refugium')
+    if (phosphate > .1) recommend({ severity: phosphate > .25 ? 'urgent' : 'watch', title: 'Phosphate is accumulating',
+      cause: `Phosphate ${phosphate.toFixed(2)} mg/L; reef target is 0–0.10 mg/L. Excess phosphate feeds nuisance growth and suppresses coral calcification.`,
+      actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } }, 'skimmer')
+    const bufferOut = alkalinity < 7 || alkalinity > 11
+    if (pH < 8 || pH > 8.4 || bufferOut) recommend({ severity: 'watch',
+      title: 'pH or alkalinity is outside target',
+      cause: `pH ${pH.toFixed(2)} (target 8.0–8.4) · alkalinity ${alkalinity.toFixed(1)} dKH (target 7–11). ${bufferOut ? 'The carbonate buffer is off-band, so pH cannot hold — a 25% change with matched water pulls alkalinity back toward 8.5 dKH.' : 'The buffer is adequate, so time at 4× lets pH settle toward its alkalinity-buffered equilibrium.'} Retest afterward; rapid swings impair coral calcification.`,
+      actionLabel: bufferOut ? 'Change 25% water' : 'Stabilize at 4×',
+      action: bufferOut ? { type: 'WATER_CHANGE', fraction: .25 } : { type: 'SET_SPEED', speed: 4 } })
+    if (state.corals.length && (par < 40 || par > 220)) recommend({ severity: parTestedOffPeak ? 'stable' : 'watch',
+      title: parTestedOffPeak ? 'Coral PAR was captured away from peak light' : `Coral PAR is ${par < 40 ? 'too low' : 'too high'}`,
+      cause: parTestedOffPeak
+        ? `PAR ${par.toFixed(0)} µmol was captured outside peak light (about 11:56–15:25 game time), where the programmed dawn/dusk ramp — or lights-off — reads off target by design. Retest near peak light before changing equipment.`
+        : `PAR ${par.toFixed(0)} µmol (target 40–220 for this stocked reef). ${par < 40 ? 'Insufficient usable light limits coral energy and growth.' : 'Excess usable light can bleach coral tissue; reduce intensity or duration.'}` },
+      par < 40 && !parTestedOffPeak ? 'light' : undefined)
+    if (state.succession.cyano > .4) recommend({ severity: 'watch', title: 'Cyanobacteria is overtaking the reef',
+      cause: `Coverage ${Math.round(state.succession.cyano * 100)}% (target below 40%). Thick mats smother surfaces and signal nutrient-rich dead zones.` }, 'circulation')
+  } else {
+    const hardness = reading('hardness')
+    const tannin = reading('tannin')
+    if (nitrate > 40) recommend({ severity: nitrate > 80 ? 'urgent' : 'watch', title: 'Nitrate is accumulating',
+      cause: `Nitrate ${nitrate.toFixed(1)} mg/L; freshwater target is 0–40 mg/L. Chronic excess degrades water quality and stresses fish.`,
+      actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } })
+    if (pH < 6 || pH > 7) recommend({ severity: 'watch', title: 'pH is outside the blackwater range',
+      cause: `pH ${pH.toFixed(2)}; target is 6.0–7.0. Correct gradually and retest because rapid pH swings stress fish.` })
+    if (hardness < 1 || hardness > 6) recommend({ severity: 'watch', title: 'Hardness is outside target',
+      cause: `Hardness ${hardness.toFixed(1)} dGH; target is 1–6 dGH. Water outside the soft-water range disrupts osmoregulation.`,
+      ...(hardness > 6 ? { actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } } : {}) })
+    if (tannin < .3 || tannin > 1) recommend({ severity: 'watch', title: 'Tannin is outside target',
+      cause: `Tannin ${tannin.toFixed(2)}; target is 0.3–1.0. Blackwater chemistry outside this band destabilizes habitat conditions.`,
+      ...(tannin > 1 ? { actionLabel: 'Change 25% water', action: { type: 'WATER_CHANGE', fraction: .25 } } : {}) })
   }
   if (!result.length) result.push({ severity: 'stable', title: 'No intervention needed',
-    cause: 'Routine observation is the right move.' })
+    cause: 'Tested habitat parameters are within target; continue routine observation.' })
   return result.slice(0, 4)
 }
 
@@ -703,7 +955,7 @@ export function projectPocketState(
     const profile = animal ? runtime.DATA.resolveSpecies(state, animal.species) : null
     if (animal && profile) selection = { entityType: 'livestock', id: animal.id, title: profile.name,
       facts: [profile.sci, `${animal.stage} · ${animal.sex}`, `Health ${Math.round(animal.health * 100)}%`,
-        `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(animal.hunger * 100)}%`] }
+        `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(clamp(animal.hunger) * 100)}%`] }
   }
   const residents = state.livestock.map((animal) => {
     const species = runtime.DATA.resolveSpecies(state, animal.species)
@@ -756,11 +1008,13 @@ export function projectPocketState(
     livestock: { clownfishCount: fish.filter((animal) => animal.species === 'ocellaris').length,
       smallReefFishCount: fish.filter((animal) => animal.species !== 'ocellaris').length,
       fishSatiation: clamp(1 - hunger), fishStress: clamp(1 - health),
-      coralHealth: corals.length ? corals.reduce((sum, coral) => sum + coral.health, 0) / corals.length : 0 },
+      coralHealth: corals.length ? corals.reduce((sum, coral) => sum + coral.health, 0) / corals.length : 0,
+      corals: corals.map(({ id, species, health: colonyHealth, extension, polyps, growth }) =>
+        ({ id, species, health: colonyHealth, extension, polyps, growth })) },
     lightField: { surfacePpfd: state.water.par, localPpfd: state.water.par * transmission * (1 - shading), sampleDepthMeters: depth,
       interfaceTransmission: 0.96, attenuationPerMeter: attenuation, shading },
-    events: { sequence: state.log.length + (feedPulse > 0 ? 1 : 0), lastEvent: feedPulse > 0 ? 'Feed dispatched through root PA' : state.log.at(-1)?.message ?? 'Reef ready',
-      causalNote: feedPulse > 0 ? 'Root livestock hunger and the optical feed response share the same action.' : 'Pocket Aquarium advances all gameplay state.', feedPulse },
+    events: { sequence: state.log.length, lastEvent: state.log.at(-1)?.message ?? 'Reef ready',
+      causalNote: 'Pocket Aquarium advances all gameplay state.', feedPulse },
   }
   return { authority: 'root_pa', habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), unlimitedCredits, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,

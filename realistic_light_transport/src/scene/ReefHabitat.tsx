@@ -2,14 +2,14 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
-import type { LifecyclePhase, ReefSceneProps } from '../contracts'
+import type { LifecyclePhase, ReefCoralColony, ReefSceneProps } from '../contracts'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
 import {
   normalizedXToSurfaceX, pelletDepthY, pelletLateralZ, surfaceXToNormalizedX,
   useFeeding, type ScenePellet,
 } from './feeding'
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
-import { REEF_ROCKS as ROCKS, seededUnit } from './reefLayout'
+import { REEF_ROCKS as ROCKS, resolveReefPelletPosition, seededUnit } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
 import { tankDragInProgress, tankPinchInProgress } from './tankGestures'
 
@@ -21,6 +21,14 @@ const OPTICAL_SAND_FLOOR_Y = -1.56
 const MIN_OPTICAL_LEVEL_RATIO = 0.04
 const DYNAMIC_FLOOR_Y = SAND_Y + 0.06
 const PARTICLE_SURFACE_CLEARANCE = 0.05
+const FOOD_FLAKE_CLEARANCE = 0.04
+const FOOD_FLOW_SCENE_UNITS_PER_METER = 3.2
+const MAX_FLOW_FRAME_SECONDS = 0.05
+const MAX_FOOD_FLOW_STEP = 0.04
+const FOOD_SAFE_HALF_WIDTH = TANK_HALF_WIDTH - 0.08
+const FOOD_SAFE_HALF_DEPTH = TANK_HALF_DEPTH - 0.1
+const PELLET_ADVECTION_FRAME_PRIORITY = -3
+const FOOD_RENDER_SYNC_FRAME_PRIORITY = 0
 const MICROFAUNA_SURFACE_CLEARANCE = 0.09
 const UP = new THREE.Vector3(0, 1, 0)
 const MAX_SUSPENDED_PARTICLES = 180
@@ -96,7 +104,7 @@ export function suspendedParticleProfile(
   }
 }
 
-interface FlowFieldSource {
+export interface FlowFieldSource {
   readonly current: FlowFieldState
 }
 
@@ -146,6 +154,15 @@ function sampleSceneFlow(flowField: FlowFieldSource, x: number, y: number, water
   )
 }
 
+function constrainScenePellet(pellet: THREE.Vector3, pelletId: number, waterSurfaceY: number) {
+  pellet.x = THREE.MathUtils.clamp(pellet.x, -FOOD_SAFE_HALF_WIDTH, FOOD_SAFE_HALF_WIDTH)
+  pellet.y = THREE.MathUtils.clamp(pellet.y, DYNAMIC_FLOOR_Y, waterSurfaceY - PARTICLE_SURFACE_CLEARANCE)
+  pellet.z = THREE.MathUtils.clamp(pellet.z, -FOOD_SAFE_HALF_DEPTH, FOOD_SAFE_HALF_DEPTH)
+  resolveReefPelletPosition(pellet, pelletId, FOOD_FLAKE_CLEARANCE)
+  pellet.x = THREE.MathUtils.clamp(pellet.x, -FOOD_SAFE_HALF_WIDTH, FOOD_SAFE_HALF_WIDTH)
+  pellet.z = THREE.MathUtils.clamp(pellet.z, -FOOD_SAFE_HALF_DEPTH, FOOD_SAFE_HALF_DEPTH)
+}
+
 const PORE_PATCHES = Array.from({ length: 32 }, (_, index) => {
   const host = ROCKS[index % ROCKS.length]
   return {
@@ -163,31 +180,86 @@ const PORE_PATCHES = Array.from({ length: 32 }, (_, index) => {
   }
 })
 
-const CORAL_BRANCHES = [
-  [-1.28, -0.92, 0.04, -1.31, -0.34, 0.02],
-  [-1.31, -0.62, 0.02, -1.68, -0.18, 0.05],
-  [-1.34, -0.58, 0.01, -1.01, -0.07, -0.06],
-  [-1.48, -0.45, 0.04, -1.75, 0.0, 0.18],
-  [-1.18, -0.37, -0.02, -0.89, 0.12, 0.12],
-  [-1.3, -0.34, 0.02, -1.36, 0.22, 0.02],
-  [-1.66, -0.2, 0.06, -1.91, 0.18, -0.02],
-  [-1.65, -0.2, 0.08, -1.54, 0.29, 0.27],
-  [-1.03, -0.12, 0.02, -0.78, 0.31, -0.13],
-  [-1.03, -0.12, 0.02, -1.05, 0.36, 0.21],
-  [-1.36, 0.08, 0.02, -1.57, 0.45, 0.08],
-  [-1.36, 0.08, 0.02, -1.17, 0.51, -0.12],
-] as const
-
-const POLYPS = Array.from({ length: 24 }, (_, index) => {
-  const angle = index * 2.399963 + seededUnit(index, 20) * 0.16
-  const radius = 0.08 + Math.sqrt((index + 0.5) / 24) * 0.38
-  return {
-    x: 0.86 + Math.cos(angle) * radius,
-    y: -0.49 + Math.sqrt(Math.max(0, 0.18 - radius * radius)) * 0.36,
-    z: 0.27 + Math.sin(angle) * radius * 0.72,
-    phase: seededUnit(index, 21) * Math.PI * 2,
-  }
+/** Coral settles on the shared live-rock layout: one seating point per authoritative colony
+ *  record, resolved onto the host rock's own surface so a colony never floats over it. Host
+ *  rocks are ordered most-visible first and spaced so no two colonies crowd each other. */
+const CORAL_SITE_ROCKS = [3, 0, 5, 12, 8] as const
+const CORAL_SITE_SEATING = 0.02
+const CORAL_SITES = CORAL_SITE_ROCKS.map((rockIndex, siteIndex) => {
+  const host = ROCKS[rockIndex]
+  const offsetX = (seededUnit(siteIndex, 50) - 0.5) * 0.34
+  const offsetZ = (seededUnit(siteIndex, 51) - 0.5) * 0.34
+  const surface = Math.sqrt(Math.max(1 - offsetX * offsetX - offsetZ * offsetZ, 0))
+  return new THREE.Vector3(
+    host.position.x + offsetX * host.scale.x,
+    host.position.y + surface * host.scale.y - CORAL_SITE_SEATING,
+    host.position.z + offsetZ * host.scale.z,
+  )
 })
+
+const MAX_COLONY_POLYPS = 48
+
+/** Colony form per catalog coral. Zoanthus encrusts as a low mat of short, stiff, tightly
+ *  clustered polyps; Goniopora builds a massive flowerpot skeleton whose long flower polyps
+ *  stream with the flow. Only catalogued species have a form, so none is ever invented. */
+interface CoralColonyProfile {
+  readonly skeletonRadius: number
+  readonly skeletonHeight: number
+  readonly skeletonLift: number
+  readonly polypFieldRadius: number
+  readonly stemLength: number
+  readonly stemExtension: number
+  readonly stemRadius: number
+  readonly discRadius: number
+  readonly tentacleArms: number
+  readonly tentacleReach: number
+  readonly tentacleRise: number
+  readonly sway: number
+  readonly skeletonColor: string
+  readonly stemColor: string
+  readonly discColor: string
+  readonly discEmissive: string
+}
+
+const CORAL_COLONY_PROFILES: Record<string, CoralColonyProfile | undefined> = {
+  zoanthid: {
+    skeletonRadius: 0.3, skeletonHeight: 0.06, skeletonLift: 0, polypFieldRadius: 0.26,
+    stemLength: 0.026, stemExtension: 0.05, stemRadius: 0.016,
+    discRadius: 0.026, tentacleArms: 10, tentacleReach: 0.015, tentacleRise: 0.004,
+    sway: 0.3,
+    skeletonColor: '#59653f', stemColor: '#7c8a4a', discColor: '#d3e262', discEmissive: '#3f5410',
+  },
+  goniopora: {
+    skeletonRadius: 0.23, skeletonHeight: 0.19, skeletonLift: 0.02, polypFieldRadius: 0.17,
+    stemLength: 0.05, stemExtension: 0.3, stemRadius: 0.008,
+    discRadius: 0.018, tentacleArms: 6, tentacleReach: 0.03, tentacleRise: 0.013,
+    sway: 1,
+    skeletonColor: '#c1ac92', stemColor: '#b6849f', discColor: '#f0c6de', discEmissive: '#5e1f45',
+  },
+}
+
+const BLEACHED_TISSUE = new THREE.Color('#e9e2d6')
+
+/** Tissue pales toward bare skeleton as this colony's authoritative health falls. */
+function colonyTissueColor(hex: string, health: number) {
+  return new THREE.Color(hex).lerp(BLEACHED_TISSUE, (1 - THREE.MathUtils.clamp(health, 0, 1)) * 0.85)
+}
+
+/** Colony-local phyllotaxis polyp field seated on the colony's own skeleton surface. Authoritative
+ *  polyp count fills the field outward, so a freshly bought colony is small and densely clustered. */
+function colonyPolypField(site: THREE.Vector3, profile: CoralColonyProfile, seed: number) {
+  return Array.from({ length: MAX_COLONY_POLYPS }, (_, index) => {
+    const spread = Math.sqrt((index + 0.5) / MAX_COLONY_POLYPS)
+    const angle = index * 2.399963 + seededUnit(index, seed) * 0.18
+    const radius = profile.polypFieldRadius * spread
+    const acrossSkeleton = Math.min(radius / profile.skeletonRadius, 1)
+    const x = Math.cos(angle) * radius
+    const y = profile.skeletonLift
+      + profile.skeletonHeight * Math.sqrt(1 - acrossSkeleton * acrossSkeleton) * 0.94
+    const z = Math.sin(angle) * radius * 0.82
+    return { x, y, z, flowX: site.x + x, flowY: site.y + y, phase: seededUnit(index, seed + 1) * Math.PI * 2 }
+  })
+}
 
 type FilmKind = 'diatom' | 'green' | 'cyano'
 
@@ -369,204 +441,130 @@ function BenthicFilm({ kind, coverage, flowPower }: { kind: FilmKind; coverage: 
   )
 }
 
-function BranchingCoral({
-  health,
-  maturity,
+/** One authoritative coral record rendered as its own species-appropriate procedural colony. */
+function CoralColony({
+  colony,
+  profile,
+  site,
   flowField,
   material,
   waterSurfaceY,
 }: {
-  health: number; maturity: number; flowField: FlowFieldSource
-  material: ProceduralMaterialTextures; waterSurfaceY: number
-}) {
-  const branchRef = useRef<THREE.InstancedMesh>(null)
-  const tipRef = useRef<THREE.InstancedMesh>(null)
-  const dummy = useMemo(() => new THREE.Object3D(), [])
-  const direction = useMemo(() => new THREE.Vector3(), [])
-  const start = useMemo(() => new THREE.Vector3(), [])
-  const end = useMemo(() => new THREE.Vector3(), [])
-  const growth = THREE.MathUtils.lerp(0.78, 1, THREE.MathUtils.clamp(maturity, 0, 1))
-
-  useLayoutEffect(() => {
-    branchRef.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    tipRef.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-  }, [])
-
-  useFrame(({ clock }) => {
-    const branch = branchRef.current
-    const tip = tipRef.current
-    if (!branch || !tip) return
-    const elapsed = clock.getElapsedTime()
-
-    CORAL_BRANCHES.forEach((points, index) => {
-      start.set(points[0], points[1], points[2])
-      end.set(points[3], points[4], points[5])
-      const flow = sampleSceneFlow(flowField, end.x, end.y, waterSurfaceY)
-      const pulse = Math.sin(elapsed * (0.8 + flow.speedMetersPerSecond * 5) + index * 0.63)
-      end.x += flow.xMetersPerSecond * 0.42 + pulse * flow.speedMetersPerSecond * 0.12
-      end.y += flow.yMetersPerSecond * 0.34
-      direction.subVectors(end, start)
-      const length = direction.length() * growth
-      direction.normalize()
-      dummy.position.copy(start).addScaledVector(direction, length * 0.5)
-      dummy.quaternion.setFromUnitVectors(UP, direction)
-      const radius = 0.045 + (index % 3) * 0.009
-      dummy.scale.set(radius, length, radius)
-      dummy.updateMatrix()
-      branch.setMatrixAt(index, dummy.matrix)
-
-      dummy.position.copy(start).addScaledVector(direction, length)
-      dummy.quaternion.identity()
-      dummy.scale.setScalar(radius * 1.28)
-      dummy.updateMatrix()
-      tip.setMatrixAt(index, dummy.matrix)
-    })
-    branch.instanceMatrix.needsUpdate = true
-    tip.instanceMatrix.needsUpdate = true
-  })
-
-  const coralColor = health > 0.55 ? '#c27b8c' : '#a59387'
-
-  return (
-    <group>
-      <instancedMesh ref={branchRef} args={[undefined, undefined, CORAL_BRANCHES.length]} castShadow>
-        <cylinderGeometry args={[1, 1.15, 1, 8]} />
-        <meshStandardMaterial
-          color={coralColor}
-          map={material.albedoMap}
-          normalMap={material.normalMap}
-          roughnessMap={material.roughnessMap}
-          emissiveMap={material.emissiveMap ?? undefined}
-          emissive="#551131"
-          emissiveIntensity={0.12}
-          roughness={0.56}
-        />
-      </instancedMesh>
-      <instancedMesh ref={tipRef} args={[undefined, undefined, CORAL_BRANCHES.length]} castShadow>
-        <sphereGeometry args={[1, 9, 7]} />
-        <meshStandardMaterial
-          color="#e7a6a5"
-          map={material.albedoMap}
-          normalMap={material.normalMap}
-          roughnessMap={material.roughnessMap}
-          emissiveMap={material.emissiveMap ?? undefined}
-          emissive="#6b183e"
-          emissiveIntensity={0.14}
-          roughness={0.5}
-        />
-      </instancedMesh>
-    </group>
-  )
-}
-
-function SoftCoral({
-  extension,
-  flowField,
-  health,
-  material,
-  waterSurfaceY,
-}: {
-  extension: number; flowField: FlowFieldSource; health: number
-  material: ProceduralMaterialTextures; waterSurfaceY: number
+  colony: ReefCoralColony; profile: CoralColonyProfile; site: THREE.Vector3
+  flowField: FlowFieldSource; material: ProceduralMaterialTextures; waterSurfaceY: number
 }) {
   const stemRef = useRef<THREE.InstancedMesh>(null)
-  const centerRef = useRef<THREE.InstancedMesh>(null)
+  const discRef = useRef<THREE.InstancedMesh>(null)
   const tentacleRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const direction = useMemo(() => new THREE.Vector3(), [])
   const center = useMemo(() => new THREE.Vector3(), [])
-  const boundedExtension = THREE.MathUtils.clamp(extension, 0, 1)
+  const polyps = useMemo(() => colonyPolypField(site, profile, colony.id), [colony.id, profile, site])
+  const tissue = useMemo(() => ({
+    skeleton: colonyTissueColor(profile.skeletonColor, colony.health),
+    stem: colonyTissueColor(profile.stemColor, colony.health),
+    disc: colonyTissueColor(profile.discColor, colony.health),
+  }), [colony.health, profile])
+  const boundedExtension = THREE.MathUtils.clamp(colony.extension, 0, 1)
+  const openPolyps = THREE.MathUtils.clamp(Math.round(colony.polyps), 1, MAX_COLONY_POLYPS)
+  // Authoritative growth is skeletal mass: the whole colony scales about its seating point.
+  const colonyScale = 0.72 + THREE.MathUtils.clamp(colony.growth, 0, 1) * 0.42
 
+  // Only the authoritative polyp count is drawn out of the shared allocation.
   useLayoutEffect(() => {
-    stemRef.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    centerRef.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-    tentacleRef.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-  }, [])
+    for (const mesh of [stemRef.current, discRef.current, tentacleRef.current]) {
+      if (mesh) mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+    }
+    if (stemRef.current) stemRef.current.count = openPolyps
+    if (discRef.current) discRef.current.count = openPolyps
+    if (tentacleRef.current) tentacleRef.current.count = openPolyps * profile.tentacleArms
+  }, [openPolyps, profile.tentacleArms])
 
   useFrame(({ clock }) => {
     const stems = stemRef.current
-    const centers = centerRef.current
+    const discs = discRef.current
     const tentacles = tentacleRef.current
-    if (!stems || !centers || !tentacles) return
+    if (!stems || !discs || !tentacles) return
 
     const elapsed = clock.getElapsedTime()
-    const stemLength = 0.035 + boundedExtension * 0.16
-    const radialReach = 0.012 + boundedExtension * 0.075
+    const stemLength = profile.stemLength + boundedExtension * profile.stemExtension
+    const radialReach = profile.tentacleReach * (0.35 + boundedExtension * 0.65)
+    const tentacleRise = profile.tentacleRise * (0.6 + boundedExtension * 0.8)
 
-    for (let polypIndex = 0; polypIndex < POLYPS.length; polypIndex += 1) {
-      const polyp = POLYPS[polypIndex]
-      const flow = sampleSceneFlow(flowField, polyp.x, polyp.y, waterSurfaceY)
-      const flowAmplitude = 0.004 + flow.speedMetersPerSecond * 0.18
+    for (let polypIndex = 0; polypIndex < openPolyps; polypIndex += 1) {
+      const polyp = polyps[polypIndex]
+      const flow = sampleSceneFlow(flowField, polyp.flowX, polyp.flowY, waterSurfaceY)
+      const flowAmplitude = (0.004 + flow.speedMetersPerSecond * 0.18) * profile.sway
       const flowRate = 0.9 + flow.speedMetersPerSecond * 5
-      const swayX = flow.xMetersPerSecond * 0.2 + Math.sin(elapsed * flowRate + polyp.phase) * flowAmplitude
-      const swayY = flow.yMetersPerSecond * 0.16
+      const swayX = flow.xMetersPerSecond * 0.2 * profile.sway
+        + Math.sin(elapsed * flowRate + polyp.phase) * flowAmplitude
+      const swayY = flow.yMetersPerSecond * 0.16 * profile.sway
       const swayZ = Math.cos(elapsed * flowRate * 0.82 + polyp.phase) * flowAmplitude * 0.72
       center.set(polyp.x + swayX, polyp.y + stemLength + swayY, polyp.z + swayZ)
 
       dummy.position.set(polyp.x + swayX * 0.45, polyp.y + stemLength * 0.5, polyp.z + swayZ * 0.45)
       dummy.rotation.set(swayZ * 1.9, 0, -swayX * 1.9)
-      dummy.scale.set(0.012, stemLength, 0.012)
+      dummy.scale.set(profile.stemRadius, stemLength, profile.stemRadius)
       dummy.updateMatrix()
       stems.setMatrixAt(polypIndex, dummy.matrix)
 
       dummy.position.copy(center)
       dummy.rotation.set(0, polyp.phase, 0)
-      dummy.scale.setScalar(0.024 + boundedExtension * 0.012)
+      const discRadius = profile.discRadius + boundedExtension * 0.01
+      dummy.scale.set(discRadius, profile.discRadius * 0.6, discRadius)
       dummy.updateMatrix()
-      centers.setMatrixAt(polypIndex, dummy.matrix)
+      discs.setMatrixAt(polypIndex, dummy.matrix)
 
-      for (let arm = 0; arm < 6; arm += 1) {
-        const angle = (arm / 6) * Math.PI * 2 + polyp.phase * 0.12
+      for (let arm = 0; arm < profile.tentacleArms; arm += 1) {
+        const angle = (arm / profile.tentacleArms) * Math.PI * 2 + polyp.phase * 0.12
         direction.set(
           Math.cos(angle) * radialReach + swayX * 0.7,
-          0.009 + boundedExtension * 0.017,
+          tentacleRise,
           Math.sin(angle) * radialReach + swayZ * 0.7,
         )
         const length = direction.length()
         direction.normalize()
         dummy.position.copy(center).addScaledVector(direction, length * 0.5)
         dummy.quaternion.setFromUnitVectors(UP, direction)
-        dummy.scale.set(0.005, length, 0.005)
+        dummy.scale.set(profile.stemRadius * 0.4, length, profile.stemRadius * 0.4)
         dummy.updateMatrix()
-        tentacles.setMatrixAt(polypIndex * 6 + arm, dummy.matrix)
+        tentacles.setMatrixAt(polypIndex * profile.tentacleArms + arm, dummy.matrix)
       }
     }
 
     stems.instanceMatrix.needsUpdate = true
-    centers.instanceMatrix.needsUpdate = true
+    discs.instanceMatrix.needsUpdate = true
     tentacles.instanceMatrix.needsUpdate = true
   })
 
   return (
-    <group>
-      <mesh position={[0.86, -0.84, 0.27]} castShadow scale={[0.34, 0.43, 0.26]}>
+    <group position={site} scale={colonyScale}>
+      <mesh
+        position={[0, profile.skeletonLift, 0]}
+        scale={[profile.skeletonRadius, profile.skeletonHeight, profile.skeletonRadius]}
+        castShadow
+      >
         <sphereGeometry args={[1, 18, 12]} />
         <meshStandardMaterial
-          color={health > 0.5 ? '#8d628d' : '#887b7c'}
+          color={tissue.skeleton}
           map={material.albedoMap}
           normalMap={material.normalMap}
           roughnessMap={material.roughnessMap}
-          emissiveMap={material.emissiveMap ?? undefined}
-          emissive="#45123e"
-          emissiveIntensity={0.1}
-          roughness={0.72}
+          roughness={0.78}
         />
       </mesh>
-      <mesh position={[0.86, -0.58, 0.27]} castShadow scale={[0.44, 0.18, 0.33]}>
-        <sphereGeometry args={[1, 18, 12]} />
-        <meshStandardMaterial color="#a56ca2" map={material.albedoMap} normalMap={material.normalMap} roughness={0.65} />
-      </mesh>
-      <instancedMesh ref={stemRef} args={[undefined, undefined, POLYPS.length]}>
-        <cylinderGeometry args={[1, 1, 1, 5]} />
-        <meshStandardMaterial color="#c68ac1" map={material.albedoMap} normalMap={material.normalMap} roughness={0.52} />
+      <instancedMesh ref={stemRef} args={[undefined, undefined, MAX_COLONY_POLYPS]}>
+        <cylinderGeometry args={[1, 1.1, 1, 5]} />
+        <meshStandardMaterial color={tissue.stem} map={material.albedoMap} normalMap={material.normalMap} roughness={0.52} />
       </instancedMesh>
-      <instancedMesh ref={centerRef} args={[undefined, undefined, POLYPS.length]}>
+      <instancedMesh ref={discRef} args={[undefined, undefined, MAX_COLONY_POLYPS]}>
         <sphereGeometry args={[1, 7, 5]} />
-        <meshStandardMaterial color="#f0a6d0" map={material.albedoMap} emissive="#63204b" emissiveMap={material.emissiveMap ?? undefined} emissiveIntensity={0.16} roughness={0.48} />
+        <meshStandardMaterial color={tissue.disc} map={material.albedoMap} emissive={profile.discEmissive}
+          emissiveMap={material.emissiveMap ?? undefined} emissiveIntensity={0.16} roughness={0.48} />
       </instancedMesh>
-      <instancedMesh ref={tentacleRef} args={[undefined, undefined, POLYPS.length * 6]}>
+      <instancedMesh ref={tentacleRef} args={[undefined, undefined, MAX_COLONY_POLYPS * profile.tentacleArms]}>
         <cylinderGeometry args={[1, 0.72, 1, 4]} />
-        <meshStandardMaterial color="#df9fc8" map={material.albedoMap} normalMap={material.normalMap} roughness={0.52} />
+        <meshStandardMaterial color={tissue.disc} map={material.albedoMap} normalMap={material.normalMap} roughness={0.52} />
       </instancedMesh>
     </group>
   )
@@ -715,14 +713,16 @@ function FoodFlakeCluster({ pellet }: { readonly pellet: ScenePellet }) {
   const decay = THREE.MathUtils.clamp(1 - pellet.ageDays / 0.6, 0, 1)
   const phase = seededUnit(pellet.id, 72) * Math.PI
   useFrame(({ clock }) => {
-    if (!cluster.current || pellet.sunk) return
+    if (!cluster.current) return
+    cluster.current.position.set(pellet.x, pellet.y, pellet.z)
+    if (pellet.sunk) return
     const elapsed = clock.getElapsedTime()
     cluster.current.rotation.set(
       phase * .2 + Math.sin(elapsed * 2.1 + phase) * .28,
       phase + elapsed * (.55 + seededUnit(pellet.id, 77) * .45),
       phase * .37 + Math.cos(elapsed * 1.6 + phase) * .38,
     )
-  })
+  }, FOOD_RENDER_SYNC_FRAME_PRIORITY)
   return (
     <group ref={cluster} position={[pellet.x, pellet.y, pellet.z]} rotation={[phase * .2, phase, phase * .37]}>
       {[0, 1, 2].map((flake) => (
@@ -754,14 +754,30 @@ function FoodPellets({ pellets }: { pellets: readonly ScenePellet[] }) {
   )
 }
 
+const TAP_FEED_SLOP_PX = 10
+
 /** Invisible catcher over the water column: a tap resolves to the exact horizontal tank
  *  position and drops one pellet at the rendered waterline. */
 function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed: (normalizedX: number) => void }) {
   const columnHeight = Math.max(waterSurfaceY - SAND_Y, 0.1)
+  // Only a gesture that pressed on this plane and released as a short stationary tap feeds.
+  // A release retargeted here from a floating HUD control carries no record and is dropped.
+  const tap = useRef<{ id: number; x: number; y: number; moved: number } | null>(null)
   return (
     <mesh
       position={[0, (SAND_Y + waterSurfaceY) / 2, TANK_HALF_DEPTH]}
+      onPointerDown={(event) => { tap.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: 0 } }}
+      onPointerMove={(event) => {
+        const gesture = tap.current
+        if (gesture && gesture.id === event.pointerId) {
+          gesture.moved = Math.max(gesture.moved, Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y))
+        }
+      }}
+      onPointerCancel={() => { tap.current = null }}
+      onPointerOut={() => { tap.current = null }}
       onPointerUp={(event) => {
+        const gesture = tap.current
+        tap.current = null
         // The invisible water plane is nearest the camera. Let a ray that also hit a
         // specimen continue to that fish; otherwise this is an intentional feed tap.
         const hitSpecimen = event.intersections.some((hit) => {
@@ -772,6 +788,8 @@ function WaterFeedTarget({ waterSurfaceY, feed }: { waterSurfaceY: number; feed:
           }
           return false
         })
+        if (!gesture || gesture.id !== event.pointerId) return
+        if (Math.max(gesture.moved, Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y)) > TAP_FEED_SLOP_PX) return
         if (hitSpecimen || tankPinchInProgress() || tankDragInProgress()) return
         event.stopPropagation()
         feed(surfaceXToNormalizedX(event.point.x))
@@ -956,15 +974,52 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
     snapshot.lightField.attenuationPerMeter,
   )
   const feeding = useFeeding()
-  const scenePellets: ScenePellet[] = feeding.food.map((pellet) => ({
-    id: pellet.id,
-    x: normalizedXToSurfaceX(pellet.x),
-    y: pelletDepthY(pellet.y, waterSurfaceY - PARTICLE_SURFACE_CLEARANCE, DYNAMIC_FLOOR_Y),
-    z: pelletLateralZ(pellet.id),
-    sunk: pellet.sunk,
-    ageDays: pellet.ageDays,
-  }))
-  const hasCoral = livestock.coralHealth > 0
+  const pelletCurrentOffsets = useRef(new Map<number, THREE.Vector3>())
+  const projectedFood = useMemo(() => {
+    const basePositions = new Map<number, THREE.Vector3>()
+    const pellets = feeding.food.map((pellet) => {
+      const base = new THREE.Vector3(
+        normalizedXToSurfaceX(pellet.x),
+        pelletDepthY(pellet.y, waterSurfaceY - PARTICLE_SURFACE_CLEARANCE, DYNAMIC_FLOOR_Y),
+        pelletLateralZ(pellet.id),
+      )
+      basePositions.set(pellet.id, base)
+      const offset = pelletCurrentOffsets.current.get(pellet.id) ?? new THREE.Vector3()
+      pelletCurrentOffsets.current.set(pellet.id, offset)
+      const resolved = base.clone().add(offset)
+      if (pellet.sunk) resolved.y = base.y
+      constrainScenePellet(resolved, pellet.id, waterSurfaceY)
+      offset.copy(resolved).sub(base)
+      return Object.assign(resolved, { id: pellet.id, sunk: pellet.sunk, ageDays: pellet.ageDays })
+    })
+    return { basePositions, pellets }
+  }, [feeding.food, waterSurfaceY])
+  const scenePellets = projectedFood.pellets
+
+  useEffect(() => {
+    const activeFood = new Set(feeding.food.map((pellet) => pellet.id))
+    for (const id of pelletCurrentOffsets.current.keys()) {
+      if (!activeFood.has(id)) pelletCurrentOffsets.current.delete(id)
+    }
+  }, [feeding.food])
+
+  useFrame((_, delta) => {
+    const step = Math.min(Math.max(delta, 0), MAX_FLOW_FRAME_SECONDS)
+    if (step === 0) return
+    for (const pellet of scenePellets) {
+      if (pellet.sunk) continue
+      const base = projectedFood.basePositions.get(pellet.id)
+      const offset = pelletCurrentOffsets.current.get(pellet.id)
+      if (!base || !offset) continue
+      const flow = sampleSceneFlow(flowField, pellet.x, pellet.y, waterSurfaceY)
+      pellet.x += THREE.MathUtils.clamp(flow.xMetersPerSecond * FOOD_FLOW_SCENE_UNITS_PER_METER * step,
+        -MAX_FOOD_FLOW_STEP, MAX_FOOD_FLOW_STEP)
+      pellet.y += THREE.MathUtils.clamp(flow.yMetersPerSecond * FOOD_FLOW_SCENE_UNITS_PER_METER * step,
+        -MAX_FOOD_FLOW_STEP, MAX_FOOD_FLOW_STEP)
+      constrainScenePellet(pellet, pellet.id, waterSurfaceY)
+      offset.set(pellet.x - base.x, pellet.y - base.y, pellet.z - base.z)
+    }
+  }, PELLET_ADVECTION_FRAME_PRIORITY)
   const materials = useMemo<HabitatMaterials>(() => {
     const created = {
       rock: createProceduralMaterialTextures('reef-rock', { seed: 29 }),
@@ -992,25 +1047,22 @@ export function ReefHabitat({ snapshot, flowField }: ReefHabitatProps) {
       <BenthicFilm kind="cyano" coverage={ecology.cyanobacteriaCoverage} flowPower={equipment.flowPower} />
       <Rockwork material={materials.rock} />
       <BenthicFilm kind="green" coverage={ecology.greenAlgaeCoverage} flowPower={equipment.flowPower} />
-      {hasCoral && (
-        <BranchingCoral
-          health={livestock.coralHealth}
-          maturity={ecology.maturity}
-          flowField={flowField}
-          material={materials.coral}
-          waterSurfaceY={waterSurfaceY}
-        />
-      )}
-      {hasCoral && (
-        <SoftCoral
-          extension={ecology.polypExtension}
-          flowField={flowField}
-          health={livestock.coralHealth}
-          material={materials.coral}
-          waterSurfaceY={waterSurfaceY}
-        />
-      )}
-      <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} pellets={scenePellets} consume={feeding.consume} />
+      {(livestock.corals ?? []).map((colony, index) => {
+        const profile = CORAL_COLONY_PROFILES[colony.species]
+        return profile ? (
+          <CoralColony
+            key={colony.id}
+            colony={colony}
+            profile={profile}
+            site={CORAL_SITES[index % CORAL_SITES.length]}
+            flowField={flowField}
+            material={materials.coral}
+            waterSurfaceY={waterSurfaceY}
+          />
+        ) : null
+      })}
+      <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} pellets={scenePellets}
+        flowField={flowField} consume={feeding.consume} />
       <SuspendedParticles flowField={flowField} profile={particleProfile} waterSurfaceY={waterSurfaceY} />
       <Microfauna activity={ecology.microfaunaActivity} waterSurfaceY={waterSurfaceY} />
       <FoodPellets pellets={scenePellets} />

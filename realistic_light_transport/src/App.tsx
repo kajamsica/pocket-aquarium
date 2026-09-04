@@ -12,6 +12,7 @@ import {
   pocketSaveKey,
   projectPocketState,
   restorePocketGame,
+  restorePocketGameDevSafe,
   serializePocketGame,
   type PocketPreventedDeath,
   type PocketState,
@@ -35,8 +36,19 @@ const WORKBENCH_SPECIES = SEARCH_PARAMS.get('workbench')
 const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
 const DEV_SAFE = isDevSafeActive()
 const SAVE_KEY = DEV_SAFE ? devSafeSaveKey : pocketSaveKey
+const GOD_MODE_KEY = `${devSafeSaveKey}:god-mode`
 const MAX_PREVENTED = 20
 const ACCEPTED_SHOWCASE_CATALOG = SHOWCASE_MODE ? createAcceptedShowcaseCatalog() : undefined
+
+/** The dev shell's persisted God Mode preference. Protection defaults on and only an explicit
+ *  opt-out disables it, and the toggle writes this key synchronously, so this is the live answer.
+ *  Component initialization and saved-state restore both read it here, so they cannot disagree
+ *  about whether protection is active. Outside the dev shell the value is unused: every caller
+ *  gates on `DEV_SAFE` first, so production keeps taking the unmodified simulator. */
+function godModePreferred() {
+  if (!DEV_SAFE) return true
+  try { return window.localStorage.getItem(GOD_MODE_KEY) !== '0' } catch { return true }
+}
 
 function earnedCreditsIn(log: PocketState['log']) {
   return log.reduce((total, entry) => {
@@ -44,6 +56,66 @@ function earnedCreditsIn(log: PocketState['log']) {
     const rankAward = entry.message.match(/\(\+(\d+) tank credits\)/)
     return total + Number(compactAward?.[1] ?? rankAward?.[1] ?? 0)
   }, 0)
+}
+
+/**
+ * Multi-view save coherence. Every write stamps a monotonic `saveSeq` next to the state, and this
+ * view remembers the highest record it has written or adopted. A periodic/pagehide writer that
+ * finds a higher `saveSeq` in storage is holding stale state, so it yields and adopts instead of
+ * overwriting; a player action always writes, one above whatever is stored, and so becomes
+ * authoritative immediately. Wall-clock stamps cannot do this job — every view stamps
+ * `lastRealTimestamp` with its own `now`, so a stale view looks newer than the action that beat it.
+ * `saveSeq` is save-envelope metadata only: the root sanitizer keeps just the fields it knows, so
+ * it never reaches simulation state, and a save written without it still restores unchanged.
+ */
+interface SaveRecord {
+  readonly raw: string
+  readonly parsed: unknown
+  /** null for a legacy or foreign save written without this metadata. */
+  readonly seq: number | null
+}
+
+let seenSeq = 0
+let seenRaw: string | null = null
+
+function readSaveRecord(): SaveRecord | null {
+  if (SHOWCASE_MODE) return null
+  let raw: string | null = null
+  try { raw = window.localStorage.getItem(SAVE_KEY) } catch { return null } // storage is optional
+  if (raw === null) return null
+  try {
+    const parsed = JSON.parse(raw) as { saveSeq?: unknown } | null
+    const seq = parsed?.saveSeq
+    return { raw, parsed, seq: typeof seq === 'number' && Number.isFinite(seq) ? seq : null }
+  } catch { return null }
+}
+
+/** True when storage holds a save this view has not accounted for. An unsequenced save is only
+ *  safe to overwrite while it is still the exact bytes this view read or wrote. */
+function holdsNewerSave(record: SaveRecord) {
+  return record.seq === null ? record.raw !== seenRaw : record.seq > seenSeq
+}
+
+/** Restore a stored record and mark it as seen, so this view stops treating its own state as newer. */
+function restoreSaveRecord(record: SaveRecord): PocketState {
+  seenSeq = record.seq ?? seenSeq
+  seenRaw = record.raw
+  // Away time is applied before the state is used, so protected play needs the protected restore.
+  // God Mode off must resume the unmodified simulator here too, or a reload or cross-view save
+  // adoption would silently hand an opted-out player death-protected catch-up.
+  return DEV_SAFE && godModePreferred()
+    ? restorePocketGameDevSafe(record.parsed).state : restorePocketGame(record.parsed)
+}
+
+/** The one local save writer: showcase stays nonpersistent and storage stays optional. Callers pass
+ *  the record they just read so the new sequence clears both this view's and storage's high mark. */
+function persistPocketState(state: PocketState, record: SaveRecord | null) {
+  if (SHOWCASE_MODE) return
+  const stamped = { ...state, saveSeq: Math.max(record?.seq ?? 0, seenSeq) + 1 }
+  const payload = serializePocketGame(stamped)
+  try { window.localStorage.setItem(SAVE_KEY, payload) } catch { return } // storage is optional
+  seenSeq = stamped.saveSeq
+  seenRaw = payload
 }
 
 if (WORKBENCH_SPECIES !== null) {
@@ -57,24 +129,26 @@ function AquariumApp() {
   const [pocketState, setPocketState] = useState(() => {
     if (SHOWCASE_MODE) return createPocketReefShowcase()
     try {
-      const saved = window.localStorage.getItem(SAVE_KEY)
-      return saved ? restorePocketGame(JSON.parse(saved)) : createPocketNewGame()
+      const record = readSaveRecord()
+      return record ? restoreSaveRecord(record) : createPocketNewGame()
     } catch {
       return createPocketNewGame()
     }
   })
   const pocketStateRef = useRef(pocketState)
   const [prevented, setPrevented] = useState<readonly PocketPreventedDeath[]>([])
-  // Death protection defaults on inside the gated dev shell; toggling only changes future ticks.
-  const [protectionOn, setProtectionOn] = useState(true)
-  const protectionRef = useRef(true)
+  // Death protection defaults on inside the gated dev shell; toggling only changes future ticks
+  // and persists as a dev-only preference, so a deliberate opt-out survives a refresh.
+  const [protectionOn, setProtectionOn] = useState(godModePreferred)
+  const protectionRef = useRef(protectionOn)
   protectionRef.current = protectionOn
   const [renderSettings, setRenderSettings] = useState(DEFAULT_RENDER_SETTINGS)
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const lastTelemetryUpdate = useRef(0)
   const godModeOn = DEV_SAFE && protectionOn
   const view = projectPocketState(pocketState, { unlimitedCredits: godModeOn })
-  pocketStateRef.current = pocketState
+  // The ref is advanced by whichever writer produced the state (dispatch or a tick), never during
+  // render, so a discarded Strict Mode/concurrent render pass cannot roll it back behind an action.
 
   useEffect(() => {
     let previousUpdate = performance.now()
@@ -93,43 +167,87 @@ function AquariumApp() {
         if (advanced.prevented.length) setPrevented((log) => [...advanced.prevented, ...log].slice(0, MAX_PREVENTED))
         return
       }
-      setPocketState((current) => advancePocketState(current, elapsedRealSeconds))
+      // Advance from the ref, like the protected branch above: it is the state a player action may
+      // have just committed, and a Strict Mode double-invoked updater must not tick twice. Ticks
+      // deliberately do not write storage — the periodic save below stays their only writer.
+      const advanced = advancePocketState(pocketStateRef.current, elapsedRealSeconds)
+      pocketStateRef.current = advanced
+      setPocketState(advanced)
     }, UPDATE_INTERVAL_MS)
 
     return () => window.clearInterval(timer)
   }, [])
 
+  // Adopting a newer save replaces this view's state wholesale — the record is the whole aquarium —
+  // and the ref moves with it so the next tick advances the adopted state instead of the old one.
+  const adoptSave = useCallback((record: SaveRecord) => {
+    const next = restoreSaveRecord(record)
+    pocketStateRef.current = next
+    setPocketState(next)
+  }, [])
+
   useEffect(() => {
     if (SHOWCASE_MODE) return
+    // Crash/offline coverage only: player actions already persisted themselves at dispatch time,
+    // so this stays a one-second sweep for simulation ticks rather than a per-tick write. The sweep
+    // reads before it writes, so a view whose state is behind the stored save adopts it rather than
+    // rolling a newer action back — the durable guard even when a `storage` event never arrives.
     const save = () => {
-      try { window.localStorage.setItem(SAVE_KEY, serializePocketGame(pocketStateRef.current)) } catch { /* storage is optional */ }
+      const record = readSaveRecord()
+      if (record && holdsNewerSave(record)) { adoptSave(record); return }
+      persistPocketState(pocketStateRef.current, record)
     }
     const timer = window.setInterval(save, 1000)
     window.addEventListener('pagehide', save)
+    // Any other same-origin view of this key (second tab, device preview) adopts a newer save the
+    // moment it lands, so one view's action shows up in the others without a reload. Adopt-only:
+    // answering a peer's write with a write of our own would ping-pong between views.
+    const adoptPeerWrite = (event: StorageEvent) => {
+      if (event.key !== SAVE_KEY) return
+      const record = readSaveRecord()
+      if (record && holdsNewerSave(record)) adoptSave(record)
+    }
+    window.addEventListener('storage', adoptPeerWrite)
     return () => {
       window.clearInterval(timer)
       window.removeEventListener('pagehide', save)
+      window.removeEventListener('storage', adoptPeerWrite)
     }
-  }, [])
+  }, [adoptSave])
 
+  // A completed player action commits as one immediate unit: the ref, React state, and the active
+  // save key all take the exact resulting state before control returns to the browser, so a reload
+  // or background transition inside the one-second save window cannot erase it. Accepted and
+  // rejected actions commit identically — a rejection's log is the state it produced. Applying the
+  // action here rather than inside a state updater also keeps Strict Mode, which double-invokes
+  // updaters, from executing the same gameplay action twice.
   const dispatch = useCallback((action: Parameters<typeof dispatchPocketAction>[1]) => {
-    setPocketState((current) => {
-      // God mode: validate/apply the action with unlimited credits, then restore the real
-      // dev-save balance so purchases/refills are free. Real milestone rewards earned by
-      // the action still accrue, so toggling God mode off cannot erase a keeper-rank payout.
-      if (DEV_SAFE && protectionRef.current) {
-        const next = dispatchPocketAction({ ...current, credits: Number.MAX_SAFE_INTEGER }, action)
-        next.credits = current.credits + earnedCreditsIn(next.log.slice(current.log.length))
-        return next
-      }
-      return dispatchPocketAction(current, action)
-    })
+    const current = pocketStateRef.current
+    // God mode: validate/apply the action with unlimited credits, then restore the real
+    // dev-save balance so purchases/refills are free. Real milestone rewards earned by
+    // the action still accrue, so toggling God mode off cannot erase a keeper-rank payout.
+    let next: PocketState
+    if (DEV_SAFE && protectionRef.current) {
+      next = dispatchPocketAction({ ...current, credits: Number.MAX_SAFE_INTEGER }, action)
+      next.credits = current.credits + earnedCreditsIn(next.log.slice(current.log.length))
+    } else {
+      next = dispatchPocketAction(current, action)
+    }
+    pocketStateRef.current = next
+    // Unguarded on purpose: the action was taken on what this view showed, so it wins over whatever
+    // is stored and lands one sequence above it, where every other view will adopt it.
+    persistPocketState(next, readSaveRecord())
+    setPocketState(next)
   }, [])
 
   const godMode = useMemo(() => DEV_SAFE ? {
     on: protectionOn,
     prevented,
-    toggle: () => setProtectionOn((current) => !current),
+    toggle: () => {
+      const next = !protectionOn
+      setProtectionOn(next)
+      try { window.localStorage.setItem(GOD_MODE_KEY, next ? '1' : '0') } catch { /* storage is optional */ }
+    },
   } : undefined, [prevented, protectionOn])
 
   const feeding = useMemo<FeedingApi>(() => ({

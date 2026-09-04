@@ -24,7 +24,7 @@
   var VALID_DAYS = 0.75;             // sustained-safe window before "Cycled"
   var YOUNG_DAYS = 8, MATURE_DAYS = 20; // tank-age biome gates (days since fill)
   var AMMONIA_DOSE = 0.7;            // fishless dosing mg/L per day (tops toward ~3)
-  var FOOD_DECAY_DAYS = 0.6, FOOD_BOTTOM = 0.82, FOOD_FALL_PER_DAY = 2.4;
+  var FOOD_DECAY_DAYS = 0.6, FOOD_BOTTOM = 0.82, FOOD_FALL_PER_DAY = 6.4; // ~0.12 game-day full-tank settle (y .05 -> .82)
   var FOOD_AMMONIA = 0.14;           // ammonia per decayed uneaten portion (before dilution)
   var METAB_AMMONIA = 0.045;         // ammonia per bioload-unit per day (before dilution)
   var DECAY_AMMONIA = 0.28;          // ammonia per size-unit per day from a corpse
@@ -243,31 +243,31 @@
     if (eq.ato.autoTopOff && res && res.reservoirL > 0 && newL < full) {
       var added = Math.min(full - newL, res.reservoirL);
       var target = newL + added;
-      applyDilution(state, oldL, target, /*freshwater*/ true);
+      applyDilution(state, oldL, target, /*matched*/ false);
       res.reservoirL = Math.max(0, res.reservoirL - added);
       newL = target;
     } else {
       // evaporation concentrates dissolved species (salts + wastes)
-      applyDilution(state, oldL, newL, /*evaporating*/ false);
+      applyDilution(state, oldL, newL, /*matched*/ false);
     }
     w.levelL = newL;
   }
 
-  /* Recompute dissolved concentrations when volume changes.
-     freshwater=true means the added water is pure freshwater (top-off / ATO):
-     conserve solute mass across old->new volume. Called with (fromL,toL). */
-  function applyDilution(state, fromL, toL, freshwater) {
+  /* Recompute dissolved concentrations when volume changes. Called with (fromL,toL).
+     Default (evaporation / freshwater top-off / ATO) conserves solute mass across the
+     change; matched=true adds habitat-matched water that already carries core chemistry. */
+  function applyDilution(state, fromL, toL, matched) {
     if (fromL <= 0 || toL <= 0) return;
     var factor = fromL / toL; // >1 concentrating (evap), <1 diluting (top-off)
     var w = state.water;
     var keys = ["ammonia", "nitrite", "nitrate", "phosphate"];
     for (var i = 0; i < keys.length; i++) w[keys[i]] *= factor;
+    if (matched) return; // matched water arrives at target salinity/alkalinity/hardness
     if (isReef(state)) {
       w.salinity *= factor; w.alkalinity *= factor; w.calcium *= factor; w.magnesium *= factor;
     } else {
       w.hardness *= factor;
     }
-    void freshwater;
   }
 
   function stepChemistry(state, dt) {
@@ -345,8 +345,8 @@
       w.magnesium = Math.max(0, w.magnesium - draw * 4 * dt);
     }
 
-    // pH drift: fresh blackwater trends acidic with tannins; reef holds high with alk buffer
-    if (reef) w.pH = approach(w.pH, clamp(7.9 + (w.alkalinity - 7) * 0.05, 7.6, 8.5), 0.3, dt);
+    // pH drift: fresh blackwater trends acidic with tannins; reef alkalinity supplies a modest buffer bias around pH 8.10 (explicit CO2/DIC is not modeled)
+    if (reef) w.pH = approach(w.pH, clamp(8.10 + (w.alkalinity - 8.5) * 0.04, 7.8, 8.45), 0.3, dt);
     else w.pH = approach(w.pH, clamp(7.0 - w.tannin * 0.9, 5.8, 7.2), 0.2, dt);
   }
 
@@ -354,10 +354,13 @@
   function classifyCycle(state, dt) {
     var w = state.water, c = state.cycle;
     var reefSafe = DATA.waterSafeForLife(state);
-    var safeCycled = reefSafe && c.lifeSupport && w.nitrate > 1;
+    var prevIdx = STAGES.indexOf(c.stage);
+    // Nitrate above 1 is the proof that initial nitrification completed. Once the stage has reached
+    // Cycled or later, the established colony is that proof, so diluted nitrate no longer un-cycles it.
+    var established = prevIdx >= STAGES.indexOf("Cycled");
+    var safeCycled = reefSafe && c.lifeSupport && (w.nitrate > 1 || established);
     if (safeCycled) c.validationDays += dt; else c.validationDays = Math.max(0, c.validationDays - dt * 0.5);
 
-    var prevIdx = STAGES.indexOf(c.stage);
     var stage;
     if (!c.filled || !c.lifeSupport) stage = "Setup";
     else if (c.validationDays >= VALID_DAYS && safeCycled) {
@@ -733,7 +736,11 @@
 
   function step(state, realSeconds) {
     var speed = num(state.speed, 0);
-    if (speed <= 0 || !(realSeconds > 0)) return state;
+    var cyc = state.cycle || {};
+    // Same commissioning freeze as offlineCatchUp: a pre-commissioning tank with no water or no
+    // running life support advances zero game time while the page is open, so the clock starts at
+    // commissioning instead of drifting through Setup. Setup dispatches still apply immediately.
+    if (speed <= 0 || !(realSeconds > 0) || !cyc.filled || !cyc.lifeSupport) return state;
     return stepDays(state, realSeconds * speed / SEC_PER_DAY);
   }
 
@@ -741,6 +748,15 @@
      Cannot instantly kill a healthy animal because welfare loss is gradual. */
   function offlineCatchUp(state, elapsedMs) {
     var requested = (num(elapsedMs, 0) / 1000) / SEC_PER_DAY; // at 1x
+    var cyc = state.cycle || {};
+    // Nothing accrues while closed for a deliberately paused save, or for a pre-commissioning tank
+    // with no water or no running life support: consume the elapsed wall clock so nothing is
+    // deferred to the resume (or applied retroactively once life support starts), but step and log
+    // nothing. Commissioned running tanks fall through to the capped catch-up below.
+    if (num(state.speed, 0) <= 0 || !cyc.filled || !cyc.lifeSupport) {
+      state.lastRealTimestamp = num(state.lastRealTimestamp, 0) + num(elapsedMs, 0);
+      return { requestedDays: +requested.toFixed(3), appliedDays: 0, capped: false, deaths: 0 };
+    }
     var applied = Math.min(Math.max(requested, 0), OFFLINE_CAP);
     var before = aliveCount(state);
     stepDays(state, applied);
@@ -838,7 +854,7 @@
   function doTopOff(state) {
     var full = tierVol(state);
     if (state.water.levelL >= full) { log(state, "water", "Water level is already full."); return; }
-    applyDilution(state, state.water.levelL, full, true);
+    applyDilution(state, state.water.levelL, full, /*matched*/ false);
     state.water.levelL = full;
     log(state, "water", isReef(state) ? "Topped off with freshwater — restored volume and lowered salinity back toward 35 ppt." : "Topped off with freshwater — restored volume and diluted dissolved wastes.");
   }
@@ -880,13 +896,61 @@
     return true;
   }
 
+  /* Which test readings an install materially moves, per equipment category. Each entry is the
+     set of measured parameters the category's coefficients actually drive in this sim:
+       filter      -> biofilterSurface feeds the nitrifiers (ammonia/nitrite/nitrate) and
+                      filter.flow competes with circulation for the flow reading (stepWater)
+       heater      -> tempPull/stability drive tempC
+       circulation -> circ.flow drives flow, circ.oxygen drives the oxygen target
+       light       -> parCeiling drives par
+       skimmer     -> organicExport exports nitrate and phosphate
+       refugium    -> nitrateExport exports nitrate and phosphate
+     ATO and feeder move volume and food, not the chemistry a test reports, so they invalidate
+     nothing. Listed explicitly (including the empty sets) so a new category has to declare its
+     own effect rather than silently inheriting "invalidates nothing". */
+  var EQUIP_AFFECTED_READINGS = {
+    filter: ["ammonia", "nitrite", "nitrate", "flow"],
+    heater: ["tempC"],
+    circulation: ["flow", "oxygen"],
+    light: ["par"],
+    skimmer: ["nitrate", "phosphate"],
+    refugium: ["nitrate", "phosphate"],
+    ato: [],
+    feeder: []
+  };
+  /* An install changes the water immediately, so the sample taken before it no longer describes
+     the tank. The measured values are preserved — the player still sees what they read — but the
+     affected readings stop counting as known, which is what makes Care ask for a retest instead
+     of diagnosing a pre-install sample and selling the next tier up. Only readings this habitat
+     actually reports are touched or named (freshwater has no PAR or flow test). Returns the
+     affected parameter labels for the install log. */
+  function invalidateEquipmentReadings(state, category) {
+    var affected = EQUIP_AFFECTED_READINGS[category] || [];
+    var params = state.habitat ? DATA.HABITATS[state.habitat].params : [];
+    var labels = [];
+    for (var i = 0; i < affected.length; i++) {
+      var key = affected[i];
+      if (params.indexOf(key) < 0) continue;
+      var test = state.tests[key];
+      if (test) test.known = false;  // value kept; only the knowledge of it goes stale
+      var band = DATA.paramBand(state.habitat, key) || DATA.PARAMS[key];
+      labels.push(band && band.label ? band.label : key);
+    }
+    return labels;
+  }
+
   function doBuyEquipment(state, category, levelId) {
     var v = PA.validatePurchase(state, { kind: "equipment", category: category, levelId: levelId });
     if (!v.ok) { log(state, "store", "Cannot buy equipment: " + v.reasons.join(" ")); return false; }
     var lvl = equipLevel(category, levelId);
     state.credits -= lvl.price; state.equipment[category] = levelId;
     if (category === "feeder" || category === "ato") syncAutomationCapacity(state, true);
-    log(state, "store", "Installed " + lvl.name + ".");
+    // Runs only past the validation gate above, so a rejected or repurchase action never
+    // invalidates a reading.
+    var stale = invalidateEquipmentReadings(state, category);
+    log(state, "store", "Installed " + lvl.name + "." + (stale.length
+      ? " Let the system stabilize, then retest the affected water parameters: " + stale.join(", ") + "."
+      : ""));
     award(state, "equip_" + category + "_" + levelId, 6, 0, null, true);
     return true;
   }
@@ -894,13 +958,13 @@
     var v = PA.validatePurchase(state, { kind: "tier", id: tier });
     if (!v.ok) { log(state, "store", "Cannot upgrade tank: " + v.reasons.join(" ")); return false; }
     var t = DATA.TIERS[tier]; state.credits -= t.price;
-    var ratio = t.volumeL / Math.max(state.water.levelL, 1);
     state.tier = tier;
-    // new water dilutes existing (topped to new volume with matched water)
-    applyDilution(state, state.water.levelL, t.volumeL, !isReef(state));
+    // livestock transfer into a tank prefilled to volume with habitat-matched water
+    applyDilution(state, state.water.levelL, t.volumeL, /*matched*/ true);
     state.water.levelL = t.volumeL;
-    void ratio;
-    log(state, "store", "Upgraded to the " + t.name + " tank.");
+    // samples describe the old tank, so every reading is stale until the player retests
+    for (var tk in state.tests) if (state.tests.hasOwnProperty(tk)) state.tests[tk].known = false;
+    log(state, "store", "Upgraded to the " + t.name + " tank — matched water preserved core chemistry and diluted accumulated nutrients. Retest the water.");
     award(state, "tier_" + tier, 20, 0, null, true);
     return true;
   }
@@ -979,9 +1043,13 @@
     var py = clamp(0.05 + (1 - level) * (FOOD_BOTTOM - 0.05), 0.05, FOOD_BOTTOM);
     state.food.push({ id: state.nextId++, x: clamp(num(x, 0.5), 0, 1), y: py, amount: 1, ageDays: 0, sunk: py >= FOOD_BOTTOM, consumed: false });
     void y; // vertical pointer position chooses the tank gesture; food enters at its surface
+    log(state, "feed", "Dropped one food portion into the water.");
     if (dangerous) { state._feedWarning = true; log(state, "warn", "Careful — feeding while ammonia/nitrite is elevated worsens the water. Feed sparingly."); }
   }
   function doConsumeFood(state, foodId, eaterId) {
+    // Paused time stops biology, so renderer-observed contact cannot feed anything while
+    // speed is 0 — the queued portion simply stays in the water until the keeper resumes.
+    if (num(state.speed, 0) <= 0) return false;
     var foodKey = (typeof foodId === "number" || typeof foodId === "string") ? Number(foodId) : NaN;
     var eaterKey = (typeof eaterId === "number" || typeof eaterId === "string") ? Number(eaterId) : NaN;
     if (!isFinite(foodKey) || foodKey < 1 || Math.floor(foodKey) !== foodKey ||
@@ -991,10 +1059,11 @@
     for (i = 0; i < state.livestock.length; i++) if (state.livestock[i].id === eaterKey) { eater = state.livestock[i]; break; }
     if (fi < 0 || !eater || eater.alive === false || eater.hunger <= 0.05) return false;
     var p = state.food[fi], sp = DATA.resolveSpecies(state, eater.species);
-    if (!sp || sp.kind === "invert" || (sp.layer === "bottom" && !p.sunk)) return false;
+    if (!sp || (sp.layer === "bottom" && !p.sunk)) return false;
     eater.hunger = clamp(eater.hunger - sp.mealSize * p.amount, 0, 1.2);
     eater.lastFedDay = state.time.days;
     state.food.splice(fi, 1);
+    log(state, "feed", sp.name + " ate one food portion.");
     return true;
   }
   function doRemoveDead(state, id) {
@@ -1042,16 +1111,17 @@
       var key = params[i];
       var value = key === "level" ? (state.water.levelL / tierVol(state) * 100) : state.water[key];
       var band = DATA.paramBand(hab, key) || DATA.PARAMS[key];
-      var test = state.tests[key];
-      var shown = r3(value);                       // one rounded value drives display, severity, and alert
+      var test = state.tests[key], live = r3(value);
+      var known = !!(test && test.known && isFinite(test.value));
+      var shown = known ? r3(test.value) : live;   // the known measurement the player holds drives display, severity, and alert
+      if (key === "pH") shown = +shown.toFixed(2); // pH judgements use the two decimals the player is shown
       var severity = severityOf(band, shown);
-      var trend = 0;
-      if (test && test.known) trend = Math.sign(shown - test.value);
+      var trend = known ? Math.sign(live - test.value) : 0;
       out.water.push({
         key: key, label: band ? band.label : key, unit: band ? band.unit : "",
         value: shown, target: band ? band.target : null, good: band ? band.good : null, warn: band ? band.warn : null,
         severity: severity, trend: trend,
-        known: !!(test && test.known), testAgeDays: test ? r3(test.ageDays) : null
+        known: known, testAgeDays: test ? r3(test.ageDays) : null
       });
       if (severity === "danger") out.alerts.push(band ? band.label : key + " is out of range");
     }
@@ -1110,6 +1180,7 @@
 
     if (raw.habitat === "amazon" || raw.habitat === "reef") applyHabitatChoice(base, raw.habitat);
     else return base; // no valid habitat: return a fresh unstarted state
+    base.log = []; // drop the initializer's new-habitat event; the saved log restored below is authoritative
 
     base.rngState = isFinite(raw.rngState) ? (raw.rngState | 0) : seed;
     base.credits = clamp(num(raw.credits, 120), 0, 1e9);

@@ -865,6 +865,11 @@ input:focus-visible {
   letter-spacing: 0.025em;
 }
 
+/* Phone stand-in for the run-state hidden at 560px; shown on the brand row there. */
+.hud-phone-clock {
+  display: none;
+}
+
 .hud-namespace {
   display: flex;
   align-items: center;
@@ -1688,13 +1693,21 @@ input:focus-visible {
      the compact PA identity reads cleanly; Tank credits and DEV SAFE live in
      .pocket-utility below and stay fully visible. */
   .hud-topbar {
-    grid-template-areas: "brand";
-    grid-template-columns: 1fr;
+    grid-template-areas: "brand clock";
+    grid-template-columns: 1fr auto;
   }
 
   .hud-run-state,
   .hud-namespace {
     display: none;
+  }
+
+  .hud-phone-clock {
+    display: block;
+    grid-area: clock;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: 0.62rem;
+    white-space: nowrap;
   }
 
   .hud-panel,
@@ -1746,6 +1759,498 @@ input:focus-visible {
   .reef-hud {
     min-height: 100%;
     overflow-y: auto;
+  }
+}
+
+/* ===== Player-arranged aquarium workspace (RuneLite-inspired behavior) =====
+ * Every viewport uses the same independent window model. Windows can coexist,
+ * move, resize, minimize, close, and snap without replacing the aquarium. */
+.pocket-game-hud .pocket-window.pocket-drawer,
+.pocket-game-hud .pocket-care-tray.pocket-drawer {
+  position: fixed !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 0;
+  display: block !important;
+  box-sizing: border-box;
+  min-width: min(220px, calc(100vw - 16px));
+  min-height: 116px;
+  max-width: calc(100vw - 16px) !important;
+  max-height: calc(100dvh - 82px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transform: scale(.985) !important;
+  transform-origin: top left;
+  resize: none !important;
+  border: 1px solid rgba(169, 226, 235, .25);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(3, 17, 23, .91), rgba(4, 25, 32, .86));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 255, 255, .04);
+  backdrop-filter: blur(20px) saturate(120%);
+  pointer-events: none !important;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.pocket-game-hud .pocket-window.pocket-drawer[data-open="true"],
+.pocket-game-hud .pocket-care-tray.pocket-drawer[data-open="true"] {
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+.pocket-game-hud .pocket-window[data-minimized="true"] {
+  min-height: 0;
+  height: auto !important;
+}
+
+.pocket-game-hud .pocket-window[data-minimized="true"] .pocket-window-bar {
+  border-bottom: 0;
+}
+
+.pocket-game-hud .pocket-window[data-minimized="true"] .pocket-window-content,
+.pocket-game-hud .pocket-window[data-minimized="true"] .pocket-window-resize-handle {
+  display: none;
+}
+
+.pocket-game-hud .pocket-window-content {
+  height: calc(100% - 42px) !important;
+  max-height: none !important;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pocket-game-hud .pocket-window-bar {
+  cursor: default;
+}
+
+.pocket-game-hud .pocket-window[data-arranging="true"] {
+  border-color: rgba(122, 224, 234, .5);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .42), 0 0 0 1px rgba(122, 224, 234, .22);
+}
+
+.pocket-game-hud .pocket-window[data-arranging="true"] .pocket-window-bar {
+  cursor: grab;
+  background: rgba(16, 52, 62, .82);
+}
+
+.pocket-game-hud .pocket-window[data-arranging="true"] .pocket-window-bar:active {
+  cursor: grabbing;
+}
+
+.pocket-game-hud .pocket-window-minimize {
+  display: grid !important;
+}
+
+/* Arrange-only edge and corner grips. Every direction resizes; corners stay touch sized. */
+.pocket-window-resize-handle {
+  position: absolute;
+  z-index: 3;
+  border-radius: 8px;
+  touch-action: none;
+}
+
+.pocket-window-resize-handle:hover {
+  background: rgba(101, 221, 232, .18);
+}
+
+.pocket-window-resize-handle[data-direction="n"],
+.pocket-window-resize-handle[data-direction="s"] { right: 22px; left: 22px; height: 10px; cursor: ns-resize; }
+.pocket-window-resize-handle[data-direction="e"],
+.pocket-window-resize-handle[data-direction="w"] { top: 22px; bottom: 22px; width: 10px; cursor: ew-resize; }
+.pocket-window-resize-handle[data-direction="n"] { top: 0; }
+.pocket-window-resize-handle[data-direction="s"] { bottom: 0; }
+.pocket-window-resize-handle[data-direction="e"] { right: 0; }
+.pocket-window-resize-handle[data-direction="w"] { left: 0; }
+.pocket-window-resize-handle[data-direction="ne"],
+.pocket-window-resize-handle[data-direction="nw"],
+.pocket-window-resize-handle[data-direction="se"],
+.pocket-window-resize-handle[data-direction="sw"] { width: 22px; height: 22px; }
+.pocket-window-resize-handle[data-direction="nw"] { top: 0; left: 0; cursor: nwse-resize; }
+.pocket-window-resize-handle[data-direction="ne"] { top: 0; right: 0; cursor: nesw-resize; }
+.pocket-window-resize-handle[data-direction="sw"] { bottom: 0; left: 0; cursor: nesw-resize; }
+.pocket-window-resize-handle[data-direction="se"] { right: 0; bottom: 0; cursor: nwse-resize; }
+
+.pocket-window-resize-handle[data-direction="se"]::after {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 9px;
+  height: 9px;
+  border-right: 1px solid rgba(137, 223, 230, .62);
+  border-bottom: 1px solid rgba(137, 223, 230, .62);
+  border-radius: 0 0 4px;
+  content: "";
+}
+
+.pocket-snap-guides {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+}
+
+.pocket-snap-guides span {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(101, 221, 232, .62);
+  border-radius: 10px;
+  background: rgba(31, 151, 168, .18);
+  box-shadow: 0 0 0 5px rgba(40, 186, 198, .05);
+  transform: translate(-50%, -50%);
+  transition: width 80ms ease, height 80ms ease, background 80ms ease;
+}
+
+.pocket-snap-guides span[data-active="true"] {
+  width: 58px;
+  height: 58px;
+  border-color: #86f0e2;
+  background: rgba(75, 226, 202, .34);
+  box-shadow: 0 0 32px rgba(75, 226, 202, .26);
+}
+
+.pocket-snap-guides span[data-valid="false"] {
+  border-color: rgba(255, 158, 158, .82);
+  background: rgba(224, 96, 96, .3);
+  box-shadow: 0 0 32px rgba(224, 96, 96, .24);
+}
+
+.pocket-snap-guides [data-snap="top-left"] { top: 112px; left: 20px; transform: none; }
+.pocket-snap-guides [data-snap="top-center"] { top: 112px; left: 50%; }
+.pocket-snap-guides [data-snap="top-right"] { top: 112px; right: 20px; left: auto; transform: none; }
+.pocket-snap-guides [data-snap="center-left"] { top: 50%; left: 20px; transform: translateY(-50%); }
+.pocket-snap-guides [data-snap="center-right"] { top: 50%; right: 20px; left: auto; transform: translateY(-50%); }
+.pocket-snap-guides [data-snap="bottom-left"] { bottom: 78px; left: 20px; transform: none; }
+.pocket-snap-guides [data-snap="bottom-center"] { bottom: 78px; left: 50%; }
+.pocket-snap-guides [data-snap="bottom-right"] { right: 20px; bottom: 78px; left: auto; transform: none; }
+
+/* The dock launches independent windows; active means that window is visible. */
+.pocket-game-hud .pocket-window-launcher {
+  position: fixed;
+  right: auto;
+  left: max(10px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 10000;
+  display: flex;
+  width: auto;
+  max-width: calc(100vw - 20px);
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  overflow-x: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 13px;
+  background: rgba(3, 17, 23, .9);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .34);
+  backdrop-filter: blur(16px);
+  scrollbar-width: none;
+  pointer-events: auto;
+}
+
+.pocket-window-launcher-label {
+  padding: 0 7px;
+  color: rgba(177, 221, 226, .54);
+  font-size: .46rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pocket-window-launcher-hint {
+  max-width: 176px;
+  color: rgba(177, 221, 226, .46);
+  font-size: .44rem;
+  line-height: 1.25;
+}
+
+.pocket-window-launcher-toggle {
+  display: none;
+}
+
+.pocket-game-hud .pocket-window-launcher button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--muted);
+  background: transparent;
+  font-size: .54rem;
+}
+
+.pocket-game-hud .pocket-window-launcher button[aria-pressed="true"] {
+  color: #f3feff;
+  border-color: rgba(93, 221, 220, .24);
+  background: rgba(68, 183, 198, .17);
+}
+
+.pocket-game-hud .pocket-window-launcher .pocket-window-arrange {
+  color: #e8fbff;
+  border-color: var(--panel-border);
+  background: rgba(13, 35, 43, .68);
+  font-weight: 650;
+  letter-spacing: .04em;
+}
+
+.pocket-game-hud .pocket-window-launcher .pocket-window-arrange[aria-pressed="true"] {
+  color: #052028;
+  border-color: #86f0e2;
+  background: #71e6c5;
+}
+
+.pocket-game-hud[data-arranging="true"] .pocket-window-launcher {
+  border-color: rgba(122, 224, 234, .45);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .34), 0 0 0 1px rgba(122, 224, 234, .18);
+}
+
+.pocket-care-tray .pocket-window-content,
+.pocket-view-panel .pocket-window-content {
+  padding: 10px 12px 14px;
+}
+
+.pocket-guide-window .pocket-guide {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Compact store cards: the immediate choice stays visible; technical detail
+ * is available on demand instead of making every product a long document. */
+.pocket-store-list {
+  gap: 7px;
+  padding: 8px 9px 12px;
+}
+
+.pocket-store-offer {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px 9px;
+  padding: 9px;
+}
+
+.pocket-store-offer-head {
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 3px 8px;
+}
+
+.pocket-offer-visual {
+  width: 52px;
+  height: 52px;
+  border-radius: 9px;
+}
+
+.pocket-offer-visual svg {
+  width: 33px;
+  height: 33px;
+  margin-top: 2px;
+}
+
+.pocket-offer-visual span {
+  padding: 2px 3px;
+  font-size: .3rem !important;
+}
+
+.pocket-offer-title > strong {
+  margin: 1px 0;
+  font-size: .7rem;
+}
+
+.pocket-offer-price {
+  min-width: 60px;
+}
+
+.pocket-offer-outcome {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: rgba(218, 244, 246, .74);
+  font-size: .54rem;
+  line-height: 1.35;
+}
+
+.pocket-store-offer > button {
+  justify-self: start;
+  min-width: 104px;
+  min-height: 31px;
+  padding: 5px 9px;
+}
+
+.pocket-offer-more {
+  grid-column: auto;
+  align-self: center;
+  color: var(--muted);
+  font-size: .52rem;
+}
+
+.pocket-offer-more > summary {
+  cursor: pointer;
+  color: rgba(146, 215, 222, .74);
+}
+
+.pocket-offer-more[open] {
+  grid-column: 1 / -1;
+}
+
+.pocket-offer-more[open] > summary {
+  margin-bottom: 7px;
+}
+
+@media (max-width: 860px) {
+  .pocket-game-hud .pocket-window.pocket-drawer,
+  .pocket-game-hud .pocket-care-tray.pocket-drawer {
+    min-width: min(220px, calc(100vw - 16px));
+    border-radius: 13px;
+  }
+
+  .pocket-game-hud .pocket-metric-window {
+    display: block !important;
+  }
+
+  /* A pinned reading is a glanceable instrument here, not a 220px card: label in the bar,
+   * value under it, inside the same envelope the workspace rails up the edge. */
+  .pocket-game-hud .pocket-metric-window.pocket-drawer {
+    min-width: 96px;
+    min-height: 44px;
+    max-width: 150px !important;
+    max-height: 64px !important;
+    border-radius: 11px;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-window-bar {
+    min-height: 26px;
+    gap: 5px;
+    padding: 3px 4px 0 8px;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-window-bar small {
+    display: none;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-window-bar strong {
+    overflow: hidden;
+    font-size: 0.5rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Minimize and close stay tappable above the arrange-mode corner grips. */
+  .pocket-game-hud .pocket-metric-window .pocket-window-actions {
+    position: relative;
+    z-index: 4;
+    gap: 2px;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-window-actions button {
+    width: 21px;
+    height: 21px;
+    border-radius: 6px;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-window-content {
+    height: calc(100% - 26px) !important;
+    overflow: hidden;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-pinned-reading {
+    min-height: 0;
+    padding: 0 8px 5px;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-pinned-reading strong {
+    overflow: hidden;
+    font-size: 0.84rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pocket-game-hud .pocket-metric-window .pocket-pinned-reading small {
+    display: none;
+  }
+
+  .pocket-window-launcher-label {
+    display: none;
+  }
+
+  .pocket-window-launcher-hint {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .pocket-game-hud .pocket-window.pocket-drawer,
+  .pocket-game-hud .pocket-care-tray.pocket-drawer {
+    background: linear-gradient(145deg, rgba(3, 17, 23, .78), rgba(4, 25, 32, .7));
+    backdrop-filter: blur(12px) saturate(112%);
+  }
+
+  .pocket-game-hud .pocket-window-launcher button {
+    min-height: 35px;
+    padding: 0 9px;
+  }
+
+  .pocket-game-hud .pocket-window-launcher-toggle {
+    display: block;
+  }
+
+  .pocket-game-hud .pocket-window-launcher[data-collapsed="true"] > :not(.pocket-window-launcher-toggle) {
+    display: none;
+  }
+
+  .pocket-game-hud .pocket-window-bar {
+    min-height: 40px;
+    padding: 6px 6px 6px 11px;
+  }
+
+  .pocket-game-hud .pocket-window-actions button {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Title, explanation, and the pinned call to action get separate bands: the scrolling copy
+   * region ends above the 44px button (57px title bar + 52px button inset + 8px gap) instead
+   * of running underneath it. */
+  .pocket-guide-window .pocket-window-content {
+    height: calc(100% - 117px) !important;
+  }
+
+  .pocket-guide-window .pocket-guide {
+    gap: 6px;
+    padding: 12px 13px;
+  }
+
+  .pocket-guide-window .pocket-guide .hud-button {
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    left: 12px;
+    z-index: 2;
+    justify-content: center;
+    box-shadow: 0 -12px 24px rgba(3, 17, 23, .7);
+  }
+
+  .pocket-window-resize-handle[data-direction="ne"],
+  .pocket-window-resize-handle[data-direction="nw"],
+  .pocket-window-resize-handle[data-direction="se"],
+  .pocket-window-resize-handle[data-direction="sw"] { width: 30px; height: 30px; }
+
+  .pocket-snap-guides [data-snap="top-left"] { top: 212px; }
+  .pocket-snap-guides [data-snap="top-center"] { top: 212px; }
+  .pocket-snap-guides [data-snap="top-right"] { top: 212px; }
+}
+
+/* Phone widths get the one-tap reef-first starting layout as a first-class dock action. */
+@media (max-width: 600px) {
+  .pocket-game-hud .pocket-window-launcher .pocket-reef-preset {
+    color: #05242c;
+    border-color: #8fe6f2;
+    background: #6ad6e8;
+    font-weight: 700;
+    letter-spacing: 0.03em;
   }
 }
 
@@ -2634,136 +3139,6 @@ input:focus-visible {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
-/* ===== Unified tank-first panel model (all viewports) =====================
- * Water / Store / Care are CLOSED by default at every width and open as one
- * translucent drawer from the compact dock, so the aquarium stays visible.
- * Laptop/desktop: a right-side drawer (<=420px, <=72vh). Phone (<=860px, below):
- * one bottom sheet (<=52vh). Only the open drawer captures pointer events. */
-.pocket-game-hud .pocket-sheet-tabs {
-  position: fixed;
-  bottom: max(16px, env(safe-area-inset-bottom));
-  left: clamp(16px, 2.4vw, 34px);
-  z-index: 12;
-  display: flex;
-  gap: 6px;
-  padding: 6px;
-  border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  background: rgba(3, 17, 23, 0.9);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
-  backdrop-filter: blur(18px);
-  pointer-events: auto;
-}
-
-.pocket-game-hud .pocket-sheet-tabs button {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  color: var(--muted);
-  background: transparent;
-  text-transform: capitalize;
-}
-
-.pocket-game-hud .pocket-sheet-tabs button[aria-pressed="true"] {
-  color: #f3feff;
-  background: rgba(68, 183, 198, 0.17);
-}
-
-/* Every panel becomes a fixed right-side drawer, hidden until its tab opens it. */
-.pocket-game-hud .pocket-drawer {
-  position: fixed;
-  top: clamp(96px, 13vh, 128px);
-  right: clamp(16px, 2.4vw, 34px);
-  bottom: auto;
-  left: auto;
-  z-index: 11;
-  display: block;
-  width: min(420px, calc(100% - 32px));
-  max-width: 420px;
-  max-height: 72vh;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  opacity: 0;
-  transform: translateX(18px);
-  pointer-events: none;
-  transition: opacity 160ms ease, transform 160ms ease;
-}
-
-.pocket-game-hud .pocket-drawer[data-mobile-open="true"] {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
-}
-
-/* Care drawer stacks vertically so it is never a giant horizontal slab. */
-.pocket-game-hud .pocket-control-deck.pocket-drawer {
-  grid-template-columns: 1fr;
-  gap: 10px;
-  padding: 12px 14px 14px;
-  align-items: stretch;
-  width: min(420px, calc(100% - 32px));
-}
-
-/* Desktop/laptop: Care returns to a compact, content-sized bottom tray centered over the
-   tank (Water and Store stay right-side drawers). It never spans a giant dead slab — it is
-   width-capped, height-capped, scrolls, and leaves most of the tank visible. */
-@media (min-width: 861px) {
-  .pocket-game-hud .hud-topbar,
-  .pocket-game-hud .pocket-utility,
-  .pocket-game-hud .pocket-sheet-tabs {
-    position: fixed;
-    z-index: 10000;
-  }
-
-  .pocket-game-hud .hud-topbar {
-    top: clamp(18px, 2.4vw, 34px);
-    right: clamp(18px, 2.4vw, 34px);
-    left: clamp(18px, 2.4vw, 34px);
-  }
-
-  .pocket-game-hud .pocket-specimen-card {
-    z-index: 10001;
-  }
-
-  .pocket-game-hud .pocket-care-tray.pocket-drawer {
-    top: auto;
-    right: auto;
-    left: 50%;
-    bottom: clamp(74px, 9vh, 104px);
-    width: min(900px, calc(100% - 48px));
-    max-width: 900px;
-    max-height: 42vh;
-    overflow: auto;
-    transform: translateX(-50%) translateY(18px);
-  }
-
-  .pocket-game-hud .pocket-care-tray.pocket-drawer[data-mobile-open="true"] {
-    transform: translateX(-50%);
-  }
-}
-
-.pocket-drawer-close {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  align-self: end;
-  justify-self: end;
-  margin: 8px 8px 0 auto;
-  padding: 4px 12px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  color: var(--muted);
-  background: rgba(3, 17, 23, 0.82);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-}
-
-.pocket-control-deck.pocket-drawer .pocket-drawer-close {
-  margin-left: auto;
-}
-
 /* Top utility pills: always-labeled credits + local God mode toggle. */
 .pocket-game-hud .pocket-utility {
   position: fixed;
@@ -2801,54 +3176,107 @@ input:focus-visible {
   font-size: 0.78rem;
 }
 
-/* Floating specimen card: compact, translucent, over the tank, independent of Store. */
-.pocket-specimen-card {
-  position: fixed;
-  top: clamp(118px, 20vh, 200px);
-  left: clamp(16px, 2.4vw, 34px);
-  z-index: 13;
-  width: min(300px, calc(100% - 24px));
-  padding: 12px 14px 14px;
-  border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(4, 18, 25, 0.9), rgba(4, 24, 31, 0.82));
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(18px) saturate(115%);
-  pointer-events: auto;
+/* Specimen inspector and roster are ordinary workspace windows: the tank stays
+ * the screen, and a resident hidden behind rockwork is still reachable by name. */
+.pocket-specimen-panel .pocket-window-content,
+.pocket-residents-panel .pocket-window-content {
+  padding: 10px 12px 14px;
 }
 
-.pocket-specimen-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.pocket-specimen-card-head strong {
+.pocket-specimen-panel .pocket-window-content > small {
   display: block;
-  font-size: 0.92rem;
-  font-weight: 620;
-}
-
-.pocket-specimen-card-head small {
-  display: block;
-  margin-top: 2px;
+  margin-bottom: 9px;
   color: var(--muted);
   font-size: 0.62rem;
   font-style: italic;
 }
 
-.pocket-card-close {
+.pocket-resident-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pocket-resident-row {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  padding: 7px 9px;
+  border: 1px solid rgba(169, 226, 235, 0.14);
+  border-radius: 10px;
+  color: inherit;
+  background: rgba(13, 35, 43, 0.42);
+  cursor: pointer;
+  text-align: left;
+}
+
+.pocket-resident-row:hover {
+  border-color: rgba(122, 224, 234, 0.38);
+  background: rgba(43, 103, 115, 0.42);
+}
+
+.pocket-resident-row[aria-pressed="true"] {
+  border-color: rgba(122, 224, 234, 0.6);
+  background: rgba(43, 103, 115, 0.52);
+}
+
+.pocket-resident-row[data-dead="true"] {
+  border-color: rgba(239, 120, 106, 0.4);
+  opacity: 0.72;
+}
+
+.pocket-resident-row[data-dead="true"] .pocket-resident-identity strong {
+  text-decoration: line-through;
+}
+
+.pocket-resident-identity {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pocket-resident-identity strong {
+  overflow: hidden;
+  font-size: 0.7rem;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pocket-resident-identity small {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
+  color: var(--dim);
+  font-size: 0.46rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pocket-resident-vitals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 9px;
   color: var(--muted);
-  background: rgba(3, 17, 23, 0.7);
-  font-size: 0.9rem;
-  line-height: 1;
+  font-size: 0.5rem;
+}
+
+.pocket-resident-vitals b {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-weight: 600;
+}
+
+.pocket-resident-vitals [data-tone="green"] b {
+  color: #72deb0;
+}
+
+.pocket-resident-vitals [data-tone="amber"] b {
+  color: #f0c57d;
+}
+
+.pocket-resident-vitals [data-tone="red"] b {
+  color: #ed7b82;
 }
 
 .pocket-automation-details {
@@ -2945,309 +3373,14 @@ input:focus-visible {
     pointer-events: none;
   }
 
-  .pocket-sheet-tabs {
-    position: fixed;
-    right: 14px;
-    bottom: 12px;
-    left: 14px;
-    z-index: 12;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-    padding: 5px;
-    border: 1px solid var(--panel-border);
-    border-radius: 14px;
-    background: rgba(3, 17, 23, 0.94);
-    backdrop-filter: blur(18px);
-    pointer-events: auto;
-  }
-
-  .pocket-sheet-tabs button {
-    border: 0;
-    border-radius: 9px;
-    color: var(--muted);
-    background: transparent;
-    text-transform: capitalize;
-  }
-
-  .pocket-sheet-tabs button[aria-pressed="true"] {
-    color: #f3feff;
-    background: rgba(68, 183, 198, 0.17);
-  }
-
-  .pocket-game-hud .hud-panel,
-  .pocket-game-hud .pocket-control-deck {
-    position: fixed;
-    top: auto;
-    right: 14px;
-    bottom: 73px;
-    left: 14px;
-    z-index: 10;
-    width: auto;
-    max-width: none;
-    max-height: 52vh;
-    margin: 0;
-    overflow: auto;
-    opacity: 0;
-    transform: translateY(calc(100% + 90px));
-    pointer-events: none;
-    transition: opacity 160ms ease, transform 160ms ease;
-  }
-
   .pocket-game-hud .pocket-control-deck.pocket-drawer {
-    width: auto;
-  }
-
-  .pocket-game-hud [data-mobile-open="true"] {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .pocket-control-deck {
     grid-template-columns: 1fr;
   }
 
-  /* Keep the floating pills and specimen card clear of the taller phone topbar. */
+  /* Keep the floating pills clear of the taller phone topbar. */
   .pocket-game-hud .pocket-utility {
     top: clamp(108px, 17vh, 140px);
   }
-
-  .pocket-specimen-card {
-    top: clamp(152px, 24vh, 210px);
-  }
-}
-
-/* ================= Tank-dominant mobile HUD (Pack 3D-03) ================= *
- * The aquarium owns the viewport; the HUD is a thin translucent overlay: a
- * compact status rail on top, a bottom tool dock, and one closeable, scrollable
- * sheet at a time. Nothing here uses fixed full-height panels, so the world stays
- * visible and there is no horizontal overflow at phone widths. */
-.pa-hud {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-sizing: border-box;
-  padding:
-    max(10px, env(safe-area-inset-top))
-    max(10px, env(safe-area-inset-right))
-    max(10px, env(safe-area-inset-bottom))
-    max(10px, env(safe-area-inset-left));
-  pointer-events: none;
-  color: #eaf7fb;
-}
-.pa-hud button {
-  pointer-events: auto;
-  font: inherit;
-  cursor: pointer;
-  color: inherit;
-}
-
-.pa-rail,
-.pa-sheet,
-.pa-dock {
-  pointer-events: auto;
-  box-sizing: border-box;
-  border: 1px solid rgba(150, 220, 235, 0.18);
-  background: linear-gradient(150deg, rgba(4, 20, 27, 0.66), rgba(4, 26, 34, 0.5));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-}
-
-.pa-rail {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  width: 100%;
-  padding: 8px 12px;
-}
-.pa-rail-live {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(218, 242, 246, 0.7);
-}
-.pa-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #65efcb;
-  box-shadow: 0 0 10px rgba(101, 239, 203, 0.8);
-}
-.pa-live-dot[data-paused="true"] {
-  background: #f4b96c;
-  box-shadow: 0 0 10px rgba(244, 185, 108, 0.72);
-}
-.pa-rail-objective {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-  flex: 1 1 140px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  color: inherit;
-}
-.pa-rail-objective span {
-  font-size: 0.54rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(218, 242, 246, 0.55);
-}
-.pa-rail-objective strong {
-  font-size: 0.84rem;
-  font-weight: 640;
-  line-height: 1.12;
-}
-.pa-rail-objective small {
-  font-size: 0.6rem;
-  color: rgba(218, 242, 246, 0.6);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pa-rail-stats {
-  display: flex;
-  gap: 12px;
-  margin: 0;
-  flex: 0 0 auto;
-}
-.pa-rail-stats div {
-  display: grid;
-  gap: 1px;
-  text-align: right;
-}
-.pa-rail-stats dt {
-  font-size: 0.5rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(218, 242, 246, 0.5);
-}
-.pa-rail-stats dd {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 640;
-  font-variant-numeric: tabular-nums;
-}
-.pa-rail-stats div[data-alert="true"] dd {
-  color: #ffb37a;
-}
-
-.pa-spacer {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  min-height: 0;
-  pointer-events: none;
-}
-.pa-inspector {
-  position: absolute;
-  top: max(82px, calc(env(safe-area-inset-top) + 72px));
-  right: max(10px, env(safe-area-inset-right));
-  width: min(290px, calc(100vw - 20px));
-  pointer-events: auto;
-  display: grid;
-  gap: 5px;
-  padding: 12px;
-  border: 1px solid rgba(150, 220, 235, 0.24);
-  border-radius: 13px;
-  background: linear-gradient(150deg, rgba(4, 20, 27, 0.82), rgba(4, 26, 34, 0.68));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34);
-}
-.pa-inspector .pa-close {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 32px;
-  height: 32px;
-}
-.pa-inspector > span {
-  padding-right: 34px;
-  font-size: 0.52rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: #86e7d1;
-}
-.pa-inspector > strong { font-size: .9rem; }
-.pa-inspector > em {
-  font-size: .62rem;
-  color: rgba(218, 242, 246, .58);
-}
-.pa-inspector dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px 12px;
-  margin: 5px 0 0;
-}
-.pa-inspector dl div { display: flex; justify-content: space-between; gap: 6px; }
-.pa-inspector dt { font-size: .58rem; color: rgba(218, 242, 246, .55); }
-.pa-inspector dd { margin: 0; font-size: .6rem; font-weight: 650; }
-.pa-feed-hint {
-  margin: 0;
-  padding: 4px 12px;
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(233, 247, 251, 0.72);
-  background: rgba(3, 15, 20, 0.4);
-  border-radius: 999px;
-}
-
-.pa-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-}
-
-.pa-sheet {
-  width: 100%;
-  max-height: 40vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.pa-sheet-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(150, 220, 235, 0.14);
-}
-.pa-sheet-head h2 {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 650;
-  text-transform: capitalize;
-}
-.pa-close {
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(150, 220, 235, 0.22);
-  border-radius: 8px;
-  background: rgba(3, 15, 20, 0.5);
-  font-size: 0.9rem;
-}
-.pa-sheet-body {
-  padding: 12px 14px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  display: grid;
-  gap: 12px;
 }
 
 .pa-card-grid {
@@ -3391,8 +3524,7 @@ input:focus-visible {
   color: rgba(218, 242, 246, 0.55);
 }
 .pa-speed button,
-.pa-choice button,
-.pa-dock button {
+.pa-choice button {
   min-height: 40px;
   border: 1px solid rgba(150, 220, 235, 0.2);
   border-radius: 8px;
@@ -3401,8 +3533,7 @@ input:focus-visible {
   font-size: 0.7rem;
 }
 .pa-speed button[aria-pressed="true"],
-.pa-choice button[aria-pressed="true"],
-.pa-dock button[aria-pressed="true"] {
+.pa-choice button[aria-pressed="true"] {
   border-color: rgba(117, 229, 239, 0.6);
   background: rgba(46, 201, 214, 0.18);
   color: #bff6fb;
@@ -3545,50 +3676,6 @@ input:focus-visible {
   font-size: 0.62rem;
   font-variant-numeric: tabular-nums;
 }
-.pa-new-tank {
-  display: grid;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(150, 220, 235, 0.14);
-}
-.pa-new-tank strong { font-size: 0.7rem; }
-.pa-new-tank small {
-  font-size: 0.6rem;
-  line-height: 1.4;
-  color: rgba(218, 242, 246, 0.58);
-}
-.pa-new-tank .hud-button { justify-self: start; }
-
-.pa-dock {
-  display: flex;
-  gap: 6px;
-  width: 100%;
-  padding: 8px;
-}
-.pa-dock button {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-/* Desktop: cap the overlay so it reads as a side utility, not a wall. */
-@media (min-width: 760px) {
-  .pa-rail {
-    max-width: 680px;
-  }
-  .pa-sheet {
-    max-width: 440px;
-    max-height: 64vh;
-  }
-  .pa-bottom {
-    align-items: flex-start;
-    width: auto;
-  }
-  .pa-dock {
-    width: auto;
-    max-width: 440px;
-  }
-}
-
 /* The old diagnostic HUD intentionally became a scrolling document on short
  * screens. The player HUD is a fixed world instead: keep its canvas, sheets,
  * and dock inside the actual phone viewport at every orientation. */
@@ -3742,127 +3829,6 @@ input:focus-visible {
   color: #ffd63d;
 }
 
-@media (min-width: 861px) {
-  .pocket-game-hud .pocket-window.pocket-drawer {
-    position: fixed;
-    right: auto;
-    bottom: auto;
-    display: block;
-    box-sizing: border-box;
-    min-width: 220px;
-    min-height: 116px;
-    max-width: calc(100vw - 16px);
-    max-height: calc(100vh - 84px);
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    opacity: 0;
-    transform: scale(0.98);
-    transform-origin: top left;
-    resize: both;
-    border: 1px solid rgba(169, 226, 235, 0.21);
-    border-radius: 15px;
-    background: linear-gradient(145deg, rgba(3, 17, 23, 0.94), rgba(4, 25, 32, 0.9));
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(20px) saturate(120%);
-    pointer-events: none;
-  }
-
-  .pocket-game-hud .pocket-window.pocket-drawer[data-desktop-open="true"] {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-  }
-
-  .pocket-game-hud .pocket-window.pocket-drawer[data-minimized="true"] {
-    min-height: 0;
-    resize: none;
-  }
-
-  .pocket-window[data-minimized="true"] .pocket-window-bar {
-    border-bottom: 0;
-  }
-
-  .pocket-window[data-minimized="true"] .pocket-window-content {
-    display: none;
-  }
-
-  .pocket-game-hud .pocket-care-tray.pocket-drawer,
-  .pocket-game-hud .pocket-care-tray.pocket-drawer[data-mobile-open="true"] {
-    right: auto;
-    bottom: auto;
-    max-width: calc(100vw - 16px);
-    max-height: calc(100vh - 84px);
-    transform: scale(0.98);
-  }
-
-  .pocket-game-hud .pocket-care-tray.pocket-drawer[data-desktop-open="true"] {
-    transform: none;
-  }
-
-  .pocket-window-bar {
-    cursor: grab;
-  }
-
-  .pocket-window-bar:active {
-    cursor: grabbing;
-  }
-
-  .pocket-care-tray .pocket-window-content,
-  .pocket-view-panel .pocket-window-content {
-    padding: 10px 12px 14px;
-  }
-
-  .pocket-guide-window .pocket-guide {
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .pocket-metric-window {
-    min-width: 180px !important;
-    min-height: 116px !important;
-  }
-}
-
-@media (max-width: 860px) {
-  .pocket-game-hud .pocket-sheet-tabs {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
-  .pocket-game-hud .pocket-sheet-tabs button {
-    min-height: 38px;
-    padding: 0 3px;
-    font-size: 0.55rem;
-  }
-
-  .pocket-game-hud .pocket-window.pocket-drawer {
-    display: block;
-    width: calc(100% - 28px);
-    padding: 0;
-    overflow: hidden;
-    justify-self: stretch;
-  }
-
-  .pocket-window-content {
-    height: auto;
-    max-height: calc(52vh - 42px);
-  }
-
-  .pocket-window-minimize {
-    display: none !important;
-  }
-
-  .pocket-care-tray .pocket-window-content,
-  .pocket-view-panel .pocket-window-content {
-    padding: 9px 10px 12px;
-  }
-
-  .pocket-metric-window {
-    display: none !important;
-  }
-}
-
 @media (max-height: 599px) {
   html:has(.pocket-reef-app),
   body:has(.pocket-reef-app),
@@ -3876,9 +3842,5 @@ input:focus-visible {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
-  }
-
-  .pocket-reef-app .pa-sheet {
-    max-height: 50dvh;
   }
 }

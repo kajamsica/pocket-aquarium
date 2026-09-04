@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { DiagnosticView, ReefRenderSettings, ReefRenderTelemetry, RenderQuality } from '../contracts'
 import type { PocketAction, PocketGameView, PocketPreventedDeath, PocketStoreOffer } from '../integration/pocketAquariumBridge'
+import { REEF_CAMERA_RESET_EVENT } from '../scene/ReefScene'
 import type { AcceptedShowcaseCatalog } from '../scene/SpecimenFish'
-import { HudWindow, useHudWorkspace, type HudPanelId } from './HudWorkspace'
+import { HudWindow, useHudWorkspace, type HudDeviceProfile, type HudPanelId } from './HudWorkspace'
 
 export interface GodModeControls {
   readonly on: boolean
@@ -26,8 +27,13 @@ const STORE_FILTERS = ['recommended', 'equipment', 'livestock', 'coral', 'tank']
 const STORE_FILTER_META: Readonly<Record<StoreFilter, readonly [string, string]>> = {
   recommended: ['For you', '✦'], equipment: ['Equipment', '⚙'], livestock: ['Fish', '◁'], coral: ['Coral', '⌁'], tank: ['Aquariums', '□'],
 }
+/* The readings the reef-first phone preset rails up the edge, in rail order. */
+const REEF_FIRST_READINGS = ['tempC', 'pH', 'ammonia'] as const
+const PINNED_READINGS_KEY = 'pocket-aquarium-pinned-readings-v2'
+const PINNED_READINGS_LEGACY_KEY = 'pocket-aquarium-pinned-readings-v1'
+type PinnedReadings = Readonly<Record<HudDeviceProfile, readonly string[]>>
 const PANEL_TABS = [
-  ['guide', 'Guide'], ['water', 'Water'], ['care', 'Care'], ['store', 'Store'], ['progress', 'Rank'], ['view', 'View'],
+  ['guide', 'Guide'], ['water', 'Water'], ['care', 'Care'], ['residents', 'Residents'], ['store', 'Store'], ['progress', 'Rank'], ['view', 'View'],
 ] as const satisfies readonly (readonly [HudPanelId, string])[]
 
 interface PocketGameHUDProps {
@@ -38,6 +44,24 @@ interface PocketGameHUDProps {
   readonly onRenderSettingsChange: (settings: ReefRenderSettings) => void
   readonly godMode?: GodModeControls
   readonly showcaseCatalog?: AcceptedShowcaseCatalog
+}
+
+/* Which readings are pinned is a per-profile preference like window geometry: the phone rail
+ * and the laptop board hold different sets, so the reef-first preset can restock the rail
+ * without disturbing a laptop selection. A v1 record predates that split and is a flat array,
+ * so it seeds both profiles rather than being discarded. */
+function readPinnedReadings(): PinnedReadings {
+  const keys = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
+  try {
+    const stored = window.localStorage.getItem(PINNED_READINGS_KEY)
+    if (stored !== null) {
+      const parsed = JSON.parse(stored) as Partial<Record<HudDeviceProfile, unknown>> | null
+      return { compact: keys(parsed?.compact), wide: keys(parsed?.wide) }
+    }
+    const legacy = keys(JSON.parse(window.localStorage.getItem(PINNED_READINGS_LEGACY_KEY) ?? '[]'))
+    return { compact: legacy, wide: legacy }
+  } catch { /* A corrupt UI preference should never block the aquarium. */ }
+  return { compact: [], wide: [] }
 }
 
 function telemetry(value: number | undefined, digits: number, unit = '') {
@@ -91,20 +115,27 @@ function guideCommand(type: string | undefined): { action?: PocketAction; sheet?
     case 'inoculate': return { action: { type: 'INOCULATE_BACTERIA' } }
     case 'test': return { action: { type: 'WATER_TEST' } }
     case 'wc25': return { action: { type: 'WATER_CHANGE', fraction: 0.25 } }
+    case 'speed4': return { action: { type: 'SET_SPEED', speed: 4 } }
     case 'topoff': return { action: { type: 'WATER_TOP_OFF' } }
     case 'feed': return { action: { type: 'FEED_AT', x: 0.5, y: 0.38 } }
     case 'open-store': return { sheet: 'store' }
-    case 'open-livestock': return { sheet: 'care' }
+    case 'open-livestock': return { sheet: 'residents' }
     case 'open-water': return { sheet: 'water' }
     default: return null
   }
+}
+
+/* Welfare reads high-is-good; hunger is inverted so a starving fish still shows red. */
+function tone(value: number, inverted = false) {
+  const score = inverted ? 1 - Math.min(1, Math.max(0, value)) : Math.min(1, Math.max(0, value))
+  return score < 0.34 ? 'red' : score < 0.58 ? 'amber' : 'green'
 }
 
 function signal(label: string, value: number, inverted = false) {
   const normalized = Math.min(1, Math.max(0, value))
   const score = inverted ? 1 - normalized : normalized
   const status = score >= 0.8 ? 'Excellent' : score >= 0.58 ? 'Stable' : score >= 0.34 ? 'Watch' : 'At risk'
-  return <div className="hud-signal" data-tone={score < 0.34 ? 'red' : score < 0.58 ? 'amber' : 'green'}>
+  return <div className="hud-signal" data-tone={tone(value, inverted)}>
     <div className="hud-signal-copy"><span>{label}</span><output>{Math.round(normalized * 100)}% · {status}</output></div>
     <div className="hud-signal-track" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100}
       aria-valuenow={Math.round(normalized * 100)}><span style={{ '--signal-level': `${normalized * 100}%` } as React.CSSProperties} /></div>
@@ -113,9 +144,9 @@ function signal(label: string, value: number, inverted = false) {
 
 export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
-  const [pinnedReadings, setPinnedReadings] = useState<readonly string[]>(() => {
-    try { return JSON.parse(window.localStorage.getItem('pocket-aquarium-pinned-readings-v1') ?? '[]') as string[] } catch { return [] }
-  })
+  const [launcherCollapsed, setLauncherCollapsed] = useState(false)
+  const [pinnedByProfile, setPinnedByProfile] = useState<PinnedReadings>(readPinnedReadings)
+  const pinnedReadings = pinnedByProfile[workspace.profile]
   const hasRecommendedOffers = view.storeOffers.some((offer) => offer.recommended)
   const [storeFilter, setStoreFilter] = useState<StoreFilter>(hasRecommendedOffers ? 'recommended' : 'equipment')
   const [focusedOfferId, setFocusedOfferId] = useState<string | null>(null)
@@ -128,35 +159,70 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   const storeCounts = useMemo(() => Object.fromEntries(STORE_FILTERS.map((filter) =>
     [filter, merchandisedOffers(view.storeOffers, filter).length])) as Record<StoreFilter, number>, [view.storeOffers])
   const { clock, tank, lightField, events } = view.reefSnapshot
-  const hungryFishCount = view.specimens.filter((specimen) => specimen.kind === 'fish' && specimen.alive && specimen.hunger > .12).length
+  /* Root photoperiod (js/sim.js): scheduled lights run between .28 and .86 of the game day. */
+  const timeOfDay = ((clock.timeOfDayHours % 24) + 24) % 24
+  const gameClock = `${Math.floor(timeOfDay).toString().padStart(2, '0')}:${Math.floor((timeOfDay % 1) * 60).toString().padStart(2, '0')}`
+  const lightsOn = timeOfDay / 24 > .28 && timeOfDay / 24 < .86
+  const livingResidents = view.specimens.filter((specimen) => specimen.alive)
+  const hungryResidentCount = livingResidents.filter((specimen) => specimen.hunger > .12).length
+  const portionShortfall = Math.max(0, livingResidents.length - view.feeder.portionsPerDispense)
   const levelRatio = Math.min(1, Math.max(0, view.water.levelL / tank.targetWaterVolumeLiters))
   const command = guideCommand(view.guide.nextAction?.type)
   const guideLabel = typeof view.guide.nextAction?.label === 'string' ? view.guide.nextAction.label : 'Continue'
   const selectedSpecimen = view.selectedSpecimen
-  const toggleReading = (key: string) => setPinnedReadings((current) => current.includes(key)
-    ? current.filter((item) => item !== key) : [...current, key])
+  /* A reading window must exist in the saved layout to hold a rail slot, and must give the
+   * slot back when unpinned, so the compact reading rail never keeps a phantom gap. */
+  const toggleReading = (key: string) => {
+    const pinned = pinnedReadings.includes(key)
+    if (pinned) workspace.closePanel(`metric:${key}`)
+    else workspace.openPanel(`metric:${key}`)
+    setPinnedByProfile((current) => ({ ...current,
+      [workspace.profile]: pinned ? current[workspace.profile].filter((item) => item !== key) : [...current[workspace.profile], key] }))
+  }
+  const applyReefView = () => {
+    const available = view.testedWater.map((item) => item.key)
+    const essential = REEF_FIRST_READINGS.filter((key) => available.includes(key))
+    const readings = essential.length ? essential : available.slice(0, REEF_FIRST_READINGS.length)
+    setPinnedByProfile((current) => ({ ...current, compact: readings }))
+    workspace.applyReefFirstPreset(readings.map((key) => `metric:${key}` as HudPanelId))
+  }
   const runGuide = () => {
     if (command?.action) dispatch(command.action)
+    /* A guided shopping step lands on the category it just asked for: the first stocking goes
+     * to Fish, general upkeep to For you when it has picks, otherwise the current filter stands. */
+    if (command?.sheet === 'store') {
+      const guided = view.guide.stage === 'stock_first_community' ? 'livestock'
+        : hasRecommendedOffers ? 'recommended' : null
+      if (guided !== null) { setStoreFilter(guided); setFocusedOfferId(null) }
+    }
     if (command?.sheet) workspace.openPanel(command.sheet)
   }
 
   useEffect(() => {
-    try { window.localStorage.setItem('pocket-aquarium-pinned-readings-v1', JSON.stringify(pinnedReadings)) } catch { /* optional UI preference */ }
-  }, [pinnedReadings])
+    try { window.localStorage.setItem(PINNED_READINGS_KEY, JSON.stringify(pinnedByProfile)) } catch { /* optional UI preference */ }
+  }, [pinnedByProfile])
 
   useEffect(() => {
     if (storeFilter === 'recommended' && !hasRecommendedOffers) setStoreFilter('equipment')
   }, [hasRecommendedOffers, storeFilter])
 
-  return <div className="reef-hud pocket-game-hud">
+  /* Only a change of selected resident reopens the inspector, so a window the player
+   * closed stays closed while the simulation keeps re-rendering the same selection. */
+  const openPanel = workspace.openPanel
+  useEffect(() => {
+    if (selectedSpecimen?.id !== undefined) openPanel('specimen')
+  }, [openPanel, selectedSpecimen?.id])
+
+  return <div className="reef-hud pocket-game-hud" data-arranging={workspace.isArranging}>
     <header className="hud-topbar">
       <div className="hud-brand"><span className="hud-brand-mark" aria-hidden="true">PA</span><div>
         <p>Guided reef care</p><h1>Pocket Reef Lab</h1>
       </div></div>
+      <span className="hud-phone-clock">{gameClock} · {lightsOn ? 'Lights on' : 'Lights off'}</span>
       <div className="hud-run-state" aria-label="Authoritative game status">
         <span className="hud-live-dot" data-paused={clock.paused} aria-hidden="true" /><div>
           <span>{clock.paused ? 'Root simulation paused' : `Root simulation ${clock.speed}×`}</span>
-          <strong>Day {clock.day} · {view.cycleStage}</strong>
+          <strong>Day {clock.day} · {gameClock} · {lightsOn ? 'Lights on' : 'Lights off'} · {view.cycleStage}</strong>
         </div>
       </div>
       <div className="hud-namespace" title="Root PA is the gameplay authority"><span aria-hidden="true">●</span>
@@ -170,25 +236,35 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       <span className="pocket-credit-pill" title="Available tank credits">
         <small>Tank credits</small><strong>{godMode?.on ? '∞' : view.credits}</strong></span>
       {godMode ? <button type="button" className="pocket-god-mode" aria-pressed={godMode.on} onClick={godMode.toggle}
-        title={`God mode protects residents and makes purchases free · ${godMode.prevented.length} deaths prevented`}>
+        title={`God mode protects residents and makes purchases free · ${godMode.prevented.length} deaths prevented this session`}>
         <span aria-hidden="true">●</span> GOD MODE
       </button> : null}
     </div>
 
-    {selectedSpecimen ? <aside className="pocket-specimen-card" aria-label={`${selectedSpecimen.name} specimen`}>
-      <div className="pocket-specimen-card-head">
-        <div><strong>{selectedSpecimen.name}</strong>
-          <small>{selectedSpecimen.scientificName}{selectedSpecimen.stage ? ` · ${selectedSpecimen.stage}` : ''}</small></div>
-        <button type="button" className="pocket-card-close" aria-label="Close specimen card"
-          onClick={() => dispatch({ type: 'SELECT_ENTITY', id: null })}>×</button>
-      </div>
+    {selectedSpecimen ? <HudWindow id="specimen" title={selectedSpecimen.name} eyebrow={selectedSpecimen.stage || 'Resident'}
+      className="hud-panel pocket-specimen-panel" workspace={workspace}
+      onClose={() => dispatch({ type: 'SELECT_ENTITY', id: null })}>
+      <small>{selectedSpecimen.scientificName}</small>
       <div className="pocket-condition-signals">{signal('Health', selectedSpecimen.health)}
         {signal('Hunger', selectedSpecimen.hunger, true)}{signal('Condition', selectedSpecimen.condition)}</div>
-    </aside> : null}
+    </HudWindow> : null}
 
-    <nav className="pocket-sheet-tabs" aria-label="Aquarium panels">
+    <nav className="pocket-window-launcher" aria-label="Aquarium windows" data-collapsed={launcherCollapsed}>
+      <button type="button" className="pocket-window-launcher-toggle" aria-expanded={!launcherCollapsed}
+        aria-label={`${launcherCollapsed ? 'Expand' : 'Collapse'} aquarium windows`}
+        onClick={() => setLauncherCollapsed((collapsed) => !collapsed)}>{launcherCollapsed ? 'Tools +' : 'Tools −'}</button>
+      <span className="pocket-window-launcher-label">Windows</span>
+      {workspace.isPhone ? <button type="button" className="pocket-reef-preset"
+        title="Lay out a reef-first phone workspace: tank dominant, guided next step, collapsed care, and railed water readings"
+        onClick={applyReefView}>Reef view</button> : null}
+      <button type="button" className="pocket-window-arrange" aria-pressed={workspace.isArranging}
+        title={workspace.isArranging ? 'Finish arranging the HUD' : 'Arrange HUD windows · hold Alt on desktop'}
+        onClick={workspace.toggleArrange}>{workspace.isArranging ? 'Done' : 'Arrange'}</button>
+      {workspace.isArranging ? <span className="pocket-window-launcher-hint" role="status">
+        Drag titles · resize any edge · drop on a snap lane · ↺ reset · Esc done</span> : null}
       {PANEL_TABS.map(([sheet, label]) => <button key={sheet} type="button"
-        aria-pressed={workspace.isOpen(sheet)} onClick={() => workspace.togglePanel(sheet)}>{label}</button>)}
+        aria-pressed={workspace.isOpen(sheet)} title={`${workspace.isOpen(sheet) ? 'Close' : 'Open'} ${label} window`}
+        onClick={() => workspace.togglePanel(sheet)}>{label}</button>)}
     </nav>
 
     <HudWindow id="guide" title="Next step" eyebrow="Guided reef care" className="pocket-guide-window" workspace={workspace}>
@@ -242,7 +318,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       <dl className="hud-metric-grid pocket-summary-grid" aria-label="Progression and tank summary">
         <div className="hud-metric"><dt>Credits</dt><dd>{view.unlimitedCredits ? '∞' : view.credits}</dd></div><div className="hud-metric"><dt>Keeper rank</dt><dd>{view.progression.rank}</dd></div>
         <div className="hud-metric"><dt>Tier</dt><dd>{view.tierName}</dd></div><div className="hud-metric"><dt>Residents</dt><dd>{view.specimens.length}</dd></div>
-        <div className="hud-metric"><dt>Still need food</dt><dd>{hungryFishCount}</dd></div>
+        <div className="hud-metric"><dt>Still need food</dt><dd>{hungryResidentCount}</dd></div>
       </dl>
       <div className="pocket-water-level"><div><span>Live fill level</span><strong>{view.water.levelL.toFixed(1)} / {tank.targetWaterVolumeLiters.toFixed(1)} L</strong></div>
         <progress max={tank.targetWaterVolumeLiters} value={view.water.levelL} aria-label="Operating water level">{Math.round(levelRatio * 100)}%</progress>
@@ -276,7 +352,6 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
             onClick={() => { setStoreFilter(filter); setFocusedOfferId(null) }}><span aria-hidden="true">{STORE_FILTER_META[filter][1]}</span>
             {STORE_FILTER_META[filter][0]} <small>{storeCounts[filter]}</small></button>)}
         </div>
-        {storeFilter === 'equipment' ? <p className="pocket-store-context">Each card shows what is installed now and the next meaningful upgrade. Purchased and obsolete levels stay out of your way.</p> : null}
         <ul className="pocket-store-list">{visibleOffers.map((offer) => {
           const focused = offer.id === focusedOfferId
           const maxed = Boolean(offer.installed && offer.levelIndex === (offer.levelCount ?? 1) - 1)
@@ -292,17 +367,19 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
               <div className="pocket-offer-tags">{offer.recommended ? <span className="pocket-offer-tag" data-tone="rec">Recommended</span> : null}
                 {offer.installed ? <span className="pocket-offer-tag" data-tone="installed">Installed</span> : null}
                 {offer.kind === 'equipment' && !offer.installed ? <span className="pocket-offer-tag" data-tone="upgrade">Next upgrade</span> : null}</div></div>
-            {offer.detail ? <p className="pocket-offer-detail">{offer.detail}</p> : null}
-            {offer.problemSolved ? <dl className="pocket-offer-facts">
-              <div><dt>Solves</dt><dd>{offer.problemSolved}</dd></div>
-              {offer.durableEffect ? <div><dt>Effect</dt><dd>{offer.durableEffect}</dd></div> : null}
-              {offer.operatingResource ? <div><dt>Upkeep</dt><dd>{offer.operatingResource}</dd></div> : null}
-            </dl> : null}
+            {offer.durableEffect ? <p className="pocket-offer-outcome">{offer.durableEffect}</p> : offer.detail ? <p className="pocket-offer-outcome">{offer.detail}</p> : null}
             <button className="hud-button" type="button" disabled={offer.installed || !offer.allowed} onClick={() => dispatch(offer.action)}>
               {offer.installed ? (maxed ? 'Fully upgraded' : 'Installed') : offer.allowed ? `Install for ${offer.price}` : 'Unavailable'}</button>
-            {offer.reasons.length ? <ul className="pocket-lock-reasons" aria-label={`${offer.name} lock reasons`}>
-              {offer.reasons.map((reason, index) => <li key={`${index}:${reason}`}>{reason}</li>)}</ul>
-              : offer.installed ? null : <p className="pocket-offer-ready">Eligible under current root rules.</p>}
+            {offer.detail || offer.problemSolved || offer.operatingResource || offer.reasons.length ? <details className="pocket-offer-more">
+              <summary>{offer.reasons.length ? 'Why unavailable' : 'Why this upgrade'}</summary>
+              {offer.detail && offer.detail !== offer.durableEffect ? <p className="pocket-offer-detail">{offer.detail}</p> : null}
+              {offer.problemSolved ? <dl className="pocket-offer-facts">
+                <div><dt>Solves</dt><dd>{offer.problemSolved}</dd></div>
+                {offer.operatingResource ? <div><dt>Upkeep</dt><dd>{offer.operatingResource}</dd></div> : null}
+              </dl> : null}
+              {offer.reasons.length ? <ul className="pocket-lock-reasons" aria-label={`${offer.name} lock reasons`}>
+                {offer.reasons.map((reason, index) => <li key={`${index}:${reason}`}>{reason}</li>)}</ul> : null}
+            </details> : offer.installed ? null : <p className="pocket-offer-ready">Ready to install.</p>}
           </li>
         })}
         {visibleOffers.length === 0 ? <li className="pocket-store-empty">No offers in this category yet.</li> : null}</ul>
@@ -324,6 +401,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         </label>
       </div><dl className="pocket-telemetry"><div><dt>Visible transmission</dt><dd>{telemetry(renderTelemetry?.optics.meanVisibleTransmittance === undefined ? undefined : renderTelemetry.optics.meanVisibleTransmittance * 100, 1, '%')}</dd></div>
         <div><dt>Mean flow</dt><dd>{telemetry(renderTelemetry?.flow.meanSpeedMetersPerSecond, 3, ' m/s')}</dd></div></dl>
+      <button className="hud-button" type="button" title="Also available by double-clicking the tank"
+        onClick={() => window.dispatchEvent(new Event(REEF_CAMERA_RESET_EVENT))}>Reset camera</button>{' '}
       <button className="hud-button pocket-reset-workspace" type="button" onClick={workspace.resetWorkspace}>Reset window layout</button>
     </HudWindow>
 
@@ -383,6 +462,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
               : `Off · ${view.feeder.hopperPortions}/${view.feeder.capacity}`}</strong></div>
           {view.feeder.installed ? <>
             <small>Every {view.feeder.intervalDays.toFixed(2)} d · {view.feeder.portionsPerDispense} portion(s){view.feeder.hopperPortions <= 0 ? ' · hopper empty' : ''}</small>
+            <small>One portion is one feeding opportunity for one resident, and bottom residents only reach it after it settles.{portionShortfall > 0 ? ` This drop is ${portionShortfall} portion(s) short of ${livingResidents.length} living resident(s) — raise portions or feed manually.` : ''}</small>
             <div className="pocket-automation-actions">
               <button className="hud-button" type="button" aria-pressed={view.feeder.enabled}
                 onClick={() => dispatch({ type: 'SET_FEEDER', enabled: !view.feeder.enabled })}>{view.feeder.enabled ? 'Disable' : 'Enable'}</button>
@@ -390,6 +470,10 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
                 onClick={() => dispatch({ type: 'SET_FEEDER', intervalDays: Math.min(14, view.feeder.intervalDays + 0.5) })}>Slower</button>
               <button className="hud-button" type="button" aria-label="Faster cadence"
                 onClick={() => dispatch({ type: 'SET_FEEDER', intervalDays: Math.max(0.25, view.feeder.intervalDays - 0.5) })}>Faster</button>
+              <button className="hud-button" type="button" aria-label="Fewer portions per dispense"
+                onClick={() => dispatch({ type: 'SET_FEEDER', portionsPerDispense: Math.max(1, view.feeder.portionsPerDispense - 1) })}>Fewer</button>
+              <button className="hud-button" type="button" aria-label="More portions per dispense"
+                onClick={() => dispatch({ type: 'SET_FEEDER', portionsPerDispense: Math.min(10, view.feeder.portionsPerDispense + 1) })}>More</button>
               <button className="hud-button" type="button"
                 onClick={() => dispatch({ type: 'REFILL_FEEDER' })}>Refill hopper</button>
             </div>
@@ -413,6 +497,25 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         {SPEEDS.map((speed) => <button key={speed} type="button" aria-pressed={clock.speed === speed}
           aria-label={speed === 0 ? 'Pause simulation' : `Set simulation speed to ${speed} times`}
           onClick={() => dispatch({ type: 'SET_SPEED', speed })}>{speed === 0 ? 'Pause' : `${speed}×`}</button>)}</div>
+    </HudWindow>
+
+    <HudWindow id="residents" title="Residents" eyebrow="Tank roster" className="hud-panel pocket-residents-panel" workspace={workspace}>
+      <ul className="pocket-resident-list" aria-label="Tank residents">
+        {view.residents.map((resident) => <li key={resident.id}>
+          <button type="button" className="pocket-resident-row" data-dead={resident.alive === false}
+            aria-pressed={selectedSpecimen?.id === resident.id} title={`Inspect ${resident.name}`}
+            onClick={() => dispatch({ type: 'SELECT_ENTITY', entityType: 'livestock', id: resident.id })}>
+            <span className="pocket-resident-identity"><strong>{resident.name}</strong>
+              <small>{resident.alive === false ? 'Deceased' : resident.stage}</small></span>
+            <span className="pocket-resident-vitals">
+              <span data-tone={tone(resident.health)}>Health <b>{Math.round(resident.health * 100)}%</b></span>
+              <span data-tone={tone(resident.hunger, true)}>Hunger <b>{Math.round(Math.min(1, Math.max(0, resident.hunger)) * 100)}%</b></span>
+              <span data-tone={tone(resident.condition)}>Condition <b>{Math.round(resident.condition * 100)}%</b></span>
+            </span>
+          </button>
+        </li>)}
+        {view.residents.length ? null : <li className="pocket-store-empty">No residents yet. Add livestock in the Store.</li>}
+      </ul>
     </HudWindow>
 
     {pinnedReadings.map((key) => {
