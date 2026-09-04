@@ -546,10 +546,113 @@ export function assignPelletTargets(specimens: readonly PocketSpecimen[], food: 
  *  and carries pores/coral spillover, so the exclusion ellipsoid is inflated past the
  *  visual hull, plus the fish body radius, to keep fish from clipping into rock. */
 const REEF_ROCK_PAD = 1.2
+const SPECIMEN_ROCK_AVOIDANCE_RANGE = 1.48
+const SPECIMEN_ROCK_TURN_ARC = 1.18
 const LOCAL_FORWARD = new THREE.Vector3(1, 0, 0)
 const WORLD_UP = new THREE.Vector3(0, 1, 0)
 const BODY_SAMPLE_OFFSETS = [-1, 0, 1] as const
 const MOTION_HEADING_SPEED_EPSILON = .01
+
+function specimenRockClearance(position: THREE.Vector3, heading: THREE.Vector3,
+  halfSpan: number, bodyRadius: number, rock: (typeof REEF_ROCKS)[number]) {
+  let minimum = Infinity
+  for (const offset of BODY_SAMPLE_OFFSETS) {
+    const sampleX = position.x + heading.x * offset * halfSpan
+    const sampleY = position.y + heading.y * offset * halfSpan
+    const sampleZ = position.z + heading.z * offset * halfSpan
+    const nx = (sampleX - rock.position.x) / (rock.scale.x * REEF_ROCK_PAD + bodyRadius)
+    const ny = (sampleY - rock.position.y) / (rock.scale.y * REEF_ROCK_PAD + bodyRadius)
+    const nz = (sampleZ - rock.position.z) / (rock.scale.z * REEF_ROCK_PAD + bodyRadius)
+    minimum = Math.min(minimum, Math.hypot(nx, ny, nz))
+  }
+  return minimum
+}
+
+export function minimumSpecimenHardscapeClearance(position: THREE.Vector3, heading: THREE.Vector3,
+  halfSpan: number, bodyRadius: number) {
+  return Math.min(...REEF_ROCKS.map((rock) => specimenRockClearance(
+    position, heading, halfSpan, bodyRadius, rock)))
+}
+
+/** Bias the route toward one deterministic passing arc before the body reaches a rendered rock. */
+export function guideSpecimenAroundHardscape(desiredHeading: THREE.Vector3, currentHeading: THREE.Vector3,
+  position: THREE.Vector3, specimenId: number, halfSpan: number, bodyRadius: number) {
+  const forwardLength = Math.hypot(currentHeading.x, currentHeading.z)
+  const forwardX = forwardLength > 1e-5 ? currentHeading.x / forwardLength : 1
+  const forwardZ = forwardLength > 1e-5 ? currentHeading.z / forwardLength : 0
+  const lookAhead = halfSpan * 1.25 + bodyRadius * 2.4
+  const predicted = new THREE.Vector3(position.x + forwardX * lookAhead, position.y,
+    position.z + forwardZ * lookAhead)
+  let strongest = 0
+  let passingSide = 0
+  for (let rockIndex = 0; rockIndex < REEF_ROCKS.length; rockIndex += 1) {
+    const rock = REEF_ROCKS[rockIndex]
+    const clearance = specimenRockClearance(predicted, currentHeading, halfSpan, bodyRadius, rock)
+    const strength = THREE.MathUtils.clamp(
+      (SPECIMEN_ROCK_AVOIDANCE_RANGE - clearance) / (SPECIMEN_ROCK_AVOIDANCE_RANGE - 1), 0, 1)
+    if (strength <= strongest) continue
+    const awayX = predicted.x - rock.position.x
+    const awayZ = predicted.z - rock.position.z
+    const cross = forwardX * awayZ - forwardZ * awayX
+    passingSide = Math.abs(cross) > .025 ? Math.sign(cross) :
+      (seededUnit(specimenId + rockIndex * 17, 611) < .5 ? -1 : 1)
+    strongest = strength
+  }
+  if (strongest === 0) return 0
+  const routeYaw = Math.atan2(desiredHeading.z, desiredHeading.x)
+  const guidedYaw = routeYaw + passingSide * SPECIMEN_ROCK_TURN_ARC * strongest
+  desiredHeading.x = Math.cos(guidedYaw)
+  desiredHeading.z = Math.sin(guidedYaw)
+  return strongest
+}
+
+/** Last-resort X/Z guard. A safe prior frame is clipped to the last clear point on its
+ * forward segment, so the result stays within the existing travel cap and never changes Y. */
+export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, proposed: THREE.Vector3,
+  heading: THREE.Vector3, halfSpan: number, bodyRadius: number) {
+  if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 1) return false
+  const start = new THREE.Vector3(previous.x, proposed.y, previous.z)
+  if (minimumSpecimenHardscapeClearance(start, heading, halfSpan, bodyRadius) < 1) {
+    proposed.x = previous.x
+    proposed.z = previous.z
+    return true
+  }
+  const endX = proposed.x
+  const endZ = proposed.z
+  let clear = 0
+  let blocked = 1
+  for (let iteration = 0; iteration < 14; iteration += 1) {
+    const sample = (clear + blocked) * .5
+    proposed.x = THREE.MathUtils.lerp(previous.x, endX, sample)
+    proposed.z = THREE.MathUtils.lerp(previous.z, endZ, sample)
+    if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 1) clear = sample
+    else blocked = sample
+  }
+  proposed.x = THREE.MathUtils.lerp(previous.x, endX, clear)
+  proposed.z = THREE.MathUtils.lerp(previous.z, endZ, clear)
+  return true
+}
+
+/** Keep a body's yaw arc from rotating its nose through rock before forward travel begins. */
+export function constrainSpecimenHardscapeTurn(position: THREE.Vector3, previousHeading: THREE.Vector3,
+  proposedHeading: THREE.Vector3, halfSpan: number, bodyRadius: number) {
+  if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 1) return false
+  const previousYaw = Math.atan2(previousHeading.z, previousHeading.x)
+  const proposedYaw = Math.atan2(proposedHeading.z, proposedHeading.x)
+  const yawDelta = Math.atan2(Math.sin(proposedYaw - previousYaw), Math.cos(proposedYaw - previousYaw))
+  let clear = 0
+  let blocked = 1
+  for (let iteration = 0; iteration < 14; iteration += 1) {
+    const sample = (clear + blocked) * .5
+    proposedHeading.set(Math.cos(previousYaw + yawDelta * sample), 0,
+      Math.sin(previousYaw + yawDelta * sample))
+    if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 1) clear = sample
+    else blocked = sample
+  }
+  proposedHeading.set(Math.cos(previousYaw + yawDelta * clear), 0,
+    Math.sin(previousYaw + yawDelta * clear))
+  return true
+}
 
 interface MotionProfile {
   readonly cruiseSpeed: number
@@ -1148,10 +1251,18 @@ function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY, positio
       const guideY = routePosition.y
       guideDirection.copy(routePosition).sub(node.position).setY(0)
       if (positionSeeded.current && guideDirection.lengthSq() > 1e-5) routeTangent.lerp(guideDirection.normalize(), .18).normalize()
+      guideSpecimenAroundHardscape(routeTangent,
+        positionSeeded.current ? steeredHeading : routeTangent, node.position, specimenId,
+        collisionEnvelope.longitudinal, bodyRadius)
       const travelSpeed = Math.max(.35, length * 1.8)
       if (!positionSeeded.current) steeredHeading.copy(routeTangent)
-      else steerSpecimenHeading(steeredHeading, routeTangent, positionEntry.velocity, node.position, specimenId,
-        bodyRadius, collisionEnvelope, positions, behavior, delta)
+      else {
+        guideDirection.copy(steeredHeading)
+        steerSpecimenHeading(steeredHeading, routeTangent, positionEntry.velocity, node.position, specimenId,
+          bodyRadius, collisionEnvelope, positions, behavior, delta)
+        constrainSpecimenHardscapeTurn(node.position, guideDirection, steeredHeading,
+          collisionEnvelope.longitudinal, bodyRadius)
+      }
       if (positionSeeded.current) routePosition.set(
         node.position.x + steeredHeading.x * route.speed * route.curve.getLength() * delta, guideY,
         node.position.z + steeredHeading.z * route.speed * route.curve.getLength() * delta)
@@ -1160,6 +1271,8 @@ function AcceptedShowcaseAnimal({ asset, index, snapshot, waterSurfaceY, positio
       routePosition.z = THREE.MathUtils.clamp(routePosition.z, -TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius)
       if (positionSeeded.current) limitSpecimenFrameTravel(node.position, routePosition,
         Math.max(.35, length * 1.8), delta)
+      if (positionSeeded.current) constrainSpecimenHardscapeTravel(node.position, routePosition,
+        steeredHeading, collisionEnvelope.longitudinal, bodyRadius)
       if (positionSeeded.current && delta > 0) positionEntry.velocity.set(
         (routePosition.x - node.position.x) / delta, 0, (routePosition.z - node.position.z) / delta)
       else positionEntry.velocity.copy(steeredHeading).multiplyScalar(route.speed * route.curve.getLength())

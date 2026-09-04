@@ -3,17 +3,22 @@ import * as THREE from 'three'
 
 import { createPocketReefShowcase, projectPocketState } from '../integration/pocketAquariumBridge'
 import { specimenAssetFor } from './specimens/assetRegistry'
+import { REEF_ROCKS } from './reefLayout'
 import {
   advanceSpecimenMotionState,
   assignPelletTargets,
   createSpecimenMotionState,
   createSpecimenMotionRoute,
   createAcceptedShowcaseCatalog,
+  constrainSpecimenHardscapeTravel,
+  constrainSpecimenHardscapeTurn,
   decideSpecimenDirection,
   isRenderableLivestockSpecies,
+  guideSpecimenAroundHardscape,
   limitSpecimenFrameTravel,
   limitSpecimenFrameTurn,
   measureSpecimenCrowd,
+  minimumSpecimenHardscapeClearance,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
   sampleSpecimenMotionRoute,
@@ -181,6 +186,64 @@ describe('specimen motion continuity', () => {
       expect(points.every(({ x, z }) => Math.abs(x) <= 2.76 - bodyRadius && Math.abs(z) <= 1.2 - bodyRadius)).toBe(true)
     }
     expect(Math.max(...sampled[0].map(({ y }) => y))).toBeLessThan(Math.min(...sampled[1].map(({ y }) => y)))
+  })
+
+  it.each([
+    ['diamond_goby', 'bottom', .34],
+    ['watchman_goby', 'bottom', .31],
+    ['epaulette_shark', 'bottom', .72],
+    ['royal_gramma', 'mid', .30],
+    ['banggai_cardinal', 'mid', .36],
+  ] as const)('%s keeps its whole body outside every rock without changing Y guidance',
+  (speciesId, layer, length) => {
+    const bodyRadius = THREE.MathUtils.clamp(length * .24, .05, .18)
+    const halfSpan = length * .52
+    const route = createSpecimenMotionRoute(37, layer, .86, bodyRadius)
+    const profile = specimenBehaviorProfile(speciesId)
+    const envelope = specimenCollisionEnvelope(length, bodyRadius)
+    const delta = 1 / 60
+    const speed = Math.max(.35, length * 1.8)
+
+    for (const [rockIndex, rock] of REEF_ROCKS.entries()) {
+      const guideY = THREE.MathUtils.clamp(rock.position.y, route.yBounds[0], route.yBounds[1])
+      const radius = Math.max(rock.scale.x, rock.scale.z) * 1.2 + halfSpan + bodyRadius + .34
+      let position = new THREE.Vector3()
+      let bestClearance = -Infinity
+      for (let spoke = 0; spoke < 24; spoke += 1) {
+        const angle = spoke / 24 * Math.PI * 2
+        const candidate = new THREE.Vector3(rock.position.x + Math.cos(angle) * radius, guideY,
+          rock.position.z + Math.sin(angle) * radius)
+        const clearance = minimumSpecimenHardscapeClearance(candidate,
+          new THREE.Vector3(-Math.cos(angle), 0, -Math.sin(angle)), halfSpan, bodyRadius)
+        if (clearance > bestClearance) { bestClearance = clearance; position = candidate }
+      }
+      expect(bestClearance, `${speciesId} rock ${rockIndex} start`).toBeGreaterThanOrEqual(1)
+      const goal = rock.position.clone().multiplyScalar(2).sub(position).setY(guideY)
+      const heading = goal.clone().sub(position).setY(0).normalize()
+      const velocity = heading.clone().multiplyScalar(speed)
+
+      for (let frame = 0; frame < 180; frame += 1) {
+        const desired = goal.clone().sub(position).setY(0).normalize()
+        guideSpecimenAroundHardscape(desired, heading, position,
+          1000 + rockIndex, halfSpan, bodyRadius)
+        const beforeHeading = heading.clone()
+        steerSpecimenHeading(heading, desired, velocity, position, 1000 + rockIndex,
+          bodyRadius, envelope, new Map(), profile, delta)
+        constrainSpecimenHardscapeTurn(position, beforeHeading, heading, halfSpan, bodyRadius)
+        const proposed = position.clone().addScaledVector(heading, speed * delta).setY(guideY)
+        limitSpecimenFrameTravel(position, proposed, speed, delta)
+        constrainSpecimenHardscapeTravel(position, proposed, heading, halfSpan, bodyRadius)
+        expect(position.distanceTo(proposed), `${speciesId} rock ${rockIndex} frame ${frame} travel`)
+          .toBeLessThanOrEqual(speed * delta + 1e-8)
+        expect(beforeHeading.angleTo(heading), `${speciesId} rock ${rockIndex} frame ${frame} turn`)
+          .toBeLessThanOrEqual(3.2 * delta + 1e-8)
+        expect(proposed.y).toBe(guideY)
+        expect(minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius),
+          `${speciesId} rock ${rockIndex} frame ${frame} clearance`).toBeGreaterThanOrEqual(1 - 1e-8)
+        velocity.copy(proposed).sub(position).divideScalar(delta)
+        position.copy(proposed)
+      }
+    }
   })
 })
 describe('specimen primary visual selection', () => {
