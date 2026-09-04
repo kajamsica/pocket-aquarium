@@ -17,6 +17,7 @@ import {
   savedRecordSupersedes,
   serializePocketGame,
   type PocketPreventedDeath,
+  type PocketRockView,
   type PocketState,
 } from './integration/pocketAquariumBridge'
 import { ReefScene } from './scene/ReefScene'
@@ -24,6 +25,7 @@ import type { CoralPlacementCandidate } from './scene/CoralPlacement'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
 import { createAcceptedShowcaseCatalog, SpecimenRosterProvider, type SpecimenHover } from './scene/SpecimenFish'
 import { PocketGameHUD } from './ui/PocketGameHUD'
+import { changedRockTransform, RockscapeEditor, type RockTransformPatch } from './ui/RockscapeEditor'
 import {
   advanceCoralDraft,
   beginCoralDraft,
@@ -49,6 +51,20 @@ const SAVE_KEY = DEV_SAFE ? devSafeSaveKey : pocketSaveKey
 const GOD_MODE_KEY = `${devSafeSaveKey}:god-mode`
 const MAX_PREVENTED = 20
 const ACCEPTED_SHOWCASE_CATALOG = SHOWCASE_MODE ? createAcceptedShowcaseCatalog() : undefined
+const ROCK_SCENE_HALF_WIDTH = 2.76
+const ROCK_SCENE_HALF_DEPTH = 1.18
+
+function bounded(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value))
+}
+
+function cloneRockView(rock: PocketRockView): PocketRockView {
+  return { ...rock,
+    position: [...rock.position] as PocketRockView['position'],
+    rotation: [...rock.rotation] as PocketRockView['rotation'],
+    scale: [...rock.scale] as PocketRockView['scale'],
+    biology: { ...rock.biology } }
+}
 
 /** The dev shell's persisted God Mode preference. Protection defaults on and only an explicit
  *  opt-out disables it, and the toggle writes this key synchronously, so this is the live answer.
@@ -173,11 +189,33 @@ function AquariumApp() {
   const [renderTelemetry, setRenderTelemetry] = useState<ReefRenderTelemetry>()
   const [activeCoralId, setActiveCoralId] = useState<number | null>(null)
   const [coralDraft, setCoralDraft] = useState<CoralDraftState<CoralPlacementCandidate> | null>(null)
+  const [rockscapeDraft, setRockscapeDraft] = useState<readonly PocketRockView[] | null>(null)
+  const rockscapeBase = useRef<readonly PocketRockView[] | null>(null)
+  const [selectedRockId, setSelectedRockId] = useState<number | null>(null)
   const previewCandidate = coralDraft?.candidate ?? null
   const lastTelemetryUpdate = useRef(0)
   const godModeOn = DEV_SAFE && protectionOn
   const view = projectPocketState(pocketState, { godMode: godModeOn })
   const activeCoral = view.coralInventory.find((coral) => coral.id === activeCoralId)
+  const occupiedRockIds = new Set(view.placedCorals.flatMap((coral) => {
+    const match = /^rock:(\d+)$/.exec(coral.placement?.surfaceId ?? '')
+    return match ? [Number(match[1])] : []
+  }))
+  const displayedCorals = rockscapeDraft && rockscapeBase.current
+    ? view.placedCorals.map((coral) => {
+      const placement = coral.placement
+      const match = /^rock:(\d+)$/.exec(placement?.surfaceId ?? '')
+      if (!placement || !match) return coral
+      const rockId = Number(match[1])
+      const base = rockscapeBase.current?.find((rock) => rock.id === rockId)
+      const draft = rockscapeDraft.find((rock) => rock.id === rockId)
+      if (!base || !draft) return coral
+      return { ...coral, placement: { ...placement, position: [
+        bounded(placement.position[0] + (draft.position[0] - base.position[0]) / ROCK_SCENE_HALF_WIDTH, -1, 1),
+        placement.position[1],
+        bounded(placement.position[2] + (draft.position[2] - base.position[2]) / ROCK_SCENE_HALF_DEPTH, -1, 1),
+      ] as const } }
+    }) : view.placedCorals
   // The ref is advanced by whichever writer produced the state (dispatch or a tick), never during
   // render, so a discarded Strict Mode/concurrent render pass cannot roll it back behind an action.
 
@@ -318,6 +356,36 @@ function AquariumApp() {
     intent: 'follow' | 'freeze' = 'follow') => {
     setCoralDraft((draft) => draft ? advanceCoralDraft(draft, candidate, intent) : null)
   }, [])
+
+  const beginRockscape = useCallback(() => {
+    cancelCoral()
+    const base = view.rockscape.map(cloneRockView)
+    rockscapeBase.current = base
+    setRockscapeDraft(base.map(cloneRockView))
+    setSelectedRockId(view.rockscape[0]?.id ?? null)
+  }, [cancelCoral, view.rockscape])
+  const updateRockscapeDraft = useCallback((rockId: number, patch: RockTransformPatch) => {
+    setSelectedRockId(rockId)
+    setRockscapeDraft((rocks) => rocks?.map((rock) => rock.id === rockId ? { ...rock, ...patch } : rock) ?? null)
+  }, [])
+  const cancelRockscape = useCallback(() => {
+    setRockscapeDraft(null)
+    rockscapeBase.current = null
+    setSelectedRockId(null)
+  }, [])
+  const lockRockscape = useCallback(() => {
+    const base = rockscapeBase.current
+    if (!rockscapeDraft || !base) return
+    for (const rock of rockscapeDraft) {
+      const original = base.find(({ id }) => id === rock.id)
+      if (!original) continue
+      const patch = changedRockTransform(original, rock)
+      if (patch) dispatch({ type: pocketActions.UPDATE_ROCK_TRANSFORM, rockId: rock.id, ...patch })
+    }
+    setRockscapeDraft(null)
+    rockscapeBase.current = null
+    setSelectedRockId(null)
+  }, [dispatch, rockscapeDraft])
   const candidateStatus = previewCandidate ? {
     valid: previewCandidate.valid,
     frozen: coralDraft?.phase === 'frozen',
@@ -338,10 +406,16 @@ function AquariumApp() {
             snapshot={view.reefSnapshot}
             renderSettings={renderSettings}
             onRenderTelemetry={updateRenderTelemetry}
-            placedCorals={view.placedCorals}
+            placedCorals={displayedCorals}
             activeCoral={activeCoral}
             previewCandidate={previewCandidate}
             onPlacementCandidate={updateCoralDraft}
+            rockscape={rockscapeDraft ?? view.rockscape}
+            rockscapeEditing={rockscapeDraft !== null}
+            selectedRockId={selectedRockId}
+            onRockSelect={setSelectedRockId}
+            onRockTransformPreview={updateRockscapeDraft}
+            sand={view.sand}
           />
         </SpecimenRosterProvider>
       </FeedingProvider>
@@ -355,9 +429,13 @@ function AquariumApp() {
         showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
         hoveredSpecimen={hoveredSpecimen}
       />
-      <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
+      {rockscapeDraft ? null : <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
         candidate={candidateStatus} onArm={armCoral} onPointerArm={(coralId) => armCoral(coralId)}
-        onCancel={cancelCoral} onLock={lockCoral} />
+        onCancel={cancelCoral} onLock={lockCoral} />}
+      <RockscapeEditor active={rockscapeDraft !== null} rocks={rockscapeDraft ?? view.rockscape}
+        occupiedRockIds={occupiedRockIds}
+        selectedRockId={selectedRockId} onBegin={beginRockscape} onSelect={setSelectedRockId}
+        onPatch={updateRockscapeDraft} onSave={lockRockscape} onCancel={cancelRockscape} />
     </main>
   )
 }

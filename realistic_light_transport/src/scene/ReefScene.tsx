@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 import type { ReefRenderSettings, ReefSceneProps } from '../contracts'
-import type { PocketCoralView } from '../integration/pocketAquariumBridge'
+import type { PocketCoralView, PocketRockView, PocketSandView } from '../integration/pocketAquariumBridge'
+import type { RockTransformPatch } from '../ui/RockscapeEditor'
 import {
   createFlowField,
   diagnoseFlowField,
@@ -275,7 +276,16 @@ interface ReefPlacementSceneProps {
   readonly onPlacementCandidate: (candidate: CoralPlacementCandidate | null) => void
 }
 
-type ReefWorldProps = ReefSceneProps & ReefPlacementSceneProps
+interface ReefRockscapeSceneProps {
+  readonly rockscape: readonly PocketRockView[]
+  readonly sand: PocketSandView
+  readonly rockscapeEditing: boolean
+  readonly selectedRockId: number | null
+  readonly onRockSelect: (rockId: number) => void
+  readonly onRockTransformPreview: (rockId: number, patch: RockTransformPatch) => void
+}
+
+type ReefWorldProps = ReefSceneProps & ReefPlacementSceneProps & ReefRockscapeSceneProps
 
 function ReefWorld({
   snapshot,
@@ -285,6 +295,12 @@ function ReefWorld({
   activeCoral,
   previewCandidate,
   onPlacementCandidate,
+  rockscape,
+  sand,
+  rockscapeEditing,
+  selectedRockId,
+  onRockSelect,
+  onRockTransformPreview,
 }: ReefWorldProps) {
   const keyLight = useRef<THREE.SpotLight>(null)
   const fillLight = useRef<THREE.PointLight>(null)
@@ -384,7 +400,10 @@ function ReefWorld({
       <group position={[0, 0.03, 0]}>
         <ReefHabitat snapshot={snapshot} flowField={flowField} placedCorals={placedCorals}
           activeCoral={activeCoral} previewCandidate={previewCandidate}
-          onPlacementCandidate={onPlacementCandidate} />
+          onPlacementCandidate={onPlacementCandidate} rockscape={rockscape}
+          sand={sand}
+          rockscapeEditing={rockscapeEditing} selectedRockId={selectedRockId}
+          onRockSelect={onRockSelect} onRockTransformPreview={onRockTransformPreview} />
         <OpticalTank
           snapshot={snapshot}
           renderSettings={renderSettings}
@@ -397,7 +416,7 @@ function ReefWorld({
         />
       </group>
       <ExposureController lightPower={lightPower} brightness={renderSettings.brightness} />
-      <CameraRig disabled={Boolean(activeCoral)} />
+      <CameraRig disabled={Boolean(activeCoral) || rockscapeEditing} />
     </>
   )
 }
@@ -410,6 +429,12 @@ export function ReefScene({
   activeCoral,
   previewCandidate,
   onPlacementCandidate,
+  rockscape,
+  sand,
+  rockscapeEditing,
+  selectedRockId,
+  onRockSelect,
+  onRockTransformPreview,
 }: ReefWorldProps) {
   const [hintDismissed, setHintDismissed] = useState(false)
   return (
@@ -442,6 +467,12 @@ export function ReefScene({
           activeCoral={activeCoral}
           previewCandidate={previewCandidate}
           onPlacementCandidate={onPlacementCandidate}
+          rockscape={rockscape}
+          sand={sand}
+          rockscapeEditing={rockscapeEditing}
+          selectedRockId={selectedRockId}
+          onRockSelect={onRockSelect}
+          onRockTransformPreview={onRockTransformPreview}
         />
       </Canvas>
     </div>
