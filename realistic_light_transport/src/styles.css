@@ -4056,7 +4056,9 @@ input:focus-visible {
   position: fixed;
   right: clamp(16px, 2.4vw, 34px);
   bottom: max(18px, env(safe-area-inset-bottom));
-  z-index: 10002;
+  /* The inventory remains above the tank/optical overlay (z=1), but below the HUD
+     stacking context (z=3), so it cannot swallow Store or Care controls. */
+  z-index: 2;
   width: min(360px, calc(100vw - 32px));
   color: #ecfbff;
   pointer-events: auto;
