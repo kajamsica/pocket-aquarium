@@ -778,7 +778,8 @@
 
       case ACT.PURCHASE_EQUIPMENT: doBuyEquipment(state, action.category, action.levelId); break;
       case ACT.PURCHASE_TIER: doBuyTier(state, action.tier); break;
-      case ACT.PURCHASE_LIVESTOCK: doBuyLivestock(state, action.species, action.count); break;
+      case ACT.PURCHASE_LIVESTOCK: doBuyLivestock(state, action.species, action.count, action.acceptRisk); break;
+      case ACT.SELL_LIVESTOCK: doSellLivestock(state, action.ids); break;
       case ACT.PURCHASE_CORAL: doBuyCoral(state, action.coral); break;
       case ACT.SEED_MICROFAUNA: doSeedMicrofauna(state, action.culture); break;
 
@@ -903,8 +904,8 @@
     award(state, "tier_" + tier, 20, 0, null, true);
     return true;
   }
-  function doBuyLivestock(state, species, cnt) {
-    var v = PA.validatePurchase(state, { kind: "livestock", id: species, count: cnt });
+  function doBuyLivestock(state, species, cnt, acceptRisk) {
+    var v = PA.validatePurchase(state, { kind: "livestock", id: species, count: cnt, acceptRisk: acceptRisk === true });
     if (!v.ok) { var denied = DATA.resolveSpecies(state, species); log(state, "store", "Cannot add " + (denied ? denied.name : species) + ": " + v.reasons.join(" ")); return false; }
     var sp = DATA.resolveSpecies(state, species);
     var n = Math.max(1, Math.floor(cnt || DATA.BUNDLES[species] || 1));
@@ -916,6 +917,23 @@
     // symbiosis note (goby + pistol shrimp)
     if (sp.symbiosisWith && DATA.currentBioload(state) >= 0 && aliveSpecies(state, sp.symbiosisWith) > 0)
       award(state, "symbiosis", 20, 15, "A goby–pistol-shrimp symbiosis formed.", true);
+    return true;
+  }
+  function doSellLivestock(state, ids) {
+    if (!Array.isArray(ids) || !ids.length) return false;
+    var wanted = {}, sold = {}, kept = [], refund = 0, count = 0;
+    for (var i = 0; i < ids.length; i++) wanted[String(ids[i])] = true;
+    for (i = 0; i < state.livestock.length; i++) {
+      var resident = state.livestock[i], sp = resident && DATA.resolveSpecies(state, resident.species);
+      if (resident && resident.alive !== false && wanted[String(resident.id)] && sp) {
+        sold[String(resident.id)] = true; refund += Math.floor((sp.price || 0) * 0.5); count++; continue;
+      }
+      kept.push(resident);
+    }
+    if (!count) return false;
+    state.livestock = kept; state.credits += refund;
+    if (state.selection && sold[String(state.selection.id)]) state.selection = null;
+    log(state, "store", "Sold " + count + " living resident" + (count === 1 ? "" : "s") + " back for " + refund + " credits.");
     return true;
   }
   function aliveSpecies(state, id) { var n = 0; for (var i = 0; i < state.livestock.length; i++) if (state.livestock[i].alive !== false && state.livestock[i].species === id) n++; return n; }

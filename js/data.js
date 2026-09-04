@@ -29,7 +29,8 @@
     // ---- purchases ----
     PURCHASE_EQUIPMENT: "PURCHASE_EQUIPMENT", // {category, levelId}
     PURCHASE_TIER: "PURCHASE_TIER",           // {tier}
-    PURCHASE_LIVESTOCK: "PURCHASE_LIVESTOCK", // {species, count?}
+    PURCHASE_LIVESTOCK: "PURCHASE_LIVESTOCK", // {species, count?, acceptRisk?}
+    SELL_LIVESTOCK: "SELL_LIVESTOCK",         // {ids}
     PURCHASE_CORAL: "PURCHASE_CORAL",         // {coral}
     SEED_MICROFAUNA: "SEED_MICROFAUNA",       // {culture} pods / infusoria culture
     // ---- interaction ----
@@ -637,24 +638,17 @@
     if (sp.expert && tierIndex(currentTierId(state)) < tierIndex("xl757"))
       reasons.push(sp.name + " is an expert-only animal for a mature large system.");
 
-    // predator / prey conflict (both directions)
-    var conflict = predatorConflict(state, sp);
-    for (var c = 0; c < conflict.length; c++) reasons.push(conflict[c]);
-
-    // territorial conflict (same-layer strong territoriality with an existing holder)
-    var terr = territorialConflict(state, sp);
-    if (terr) reasons.push(terr);
-
-    // coral / invert safety vs existing coral/invert
-    if (!sp.invertSafe && hasInvertOrCoral(state))
-      reasons.push(sp.name + " will harm the invertebrates or coral already in this tank.");
+    // Structured compatibility risks require an explicit player choice. Legacy
+    // callers still see their messages in reasons until acceptRisk is supplied.
+    var conflicts = livestockConflicts(state, sp);
+    if (request.acceptRisk !== true) for (var c = 0; c < conflicts.length; c++) reasons.push(conflicts[c].message);
 
     // credits
     var cost = sp.price * reqCount;
     if ((state.credits || 0) < cost)
       reasons.push("Not enough credits (need " + cost + ", have " + Math.floor(state.credits || 0) + ").");
 
-    return { ok: reasons.length === 0, reasons: reasons };
+    return { ok: reasons.length === 0, reasons: reasons, conflicts: conflicts };
   }
 
   function withinWarn(habitat, key, value) {
@@ -673,52 +667,33 @@
     return map[f] || f;
   }
 
-  function predatorConflict(state, sp) {
-    var out = [], ls = (state && state.livestock) || [], i, other;
-    // adding a predator that eats existing tankmates
-    if (sp.predator && sp.preysOn && sp.preysOn.length) {
-      for (i = 0; i < ls.length; i++) {
-        other = ls[i]; if (!other || other.alive === false) continue;
-        var os = resolveSpecies(state, other.species); if (!os) continue;
-        if (tagsIntersect(sp.preysOn, os.preyTags)) {
-          out.push(sp.name + " will prey on your " + os.name + ".");
-          break;
-        }
+  function livestockConflicts(state, sp) {
+    var out = [], buckets = {}, ls = (state && state.livestock) || [];
+    for (var i = 0; i < ls.length; i++) {
+      var resident = ls[i]; if (!resident || resident.alive === false) continue;
+      var os = resolveSpecies(state, resident.species); if (!os) continue;
+      var tag = null, message = null;
+      var territorial = sp.territoriality >= 0.45 && os.id !== sp.id && os.layer === sp.layer && os.territoriality >= 0.45;
+      if (sp.predator && tagsIntersect(sp.preysOn, os.preyTags)) {
+        tag = "predation"; message = sp.name + " will prey on your " + os.name + ".";
+      } else if (os.predator && tagsIntersect(os.preysOn, sp.preyTags)) {
+        tag = "predation"; message = "Your " + os.name + " would hunt and eat " + sp.name + ".";
       }
-    }
-    // adding prey into a tank that already holds a predator that eats it
-    for (i = 0; i < ls.length; i++) {
-      other = ls[i]; if (!other || other.alive === false) continue;
-      var predSp = resolveSpecies(state, other.species); if (!predSp || !predSp.predator) continue;
-      if (tagsIntersect(predSp.preysOn, sp.preyTags)) {
-        out.push("Your " + predSp.name + " would hunt and eat " + sp.name + ".");
-        break;
+      if (territorial) {
+        if (tag) message += " They may also fight over the same territory.";
+        else { tag = "territoriality"; message = sp.name + " will fight your " + os.name + " over the same territory."; }
       }
+      if (!tag && !sp.invertSafe && os.kind === "invert") {
+        tag = "invert_safety"; message = sp.name + " may harm your " + os.name + ".";
+      }
+      if (!tag) continue;
+      var key = tag + ":" + os.id, item = buckets[key];
+      if (!item) item = buckets[key] = { riskTag: tag, message: message, residentSpeciesId: os.id,
+        residentName: os.name, residentIds: [], refundCredits: 0 }, out.push(item);
+      item.residentIds.push(resident.id);
+      item.refundCredits += Math.floor((os.price || 0) * 0.5);
     }
     return out;
-  }
-
-  function territorialConflict(state, sp) {
-    if (!sp || sp.territoriality < 0.45) return null;
-    var ls = (state && state.livestock) || [];
-    for (var i = 0; i < ls.length; i++) {
-      var other = ls[i]; if (!other || other.alive === false) continue;
-      var os = resolveSpecies(state, other.species); if (!os) continue;
-      if (os.id !== sp.id && os.layer === sp.layer && os.territoriality >= 0.45)
-        return sp.name + " will fight your " + os.name + " over the same territory.";
-    }
-    return null;
-  }
-
-  function hasInvertOrCoral(state) {
-    if (count(state && state.corals) > 0) return true;
-    var ls = (state && state.livestock) || [];
-    for (var i = 0; i < ls.length; i++) {
-      var o = ls[i]; if (!o || o.alive === false) continue;
-      var os = resolveSpecies(state, o.species);
-      if (os && os.kind === "invert") return true;
-    }
-    return false;
   }
 
   function tagsIntersect(a, b) {
