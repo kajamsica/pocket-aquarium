@@ -18,7 +18,6 @@ const TANK_HALF_WIDTH = 2.76
 // rendered tank so fish swim the full depth band without clipping the glass panels.
 const TANK_HALF_DEPTH = 1.2
 const SAND_Y = -1.44
-const MARINE_SPECIES = new Set(['ocellaris', 'watchman_goby', 'pistol_shrimp', 'epaulette_shark'])
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
   readonly morphologyOverride?: MorphologyProfileV1
@@ -218,6 +217,11 @@ export function resolveSpecimenVisualPlan(speciesId: string, hasAcceptedAsset: b
     return { renderAcceptedAsset: false, proceduralFallback: speciesId }
   }
   return { renderAcceptedAsset: false }
+}
+
+export function isRenderableLivestockSpecies(speciesId: string, hasAcceptedAsset: boolean) {
+  const plan = resolveSpecimenVisualPlan(speciesId, hasAcceptedAsset)
+  return plan.renderAcceptedAsset || Boolean(plan.proceduralFallback)
 }
 
 /** Hunger decides priority, but every eligible fish receives one portion before repeats. */
@@ -430,7 +434,8 @@ export function SpecimenFish({ snapshot, waterSurfaceY, pellets, consume }: Spec
     watchman_goby: cropSkin(gobySource, VISUAL_SKINS.watchman_goby),
   }), [gobySource])
   useEffect(() => () => Object.values(skins).forEach((skin) => skin.dispose()), [skins])
-  const marineRoster = roster.filter((specimen) => specimen.alive && MARINE_SPECIES.has(specimen.speciesId)).slice(0, MAX_SPECIMENS)
+  const marineRoster = roster.filter((specimen) => specimen.alive &&
+    isRenderableLivestockSpecies(specimen.speciesId, Boolean(specimenAssetFor(specimen.speciesId)))).slice(0, MAX_SPECIMENS)
   const assignments = assignPelletTargets(marineRoster, pellets, mouths, waterSurfaceY)
   return <group name="root-pocket-aquarium-specimens">
     <FoodContactDriver food={pellets} specimens={marineRoster} mouths={mouths} assignments={assignments}

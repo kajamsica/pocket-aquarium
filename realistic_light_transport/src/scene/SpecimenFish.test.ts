@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { specimenAssetFor } from './specimens/assetRegistry'
-import { resolveSpecimenVisualPlan } from './SpecimenFish'
+import { isRenderableLivestockSpecies, resolveSpecimenVisualPlan } from './SpecimenFish'
 
 describe('specimen primary visual selection', () => {
   it.each(['watchman_goby', 'pistol_shrimp', 'epaulette_shark'])('suppresses the %s procedural body when its accepted GLB exists', (speciesId) => {
@@ -19,5 +19,10 @@ describe('specimen primary visual selection', () => {
   it('does not invent a procedural duplicate for Ocellaris or an unknown species', () => {
     expect(resolveSpecimenVisualPlan('ocellaris', true)).toEqual({ renderAcceptedAsset: true })
     expect(resolveSpecimenVisualPlan('unknown_species', false)).toEqual({ renderAcceptedAsset: false })
+  })
+
+  it('admits any livestock species with an accepted asset without a renderer catalog entry', () => {
+    expect(isRenderableLivestockSpecies('future_livestock_species', true)).toBe(true)
+    expect(isRenderableLivestockSpecies('future_livestock_species', false)).toBe(false)
   })
 })
