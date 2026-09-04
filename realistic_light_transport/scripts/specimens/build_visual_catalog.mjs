@@ -4,7 +4,7 @@
 //   node scripts/specimens/build_visual_catalog.mjs            write src/catalog/visual-catalog.v1.json
 //   node scripts/specimens/build_visual_catalog.mjs --check    exit 1 when the committed JSON is stale
 //
-// Options: --root <rlt root> --out <json path> --registry </tmp/pa-lanes/registry.json> --force --quiet
+// Options: --root <rlt root> --out <json path> --registry <approval json> --force --quiet
 //
 // The builder scans art/specimens/*/asset.source.json, every candidates/*/candidate.manifest.json and
 // the accepted packages (<id>.asset.json whose promotion is accepted and whose runtime GLB is bundled
@@ -20,7 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const SCHEMA_VERSION = 'pocket-aquarium.visual-catalog/v1'
 export const DEFAULT_OUTPUT = 'src/catalog/visual-catalog.v1.json'
-export const DEFAULT_REGISTRY = '/tmp/pa-lanes/registry.json'
+export const DEFAULT_REGISTRY = 'art/specimens/user-acceptance.v1.json'
 // Known categories keep this display order; unknown categories (a future `plant`) sort after them
 // alphabetically so the schema does not need to change when they arrive.
 export const CATEGORY_ORDER = ['fish', 'coral', 'invertebrate', 'cleanup_crew']
@@ -98,10 +98,22 @@ function plainRecord(value) {
   return out
 }
 
-// registry.json approvedByUser values are prose such as "candidates/fable-v1 (digest ...)" or
-// "round-v2 (lane fable-v2, ...)"; the candidate directory name is the first token.
 export function parseApprovals(registry) {
   const approvals = {}
+  if (registry?.schemaVersion === 'pocket-aquarium.user-acceptance/v1') {
+    const exclusions = Array.isArray(registry.excluded) ? registry.excluded : []
+    const excluded = new Set(exclusions.map((value) => String(value).trim().split(/\s/)[0]))
+    const entries = Array.isArray(registry.entries) ? registry.entries : []
+    for (const entry of entries) {
+      const { speciesId, candidate } = entry
+      if (entry.status === 'user_accepted' && entry.userApprovedLook === true
+        && typeof speciesId === 'string' && typeof candidate === 'string'
+        && SAFE_SEGMENT.test(speciesId) && SAFE_SEGMENT.test(candidate)
+        && !excluded.has(`${speciesId}/${candidate}`)) approvals[speciesId] = candidate
+    }
+    return approvals
+  }
+  // Legacy lane registry values may include prose after the candidate's first token.
   const source = registry && typeof registry === 'object' ? registry.approvedByUser : undefined
   if (!source || typeof source !== 'object') return approvals
   for (const speciesId of Object.keys(source).sort(compareStrings)) {
@@ -387,7 +399,7 @@ function describeDifferences(previous, next) {
 }
 
 function parseArgs(argv) {
-  const options = { check: false, force: false, quiet: false, root: SCRIPT_ROOT, out: null, registry: DEFAULT_REGISTRY }
+  const options = { check: false, force: false, quiet: false, root: SCRIPT_ROOT, out: null, registry: null }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--check') options.check = true
@@ -399,6 +411,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument ${arg}`)
   }
   options.out = path.resolve(options.root, options.out ?? DEFAULT_OUTPUT)
+  options.registry = path.resolve(options.root, options.registry ?? DEFAULT_REGISTRY)
   return options
 }
 
@@ -411,10 +424,8 @@ export function main(argv = process.argv.slice(2)) {
   if (registry.ok) {
     approvals = parseApprovals(registry.value)
   } else {
-    // Without the lane registry (CI, another machine) keep the approvals already recorded in the
-    // committed catalog so --check stays meaningful.
-    approvals = existing.ok && existing.value.userApprovals ? existing.value.userApprovals : {}
-    log(`note: registry ${options.registry} ${registry.reason}; reusing ${Object.keys(approvals).length} recorded approval(s)`)
+    approvals = {}
+    log(`note: approval source ${options.registry} ${registry.reason}; no user approvals recorded`)
   }
   const { catalog, warnings } = buildVisualCatalog({ root: options.root, approvals })
   for (const warning of warnings) console.error(`warning: ${warning}`)

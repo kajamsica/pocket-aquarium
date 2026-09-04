@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-04T00:43:18.710Z",
+  "generatedAt": "2026-09-04T01:09:46.516Z",
   "categories": [
     "fish",
     "coral",
@@ -17,7 +17,7 @@
   "userApprovals": {
     "blue_hippo_tang": "approved-v2",
     "brittle_star": "fable-v1",
-    "gem_tang": "fable-v2",
+    "gem_tang": "round-v2",
     "tomini_tang": "fable-v1"
   },
   "summary": {
@@ -39,7 +39,7 @@
       "total": 52,
       "loadable": 51,
       "missing": 1,
-      "userApproved": 4
+      "userApproved": 3
     }
   },
   "rows": [
@@ -604,7 +604,7 @@
             "swim": true
           },
           "referenceSizeMeters": 0.2,
-          "userApproved": true,
+          "userApproved": false,
           "renders": {
             "authorPreview": "art/specimens/gem_tang/candidates/fable-v2/renders/author-preview.png",
             "threeView": "art/specimens/gem_tang/candidates/fable-v2/renders/three-view.png"

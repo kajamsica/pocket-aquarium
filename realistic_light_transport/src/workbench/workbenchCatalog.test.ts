@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { CatalogCandidate, CatalogRow, VisualCatalog } from '../catalog/visualCatalog'
+import userAcceptance from '../../art/specimens/user-acceptance.v1.json'
+import { visualCatalog, type CatalogCandidate, type CatalogRow, type VisualCatalog } from '../catalog/visualCatalog'
 import { acceptedSpecimenAssetList, specimenAssetFor } from '../scene/specimens/assetRegistry'
 import {
   BADGE_LABELS,
@@ -187,6 +188,22 @@ describe('runtime asset registry stays accepted-only', () => {
     expect(selectWorkbenchAsset(catalog.assets, 'millepora', 'fable-v1-branching').asset?.key).toBe(branching.key)
     expect(selectWorkbenchAsset(catalog.assets, 'blue_hippo_tang', null).asset?.state).toBe('accepted')
     expect(workbenchSearch(branching, 'shared', '')).toBe('?workbench=millepora&candidate=fable-v1-branching&scale=shared')
+  })
+
+  it('never gives formally excluded candidates a user-approved badge', async () => {
+    const excluded = userAcceptance.excluded.map((entry) => {
+      const [speciesId, candidate] = entry.split(/[\s/]/)
+      return { speciesId, candidate, label: entry }
+    })
+    const catalog = await loadWorkbenchCatalog(fakeFetch({
+      candidates: excluded.map(({ speciesId, candidate }) => indexEntry(speciesId, candidate)),
+    }))
+    const options = workbenchOptionGroups(catalog).flatMap((group) => group.options)
+
+    expect(visualCatalog.userApprovals.gem_tang).toBe('round-v2')
+    for (const { speciesId, candidate, label } of excluded) {
+      expect(options.find((option) => option.key === candidateKey(speciesId, candidate))?.badge, label).not.toBe('approved')
+    }
   })
 })
 
