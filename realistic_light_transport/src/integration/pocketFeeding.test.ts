@@ -121,7 +121,11 @@ describe('mouth-contact consumption', () => {
   })
 
   it('rejects a duplicate contact — a second fish cannot re-consume the same pellet', () => {
-    const fed = dispatchPocketAction(createPocketReefShowcase(), { type: 'FEED', x: 0.5 })
+    const state = createPocketReefShowcase()
+    const firstClown = state.livestock.find((animal) => animal.species === 'ocellaris')!
+    state.livestock.push({ ...firstClown, id: Math.max(...state.livestock.map(({ id }) => id)) + 1,
+      name: 'Second Ocellaris' })
+    const fed = dispatchPocketAction(state, { type: 'FEED', x: 0.5 })
     const pelletId = projectPocketState(fed).food[0].id
     const clowns = fed.livestock.filter((a) => a.species === 'ocellaris' && a.alive !== false)
     const firstEater = clowns[0].id
@@ -138,17 +142,22 @@ describe('mouth-contact consumption', () => {
 })
 
 describe('fair physical targeting', () => {
-  it('reserves the first portion for the hungriest eligible fish and distributes a meal', () => {
+  it('reserves sunk portions for hungry bottom fish and distributes a meal', () => {
     const state = createPocketReefShowcase()
     const fish = state.livestock.filter((animal) => animal.kind === 'fish')
-    fish.forEach((animal, index) => { animal.hunger = [0.3, 0.55, 0.95][index] ?? 0.2 })
+    const bottomIds = new Set(projectPocketState(state).specimens
+      .filter(({ layer }) => layer === 'bottom').map(({ id }) => id))
+    const bottomFish = fish.filter(({ id }) => bottomIds.has(id))
+    fish.forEach((animal) => { animal.hunger = .99 })
+    bottomFish.forEach((animal, index) => { animal.hunger = [0.3, 0.55, 0.95][index] ?? .2 })
     const specimens = projectPocketState(state).specimens.filter((animal) => animal.kind === 'fish')
     const positions = new Map(specimens.map((animal) => [animal.id, new THREE.Vector3()]))
     const pellets = [101, 102, 103].map((id) => ({ id, x: 0, y: 0, z: 0, sunk: true, ageDays: 0 }))
 
     const assignments = assignPelletTargets(specimens, pellets, positions, 1)
-    const hungriest = specimens.reduce((best, animal) => animal.hunger > best.hunger ? animal : best)
-    expect(assignments.get(101)).toBe(hungriest.id)
+    const hungriestBottom = specimens.filter(({ layer }) => layer === 'bottom')
+      .reduce((best, animal) => animal.hunger > best.hunger ? animal : best)
+    expect(assignments.get(101)).toBe(hungriestBottom.id)
     expect(new Set(assignments.values()).size).toBe(3)
   })
 

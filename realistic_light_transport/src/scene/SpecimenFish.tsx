@@ -14,6 +14,7 @@ import { REEF_ROCKS } from './reefLayout'
 import {
   fishPaceMultiplier,
   fishRouteWaypoints,
+  isAcceptedAnimalSpeciesId,
   isSurfaceBoundLocomotion,
   resolveSpecimenLocomotionPlan,
   speciesBehaviorPolicyFor,
@@ -512,7 +513,9 @@ export function assignPelletTargets(specimens: readonly PocketSpecimen[], food: 
   void waterSurfaceY
   const assignments = new Map<number, number>()
   const fedThisPass = new Set<number>()
-  const hungryResidents = specimens.filter((specimen) => specimen.alive && specimen.hunger > .05)
+  const hungryResidents = specimens.filter((specimen) => specimen.alive && specimen.hunger > .05 &&
+    (!isAcceptedAnimalSpeciesId(specimen.speciesId) ||
+      !isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(specimen.speciesId))))
   const hungryBottom = hungryResidents.filter((specimen) => specimen.layer === 'bottom')
   const hungryWaterColumn = hungryResidents.filter((specimen) => specimen.layer !== 'bottom')
   // Freshly stocked residents share a lastFedDay, so an equal history must still reserve;

@@ -133,6 +133,17 @@ describe('authoritative species locomotion', () => {
     expect(Math.max(...samples.map((point) => point.distanceTo(samples[0])))).toBeLessThan(.45)
     expect(samples.at(-1)?.distanceTo(samples[0])).toBeLessThan(1e-6)
   })
+
+  it('reserves sunk food for a benthic goby instead of a non-pursuing cleaner shrimp', () => {
+    const state = createPocketReefShowcase()
+    state.livestock.find(({ species }) => species === 'diamond_goby')!.hunger = .65
+    state.livestock.find(({ species }) => species === 'cleaner_shrimp')!.hunger = 1
+    const specimens = projectPocketState(state).specimens.filter(({ speciesId }) =>
+      speciesId === 'diamond_goby' || speciesId === 'cleaner_shrimp')
+    const pellet = { id: 501, x: 0, y: -1.44, z: 0, sunk: true, ageDays: 0 }
+    expect(assignPelletTargets(specimens, [pellet], new Map(), .86).get(pellet.id))
+      .toBe(specimens.find(({ speciesId }) => speciesId === 'diamond_goby')?.id)
+  })
 })
 
 describe('specimen motion continuity', () => {
@@ -392,7 +403,7 @@ describe('accepted catalog showcase boundary', () => {
     const projected = projectPocketState(state).specimens
     const populations = resolveSpecimenPopulations(projected)
 
-    expect(populations.authoritative).toHaveLength(25)
+    expect(populations.authoritative).toHaveLength(state.livestock.length)
     expect(populations.authoritative.map(({ id }) => id)).toEqual(state.livestock.map(({ id }) => id))
     for (const specimen of populations.authoritative) {
       state = dispatchPocketAction(state, specimenSelectionAction(specimen.id))
