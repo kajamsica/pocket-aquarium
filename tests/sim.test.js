@@ -486,6 +486,7 @@ group("livestock conflict choices");
   eq(sold.selection, null, "selling the selected resident clears selection");
   eq(sold.livestock.length, 1, "only listed living residents are removed");
   eq(sold.livestock[0].id, deadId, "dead or unlisted residents are retained");
+  ok(sold.log.some(function (entry) { return entry.type === "store" && /Sold 2 living residents/.test(entry.message); }), "sale is logged");
   PA.dispatch(sold, { type: "PURCHASE_LIVESTOCK", species: "epaulette_shark", count: 1 });
   eq(sold.livestock.filter(function (a) { return a.species === "epaulette_shark"; }).length, 1, "ordinary purchase succeeds after conflicts are sold");
   eq(sold.credits, 4122, "sale refund and purchase remain separate deterministic transactions");
