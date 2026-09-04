@@ -2891,6 +2891,15 @@ input:focus-visible {
   filter: drop-shadow(0 0 8px rgba(79, 221, 225, 0.2));
 }
 
+/* Accepted specimen artwork letterboxes inside the same glyph box, so a 960x640 authoring render
+ * stays legible at both the 72 px board and 52 px compact thumbnail without resizing the card. */
+.pocket-offer-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .pocket-offer-visual span {
   width: 100%;
   padding: 4px 5px;
@@ -2929,6 +2938,60 @@ input:focus-visible {
   color: #a9ebf0;
   border: 1px solid rgba(91, 204, 214, 0.25);
   background: rgba(29, 101, 112, 0.22);
+}
+
+.pocket-offer-tag[data-tone="risk"] {
+  color: #2a1704;
+  background: #efb36a;
+}
+
+/* A compatibility risk is a decision, not a failure: the card borrows the amber lock hue rather
+   than the red of a real blocker, and the choice itself spans the card so all three outcomes and
+   the refund they cost are read together. */
+.pocket-store-offer[data-risk="true"] {
+  border-color: rgba(239, 179, 106, 0.4);
+}
+
+.pocket-offer-decision {
+  display: grid;
+  gap: 7px;
+  grid-column: 1 / -1;
+  padding: 9px 10px;
+  border: 1px solid rgba(239, 179, 106, 0.32);
+  border-radius: 10px;
+  background: rgba(52, 33, 8, 0.42);
+}
+
+.pocket-offer-decision > strong {
+  color: #ffe6bf;
+  font-size: 0.62rem;
+  line-height: 1.35;
+}
+
+.pocket-offer-decision > ul {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0 0 0 12px;
+}
+
+.pocket-offer-decision > ul > li,
+.pocket-offer-decision > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.54rem;
+  line-height: 1.4;
+}
+
+.pocket-offer-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pocket-offer-decision-actions > .hud-button {
+  flex: 1 1 auto;
+  min-width: 116px;
 }
 
 .pocket-store-context {
@@ -3183,12 +3246,21 @@ input:focus-visible {
   padding: 10px 12px 14px;
 }
 
-.pocket-specimen-panel .pocket-window-content > small {
-  display: block;
+.pocket-selected-identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
   margin-bottom: 9px;
+}
+
+.pocket-selected-identity > small {
+  overflow: hidden;
   color: var(--muted);
   font-size: 0.62rem;
   font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pocket-resident-list {
@@ -3231,6 +3303,10 @@ input:focus-visible {
   text-decoration: line-through;
 }
 
+.pocket-resident-row[data-dead="true"] .pocket-inline-name {
+  text-decoration: line-through;
+}
+
 .pocket-resident-identity {
   display: flex;
   align-items: baseline;
@@ -3244,6 +3320,44 @@ input:focus-visible {
   font-weight: 620;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pocket-inline-name,
+.pocket-inline-name-input {
+  min-width: 0;
+  height: 1.45em;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #f2fcfd;
+  background: transparent;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 620;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.pocket-inline-name {
+  overflow: hidden;
+  cursor: text;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pocket-inline-name-input {
+  width: 100%;
+  border-bottom: 1px solid #6fe6bd;
+  outline: none;
+}
+
+.pocket-selected-identity > .pocket-inline-name,
+.pocket-selected-identity > .pocket-inline-name-input {
+  flex: 1 1 auto;
+}
+
+.pocket-resident-identity > .pocket-inline-name-input {
+  flex: 1 1 auto;
 }
 
 .pocket-resident-identity small {

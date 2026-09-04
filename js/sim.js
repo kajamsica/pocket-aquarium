@@ -517,9 +517,11 @@
 
   function killAnimal(state, a, cause) {
     a.alive = false; a.health = 0; a.causeOfDeath = cause; a.decayDays = 0;
-    var sp = DATA.resolveSpecies(state, a.species);
-    log(state, "death", (sp ? sp.name : a.species) + " died — proximate cause: " + cause + ". Remove the body before it fouls the water.");
-    state.memorial.push({ species: a.species, name: sp ? sp.name : a.species, ageDays: +a.ageDays.toFixed(1), cause: cause, day: Math.floor(state.time.days) });
+    // The record names the animal the keeper lost, so a renamed resident is mourned by its name;
+    // `species` still carries the catalog identity for anything reading the memorial by species.
+    var label = residentLabel(state, a);
+    log(state, "death", label + " died — proximate cause: " + cause + ". Remove the body before it fouls the water.");
+    state.memorial.push({ species: a.species, name: label, ageDays: +a.ageDays.toFixed(1), cause: cause, day: Math.floor(state.time.days) });
   }
 
   /* ============================ corals / polyps ============================ */
@@ -804,6 +806,7 @@
       case ACT.CONSUME_FOOD: doConsumeFood(state, action.foodId, action.eaterId); break;
       case ACT.SELECT_ENTITY: state.selection = (action.id == null) ? null : { entityType: action.entityType || "livestock", id: action.id }; break;
       case ACT.REMOVE_DEAD: doRemoveDead(state, action.id); break;
+      case ACT.RENAME_LIVESTOCK: doRenameLivestock(state, action.id, action.name); break;
 
       case ACT.SET_SPEED: doSetSpeed(state, action.speed); break;
       case ACT.TOGGLE_PAUSE:
@@ -1063,7 +1066,7 @@
     eater.hunger = clamp(eater.hunger - sp.mealSize * p.amount, 0, 1.2);
     eater.lastFedDay = state.time.days;
     state.food.splice(fi, 1);
-    log(state, "feed", sp.name + " ate one food portion.");
+    log(state, "feed", residentLabel(state, eater) + " ate one food portion.");
     return true;
   }
   function doRemoveDead(state, id) {
@@ -1075,6 +1078,25 @@
     }
     state.livestock = kept;
     if (removed) { log(state, "care", "Removed decaying biomass — the water can recover now."); award(state, "removed_dead", 3, 0, null, false); }
+  }
+  /* Names one living or dead resident. Only the label changes: species, id, and every simulated
+     value stay put, so selection, feeding, death, and removal keep targeting the same animal. */
+  function doRenameLivestock(state, id, name) {
+    var resident = null;
+    for (var i = 0; i < state.livestock.length; i++) if (state.livestock[i].id === id) resident = state.livestock[i];
+    if (!resident) return false;
+    var was = residentLabel(state, resident);
+    var next = DATA.sanitizeResidentName(name);
+    if (next) resident.customName = next; else delete resident.customName;
+    var now = residentLabel(state, resident);
+    if (now === was) return false;
+    log(state, "care", was + " is now called " + now + ".");
+    return true;
+  }
+  /* What to call a resident anywhere it is identified: its custom name, else the species name. */
+  function residentLabel(state, a) {
+    var sp = DATA.resolveSpecies(state, a.species);
+    return a.customName || (sp ? sp.name : a.species);
   }
   function doSetSpeed(state, speed) {
     if (DATA.speeds.indexOf(speed) < 0) return;
@@ -1133,7 +1155,7 @@
       if (a.alive === false) { dead++; alerts.push("dead — remove body"); }
       else { healthSum += a.health; n++; if (a.hunger > 0.85) alerts.push("hungry"); if (a.health < 0.5) alerts.push("unhealthy"); }
       out.livestock.push({
-        id: a.id, species: a.species, name: sp ? sp.name : a.species, sci: sp ? sp.sci : "",
+        id: a.id, species: a.species, name: residentLabel(state, a), speciesName: sp ? sp.name : a.species, sci: sp ? sp.sci : "",
         ageDays: r3(a.ageDays), stage: a.stage, sex: a.sex,
         hunger: r3(a.hunger), condition: r3(a.condition), health: r3(a.health), alive: a.alive !== false, alerts: alerts
       });
@@ -1324,7 +1346,10 @@
   }
   function sanitizeAnimal(state, a) {
     var sp = DATA.resolveSpecies(state, a.species);
-    return {
+    // Only a save that actually carries a usable name gets the field back, so an older save — or
+    // one whose name sanitizes away to nothing — restores exactly as it did before renaming existed.
+    var customName = DATA.sanitizeResidentName(a.customName);
+    var out = {
       id: num(a.id, state.nextId++), species: a.species, kind: sp.kind,
       ageDays: clamp(num(a.ageDays, sp.maturityDays * 0.4), 0, 1e5),
       stage: a.stage === "adult" ? "adult" : "juvenile",
@@ -1335,6 +1360,8 @@
       lastFedDay: num(a.lastFedDay, state.time.days),
       x: clamp(num(a.x, 0.5), 0, 1), y: clamp(num(a.y, 0.5), 0, 1)
     };
+    if (customName) out.customName = customName;
+    return out;
   }
   function sanitizeCoral(state, co) {
     var cd = DATA.CORALS[co.species];
