@@ -1,0 +1,947 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "banggai_cardinal",
+  "rig": "PA_banggai_cardinal_Rig",
+  "root": "PA_banggai_cardinal_Root",
+  "meshes": [
+    "PA_banggai_cardinal_Body",
+    "PA_banggai_cardinal_Fins",
+    "PA_banggai_cardinal_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_banggai_cardinal_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.0006875000000000002,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_dorsal1"
+      ],
+      "label": "fin_body_dorsal1"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_dorsal2"
+      ],
+      "label": "fin_body_dorsal2"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_dorsal2_ray"
+      ],
+      "label": "fin_body_dorsal2_ray"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_anal_ray"
+      ],
+      "label": "fin_body_anal_ray"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "label": "fin_fin_dorsal1_dorsal2"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "label": "fin_fin_dorsal1_dorsal2_ray"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal1_anal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "label": "fin_fin_dorsal1_anal_ray"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal1_caudal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal1_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal1_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal1_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal1_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal2_anal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "label": "fin_fin_dorsal2_anal_ray"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal2_caudal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal2_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal2_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal2_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2",
+        "attach_dorsal2"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal2_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal2_ray_anal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "label": "fin_fin_dorsal2_ray_anal_ray"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal2_ray_caudal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal2_ray_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal2_ray_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal2_ray_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_dorsal2_ray",
+        "attach_dorsal2_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal2_ray_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_caudal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_ray_caudal"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_ray_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_ray_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_ray_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_anal_ray",
+        "attach_anal_ray"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_ray_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_banggai_cardinal_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_banggai_cardinal_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_banggai_cardinal_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_banggai_cardinal_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_banggai_cardinal_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.08,
+    "tolerance": 0.03,
+    "kind": "adult_total_length"
+  },
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Anal",
+        "AnalRay",
+        "Caudal",
+        "Dorsal1",
+        "Dorsal2",
+        "Dorsal2Ray",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Anal",
+        "AnalRay",
+        "Caudal",
+        "Dorsal1",
+        "Dorsal2",
+        "Dorsal2Ray",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "burst": {
+      "loop": false,
+      "frames": 30,
+      "bones": [
+        "Anal",
+        "AnalRay",
+        "Caudal",
+        "Dorsal1",
+        "Dorsal2",
+        "Dorsal2Ray",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_banggai_cardinal_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.00027500000000000007
+    },
+    {
+      "object": "PA_banggai_cardinal_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.00027500000000000007
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.04665,
+      -0.014399,
+      -0.030933
+    ],
+    "max": [
+      0.033829,
+      0.014399,
+      0.034554
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.05500000000000001,
+    "fins": [
+      "dorsal1",
+      "dorsal2",
+      "dorsal2_ray",
+      "anal",
+      "anal_ray",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-pr11-postmerge-runtime/realistic_light_transport/art/specimens/banggai_cardinal/candidates/fable-v3/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-pr11-postmerge-runtime/realistic_light_transport/art/specimens/banggai_cardinal/candidates/fable-v3/renders/three-view.png",
+    "boundsMin": [
+      -0.04665026441216469,
+      -0.014399051666259766,
+      -0.030932821333408356
+    ],
+    "boundsMax": [
+      0.033829376101493835,
+      0.014399049803614616,
+      0.034554172307252884
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

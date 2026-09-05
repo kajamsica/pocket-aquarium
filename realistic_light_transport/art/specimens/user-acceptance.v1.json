@@ -39,6 +39,12 @@
       "candidate": "fable-v2-*",
       "at": "2026-09-04T11:30:00-04:00",
       "statement": "we want to use/keep the later validated one not the initial reference"
+    },
+    {
+      "speciesId": "banggai_cardinal",
+      "candidate": "fable-v3",
+      "at": "2026-09-05T09:47:23-04:00",
+      "statement": "thats acceptable, make a pr to gdt this in instead"
     }
   ],
   "scope": "Look approval of candidate packages by their candidateHash. Runtime promotion (asset registry, bundled GLB, accepted-hash gate) remains a separate explicit pipeline step and is not performed by this record.",
@@ -47,6 +53,7 @@
     "ocellaris/fable-baseline (pipeline regression proof)",
     "gem_tang/fable-v2 (concurrent session build, superseded by round-v2)",
     "six_line_wrasse/fable-v1 (failed size gate, superseded by fable-v2)",
+    "banggai_cardinal/fable-v2 (unaccepted intermediate, superseded by fable-v3)",
     "acropora_branching/fable-v1-bushy_pink (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
     "acropora_branching/fable-v1-staghorn_blue (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
     "acropora_branching/fable-v1-staghorn_green_purple_tips (initial animated-skeleton build, superseded by the fable-v2 static-skeleton rebuild; package removed)",
@@ -155,6 +162,16 @@
       "geometryDigest": "0f7bac2e48661a64ca71641723b26cc6c5e2f3e45f317c549a2c54fee8babea3",
       "status": "user_accepted",
       "userApprovedLook": false
+    },
+    {
+      "speciesId": "banggai_cardinal",
+      "candidate": "fable-v3",
+      "candidateHash": "bfd02f8d07da58c37b45f954789e86d5500a9daca9469683094c8ff66e75d310",
+      "glbSha256": "438289d4105d3157ca345adec6c822b7ee94cd2f1f5f532302c8b7e74fe3814f",
+      "geometryDigest": "2efbb94946673cc445ba79dcfa0e14a48e3336e5b66e750d67e41932eb5c9a4f",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-05T09:47:23-04:00"
     },
     {
       "speciesId": "black_storm_ocellaris",

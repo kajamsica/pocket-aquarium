@@ -129,11 +129,12 @@ describe('accepted specimen asset registry', () => {
     }
   })
 
-  it('records the seven newly formalized variant approvals with exact hashes', () => {
+  it('records the eight newly formalized variant approvals with exact hashes', () => {
     const expected = [
       ['acropora_branching', 'fable-v2-staghorn_blue', 'ae219eb3c58c38129d948c979a9be99ff03863a9b8a856a46887a0cbba9bbe6a'],
       ['acropora_branching', 'fable-v2-table_green', '374f523f2b097c0cf97a583ae2c9c2d81395bc7c2197af6d6885804023925745'],
       ['anacropora', 'fable-v1-green', 'd2240c0653653ca8a9a07d31215d6523bce1f414146689f7ec06ad4259b34b2a'],
+      ['banggai_cardinal', 'fable-v3', '438289d4105d3157ca345adec6c822b7ee94cd2f1f5f532302c8b7e74fe3814f'],
       ['millepora', 'fable-v1-blade', '77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780'],
       ['millepora', 'fable-v1-branching', '9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634'],
       ['stylophora', 'fable-v1-blueberry', 'd61420f0a95f375723687b4ab747e8b1a1f637ac227719aa7bbc89606689a6e1'],
