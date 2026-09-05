@@ -62,7 +62,9 @@ export function initializeSemanticActions(actions: SemanticAnimationActions, pla
 export function applySemanticAnimationDrive(actions: SemanticAnimationActions, plan: SemanticAnimationPlan,
   hunger: number, feedDrive: number) {
   const burstDrive = THREE.MathUtils.clamp(feedDrive, 0, 1)
-  const responseActive = burstDrive > 0.12
+  // Ordinary pursuit stays on the locomotion clip. Only the short acquisition/contact pulse
+  // crosses this gate, so a non-looping response cannot restart throughout the whole chase.
+  const responseActive = burstDrive > 0.72
   const responseWeight = responseActive ? burstDrive : 0
   const baseWeight = 1 - responseWeight
   const locomotion = actions[plan.locomotion.clipName]
@@ -74,8 +76,9 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
   if (!response) return
   response.setEffectiveWeight(responseWeight)
   response.setEffectiveTimeScale(1.15 + burstDrive * 0.45)
-  if (responseActive && !response.isRunning()) response.reset().play()
+  if (responseActive && !response.isRunning() && response.time < response.getClip().duration - 1e-4) response.play()
   else if (!responseActive && response.isRunning()) response.stop().setEffectiveWeight(0)
+  else if (!responseActive) response.stop().setEffectiveWeight(0)
 }
 
 export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive }: RiggedSpecimenProps) {

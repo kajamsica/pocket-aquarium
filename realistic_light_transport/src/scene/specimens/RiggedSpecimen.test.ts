@@ -86,11 +86,11 @@ describe('rigged specimen semantic animation plan', () => {
     const actions = createActions(plan)
     initializeSemanticActions(actions, plan)
 
-    applySemanticAnimationDrive(actions, plan, 0.5, 0.1)
+    applySemanticAnimationDrive(actions, plan, 0.5, 0.6)
     expect(actions.burst?.getEffectiveWeight()).toBe(0)
     expect(actions.burst?.isRunning()).toBe(false)
 
-    applySemanticAnimationDrive(actions, plan, 0.5, 0.5)
+    applySemanticAnimationDrive(actions, plan, 0.5, 0.8)
     const totalWeight = (actions.idle?.getEffectiveWeight() ?? 0) +
       (actions.swim?.getEffectiveWeight() ?? 0) + (actions.burst?.getEffectiveWeight() ?? 0)
     expect(totalWeight).toBeCloseTo(1)
