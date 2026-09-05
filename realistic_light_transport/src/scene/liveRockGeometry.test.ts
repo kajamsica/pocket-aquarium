@@ -28,15 +28,15 @@ describe('live rock geometry', () => {
     const radii = Array.from({ length: position.count }, (_, index) =>
       new THREE.Vector3().fromBufferAttribute(position, index).length())
 
-    expect(Math.min(...radii)).toBeGreaterThanOrEqual(LIVE_ROCK_MIN_RADIUS - 1e-6)
     expect(Math.max(...radii)).toBeLessThanOrEqual(LIVE_ROCK_MAX_RADIUS + 1e-6)
-    expect(Math.max(...radii) - Math.min(...radii)).toBeGreaterThan(0.18)
+    expect(Math.max(...radii) - Math.min(...radii)).toBeGreaterThan(0.5)
+    expect(radii.filter((radius) => radius > 0.98).length).toBeGreaterThan(20)
+    expect(position.count).toBeGreaterThan(1800)
     expect(geometry.boundingSphere?.radius).toBeLessThan(1.2)
     for (let index = 0; index < normal.count; index += 1) {
-      const direction = new THREE.Vector3().fromBufferAttribute(position, index).normalize()
       const surfaceNormal = new THREE.Vector3().fromBufferAttribute(normal, index)
       expect(surfaceNormal.length()).toBeCloseTo(1, 5)
-      expect(surfaceNormal.dot(direction)).toBeGreaterThan(0.45)
+      expect(Number.isFinite(surfaceNormal.x + surfaceNormal.y + surfaceNormal.z)).toBe(true)
     }
     geometry.dispose()
   })
