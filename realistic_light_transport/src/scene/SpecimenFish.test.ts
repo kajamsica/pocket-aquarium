@@ -150,12 +150,18 @@ describe('authoritative species locomotion', () => {
       .toBe(specimens.find(({ speciesId }) => speciesId === 'diamond_goby')?.id)
   })
 
-  it('does not send satiated fish or surface-bound invertebrates swimming after a portion', () => {
+  it('targets a default-hunger fish while excluding satiated fish and surface-bound invertebrates', () => {
     const state = createPocketReefShowcase()
     const specimens = projectPocketState(state).specimens.filter(({ speciesId }) =>
       speciesId === 'ocellaris' || speciesId === 'cleaner_shrimp')
-    specimens.forEach((specimen) => { specimen.hunger = specimen.speciesId === 'cleaner_shrimp' ? 1 : .12 })
     const pellet = { id: 502, x: 0, y: 0, z: 0, sunk: false, ageDays: 0 }
+
+    const clown = specimens.find(({ speciesId }) => speciesId === 'ocellaris')!
+    expect(clown.hunger).toBeGreaterThan(.05)
+    expect(assignPelletTargets(specimens, [pellet], new Map(), .86).get(pellet.id)).toBe(clown.id)
+
+    clown.hunger = .05
+    specimens.find(({ speciesId }) => speciesId === 'cleaner_shrimp')!.hunger = 1
     expect(assignPelletTargets(specimens, [pellet], new Map(), .86)).toHaveProperty('size', 0)
   })
 

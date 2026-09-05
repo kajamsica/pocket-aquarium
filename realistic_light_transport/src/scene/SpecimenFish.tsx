@@ -37,7 +37,9 @@ const MAX_POSITION_FRAME_SECONDS = .05
 const MAX_FISH_FLOW_STEP = 0.025
 const FISH_MOTION_FRAME_PRIORITY = -2
 const FOOD_CONTACT_FRAME_PRIORITY = -1
-const FEEDING_HUNGER_THRESHOLD = .12
+// Must match the authoritative CONSUME_FOOD contract in js/sim.js. Raising this renderer-only
+// gate strands valid pellets because the showcase's ordinary starting hunger is .10.
+const FEEDING_HUNGER_THRESHOLD = .05
 const FOOD_ATTENTION_SECONDS = .32
 const FOOD_BITE_SECONDS = .38
 const FOOD_BITE_APPROACH_RADIUS = FOOD_CONTACT_RADIUS * 2.25
