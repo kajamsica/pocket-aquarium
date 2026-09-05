@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-04T15:35:02.081Z",
+  "generatedAt": "2026-09-05T13:47:42.638Z",
   "categories": [
     "fish",
     "coral",
@@ -15,6 +15,7 @@
     "missing"
   ],
   "userApprovals": {
+    "banggai_cardinal": "fable-v3",
     "blue_hippo_tang": "approved-v2",
     "brittle_star": "fable-v1",
     "gem_tang": "round-v2",
@@ -37,10 +38,10 @@
       "missing": 0
     },
     "candidates": {
-      "total": 57,
-      "loadable": 56,
+      "total": 58,
+      "loadable": 57,
       "missing": 1,
-      "userApproved": 4
+      "userApproved": 5
     }
   },
   "rows": [
@@ -108,6 +109,48 @@
             "authorPreview": "art/specimens/banggai_cardinal/candidates/fable-v1/renders/author-preview.png",
             "threeView": "art/specimens/banggai_cardinal/candidates/fable-v1/renders/three-view.png"
           }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Banggai Cardinalfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/banggai_cardinal/candidates/fable-v3/lod1.glb",
+          "glbSha256": "438289d4105d3157ca345adec6c822b7ee94cd2f1f5f532302c8b7e74fe3814f",
+          "glbSha256Verified": true,
+          "geometryDigest": "2efbb94946673cc445ba79dcfa0e14a48e3336e5b66e750d67e41932eb5c9a4f",
+          "statistics": {
+            "triangles": 8632,
+            "materials": 6,
+            "bones": 16,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.08,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/banggai_cardinal/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/banggai_cardinal/candidates/fable-v3/renders/three-view.png"
+          }
         }
       ],
       "variants": [],
@@ -122,10 +165,11 @@
         "referenceGrade": "B"
       },
       "visualDebt": [
-        "First dorsal spine tassels are painted (soft ray tips) rather than modelled as separate filaments.",
-        "Second dorsal and anal membranes are single sheared thin shells; the elongated anterior ray is part of the sheet, not a free filament.",
+        "First-dorsal spines are one bowed thin shell whose leading membrane is painted pale and dissolved between the spines; the hook is a smooth quadratic bow, not a sharp crook.",
+        "Second-dorsal filament and anal lobe are separate bowed thin shells abutting their pale sails at the base; the join is a shared base edge, not a continuous membrane.",
         "White spot pattern is procedural and identical across builds; real individuals carry unique spot patterns.",
-        "Mouth is the shared plan's small tube cue and reads narrower than the species' large gape (MG 27% SL)."
+        "Mouth is the shared plan's tube lip cue on a blunt snout plus a painted oblique gape cleft; the large gape (MG 27% SL) is not modelled as an opening.",
+        "Reference silhouette measured on the NOAA illustration; live fish vary in fin-ray length and bar width."
       ]
     },
     {

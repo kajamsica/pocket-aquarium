@@ -334,16 +334,16 @@
       "speciesId": "banggai_cardinal",
       "category": "fish",
       "bodyPlan": "fish",
-      "sourceCandidate": "fable-v1",
-      "sourceCandidateGlbPath": "art/specimens/banggai_cardinal/candidates/fable-v1/lod1.glb",
-      "bundledGlbPath": "src/assets/specimens/banggai_cardinal/v1/lod1.glb",
+      "sourceCandidate": "fable-v3",
+      "sourceCandidateGlbPath": "art/specimens/banggai_cardinal/candidates/fable-v3/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/banggai_cardinal/v2/lod1.glb",
       "version": "0.1.0",
       "referenceSize": {
         "meters": 0.08,
         "kind": "adult_total_length"
       },
       "displayName": "Banggai Cardinalfish",
-      "sha256": "2d9e21b87528977bf6d8d575dc7954da839dab6b7b00c167ecb5c2815627edd6",
+      "sha256": "438289d4105d3157ca345adec6c822b7ee94cd2f1f5f532302c8b7e74fe3814f",
       "clips": [
         "burst",
         "idle",
