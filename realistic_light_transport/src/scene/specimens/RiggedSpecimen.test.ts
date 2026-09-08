@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import * as THREE from 'three'
 
 import { specimenAssetFor } from './assetRegistry'
-import { applyEpauletteTurnPose, applySemanticAnimationDrive, initializeSemanticActions, makeAnimationClipInPlace,
-  resolveSemanticAnimationPlan, type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
+import { applySemanticAnimationDrive, applySpecimenTurnPose, initializeSemanticActions, makeAnimationClipInPlace,
+  resolveSemanticAnimationPlan, supportsSpecimenTurnPose, type SemanticAnimationActions,
+  type SemanticAnimationPlan } from './RiggedSpecimen'
 
 function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
   const mixer = new THREE.AnimationMixer(new THREE.Object3D())
@@ -12,6 +13,19 @@ function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
 }
 
 const turnBoneNames = ['Spine_A', 'Spine_B', 'Peduncle', 'Caudal'] as const
+const clownTurnProfile = [0.03, 0.07, 0.14, 0.22] as const
+const deepTurnProfile = [0.025, 0.055, 0.115, 0.18] as const
+const fusiformTurnProfile = [0.04, 0.08, 0.15, 0.23] as const
+const sharkTurnProfile = [0.1, 0.18, 0.28, 0.34] as const
+const turnProfileCases = [
+  ['ocellaris', clownTurnProfile], ['black_storm_ocellaris', clownTurnProfile],
+  ['banggai_cardinal', deepTurnProfile], ['blue_hippo_tang', deepTurnProfile],
+  ['gem_tang', deepTurnProfile], ['purple_tang', deepTurnProfile],
+  ['tomini_tang', deepTurnProfile], ['yellow_tang', deepTurnProfile],
+  ['diamond_goby', fusiformTurnProfile], ['watchman_goby', fusiformTurnProfile],
+  ['royal_gramma', fusiformTurnProfile], ['six_line_wrasse', fusiformTurnProfile],
+  ['epaulette_shark', sharkTurnProfile],
+] as const
 
 function createTurnRig() {
   const root = new THREE.Group()
@@ -29,14 +43,14 @@ function zAngle(root: THREE.Object3D, boneName: string) {
 }
 
 describe('rigged specimen semantic animation plan', () => {
-  it('clamps and mirrors the directional Epaulette turn pose', () => {
+  it.each(turnProfileCases)('clamps and mirrors the %s directional turn pose', (speciesId) => {
     const hardRight = createTurnRig()
     const clampedRight = createTurnRig()
     const hardLeft = createTurnRig()
 
-    applyEpauletteTurnPose(hardRight, 'epaulette_shark', 1)
-    applyEpauletteTurnPose(clampedRight, 'epaulette_shark', 4)
-    applyEpauletteTurnPose(hardLeft, 'epaulette_shark', -1)
+    applySpecimenTurnPose(hardRight, speciesId, 1)
+    applySpecimenTurnPose(clampedRight, speciesId, 4)
+    applySpecimenTurnPose(hardLeft, speciesId, -1)
 
     for (const name of turnBoneNames) {
       expect(hardRight.getObjectByName(name)!.quaternion.angleTo(clampedRight.getObjectByName(name)!.quaternion))
@@ -45,49 +59,50 @@ describe('rigged specimen semantic animation plan', () => {
     }
   })
 
-  it('distributes steering curvature progressively toward the tail', () => {
+  it.each(turnProfileCases)('supports %s and applies its exact progressive turn profile', (speciesId, profile) => {
     const root = createTurnRig()
-    applyEpauletteTurnPose(root, 'epaulette_shark', 1)
+    applySpecimenTurnPose(root, speciesId, 1)
 
     const bends = turnBoneNames.map((name) => Math.abs(zAngle(root, name)))
-    expect(bends[0]).toBeGreaterThan(0)
-    expect(bends[1]).toBeGreaterThan(bends[0])
-    expect(bends[2]).toBeGreaterThan(bends[1])
-    expect(bends[3]).toBeGreaterThan(bends[2])
-    expect(bends[0]).toBeCloseTo(0.1)
-    expect(bends[1]).toBeCloseTo(0.18)
-    expect(bends[2]).toBeCloseTo(0.28)
-    expect(bends[3]).toBeCloseTo(0.34)
+    expect(supportsSpecimenTurnPose(speciesId)).toBe(true)
+    for (let index = 0; index < bends.length; index += 1) {
+      expect(bends[index]).toBeCloseTo(profile[index])
+      if (index > 0) expect(bends[index]).toBeGreaterThan(bends[index - 1])
+    }
   })
 
-  it('reapplies from the freshly sampled authored pose without accumulating bend', () => {
+  it.each(turnProfileCases)('reapplies %s from a fresh sampled pose without accumulating bend', (speciesId) => {
     const root = createTurnRig()
     const spine = root.getObjectByName('Spine_A')!
     const sampledPose = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.12)
 
     spine.quaternion.copy(sampledPose)
-    applyEpauletteTurnPose(root, 'epaulette_shark', 0.6)
+    applySpecimenTurnPose(root, speciesId, 0.6)
     const firstFrame = spine.quaternion.clone()
     spine.quaternion.copy(sampledPose)
-    applyEpauletteTurnPose(root, 'epaulette_shark', 0.6)
+    applySpecimenTurnPose(root, speciesId, 0.6)
 
     expect(spine.quaternion.angleTo(firstFrame)).toBeCloseTo(0)
   })
 
-  it('leaves a neutral pose and every non-Epaulette rig unchanged', () => {
-    const neutral = createTurnRig()
-    const otherSpecies = createTurnRig()
+  it('leaves a supported fish neutral pose unchanged', () => {
+    const root = createTurnRig()
     const base = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.2)
-    neutral.getObjectByName('Spine_A')!.quaternion.copy(base)
-    otherSpecies.getObjectByName('Spine_A')!.quaternion.copy(base)
+    root.getObjectByName('Spine_A')!.quaternion.copy(base)
 
-    applyEpauletteTurnPose(neutral, 'epaulette_shark', 0)
-    applyEpauletteTurnPose(otherSpecies, 'ocellaris', 1)
+    applySpecimenTurnPose(root, 'ocellaris', 0)
 
-    expect(neutral.getObjectByName('Spine_A')!.quaternion.equals(base)).toBe(true)
-    expect(otherSpecies.getObjectByName('Spine_A')!.quaternion.equals(base)).toBe(true)
-    expect(otherSpecies.children.every((bone) => bone.quaternion.equals(bone.name === 'Spine_A' ? base : new THREE.Quaternion())))
-      .toBe(true)
+    expect(root.getObjectByName('Spine_A')!.quaternion.equals(base)).toBe(true)
+  })
+
+  it.each(['cleaner_shrimp', 'astrea_snail', 'acropora_branching'])('leaves unsupported %s rigs unchanged', (speciesId) => {
+    const root = createTurnRig()
+    const before = root.children.map((bone) => bone.quaternion.clone())
+
+    applySpecimenTurnPose(root, speciesId, 1)
+
+    expect(supportsSpecimenTurnPose(speciesId)).toBe(false)
+    expect(root.children.every((bone, index) => bone.quaternion.equals(before[index]))).toBe(true)
   })
 
   it('removes only cloned rig-root translation and leaves the source clip unchanged', () => {
