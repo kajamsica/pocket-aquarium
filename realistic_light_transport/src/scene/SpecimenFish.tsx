@@ -37,6 +37,12 @@ const MAX_POSITION_FRAME_SECONDS = .05
 const MAX_FISH_FLOW_STEP = 0.025
 const FISH_MOTION_FRAME_PRIORITY = -2
 const FOOD_CONTACT_FRAME_PRIORITY = -1
+// Must match the authoritative CONSUME_FOOD contract in js/sim.js. Raising this renderer-only
+// gate strands valid pellets because the showcase's ordinary starting hunger is .10.
+const FEEDING_HUNGER_THRESHOLD = .05
+const FOOD_ATTENTION_SECONDS = .32
+const FOOD_BITE_SECONDS = .38
+const FOOD_BITE_APPROACH_RADIUS = FOOD_CONTACT_RADIUS * 2.25
 /** The selected marker is presentation only: it must never become a click or feed-tap target. */
 const MARKER_NO_RAYCAST = () => null
 /** Transient pointer presentation only. It carries an id and viewport point; the HUD reads the
@@ -534,7 +540,7 @@ export function assignPelletTargets(specimens: readonly PocketSpecimen[], food: 
   void waterSurfaceY
   const assignments = new Map<number, number>()
   const fedThisPass = new Set<number>()
-  const hungryResidents = specimens.filter((specimen) => specimen.alive && specimen.hunger > .05 &&
+  const hungryResidents = specimens.filter((specimen) => specimen.alive && specimen.hunger > FEEDING_HUNGER_THRESHOLD &&
     (!isAcceptedAnimalSpeciesId(specimen.speciesId) ||
       !isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(specimen.speciesId))))
   const hungryBottom = hungryResidents.filter((specimen) => specimen.layer === 'bottom')
@@ -681,7 +687,7 @@ export function constrainSpecimenHardscapeTurn(position: THREE.Vector3, previous
   return true
 }
 
-interface MotionProfile {
+export interface MotionProfile {
   readonly cruiseSpeed: number
   readonly pursuitSpeed: number
   readonly acceleration: number
@@ -692,6 +698,56 @@ interface MotionProfile {
   readonly roamX: number
   readonly roamY: number
   readonly roamZ: number
+}
+
+export interface FeedingResponseState {
+  targetFoodId: number | null
+  biteFoodId: number | null
+  responseUntil: number
+}
+
+export function createFeedingResponseState(): FeedingResponseState {
+  return { targetFoodId: null, biteFoodId: null, responseUntil: -Infinity }
+}
+
+/** One attention flick on acquisition and one short semantic response at mouth approach.
+ *  Holding a target between those moments must remain an ordinary forward swim, otherwise
+ *  non-looping burst/sift clips continuously restart and make the animal twitch. */
+export function updateFeedingResponseState(state: FeedingResponseState, targetFoodId: number | null,
+  mouthDistance: number | null, nowSeconds: number) {
+  if (state.targetFoodId !== targetFoodId) {
+    state.targetFoodId = targetFoodId
+    state.biteFoodId = null
+    if (targetFoodId !== null) state.responseUntil = Math.max(state.responseUntil, nowSeconds + FOOD_ATTENTION_SECONDS)
+  }
+  if (targetFoodId !== null && mouthDistance !== null && mouthDistance <= FOOD_BITE_APPROACH_RADIUS &&
+    state.biteFoodId !== targetFoodId) {
+    state.biteFoodId = targetFoodId
+    state.responseUntil = Math.max(state.responseUntil, nowSeconds + FOOD_BITE_SECONDS)
+  }
+  return nowSeconds < state.responseUntil
+}
+
+/** Feeding is a deliberate burst, not a teleport: the normal species cap remains the base,
+ *  while turning and acceleration briefly become more decisive during pursuit. */
+export function resolveFoodPursuitMotion(profile: MotionProfile, pursuing: boolean) {
+  return pursuing ? {
+    maximumSpeed: profile.pursuitSpeed * 1.12,
+    acceleration: profile.acceleration * 1.55,
+    turnRate: profile.turnRate * 1.35,
+  } : {
+    maximumSpeed: profile.cruiseSpeed,
+    acceleration: profile.acceleration,
+    turnRate: profile.turnRate,
+  }
+}
+
+export function resolveFoodAnimationDrive(pursuing: boolean, responsePulse: boolean, normalizedSpeed: number) {
+  if (responsePulse) return 1
+  if (!pursuing) return THREE.MathUtils.clamp(normalizedSpeed * .16, 0, .3)
+  // Deliberately below RiggedSpecimen's response threshold: speed up locomotion without
+  // replaying the authored response clip for every frame of a potentially long chase.
+  return THREE.MathUtils.clamp(.42 + normalizedSpeed * .1, .42, .62)
 }
 
 interface FishPhysicsState {
@@ -945,7 +1001,7 @@ function FoodContactDriver({ food, specimens, mouths, assignments, paused, consu
       if (consumeSent.current.has(pellet.id)) continue
       const assignedEater = assignments.get(pellet.id)
       const eater = specimens.find((specimen) => specimen.id === assignedEater && specimen.alive &&
-        specimen.hunger > .05 && (specimen.layer !== 'bottom' || pellet.sunk) &&
+        specimen.hunger > FEEDING_HUNGER_THRESHOLD && (specimen.layer !== 'bottom' || pellet.sunk) &&
         visibleFoodContact(mouths.get(specimen.id) ?? { x: Infinity, y: Infinity, z: Infinity }, pellet,
           firstSeenAt.current.get(pellet.id) ?? nowMs, nowMs))
       if (!eater) continue
@@ -1010,6 +1066,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const mouthPosition = useMemo(() => new THREE.Vector3(), [])
   const fallbackMouth = useMemo(() => new THREE.Vector3(), [])
   const forage = useRef(0)
+  const feedingResponse = useRef(createFeedingResponseState())
   const tailPhase = useRef(seededUnit(specimen.id, 2) * Math.PI * 2)
   const phase = seededUnit(specimen.id, 1) * Math.PI * 2
   const behaviorPolicy = speciesBehaviorPolicyFor(specimen.speciesId)
@@ -1032,7 +1089,9 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const markerRadius = (riggedAsset ? length : 1) * .62
   const visualPlan = resolveSpecimenVisualPlan(specimen.speciesId, Boolean(riggedAsset))
   const targetFood = food.find((pellet) => assignments.get(pellet.id) === specimen.id)
-  const targetPosition = targetFood ?? null
+  // Bottom fish may own a reserved falling portion, but they do not swim up after it. Their
+  // visible response begins only when that portion reaches the substrate and becomes reachable.
+  const targetPosition = targetFood && (!benthic || targetFood.sunk) ? targetFood : null
   const profile = specimenMotionProfile(specimen.speciesId)
   const verticalBounds = specimenVerticalBounds(specimen.layer, waterSurfaceY, bodyRadius)
   const habitatPolicy = behaviorPolicy.fishHabitat
@@ -1183,7 +1242,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
 
     const arrivalDistance = motion.desired.length()
-    const maximumSpeed = targetPosition ? profile.pursuitSpeed : profile.cruiseSpeed *
+    const pursuitMotion = resolveFoodPursuitMotion(profile, Boolean(targetPosition))
+    const maximumSpeed = targetPosition ? pursuitMotion.maximumSpeed : profile.cruiseSpeed *
       fishPaceMultiplier(habitatPolicy!, specimen.id, now)
     let desiredSpeed = maximumSpeed * Math.min(1, Math.sqrt(arrivalDistance / profile.arrivalRadius))
     const mouthDistance = targetPosition ? motion.position.distanceTo(targetPosition) - mouthLead : 0
@@ -1196,7 +1256,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const horizontalDrive = Math.hypot(motion.desiredDirection.x, motion.desiredDirection.z)
     if (horizontalDrive > 1e-4) {
       steerSpecimenHeading(motion.crowdHeading, motion.desiredDirection, motion.velocity, motion.position,
-        specimen.id, bodyRadius, collisionEnvelope, positions, behavior, step, profile.turnRate)
+        specimen.id, bodyRadius, collisionEnvelope, positions, behavior, step, pursuitMotion.turnRate)
       motion.desiredDirection.x = motion.crowdHeading.x * horizontalDrive
       motion.desiredDirection.z = motion.crowdHeading.z * horizontalDrive
     }
@@ -1210,11 +1270,11 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     if (benthic && !targetPosition) motion.desiredDirection.y *= .16
     if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
     else motion.desiredDirection.copy(motion.forward)
-    turnTowards(motion.forward, motion.desiredDirection, profile.turnRate * step, motion.correction)
+    turnTowards(motion.forward, motion.desiredDirection, pursuitMotion.turnRate * step, motion.correction)
 
     motion.desired.copy(motion.forward).multiplyScalar(desiredSpeed)
     motion.correction.copy(motion.desired).sub(motion.velocity)
-    const maximumVelocityChange = profile.acceleration * step
+    const maximumVelocityChange = pursuitMotion.acceleration * step
     if (motion.correction.lengthSq() > maximumVelocityChange * maximumVelocityChange) {
       motion.correction.setLength(maximumVelocityChange)
     }
@@ -1266,8 +1326,14 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     node.scale.setScalar(riggedAsset ? 1 : length)
     billboardMarker()
 
-    const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 + turnAngle / Math.max(profile.turnRate * step, .001) * .16, 0, .3)
-    const feedDrive = targetPosition ? .58 + normalizedSpeed * .22 : motionDrive
+    const estimatedMouthDistance = targetPosition ? Math.max(0, motion.position.distanceTo(targetPosition) - mouthLead) : null
+    const responsePulse = updateFeedingResponseState(feedingResponse.current, targetPosition?.id ?? null,
+      estimatedMouthDistance, now)
+    const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 +
+      turnAngle / Math.max(pursuitMotion.turnRate * step, .001) * .16, 0, .3)
+    const feedDrive = responsePulse ? 1 : targetPosition
+      ? resolveFoodAnimationDrive(true, false, normalizedSpeed)
+      : motionDrive
     forage.current += (THREE.MathUtils.clamp(feedDrive, 0, 1) - forage.current) * (1 - Math.exp(-step * 4.5))
     tailPhase.current += step * (4.4 + normalizedSpeed * 8.5)
     if (tail.current) {

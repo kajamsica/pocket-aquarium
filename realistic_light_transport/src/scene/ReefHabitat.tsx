@@ -19,6 +19,7 @@ import {
   useFeeding, type ScenePellet,
 } from './feeding'
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
+import { createLiveRockGeometry } from './liveRockGeometry'
 import { REEF_ROCKS as ROCKS, resolveReefPelletPosition, seededUnit } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
 import { tankDragInProgress, tankPinchInProgress } from './tankGestures'
@@ -253,25 +254,23 @@ function SandBed({ material }: { readonly material: ProceduralMaterialTextures }
 }
 
 function Rockwork({ material }: { readonly material: ProceduralMaterialTextures }) {
-  const rockRef = useRef<THREE.InstancedMesh>(null)
   const poreRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const color = useMemo(() => new THREE.Color(), [])
+  const geometries = useMemo(() => ROCKS.map((_, index) => createLiveRockGeometry(index + 29)), [])
+  const colors = useMemo(() => {
+    const baseRockColor = new THREE.Color('#635d54')
+    return ROCKS.map((_, index) => new THREE.Color().setHSL(
+      0.075 + seededUnit(index, 40) * 0.035,
+      0.09,
+      0.25 + seededUnit(index, 41) * 0.08,
+    ).multiply(baseRockColor))
+  }, [])
+
+  useEffect(() => () => geometries.forEach((geometry) => geometry.dispose()), [geometries])
 
   useLayoutEffect(() => {
-    const rock = rockRef.current
     const pore = poreRef.current
-    if (!rock || !pore) return
-
-    ROCKS.forEach((piece, index) => {
-      dummy.position.copy(piece.position)
-      dummy.rotation.copy(piece.rotation)
-      dummy.scale.copy(piece.scale)
-      dummy.updateMatrix()
-      rock.setMatrixAt(index, dummy.matrix)
-      color.setHSL(0.075 + seededUnit(index, 40) * 0.035, 0.09, 0.25 + seededUnit(index, 41) * 0.08)
-      rock.setColorAt(index, color)
-    })
+    if (!pore) return
 
     PORE_PATCHES.forEach((patch, index) => {
       dummy.position.copy(patch.position)
@@ -281,29 +280,37 @@ function Rockwork({ material }: { readonly material: ProceduralMaterialTextures 
       pore.setMatrixAt(index, dummy.matrix)
     })
 
-    rock.instanceMatrix.needsUpdate = true
     pore.instanceMatrix.needsUpdate = true
-    if (rock.instanceColor) rock.instanceColor.needsUpdate = true
-  }, [color, dummy])
+  }, [dummy])
 
   return (
     <group>
-      <instancedMesh ref={rockRef} args={[undefined, undefined, ROCKS.length]} castShadow receiveShadow userData={{
-        [CORAL_PLACEMENT_SURFACE_KEY]: 'rock', [CORAL_PLACEMENT_SURFACE_ID_KEY]: 'rock',
-      }}>
-        <icosahedronGeometry args={[1, 2]} />
-        <meshStandardMaterial
-          color="#635d54"
-          map={material.albedoMap}
-          normalMap={material.normalMap}
-          roughnessMap={material.roughnessMap}
-          emissiveMap={material.emissiveMap ?? undefined}
-          emissive="#1c071c"
-          emissiveIntensity={0.08}
-          roughness={0.93}
-          vertexColors
-        />
-      </instancedMesh>
+      {ROCKS.map((piece, index) => (
+        <mesh
+          key={`live-rock-${index}`}
+          geometry={geometries[index]}
+          position={piece.position}
+          rotation={piece.rotation}
+          scale={piece.scale}
+          castShadow
+          receiveShadow
+          userData={{
+            [CORAL_PLACEMENT_SURFACE_KEY]: 'rock',
+            [CORAL_PLACEMENT_SURFACE_ID_KEY]: `rock:${index}`,
+          }}
+        >
+          <meshStandardMaterial
+            color={colors[index]}
+            map={material.albedoMap}
+            normalMap={material.normalMap}
+            roughnessMap={material.roughnessMap}
+            emissiveMap={material.emissiveMap ?? undefined}
+            emissive="#1c071c"
+            emissiveIntensity={0.08}
+            roughness={0.93}
+          />
+        </mesh>
+      ))}
       <instancedMesh ref={poreRef} args={[undefined, undefined, PORE_PATCHES.length]}>
         <sphereGeometry args={[1, 8, 5]} />
         <meshStandardMaterial color="#241f1e" roughness={1} />

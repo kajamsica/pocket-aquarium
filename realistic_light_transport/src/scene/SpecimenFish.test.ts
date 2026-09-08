@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 
 import { createPocketReefShowcase, dispatchPocketAction, projectPocketState } from '../integration/pocketAquariumBridge'
+import { FOOD_CONTACT_RADIUS } from './foodContact'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import { REEF_ROCKS } from './reefLayout'
 import {
   advanceSpecimenMotionState,
   assignPelletTargets,
+  createFeedingResponseState,
   createSpecimenMotionState,
   createSpecimenMotionRoute,
   createAcceptedShowcaseCatalog,
@@ -21,6 +23,8 @@ import {
   minimumSpecimenHardscapeClearance,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
+  resolveFoodAnimationDrive,
+  resolveFoodPursuitMotion,
   sampleSpecimenMotionRoute,
   specimenMotionProfile,
   specimenSurfaceProgress,
@@ -31,6 +35,7 @@ import {
   specimenSelectionAction,
   steerSpecimenHeading,
   updateUprightSpecimenOrientation,
+  updateFeedingResponseState,
 } from './SpecimenFish'
 import {
   isSurfaceBoundLocomotion,
@@ -143,6 +148,42 @@ describe('authoritative species locomotion', () => {
     const pellet = { id: 501, x: 0, y: -1.44, z: 0, sunk: true, ageDays: 0 }
     expect(assignPelletTargets(specimens, [pellet], new Map(), .86).get(pellet.id))
       .toBe(specimens.find(({ speciesId }) => speciesId === 'diamond_goby')?.id)
+  })
+
+  it('targets a default-hunger fish while excluding satiated fish and surface-bound invertebrates', () => {
+    const state = createPocketReefShowcase()
+    const specimens = projectPocketState(state).specimens.filter(({ speciesId }) =>
+      speciesId === 'ocellaris' || speciesId === 'cleaner_shrimp')
+    const pellet = { id: 502, x: 0, y: 0, z: 0, sunk: false, ageDays: 0 }
+
+    const clown = specimens.find(({ speciesId }) => speciesId === 'ocellaris')!
+    expect(clown.hunger).toBeGreaterThan(.05)
+    expect(assignPelletTargets(specimens, [pellet], new Map(), .86).get(pellet.id)).toBe(clown.id)
+
+    clown.hunger = .05
+    specimens.find(({ speciesId }) => speciesId === 'cleaner_shrimp')!.hunger = 1
+    expect(assignPelletTargets(specimens, [pellet], new Map(), .86)).toHaveProperty('size', 0)
+  })
+
+  it('uses bounded feeding boosts and short, non-repeating attention and bite pulses', () => {
+    const profile = specimenMotionProfile('ocellaris')
+    expect(resolveFoodPursuitMotion(profile, true)).toEqual({
+      maximumSpeed: profile.pursuitSpeed * 1.12,
+      acceleration: profile.acceleration * 1.55,
+      turnRate: profile.turnRate * 1.35,
+    })
+    expect(resolveFoodAnimationDrive(true, false, 1)).toBeLessThan(.72)
+    expect(resolveFoodAnimationDrive(true, true, 1)).toBe(1)
+
+    const response = createFeedingResponseState()
+    expect(updateFeedingResponseState(response, 9, 1, 2)).toBe(true)
+    expect(updateFeedingResponseState(response, 9, 1, 2.33)).toBe(false)
+    expect(updateFeedingResponseState(response, 9, FOOD_CONTACT_RADIUS * 2, 2.34)).toBe(true)
+    const biteUntil = response.responseUntil
+    expect(updateFeedingResponseState(response, 9, FOOD_CONTACT_RADIUS, 2.35)).toBe(true)
+    expect(response.responseUntil).toBe(biteUntil)
+    expect(updateFeedingResponseState(response, null, null, biteUntil - .01)).toBe(true)
+    expect(updateFeedingResponseState(response, null, null, biteUntil + .01)).toBe(false)
   })
 })
 
