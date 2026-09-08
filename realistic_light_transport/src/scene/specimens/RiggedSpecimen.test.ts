@@ -54,6 +54,10 @@ describe('rigged specimen semantic animation plan', () => {
     expect(bends[1]).toBeGreaterThan(bends[0])
     expect(bends[2]).toBeGreaterThan(bends[1])
     expect(bends[3]).toBeGreaterThan(bends[2])
+    expect(bends[0]).toBeCloseTo(0.1)
+    expect(bends[1]).toBeCloseTo(0.18)
+    expect(bends[2]).toBeCloseTo(0.28)
+    expect(bends[3]).toBeCloseTo(0.34)
   })
 
   it('reapplies from the freshly sampled authored pose without accumulating bend', () => {

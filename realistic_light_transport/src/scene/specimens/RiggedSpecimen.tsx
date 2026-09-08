@@ -46,10 +46,10 @@ export function resolveSemanticAnimationPlan(asset: SpecimenAsset): SemanticAnim
 export type SemanticAnimationActions = Partial<Record<string, THREE.AnimationAction>>
 
 const EPAULETTE_TURN_BONES = [
-  ['Spine_A', 0.07],
-  ['Spine_B', 0.13],
-  ['Peduncle', 0.2],
-  ['Caudal', 0.24],
+  ['Spine_A', 0.1],
+  ['Spine_B', 0.18],
+  ['Peduncle', 0.28],
+  ['Caudal', 0.34],
 ] as const
 const TURN_AXIS = new THREE.Vector3(0, 0, 1)
 const TURN_ROTATION = new THREE.Quaternion()
