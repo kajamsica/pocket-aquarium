@@ -11,7 +11,13 @@ import type { ScenePellet } from './feeding'
 import { FOOD_CONTACT_RADIUS, type ScenePoint, visibleFoodContact } from './foodContact'
 import type { FlowFieldSource } from './ReefHabitat'
 import { REEF_ROCKS } from './reefLayout'
-import { diamondGobyBurrowSite, sharedBurrowSite, type BurrowSite } from './speciesInteractions'
+import {
+  diamondGobyBurrowSite,
+  sampleDiamondGobyHabitatTarget,
+  sharedBurrowSite,
+  type BurrowSite,
+  type DiamondGobyHabitatMode,
+} from './speciesInteractions'
 import {
   fishPaceMultiplier,
   fishRouteWaypoints,
@@ -1115,6 +1121,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const behaviorPolicy = speciesBehaviorPolicyFor(specimen.speciesId)
   const locomotion = resolveSpecimenLocomotionPlan(specimen.speciesId)
   const surfaceBound = isSurfaceBoundLocomotion(locomotion)
+  const diamondGoby = specimen.speciesId === 'diamond_goby'
   const rootX = THREE.MathUtils.lerp(-TANK_HALF_WIDTH * .72, TANK_HALF_WIDTH * .72, specimen.x)
   const benthic = locomotion === 'benthic_fish'
   const clearance = specimen.speciesId === 'epaulette_shark' ? .14 : .08
@@ -1138,16 +1145,14 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const profile = specimenMotionProfile(specimen.speciesId)
   const verticalBounds = specimenVerticalBounds(specimen.layer, waterSurfaceY, bodyRadius)
   const habitatPolicy = behaviorPolicy.fishHabitat
-  const interactionSite = useMemo(() => specimen.speciesId === 'diamond_goby'
-    ? diamondGobyBurrowSite(specimen.id)
-    : specimen.speciesId === 'watchman_goby' || specimen.speciesId === 'pistol_shrimp'
-      ? sharedBurrowSite() : null, [specimen.id, specimen.speciesId])
+  const interactionSite = useMemo(() => specimen.speciesId === 'watchman_goby' || specimen.speciesId === 'pistol_shrimp'
+    ? sharedBurrowSite() : null, [specimen.id, specimen.speciesId])
   const interactionTarget = useMemo(() => new THREE.Vector3(), [])
-  const habitatWaypoints = useMemo(() => surfaceBound || !habitatPolicy || interactionSite ? [] : fishRouteWaypoints(habitatPolicy, specimen.id, {
+  const habitatWaypoints = useMemo(() => surfaceBound || !habitatPolicy || interactionSite || diamondGoby ? [] : fishRouteWaypoints(habitatPolicy, specimen.id, {
     x: [-TANK_HALF_WIDTH + bodyRadius + length * .34, TANK_HALF_WIDTH - bodyRadius - length * .34],
     z: [-TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius],
   }, verticalBounds, REEF_ROCKS.map((rock) => new THREE.Vector3(...rock.position.toArray()))),
-  [bodyRadius, habitatPolicy, interactionSite, length, specimen.id, surfaceBound, verticalBounds])
+  [bodyRadius, diamondGoby, habitatPolicy, interactionSite, length, specimen.id, surfaceBound, verticalBounds])
   const surfaceCircuit = useMemo(() => surfaceBound ? createSurfaceCircuit(
     specimen.speciesId, specimen.id, TANK_HALF_WIDTH - bodyRadius, TANK_HALF_DEPTH - bodyRadius, SAND_Y) : undefined,
   [bodyRadius, specimen.id, specimen.speciesId, surfaceBound])
@@ -1204,7 +1209,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const step = Math.min(Math.max(delta, 0), .05)
     const mouthLead = riggedAsset ? length * .53 : length * .5
     const bodyHalfSpan = Math.max(length * (shark ? .48 : .34), bodyRadius * .55)
-    const sifting = interactionSite
+    let diamondGobyMode: DiamondGobyHabitatMode | null = null
+    let sifting = interactionSite
       ? sampleBurrowResidentTarget(specimen.speciesId, specimen.id, now, interactionSite, interactionTarget)
       : false
 
@@ -1265,7 +1271,32 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       motion.nextRoamAt = 0
     }
 
-    if (!targetPosition && interactionSite) {
+    if (diamondGoby) {
+      diamondGobyMode = sampleDiamondGobyHabitatTarget(specimen.id + motion.roamIndex, now, interactionTarget)
+      sifting = diamondGobyMode === 'sand_sift'
+      if (!targetPosition && now >= motion.nextRoamAt) {
+        const targetDistanceSq = motion.position.distanceToSquared(interactionTarget)
+        const previousDistanceSq = motion.previousPosition.distanceToSquared(interactionTarget)
+        motion.nextRoamAt = now + 1.5
+        if (targetDistanceSq > .04 && targetDistanceSq >= previousDistanceSq - 1e-4) {
+          motion.roamIndex += 1
+          diamondGobyMode = sampleDiamondGobyHabitatTarget(
+            specimen.id + motion.roamIndex, now, interactionTarget)
+          if (diamondGobyMode === 'rock_excursion') {
+            diamondGobyMode = 'sand_transfer'
+            interactionTarget.copy(diamondGobyBurrowSite(specimen.id + motion.roamIndex).position)
+          }
+          sifting = diamondGobyMode === 'sand_sift'
+        }
+      }
+    }
+    const habitatBenthic = benthic && (Boolean(targetPosition) || diamondGobyMode !== 'rock_excursion')
+
+    if (!targetPosition && diamondGobyMode) {
+      motion.roamTarget.copy(interactionTarget)
+      clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius,
+        habitatBenthic, clearance, waterSurfaceY)
+    } else if (!targetPosition && interactionSite) {
       motion.roamTarget.copy(interactionTarget)
       const sandLevel = motion.roamTarget.y
       resolveReefHardscape(motion.roamTarget, bodyRadius, benthic)
@@ -1326,14 +1357,15 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       motion.desiredDirection.x = motion.crowdHeading.x * horizontalDrive
       motion.desiredDirection.z = motion.crowdHeading.z * horizontalDrive
     }
-    addPredictiveAvoidance(motion, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY, profile.lookAhead)
+    addPredictiveAvoidance(motion, bodyHalfSpan, bodyRadius,
+      habitatBenthic, clearance, waterSurfaceY, profile.lookAhead)
     // Portions only ever settle in a rock-free lane, so the summed potential field has nothing
     // real to avoid at the destination. At full strength it matches the unit pursuit vector and
     // parks a benthic eater in orbit, so fade it out over the final approach; the hardscape and
     // tank projections below remain the authoritative collision guard.
     motion.desiredDirection.addScaledVector(motion.avoidance,
       targetPosition ? .92 * Math.min(1, Math.max(mouthDistance, 0) / profile.arrivalRadius) : 1.18)
-    if (benthic && !targetPosition) motion.desiredDirection.y *= .16
+    if (habitatBenthic && !targetPosition) motion.desiredDirection.y *= .16
     if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
     else motion.desiredDirection.copy(motion.forward)
     if (riggedAsset?.category === 'fish') {
@@ -1360,7 +1392,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
     motion.velocity.add(motion.correction)
     if (motion.velocity.lengthSq() > maximumSpeed * maximumSpeed) motion.velocity.setLength(maximumSpeed)
-    if (benthic && !targetPosition) motion.velocity.y *= Math.exp(-step * 8)
+    if (habitatBenthic && !targetPosition) motion.velocity.y *= Math.exp(-step * 8)
     if (motion.velocity.lengthSq() > MOTION_HEADING_SPEED_EPSILON * MOTION_HEADING_SPEED_EPSILON) {
       motion.forward.copy(motion.velocity).normalize()
     }
@@ -1372,7 +1404,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       (motion.position.x + TANK_HALF_WIDTH) / (TANK_HALF_WIDTH * 2),
       (motion.position.y - SAND_Y) / Math.max(waterSurfaceY - SAND_Y, .01),
     )
-    const currentExposure = benthic ? .1 : .42
+    const currentExposure = habitatBenthic ? .1 : .42
     const currentScale = sceneUnitsPerMeter * currentExposure * step
     motion.position.x += THREE.MathUtils.clamp(current.xMetersPerSecond * currentScale,
       -MAX_FISH_FLOW_STEP, MAX_FISH_FLOW_STEP)
@@ -1382,9 +1414,10 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     // Alternate oriented body projection and glass bounds. Avoidance should normally
     // make this a no-op; it remains a guard for frame spikes and newly moving targets.
     for (let i = 0; i < 5; i += 1) {
-      resolveReefBodyHardscape(motion.position, motion.forward, bodyHalfSpan, bodyRadius, benthic,
+      resolveReefBodyHardscape(motion.position, motion.forward, bodyHalfSpan, bodyRadius, habitatBenthic,
         motion.sample, motion.correction)
-      clampBodyToTank(motion.position, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
+      clampBodyToTank(motion.position, motion.forward, bodyHalfSpan, bodyRadius,
+        habitatBenthic, clearance, waterSurfaceY)
     }
     motion.correction.copy(motion.position).sub(motion.desired)
     if (motion.correction.lengthSq() > 1e-8) {
