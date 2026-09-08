@@ -23,6 +23,7 @@ import {
   minimumSpecimenHardscapeClearance,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
+  resolveVisualTravelDirection,
   resolveFoodAnimationDrive,
   resolveFoodPursuitMotion,
   sampleBurrowResidentTarget,
@@ -231,6 +232,29 @@ describe('authoritative species locomotion', () => {
 })
 
 describe('specimen motion continuity', () => {
+  it('normalizes visual travel into the supplied reusable target without mutating source vectors', () => {
+    const position = new THREE.Vector3(4, 3, -1)
+    const previousPosition = new THREE.Vector3(1, 1, -1)
+    const fallback = new THREE.Vector3(0, 0, 1)
+    const target = new THREE.Vector3()
+
+    expect(resolveVisualTravelDirection(position, previousPosition, fallback, target)).toBe(target)
+    expect(target).toEqual(new THREE.Vector3(3, 2, 0).normalize())
+    expect(position).toEqual(new THREE.Vector3(4, 3, -1))
+    expect(previousPosition).toEqual(new THREE.Vector3(1, 1, -1))
+    expect(fallback).toEqual(new THREE.Vector3(0, 0, 1))
+  })
+
+  it('falls back to the provided forward vector when visual displacement is zero', () => {
+    const position = new THREE.Vector3(2, -.4, 1)
+    const forward = new THREE.Vector3(.6, 0, -.8)
+    const target = new THREE.Vector3()
+
+    expect(resolveVisualTravelDirection(position, position.clone(), forward, target)).toBe(target)
+    expect(target).toEqual(forward)
+    expect(forward).toEqual(new THREE.Vector3(.6, 0, -.8))
+  })
+
   it('caps travel at the frame delta and at 50 ms after a stall', () => {
     const regularFrame = new THREE.Vector3(10, 0, 0)
     const stalledFrame = new THREE.Vector3(10, 0, 0)
