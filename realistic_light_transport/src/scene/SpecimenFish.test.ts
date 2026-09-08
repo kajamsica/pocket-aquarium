@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { createPocketReefShowcase, dispatchPocketAction, projectPocketState } from '../integration/pocketAquariumBridge'
 import { FOOD_CONTACT_RADIUS } from './foodContact'
 import { specimenAssetFor } from './specimens/assetRegistry'
-import { REEF_ROCKS } from './reefLayout'
+import { REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
 import {
   advanceSpecimenMotionState,
   assignPelletTargets,
@@ -44,7 +44,7 @@ import {
   resolveSpecimenLocomotionPlan,
   speciesBehaviorPolicyFor,
 } from './speciesBehavior'
-import { diamondGobyBurrowSite, sharedBurrowSite } from './speciesInteractions'
+import { sampleDiamondGobyHabitatTarget, sharedBurrowSite } from './speciesInteractions'
 import { createSurfaceCircuit, sampleSurfaceCircuit } from './surfaceLocomotion'
 
 const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
@@ -142,25 +142,84 @@ describe('authoritative species locomotion', () => {
     expect(samples.at(-1)?.distanceTo(samples[0])).toBeLessThan(1e-6)
   })
 
-  it('alternates the Diamond Goby between a sand-level sift loop and rest at its separate home', () => {
-    const site = diamondGobyBurrowSite(29)
-    const cycle = site.siftCycle!
-    const period = cycle.siftSeconds + cycle.restSeconds
-    const siftStart = period - cycle.phaseOffsetSeconds + .01
-    const samples = [0, .25, .5, .75].map((fraction) => {
-      const target = new THREE.Vector3()
-      expect(sampleBurrowResidentTarget('diamond_goby', 29,
-        siftStart + cycle.siftSeconds * fraction, site, target)).toBe(true)
-      return target
+  it('keeps Diamond Goby rock excursions between four and six percent long-term', () => {
+    const target = new THREE.Vector3()
+    const sampleCount = 2_400
+    let excursionCount = 0
+    for (let second = 0; second < sampleCount; second += 1) {
+      if (sampleDiamondGobyHabitatTarget(29, second, target) === 'rock_excursion') excursionCount += 1
+    }
+    expect(excursionCount / sampleCount).toBeGreaterThan(.04)
+    expect(excursionCount / sampleCount).toBeLessThan(.06)
+  })
+
+  it('visits safe separated front and back sand stations at sand height', () => {
+    const target = new THREE.Vector3()
+    const sandZ: number[] = []
+    for (let step = 0; step < 1_440; step += 1) {
+      const mode = sampleDiamondGobyHabitatTarget(29, step * .25, target)
+      if (!mode.startsWith('sand_')) continue
+      sandZ.push(target.z)
+      expect(target.y).toBeCloseTo(REEF_SAND_Y + .08)
+      expect(REEF_ROCKS.every((rock) => {
+        const x = (target.x - rock.position.x) / (rock.scale.x * 1.2 + .08)
+        const z = (target.z - rock.position.z) / (rock.scale.z * 1.2 + .08)
+        return x * x + z * z >= 1 - 1e-8
+      })).toBe(true)
+    }
+    expect(Math.max(...sandZ)).toBeGreaterThan(.85)
+    expect(Math.min(...sandZ)).toBeLessThan(-.85)
+    expect(Math.max(...sandZ) - Math.min(...sandZ)).toBeGreaterThan(1.7)
+  })
+
+  it('holds materially longer than transfers and keeps adjacent habitat samples continuous', () => {
+    const target = new THREE.Vector3()
+    const previous = new THREE.Vector3()
+    let holdCount = 0
+    let transferCount = 0
+    let maximumStep = 0
+    sampleDiamondGobyHabitatTarget(29, 0, previous)
+    for (let step = 1; step <= 2_400; step += 1) {
+      const mode = sampleDiamondGobyHabitatTarget(29, step * .05, target)
+      if (mode === 'sand_hold') holdCount += 1
+      if (mode === 'sand_transfer') transferCount += 1
+      maximumStep = Math.max(maximumStep, target.distanceTo(previous))
+      previous.copy(target)
+    }
+    expect(holdCount).toBeGreaterThan(transferCount * 6)
+    expect(maximumStep).toBeLessThan(.08)
+  })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'returns a finite habitat target for invalid time %s', (elapsedSeconds) => {
+      const target = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN)
+      expect(sampleDiamondGobyHabitatTarget(29, elapsedSeconds, target))
+        .toMatch(/^(sand_hold|sand_sift|sand_transfer|rock_excursion)$/)
+      expect(target.toArray().every(Number.isFinite)).toBe(true)
     })
-    const rest = new THREE.Vector3()
-    expect(sampleBurrowResidentTarget('diamond_goby', 29,
-      siftStart + cycle.siftSeconds + .01, site, rest)).toBe(false)
-    expect(rest).toEqual(site.position)
-    expect(samples.every((target) => target.y === site.position.y)).toBe(true)
-    expect(Math.max(...samples.map((target) => target.distanceTo(site.position)))).toBeLessThan(cycle.siftRadius)
-    expect(Math.max(...samples.map((target) => target.distanceTo(site.position)))).toBeGreaterThan(.08)
-    expect(site.position.distanceTo(sharedBurrowSite().position)).toBeGreaterThanOrEqual(.72)
+
+  it('advances a bottom resident horizontally toward a transfer target without teleporting', () => {
+    const target = new THREE.Vector3()
+    let transferStart = 0
+    while (transferStart < 120 &&
+      sampleDiamondGobyHabitatTarget(29, transferStart, target) !== 'sand_transfer') transferStart += .05
+    expect(transferStart).toBeLessThan(120)
+    const position = target.clone()
+    const initialPosition = position.clone()
+    const profile = specimenMotionProfile('diamond_goby')
+    const delta = 1 / 60
+    let maximumStep = 0
+    for (let frame = 1; frame <= 120; frame += 1) {
+      sampleDiamondGobyHabitatTarget(29, transferStart + frame * delta, target)
+      const proposed = target.clone()
+      maximumStep = Math.max(maximumStep,
+        limitSpecimenFrameTravel(position, proposed, profile.cruiseSpeed, delta))
+      position.copy(proposed)
+    }
+    expect(Math.hypot(position.x - initialPosition.x, position.z - initialPosition.z)).toBeGreaterThan(.15)
+    expect(position.distanceTo(target)).toBeLessThan(initialPosition.distanceTo(target))
+    expect(position.y).toBeCloseTo(REEF_SAND_Y + .08)
+    expect(maximumStep).toBeLessThanOrEqual(profile.cruiseSpeed * delta + 1e-8)
   })
 
   it('keeps Watchman Goby and Pistol Shrimp on soft independent paths around one shared burrow', () => {
