@@ -1326,7 +1326,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     if (benthic && !targetPosition) motion.desiredDirection.y *= .16
     if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
     else motion.desiredDirection.copy(motion.forward)
-    if (shark) {
+    if (riggedAsset?.category === 'fish') {
       const signedTurnAngle = Math.atan2(
         motion.forward.z * motion.desiredDirection.x - motion.forward.x * motion.desiredDirection.z,
         motion.forward.x * motion.desiredDirection.x + motion.forward.z * motion.desiredDirection.z,
