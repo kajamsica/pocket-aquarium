@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
+import { sampleReefScapeSupport, type ScapeSupportSample } from '../surfaceLocomotion'
 import type { SemanticAnimationRole, SpecimenAsset } from './assetRegistry'
 
 export interface RiggedSpecimenProps {
@@ -69,6 +70,45 @@ const SPECIMEN_TURN_PROFILES: Readonly<Record<string, SpecimenTurnProfile>> = {
 }
 const TURN_AXIS = new THREE.Vector3(0, 0, 1)
 const TURN_ROTATION = new THREE.Quaternion()
+
+const LINCKIA_ARM_CHAINS = [
+  ['Arm0_A', 'Arm0_B', 'Arm0_C', 'Arm0_D'],
+  ['Arm1_A_L', 'Arm1_B_L', 'Arm1_C_L', 'Arm1_D_L'],
+  ['Arm1_A_R', 'Arm1_B_R', 'Arm1_C_R', 'Arm1_D_R'],
+  ['Arm2_A_L', 'Arm2_B_L', 'Arm2_C_L', 'Arm2_D_L'],
+  ['Arm2_A_R', 'Arm2_B_R', 'Arm2_C_R', 'Arm2_D_R'],
+] as const
+const LINCKIA_MAX_JOINT_BEND = [0.2, 0.28, 0.34, 0.38] as const
+const LINCKIA_LOCAL_BEND_AXIS = new THREE.Vector3(1, 0, 0)
+const LINCKIA_LOCAL_TIP_DIRECTION = new THREE.Vector3(0, 1, 0)
+const LINCKIA_BEND_ROTATION = new THREE.Quaternion()
+
+interface LinckiaArmJoint {
+  readonly bone: THREE.Bone
+  readonly endpoint?: THREE.Bone
+  readonly tipLength: number
+  readonly maximumBend: number
+  readonly support: ScapeSupportSample
+}
+
+function resolveLinckiaArmJoints(root: THREE.Object3D): readonly LinckiaArmJoint[] {
+  return LINCKIA_ARM_CHAINS.flatMap((chain) => chain.flatMap((boneName, index) => {
+    const bone = root.getObjectByName(boneName)
+    if (!(bone instanceof THREE.Bone)) return []
+    const endpoint = index < chain.length - 1 ? root.getObjectByName(chain[index + 1]) : undefined
+    const nextBone = endpoint instanceof THREE.Bone ? endpoint : undefined
+    return [{
+      bone,
+      endpoint: nextBone,
+      tipLength: Math.max(nextBone?.position.length() ?? bone.position.length(), 0.01),
+      maximumBend: LINCKIA_MAX_JOINT_BEND[index],
+      support: {
+        position: new THREE.Vector3(), normal: new THREE.Vector3(0, 1, 0),
+        kind: 'sand' as const, distance: 0,
+      },
+    }]
+  }))
+}
 
 export function supportsSpecimenTurnPose(speciesId: string) {
   return SPECIMEN_TURN_PROFILES[speciesId] !== undefined
@@ -138,12 +178,23 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
   const actions = useRef<Partial<Record<string, THREE.AnimationAction>>>({})
   const animationPlan = useMemo(() => resolveSemanticAnimationPlan(asset), [asset])
+  const linckiaArmJoints = useMemo(() => asset.speciesId === 'blue_linckia'
+    ? resolveLinckiaArmJoints(root) : [], [asset.speciesId, root])
+  const linckiaArmBends = useRef<number[]>([])
+  const linckiaScratch = useMemo(() => ({
+    axisWorld: new THREE.Vector3(), bendCross: new THREE.Vector3(), currentDirection: new THREE.Vector3(),
+    desiredDirection: new THREE.Vector3(), endpointScape: new THREE.Vector3(),
+    endpointWorld: new THREE.Vector3(), jointWorld: new THREE.Vector3(),
+    preferredNormal: new THREE.Vector3(), scapeMatrixInverse: new THREE.Matrix4(),
+    targetWorld: new THREE.Vector3(), specimenWorldPosition: new THREE.Vector3(),
+  }), [])
   const seeded = useRef(false)
   const smoothedTurnDrive = useRef(0)
 
   useEffect(() => {
     root.name = `rigged-${asset.speciesId}-${individualId}`
     smoothedTurnDrive.current = 0
+    linckiaArmBends.current = linckiaArmJoints.map(() => 0)
     root.userData = { ...root.userData, rootSpecimenId: individualId, speciesId: asset.speciesId, stage }
     root.traverse((node) => {
       if (node instanceof THREE.Mesh) {
@@ -177,7 +228,8 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
       mixer.uncacheRoot(root)
       actions.current = {}
     }
-  }, [animationPlan, asset.clipLoops, asset.clips, asset.speciesId, individualId, mixer, root, source.animations, stage])
+  }, [animationPlan, asset.clipLoops, asset.clips, asset.speciesId, individualId, linckiaArmJoints,
+    mixer, root, source.animations, stage])
 
   useFrame((_, delta) => {
     applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current,
@@ -189,6 +241,56 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
     const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
     smoothedTurnDrive.current = THREE.MathUtils.damp(smoothedTurnDrive.current, targetTurn, damping, frameDelta)
     applySpecimenTurnPose(root, asset.speciesId, smoothedTurnDrive.current)
+
+    const specimenGroup = root.parent
+    const scapeSpace = specimenGroup?.parent
+    if (asset.speciesId !== 'blue_linckia' || !specimenGroup || !scapeSpace || !linckiaArmJoints.length) return
+    specimenGroup.updateWorldMatrix(true, false)
+    scapeSpace.updateWorldMatrix(true, false)
+    root.updateWorldMatrix(true, true)
+    const maximumDistance = Math.max(targetLengthSceneUnits * 0.7, 0.1)
+    const surfaceClearance = Math.max(targetLengthSceneUnits * 0.012, 0.003)
+    specimenGroup.getWorldPosition(linckiaScratch.specimenWorldPosition)
+    linckiaScratch.preferredNormal.copy(LINCKIA_LOCAL_TIP_DIRECTION)
+    specimenGroup.localToWorld(linckiaScratch.preferredNormal)
+    linckiaScratch.preferredNormal.sub(linckiaScratch.specimenWorldPosition)
+      .transformDirection(linckiaScratch.scapeMatrixInverse.copy(scapeSpace.matrixWorld).invert())
+
+    for (const [index, joint] of linckiaArmJoints.entries()) {
+      joint.bone.getWorldPosition(linckiaScratch.jointWorld)
+      if (joint.endpoint) joint.endpoint.getWorldPosition(linckiaScratch.endpointWorld)
+      else joint.bone.localToWorld(linckiaScratch.endpointWorld.copy(LINCKIA_LOCAL_TIP_DIRECTION)
+        .multiplyScalar(joint.tipLength))
+      linckiaScratch.endpointScape.copy(linckiaScratch.endpointWorld)
+      scapeSpace.worldToLocal(linckiaScratch.endpointScape)
+      const support = sampleReefScapeSupport(linckiaScratch.endpointScape,
+        linckiaScratch.preferredNormal, maximumDistance, joint.support)
+      let targetBend = 0
+      if (support.distance <= maximumDistance) {
+        linckiaScratch.targetWorld.copy(support.position).addScaledVector(support.normal, surfaceClearance)
+        scapeSpace.localToWorld(linckiaScratch.targetWorld)
+        linckiaScratch.currentDirection.copy(linckiaScratch.endpointWorld).sub(linckiaScratch.jointWorld)
+        linckiaScratch.desiredDirection.copy(linckiaScratch.targetWorld).sub(linckiaScratch.jointWorld)
+        if (linckiaScratch.currentDirection.lengthSq() >= 1e-8 &&
+          linckiaScratch.desiredDirection.lengthSq() >= 1e-8) {
+          linckiaScratch.currentDirection.normalize()
+          linckiaScratch.desiredDirection.normalize()
+          joint.bone.getWorldQuaternion(LINCKIA_BEND_ROTATION)
+          linckiaScratch.axisWorld.copy(LINCKIA_LOCAL_BEND_AXIS)
+            .applyQuaternion(LINCKIA_BEND_ROTATION).normalize()
+          targetBend = THREE.MathUtils.clamp(Math.atan2(
+            linckiaScratch.axisWorld.dot(linckiaScratch.bendCross.crossVectors(
+              linckiaScratch.currentDirection, linckiaScratch.desiredDirection)),
+            linckiaScratch.currentDirection.dot(linckiaScratch.desiredDirection),
+          ), -joint.maximumBend, joint.maximumBend)
+        }
+      }
+      const bend = THREE.MathUtils.damp(linckiaArmBends.current[index] ?? 0, targetBend, 7, frameDelta)
+      linckiaArmBends.current[index] = bend
+      LINCKIA_BEND_ROTATION.setFromAxisAngle(LINCKIA_LOCAL_BEND_AXIS, bend)
+      joint.bone.quaternion.multiply(LINCKIA_BEND_ROTATION)
+      joint.bone.updateWorldMatrix(false, true)
+    }
   })
 
   const authoredScale = targetLengthSceneUnits / asset.referenceAdultLengthMeters
