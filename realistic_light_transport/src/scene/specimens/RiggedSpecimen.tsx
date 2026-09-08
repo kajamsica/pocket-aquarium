@@ -79,6 +79,8 @@ const LINCKIA_ARM_CHAINS = [
   ['Arm2_A_R', 'Arm2_B_R', 'Arm2_C_R', 'Arm2_D_R'],
 ] as const
 const LINCKIA_MAX_JOINT_BEND = [0.2, 0.28, 0.34, 0.38] as const
+// Accepted mesh: the arm bone axis sits about 9 mm above the oral surface on a 250 mm adult span.
+const LINCKIA_ARM_AXIS_CLEARANCE_RATIO = 0.036
 const LINCKIA_LOCAL_BEND_AXIS = new THREE.Vector3(1, 0, 0)
 const LINCKIA_LOCAL_TIP_DIRECTION = new THREE.Vector3(0, 1, 0)
 const LINCKIA_BEND_ROTATION = new THREE.Quaternion()
@@ -249,7 +251,7 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
     scapeSpace.updateWorldMatrix(true, false)
     root.updateWorldMatrix(true, true)
     const maximumDistance = Math.max(targetLengthSceneUnits * 0.7, 0.1)
-    const surfaceClearance = Math.max(targetLengthSceneUnits * 0.012, 0.003)
+    const surfaceClearance = Math.max(targetLengthSceneUnits * LINCKIA_ARM_AXIS_CLEARANCE_RATIO, 0.003)
     specimenGroup.getWorldPosition(linckiaScratch.specimenWorldPosition)
     linckiaScratch.preferredNormal.copy(LINCKIA_LOCAL_TIP_DIRECTION)
     specimenGroup.localToWorld(linckiaScratch.preferredNormal)
