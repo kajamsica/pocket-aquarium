@@ -16,6 +16,8 @@ export interface RiggedSpecimenProps {
   readonly feedDrive: RefObject<number>
   /** Live -1..1 steering drive, with negative turning left and positive turning right. */
   readonly turnDrive?: RefObject<number>
+  /** Live ratio of current locomotion speed to the resident's normal cruise speed. */
+  readonly locomotionDrive?: RefObject<number>
 }
 
 function phaseForId(id: number) {
@@ -103,7 +105,7 @@ export function initializeSemanticActions(actions: SemanticAnimationActions, pla
 }
 
 export function applySemanticAnimationDrive(actions: SemanticAnimationActions, plan: SemanticAnimationPlan,
-  hunger: number, feedDrive: number) {
+  hunger: number, feedDrive: number, locomotionSpeedRatio?: number) {
   const burstDrive = THREE.MathUtils.clamp(feedDrive, 0, 1)
   // Ordinary pursuit stays on the locomotion clip. Only the short acquisition/contact pulse
   // crosses this gate, so a non-looping response cannot restart throughout the whole chase.
@@ -113,9 +115,14 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
   const locomotion = actions[plan.locomotion.clipName]
   const idle = actions[plan.idle.clipName]
   const response = actions[plan.response.clipName]
-  locomotion?.setEffectiveWeight(0.78 * baseWeight)
-  locomotion?.setEffectiveTimeScale(0.92 + hunger * 0.28 + burstDrive * 0.34)
-  idle?.setEffectiveWeight(0.22 * baseWeight)
+  const speedRatio = locomotionSpeedRatio === undefined ? undefined : THREE.MathUtils.clamp(locomotionSpeedRatio, 0, 1.4)
+  const locomotionBaseWeight = speedRatio === undefined ? 0.78 : THREE.MathUtils.lerp(0.32, 0.78, Math.min(speedRatio, 1))
+  const idleBaseWeight = speedRatio === undefined ? 0.22 : 1 - locomotionBaseWeight
+  locomotion?.setEffectiveWeight(locomotionBaseWeight * baseWeight)
+  locomotion?.setEffectiveTimeScale(speedRatio === undefined
+    ? 0.92 + hunger * 0.28 + burstDrive * 0.34
+    : 0.5 + speedRatio * 0.5 + burstDrive * 0.15)
+  idle?.setEffectiveWeight(idleBaseWeight * baseWeight)
   if (!response) return
   response.setEffectiveWeight(responseWeight)
   response.setEffectiveTimeScale(1.15 + burstDrive * 0.45)
@@ -125,7 +132,7 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
 }
 
 export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive,
-  turnDrive }: RiggedSpecimenProps) {
+  turnDrive, locomotionDrive }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
   const root = useMemo(() => cloneSkinned(source.scene) as THREE.Group, [source.scene])
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
@@ -173,7 +180,8 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   }, [animationPlan, asset.clipLoops, asset.clips, asset.speciesId, individualId, mixer, root, source.animations, stage])
 
   useFrame((_, delta) => {
-    applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current)
+    applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current,
+      asset.category === 'fish' ? locomotionDrive?.current : undefined)
     const frameDelta = Math.min(delta, 0.05)
     mixer.update(frameDelta)
     const liveTurn = turnDrive?.current ?? 0
