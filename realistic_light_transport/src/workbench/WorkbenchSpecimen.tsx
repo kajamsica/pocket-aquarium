@@ -58,6 +58,7 @@ export function WorkbenchSpecimen({
   const source = useLoader(GLTFLoader, asset.url)
   const turntableRoot = useRef<THREE.Group>(null)
   const mounted = useRef(false)
+  const smoothedTurnPreview = useRef(0)
   const root = useMemo(() => {
     const cloned = cloneSkinned(source.scene) as THREE.Group
     cloned.name = `workbench-${asset.key}`
@@ -85,6 +86,10 @@ export function WorkbenchSpecimen({
     const clip = THREE.AnimationClip.findByName(source.animations, clipName)
     return clip ? mixer.clipAction(clip, root) : undefined
   }, [clipName, mixer, root, source.animations])
+
+  useEffect(() => {
+    smoothedTurnPreview.current = 0
+  }, [asset.key])
 
   useEffect(() => {
     let triangles = 0
@@ -182,9 +187,13 @@ export function WorkbenchSpecimen({
 
   useFrame((_, delta) => {
     if (action) {
-      if (playing) mixer.update(Math.min(delta, 0.05) * playbackRate)
+      const frameDelta = Math.min(delta, 0.05)
+      if (playing) mixer.update(frameDelta * playbackRate)
       else mixer.setTime(phase * action.getClip().duration)
-      applyEpauletteTurnPose(root, asset.speciesId, turnPreview)
+      const targetTurn = Math.abs(turnPreview) < 0.025 ? 0 : THREE.MathUtils.clamp(turnPreview, -1, 1)
+      const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
+      smoothedTurnPreview.current = THREE.MathUtils.damp(smoothedTurnPreview.current, targetTurn, damping, frameDelta)
+      applyEpauletteTurnPose(root, asset.speciesId, smoothedTurnPreview.current)
     }
     if (playing && action) {
       const duration = action.getClip().duration
