@@ -45,24 +45,43 @@ export function resolveSemanticAnimationPlan(asset: SpecimenAsset): SemanticAnim
 
 export type SemanticAnimationActions = Partial<Record<string, THREE.AnimationAction>>
 
-const EPAULETTE_TURN_BONES = [
-  ['Spine_A', 0.1],
-  ['Spine_B', 0.18],
-  ['Peduncle', 0.28],
-  ['Caudal', 0.34],
-] as const
+const TURN_BONE_NAMES = ['Spine_A', 'Spine_B', 'Peduncle', 'Caudal'] as const
+type SpecimenTurnProfile = readonly [number, number, number, number]
+const CLOWN_TURN_PROFILE: SpecimenTurnProfile = [0.03, 0.07, 0.14, 0.22]
+const DEEP_BODY_TURN_PROFILE: SpecimenTurnProfile = [0.025, 0.055, 0.115, 0.18]
+const FUSIFORM_TURN_PROFILE: SpecimenTurnProfile = [0.04, 0.08, 0.15, 0.23]
+const SPECIMEN_TURN_PROFILES: Readonly<Record<string, SpecimenTurnProfile>> = {
+  epaulette_shark: [0.1, 0.18, 0.28, 0.34],
+  ocellaris: CLOWN_TURN_PROFILE,
+  black_storm_ocellaris: CLOWN_TURN_PROFILE,
+  banggai_cardinal: DEEP_BODY_TURN_PROFILE,
+  blue_hippo_tang: DEEP_BODY_TURN_PROFILE,
+  gem_tang: DEEP_BODY_TURN_PROFILE,
+  purple_tang: DEEP_BODY_TURN_PROFILE,
+  tomini_tang: DEEP_BODY_TURN_PROFILE,
+  yellow_tang: DEEP_BODY_TURN_PROFILE,
+  diamond_goby: FUSIFORM_TURN_PROFILE,
+  watchman_goby: FUSIFORM_TURN_PROFILE,
+  royal_gramma: FUSIFORM_TURN_PROFILE,
+  six_line_wrasse: FUSIFORM_TURN_PROFILE,
+}
 const TURN_AXIS = new THREE.Vector3(0, 0, 1)
 const TURN_ROTATION = new THREE.Quaternion()
 
-/** Add the shared Epaulette steering pose after an authored clip has been sampled. */
-export function applyEpauletteTurnPose(root: THREE.Object3D, speciesId: string, turnDrive: number) {
-  if (speciesId !== 'epaulette_shark') return
+export function supportsSpecimenTurnPose(speciesId: string) {
+  return SPECIMEN_TURN_PROFILES[speciesId] !== undefined
+}
+
+/** Add the species turn pose after an authored clip has been sampled. */
+export function applySpecimenTurnPose(root: THREE.Object3D, speciesId: string, turnDrive: number) {
+  const profile = SPECIMEN_TURN_PROFILES[speciesId]
+  if (!profile) return
   const drive = THREE.MathUtils.clamp(turnDrive, -1, 1)
   if (drive === 0) return
-  for (const [boneName, bendRadians] of EPAULETTE_TURN_BONES) {
+  for (const [index, boneName] of TURN_BONE_NAMES.entries()) {
     const bone = root.getObjectByName(boneName)
     if (!(bone instanceof THREE.Bone)) continue
-    TURN_ROTATION.setFromAxisAngle(TURN_AXIS, bendRadians * drive)
+    TURN_ROTATION.setFromAxisAngle(TURN_AXIS, profile[index] * drive)
     bone.quaternion.multiply(TURN_ROTATION)
   }
 }
@@ -161,7 +180,7 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
     const targetTurn = Math.abs(liveTurn) < 0.025 ? 0 : THREE.MathUtils.clamp(liveTurn, -1, 1)
     const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
     smoothedTurnDrive.current = THREE.MathUtils.damp(smoothedTurnDrive.current, targetTurn, damping, frameDelta)
-    applyEpauletteTurnPose(root, asset.speciesId, smoothedTurnDrive.current)
+    applySpecimenTurnPose(root, asset.speciesId, smoothedTurnDrive.current)
   })
 
   const authoredScale = targetLengthSceneUnits / asset.referenceAdultLengthMeters
