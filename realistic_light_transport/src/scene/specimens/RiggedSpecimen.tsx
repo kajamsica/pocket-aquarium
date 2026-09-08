@@ -14,6 +14,10 @@ export interface RiggedSpecimenProps {
   readonly hunger: number
   /** Live 0..1 feeding-pursuit drive updated each frame by the fish's steering. */
   readonly feedDrive: RefObject<number>
+  /** Live -1..1 steering drive, with negative turning left and positive turning right. */
+  readonly turnDrive?: RefObject<number>
+  /** Live ratio of current locomotion speed to the resident's normal cruise speed. */
+  readonly locomotionDrive?: RefObject<number>
 }
 
 function phaseForId(id: number) {
@@ -43,6 +47,47 @@ export function resolveSemanticAnimationPlan(asset: SpecimenAsset): SemanticAnim
 
 export type SemanticAnimationActions = Partial<Record<string, THREE.AnimationAction>>
 
+const TURN_BONE_NAMES = ['Spine_A', 'Spine_B', 'Peduncle', 'Caudal'] as const
+type SpecimenTurnProfile = readonly [number, number, number, number]
+const CLOWN_TURN_PROFILE: SpecimenTurnProfile = [0.03, 0.07, 0.14, 0.22]
+const DEEP_BODY_TURN_PROFILE: SpecimenTurnProfile = [0.025, 0.055, 0.115, 0.18]
+const FUSIFORM_TURN_PROFILE: SpecimenTurnProfile = [0.04, 0.08, 0.15, 0.23]
+const SPECIMEN_TURN_PROFILES: Readonly<Record<string, SpecimenTurnProfile>> = {
+  epaulette_shark: [0.1, 0.18, 0.28, 0.34],
+  ocellaris: CLOWN_TURN_PROFILE,
+  black_storm_ocellaris: CLOWN_TURN_PROFILE,
+  banggai_cardinal: DEEP_BODY_TURN_PROFILE,
+  blue_hippo_tang: DEEP_BODY_TURN_PROFILE,
+  gem_tang: DEEP_BODY_TURN_PROFILE,
+  purple_tang: DEEP_BODY_TURN_PROFILE,
+  tomini_tang: DEEP_BODY_TURN_PROFILE,
+  yellow_tang: DEEP_BODY_TURN_PROFILE,
+  diamond_goby: FUSIFORM_TURN_PROFILE,
+  watchman_goby: FUSIFORM_TURN_PROFILE,
+  royal_gramma: FUSIFORM_TURN_PROFILE,
+  six_line_wrasse: FUSIFORM_TURN_PROFILE,
+}
+const TURN_AXIS = new THREE.Vector3(0, 0, 1)
+const TURN_ROTATION = new THREE.Quaternion()
+
+export function supportsSpecimenTurnPose(speciesId: string) {
+  return SPECIMEN_TURN_PROFILES[speciesId] !== undefined
+}
+
+/** Add the species turn pose after an authored clip has been sampled. */
+export function applySpecimenTurnPose(root: THREE.Object3D, speciesId: string, turnDrive: number) {
+  const profile = SPECIMEN_TURN_PROFILES[speciesId]
+  if (!profile) return
+  const drive = THREE.MathUtils.clamp(turnDrive, -1, 1)
+  if (drive === 0) return
+  for (const [index, boneName] of TURN_BONE_NAMES.entries()) {
+    const bone = root.getObjectByName(boneName)
+    if (!(bone instanceof THREE.Bone)) continue
+    TURN_ROTATION.setFromAxisAngle(TURN_AXIS, profile[index] * drive)
+    bone.quaternion.multiply(TURN_ROTATION)
+  }
+}
+
 const BASE_ROOT_SPECIES = new Set(['acropora_branching', 'stylophora'])
 
 /** Clone an authored clip and remove only translation owned by the rig root. */
@@ -60,7 +105,7 @@ export function initializeSemanticActions(actions: SemanticAnimationActions, pla
 }
 
 export function applySemanticAnimationDrive(actions: SemanticAnimationActions, plan: SemanticAnimationPlan,
-  hunger: number, feedDrive: number) {
+  hunger: number, feedDrive: number, locomotionSpeedRatio?: number) {
   const burstDrive = THREE.MathUtils.clamp(feedDrive, 0, 1)
   // Ordinary pursuit stays on the locomotion clip. Only the short acquisition/contact pulse
   // crosses this gate, so a non-looping response cannot restart throughout the whole chase.
@@ -70,9 +115,14 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
   const locomotion = actions[plan.locomotion.clipName]
   const idle = actions[plan.idle.clipName]
   const response = actions[plan.response.clipName]
-  locomotion?.setEffectiveWeight(0.78 * baseWeight)
-  locomotion?.setEffectiveTimeScale(0.92 + hunger * 0.28 + burstDrive * 0.34)
-  idle?.setEffectiveWeight(0.22 * baseWeight)
+  const speedRatio = locomotionSpeedRatio === undefined ? undefined : THREE.MathUtils.clamp(locomotionSpeedRatio, 0, 1.4)
+  const locomotionBaseWeight = speedRatio === undefined ? 0.78 : THREE.MathUtils.lerp(0.32, 0.78, Math.min(speedRatio, 1))
+  const idleBaseWeight = speedRatio === undefined ? 0.22 : 1 - locomotionBaseWeight
+  locomotion?.setEffectiveWeight(locomotionBaseWeight * baseWeight)
+  locomotion?.setEffectiveTimeScale(speedRatio === undefined
+    ? 0.92 + hunger * 0.28 + burstDrive * 0.34
+    : 0.5 + speedRatio * 0.5 + burstDrive * 0.15)
+  idle?.setEffectiveWeight(idleBaseWeight * baseWeight)
   if (!response) return
   response.setEffectiveWeight(responseWeight)
   response.setEffectiveTimeScale(1.15 + burstDrive * 0.45)
@@ -81,16 +131,19 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
   else if (!responseActive) response.stop().setEffectiveWeight(0)
 }
 
-export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive }: RiggedSpecimenProps) {
+export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive,
+  turnDrive, locomotionDrive }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
   const root = useMemo(() => cloneSkinned(source.scene) as THREE.Group, [source.scene])
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
   const actions = useRef<Partial<Record<string, THREE.AnimationAction>>>({})
   const animationPlan = useMemo(() => resolveSemanticAnimationPlan(asset), [asset])
   const seeded = useRef(false)
+  const smoothedTurnDrive = useRef(0)
 
   useEffect(() => {
     root.name = `rigged-${asset.speciesId}-${individualId}`
+    smoothedTurnDrive.current = 0
     root.userData = { ...root.userData, rootSpecimenId: individualId, speciesId: asset.speciesId, stage }
     root.traverse((node) => {
       if (node instanceof THREE.Mesh) {
@@ -127,8 +180,15 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   }, [animationPlan, asset.clipLoops, asset.clips, asset.speciesId, individualId, mixer, root, source.animations, stage])
 
   useFrame((_, delta) => {
-    applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current)
-    mixer.update(Math.min(delta, 0.05))
+    applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current,
+      asset.category === 'fish' ? locomotionDrive?.current : undefined)
+    const frameDelta = Math.min(delta, 0.05)
+    mixer.update(frameDelta)
+    const liveTurn = turnDrive?.current ?? 0
+    const targetTurn = Math.abs(liveTurn) < 0.025 ? 0 : THREE.MathUtils.clamp(liveTurn, -1, 1)
+    const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
+    smoothedTurnDrive.current = THREE.MathUtils.damp(smoothedTurnDrive.current, targetTurn, damping, frameDelta)
+    applySpecimenTurnPose(root, asset.speciesId, smoothedTurnDrive.current)
   })
 
   const authoredScale = targetLengthSceneUnits / asset.referenceAdultLengthMeters

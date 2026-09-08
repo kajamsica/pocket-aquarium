@@ -11,6 +11,7 @@ import type { ScenePellet } from './feeding'
 import { FOOD_CONTACT_RADIUS, type ScenePoint, visibleFoodContact } from './foodContact'
 import type { FlowFieldSource } from './ReefHabitat'
 import { REEF_ROCKS } from './reefLayout'
+import { diamondGobyBurrowSite, sharedBurrowSite, type BurrowSite } from './speciesInteractions'
 import {
   fishPaceMultiplier,
   fishRouteWaypoints,
@@ -750,6 +751,37 @@ export function resolveFoodAnimationDrive(pursuing: boolean, responsePulse: bool
   return THREE.MathUtils.clamp(.42 + normalizedSpeed * .1, .42, .62)
 }
 
+/** Sample the existing species-interaction sites into the motion owner's reusable target.
+ *  Returning true holds the rig's response drive for one sift phase; the semantic animation
+ *  gate plays the non-looping response once, then resets it during the following rest phase. */
+export function sampleBurrowResidentTarget(speciesId: string, specimenId: number, elapsedSeconds: number,
+  site: BurrowSite, target: THREE.Vector3) {
+  const elapsed = Number.isFinite(elapsedSeconds) ? Math.max(0, elapsedSeconds) : 0
+  target.copy(site.position)
+  if (speciesId === 'diamond_goby' && site.siftCycle) {
+    const cycle = site.siftCycle
+    const cycleSeconds = cycle.siftSeconds + cycle.restSeconds
+    const cycleTime = THREE.MathUtils.euclideanModulo(elapsed + cycle.phaseOffsetSeconds, cycleSeconds)
+    if (cycleTime >= cycle.siftSeconds) return false
+    const angle = cycleTime / cycle.siftSeconds * Math.PI * 2 + seededUnit(specimenId, 641) * Math.PI * 2
+    target.x += Math.sin(angle) * cycle.siftRadius * .42
+    target.z -= (1 - Math.cos(angle)) * cycle.siftRadius * .14
+    return true
+  }
+  const angle = elapsed * (speciesId === 'pistol_shrimp' ? .48 : .34) +
+    seededUnit(specimenId, 642) * Math.PI * 2
+  if (speciesId === 'watchman_goby') {
+    target.add(site.watchmanGuardOffset)
+    target.x += Math.cos(angle) * .045
+    target.z += Math.sin(angle) * .025
+  } else if (speciesId === 'pistol_shrimp') {
+    target.add(site.pistolMaintenanceOffset)
+    target.x += Math.cos(angle) * .04
+    target.z += Math.sin(angle) * .03
+  }
+  return false
+}
+
 interface FishPhysicsState {
   readonly position: THREE.Vector3
   readonly velocity: THREE.Vector3
@@ -819,6 +851,15 @@ export function specimenSurfaceProgress(speciesId: string, circuit: SurfaceCircu
   if (!station) return 0
   const patrol = .5 + Math.sin((elapsedSeconds / 18 + seededUnit(seed, 902)) * Math.PI * 2) * .035
   return (prefix + station.length * patrol) / circuit.totalLength
+}
+
+/** Resolve the final visual travel direction without changing the physics heading. */
+export function resolveVisualTravelDirection(position: THREE.Vector3, previousPosition: THREE.Vector3,
+  fallback: THREE.Vector3, target = new THREE.Vector3()) {
+  target.copy(position).sub(previousPosition)
+  if (target.lengthSq() > 1e-8) target.normalize()
+  else target.copy(fallback)
+  return target
 }
 
 /** Keep authored +X-forward fish upright while allowing a small, smoothly capped turn bank. */
@@ -1066,6 +1107,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const mouthPosition = useMemo(() => new THREE.Vector3(), [])
   const fallbackMouth = useMemo(() => new THREE.Vector3(), [])
   const forage = useRef(0)
+  const turnDrive = useRef(0)
+  const locomotionDrive = useRef(0)
   const feedingResponse = useRef(createFeedingResponseState())
   const tailPhase = useRef(seededUnit(specimen.id, 2) * Math.PI * 2)
   const phase = seededUnit(specimen.id, 1) * Math.PI * 2
@@ -1095,11 +1138,16 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const profile = specimenMotionProfile(specimen.speciesId)
   const verticalBounds = specimenVerticalBounds(specimen.layer, waterSurfaceY, bodyRadius)
   const habitatPolicy = behaviorPolicy.fishHabitat
-  const habitatWaypoints = useMemo(() => surfaceBound || !habitatPolicy ? [] : fishRouteWaypoints(habitatPolicy, specimen.id, {
+  const interactionSite = useMemo(() => specimen.speciesId === 'diamond_goby'
+    ? diamondGobyBurrowSite(specimen.id)
+    : specimen.speciesId === 'watchman_goby' || specimen.speciesId === 'pistol_shrimp'
+      ? sharedBurrowSite() : null, [specimen.id, specimen.speciesId])
+  const interactionTarget = useMemo(() => new THREE.Vector3(), [])
+  const habitatWaypoints = useMemo(() => surfaceBound || !habitatPolicy || interactionSite ? [] : fishRouteWaypoints(habitatPolicy, specimen.id, {
     x: [-TANK_HALF_WIDTH + bodyRadius + length * .34, TANK_HALF_WIDTH - bodyRadius - length * .34],
     z: [-TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius],
   }, verticalBounds, REEF_ROCKS.map((rock) => new THREE.Vector3(...rock.position.toArray()))),
-  [bodyRadius, habitatPolicy, length, specimen.id, surfaceBound, verticalBounds])
+  [bodyRadius, habitatPolicy, interactionSite, length, specimen.id, surfaceBound, verticalBounds])
   const surfaceCircuit = useMemo(() => surfaceBound ? createSurfaceCircuit(
     specimen.speciesId, specimen.id, TANK_HALF_WIDTH - bodyRadius, TANK_HALF_DEPTH - bodyRadius, SAND_Y) : undefined,
   [bodyRadius, specimen.id, specimen.speciesId, surfaceBound])
@@ -1156,12 +1204,23 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const step = Math.min(Math.max(delta, 0), .05)
     const mouthLead = riggedAsset ? length * .53 : length * .5
     const bodyHalfSpan = Math.max(length * (shark ? .48 : .34), bodyRadius * .55)
+    const sifting = interactionSite
+      ? sampleBurrowResidentTarget(specimen.speciesId, specimen.id, now, interactionSite, interactionTarget)
+      : false
 
     if (surfaceBound && surfaceCircuit) {
       motion.previousPosition.copy(motion.position)
       motion.previousForward.copy(motion.forward)
-      sampleSurfaceCircuit(surfaceCircuit, specimenSurfaceProgress(specimen.speciesId, surfaceCircuit,
-        specimen.id, now, profile.cruiseSpeed), surfacePose)
+      if (specimen.speciesId === 'pistol_shrimp' && interactionSite) {
+        surfacePose.position.copy(interactionTarget)
+        surfacePose.normal.copy(WORLD_UP)
+        surfacePose.tangent.copy(interactionTarget).sub(motion.position).setY(0)
+        if (surfacePose.tangent.lengthSq() > 1e-6) surfacePose.tangent.normalize()
+        else surfacePose.tangent.copy(motion.forward).setY(0).normalize()
+      } else {
+        sampleSurfaceCircuit(surfaceCircuit, specimenSurfaceProgress(specimen.speciesId, surfaceCircuit,
+          specimen.id, now, profile.cruiseSpeed), surfacePose)
+      }
       motion.desired.copy(surfacePose.position).addScaledVector(surfacePose.normal,
         Math.min(.045, bodyRadius * .42))
       if (!motion.initialized) {
@@ -1193,7 +1252,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
 
     if (!motion.initialized) {
       const initialDirection = seededUnit(specimen.id, 4) > .5 ? 1 : -1
-      motion.position.set(rootX, rootY, clown ? .48 : benthic ? .22 : (seededUnit(specimen.id, 5) - .5) * .65)
+      if (interactionSite) motion.position.copy(interactionTarget)
+      else motion.position.set(rootX, rootY, clown ? .48 : benthic ? .22 : (seededUnit(specimen.id, 5) - .5) * .65)
       motion.forward.set(initialDirection, 0, (seededUnit(specimen.id, 6) - .5) * .3).normalize()
       motion.crowdHeading.set(motion.forward.x, 0, motion.forward.z).normalize()
       clampBodyToTank(motion.position, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
@@ -1205,7 +1265,13 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       motion.nextRoamAt = 0
     }
 
-    if (!targetPosition && (now >= motion.nextRoamAt || motion.position.distanceToSquared(motion.roamTarget) < .04)) {
+    if (!targetPosition && interactionSite) {
+      motion.roamTarget.copy(interactionTarget)
+      const sandLevel = motion.roamTarget.y
+      resolveReefHardscape(motion.roamTarget, bodyRadius, benthic)
+      motion.roamTarget.y = sandLevel
+      clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
+    } else if (!targetPosition && (now >= motion.nextRoamAt || motion.position.distanceToSquared(motion.roamTarget) < .04)) {
       const index = motion.roamIndex
       // Same neighbor measurement the showcase route uses for its crowd decisions: under
       // pressure the next roam target is offset down the away vector, so a crowded resident
@@ -1270,6 +1336,20 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     if (benthic && !targetPosition) motion.desiredDirection.y *= .16
     if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
     else motion.desiredDirection.copy(motion.forward)
+    if (riggedAsset?.category === 'fish') {
+      const signedTurnAngle = Math.atan2(
+        motion.forward.z * motion.desiredDirection.x - motion.forward.x * motion.desiredDirection.z,
+        motion.forward.x * motion.desiredDirection.x + motion.forward.z * motion.desiredDirection.z,
+      )
+      const absoluteTurnAngle = Math.abs(signedTurnAngle)
+      const targetTurnDrive = Math.sign(signedTurnAngle) * (
+        THREE.MathUtils.smoothstep(absoluteTurnAngle, .04, .78) * .58 +
+        THREE.MathUtils.smoothstep(absoluteTurnAngle, .78, 1.8) * .42
+      )
+      const response = targetTurnDrive * turnDrive.current < 0 ||
+        Math.abs(targetTurnDrive) > Math.abs(turnDrive.current) ? 6.5 : 3.2
+      turnDrive.current += (targetTurnDrive - turnDrive.current) * (1 - Math.exp(-step * response))
+    }
     turnTowards(motion.forward, motion.desiredDirection, pursuitMotion.turnRate * step, motion.correction)
 
     motion.desired.copy(motion.forward).multiplyScalar(desiredSpeed)
@@ -1318,9 +1398,15 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const normalizedSpeed = THREE.MathUtils.clamp(actualSpeed / Math.max(profile.cruiseSpeed, .01), 0, 1.8)
     const turnAngle = motion.previousForward.angleTo(motion.forward)
     const turnSign = Math.sign(motion.previousForward.z * motion.forward.x - motion.previousForward.x * motion.forward.z)
-    updateUprightSpecimenOrientation(motion.orientation, motion.forward,
+    const visualTravelDirection = resolveVisualTravelDirection(
+      motion.position, motion.previousPosition, motion.forward, motion.sample)
+    updateUprightSpecimenOrientation(motion.orientation, visualTravelDirection,
       turnSign * Math.min(turnAngle / Math.max(step, .001), profile.turnRate) / profile.turnRate * .09,
       profile.turnRate * step, motion.targetOrientation)
+    if (riggedAsset?.category === 'fish') {
+      const locomotionTarget = THREE.MathUtils.clamp(normalizedSpeed, 0, 1.4)
+      locomotionDrive.current += (locomotionTarget - locomotionDrive.current) * (1 - Math.exp(-step * 5.2))
+    } else locomotionDrive.current = 0
     node.position.copy(motion.position)
     node.quaternion.copy(motion.orientation)
     node.scale.setScalar(riggedAsset ? 1 : length)
@@ -1331,7 +1417,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       estimatedMouthDistance, now)
     const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 +
       turnAngle / Math.max(pursuitMotion.turnRate * step, .001) * .16, 0, .3)
-    const feedDrive = responsePulse ? 1 : targetPosition
+    const feedDrive = responsePulse || (sifting && !targetPosition) ? 1 : targetPosition
       ? resolveFoodAnimationDrive(true, false, normalizedSpeed)
       : motionDrive
     forage.current += (THREE.MathUtils.clamp(feedDrive, 0, 1) - forage.current) * (1 - Math.exp(-step * 4.5))
@@ -1403,7 +1489,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     </mesh> : null}
     {visualPlan.renderAcceptedAsset && riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
-      feedDrive={forage} />}
+      feedDrive={forage} turnDrive={turnDrive} locomotionDrive={locomotionDrive} />}
     {morphologyOverride?.speciesId === specimen.speciesId &&
       <DraftMorphologyOverlay profile={morphologyOverride} targetLengthSceneUnits={length} />}
     {visualPlan.proceduralFallback === 'watchman_goby' &&

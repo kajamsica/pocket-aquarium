@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
+import { applySpecimenTurnPose } from '../scene/specimens/RiggedSpecimen'
 import type { WorkbenchAsset } from './workbenchCatalog'
 
 export type WorkbenchClipName = string
@@ -28,6 +29,7 @@ interface WorkbenchSpecimenProps {
   readonly showSkeleton: boolean
   readonly castShadow: boolean
   readonly turntable: boolean
+  readonly turnPreview: number
   readonly onReady: (stats: WorkbenchAssetStats) => void
   readonly onMissingClip: (message?: string) => void
   readonly onPhase: (phase: number) => void
@@ -48,6 +50,7 @@ export function WorkbenchSpecimen({
   showSkeleton,
   castShadow,
   turntable,
+  turnPreview,
   onReady,
   onMissingClip,
   onPhase,
@@ -55,6 +58,8 @@ export function WorkbenchSpecimen({
   const source = useLoader(GLTFLoader, asset.url)
   const turntableRoot = useRef<THREE.Group>(null)
   const mounted = useRef(false)
+  const smoothedTurnPreview = useRef(0)
+  const appliedTurnPreview = useRef(0)
   const root = useMemo(() => {
     const cloned = cloneSkinned(source.scene) as THREE.Group
     cloned.name = `workbench-${asset.key}`
@@ -82,6 +87,18 @@ export function WorkbenchSpecimen({
     const clip = THREE.AnimationClip.findByName(source.animations, clipName)
     return clip ? mixer.clipAction(clip, root) : undefined
   }, [clipName, mixer, root, source.animations])
+
+  useEffect(() => {
+    smoothedTurnPreview.current = 0
+    appliedTurnPreview.current = 0
+    return () => {
+      if (appliedTurnPreview.current !== 0) {
+        applySpecimenTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+      }
+      smoothedTurnPreview.current = 0
+      appliedTurnPreview.current = 0
+    }
+  }, [asset.key, asset.speciesId, root])
 
   useEffect(() => {
     let triangles = 0
@@ -138,6 +155,10 @@ export function WorkbenchSpecimen({
   }, [showSkeleton, skeletonHelper])
 
   useEffect(() => {
+    if (appliedTurnPreview.current !== 0) {
+      applySpecimenTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+      appliedTurnPreview.current = 0
+    }
     mixer.stopAllAction()
     if (!action) {
       onMissingClip(`The asset does not contain the requested “${clipName}” clip.`)
@@ -151,11 +172,7 @@ export function WorkbenchSpecimen({
     return () => {
       action.stop()
     }
-  }, [action, clipName, loop, mixer, onMissingClip])
-
-  useEffect(() => {
-    if (!playing && action) mixer.setTime(phase * action.getClip().duration)
-  }, [action, mixer, phase, playing])
+  }, [action, asset.speciesId, clipName, loop, mixer, onMissingClip, root])
 
   useEffect(() => {
     mounted.current = true
@@ -178,8 +195,21 @@ export function WorkbenchSpecimen({
   }, [mixer, root, skeletonHelper])
 
   useFrame((_, delta) => {
+    if (action) {
+      if (appliedTurnPreview.current !== 0) {
+        applySpecimenTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+        appliedTurnPreview.current = 0
+      }
+      const frameDelta = Math.min(delta, 0.05)
+      if (playing) mixer.update(frameDelta * playbackRate)
+      else mixer.setTime(phase * action.getClip().duration)
+      const targetTurn = Math.abs(turnPreview) < 0.025 ? 0 : THREE.MathUtils.clamp(turnPreview, -1, 1)
+      const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
+      smoothedTurnPreview.current = THREE.MathUtils.damp(smoothedTurnPreview.current, targetTurn, damping, frameDelta)
+      applySpecimenTurnPose(root, asset.speciesId, smoothedTurnPreview.current)
+      appliedTurnPreview.current = smoothedTurnPreview.current
+    }
     if (playing && action) {
-      mixer.update(Math.min(delta, 0.05) * playbackRate)
       const duration = action.getClip().duration
       if (duration > 0) onPhase(Math.min(action.time / duration, 1))
     }

@@ -23,8 +23,10 @@ import {
   minimumSpecimenHardscapeClearance,
   resolveSpecimenPopulations,
   resolveSpecimenVisualPlan,
+  resolveVisualTravelDirection,
   resolveFoodAnimationDrive,
   resolveFoodPursuitMotion,
+  sampleBurrowResidentTarget,
   sampleSpecimenMotionRoute,
   specimenMotionProfile,
   specimenSurfaceProgress,
@@ -42,6 +44,7 @@ import {
   resolveSpecimenLocomotionPlan,
   speciesBehaviorPolicyFor,
 } from './speciesBehavior'
+import { diamondGobyBurrowSite, sharedBurrowSite } from './speciesInteractions'
 import { createSurfaceCircuit, sampleSurfaceCircuit } from './surfaceLocomotion'
 
 const TEST_ENVELOPE = { longitudinal: .3, lateral: .14 }
@@ -139,6 +142,47 @@ describe('authoritative species locomotion', () => {
     expect(samples.at(-1)?.distanceTo(samples[0])).toBeLessThan(1e-6)
   })
 
+  it('alternates the Diamond Goby between a sand-level sift loop and rest at its separate home', () => {
+    const site = diamondGobyBurrowSite(29)
+    const cycle = site.siftCycle!
+    const period = cycle.siftSeconds + cycle.restSeconds
+    const siftStart = period - cycle.phaseOffsetSeconds + .01
+    const samples = [0, .25, .5, .75].map((fraction) => {
+      const target = new THREE.Vector3()
+      expect(sampleBurrowResidentTarget('diamond_goby', 29,
+        siftStart + cycle.siftSeconds * fraction, site, target)).toBe(true)
+      return target
+    })
+    const rest = new THREE.Vector3()
+    expect(sampleBurrowResidentTarget('diamond_goby', 29,
+      siftStart + cycle.siftSeconds + .01, site, rest)).toBe(false)
+    expect(rest).toEqual(site.position)
+    expect(samples.every((target) => target.y === site.position.y)).toBe(true)
+    expect(Math.max(...samples.map((target) => target.distanceTo(site.position)))).toBeLessThan(cycle.siftRadius)
+    expect(Math.max(...samples.map((target) => target.distanceTo(site.position)))).toBeGreaterThan(.08)
+    expect(site.position.distanceTo(sharedBurrowSite().position)).toBeGreaterThanOrEqual(.72)
+  })
+
+  it('keeps Watchman Goby and Pistol Shrimp on soft independent paths around one shared burrow', () => {
+    const site = sharedBurrowSite()
+    const watchman = new THREE.Vector3()
+    const pistol = new THREE.Vector3()
+    expect(sampleBurrowResidentTarget('watchman_goby', 41, 12, site, watchman)).toBe(false)
+    expect(sampleBurrowResidentTarget('pistol_shrimp', 42, 12, site, pistol)).toBe(false)
+    expect(watchman.y).toBeCloseTo(site.position.y + site.watchmanGuardOffset.y)
+    expect(pistol.y).toBeCloseTo(site.position.y + site.pistolMaintenanceOffset.y)
+    expect(watchman.distanceTo(site.position)).toBeLessThan(.31)
+    expect(pistol.distanceTo(site.position)).toBeLessThan(.21)
+    expect(watchman.distanceTo(pistol)).toBeLessThan(.46)
+
+    const nextWatchman = new THREE.Vector3()
+    const nextPistol = new THREE.Vector3()
+    sampleBurrowResidentTarget('watchman_goby', 41, 12.05, site, nextWatchman)
+    sampleBurrowResidentTarget('pistol_shrimp', 42, 12.05, site, nextPistol)
+    expect(nextWatchman.distanceTo(watchman)).toBeLessThan(.002)
+    expect(nextPistol.distanceTo(pistol)).toBeLessThan(.002)
+  })
+
   it('reserves sunk food for a benthic goby instead of a non-pursuing cleaner shrimp', () => {
     const state = createPocketReefShowcase()
     state.livestock.find(({ species }) => species === 'diamond_goby')!.hunger = .65
@@ -188,6 +232,29 @@ describe('authoritative species locomotion', () => {
 })
 
 describe('specimen motion continuity', () => {
+  it('normalizes visual travel into the supplied reusable target without mutating source vectors', () => {
+    const position = new THREE.Vector3(4, 3, -1)
+    const previousPosition = new THREE.Vector3(1, 1, -1)
+    const fallback = new THREE.Vector3(0, 0, 1)
+    const target = new THREE.Vector3()
+
+    expect(resolveVisualTravelDirection(position, previousPosition, fallback, target)).toBe(target)
+    expect(target).toEqual(new THREE.Vector3(3, 2, 0).normalize())
+    expect(position).toEqual(new THREE.Vector3(4, 3, -1))
+    expect(previousPosition).toEqual(new THREE.Vector3(1, 1, -1))
+    expect(fallback).toEqual(new THREE.Vector3(0, 0, 1))
+  })
+
+  it('falls back to the provided forward vector when visual displacement is zero', () => {
+    const position = new THREE.Vector3(2, -.4, 1)
+    const forward = new THREE.Vector3(.6, 0, -.8)
+    const target = new THREE.Vector3()
+
+    expect(resolveVisualTravelDirection(position, position.clone(), forward, target)).toBe(target)
+    expect(target).toEqual(forward)
+    expect(forward).toEqual(new THREE.Vector3(.6, 0, -.8))
+  })
+
   it('caps travel at the frame delta and at 50 ms after a stall', () => {
     const regularFrame = new THREE.Vector3(10, 0, 0)
     const stalledFrame = new THREE.Vector3(10, 0, 0)

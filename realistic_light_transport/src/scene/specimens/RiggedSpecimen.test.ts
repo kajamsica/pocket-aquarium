@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import * as THREE from 'three'
 
 import { specimenAssetFor } from './assetRegistry'
-import { applySemanticAnimationDrive, initializeSemanticActions, makeAnimationClipInPlace, resolveSemanticAnimationPlan,
-  type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
+import { applySemanticAnimationDrive, applySpecimenTurnPose, initializeSemanticActions, makeAnimationClipInPlace,
+  resolveSemanticAnimationPlan, supportsSpecimenTurnPose, type SemanticAnimationActions,
+  type SemanticAnimationPlan } from './RiggedSpecimen'
 
 function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
   const mixer = new THREE.AnimationMixer(new THREE.Object3D())
@@ -11,7 +12,99 @@ function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
     [clipName, mixer.clipAction(new THREE.AnimationClip(clipName, 1))]))
 }
 
+const turnBoneNames = ['Spine_A', 'Spine_B', 'Peduncle', 'Caudal'] as const
+const clownTurnProfile = [0.03, 0.07, 0.14, 0.22] as const
+const deepTurnProfile = [0.025, 0.055, 0.115, 0.18] as const
+const fusiformTurnProfile = [0.04, 0.08, 0.15, 0.23] as const
+const sharkTurnProfile = [0.1, 0.18, 0.28, 0.34] as const
+const turnProfileCases = [
+  ['ocellaris', clownTurnProfile], ['black_storm_ocellaris', clownTurnProfile],
+  ['banggai_cardinal', deepTurnProfile], ['blue_hippo_tang', deepTurnProfile],
+  ['gem_tang', deepTurnProfile], ['purple_tang', deepTurnProfile],
+  ['tomini_tang', deepTurnProfile], ['yellow_tang', deepTurnProfile],
+  ['diamond_goby', fusiformTurnProfile], ['watchman_goby', fusiformTurnProfile],
+  ['royal_gramma', fusiformTurnProfile], ['six_line_wrasse', fusiformTurnProfile],
+  ['epaulette_shark', sharkTurnProfile],
+] as const
+
+function createTurnRig() {
+  const root = new THREE.Group()
+  for (const name of turnBoneNames) {
+    const bone = new THREE.Bone()
+    bone.name = name
+    root.add(bone)
+  }
+  return root
+}
+
+function zAngle(root: THREE.Object3D, boneName: string) {
+  const rotation = root.getObjectByName(boneName)!.quaternion
+  return 2 * Math.atan2(rotation.z, rotation.w)
+}
+
 describe('rigged specimen semantic animation plan', () => {
+  it.each(turnProfileCases)('clamps and mirrors the %s directional turn pose', (speciesId) => {
+    const hardRight = createTurnRig()
+    const clampedRight = createTurnRig()
+    const hardLeft = createTurnRig()
+
+    applySpecimenTurnPose(hardRight, speciesId, 1)
+    applySpecimenTurnPose(clampedRight, speciesId, 4)
+    applySpecimenTurnPose(hardLeft, speciesId, -1)
+
+    for (const name of turnBoneNames) {
+      expect(hardRight.getObjectByName(name)!.quaternion.angleTo(clampedRight.getObjectByName(name)!.quaternion))
+        .toBeCloseTo(0)
+      expect(zAngle(hardLeft, name)).toBeCloseTo(-zAngle(hardRight, name))
+    }
+  })
+
+  it.each(turnProfileCases)('supports %s and applies its exact progressive turn profile', (speciesId, profile) => {
+    const root = createTurnRig()
+    applySpecimenTurnPose(root, speciesId, 1)
+
+    const bends = turnBoneNames.map((name) => Math.abs(zAngle(root, name)))
+    expect(supportsSpecimenTurnPose(speciesId)).toBe(true)
+    for (let index = 0; index < bends.length; index += 1) {
+      expect(bends[index]).toBeCloseTo(profile[index])
+      if (index > 0) expect(bends[index]).toBeGreaterThan(bends[index - 1])
+    }
+  })
+
+  it.each(turnProfileCases)('reapplies %s from a fresh sampled pose without accumulating bend', (speciesId) => {
+    const root = createTurnRig()
+    const spine = root.getObjectByName('Spine_A')!
+    const sampledPose = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.12)
+
+    spine.quaternion.copy(sampledPose)
+    applySpecimenTurnPose(root, speciesId, 0.6)
+    const firstFrame = spine.quaternion.clone()
+    spine.quaternion.copy(sampledPose)
+    applySpecimenTurnPose(root, speciesId, 0.6)
+
+    expect(spine.quaternion.angleTo(firstFrame)).toBeCloseTo(0)
+  })
+
+  it('leaves a supported fish neutral pose unchanged', () => {
+    const root = createTurnRig()
+    const base = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.2)
+    root.getObjectByName('Spine_A')!.quaternion.copy(base)
+
+    applySpecimenTurnPose(root, 'ocellaris', 0)
+
+    expect(root.getObjectByName('Spine_A')!.quaternion.equals(base)).toBe(true)
+  })
+
+  it.each(['cleaner_shrimp', 'astrea_snail', 'acropora_branching'])('leaves unsupported %s rigs unchanged', (speciesId) => {
+    const root = createTurnRig()
+    const before = root.children.map((bone) => bone.quaternion.clone())
+
+    applySpecimenTurnPose(root, speciesId, 1)
+
+    expect(supportsSpecimenTurnPose(speciesId)).toBe(false)
+    expect(root.children.every((bone, index) => bone.quaternion.equals(before[index]))).toBe(true)
+  })
+
   it('removes only cloned rig-root translation and leaves the source clip unchanged', () => {
     const source = new THREE.AnimationClip('swim', 1, [
       new THREE.VectorKeyframeTrack('Root.position', [0, 1], [0, 0, 0, 1, 2, 3]),
@@ -87,6 +180,9 @@ describe('rigged specimen semantic animation plan', () => {
     initializeSemanticActions(actions, plan)
 
     applySemanticAnimationDrive(actions, plan, 0.5, 0.6)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(0.92 + 0.5 * 0.28 + 0.6 * 0.34)
     expect(actions.burst?.getEffectiveWeight()).toBe(0)
     expect(actions.burst?.isRunning()).toBe(false)
 
@@ -99,5 +195,26 @@ describe('rigged specimen semantic animation plan', () => {
     applySemanticAnimationDrive(actions, plan, 0.5, 0)
     expect(actions.burst?.getEffectiveWeight()).toBe(0)
     expect(actions.burst?.isRunning()).toBe(false)
+  })
+
+  it('maps fish locomotion speed to ordered clip rate and idle blend', () => {
+    const plan = resolveSemanticAnimationPlan(specimenAssetFor('ocellaris')!)
+    const actions = createActions(plan)
+    initializeSemanticActions(actions, plan)
+
+    applySemanticAnimationDrive(actions, plan, 0, 0, 0)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(0.5)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.32)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.68)
+
+    applySemanticAnimationDrive(actions, plan, 0, 0, 1)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(1)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
+
+    applySemanticAnimationDrive(actions, plan, 0, 0, 1.4)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(1.2)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
   })
 })
