@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import {
+  createLiveRockSurfaceContour,
+  LIVE_ROCK_SEED_OFFSET,
+} from './liveRockGeometry'
+import { REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
+
 import { resolveSpecimenLocomotionPlan } from './speciesBehavior'
 import {
   createSurfaceCircuit,
@@ -67,4 +73,55 @@ describe('surface locomotion policy', () => {
       }
     }
   })
+
+  it('samples a deterministic, continuous outer contour with outward unit normals', () => {
+    const rock = REEF_ROCKS[4]
+    const seed = LIVE_ROCK_SEED_OFFSET + 4
+    const contour = createLiveRockSurfaceContour(seed, rock.position, rock.rotation, rock.scale)
+    const replay = createLiveRockSurfaceContour(seed, rock.position, rock.rotation, rock.scale)
+
+    expect(contour.map(({ position }) => position.toArray()))
+      .toEqual(replay.map(({ position }) => position.toArray()))
+    expect(contour[0].position.distanceTo(contour[contour.length - 1].position)).toBeLessThan(1e-8)
+    for (let index = 0; index < contour.length; index += 1) {
+      const sample = contour[index]
+      expect(sample.position.toArray().every(Number.isFinite)).toBe(true)
+      expect(sample.normal.length()).toBeCloseTo(1, 6)
+      expect(sample.normal.dot(sample.position.clone().sub(rock.position))).toBeGreaterThan(0)
+      if (index > 0) expect(sample.position.distanceTo(contour[index - 1].position)).toBeLessThan(.09)
+    }
+  })
+
+  it.each(['blue_linckia', 'brittle_star'])(
+    '%s follows the rendered jagged-rock contour with continuous outward poses', (speciesId) => {
+      const circuit = createSurfaceCircuit(speciesId, 17)
+      const rock = circuit.segments.find((segment) => segment.kind === 'rock')
+      expect(rock?.kind).toBe('rock')
+      if (!rock || rock.kind !== 'rock') return
+      const rockIndex = REEF_ROCKS.indexOf(rock.rock)
+      const renderedContour = createLiveRockSurfaceContour(
+        rockIndex + LIVE_ROCK_SEED_OFFSET, rock.rock.position, rock.rock.rotation, rock.rock.scale)
+      const distanceBefore = circuit.segments.slice(0, circuit.segments.indexOf(rock))
+        .reduce((sum, segment) => sum + segment.length, 0)
+
+      expect(rock.points[0].y).toBeCloseTo(REEF_SAND_Y, 8)
+      expect(rock.points[rock.points.length - 1].y).toBeCloseTo(REEF_SAND_Y, 8)
+      for (let index = 1; index < rock.points.length - 1; index += 1) {
+        expect(renderedContour.some(({ position }) => position.distanceTo(rock.points[index]) < 1e-8))
+          .toBe(true)
+      }
+
+      let previous = sampleSurfaceCircuit(circuit, distanceBefore / circuit.totalLength).position.clone()
+      for (let step = 1; step <= 96; step += 1) {
+        const progress = (distanceBefore + rock.length * step / 96) / circuit.totalLength
+        const pose = sampleSurfaceCircuit(circuit, progress)
+        expect(pose.position.y).toBeGreaterThanOrEqual(REEF_SAND_Y - 1e-8)
+        expect(pose.position.distanceTo(previous)).toBeLessThan(.035)
+        expect(pose.normal.dot(pose.position.clone().sub(rock.rock.position))).toBeGreaterThan(0)
+        expect(pose.normal.length()).toBeCloseTo(1, 6)
+        expect(Math.abs(pose.normal.dot(pose.tangent))).toBeLessThan(1e-6)
+        previous = pose.position.clone()
+      }
+    },
+  )
 })
