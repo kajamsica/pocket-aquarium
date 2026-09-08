@@ -214,5 +214,7 @@ describe('rigged specimen semantic animation plan', () => {
 
     applySemanticAnimationDrive(actions, plan, 0, 0, 1.4)
     expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(1.2)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
   })
 })
