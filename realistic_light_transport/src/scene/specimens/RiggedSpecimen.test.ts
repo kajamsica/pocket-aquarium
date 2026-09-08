@@ -180,6 +180,9 @@ describe('rigged specimen semantic animation plan', () => {
     initializeSemanticActions(actions, plan)
 
     applySemanticAnimationDrive(actions, plan, 0.5, 0.6)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(0.92 + 0.5 * 0.28 + 0.6 * 0.34)
     expect(actions.burst?.getEffectiveWeight()).toBe(0)
     expect(actions.burst?.isRunning()).toBe(false)
 
@@ -192,5 +195,24 @@ describe('rigged specimen semantic animation plan', () => {
     applySemanticAnimationDrive(actions, plan, 0.5, 0)
     expect(actions.burst?.getEffectiveWeight()).toBe(0)
     expect(actions.burst?.isRunning()).toBe(false)
+  })
+
+  it('maps fish locomotion speed to ordered clip rate and idle blend', () => {
+    const plan = resolveSemanticAnimationPlan(specimenAssetFor('ocellaris')!)
+    const actions = createActions(plan)
+    initializeSemanticActions(actions, plan)
+
+    applySemanticAnimationDrive(actions, plan, 0, 0, 0)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(0.5)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.32)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.68)
+
+    applySemanticAnimationDrive(actions, plan, 0, 0, 1)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(1)
+    expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
+    expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
+
+    applySemanticAnimationDrive(actions, plan, 0, 0, 1.4)
+    expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(1.2)
   })
 })
