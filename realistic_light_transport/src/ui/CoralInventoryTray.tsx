@@ -1,3 +1,15 @@
+import { useState } from 'react'
+
+const CORAL_TRAY_OPEN_KEY = 'pocket-aquarium:coral-tray-open'
+
+function initialCoralTrayOpen() {
+  try {
+    const saved = window.localStorage.getItem(CORAL_TRAY_OPEN_KEY)
+    if (saved !== null) return saved === '1'
+  } catch { /* Storage is optional. */ }
+  return !window.matchMedia('(max-width: 860px)').matches
+}
+
 export interface CoralInventoryItem {
   readonly id: number
   readonly speciesName: string
@@ -55,6 +67,7 @@ export function CoralInventoryTray({
   onCancel,
   onLock,
 }: CoralInventoryTrayProps) {
+  const [open, setOpen] = useState(initialCoralTrayOpen)
   if (!inventory.length) return null
 
   const active = inventory.find((coral) => coral.id === activeId)
@@ -68,7 +81,11 @@ export function CoralInventoryTray({
 
   return (
     <aside className="coral-inventory-tray" aria-label="Unplaced coral inventory">
-      <details className="coral-tray-disclosure">
+      <details className="coral-tray-disclosure" open={open} onToggle={(event) => {
+        const nextOpen = event.currentTarget.open
+        setOpen(nextOpen)
+        try { window.localStorage.setItem(CORAL_TRAY_OPEN_KEY, nextOpen ? '1' : '0') } catch { /* Storage is optional. */ }
+      }}>
         <summary aria-label={`Coral tray, ${inventory.length} unplaced`}>
           <span>Coral tray</span><strong>{inventory.length}</strong>
         </summary>

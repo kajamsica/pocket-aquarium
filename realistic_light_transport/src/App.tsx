@@ -246,16 +246,6 @@ function AquariumApp() {
     }
   }, [adoptSave])
 
-  useEffect(() => {
-    const tray = document.querySelector<HTMLDetailsElement>('.coral-tray-disclosure')
-    if (!tray) return
-    const mobile = window.matchMedia('(max-width: 860px)')
-    const syncTray = () => { tray.open = !mobile.matches }
-    syncTray()
-    mobile.addEventListener('change', syncTray)
-    return () => mobile.removeEventListener('change', syncTray)
-  }, [view.coralInventory.length])
-
   // A completed player action commits as one immediate unit: the ref, React state, and the active
   // save key all take the exact resulting state before control returns to the browser, so a reload
   // or background transition inside the one-second save window cannot erase it. Accepted and
