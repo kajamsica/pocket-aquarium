@@ -87,6 +87,8 @@ interface PocketAnimal {
   hunger: number
   condition: number
   health: number
+  parasiteLoad: number
+  lastParasiteCleaningCycle: number
   alive: boolean
   causeOfDeath?: string | null
   decayDays?: number
@@ -448,7 +450,8 @@ export function createPocketReefShowcase(): PocketState {
     const row = Math.floor(index / 5)
     const layerY = profile.layer === 'bottom' ? .86 : profile.layer === 'top' ? .18 : .5
     return { id: index + 1, species: profile.id, kind: profile.kind, ageDays: profile.maturityDays,
-      stage: 'adult', sex: 'unknown', hunger: .1, condition: 1, health: 1, alive: true,
+      stage: 'adult', sex: 'unknown', hunger: .1, condition: 1, health: 1,
+      parasiteLoad: profile.id === 'ocellaris' ? .6 : 0, lastParasiteCleaningCycle: -1, alive: true,
       causeOfDeath: null, decayDays: 0, lastFedDay: state.time.days,
       x: .1 + (index % 5) * .2, y: clamp(layerY + (row - 2) * .03, .1, .92) }
   })
@@ -1125,7 +1128,8 @@ export function projectPocketState(
       title: animal.customName || profile.name,
       facts: [...(animal.customName ? [profile.name] : []), profile.sci,
         `${animal.stage} · ${animal.sex}`, `Health ${Math.round(animal.health * 100)}%`,
-        `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(clamp(animal.hunger) * 100)}%`] }
+        `Condition ${Math.round(animal.condition * 100)}%`, `Hunger ${Math.round(clamp(animal.hunger) * 100)}%`,
+        ...(animal.parasiteLoad > 0 ? [`Parasites ${Math.round(animal.parasiteLoad * 100)}%`] : [])] }
   }
   const residents = state.livestock.map((animal) => {
     const species = runtime.DATA.resolveSpecies(state, animal.species)

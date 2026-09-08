@@ -262,6 +262,50 @@ group("succession drivers are independent");
   gt(cyanoCase("none"), cyanoCase("gyre") + 0.1, "cyano driven by poor flow / dead zones");
 })();
 
+group("bounded cleaner-shrimp parasite treatment");
+(function () {
+  var purchased = cycledFresh(54);
+  PA.dispatch(purchased, { type: "PURCHASE_LIVESTOCK", species: "neon_tetra", count: 6 });
+  eq(purchased.livestock[0].parasiteLoad, 0, "ordinary purchases start parasite-free");
+  eq(purchased.livestock[0].lastParasiteCleaningCycle, -1, "ordinary purchases have no accepted cleaning cycle");
+  purchased.livestock[0].parasiteLoad = 0.43;
+  eq(PA.sanitizeState(JSON.parse(JSON.stringify(purchased))).livestock[0].parasiteLoad, 0.43,
+    "parasite load survives a save/sanitize round trip");
+  purchased.livestock[0].parasiteLoad = 5;
+  eq(PA.sanitizeState(purchased).livestock[0].parasiteLoad, 1, "sanitize clamps parasite load to one");
+  delete purchased.livestock[0].parasiteLoad;
+  eq(PA.sanitizeState(purchased).livestock[0].parasiteLoad, 0, "legacy saves default parasite load to zero");
+
+  var noCleaner = cycledReef(55); addAdult(noCleaner, "ocellaris", 1);
+  noCleaner.livestock[0].parasiteLoad = 0.8;
+  var invalidLogs = noCleaner.log.length;
+  PA.dispatch(noCleaner, { type: "CLEAN_PARASITES", id: noCleaner.livestock[0].id, cycleNumber: 1 });
+  eq(noCleaner.livestock[0].parasiteLoad, 0.8, "treatment requires a living cleaner shrimp");
+  eq(noCleaner.log.length, invalidLogs, "invalid treatment does not log care");
+
+  var serviced = cycledReef(56); addAdult(serviced, "cleaner_shrimp", 1); addAdult(serviced, "ocellaris", 2);
+  var cleaner = serviced.livestock[0], first = serviced.livestock[1], second = serviced.livestock[2];
+  first.parasiteLoad = 0.8; second.parasiteLoad = 0.6;
+  cleaner.alive = false;
+  PA.dispatch(serviced, { type: "CLEAN_PARASITES", id: first.id, cycleNumber: 1 });
+  eq(first.parasiteLoad, 0.8, "a dead cleaner cannot treat fish");
+  cleaner.alive = true;
+  PA.dispatch(serviced, { type: "CLEAN_PARASITES", id: cleaner.id, cycleNumber: 1 });
+  eq(first.parasiteLoad, 0.8, "an invert cannot be selected as the treatment client");
+  var careLogs = serviced.log.length;
+  PA.dispatch(serviced, { type: "CLEAN_PARASITES", id: first.id, cycleNumber: 4 });
+  eq(first.parasiteLoad, 0.55, "one service removes the bounded 25 percent load");
+  eq(second.parasiteLoad, 0.6, "one service never cures another fish globally");
+  eq(serviced.log.length, careLogs + 1, "an actual reduction logs one care event");
+  eq(cleaner.lastParasiteCleaningCycle, 4, "the cleaner station persists its authoritative cycle");
+  PA.dispatch(serviced, { type: "CLEAN_PARASITES", id: first.id, cycleNumber: 4 });
+  PA.dispatch(serviced, { type: "CLEAN_PARASITES", id: second.id, cycleNumber: 4 });
+  eq(first.parasiteLoad, 0.55, "same-cycle replay cannot treat again");
+  eq(second.parasiteLoad, 0.6, "one accepted cycle cannot serve a second client");
+  PA.dispatch(serviced, { type: "CLEAN_PARASITES", id: second.id, cycleNumber: 5 });
+  eq(second.parasiteLoad, 0.35, "a newer station cycle can serve a different client");
+})();
+
 /* ============================================================ *
  * 4. Reef evaporation raises salinity; top-off + ATO control it
  * ============================================================ */
