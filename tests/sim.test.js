@@ -367,6 +367,9 @@ group("equipment + tier purchases change coefficients/outcomes");
   PA.dispatch(reef, { type: "PURCHASE_TIER", tier: "monster3785" });
   eq(reef.tier, finalTier, "dispatch cannot bypass the downgrade lock");
   eq(reef.water.levelL, finalVolume, "blocked downgrade cannot change water volume");
+  var restoredCylinder = PA.sanitizeState(JSON.parse(JSON.stringify(reef)));
+  eq(restoredCylinder.tier, "cylinder5678", "the cylinder tier survives save reload");
+  eq(restoredCylinder.water.levelL, 5678, "a full cylinder remains at 5,678 L after save reload");
 })();
 
 /* ============================================================ *

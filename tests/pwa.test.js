@@ -120,10 +120,9 @@ if (exists("assets/icons/app-icon-master-v1.png")) {
 group("service worker");
 var sw = readText("sw.js");
 ok(/CACHE_VERSION\s*=/.test(sw), "sw.js defines an explicit CACHE_VERSION");
-// PAR5-01C release gate: the shell (index.html/styles.css/app.js/render.js) changed, so the
-// cache MUST be bumped to v3 — v2 would let an already-controlled client pin the pre-fix app.
-ok(/CACHE_VERSION\s*=\s*["']v4["']/.test(sw), "sw.js ships the v4 release cache (bumped from v3 so the specimen-aware shell can't be pinned)");
-ok(!/CACHE_VERSION\s*=\s*["']v2["']/.test(sw), "sw.js no longer ships the superseded v2 cache version");
+// Tank catalog data is cache-first, so a new version must evict the pre-expansion shell.
+ok(/CACHE_VERSION\s*=\s*["']v5["']/.test(sw), "sw.js ships the v5 release cache for the expanded tank catalog");
+ok(!/CACHE_VERSION\s*=\s*["']v4["']/.test(sw), "sw.js no longer ships the superseded v4 cache version");
 ok(/pocket-aquarium-shell-/.test(sw), "sw.js cache name is namespaced and versioned");
 ok(/addEventListener\(\s*["']install["']/.test(sw), "sw.js has an install handler");
 ok(/addEventListener\(\s*["']activate["']/.test(sw), "sw.js has an activate handler");

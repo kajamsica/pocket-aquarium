@@ -1299,9 +1299,9 @@
       var wkeys = ["levelL", "tempC", "pH", "ammonia", "nitrite", "nitrate", "oxygen", "salinity", "alkalinity", "calcium", "magnesium", "phosphate", "par", "flow", "hardness", "tannin"];
       for (var wi = 0; wi < wkeys.length; wi++) {
         var wk = wkeys[wi];
-        base.water[wk] = clamp(num(raw.water[wk], base.water[wk]), 0, wk === "calcium" || wk === "magnesium" ? 3000 : (wk === "levelL" ? 5000 : 100));
+        base.water[wk] = clamp(num(raw.water[wk], base.water[wk]), 0, wk === "calcium" || wk === "magnesium" ? 3000 : (wk === "levelL" ? tierVol(base) : 100));
       }
-      base.water.levelL = clamp(num(raw.water.levelL, tierVol(base)), 0, 5000);
+      base.water.levelL = clamp(num(raw.water.levelL, tierVol(base)), 0, tierVol(base));
     } else {
       base.water.levelL = tierVol(base);
     }

@@ -14,8 +14,8 @@
    - The worker never caches itself; the browser updates sw.js on its own byte-diff. */
 "use strict";
 
-// v4: load the accepted specimen catalog before root PA and keep it available offline.
-var CACHE_VERSION = "v4";
+// v5: refresh the cache-first tank catalog for the expanded habitat-neutral upgrade path.
+var CACHE_VERSION = "v5";
 var CACHE_NAME = "pocket-aquarium-shell-" + CACHE_VERSION;
 
 /* Relative to the worker scope — subpath-safe under /pocket-aquarium/. */
