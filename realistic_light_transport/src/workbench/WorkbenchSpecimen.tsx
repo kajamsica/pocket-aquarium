@@ -59,6 +59,7 @@ export function WorkbenchSpecimen({
   const turntableRoot = useRef<THREE.Group>(null)
   const mounted = useRef(false)
   const smoothedTurnPreview = useRef(0)
+  const appliedTurnPreview = useRef(0)
   const root = useMemo(() => {
     const cloned = cloneSkinned(source.scene) as THREE.Group
     cloned.name = `workbench-${asset.key}`
@@ -89,7 +90,15 @@ export function WorkbenchSpecimen({
 
   useEffect(() => {
     smoothedTurnPreview.current = 0
-  }, [asset.key])
+    appliedTurnPreview.current = 0
+    return () => {
+      if (appliedTurnPreview.current !== 0) {
+        applyEpauletteTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+      }
+      smoothedTurnPreview.current = 0
+      appliedTurnPreview.current = 0
+    }
+  }, [asset.key, asset.speciesId, root])
 
   useEffect(() => {
     let triangles = 0
@@ -146,6 +155,10 @@ export function WorkbenchSpecimen({
   }, [showSkeleton, skeletonHelper])
 
   useEffect(() => {
+    if (appliedTurnPreview.current !== 0) {
+      applyEpauletteTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+      appliedTurnPreview.current = 0
+    }
     mixer.stopAllAction()
     if (!action) {
       onMissingClip(`The asset does not contain the requested “${clipName}” clip.`)
@@ -159,11 +172,7 @@ export function WorkbenchSpecimen({
     return () => {
       action.stop()
     }
-  }, [action, clipName, loop, mixer, onMissingClip])
-
-  useEffect(() => {
-    if (!playing && action) mixer.setTime(phase * action.getClip().duration)
-  }, [action, mixer, phase, playing])
+  }, [action, asset.speciesId, clipName, loop, mixer, onMissingClip, root])
 
   useEffect(() => {
     mounted.current = true
@@ -187,6 +196,10 @@ export function WorkbenchSpecimen({
 
   useFrame((_, delta) => {
     if (action) {
+      if (appliedTurnPreview.current !== 0) {
+        applyEpauletteTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+        appliedTurnPreview.current = 0
+      }
       const frameDelta = Math.min(delta, 0.05)
       if (playing) mixer.update(frameDelta * playbackRate)
       else mixer.setTime(phase * action.getClip().duration)
@@ -194,6 +207,7 @@ export function WorkbenchSpecimen({
       const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
       smoothedTurnPreview.current = THREE.MathUtils.damp(smoothedTurnPreview.current, targetTurn, damping, frameDelta)
       applyEpauletteTurnPose(root, asset.speciesId, smoothedTurnPreview.current)
+      appliedTurnPreview.current = smoothedTurnPreview.current
     }
     if (playing && action) {
       const duration = action.getClip().duration
