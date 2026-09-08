@@ -14,6 +14,8 @@ export interface RiggedSpecimenProps {
   readonly hunger: number
   /** Live 0..1 feeding-pursuit drive updated each frame by the fish's steering. */
   readonly feedDrive: RefObject<number>
+  /** Live -1..1 steering drive, with negative turning left and positive turning right. */
+  readonly turnDrive?: RefObject<number>
 }
 
 function phaseForId(id: number) {
@@ -42,6 +44,28 @@ export function resolveSemanticAnimationPlan(asset: SpecimenAsset): SemanticAnim
 }
 
 export type SemanticAnimationActions = Partial<Record<string, THREE.AnimationAction>>
+
+const EPAULETTE_TURN_BONES = [
+  ['Spine_A', 0.07],
+  ['Spine_B', 0.13],
+  ['Peduncle', 0.2],
+  ['Caudal', 0.24],
+] as const
+const TURN_AXIS = new THREE.Vector3(0, 0, 1)
+const TURN_ROTATION = new THREE.Quaternion()
+
+/** Add the shared Epaulette steering pose after an authored clip has been sampled. */
+export function applyEpauletteTurnPose(root: THREE.Object3D, speciesId: string, turnDrive: number) {
+  if (speciesId !== 'epaulette_shark') return
+  const drive = THREE.MathUtils.clamp(turnDrive, -1, 1)
+  if (drive === 0) return
+  for (const [boneName, bendRadians] of EPAULETTE_TURN_BONES) {
+    const bone = root.getObjectByName(boneName)
+    if (!(bone instanceof THREE.Bone)) continue
+    TURN_ROTATION.setFromAxisAngle(TURN_AXIS, bendRadians * drive)
+    bone.quaternion.multiply(TURN_ROTATION)
+  }
+}
 
 const BASE_ROOT_SPECIES = new Set(['acropora_branching', 'stylophora'])
 
@@ -81,16 +105,19 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
   else if (!responseActive) response.stop().setEffectiveWeight(0)
 }
 
-export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive }: RiggedSpecimenProps) {
+export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive,
+  turnDrive }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
   const root = useMemo(() => cloneSkinned(source.scene) as THREE.Group, [source.scene])
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
   const actions = useRef<Partial<Record<string, THREE.AnimationAction>>>({})
   const animationPlan = useMemo(() => resolveSemanticAnimationPlan(asset), [asset])
   const seeded = useRef(false)
+  const smoothedTurnDrive = useRef(0)
 
   useEffect(() => {
     root.name = `rigged-${asset.speciesId}-${individualId}`
+    smoothedTurnDrive.current = 0
     root.userData = { ...root.userData, rootSpecimenId: individualId, speciesId: asset.speciesId, stage }
     root.traverse((node) => {
       if (node instanceof THREE.Mesh) {
@@ -128,7 +155,13 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
 
   useFrame((_, delta) => {
     applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current)
-    mixer.update(Math.min(delta, 0.05))
+    const frameDelta = Math.min(delta, 0.05)
+    mixer.update(frameDelta)
+    const liveTurn = turnDrive?.current ?? 0
+    const targetTurn = Math.abs(liveTurn) < 0.025 ? 0 : THREE.MathUtils.clamp(liveTurn, -1, 1)
+    const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
+    smoothedTurnDrive.current = THREE.MathUtils.damp(smoothedTurnDrive.current, targetTurn, damping, frameDelta)
+    applyEpauletteTurnPose(root, asset.speciesId, smoothedTurnDrive.current)
   })
 
   const authoredScale = targetLengthSceneUnits / asset.referenceAdultLengthMeters

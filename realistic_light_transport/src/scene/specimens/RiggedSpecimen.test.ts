@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import * as THREE from 'three'
 
 import { specimenAssetFor } from './assetRegistry'
-import { applySemanticAnimationDrive, initializeSemanticActions, makeAnimationClipInPlace, resolveSemanticAnimationPlan,
-  type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
+import { applyEpauletteTurnPose, applySemanticAnimationDrive, initializeSemanticActions, makeAnimationClipInPlace,
+  resolveSemanticAnimationPlan, type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
 
 function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
   const mixer = new THREE.AnimationMixer(new THREE.Object3D())
@@ -11,7 +11,81 @@ function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
     [clipName, mixer.clipAction(new THREE.AnimationClip(clipName, 1))]))
 }
 
+const turnBoneNames = ['Spine_A', 'Spine_B', 'Peduncle', 'Caudal'] as const
+
+function createTurnRig() {
+  const root = new THREE.Group()
+  for (const name of turnBoneNames) {
+    const bone = new THREE.Bone()
+    bone.name = name
+    root.add(bone)
+  }
+  return root
+}
+
+function zAngle(root: THREE.Object3D, boneName: string) {
+  const rotation = root.getObjectByName(boneName)!.quaternion
+  return 2 * Math.atan2(rotation.z, rotation.w)
+}
+
 describe('rigged specimen semantic animation plan', () => {
+  it('clamps and mirrors the directional Epaulette turn pose', () => {
+    const hardRight = createTurnRig()
+    const clampedRight = createTurnRig()
+    const hardLeft = createTurnRig()
+
+    applyEpauletteTurnPose(hardRight, 'epaulette_shark', 1)
+    applyEpauletteTurnPose(clampedRight, 'epaulette_shark', 4)
+    applyEpauletteTurnPose(hardLeft, 'epaulette_shark', -1)
+
+    for (const name of turnBoneNames) {
+      expect(hardRight.getObjectByName(name)!.quaternion.angleTo(clampedRight.getObjectByName(name)!.quaternion))
+        .toBeCloseTo(0)
+      expect(zAngle(hardLeft, name)).toBeCloseTo(-zAngle(hardRight, name))
+    }
+  })
+
+  it('distributes steering curvature progressively toward the tail', () => {
+    const root = createTurnRig()
+    applyEpauletteTurnPose(root, 'epaulette_shark', 1)
+
+    const bends = turnBoneNames.map((name) => Math.abs(zAngle(root, name)))
+    expect(bends[0]).toBeGreaterThan(0)
+    expect(bends[1]).toBeGreaterThan(bends[0])
+    expect(bends[2]).toBeGreaterThan(bends[1])
+    expect(bends[3]).toBeGreaterThan(bends[2])
+  })
+
+  it('reapplies from the freshly sampled authored pose without accumulating bend', () => {
+    const root = createTurnRig()
+    const spine = root.getObjectByName('Spine_A')!
+    const sampledPose = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.12)
+
+    spine.quaternion.copy(sampledPose)
+    applyEpauletteTurnPose(root, 'epaulette_shark', 0.6)
+    const firstFrame = spine.quaternion.clone()
+    spine.quaternion.copy(sampledPose)
+    applyEpauletteTurnPose(root, 'epaulette_shark', 0.6)
+
+    expect(spine.quaternion.angleTo(firstFrame)).toBeCloseTo(0)
+  })
+
+  it('leaves a neutral pose and every non-Epaulette rig unchanged', () => {
+    const neutral = createTurnRig()
+    const otherSpecies = createTurnRig()
+    const base = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.2)
+    neutral.getObjectByName('Spine_A')!.quaternion.copy(base)
+    otherSpecies.getObjectByName('Spine_A')!.quaternion.copy(base)
+
+    applyEpauletteTurnPose(neutral, 'epaulette_shark', 0)
+    applyEpauletteTurnPose(otherSpecies, 'ocellaris', 1)
+
+    expect(neutral.getObjectByName('Spine_A')!.quaternion.equals(base)).toBe(true)
+    expect(otherSpecies.getObjectByName('Spine_A')!.quaternion.equals(base)).toBe(true)
+    expect(otherSpecies.children.every((bone) => bone.quaternion.equals(bone.name === 'Spine_A' ? base : new THREE.Quaternion())))
+      .toBe(true)
+  })
+
   it('removes only cloned rig-root translation and leaves the source clip unchanged', () => {
     const source = new THREE.AnimationClip('swim', 1, [
       new THREE.VectorKeyframeTrack('Root.position', [0, 1], [0, 0, 0, 1, 2, 3]),
