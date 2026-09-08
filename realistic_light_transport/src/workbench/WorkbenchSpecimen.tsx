@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
+import { applyEpauletteTurnPose } from '../scene/specimens/RiggedSpecimen'
 import type { WorkbenchAsset } from './workbenchCatalog'
 
 export type WorkbenchClipName = string
@@ -28,6 +29,7 @@ interface WorkbenchSpecimenProps {
   readonly showSkeleton: boolean
   readonly castShadow: boolean
   readonly turntable: boolean
+  readonly turnPreview: number
   readonly onReady: (stats: WorkbenchAssetStats) => void
   readonly onMissingClip: (message?: string) => void
   readonly onPhase: (phase: number) => void
@@ -48,6 +50,7 @@ export function WorkbenchSpecimen({
   showSkeleton,
   castShadow,
   turntable,
+  turnPreview,
   onReady,
   onMissingClip,
   onPhase,
@@ -178,8 +181,12 @@ export function WorkbenchSpecimen({
   }, [mixer, root, skeletonHelper])
 
   useFrame((_, delta) => {
+    if (action) {
+      if (playing) mixer.update(Math.min(delta, 0.05) * playbackRate)
+      else mixer.setTime(phase * action.getClip().duration)
+      applyEpauletteTurnPose(root, asset.speciesId, turnPreview)
+    }
     if (playing && action) {
-      mixer.update(Math.min(delta, 0.05) * playbackRate)
       const duration = action.getClip().duration
       if (duration > 0) onPhase(Math.min(action.time / duration, 1))
     }
