@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
-import { applyEpauletteTurnPose } from '../scene/specimens/RiggedSpecimen'
+import { applySpecimenTurnPose } from '../scene/specimens/RiggedSpecimen'
 import type { WorkbenchAsset } from './workbenchCatalog'
 
 export type WorkbenchClipName = string
@@ -93,7 +93,7 @@ export function WorkbenchSpecimen({
     appliedTurnPreview.current = 0
     return () => {
       if (appliedTurnPreview.current !== 0) {
-        applyEpauletteTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+        applySpecimenTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
       }
       smoothedTurnPreview.current = 0
       appliedTurnPreview.current = 0
@@ -156,7 +156,7 @@ export function WorkbenchSpecimen({
 
   useEffect(() => {
     if (appliedTurnPreview.current !== 0) {
-      applyEpauletteTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+      applySpecimenTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
       appliedTurnPreview.current = 0
     }
     mixer.stopAllAction()
@@ -197,7 +197,7 @@ export function WorkbenchSpecimen({
   useFrame((_, delta) => {
     if (action) {
       if (appliedTurnPreview.current !== 0) {
-        applyEpauletteTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
+        applySpecimenTurnPose(root, asset.speciesId, -appliedTurnPreview.current)
         appliedTurnPreview.current = 0
       }
       const frameDelta = Math.min(delta, 0.05)
@@ -206,7 +206,7 @@ export function WorkbenchSpecimen({
       const targetTurn = Math.abs(turnPreview) < 0.025 ? 0 : THREE.MathUtils.clamp(turnPreview, -1, 1)
       const damping = Math.abs(targetTurn) > 0.8 ? 8 : 4.5
       smoothedTurnPreview.current = THREE.MathUtils.damp(smoothedTurnPreview.current, targetTurn, damping, frameDelta)
-      applyEpauletteTurnPose(root, asset.speciesId, smoothedTurnPreview.current)
+      applySpecimenTurnPose(root, asset.speciesId, smoothedTurnPreview.current)
       appliedTurnPreview.current = smoothedTurnPreview.current
     }
     if (playing && action) {

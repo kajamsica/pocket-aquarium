@@ -9,6 +9,7 @@ import {
   type WorkbenchClipName,
 } from './WorkbenchSpecimen'
 import { SHARED_SCALE_BAR_METERS } from '../catalog/visualCatalog'
+import { supportsSpecimenTurnPose } from '../scene/specimens/RiggedSpecimen'
 import {
   BADGE_LABELS,
   assetBadge,
@@ -502,13 +503,13 @@ export function SpecimenWorkbench() {
             <span>Phase {(phase * 100).toFixed(0)}%</span>
             <input id="workbench-phase" type="range" min="0" max="1" step="0.01" value={phase} disabled={playing} onChange={(event) => setPhase(Number(event.target.value))} />
           </label>
-          {asset.speciesId === 'epaulette_shark' && (
+          {supportsSpecimenTurnPose(asset.speciesId) && (
             <>
               <label className="workbench-scrub" htmlFor="workbench-turn-preview">
                 <span>Steering turn {turnPreview < 0 ? 'left' : turnPreview > 0 ? 'right' : 'straight'} · {Math.abs(turnPreview * 100).toFixed(0)}%</span>
                 <input id="workbench-turn-preview" type="range" min="-1" max="1" step="0.05" value={turnPreview} onChange={(event) => setTurnPreview(Number(event.target.value))} />
               </label>
-              <div className="workbench-grid workbench-grid--camera" aria-label="Epaulette steering turn preview">
+              <div className="workbench-grid workbench-grid--camera" aria-label="Specimen steering turn preview">
                 <button type="button" aria-pressed={turnPreview === -1} onClick={() => setTurnPreview(-1)}>Sharp left</button>
                 <button type="button" aria-pressed={turnPreview === 0} onClick={() => setTurnPreview(0)}>Straight</button>
                 <button type="button" aria-pressed={turnPreview === 1} onClick={() => setTurnPreview(1)}>Sharp right</button>
