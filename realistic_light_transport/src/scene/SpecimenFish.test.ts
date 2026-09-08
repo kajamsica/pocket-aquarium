@@ -495,7 +495,8 @@ describe('specimen motion continuity', () => {
           new THREE.Vector3(-Math.cos(angle), 0, -Math.sin(angle)), halfSpan, bodyRadius)
         if (clearance > bestClearance) { bestClearance = clearance; position = candidate }
       }
-      expect(bestClearance, `${speciesId} rock ${rockIndex} start`).toBeGreaterThanOrEqual(1)
+      expect(bestClearance + bodyRadius, `${speciesId} rock ${rockIndex} start`)
+        .toBeGreaterThanOrEqual(bodyRadius - 1e-8)
       const goal = rock.position.clone().multiplyScalar(2).sub(position).setY(guideY)
       const heading = goal.clone().sub(position).setY(0).normalize()
       const velocity = heading.clone().multiplyScalar(speed)
@@ -516,12 +517,51 @@ describe('specimen motion continuity', () => {
         expect(beforeHeading.angleTo(heading), `${speciesId} rock ${rockIndex} frame ${frame} turn`)
           .toBeLessThanOrEqual(3.2 * delta + 1e-8)
         expect(proposed.y).toBe(guideY)
-        expect(minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius),
-          `${speciesId} rock ${rockIndex} frame ${frame} clearance`).toBeGreaterThanOrEqual(1 - 1e-8)
+        expect(minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) + bodyRadius,
+          `${speciesId} rock ${rockIndex} frame ${frame} clearance`)
+          .toBeGreaterThanOrEqual(bodyRadius - 1e-8)
         velocity.copy(proposed).sub(position).divideScalar(delta)
         position.copy(proposed)
       }
     }
+  })
+
+  it('lets a Diamond Goby cross the open interval between rocks 7 and 8 but clips solid rock', () => {
+    const bodyRadius = .34 * .24
+    const halfSpan = .34 * .52
+    const sandY = REEF_SAND_Y + .08
+    const firstRock = REEF_ROCKS[7]
+    const secondRock = REEF_ROCKS[8]
+    const midpoint = firstRock.position.clone().add(secondRock.position).multiplyScalar(.5).setY(sandY)
+    const gapHeading = new THREE.Vector3(
+      firstRock.position.z - secondRock.position.z, 0,
+      secondRock.position.x - firstRock.position.x,
+    ).normalize()
+    const start = midpoint.clone().addScaledVector(gapHeading, -.18)
+    const goal = midpoint.clone().addScaledVector(gapHeading, .18)
+    const position = start.clone()
+    const speed = specimenMotionProfile('diamond_goby').cruiseSpeed
+    const delta = 1 / 60
+    let maximumStep = 0
+    let gapConstrained = false
+    for (let frame = 0; frame < 120 && position.distanceToSquared(goal) > 1e-10; frame += 1) {
+      const proposed = goal.clone()
+      maximumStep = Math.max(maximumStep, limitSpecimenFrameTravel(position, proposed, speed, delta))
+      gapConstrained ||= constrainSpecimenHardscapeTravel(position, proposed, gapHeading, halfSpan, bodyRadius)
+      expect(proposed.y).toBe(sandY)
+      position.copy(proposed)
+    }
+    expect(gapConstrained).toBe(false)
+    expect(position.distanceTo(start)).toBeCloseTo(.36)
+    expect(maximumStep).toBeLessThanOrEqual(speed * delta + 1e-8)
+
+    const solidGoal = REEF_ROCKS[0].position.clone().setY(sandY)
+    const solidHeading = solidGoal.clone().sub(midpoint).normalize()
+    const intendedDistance = midpoint.distanceTo(solidGoal)
+    expect(constrainSpecimenHardscapeTravel(midpoint, solidGoal, solidHeading, halfSpan, bodyRadius)).toBe(true)
+    expect(solidGoal.y).toBe(sandY)
+    expect(midpoint.distanceTo(solidGoal)).toBeGreaterThan(0)
+    expect(midpoint.distanceTo(solidGoal)).toBeLessThan(intendedDistance)
   })
 })
 describe('specimen primary visual selection', () => {
