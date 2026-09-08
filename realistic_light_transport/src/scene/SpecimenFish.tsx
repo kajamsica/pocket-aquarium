@@ -1098,6 +1098,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const mouthPosition = useMemo(() => new THREE.Vector3(), [])
   const fallbackMouth = useMemo(() => new THREE.Vector3(), [])
   const forage = useRef(0)
+  const turnDrive = useRef(0)
   const feedingResponse = useRef(createFeedingResponseState())
   const tailPhase = useRef(seededUnit(specimen.id, 2) * Math.PI * 2)
   const phase = seededUnit(specimen.id, 1) * Math.PI * 2
@@ -1325,6 +1326,20 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     if (benthic && !targetPosition) motion.desiredDirection.y *= .16
     if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
     else motion.desiredDirection.copy(motion.forward)
+    if (shark) {
+      const signedTurnAngle = Math.atan2(
+        motion.forward.z * motion.desiredDirection.x - motion.forward.x * motion.desiredDirection.z,
+        motion.forward.x * motion.desiredDirection.x + motion.forward.z * motion.desiredDirection.z,
+      )
+      const absoluteTurnAngle = Math.abs(signedTurnAngle)
+      const targetTurnDrive = Math.sign(signedTurnAngle) * (
+        THREE.MathUtils.smoothstep(absoluteTurnAngle, .04, .78) * .58 +
+        THREE.MathUtils.smoothstep(absoluteTurnAngle, .78, 1.8) * .42
+      )
+      const response = targetTurnDrive * turnDrive.current < 0 ||
+        Math.abs(targetTurnDrive) > Math.abs(turnDrive.current) ? 6.5 : 3.2
+      turnDrive.current += (targetTurnDrive - turnDrive.current) * (1 - Math.exp(-step * response))
+    }
     turnTowards(motion.forward, motion.desiredDirection, pursuitMotion.turnRate * step, motion.correction)
 
     motion.desired.copy(motion.forward).multiplyScalar(desiredSpeed)
@@ -1458,7 +1473,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     </mesh> : null}
     {visualPlan.renderAcceptedAsset && riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
-      feedDrive={forage} />}
+      feedDrive={forage} turnDrive={turnDrive} />}
     {morphologyOverride?.speciesId === specimen.speciesId &&
       <DraftMorphologyOverlay profile={morphologyOverride} targetLengthSceneUnits={length} />}
     {visualPlan.proceduralFallback === 'watchman_goby' &&
