@@ -20,6 +20,50 @@ export interface RiggedSpecimenProps {
   readonly turnDrive?: RefObject<number>
   /** Live ratio of current locomotion speed to the resident's normal cruise speed. */
   readonly locomotionDrive?: RefObject<number>
+  /** Optional non-fish drive for authored lifecycle animation speed. */
+  readonly semanticDrive?: number
+  readonly appearance?: SpecimenAppearance
+}
+
+export interface SpecimenAppearance {
+  readonly saturation: number
+  readonly opacity: number
+}
+
+export function resolveSpecimenAppearance(appearance?: SpecimenAppearance): SpecimenAppearance | undefined {
+  if (!appearance) return undefined
+  const unit = (value: number) => THREE.MathUtils.clamp(Number.isFinite(value) ? value : 0, 0, 1)
+  return { saturation: unit(appearance.saturation), opacity: unit(appearance.opacity) }
+}
+
+type ColorMaterial = THREE.Material & { color: THREE.Color }
+const materialColor = (material: THREE.Material) =>
+  'color' in material && material.color instanceof THREE.Color ? material as ColorMaterial : undefined
+
+function applyResolvedAppearance(material: THREE.Material, baseColor: THREE.Color | undefined,
+  baseOpacity: number, baseTransparent: boolean, baseDepthWrite: boolean, appearance: SpecimenAppearance) {
+  const colored = materialColor(material)
+  if (colored && baseColor) {
+    if (appearance.saturation === 1) colored.color.copy(baseColor)
+    else {
+      const luminance = baseColor.r * .2126 + baseColor.g * .7152 + baseColor.b * .0722
+      colored.color.setRGB(luminance, luminance, luminance).lerp(baseColor, appearance.saturation)
+    }
+  }
+  material.opacity = baseOpacity * appearance.opacity
+  material.transparent = baseTransparent || material.opacity < 1
+  material.depthWrite = baseDepthWrite && material.opacity >= 1
+  material.needsUpdate = true
+}
+
+/** Clone before applying lifecycle appearance so accepted source assets and sibling instances stay immutable. */
+export function specimenMaterialWithAppearance(source: THREE.Material,
+  appearance: SpecimenAppearance): THREE.Material {
+  const resolved = resolveSpecimenAppearance(appearance)!
+  const material = source.clone()
+  applyResolvedAppearance(material, materialColor(source)?.color, source.opacity, source.transparent,
+    source.depthWrite, resolved)
+  return material
 }
 
 function phaseForId(id: number) {
@@ -62,6 +106,7 @@ const SPECIMEN_TURN_PROFILES: Readonly<Record<string, SpecimenTurnProfile>> = {
   blue_hippo_tang: DEEP_BODY_TURN_PROFILE,
   gem_tang: DEEP_BODY_TURN_PROFILE,
   purple_tang: DEEP_BODY_TURN_PROFILE,
+  regal_angelfish: DEEP_BODY_TURN_PROFILE,
   tomini_tang: DEEP_BODY_TURN_PROFILE,
   yellow_tang: DEEP_BODY_TURN_PROFILE,
   diamond_goby: FUSIFORM_TURN_PROFILE,
@@ -177,9 +222,28 @@ export function applySemanticAnimationDrive(actions: SemanticAnimationActions, p
 }
 
 export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, stage, hunger, feedDrive,
-  turnDrive, locomotionDrive }: RiggedSpecimenProps) {
+  turnDrive, locomotionDrive, semanticDrive, appearance }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
-  const root = useMemo(() => cloneSkinned(source.scene) as THREE.Group, [source.scene])
+  const appearancePlan = useMemo(() => resolveSpecimenAppearance(appearance),
+    [appearance?.opacity, appearance?.saturation])
+  const instance = useMemo(() => {
+    const root = cloneSkinned(source.scene) as THREE.Group
+    const materials: Array<{ material: THREE.Material; baseColor?: THREE.Color;
+      baseOpacity: number; baseTransparent: boolean; baseDepthWrite: boolean }> = []
+    if (appearancePlan) root.traverse((node) => {
+      if (!(node instanceof THREE.Mesh)) return
+      const own = (sourceMaterial: THREE.Material) => {
+        const material = specimenMaterialWithAppearance(sourceMaterial, appearancePlan)
+        materials.push({ material, baseColor: materialColor(sourceMaterial)?.color.clone(),
+          baseOpacity: sourceMaterial.opacity, baseTransparent: sourceMaterial.transparent,
+          baseDepthWrite: sourceMaterial.depthWrite })
+        return material
+      }
+      node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material)
+    })
+    return { root, materials }
+  }, [Boolean(appearancePlan), source.scene])
+  const { root, materials: instanceMaterials } = instance
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root])
   const actions = useRef<Partial<Record<string, THREE.AnimationAction>>>({})
   const animationPlan = useMemo(() => resolveSemanticAnimationPlan(asset), [asset])
@@ -241,8 +305,20 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   }, [animationPlan, asset.clipLoops, asset.clips, asset.speciesId, individualId, linckiaArmJoints,
     mixer, root, source.animations, stage])
 
+  useEffect(() => {
+    if (!appearancePlan) return
+    for (const record of instanceMaterials) applyResolvedAppearance(record.material, record.baseColor,
+      record.baseOpacity, record.baseTransparent, record.baseDepthWrite, appearancePlan)
+  }, [appearancePlan, instanceMaterials])
+
+  useEffect(() => () => {
+    for (const record of instanceMaterials) record.material.dispose()
+  }, [instanceMaterials])
+
   useFrame((_, delta) => {
-    applySemanticAnimationDrive(actions.current, animationPlan, hunger, feedDrive.current,
+    const drive = semanticDrive === undefined ? hunger
+      : THREE.MathUtils.clamp(Number.isFinite(semanticDrive) ? semanticDrive : 0, 0, 1)
+    applySemanticAnimationDrive(actions.current, animationPlan, drive, feedDrive.current,
       asset.category === 'fish' ? locomotionDrive?.current : undefined)
     const frameDelta = Math.min(delta, 0.05)
     mixer.update(frameDelta)

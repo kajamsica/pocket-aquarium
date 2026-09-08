@@ -978,6 +978,105 @@
       "defaultForSpecies": false
     },
     {
+      "key": "montipora@capricornis_plating",
+      "speciesId": "montipora",
+      "variantId": "capricornis_plating",
+      "category": "coral",
+      "bodyPlan": "montipora_colony",
+      "sourceCandidate": "fable-v1-capricornis_plating",
+      "sourceCandidateGlbPath": "art/specimens/montipora/candidates/fable-v1-capricornis_plating/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/montipora/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Montipora capricornis (orange whorling plate, green polyps)",
+      "sha256": "b620a9ca160cd9d53275e29ee0dad2620f437e2ee5dfbf70a6085f597da3bc9c",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "montipora@digitata_branching",
+      "speciesId": "montipora",
+      "variantId": "digitata_branching",
+      "category": "coral",
+      "bodyPlan": "montipora_colony",
+      "sourceCandidate": "fable-v1-digitata_branching",
+      "sourceCandidateGlbPath": "art/specimens/montipora/candidates/fable-v1-digitata_branching/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/montipora/digitata_branching/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Montipora digitata (purple fingers, green polyps)",
+      "sha256": "ff210f0308c01b258470f69863c17c09885a89b3fcb16c675a3a59668af00cf6",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
+      "key": "montipora@encrusting",
+      "speciesId": "montipora",
+      "variantId": "encrusting",
+      "category": "coral",
+      "bodyPlan": "montipora_colony",
+      "sourceCandidate": "fable-v1-encrusting",
+      "sourceCandidateGlbPath": "art/specimens/montipora/candidates/fable-v1-encrusting/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/montipora/encrusting/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "colony_width"
+      },
+      "displayName": "Montipora encrusting (red sheet, green polyps)",
+      "sha256": "a2dfc83c5b6dde3b23d0c1dae80749f8b727359aab10e10c54839d3d65740428",
+      "clips": [
+        "flow",
+        "retract",
+        "sway"
+      ],
+      "clipRoles": {
+        "idle": "sway",
+        "locomotion": "flow",
+        "response": "retract"
+      },
+      "clipLoops": {
+        "sway": true,
+        "flow": true,
+        "retract": false
+      },
+      "defaultForSpecies": false
+    },
+    {
       "key": "nassarius_snail",
       "speciesId": "nassarius_snail",
       "category": "cleanup_crew",
@@ -1056,6 +1155,38 @@
       },
       "displayName": "Purple Tang",
       "sha256": "3da76e8badbcd31565ce7154906834482c051e5443d56b6369f7c75033a309af",
+      "clips": [
+        "burst",
+        "idle",
+        "swim"
+      ],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "clipLoops": {
+        "idle": true,
+        "swim": true,
+        "burst": false
+      },
+      "defaultForSpecies": true
+    },
+    {
+      "key": "regal_angelfish",
+      "speciesId": "regal_angelfish",
+      "category": "fish",
+      "bodyPlan": "fish",
+      "sourceCandidate": "fable-v1",
+      "sourceCandidateGlbPath": "art/specimens/regal_angelfish/candidates/fable-v1/lod1.glb",
+      "bundledGlbPath": "src/assets/specimens/regal_angelfish/v1/lod1.glb",
+      "version": "0.1.0",
+      "referenceSize": {
+        "meters": 0.25,
+        "kind": "adult_total_length"
+      },
+      "displayName": "Regal Angelfish",
+      "sha256": "056f4ea5d4e7de7a033d9b1de9f6eb6006896e4222f556889b6f01109a5a220f",
       "clips": [
         "burst",
         "idle",

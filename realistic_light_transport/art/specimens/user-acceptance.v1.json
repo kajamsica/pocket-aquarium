@@ -354,6 +354,33 @@
       "userApprovedLook": false
     },
     {
+      "speciesId": "montipora",
+      "candidate": "fable-v1-capricornis_plating",
+      "candidateHash": "c1e2c7ebd2d599d004909394053ad7960e3fd8c35f0a875a6e4e9129df5f9c50",
+      "glbSha256": "b620a9ca160cd9d53275e29ee0dad2620f437e2ee5dfbf70a6085f597da3bc9c",
+      "geometryDigest": "35519f71ce94339337f29f1b45d6df1f3dfc33c562cd979fef4eac752d022f6b",
+      "status": "user_accepted",
+      "userApprovedLook": true
+    },
+    {
+      "speciesId": "montipora",
+      "candidate": "fable-v1-digitata_branching",
+      "candidateHash": "62e8fa53ed0d2840bcfed1055709995e11bbd7b57bb3466783db392c4ac67520",
+      "glbSha256": "ff210f0308c01b258470f69863c17c09885a89b3fcb16c675a3a59668af00cf6",
+      "geometryDigest": "fba29a2a7ecc421c708182f2bd5279abad3773ad8759aa6132f6d325d66ad3dd",
+      "status": "user_accepted",
+      "userApprovedLook": true
+    },
+    {
+      "speciesId": "montipora",
+      "candidate": "fable-v1-encrusting",
+      "candidateHash": "8e562e8eb49f581b11e37cbd8ef9b6ca421a538cf1c6d4e788b941c2bc27ae8b",
+      "glbSha256": "a2dfc83c5b6dde3b23d0c1dae80749f8b727359aab10e10c54839d3d65740428",
+      "geometryDigest": "c30cb965b72e2d58a7c2c6bb688efde7e2f0928e4d12655d9347766807287e4b",
+      "status": "user_accepted",
+      "userApprovedLook": true
+    },
+    {
       "speciesId": "nassarius_snail",
       "candidate": "fable-v1",
       "candidateHash": "a5c240c61b785b2b75a2ecc0c25fbab8a40dad60baca6850fdc6c28191a0e32a",

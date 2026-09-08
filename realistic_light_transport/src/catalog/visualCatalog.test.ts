@@ -59,7 +59,7 @@ describe('committed visual catalog', () => {
 
   it('pairs every catalog row with its accepted registry default without resolving candidate keys', () => {
     const accepted = acceptedSpecimenAssets()
-    expect(accepted).toHaveLength(33)
+    expect(accepted).toHaveLength(35)
     expect(accepted.map(({ row }) => row.id).sort()).toEqual([...ACCEPTED_SPECIES_IDS].sort())
     for (const { row, asset } of accepted) {
       expect(asset, row.id).toBe(specimenAssetFor(row.id))

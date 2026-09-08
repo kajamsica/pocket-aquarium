@@ -9,6 +9,7 @@ import {
   evaluateCoralPlacement,
   localTankPointToNormalized,
   normalizedTankPointToLocal,
+  resolveCoralLifecycleVisualPlan,
   resolveCoralRenderPlan,
   type CoralSurfaceHit,
   type TankPlacementSpace,
@@ -94,5 +95,28 @@ describe('accepted coral render plans', () => {
   it('does not render unknown variants or accepted non-coral specimens', () => {
     expect(resolveCoralRenderPlan('goniopora', 'not_accepted', 10, 'preview')).toBeUndefined()
     expect(resolveCoralRenderPlan('ocellaris', undefined, 10, 'locked')).toBeUndefined()
+  })
+
+  it('maps growth, polyp activity, and tissue condition to separate clamped visual channels', () => {
+    const newColony = resolveCoralLifecycleVisualPlan({ health: 1, tissue: 1, extension: .2,
+      polyps: 5, growth: 0 })
+    const grown = resolveCoralLifecycleVisualPlan({ health: 1, tissue: 1, extension: .2,
+      polyps: 5, growth: 1 })
+    const active = resolveCoralLifecycleVisualPlan({ health: 1, tissue: 1, extension: 1,
+      polyps: 100, growth: 0 })
+    const stressed = resolveCoralLifecycleVisualPlan({ health: -1, tissue: -1, extension: -1,
+      polyps: -1, growth: -1 })
+
+    expect(grown.widthScale).toBeGreaterThan(newColony.widthScale)
+    expect(active.animationDrive).toBeGreaterThan(newColony.animationDrive)
+    expect(active.widthScale).toBe(newColony.widthScale)
+    expect(active.appearance).toEqual(newColony.appearance)
+    expect(stressed).toMatchObject({ widthScale: newColony.widthScale, animationDrive: 0 })
+    expect(stressed.appearance.saturation).toBeLessThan(grown.appearance.saturation)
+    expect(stressed.appearance.opacity).toBeGreaterThan(0)
+    expect(stressed.appearance.opacity).toBeLessThan(grown.appearance.opacity)
+    expect(resolveCoralLifecycleVisualPlan({ health: 2, tissue: 2, extension: 2,
+      polyps: 6000, growth: 2 })).toEqual(resolveCoralLifecycleVisualPlan({ health: 1,
+      tissue: 1, extension: 1, polyps: 5000, growth: 1 }))
   })
 })
