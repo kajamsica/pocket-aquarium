@@ -68,6 +68,10 @@ function reefRockSurfaces() {
   return cachedRockSurfaces
 }
 
+export function prepareReefScapeSupport(): void {
+  reefRockSurfaces()
+}
+
 /** Find the nearest exact rendered reef surface below a local starfish sample.
  * Sand remains analytic so an outer arm can settle onto it while the disc stays on rock. */
 export function sampleReefScapeSupport(worldPoint: THREE.Vector3,
