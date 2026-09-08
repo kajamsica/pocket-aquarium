@@ -299,10 +299,7 @@ function clipRockContourToSand(contour: readonly LiveRockSurfaceSample[], sandY:
 function createRockSegment(seed: number, sandY: number,
   rocks: readonly ReefRock[]): RockSegment | undefined {
   const radiusScale = 1.035
-  const eligible = rocks.map((rock, index) => {
-    const sharedIndex = REEF_ROCKS.indexOf(rock)
-    return { rock, index: sharedIndex >= 0 ? sharedIndex : index }
-  }).filter(({ rock }) => Math.abs(
+  const eligible = rocks.map((rock) => ({ rock, index: rock.index })).filter(({ rock }) => Math.abs(
     (sandY - rock.position.y) / (rock.scale.y * radiusScale)) < .96)
   const preferred = Math.floor(seededUnit(seed, 711) * eligible.length)
   for (let attempt = 0; attempt < eligible.length; attempt += 1) {
