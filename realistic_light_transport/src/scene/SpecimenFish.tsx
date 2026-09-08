@@ -853,6 +853,15 @@ export function specimenSurfaceProgress(speciesId: string, circuit: SurfaceCircu
   return (prefix + station.length * patrol) / circuit.totalLength
 }
 
+/** Resolve the final visual travel direction without changing the physics heading. */
+export function resolveVisualTravelDirection(position: THREE.Vector3, previousPosition: THREE.Vector3,
+  fallback: THREE.Vector3, target = new THREE.Vector3()) {
+  target.copy(position).sub(previousPosition)
+  if (target.lengthSq() > 1e-8) target.normalize()
+  else target.copy(fallback)
+  return target
+}
+
 /** Keep authored +X-forward fish upright while allowing a small, smoothly capped turn bank. */
 export function updateUprightSpecimenOrientation(current: THREE.Quaternion, forward: THREE.Vector3,
   bankRadians: number, maximumTurnRadians: number, target = new THREE.Quaternion()) {
@@ -1099,6 +1108,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const fallbackMouth = useMemo(() => new THREE.Vector3(), [])
   const forage = useRef(0)
   const turnDrive = useRef(0)
+  const locomotionDrive = useRef(0)
   const feedingResponse = useRef(createFeedingResponseState())
   const tailPhase = useRef(seededUnit(specimen.id, 2) * Math.PI * 2)
   const phase = seededUnit(specimen.id, 1) * Math.PI * 2
@@ -1388,9 +1398,15 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     const normalizedSpeed = THREE.MathUtils.clamp(actualSpeed / Math.max(profile.cruiseSpeed, .01), 0, 1.8)
     const turnAngle = motion.previousForward.angleTo(motion.forward)
     const turnSign = Math.sign(motion.previousForward.z * motion.forward.x - motion.previousForward.x * motion.forward.z)
-    updateUprightSpecimenOrientation(motion.orientation, motion.forward,
+    const visualTravelDirection = resolveVisualTravelDirection(
+      motion.position, motion.previousPosition, motion.forward, motion.sample)
+    updateUprightSpecimenOrientation(motion.orientation, visualTravelDirection,
       turnSign * Math.min(turnAngle / Math.max(step, .001), profile.turnRate) / profile.turnRate * .09,
       profile.turnRate * step, motion.targetOrientation)
+    if (riggedAsset?.category === 'fish') {
+      const locomotionTarget = THREE.MathUtils.clamp(normalizedSpeed, 0, 1.4)
+      locomotionDrive.current += (locomotionTarget - locomotionDrive.current) * (1 - Math.exp(-step * 5.2))
+    } else locomotionDrive.current = 0
     node.position.copy(motion.position)
     node.quaternion.copy(motion.orientation)
     node.scale.setScalar(riggedAsset ? 1 : length)
@@ -1473,7 +1489,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     </mesh> : null}
     {visualPlan.renderAcceptedAsset && riggedAsset && <RiggedSpecimen asset={riggedAsset} individualId={specimen.id}
       targetLengthSceneUnits={length} stage={specimen.stage} hunger={specimen.hunger}
-      feedDrive={forage} turnDrive={turnDrive} />}
+      feedDrive={forage} turnDrive={turnDrive} locomotionDrive={locomotionDrive} />}
     {morphologyOverride?.speciesId === specimen.speciesId &&
       <DraftMorphologyOverlay profile={morphologyOverride} targetLengthSceneUnits={length} />}
     {visualPlan.proceduralFallback === 'watchman_goby' &&
