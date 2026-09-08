@@ -9,6 +9,7 @@ import type { MorphologyProfileV1 } from '../specimens/specimenProfile'
 import { evaluateMorphology } from '../workbench/geometry/evaluateMorphology'
 import type { ScenePellet } from './feeding'
 import { FOOD_CONTACT_RADIUS, type ScenePoint, visibleFoodContact } from './foodContact'
+import { createLiveRockCollisionField, LIVE_ROCK_SEED_OFFSET } from './liveRockGeometry'
 import type { FlowFieldSource } from './ReefHabitat'
 import { REEF_ROCKS } from './reefLayout'
 import {
@@ -582,36 +583,34 @@ export function assignPelletTargets(specimens: readonly PocketSpecimen[], food: 
   return assignments
 }
 
-/** Padding over the raw rock scale: the rendered icosahedron hardscape is irregular
- *  and carries pores/coral spillover, so the exclusion ellipsoid is inflated past the
- *  visual hull, plus the fish body radius, to keep fish from clipping into rock. */
-const REEF_ROCK_PAD = 1.2
-const SPECIMEN_ROCK_AVOIDANCE_RANGE = 1.48
+const SPECIMEN_ROCK_AVOIDANCE_RANGE = .32
 const SPECIMEN_ROCK_TURN_ARC = 1.18
 const LOCAL_FORWARD = new THREE.Vector3(1, 0, 0)
 const WORLD_UP = new THREE.Vector3(0, 1, 0)
 const BODY_SAMPLE_OFFSETS = [-1, 0, 1] as const
 const MOTION_HEADING_SPEED_EPSILON = .01
+const HARDSCAPE_SAMPLE = new THREE.Vector3()
+const HARDSCAPE_NORMAL = new THREE.Vector3()
+const REEF_ROCK_COLLISION_FIELDS = REEF_ROCKS.map((rock, index) => createLiveRockCollisionField(
+  index + LIVE_ROCK_SEED_OFFSET, rock.position, rock.rotation, rock.scale))
 
 function specimenRockClearance(position: THREE.Vector3, heading: THREE.Vector3,
-  halfSpan: number, bodyRadius: number, rock: (typeof REEF_ROCKS)[number]) {
+  halfSpan: number, bodyRadius: number, rockIndex: number) {
+  const field = REEF_ROCK_COLLISION_FIELDS[rockIndex]
+  if (!field) return Infinity
   let minimum = Infinity
   for (const offset of BODY_SAMPLE_OFFSETS) {
-    const sampleX = position.x + heading.x * offset * halfSpan
-    const sampleY = position.y + heading.y * offset * halfSpan
-    const sampleZ = position.z + heading.z * offset * halfSpan
-    const nx = (sampleX - rock.position.x) / (rock.scale.x * REEF_ROCK_PAD + bodyRadius)
-    const ny = (sampleY - rock.position.y) / (rock.scale.y * REEF_ROCK_PAD + bodyRadius)
-    const nz = (sampleZ - rock.position.z) / (rock.scale.z * REEF_ROCK_PAD + bodyRadius)
-    minimum = Math.min(minimum, Math.hypot(nx, ny, nz))
+    HARDSCAPE_SAMPLE.copy(heading).multiplyScalar(offset * halfSpan).add(position)
+    minimum = Math.min(minimum,
+      field.surfaceClearance(HARDSCAPE_SAMPLE, HARDSCAPE_NORMAL) - bodyRadius)
   }
   return minimum
 }
 
 export function minimumSpecimenHardscapeClearance(position: THREE.Vector3, heading: THREE.Vector3,
   halfSpan: number, bodyRadius: number) {
-  return Math.min(...REEF_ROCKS.map((rock) => specimenRockClearance(
-    position, heading, halfSpan, bodyRadius, rock)))
+  return Math.min(...REEF_ROCKS.map((_, rockIndex) => specimenRockClearance(
+    position, heading, halfSpan, bodyRadius, rockIndex)))
 }
 
 /** Bias the route toward one deterministic passing arc before the body reaches a rendered rock. */
@@ -627,9 +626,9 @@ export function guideSpecimenAroundHardscape(desiredHeading: THREE.Vector3, curr
   let passingSide = 0
   for (let rockIndex = 0; rockIndex < REEF_ROCKS.length; rockIndex += 1) {
     const rock = REEF_ROCKS[rockIndex]
-    const clearance = specimenRockClearance(predicted, currentHeading, halfSpan, bodyRadius, rock)
+    const clearance = specimenRockClearance(predicted, currentHeading, halfSpan, bodyRadius, rockIndex)
     const strength = THREE.MathUtils.clamp(
-      (SPECIMEN_ROCK_AVOIDANCE_RANGE - clearance) / (SPECIMEN_ROCK_AVOIDANCE_RANGE - 1), 0, 1)
+      (SPECIMEN_ROCK_AVOIDANCE_RANGE - clearance) / SPECIMEN_ROCK_AVOIDANCE_RANGE, 0, 1)
     if (strength <= strongest) continue
     const awayX = predicted.x - rock.position.x
     const awayZ = predicted.z - rock.position.z
@@ -650,9 +649,9 @@ export function guideSpecimenAroundHardscape(desiredHeading: THREE.Vector3, curr
  * forward segment, so the result stays within the existing travel cap and never changes Y. */
 export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, proposed: THREE.Vector3,
   heading: THREE.Vector3, halfSpan: number, bodyRadius: number) {
-  if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 1) return false
+  if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 0) return false
   const start = new THREE.Vector3(previous.x, proposed.y, previous.z)
-  if (minimumSpecimenHardscapeClearance(start, heading, halfSpan, bodyRadius) < 1) {
+  if (minimumSpecimenHardscapeClearance(start, heading, halfSpan, bodyRadius) < 0) {
     proposed.x = previous.x
     proposed.z = previous.z
     return true
@@ -665,7 +664,7 @@ export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, propos
     const sample = (clear + blocked) * .5
     proposed.x = THREE.MathUtils.lerp(previous.x, endX, sample)
     proposed.z = THREE.MathUtils.lerp(previous.z, endZ, sample)
-    if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 1) clear = sample
+    if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 0) clear = sample
     else blocked = sample
   }
   proposed.x = THREE.MathUtils.lerp(previous.x, endX, clear)
@@ -676,7 +675,7 @@ export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, propos
 /** Keep a body's yaw arc from rotating its nose through rock before forward travel begins. */
 export function constrainSpecimenHardscapeTurn(position: THREE.Vector3, previousHeading: THREE.Vector3,
   proposedHeading: THREE.Vector3, halfSpan: number, bodyRadius: number) {
-  if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 1) return false
+  if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 0) return false
   const previousYaw = Math.atan2(previousHeading.z, previousHeading.x)
   const proposedYaw = Math.atan2(proposedHeading.z, proposedHeading.x)
   const yawDelta = Math.atan2(Math.sin(proposedYaw - previousYaw), Math.cos(proposedYaw - previousYaw))
@@ -686,7 +685,7 @@ export function constrainSpecimenHardscapeTurn(position: THREE.Vector3, previous
     const sample = (clear + blocked) * .5
     proposedHeading.set(Math.cos(previousYaw + yawDelta * sample), 0,
       Math.sin(previousYaw + yawDelta * sample))
-    if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 1) clear = sample
+    if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 0) clear = sample
     else blocked = sample
   }
   proposedHeading.set(Math.cos(previousYaw + yawDelta * clear), 0,
@@ -922,26 +921,17 @@ function resolveReefBodyHardscape(position: THREE.Vector3, forward: THREE.Vector
     let corrected = false
     for (const offset of BODY_SAMPLE_OFFSETS) {
       sample.copy(forward).multiplyScalar(offset * halfSpan).add(position)
-      for (const rock of REEF_ROCKS) {
-        const rx = rock.scale.x * REEF_ROCK_PAD + bodyRadius
-        const ry = rock.scale.y * REEF_ROCK_PAD + bodyRadius
-        const rz = rock.scale.z * REEF_ROCK_PAD + bodyRadius
-        let nx = (sample.x - rock.position.x) / rx
-        let ny = (sample.y - rock.position.y) / ry
-        let nz = (sample.z - rock.position.z) / rz
-        let normalizedLength = Math.sqrt(nx * nx + ny * ny + nz * nz)
-        if (normalizedLength >= 1) continue
-        if (normalizedLength < 1e-5) {
-          nx = offset || 1
-          ny = benthic ? .04 : .65
-          nz = .5
-          normalizedLength = Math.sqrt(nx * nx + ny * ny + nz * nz)
+      for (let rockIndex = 0; rockIndex < REEF_ROCK_COLLISION_FIELDS.length; rockIndex += 1) {
+        const field = REEF_ROCK_COLLISION_FIELDS[rockIndex]
+        const clearance = field.surfaceClearance(sample, correction)
+        if (clearance >= bodyRadius) continue
+        if (benthic) correction.y = 0
+        if (correction.lengthSq() < 1e-8) {
+          correction.copy(sample).sub(REEF_ROCKS[rockIndex].position)
+          if (benthic) correction.y = 0
+          if (correction.lengthSq() < 1e-8) correction.set(offset || 1, 0, .5)
         }
-        correction.set(
-          rock.position.x + nx / normalizedLength * rx - sample.x,
-          rock.position.y + ny / normalizedLength * ry - sample.y,
-          rock.position.z + nz / normalizedLength * rz - sample.z,
-        )
+        correction.normalize().multiplyScalar(bodyRadius - clearance)
         position.add(correction)
         sample.add(correction)
         corrected = true
@@ -975,20 +965,16 @@ function addPredictiveAvoidance(state: FishPhysicsState, halfSpan: number, bodyR
 
   for (const offset of BODY_SAMPLE_OFFSETS) {
     sample.copy(state.forward).multiplyScalar(offset * halfSpan).add(predicted)
-    for (const rock of REEF_ROCKS) {
-      const rx = rock.scale.x * REEF_ROCK_PAD + bodyRadius
-      const ry = rock.scale.y * REEF_ROCK_PAD + bodyRadius
-      const rz = rock.scale.z * REEF_ROCK_PAD + bodyRadius
-      const nx = (sample.x - rock.position.x) / rx
-      const ny = (sample.y - rock.position.y) / ry
-      const nz = (sample.z - rock.position.z) / rz
-      const normalizedLength = Math.sqrt(nx * nx + ny * ny + nz * nz)
-      const avoidanceRange = 1.42
-      if (normalizedLength >= avoidanceRange) continue
-      state.correction.set(nx / rx, ny / ry, nz / rz)
-      if (state.correction.lengthSq() < 1e-6) state.correction.set(offset || 1, benthic ? .03 : .5, .6)
+    for (let rockIndex = 0; rockIndex < REEF_ROCK_COLLISION_FIELDS.length; rockIndex += 1) {
+      const clearance = REEF_ROCK_COLLISION_FIELDS[rockIndex].surfaceClearance(sample, state.correction) - bodyRadius
+      if (clearance >= SPECIMEN_ROCK_AVOIDANCE_RANGE) continue
+      if (state.correction.lengthSq() < 1e-6) {
+        state.correction.copy(sample).sub(REEF_ROCKS[rockIndex].position)
+        if (state.correction.lengthSq() < 1e-6) state.correction.set(offset || 1, benthic ? .03 : .5, .6)
+      }
       if (benthic) state.correction.y *= .12
-      state.correction.normalize().multiplyScalar((avoidanceRange - Math.max(normalizedLength, .18)) * .72)
+      const strength = 1 - THREE.MathUtils.clamp(clearance / SPECIMEN_ROCK_AVOIDANCE_RANGE, -.25, 1)
+      state.correction.normalize().multiplyScalar(strength * .72)
       avoidance.add(state.correction)
     }
   }
@@ -998,27 +984,19 @@ function addPredictiveAvoidance(state: FishPhysicsState, halfSpan: number, bodyR
 /** Resolve against the same padded ellipsoids that render the live-rock hardscape. */
 export function resolveReefHardscape(position: THREE.Vector3, bodyRadius: number, benthic: boolean) {
   for (let pass = 0; pass < 6; pass += 1) {
-    for (const rock of REEF_ROCKS) {
-      const rx = rock.scale.x * REEF_ROCK_PAD + bodyRadius
-      const ry = rock.scale.y * REEF_ROCK_PAD + bodyRadius
-      const rz = rock.scale.z * REEF_ROCK_PAD + bodyRadius
-      let nx = (position.x - rock.position.x) / rx
-      let ny = (position.y - rock.position.y) / ry
-      let nz = (position.z - rock.position.z) / rz
-      let length = Math.sqrt(nx * nx + ny * ny + nz * nz)
-      if (length >= 1) continue
-      if (length < 1e-5) {
-        nx = 0
-        ny = benthic ? 0 : 1
-        nz = 1
-        length = Math.sqrt(ny * ny + nz * nz)
+    for (let rockIndex = 0; rockIndex < REEF_ROCK_COLLISION_FIELDS.length; rockIndex += 1) {
+      const field = REEF_ROCK_COLLISION_FIELDS[rockIndex]
+      const clearance = field.surfaceClearance(position, HARDSCAPE_NORMAL)
+      if (clearance >= bodyRadius) continue
+      const originalY = position.y
+      if (benthic) HARDSCAPE_NORMAL.y = 0
+      if (HARDSCAPE_NORMAL.lengthSq() < 1e-8) {
+        HARDSCAPE_NORMAL.copy(position).sub(REEF_ROCKS[rockIndex].position)
+        if (benthic) HARDSCAPE_NORMAL.y = 0
+        if (HARDSCAPE_NORMAL.lengthSq() < 1e-8) HARDSCAPE_NORMAL.set(1, 0, 0)
       }
-      if (!benthic) {
-        ny += .7
-        length = Math.sqrt(nx * nx + ny * ny + nz * nz)
-      }
-      position.set(rock.position.x + nx / length * rx, rock.position.y + ny / length * ry,
-        rock.position.z + nz / length * rz)
+      position.addScaledVector(HARDSCAPE_NORMAL.normalize(), bodyRadius - clearance)
+      if (benthic) position.y = originalY
     }
   }
 }
