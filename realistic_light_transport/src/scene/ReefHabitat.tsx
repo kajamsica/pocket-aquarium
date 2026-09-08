@@ -437,7 +437,7 @@ function Rockwork({ material, rockscape, editing = false, selectedRockId = null,
 
   useEffect(() => () => geometries.forEach((geometry) => geometry.dispose()), [geometries])
 
-  const selectRock = (event: ThreeEvent<PointerEvent>, rock: PocketRockView) => {
+  const selectRock = (event: ThreeEvent<MouseEvent>, rock: PocketRockView) => {
     if (!editing) return
     event.stopPropagation()
     onRockSelect?.(rock.id)
