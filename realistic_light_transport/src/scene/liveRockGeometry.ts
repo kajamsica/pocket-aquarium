@@ -5,6 +5,12 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
  * collision ellipsoids' existing 1.2x padding. */
 export const LIVE_ROCK_MIN_RADIUS = 0.58
 export const LIVE_ROCK_MAX_RADIUS = 1.17
+export const LIVE_ROCK_SEED_OFFSET = 29
+
+export interface LiveRockSurfaceSample {
+  readonly position: THREE.Vector3
+  readonly normal: THREE.Vector3
+}
 
 function unit(seed: number, salt: number) {
   const value = Math.sin((seed + 1) * 12.9898 + salt * 78.233) * 43758.5453
@@ -177,4 +183,50 @@ export function createLiveRockGeometry(seed: number, detail = 3) {
   geometry.computeBoundingBox()
   geometry.computeBoundingSphere()
   return geometry
+}
+
+/** Sample the rendered compound hull's outer silhouette in the world XY plane.
+ * This is intentionally a build-time batch for deterministic surface circuits,
+ * not a per-frame raycast path. */
+export function createLiveRockSurfaceContour(seed: number, position: THREE.Vector3,
+  rotation: THREE.Euler, scale: THREE.Vector3, sampleCount = 128): LiveRockSurfaceSample[] {
+  const count = Math.max(32, Math.floor(sampleCount / 4) * 4)
+  const geometry = createLiveRockGeometry(seed)
+  const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.position.copy(position)
+  mesh.rotation.copy(rotation)
+  mesh.scale.copy(scale)
+  mesh.updateMatrixWorld(true)
+
+  const raycaster = new THREE.Raycaster()
+  const radial = new THREE.Vector3()
+  const rayDirection = new THREE.Vector3()
+  const rayOrigin = new THREE.Vector3()
+  const normalMatrix = new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld)
+  const rayDistance = Math.max(scale.x, scale.y, scale.z) * LIVE_ROCK_MAX_RADIUS * 2 + .5
+  const samples: LiveRockSurfaceSample[] = []
+
+  try {
+    for (let index = 0; index <= count; index += 1) {
+      const angle = Math.PI * 1.5 - index / count * Math.PI * 2
+      radial.set(Math.cos(angle), Math.sin(angle), 0)
+      rayOrigin.copy(position).addScaledVector(radial, rayDistance)
+      rayDirection.copy(radial).negate()
+      raycaster.set(rayOrigin, rayDirection)
+      const hit = raycaster.intersectObject(mesh, false)[0]
+      if (!hit) throw new Error(`Unable to sample live-rock contour at ${angle}`)
+      const normal = hit.normal
+        ? hit.normal.clone().applyNormalMatrix(normalMatrix)
+        : hit.face?.normal.clone().applyNormalMatrix(normalMatrix) ?? radial.clone()
+      normal.normalize()
+      if (normal.dot(radial) < 0) normal.negate()
+      samples.push({ position: hit.point.clone(), normal })
+    }
+  } finally {
+    geometry.dispose()
+    material.dispose()
+  }
+
+  return samples
 }

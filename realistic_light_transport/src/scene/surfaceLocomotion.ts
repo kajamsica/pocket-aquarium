@@ -1,5 +1,10 @@
 import * as THREE from 'three'
 
+import {
+  createLiveRockSurfaceContour,
+  LIVE_ROCK_SEED_OFFSET,
+  type LiveRockSurfaceSample,
+} from './liveRockGeometry'
 import { REEF_ROCKS, REEF_SAND_Y, seededUnit } from './reefLayout'
 
 export type SurfaceMode = 'sand' | 'sand_glass' | 'sand_rock' | 'glass_rock' |
@@ -30,9 +35,9 @@ interface LineSegment {
 interface RockSegment {
   readonly kind: 'rock'
   readonly rock: (typeof REEF_ROCKS)[number]
-  readonly radiusScale: number
-  readonly startAngle: number
-  readonly endAngle: number
+  readonly points: readonly THREE.Vector3[]
+  readonly normals: readonly THREE.Vector3[]
+  readonly distances: readonly number[]
   readonly length: number
 }
 
@@ -77,43 +82,82 @@ function line(kind: LineSegment['kind'], start: THREE.Vector3, end: THREE.Vector
   return { kind, start, end, normal, length: start.distanceTo(end) }
 }
 
-function rockPoint(segment: RockSegment, t: number, target: THREE.Vector3) {
-  const angle = THREE.MathUtils.lerp(segment.startAngle, segment.endAngle, t)
-  const { position, scale } = segment.rock
-  return target.set(
-    position.x + Math.cos(angle) * scale.x * segment.radiusScale,
-    position.y + Math.sin(angle) * scale.y * segment.radiusScale,
-    position.z,
-  )
+function rockPoint(segment: RockSegment, t: number, target: THREE.Vector3,
+  normal?: THREE.Vector3, tangent?: THREE.Vector3) {
+  const distance = THREE.MathUtils.clamp(t, 0, 1) * segment.length
+  let index = 0
+  while (index < segment.distances.length - 2 && segment.distances[index + 1] < distance) index += 1
+  const span = segment.distances[index + 1] - segment.distances[index]
+  const localT = span > 1e-8 ? (distance - segment.distances[index]) / span : 0
+  target.lerpVectors(segment.points[index], segment.points[index + 1], localT)
+  if (normal) normal.lerpVectors(segment.normals[index], segment.normals[index + 1], localT).normalize()
+  if (tangent) tangent.copy(segment.points[index + 1]).sub(segment.points[index]).normalize()
+  if (normal && tangent) normal.addScaledVector(tangent, -normal.dot(tangent)).normalize()
+  return target
 }
 
-function rockArcLength(segment: Omit<RockSegment, 'length'>) {
-  const previous = new THREE.Vector3()
-  const current = new THREE.Vector3()
-  rockPoint(segment as RockSegment, 0, previous)
-  let length = 0
-  for (let step = 1; step <= 24; step += 1) {
-    rockPoint(segment as RockSegment, step / 24, current)
-    length += current.distanceTo(previous)
-    previous.copy(current)
+const rockContours = new WeakMap<object, Map<number, readonly LiveRockSurfaceSample[]>>()
+
+function surfaceContourForRock(rock: (typeof REEF_ROCKS)[number], rockIndex: number) {
+  const seed = rockIndex + LIVE_ROCK_SEED_OFFSET
+  let contours = rockContours.get(rock)
+  if (!contours) {
+    contours = new Map()
+    rockContours.set(rock, contours)
   }
-  return length
+  let contour = contours.get(seed)
+  if (!contour) {
+    contour = createLiveRockSurfaceContour(seed, rock.position, rock.rotation, rock.scale)
+    contours.set(seed, contour)
+  }
+  return contour
+}
+
+function crossingAtSand(a: LiveRockSurfaceSample, b: LiveRockSurfaceSample, sandY: number) {
+  const span = b.position.y - a.position.y
+  const t = Math.abs(span) > 1e-8
+    ? THREE.MathUtils.clamp((sandY - a.position.y) / span, 0, 1)
+    : 0
+  const position = new THREE.Vector3().lerpVectors(a.position, b.position, t)
+  position.y = sandY
+  return { position, normal: new THREE.Vector3().lerpVectors(a.normal, b.normal, t).normalize() }
+}
+
+function clipRockContourToSand(contour: readonly LiveRockSurfaceSample[], sandY: number) {
+  const topIndex = Math.floor((contour.length - 1) / 2)
+  if (contour[topIndex].position.y < sandY) return undefined
+  let start = topIndex
+  let end = topIndex
+  while (start > 0 && contour[start - 1].position.y >= sandY) start -= 1
+  while (end < contour.length - 1 && contour[end + 1].position.y >= sandY) end += 1
+  if (start === 0 || end === contour.length - 1) return undefined
+
+  const clipped = [crossingAtSand(contour[start - 1], contour[start], sandY),
+    ...contour.slice(start, end + 1), crossingAtSand(contour[end], contour[end + 1], sandY)]
+  const points = clipped.map((sample) => sample.position)
+  const normals = clipped.map((sample) => sample.normal)
+  const distances = [0]
+  for (let index = 1; index < points.length; index += 1) {
+    distances.push(distances[index - 1] + points[index].distanceTo(points[index - 1]))
+  }
+  return { points, normals, distances, length: distances[distances.length - 1] }
 }
 
 function createRockSegment(seed: number, sandY: number,
   rocks: readonly (typeof REEF_ROCKS)[number][]): RockSegment | undefined {
   const radiusScale = 1.035
-  const eligible = rocks.filter((rock) =>
-    Math.abs((sandY - rock.position.y) / (rock.scale.y * radiusScale)) < .96)
-  const rock = eligible[Math.floor(seededUnit(seed, 711) * eligible.length)]
-  if (!rock) return undefined
-  const vertical = THREE.MathUtils.clamp(
-    (sandY - rock.position.y) / (rock.scale.y * radiusScale), -.96, .96)
-  const endAngle = Math.asin(vertical)
-  const partial: Omit<RockSegment, 'length'> = {
-    kind: 'rock', rock, radiusScale, startAngle: Math.PI - endAngle, endAngle,
+  const eligible = rocks.map((rock, index) => {
+    const sharedIndex = REEF_ROCKS.indexOf(rock)
+    return { rock, index: sharedIndex >= 0 ? sharedIndex : index }
+  }).filter(({ rock }) => Math.abs(
+    (sandY - rock.position.y) / (rock.scale.y * radiusScale)) < .96)
+  const preferred = Math.floor(seededUnit(seed, 711) * eligible.length)
+  for (let attempt = 0; attempt < eligible.length; attempt += 1) {
+    const { rock, index } = eligible[(preferred + attempt) % eligible.length]
+    const path = clipRockContourToSand(surfaceContourForRock(rock, index), sandY)
+    if (path?.length) return { kind: 'rock', rock, ...path }
   }
-  return { ...partial, length: rockArcLength(partial) }
+  return undefined
 }
 
 function addSandLoop(segments: SurfaceSegment[], seed: number, halfWidth: number,
@@ -209,13 +253,7 @@ export function sampleSurfaceCircuit(circuit: SurfaceCircuit, progress: number,
     target.normal.copy(segment.normal).normalize()
     target.tangent.copy(segment.end).sub(segment.start).normalize()
   } else {
-    const angle = THREE.MathUtils.lerp(segment.startAngle, segment.endAngle, t)
-    const angleDirection = Math.sign(segment.endAngle - segment.startAngle) || 1
-    rockPoint(segment, t, target.position)
-    target.normal.set(Math.cos(angle) / segment.rock.scale.x,
-      Math.sin(angle) / segment.rock.scale.y, 0).normalize()
-    target.tangent.set(-Math.sin(angle) * segment.rock.scale.x * angleDirection,
-      Math.cos(angle) * segment.rock.scale.y * angleDirection, 0).normalize()
+    rockPoint(segment, t, target.position, target.normal, target.tangent)
   }
   return target
 }
