@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "banggai_cardinal",
+  "variantId": null,
+  "scientificName": "Pterapogon kauderni",
+  "biome": "reef",
+  "waterType": "salt",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.08,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "bfd02f8d07da58c37b45f954789e86d5500a9daca9469683094c8ff66e75d310",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Banggai Cardinalfish",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-282494",
+      "title": "Pterapogon kauderni Koumans, 1933 taxon record (accepted; Apogonidae)",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=282494",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "FISHBASE-PTERAPOGON_KAUDERNI",
+      "title": "Pterapogon kauderni species summary (max length 8.6 cm TL; D VIII + I,14; A II,13; short deep compressed body; tasseled first dorsal, spike-like second dorsal, deeply forked caudal, three white-edged black bars, white-spotted black fin margins)",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Pterapogon-kauderni.html",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "NDOBE-2013-AIP-43-3",
+      "title": "Ndobe S. et al. 2013. Life history of Banggai cardinalfish, Pterapogon kauderni, from Banggai Islands and Palu Bay. Acta Ichthyologica et Piscatoria 43(3): 237-250. Table 4 morphometric ratios: TL/SL 150%, SL/BH 2.07, HH 37% SL, DF1 35% SL, DF2 67-74% SL, AF 38% SL, VF 45% SL, PF 26% SL, CF 47-50% SL",
+      "publisher": "Acta Ichthyologica et Piscatoria (open access)",
+      "url": "https://doi.org/10.3750/AIP2013.43.3.08",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "peer_reviewed_morphometrics",
+      "allowedUse": "facts_and_citation",
+      "license": "Open access article; numeric ratios cited only"
+    },
+    {
+      "id": "NOAA-BANGGAI-CARDINALFISH",
+      "title": "Banggai Cardinalfish species page (up to 3.4 in; tasseled first dorsal, elongated anal and second dorsal rays, deeply forked caudal, black and light bars with whitish spots over a silvery body)",
+      "publisher": "NOAA Fisheries",
+      "url": "https://www.fisheries.noaa.gov/species/banggai-cardinalfish",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "US Government public domain (text)"
+    },
+    {
+      "id": "COMMONS-PTERAPOGON_KAUDERNI",
+      "title": "Category:Pterapogon kauderni (openly licensed photographs, proportion and colour-placement study only)",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Pterapogon_kauderni",
+      "accessedAt": "2026-09-03",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file CC BY / CC BY-SA / public domain; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "af42afa687d568f0f5fedb10faf992f9a4389d3f2312ab4dc6e7ed62f8b3f3c3",
+  "sourceReferencesSha256": "e036215c98661fb8e763505f52af8b8a18d42a6ce45df5f0af30761329c6cce1",
+  "sourceBlendSha256": "076d1d2e77a40ebf1bb21a66afe97f3d9a8f8045ef63bbe76082f2032239dd05",
+  "builder": {
+    "entrypoint": "7304e6eafca0cc86d90f09a5c71444c69cd8cc86c5094442b3155dc75f288c6c",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "eca253ef9eb7a6436c7bbccb614ef99fc62d9181e65fd8666dcc76ca6cb1c148",
+    "speciesBackend": "c1416bceb3213ac24b07180b40513654328adf0d1781341d4071616738a50973",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "438289d4105d3157ca345adec6c822b7ee94cd2f1f5f532302c8b7e74fe3814f"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "f63982618234eb8bf02042372b703ca2855c4e3a286de380e7f6eb177e748306"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "e21f8ea89e04d9d99d6f512cf725b7d648963df8cf065969bf54971445668614"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "b0d2e62b91f0c2846376bc894964de4147b400fb7739d7bee7a745ba58848e29"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "383bb06cd15e61e9ceca8bfd982098fd27f1488a8cc6bd40454a8b0b9cab55e9"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "b7d3e7235b175b610e81c4a1ec9265005ccb0670e40d6557d0b26aea3491da2f"
+    }
+  ],
+  "statistics": {
+    "triangles": 8632,
+    "materials": 6,
+    "bones": 16,
+    "nodes": 22,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_banggai_cardinal_Body": 2402,
+      "PA_banggai_cardinal_Fins": 1004,
+      "PA_banggai_cardinal_Details": 1028
+    },
+    "runtimeBytes": 2091536
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.04665,
+      -0.014399,
+      -0.030933
+    ],
+    "max": [
+      0.033829,
+      0.014399,
+      0.034554
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

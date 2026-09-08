@@ -214,6 +214,11 @@ def median_rows(body: Body, fin: dict, scale: float, embed: float = 0.0):
     heights = Profile([p[0] for p in fin["heights"]], [p[1] for p in fin["heights"]])
     lean = float(fin.get("lean", 0.0))
     pinch = float(fin.get("pinch", 0.0))
+    # optional backward bow of the rays: `curve` metres of extra x offset at the edge of the tallest
+    # column, growing with t^2 and scaled by each column's height so shorter rays bow proportionally
+    # (hooked spines, trailing filaments); absent or 0 leaves the sheet linear as before
+    curve = float(fin.get("curve", 0.0))
+    peak = max(p[1] for p in fin["heights"]) or 1.0
     rows = []
     for r in range(rows_n):
         t = r / (rows_n - 1)
@@ -222,6 +227,8 @@ def median_rows(body: Body, fin: dict, scale: float, embed: float = 0.0):
             s = c / (cols_n - 1)
             base_x = fin["xStart"] + s * (fin["xEnd"] - fin["xStart"])
             x = base_x + lean * t + (0.5 - s) * pinch * t
+            if curve:
+                x += curve * t * t * heights(s) / peak
             ridge = body.ridge_z(base_x, dorsal)
             height = heights(s) * t - embed
             z = ridge + (height if dorsal else -height)
@@ -434,7 +441,11 @@ def build(spec: dict, species, ctx) -> BuildResult:
     t_edge = float(thickness["edge"]) * scale
     embed_median = max(t_base * 0.6, 0.0006 * scale)
     embed_paired = t_base * 0.4
-    eye_material = mat.principled(f"{prefix}_Eye", palette.get("iris", (0.08, 0.05, 0.02)), 0.14, coat=0.6, subsurface=0.0)
+    eye_options = morphology.get("eyes", {})
+    # optional per-species eye finish: a matte, uncoated iris keeps a dark embedded eye from growing a
+    # pale Fresnel ring at its rim; defaults are the historic glossy coated eye
+    eye_material = mat.principled(f"{prefix}_Eye", palette.get("iris", (0.08, 0.05, 0.02)), float(eye_options.get("roughness", 0.14)),
+                                  coat=float(eye_options.get("coat", 0.6)), subsurface=0.0)
     pupil_material = mat.principled(f"{prefix}_Pupil", (0.004, 0.003, 0.003), 0.3, coat=0.2, subsurface=0.0)
     glint_material = mat.principled(f"{prefix}_Glint", (0.85, 0.86, 0.84), 0.2, subsurface=0.0)
     cue_material = mat.principled(f"{prefix}_Cue", palette.get("cue", (0.12, 0.05, 0.03)), 0.46, coat=0.05)
@@ -623,6 +634,7 @@ def build(spec: dict, species, ctx) -> BuildResult:
     radius = float(eye["radius"])
     protrude = float(eye.get("protrude", 0.55))
     aspect = float(eye.get("aspect", 0.35))
+    seat = float(eye.get("seat", 0.0))
     for side, suffix in ((-1, "L"), (1, "R")):
         y_surface = body.surface_y(eye_x, eye_z)
         # the eyeball is a flattened ellipsoid seated in the head contour; only `protrude` of its
@@ -630,15 +642,29 @@ def build(spec: dict, species, ctx) -> BuildResult:
         center_y = side * (y_surface - radius * aspect * (1.0 - protrude))
         outer_y = center_y + side * radius * aspect
         rotation = Matrix.Rotation(math.radians(90) * side, 3, "X")
+        pupil_r = radius * float(eye.get("pupilFraction", 0.5))
+        # optional pupil flattening: a low dome has no steep rim to catch a Fresnel ring or a hot-spot,
+        # which is what keeps an embedded dark eye from reading as a glass bead; 0.3 is the historic dome
+        pupil_t = pupil_r * float(eye.get("pupilAspect", 0.3))
+        pupil_center = (eye_x + radius * 0.06, outer_y - side * pupil_t * 0.45, eye_z)
+        glint_center = (eye_x + radius * 0.34, outer_y + side * pupil_t * 0.35, eye_z + radius * 0.34)
+        if seat:
+            # optional seating: tilt the disc (and its pupil/glint) to the local head surface so the rim
+            # follows the skin where the head narrows toward the snout and the ridge instead of standing
+            # proud at the front and top; `seat` scales the tilt (1 = full local slope)
+            probe = radius * 0.7
+            slope_x = (body.surface_y(eye_x + probe, eye_z) - body.surface_y(eye_x - probe, eye_z)) / (2 * probe)
+            slope_z = (body.surface_y(eye_x, eye_z + probe) - body.surface_y(eye_x, eye_z - probe)) / (2 * probe)
+            seating = Matrix.Rotation(side * math.atan(slope_x) * seat, 3, "Z") @ Matrix.Rotation(-side * math.atan(slope_z) * seat, 3, "X")
+            rotation = seating @ rotation
+            eye_center = Vector((eye_x, center_y, eye_z))
+            pupil_center = tuple(eye_center + seating @ (Vector(pupil_center) - eye_center))
+            glint_center = tuple(eye_center + seating @ (Vector(glint_center) - eye_center))
         eyeball = msh.make_part(f"eye_{suffix}", msh.ellipsoid((eye_x, center_y, eye_z), (radius, radius, radius * aspect), 20, 12, rotation),
                                 "eye", lambda i, v: {"Body": 1.0}, closed=True)
-        pupil_r = radius * float(eye.get("pupilFraction", 0.5))
-        pupil_t = pupil_r * 0.3
-        pupil = msh.make_part(f"pupil_{suffix}", msh.ellipsoid((eye_x + radius * 0.06, outer_y - side * pupil_t * 0.45, eye_z),
-                                                                (pupil_r, pupil_r, pupil_t), 16, 10, rotation),
+        pupil = msh.make_part(f"pupil_{suffix}", msh.ellipsoid(pupil_center, (pupil_r, pupil_r, pupil_t), 16, 10, rotation),
                               "pupil", lambda i, v: {"Body": 1.0}, closed=True)
-        glint = msh.make_part(f"glint_{suffix}", msh.ellipsoid((eye_x + radius * 0.34, outer_y + side * pupil_t * 0.35, eye_z + radius * 0.34),
-                                                                (radius * 0.065, radius * 0.065, radius * 0.03), 10, 6, rotation),
+        glint = msh.make_part(f"glint_{suffix}", msh.ellipsoid(glint_center, (radius * 0.065, radius * 0.065, radius * 0.03), 10, 6, rotation),
                               "glint", lambda i, v: {"Body": 1.0}, closed=True)
         detail_parts.extend([eyeball, pupil, glint])
     # mouth: short arc tube at the snout tip, skinned to Jaw

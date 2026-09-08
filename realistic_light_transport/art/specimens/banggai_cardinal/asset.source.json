@@ -12,66 +12,74 @@
   "referenceSize": {
     "meters": 0.08,
     "kind": "adult_total_length",
-    "note": "FishBase records a maximum of 8.6 cm TL (female); 8 cm TL is a large adult. Ndobe et al. 2013 measured TL = 150% SL, so the modelled body is 5.35 cm SL plus a 2.65 cm deeply forked caudal fin (CF = 48% SL)."
+    "note": "FishBase records a maximum of 8.6 cm TL (female); 8 cm TL is a large adult. Ndobe et al. 2013 measured TL = 150% SL, so the modelled body is 5.5 cm SL plus a 2.5 cm deeply forked caudal fin (CF = 45% SL); the second-dorsal filament trails inside that length."
   },
   "origin": "anatomical_midbody",
   "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
   "palette": {
-    "skin": [0.66, 0.68, 0.7],
+    "skin": [0.5, 0.56, 0.66],
     "fin": [0.02, 0.02, 0.025],
-    "iris": [0.1, 0.11, 0.14],
-    "cue": [0.1, 0.09, 0.09],
+    "iris": [0.02, 0.022, 0.03],
+    "cue": [0.09, 0.09, 0.1],
     "adornment": [0.9, 0.9, 0.9]
   },
-  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.3, "finReliefStrength": 1.4 },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.5, "finReliefStrength": 1.4 },
   "morphology": {
-    "notes": "Short, deep, strongly compressed apogonid body (SL/BH 2.07, Ndobe et al. 2013); large head (HH 37% SL) with a big lateral eye and a large oblique terminal mouth; two separate dorsal fins (first tall, pointed, tasseled, DF1 35% SL; second spike-like with a greatly elongated trailing anterior ray, DF2 70% SL); long pointed anal fin (38% SL) opposite the second dorsal; enlarged pointed pelvic fins (45% SL); deeply forked caudal with long pointed lobes (48% SL); clear pectorals (26% SL).",
+    "notes": "Proportions taken from the NOAA Fisheries species illustration (snout tip to caudal base = SL): short, deep, strongly compressed apogonid body, bony torso SL/BH about 1.95 (illustration 2.06, Ndobe et al. 2013 2.07; width about 0.38 of depth), the visible silhouette including the broad pelvic lobe about 1.2 SL/height. Straight steep forehead (about 33 degrees) from a short blunt snout to the nape at the first-dorsal origin, deep abrupt chest, belly nearly flat to the anal origin, depth carried back to the second-dorsal origin, then a quick taper to a short thick peduncle (16% SL deep, 12% SL long). Large head (HL 35% SL) with a big lateral eye (12.4% SL) seated in the head bar at 15% SL behind the tip and a broad oblique terminal mouth. Fins: first dorsal a tall black sail (31% SL) with backward-bowed hooked leading spines; second dorsal a thick black anterior ray running out as a bowed filament (74% SL along the ray) with a large pale swept sail (21% SL tall) behind it; anal a broad tapering black lobe (41% SL) with a pale sail behind it; pelvic a broad rounded black spotted lobe (38% SL) hanging under the anterior belly; clear pectorals; caudal with long black upper and lower bands (45% SL) framing a pale deeply forked centre.",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.0235, "halfWidth": 0.0021, "dorsalHeight": 0.004, "ventralDepth": 0.0038, "centerZ": 0.0 },
-      { "id": "peduncle", "x": -0.019, "halfWidth": 0.0028, "dorsalHeight": 0.0056, "ventralDepth": 0.0053, "centerZ": 0.0 },
-      { "id": "posterior-a", "x": -0.013, "halfWidth": 0.0038, "dorsalHeight": 0.0084, "ventralDepth": 0.008, "centerZ": 0.0002 },
-      { "id": "posterior-b", "x": -0.006, "halfWidth": 0.0047, "dorsalHeight": 0.0112, "ventralDepth": 0.0106, "centerZ": 0.0004 },
-      { "id": "mid-a", "x": 0.001, "halfWidth": 0.0054, "dorsalHeight": 0.013, "ventralDepth": 0.0121, "centerZ": 0.0004 },
-      { "id": "mid-b", "x": 0.008, "halfWidth": 0.0057, "dorsalHeight": 0.0138, "ventralDepth": 0.0126, "centerZ": 0.0002 },
-      { "id": "anterior", "x": 0.014, "halfWidth": 0.0055, "dorsalHeight": 0.0131, "ventralDepth": 0.0117, "centerZ": 0.0 },
-      { "id": "operculum", "x": 0.019, "halfWidth": 0.0049, "dorsalHeight": 0.011, "ventralDepth": 0.0098, "centerZ": -0.0004 },
-      { "id": "head", "x": 0.0235, "halfWidth": 0.004, "dorsalHeight": 0.008, "ventralDepth": 0.0072, "centerZ": -0.001 },
-      { "id": "snout", "x": 0.027, "halfWidth": 0.0028, "dorsalHeight": 0.0048, "ventralDepth": 0.0042, "centerZ": -0.0016 },
-      { "id": "snout-tip", "x": 0.03, "halfWidth": 0.001, "dorsalHeight": 0.0016, "ventralDepth": 0.0014, "centerZ": -0.0022 }
+      { "id": "caudal-base", "x": -0.0222, "halfWidth": 0.0017, "dorsalHeight": 0.0046, "ventralDepth": 0.0044, "centerZ": 0.0004 },
+      { "id": "peduncle", "x": -0.019, "halfWidth": 0.0021, "dorsalHeight": 0.0049, "ventralDepth": 0.0047, "centerZ": 0.0004 },
+      { "id": "posterior-a", "x": -0.0155, "halfWidth": 0.0027, "dorsalHeight": 0.006, "ventralDepth": 0.0056, "centerZ": 0.0004 },
+      { "id": "posterior-b", "x": -0.01, "halfWidth": 0.0037, "dorsalHeight": 0.0088, "ventralDepth": 0.007, "centerZ": 0.0004 },
+      { "id": "dorsal2-origin", "x": -0.004, "halfWidth": 0.0045, "dorsalHeight": 0.0118, "ventralDepth": 0.0104, "centerZ": 0.0004 },
+      { "id": "mid", "x": 0.001, "halfWidth": 0.005, "dorsalHeight": 0.0134, "ventralDepth": 0.0126, "centerZ": 0.0003 },
+      { "id": "anterior", "x": 0.0065, "halfWidth": 0.0053, "dorsalHeight": 0.014, "ventralDepth": 0.0136, "centerZ": 0.0002 },
+      { "id": "shoulder", "x": 0.012, "halfWidth": 0.0054, "dorsalHeight": 0.0148, "ventralDepth": 0.0134, "centerZ": 0.0001 },
+      { "id": "operculum", "x": 0.0165, "halfWidth": 0.0052, "dorsalHeight": 0.0136, "ventralDepth": 0.0126, "centerZ": -0.0001 },
+      { "id": "cheek", "x": 0.02, "halfWidth": 0.0048, "dorsalHeight": 0.0116, "ventralDepth": 0.0118, "centerZ": -0.0003 },
+      { "id": "eye", "x": 0.0235, "halfWidth": 0.0043, "dorsalHeight": 0.0098, "ventralDepth": 0.011, "centerZ": -0.0004 },
+      { "id": "head", "x": 0.0268, "halfWidth": 0.0037, "dorsalHeight": 0.008, "ventralDepth": 0.0093, "centerZ": -0.0005 },
+      { "id": "snout", "x": 0.0298, "halfWidth": 0.0028, "dorsalHeight": 0.0058, "ventralDepth": 0.0066, "centerZ": -0.0005 },
+      { "id": "snout-tip", "x": 0.0328, "halfWidth": 0.0012, "dorsalHeight": 0.002, "ventralDepth": 0.0021, "centerZ": -0.0006 }
     ],
-    "crossSection": { "dorsalExponent": 1.85, "ventralExponent": 1.7 },
+    "crossSection": { "dorsalExponent": 1.7, "ventralExponent": 1.9 },
     "sampling": { "ringSegments": 48, "ringCount": 52 },
     "zoneFractions": [0.1, 0.28, 0.55, 0.78],
     "finThickness": { "base": 0.0009, "edge": 0.0001 },
     "fins": [
-      { "name": "dorsal1", "bone": "Dorsal1", "type": "median", "side": "dorsal", "xStart": 0.003, "xEnd": 0.013, "rows": 5, "columns": 12, "lean": -0.002, "pinch": 0.004, "rayCount": 8,
-        "heights": [[0.0, 0.003], [0.2, 0.006], [0.45, 0.012], [0.7, 0.018], [0.85, 0.019], [1.0, 0.012]] },
-      { "name": "dorsal2", "bone": "Dorsal2", "type": "median", "side": "dorsal", "xStart": -0.0165, "xEnd": -0.0035, "rows": 6, "columns": 12, "lean": -0.0125, "pinch": 0.025, "rayCount": 15,
-        "heights": [[0.0, 0.003], [0.25, 0.0045], [0.5, 0.007], [0.75, 0.012], [0.9, 0.023], [1.0, 0.028]] },
-      { "name": "anal", "bone": "Anal", "type": "median", "side": "ventral", "xStart": -0.0165, "xEnd": -0.004, "rows": 5, "columns": 12, "lean": -0.005, "pinch": 0.01, "rayCount": 15,
-        "heights": [[0.0, 0.003], [0.3, 0.005], [0.6, 0.0085], [0.85, 0.014], [1.0, 0.019]] },
-      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 13, "spanTop": 0.0155, "spanBottom": 0.0155, "length": 0.0265, "fork": 0.58, "forkPower": 2.0, "baseFraction": 0.9, "rayCount": 17 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.01, "rootLength": 0.0035, "rootHeight": -0.15, "length": 0.0135, "sweepDegrees": 42, "droopDegrees": 12, "spread": 0.85, "taper": 0.35, "power": 0.6, "flare": 0.6, "rayCount": 13, "rows": 4, "columns": 7 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.0095, "rootLength": 0.006, "rootHeight": -0.9, "length": 0.018, "sweepDegrees": 58, "droopDegrees": 34, "spread": 0.35, "taper": 0.3, "power": 0.9, "flare": 0.45, "rayCount": 6, "rows": 5, "columns": 6 }
+      { "name": "dorsal1", "bone": "Dorsal1", "type": "median", "side": "dorsal", "xStart": 0.001, "xEnd": 0.0125, "rows": 7, "columns": 12, "lean": -0.0035, "pinch": 0.006, "curve": -0.0045, "rayCount": 8,
+        "heights": [[0.0, 0.009], [0.2, 0.0105], [0.4, 0.012], [0.6, 0.0138], [0.78, 0.0155], [0.9, 0.0172], [1.0, 0.0165]] },
+      { "name": "dorsal2", "bone": "Dorsal2", "type": "median", "side": "dorsal", "xStart": -0.0115, "xEnd": -0.0016, "rows": 6, "columns": 12, "lean": -0.00275, "pinch": 0.0037, "curve": -0.005, "rayCount": 14,
+        "heights": [[0.0, 0.005], [0.25, 0.0058], [0.5, 0.0068], [0.75, 0.0084], [1.0, 0.0098]] },
+      { "name": "dorsal2_ray", "bone": "Dorsal2Ray", "type": "median", "side": "dorsal", "xStart": -0.0016, "xEnd": -0.0002, "rows": 8, "columns": 3, "lean": -0.011, "pinch": 0.0012, "curve": -0.026, "rayCount": 1,
+        "heights": [[0.0, 0.0215], [1.0, 0.0215]] },
+      { "name": "anal", "bone": "Anal", "type": "median", "side": "ventral", "xStart": -0.014, "xEnd": -0.0085, "rows": 5, "columns": 10, "lean": -0.0028, "pinch": -0.0036, "rayCount": 10,
+        "heights": [[0.0, 0.0025], [0.3, 0.0045], [0.6, 0.0068], [0.85, 0.0088], [1.0, 0.0095]] },
+      { "name": "anal_ray", "bone": "AnalRay", "type": "median", "side": "ventral", "xStart": -0.0085, "xEnd": -0.003, "rows": 7, "columns": 6, "lean": -0.0015, "pinch": 0.003, "curve": -0.0015, "rayCount": 5,
+        "heights": [[0.0, 0.017], [0.5, 0.0192], [1.0, 0.0195]] },
+      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 13, "spanTop": 0.01, "spanBottom": 0.0112, "length": 0.025, "fork": 0.82, "forkPower": 1.0, "baseFraction": 0.9, "topLobeLength": 1.0, "bottomLobeLength": 0.96, "rayCount": 17 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.013, "rootLength": 0.0036, "rootHeight": -0.12, "length": 0.0135, "sweepDegrees": 40, "droopDegrees": 14, "spread": 0.85, "taper": 0.35, "power": 0.6, "flare": 0.6, "rayCount": 13, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0142, "rootLength": 0.005, "rootHeight": -0.94, "length": 0.021, "sweepDegrees": 24, "droopDegrees": 70, "spread": 0.32, "taper": 0.55, "power": 0.6, "flare": 1.4, "rayCount": 6, "rows": 6, "columns": 8 }
     ],
-    "finAdjacency": [],
-    "eyes": { "x": 0.022, "zFraction": 0.45, "radius": 0.0034, "protrude": 0.35, "aspect": 0.3, "pupilFraction": 0.5 },
-    "mouth": { "zOffset": -0.2, "width": 0.0034, "radius": 0.00045 },
-    "gill": { "x": 0.012, "radius": 0.00022, "points": 11, "bulge": 0.025 },
+    "finAdjacency": [["dorsal2", "dorsal2_ray"], ["anal", "anal_ray"]],
+    "eyes": { "x": 0.0244, "zFraction": 0.3, "radius": 0.0037, "protrude": 0.5, "aspect": 0.16, "pupilFraction": 0.7, "pupilAspect": 0.1, "seat": 1.0, "coat": 0.05, "roughness": 0.45 },
+    "mouth": { "zOffset": -0.15, "width": 0.0027, "radius": 0.0007 },
+    "gill": { "x": 0.0165, "radius": 0.00022, "points": 11, "bulge": 0.02 },
     "adornments": []
   },
-  "rig": { "axialJoints": [0.026, 0.005, -0.005, -0.013, -0.021, -0.03] },
+  "rig": { "axialJoints": [0.028, 0.006, -0.004, -0.012, -0.0195, -0.028] },
   "animation": {
-    "idle": { "frames": 90, "loop": true, "axial": [0.8, 1.5, 2.5, 4.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 16, "pectoralFrequency": 3, "pelvic": 3, "median": 1.2, "dorsal2": 2.0, "anal": 1.6, "gill": 1.6, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 2 },
-    "swim": { "frames": 60, "loop": true, "axial": [2.0, 4.0, 7.0, 11.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 22, "pectoralFrequency": 4, "pelvic": 5, "median": 1.6, "dorsal2": 2.6, "anal": 2.2, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
-    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [5.0, 9.0, 15.0, 22.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "pelvic": 8, "median": 3.0, "dorsal2": 4.0, "anal": 3.5, "gill": 2.0, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
+    "idle": { "frames": 90, "loop": true, "axial": [0.8, 1.5, 2.5, 4.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 16, "pectoralFrequency": 3, "pelvic": 3, "median": 1.2, "dorsal1": 1.4, "dorsal2": 1.0, "dorsal2_ray": 2.0, "anal": 1.0, "anal_ray": 1.6, "gill": 1.6, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 2 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.0, 4.0, 7.0, 11.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 22, "pectoralFrequency": 4, "pelvic": 5, "median": 1.6, "dorsal1": 1.8, "dorsal2": 1.4, "dorsal2_ray": 2.6, "anal": 1.4, "anal_ray": 2.2, "gill": 1.5, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "burst": { "frames": 30, "loop": false, "envelope": "bell", "axial": [5.0, 9.0, 15.0, 22.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 30, "pectoralFrequency": 3, "pelvic": 8, "median": 3.0, "dorsal1": 3.0, "dorsal2": 2.5, "dorsal2_ray": 4.0, "anal": 2.5, "anal_ray": 3.5, "gill": 2.0, "gillFrequency": 2, "jaw": 3.0, "jawFrequency": 2 }
   },
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
   "visualDebt": [
-    "First dorsal spine tassels are painted (soft ray tips) rather than modelled as separate filaments.",
-    "Second dorsal and anal membranes are single sheared thin shells; the elongated anterior ray is part of the sheet, not a free filament.",
+    "First-dorsal spines are one bowed thin shell whose leading membrane is painted pale and dissolved between the spines; the hook is a smooth quadratic bow, not a sharp crook.",
+    "Second-dorsal filament and anal lobe are separate bowed thin shells abutting their pale sails at the base; the join is a shared base edge, not a continuous membrane.",
     "White spot pattern is procedural and identical across builds; real individuals carry unique spot patterns.",
-    "Mouth is the shared plan's small tube cue and reads narrower than the species' large gape (MG 27% SL)."
+    "Mouth is the shared plan's tube lip cue on a blunt snout plus a painted oblique gape cleft; the large gape (MG 27% SL) is not modelled as an opening.",
+    "Reference silhouette measured on the NOAA illustration; live fish vary in fin-ray length and bar width."
   ]
 }
