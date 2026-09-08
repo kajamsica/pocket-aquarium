@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   createLiveRockSurfaceContour,
@@ -206,4 +206,43 @@ describe('surface locomotion policy', () => {
       }
     },
   )
+})
+
+describe('reef scape support preparation', () => {
+  it('holds the authored pose while browser rock surfaces prepare one slice at a time', async () => {
+    const slices: Array<() => void> = []
+    vi.stubGlobal('window', {
+      requestIdleCallback(callback: () => void) {
+        slices.push(callback)
+        return slices.length
+      },
+      setTimeout(callback: () => void) {
+        slices.push(callback)
+        return slices.length
+      },
+    })
+    vi.resetModules()
+    try {
+      const { prepareReefScapeSupport, sampleReefScapeSupport } = await import('./surfaceLocomotion')
+      const probe = new THREE.Vector3(0, REEF_SAND_Y + .04, 0)
+      const maximumDistance = .08
+
+      prepareReefScapeSupport()
+      expect(slices).toHaveLength(1)
+      const pending = sampleReefScapeSupport(probe, new THREE.Vector3(0, 1, 0), maximumDistance)
+      expect(pending.position.toArray()).toEqual(probe.toArray())
+      expect(pending.distance).toBeGreaterThan(maximumDistance)
+      expect(Number.isFinite(pending.distance)).toBe(true)
+
+      slices.shift()?.()
+      expect(slices).toHaveLength(1)
+      const stillPending = sampleReefScapeSupport(
+        probe, new THREE.Vector3(0, 1, 0), maximumDistance)
+      expect(stillPending.position.toArray()).toEqual(probe.toArray())
+      expect(stillPending.distance).toBeGreaterThan(maximumDistance)
+    } finally {
+      vi.unstubAllGlobals()
+      vi.resetModules()
+    }
+  })
 })
