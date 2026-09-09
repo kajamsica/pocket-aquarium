@@ -4,6 +4,9 @@ An **isolated** Capacitor 8.5.1 shell that packages the accepted React/Three.js 
 Aquarium build as a native iOS app. GitHub Pages and Capacitor both consume the same
 `realistic_light_transport/dist` artifact, so the browser and native hosts cannot drift.
 
+The Android host uses the same staged web artifact. GitHub Actions produces an installable
+debug APK for direct device testing; see [`../docs/ANDROID_DEPLOYMENT.md`](../docs/ANDROID_DEPLOYMENT.md).
+
 - **App name:** Pocket Aquarium
 - **App id:** `com.kajamsica.pocketaquarium`
 - **Web dir:** `www` (staged, git-ignored — never edited by hand)
