@@ -270,7 +270,7 @@
       },
       {
         "area": "preserved candidate burst axial parity",
-        "note": "The original axial tuple [7, 11, 18, 27] first failed Spine_B at quarter phase by 0.7672 degrees; reducing only Spine_B to 10.5 advanced validation and exposed Caudal at half phase by 1.0505 degrees. The coordinated tuple [5, 7.5, 12, 17] predicts 0.5231 degrees for Spine_B and 0.6614 degrees for Caudal under observed amplitude-linear parity error, leaving 0.2269 and 0.0886 degrees margin. A new build must verify both predictions."
+        "note": "The original axial tuple [7, 11, 18, 27] first failed Spine_B at quarter phase by 0.7672 degrees. The coordinated tuple [5, 7.5, 12, 17] advanced past earlier failures but exposed Peduncle at half phase by 1.0806 degrees. Shared plan code proves the four values map to Spine_A, Spine_B, Peduncle and Caudal, so reducing only the third value from 12 to 8 predicts 0.7204 degrees under the observed amplitude-linear parity error, leaving 0.0296 degrees margin. A new build must verify the prediction."
       },
       {
         "area": "top and front calibration",
@@ -284,15 +284,15 @@
     "acceptanceBlockers": []
   },
   "failedCandidateEvidence": {
-    "path": "/tmp/pocket-aquarium-fw-failed-rasbora-rebuild-4Y8fjR/fable-v1",
+    "path": "/tmp/pocket-aquarium-fw-failed-rasbora-final-Q37icS/fable-v1",
     "candidateId": "fable-v1",
     "status": "failed_unaccepted",
     "sourceValidation": "passed",
     "runtimeValidation": "failed",
-    "runtimeError": "Parity burst 0.50 Caudal: 1.0505 degrees after Spine_B amplitude 11 to 10.5 advanced past its prior 0.7672-degree quarter-phase failure",
-    "priorAxialTuple": [7, 11, 18, 27],
-    "rebuildAxialTuple": [7, 10.5, 18, 27],
-    "renderReview": "The bounded three-apex axine now reads correctly and must remain unchanged. The side silhouette is still too capsule-like and blunt, with a swollen belly-to-head transition, protrusive eye, and oversized fins."
+    "runtimeError": "Parity burst 0.50 Peduncle: 1.0806 degrees with the coordinated [5, 7.5, 12, 17] tuple",
+    "priorAxialTuple": [5, 7.5, 12, 17],
+    "rebuildAxialTuple": [5, 7.5, 8, 17],
+    "renderReview": "The bounded three-apex axine reads correctly and must remain unchanged. The revised side silhouette, head taper, eye seating, body depth and fin scale passed the required static three-view review; top and front remain explicitly high-uncertainty inferred views."
   },
   "cueComparison": [
     {
@@ -332,17 +332,19 @@
     "axialLag": 0.48,
     "beforeAxialDegrees": [7, 11, 18, 27],
     "intermediateAxialDegrees": [7, 10.5, 18, 27],
-    "afterAxialDegrees": [5, 7.5, 12, 17],
+    "afterAxialDegrees": [5, 7.5, 8, 17],
     "observations": [
       { "bone": "Spine_B", "phase": 0.25, "amplitudeDegrees": 11, "errorDegrees": 0.7672, "provenance": "reported failure for the original source tuple" },
-      { "bone": "Caudal", "phase": 0.5, "amplitudeDegrees": 27, "errorDegrees": 1.0505, "provenance": "preserved rebuild validation-runtime.json after Spine_B amplitude 10.5 advanced validation" }
+      { "bone": "Caudal", "phase": 0.5, "amplitudeDegrees": 27, "errorDegrees": 1.0505, "provenance": "preserved rebuild validation-runtime.json after Spine_B amplitude 10.5 advanced validation" },
+      { "bone": "Peduncle", "phase": 0.5, "amplitudeDegrees": 12, "errorDegrees": 1.0806, "provenance": "preserved final v2 validation-runtime.json with the coordinated [5, 7.5, 12, 17] tuple" }
     ],
     "model": "With frame count, frequency, lag, envelope, export and importer fixed, quaternion interpolation error at a sampled phase scales approximately with that bone's rotation amplitude. Predictions scale each observed error by afterAmplitude / observedAmplitude.",
     "predictions": [
       { "bone": "Spine_B", "phase": 0.25, "amplitudeDegrees": 7.5, "predictedErrorDegrees": 0.5231, "predictedMarginDegrees": 0.2269 },
+      { "bone": "Peduncle", "phase": 0.5, "amplitudeDegrees": 8, "predictedErrorDegrees": 0.7204, "predictedMarginDegrees": 0.0296 },
       { "bone": "Caudal", "phase": 0.5, "amplitudeDegrees": 17, "predictedErrorDegrees": 0.6614, "predictedMarginDegrees": 0.0886 }
     ],
-    "rationale": "All four axial amplitudes are reduced together so the response retains an increasing head-to-tail wave. The largest proportional reduction is distal, where the observed Caudal error sets the limiting margin. Frequency, lag, envelope, and non-axial channels remain unchanged because the observed failures are amplitude-bounded. These are prebuild predictions, not runtime validation."
+    "rationale": "The newest failure is isolated to the third travelling-wave channel, which shared plan code maps to Peduncle. Only that amplitude is reduced, while Spine_A, Spine_B, Caudal, frequency, lag, envelope and non-axial channels remain unchanged. This is a prebuild prediction, not runtime validation."
   },
   "uncertainty": "No verified true dorsal/top or sharp frontal original was found. Width and frontal head shape remain constrained only by the authoritative compressed classification plus qualitative oblique views.",
   "pixelPolicy": "No reference pixels were copied, sampled, traced or redistributed.",
