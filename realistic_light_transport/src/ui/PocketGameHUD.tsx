@@ -28,8 +28,6 @@ const STORE_FILTERS = ['recommended', 'equipment', 'livestock', 'coral', 'tank']
 const STORE_FILTER_META: Readonly<Record<StoreFilter, readonly [string, string]>> = {
   recommended: ['For you', '✦'], equipment: ['Equipment', '⚙'], livestock: ['Fish', '◁'], coral: ['Coral', '⌁'], tank: ['Aquariums', '□'],
 }
-/* The readings the reef-first phone preset rails up the edge, in rail order. */
-const REEF_FIRST_READINGS = ['tempC', 'pH', 'ammonia'] as const
 const PINNED_READINGS_KEY = 'pocket-aquarium-pinned-readings-v2'
 const PINNED_READINGS_LEGACY_KEY = 'pocket-aquarium-pinned-readings-v1'
 type PinnedReadings = Readonly<Record<HudDeviceProfile, readonly string[]>>
@@ -161,7 +159,7 @@ function signal(label: string, value: number, inverted = false) {
 
 export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
-  const [launcherCollapsed, setLauncherCollapsed] = useState(false)
+  const [launcherCollapsed, setLauncherCollapsed] = useState(() => workspace.profile === 'compact')
   const [pinnedByProfile, setPinnedByProfile] = useState<PinnedReadings>(readPinnedReadings)
   const pinnedReadings = pinnedByProfile[workspace.profile]
   const hasRecommendedOffers = view.storeOffers.some((offer) => offer.recommended)
@@ -237,12 +235,16 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       [workspace.profile]: pinned ? current[workspace.profile].filter((item) => item !== key) : [...current[workspace.profile], key] }))
   }
   const applyReefView = () => {
-    const available = view.testedWater.map((item) => item.key)
-    const essential = REEF_FIRST_READINGS.filter((key) => available.includes(key))
-    const readings = essential.length ? essential : available.slice(0, REEF_FIRST_READINGS.length)
-    setPinnedByProfile((current) => ({ ...current, compact: readings }))
-    workspace.applyReefFirstPreset(readings.map((key) => `metric:${key}` as HudPanelId))
+    setPinnedByProfile((current) => ({ ...current, compact: [] }))
+    workspace.applyReefFirstPreset()
+    setLauncherCollapsed(true)
   }
+  const compactPanel = (panel: HudPanelId) => {
+    workspace.togglePanel(panel)
+    setLauncherCollapsed(true)
+  }
+  const compactTankActive = PANEL_TABS.every(([panel]) => !workspace.isOpen(panel))
+    && !workspace.isOpen('specimen') && pinnedReadings.length === 0 && !workspace.isArranging
   const runGuide = () => {
     if (command?.action) dispatch(command.action)
     /* A guided shopping step lands on the category it just asked for: the first stocking goes
@@ -258,6 +260,10 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   useEffect(() => {
     try { window.localStorage.setItem(PINNED_READINGS_KEY, JSON.stringify(pinnedByProfile)) } catch { /* optional UI preference */ }
   }, [pinnedByProfile])
+
+  useEffect(() => {
+    setLauncherCollapsed(workspace.profile === 'compact')
+  }, [workspace.profile])
 
   useEffect(() => {
     if (storeFilter === 'recommended' && !hasRecommendedOffers) setStoreFilter('equipment')
@@ -335,22 +341,39 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         Health <b>{Math.round(hoveredResident.health * 100)}%</b></span></span>
     </div> : null}
 
-    <nav className="pocket-window-launcher" aria-label="Aquarium windows" data-collapsed={launcherCollapsed}>
-      <button type="button" className="pocket-window-launcher-toggle" aria-expanded={!launcherCollapsed}
-        aria-label={`${launcherCollapsed ? 'Expand' : 'Collapse'} aquarium windows`}
-        onClick={() => setLauncherCollapsed((collapsed) => !collapsed)}>{launcherCollapsed ? 'Tools +' : 'Tools −'}</button>
-      <span className="pocket-window-launcher-label">Windows</span>
-      {workspace.isPhone ? <button type="button" className="pocket-reef-preset"
-        title="Lay out a reef-first phone workspace: tank dominant, guided next step, collapsed care, and railed water readings"
-        onClick={applyReefView}>Reef view</button> : null}
-      <button type="button" className="pocket-window-arrange" aria-pressed={workspace.isArranging}
-        title={workspace.isArranging ? 'Finish arranging the HUD' : 'Arrange HUD windows · hold Alt on desktop'}
-        onClick={workspace.toggleArrange}>{workspace.isArranging ? 'Done' : 'Arrange'}</button>
-      {workspace.isArranging ? <span className="pocket-window-launcher-hint" role="status">
-        Drag titles · resize any edge · drop on a snap lane · ↺ reset · Esc done</span> : null}
-      {PANEL_TABS.map(([sheet, label]) => <button key={sheet} type="button"
-        aria-pressed={workspace.isOpen(sheet)} title={`${workspace.isOpen(sheet) ? 'Close' : 'Open'} ${label} window`}
-        onClick={() => workspace.togglePanel(sheet)}>{label}</button>)}
+    <nav className="pocket-window-launcher" aria-label={workspace.profile === 'compact' ? 'Aquarium game controls' : 'Aquarium windows'}
+      data-collapsed={launcherCollapsed}>
+      {workspace.profile === 'compact' ? <>
+        <button type="button" className="pocket-mobile-dock-action pocket-reef-preset" aria-pressed={compactTankActive}
+          title="Return to the tank" onClick={applyReefView}><span aria-hidden="true">⌂</span><span>Tank</span></button>
+        <button type="button" className="pocket-mobile-dock-action" aria-pressed={workspace.isOpen('care')}
+          title={`${workspace.isOpen('care') ? 'Close' : 'Open'} Care`} onClick={() => compactPanel('care')}><span aria-hidden="true">♡</span><span>Care</span></button>
+        <button type="button" className="pocket-mobile-dock-action" aria-pressed={workspace.isOpen('residents')}
+          title={`${workspace.isOpen('residents') ? 'Close' : 'Open'} Residents`} onClick={() => compactPanel('residents')}><span aria-hidden="true">◌</span><span>Residents</span></button>
+        <button type="button" className="pocket-mobile-dock-action" aria-pressed={workspace.isOpen('store')}
+          title={`${workspace.isOpen('store') ? 'Close' : 'Open'} Store`} onClick={() => compactPanel('store')}><span aria-hidden="true">▣</span><span>Store</span></button>
+        <button type="button" className="pocket-mobile-dock-action pocket-mobile-more" aria-expanded={!launcherCollapsed}
+          aria-controls="pocket-mobile-more-actions" aria-pressed={!launcherCollapsed}
+          onClick={() => setLauncherCollapsed((collapsed) => !collapsed)}><span aria-hidden="true">•••</span><span>More</span></button>
+        {!launcherCollapsed ? <div id="pocket-mobile-more-actions" className="pocket-mobile-dock-secondary" role="group" aria-label="More aquarium controls">
+          <button type="button" aria-pressed={workspace.isOpen('guide')} onClick={() => compactPanel('guide')}><span aria-hidden="true">?</span><span>Guide</span></button>
+          <button type="button" aria-pressed={workspace.isOpen('water')} onClick={() => compactPanel('water')}><span aria-hidden="true">≈</span><span>Water</span></button>
+          <button type="button" className="pocket-window-arrange" aria-pressed={workspace.isArranging}
+            onClick={() => { workspace.toggleArrange(); setLauncherCollapsed(true) }}><span aria-hidden="true">↔</span><span>{workspace.isArranging ? 'Done' : 'Layout'}</span></button>
+          <button type="button" aria-pressed={workspace.isOpen('progress')} onClick={() => compactPanel('progress')}><span aria-hidden="true">★</span><span>Rank</span></button>
+          <button type="button" aria-pressed={workspace.isOpen('view')} onClick={() => compactPanel('view')}><span aria-hidden="true">◉</span><span>View</span></button>
+        </div> : null}
+      </> : <>
+        <span className="pocket-window-launcher-label">Windows</span>
+        <button type="button" className="pocket-window-arrange" aria-pressed={workspace.isArranging}
+          title={workspace.isArranging ? 'Finish arranging the HUD' : 'Arrange HUD windows · hold Alt on desktop'}
+          onClick={workspace.toggleArrange}>{workspace.isArranging ? 'Done' : 'Arrange'}</button>
+        {workspace.isArranging ? <span className="pocket-window-launcher-hint" role="status">
+          Drag titles · resize any edge · drop on a snap lane · ↺ reset · Esc done</span> : null}
+        {PANEL_TABS.map(([sheet, label]) => <button key={sheet} type="button"
+          aria-pressed={workspace.isOpen(sheet)} title={`${workspace.isOpen(sheet) ? 'Close' : 'Open'} ${label} window`}
+          onClick={() => workspace.togglePanel(sheet)}>{label}</button>)}
+      </>}
     </nav>
 
     <HudWindow id="guide" title="Next step" eyebrow="Guided reef care" className="pocket-guide-window" workspace={workspace}>
