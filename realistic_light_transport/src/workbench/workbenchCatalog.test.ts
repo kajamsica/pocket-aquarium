@@ -15,6 +15,7 @@ import {
   selectWorkbenchAsset,
   workbenchOptionGroups,
   workbenchSearch,
+  workbenchWaterGroup,
   type WorkbenchAsset,
 } from './workbenchCatalog'
 
@@ -68,6 +69,7 @@ function row(overrides: Partial<CatalogRow> & Pick<CatalogRow, 'id' | 'displayNa
 const ROWS: readonly CatalogRow[] = [
   row({
     id: 'blue_hippo_tang', displayName: 'Blue Hippo Tang', category: 'fish', referenceSize: { meters: 0.25, kind: 'adult_total_length' },
+    waterType: 'freshwater',
     candidates: [candidate({ name: 'fable-v1' }), candidate({ name: 'fable-v2', userApproved: true })],
   }),
   row({ id: 'epaulette_shark', displayName: 'Epaulette Shark', category: 'fish', referenceSize: { meters: 0.9, kind: 'adult_total_length' }, assetStatus: 'missing' }),
@@ -85,7 +87,7 @@ const ROWS: readonly CatalogRow[] = [
     referenceSize: { meters: 0.15, kind: 'colony_width' },
     candidates: [candidate({ name: 'fable-v1-table_blue', variantId: 'table_blue', displayName: 'Acropora table, blue' })],
   }),
-  row({ id: 'goniopora', displayName: 'Goniopora', category: 'coral', assetStatus: 'provisional', provisional: true, candidates: [candidate({ name: 'fable-v1' })] }),
+  row({ id: 'goniopora', displayName: 'Goniopora', category: 'coral', waterType: null, assetStatus: 'provisional', provisional: true, candidates: [candidate({ name: 'fable-v1' })] }),
   row({ id: 'trochus_snail', displayName: 'Trochus Snail', category: 'cleanup_crew', referenceSize: { meters: 0.03, kind: 'adult_shell_diameter' }, candidates: [candidate({ name: 'fable-v1', referenceSizeMeters: 0.03 })] }),
 ]
 
@@ -284,32 +286,44 @@ describe('workbench candidate catalog', () => {
     expect(Object.values(BADGE_LABELS)).toEqual(['Accepted (runtime)', 'Candidate', 'Candidate (user approved look)', 'Provisional', 'Failed'])
   })
 
-  it('builds the categorized picker with accepted rows first and unloadable rows disabled', async () => {
+  it('builds the water-grouped picker with accepted rows first and unloadable rows disabled', async () => {
     const catalog = await loadWorkbenchCatalog(fakeFetch(CANDIDATE_INDEX), { catalog: CATALOG, acceptedAssets: ACCEPTED_FIXTURE })
     const groups = workbenchOptionGroups(catalog)
-    expect(groups.map((group) => group.category)).toEqual(['fish', 'coral', 'cleanup_crew', 'uncatalogued'])
-    const fish = groups[0].options
+    expect(workbenchWaterGroup('freshwater')).toBe('freshwater')
+    expect(workbenchWaterGroup('saltwater')).toBe('saltwater')
+    expect(workbenchWaterGroup(null)).toBe('unknown')
+    expect(workbenchWaterGroup('brackish')).toBe('unknown')
+    expect(groups.map((group) => [group.waterType, group.label])).toEqual([
+      ['freshwater', 'Freshwater'],
+      ['saltwater', 'Saltwater'],
+      ['unknown', 'Unknown / Unclassified'],
+    ])
+    const freshwater = groups[0].options
+    expect(freshwater.map((option) => option.key)).toEqual(['blue_hippo_tang@fable-v1', 'blue_hippo_tang@fable-v2'])
+    expect(freshwater.find((option) => option.key === 'blue_hippo_tang@fable-v2')).toMatchObject({ badge: 'approved', label: 'Blue Hippo Tang (fable-v2, user approved)' })
+
+    const fish = groups[1].options
     expect(fish[0]).toMatchObject({ key: 'ocellaris', disabled: false, badge: 'accepted', label: 'Ocellaris Clownfish (accepted v2.0.0-candidate)' })
     expect(fish.map((option) => option.key)).toEqual([
       'ocellaris',
-      'blue_hippo_tang@fable-v1',
-      'blue_hippo_tang@fable-v2',
       'epaulette_shark',
       'row:six_line_wrasse@fable-v1',
+      'acropora_branching@fable-v1-table_blue',
+      'trochus_snail@fable-v1',
+      'trochus_snail@fable-v2',
     ])
-    expect(fish.find((option) => option.key === 'blue_hippo_tang@fable-v2')).toMatchObject({ badge: 'approved', label: 'Blue Hippo Tang (fable-v2, user approved)' })
     expect(fish.find((option) => option.key === 'epaulette_shark')).toMatchObject({ disabled: false, badge: 'accepted' })
     expect(fish.find((option) => option.key === 'row:six_line_wrasse@fable-v1')).toMatchObject({ disabled: true, status: 'build failed at source' })
 
     const coral = groups[1].options
     expect(coral.find((option) => option.key === 'acropora_branching@fable-v1-table_blue')?.label).toBe('Acropora (branching SPS) / Acropora table, blue (fable-v1-table_blue, validated)')
-    expect(coral.find((option) => option.key === 'goniopora@fable-v1')?.badge).toBe('provisional')
+    expect(groups[2].options.find((option) => option.key === 'goniopora@fable-v1')?.badge).toBe('provisional')
 
     // A loadable candidate the committed catalog has not been rebuilt for is still offered.
-    const cleanup = groups[2].options
+    const cleanup = groups[1].options
     expect(cleanup.map((option) => option.key)).toEqual(['trochus_snail@fable-v1', 'trochus_snail@fable-v2'])
     expect(cleanup[1].label).toContain('not in catalog yet')
-    expect(groups[3].options.map((option) => option.key)).toEqual(['watchman_goby', 'pistol_shrimp', 'zoanthid@fable-v1-blue_green'])
+    expect(groups[2].options.map((option) => option.key)).toEqual(['goniopora@fable-v1', 'watchman_goby', 'pistol_shrimp', 'zoanthid@fable-v1-blue_green'])
   })
 
   it('marks candidates as dev-server-only when the candidate service is unavailable', async () => {
