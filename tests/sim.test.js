@@ -617,12 +617,32 @@ group("equipment + tier purchases change coefficients/outcomes");
 group("freshwater equipment eligibility");
 (function () {
   var fresh = cycledFresh(481);
+  var reefFilterLevels = D.EQUIPMENT.filter.levels.filter(function (level) {
+    return D.EQUIPMENT.filter.levelWaterTypes[level.id].indexOf("salt") >= 0;
+  });
+  eq(JSON.stringify(reefFilterLevels), JSON.stringify([
+    { id: "sponge", name: "Sponge filter", price: 0, biofilterSurface: 1, flow: 0.1 },
+    { id: "hob", name: "HOB power filter", price: 60, biofilterSurface: 1.9, flow: 0.25 },
+    { id: "canister", name: "Canister filter", price: 180, biofilterSurface: 3.1, flow: 0.4 }
+  ]), "reef filter levels remain exactly equal to the pre-freshwater catalog");
   eq(JSON.stringify(PA.validatePurchase(fresh, {
     kind: "equipment", category: "filter", levelId: "canister"
   }).reasons), "[]", "freshwater allows a normal canister filter upgrade");
   eq(JSON.stringify(PA.validatePurchase(fresh, {
-    kind: "equipment", category: "light", levelId: "led"
+    kind: "equipment", category: "filter", levelId: "high_capacity"
+  }).reasons), "[]", "freshwater allows its high-capacity filter");
+  eq(JSON.stringify(PA.validatePurchase(fresh, {
+    kind: "equipment", category: "light", levelId: "planted_led"
   }).reasons), "[]", "freshwater allows a planted-light upgrade");
+  has(PA.validatePurchase(cycledReef(482), {
+    kind: "equipment", category: "filter", levelId: "high_capacity"
+  }).reasons, "not available", "reef rejects the freshwater-only high-capacity filter");
+  has(PA.validatePurchase(cycledReef(483), {
+    kind: "equipment", category: "light", levelId: "planted_led"
+  }).reasons, "not available", "reef rejects the freshwater-only planted light");
+  has(PA.validatePurchase(fresh, {
+    kind: "equipment", category: "light", levelId: "led"
+  }).reasons, "not available", "freshwater rejects the reef light");
   eq(JSON.stringify(PA.validatePurchase(fresh, {
     kind: "equipment", category: "skimmer", levelId: "cone"
   }).reasons), JSON.stringify(["Protein skimmer is only useful on a saltwater reef."]),
@@ -631,7 +651,7 @@ group("freshwater equipment eligibility");
     kind: "equipment", category: "algae_clip", levelId: "clip"
   }).reasons), JSON.stringify(["Wall algae clip is only useful on a saltwater reef."]),
   "freshwater rejects the reef-only nori clip");
-  eq(PA.validatePurchase(cycledReef(482), {
+  eq(PA.validatePurchase(cycledReef(484), {
     kind: "equipment", category: "skimmer", levelId: "cone"
   }).ok, true, "reef equipment remains available to reef tanks");
 })();
@@ -828,8 +848,11 @@ group("compatibility + capacity blockers");
   var big = cycledReef(76); big.tier = "xl757"; big.credits = 5000; addAdult(big, "epaulette_shark", 1);
   has(PA.validatePurchase(big, { kind: "livestock", id: "ocellaris", count: 1 }).reasons, "hunt and eat", "existing predator blocks adding its prey");
 
-  // territorial conflict (two strong same-layer bottom holders)
-  has(PA.validatePurchase(big, { kind: "livestock", id: "watchman_goby", count: 1 }).reasons, "hunt and eat", "predator conflict flagged");
+  // one resident can create distinct predation and territorial warnings
+  var gobyRisk = PA.validatePurchase(big, { kind: "livestock", id: "watchman_goby", count: 1 });
+  has(gobyRisk.reasons, "hunt and eat", "predator conflict flagged");
+  has(gobyRisk.reasons, "fight", "territorial conflict flagged");
+  eq(gobyRisk.conflicts.length, 2, "distinct risks against one resident are both retained");
 
   // invert safety identifies the resident at risk
   var reefCoral = cycledReef(77); reefCoral.tier = "xl757"; reefCoral.credits = 5000;
@@ -863,6 +886,21 @@ group("freshwater compatibility outcomes and reason ordering");
   eq(PA.validatePurchase(calmCommunity, {
     kind: "livestock", id: "betta_splendens_male", count: 1, acceptRisk: true
   }).ok, true, "explicit risk acceptance still permits a conditional placid community");
+
+  var shrimpCommunity = cycledFresh(788); addAdult(shrimpCommunity, "amano_shrimp", 3);
+  report = D.assessCompatibility(shrimpCommunity, D.SPECIES.betta_splendens_male, 1);
+  eq(JSON.stringify(report.reasonCodes), JSON.stringify(["predation.proposed", "predation.proposed", "predation.proposed",
+    "invert.unsafe", "invert.unsafe", "invert.unsafe"]), "a proposed betta declares its Amano shrimp prey risk");
+  eq(report.conflicts.length, 2, "the betta prey and invert-safety warnings remain distinct");
+
+  var bettaCommunity = cycledFresh(789); Object.assign(bettaCommunity.water, { pH: 7, hardness: 8 });
+  addAdult(bettaCommunity, "betta_splendens_male", 1);
+  report = D.assessCompatibility(bettaCommunity, D.SPECIES.amano_shrimp, 3);
+  eq(JSON.stringify(report.reasonCodes), JSON.stringify(["predation.resident"]),
+    "a resident betta declares the same prey risk when Amano shrimp are proposed");
+  eq(PA.validatePurchase(bettaCommunity, {
+    kind: "livestock", id: "amano_shrimp", count: 3, acceptRisk: true
+  }).ok, true, "explicit risk acceptance permits the reverse-order conditional pairing");
 
   var shortShoal = cycledFresh(783); addAdult(shortShoal, "betta_splendens_male", 1);
   report = D.assessCompatibility(shortShoal, D.SPECIES.harlequin_rasbora, 5);

@@ -153,11 +153,12 @@
    * ------------------------------------------------------------------ */
   var EQUIPMENT = {
     filter: {
-      category: "filter", label: "Filtration", waterTypes: ["fresh", "salt"],
+      category: "filter", label: "Filtration",
+      levelWaterTypes: { sponge: ["fresh", "salt"], hob: ["fresh", "salt"], canister: ["fresh", "salt"], high_capacity: ["fresh"] },
       levels: [
-        { id: "sponge",   name: "Sponge filter",  price: 0,   biofilterSurface: 1.0, flow: 0.10, adjustableFlow: false, aeration: 0.7 },
-        { id: "hob",      name: "Adjustable HOB/internal filter", price: 60, biofilterSurface: 1.9, flow: 0.25, adjustableFlow: true, aeration: 0.55 },
-        { id: "canister", name: "Canister filter + spray bar", price: 180, biofilterSurface: 3.1, flow: 0.40, adjustableFlow: true, aeration: 0.65 },
+        { id: "sponge",   name: "Sponge filter",  price: 0,   biofilterSurface: 1.0, flow: 0.10 },
+        { id: "hob",      name: "HOB power filter", price: 60,  biofilterSurface: 1.9, flow: 0.25 },
+        { id: "canister", name: "Canister filter", price: 180, biofilterSurface: 3.1, flow: 0.40 },
         { id: "high_capacity", name: "High-capacity filter + aeration", price: 320, biofilterSurface: 4.5, flow: 0.60, adjustableFlow: true, aeration: 0.95 }
       ]
     },
@@ -178,11 +179,14 @@
       ]
     },
     light: {
-      category: "light", label: "Lighting / PAR", waterTypes: ["fresh", "salt"],
+      category: "light", label: "Lighting / PAR",
+      levelWaterTypes: { basic: ["fresh", "salt"], led: ["salt"], pro_led: ["salt"], planted_led: ["fresh"], high_growth_led: ["fresh"] },
       levels: [
-        { id: "basic",   name: "Basic strip",      freshwaterPreset: "low-light daylight", price: 0,   parCeiling: 60,  photoperiodControl: false },
-        { id: "led",     name: "Reef/plant LED",   freshwaterPreset: "planted daylight",   price: 90,  parCeiling: 160, photoperiodControl: true },
-        { id: "pro_led", name: "Programmable LED", freshwaterPreset: "high-growth planted", price: 220, parCeiling: 340, photoperiodControl: true }
+        { id: "basic",   name: "Basic strip",        price: 0,   parCeiling: 60,  photoperiodControl: false },
+        { id: "led",     name: "Reef/plant LED",     price: 90,  parCeiling: 160, photoperiodControl: true },
+        { id: "pro_led", name: "Programmable LED",   price: 220, parCeiling: 340, photoperiodControl: true },
+        { id: "planted_led", name: "Planted daylight LED", price: 90, parCeiling: 160, photoperiodControl: true },
+        { id: "high_growth_led", name: "High-growth planted LED", price: 220, parCeiling: 340, photoperiodControl: true }
       ]
     },
     skimmer: {
@@ -1097,7 +1101,7 @@
       decisions.push({ outcome: outcome, reasonCode: code, message: message,
         residentSpeciesId: resident ? resident.species.id : null });
       if (outcome !== "conditional" || !resident) return;
-      var key = resident.species.id, item = conflictBuckets[key];
+      var key = resident.species.id + "|" + code, item = conflictBuckets[key];
       if (!item) item = conflictBuckets[key] = { riskTag: riskTag || code, reasonCode: code, message: message,
         residentSpeciesId: resident.species.id, residentName: resident.species.name, residentIds: [], refundCredits: 0 }, conflicts.push(item);
       if (item.residentIds.indexOf(resident.animal.id) < 0) {
@@ -1168,9 +1172,9 @@
           add("conditional", "temperament.betta_community", "A male betta may share a calm, covered community, but individual temperament requires monitoring and a separation plan.", other, "temperament");
         else add("block", "temperament.betta_unsuitable", "This is not a suitable placid companion for a male betta.", other);
       }
-      if (sp.predator && tagsIntersect(sp.preysOn, os.preyTags)) add("conditional", "predation.proposed",
+      if (tagsIntersect(sp.preysOn, os.preyTags)) add("conditional", "predation.proposed",
         sp.name + " will prey on your " + os.name + ".", other, "predation");
-      else if (os.predator && tagsIntersect(os.preysOn, sp.preyTags)) add("conditional", "predation.resident",
+      else if (tagsIntersect(os.preysOn, sp.preyTags)) add("conditional", "predation.resident",
         "Your " + os.name + " would hunt and eat " + sp.name + ".", other, "predation");
     }
 
@@ -1254,6 +1258,9 @@
       var equipmentWater = HABITATS[state.habitat] && HABITATS[state.habitat].waterType;
       if (catDef && catDef.waterTypes && equipmentWater && catDef.waterTypes.indexOf(equipmentWater) < 0 && !catDef.reefOnly)
         reasons.push(catDef.label + " is not available for this water type.");
+      var levelWaterTypes = catDef && catDef.levelWaterTypes && catDef.levelWaterTypes[lvl.id];
+      if (levelWaterTypes && equipmentWater && levelWaterTypes.indexOf(equipmentWater) < 0)
+        reasons.push(lvl.name + " is not available for this water type.");
       // Repurchase / downgrade gate: the same installed level is never purchasable, and any
       // lower level in the category is not an upgrade. Higher levels fall through to credits.
       if (catDef && state.equipment) {
