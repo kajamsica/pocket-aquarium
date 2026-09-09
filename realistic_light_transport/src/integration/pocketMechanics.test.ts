@@ -293,17 +293,25 @@ describe('freshwater bridge boundary', () => {
       saltEquivalentGPerKg: 0 })
     expect(view.optics).toEqual({ localPpfd: 0, mode: 'read_only' })
 
-    expect(livestockIds).toEqual([
-      'neon_tetra', 'pygmy_cory', 'betta_splendens_male', 'harlequin_rasbora',
-      'bronze_cory', 'southern_platy', 'yellow_lab_cichlid', 'oscar_cichlid',
-      'fancy_goldfish', 'amano_shrimp', 'spotted_nerite',
-    ])
+    const filled = dispatchPocketAction(choose('freshwater'), { type: pocketActions.SETUP_FILL })
+    expect(filled.water.tannin).toBeCloseTo(.6, 6)
+    expect(projectPocketState(filled).reefSnapshot.chemistry.tannin).toBeCloseTo(.6, 6)
+
+    expect(livestockIds).toEqual([])
+    expect(view.storeOffers.filter(({ kind }) => kind === 'livestock')
+      .every(({ id }) => Boolean(specimenAssetFor(id)))).toBe(true)
+    expect(view.storeOffers.find(({ id }) => id === 'neon_tetra')).toBeUndefined()
+    expect(projectPocketState(choose('freshwater'), { godMode: true }).storeOffers
+      .filter(({ kind }) => kind === 'livestock')).toEqual([])
     expect(view.storeOffers.some(({ kind }) => kind === 'coral')).toBe(false)
     expect(equipmentIds.some((id) => id.startsWith('skimmer:') || id.startsWith('algae_clip:'))).toBe(false)
     expect(tiers.every(({ detail }) => detail?.includes('pH, hardness, and tannins'))).toBe(true)
     expect(tiers.every(({ detail }) => !detail?.includes('salinity, alkalinity, calcium'))).toBe(true)
 
     const reefOffers = projectPocketState(createPocketReefShowcase()).storeOffers
+    const reefLivestockIds = reefOffers.filter(({ kind }) => kind === 'livestock').map(({ id }) => id)
+    expect(reefLivestockIds).toContain('ocellaris')
+    expect(reefLivestockIds).toContain('black_storm_ocellaris')
     expect(reefOffers.some(({ kind }) => kind === 'coral')).toBe(true)
     expect(reefOffers.some(({ id }) => id === 'skimmer:hob')).toBe(true)
     expect(reefOffers.some(({ id }) => id === 'algae_clip:clip')).toBe(true)

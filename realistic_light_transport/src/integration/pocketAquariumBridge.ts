@@ -73,6 +73,7 @@ interface PocketWater {
   magnesium: number
   par: number
   flow: number
+  tannin: number
 }
 
 interface PocketAnimal {
@@ -893,7 +894,8 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
       ...(riskOnly ? { conflicts } : {}), ...extra }
   }
   const livestock = Object.keys(runtime.DATA.SPECIES).map((id) => runtime.DATA.resolveSpecies(state, id))
-    .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === state.habitat)).map((item) => {
+    .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === state.habitat
+      && (reef || specimenAssetFor(item.id)))).map((item) => {
     const count = runtime.DATA.BUNDLES[item.id] ?? 1
     const detail = `${item.sci} · ${item.adultSizeCm} cm adult · ${item.layer} layer`
     return offer('livestock', 'livestock', item.id, item.name, item.price * count,
@@ -1244,7 +1246,8 @@ export function projectPocketState(
       phosphatePhosphorusMassMilligrams: state.water.phosphate * state.water.levelL,
       totalAmmoniaNitrogenMgPerLiter: state.water.ammonia, nitriteNitrogenMgPerLiter: state.water.nitrite,
       nitrateNitrogenMgPerLiter: state.water.nitrate, phosphatePhosphorusMgPerLiter: state.water.phosphate,
-      temperatureCelsius: state.water.tempC, ph: state.water.pH, alkalinityDkh: state.water.alkalinity },
+      temperatureCelsius: state.water.tempC, ph: state.water.pH, alkalinityDkh: state.water.alkalinity,
+      tannin: state.water.tannin },
     equipment: { atoEnabled: Boolean(ato?.autoTopOff), atoReservoirLiters: automation.ato.reservoirL,
       atoReservoirCapacityLiters: automation.ato.capacityL, atoEmpty: atoInstalled && automation.ato.reservoirL <= 0.05,
       atoSetpointLiters: tier.volumeL, atoPumpLitersPerHour: atoTopping ? tier.volumeL * 0.012 / 24 : 0,

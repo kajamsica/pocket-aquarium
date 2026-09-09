@@ -83,6 +83,8 @@ export interface AquariumSnapshot {
     readonly temperatureCelsius: number
     readonly ph: number
     readonly alkalinityDkh: number
+    /** Normalized freshwater tannin index. Omitted by legacy or marine-only producers. */
+    readonly tannin?: number
   }
   readonly equipment: {
     readonly atoEnabled: boolean
