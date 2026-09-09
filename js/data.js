@@ -25,6 +25,7 @@
     // ---- automation (installed physical equipment) ----
     SET_FEEDER: "SET_FEEDER",               // {enabled?, intervalDays?, portionsPerDispense?} configure/toggle auto feeder
     REFILL_FEEDER: "REFILL_FEEDER",         // refill the auto-feeder hopper (costs credits)
+    REFILL_NORI: "REFILL_NORI",             // refill an installed wall algae clip
     REFILL_RESERVOIR: "REFILL_RESERVOIR",   // refill the finite freshwater ATO reservoir
     // ---- purchases ----
     PURCHASE_EQUIPMENT: "PURCHASE_EQUIPMENT", // {category, levelId}
@@ -37,6 +38,7 @@
     // ---- interaction ----
     FEED: "FEED",                           // {x, y} normalized [0,1] tank coordinates
     CONSUME_FOOD: "CONSUME_FOOD",           // {foodId, eaterId} after renderer-observed contact
+    CONSUME_NORI: "CONSUME_NORI",           // {eaterId, biteCycle} after renderer-observed clip contact
     SELECT_ENTITY: "SELECT_ENTITY",         // {entityType, id} | {id:null} to clear
     REMOVE_DEAD: "REMOVE_DEAD",             // {id} remove decaying biomass
     RENAME_LIVESTOCK: "RENAME_LIVESTOCK",   // {id, name} custom name for one resident; empty name restores the species name
@@ -193,6 +195,13 @@
       levels: [
         { id: "none", name: "Hand feeding",              price: 0,  autoFeed: false, hopperCapacity: 0 },
         { id: "auto", name: "Programmable auto feeder",  price: 55, autoFeed: true,  hopperCapacity: 28 }
+      ]
+    },
+    algae_clip: {
+      category: "algae_clip", label: "Wall algae clip", reefOnly: true,
+      levels: [
+        { id: "none", name: "No algae clip", price: 0, noriCapacity: 0 },
+        { id: "clip", name: "Magnetic nori grazing clip", price: 35, noriCapacity: 8 }
       ]
     }
   };

@@ -416,6 +416,56 @@ group("equipment + tier purchases change coefficients/outcomes");
   eq(restoredCylinder.water.levelL, 5678, "a full cylinder remains at 5,678 L after save reload");
 })();
 
+group("wall algae clip install, refill, save, and grazing guardrails");
+(function () {
+  var s = cycledReef(48), startingCredits = s.credits;
+  PA.dispatch(s, { type: D.ACTIONS.PURCHASE_EQUIPMENT, category: "algae_clip", levelId: "clip" });
+  eq(s.equipment.algae_clip, "clip", "the ordered equipment upgrade installs the wall clip");
+  eq(s.automation.nori.capacity, 8, "installed clip publishes its nori capacity");
+  eq(s.automation.nori.remaining, 0, "a new clip starts empty until the keeper refills it");
+  eq(s.credits, startingCredits - 35, "install charges the published equipment price");
+  PA.dispatch(s, { type: D.ACTIONS.REFILL_NORI });
+  eq(s.automation.nori.remaining, 8, "refill installs one full nori sheet");
+  eq(s.credits, startingCredits - 41, "refill charges the published six-credit resource cost");
+  PA.dispatch(s, { type: D.ACTIONS.REFILL_NORI });
+  eq(s.credits, startingCredits - 41, "refilling an already full clip is a no-op");
+
+  var restored = PA.sanitizeState(JSON.parse(JSON.stringify(s)));
+  eq(restored.automation.nori.remaining, 8, "nori survives a save and sanitize round trip");
+  restored.automation.nori.remaining = 99; restored.automation.nori.lastBiteCycle = 12.8;
+  restored = PA.sanitizeState(restored);
+  eq(restored.automation.nori.remaining, 8, "sanitize clamps nori to installed capacity");
+  eq(restored.automation.nori.lastBiteCycle, Math.floor(restored.time.days * 24), "sanitize rejects a bite cycle from the future");
+  var legacy = JSON.parse(JSON.stringify(s)); delete legacy.automation.nori;
+  legacy = PA.sanitizeState(legacy);
+  eq(legacy.automation.nori.remaining, 0, "an older save safely defaults to an empty clip");
+  eq(legacy.automation.nori.lastBiteCycle, -1, "an older save has no accepted bite cycle");
+
+  var grazing = cycledReef(49); grazing.equipment.algae_clip = "clip";
+  grazing.automation.nori = { remaining: 8, capacity: 8, lastBiteCycle: -1 };
+  addAdult(grazing, "yellow_tang", 1); addAdult(grazing, "ocellaris", 1); addAdult(grazing, "turbo_snail", 1);
+  var tang = grazing.livestock[0], clown = grazing.livestock[1], snail = grazing.livestock[2];
+  tang.hunger = clown.hunger = snail.hunger = 0.8; grazing.time.days = 10 / 24;
+  grazing.speed = 0;
+  PA.dispatch(grazing, { type: D.ACTIONS.CONSUME_NORI, eaterId: tang.id, biteCycle: 10 });
+  eq(grazing.automation.nori.remaining, 8, "paused mouth contact cannot consume nori");
+  grazing.speed = 1;
+  [9, 11].forEach(function (cycle) {
+    PA.dispatch(grazing, { type: D.ACTIONS.CONSUME_NORI, eaterId: tang.id, biteCycle: cycle });
+  });
+  PA.dispatch(grazing, { type: D.ACTIONS.CONSUME_NORI, eaterId: clown.id, biteCycle: 10 });
+  PA.dispatch(grazing, { type: D.ACTIONS.CONSUME_NORI, eaterId: snail.id, biteCycle: 10 });
+  eq(grazing.automation.nori.remaining, 8, "stale, future, nonherbivore, and invert attempts are rejected");
+  var hungry = tang.hunger;
+  PA.dispatch(grazing, { type: D.ACTIONS.CONSUME_NORI, eaterId: tang.id, biteCycle: 10 });
+  eq(grazing.automation.nori.remaining, 7, "an eligible tang consumes exactly one current-hour bite");
+  lt(tang.hunger, hungry, "a valid bite reduces only the eligible tang's hunger");
+  var fedHunger = tang.hunger;
+  PA.dispatch(grazing, { type: D.ACTIONS.CONSUME_NORI, eaterId: tang.id, biteCycle: 10 });
+  eq(grazing.automation.nori.remaining, 7, "same-hour replay cannot consume a second bite");
+  eq(tang.hunger, fedHunger, "same-hour replay cannot feed the tang twice");
+})();
+
 /* ============================================================ *
  * 6. Feeding, uneaten decay, hunger->condition->health->death,
  *    corpse ammonia, dead removal

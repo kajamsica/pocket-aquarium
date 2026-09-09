@@ -110,6 +110,7 @@ function StoreArtwork({ offer }: { readonly offer: PocketStoreOffer }) {
     case 'refugium': drawing = <><path d="M8 12h32v28H8zM8 32h32" /><path d="M19 32c-1-8 2-13 7-16m-7 9-5-5m6 1 7-4m1 15c0-6 3-9 7-11" /></>; break
     case 'ato': drawing = <><path d="M13 9h22v34H13zM17 14h14" /><path d="M24 19c5 7 7 10 7 14a7 7 0 0 1-14 0c0-4 2-7 7-14Z" /></>; break
     case 'feeder': drawing = <><path d="M13 8h22l-3 20H16Z" /><path d="M20 28h8v6h-8zM24 34v7" /><circle cx="18" cy="42" r="1" /><circle cx="24" cy="44" r="1" /><circle cx="30" cy="41" r="1" /></>; break
+    case 'algae_clip': drawing = <><path d="M15 8h18v7H15zM24 15v5" /><path d="M13 20h22v24H13z" /><path d="M18 25c5 3 7-3 12 0v14H18Z" /></>; break
     case 'filter': drawing = <><rect x="12" y="7" width="24" height="36" rx="3" /><path d="M17 14h14M17 20h14M17 26h14M17 35c5-5 9-5 14 0" /></>; break
     case 'coral': drawing = <><path d="M24 42V17m0 9-9-9m9 15 10-11m-10 4 7-12m-16 29h20" /><circle cx="15" cy="17" r="3" /><circle cx="31" cy="13" r="3" /><circle cx="34" cy="21" r="3" /></>; break
     case 'tier': drawing = <><path d="M5 10h38v31H5zM8 14h32v22H8z" /><path d="M9 30c7-5 13 4 20-1s8 2 11 0" /><circle cx="17" cy="23" r="3" /></>; break
@@ -600,6 +601,19 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
                 onClick={() => dispatch({ type: 'REFILL_FEEDER' })}>Refill hopper</button>
             </div>
           </> : <small>Buy the auto feeder in the store to schedule feeding.</small>}
+        </div>
+        <div className="pocket-automation-device" data-empty={view.nori.installed && view.nori.remaining <= 0}>
+          <div className="pocket-automation-head"><span>Wall algae clip</span>
+            <strong>{view.nori.installed ? `${view.nori.remaining}/${view.nori.capacity} nori` : 'Not installed'}</strong></div>
+          {view.nori.installed ? <>
+            <small>{view.nori.remaining > 0
+              ? 'Hungry herbivorous tangs take turns grazing the clipped sheet.'
+              : 'Empty. Refill the clip to restore tang grazing.'}</small>
+            <div className="pocket-automation-actions">
+              <button className="hud-button" type="button" disabled={view.nori.remaining >= view.nori.capacity}
+                onClick={() => dispatch({ type: 'REFILL_NORI' })}>{view.nori.remaining >= view.nori.capacity ? 'Nori full' : 'Refill nori'}</button>
+            </div>
+          </> : <small>Buy the magnetic nori grazing clip in the equipment store.</small>}
         </div>
         <div className="pocket-automation-device" data-empty={view.ato.installed && view.ato.reservoirL <= 0.05}>
           <div className="pocket-automation-head"><span>ATO reservoir</span>
