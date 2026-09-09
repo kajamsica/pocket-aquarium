@@ -94,7 +94,7 @@ function defaultLayout(id: HudPanelId, profile: HudDeviceProfile): HudWindowLayo
   const height = (desktop: number, phone = desktop) => Math.min(compact ? phone : desktop, viewportHeight - top - 78)
   const right = (panelWidth: number) => Math.max(edge, viewportWidth - panelWidth - edge)
   switch (id) {
-    case 'guide': return { x: edge, y: top, width: width(310, 286), height: height(186, 170), open: true, minimized: false, z: 20, snap: 'top-left', snapOrder: 0 }
+    case 'guide': return { x: edge, y: top, width: width(310, 286), height: height(186, 170), open: !compact, minimized: false, z: 20, snap: 'top-left', snapOrder: 0 }
     /* Compact chemistry is a bounded bottom tool (<=40dvh) so the tank stays the world. */
     case 'water': {
       if (!compact) return { x: edge, y: top + 26, width: width(380), height: height(500), open: false, minimized: false, z: 21, snap: 'top-left', snapOrder: 1 }
@@ -229,7 +229,7 @@ export interface HudWorkspaceController {
   readonly resetPanel: (id: HudPanelId) => void
   readonly resetWorkspace: () => void
   readonly registerPanel: (id: HudPanelId) => void
-  readonly applyReefFirstPreset: (metricIds: readonly HudPanelId[]) => void
+  readonly applyReefFirstPreset: () => void
   readonly bringToFront: (id: HudPanelId) => void
   readonly updateLayout: (id: HudPanelId, patch: Partial<HudWindowLayout>) => void
 }
@@ -386,30 +386,14 @@ export function useHudWorkspace(): HudWorkspaceController {
     })
   }, [])
 
-  /* One action installs the playtested reef-first phone arrangement: a narrowed guide sheet
-   * with Care collapsed beneath it, chemistry parked as a closed bottom tool, full sheets
-   * unsnapped out of the reading lane, and the essential readings railed up the free edge.
-   * It writes only the compact profile, so a laptop arrangement is never disturbed, and it
-   * is a starting layout — every window stays openable, movable, resizable, and closable. */
-  const applyReefFirstPreset = useCallback((metricIds: readonly HudPanelId[]) => {
+  /* Reef view is the clear-tank phone workspace. It writes only the compact profile, so
+   * a laptop arrangement is never disturbed, and every window remains openable afterward. */
+  const applyReefFirstPreset = useCallback(() => {
     setProfiles((current) => {
       const layouts = effectiveLayouts(current.compact, 'compact')
-      const limits = windowLimits('guide')
-      const sheetWidth = clamp(window.innerWidth - METRIC_MAX_WIDTH - EDGE * 2 - STACK_GAP, limits.minWidth, limits.maxWidth)
-      /* Title, explanation, and the pinned call to action each need their own band at 390x844,
-       * so the preset sheet gets a bounded reading height instead of inheriting a shorter one. */
-      const guideHeight = clamp(Math.round(window.innerHeight * .3), 236, limits.maxHeight)
       const compact: Record<string, HudWindowLayout> = Object.fromEntries(Object.entries(current.compact)
-        // A reading left over from an earlier pin set leaves the rail so it cannot hold a slot.
         .map(([id, layout]) => [id, isMetricPanel(id) ? { ...layout, open: false } : layout]))
       for (const id of BUILT_IN_PANELS) compact[id] = { ...layouts[id], open: false, snap: null }
-      compact.guide = { ...layouts.guide, width: sheetWidth, height: guideHeight, open: true, minimized: false, snap: 'top-left', snapOrder: 0, z: 20 }
-      compact.care = { ...layouts.care, width: sheetWidth, open: true, minimized: true, snap: 'top-left', snapOrder: 1, z: 21 }
-      compact.water = { ...defaultLayout('water', 'compact'), z: 22 }
-      metricIds.forEach((id, index) => {
-        compact[id] = { ...defaultLayout(id, 'compact'), width: METRIC_MAX_WIDTH, height: METRIC_MAX_HEIGHT,
-          open: true, minimized: false, snap: METRIC_RAIL_SNAP, snapOrder: index, z: 30 + index }
-      })
       return { ...current, compact }
     })
   }, [])

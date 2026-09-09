@@ -28,8 +28,6 @@ const STORE_FILTERS = ['recommended', 'equipment', 'livestock', 'coral', 'tank']
 const STORE_FILTER_META: Readonly<Record<StoreFilter, readonly [string, string]>> = {
   recommended: ['For you', '✦'], equipment: ['Equipment', '⚙'], livestock: ['Fish', '◁'], coral: ['Coral', '⌁'], tank: ['Aquariums', '□'],
 }
-/* The readings the reef-first phone preset rails up the edge, in rail order. */
-const REEF_FIRST_READINGS = ['tempC', 'pH', 'ammonia'] as const
 const PINNED_READINGS_KEY = 'pocket-aquarium-pinned-readings-v2'
 const PINNED_READINGS_LEGACY_KEY = 'pocket-aquarium-pinned-readings-v1'
 type PinnedReadings = Readonly<Record<HudDeviceProfile, readonly string[]>>
@@ -161,7 +159,7 @@ function signal(label: string, value: number, inverted = false) {
 
 export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
-  const [launcherCollapsed, setLauncherCollapsed] = useState(false)
+  const [launcherCollapsed, setLauncherCollapsed] = useState(() => workspace.profile === 'compact')
   const [pinnedByProfile, setPinnedByProfile] = useState<PinnedReadings>(readPinnedReadings)
   const pinnedReadings = pinnedByProfile[workspace.profile]
   const hasRecommendedOffers = view.storeOffers.some((offer) => offer.recommended)
@@ -237,11 +235,9 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       [workspace.profile]: pinned ? current[workspace.profile].filter((item) => item !== key) : [...current[workspace.profile], key] }))
   }
   const applyReefView = () => {
-    const available = view.testedWater.map((item) => item.key)
-    const essential = REEF_FIRST_READINGS.filter((key) => available.includes(key))
-    const readings = essential.length ? essential : available.slice(0, REEF_FIRST_READINGS.length)
-    setPinnedByProfile((current) => ({ ...current, compact: readings }))
-    workspace.applyReefFirstPreset(readings.map((key) => `metric:${key}` as HudPanelId))
+    setPinnedByProfile((current) => ({ ...current, compact: [] }))
+    workspace.applyReefFirstPreset()
+    setLauncherCollapsed(true)
   }
   const runGuide = () => {
     if (command?.action) dispatch(command.action)
@@ -258,6 +254,10 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   useEffect(() => {
     try { window.localStorage.setItem(PINNED_READINGS_KEY, JSON.stringify(pinnedByProfile)) } catch { /* optional UI preference */ }
   }, [pinnedByProfile])
+
+  useEffect(() => {
+    setLauncherCollapsed(workspace.profile === 'compact')
+  }, [workspace.profile])
 
   useEffect(() => {
     if (storeFilter === 'recommended' && !hasRecommendedOffers) setStoreFilter('equipment')
