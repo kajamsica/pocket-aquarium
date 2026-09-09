@@ -13,10 +13,17 @@ import { createLiveRockCollisionField, LIVE_ROCK_SEED_OFFSET } from './liveRockG
 import type { FlowFieldSource } from './ReefHabitat'
 import { REEF_ROCKS } from './reefLayout'
 import {
+  cleaningStation,
+  cleaningStationScheduleTime,
+  cleaningVisitIntent,
+  cleaningVisitPace,
   diamondGobyBurrowSite,
   sampleDiamondGobyHabitatTarget,
   sharedBurrowSite,
+  shouldDispatchCleaningTreatment,
   type BurrowSite,
+  type CleaningStation,
+  type CleaningVisitIntent,
   type DiamondGobyHabitatMode,
 } from './speciesInteractions'
 import {
@@ -61,6 +68,7 @@ export interface SpecimenHover {
   readonly x: number
   readonly y: number
 }
+const CLEANING_CLIENT_OFFSET = new THREE.Vector3(.24, .1, .18)
 interface SpecimenRosterValue {
   readonly specimens: readonly PocketSpecimen[]
   readonly morphologyOverride?: MorphologyProfileV1
@@ -1070,7 +1078,7 @@ const publishFeedTrace = () => {
   node.textContent = JSON.stringify(feedTraceStore())
 }
 
-function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, assignments, mouths, positions, dispatch, geometry, skins, morphologyOverride }: {
+function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, assignments, mouths, positions, cleaningIntent, dispatch, geometry, skins, morphologyOverride }: {
   readonly specimen: PocketSpecimen
   readonly snapshot: ReefSnapshot
   readonly waterSurfaceY: number
@@ -1079,6 +1087,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   readonly assignments: FoodAssignments
   readonly mouths: MouthPositions
   readonly positions: SpecimenPositions
+  readonly cleaningIntent: RefObject<CleaningVisitIntent | null>
   readonly dispatch?: (action: PocketAction) => void
   readonly geometry: SpecimenGeometry
   readonly skins: SpeciesSkins
@@ -1119,7 +1128,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const targetFood = food.find((pellet) => assignments.get(pellet.id) === specimen.id)
   // Bottom fish may own a reserved falling portion, but they do not swim up after it. Their
   // visible response begins only when that portion reaches the substrate and becomes reachable.
-  const targetPosition = targetFood && (!benthic || targetFood.sunk) ? targetFood : null
+  const reachableFood = targetFood && (!benthic || targetFood.sunk) ? targetFood : null
   const profile = specimenMotionProfile(specimen.speciesId)
   const verticalBounds = specimenVerticalBounds(specimen.layer, waterSurfaceY, bodyRadius)
   const habitatPolicy = behaviorPolicy.fishHabitat
@@ -1191,6 +1200,9 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     let sifting = interactionSite
       ? sampleBurrowResidentTarget(specimen.speciesId, specimen.id, now, interactionSite, interactionTarget)
       : false
+    const visit = cleaningIntent.current?.clientId === specimen.id ? cleaningIntent.current : null
+    const cleaningTarget = reachableFood ? null : visit
+    const targetPosition = reachableFood ?? cleaningTarget?.targetPosition ?? null
 
     if (surfaceBound && surfaceCircuit) {
       motion.previousPosition.copy(motion.position)
@@ -1305,7 +1317,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       // height burns pursuit authority on an unreachable climb; preposition under its lateral
       // route instead and take the real height once it has settled.
       motion.desired.set(targetPosition.x,
-        benthic && !targetPosition.sunk ? rootY : targetPosition.y, targetPosition.z)
+        benthic && reachableFood && !reachableFood.sunk ? rootY : targetPosition.y, targetPosition.z)
       motion.desiredDirection.copy(motion.desired).sub(motion.position)
       if (motion.desiredDirection.lengthSq() > 1e-6) motion.desiredDirection.normalize()
       else motion.desiredDirection.copy(motion.forward)
@@ -1318,11 +1330,12 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
 
     const arrivalDistance = motion.desired.length()
     const pursuitMotion = resolveFoodPursuitMotion(profile, Boolean(targetPosition))
-    const maximumSpeed = targetPosition ? pursuitMotion.maximumSpeed : profile.cruiseSpeed *
+    const maximumSpeed = targetPosition ? pursuitMotion.maximumSpeed * (cleaningTarget ?
+      cleaningVisitPace(cleaningTarget, mouthPosition) : 1) : profile.cruiseSpeed *
       fishPaceMultiplier(habitatPolicy!, specimen.id, now)
     let desiredSpeed = maximumSpeed * Math.min(1, Math.sqrt(arrivalDistance / profile.arrivalRadius))
     const mouthDistance = targetPosition ? motion.position.distanceTo(targetPosition) - mouthLead : 0
-    if (targetPosition && mouthDistance > FOOD_CONTACT_RADIUS * .55) desiredSpeed = Math.max(desiredSpeed, .065)
+    if (reachableFood && mouthDistance > FOOD_CONTACT_RADIUS * .55) desiredSpeed = Math.max(desiredSpeed, .065)
     // Reuse the shared crowd separation the accepted showcase population already runs, so
     // authoritative residents pass one another instead of interpenetrating. Only the yaw of
     // the desired direction comes from it (`steerSpecimenHeading` reads the route heading as
@@ -1423,12 +1436,12 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     node.scale.setScalar(riggedAsset ? 1 : length)
     billboardMarker()
 
-    const estimatedMouthDistance = targetPosition ? Math.max(0, motion.position.distanceTo(targetPosition) - mouthLead) : null
-    const responsePulse = updateFeedingResponseState(feedingResponse.current, targetPosition?.id ?? null,
+    const estimatedMouthDistance = reachableFood ? Math.max(0, motion.position.distanceTo(reachableFood) - mouthLead) : null
+    const responsePulse = updateFeedingResponseState(feedingResponse.current, reachableFood?.id ?? null,
       estimatedMouthDistance, now)
     const motionDrive = THREE.MathUtils.clamp(normalizedSpeed * .16 +
       turnAngle / Math.max(pursuitMotion.turnRate * step, .001) * .16, 0, .3)
-    const feedDrive = responsePulse || (sifting && !targetPosition) ? 1 : targetPosition
+    const feedDrive = responsePulse || (sifting && !reachableFood) ? 1 : reachableFood
       ? resolveFoodAnimationDrive(true, false, normalizedSpeed)
       : motionDrive
     forage.current += (THREE.MathUtils.clamp(feedDrive, 0, 1) - forage.current) * (1 - Math.exp(-step * 4.5))
@@ -1463,7 +1476,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       }
       // `motion.desired` still holds the pre-projection position snapshotted just before the loop above, so this reads back the applied correction.
       const collisionCorrection = motion.position.distanceTo(motion.desired)
-      const traceMouthDistance = targetPosition ? mouthPosition.distanceTo(targetPosition) : null
+      const traceMouthDistance = targetFood ? mouthPosition.distanceTo(targetFood) : null
       cumulative.pathDistance += motion.position.distanceTo(motion.previousPosition)
       cumulative.collisionCorrectionDistance += collisionCorrection
       cumulative.frames += 1
@@ -1472,7 +1485,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
         specimenId: specimen.id, speciesId: specimen.speciesId, layer: specimen.layer, targetFoodId,
         targetSunk: targetFood ? targetFood.sunk : null, mouthDistance: traceMouthDistance, actualSpeed,
         position: { x: motion.position.x, y: motion.position.y, z: motion.position.z }, mouth: { x: mouthPosition.x, y: mouthPosition.y, z: mouthPosition.z },
-        food: targetPosition ? { x: targetPosition.x, y: targetPosition.y, z: targetPosition.z } : null,
+        food: targetFood ? { x: targetFood.x, y: targetFood.y, z: targetFood.z } : null,
         avoidanceMagnitude: motion.avoidance.length(), collisionCorrection, pathDistance: cumulative.pathDistance,
         collisionCorrectionDistance: cumulative.collisionCorrectionDistance, minimumMouthDistance: cumulative.minimumMouthDistance, frames: cumulative.frames,
       }
@@ -1535,12 +1548,50 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
   }), [gobySource])
   useEffect(() => () => Object.values(skins).forEach((skin) => skin.dispose()), [skins])
   const assignments = assignPelletTargets(roster, pellets, mouths, waterSurfaceY)
+  const cleaner = roster.find((specimen) => specimen.speciesId === 'cleaner_shrimp')
+  const station = useMemo(() => cleaner ? cleaningStation(cleaner.id) : null, [cleaner?.id])
+  const activeStation = useMemo<CleaningStation | null>(() => station ? {
+    ...station,
+    position: station.position.clone(), normal: station.normal.clone(),
+    approachPosition: station.approachPosition.clone(), servicePosition: station.servicePosition.clone(),
+    departurePosition: station.departurePosition.clone(),
+  } : null, [station])
+  const stationOffset = useMemo(() => new THREE.Vector3(), [])
+  const cleaningIntent = useRef<CleaningVisitIntent | null>(null)
+  const treatedCycle = useRef(-1)
+  useFrame(() => {
+    cleaningIntent.current = null
+    const scheduleTime = cleaningStationScheduleTime(snapshot.clock.elapsedHours, snapshot.clock.paused)
+    if (scheduleTime === null) return
+    const cleanerPosition = cleaner && positions.get(cleaner.id)?.position
+    if (!cleaner || !station || !activeStation || !cleanerPosition) return
+    stationOffset.copy(cleanerPosition).add(CLEANING_CLIENT_OFFSET).sub(station.servicePosition)
+    activeStation.position.copy(cleanerPosition)
+    activeStation.approachPosition.copy(station.approachPosition).add(stationOffset)
+    activeStation.servicePosition.copy(station.servicePosition).add(stationOffset)
+    activeStation.departurePosition.copy(station.departurePosition).add(stationOffset)
+    const feedingResidents = new Set(assignments.values())
+    const animals = roster.flatMap((resident) => {
+      const entry = positions.get(resident.id)
+      return entry ? [{ id: resident.id, speciesId: resident.speciesId, isFish: resident.kind === 'fish',
+        alive: resident.alive, parasiteLoad: feedingResidents.has(resident.id) ? 0 : resident.parasiteLoad,
+        position: entry.position, velocity: entry.velocity }] : []
+    })
+    const intent = cleaningVisitIntent(scheduleTime, activeStation, animals)
+    cleaningIntent.current = intent
+    const lastAcceptedCycle = Math.max(treatedCycle.current, cleaner.lastParasiteCleaningCycle ?? -1)
+    if (shouldDispatchCleaningTreatment(intent, lastAcceptedCycle,
+      intent.clientId === null ? undefined : mouths.get(intent.clientId), activeStation.servicePosition)) {
+      treatedCycle.current = intent.cycleNumber
+      dispatch?.({ type: 'CLEAN_PARASITES', id: intent.clientId, cycleNumber: intent.cycleNumber })
+    }
+  }, FISH_MOTION_FRAME_PRIORITY - 1)
   return <group name="root-pocket-aquarium-specimens">
     <FoodContactDriver food={pellets} specimens={roster} mouths={mouths} assignments={assignments}
       paused={snapshot.clock.paused} consume={consume} />
     {roster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
       waterSurfaceY={waterSurfaceY} food={pellets} flowField={flowField} mouths={mouths} assignments={assignments}
-      positions={positions} dispatch={dispatch} geometry={geometry} skins={skins}
+      positions={positions} cleaningIntent={cleaningIntent} dispatch={dispatch} geometry={geometry} skins={skins}
       morphologyOverride={morphologyOverride?.speciesId === specimen.speciesId ? morphologyOverride : undefined} />)}
   </group>
 }

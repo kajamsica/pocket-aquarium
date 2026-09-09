@@ -5,6 +5,8 @@ import { createPocketReefShowcase, dispatchPocketAction, projectPocketState } fr
 import { FOOD_CONTACT_RADIUS } from './foodContact'
 import { specimenAssetFor } from './specimens/assetRegistry'
 import { REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
+import { cleaningStation, cleaningStationScheduleTime, cleaningVisitIntent, cleaningVisitPace, shouldDispatchCleaningTreatment,
+  type InteractionAnimal } from './speciesInteractions'
 import {
   advanceSpecimenMotionState,
   assignPelletTargets,
@@ -53,6 +55,10 @@ const neighbor = (x: number, z: number, velocityX: number, velocityZ: number,
   position: new THREE.Vector3(x, 0, z), velocity: new THREE.Vector3(velocityX, 0, velocityZ),
   profile, ...TEST_ENVELOPE, verticalClearance: .2,
 })
+
+const interactionAnimal = (id: number, parasiteLoad: number, alive = true,
+  isFish = true): InteractionAnimal => ({ id, speciesId: isFish ? 'ocellaris' : 'cleaner_shrimp',
+  isFish, alive, parasiteLoad, position: new THREE.Vector3(), velocity: new THREE.Vector3() })
 
 describe('authoritative species locomotion', () => {
   const animals = createAcceptedShowcaseCatalog().animalAssets
@@ -287,6 +293,50 @@ describe('authoritative species locomotion', () => {
     expect(response.responseUntil).toBe(biteUntil)
     expect(updateFeedingResponseState(response, null, null, biteUntil - .01)).toBe(true)
     expect(updateFeedingResponseState(response, null, null, biteUntil + .01)).toBe(false)
+  })
+})
+
+describe('cleaner-shrimp station intent', () => {
+  const station = cleaningStation(8)
+  const elapsedAt = (cycleSecond: number) => THREE.MathUtils.euclideanModulo(
+    cycleSecond - station.phaseOffsetSeconds, 28)
+
+  it('stays idle without an infected living fish and selects only the eligible client', () => {
+    expect(projectPocketState(createPocketReefShowcase()).specimens
+      .find(({ speciesId }) => speciesId === 'ocellaris')?.parasiteLoad).toBe(.6)
+    const ineligible = [interactionAnimal(1, 0), interactionAnimal(2, .8, false),
+      interactionAnimal(3, .8, true, false)]
+    expect(cleaningVisitIntent(elapsedAt(16), station, ineligible)).toMatchObject({
+      clientId: null, phase: 'idle', phaseProgress: 1,
+    })
+    const intent = cleaningVisitIntent(elapsedAt(16), station,
+      [...ineligible, interactionAnimal(4, .6)])
+    expect(intent).toMatchObject({ clientId: 4, phase: 'service' })
+  })
+
+  it('uses authoritative game hours and exposes no visit time while paused', () => {
+    const oneCycle = cleaningStationScheduleTime(8, false)
+    expect(oneCycle).toBe(28)
+    expect(cleaningStationScheduleTime(16, true)).toBeNull()
+    expect(cleaningStationScheduleTime(16, false)).toBe(56)
+  })
+
+  it('requires contact and allows only one treatment dispatch per service cycle', () => {
+    const animal = interactionAnimal(4, .6)
+    const service = cleaningVisitIntent(elapsedAt(16), station, [animal])
+    const approach = cleaningVisitIntent(elapsedAt(12), station, [animal])
+    const near = station.servicePosition.clone()
+    const far = near.clone().addScalar(1)
+    expect(cleaningVisitPace(service, far)).toBe(1)
+    expect(cleaningVisitPace(service, near)).toBe(service.paceMultiplier)
+    expect(shouldDispatchCleaningTreatment(service, service.cycleNumber - 1,
+      far, station.servicePosition)).toBe(false)
+    expect(shouldDispatchCleaningTreatment(service, service.cycleNumber - 1,
+      near, station.servicePosition)).toBe(true)
+    expect(shouldDispatchCleaningTreatment(service, service.cycleNumber,
+      near, station.servicePosition)).toBe(false)
+    expect(shouldDispatchCleaningTreatment(approach, approach.cycleNumber - 1,
+      near, station.servicePosition)).toBe(false)
   })
 })
 

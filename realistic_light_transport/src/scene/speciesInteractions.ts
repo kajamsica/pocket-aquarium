@@ -10,6 +10,8 @@ export interface InteractionAnimal {
   readonly id: number
   readonly speciesId: string
   readonly isFish: boolean
+  readonly alive: boolean
+  readonly parasiteLoad: number
   readonly position: THREE.Vector3
   readonly velocity: THREE.Vector3
 }
@@ -44,8 +46,11 @@ export interface CleaningStation {
 }
 
 export type CleaningVisitPhase = 'idle' | 'approach' | 'service' | 'depart'
+export const CLEANING_SERVICE_CONTACT_RADIUS = .2
+const CLEANING_STATION_UNITS_PER_GAME_HOUR = 28 / 8
 
 export interface CleaningVisitIntent {
+  readonly cycleNumber: number
   readonly clientId: number | null
   readonly phase: CleaningVisitPhase
   readonly phaseProgress: number
@@ -357,30 +362,49 @@ function smoothProgress(value: number) {
   return bounded * bounded * (3 - 2 * bounded)
 }
 
+export function cleaningStationScheduleTime(elapsedHours: number, paused: boolean) {
+  if (paused) return null
+  const authoritative = Number.isFinite(elapsedHours) ? Math.max(0, elapsedHours) : 0
+  return authoritative * CLEANING_STATION_UNITS_PER_GAME_HOUR
+}
+
 /** Pure attraction intent. The existing renderer remains responsible for capped travel and turns. */
 export function cleaningVisitIntent(elapsedSeconds: number, station: CleaningStation,
   animals: readonly InteractionAnimal[]): CleaningVisitIntent {
-  const clients = animals.filter((animal) => animal.isFish).sort((a, b) => a.id - b.id)
+  const clients = animals.filter((animal) => animal.alive && animal.isFish && animal.parasiteLoad > 0)
+    .sort((a, b) => a.id - b.id)
   const elapsed = Math.max(0, Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0) + station.phaseOffsetSeconds
   const cycleNumber = Math.floor(elapsed / 28)
   const cycleTime = elapsed % 28
   const client = clients[Math.floor(seededUnit(station.scheduleSeed + cycleNumber, 631) * clients.length)]
   if (!client || cycleTime < 9) return {
-    clientId: null, phase: 'idle', phaseProgress: cycleTime / 9,
+    cycleNumber, clientId: null, phase: 'idle', phaseProgress: Math.min(cycleTime / 9, 1),
     targetPosition: station.approachPosition.clone(), blend: 0, paceMultiplier: 1,
   }
   if (cycleTime < 15) {
     const progress = smoothProgress((cycleTime - 9) / 6)
-    return { clientId: client.id, phase: 'approach', phaseProgress: progress,
+    return { cycleNumber, clientId: client.id, phase: 'approach', phaseProgress: progress,
       targetPosition: station.approachPosition.clone().lerp(station.servicePosition, progress),
       blend: progress, paceMultiplier: THREE.MathUtils.lerp(1, .18, progress) }
   }
   if (cycleTime < 21) return {
-    clientId: client.id, phase: 'service', phaseProgress: (cycleTime - 15) / 6,
-    targetPosition: station.servicePosition.clone(), blend: 1, paceMultiplier: .18,
+    cycleNumber, clientId: client.id, phase: 'service', phaseProgress: (cycleTime - 15) / 6,
+    targetPosition: station.servicePosition.clone(), blend: 1, paceMultiplier: .04,
   }
   const progress = smoothProgress((cycleTime - 21) / 7)
-  return { clientId: client.id, phase: 'depart', phaseProgress: progress,
+  return { cycleNumber, clientId: client.id, phase: 'depart', phaseProgress: progress,
     targetPosition: station.servicePosition.clone().lerp(station.departurePosition, progress),
     blend: 1 - progress, paceMultiplier: THREE.MathUtils.lerp(.18, 1, progress) }
+}
+
+export function shouldDispatchCleaningTreatment(intent: CleaningVisitIntent, treatedCycle: number,
+  clientPosition: THREE.Vector3 | undefined, servicePosition: THREE.Vector3,
+  contactRadius = CLEANING_SERVICE_CONTACT_RADIUS) {
+  return intent.phase === 'service' && intent.clientId !== null && intent.cycleNumber > treatedCycle &&
+    Boolean(clientPosition && clientPosition.distanceTo(servicePosition) <= contactRadius)
+}
+
+export function cleaningVisitPace(intent: CleaningVisitIntent, clientPosition: THREE.Vector3) {
+  return clientPosition.distanceTo(intent.targetPosition) <= CLEANING_SERVICE_CONTACT_RADIUS
+    ? intent.paceMultiplier : 1
 }

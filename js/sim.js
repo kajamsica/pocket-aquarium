@@ -11,6 +11,7 @@
   var ACT = DATA.ACTIONS;
   var STAGES = DATA.CYCLE_STAGES;
   var LOCK_CORAL_PLACEMENT = ACT.LOCK_CORAL_PLACEMENT || "LOCK_CORAL_PLACEMENT";
+  var CLEAN_PARASITES = ACT.CLEAN_PARASITES || "CLEAN_PARASITES";
 
   /* ============================ tuning ============================ *
    * Broad, documented coefficients — a readable game model, not a
@@ -508,7 +509,7 @@
 
   /* ============================ livestock welfare ============================ */
   function stressFactors(state, a, sp) {
-    var w = state.water, out = { starve: 0, toxic: 0, temp: 0, salinity: 0, oxygen: 0, crowd: 0 };
+    var w = state.water, out = { starve: 0, toxic: 0, temp: 0, salinity: 0, oxygen: 0, crowd: 0, parasite: 0 };
     if (a.condition < 0.3) out.starve = HEALTH_STARVE * (0.3 - a.condition) / 0.3;
     var toxA = Math.max(0, w.ammonia - HEALTH_TOX), toxN = Math.max(0, w.nitrite - HEALTH_TOX);
     if (toxA > 0 || toxN > 0) out.toxic = HEALTH_TOX * clamp(0.3 + (toxA + toxN) / HEALTH_TOX, 0, 1.6);
@@ -518,6 +519,7 @@
     if (w.oxygen < 4.5) out.oxygen = 0.15 * (4.5 - w.oxygen);
     var cap = DATA.bioloadCapacity(state);
     if (DATA.currentBioload(state) > cap) out.crowd = 0.08;
+    if (num(a.parasiteLoad, 0) > 0) out.parasite = 0.04 * clamp(a.parasiteLoad, 0, 1);
     return out;
   }
 
@@ -538,7 +540,7 @@
       else if (a.hunger < 0.5) a.condition = clamp(a.condition + CONDITION_RECOVER * dt, 0, 1);
       // health from stressors
       var f = stressFactors(state, a, sp);
-      var loss = f.starve + f.toxic + f.temp + f.salinity + f.oxygen + f.crowd;
+      var loss = f.starve + f.toxic + f.temp + f.salinity + f.oxygen + f.crowd + f.parasite;
       if (loss > 0) {
         a.health = clamp(a.health - loss * dt, 0, 1);
       } else if (a.condition > 0.6 && a.hunger < 0.7) {
@@ -550,7 +552,7 @@
 
   function dominantCause(f) {
     var best = "unknown", v = 0, k;
-    var labels = { starve: "starvation", toxic: "toxic ammonia/nitrite", temp: "temperature shock", salinity: "salinity shock", oxygen: "low oxygen", crowd: "chronic crowding" };
+    var labels = { starve: "starvation", toxic: "toxic ammonia/nitrite", temp: "temperature shock", salinity: "salinity shock", oxygen: "low oxygen", crowd: "chronic crowding", parasite: "parasite stress" };
     for (k in f) if (f.hasOwnProperty(k) && f[k] > v) { v = f[k]; best = labels[k]; }
     return best;
   }
@@ -846,6 +848,7 @@
       case ACT.FEED:
       case "FEED_AT": doFeed(state, action.x, action.y); break; // FEED_AT is the renderer's pointer-feed action
       case ACT.CONSUME_FOOD: doConsumeFood(state, action.foodId, action.eaterId); break;
+      case CLEAN_PARASITES: doCleanParasites(state, action.id, action.cycleNumber); break;
       case ACT.SELECT_ENTITY: state.selection = (action.id == null) ? null : { entityType: action.entityType || "livestock", id: action.id }; break;
       case ACT.REMOVE_DEAD: doRemoveDead(state, action.id); break;
       case ACT.RENAME_LIVESTOCK: doRenameLivestock(state, action.id, action.name); break;
@@ -1052,7 +1055,8 @@
     return {
       id: state.nextId++, species: species, kind: sp.kind,
       ageDays: sp.maturityDays * 0.4, stage: "juvenile", sex: "unknown",
-      hunger: 0.2, condition: 1, health: 1, alive: true, causeOfDeath: null, decayDays: 0,
+      hunger: 0.2, condition: 1, health: 1, parasiteLoad: 0, lastParasiteCleaningCycle: -1,
+      alive: true, causeOfDeath: null, decayDays: 0,
       lastFedDay: state.time.days,
       x: rrange(state, 0.15, 0.85), y: rrange(state, 0.2, 0.8)
     };
@@ -1099,6 +1103,27 @@
     void y; // vertical pointer position chooses the tank gesture; food enters at its surface
     log(state, "feed", "Dropped one food portion into the water.");
     if (dangerous) { state._feedWarning = true; log(state, "warn", "Careful — feeding while ammonia/nitrite is elevated worsens the water. Feed sparingly."); }
+  }
+  function doCleanParasites(state, id, cycleNumber) {
+    if (typeof cycleNumber !== "number" || !isFinite(cycleNumber) || cycleNumber < 0 ||
+        Math.floor(cycleNumber) !== cycleNumber) return false;
+    var target = null, cleaner = null, i;
+    for (i = 0; i < state.livestock.length; i++) {
+      var resident = state.livestock[i], sp = resident && DATA.resolveSpecies(state, resident.species);
+      if (!resident || resident.alive === false || !sp) continue;
+      if (resident.id === id) target = resident;
+      if (!cleaner && resident.species === "cleaner_shrimp" &&
+          (sp.cleanupRoles || []).indexOf("fish_cleaning") >= 0) cleaner = resident;
+    }
+    var targetSpecies = target && DATA.resolveSpecies(state, target.species);
+    var before = target ? clamp(num(target.parasiteLoad, 0), 0, 1) : 0;
+    var lastCycle = cleaner ? Math.max(-1, Math.floor(num(cleaner.lastParasiteCleaningCycle, -1))) : -1;
+    if (!target || !targetSpecies || targetSpecies.kind !== "fish" || !cleaner || before <= 0 ||
+        cycleNumber <= lastCycle) return false;
+    target.parasiteLoad = Math.max(0, before - 0.25);
+    cleaner.lastParasiteCleaningCycle = cycleNumber;
+    log(state, "care", residentLabel(state, cleaner) + " treated " + residentLabel(state, target) + " for parasites.");
+    return true;
   }
   function doConsumeFood(state, foodId, eaterId) {
     // Paused time stops biology, so renderer-observed contact cannot feed anything while
@@ -1409,7 +1434,8 @@
       stage: a.stage === "adult" ? "adult" : "juvenile",
       sex: ["male", "female", "unknown"].indexOf(a.sex) >= 0 ? a.sex : "unknown",
       hunger: clamp(num(a.hunger, 0.2), 0, 1.2), condition: clamp(num(a.condition, 1), 0, 1),
-      health: clamp(num(a.health, 1), 0, 1), alive: a.alive !== false,
+      health: clamp(num(a.health, 1), 0, 1), parasiteLoad: clamp(num(a.parasiteLoad, 0), 0, 1),
+      lastParasiteCleaningCycle: Math.max(-1, Math.floor(num(a.lastParasiteCleaningCycle, -1))), alive: a.alive !== false,
       causeOfDeath: a.causeOfDeath || null, decayDays: clamp(num(a.decayDays, 0), 0, 1e4),
       lastFedDay: num(a.lastFedDay, state.time.days),
       x: clamp(num(a.x, 0.5), 0, 1), y: clamp(num(a.y, 0.5), 0, 1)
