@@ -4009,7 +4009,25 @@ input:focus-visible {
   pointer-events: auto;
 }
 
-.coral-tray-disclosure > summary { display: none; }
+.coral-tray-disclosure > summary {
+  display: flex;
+  width: fit-content;
+  min-height: 44px;
+  margin-left: auto;
+  padding: 0 13px;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(169, 226, 235, .24);
+  border-radius: 999px;
+  background: rgba(3, 17, 23, .94);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .34);
+  list-style: none;
+  cursor: pointer;
+}
+.coral-tray-disclosure > summary::-webkit-details-marker { display: none; }
+.coral-tray-disclosure > summary span { font-size: .64rem; font-weight: 650; }
+.coral-tray-disclosure > summary strong { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; color: #062019; background: #78e3c5; font-size: .62rem; }
+.coral-tray-disclosure:not([open]) > .coral-tray-panel { display: none; }
 .coral-tray-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -4067,24 +4085,5 @@ input:focus-visible {
 @media (max-width: 860px) {
   .coral-inventory-tray { right: 14px; bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px)); width: calc(100vw - 28px); }
   .coral-tray-disclosure { position: relative; }
-  .coral-tray-disclosure > summary {
-    display: flex;
-    width: fit-content;
-    min-height: 44px;
-    margin-left: auto;
-    padding: 0 13px;
-    align-items: center;
-    gap: 9px;
-    border: 1px solid rgba(169, 226, 235, .24);
-    border-radius: 999px;
-    background: rgba(3, 17, 23, .94);
-    box-shadow: 0 12px 34px rgba(0, 0, 0, .34);
-    list-style: none;
-    cursor: pointer;
-  }
-  .coral-tray-disclosure > summary::-webkit-details-marker { display: none; }
-  .coral-tray-disclosure > summary span { font-size: .64rem; font-weight: 650; }
-  .coral-tray-disclosure > summary strong { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; color: #062019; background: #78e3c5; font-size: .62rem; }
-  .coral-tray-disclosure:not([open]) > .coral-tray-panel { display: none; }
   .coral-tray-panel { position: absolute; right: 0; bottom: calc(100% + 8px); width: min(362px, calc(100vw - 28px)); max-height: min(46vh, 390px); }
 }
