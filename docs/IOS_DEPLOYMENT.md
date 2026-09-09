@@ -1,19 +1,21 @@
-# iPhone Deployment — Pocket Aquarium
+# iPhone Deployment: Pocket Aquarium
 
-This document describes the two ways Pocket Aquarium can reach an iPhone:
+This document describes the current mobile distribution paths:
 
-1. **Live today — the installable PWA** (verified, no paid plan, no signing).
-2. **Follow-on — a native app via Capacitor** — the iOS host is now **checked in and
-   reproducible** under [`native/`](../native/). What is still gated is *signing and shipping*
-   to a device/TestFlight, which needs full Xcode 26+ and an Apple signing identity that this
-   machine does not have.
+1. **Live today: the installable iPhone PWA** (verified, no paid plan, no signing).
+2. **Live today: the Android debug app** from the native mobile workflow.
+3. **Next gate: a signed iPhone beta through TestFlight.** The reproducible Capacitor iOS host
+   exists under [`native/`](../native/), but Apple signing and App Store Connect inputs are not
+   provisioned yet.
 
-> **Status: `PWA_DEPLOYED_NATIVE_HOST_COMPILES_SIGNING_BLOCKED`.**
+> **Status: `PWA_AND_ANDROID_AVAILABLE_IOS_TESTFLIGHT_INPUTS_REQUIRED`.**
 > The Progressive Web App is deployed and installable on iPhone right now. The native Capacitor 8
 > iOS project has been **generated and committed** (`native/ios/`, Swift Package Manager, no
-> CocoaPods) and can be re-staged and re-synced deterministically. A signed native **binary** is
-> still **not** produced: the required Apple toolchain (full Xcode 26+) and signing state
-> (identity, App ID, provisioning profile) are absent on this machine — see
+> CocoaPods) and can be re-staged and re-synced deterministically. The merged **Validate native
+> mobile hosts** workflow in `.github/workflows/ios.yml` validates both the unsigned iOS Simulator
+> app and installable Android debug APK. **No signed
+> IPA or TestFlight build exists yet** because the protected Apple inputs and App Store Connect
+> app record are absent. Local Xcode and signing state are also absent on this machine; see
 > [Local toolchain evidence](#local-toolchain-evidence-recorded-2026-09-02).
 
 ---
@@ -108,12 +110,12 @@ app bundle. The workflow itself uses the built-in `GITHUB_TOKEN` with least-priv
 
 ---
 
-## 3. Native app host (Capacitor 8) — checked in under `native/`
+## 3. Native mobile hosts (Capacitor 8), checked in under `native/`
 
-A native iOS app wraps this same compiled web app with **Capacitor 8**. The host is a **checked-in,
-isolated** package at [`native/`](../native/): pinned Capacitor 8.5.1 toolchain, a deterministic
-staging boundary, and the generated **Swift Package Manager** Xcode project. It changes nothing
-about the web runtime or the Pages deployment — both hosts consume
+Native iOS and Android apps wrap the same compiled web app with **Capacitor 8**. The hosts are a
+**checked-in, isolated** package at [`native/`](../native/): pinned Capacitor 8.5.1 dependencies,
+a deterministic staging boundary, an Xcode project using Swift Package Manager, and an Android
+Gradle project. This changes nothing about the web runtime or Pages deployment. All hosts consume
 `realistic_light_transport/dist`.
 
 ### What is committed vs. regenerated
@@ -121,7 +123,7 @@ about the web runtime or the Pages deployment — both hosts consume
 Committed (the reproducible source of truth):
 
 - `native/package.json` + `native/package-lock.json` — exact-pinned `@capacitor/core`,
-  `@capacitor/ios`, and `@capacitor/cli` at `8.5.1`.
+  `@capacitor/ios`, `@capacitor/android`, and `@capacitor/cli` at `8.5.1`.
 - `native/capacitor.config.json` — app identity (`Pocket Aquarium`,
   `com.kajamsica.pocketaquarium`) and the `webDir: "www"` boundary. **No remote server URL** —
   the app loads its bundled assets offline.
@@ -130,11 +132,12 @@ Committed (the reproducible source of truth):
   `native/ios/App/CapApp-SPM/Package.swift` that pins `capacitor-swift-pm` to `exact: "8.5.1"`.
   The app icon is a `sips`-resized 1024×1024 derivative of the preserved RGB master
   `assets/icons/app-icon-master-v1.png` (the master itself is never modified).
+- `native/android/**`: the generated Android Gradle project and launcher icons.
 
-Regenerated locally and git-ignored (never committed — no duplicated runtime bytes, no secrets):
+Regenerated locally and git-ignored (never committed, so there are no duplicated runtime bytes or secrets):
 `native/node_modules/`, the staged `native/www/`, the copied `native/ios/App/App/public/`,
 the generated `capacitor.config.json`/`config.xml` inside `ios/`, `native/ios/capacitor-cordova-ios-plugins/`,
-`DerivedData/`, `xcuserdata/`, and any Apple signing material.
+Android build output, `DerivedData/`, `xcuserdata/`, and any signing material.
 
 ### The staging boundary
 
@@ -156,6 +159,7 @@ cd native
 npm ci                     # install the pinned Capacitor 8.5.1 toolchain (reproducible)
 npm run sync:fresh         # build the 3D app, stage exact bytes, and sync native/SPM wiring
 npx cap open ios           # open native/ios/App/App.xcodeproj in Xcode (needs full Xcode 26+)
+# Or sync/open Android with npm run sync:fresh:android and npm run open:android.
 ```
 
 Package **resolution and build** happen in Xcode / `xcodebuild` (from the `Package.swift` wiring),
@@ -190,37 +194,69 @@ Primary sources: Capacitor — *Environment Setup*
 and *TestFlight* (<https://developer.apple.com/testflight/>), plus *Xcode SDK and system
 requirements* (<https://developer.apple.com/xcode/system-requirements/>).
 
-### Sign and distribute (gated — needs full Xcode 26+ and an Apple signing state)
+### Configure secure TestFlight distribution
 
-The host is already generated (see §3), so a future operator does **not** re-scaffold it. They
-re-stage, re-sync, open the committed project, set a signing Team, and distribute. The commands
-below **were NOT executed here** because they require full Xcode 26+ and an Apple signing
-identity — both absent on this machine, whose current macOS version is also below Xcode 26's
-minimum (see [§4](#4-local-toolchain-evidence-recorded-2026-09-02)).
+The signed workflow must use the protected GitHub environment **`apple-testflight`**. Store all
+seven values as environment secrets with these exact names:
 
-```sh
-# From native/: refresh the bundle and open the committed project.
-cd native
-npm ci && npm run sync:fresh
-npx cap open ios
-# In Xcode: select the App target → Signing & Capabilities → choose your Team,
-# confirm the bundle identifier (com.kajamsica.pocketaquarium), and let Xcode manage
-# the provisioning profile.
+- `APPLE_TEAM_ID`
+- `APP_STORE_CONNECT_KEY_ID`
+- `APP_STORE_CONNECT_ISSUER_ID`
+- `APP_STORE_CONNECT_API_KEY_P8_BASE64`
+- `IOS_DISTRIBUTION_CERTIFICATE_BASE64`
+- `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`
+- `IOS_APP_STORE_PROVISIONING_PROFILE_BASE64`
 
-# Confirm the native toolchain is actually present (these currently FAIL here):
-xcodebuild -version
-security find-identity -v -p codesigning
+Account-holder setup:
 
-# Distribute (choose one), all requiring the signing state above:
-# a) Direct install to a registered device: Xcode → Product → Run (device selected).
-# b) Ad-hoc build for registered devices: Xcode → Product → Archive → Distribute App.
-# c) TestFlight/App Store: Archive → Distribute App → upload to App Store Connect,
-#    then manage the beta in TestFlight.
-```
+1. In Apple Developer Certificates, Identifiers & Profiles, register the explicit App ID
+   **`com.kajamsica.pocketaquarium`**. In App Store Connect, create the Pocket Aquarium app record
+   using that bundle ID.
+2. Create an **Apple Distribution** certificate. Install its private key, export the certificate
+   and private key together from Keychain Access as a password-protected PKCS#12 (`.p12`), and
+   retain that password for `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`.
+3. Create an **App Store** provisioning profile for the same App ID and distribution certificate,
+   then download the `.mobileprovision` file.
+4. In App Store Connect, create an API key with access sufficient to upload this app. Download its
+   `.p8` file once, then record its key ID and issuer ID.
+5. Encode each file locally without printing it into terminal output. On macOS, copy each encoded
+   value directly to the clipboard, for example `base64 -i Certificate.p12 | pbcopy`, then repeat
+   for the provisioning profile and `.p8` key. Add the values through the GitHub environment UI.
+   Do not paste credentials into issues, pull requests, chat, command arguments, or shell history.
+6. Protect `apple-testflight` with required reviewers and restrict deployment branches to `main`.
+   Keep account-holder approval as the release gate.
 
-Never embed Apple credentials, App Store Connect API keys, or signing secrets in the repository
-or in any command output. The `native/.gitignore` excludes `*.mobileprovision`, `*.p12`, `*.cer`,
-and other signing material so they can never be committed.
+The workflow must be merged before use because a manually dispatched GitHub workflow is registered
+from the default branch. After merge, open **Actions**, choose the signed TestFlight workflow,
+select **Run workflow**, confirm `main`, and approve the `apple-testflight` environment deployment.
+Each upload needs a unique, increasing iOS build number.
+
+The distribution run builds and stages the accepted web runtime, syncs Capacitor, imports the
+temporary certificate and provisioning profile, archives the App Store build, exports the signed
+IPA, validates it, and uploads it to App Store Connect. Temporary signing files and keychains must
+be deleted even when a step fails. GitHub cannot bypass Apple signing or provisioning.
+
+After Apple finishes processing the upload, assign the build to an internal TestFlight group and
+invite the tester's Apple Account email. On the iPhone, install Apple's **TestFlight** app, accept
+the invitation, and install Pocket Aquarium from TestFlight. A TestFlight beta build is available
+for **90 days** from upload; upload a newer unique build before it expires.
+
+Rotate the API key, certificate, profile, or PKCS#12 password when exposed, when staff access
+changes, and before expiry. Revoke compromised credentials in Apple Developer or App Store
+Connect first, then replace the corresponding GitHub environment secrets. Never commit signing
+files. The native ignore rules exclude `.mobileprovision`, `.p12`, `.cer`, and related material.
+
+Troubleshooting categories:
+
+- **Workflow is missing:** confirm the signed workflow was merged to `main` and includes manual dispatch.
+- **Certificate import or signing fails:** confirm the `.p12` contains the private key, its password
+  matches, the certificate is valid, and `APPLE_TEAM_ID` names its team.
+- **Provisioning fails:** confirm the App Store profile is current and matches the explicit bundle ID,
+  team, distribution certificate, and enabled capabilities.
+- **Upload is rejected:** use a new build number and confirm the App Store Connect app record, API
+  key access, bundle ID, version metadata, archive export, and validation results.
+- **Build is absent in TestFlight:** wait for Apple processing, then inspect App Store Connect for
+  compliance questions or processing errors before inviting internal testers.
 
 ---
 
@@ -238,7 +274,8 @@ Captured on this machine during this deployment step:
 | Device tooling | `xcrun xctrace list devices` / `xcrun devicectl list devices` | Utilities not present (full Xcode absent) → cannot enumerate connected iOS devices |
 | Node | `node --version` | `v24.2.0` (meets Capacitor's Node 22+) |
 
-**Conclusion:** the checked-in host compiles on GitHub's macOS 26 / Xcode 26 runner, but this
+**Conclusion:** the checked-in iOS host compiles on GitHub's macOS 26 / Xcode 26 runner, and the
+merged native workflow also produces the Android debug APK. This
 local Mac needs a macOS upgrade before Xcode 26 can be installed. Full Xcode, a code-signing
 identity, and a provisioning profile are absent, so no local iPhone build or signing is possible.
 
@@ -261,8 +298,10 @@ identity, and a provisioning profile are absent, so no local iPhone build or sig
   `capacitor-swift-pm` to `8.5.1`, and the app icon is a derivative of the preserved master.
 - GitHub Actions has compiled the staged host as an **unsigned iOS Simulator app** on a macOS 26 /
   Xcode 26 runner, proving the checked-in Xcode/SPM project resolves and builds without signing.
+- The same merged native workflow builds an installable Android debug APK from the same staged
+  runtime. This does not provide or imply an Apple-signed build.
 
-**Blocked (native binary), and why no fake artifact is produced:**
+**Blocked (signed iPhone binary), and why no fake artifact is produced:**
 
 - Opening the project and launching it in a local **Simulator** are blocked on a macOS upgrade and
   **full Xcode 26+**; Simulator use does not require Apple signing. `xcodebuild` currently fails
@@ -271,11 +310,12 @@ identity, and a provisioning profile are absent, so no local iPhone build or sig
 - A **physical-device** install or **TestFlight** upload additionally requires an Apple signing
   state (identity, App ID, provisioning profile). This machine has none:
   `security find-identity -v -p codesigning` reports **0 valid identities**.
-- **No unsigned or fake `.ipa` is created.** An unsigned or ad-hoc-without-profile IPA cannot
+- **No signed IPA or TestFlight build exists yet.** The protected `apple-testflight` inputs and
+  App Store Connect app record are absent. An unsigned or ad-hoc-without-profile IPA cannot
   install on an iPhone, cannot go to TestFlight or the App Store, and would be a misleading
-  artifact. The honest state is **`PWA_DEPLOYED_NATIVE_HOST_COMPILES_SIGNING_BLOCKED`**: the
+  artifact. The honest state is **`PWA_AND_ANDROID_AVAILABLE_IOS_TESTFLIGHT_INPUTS_REQUIRED`**: the
   host exists, is reproducible, and compiles today; the *signed build* becomes runnable once the
-  prerequisites in [§3](#3-native-app-host-capacitor-8--checked-in-under-native) exist.
+  prerequisites in [§3](#3-native-mobile-hosts-capacitor-8-checked-in-under-native) exist.
 
 ---
 
@@ -284,6 +324,11 @@ identity, and a provisioning profile are absent, so no local iPhone build or sig
 - Apple — Turn a website into an app in Safari on iPhone: <https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios>
 - Apple — Distributing your app to registered devices: <https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices>
 - Apple — TestFlight: <https://developer.apple.com/testflight/>
+- Apple, Add a new app: <https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/>
+- Apple, Create API keys: <https://developer.apple.com/help/app-store-connect/manage-keys/create-api-keys/>
+- Apple, Create an App Store provisioning profile: <https://developer.apple.com/help/account/provisioning-profiles/create-an-app-store-provisioning-profile/>
+- Apple, Upload builds: <https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/>
+- Apple, TestFlight overview: <https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/>
 - Apple — Xcode SDK and system requirements: <https://developer.apple.com/xcode/system-requirements/>
 - Capacitor — Environment Setup: <https://capacitorjs.com/docs/getting-started/environment-setup>
 - Capacitor — Installing Capacitor (Getting Started): <https://capacitorjs.com/docs/getting-started>

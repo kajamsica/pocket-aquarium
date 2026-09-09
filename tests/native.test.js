@@ -42,6 +42,42 @@ function eqArrays(a, b) {
   return true;
 }
 
+function yamlBlock(source, key) {
+  var lines = source.split("\n");
+  var escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  var match, start = -1, indent = -1;
+  for (var i = 0; i < lines.length; i++) {
+    match = lines[i].match(new RegExp("^(\\s*)" + escaped + "\\s*:"));
+    if (match) { start = i; indent = match[1].length; break; }
+  }
+  if (start < 0) return "";
+  var end = lines.length;
+  for (var j = start + 1; j < lines.length; j++) {
+    if (lines[j].trim() && !/^\s*#/.test(lines[j]) && (lines[j].match(/^\s*/) || [""])[0].length <= indent) { end = j; break; }
+  }
+  return lines.slice(start, end).join("\n");
+}
+
+function yamlSteps(job) {
+  var lines = yamlBlock(job, "steps").split("\n");
+  var itemIndent = Infinity, starts = [];
+  lines.forEach(function (line) {
+    var match = line.match(/^(\s*)-\s+\S/);
+    if (match) itemIndent = Math.min(itemIndent, match[1].length);
+  });
+  lines.forEach(function (line, index) {
+    if (new RegExp("^\\s{" + itemIndent + "}-\\s+\\S").test(line)) starts.push(index);
+  });
+  return starts.map(function (start, index) { return lines.slice(start, starts[index + 1] || lines.length).join("\n"); });
+}
+
+function yamlNamedStep(job, name) {
+  var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return yamlSteps(job).find(function (step) {
+    return new RegExp("^\\s*(?:-\\s*)?name\\s*:\\s*[\\\"']?" + escaped + "[\\\"']?\\s*$", "m").test(step);
+  }) || "";
+}
+
 function listFiles(root) {
   var files = [];
   (function walk(dir, base) {
@@ -247,6 +283,75 @@ function main(mod) {
   ok(!fs.existsSync(path.join(iosApp, "App", "public")) ||
      childProcessIgnored(path.join(NATIVE, "ios", "App", "App", "public")),
     "copied web assets (ios/App/App/public) are git-ignored, not committed");
+
+  /* ------------------ 12. protected TestFlight release contract ------------------ */
+  group("TestFlight release workflow");
+  var workflow = readText(path.join(ROOT, ".github", "workflows", "ios.yml"));
+  var jobs = yamlBlock(workflow, "jobs");
+  var testflight = yamlBlock(jobs, "testflight");
+  var preflight = yamlNamedStep(testflight, "Require protected TestFlight inputs");
+  ok(!!testflight, "TestFlight job is structurally present under jobs");
+  ok(/^\s*workflow_dispatch\s*:/m.test(workflow), "native workflow supports deliberate manual dispatch");
+  ok(/if\s*:\s*\$\{\{\s*github\.event_name\s*==\s*'workflow_dispatch'\s*&&\s*github\.ref\s*==\s*'refs\/heads\/main'\s*\}\}/.test(testflight),
+    "TestFlight upload runs only for a manual dispatch on main");
+  ok(/environment\s*:\s*apple-testflight/.test(testflight), "TestFlight job uses the protected apple-testflight environment");
+  var secretConsumers = {
+    APPLE_TEAM_ID: ["Require protected TestFlight inputs", "Install ephemeral signing credentials", "Archive and export the App Store build"],
+    APP_STORE_CONNECT_KEY_ID: ["Require protected TestFlight inputs", "Install ephemeral signing credentials", "Validate and upload to TestFlight"],
+    APP_STORE_CONNECT_ISSUER_ID: ["Require protected TestFlight inputs", "Validate and upload to TestFlight"],
+    APP_STORE_CONNECT_API_KEY_P8_BASE64: ["Require protected TestFlight inputs", "Install ephemeral signing credentials"],
+    IOS_DISTRIBUTION_CERTIFICATE_BASE64: ["Require protected TestFlight inputs", "Install ephemeral signing credentials"],
+    IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ["Require protected TestFlight inputs", "Install ephemeral signing credentials"],
+    IOS_APP_STORE_PROVISIONING_PROFILE_BASE64: ["Require protected TestFlight inputs", "Install ephemeral signing credentials"]
+  };
+  var validationList = (preflight.match(/for\s+name\s+in([\s\S]*?);\s*do/) || ["", ""])[1];
+  Object.keys(secretConsumers).forEach(function (name) {
+    var expression = new RegExp("\\$\\{\\{\\s*secrets\\." + name + "\\s*\\}\\}", "g");
+    var total = (testflight.match(expression) || []).length;
+    var allowed = secretConsumers[name].reduce(function (count, stepName) {
+      return count + ((yamlNamedStep(testflight, stepName).match(expression) || []).length);
+    }, 0);
+    ok(new RegExp("^\\s*" + name + "\\s*:\\s*\\$\\{\\{\\s*secrets\\." + name + "\\s*\\}\\}", "m").test(preflight),
+      "preflight receives protected " + name);
+    ok(new RegExp("\\b" + name + "\\b").test(validationList), "preflight explicitly validates " + name);
+    ok(total === allowed && allowed === secretConsumers[name].length, name + " is exposed only to its consuming steps");
+  });
+  ok(/\[\[\s+-z\s+"\$\{!name:-\}"\s*\]\]/.test(preflight) && /exit\s+"\$missing"/.test(preflight),
+    "preflight fails closed when any protected input is empty");
+  var jobScope = testflight.slice(0, testflight.indexOf(yamlBlock(testflight, "steps")));
+  ok(!/\$\{\{\s*secrets\./.test(jobScope), "Apple secrets are absent from TestFlight job scope");
+  [
+    "Checkout", "Set up Node.js", "Install 3D app dependencies", "Build the accepted 3D web runtime",
+    "Install pinned Capacitor toolchain", "Stage and sync the accepted web runtime", "Run native packaging contracts",
+    "Remove signing credentials and release outputs"
+  ].forEach(function (stepName) {
+    var step = yamlNamedStep(testflight, stepName);
+    ok(!!step && !/\$\{\{\s*secrets\./.test(step), stepName + " is present and does not receive Apple secrets");
+  });
+  ok(/PRODUCT_BUNDLE_IDENTIFIER=com\.kajamsica\.pocketaquarium/.test(testflight), "signed archive uses the exact app bundle ID");
+  ok(/working-directory\s*:\s*native/.test(yamlNamedStep(testflight, "Stage and sync the accepted web runtime")) &&
+     /run\s*:\s*npm run sync(?:\s|$)/.test(yamlNamedStep(testflight, "Stage and sync the accepted web runtime")),
+    "TestFlight stages through the same local iOS sync path");
+  ok(/xcodebuild[\s\S]*?archive[\s\S]*?xcodebuild -exportArchive/.test(testflight), "TestFlight job archives and exports the App Store build");
+  ok(/altool --validate-app/.test(testflight) && /altool --upload-app/.test(testflight), "TestFlight job validates then uploads the IPA");
+  ok(/CURRENT_PROJECT_VERSION="\$\{\{ github\.run_number \}\}"/.test(testflight), "each upload uses the unique GitHub run number as its build number");
+  ok(/RUNNER_TEMP\/pocket-aquarium-testflight\.keychain-db/.test(testflight) && /security create-keychain/.test(testflight),
+    "signing certificate is imported into an ephemeral runner keychain");
+  ok(/IOS_PROFILE_PATH=.*profile_path/.test(testflight) && /install -m 600.*mobileprovision/.test(testflight),
+    "provisioning profile is validated and installed ephemerally");
+  ok(/IOS_API_KEY_PATH=.*api_key_path/.test(testflight) && /install -m 600.*AuthKey\.p8/.test(testflight),
+    "App Store Connect API key is installed ephemerally");
+  var cleanup = yamlNamedStep(testflight, "Remove signing credentials and release outputs");
+  ok(/if\s*:\s*always\(\)/.test(cleanup) && /delete-keychain/.test(cleanup) && /rm -rf/.test(cleanup),
+    "signing credentials and release outputs are always removed");
+  ok(!/actions\/upload-artifact/.test(testflight), "signed IPA is never uploaded as a GitHub artifact");
+  ok(/name\s*:\s*Build unsigned iOS simulator app/.test(yamlBlock(jobs, "build")), "unsigned iOS Simulator job remains present");
+  ok(/name\s*:\s*Build installable Android debug APK/.test(yamlBlock(jobs, "android")), "Android debug APK job remains present");
+
+  group("TestFlight deployment documentation");
+  var iosDocs = readText(path.join(ROOT, "docs", "IOS_DEPLOYMENT.md"));
+  ok(/protected GitHub environment \*\*`apple-testflight`\*\*/.test(iosDocs), "deployment guide names the protected environment");
+  ok(/No signed IPA or TestFlight build exists yet/i.test(iosDocs), "deployment guide explicitly says no signed/TestFlight build exists yet");
 
   /* cleanup temp dirs */
   [dest1, fixSrc, fixDest].forEach(function (d) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) {} });
