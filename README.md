@@ -9,6 +9,8 @@ animals, and feed fish through physical food/contact rather than a feed-button s
 - **Player source:** [`realistic_light_transport/`](realistic_light_transport/)
 - **Deterministic tests:** root simulation/PWA/native contracts plus the 3D app's Vitest suite
 - **Installable:** iPhone-ready Progressive Web App with an offline shell — see [Install on iPhone](#install-on-iphone-and-other-devices)
+- **Android build:** GitHub Actions produces an installable debug APK for direct device testing;
+  see [`docs/ANDROID_DEPLOYMENT.md`](docs/ANDROID_DEPLOYMENT.md).
 
 ---
 
