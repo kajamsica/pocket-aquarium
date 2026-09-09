@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 
-export type HudPanelId = 'guide' | 'water' | 'store' | 'care' | 'view' | 'progress' | 'residents' | 'specimen' | `metric:${string}`
+export type HudPanelId = 'guide' | 'water' | 'store' | 'care' | 'view' | 'progress' | 'residents' | 'specimen' | 'aquariums' | `metric:${string}`
 export type HudDeviceProfile = 'compact' | 'wide'
 type SnapHorizontal = 'left' | 'center' | 'right'
 type SnapVertical = 'top' | 'center' | 'bottom'
@@ -37,7 +37,7 @@ const METRIC_MIN_HEIGHT = 44
 /* Fresh compact pins rail in after any reef-first preset slot, then renormalize on load. */
 const METRIC_RAIL_ORDER = 8
 const METRIC_RAIL_SNAP: HudSnap = 'top-right'
-const BUILT_IN_PANELS = ['guide', 'water', 'store', 'care', 'view', 'progress', 'residents', 'specimen'] as const satisfies readonly HudPanelId[]
+const BUILT_IN_PANELS = ['guide', 'water', 'store', 'care', 'view', 'progress', 'residents', 'specimen', 'aquariums'] as const satisfies readonly HudPanelId[]
 const SNAP_TARGETS: readonly HudSnap[] = [
   'top-left', 'top-center', 'top-right',
   'center-left', 'center-right',
@@ -110,6 +110,7 @@ function defaultLayout(id: HudPanelId, profile: HudDeviceProfile): HudWindowLayo
     /* Roster and inspector stay unsnapped so adding them cannot reshuffle an existing snap stack. */
     case 'residents': { const panelWidth = width(320, 300); return { x: right(panelWidth), y: top + 60, width: panelWidth, height: height(340, 300), open: false, minimized: false, z: 26, snap: null, snapOrder: 0 } }
     case 'specimen': return { x: edge, y: top + 200, width: width(300, 286), height: height(228, 208), open: false, minimized: false, z: 27, snap: null, snapOrder: 0 }
+    case 'aquariums': return { x: edge, y: top + 92, width: width(380, 342), height: height(430, 400), open: false, minimized: false, z: 28, snap: null, snapOrder: 0 }
     default: {
       const index = Math.abs(id.split('').reduce((value, character) => value + character.charCodeAt(0), 0)) % 5
       /* Compact pins join an ordered edge rail instead of cascading over the tank centre. */
