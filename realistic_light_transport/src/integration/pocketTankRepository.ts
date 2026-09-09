@@ -32,7 +32,8 @@ type SaveResult = Readonly<{ status: 'saved' | 'adopted' | 'active_changed'; sna
 type CommitResult = Readonly<{ status: 'committed' | 'adopted' | 'active_changed'; snapshot: PocketTankRepositorySnapshot }>
 interface StoredTank { readonly raw: string; readonly state: PocketState; readonly seq: number | null }
 interface SeenTank { readonly raw: string | null; readonly seq: number }
-
+type TankSlot = Readonly<{ kind: 'missing' } | { kind: 'invalid'; raw: string } | { kind: 'valid'; stored: StoredTank }>
+interface IndexRecord { readonly raw: string | null; readonly index: PocketTankIndex }
 const emptyIndex = (): PocketTankIndex => ({ schemaVersion: INDEX_SCHEMA, revision: 0,
   activeTankId: null, tanks: [] })
 
@@ -121,14 +122,20 @@ export function createPocketTankRepository({
   const storageKeyFor = (id: string) => id === LEGACY_TANK_ID
     ? baseKey : `${baseKey}:tank-v1:${id}`
 
-  const readStoredTank = (id: string): StoredTank | null => {
+  const readTankSlot = (id: string): TankSlot => {
     const raw = storage.getItem(storageKeyFor(id))
-    if (raw === null) return null
+    if (raw === null) return { kind: 'missing' }
     try {
       const parsed: unknown = JSON.parse(raw)
-      if (!isObject(parsed) || !looksLikePocketState(parsed)) return null
-      return { raw, state: restorePocketGame(parsed, now()), seq: readSaveSequence(parsed) }
-    } catch { return null }
+      if (!isObject(parsed) || !looksLikePocketState(parsed)) return { kind: 'invalid', raw }
+      return { kind: 'valid', stored: { raw, state: restorePocketGame(parsed, now()),
+        seq: readSaveSequence(parsed) } }
+    } catch { return { kind: 'invalid', raw } }
+  }
+
+  const readStoredTank = (id: string) => {
+    const slot = readTankSlot(id)
+    return slot.kind === 'valid' ? slot.stored : null
   }
 
   const remember = (id: string, stored: StoredTank) => {
@@ -136,25 +143,55 @@ export function createPocketTankRepository({
     seen.set(id, { raw: stored.raw, seq: stored.seq ?? previous?.seq ?? 0 })
   }
 
-  const writeIndex = (index: PocketTankIndex) => {
-    storage.setItem(indexKey, JSON.stringify(index))
+  const readIndexRecord = (): IndexRecord => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const raw = storage.getItem(indexKey)
+      if (raw !== null) return { raw, index: parseIndex(raw) }
+      const legacySlot = readTankSlot(LEGACY_TANK_ID)
+      if (legacySlot.kind === 'invalid') {
+        throw new Error('Legacy tank storage is occupied by invalid or foreign data')
+      }
+      if (legacySlot.kind === 'missing') return { raw: null, index: emptyIndex() }
+      const legacy = legacySlot.stored
+      const migrated: PocketTankIndex = {
+        schemaVersion: INDEX_SCHEMA,
+        revision: 1,
+        activeTankId: LEGACY_TANK_ID,
+        tanks: [{ id: LEGACY_TANK_ID, name: 'Original tank', habitat: legacy.state.habitat }],
+      }
+      const guardedRaw = storage.getItem(indexKey)
+      if (guardedRaw !== null) continue
+      const migratedRaw = JSON.stringify(migrated)
+      storage.setItem(indexKey, migratedRaw)
+      const verifiedRaw = storage.getItem(indexKey)
+      if (verifiedRaw === migratedRaw) {
+        remember(LEGACY_TANK_ID, legacy)
+        return { raw: migratedRaw, index: migrated }
+      }
+      if (verifiedRaw !== null) return { raw: verifiedRaw, index: parseIndex(verifiedRaw) }
+    }
+    throw new Error('Pocket tank index changed too often during migration')
   }
 
-  const readIndex = (): PocketTankIndex => {
-    const raw = storage.getItem(indexKey)
-    if (raw !== null) return parseIndex(raw)
-
-    const legacy = readStoredTank(LEGACY_TANK_ID)
-    if (!legacy) return emptyIndex()
-    const migrated: PocketTankIndex = {
-      schemaVersion: INDEX_SCHEMA,
-      revision: 1,
-      activeTankId: LEGACY_TANK_ID,
-      tanks: [{ id: LEGACY_TANK_ID, name: 'Original tank', habitat: legacy.state.habitat }],
+  const readIndex = () => readIndexRecord().index
+  const mutateIndex = (
+    apply: (latest: PocketTankIndex) => PocketTankIndex | null,
+    postcondition: (latest: PocketTankIndex) => boolean,
+  ): PocketTankIndex => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const current = readIndexRecord()
+      const applied = apply(current.index)
+      if (applied === null) return current.index
+      const next = { ...applied, revision: current.index.revision + 1 }
+      if (storage.getItem(indexKey) !== current.raw) continue
+      const nextRaw = JSON.stringify(next)
+      storage.setItem(indexKey, nextRaw)
+      const verifiedRaw = storage.getItem(indexKey)
+      if (verifiedRaw === null) continue
+      const verified = parseIndex(verifiedRaw)
+      if (postcondition(verified)) return verified
     }
-    writeIndex(migrated)
-    remember(LEGACY_TANK_ID, legacy)
-    return migrated
+    throw new Error('Pocket tank index changed too often to save safely')
   }
 
   const snapshotFor = (index: PocketTankIndex): PocketTankRepositorySnapshot => {
@@ -178,20 +215,22 @@ export function createPocketTankRepository({
     return { index: { ...index, tanks }, active }
   }
 
-  const writeState = (id: string, state: PocketState, current: StoredTank | null) => {
+  const writeState = (id: string, state: PocketState, current: StoredTank | null, requireEmpty = false) => {
     const prior = seen.get(id)
     const saveSeq = Math.max(current?.seq ?? 0, prior?.seq ?? 0) + 1
     const stamped: PocketState & { saveSeq: number } = { ...state, saveSeq }
     const raw = serializePocketGame(stamped, now())
+    if (requireEmpty && storage.getItem(storageKeyFor(id)) !== null) {
+      throw new Error(`Tank storage ${storageKeyFor(id)} became occupied`)
+    }
     storage.setItem(storageKeyFor(id), raw)
     const stored = { raw, state, seq: saveSeq }
     remember(id, stored)
     return stored
   }
 
-  const nextId = (reservedId?: string) => {
-    const candidate = reservedId ?? makeId?.()
-      ?? `tank-${Math.floor(now()).toString(36)}-${(++generatedId).toString(36)}`
+  const nextId = () => {
+    const candidate = makeId?.() ?? `tank-${Math.floor(now()).toString(36)}-${(++generatedId).toString(36)}`
     if (!isTankId(candidate) || candidate === LEGACY_TANK_ID) {
       throw new Error('Tank ID must be lowercase letters, numbers, and hyphens')
     }
@@ -212,36 +251,43 @@ export function createPocketTankRepository({
     }
     const id = reservedId ?? (index.tanks.length === 0 ? LEGACY_TANK_ID : nextId())
     if (index.tanks.some((tank) => tank.id === id)) throw new Error(`Tank ${id} already exists`)
-    writeState(id, state, readStoredTank(id))
-    const next: PocketTankIndex = {
-      ...index,
-      revision: index.revision + 1,
-      activeTankId: id,
-      tanks: [...index.tanks, { id, name, habitat: state.habitat }],
-    }
-    writeIndex(next)
+    const target = readTankSlot(id)
+    if (target.kind !== 'missing') throw new Error(`Tank storage ${storageKeyFor(id)} is already occupied`)
+    const written = writeState(id, state, null, true)
+    const next = mutateIndex((latest) => {
+      const existing = latest.tanks.find((tank) => tank.id === id)
+      if (existing) {
+        const slot = readTankSlot(id)
+        const ownLegacyMigration = id === LEGACY_TANK_ID && latest.tanks.length === 1
+          && slot.kind === 'valid' && slot.stored.raw === written.raw
+        if (!ownLegacyMigration) throw new Error(`Tank ${id} already exists`)
+        return { ...latest, activeTankId: id, tanks: [{ id, name, habitat: state.habitat }] }
+      }
+      return { ...latest, activeTankId: id,
+        tanks: [...latest.tanks, { id, name, habitat: state.habitat }] }
+    }, (latest) => latest.activeTankId === id
+      && latest.tanks.some((tank) => tank.id === id && tank.name === name
+        && tank.habitat === state.habitat))
     return snapshotFor(next)
   }
 
   const renameTank = (id: string, rawName: string) => {
-    const index = readIndex()
     const name = normalizeName(rawName)
-    if (!index.tanks.some((tank) => tank.id === id)) throw new Error(`Unknown tank ${id}`)
-    const changed = index.tanks.some((tank) => tank.id === id && tank.name !== name)
-    if (!changed) return snapshotFor(index)
-    const next = { ...index, revision: index.revision + 1,
-      tanks: index.tanks.map((tank) => tank.id === id ? { ...tank, name } : tank) }
-    writeIndex(next)
+    const next = mutateIndex((latest) => {
+      const tank = latest.tanks.find((candidate) => candidate.id === id)
+      if (!tank) throw new Error(`Unknown tank ${id}`)
+      return tank.name === name ? null : { ...latest,
+        tanks: latest.tanks.map((candidate) => candidate.id === id ? { ...candidate, name } : candidate) }
+    }, (latest) => latest.tanks.some((tank) => tank.id === id && tank.name === name))
     return snapshotFor(next)
   }
 
   const activateTank = (id: string) => {
-    const index = readIndex()
-    if (!index.tanks.some((tank) => tank.id === id)) throw new Error(`Unknown tank ${id}`)
     if (!readStoredTank(id)) throw new Error(`Tank ${id} has no valid saved state`)
-    if (index.activeTankId === id) return snapshotFor(index)
-    const next = { ...index, revision: index.revision + 1, activeTankId: id }
-    writeIndex(next)
+    const next = mutateIndex((latest) => {
+      if (!latest.tanks.some((tank) => tank.id === id)) throw new Error(`Unknown tank ${id}`)
+      return latest.activeTankId === id ? null : { ...latest, activeTankId: id }
+    }, (latest) => latest.activeTankId === id)
     return snapshotFor(next)
   }
 
@@ -249,29 +295,37 @@ export function createPocketTankRepository({
     const index = readIndex()
     if (!index.tanks.some((tank) => tank.id === id)) throw new Error(`Unknown tank ${id}`)
     writeState(id, state, readStoredTank(id))
-    const next = { ...index, revision: index.revision + 1,
-      tanks: index.tanks.map((tank) => tank.id === id ? { ...tank, habitat: state.habitat } : tank) }
-    writeIndex(next)
+    const next = mutateIndex((latest) => {
+      if (!latest.tanks.some((tank) => tank.id === id)) throw new Error(`Unknown tank ${id}`)
+      return { ...latest, tanks: latest.tanks.map((tank) => tank.id === id
+        ? { ...tank, habitat: state.habitat } : tank) }
+    }, (latest) => latest.tanks.some((tank) => tank.id === id && tank.habitat === state.habitat))
     return snapshotFor(next)
   }
 
   const saveActive = (expectedTankId: string, state: PocketState): SaveResult => {
-    const index = readIndex()
-    if (index.activeTankId !== expectedTankId) {
-      return { status: 'active_changed', snapshot: snapshotFor(index) }
+    const opening = readIndexRecord()
+    if (opening.index.activeTankId !== expectedTankId) {
+      return { status: 'active_changed', snapshot: snapshotFor(opening.index) }
     }
-    const current = readStoredTank(expectedTankId)
+    const slot = readTankSlot(expectedTankId)
+    if (slot.kind === 'invalid') throw new Error(`Tank ${expectedTankId} contains invalid or foreign data`)
+    const current = slot.kind === 'valid' ? slot.stored : null
+    const latest = readIndexRecord()
+    if (latest.index.activeTankId !== expectedTankId) {
+      return { status: 'active_changed', snapshot: snapshotFor(latest.index) }
+    }
     const prior = seen.get(expectedTankId) ?? { seq: 0, raw: null }
     if (current && savedRecordSupersedes(current, prior)) {
       remember(expectedTankId, current)
-      return { status: 'adopted', snapshot: snapshotFor(index) }
+      return { status: 'adopted', snapshot: snapshotFor(latest.index) }
     }
     try { writeState(expectedTankId, state, current) } catch (error) {
       if (!current) throw error
       remember(expectedTankId, current)
-      return { status: 'adopted', snapshot: snapshotFor(index) }
+      return { status: 'adopted', snapshot: snapshotFor(latest.index) }
     }
-    return { status: 'saved', snapshot: snapshotFor(index) }
+    return { status: 'saved', snapshot: snapshotFor(latest.index) }
   }
 
   const commitActiveAction = (
@@ -279,11 +333,17 @@ export function createPocketTankRepository({
     state: PocketState,
     reduce: (state: PocketState) => PocketState,
   ): CommitResult => {
-    const index = readIndex()
-    if (index.activeTankId !== expectedTankId) {
-      return { status: 'active_changed', snapshot: snapshotFor(index) }
+    const opening = readIndexRecord()
+    if (opening.index.activeTankId !== expectedTankId) {
+      return { status: 'active_changed', snapshot: snapshotFor(opening.index) }
     }
-    const current = readStoredTank(expectedTankId)
+    const slot = readTankSlot(expectedTankId)
+    if (slot.kind === 'invalid') throw new Error(`Tank ${expectedTankId} contains invalid or foreign data`)
+    const current = slot.kind === 'valid' ? slot.stored : null
+    const latest = readIndexRecord()
+    if (latest.index.activeTankId !== expectedTankId) {
+      return { status: 'active_changed', snapshot: snapshotFor(latest.index) }
+    }
     const prior = seen.get(expectedTankId) ?? { seq: 0, raw: null }
     const base = current && savedRecordSupersedes(current, prior) ? current.state : state
     if (current && base === current.state) remember(expectedTankId, current)
@@ -291,9 +351,9 @@ export function createPocketTankRepository({
     try { writeState(expectedTankId, nextState, current) } catch (error) {
       if (!current) throw error
       remember(expectedTankId, current)
-      return { status: 'adopted', snapshot: snapshotFor(index) }
+      return { status: 'adopted', snapshot: snapshotFor(latest.index) }
     }
-    return { status: 'committed', snapshot: snapshotFor(index) }
+    return { status: 'committed', snapshot: snapshotFor(latest.index) }
   }
 
   return { getSnapshot, createTank, renameTank, activateTank, resetTank, saveActive, commitActiveAction }
