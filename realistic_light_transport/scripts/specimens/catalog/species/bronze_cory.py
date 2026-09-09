@@ -1,9 +1,9 @@
-"""Corydoras aeneus (Bronze Cory): armored, benthic freshwater fish paint hooks.
+"""Corydoras aeneus (Bronze Cory): armored benthic fish paint hooks.
 
-The shared ``fish`` plan carries the high-backed body, inferior mouth, paired
-barbels, fins and rig from ``art/specimens/bronze_cory/asset.source.json``.
-This module supplies deterministic bronze/olive colour, lateral plate relief,
-and restrained bottom-dweller movement accents. No reference pixels are used.
+The shared ``fish`` plan carries the source-authored sloping head, inferior
+mouth, tapered barbels, fins and rig. This module supplies deterministic
+olive-bronze colour, two lateral armor rows and a strong pectoral-spine cue.
+No reference pixels are used.
 """
 
 from __future__ import annotations
@@ -14,22 +14,35 @@ from ..lib import animation, paint, textures
 from ..lib.noise import fbm, smoothstep
 
 
-BRONZE = (0.43, 0.38, 0.24)
-OLIVE = (0.30, 0.29, 0.20)
-BELLY = (0.70, 0.66, 0.49)
-PLATE = (0.16, 0.16, 0.12)
-FIN = (0.46, 0.42, 0.27)
-FIN_EDGE = (0.22, 0.20, 0.13)
+BRONZE = (0.43, 0.40, 0.24)
+OLIVE = (0.24, 0.28, 0.18)
+FLANK_DARK = (0.15, 0.20, 0.14)
+BRONZE_SHEEN = (0.58, 0.50, 0.27)
+BELLY = (0.73, 0.68, 0.51)
+PLATE = (0.12, 0.16, 0.11)
+FIN = (0.68, 0.58, 0.34)
+FIN_EDGE = (0.29, 0.27, 0.16)
+
+
+def _plate_row(u, zeta, center, half_height, count, offset):
+    """One shallow row of overlapping armor with a raised trailing margin."""
+    trunk = smoothstep(0.11, 0.17, u) * (1.0 - smoothstep(0.74, 0.82, u))
+    row = 1.0 - smoothstep(half_height * 0.62, half_height, np.abs(zeta - center))
+    plate_u = np.clip((u - 0.13) / 0.67, 0.0, 1.0)
+    phase = np.mod(plate_u * count + offset, 1.0)
+    crown = smoothstep(0.05, 0.22, phase) * (1.0 - smoothstep(0.72, 0.98, phase))
+    trailing_margin = 1.0 - smoothstep(0.03, 0.15, phase)
+    relief = row * trunk * (0.34 * crown + 0.66 * trailing_margin)
+    return relief, row * trunk * trailing_margin
 
 
 def _plate_relief(ctx):
-    """Return seeded plate and skin relief, weighted toward the lateral trunk."""
-    scales = paint.scales_height(ctx.U, ctx.V, 30.0, 18.0, seed=17)
+    """Return distinct staggered armor rows plus restrained skin grain."""
+    upper, upper_edge = _plate_row(ctx.U, ctx.ZETA, 0.18, 0.25, 24.0, 0.08)
+    lower, lower_edge = _plate_row(ctx.U, ctx.ZETA, -0.20, 0.24, 22.0, 0.56)
     skin = fbm(ctx.U * 72.0, ctx.V * 34.0, octaves=2, seed=23)
-    lateral = 1.0 - np.abs(ctx.ZETA)
-    plate_edges = 0.5 + 0.5 * np.cos(ctx.U * np.pi * 2.0 * 24.0)
-    plate_edges = np.clip(plate_edges, 0.0, 1.0) * smoothstep(0.18, 0.72, lateral)
-    return np.clip(0.54 * scales + 0.22 * skin + 0.24 * plate_edges, 0.0, 1.0), plate_edges
+    height = 0.42 + 0.28 * upper + 0.28 * lower + 0.05 * (skin - 0.5)
+    return np.clip(height, 0.0, 1.0), np.maximum(upper_edge, lower_edge)
 
 
 def paint_body(ctx):
@@ -37,16 +50,23 @@ def paint_body(ctx):
         raise ValueError(f"Unsupported freshwater fish textureStyle: {ctx.spec.get('textureStyle')}")
     u, z, v = ctx.U, ctx.ZETA, ctx.V
     albedo = textures.rgba(BRONZE, 1.0, ctx.shape)
-    back = smoothstep(0.22, 0.90, z)
-    belly = smoothstep(-0.28, -0.88, z)
-    albedo = textures.mix(albedo, OLIVE, back * 0.72)
-    albedo = textures.mix(albedo, BELLY, belly * 0.76)
+    back = smoothstep(0.18, 0.88, z)
+    belly = smoothstep(-0.18, -0.86, z)
+    trunk = smoothstep(0.11, 0.20, u) * (1.0 - smoothstep(0.74, 0.84, u))
+    flank_height = smoothstep(-0.54, -0.16, z) * (1.0 - smoothstep(0.42, 0.76, z))
+    flank = trunk * flank_height
+    albedo = textures.mix(albedo, OLIVE, back * 0.58)
+    albedo = textures.mix(albedo, FLANK_DARK, flank * 0.72)
+    albedo = textures.mix(albedo, BELLY, belly * 0.86)
 
     mottling = fbm(u * 24.0, v * 13.0, octaves=3, seed=31)
-    albedo = textures.scale_rgb(albedo, 0.88 + 0.20 * mottling)
+    sheen_band = paint.band(z, 0.08, 0.30, 0.16) * flank
+    albedo = textures.mix(albedo, BRONZE_SHEEN, sheen_band * (0.10 + 0.22 * mottling))
+    albedo = textures.scale_rgb(albedo, 0.91 + 0.16 * mottling)
+    albedo = textures.mix(albedo, BELLY, smoothstep(0.82, 0.98, u) * belly * 0.18)
     plate_height, plate_edges = _plate_relief(ctx)
-    albedo = textures.mix(albedo, PLATE, plate_edges * smoothstep(0.48, 0.95, back) * 0.14)
-    roughness = 0.48 + 0.16 * plate_height + 0.04 * back
+    albedo = textures.mix(albedo, PLATE, plate_edges * flank * 0.22)
+    roughness = 0.43 + 0.17 * plate_height + 0.05 * belly
     return {"albedo": albedo, "roughness": textures.grey(roughness),
             "normal": textures.normal_from_height(plate_height, 1.05)}
 
@@ -54,13 +74,19 @@ def paint_body(ctx):
 def paint_fin(ctx):
     if ctx.spec.get("textureStyle") != "bronze_cory":
         raise ValueError(f"Unsupported freshwater fish textureStyle: {ctx.spec.get('textureStyle')}")
-    count = {"dorsal1": 9, "adipose": 6, "anal": 8, "caudal": 12, "pectoral": 10, "pelvic": 6}.get(ctx.fin, 10)
+    count = {"dorsal1": 8, "adipose": 6, "anal": 8, "caudal": 14, "pectoral": 9, "pelvic": 6}.get(ctx.fin, 10)
     ray = paint.rays(ctx.U, float(count), 4.0)
-    albedo = textures.rgba(FIN, 0.92, ctx.shape)
-    albedo = textures.mix(albedo, FIN_EDGE, ray * 0.32)
+    albedo = textures.rgba(FIN, 0.80, ctx.shape)
+    albedo = textures.mix(albedo, FIN_EDGE, ray * 0.25)
+    leading_spine = np.zeros(ctx.shape)
+    if ctx.fin in ("dorsal1", "pectoral"):
+        leading_spine = 1.0 - smoothstep(0.02, 0.11, ctx.U)
+        albedo = textures.mix(albedo, FIN_EDGE, leading_spine * 0.72)
     albedo = textures.scale_rgb(albedo, 0.90 + 0.14 * fbm(ctx.U * 18.0, ctx.V * 8.0, octaves=2, seed=41))
-    albedo[..., 3] = np.clip(0.82 - 0.14 * smoothstep(0.72, 1.0, ctx.V) + 0.08 * ray, 0.0, 1.0)
-    return albedo
+    albedo[..., 3] = np.clip(0.76 - 0.20 * smoothstep(0.70, 1.0, ctx.V) + 0.10 * ray + 0.18 * leading_spine, 0.0, 1.0)
+    root_fade = 0.30 + 0.70 * smoothstep(0.0, 0.28, ctx.V)
+    height = np.clip(0.35 + 0.42 * ray * root_fade + 0.40 * leading_spine, 0.0, 1.0)
+    return {"albedo": albedo, "height": height}
 
 
 def extra_channels(clip_name, spec, envelope):
