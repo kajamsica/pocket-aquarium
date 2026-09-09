@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1", "id": "freshwater_angelfish", "displayName": "Freshwater Angelfish", "scientificLabel": "Pterophyllum scalare", "taxonomyConfidence": "species",
+  "category": "fish", "waterType": "freshwater", "biome": "freshwater_community", "bodyPlan": "fish", "backend": "catalog.species.freshwater_angelfish", "textureStyle": "freshwater_angelfish", "assetVersion": "0.1.0", "referenceGrade": "B",
+  "referenceSize": { "meters": 0.105, "kind": "adult_total_length", "note": "FishBase reports 10.5 cm maximum total length. The 84 mm station-defined standard length plus the 21 mm truncate caudal envelope preserves that scope." },
+  "origin": "anatomical_midbody", "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "display" },
+  "palette": { "skin": [0.62, 0.66, 0.64], "fin": [0.50, 0.54, 0.51], "iris": [0.63, 0.48, 0.16], "cue": [0.035, 0.04, 0.038], "adornment": [0.30, 0.31, 0.29] },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.34, "finReliefStrength": 1.1, "finNormalStrength": 0.38 },
+  "morphology": {
+    "notes": "Wild-type adult Pterophyllum scalare: a highly laterally compressed disc/diamond body, clearly concave dorsal head profile, small terminal mouth, four-bar silver pattern, tall triangular dorsal and anal envelopes, truncate caudal with modest dorsal and ventral streamers, and very elongated thoracic pelvic rays. FishBase's SL/body-height range of 1.07 to 1.29 is encoded at 1.167 at the anal level; top and front widths remain explicit inferences.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.040, "halfWidth": 0.0015, "dorsalHeight": 0.0044, "ventralDepth": 0.0042, "centerZ": 0.0000 },
+      { "id": "peduncle", "x": -0.035, "halfWidth": 0.0026, "dorsalHeight": 0.0075, "ventralDepth": 0.0070, "centerZ": 0.0002 },
+      { "id": "posterior", "x": -0.027, "halfWidth": 0.0046, "dorsalHeight": 0.0240, "ventralDepth": 0.0220, "centerZ": 0.0005 },
+      { "id": "midbody", "x": -0.015, "halfWidth": 0.0061, "dorsalHeight": 0.0345, "ventralDepth": 0.0325, "centerZ": 0.0007 },
+      { "id": "anal-level", "x": -0.004, "halfWidth": 0.0065, "dorsalHeight": 0.0370, "ventralDepth": 0.0350, "centerZ": 0.0007 },
+      { "id": "anterior", "x": 0.009, "halfWidth": 0.0064, "dorsalHeight": 0.0360, "ventralDepth": 0.0320, "centerZ": 0.0005 },
+      { "id": "operculum", "x": 0.022, "halfWidth": 0.0058, "dorsalHeight": 0.0300, "ventralDepth": 0.0270, "centerZ": 0.0010 },
+      { "id": "head", "x": 0.032, "halfWidth": 0.0051, "dorsalHeight": 0.0210, "ventralDepth": 0.0200, "centerZ": 0.0010 },
+      { "id": "forehead-saddle", "x": 0.038, "halfWidth": 0.0043, "dorsalHeight": 0.0120, "ventralDepth": 0.0140, "centerZ": 0.0010 },
+      { "id": "snout", "x": 0.042, "halfWidth": 0.0034, "dorsalHeight": 0.0140, "ventralDepth": 0.0100, "centerZ": 0.0000 },
+      { "id": "snout-tip", "x": 0.044, "halfWidth": 0.0013, "dorsalHeight": 0.0025, "ventralDepth": 0.0028, "centerZ": -0.0010 }
+    ],
+    "crossSection": { "dorsalExponent": 1.84, "ventralExponent": 1.90 }, "sampling": { "ringSegments": 48, "ringCount": 56 }, "zoneFractions": [0.10, 0.28, 0.55, 0.78], "finThickness": { "base": 0.0008, "edge": 0.00008 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.037, "xEnd": 0.022, "rows": 6, "columns": 17, "lean": -0.009, "curve": -0.002, "rayCount": 29, "heights": [[0.0,0.010],[0.10,0.041],[0.22,0.062],[0.38,0.058],[0.56,0.047],[0.74,0.033],[0.90,0.017],[1.0,0.005]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.037, "xEnd": 0.006, "rows": 6, "columns": 15, "lean": -0.008, "curve": -0.002, "rayCount": 26, "heights": [[0.0,0.009],[0.12,0.040],[0.26,0.057],[0.45,0.052],[0.64,0.040],[0.82,0.024],[1.0,0.005]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 13, "spanTop": 0.018, "spanBottom": 0.018, "length": 0.0195, "topLobeLength": 1.15, "bottomLobeLength": 1.15, "fork": 0.22, "forkPower": 4.0, "rounding": 0.03, "baseFraction": 0.92, "rayCount": 17 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.023, "rootLength": 0.012, "rootHeight": -0.05, "length": 0.027, "sweepDegrees": 34, "droopDegrees": 7, "spread": 0.64, "taper": 0.28, "power": 0.72, "flare": 0.50, "rayCount": 13, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.020, "rootLength": 0.007, "rootHeight": -0.88, "length": 0.042, "sweepDegrees": 18, "droopDegrees": 71, "spread": 0.12, "taper": 0.08, "power": 1.8, "flare": 0.08, "rayCount": 6, "rows": 5, "columns": 7, "distalFilament": { "length": 0.035, "center": 0.18, "width": 0.13, "taperPower": 1.3, "distalPower": 2.3 } }
+    ],
+    "finAdjacency": [], "eyes": { "x": 0.033, "zFraction": 0.34, "radius": 0.0044, "protrude": 0.16, "aspect": 0.30, "seat": 0.85, "roughness": 0.20, "coat": 0.20, "pupilFraction": 0.58, "pupilAspect": 0.18 },
+    "mouth": { "zOffset": 0.0, "width": 0.0018, "radius": 0.00024, "upperLip": { "centerOffset": [0.0005,0.0004], "cornerOffset": [-0.0010,0.0001], "widthScale": 1.0, "cornerRadiusScale": 0.55, "centerRadiusScale": 0.82 }, "lowerLip": { "centerOffset": [0.0002,-0.0006], "cornerOffset": [-0.0011,-0.0004], "widthScale": 0.92, "cornerRadiusScale": 0.50, "centerRadiusScale": 0.72 } },
+    "gill": { "x": 0.021, "radius": 0.00022, "points": 13, "bulge": 0.025 }, "adornments": []
+  },
+  "rig": { "axialJoints": [0.037, 0.014, 0.001, -0.015, -0.030, -0.043] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [0.6,1.2,2.0,3.5], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 18, "pectoralFrequency": 2, "pelvic": 2.5, "median": 0.8, "gill": 1.5, "gillFrequency": 3, "jaw": 1.5, "jawFrequency": 3, "bodyRoll": 0.8, "hoverPitch": 0.7, "hoverFrequency": 1 },
+    "swim": { "frames": 60, "loop": true, "axial": [1.4,2.8,5.5,8.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 24, "pectoralFrequency": 4, "pelvic": 4.0, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 1.5, "jawFrequency": 2, "bodyRoll": 1.2, "hoverPitch": 0.0, "hoverFrequency": 2 },
+    "display": { "frames": 45, "loop": false, "envelope": "bell", "axial": [1.0,2.0,3.0,5.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 32, "pectoralFrequency": 3, "pelvic": 7.0, "median": 4.5, "gill": 2.5, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 3, "bodyRoll": 2.5, "hoverPitch": 0.5, "hoverFrequency": 1 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 }, "preview": { "frame": 12, "azimuthDegrees": -55, "elevationDegrees": 14 },
+  "visualDebt": ["No verified true orthographic top or frontal photograph was found; width and frontal head volume are conservative inferences.", "Caudal streamers are shaped with the shared caudal lobe controls rather than separately deformable rays.", "Fin rays are normal-map relief on thin membranes rather than individual modeled rays."]
+}
