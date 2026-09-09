@@ -228,7 +228,7 @@ interface CatalogCoral {
 }
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number; form?: 'rectangular' | 'cylinder'; devOnly?: boolean; waterTypes?: readonly ('fresh' | 'salt')[] }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
-interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number; noriCapacity?: number }
+interface EquipmentLevel { id: string; name: string; price: number; flow?: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number; noriCapacity?: number }
 interface CatalogHabitat { id: string; name: string; waterType: 'fresh' | 'salt'; blurb: string; params: string[] }
 interface Validation { ok: boolean; reasons: string[]; conflicts?: PocketPurchaseConflict[] }
 
@@ -532,9 +532,11 @@ export function createPocketFreshwaterDevTank(nowMs?: number): PocketState {
       send({ type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id })
   })
   send({ type: runtime.ACTIONS.SETUP_LIFE_SUPPORT, on: true })
+  const installedFlow = Math.max(runtime.DATA.equipLevel('filter', state.equipment.filter)?.flow ?? 0,
+    runtime.DATA.equipLevel('circulation', state.equipment.circulation)?.flow ?? 0)
   Object.assign(state.water, { levelL: 189, tempC: 26, pH: 6.4, ammonia: 0, nitrite: 0,
     nitrate: 10, oxygen: 7.2, hardness: 3, tannin: 0.6, salinity: 0, alkalinity: 0,
-    calcium: 0, magnesium: 0, phosphate: 0 })
+    calcium: 0, magnesium: 0, phosphate: 0, flow: installedFlow })
   Object.assign(state.cycle, { stage: 'Mature biome', aob: 1, nob: 1, ammoniaSource: false,
     inoculated: true, lifeSupport: true, filled: true, validationDays: 1 })
   state.time.days = 30
