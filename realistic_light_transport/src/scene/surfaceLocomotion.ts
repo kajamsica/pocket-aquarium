@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 
 import {
+  createLiveRockGeometry,
   createLiveRockSurfaceContour,
   LIVE_ROCK_SEED_OFFSET,
   type LiveRockSurfaceSample,
@@ -22,6 +23,158 @@ export interface SurfacePose {
   readonly position: THREE.Vector3
   readonly normal: THREE.Vector3
   readonly tangent: THREE.Vector3
+}
+
+export type ScapeSurfaceKind = 'sand' | 'rock'
+
+export interface ScapeSupportSample {
+  readonly position: THREE.Vector3
+  readonly normal: THREE.Vector3
+  readonly kind: ScapeSurfaceKind
+  readonly distance: number
+}
+
+interface CachedRockSurface {
+  readonly mesh: THREE.Mesh
+  readonly normalMatrix: THREE.Matrix3
+}
+
+const SUPPORT_RAY_EPSILON = .002
+const SUPPORT_NORMAL_PENALTY = .06
+const SUPPORT_UP = new THREE.Vector3(0, 1, 0)
+const supportRaycaster = new THREE.Raycaster()
+const supportRayOrigin = new THREE.Vector3()
+const supportRayDirection = new THREE.Vector3()
+const supportRayOutward = new THREE.Vector3()
+const supportPoint = new THREE.Vector3()
+const supportNormal = new THREE.Vector3()
+const supportHits: THREE.Intersection[] = []
+const cachedRockSurfaces: CachedRockSurface[] = []
+const cachedRockMeshes: THREE.Mesh[] = []
+let cachedRockMaterial: THREE.MeshBasicMaterial | undefined
+let rockPreparationScheduled = false
+
+function prepareNextReefRockSurface() {
+  const rockIndex = cachedRockSurfaces.length
+  const rock = REEF_ROCKS[rockIndex]
+  if (!rock) return
+  cachedRockMaterial ??= new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })
+  const mesh = new THREE.Mesh(
+    createLiveRockGeometry(rockIndex + LIVE_ROCK_SEED_OFFSET), cachedRockMaterial)
+  mesh.position.copy(rock.position)
+  mesh.rotation.copy(rock.rotation)
+  mesh.scale.copy(rock.scale)
+  mesh.updateMatrixWorld(true)
+  cachedRockSurfaces.push({
+    mesh,
+    normalMatrix: new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld),
+  })
+  cachedRockMeshes.push(mesh)
+}
+
+function reefScapeSupportReady() {
+  return cachedRockSurfaces.length === REEF_ROCKS.length
+}
+
+function scheduleNextReefRockSurface() {
+  if (rockPreparationScheduled || reefScapeSupportReady()) return
+  rockPreparationScheduled = true
+  const prepareSlice = () => {
+    rockPreparationScheduled = false
+    prepareNextReefRockSurface()
+    scheduleNextReefRockSurface()
+  }
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(prepareSlice, { timeout: 100 })
+  } else window.setTimeout(prepareSlice, 0)
+}
+
+export function prepareReefScapeSupport(): void {
+  if (typeof window !== 'undefined') {
+    scheduleNextReefRockSurface()
+    return
+  }
+  while (!reefScapeSupportReady()) prepareNextReefRockSurface()
+}
+
+/** Find the nearest exact rendered reef surface below a local starfish sample.
+ * Sand remains analytic so an outer arm can settle onto it while the disc stays on rock. */
+export function sampleReefScapeSupport(worldPoint: THREE.Vector3,
+  preferredNormal: THREE.Vector3, maximumDistance: number,
+  target: ScapeSupportSample = {
+    position: new THREE.Vector3(), normal: new THREE.Vector3(), kind: 'sand', distance: 0,
+  }): ScapeSupportSample {
+  const output = target as {
+    position: THREE.Vector3
+    normal: THREE.Vector3
+    kind: ScapeSurfaceKind
+    distance: number
+  }
+  supportPoint.set(
+    Number.isFinite(worldPoint.x) ? worldPoint.x : 0,
+    Number.isFinite(worldPoint.y) ? worldPoint.y : REEF_SAND_Y,
+    Number.isFinite(worldPoint.z) ? worldPoint.z : 0,
+  )
+  const limit = Number.isFinite(maximumDistance) ? Math.max(0, maximumDistance) : 0
+  const sandDistance = Math.abs(supportPoint.y - REEF_SAND_Y)
+  output.position.set(supportPoint.x, REEF_SAND_Y, supportPoint.z)
+  output.normal.copy(SUPPORT_UP)
+  output.kind = 'sand'
+  output.distance = sandDistance
+
+  supportNormal.copy(preferredNormal)
+  if (!Number.isFinite(supportNormal.x) || !Number.isFinite(supportNormal.y)
+    || !Number.isFinite(supportNormal.z) || supportNormal.lengthSq() < 1e-8) {
+    supportNormal.copy(SUPPORT_UP)
+  } else supportNormal.normalize()
+
+  if (!reefScapeSupportReady()) {
+    prepareReefScapeSupport()
+    if (typeof window !== 'undefined') {
+      output.position.copy(supportPoint)
+      output.normal.copy(supportNormal)
+      output.kind = 'sand'
+      output.distance = Math.min(Number.MAX_VALUE,
+        limit + Math.max(SUPPORT_RAY_EPSILON, limit * 1e-6))
+      return target
+    }
+  }
+
+  let bestScore = sandDistance <= limit
+    ? sandDistance + limit * SUPPORT_NORMAL_PENALTY * (1 - Math.max(0, supportNormal.y))
+    : Infinity
+  if (limit <= 0) return target
+
+  const rayCount = supportNormal.dot(SUPPORT_UP) < .985 ? 2 : 1
+  for (let rayIndex = 0; rayIndex < rayCount; rayIndex += 1) {
+    supportRayOutward.copy(rayIndex === 0 ? supportNormal : SUPPORT_UP)
+    supportRayDirection.copy(supportRayOutward).negate()
+    supportRayOrigin.copy(supportPoint).addScaledVector(supportRayOutward, SUPPORT_RAY_EPSILON)
+    supportRaycaster.set(supportRayOrigin, supportRayDirection)
+    supportRaycaster.near = 0
+    supportRaycaster.far = limit + SUPPORT_RAY_EPSILON
+    supportHits.length = 0
+    supportRaycaster.intersectObjects(cachedRockMeshes, false, supportHits)
+    for (const hit of supportHits) {
+      const distance = hit.point.distanceTo(supportPoint)
+      if (!Number.isFinite(distance) || distance > limit + 1e-6) continue
+      const surface = cachedRockSurfaces.find(({ mesh }) => mesh === hit.object)
+      if (!surface) continue
+      const normal = hit.normal ?? hit.face?.normal
+      if (normal) supportRayDirection.copy(normal).applyNormalMatrix(surface.normalMatrix).normalize()
+      else supportRayDirection.copy(supportRayOutward)
+      if (supportRayDirection.dot(supportRayOutward) < 0) supportRayDirection.negate()
+      const alignment = Math.max(0, supportRayDirection.dot(supportNormal))
+      const score = distance + limit * SUPPORT_NORMAL_PENALTY * (1 - alignment)
+      if (score >= bestScore) continue
+      bestScore = score
+      output.position.copy(hit.point)
+      output.normal.copy(supportRayDirection)
+      output.kind = 'rock'
+      output.distance = distance
+    }
+  }
+  return target
 }
 
 interface LineSegment {

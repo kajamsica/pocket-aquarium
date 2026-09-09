@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import * as THREE from 'three'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   createLiveRockSurfaceContour,
@@ -10,6 +11,7 @@ import { resolveSpecimenLocomotionPlan } from './speciesBehavior'
 import {
   createSurfaceCircuit,
   isSurfaceSpeciesId,
+  sampleReefScapeSupport,
   sampleSurfaceCircuit,
   SURFACE_SPECIES_IDS,
   surfaceModeForSpecies,
@@ -31,6 +33,14 @@ const EXPECTED_MODES = {
 } as const
 
 describe('surface locomotion policy', () => {
+  function starfishRockSegment() {
+    const segment = createSurfaceCircuit('blue_linckia', 17).segments
+      .find((candidate) => candidate.kind === 'rock')
+    expect(segment?.kind).toBe('rock')
+    if (!segment || segment.kind !== 'rock') throw new Error('Missing deterministic rock segment')
+    return segment
+  }
+
   it('classifies every accepted surface-bound animal with no fallback', () => {
     expect(SURFACE_SPECIES_IDS).toHaveLength(12)
     expect(Object.keys(EXPECTED_MODES).sort()).toEqual([...SURFACE_SPECIES_IDS].sort())
@@ -92,6 +102,78 @@ describe('surface locomotion policy', () => {
     }
   })
 
+  it('selects the exact rendered rock support near a rock surface', () => {
+    const rock = starfishRockSegment()
+    const index = Math.floor(rock.points.length / 2)
+    const surfacePoint = rock.points[index]
+    const surfaceNormal = rock.normals[index]
+    const probe = surfacePoint.clone().addScaledVector(surfaceNormal, .025)
+
+    const support = sampleReefScapeSupport(probe, surfaceNormal, .08)
+
+    expect(support.kind).toBe('rock')
+    expect(support.position.distanceTo(surfacePoint)).toBeLessThan(1e-5)
+    expect(support.distance).toBeCloseTo(.025, 5)
+    expect(support.normal.length()).toBeCloseTo(1, 6)
+    expect(support.normal.dot(surfaceNormal)).toBeGreaterThan(.95)
+  })
+
+  it('selects analytic sand away from every rendered rock', () => {
+    const probe = new THREE.Vector3(8, REEF_SAND_Y + .04, 0)
+
+    const support = sampleReefScapeSupport(probe, new THREE.Vector3(0, 1, 0), .08)
+
+    expect(support.kind).toBe('sand')
+    expect(support.position.toArray()).toEqual([probe.x, REEF_SAND_Y, probe.z])
+    expect(support.normal.toArray()).toEqual([0, 1, 0])
+    expect(support.distance).toBeCloseTo(.04)
+  })
+
+  it('resolves adjacent arm samples independently across a rock and sand seam', () => {
+    const rock = starfishRockSegment()
+    const sandPoint = rock.points[0]
+    const rockIndex = rock.points.findIndex((point) => point.y > REEF_SAND_Y + .04)
+    expect(rockIndex).toBeGreaterThan(0)
+    const rockPoint = rock.points[rockIndex]
+    const rockNormal = rock.normals[rockIndex]
+
+    const sandSupport = sampleReefScapeSupport(
+      sandPoint, new THREE.Vector3(0, 1, 0), .12)
+    const rockSupport = sampleReefScapeSupport(
+      rockPoint.clone().addScaledVector(rockNormal, .02), rockNormal, .12)
+
+    expect(sandPoint.distanceTo(rockPoint)).toBeLessThan(.2)
+    expect(sandSupport.kind).toBe('sand')
+    expect(rockSupport.kind).toBe('rock')
+    expect(sandSupport.position.y).toBeCloseTo(REEF_SAND_Y, 8)
+    expect(rockSupport.position.distanceTo(rockPoint)).toBeLessThan(1e-5)
+  })
+
+  it('keeps invalid and degenerate support inputs finite', () => {
+    const target = {
+      position: new THREE.Vector3(),
+      normal: new THREE.Vector3(),
+      kind: 'rock' as const,
+      distance: Number.NaN,
+    }
+    const support = sampleReefScapeSupport(
+      new THREE.Vector3(Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY),
+      new THREE.Vector3(0, 0, 0), Number.NaN, target)
+
+    expect(support).toBe(target)
+    expect(support.kind).toBe('sand')
+    expect(support.position.toArray().every(Number.isFinite)).toBe(true)
+    expect(support.normal.toArray()).toEqual([0, 1, 0])
+    expect(Number.isFinite(support.distance)).toBe(true)
+
+    const invalidNormal = sampleReefScapeSupport(
+      new THREE.Vector3(8, REEF_SAND_Y + .02, 0),
+      new THREE.Vector3(Number.NaN, 0, 0), .08)
+    expect(invalidNormal.position.toArray().every(Number.isFinite)).toBe(true)
+    expect(invalidNormal.normal.toArray().every(Number.isFinite)).toBe(true)
+    expect(Number.isFinite(invalidNormal.distance)).toBe(true)
+  })
+
   it.each(['blue_linckia', 'brittle_star'])(
     '%s follows the rendered jagged-rock contour with continuous outward poses', (speciesId) => {
       const circuit = createSurfaceCircuit(speciesId, 17)
@@ -124,4 +206,43 @@ describe('surface locomotion policy', () => {
       }
     },
   )
+})
+
+describe('reef scape support preparation', () => {
+  it('holds the authored pose while browser rock surfaces prepare one slice at a time', async () => {
+    const slices: Array<() => void> = []
+    vi.stubGlobal('window', {
+      requestIdleCallback(callback: () => void) {
+        slices.push(callback)
+        return slices.length
+      },
+      setTimeout(callback: () => void) {
+        slices.push(callback)
+        return slices.length
+      },
+    })
+    vi.resetModules()
+    try {
+      const { prepareReefScapeSupport, sampleReefScapeSupport } = await import('./surfaceLocomotion')
+      const probe = new THREE.Vector3(0, REEF_SAND_Y + .04, 0)
+      const maximumDistance = .08
+
+      prepareReefScapeSupport()
+      expect(slices).toHaveLength(1)
+      const pending = sampleReefScapeSupport(probe, new THREE.Vector3(0, 1, 0), maximumDistance)
+      expect(pending.position.toArray()).toEqual(probe.toArray())
+      expect(pending.distance).toBeGreaterThan(maximumDistance)
+      expect(Number.isFinite(pending.distance)).toBe(true)
+
+      slices.shift()?.()
+      expect(slices).toHaveLength(1)
+      const stillPending = sampleReefScapeSupport(
+        probe, new THREE.Vector3(0, 1, 0), maximumDistance)
+      expect(stillPending.position.toArray()).toEqual(probe.toArray())
+      expect(stillPending.distance).toBeGreaterThan(maximumDistance)
+    } finally {
+      vi.unstubAllGlobals()
+      vi.resetModules()
+    }
+  })
 })
