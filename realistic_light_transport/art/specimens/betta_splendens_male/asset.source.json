@@ -46,7 +46,7 @@
     "finThickness": { "base": 0.0008, "edge": 0.00008 },
     "fins": [
       { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.014, "xEnd": 0.010, "rows": 5, "columns": 15, "lean": -0.006, "heights": [[0.0, 0.005], [0.22, 0.012], [0.55, 0.015], [0.82, 0.013], [1.0, 0.006]] },
-      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.016, "xEnd": 0.012, "rows": 5, "columns": 16, "lean": -0.009, "heights": [[0.0, 0.006], [0.25, 0.016], [0.60, 0.018], [0.84, 0.014], [1.0, 0.006]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.016, "xEnd": 0.012, "rows": 5, "columns": 16, "lean": -0.002, "heights": [[0.0, 0.006], [0.25, 0.016], [0.60, 0.018], [0.84, 0.014], [1.0, 0.006]] },
       { "name": "caudal", "type": "caudal", "rows": 6, "columns": 13, "spanTop": 0.017, "spanBottom": 0.017, "length": 0.0185, "fork": 0.0, "rounding": 0.55, "baseFraction": 0.9 },
       { "name": "pectoral", "type": "paired", "rootX": 0.013, "rootLength": 0.006, "rootHeight": -0.08, "length": 0.010, "sweepDegrees": 35, "droopDegrees": 12, "spread": 0.8, "taper": 0.5, "power": 0.6, "flare": 0.75, "rayCount": 13, "rows": 4, "columns": 7 },
       { "name": "pelvic", "type": "paired", "rootX": 0.012, "rootLength": 0.004, "rootHeight": -0.90, "length": 0.020, "sweepDegrees": 68, "droopDegrees": 34, "spread": 0.22, "taper": 0.15, "power": 1.5, "flare": 0.2, "rayCount": 2, "rows": 3, "columns": 5 }

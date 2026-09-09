@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-05T13:47:42.638Z",
+  "generatedAt": "2026-09-09T20:54:06.696Z",
   "categories": [
     "fish",
     "coral",
@@ -24,23 +24,23 @@
     "tomini_tang": "fable-v1"
   },
   "summary": {
-    "rows": 35,
+    "rows": 36,
     "byCategory": {
-      "fish": 14,
+      "fish": 15,
       "coral": 9,
       "invertebrate": 3,
       "cleanup_crew": 9
     },
     "byStatus": {
       "accepted": 1,
-      "candidate": 34,
+      "candidate": 35,
       "provisional": 0,
       "failed": 0,
       "missing": 0
     },
     "candidates": {
-      "total": 58,
-      "loadable": 57,
+      "total": 59,
+      "loadable": 58,
       "missing": 1,
       "userApproved": 6
     }
@@ -673,6 +673,89 @@
         "Spot pattern is mirrored left/right (one lattice shared by both flanks) to avoid a UV seam on the dorsal ridge.",
         "Lips are a simple cue tube; the crenulated Zebrasoma lip margin is not modelled.",
         "Roughness and normal PNGs are written blank by the shared lib/textures.py at the build commit (colorspace set after pixel upload); the candidate needs a rebuild once the shared fix lands (see /tmp/pa-lanes/gem_tang/shared-change-request.md)."
+      ]
+    },
+    {
+      "id": "betta_splendens_male",
+      "displayName": "Male Betta",
+      "scientificLabel": "Betta splendens",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.065,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Male Betta",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/betta_splendens_male/candidates/fable-v1/lod1.glb",
+          "glbSha256": "ecd51915201b0bf6c33bda407a006e8131280d3502baad0e76b5302d9916034b",
+          "glbSha256Verified": true,
+          "geometryDigest": "aa2a770c953b4ae777a16820a1da116e842b74a6001882b4c18736667f5b2e3c",
+          "statistics": {
+            "triangles": 7942,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.065,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/betta_splendens_male/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/betta_splendens_male/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "display"
+      },
+      "provenance": {
+        "source": "art/specimens/betta_splendens_male/asset.source.json",
+        "sourceReferences": "art/specimens/betta_splendens_male/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Domestic Betta splendens fin shapes vary widely; this source targets a rounded halfmoon-like male rather than every strain.",
+        "The paired pelvic fin filaments are thin fans because the shared fish plan does not yet support isolated soft rays.",
+        "Fin rays are normal-map relief on thin membranes rather than separate modeled rays."
       ]
     },
     {
