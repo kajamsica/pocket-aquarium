@@ -114,7 +114,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.controlStations[*].centerZ"
       ],
-      "notes": "Station heights and centers place the maximum depth behind the head while preserving the species-specific steep predorsal rise."
+      "notes": "Revised station heights hold depth at the dorsal-fin origin near Tan's reported mean while moving maximum depth behind the shortened head, flattening the swollen belly transition, and preserving the steep convex predorsal rise."
     },
     {
       "name": "short caudal peduncle and symmetrical forked caudal",
@@ -148,7 +148,7 @@
         "morphology.eyes",
         "morphology.mouth"
       ],
-      "notes": "The head stations, large eye radius, and centered mouth encode the laterally observed head cues."
+      "notes": "The shortened head and snout stations retain the terminal mouth, while a smaller, tilted, deeply seated eye preserves the observed large lateral eye without the failed candidate's bead-like protrusion."
     },
     {
       "name": "dorsal, pelvic, anal, pectoral, and caudal fin placement",
@@ -186,7 +186,7 @@
         "morphology.controlStations[*].dorsalHeight",
         "morphology.controlStations[*].ventralDepth"
       ],
-      "notes": "Tan reports 32.6 to 38.2 percent of standard length, mean 35.8 percent, for T. heteromorpha. Station heights are the corresponding source controls; the unbuilt candidate still requires visual comparison rather than claiming exact rendered calibration."
+      "notes": "Tan reports 32.6 to 38.2 percent of standard length, mean 35.8 percent, for T. heteromorpha. The revised source evaluates to 35.34 percent at the dorsal-fin origin over the 39 mm station-defined standard length. This source calculation is in range, but the unbuilt candidate still requires visual comparison."
     },
     {
       "name": "axine anterior depth divided by body depth",
@@ -265,12 +265,12 @@
   "candidateComparison": {
     "mismatches": [
       {
-        "area": "failed candidate axine",
-        "note": "The preserved fable-v1 candidate filled most of the posterior body depth. The repaired source replaces that broad U-threshold with independent dorsal and ventral bounds that taper to a narrow caudal point; this source delta is unbuilt, so the old render remains evidence of the former mismatch rather than an open source blocker."
+        "area": "preserved candidate side silhouette",
+        "note": "The preserved rebuild shows the corrected axine but remains too capsule-like, with a blunt head, swollen belly-to-head transition, protrusive eye, and oversized median fins. The revised lateral stations reduce the anterior and ventral fullness, shorten the head transition, seat the eye, and reduce fin spans. These are source-level resolutions of the known prebuild blockers, not a claim that the unbuilt result has passed visual review."
       },
       {
-        "area": "failed candidate pectoral parity",
-        "note": "The preserved runtime receipt reports 1.4396 degrees at burst quarter phase with amplitude 24. The repaired source uses amplitude 10, predicting 0.5994 degrees from the two observed near-linear points, below the 0.75-degree gate with 0.1506 degrees margin; this prediction remains unbuilt."
+        "area": "preserved candidate burst axial parity",
+        "note": "The original axial tuple [7, 11, 18, 27] first failed Spine_B at quarter phase by 0.7672 degrees; reducing only Spine_B to 10.5 advanced validation and exposed Caudal at half phase by 1.0505 degrees. The coordinated tuple [5, 7.5, 12, 17] predicts 0.5231 degrees for Spine_B and 0.6614 degrees for Caudal under observed amplitude-linear parity error, leaving 0.2269 and 0.0886 degrees margin. A new build must verify both predictions."
       },
       {
         "area": "top and front calibration",
@@ -284,42 +284,43 @@
     "acceptanceBlockers": []
   },
   "failedCandidateEvidence": {
-    "path": "/tmp/pocket-aquarium-fw-failed-candidate-jBRv5A/harlequin_rasbora-fable-v1",
+    "path": "/tmp/pocket-aquarium-fw-failed-rasbora-rebuild-4Y8fjR/fable-v1",
     "candidateId": "fable-v1",
     "status": "failed_unaccepted",
     "sourceValidation": "passed",
     "runtimeValidation": "failed",
-    "runtimeError": "Parity burst 0.25 Pectoral_L: 1.4396 degrees",
-    "priorReportedRuntimeErrorAt28Degrees": 1.6772,
-    "renderReview": "The dark field fills most of the posterior flank and reaches the dorsal and ventral contours; it does not read as a sharply bounded three-apex axine."
+    "runtimeError": "Parity burst 0.50 Caudal: 1.0505 degrees after Spine_B amplitude 11 to 10.5 advanced past its prior 0.7672-degree quarter-phase failure",
+    "priorAxialTuple": [7, 11, 18, 27],
+    "rebuildAxialTuple": [7, 10.5, 18, 27],
+    "renderReview": "The bounded three-apex axine now reads correctly and must remain unchanged. The side silhouette is still too capsule-like and blunt, with a swollen belly-to-head transition, protrusive eye, and oversized fins."
   },
   "cueComparison": [
     {
       "cue": "axine",
       "reference": "A straight-edged posterior triangle with dorsal and ventral apices near their fin origins and a caudal apex tapering along the peduncle to the caudal-fin base.",
-      "before": "A U-threshold filled nearly the full posterior body depth, with only a weak dorsal multiplier.",
-      "afterSourceLogic": "Independent dorsal and ventral bounds expand from a narrow caudal point to the two anterior apices; the existing sloped anterior edge is retained with reduced organic wander.",
-      "status": "source_repaired_unbuilt"
+      "before": "The earlier rejected candidate used a U-threshold that filled nearly the full posterior body depth.",
+      "afterSourceLogic": "The preserved rebuild proves the independent dorsal and ventral bounds form the intended three-apex wedge. This source logic is retained unchanged.",
+      "status": "rebuild_observed_correct_retained"
     },
     {
       "cue": "side-profile silhouette",
       "reference": "Deep, laterally compressed trunk; steep convex predorsal profile; short peduncle; forked caudal.",
-      "before": "The failed candidate preserves these broad outline cues, but the oversized axine visually obscures the posterior form.",
-      "afterSourceLogic": "Control stations and fins remain unchanged; the bounded axine should expose the dorsal and ventral posterior body contours.",
-      "status": "retained_source_unbuilt"
+      "before": "The preserved rebuild is deep but too uniformly rounded, with excess anterior and ventral fullness that reads as a capsule rather than a compressed cyprinid.",
+      "afterSourceLogic": "Anterior, opercular, head, and snout depths taper sooner; the belly is reduced more than the predorsal ridge. At the dorsal-fin origin, source depth is 35.34 percent of the station-defined standard length, within Tan's 32.6 to 38.2 percent range.",
+      "status": "source_repaired_unbuilt"
     },
     {
       "cue": "head and fin morphology",
       "reference": "Large round eye, short opercular region, small terminal mouth, orange-red dorsal, translucent paired fins and forked caudal.",
-      "before": "The failed candidate broadly follows these cues; they were not named rejection causes.",
-      "afterSourceLogic": "Head stations, eyes, mouth and fin geometry remain unchanged to avoid unrelated scope growth.",
-      "status": "retained_source_unbuilt"
+      "before": "The preserved rebuild has a blunt swollen head, a bead-like eye standing proud of the flank, and median and paired fins that dominate the small body.",
+      "afterSourceLogic": "The head transition and snout are shortened and tapered, eye radius and proud depth are reduced with local-surface seating, and dorsal, anal, caudal, pectoral, and pelvic spans are reduced without changing the diagnostic axine or terminal mouth.",
+      "status": "source_repaired_unbuilt"
     },
     {
       "cue": "top and body depth",
       "reference": "FishBase states a compressed cross section; oblique spawning imagery supports narrow width only qualitatively.",
       "before": "The failed three-view is compatible with lateral compression, but no calibrated top reference exists.",
-      "afterSourceLogic": "Half-width stations remain unchanged; no unsupported top-outline correction is introduced.",
+      "afterSourceLogic": "Half-width stations and cross-section exponents remain unchanged; no unsupported top-outline or frontal correction is introduced.",
       "status": "uncertain_retained"
     }
   ],
@@ -327,19 +328,21 @@
     "gateDegrees": 0.75,
     "burstFrames": 24,
     "envelope": "bell",
-    "pectoralFrequency": 4,
-    "phase": 0,
-    "beforeAmplitudeDegrees": 28,
-    "intermediateAmplitudeDegrees": 24,
-    "afterAmplitudeDegrees": 10,
+    "axialFrequency": 3,
+    "axialLag": 0.48,
+    "beforeAxialDegrees": [7, 11, 18, 27],
+    "intermediateAxialDegrees": [7, 10.5, 18, 27],
+    "afterAxialDegrees": [5, 7.5, 12, 17],
     "observations": [
-      { "amplitudeDegrees": 28, "quarterPhaseErrorDegrees": 1.6772, "provenance": "reported pre-reduction failure" },
-      { "amplitudeDegrees": 24, "quarterPhaseErrorDegrees": 1.4396, "provenance": "preserved failed candidate validation-runtime.json" }
+      { "bone": "Spine_B", "phase": 0.25, "amplitudeDegrees": 11, "errorDegrees": 0.7672, "provenance": "reported failure for the original source tuple" },
+      { "bone": "Caudal", "phase": 0.5, "amplitudeDegrees": 27, "errorDegrees": 1.0505, "provenance": "preserved rebuild validation-runtime.json after Spine_B amplitude 10.5 advanced validation" }
     ],
-    "fit": "The two observed errors are linear in amplitude to within 0.002 degrees; E(A) is approximately 0.05994 times A.",
-    "predictedQuarterPhaseErrorDegrees": 0.5994,
-    "predictedMarginDegrees": 0.1506,
-    "rationale": "Amplitude 12 predicts only 0.7192 degrees and leaves little tolerance below the actual 0.75-degree gate. Amplitude 10 preserves a visible burst stroke while providing a safer source-only margin. Frequency or phase changes lack equally direct two-point evidence."
+    "model": "With frame count, frequency, lag, envelope, export and importer fixed, quaternion interpolation error at a sampled phase scales approximately with that bone's rotation amplitude. Predictions scale each observed error by afterAmplitude / observedAmplitude.",
+    "predictions": [
+      { "bone": "Spine_B", "phase": 0.25, "amplitudeDegrees": 7.5, "predictedErrorDegrees": 0.5231, "predictedMarginDegrees": 0.2269 },
+      { "bone": "Caudal", "phase": 0.5, "amplitudeDegrees": 17, "predictedErrorDegrees": 0.6614, "predictedMarginDegrees": 0.0886 }
+    ],
+    "rationale": "All four axial amplitudes are reduced together so the response retains an increasing head-to-tail wave. The largest proportional reduction is distal, where the observed Caudal error sets the limiting margin. Frequency, lag, envelope, and non-axial channels remain unchanged because the observed failures are amplitude-bounded. These are prebuild predictions, not runtime validation."
   },
   "uncertainty": "No verified true dorsal/top or sharp frontal original was found. Width and frontal head shape remain constrained only by the authoritative compressed classification plus qualitative oblique views.",
   "pixelPolicy": "No reference pixels were copied, sampled, traced or redistributed.",
