@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.freshwater_fish",
   "textureStyle": "betta_splendens_male",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.1.1",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.065,
@@ -20,40 +20,41 @@
   "origin": "anatomical_midbody",
   "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "display" },
   "palette": {
-    "skin": [0.05, 0.34, 0.38],
-    "fin": [0.55, 0.04, 0.07],
+    "skin": [0.025, 0.16, 0.34],
+    "fin": [0.62, 0.025, 0.04],
     "iris": [0.08, 0.05, 0.03],
     "cue": [0.06, 0.035, 0.035],
     "adornment": [0.72, 0.16, 0.18]
   },
   "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.35, "finReliefStrength": 1.0, "finNormalStrength": 0.4 },
   "morphology": {
-    "notes": "Elongate, laterally compressed gourami relative with a gently arched back, upturned terminal mouth and large domestic male dorsal, anal and caudal fins. The body is 46.5 mm from peduncle base to snout and the rounded caudal adds 18.5 mm.",
+    "notes": "Long-finned domestic male halfmoon form with a streamlined, laterally compressed body, sloping forehead, upturned terminal lips, rear-set dorsal, long anal fin and a 180-degree, capital-D-like caudal envelope. The station body is 46.5 mm from caudal base to snout tip and the caudal adds 18.5 mm.",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.0205, "halfWidth": 0.0022, "dorsalHeight": 0.0042, "ventralDepth": 0.0038, "centerZ": 0.0 },
-      { "id": "peduncle", "x": -0.016, "halfWidth": 0.0030, "dorsalHeight": 0.0055, "ventralDepth": 0.0048, "centerZ": 0.0002 },
-      { "id": "posterior", "x": -0.009, "halfWidth": 0.0040, "dorsalHeight": 0.0074, "ventralDepth": 0.0062, "centerZ": 0.0006 },
-      { "id": "midbody", "x": 0.000, "halfWidth": 0.0048, "dorsalHeight": 0.0093, "ventralDepth": 0.0077, "centerZ": 0.0010 },
-      { "id": "anterior", "x": 0.009, "halfWidth": 0.0052, "dorsalHeight": 0.0100, "ventralDepth": 0.0081, "centerZ": 0.0010 },
-      { "id": "operculum", "x": 0.016, "halfWidth": 0.0049, "dorsalHeight": 0.0092, "ventralDepth": 0.0075, "centerZ": 0.0008 },
-      { "id": "head", "x": 0.021, "halfWidth": 0.0040, "dorsalHeight": 0.0075, "ventralDepth": 0.0064, "centerZ": 0.0006 },
-      { "id": "snout", "x": 0.025, "halfWidth": 0.0023, "dorsalHeight": 0.0043, "ventralDepth": 0.0036, "centerZ": 0.0010 },
-      { "id": "snout-tip", "x": 0.026, "halfWidth": 0.0007, "dorsalHeight": 0.0014, "ventralDepth": 0.0012, "centerZ": 0.0016 }
+      { "id": "caudal-base", "x": -0.0205, "halfWidth": 0.0020, "dorsalHeight": 0.0040, "ventralDepth": 0.0036, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.016, "halfWidth": 0.0027, "dorsalHeight": 0.0053, "ventralDepth": 0.0046, "centerZ": 0.0002 },
+      { "id": "posterior", "x": -0.009, "halfWidth": 0.0035, "dorsalHeight": 0.0071, "ventralDepth": 0.0059, "centerZ": 0.0006 },
+      { "id": "midbody", "x": 0.000, "halfWidth": 0.0042, "dorsalHeight": 0.0090, "ventralDepth": 0.0074, "centerZ": 0.0010 },
+      { "id": "anterior", "x": 0.009, "halfWidth": 0.0044, "dorsalHeight": 0.0096, "ventralDepth": 0.0078, "centerZ": 0.0010 },
+      { "id": "operculum", "x": 0.016, "halfWidth": 0.0042, "dorsalHeight": 0.0088, "ventralDepth": 0.0072, "centerZ": 0.0008 },
+      { "id": "head", "x": 0.0205, "halfWidth": 0.0036, "dorsalHeight": 0.0073, "ventralDepth": 0.0062, "centerZ": 0.0007 },
+      { "id": "forehead", "x": 0.0235, "halfWidth": 0.0030, "dorsalHeight": 0.0055, "ventralDepth": 0.0050, "centerZ": 0.0008 },
+      { "id": "snout", "x": 0.0253, "halfWidth": 0.0022, "dorsalHeight": 0.0037, "ventralDepth": 0.0035, "centerZ": 0.0009 },
+      { "id": "snout-tip", "x": 0.026, "halfWidth": 0.0012, "dorsalHeight": 0.0020, "ventralDepth": 0.0017, "centerZ": 0.0011 }
     ],
     "crossSection": { "dorsalExponent": 1.82, "ventralExponent": 1.78 },
     "sampling": { "ringSegments": 48, "ringCount": 50 },
     "zoneFractions": [0.1, 0.28, 0.55, 0.78],
     "finThickness": { "base": 0.0008, "edge": 0.00008 },
     "fins": [
-      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.014, "xEnd": 0.010, "rows": 5, "columns": 15, "lean": -0.006, "heights": [[0.0, 0.005], [0.22, 0.012], [0.55, 0.015], [0.82, 0.013], [1.0, 0.006]] },
-      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.016, "xEnd": 0.012, "rows": 5, "columns": 16, "lean": -0.002, "heights": [[0.0, 0.006], [0.25, 0.016], [0.60, 0.018], [0.84, 0.014], [1.0, 0.006]] },
-      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 13, "spanTop": 0.017, "spanBottom": 0.017, "length": 0.0185, "fork": 0.0, "rounding": 0.55, "baseFraction": 0.9 },
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.0192, "xEnd": 0.0045, "rows": 5, "columns": 15, "lean": -0.0020, "heights": [[0.0, 0.0080], [0.18, 0.0105], [0.50, 0.0125], [0.78, 0.0095], [1.0, 0.0028]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.0192, "xEnd": 0.0140, "rows": 5, "columns": 17, "lean": -0.0035, "heights": [[0.0, 0.0120], [0.16, 0.0170], [0.42, 0.0180], [0.72, 0.0140], [1.0, 0.0040]] },
+      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 15, "spanTop": 0.0195, "spanBottom": 0.0195, "length": 0.0185, "fork": 0.0, "rounding": 0.18, "baseFraction": 1.0 },
       { "name": "pectoral", "type": "paired", "rootX": 0.013, "rootLength": 0.006, "rootHeight": -0.08, "length": 0.010, "sweepDegrees": 35, "droopDegrees": 12, "spread": 0.8, "taper": 0.5, "power": 0.6, "flare": 0.75, "rayCount": 13, "rows": 4, "columns": 7 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.012, "rootLength": 0.004, "rootHeight": -0.90, "length": 0.020, "sweepDegrees": 68, "droopDegrees": 34, "spread": 0.22, "taper": 0.15, "power": 1.5, "flare": 0.2, "rayCount": 2, "rows": 3, "columns": 5 }
+      { "name": "pelvic", "type": "paired", "rootX": 0.012, "rootLength": 0.0018, "rootHeight": -0.90, "length": 0.014, "sweepDegrees": 70, "droopDegrees": 36, "spread": 0.12, "taper": 0.02, "power": 3.0, "flare": 0.04, "rayCount": 2, "rows": 4, "columns": 5, "distalFilament": { "length": 0.006, "center": 0.5, "width": 0.18, "taperPower": 2.4, "distalPower": 2.0 } }
     ],
     "finAdjacency": [],
-    "eyes": { "x": 0.020, "zFraction": 0.40, "radius": 0.0021, "protrude": 0.25, "aspect": 0.34, "pupilFraction": 0.55 },
-    "mouth": { "zOffset": 0.18, "width": 0.0018, "radius": 0.00028 },
+    "eyes": { "x": 0.0195, "zFraction": 0.38, "radius": 0.0018, "protrude": 0.05, "aspect": 0.28, "pupilFraction": 0.60, "pupilAspect": 0.12, "seat": 1.0, "roughness": 0.20, "coat": 0.25 },
+    "mouth": { "zOffset": 0.35, "width": 0.0014, "radius": 0.00022, "upperLip": { "centerOffset": [0.0014, 0.0002], "cornerOffset": [-0.0007, 0.0005], "widthScale": 0.95, "cornerRadiusScale": 0.52, "centerRadiusScale": 1.10 }, "lowerLip": { "centerOffset": [0.0010, -0.00065], "cornerOffset": [-0.0009, -0.00055], "widthScale": 0.88, "cornerRadiusScale": 0.48, "centerRadiusScale": 0.95 } },
     "gill": { "x": 0.013, "radius": 0.00020, "points": 11, "bulge": 0.028 },
     "adornments": []
   },
@@ -66,8 +67,9 @@
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 12, "azimuthDegrees": -52, "elevationDegrees": 18 },
   "visualDebt": [
-    "Domestic Betta splendens fin shapes vary widely; this source targets a rounded halfmoon-like male rather than every strain.",
-    "The paired pelvic fin filaments are thin fans because the shared fish plan does not yet support isolated soft rays.",
+    "Domestic Betta splendens fin shapes and colour morphs vary widely; this source targets a documented long-finned single-tail halfmoon blue-red male rather than every strain.",
+    "The paired pelvic fins use a narrow source sheet with one optional distal filament ridge. They remain simplified membranes rather than independently modeled soft rays.",
+    "Lip projection is independently authored with the shared optional controls, but the lower-jaw volume remains part of the station body rather than a separate deformable mesh.",
     "Fin rays are normal-map relief on thin membranes rather than separate modeled rays."
   ]
 }

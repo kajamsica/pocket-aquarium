@@ -23,29 +23,40 @@ def paint_body(ctx):
     if ctx.spec.get("textureStyle") != "betta_splendens_male":
         raise ValueError(f"Unsupported freshwater fish textureStyle: {ctx.spec.get('textureStyle')}")
     u, z, v = ctx.U, ctx.ZETA, ctx.V
-    flank = textures.rgba((0.055, 0.34, 0.38), 1.0, ctx.shape)
-    cyan = textures.rgba((0.05, 0.62, 0.66), 1.0, ctx.shape)
-    red = (0.62, 0.035, 0.055)
-    dark = (0.025, 0.045, 0.055)
-    iridescence = fbm(u * 42.0, v * 22.0, octaves=3, seed=31)
-    albedo = textures.mix(flank, cyan, smoothstep(0.44, 0.78, iridescence) * 0.58)
-    albedo = textures.mix(albedo, dark, smoothstep(0.73, 0.95, u) * 0.78)
-    belly = smoothstep(-0.30, -0.90, z)
-    albedo = textures.mix(albedo, (0.18, 0.38, 0.35), belly * 0.45)
-    shoulder = smoothstep(0.58, 0.72, u) * (1.0 - smoothstep(0.80, 0.92, u))
-    albedo = textures.mix(albedo, red, shoulder * smoothstep(-0.35, 0.25, z) * 0.24)
+    navy = textures.rgba((0.018, 0.055, 0.12), 1.0, ctx.shape)
+    cobalt = textures.rgba((0.018, 0.22, 0.52), 1.0, ctx.shape)
+    turquoise = textures.rgba((0.015, 0.38, 0.43), 1.0, ctx.shape)
+    dark = (0.012, 0.025, 0.05)
     height = _scale_relief(ctx, 52.0, 24.0)
-    roughness = 0.30 + 0.13 * height + 0.07 * smoothstep(0.70, 1.0, u)
+
+    # Keep the blue-green sheen coherent along the scale rows. The rejected source
+    # thresholded broad FBM islands, producing camouflage-like pale patches that do
+    # not read as iridescent Betta scales.
+    fine_variation = fbm(u * 76.0, v * 36.0, octaves=2, seed=31)
+    scale_sheen = np.clip(0.72 * height + 0.28 * fine_variation, 0.0, 1.0)
+    albedo = textures.mix(navy, cobalt, 0.48 + 0.32 * scale_sheen)
+    lateral_sheen = (1.0 - np.abs(z)) * smoothstep(0.24, 0.84, scale_sheen)
+    albedo = textures.mix(albedo, turquoise, lateral_sheen * 0.34)
+
+    # A dark dorsum, face and caudal peduncle frame the metallic flank without
+    # inventing a hard body patch not present in the phenotype references.
+    albedo = textures.mix(albedo, dark, smoothstep(0.20, 0.92, z) * 0.44)
+    albedo = textures.mix(albedo, dark, smoothstep(0.76, 0.98, u) * 0.58)
+    albedo = textures.mix(albedo, dark, (1.0 - smoothstep(0.02, 0.16, u)) * 0.24)
+    belly = smoothstep(-0.24, -0.94, z)
+    albedo = textures.mix(albedo, (0.08, 0.18, 0.24), belly * 0.36)
+    roughness = 0.27 + 0.11 * height + 0.08 * smoothstep(0.72, 1.0, u)
     return {"albedo": albedo, "roughness": textures.grey(roughness),
             "normal": textures.normal_from_height(height, 0.95)}
 
 
-def _fin_base(ctx, colour, edge_colour, alpha=0.90):
+def _fin_base(ctx, colour, edge_colour, alpha=0.90, edge_start=0.54):
     ray = paint.rays(ctx.U, 16.0, 4.0)
     albedo = textures.rgba(colour, 1.0, ctx.shape)
-    albedo = textures.mix(albedo, edge_colour, smoothstep(0.70, 1.0, ctx.V) * 0.72)
-    albedo = textures.scale_rgb(albedo, 0.88 + 0.18 * ray)
-    albedo[..., 3] = np.clip(alpha - 0.14 * smoothstep(0.88, 1.0, ctx.V), 0.0, 1.0)
+    distal = smoothstep(edge_start, 0.96, ctx.V)
+    albedo = textures.mix(albedo, edge_colour, distal * 0.88)
+    albedo = textures.scale_rgb(albedo, 0.82 + 0.22 * ray)
+    albedo[..., 3] = np.clip(alpha - 0.18 * smoothstep(0.84, 1.0, ctx.V), 0.0, 1.0)
     return albedo
 
 
@@ -53,7 +64,7 @@ def paint_fin(ctx):
     if ctx.spec.get("textureStyle") != "betta_splendens_male":
         raise ValueError(f"Unsupported freshwater fish textureStyle: {ctx.spec.get('textureStyle')}")
     if ctx.fin == "pectoral":
-        return _fin_base(ctx, (0.10, 0.45, 0.48), (0.55, 0.08, 0.12), 0.72)
+        return _fin_base(ctx, (0.035, 0.22, 0.38), (0.34, 0.035, 0.065), 0.64, 0.72)
     if ctx.fin == "pelvic":
-        return _fin_base(ctx, (0.34, 0.025, 0.045), (0.82, 0.10, 0.12), 0.96)
-    return _fin_base(ctx, (0.10, 0.30, 0.34), (0.82, 0.06, 0.09), 0.92)
+        return _fin_base(ctx, (0.26, 0.012, 0.035), (0.78, 0.035, 0.055), 0.94, 0.38)
+    return _fin_base(ctx, (0.025, 0.12, 0.30), (0.72, 0.018, 0.035), 0.90, 0.52)

@@ -1,39 +1,163 @@
 {
   "schemaVersion": "pocket-aquarium.source-references/v1",
   "speciesId": "betta_splendens_male",
-  "revision": 1,
-  "policy": "References informed taxonomy, adult size, proportions, fin placement and colour strategy only. No pixels were sampled, traced, copied or redistributed.",
+  "revision": 2,
+  "policy": "References informed taxonomy, adult size, fin-form definition, proportions, landmarks and a blue-red colour strategy only. No pixels were sampled, traced, copied or redistributed.",
+  "targetForm": {
+    "name": "long-finned single-tail halfmoon blue-red male",
+    "definition": "A domestic male Betta splendens with a nominal 180-degree halfmoon caudal envelope. Morphology and colour are separately triangulated because domestic strains vary widely and no single photograph supplies orthographic side, front and top views.",
+    "sourceRefs": [
+      "IBC-2022-HALFMOON-STANDARD",
+      "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+      "COMMONS-BETTA-BLUE-RED-HALFMOON"
+    ]
+  },
   "sources": [
     {
       "id": "FISHBASE-BETTA-SPLENDENS",
       "title": "Betta splendens species summary",
       "publisher": "FishBase",
+      "creator": "Rainer Froese and Daniel Pauly (editors)",
       "url": "https://www.fishbase.se/summary/Betta_splendens.html",
       "accessedAt": "2026-09-09",
       "evidenceClass": "authoritative_reference",
       "allowedUse": "facts_and_citation",
-      "license": "CC BY-NC 3.0 (text)"
+      "license": "CC BY-NC 3.0 for FishBase content; individual source citations retain their own rights",
+      "pose": "not_applicable",
+      "evidence": [
+        "6.5 cm maximum total length for male or unsexed fish",
+        "fusiform normal body-shape classification",
+        "species identity and basic meristics"
+      ]
     },
     {
       "id": "OATA-BETTA",
-      "title": "Bettas, Siamese Fighting Fish",
+      "title": "How to care for bettas (Siamese Fighting Fish)",
       "publisher": "Ornamental Aquatic Trade Association",
+      "creator": "Ornamental Aquatic Trade Association",
       "url": "https://ornamentalfish.org/wp-content/uploads/Bettas-Siamese-Fighting-Fish.pdf",
       "accessedAt": "2026-09-09",
       "evidenceClass": "expert_consensus",
-      "allowedUse": "facts_and_citation"
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright retained by OATA; no reuse license stated in the PDF",
+      "pose": "not_applicable",
+      "evidence": [
+        "domestic males have significantly longer finnage than females",
+        "aquarium-trade context for the selected domestic male form"
+      ]
     },
     {
-      "id": "COMMONS-BETTA-SPLENDENS",
-      "title": "Category: Betta splendens",
+      "id": "IBC-2022-HALFMOON-STANDARD",
+      "title": "IBC 2022 Exhibition Standards Book 01 Final, Halfmoon Longfin",
+      "publisher": "International Betta Congress",
+      "creator": "International Betta Congress Judging Board",
+      "url": "https://www.ibcbettas.org/wp-content/uploads/2025/06/IBC-2022-Exhibition-Standards-Book-01-Final.pdf",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright retained by the International Betta Congress; no open reuse license stated",
+      "pose": "diagrammatic_side_and_rear",
+      "evidence": [
+        "long-finned halfmoon is defined by a full 180-degree caudal spread",
+        "overall dorsal, caudal and anal silhouette should be continuous without open spaces",
+        "caudal should read as a capital-D-like halfmoon rather than a rounded delta"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+      "title": "File:Betta halfmoon.jpg",
       "publisher": "Wikimedia Commons",
-      "url": "https://commons.wikimedia.org/wiki/Category:Betta_splendens",
+      "creator": "Eduardoblas",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta_halfmoon.jpg",
       "accessedAt": "2026-09-09",
       "evidenceClass": "open_reference_imagery",
       "allowedUse": "proportion_reference_only",
-      "license": "Per-file open license; nothing copied"
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "pose": "primary_lateral",
+      "evidence": [
+        "long-finned male halfmoon body silhouette",
+        "sloping forehead and upturned terminal lips",
+        "rear-set dorsal and long anal placement",
+        "large continuous caudal envelope",
+        "narrow pointed pelvic fins"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-HALF-MOON-LERDSUWA",
+      "title": "File:Betta Half Moon.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Lerdsuwa",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta_Half_Moon.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "delta_anatomy_reference_only",
+      "license": "Multi-licensed: GFDL 1.2 or later; CC BY-SA 3.0, 2.5, 2.0 or 1.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "pose": "lateral_delta_control",
+      "evidence": [
+        "delta-form head, eye, lip, dorsal-origin, anal-base and pelvic-fin landmarks",
+        "excluded from halfmoon caudal-outline calibration because the file description identifies the photographed fish as delta"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-FACE",
+      "title": "File:Betta face.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Editor at Large",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta_face.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "pose": "primary_front",
+      "evidence": [
+        "front-view head depth and width relationship",
+        "eyes seated into the lateral head contour",
+        "paired pelvic-fin separation and narrowness",
+        "upturned mouth position"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-MALE-TOP",
+      "title": "File:Betta-splendens-male.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Denise Chan",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta-splendens-male.jpg",
+      "sourceUrl": "https://www.flickr.com/photos/denn/3782105452/",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "pose": "primary_top_oblique",
+      "evidence": [
+        "male Betta splendens photographed from above",
+        "streamlined anterior taper and caudal-peduncle width transition",
+        "body-width calibration with medium uncertainty because the pose and camera are not orthographic"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-BLUE-RED-HALFMOON",
+      "title": "File:Silk define as Red also Blue.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Farahalida88",
+      "url": "https://commons.wikimedia.org/wiki/File:Silk_define_as_Red_also_Blue.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "qualitative_colour_and_fin_boundary_reference_only",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "pose": "colour_reference_oblique",
+      "evidence": [
+        "file caption identifies a blue-red halfmoon Betta",
+        "coherent blue body and proximal fin colour rather than broad pale camouflage-like patches",
+        "red distal fin field and translucent ray-supported membrane"
+      ],
+      "uncertainty": "Hue and saturation are camera-, lighting- and individual-dependent. The source supports broad colour placement only, not exact sampled RGB values."
     }
   ],
   "referenceGrade": "B",
-  "referenceGradeRationale": "FishBase supports adult size and basic meristics. Openly licensed lateral views support domestic male proportions, while top and front thickness remain inferred from osphronemid anatomy."
+  "referenceGradeRationale": "Exact lateral, front and top-oblique Betta splendens file pages document the selected landmarks, while an exact blue-red halfmoon page supports qualitative colour placement and the IBC standard defines the caudal envelope. Absolute dimensions still come from FishBase rather than a calibrated specimen. The top and colour photographs are oblique, so width and hue remain explicitly uncertain."
 }
