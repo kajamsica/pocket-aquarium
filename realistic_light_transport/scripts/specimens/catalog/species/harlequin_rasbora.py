@@ -30,19 +30,25 @@ def _require_species(ctx):
 
 
 def _axine(ctx):
-    """Return the soft-edged dark wedge in body texture coordinates.
+    """Return the sharply bounded three-apex axine in body coordinates.
 
     U runs from the caudal base to the snout, and ZETA runs from belly to
-    dorsal ridge. The anterior edge starts high under the dorsal origin and
-    steps posteriorly toward the belly, giving the patch its triangular slope.
+    dorsal ridge. The dorsal and ventral apices sit near their fin origins;
+    both edges converge on a narrow caudal apex instead of filling the entire
+    posterior flank.
     """
     U, Z, V = ctx.U, ctx.ZETA, ctx.V
-    wander = (fbm(Z * 3.0 + 1.7, V * 4.0 + U * 0.4, octaves=2, seed=17) - 0.5) * 0.018
-    boundary = 0.62 - 0.15 * smoothstep(0.72, -0.78, Z) + wander
-    edge = smoothstep(boundary + 0.012, boundary - 0.012, U)
-    tail_taper = smoothstep(0.035, 0.11, U)
-    dorsal_taper = 0.74 + 0.26 * smoothstep(-0.7, 0.82, Z)
-    return np.clip(edge * tail_taper * dorsal_taper, 0.0, 1.0)
+    wander = (fbm(Z * 3.0 + 1.7, V * 4.0 + U * 0.4, octaves=2, seed=17) - 0.5) * 0.008
+    anterior = 0.62 - 0.11 * smoothstep(0.68, -0.62, Z) + wander
+    anterior_edge = smoothstep(anterior + 0.012, anterior - 0.012, U)
+
+    growth = smoothstep(0.055, 0.54, U)
+    dorsal_edge = 0.05 + 0.63 * growth
+    ventral_edge = -0.04 - 0.58 * growth
+    inside_dorsal = 1.0 - smoothstep(dorsal_edge - 0.025, dorsal_edge + 0.025, Z)
+    inside_ventral = smoothstep(ventral_edge - 0.025, ventral_edge + 0.025, Z)
+    caudal_taper = smoothstep(0.025, 0.075, U)
+    return np.clip(anterior_edge * inside_dorsal * inside_ventral * caudal_taper, 0.0, 1.0)
 
 
 def paint_body(ctx):
@@ -56,8 +62,8 @@ def paint_body(ctx):
     sheen = fbm(U * 27.0, V * 13.0, octaves=3, seed=3)
     albedo = textures.scale_rgb(albedo, 0.89 + 0.20 * sheen)
 
-    # A muted halo keeps the wedge edge legible without turning it into a hard decal.
-    halo = paint.band(U - (0.62 - 0.15 * smoothstep(0.72, -0.78, Z)), 0.0, 0.03, 0.018)
+    # A muted halo follows the bounded wedge edge without becoming a second broad patch.
+    halo = np.clip(4.0 * wedge * (1.0 - wedge), 0.0, 1.0)
     albedo = textures.mix(albedo, AXINE_RIM, halo * 0.45)
     albedo = textures.mix(albedo, AXINE, wedge)
 

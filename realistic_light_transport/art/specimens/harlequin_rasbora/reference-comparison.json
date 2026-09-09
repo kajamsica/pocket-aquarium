@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "harlequin_rasbora",
+  "sourceRevision": 2,
+  "referencePacket": "source-references.json",
+  "failedCandidateEvidence": {
+    "path": "/tmp/pocket-aquarium-fw-failed-candidate-jBRv5A/harlequin_rasbora-fable-v1",
+    "candidateId": "fable-v1",
+    "status": "failed_unaccepted",
+    "sourceValidation": "passed",
+    "runtimeValidation": "failed",
+    "runtimeError": "Parity burst 0.25 Pectoral_L: 1.4396 degrees",
+    "priorReportedRuntimeErrorAt28Degrees": 1.6772,
+    "renderReview": "The dark field fills most of the posterior flank and reaches the dorsal and ventral contours; it does not read as a sharply bounded three-apex axine."
+  },
+  "cueComparison": [
+    {
+      "cue": "axine",
+      "reference": "A straight-edged posterior triangle with dorsal and ventral apices near their fin origins and a caudal apex tapering along the peduncle to the caudal-fin base.",
+      "before": "A U-threshold filled nearly the full posterior body depth, with only a weak dorsal multiplier.",
+      "afterSourceLogic": "Independent dorsal and ventral bounds expand from a narrow caudal point to the two anterior apices; the existing sloped anterior edge is retained with reduced organic wander.",
+      "status": "source_repaired_unbuilt"
+    },
+    {
+      "cue": "side-profile silhouette",
+      "reference": "Deep, laterally compressed trunk; steep convex predorsal profile; short peduncle; forked caudal.",
+      "before": "The failed candidate preserves these broad outline cues, but the oversized axine visually obscures the posterior form.",
+      "afterSourceLogic": "Control stations and fins remain unchanged; the bounded axine should expose the dorsal and ventral posterior body contours.",
+      "status": "retained_source_unbuilt"
+    },
+    {
+      "cue": "head and fin morphology",
+      "reference": "Large round eye, short opercular region, small terminal mouth, orange-red dorsal, translucent paired fins and forked caudal.",
+      "before": "The failed candidate broadly follows these cues; they were not named rejection causes.",
+      "afterSourceLogic": "Head stations, eyes, mouth and fin geometry remain unchanged to avoid unrelated scope growth.",
+      "status": "retained_source_unbuilt"
+    },
+    {
+      "cue": "top and body depth",
+      "reference": "FishBase states a compressed cross section; oblique spawning imagery supports narrow width only qualitatively.",
+      "before": "The failed three-view is compatible with lateral compression, but no calibrated top reference exists.",
+      "afterSourceLogic": "Half-width stations remain unchanged; no unsupported top-outline correction is introduced.",
+      "status": "uncertain_retained"
+    }
+  ],
+  "parityPrediction": {
+    "gateDegrees": 0.75,
+    "burstFrames": 24,
+    "envelope": "bell",
+    "pectoralFrequency": 4,
+    "phase": 0,
+    "beforeAmplitudeDegrees": 28,
+    "intermediateAmplitudeDegrees": 24,
+    "afterAmplitudeDegrees": 10,
+    "observations": [
+      { "amplitudeDegrees": 28, "quarterPhaseErrorDegrees": 1.6772, "provenance": "reported pre-reduction failure" },
+      { "amplitudeDegrees": 24, "quarterPhaseErrorDegrees": 1.4396, "provenance": "preserved failed candidate validation-runtime.json" }
+    ],
+    "fit": "The two observed errors are linear in amplitude to within 0.002 degrees; E(A) is approximately 0.05994 times A.",
+    "predictedQuarterPhaseErrorDegrees": 0.5994,
+    "predictedMarginDegrees": 0.1506,
+    "rationale": "Amplitude 12 predicts only 0.7192 degrees and leaves little tolerance below the actual 0.75-degree gate. Amplitude 10 preserves a visible burst stroke while providing a safer source-only margin. Frequency or phase changes lack equally direct two-point evidence."
+  },
+  "uncertainty": "No verified true dorsal/top or sharp frontal original was found. Width and frontal head shape remain constrained only by the authoritative compressed classification plus qualitative oblique views.",
+  "pixelPolicy": "No reference pixels were copied, sampled, traced or redistributed.",
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": false
+  }
+}

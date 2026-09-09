@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.harlequin_rasbora",
   "textureStyle": "harlequin_rasbora",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.1.1",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.05,
@@ -28,7 +28,7 @@
   },
   "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.28, "finReliefStrength": 1.0, "finNormalStrength": 0.36 },
   "morphology": {
-    "notes": "Small, deep-bodied and strongly compressed cyprinid with a steep predorsal profile, terminal mouth and forked caudal. The broad black axine begins near the dorsal and pelvic origins and tapers to the caudal base.",
+    "notes": "Small, deep-bodied and strongly compressed cyprinid with a steep predorsal profile, terminal mouth and forked caudal. The sharply bounded black axine has a dorsal apex below the dorsal-fin origin, a ventral apex above the pelvic-fin origin and a narrow caudal apex along the peduncle.",
     "controlStations": [
       { "id": "caudal-base", "x": -0.017, "halfWidth": 0.0014, "dorsalHeight": 0.0028, "ventralDepth": 0.0025, "centerZ": 0.0 },
       { "id": "peduncle", "x": -0.013, "halfWidth": 0.0020, "dorsalHeight": 0.0040, "ventralDepth": 0.0037, "centerZ": 0.0 },
@@ -61,7 +61,7 @@
   "animation": {
     "idle": { "frames": 90, "loop": true, "axial": [1.2, 2.0, 3.5, 5.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 18, "pectoralFrequency": 3, "median": 1.0, "gill": 1.5, "gillFrequency": 3, "jaw": 1.6, "jawFrequency": 3 },
     "swim": { "frames": 60, "loop": true, "axial": [3.5, 5.5, 9.0, 13.0], "axialFrequency": 3, "axialLag": 0.48, "pectoral": 20, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 1.5, "jawFrequency": 2 },
-    "burst": { "frames": 24, "loop": false, "envelope": "bell", "axial": [7.0, 11.0, 18.0, 27.0], "axialFrequency": 3, "axialLag": 0.48, "pectoral": 28, "pectoralFrequency": 4, "median": 3.0, "gill": 2.5, "gillFrequency": 3, "jaw": 2.5, "jawFrequency": 3 }
+    "burst": { "frames": 24, "loop": false, "envelope": "bell", "axial": [7.0, 11.0, 18.0, 27.0], "axialFrequency": 3, "axialLag": 0.48, "pectoral": 10, "pectoralFrequency": 4, "median": 3.0, "gill": 2.5, "gillFrequency": 3, "jaw": 2.5, "jawFrequency": 3 }
   },
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
