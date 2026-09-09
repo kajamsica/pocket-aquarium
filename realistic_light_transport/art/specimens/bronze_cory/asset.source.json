@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "bronze_cory",
+  "displayName": "Bronze Cory",
+  "scientificLabel": "Corydoras aeneus",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "freshwater",
+  "biome": "freshwater_community",
+  "bodyPlan": "fish",
+  "backend": "catalog.species.bronze_cory",
+  "textureStyle": "bronze_cory",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.075,
+    "kind": "adult_display_reference_length",
+    "note": "FishBase reports a maximum 7.5 cm standard length. The candidate uses a conservative 7.5 cm visible display reference instead of silently inventing a standard-to-total-length conversion; the authoritative measurement scope remains recorded here."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "rest", "locomotion": "swim", "response": "forage" },
+  "palette": {
+    "skin": [0.40, 0.36, 0.23],
+    "fin": [0.56, 0.50, 0.32],
+    "iris": [0.24, 0.15, 0.05],
+    "cue": [0.18, 0.12, 0.07],
+    "adornment": [0.58, 0.52, 0.36]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.52, "finReliefStrength": 1.15, "finNormalStrength": 0.42 },
+  "morphology": {
+    "notes": "Short rounded snout, armored high-backed trunk, nearly flat ventral surface and ventrally oriented mouth. FishBase gives body height 2.5 to 2.9 times in standard length, one dorsal spine, seven dorsal soft rays and 23 to 24 dorsal plus 20 to 22 ventral plates.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.025, "halfWidth": 0.0026, "dorsalHeight": 0.0044, "ventralDepth": 0.0035, "centerZ": 0.0004 },
+      { "id": "peduncle", "x": -0.020, "halfWidth": 0.0035, "dorsalHeight": 0.0060, "ventralDepth": 0.0046, "centerZ": 0.0005 },
+      { "id": "posterior", "x": -0.013, "halfWidth": 0.0053, "dorsalHeight": 0.0105, "ventralDepth": 0.0065, "centerZ": 0.0012 },
+      { "id": "midbody", "x": -0.002, "halfWidth": 0.0072, "dorsalHeight": 0.0144, "ventralDepth": 0.0078, "centerZ": 0.0017 },
+      { "id": "anterior", "x": 0.010, "halfWidth": 0.0083, "dorsalHeight": 0.0155, "ventralDepth": 0.0080, "centerZ": 0.0019 },
+      { "id": "operculum", "x": 0.020, "halfWidth": 0.0085, "dorsalHeight": 0.0138, "ventralDepth": 0.0078, "centerZ": 0.0015 },
+      { "id": "head", "x": 0.029, "halfWidth": 0.0076, "dorsalHeight": 0.0105, "ventralDepth": 0.0069, "centerZ": 0.0008 },
+      { "id": "snout", "x": 0.035, "halfWidth": 0.0052, "dorsalHeight": 0.0062, "ventralDepth": 0.0050, "centerZ": -0.0003 },
+      { "id": "snout-tip", "x": 0.037, "halfWidth": 0.0022, "dorsalHeight": 0.0025, "ventralDepth": 0.0023, "centerZ": -0.0018 }
+    ],
+    "crossSection": { "dorsalExponent": 1.88, "ventralExponent": 2.55 },
+    "sampling": { "ringSegments": 48, "ringCount": 54 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.0009, "edge": 0.00010 },
+    "fins": [
+      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": 0.001, "xEnd": 0.014, "rows": 4, "columns": 9, "lean": -0.003, "heights": [[0.0, 0.004], [0.22, 0.014], [0.62, 0.010], [1.0, 0.0035]] },
+      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.019, "xEnd": -0.011, "rows": 3, "columns": 6, "lean": -0.001, "heights": [[0.0, 0.0015], [0.45, 0.0040], [1.0, 0.0012]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.019, "xEnd": -0.007, "rows": 4, "columns": 8, "lean": -0.002, "heights": [[0.0, 0.0025], [0.30, 0.0055], [0.70, 0.0045], [1.0, 0.0018]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0105, "spanBottom": 0.0100, "length": 0.010, "fork": 0.26, "forkPower": 1.8, "rounding": 0.12, "baseFraction": 0.90 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.016, "rootLength": 0.009, "rootHeight": -0.38, "length": 0.018, "sweepDegrees": 48, "droopDegrees": 30, "spread": 0.68, "taper": 0.32, "power": 0.85, "flare": 0.50, "rayCount": 9, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": -0.002, "rootLength": 0.006, "rootHeight": -0.90, "length": 0.011, "sweepDegrees": 50, "droopDegrees": 42, "spread": 0.30, "taper": 0.36, "power": 0.75, "flare": 0.45, "rayCount": 6, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.025, "zFraction": 0.50, "radius": 0.0027, "protrude": 0.30, "aspect": 0.33, "pupilFraction": 0.55 },
+    "mouth": { "zOffset": -0.70, "width": 0.0024, "radius": 0.00034 },
+    "gill": { "x": 0.015, "radius": 0.00024, "points": 11, "bulge": 0.026 },
+    "adornments": [
+      { "type": "sphere", "name": "barbel_L_outer", "center": [0.038, -0.0032, -0.0032], "radii": [0.002, 0.00025, 0.00025], "bone": "Body" },
+      { "type": "sphere", "name": "barbel_R_outer", "center": [0.038, 0.0032, -0.0032], "radii": [0.002, 0.00025, 0.00025], "bone": "Body" }
+    ]
+  },
+  "rig": { "axialJoints": [0.030, 0.010, -0.002, -0.014, -0.022, -0.028] },
+  "animation": {
+    "rest": { "frames": 90, "loop": true, "axial": [0.6, 1.0, 1.8, 2.8], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 7, "pectoralFrequency": 2, "pelvic": 2.0, "median": 0.6, "gill": 2.2, "gillFrequency": 3, "jaw": 3.0, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.0, 3.2, 5.5, 8.5], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 22, "pectoralFrequency": 3, "pelvic": 4.0, "median": 1.2, "gill": 1.8, "gillFrequency": 2, "jaw": 2.0, "jawFrequency": 2 },
+    "forage": { "frames": 66, "loop": false, "envelope": "hold", "axial": [0.8, 1.3, 2.0, 3.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 15, "pectoralFrequency": 3, "pelvic": 3.0, "median": 0.8, "gill": 4.0, "gillFrequency": 4, "jaw": 7.0, "jawFrequency": 5 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -48, "elevationDegrees": 22 },
+  "visualDebt": [
+    "The shared fish plan approximates the paired lateral bony plate rows with normal relief rather than modeled scutes.",
+    "Barbels are simple slender ellipsoids and do not yet flex independently.",
+    "The pectoral spine is represented by the leading edge of the pectoral fin rather than a separate denticulated ray."
+  ]
+}
