@@ -3,6 +3,286 @@
   "speciesId": "harlequin_rasbora",
   "sourceRevision": 2,
   "referencePacket": "source-references.json",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+      "originalPageUrl": "https://www.fishbase.se/summary/10881",
+      "creator": "FishBase editors",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic, size, and morphology facts with citation; no source imagery copied or redistributed."
+    },
+    {
+      "id": "TAN-2020-TRIGONOSTIGMA",
+      "originalPageUrl": "https://lkcnhm.nus.edu.sg/wp-content/uploads/sites/11/app/uploads/2020/01/RBZ-2020-0058.pdf",
+      "creator": "Tan Heok Hui",
+      "license": "Copyright National University of Singapore",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Morphometric and diagnostic facts with citation; no figure pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-HARLEQUIN-RASBORA-MALE",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Harlequin_Rasbora.jpg",
+      "creator": "Mariusz Dabrowski",
+      "license": "CC BY-SA 3.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual proportion and pattern reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-RASBORA-H",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Rasbora_h.jpg",
+      "creator": "-serwacy01-",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual head, body, and fin reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "INATURALIST-251680901",
+      "originalPageUrl": "https://www.inaturalist.org/photos/251680901",
+      "creator": "Zakqary Roy",
+      "license": "CC BY 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual wild-specimen proportion and pattern reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-BREEDING2",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Trigonostigma_heteromorpha_breeding2.jpg",
+      "creator": "Stefan Maurer",
+      "license": "CC BY-SA 2.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Qualitative oblique cross-section reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "SIGNIFY-MNHN1912-0141",
+      "originalPageUrl": "https://signifynaturalhistory.sg/specimens/MNHN1912-0141_Rasbora_heteromorpha_nontype",
+      "creator": "SIGNIFY, Lee Kong Chian Natural History Museum",
+      "license": "No open reuse license stated; specimen imagery copyright Museum national d'Histoire naturelle",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "View and factual citation only; no image reuse, copying, sampling, tracing, or redistribution."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "COMMONS-RASBORA-H",
+        "INATURALIST-251680901",
+        "SIGNIFY-MNHN1912-0141"
+      ],
+      "notes": "Multiple exact live-fish and voucher pages show a deep, laterally compressed trunk, steep convex predorsal profile, large eye, terminal mouth, fin origins, short peduncle, forked caudal, and bounded posterior axine."
+    },
+    "top": {
+      "status": "inferred",
+      "sourceIds": [
+        "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+        "COMMONS-BREEDING2"
+      ],
+      "uncertainty": "High. No verified true dorsal or orthographic top original was found; FishBase calls the cross section compressed and the spawning oblique supports narrow width only qualitatively.",
+      "notes": "Half-width and dorsal outline are retained from the anatomical source controls rather than calibrated to an unavailable top photograph."
+    },
+    "front": {
+      "status": "inferred",
+      "sourceIds": [
+        "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+        "COMMONS-RASBORA-H",
+        "COMMONS-BREEDING2"
+      ],
+      "uncertainty": "High. No verified sharp orthographic frontal original was found, and the available spawning image is foreshortened and motion blurred.",
+      "notes": "Frontal head thickness and eye protrusion remain conservative inferences from the compressed classification, lateral head views, and qualitative oblique view."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "steep convex snout-to-predorsal profile and deep trunk",
+      "sourceIds": [
+        "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "COMMONS-RASBORA-H",
+        "SIGNIFY-MNHN1912-0141"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.controlStations[*].centerZ"
+      ],
+      "notes": "Station heights and centers place the maximum depth behind the head while preserving the species-specific steep predorsal rise."
+    },
+    {
+      "name": "short caudal peduncle and symmetrical forked caudal",
+      "sourceIds": [
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "INATURALIST-251680901",
+        "SIGNIFY-MNHN1912-0141"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[caudal-base]",
+        "morphology.controlStations[peduncle]",
+        "morphology.fins[caudal].spanTop",
+        "morphology.fins[caudal].spanBottom",
+        "morphology.fins[caudal].length",
+        "morphology.fins[caudal].fork"
+      ],
+      "notes": "Peduncle stations narrow rapidly before equal caudal spans and a fork control form the symmetric tail silhouette."
+    },
+    {
+      "name": "large eye, short opercular region, and small terminal mouth",
+      "sourceIds": [
+        "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "COMMONS-RASBORA-H"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[operculum]",
+        "morphology.controlStations[head]",
+        "morphology.controlStations[snout]",
+        "morphology.eyes",
+        "morphology.mouth"
+      ],
+      "notes": "The head stations, large eye radius, and centered mouth encode the laterally observed head cues."
+    },
+    {
+      "name": "dorsal, pelvic, anal, pectoral, and caudal fin placement",
+      "sourceIds": [
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "COMMONS-RASBORA-H",
+        "INATURALIST-251680901"
+      ],
+      "sourceControls": [
+        "morphology.fins[*].xStart",
+        "morphology.fins[*].xEnd",
+        "morphology.fins[*].rootX",
+        "morphology.fins[*].rootHeight"
+      ],
+      "notes": "Median-fin extents and paired-fin roots map the observed lateral origins without changing unrelated fin geometry."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "maximum adult total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.05, "unit": "meters total length" },
+      "sourceIds": ["FISHBASE-TRIGONOSTIGMA-HETEROMORPHA"],
+      "sourceControls": ["referenceSize.meters", "referenceSize.kind"],
+      "notes": "FishBase reports 5.0 cm maximum total length; the source package records that value directly."
+    },
+    {
+      "name": "body depth at dorsal-fin origin divided by standard length",
+      "status": "observed",
+      "referenceValue": { "value": 0.358, "unit": "mean ratio" },
+      "sourceIds": ["TAN-2020-TRIGONOSTIGMA"],
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth"
+      ],
+      "notes": "Tan reports 32.6 to 38.2 percent of standard length, mean 35.8 percent, for T. heteromorpha. Station heights are the corresponding source controls; the unbuilt candidate still requires visual comparison rather than claiming exact rendered calibration."
+    },
+    {
+      "name": "axine anterior depth divided by body depth",
+      "status": "observed",
+      "referenceValue": { "value": 0.667, "unit": "minimum ratio" },
+      "sourceIds": ["TAN-2020-TRIGONOSTIGMA"],
+      "sourceControls": [
+        "catalog.species.harlequin_rasbora._axine.dorsal_bound",
+        "catalog.species.harlequin_rasbora._axine.ventral_bound"
+      ],
+      "notes": "Tan diagnoses the T. heteromorpha axine as more than two-thirds of body depth at its broad anterior end. Independent dorsal and ventral bounds now preserve that local depth while tapering toward the peduncle rather than filling the whole posterior flank."
+    },
+    {
+      "name": "side-to-side width relative to vertical body depth",
+      "status": "inferred",
+      "referenceValue": { "value": 0.48, "unit": "width/depth ratio" },
+      "sourceIds": [
+        "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+        "COMMONS-BREEDING2"
+      ],
+      "uncertainty": "High. This conservative compressed-body ratio is not a published T. heteromorpha measurement and no orthographic top or front source was found.",
+      "sourceControls": [
+        "morphology.controlStations[*].halfWidth",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.crossSection"
+      ],
+      "notes": "FishBase's compressed classification and the spawning oblique support a narrow section qualitatively, but they do not justify a calibrated observed ratio."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "three-apex posterior axine",
+      "sourceIds": [
+        "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "INATURALIST-251680901"
+      ],
+      "sourceControls": [
+        "catalog.species.harlequin_rasbora._axine",
+        "catalog.species.harlequin_rasbora._body_textures",
+        "palette.cue"
+      ],
+      "notes": "The black field begins with dorsal and ventral apices near their fin origins, has a straight to gently sloped anterior boundary, and narrows to a caudal apex at the caudal-fin base."
+    },
+    {
+      "name": "orange-red body sheen and dark dorsal shading",
+      "sourceIds": [
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "COMMONS-RASBORA-H",
+        "INATURALIST-251680901"
+      ],
+      "sourceControls": [
+        "catalog.species.harlequin_rasbora._body_textures",
+        "palette.skin",
+        "palette.adornment"
+      ],
+      "notes": "Procedural vertical blends keep the warm live-fish body color separate from both the dark dorsum and sharply bounded axine."
+    },
+    {
+      "name": "orange-red dorsal with translucent paired and anal fins",
+      "sourceIds": [
+        "TAN-2020-TRIGONOSTIGMA",
+        "COMMONS-HARLEQUIN-RASBORA-MALE",
+        "COMMONS-RASBORA-H"
+      ],
+      "sourceControls": [
+        "catalog.species.harlequin_rasbora._fin_textures",
+        "palette.fin"
+      ],
+      "notes": "Fin-type branches control opaque warm dorsal and caudal color separately from the more translucent paired and anal fins."
+    }
+  ],
+  "candidateComparison": {
+    "mismatches": [
+      {
+        "area": "failed candidate axine",
+        "note": "The preserved fable-v1 candidate filled most of the posterior body depth. The repaired source replaces that broad U-threshold with independent dorsal and ventral bounds that taper to a narrow caudal point; this source delta is unbuilt, so the old render remains evidence of the former mismatch rather than an open source blocker."
+      },
+      {
+        "area": "failed candidate pectoral parity",
+        "note": "The preserved runtime receipt reports 1.4396 degrees at burst quarter phase with amplitude 24. The repaired source uses amplitude 10, predicting 0.5994 degrees from the two observed near-linear points, below the 0.75-degree gate with 0.1506 degrees margin; this prediction remains unbuilt."
+      },
+      {
+        "area": "top and front calibration",
+        "note": "Exact width and frontal head shape remain uncertain because no verified orthographic top or frontal original was found. Existing compressed-body controls are retained and explicitly treated as inference."
+      },
+      {
+        "area": "fin rays",
+        "note": "Fin rays remain normal-map relief rather than individually modeled structures; this representational simplification was not a rejection cause."
+      }
+    ],
+    "acceptanceBlockers": []
+  },
   "failedCandidateEvidence": {
     "path": "/tmp/pocket-aquarium-fw-failed-candidate-jBRv5A/harlequin_rasbora-fable-v1",
     "candidateId": "fable-v1",
