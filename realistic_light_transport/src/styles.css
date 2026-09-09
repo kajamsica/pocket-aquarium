@@ -2331,6 +2331,27 @@ input:focus-visible {
 
   .pocket-game-hud .pocket-god-mode { padding: 0 9px; }
 
+  .pocket-game-hud .pocket-window-launcher:not([data-collapsed="true"]) {
+    display: grid;
+    width: calc(100vw - max(10px, env(safe-area-inset-left)) - max(10px, env(safe-area-inset-right)));
+    max-width: none;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: hidden;
+  }
+
+  .pocket-game-hud .pocket-window-launcher:not([data-collapsed="true"]) button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 3px;
+    font-size: .48rem;
+    white-space: nowrap;
+  }
+
+  .pocket-reef-app:has(.pocket-window-launcher:not([data-collapsed="true"])) .coral-inventory-tray,
+  .pocket-reef-app:has(.pocket-window-launcher:not([data-collapsed="true"])) .rockscape-editor-launcher {
+    bottom: max(116px, calc(env(safe-area-inset-bottom) + 116px));
+  }
+
   .pocket-game-hud .pocket-window-launcher .pocket-reef-preset {
     color: #05242c;
     border-color: #8fe6f2;
