@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "amano_shrimp",
+  "displayName": "Amano Shrimp",
+  "scientificLabel": "Caridina multidentata",
+  "taxonomyConfidence": "species",
+  "category": "invertebrate",
+  "waterType": "freshwater",
+  "biome": "freshwater_community",
+  "bodyPlan": "decapod_shrimp",
+  "assetVersion": "0.1.0",
+  "referenceGrade": "B",
+  "provisional": true,
+  "candidateOnly": true,
+  "buildStatus": "source_only_unbuilt",
+  "referenceSize": {
+    "meters": 0.05,
+    "kind": "adult_body_length",
+    "note": "Okinawa Ikimono Lab gives a 3 to 5 cm size range. This source uses the upper-range 5 cm adult anchor, measured rostrum-tip to telson-tip along the rest-pose body axis. Long antennae and antennules remain outside this adult body-length measurement. The range and measurement convention must be retained when a candidate builder is authored."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "bottom_walk",
+    "response": "graze"
+  },
+  "palette": {
+    "body": [0.66, 0.63, 0.55],
+    "bodyWarm": [0.62, 0.48, 0.32],
+    "dottedMark": [0.38, 0.18, 0.10],
+    "eye": [0.015, 0.012, 0.01],
+    "appendage": [0.72, 0.69, 0.61],
+    "internalCue": [0.43, 0.26, 0.18]
+  },
+  "materialIntent": {
+    "body": {
+      "mode": "translucent_shell",
+      "alpha": 0.48,
+      "transmission": 0.32,
+      "roughness": 0.38,
+      "note": "Keep a visibly translucent grey-olive body with reddish-brown dotted side markings. Exact optical coefficients are a later light-transport calibration, not a biological measurement."
+    },
+    "appendages": {
+      "mode": "thin_translucent",
+      "alpha": 0.32,
+      "transmission": 0.45
+    }
+  },
+  "morphology": {
+    "notes": "Slender atyid caridean with a smooth cephalothorax, six abdominal somites, tapering telson and paired uropods. The rostrum carries a dorsal crest over the orbit and toothed dorsal and ventral margins. Preserve the small first and second chelae, five pairs of walking legs, five pairs of pleopods, stalked eyes, antennules and long fine antennae. The body silhouette should read as a small, transparent, surface-grazing freshwater shrimp rather than a banded cleaner shrimp or a stout snapping shrimp.",
+    "body": {
+      "axis": "+X",
+      "symmetryPlane": "y=0",
+      "carapaceFractionOfBody": 0.3,
+      "abdomenSomites": 6,
+      "telson": "tapered, longer than the sixth somite",
+      "uropods": "paired lateral blades with a visible diaeresis"
+    },
+    "rostrum": {
+      "profile": "short-to-medium, crest over the orbital region, anterior portion nearly horizontal",
+      "dorsalTeeth": "retain as a visible serrated cue; exact count is source-dependent and must not be invented in a first mesh",
+      "ventralTeeth": "retain as a visible serrated cue; exact count is source-dependent and must not be invented in a first mesh"
+    },
+    "appendages": {
+      "eyes": "small black eyes on short stalks",
+      "antennules": "paired segmented peduncles with fine flagella",
+      "antennae": {
+        "count": 2,
+        "intent": "long, fine, translucent sensory filaments",
+        "limitation": "antennae may arc laterally or upward for readability but must not change the adult body-length measurement"
+      },
+      "pereiopods": {
+        "pairs": 5,
+        "pairOne": "small chelae",
+        "pairTwo": "small, brush-like chelae",
+        "pairsThreeToFive": "longer, stout walking legs with pointed dactyli and restrained setal suggestion"
+      },
+      "pleopods": "five paired abdominal paddles, kept subordinate to the transparent body silhouette",
+      "maxilliped": "forward-facing mouthpart group, simplified only if needed for the small scale"
+    },
+    "markings": {
+      "body": "semi-transparent grey to olive base with broken reddish-brown dots or short marks along the flanks",
+      "variation": "mark density and contrast remain candidate parameters, not fixed sexual dimorphism claims",
+      "visualPriority": "transparency and dotted flanks must survive at aquarium viewing distance"
+    }
+  },
+  "locomotionIntent": {
+    "modes": ["bottom_walk", "rock_or_plant_surface_graze", "short_repositioning_hop"],
+    "contact": "walking legs should establish stable bottom or hard-surface contact; no free-water fish swim cycle",
+    "behavior": "slow nocturnal grazing posture with small antenna sweeps and asynchronous walking-leg phases",
+    "runtimeStatus": "intent_only_unbuilt"
+  },
+  "animationIntent": {
+    "rest": "subtle body settling, antenna search and low-amplitude pleopod motion",
+    "bottom_walk": "metachronal walking-leg phases with abdomen held close to the substrate and antennae probing ahead",
+    "graze": "front appendage and mouthpart activity while the walking legs keep surface contact",
+    "constraints": [
+      "Do not use the cleaner shrimp hover/clean vocabulary as the Amano response contract.",
+      "Do not add a snapping-claw or fish-like free-swim cycle.",
+      "Keep appendage motion small enough that translucent limb intersections remain hidden at candidate scale."
+    ]
+  },
+  "validationIntent": {
+    "triangleBudget": [3500, 16000],
+    "requiredBeforeBuild": [
+      "adult body-length measurement is rostrum-tip to telson-tip and excludes antennae",
+      "bilateral symmetry and six-somite abdomen are preserved",
+      "translucent dotted body remains legible without opaque banding",
+      "bottom and hard-surface contact poses remain stable"
+    ]
+  },
+  "schemaGap": {
+    "status": "blocking_for_geometry",
+    "reason": "The current catalog has no shared translucent atyid shrimp body plan. Cleaner Shrimp and Pistol Shrimp are species-local backends with hardcoded colour, appendage and chela assumptions; reusing either would produce the wrong animal.",
+    "smallest_future_owner": "a dedicated amano_shrimp species author module, or a separately reviewed shared atyid plan only after a second freshwater atyid requires it",
+    "requiredProof": "A future candidate must show source-only geometry and animation validation before any runtime promotion."
+  },
+  "visualDebt": [
+    "No geometry, source.blend, GLB, candidate manifest or runtime registration is included in this source-only package.",
+    "Rostral teeth, fine setae, pleopod setules and the uropodal diaeresis are identification cues to be validated during a later candidate build.",
+    "Optical transmission, internal organs and exact dot density require later reference review and light-transport calibration.",
+    "Freshwater bottom and hard-surface locomotion are an intent contract only; runtime/store/workbench behavior is intentionally untouched."
+  ]
+}
