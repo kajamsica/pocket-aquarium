@@ -210,7 +210,7 @@ export function createPocketTankRepository({
     if (reservedId !== undefined && (!isTankId(reservedId) || reservedId === LEGACY_TANK_ID)) {
       throw new Error('Reserved tank ID must be lowercase letters, numbers, and hyphens')
     }
-    const id = index.tanks.length === 0 ? LEGACY_TANK_ID : nextId(reservedId)
+    const id = reservedId ?? (index.tanks.length === 0 ? LEGACY_TANK_ID : nextId())
     if (index.tanks.some((tank) => tank.id === id)) throw new Error(`Tank ${id} already exists`)
     writeState(id, state, readStoredTank(id))
     const next: PocketTankIndex = {
