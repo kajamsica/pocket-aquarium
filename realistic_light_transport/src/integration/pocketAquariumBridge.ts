@@ -226,7 +226,7 @@ interface CatalogCoral {
   defaultVariantId: string
   variants: readonly Readonly<{ id: string; displayName: string }>[]
 }
-interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number; form?: 'rectangular' | 'cylinder' }
+interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number; form?: 'rectangular' | 'cylinder'; devOnly?: boolean; waterTypes?: readonly ('fresh' | 'salt')[] }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number; noriCapacity?: number }
 interface CatalogHabitat { id: string; name: string; waterType: 'fresh' | 'salt'; blurb: string; params: string[] }
@@ -513,6 +513,38 @@ export function createPocketReefShowcase(): PocketState {
   send({ type: act.WATER_TEST })  // the store needs a peak-light PAR reading on file before it sells coral
   runtime.stepDays(state, 0.02)
   send({ type: act.WATER_TEST })
+  return state
+}
+
+export const DEV_FRESHWATER_50_TANK_ID = 'dev-freshwater-50' as const
+
+/** A deterministic, empty freshwater fixture for development and visual inspection. */
+export function createPocketFreshwaterDevTank(nowMs?: number): PocketState {
+  const state = runtime.createState({ habitat: 'amazon', credits: 10_000, seed: 0xf35a189,
+    ...(nowMs === undefined ? {} : { now: nowMs }) })
+  const send = (action: PocketAction) => runtime.dispatch(state, action)
+  state.tier = 'fresh189'
+  send({ type: runtime.ACTIONS.SETUP_FILL })
+  Object.entries(runtime.DATA.EQUIPMENT).filter(([, item]) => !item.reefOnly).forEach(([category, item]) => {
+    const level = item.levels.filter((candidate) => !item.levelWaterTypes?.[candidate.id]
+      || item.levelWaterTypes[candidate.id].includes('fresh')).at(-1)
+    if (level && state.equipment[category] !== level.id)
+      send({ type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id })
+  })
+  send({ type: runtime.ACTIONS.SETUP_LIFE_SUPPORT, on: true })
+  Object.assign(state.water, { levelL: 189, tempC: 26, pH: 6.4, ammonia: 0, nitrite: 0,
+    nitrate: 10, oxygen: 7.2, hardness: 3, tannin: 0.6, salinity: 0, alkalinity: 0,
+    calcium: 0, magnesium: 0, phosphate: 0 })
+  Object.assign(state.cycle, { stage: 'Mature biome', aob: 1, nob: 1, ammoniaSource: false,
+    inoculated: true, lifeSupport: true, filled: true, validationDays: 1 })
+  state.time.days = 30
+  state.succession.age = 30
+  state.livestock = []
+  state.corals = []
+  state.clutches = []
+  state.food = []
+  state.selection = null
+  state.nextId = 1
   return state
 }
 
@@ -927,7 +959,8 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
           problemSolved: copy?.problem, durableEffect: copy?.effect, operatingResource: copy?.resource })
     })
   })
-  const tiers = runtime.DATA.TIER_ORDER.filter((id) => id !== state.tier).map((id) => {
+  const tiers = runtime.DATA.TIER_ORDER.filter((id) => id !== state.tier
+    && !runtime.DATA.TIERS[id]?.devOnly).map((id) => {
     const item = runtime.DATA.TIERS[id]
     return offer('tier', 'tank', id, item.name, item.price, { kind: 'tier', id },
       { type: runtime.ACTIONS.PURCHASE_TIER, tier: id }, { levelIndex: runtime.DATA.TIER_ORDER.indexOf(id),

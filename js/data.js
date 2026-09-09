@@ -132,6 +132,7 @@
   var TIERS = {
     nano20:   { id: "nano20",   name: "20 gal long (75 L)",  volumeL: 75,  footprintCm2: 1800,  biofilterBase: 1.0, hardscapeSlots: 2, bioloadCap: 10, price: 0 },
     mid151:   { id: "mid151",   name: "40 gal (151 L)",      volumeL: 151, footprintCm2: 3600,  biofilterBase: 1.6, hardscapeSlots: 4, bioloadCap: 22, price: 220 },
+    fresh189: { id: "fresh189", name: "50 gal freshwater developer tank (189 L)", volumeL: 189, footprintCm2: 4500, biofilterBase: 2.0, hardscapeSlots: 5, bioloadCap: 30, price: 0, progressionIndex: 1.5, waterTypes: ["fresh"], devOnly: true },
     large284: { id: "large284", name: "75 gal (284 L)",      volumeL: 284, footprintCm2: 6000,  biofilterBase: 2.4, hardscapeSlots: 6, bioloadCap: 42, price: 480 },
     xl757:    { id: "xl757",    name: "200 gal (757 L)",     volumeL: 757, footprintCm2: 12000, biofilterBase: 4.0, hardscapeSlots: 10, bioloadCap: 120, price: 1200 },
     xxl946:   { id: "xxl946",   name: "250 gal (946 L)", volumeL: 946, footprintCm2: 15000, biofilterBase: 5.0, hardscapeSlots: 12, bioloadCap: 150, price: 1800, form: "rectangular" },
@@ -890,7 +891,10 @@
   /* ------------------------------------------------------------------ *
    * Catalog helpers (pure).
    * ------------------------------------------------------------------ */
-  function tierIndex(id) { var i = TIER_ORDER.indexOf(id); return i < 0 ? 0 : i; }
+  function tierIndex(id) {
+    var i = TIER_ORDER.indexOf(id), tier = TIERS[id];
+    return i >= 0 ? i : (tier && isFinite(tier.progressionIndex) ? tier.progressionIndex : 0);
+  }
   function equipLevel(category, levelId) {
     var cat = EQUIPMENT[category]; if (!cat) return null;
     for (var i = 0; i < cat.levels.length; i++) if (cat.levels[i].id === levelId) return cat.levels[i];
@@ -1283,6 +1287,10 @@
     if (kind === "tier") {
       var t = TIERS[request.id];
       if (!t) { reasons.push("Unknown tank tier."); return { ok: false, reasons: reasons }; }
+      var tierWater = HABITATS[state.habitat] && HABITATS[state.habitat].waterType;
+      if (t.devOnly) reasons.push("That tank is reserved for developer fixtures.");
+      if (t.waterTypes && tierWater && t.waterTypes.indexOf(tierWater) < 0)
+        reasons.push("That tank is not available for this water type.");
       if (tierIndex(request.id) <= tierIndex(currentTierId(state)))
         reasons.push("That tank is not larger than your current tank.");
       if ((state.credits || 0) < t.price)
