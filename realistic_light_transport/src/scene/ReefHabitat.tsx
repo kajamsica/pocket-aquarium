@@ -23,6 +23,12 @@ import { createLiveRockGeometry } from './liveRockGeometry'
 import { materializeReefRocks, REEF_ROCKS as ROCKS, resolveReefPelletPosition, seededUnit,
   type ReefRock } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
+import { FreshwaterHabitat } from './FreshwaterHabitat'
+import {
+  resolveHabitatVisualSettings,
+  snapshotTannin,
+  type AquariumVisualProfile,
+} from './habitatVisualProfile'
 import { tankDragInProgress, tankPinchInProgress } from './tankGestures'
 
 const TANK_HALF_WIDTH = 2.76
@@ -121,6 +127,7 @@ export interface FlowFieldSource {
 
 interface ReefHabitatProps extends ReefSceneProps {
   readonly flowField: FlowFieldSource
+  readonly visualProfile?: AquariumVisualProfile
   readonly rockscape?: readonly PocketRockView[]
   readonly sand: PocketSandView
   readonly rockscapeEditing?: boolean
@@ -233,24 +240,25 @@ function constrainScenePellet(pellet: THREE.Vector3, pelletId: number, waterSurf
 
 type FilmKind = 'diatom' | 'green' | 'cyano'
 
-export function sandVisualPlan(sand: PocketSandView) {
+export function sandVisualPlan(sand: PocketSandView, cleanBaseColor = '#d6c8a1') {
   const detritus = THREE.MathUtils.clamp(sand.detritus, 0, 1)
   const film = THREE.MathUtils.clamp(sand.surfaceFilm, 0, 1)
   const cleanliness = THREE.MathUtils.clamp(sand.cleanliness, 0, 1)
   return {
     detritusInstances: Math.round(detritus * 120),
     filmInstances: Math.round(film * 42),
-    baseColor: `#${new THREE.Color('#d6c8a1').lerp(new THREE.Color('#81704f'), (1 - cleanliness) * .42).getHexString()}`,
+    baseColor: `#${new THREE.Color(cleanBaseColor).lerp(new THREE.Color('#81704f'), (1 - cleanliness) * .42).getHexString()}`,
   }
 }
 
-function SandBed({ material, sand }: {
+function SandBed({ material, sand, cleanBaseColor }: {
   readonly material: ProceduralMaterialTextures
   readonly sand: PocketSandView
+  readonly cleanBaseColor?: string
 }) {
   const moundRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const plan = sandVisualPlan(sand)
+  const plan = sandVisualPlan(sand, cleanBaseColor)
 
   useLayoutEffect(() => {
     const mound = moundRef.current
@@ -305,11 +313,14 @@ function SandBed({ material, sand }: {
   )
 }
 
-function SandCondition({ sand }: { readonly sand: PocketSandView }) {
+function SandCondition({ sand, cleanBaseColor }: {
+  readonly sand: PocketSandView
+  readonly cleanBaseColor?: string
+}) {
   const detritusRef = useRef<THREE.InstancedMesh>(null)
   const filmRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const plan = sandVisualPlan(sand)
+  const plan = sandVisualPlan(sand, cleanBaseColor)
 
   useLayoutEffect(() => {
     const detritus = detritusRef.current
@@ -904,8 +915,9 @@ function AtoHardware({ equipment, waterSurfaceY }: {
 /** Restrained procedural cues for installed, non-default filtration, circulation, skimmer,
  *  refugium, and upgraded LED fixtures. Decorative only — none participate in collision, and
  *  the feeder/ATO keep their own dedicated hardware. */
-function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
+function InstalledEquipmentHardware({ equipment, waterSurfaceY, visualProfile = 'reef' }: {
   equipment: ReefSceneProps['snapshot']['equipment']; waterSurfaceY: number
+  visualProfile?: AquariumVisualProfile
 }) {
   const rimY = waterSurfaceY + 0.12
   const filter = equipment.filterLevel
@@ -936,7 +948,7 @@ function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
         </mesh>
       ) : null}
       {/* Protein skimmer column on the back rim. */}
-      {skimmer && skimmer !== 'none' ? (
+      {visualProfile !== 'freshwater' && skimmer && skimmer !== 'none' ? (
         <group position={[-1.7, rimY - 0.1, -TANK_HALF_DEPTH + 0.1]}>
           <mesh castShadow>
             <cylinderGeometry args={[0.12, 0.15, skimmer === 'cone' ? 0.72 : 0.5, 16]} />
@@ -949,7 +961,7 @@ function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
         </group>
       ) : null}
       {/* Refugium macroalgae clump beside the tank. */}
-      {refugium && refugium !== 'none' ? (
+      {visualProfile !== 'freshwater' && refugium && refugium !== 'none' ? (
         <group position={[-TANK_HALF_WIDTH - 0.5, SAND_Y + 0.28, -TANK_HALF_DEPTH + 0.5]}>
           <mesh castShadow>
             <boxGeometry args={[0.5, 0.56, 0.4]} />
@@ -980,25 +992,28 @@ function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
 
 export function ReefHabitat({ snapshot, flowField, rockscape, sand, rockscapeEditing, selectedRockId,
   onRockSelect, onRockTransformPreview, placedCorals, activeCoral, previewCandidate,
-  onPlacementCandidate }: ReefHabitatProps) {
+  onPlacementCandidate, visualProfile = 'reef' }: ReefHabitatProps) {
   const { ecology, equipment } = snapshot
+  const isFreshwater = visualProfile === 'freshwater'
+  const visualSettings = resolveHabitatVisualSettings(visualProfile, snapshotTannin(snapshot))
   const habitatRef = useRef<THREE.Group>(null)
   const rockTransformKey = (rockscape ?? FALLBACK_LIVE_ROCKSCAPE).map((rock) =>
     `${rock.id}:${rock.position.join(',')}:${rock.rotation.join(',')}:${rock.scale.join(',')}`).join('|')
-  const sceneRocks = useMemo(() => materializeReefRocks(rockscape ?? FALLBACK_LIVE_ROCKSCAPE),
-    [rockTransformKey])
+  const sceneRocks = useMemo(() => isFreshwater
+    ? [] : materializeReefRocks(rockscape ?? FALLBACK_LIVE_ROCKSCAPE),
+  [isFreshwater, rockTransformKey])
   const placementRaycaster = useMemo(() => new THREE.Raycaster(), [])
   const waterSurfaceY = waterSurfaceFor(snapshot.tank)
   const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / snapshot.tank.widthMeters
   const placementSpace = useMemo(() => ({ halfWidth: TANK_HALF_WIDTH, halfDepth: TANK_HALF_DEPTH,
     floorY: SAND_Y, waterlineY: waterSurfaceY }), [waterSurfaceY])
-  const activePlan = activeCoral
+  const activePlan = !isFreshwater && activeCoral
     ? resolveCoralRenderPlan(activeCoral.speciesId, activeCoral.variantId, sceneUnitsPerMeter, 'preview')
     : undefined
-  const occupied = useMemo(() => placedCorals.flatMap((coral) => {
+  const occupied = useMemo(() => isFreshwater ? [] : placedCorals.flatMap((coral) => {
     const plan = resolveCoralRenderPlan(coral.speciesId, coral.variantId, sceneUnitsPerMeter, 'locked')
     return coral.placement && plan ? [{ placement: coral.placement, radius: plan.targetWidth * .45 }] : []
-  }), [placedCorals, sceneUnitsPerMeter])
+  }), [isFreshwater, placedCorals, sceneUnitsPerMeter])
   const updatePlacementCandidate = useCallback((event: ThreeEvent<PointerEvent | MouseEvent>,
     intent: 'follow' | 'freeze') => {
     if (!activeCoral || !activePlan || !habitatRef.current) return
@@ -1088,22 +1103,22 @@ export function ReefHabitat({ snapshot, flowField, rockscape, sand, rockscapeEdi
   }, [materials])
 
   return (
-    <group ref={habitatRef} name="living-reef-habitat">
-      <SandBed material={materials.sand} sand={sand} />
-      <SandCondition sand={sand} />
+    <group ref={habitatRef} name={isFreshwater ? 'living-freshwater-habitat' : 'living-reef-habitat'}>
+      <SandBed material={materials.sand} sand={sand} cleanBaseColor={visualSettings.substrate} />
+      <SandCondition sand={sand} cleanBaseColor={visualSettings.substrate} />
       <BenthicFilm kind="diatom" coverage={ecology.diatomCoverage} flowPower={equipment.flowPower} />
       <BenthicFilm kind="cyano" coverage={ecology.cyanobacteriaCoverage} flowPower={equipment.flowPower} />
-      <Rockwork material={materials.rock} rockscape={rockscape} editing={rockscapeEditing}
+      {!isFreshwater ? <Rockwork material={materials.rock} rockscape={rockscape} editing={rockscapeEditing}
         selectedRockId={selectedRockId} onRockSelect={onRockSelect}
-        onRockTransformPreview={onRockTransformPreview} />
-      <BenthicFilm kind="green" coverage={ecology.greenAlgaeCoverage} flowPower={equipment.flowPower}
-        rocks={sceneRocks} />
-      {placedCorals.map((coral) => coral.placement ? <CoralPlacement key={coral.id}
+        onRockTransformPreview={onRockTransformPreview} /> : <FreshwaterHabitat />}
+      {!isFreshwater ? <BenthicFilm kind="green" coverage={ecology.greenAlgaeCoverage}
+        flowPower={equipment.flowPower} rocks={sceneRocks} /> : null}
+      {!isFreshwater && placedCorals.map((coral) => coral.placement ? <CoralPlacement key={coral.id}
         speciesId={coral.speciesId} variantId={coral.variantId} individualId={coral.id}
         placement={coral.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
         mode="locked" lifecycle={{ health: coral.health, tissue: coral.tissue, extension: coral.extension,
           polyps: coral.polyps, growth: coral.growth }} /> : null)}
-      {activeCoral && previewCandidate ? <CoralPlacement speciesId={activeCoral.speciesId}
+      {!isFreshwater && activeCoral && previewCandidate ? <CoralPlacement speciesId={activeCoral.speciesId}
         variantId={activeCoral.variantId} individualId={activeCoral.id}
         placement={previewCandidate.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
         mode="preview" valid={previewCandidate.valid} active /> : null}
@@ -1114,10 +1129,11 @@ export function ReefHabitat({ snapshot, flowField, rockscape, sand, rockscapeEdi
       <FoodPellets pellets={scenePellets} />
       <AutoFeederHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       <AtoHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
-      <InstalledEquipmentHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
-      {!activeCoral && !rockscapeEditing
+      <InstalledEquipmentHardware equipment={equipment} waterSurfaceY={waterSurfaceY}
+        visualProfile={visualProfile} />
+      {(!activeCoral || isFreshwater) && (!rockscapeEditing || isFreshwater)
         && <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />}
-      {activeCoral && <mesh name="coral-placement-input" position={[0, (SAND_Y + waterSurfaceY) / 2,
+      {!isFreshwater && activeCoral && <mesh name="coral-placement-input" position={[0, (SAND_Y + waterSurfaceY) / 2,
         TANK_HALF_DEPTH + .035]} onPointerMove={(event) => updatePlacementCandidate(event, 'follow')}
         onClick={(event) => updatePlacementCandidate(event, 'freeze')} renderOrder={100}>
         <planeGeometry args={[TANK_HALF_WIDTH * 2, waterSurfaceY - SAND_Y]} />

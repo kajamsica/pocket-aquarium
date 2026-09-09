@@ -50,8 +50,8 @@ export interface ReefCoralColony {
   readonly growth: number
 }
 
-export interface ReefSnapshot {
-  readonly namespace: typeof ACTIVE_AQUARIUM_NAMESPACE
+export interface AquariumSnapshot {
+  readonly namespace: AquariumNamespace
   readonly clock: {
     readonly elapsedHours: number
     readonly day: number
@@ -83,6 +83,8 @@ export interface ReefSnapshot {
     readonly temperatureCelsius: number
     readonly ph: number
     readonly alkalinityDkh: number
+    /** Normalized freshwater tannin index. Omitted by legacy or marine-only producers. */
+    readonly tannin?: number
   }
   readonly equipment: {
     readonly atoEnabled: boolean
@@ -139,6 +141,10 @@ export interface ReefSnapshot {
     readonly feedPulse: number
   }
 }
+
+/** Compatibility name for the original scene/HUD contract while freshwater joins the same
+ * simulation and rendering surface. */
+export type ReefSnapshot = AquariumSnapshot
 
 export type ReefAction =
   | { readonly type: 'set_speed'; readonly speed: number }

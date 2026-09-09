@@ -386,6 +386,17 @@ function AquariumApp() {
     rockscapeBase.current = null
     setSelectedRockId(null)
   }, [dispatch, rockscapeDraft])
+  const startOver = useCallback(() => {
+    const next = createPocketNewGame()
+    pocketStateRef.current = next
+    persistPocketState(next)
+    setActiveCoralId(null)
+    setCoralDraft(null)
+    rockscapeBase.current = null
+    setRockscapeDraft(null)
+    setSelectedRockId(null)
+    setPocketState(next)
+  }, [])
   const candidateStatus = previewCandidate ? {
     valid: previewCandidate.valid,
     frozen: coralDraft?.phase === 'frozen',
@@ -394,8 +405,28 @@ function AquariumApp() {
       : `Choose another position (${previewCandidate.reason ?? 'invalid surface'}).`,
   } : null
 
+  if (!pocketState.habitat) return <main className="reef-app pocket-reef-app pocket-habitat-setup">
+    <section className="pocket-habitat-chooser" aria-labelledby="pocket-habitat-title">
+      <p>Build a living aquarium</p>
+      <h1 id="pocket-habitat-title">Choose your water</h1>
+      <span>The same physical tank simulation supports two distinct ecosystems. Your choice sets the water, cycle, equipment, and residents.</span>
+      <div className="pocket-habitat-options">
+        <button type="button" onClick={() => dispatch({ type: pocketActions.CHOOSE_HABITAT, habitat: 'reef' })}>
+          <small>Saltwater</small><strong>Reef lagoon</strong>
+          <span>Live rock, coral, marine fish, salinity, and reef lighting.</span>
+        </button>
+        <button type="button" onClick={() => dispatch({ type: pocketActions.CHOOSE_HABITAT, habitat: 'amazon' })}>
+          <small>Freshwater</small><strong>Amazonian margin</strong>
+          <span>Soft tannin water, planted cover, schooling fish, and freshwater filtration.</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  const reef = view.reefSnapshot.namespace === 'marine_reef'
+
   return (
-    <main className="reef-app pocket-reef-app">
+    <main className="reef-app pocket-reef-app" data-aquarium={view.reefSnapshot.namespace}>
       <FeedingProvider value={feeding}>
         {/* Root `view.selection` stays the single selection authority: the tank marks whichever
           * resident it names, whether the tank or the Residents roster made that selection. */}
@@ -428,14 +459,15 @@ function AquariumApp() {
         godMode={godMode}
         showcaseCatalog={ACCEPTED_SHOWCASE_CATALOG}
         hoveredSpecimen={hoveredSpecimen}
+        onStartOver={startOver}
       />
-      {rockscapeDraft ? null : <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
+      {!reef || rockscapeDraft ? null : <CoralInventoryTray inventory={view.coralInventory} activeId={activeCoralId}
         candidate={candidateStatus} onArm={armCoral} onPointerArm={(coralId) => armCoral(coralId)}
         onCancel={cancelCoral} onLock={lockCoral} />}
-      <RockscapeEditor active={rockscapeDraft !== null} rocks={rockscapeDraft ?? view.rockscape}
+      {reef ? <RockscapeEditor active={rockscapeDraft !== null} rocks={rockscapeDraft ?? view.rockscape}
         occupiedRockIds={occupiedRockIds}
         selectedRockId={selectedRockId} onBegin={beginRockscape} onSelect={setSelectedRockId}
-        onPatch={updateRockscapeDraft} onSave={lockRockscape} onCancel={cancelRockscape} />
+        onPatch={updateRockscapeDraft} onSave={lockRockscape} onCancel={cancelRockscape} /> : null}
     </main>
   )
 }

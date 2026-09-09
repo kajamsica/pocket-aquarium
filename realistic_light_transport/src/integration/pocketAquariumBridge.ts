@@ -3,7 +3,7 @@ import '../../../js/data.js'
 import '../../../js/sim.js'
 import '../../../js/sessionGuide.js'
 
-import type { LifecyclePhase, ReefSnapshot } from '../contracts'
+import type { AquariumNamespace, LifecyclePhase, ReefSnapshot } from '../contracts'
 import { sampleSpectralTransmittance } from '../scene/materials/spectralTransport'
 import { ACCEPTED_SPECIES_IDS, specimenAssetFor } from '../scene/specimens/assetRegistry'
 
@@ -73,6 +73,7 @@ interface PocketWater {
   magnesium: number
   par: number
   flow: number
+  tannin: number
 }
 
 interface PocketAnimal {
@@ -228,6 +229,7 @@ interface CatalogCoral {
 interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number; form?: 'rectangular' | 'cylinder' }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number; noriCapacity?: number }
+interface CatalogHabitat { id: string; name: string; waterType: 'fresh' | 'salt'; blurb: string; params: string[] }
 interface Validation { ok: boolean; reasons: string[]; conflicts?: PocketPurchaseConflict[] }
 
 /** One structured compatibility risk from the root's `livestockConflicts`, grouped per existing
@@ -255,8 +257,9 @@ interface PocketRuntime {
     CORALS: Record<string, CatalogCoral>
     TIERS: Record<string, CatalogTier>
     TIER_ORDER: string[]
-    HABITATS: Record<string, { params: string[] }>
-    EQUIPMENT: Record<string, { label: string; levels: EquipmentLevel[] }>
+    HABITATS: Record<string, CatalogHabitat>
+    EQUIPMENT: Record<string, { label: string; reefOnly?: boolean;
+      levelWaterTypes?: Record<string, readonly ('fresh' | 'salt')[]>; levels: EquipmentLevel[] }>
     KEEPER_RANKS: CatalogKeeperRank[]
     residentNameMaxLength: number
     resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
@@ -454,7 +457,7 @@ export const residentNameMaxLength = runtime.DATA.residentNameMaxLength
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value))
 const clone = (state: PocketState): PocketState => structuredClone(state)
 
-function preparePocketReef(state: PocketState) {
+function preparePocketHabitat(state: PocketState) {
   const act = runtime.ACTIONS
   const send = (action: PocketAction) => runtime.dispatch(state, action)
   send({ type: act.PURCHASE_TIER, tier: 'mid151' })
@@ -468,13 +471,13 @@ function preparePocketReef(state: PocketState) {
   send({ type: act.INOCULATE_BACTERIA })
   runtime.stepDays(state, 21.5)
   send({ type: act.ADD_AMMONIA_SOURCE, on: false })
-  send({ type: act.SEED_MICROFAUNA, culture: 'pods' })
+  send({ type: act.SEED_MICROFAUNA, culture: state.habitat === 'reef' ? 'pods' : 'infusoria' })
   return send
 }
 
 export function createPocketReefShowcase(): PocketState {
   const state = runtime.createState({ habitat: 'reef', credits: 3000, seed: 0x51f15e })
-  const send = preparePocketReef(state)
+  const send = preparePocketHabitat(state)
   const act = runtime.ACTIONS
   send({ type: act.PURCHASE_TIER, tier: 'xl757' })
   const acceptedDefaults = [...ACCEPTED_SPECIES_IDS].sort().map((speciesId) => {
@@ -514,7 +517,7 @@ export function createPocketReefShowcase(): PocketState {
 }
 
 export function createPocketNewGame(): PocketState {
-  return runtime.createState({ habitat: 'reef', seed: 0x51f15e })
+  return runtime.createState({ seed: 0x51f15e })
 }
 
 export const createStarterPocketState = createPocketNewGame
@@ -567,9 +570,9 @@ export function savePocketState(state: PocketState, now = Date.now(), storage?: 
 }
 
 export function createPocketSpecimenPreview(speciesId: string, profileOverride?: CatalogSpecies): PocketState {
-  const state = runtime.createSpecimenPreviewState({ habitat: 'reef', credits: 3000, seed: 0x51f15e,
+  const state = runtime.createSpecimenPreviewState({ credits: 3000, seed: 0x51f15e,
     speciesId, profileOverride })
-  const send = preparePocketReef(state)
+  const send = preparePocketHabitat(state)
   const act = runtime.ACTIONS
   send({ type: act.PURCHASE_LIVESTOCK, species: speciesId, count: 1 })
   runtime.stepDays(state, 0.02)
@@ -845,6 +848,13 @@ const EQUIPMENT_COPY: Readonly<Record<string, Readonly<{ problem: string; effect
   'algae_clip:clip': { problem: 'Herbivorous tangs need repeated grazing opportunities', effect: 'Holds a visible nori sheet on the tank wall', resource: 'Refill the clip when the sheet is eaten' },
 }
 
+const FRESHWATER_EQUIPMENT_COPY: typeof EQUIPMENT_COPY = {
+  'heater:controller': { problem: 'Preset heaters drift outside a tropical community range', effect: 'Tight ~26 °C control at high stability', resource: 'Draws power; verify probe calibration' },
+  'light:led': { problem: 'A basic strip limits planted habitat growth', effect: 'Raises PPFD ceiling to 160 with photoperiod control', resource: 'Draws power on the programmed photoperiod' },
+  'light:pro_led': { problem: 'Dense planted displays need tunable light', effect: 'Raises PPFD ceiling to 340 with full photoperiod control', resource: 'Higher power draw on the programmed photoperiod' },
+  'ato:ato': { problem: 'Evaporation lowers swimming volume between top-offs', effect: 'Auto-replaces evaporated freshwater to hold the waterline', resource: 'Refill the finite freshwater reservoir' },
+}
+
 /* Accepted specimen packages bundle only the GLB, so a Store card's still image is the authoring
  * render that produced it. The eager glob imports URL strings over a superset the way the runtime
  * asset registry already does with `**\/lod1.glb`, and the accepted registry — not the glob —
@@ -865,6 +875,7 @@ function acceptedArtwork(speciesId: string): Partial<PocketStoreOffer> {
 }
 
 function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
+  const reef = state.habitat === 'reef'
   const offer = (kind: PocketStoreOffer['kind'], group: PocketStoreOffer['group'], id: string, name: string,
     price: number, request: Record<string, unknown>, action: PocketAction,
     extra?: Partial<PocketStoreOffer>): PocketStoreOffer => {
@@ -884,29 +895,34 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
       ...(riskOnly ? { conflicts } : {}), ...extra }
   }
   const livestock = Object.keys(runtime.DATA.SPECIES).map((id) => runtime.DATA.resolveSpecies(state, id))
-    .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === 'reef')).map((item) => {
+    .filter((item): item is CatalogSpecies => Boolean(item && item.habitat === state.habitat
+      && (reef || specimenAssetFor(item.id)))).map((item) => {
     const count = runtime.DATA.BUNDLES[item.id] ?? 1
     const detail = `${item.sci} · ${item.adultSizeCm} cm adult · ${item.layer} layer`
     return offer('livestock', 'livestock', item.id, item.name, item.price * count,
       { kind: 'livestock', id: item.id, count }, { type: runtime.ACTIONS.PURCHASE_LIVESTOCK, species: item.id, count },
       { detail, ...acceptedArtwork(item.id) })
   })
-  const corals = Object.values(runtime.DATA.CORALS).flatMap((item) => item.variants.map((variant) =>
+  const corals = reef ? Object.values(runtime.DATA.CORALS).flatMap((item) => item.variants.map((variant) =>
     offer('coral', 'coral', `${item.id}@${variant.id}`, variant.displayName, item.price,
       { kind: 'coral', id: item.id, variantId: variant.id },
       { type: runtime.ACTIONS.PURCHASE_CORAL, coral: item.id, variantId: variant.id },
       { detail: `${item.name} · PAR ${item.par.min}–${item.par.max} µmol · flow ${item.flow.min}–${item.flow.max}`
-        + ` · needs a ${item.maturityGate === 'mature' ? 'mature' : 'cycled'} biome` })))
-  const equipment = Object.entries(runtime.DATA.EQUIPMENT).flatMap(([category, item]) => {
-    const installedLevelIndex = item.levels.findIndex((level) => level.id === state.equipment[category])
-    const installedName = item.levels[installedLevelIndex]?.name
-    return item.levels.map((level, levelIndex) => {
+        + ` · needs a ${item.maturityGate === 'mature' ? 'mature' : 'cycled'} biome` }))) : []
+  const equipment = Object.entries(runtime.DATA.EQUIPMENT).filter(([, item]) => reef || !item.reefOnly).flatMap(([category, item]) => {
+    const waterType = reef ? 'salt' : 'fresh'
+    const levels = item.levels.filter((level) => !item.levelWaterTypes?.[level.id]
+      || item.levelWaterTypes[level.id].includes(waterType))
+    const installedLevelIndex = levels.findIndex((level) => level.id === state.equipment[category])
+    const installedName = levels[installedLevelIndex]?.name
+    return levels.map((level, levelIndex) => {
       const installed = state.equipment[category] === level.id
-      const copy = EQUIPMENT_COPY[`${category}:${level.id}`]
+      const copy = (!reef ? FRESHWATER_EQUIPMENT_COPY[`${category}:${level.id}`] : undefined)
+        ?? EQUIPMENT_COPY[`${category}:${level.id}`]
       return offer('equipment', 'equipment', `${category}:${level.id}`, level.name, level.price,
         { kind: 'equipment', category, levelId: level.id },
         { type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id },
-        { installed, category: item.label, categoryId: category, levelIndex, levelCount: item.levels.length,
+        { installed, category: item.label, categoryId: category, levelIndex, levelCount: levels.length,
           installedLevelIndex, installedName,
           problemSolved: copy?.problem, durableEffect: copy?.effect, operatingResource: copy?.resource })
     })
@@ -918,17 +934,23 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
         levelCount: runtime.DATA.TIER_ORDER.length, installedLevelIndex: runtime.DATA.TIER_ORDER.indexOf(state.tier),
         installedName: runtime.DATA.TIERS[state.tier]?.name,
         detail: `${item.volumeL} L · ${item.form === 'cylinder' ? 'cylindrical display' : 'rectangular tank'} · ${item.bioloadCap} bioload capacity · ${item.hardscapeSlots} hardscape slots`
-          + ' · arrives filled with habitat-matched conditioned water: salinity, alkalinity, calcium, and magnesium hold,'
+          + (reef
+            ? ' · arrives filled with habitat-matched conditioned water: salinity, alkalinity, calcium, and magnesium hold,'
+            : ' · arrives filled with habitat-matched conditioned water: pH, hardness, and tannins hold,')
           + ' accumulated nutrients dilute into the larger volume, and every water test needs a retest.' })
   })
   return [...livestock, ...corals, ...equipment, ...tiers]
 }
 
 function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjective {
-  if (!state.cycle.filled) return { chapter: 'Commissioning · 1 of 4', title: 'Mix saltwater and fill',
-    detail: 'Bring the dry reef to its operating waterline at 35 ppt.',
-    lesson: 'Saltwater establishes the habitat, but the filter still needs nitrifying bacteria.',
-    destination: 'care', actionLabel: 'Fill the reef', action: { type: 'SETUP_FILL' } }
+  const reef = state.habitat === 'reef'
+  if (!state.cycle.filled) return { chapter: 'Commissioning · 1 of 4',
+    title: reef ? 'Mix saltwater and fill' : 'Fill and dechlorinate',
+    detail: reef ? 'Bring the dry reef to its operating waterline at 35 ppt.'
+      : 'Fill the freshwater aquarium, condition the water, and establish its soft-water baseline.',
+    lesson: reef ? 'Saltwater establishes the habitat, but the filter still needs nitrifying bacteria.'
+      : 'Conditioned water establishes the habitat, but the filter still needs nitrifying bacteria.',
+    destination: 'care', actionLabel: reef ? 'Fill the reef' : 'Fill the aquarium', action: { type: 'SETUP_FILL' } }
   if (!state.cycle.lifeSupport) return { chapter: 'Commissioning · 2 of 4', title: 'Start life support',
     detail: 'Turn on filtration, heat, oxygenation, and circulation.',
     lesson: 'Flow carries oxygen and dissolved waste to the biofilter.',
@@ -959,7 +981,7 @@ function objectiveFor(state: PocketState, guide: PocketGuideView): PocketObjecti
   if (!state.livestock.some((animal) => animal.alive !== false)) return { chapter: 'First stocking unlocked',
     title: 'Choose the first resident', detail: 'The biofilter is ready for a gradual first stocking.',
     lesson: 'Every animal adds waste, so stock slowly.', destination: 'store' }
-  return { chapter: 'Living reef', title: guide.title, detail: guide.body,
+  return { chapter: reef ? 'Living reef' : 'Living freshwater habitat', title: guide.title, detail: guide.body,
     lesson: 'Observe animals and water together before intervening.', destination: 'care' }
 }
 
@@ -1109,6 +1131,9 @@ export function projectPocketState(
   options?: { readonly godMode?: boolean },
 ): PocketGameView {
   const godMode = Boolean(options?.godMode)
+  const reef = state.habitat === 'reef'
+  const namespace: AquariumNamespace = state.habitat === 'amazon' ? 'freshwater' : 'marine_reef'
+  const habitat = state.habitat ? runtime.DATA.HABITATS[state.habitat] : undefined
   const tier = runtime.DATA.TIERS[state.tier]
   const light = runtime.DATA.equipLevel('light', state.equipment.light)
   const ato = runtime.DATA.equipLevel('ato', state.equipment.ato)
@@ -1123,7 +1148,7 @@ export function projectPocketState(
     hopperPortions: automation.feeder.hopperPortions, capacity: automation.feeder.capacity, status: automation.feeder.status }
   const atoView: PocketAtoView = { installed: atoInstalled, reservoirL: automation.ato.reservoirL,
     capacityL: automation.ato.capacityL, topping: atoTopping }
-  const nori: PocketNoriView = { installed: Boolean(noriLevel?.noriCapacity),
+  const nori: PocketNoriView = { installed: reef && Boolean(noriLevel?.noriCapacity),
     remaining: noriResource.remaining, capacity: noriResource.capacity,
     lastBiteCycle: noriResource.lastBiteCycle }
   const rockscape: PocketRockView[] = state.rockscape.rocks.map((rock) => ({
@@ -1138,8 +1163,8 @@ export function projectPocketState(
     cleanliness: state.substrate.cleanliness }
   const living = state.livestock.filter((animal) => animal.alive !== false)
   const fish = living.filter((animal) => animal.kind === 'fish')
-  const corals = state.corals
-  const coralViews: PocketCoralView[] = state.corals.map((coral) => {
+  const corals = reef ? state.corals : []
+  const coralViews: PocketCoralView[] = corals.map((coral) => {
     const species = runtime.DATA.CORALS[coral.species]
     const variantId = coral.variantId || species.defaultVariantId
     const variant = species.variants.find((item) => item.id === variantId)
@@ -1172,7 +1197,7 @@ export function projectPocketState(
       testedAtDay: ageDays === null ? null : Math.max(0, state.time.days - ageDays) }
   })
   let selection: PocketSelectionView | null = null
-  if (state.selection?.entityType === 'coral') {
+  if (reef && state.selection?.entityType === 'coral') {
     const coral = state.corals.find((item) => item.id === state.selection?.id)
     const profile = coral ? runtime.DATA.CORALS[coral.species] : null
     if (coral && profile) selection = { entityType: 'coral', id: coral.id, title: profile.name,
@@ -1212,7 +1237,7 @@ export function projectPocketState(
       cause: animal.causeOfDeath ?? null }))
   const objective = objectiveFor(state, guide)
   const reefSnapshot: ReefSnapshot = {
-    namespace: 'marine_reef',
+    namespace,
     clock: { elapsedHours: state.time.days * 24, day: Math.floor(state.time.days) + 1,
       timeOfDayHours: (state.time.days % 1) * 24, speed: state.speed, paused: state.speed === 0 },
     tank: { nominalVolumeLiters: tier.volumeL, targetWaterVolumeLiters: tier.volumeL,
@@ -1225,7 +1250,8 @@ export function projectPocketState(
       phosphatePhosphorusMassMilligrams: state.water.phosphate * state.water.levelL,
       totalAmmoniaNitrogenMgPerLiter: state.water.ammonia, nitriteNitrogenMgPerLiter: state.water.nitrite,
       nitrateNitrogenMgPerLiter: state.water.nitrate, phosphatePhosphorusMgPerLiter: state.water.phosphate,
-      temperatureCelsius: state.water.tempC, ph: state.water.pH, alkalinityDkh: state.water.alkalinity },
+      temperatureCelsius: state.water.tempC, ph: state.water.pH, alkalinityDkh: state.water.alkalinity,
+      tannin: state.water.tannin },
     equipment: { atoEnabled: Boolean(ato?.autoTopOff), atoReservoirLiters: automation.ato.reservoirL,
       atoReservoirCapacityLiters: automation.ato.capacityL, atoEmpty: atoInstalled && automation.ato.reservoirL <= 0.05,
       atoSetpointLiters: tier.volumeL, atoPumpLitersPerHour: atoTopping ? tier.volumeL * 0.012 / 24 : 0,
@@ -1233,7 +1259,7 @@ export function projectPocketState(
       feederDispensing: feeder.enabled && feeder.status === 'dispensed' && state.food.length > 0,
       feederEmpty: feeder.installed && feeder.hopperPortions <= 0,
       filterLevel: state.equipment.filter, circulationLevel: state.equipment.circulation,
-      lightLevel: state.equipment.light, skimmerLevel: state.equipment.skimmer, refugiumLevel: state.equipment.refugium,
+      lightLevel: state.equipment.light, skimmerLevel: reef ? state.equipment.skimmer : undefined, refugiumLevel: state.equipment.refugium,
       lightPower: clamp(state.water.par / Math.max(light?.parCeiling ?? 1, 1)), flowPower: clamp(state.water.flow) },
     ecology: { phase: lifecycleFor(state), maturity: clamp(state.succession.age / 20), diatomCoverage: state.succession.diatom,
       greenAlgaeCoverage: state.succession.greenFilm, cyanobacteriaCoverage: state.succession.cyano,
@@ -1248,10 +1274,10 @@ export function projectPocketState(
         ({ id, species, health: colonyHealth, extension, polyps, growth })) },
     lightField: { surfacePpfd: state.water.par, localPpfd: state.water.par * transmission * (1 - shading), sampleDepthMeters: depth,
       interfaceTransmission: 0.96, attenuationPerMeter: attenuation, shading },
-    events: { sequence: state.log.length, lastEvent: state.log.at(-1)?.message ?? 'Reef ready',
+    events: { sequence: state.log.length, lastEvent: state.log.at(-1)?.message ?? (reef ? 'Reef ready' : 'Freshwater habitat ready'),
       causalNote: 'Pocket Aquarium advances all gameplay state.', feedPulse },
   }
-  return { authority: pocketShowcasePopulationAuthority, habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
+  return { authority: pocketShowcasePopulationAuthority, habitatName: habitat?.name ?? 'Choose an aquarium habitat', tierName: tier.name,
     credits: Math.floor(state.credits), unlimitedCredits: godMode, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,
     cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
     objective, residents, rockscape, sand, coralInventory, placedCorals,
