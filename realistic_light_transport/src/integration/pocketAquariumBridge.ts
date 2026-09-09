@@ -258,7 +258,8 @@ interface PocketRuntime {
     TIERS: Record<string, CatalogTier>
     TIER_ORDER: string[]
     HABITATS: Record<string, CatalogHabitat>
-    EQUIPMENT: Record<string, { label: string; reefOnly?: boolean; levels: EquipmentLevel[] }>
+    EQUIPMENT: Record<string, { label: string; reefOnly?: boolean;
+      levelWaterTypes?: Record<string, readonly ('fresh' | 'salt')[]>; levels: EquipmentLevel[] }>
     KEEPER_RANKS: CatalogKeeperRank[]
     residentNameMaxLength: number
     resolveSpecies: (state: PocketState | null, speciesId: string) => CatalogSpecies | null
@@ -909,16 +910,19 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
       { detail: `${item.name} · PAR ${item.par.min}–${item.par.max} µmol · flow ${item.flow.min}–${item.flow.max}`
         + ` · needs a ${item.maturityGate === 'mature' ? 'mature' : 'cycled'} biome` }))) : []
   const equipment = Object.entries(runtime.DATA.EQUIPMENT).filter(([, item]) => reef || !item.reefOnly).flatMap(([category, item]) => {
-    const installedLevelIndex = item.levels.findIndex((level) => level.id === state.equipment[category])
-    const installedName = item.levels[installedLevelIndex]?.name
-    return item.levels.map((level, levelIndex) => {
+    const waterType = reef ? 'salt' : 'fresh'
+    const levels = item.levels.filter((level) => !item.levelWaterTypes?.[level.id]
+      || item.levelWaterTypes[level.id].includes(waterType))
+    const installedLevelIndex = levels.findIndex((level) => level.id === state.equipment[category])
+    const installedName = levels[installedLevelIndex]?.name
+    return levels.map((level, levelIndex) => {
       const installed = state.equipment[category] === level.id
       const copy = (!reef ? FRESHWATER_EQUIPMENT_COPY[`${category}:${level.id}`] : undefined)
         ?? EQUIPMENT_COPY[`${category}:${level.id}`]
       return offer('equipment', 'equipment', `${category}:${level.id}`, level.name, level.price,
         { kind: 'equipment', category, levelId: level.id },
         { type: runtime.ACTIONS.PURCHASE_EQUIPMENT, category, levelId: level.id },
-        { installed, category: item.label, categoryId: category, levelIndex, levelCount: item.levels.length,
+        { installed, category: item.label, categoryId: category, levelIndex, levelCount: levels.length,
           installedLevelIndex, installedName,
           problemSolved: copy?.problem, durableEffect: copy?.effect, operatingResource: copy?.resource })
     })

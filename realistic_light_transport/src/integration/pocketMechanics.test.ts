@@ -316,6 +316,31 @@ describe('freshwater bridge boundary', () => {
     expect(reefOffers.some(({ id }) => id === 'skimmer:hob')).toBe(true)
     expect(reefOffers.some(({ id }) => id === 'algae_clip:clip')).toBe(true)
   })
+
+  it('projects exact water-type equipment catalogs in normal and God Mode', () => {
+    const ids = (state: PocketState, godMode: boolean) => projectPocketState(state, { godMode }).storeOffers
+      .filter(({ kind }) => kind === 'equipment').map(({ id }) => id)
+    const freshwaterIds = [
+      'filter:sponge', 'filter:hob', 'filter:canister', 'filter:high_capacity',
+      'heater:none', 'heater:basic', 'heater:controller',
+      'circulation:none', 'circulation:powerhead', 'circulation:gyre',
+      'light:basic', 'light:planted_led', 'light:high_growth_led',
+      'refugium:none', 'refugium:refugium', 'ato:none', 'ato:ato', 'feeder:none', 'feeder:auto',
+    ]
+    const reefIds = [
+      'filter:sponge', 'filter:hob', 'filter:canister',
+      'heater:none', 'heater:basic', 'heater:controller',
+      'circulation:none', 'circulation:powerhead', 'circulation:gyre',
+      'light:basic', 'light:led', 'light:pro_led',
+      'skimmer:none', 'skimmer:hob', 'skimmer:cone', 'refugium:none', 'refugium:refugium',
+      'ato:none', 'ato:ato', 'feeder:none', 'feeder:auto', 'algae_clip:none', 'algae_clip:clip',
+    ]
+
+    for (const godMode of [false, true]) {
+      expect(ids(createPocketReefShowcase(), godMode)).toEqual(reefIds)
+      expect(ids(choose('freshwater'), godMode)).toEqual(freshwaterIds)
+    }
+  })
 })
 
 describe('resident rename durability', () => {
