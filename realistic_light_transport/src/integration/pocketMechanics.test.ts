@@ -2,8 +2,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import {
   advancePocketState,
+  createPocketFreshwaterDevTank,
   createPocketNewGame,
   createPocketReefShowcase,
+  DEV_FRESHWATER_50_TANK_ID,
   dispatchPocketAction,
   pocketActions,
   pocketSaveKey,
@@ -278,6 +280,7 @@ describe('freshwater bridge boundary', () => {
 
   it('projects freshwater chemistry, livestock, equipment, and copy without reef leakage', () => {
     const view = projectPocketState(choose('freshwater'))
+    const godView = projectPocketState(choose('freshwater'), { godMode: true })
     const livestockIds = view.storeOffers.filter(({ kind }) => kind === 'livestock').map(({ id }) => id)
     const equipmentIds = view.storeOffers.filter(({ kind }) => kind === 'equipment').map(({ id }) => id)
     const tiers = view.storeOffers.filter(({ kind }) => kind === 'tier')
@@ -301,8 +304,8 @@ describe('freshwater bridge boundary', () => {
     expect(view.storeOffers.filter(({ kind }) => kind === 'livestock')
       .every(({ id }) => Boolean(specimenAssetFor(id)))).toBe(true)
     expect(view.storeOffers.find(({ id }) => id === 'neon_tetra')).toBeUndefined()
-    expect(projectPocketState(choose('freshwater'), { godMode: true }).storeOffers
-      .filter(({ kind }) => kind === 'livestock')).toEqual([])
+    expect(godView.storeOffers.filter(({ kind }) => kind === 'livestock')).toEqual([])
+    expect(godView.storeOffers.filter(({ kind }) => kind === 'coral')).toEqual([])
     expect(view.storeOffers.some(({ kind }) => kind === 'coral')).toBe(false)
     expect(equipmentIds.some((id) => id.startsWith('skimmer:') || id.startsWith('algae_clip:'))).toBe(false)
     expect(tiers.every(({ detail }) => detail?.includes('pH, hardness, and tannins'))).toBe(true)
@@ -340,6 +343,33 @@ describe('freshwater bridge boundary', () => {
       expect(ids(createPocketReefShowcase(), godMode)).toEqual(reefIds)
       expect(ids(choose('freshwater'), godMode)).toEqual(freshwaterIds)
     }
+  })
+
+  it('creates the hidden empty 189 L freshwater developer tank ready for immediate use', () => {
+    const state = createPocketFreshwaterDevTank(1_000)
+    const view = projectPocketState(state)
+
+    expect(DEV_FRESHWATER_50_TANK_ID).toBe('dev-freshwater-50')
+    expect(state).toMatchObject({ habitat: 'amazon', tier: 'fresh189',
+      water: { levelL: 189, flow: .9, ammonia: 0, nitrite: 0, nitrate: 10 },
+      cycle: { stage: 'Mature biome', aob: 1, nob: 1, ammoniaSource: false,
+        inoculated: true, lifeSupport: true, filled: true, validationDays: 1 } })
+    expect(view).toMatchObject({ filled: true, cycled: true, cycleStage: 'Mature biome' })
+    expect(state.equipment).toEqual({
+      filter: 'high_capacity', heater: 'controller', circulation: 'gyre',
+      light: 'high_growth_led', skimmer: 'none', refugium: 'refugium',
+      ato: 'ato', feeder: 'auto', algae_clip: 'none',
+    })
+    expect(view.reefSnapshot.equipment).toMatchObject({
+      filterLevel: 'high_capacity', circulationLevel: 'gyre', lightLevel: 'high_growth_led',
+      skimmerLevel: undefined, flowPower: .9,
+    })
+    expect(view.nori).toEqual({ installed: false, remaining: 0, capacity: 0, lastBiteCycle: -1 })
+    expect(state.livestock).toEqual([])
+    expect(state.corals).toEqual([])
+    expect(state.food).toEqual([])
+    expect(view.storeOffers.some(({ id }) => id === 'fresh189')).toBe(false)
+    expect(projectPocketState(state, { godMode: true }).storeOffers.some(({ id }) => id === 'fresh189')).toBe(false)
   })
 })
 

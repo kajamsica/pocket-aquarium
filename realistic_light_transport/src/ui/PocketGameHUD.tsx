@@ -5,6 +5,7 @@ import { residentNameMaxLength } from '../integration/pocketAquariumBridge'
 import type { PocketAction, PocketGameView, PocketPreventedDeath, PocketStoreOffer } from '../integration/pocketAquariumBridge'
 import { REEF_CAMERA_RESET_EVENT } from '../scene/ReefScene'
 import type { AcceptedShowcaseCatalog, SpecimenHover } from '../scene/SpecimenFish'
+import { AquariumLibraryPanel, type AquariumLibraryModel } from './AquariumLibraryPanel'
 import { HudWindow, useHudWorkspace, type HudDeviceProfile, type HudPanelId } from './HudWorkspace'
 
 export interface GodModeControls {
@@ -44,6 +45,7 @@ interface PocketGameHUDProps {
   readonly godMode?: GodModeControls
   readonly showcaseCatalog?: AcceptedShowcaseCatalog
   readonly hoveredSpecimen?: SpecimenHover | null
+  readonly tankLibrary?: AquariumLibraryModel
   readonly onStartOver: () => void
 }
 
@@ -158,7 +160,7 @@ function signal(label: string, value: number, inverted = false) {
   </div>
 }
 
-export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen, onStartOver }: PocketGameHUDProps) {
+export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen, tankLibrary, onStartOver }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
   const reef = view.reefSnapshot.namespace === 'marine_reef'
   const availableStoreFilters = reef ? STORE_FILTERS : STORE_FILTERS.filter((filter) => filter !== 'coral')
@@ -168,6 +170,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   const hasRecommendedOffers = view.storeOffers.some((offer) => offer.recommended)
   const [storeFilter, setStoreFilter] = useState<StoreFilter>(hasRecommendedOffers ? 'recommended' : 'equipment')
   const [focusedOfferId, setFocusedOfferId] = useState<string | null>(null)
+  const panelTabs = tankLibrary ? [...PANEL_TABS, ['aquariums', 'Aquariums'] as const] : PANEL_TABS
+  const activeLibraryTank = tankLibrary?.tanks.find((tank) => tank.active)
   /* The one offer whose compatibility decision is open, and the one inline rename currently being
    * drafted. Both are transient UI intent: neither exists in the authoritative save. */
   const [decidingOfferId, setDecidingOfferId] = useState<string | null>(null)
@@ -246,7 +250,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     workspace.togglePanel(panel)
     setLauncherCollapsed(true)
   }
-  const compactTankActive = PANEL_TABS.every(([panel]) => !workspace.isOpen(panel))
+  const compactTankActive = panelTabs.every(([panel]) => !workspace.isOpen(panel))
     && !workspace.isOpen('specimen') && pinnedReadings.length === 0 && !workspace.isArranging
   const runGuide = () => {
     if (command?.action) dispatch(command.action)
@@ -304,6 +308,11 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </header>
 
     <div className="pocket-utility" aria-label="Tank utilities">
+      {tankLibrary ? <button type="button" className="pocket-credit-pill pocket-library-entry"
+        aria-label={`Open aquarium library${activeLibraryTank ? `, current tank ${activeLibraryTank.name}` : ''}`}
+        onClick={() => workspace.openPanel('aquariums')}>
+        <small>Current tank</small><strong>{activeLibraryTank?.name ?? 'Choose aquarium'}</strong>
+      </button> : null}
       {showcaseCatalog ? <span className="pocket-credit-pill" title="Accepted catalog seeded through root gameplay">
         <small>Accepted catalog</small><strong>{showcaseCatalog.acceptedSpeciesCount} species · {showcaseCatalog.animalAssets.length} animals · {showcaseCatalog.coralAssets.length} corals</strong>
       </span> : null}
@@ -346,7 +355,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </div> : null}
 
     <nav className="pocket-window-launcher" aria-label={workspace.profile === 'compact' ? 'Aquarium game controls' : 'Aquarium windows'}
-      data-collapsed={launcherCollapsed}>
+      data-collapsed={launcherCollapsed} data-has-library={Boolean(tankLibrary)}>
       {workspace.profile === 'compact' ? <>
         <button type="button" className="pocket-mobile-dock-action pocket-reef-preset" aria-pressed={compactTankActive}
           title="Return to the tank" onClick={applyReefView}><span aria-hidden="true">⌂</span><span>Tank</span></button>
@@ -362,6 +371,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         {!launcherCollapsed ? <div id="pocket-mobile-more-actions" className="pocket-mobile-dock-secondary" role="group" aria-label="More aquarium controls">
           <button type="button" aria-pressed={workspace.isOpen('guide')} onClick={() => compactPanel('guide')}><span aria-hidden="true">?</span><span>Guide</span></button>
           <button type="button" aria-pressed={workspace.isOpen('water')} onClick={() => compactPanel('water')}><span aria-hidden="true">≈</span><span>Water</span></button>
+          {tankLibrary ? <button type="button" aria-pressed={workspace.isOpen('aquariums')} onClick={() => compactPanel('aquariums')}>
+            <span aria-hidden="true">▤</span><span>Aquariums</span></button> : null}
           <button type="button" className="pocket-window-arrange" aria-pressed={workspace.isArranging}
             onClick={() => { workspace.toggleArrange(); setLauncherCollapsed(true) }}><span aria-hidden="true">↔</span><span>{workspace.isArranging ? 'Done' : 'Layout'}</span></button>
           <button type="button" aria-pressed={workspace.isOpen('progress')} onClick={() => compactPanel('progress')}><span aria-hidden="true">★</span><span>Rank</span></button>
@@ -374,11 +385,16 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
           onClick={workspace.toggleArrange}>{workspace.isArranging ? 'Done' : 'Arrange'}</button>
         {workspace.isArranging ? <span className="pocket-window-launcher-hint" role="status">
           Drag titles · resize any edge · drop on a snap lane · ↺ reset · Esc done</span> : null}
-        {PANEL_TABS.map(([sheet, label]) => <button key={sheet} type="button"
+        {panelTabs.map(([sheet, label]) => <button key={sheet} type="button"
           aria-pressed={workspace.isOpen(sheet)} title={`${workspace.isOpen(sheet) ? 'Close' : 'Open'} ${label} window`}
           onClick={() => workspace.togglePanel(sheet)}>{label}</button>)}
       </>}
     </nav>
+
+    {tankLibrary ? <HudWindow id="aquariums" title="Aquariums" eyebrow="Your tank library"
+      className="hud-panel pocket-library-panel" workspace={workspace}>
+      <AquariumLibraryPanel model={tankLibrary} />
+    </HudWindow> : null}
 
     <HudWindow id="guide" title="Next step" eyebrow={reef ? 'Guided reef care' : 'Guided freshwater care'} className="pocket-guide-window" workspace={workspace}>
       <section className="pocket-guide" aria-labelledby="pocket-guide-title">
