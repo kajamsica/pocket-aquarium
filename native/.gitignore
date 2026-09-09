@@ -1,6 +1,6 @@
-# Pocket Aquarium native host (IOS-1) — ignore everything regenerable or sensitive.
+# Pocket Aquarium native host: ignore everything regenerable or sensitive.
 # The committed source of truth is: package.json, package-lock.json,
-# capacitor.config.json, scripts/, README.md, and the generated ios/ project sources.
+# capacitor.config.json, scripts/, README.md, and generated native project sources.
 
 # Toolchain — reinstalled with `npm ci`.
 node_modules/
@@ -26,3 +26,11 @@ xcuserdata/
 *.certSigningRequest
 *.keychain
 ExportOptions.plist
+
+# Android SDK and signing material. Generated Android build, staged public, and
+# Capacitor config copies are covered by android/.gitignore.
+android/local.properties
+android/**/*.jks
+android/**/*.keystore
+android/**/keystore.properties
+android/**/signing.properties

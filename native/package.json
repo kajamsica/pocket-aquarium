@@ -2,16 +2,20 @@
   "name": "pocket-aquarium-native",
   "version": "1.0.0",
   "private": true,
-  "description": "Isolated Capacitor 8 iOS host for the compiled Three.js Pocket Aquarium. No web runtime lives here; scripts/stage-web.mjs stages the Vite artifact into ./www.",
+  "description": "Isolated Capacitor 8 host for the compiled Three.js Pocket Aquarium. No web runtime lives here; scripts/stage-web.mjs stages the Vite artifact into ./www.",
   "type": "module",
   "scripts": {
     "build:web": "npm --prefix ../realistic_light_transport ci && npm --prefix ../realistic_light_transport run build",
     "stage": "node scripts/stage-web.mjs",
     "sync": "node scripts/stage-web.mjs && cap sync ios",
     "sync:fresh": "npm run build:web && npm run sync",
-    "open": "cap open ios"
+    "open": "cap open ios",
+    "sync:android": "node scripts/stage-web.mjs && cap sync android",
+    "sync:fresh:android": "npm run build:web && npm run sync:android",
+    "open:android": "cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.1",
     "@capacitor/core": "8.5.1",
     "@capacitor/ios": "8.5.1"
   },
