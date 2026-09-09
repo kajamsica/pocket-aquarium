@@ -248,6 +248,43 @@ function main(mod) {
      childProcessIgnored(path.join(NATIVE, "ios", "App", "App", "public")),
     "copied web assets (ios/App/App/public) are git-ignored, not committed");
 
+  /* ------------------ 12. protected TestFlight release contract ------------------ */
+  group("TestFlight release workflow");
+  var workflow = readText(path.join(ROOT, ".github", "workflows", "ios.yml"));
+  var testflight = workflow.split(/\n  testflight:\s*\n/)[1] || "";
+  ok(/\n  workflow_dispatch:\s*(?:\n|$)/.test(workflow), "native workflow supports deliberate manual dispatch");
+  ok(/if:\s*\$\{\{\s*github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'\s*\}\}/.test(testflight),
+    "TestFlight upload runs only for a manual dispatch on main");
+  ok(/environment:\s*apple-testflight/.test(testflight), "TestFlight job uses the protected apple-testflight environment");
+  [
+    "APPLE_TEAM_ID", "APP_STORE_CONNECT_KEY_ID", "APP_STORE_CONNECT_ISSUER_ID",
+    "APP_STORE_CONNECT_API_KEY_P8_BASE64", "IOS_DISTRIBUTION_CERTIFICATE_BASE64",
+    "IOS_DISTRIBUTION_CERTIFICATE_PASSWORD", "IOS_APP_STORE_PROVISIONING_PROFILE_BASE64"
+  ].forEach(function (name) {
+    ok(testflight.indexOf(name + ": ${{ secrets." + name + " }}") >= 0, "TestFlight job requires protected " + name);
+  });
+  ok(/PRODUCT_BUNDLE_IDENTIFIER=com\.kajamsica\.pocketaquarium/.test(testflight), "signed archive uses the exact app bundle ID");
+  ok(/working-directory:\s*native\s*\n\s*run:\s*npm run sync(?:\s|$)/.test(testflight), "TestFlight stages through the same local iOS sync path");
+  ok(/xcodebuild[\s\S]*?archive[\s\S]*?xcodebuild -exportArchive/.test(testflight), "TestFlight job archives and exports the App Store build");
+  ok(/altool --validate-app/.test(testflight) && /altool --upload-app/.test(testflight), "TestFlight job validates then uploads the IPA");
+  ok(/CURRENT_PROJECT_VERSION="\$\{\{ github\.run_number \}\}"/.test(testflight), "each upload uses the unique GitHub run number as its build number");
+  ok(/RUNNER_TEMP\/pocket-aquarium-testflight\.keychain-db/.test(testflight) && /security create-keychain/.test(testflight),
+    "signing certificate is imported into an ephemeral runner keychain");
+  ok(/IOS_PROFILE_PATH=.*profile_path/.test(testflight) && /install -m 600.*mobileprovision/.test(testflight),
+    "provisioning profile is validated and installed ephemerally");
+  ok(/IOS_API_KEY_PATH=.*api_key_path/.test(testflight) && /install -m 600.*AuthKey\.p8/.test(testflight),
+    "App Store Connect API key is installed ephemerally");
+  ok(/Remove signing credentials and release outputs[\s\S]*?if:\s*always\(\)[\s\S]*?delete-keychain[\s\S]*?rm -rf/.test(testflight),
+    "signing credentials and release outputs are always removed");
+  ok(!/actions\/upload-artifact/.test(testflight), "signed IPA is never uploaded as a GitHub artifact");
+  ok(/\n  build:\s*\n[\s\S]*?name:\s*Build unsigned iOS simulator app/.test(workflow), "unsigned iOS Simulator job remains present");
+  ok(/\n  android:\s*\n[\s\S]*?name:\s*Build installable Android debug APK/.test(workflow), "Android debug APK job remains present");
+
+  group("TestFlight deployment documentation");
+  var iosDocs = readText(path.join(ROOT, "docs", "IOS_DEPLOYMENT.md"));
+  ok(/protected GitHub environment \*\*`apple-testflight`\*\*/.test(iosDocs), "deployment guide names the protected environment");
+  ok(/No signed IPA or TestFlight build exists yet/i.test(iosDocs), "deployment guide explicitly says no signed/TestFlight build exists yet");
+
   /* cleanup temp dirs */
   [dest1, fixSrc, fixDest].forEach(function (d) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) {} });
 }
