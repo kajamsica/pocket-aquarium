@@ -3,7 +3,7 @@ import * as THREE from 'three'
 
 import { useSpecimenDispatch } from './SpecimenFish'
 import { specimenAssetFor, type SpecimenAsset } from './specimens/assetRegistry'
-import { RiggedSpecimen } from './specimens/RiggedSpecimen'
+import { RiggedSpecimen, type SpecimenAppearance } from './specimens/RiggedSpecimen'
 
 export type CoralSurface = 'sand' | 'rock'
 export type Vec3Tuple = readonly [number, number, number]
@@ -135,6 +135,36 @@ export interface CoralRenderPlan {
   readonly ringColor?: '#48e08b' | '#ff5f6d'
 }
 
+export interface CoralLifecycleInputs {
+  readonly health: number
+  readonly tissue: number
+  readonly extension: number
+  readonly polyps: number
+  readonly growth: number
+}
+
+export interface CoralLifecycleVisualPlan {
+  readonly widthScale: number
+  readonly animationDrive: number
+  readonly appearance: SpecimenAppearance
+}
+
+const boundedLifecycle = (value: number, high = 1) =>
+  THREE.MathUtils.clamp(Number.isFinite(value) ? value : 0, 0, high)
+
+export function resolveCoralLifecycleVisualPlan(inputs: CoralLifecycleInputs): CoralLifecycleVisualPlan {
+  const condition = Math.min(boundedLifecycle(inputs.health), boundedLifecycle(inputs.tissue))
+  const growth = boundedLifecycle(inputs.growth)
+  const extension = boundedLifecycle(inputs.extension)
+  const polyps = boundedLifecycle(inputs.polyps, 5000)
+  const polypActivity = polyps / (polyps + 20)
+  return {
+    widthScale: .72 + growth * .56,
+    animationDrive: boundedLifecycle(extension * (.72 + polypActivity * .28)),
+    appearance: { saturation: .32 + condition * .68, opacity: .42 + condition * .58 },
+  }
+}
+
 export function resolveCoralRenderPlan(speciesId: string, variantId: string | undefined,
   sceneUnitsPerMeter: number, mode: 'preview' | 'locked', valid = true): CoralRenderPlan | undefined {
   const asset = specimenAssetFor(speciesId, variantId)
@@ -153,6 +183,7 @@ export interface CoralPlacementProps {
   readonly space: TankPlacementSpace
   readonly sceneUnitsPerMeter: number
   readonly mode: 'preview' | 'locked'
+  readonly lifecycle?: CoralLifecycleInputs
   readonly valid?: boolean
   readonly active?: boolean
 }
@@ -161,11 +192,12 @@ function stopPlacementEvent(event: { stopPropagation(): void }) { event.stopProp
 
 /** Controlled renderer only. Persistence and placement-mode ownership remain above the scene. */
 export function CoralPlacement({ speciesId, variantId, individualId, placement, space,
-  sceneUnitsPerMeter, mode, valid = true, active = false }: CoralPlacementProps) {
+  sceneUnitsPerMeter, mode, lifecycle, valid = true, active = false }: CoralPlacementProps) {
   const dispatch = useSpecimenDispatch()
   const feedDrive = useRef(0)
   const plan = resolveCoralRenderPlan(speciesId, variantId, sceneUnitsPerMeter, mode, valid)
   if (!plan) return null
+  const lifecyclePlan = lifecycle ? resolveCoralLifecycleVisualPlan(lifecycle) : undefined
   const transform = coralPlacementTransform(placement, space)
   const stop = active ? stopPlacementEvent : undefined
   // A locked colony is a placed resident of the tank, so it answers the same root selection
@@ -175,14 +207,16 @@ export function CoralPlacement({ speciesId, variantId, individualId, placement, 
   const ringRadius = plan.targetWidth * 0.62
   return (
     <group name={`coral-${mode}-${individualId}`} position={transform.position} quaternion={transform.quaternion}
-      userData={selectable ? { rootCoralId: individualId } : {}}
-      onPointerDown={stop} onPointerMove={stop} onPointerUp={stop} onDoubleClick={stop} onWheel={stop}
-      onClick={selectable ? (event) => {
-        stopPlacementEvent(event)
-        dispatch?.({ type: 'SELECT_ENTITY', entityType: 'coral', id: individualId })
-      } : stop}>
-      <RiggedSpecimen asset={plan.asset} individualId={individualId} targetLengthSceneUnits={plan.targetWidth}
-        stage="adult" hunger={0} feedDrive={feedDrive} />
+        userData={selectable ? { rootCoralId: individualId } : {}}
+        onPointerDown={stop} onPointerMove={stop} onPointerUp={stop} onDoubleClick={stop} onWheel={stop}
+        onClick={selectable ? (event) => {
+          stopPlacementEvent(event)
+          dispatch?.({ type: 'SELECT_ENTITY', entityType: 'coral', id: individualId })
+        } : stop}>
+        <RiggedSpecimen asset={plan.asset} individualId={individualId}
+          targetLengthSceneUnits={plan.targetWidth * (lifecyclePlan?.widthScale ?? 1)}
+          stage="adult" hunger={0} feedDrive={feedDrive} semanticDrive={lifecyclePlan?.animationDrive}
+          appearance={lifecyclePlan?.appearance} />
       {plan.ringColor && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .006, 0]} renderOrder={20}>
         <ringGeometry args={[ringRadius * .78, ringRadius, 36]} />
         <meshBasicMaterial color={plan.ringColor} transparent opacity={.9} depthTest={false} />

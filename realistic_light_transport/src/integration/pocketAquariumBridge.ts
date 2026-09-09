@@ -390,6 +390,10 @@ export interface PocketCoralView {
   readonly speciesName: string
   readonly variantDisplayName: string
   readonly health: number
+  readonly tissue: number
+  readonly extension: number
+  readonly polyps: number
+  readonly growth: number
   readonly placement: PocketCoralPlacement | null
 }
 
@@ -1088,6 +1092,7 @@ export function projectPocketState(
     const variant = species.variants.find((item) => item.id === variantId)
     return { id: coral.id, speciesId: coral.species, variantId, speciesName: species.name,
       variantDisplayName: variant?.displayName ?? species.name, health: coral.health,
+      tissue: coral.tissue, extension: coral.extension, polyps: coral.polyps, growth: coral.growth,
       placement: coral.placement }
   })
   const coralInventory = coralViews.filter((coral) => coral.placement === null)

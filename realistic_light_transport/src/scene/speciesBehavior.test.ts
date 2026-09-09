@@ -17,8 +17,8 @@ const acceptedAnimalIds = runtimeAcceptance.assets
   .sort()
 
 describe('accepted animal behavior policy', () => {
-  it('exhaustively matches the 25 accepted non-coral defaults', () => {
-    expect(ACCEPTED_ANIMAL_SPECIES_IDS).toHaveLength(25)
+  it('exhaustively matches the 26 accepted non-coral defaults', () => {
+    expect(ACCEPTED_ANIMAL_SPECIES_IDS).toHaveLength(26)
     expect([...ACCEPTED_ANIMAL_SPECIES_IDS].sort()).toEqual(acceptedAnimalIds)
     expect(ACCEPTED_ANIMAL_SPECIES_IDS.every(isAcceptedAnimalSpeciesId)).toBe(true)
     for (const speciesId of ACCEPTED_ANIMAL_SPECIES_IDS) {
@@ -38,6 +38,7 @@ describe('accepted animal behavior policy', () => {
     expect(resolveSpecimenLocomotionPlan('black_storm_ocellaris')).toBe('rock_fish')
     expect(resolveSpecimenLocomotionPlan('six_line_wrasse')).toBe('rock_fish')
     expect(resolveSpecimenLocomotionPlan('yellow_tang')).toBe('open_water_fish')
+    expect(resolveSpecimenLocomotionPlan('regal_angelfish')).toBe('rock_fish')
     expect(resolveSpecimenLocomotionPlan('diamond_goby')).toBe('benthic_fish')
     expect(resolveSpecimenLocomotionPlan('cleaner_shrimp')).toBe('cleaner_station_crawler')
     expect(resolveSpecimenLocomotionPlan('pistol_shrimp')).toBe('burrow_crawler')
@@ -57,8 +58,11 @@ describe('accepted animal behavior policy', () => {
   it('provides habitat policies for every accepted fish but never for a crawler', () => {
     const fishIds = ACCEPTED_ANIMAL_SPECIES_IDS.filter((speciesId) =>
       !isSurfaceBoundLocomotion(resolveSpecimenLocomotionPlan(speciesId)))
-    expect(fishIds).toHaveLength(13)
+    expect(fishIds).toHaveLength(14)
     fishIds.forEach((speciesId) => expect(fishHabitatPolicyFor(speciesId).verticalBand).toHaveLength(2))
+    expect(fishHabitatPolicyFor('regal_angelfish')).toMatchObject({
+      habitat: 'reef_cruise', verticalBand: [.24, .72], xCoverage: .82, zCoverage: .72,
+    })
     expect(() => fishHabitatPolicyFor('astrea_snail')).toThrow('does not have fish habitat policy')
   })
 })

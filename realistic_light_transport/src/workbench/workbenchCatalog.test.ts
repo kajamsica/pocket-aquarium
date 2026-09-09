@@ -147,10 +147,10 @@ function fakeFetch(payload: unknown, ok = true): typeof fetch {
 }
 
 describe('runtime asset registry stays accepted-only', () => {
-  it('resolves all 47 accepted assets across 33 species without treating compound keys as species ids', () => {
+  it('resolves all 51 accepted assets across 35 species without treating compound keys as species ids', () => {
     const registry = acceptedSpecimenAssetList()
-    expect(registry).toHaveLength(47)
-    expect(new Set(registry.map((asset) => asset.speciesId))).toHaveProperty('size', 33)
+    expect(registry).toHaveLength(51)
+    expect(new Set(registry.map((asset) => asset.speciesId))).toHaveProperty('size', 35)
     expect(acceptedWorkbenchAssets([]).map((asset) => asset.key)).toEqual(registry.map((asset) => asset.key))
     for (const candidateKey of ['blue_hippo_tang@approved-v2', 'millepora@fable-v1-blade', 'constructor', '__proto__']) {
       expect(specimenAssetFor(candidateKey)).toBeUndefined()
@@ -168,20 +168,26 @@ describe('runtime asset registry stays accepted-only', () => {
   it('keeps every runtime asset inspectable even when the catalog has no accepted rows', () => {
     const assets = acceptedWorkbenchAssets([])
     const ocellaris = assets.find((asset) => asset.key === 'ocellaris')!
-    expect(assets).toHaveLength(47)
+    expect(assets).toHaveLength(51)
     expect(ocellaris.referenceSizeMeters).toBe(0.08)
     expect(ocellaris.clipLoops).toEqual({ idle: true, swim: true, burst: false })
+    expect(assets.find((asset) => asset.key === 'regal_angelfish')).toMatchObject({
+      sourceCandidate: 'fable-v1', category: 'fish', referenceSizeMeters: .25,
+    })
+    expect(assets.find((asset) => asset.key === 'montipora@capricornis_plating')).toMatchObject({
+      sourceCandidate: 'fable-v1-capricornis_plating', category: 'coral', referenceSizeMeters: .15,
+    })
   })
 
   it('preserves promoted keys and source candidates without duplicate candidate rows', async () => {
     const promoted = acceptedSpecimenAssetList().filter((asset) => asset.key === 'blue_hippo_tang' || asset.speciesId === 'millepora')
     const discovered = { candidates: promoted.map((asset) => indexEntry(asset.speciesId, asset.sourceCandidate, { variantId: asset.variantId ?? null })) }
     const catalog = await loadWorkbenchCatalog(fakeFetch(discovered))
-    expect(catalog.assets).toHaveLength(47)
+    expect(catalog.assets).toHaveLength(51)
     expect(catalog.assets.every((asset) => asset.state === 'accepted')).toBe(true)
     const acceptedOptions = workbenchOptionGroups(catalog).flatMap((group) => group.options).filter((option) => option.badge === 'accepted')
-    expect(acceptedOptions).toHaveLength(47)
-    expect(new Set(acceptedOptions.map((option) => option.key))).toHaveProperty('size', 47)
+    expect(acceptedOptions).toHaveLength(51)
+    expect(new Set(acceptedOptions.map((option) => option.key))).toHaveProperty('size', 51)
     const branching = catalog.assets.find((asset) => asset.key === 'millepora@branching')!
     expect(branching).toMatchObject({ state: 'accepted', candidate: 'fable-v1-branching', sourceCandidate: 'fable-v1-branching', variantId: 'branching', category: 'coral', bodyPlan: 'hydrocoral_colony', referenceSizeKind: 'colony_width' })
     expect(selectWorkbenchAsset(catalog.assets, 'millepora', null).asset?.key).toBe('millepora@blade')
@@ -283,7 +289,7 @@ describe('workbench candidate catalog', () => {
     const groups = workbenchOptionGroups(catalog)
     expect(groups.map((group) => group.category)).toEqual(['fish', 'coral', 'cleanup_crew', 'uncatalogued'])
     const fish = groups[0].options
-    expect(fish[0]).toMatchObject({ key: 'ocellaris', disabled: false, badge: 'accepted', label: 'Ocellaris Clownfish (accepted v1.1.0)' })
+    expect(fish[0]).toMatchObject({ key: 'ocellaris', disabled: false, badge: 'accepted', label: 'Ocellaris Clownfish (accepted v2.0.0-candidate)' })
     expect(fish.map((option) => option.key)).toEqual([
       'ocellaris',
       'blue_hippo_tang@fable-v1',

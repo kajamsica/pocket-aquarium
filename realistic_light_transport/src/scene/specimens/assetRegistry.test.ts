@@ -22,14 +22,14 @@ function sha256(path: string): string {
 }
 
 describe('accepted specimen asset registry', () => {
-  it('enumerates 47 unique accepted assets across 33 species', () => {
+  it('enumerates 51 unique accepted assets across 35 species', () => {
     const assets = acceptedSpecimenAssetList()
 
-    expect(assets).toHaveLength(47)
+    expect(assets).toHaveLength(51)
     expect(listSpecimenAssets()).toBe(assets)
-    expect(new Set(assets.map((asset) => asset.key))).toHaveProperty('size', 47)
-    expect(ACCEPTED_SPECIES_IDS).toHaveLength(33)
-    expect(new Set(ACCEPTED_SPECIES_IDS)).toHaveProperty('size', 33)
+    expect(new Set(assets.map((asset) => asset.key))).toHaveProperty('size', 51)
+    expect(ACCEPTED_SPECIES_IDS).toHaveLength(35)
+    expect(new Set(ACCEPTED_SPECIES_IDS)).toHaveProperty('size', 35)
   })
 
   it('records exactly one default and resolves explicit variants', () => {
@@ -52,6 +52,7 @@ describe('accepted specimen asset registry', () => {
     expect(bySpecies.get('blue_hippo_tang')?.sourceCandidate).toBe('approved-v2')
     expect(bySpecies.get('gem_tang')?.sourceCandidate).toBe('round-v2')
     expect(bySpecies.get('purple_tang')?.sourceCandidate).toBe('fable-v2')
+    expect(bySpecies.get('regal_angelfish')?.sourceCandidate).toBe('fable-v1')
     expect(bySpecies.get('yellow_tang')?.sourceCandidate).toBe('fable-v2')
     expect(bySpecies.get('six_line_wrasse')?.sourceCandidate).toBe('fable-v2')
   })
@@ -74,7 +75,7 @@ describe('accepted specimen asset registry', () => {
   })
 
   it('matches every accepted source and bundled GLB to its exact receipt hash', () => {
-    expect(runtimeAcceptance.assets).toHaveLength(47)
+    expect(runtimeAcceptance.assets).toHaveLength(51)
     for (const entry of runtimeAcceptance.assets) {
       expect(sha256(entry.sourceCandidateGlbPath), `${entry.key} source`).toBe(entry.sha256)
       expect(sha256(entry.bundledGlbPath), `${entry.key} bundle`).toBe(entry.sha256)
@@ -97,7 +98,7 @@ describe('accepted specimen asset registry', () => {
       .map((entry) => [`${entry.speciesId}/${entry.candidate}`, entry]))
     const promotions = runtimeAcceptance.assets
 
-    expect(promotions).toHaveLength(47)
+    expect(promotions).toHaveLength(51)
     for (const promotion of promotions) {
       const key = `${promotion.speciesId}/${promotion.sourceCandidate}`
       const formal = formallyAccepted.get(key)
@@ -129,7 +130,7 @@ describe('accepted specimen asset registry', () => {
     }
   })
 
-  it('records the eight newly formalized variant approvals with exact hashes', () => {
+  it('records the eleven newly formalized variant approvals with exact hashes', () => {
     const expected = [
       ['acropora_branching', 'fable-v2-staghorn_blue', 'ae219eb3c58c38129d948c979a9be99ff03863a9b8a856a46887a0cbba9bbe6a'],
       ['acropora_branching', 'fable-v2-table_green', '374f523f2b097c0cf97a583ae2c9c2d81395bc7c2197af6d6885804023925745'],
@@ -137,6 +138,9 @@ describe('accepted specimen asset registry', () => {
       ['banggai_cardinal', 'fable-v3', '438289d4105d3157ca345adec6c822b7ee94cd2f1f5f532302c8b7e74fe3814f'],
       ['millepora', 'fable-v1-blade', '77a364947b53005404132045394bd2b969001c449cffd7fd1325a6cbce7b6780'],
       ['millepora', 'fable-v1-branching', '9dfc47f3ac2b4df6d3035ede7133d8bbee175ee58a347c7eaa0f2d8e1fc5c634'],
+      ['montipora', 'fable-v1-capricornis_plating', 'b620a9ca160cd9d53275e29ee0dad2620f437e2ee5dfbf70a6085f597da3bc9c'],
+      ['montipora', 'fable-v1-digitata_branching', 'ff210f0308c01b258470f69863c17c09885a89b3fcb16c675a3a59668af00cf6'],
+      ['montipora', 'fable-v1-encrusting', 'a2dfc83c5b6dde3b23d0c1dae80749f8b727359aab10e10c54839d3d65740428'],
       ['stylophora', 'fable-v1-blueberry', 'd61420f0a95f375723687b4ab747e8b1a1f637ac227719aa7bbc89606689a6e1'],
       ['stylophora', 'fable-v1-pink', 'bd7b9588ea9f8728577f3c965bfc74f1250fc6035d11cd6911418ed35bdfe79d'],
     ] as const

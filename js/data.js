@@ -360,6 +360,18 @@
       maturityDays: 100, breeding: null,
       teachNote: "Purple tangs are among the most aggressive Zebrasoma: one per system, in at least 470 L, and never alongside another tang."
     },
+    regal_angelfish: {
+      id: "regal_angelfish", kind: "fish", name: "Regal Angelfish", sci: "Pygoplites diacanthus",
+      waterType: "salt", habitat: "reef", nativeHabitat: "Indo-Pacific coral-rich reef slopes and caves, browsing close to rockwork",
+      adultSizeCm: 25, price: 320, bioload: 12,
+      minTier: "xl757", minVolumeL: 475, minFootprintCm2: 9000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.5,
+      predator: false, preysOn: [], preyTags: [],
+      coralSafe: false, invertSafe: true, requiredFeature: "mature_live_rock", cleanupRoles: [], expert: true,
+      diet: "omnivore-browser", feedIntervalDays: 0.9, mealSize: 0.85, metabolic: 1.45,
+      maturityDays: 120, breeding: null,
+      teachNote: "An expert-only rockwork browser for a mature reef of at least 475 L. Regal angelfish need a varied sponge-rich diet and may nip sessile corals, so reef compatibility is cautionary rather than guaranteed."
+    },
     royal_gramma: {
       id: "royal_gramma", kind: "fish", name: "Royal Gramma", sci: "Gramma loreto",
       waterType: "salt", habitat: "reef", nativeHabitat: "Caribbean reef ledges and cave overhangs",
@@ -624,6 +636,20 @@
       dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 6,
       calcification: 0.7, startPolyps: 70,
       note: "Fast-calcifying hydrocoral with a potent sting; provide bright light and vigorous flow."
+    },
+    montipora: {
+      id: "montipora", kind: "coral", name: "Montipora", sci: "Montipora sp. (Acroporidae)",
+      waterType: "salt", habitat: "reef", price: 80, referenceSizeCm: 15, referenceSizeKind: "colony_width",
+      defaultVariantId: "capricornis_plating", variants: [
+        { id: "capricornis_plating", displayName: "Montipora capricornis (orange whorling plate, green polyps)" },
+        { id: "digitata_branching", displayName: "Montipora digitata (purple fingers, green polyps)" },
+        { id: "encrusting", displayName: "Montipora encrusting (red sheet, green polyps)" }
+      ],
+      par: { min: 150, max: 350, low: 200, high: 300 },
+      flow: { min: 0.5, max: 1, low: 0.65, high: 0.9 },
+      dayFeeder: true, maturityGate: "mature", stabilityDaysGate: 7,
+      calcification: 0.75, startPolyps: 90,
+      note: "High-light, high-flow SPS for a mature stable reef; steady alkalinity and calcium support plating, branching, or encrusting growth."
     },
     stylophora: {
       id: "stylophora", kind: "coral", name: "Blueberry Stylophora", sci: "Stylophora pistillata",

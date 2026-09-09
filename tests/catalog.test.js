@@ -13,7 +13,7 @@ var acceptedCorals = accepted.filter(function (entry) { return entry.category ==
 var marineIds = Object.keys(D.SPECIES).filter(function (id) { return D.SPECIES[id].habitat === "reef"; }).sort();
 var acceptedAnimalIds = acceptedAnimals.map(function (entry) { return entry.speciesId; }).sort();
 
-assert.equal(acceptedAnimals.length, 25);
+assert.equal(acceptedAnimals.length, 26);
 assert.deepEqual(marineIds, acceptedAnimalIds);
 assert.ok(D.SPECIES.neon_tetra && D.SPECIES.pygmy_cory, "freshwater catalog remains present");
 assert.equal(D.ACTIONS.LOCK_CORAL_PLACEMENT, "LOCK_CORAL_PLACEMENT");
@@ -30,9 +30,17 @@ acceptedAnimals.forEach(function (entry) {
   assert.ok(Array.isArray(profile.cleanupRoles), entry.speciesId + " cleanup roles");
 });
 
+assert.equal(D.SPECIES.regal_angelfish.minTier, "xl757");
+assert.ok(D.SPECIES.regal_angelfish.minVolumeL >= 475);
+assert.equal(D.SPECIES.regal_angelfish.expert, true);
+assert.equal(D.SPECIES.regal_angelfish.coralSafe, false);
+assert.equal(D.SPECIES.regal_angelfish.invertSafe, true);
+assert.deepEqual(D.SPECIES.regal_angelfish.cleanupRoles, []);
+assert.equal(D.SPECIES.regal_angelfish.breeding, null);
+
 var coralIds = Object.keys(D.CORALS).sort();
 var acceptedCoralIds = Array.from(new Set(acceptedCorals.map(function (entry) { return entry.speciesId; }))).sort();
-assert.equal(coralIds.length, 8);
+assert.equal(coralIds.length, 9);
 assert.deepEqual(coralIds, acceptedCoralIds);
 
 var actualVariants = [];
@@ -48,12 +56,22 @@ coralIds.forEach(function (id) {
   assert.ok(coral.par.min < coral.par.max && coral.flow.min < coral.flow.max, id + " husbandry ranges");
 });
 var acceptedVariants = acceptedCorals.map(function (entry) { return [entry.speciesId, entry.variantId, entry.displayName]; });
-assert.equal(actualVariants.length, 22);
+assert.equal(actualVariants.length, 25);
 assert.deepEqual(actualVariants.sort(), acceptedVariants.sort());
+
+assert.equal(D.CORALS.montipora.defaultVariantId, "capricornis_plating");
+assert.equal(D.CORALS.montipora.referenceSizeCm, 15);
+assert.equal(D.CORALS.montipora.maturityGate, "mature");
+assert.equal(D.CORALS.montipora.stabilityDaysGate, 7);
+assert.equal(D.CORALS.montipora.calcification, 0.75);
+assert.equal(D.CORALS.montipora.startPolyps, 90);
+assert.ok(D.CORALS.montipora.par.min >= 150 && D.CORALS.montipora.flow.min >= 0.5);
+assert.ok(D.CORALS.montipora.par.max <= D.CORALS.acropora_branching.par.max);
+assert.ok(D.CORALS.montipora.flow.max <= D.CORALS.acropora_branching.flow.max);
 
 var acceptedVariant = global.PA.validatePurchase({}, { kind: "coral", id: "zoanthid", variantId: "blue_green" });
 var rejectedVariant = global.PA.validatePurchase({}, { kind: "coral", id: "zoanthid", variantId: "candidate_only" });
 assert.ok(acceptedVariant.reasons.indexOf("Unknown coral variant.") < 0);
 assert.ok(rejectedVariant.reasons.indexOf("Unknown coral variant.") >= 0);
 
-console.log("Accepted marine catalog parity: 25 animals, 8 corals, 22 coral variants.");
+console.log("Accepted marine catalog parity: 26 animals, 9 corals, 25 coral variants.");

@@ -65,8 +65,8 @@ describe('authoritative species locomotion', () => {
 
   it('classifies every accepted animal before it reaches the runtime integrator', () => {
     const classes = animals.map(({ speciesId }) => resolveSpecimenLocomotionPlan(speciesId))
-    expect(animals).toHaveLength(25)
-    expect(classes.filter((mode) => mode.endsWith('_fish'))).toHaveLength(13)
+    expect(animals).toHaveLength(26)
+    expect(classes.filter((mode) => mode.endsWith('_fish'))).toHaveLength(14)
     expect(classes.filter(isSurfaceBoundLocomotion)).toHaveLength(12)
     expect(new Set(classes)).toEqual(new Set([
       'open_water_fish', 'rock_fish', 'benthic_fish', 'sand_crawler',
@@ -639,23 +639,23 @@ describe('specimen primary visual selection', () => {
 })
 
 describe('accepted catalog showcase boundary', () => {
-  it('presents HUD counts for one default per 33 species and all 25 non-coral animals', () => {
+  it('presents HUD counts for one default per 35 species and all 26 non-coral animals', () => {
     const catalog = createAcceptedShowcaseCatalog()
 
-    expect(catalog.acceptedSpeciesCount).toBe(33)
-    expect(catalog.defaultAssets).toHaveLength(33)
-    expect(new Set(catalog.defaultAssets.map((asset) => asset.speciesId))).toHaveProperty('size', 33)
+    expect(catalog.acceptedSpeciesCount).toBe(35)
+    expect(catalog.defaultAssets).toHaveLength(35)
+    expect(new Set(catalog.defaultAssets.map((asset) => asset.speciesId))).toHaveProperty('size', 35)
     expect(catalog.defaultAssets.every((asset) => asset.defaultForSpecies)).toBe(true)
-    expect(catalog.animalAssets).toHaveLength(25)
-    expect(new Set(catalog.animalAssets.map((asset) => asset.speciesId))).toHaveProperty('size', 25)
+    expect(catalog.animalAssets).toHaveLength(26)
+    expect(new Set(catalog.animalAssets.map((asset) => asset.speciesId))).toHaveProperty('size', 26)
     expect(catalog.animalAssets.every((asset) => asset.defaultForSpecies && asset.category !== 'coral')).toBe(true)
-    expect(catalog.animalAssets.filter((asset) => asset.category === 'fish')).toHaveLength(13)
+    expect(catalog.animalAssets.filter((asset) => asset.category === 'fish')).toHaveLength(14)
     expect(catalog.animalAssets.filter((asset) => asset.category === 'cleanup_crew')).toHaveLength(9)
     expect(catalog.animalAssets.filter((asset) => asset.category === 'invertebrate')).toHaveLength(3)
-    expect(catalog.coralAssets).toHaveLength(8)
+    expect(catalog.coralAssets).toHaveLength(9)
   })
 
-  it('renders and selects all 25 root residents through authoritative dispatch', () => {
+  it('renders and selects all 26 root residents through authoritative dispatch', () => {
     let state = createPocketReefShowcase()
     const projected = projectPocketState(state).specimens
     const populations = resolveSpecimenPopulations(projected)

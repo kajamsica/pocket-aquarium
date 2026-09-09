@@ -19,6 +19,7 @@
     "blue_hippo_tang": "approved-v2",
     "brittle_star": "fable-v1",
     "gem_tang": "round-v2",
+    "montipora": "fable-v1-encrusting",
     "regal_angelfish": "fable-v1",
     "tomini_tang": "fable-v1"
   },
@@ -41,7 +42,7 @@
       "total": 58,
       "loadable": 57,
       "missing": 1,
-      "userApproved": 5
+      "userApproved": 6
     }
   },
   "rows": [
@@ -2735,7 +2736,7 @@
             "sway": true
           },
           "referenceSizeMeters": 0.15,
-          "userApproved": false,
+          "userApproved": true,
           "renders": {
             "authorPreview": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/author-preview.png",
             "threeView": "art/specimens/montipora/candidates/fable-v1-encrusting/renders/three-view.png"

@@ -3,8 +3,8 @@ import * as THREE from 'three'
 
 import { specimenAssetFor } from './assetRegistry'
 import { applySemanticAnimationDrive, applySpecimenTurnPose, initializeSemanticActions, makeAnimationClipInPlace,
-  resolveSemanticAnimationPlan, supportsSpecimenTurnPose, type SemanticAnimationActions,
-  type SemanticAnimationPlan } from './RiggedSpecimen'
+  resolveSemanticAnimationPlan, resolveSpecimenAppearance, specimenMaterialWithAppearance,
+  supportsSpecimenTurnPose, type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
 
 function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
   const mixer = new THREE.AnimationMixer(new THREE.Object3D())
@@ -21,6 +21,7 @@ const turnProfileCases = [
   ['ocellaris', clownTurnProfile], ['black_storm_ocellaris', clownTurnProfile],
   ['banggai_cardinal', deepTurnProfile], ['blue_hippo_tang', deepTurnProfile],
   ['gem_tang', deepTurnProfile], ['purple_tang', deepTurnProfile],
+  ['regal_angelfish', deepTurnProfile],
   ['tomini_tang', deepTurnProfile], ['yellow_tang', deepTurnProfile],
   ['diamond_goby', fusiformTurnProfile], ['watchman_goby', fusiformTurnProfile],
   ['royal_gramma', fusiformTurnProfile], ['six_line_wrasse', fusiformTurnProfile],
@@ -216,5 +217,25 @@ describe('rigged specimen semantic animation plan', () => {
     expect(actions.swim?.getEffectiveTimeScale()).toBeCloseTo(1.2)
     expect(actions.swim?.getEffectiveWeight()).toBeCloseTo(0.78)
     expect(actions.idle?.getEffectiveWeight()).toBeCloseTo(0.22)
+  })
+
+  it('clamps appearance and changes only an owned material clone', () => {
+    const shared = new THREE.MeshStandardMaterial({ color: '#f02030', opacity: 1 })
+    const sourceColor = shared.color.clone()
+    const stressed = specimenMaterialWithAppearance(shared,
+      { saturation: 0, opacity: .45 }) as THREE.MeshStandardMaterial
+    const healthy = specimenMaterialWithAppearance(shared,
+      { saturation: 1, opacity: 1 }) as THREE.MeshStandardMaterial
+
+    expect(resolveSpecimenAppearance()).toBeUndefined()
+    expect(resolveSpecimenAppearance({ saturation: -2, opacity: 2 })).toEqual({ saturation: 0, opacity: 1 })
+    expect(stressed).not.toBe(shared)
+    expect(stressed.color.r).toBeCloseTo(stressed.color.g)
+    expect(stressed.opacity).toBeCloseTo(.45)
+    expect(stressed.transparent).toBe(true)
+    expect(shared.color).toEqual(sourceColor)
+    expect(shared.opacity).toBe(1)
+    expect(healthy.color).toEqual(sourceColor)
+    stressed.dispose(); healthy.dispose(); shared.dispose()
   })
 })

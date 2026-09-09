@@ -28,7 +28,8 @@ export const ACCEPTED_ANIMAL_SPECIES_IDS = [
   'astrea_snail', 'banggai_cardinal', 'black_storm_ocellaris', 'blue_hippo_tang',
   'blue_linckia', 'brittle_star', 'cerith_snail', 'cleaner_shrimp', 'diamond_goby',
   'emerald_crab', 'epaulette_shark', 'fighting_conch', 'gem_tang', 'nassarius_snail',
-  'ocellaris', 'pistol_shrimp', 'purple_tang', 'royal_gramma', 'scarlet_hermit',
+  'ocellaris', 'pistol_shrimp', 'purple_tang', 'regal_angelfish', 'royal_gramma',
+  'scarlet_hermit',
   'six_line_wrasse', 'tomini_tang', 'trochus_snail', 'turbo_snail', 'watchman_goby',
   'yellow_tang',
 ] as const
@@ -99,6 +100,12 @@ const SPECIES_BEHAVIOR_POLICIES = {
   ocellaris: { locomotion: 'rock_fish', speedClass: 'cruise', fishHabitat: OCELLARIS_POLICY },
   pistol_shrimp: { locomotion: 'burrow_crawler', speedClass: 'crawl' },
   purple_tang: { locomotion: 'open_water_fish', speedClass: 'fast_cruise', fishHabitat: TANG_POLICY },
+  regal_angelfish: {
+    locomotion: 'rock_fish', speedClass: 'cruise', fishHabitat: {
+      habitat: 'reef_cruise', verticalBand: [.24, .72], xCoverage: .82, zCoverage: .72,
+      structureRadius: 0, pace: { cruiseMultiplier: .9, surgeMultiplier: 1.12, cycleSeconds: [17, 25] },
+    },
+  },
   royal_gramma: {
     locomotion: 'rock_fish', speedClass: 'hover', fishHabitat: {
       habitat: 'rock_shelter', verticalBand: [.25, .62], xCoverage: 0, zCoverage: 0,

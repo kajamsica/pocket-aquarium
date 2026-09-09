@@ -893,7 +893,8 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
       {placedCorals.map((coral) => coral.placement ? <CoralPlacement key={coral.id}
         speciesId={coral.speciesId} variantId={coral.variantId} individualId={coral.id}
         placement={coral.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
-        mode="locked" /> : null)}
+        mode="locked" lifecycle={{ health: coral.health, tissue: coral.tissue, extension: coral.extension,
+          polyps: coral.polyps, growth: coral.growth }} /> : null)}
       {activeCoral && previewCandidate ? <CoralPlacement speciesId={activeCoral.speciesId}
         variantId={activeCoral.variantId} individualId={activeCoral.id}
         placement={previewCandidate.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
