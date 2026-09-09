@@ -1,4 +1,4 @@
-/* Pocket Aquarium — native iOS host contract tests (IOS-1).
+/* Pocket Aquarium native iOS and Android Capacitor host contract tests.
    Dependency-free: run with `node tests/native.test.js`. No test framework, no network,
    no package install — only Node built-ins. These are STATIC + deterministic checks that
    read bytes on disk and drive the real staging boundary against a disposable fixture.
@@ -8,7 +8,7 @@
      - the staged tree matches the compiled Three.js Pages artifact exactly,
      - path safety, stale cleanup, missing-file failure, and checksum repeatability,
      - forbidden bytes (icon master, invalid sprite, docs/tests/labs/reef) are never staged,
-     - the generated iOS/SPM project is wired to capacitor-swift-pm 8.5.1,
+     - generated iOS/SPM and Android projects preserve the app identity and host boundary,
      - no signing material or remote-server config is committed. */
 "use strict";
 var fs = require("fs");
@@ -60,6 +60,7 @@ function main(mod) {
   var pkg = JSON.parse(readText(path.join(NATIVE, "package.json")));
   ok(pkg.dependencies["@capacitor/core"] === "8.5.1", "@capacitor/core pinned exactly to 8.5.1");
   ok(pkg.dependencies["@capacitor/ios"] === "8.5.1", "@capacitor/ios pinned exactly to 8.5.1");
+  ok(pkg.dependencies["@capacitor/android"] === "8.5.1", "@capacitor/android pinned exactly to 8.5.1");
   ok(pkg.devDependencies["@capacitor/cli"] === "8.5.1", "@capacitor/cli pinned exactly to 8.5.1");
   ok(pkg.type === "module", "native package is an ESM module");
   ok(/realistic_light_transport/.test(pkg.scripts["build:web"] || ""), "build:web compiles the Three.js product source");
@@ -67,6 +68,13 @@ function main(mod) {
   ok(exists(path.join(NATIVE, "package-lock.json")), "committed package-lock.json exists");
   var lock = JSON.parse(readText(path.join(NATIVE, "package-lock.json")));
   ok(lock.lockfileVersion >= 2, "lockfile is v2+ (reproducible npm ci)");
+  ok(lock.packages[""].dependencies["@capacitor/android"] === "8.5.1", "lockfile root pins @capacitor/android exactly to 8.5.1");
+  ok(/^node scripts\/stage-web\.mjs && cap sync android$/.test(pkg.scripts["sync:android"] || ""), "sync:android stages then syncs Android");
+  ok(/^npm run build:web && npm run sync:android$/.test(pkg.scripts["sync:fresh:android"] || ""), "sync:fresh:android builds web before Android sync");
+  ok(/^cap open android$/.test(pkg.scripts["open:android"] || ""), "open:android opens Android");
+  ok(/cap sync ios$/.test(pkg.scripts.sync || ""), "sync continues to target iOS");
+  ok(/build:web/.test(pkg.scripts["sync:fresh"] || "") && /npm run sync$/.test(pkg.scripts["sync:fresh"] || ""), "sync:fresh continues to build then sync iOS");
+  ok(/^cap open ios$/.test(pkg.scripts.open || ""), "open continues to target iOS");
 
   /* ------------------ 2. capacitor config (no remote server) ------------------ */
   group("capacitor config");
@@ -182,7 +190,29 @@ function main(mod) {
   var masterSize = pngSize(master);
   ok(masterSize && masterSize.width === 1254 && masterSize.height === 1254, "root icon master is preserved at 1254x1254");
 
-  /* ------------------ 10. ignore boundary: no committed generated web / secrets ------------------ */
+  /* ------------------ 10. generated Android project wiring ------------------ */
+  group("generated Android project");
+  var trackedFiles = childProcess.execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8" }).trim().split("\n");
+  var androidMain = "native/android/app/src/main/java/com/kajamsica/pocketaquarium/MainActivity.java";
+  [
+    "native/android/settings.gradle",
+    "native/android/app/build.gradle",
+    "native/android/app/src/main/AndroidManifest.xml",
+    androidMain
+  ].forEach(function (rel) { ok(trackedFiles.indexOf(rel) >= 0, rel + " is committed"); });
+  var androidSettings = readText(path.join(NATIVE, "android", "settings.gradle"));
+  var androidGradle = readText(path.join(NATIVE, "android", "app", "build.gradle"));
+  var androidManifest = readText(path.join(NATIVE, "android", "app", "src", "main", "AndroidManifest.xml"));
+  var mainActivity = readText(path.join(ROOT, androidMain));
+  ok(/include\s+['"]:app['"]/.test(androidSettings), "Android settings include the app project");
+  ok(/namespace\s*=\s*["']com\.kajamsica\.pocketaquarium["']/.test(androidGradle), "Android namespace matches the Capacitor app ID");
+  ok(/applicationId\s+["']com\.kajamsica\.pocketaquarium["']/.test(androidGradle), "Android application ID matches the Capacitor app ID");
+  ok(/android:name=["']\.MainActivity["']/.test(androidManifest), "manifest resolves .MainActivity within the app package");
+  ok(/^package com\.kajamsica\.pocketaquarium;/m.test(mainActivity), "MainActivity package matches its committed Java path");
+  ok(/import com\.getcapacitor\.BridgeActivity;/.test(mainActivity), "MainActivity imports Capacitor BridgeActivity");
+  ok(/public\s+class\s+MainActivity\s+extends\s+BridgeActivity\s*\{\s*\}/.test(mainActivity), "MainActivity is an empty Capacitor BridgeActivity host");
+
+  /* ------------------ 11. ignore boundary: no committed generated web / secrets ------------------ */
   group("ignore boundary");
   var iosIgnore = readText(path.join(NATIVE, "ios", ".gitignore"));
   ok(/App\/App\/public/.test(iosIgnore), "ios/.gitignore excludes the copied web assets (App/App/public)");
@@ -192,6 +222,27 @@ function main(mod) {
   ok(/node_modules/.test(nativeIgnore), "native/.gitignore excludes node_modules");
   ok(/^www\/?$/m.test(nativeIgnore), "native/.gitignore excludes the staged www");
   ok(/mobileprovision/.test(nativeIgnore) && /\*\.p12/.test(nativeIgnore), "native/.gitignore excludes signing material");
+  var androidIgnore = readText(path.join(NATIVE, "android", ".gitignore"));
+  ok(/app\/src\/main\/assets\/public/.test(androidIgnore), "android/.gitignore excludes copied web assets");
+  ok(/^build\/$/m.test(androidIgnore) && /^\.gradle\/$/m.test(androidIgnore), "android/.gitignore excludes build and Gradle output");
+  ok(/^local\.properties$/m.test(androidIgnore), "android/.gitignore excludes the local Android SDK path");
+  ok(/android\/\*\*\/\*\.jks/.test(nativeIgnore) && /android\/\*\*\/\*\.keystore/.test(nativeIgnore), "native/.gitignore excludes Android keystores");
+  ok(/keystore\.properties/.test(nativeIgnore) && /signing\.properties/.test(nativeIgnore), "native/.gitignore excludes Android signing properties");
+  [
+    "native/android/local.properties",
+    "native/android/app/build/output.apk",
+    "native/android/app/release-key.jks",
+    "native/android/app/release-key.keystore",
+    "native/android/keystore.properties",
+    "native/android/signing.properties",
+    "native/android/app/src/main/assets/public/index.html"
+  ].forEach(function (rel) { ok(childProcessIgnored(path.join(ROOT, rel)), rel + " is git-ignored"); });
+  ok(!trackedFiles.some(function (rel) { return /^native\/android\/(?:.*\/)?(?:local\.properties|keystore(?:\.[^/]+)?|[^/]+\.(?:jks|keystore)|signing\.properties)$/.test(rel); }),
+    "no Android SDK or signing material is committed");
+  ok(!trackedFiles.some(function (rel) { return rel === "native/www" || /^native\/www\//.test(rel) || /^native\/android\/app\/src\/main\/assets\/public\//.test(rel); }),
+    "no staged native or Android public runtime bytes are committed");
+  ok(trackedFiles.indexOf("native/android/app/src/main/assets/capacitor.config.json") < 0 && !("server" in cfg),
+    "no generated or remote Capacitor server configuration is committed");
   // The generated public copy must NOT be committed alongside the source runtime.
   ok(!fs.existsSync(path.join(iosApp, "App", "public")) ||
      childProcessIgnored(path.join(NATIVE, "ios", "App", "App", "public")),
