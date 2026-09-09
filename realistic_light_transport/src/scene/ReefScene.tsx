@@ -16,6 +16,11 @@ import {
 import { OpticalTank } from './OpticalTank'
 import type { CoralPlacementCandidate } from './CoralPlacement'
 import { ReefHabitat } from './ReefHabitat'
+import {
+  resolveHabitatVisualSettings,
+  snapshotTannin,
+  type AquariumVisualProfile,
+} from './habitatVisualProfile'
 import type { SpectralTransportTelemetry } from './materials/spectralTransport'
 import { endTankDrag, noteTankDrag, noteTankPointerDown, noteTankPointerUp } from './tankGestures'
 
@@ -286,6 +291,7 @@ interface ReefRockscapeSceneProps {
 }
 
 type ReefWorldProps = ReefSceneProps & ReefPlacementSceneProps & ReefRockscapeSceneProps
+  & { readonly visualProfile?: AquariumVisualProfile }
 
 function ReefWorld({
   snapshot,
@@ -301,6 +307,7 @@ function ReefWorld({
   selectedRockId,
   onRockSelect,
   onRockTransformPreview,
+  visualProfile = 'reef',
 }: ReefWorldProps) {
   const keyLight = useRef<THREE.SpotLight>(null)
   const fillLight = useRef<THREE.PointLight>(null)
@@ -308,6 +315,7 @@ function ReefWorld({
   const opticsTelemetry = useRef<SpectralTransportTelemetry | undefined>(undefined)
   const lastTelemetryEmit = useRef(0)
   const lightPower = THREE.MathUtils.clamp(snapshot.equipment.lightPower, 0, 1)
+  const visualSettings = resolveHabitatVisualSettings(visualProfile, snapshotTannin(snapshot))
   const daylight = useMemo(() => new THREE.Color(), [])
   const updateOpticsTelemetry = useCallback((telemetry: SpectralTransportTelemetry) => {
     opticsTelemetry.current = telemetry
@@ -344,9 +352,9 @@ function ReefWorld({
       })
     }
     daylight.setRGB(
-      THREE.MathUtils.lerp(0.2, 0.64, lightPower),
-      THREE.MathUtils.lerp(0.38, 0.82, lightPower),
-      1,
+      THREE.MathUtils.lerp(visualSettings.keyLow[0], visualSettings.keyHigh[0], lightPower),
+      THREE.MathUtils.lerp(visualSettings.keyLow[1], visualSettings.keyHigh[1], lightPower),
+      THREE.MathUtils.lerp(visualSettings.keyLow[2], visualSettings.keyHigh[2], lightPower),
     )
 
     if (keyLight.current) {
@@ -361,14 +369,14 @@ function ReefWorld({
 
   return (
     <>
-      <color attach="background" args={['#01080d']} />
-      <fogExp2 attach="fog" args={['#061923', 0.055]} />
-      <hemisphereLight args={['#8bd5f2', '#0d1c24', 0.6]} />
-      <directionalLight color="#8fbfd0" intensity={0.42} position={[1.8, 2.5, 5]} />
+      <color attach="background" args={[visualSettings.background]} />
+      <fogExp2 attach="fog" args={[visualSettings.fog, visualSettings.fogDensity]} />
+      <hemisphereLight args={[visualSettings.hemisphereSky, visualSettings.hemisphereGround, 0.6]} />
+      <directionalLight color={visualSettings.directional} intensity={0.42} position={[1.8, 2.5, 5]} />
       <spotLight
         ref={keyLight}
         castShadow
-        color="#83cfff"
+        color={visualSettings.keyInitial}
         intensity={70 + lightPower * 150}
         angle={0.58}
         penumbra={0.72}
@@ -381,7 +389,7 @@ function ReefWorld({
       />
       <pointLight
         ref={fillLight}
-        color="#3dd9d0"
+        color={visualSettings.fill}
         intensity={12 + lightPower * 18}
         decay={2}
         distance={7}
@@ -390,11 +398,11 @@ function ReefWorld({
 
       <mesh position={[0, 0.08, -1.78]} receiveShadow>
         <planeGeometry args={[12, 7]} />
-        <meshStandardMaterial color="#06141a" roughness={0.88} metalness={0.08} />
+        <meshStandardMaterial color={visualSettings.backing} roughness={0.88} metalness={0.08} />
       </mesh>
       <mesh position={[0, -1.86, 0]} receiveShadow>
         <boxGeometry args={[6.7, 0.34, 3.35]} />
-        <meshStandardMaterial color="#071014" roughness={0.74} metalness={0.22} />
+        <meshStandardMaterial color={visualSettings.stand} roughness={0.74} metalness={0.22} />
       </mesh>
 
       <group position={[0, 0.03, 0]}>
@@ -403,11 +411,13 @@ function ReefWorld({
           onPlacementCandidate={onPlacementCandidate} rockscape={rockscape}
           sand={sand}
           rockscapeEditing={rockscapeEditing} selectedRockId={selectedRockId}
-          onRockSelect={onRockSelect} onRockTransformPreview={onRockTransformPreview} />
+          onRockSelect={onRockSelect} onRockTransformPreview={onRockTransformPreview}
+          visualProfile={visualProfile} />
         <OpticalTank
           snapshot={snapshot}
           renderSettings={renderSettings}
           onOpticsTelemetry={updateOpticsTelemetry}
+          visualProfile={visualProfile}
         />
         <FlowVectorField
           flowField={flowField}
@@ -435,10 +445,11 @@ export function ReefScene({
   selectedRockId,
   onRockSelect,
   onRockTransformPreview,
+  visualProfile = 'reef',
 }: ReefWorldProps) {
   const [hintDismissed, setHintDismissed] = useState(false)
   return (
-    <div className="canvas-shell" aria-label="Interactive three-dimensional marine reef aquarium">
+    <div className="canvas-shell" aria-label={`Interactive three-dimensional ${visualProfile === 'freshwater' ? 'freshwater' : 'marine reef'} aquarium`}>
       {!hintDismissed ? <button type="button" className="tank-orbit-hint" onClick={() => setHintDismissed(true)}
         aria-label="Dismiss camera hint">Drag to orbit · Pinch/wheel to zoom · Arrow keys ×</button> : null}
       <Canvas
@@ -473,6 +484,7 @@ export function ReefScene({
           selectedRockId={selectedRockId}
           onRockSelect={onRockSelect}
           onRockTransformPreview={onRockTransformPreview}
+          visualProfile={visualProfile}
         />
       </Canvas>
     </div>
