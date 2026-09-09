@@ -2307,6 +2307,10 @@ input:focus-visible {
     backdrop-filter: blur(16px);
   }
 
+  .pocket-game-hud .pocket-window-launcher[data-has-library="true"] .pocket-mobile-dock-secondary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .pocket-game-hud .pocket-window-bar {
     min-height: 40px;
     padding: 6px 6px 6px 11px;
@@ -3366,6 +3370,128 @@ input:focus-visible {
 .pocket-credit-pill strong {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 0.78rem;
+}
+
+.pocket-library-entry {
+  color: inherit;
+  cursor: pointer;
+}
+
+.pocket-library-entry:hover {
+  border-color: rgba(122, 224, 234, 0.42);
+  background: rgba(20, 54, 63, 0.88);
+}
+
+.pocket-library-panel .pocket-window-content {
+  padding: 10px 12px 14px;
+}
+
+.pocket-aquarium-library {
+  display: grid;
+  gap: 10px;
+}
+
+.pocket-library-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pocket-library-summary p {
+  margin: 0 0 3px;
+  color: var(--dim);
+  font-size: .5rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.pocket-library-summary strong {
+  font-size: .76rem;
+}
+
+.pocket-library-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pocket-library-list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(169, 226, 235, .14);
+  border-radius: 10px;
+  background: rgba(13, 35, 43, .42);
+}
+
+.pocket-library-list > li[data-active="true"] {
+  border-color: rgba(113, 230, 197, .54);
+  background: rgba(43, 103, 115, .42);
+}
+
+.pocket-library-identity {
+  min-width: 0;
+}
+
+.pocket-library-identity > strong {
+  display: block;
+  overflow: hidden;
+  font-size: .7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pocket-library-identity > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .52rem;
+}
+
+.pocket-library-identity b {
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #06241e;
+  background: #71e6c5;
+  font-size: .45rem;
+  text-transform: uppercase;
+}
+
+.pocket-library-list form {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.pocket-library-list label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.pocket-library-list input {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid rgba(169, 226, 235, .18);
+  border-radius: 9px;
+  color: #eefeff;
+  background: rgba(2, 14, 20, .68);
+  font: inherit;
+}
+
+.pocket-library-list input:focus-visible {
+  outline: 2px solid #71e6c5;
+  outline-offset: 1px;
 }
 
 /* Hover identity: a compact read-only companion to the pointer, not a window. It takes no
