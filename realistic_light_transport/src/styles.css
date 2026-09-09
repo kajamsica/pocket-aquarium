@@ -1731,6 +1731,17 @@ input:focus-visible {
   .rockscape-editor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+@media (max-width: 860px) {
+  .rockscape-editor-launcher,
+  .rockscape-editor {
+    left: max(10px, env(safe-area-inset-left));
+  }
+
+  .rockscape-editor {
+    width: min(390px, calc(100vw - max(10px, env(safe-area-inset-left)) - max(10px, env(safe-area-inset-right))));
+  }
+}
+
 @media (max-width: 560px) {
   .reef-app {
     min-height: 820px;
@@ -2242,8 +2253,12 @@ input:focus-visible {
   }
 
   .pocket-game-hud .pocket-window-launcher button {
-    min-height: 35px;
+    min-height: 44px;
     padding: 0 9px;
+  }
+
+  .pocket-game-hud .pocket-god-mode {
+    min-height: 44px;
   }
 
   .pocket-game-hud .pocket-window-launcher-toggle {
@@ -2298,6 +2313,24 @@ input:focus-visible {
 
 /* Phone widths get the one-tap reef-first starting layout as a first-class dock action. */
 @media (max-width: 600px) {
+  .tank-orbit-hint,
+  .pocket-credit-pill[title="Accepted catalog seeded through root gameplay"] {
+    display: none;
+  }
+
+  .pocket-game-hud .pocket-utility {
+    right: max(10px, env(safe-area-inset-right));
+    left: max(10px, env(safe-area-inset-left));
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+
+  .pocket-game-hud .pocket-credit-pill {
+    padding: 5px 9px;
+  }
+
+  .pocket-game-hud .pocket-god-mode { padding: 0 9px; }
+
   .pocket-game-hud .pocket-window-launcher .pocket-reef-preset {
     color: #05242c;
     border-color: #8fe6f2;
@@ -3568,9 +3601,35 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  /* Keep the floating pills clear of the taller phone topbar. */
+  /* Keep the floating pills clear of the compact topbar. */
   .pocket-game-hud .pocket-utility {
-    top: clamp(108px, 17vh, 140px);
+    top: max(82px, calc(env(safe-area-inset-top) + 82px));
+  }
+}
+
+@media (max-width: 860px) and (max-height: 599px) {
+  .hud-topbar {
+    grid-template-areas: "brand clock";
+    grid-template-columns: 1fr auto;
+  }
+
+  .hud-run-state,
+  .hud-namespace,
+  .tank-orbit-hint,
+  .pocket-credit-pill[title="Accepted catalog seeded through root gameplay"] {
+    display: none;
+  }
+
+  .hud-phone-clock {
+    display: block;
+    grid-area: clock;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: 0.62rem;
+    white-space: nowrap;
+  }
+
+  .pocket-game-hud .pocket-utility {
+    top: max(70px, calc(env(safe-area-inset-top) + 70px));
   }
 }
 
@@ -4138,7 +4197,12 @@ input:focus-visible {
 .coral-tray-status[data-state="invalid"] > span { background: #ef786a; }
 
 @media (max-width: 860px) {
-  .coral-inventory-tray { right: 14px; bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px)); width: calc(100vw - 28px); }
+  .coral-inventory-tray {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(68px, calc(env(safe-area-inset-bottom) + 68px));
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+  }
   .coral-tray-disclosure { position: relative; }
-  .coral-tray-panel { position: absolute; right: 0; bottom: calc(100% + 8px); width: min(362px, calc(100vw - 28px)); max-height: min(46vh, 390px); }
+  .coral-tray-panel { position: absolute; right: 0; bottom: calc(100% + 8px); width: min(362px, 100%); max-height: min(46vh, 390px); }
 }

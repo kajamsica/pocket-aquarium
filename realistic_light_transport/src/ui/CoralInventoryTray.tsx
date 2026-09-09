@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const CORAL_TRAY_OPEN_KEY = 'pocket-aquarium:coral-tray-open'
+const CORAL_TRAY_COMPACT_OPEN_KEY = `${CORAL_TRAY_OPEN_KEY}:compact`
+const CORAL_TRAY_COMPACT_QUERY = '(max-width: 860px)'
 
-function initialCoralTrayOpen() {
+function savedCoralTrayOpen(compact: boolean) {
   try {
-    const saved = window.localStorage.getItem(CORAL_TRAY_OPEN_KEY)
+    const saved = window.localStorage.getItem(compact ? CORAL_TRAY_COMPACT_OPEN_KEY : CORAL_TRAY_OPEN_KEY)
     if (saved !== null) return saved === '1'
   } catch { /* Storage is optional. */ }
-  return !window.matchMedia('(max-width: 860px)').matches
+  return !compact
+}
+
+function initialCoralTrayOpen() {
+  return savedCoralTrayOpen(window.matchMedia(CORAL_TRAY_COMPACT_QUERY).matches)
 }
 
 export interface CoralInventoryItem {
@@ -68,6 +74,15 @@ export function CoralInventoryTray({
   onLock,
 }: CoralInventoryTrayProps) {
   const [open, setOpen] = useState(initialCoralTrayOpen)
+
+  useEffect(() => {
+    const compactQuery = window.matchMedia(CORAL_TRAY_COMPACT_QUERY)
+    const restoreLayoutPreference = () => setOpen(savedCoralTrayOpen(compactQuery.matches))
+    restoreLayoutPreference()
+    compactQuery.addEventListener('change', restoreLayoutPreference)
+    return () => compactQuery.removeEventListener('change', restoreLayoutPreference)
+  }, [])
+
   if (!inventory.length) return null
 
   const active = inventory.find((coral) => coral.id === activeId)
@@ -84,7 +99,8 @@ export function CoralInventoryTray({
       <details className="coral-tray-disclosure" open={open} onToggle={(event) => {
         const nextOpen = event.currentTarget.open
         setOpen(nextOpen)
-        try { window.localStorage.setItem(CORAL_TRAY_OPEN_KEY, nextOpen ? '1' : '0') } catch { /* Storage is optional. */ }
+        const compact = window.matchMedia(CORAL_TRAY_COMPACT_QUERY).matches
+        try { window.localStorage.setItem(compact ? CORAL_TRAY_COMPACT_OPEN_KEY : CORAL_TRAY_OPEN_KEY, nextOpen ? '1' : '0') } catch { /* Storage is optional. */ }
       }}>
         <summary aria-label={`Coral tray, ${inventory.length} unplaced`}>
           <span>Coral tray</span><strong>{inventory.length}</strong>
