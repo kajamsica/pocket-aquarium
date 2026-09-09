@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-09T21:00:31.174Z",
+  "generatedAt": "2026-09-09T21:33:03.575Z",
   "categories": [
     "fish",
     "coral",
@@ -33,14 +33,14 @@
     },
     "byStatus": {
       "accepted": 1,
-      "candidate": 36,
+      "candidate": 37,
       "provisional": 1,
       "failed": 0,
-      "missing": 1
+      "missing": 0
     },
     "candidates": {
-      "total": 60,
-      "loadable": 59,
+      "total": 61,
+      "loadable": 60,
       "missing": 1,
       "userApproved": 6
     }
@@ -771,8 +771,8 @@
         "kind": "adult_total_length"
       },
       "referenceGrade": "B",
-      "assetStatus": "missing",
-      "assetVersion": "0.1.0",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.2",
       "provisional": false,
       "accepted": {
         "glb": null,
@@ -780,7 +780,50 @@
         "clips": [],
         "statistics": null
       },
-      "candidates": [],
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Harlequin Rasbora",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.2",
+          "loadable": true,
+          "glb": "art/specimens/harlequin_rasbora/candidates/fable-v1/lod1.glb",
+          "glbSha256": "842a3f85bdac1af9f67f56019f46d146e8ebb9ec5644f111f1bf6068358351d5",
+          "glbSha256Verified": true,
+          "geometryDigest": "12a9faf37c99be898908aea9342b8dde91312c31e92c2f35bd868d4e2347fabc",
+          "statistics": {
+            "triangles": 7342,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.05,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/harlequin_rasbora/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/harlequin_rasbora/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
       "variants": [],
       "clipRoles": {
         "idle": "idle",
