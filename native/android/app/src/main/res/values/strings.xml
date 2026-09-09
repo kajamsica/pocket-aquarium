@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pocket Aquarium</string>
+    <string name="title_activity_main">Pocket Aquarium</string>
+    <string name="package_name">com.kajamsica.pocketaquarium</string>
+    <string name="custom_url_scheme">com.kajamsica.pocketaquarium</string>
+</resources>
