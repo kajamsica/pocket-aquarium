@@ -26,7 +26,7 @@ describe('tank care guidance and resident inspection', () => {
       decayDays: 1.25,
     })
     expect(view.selectedSpecimen?.id).toBe(deceased.id)
-    expect(view.objective.destination).toBe('journal')
+    expect(view.objective.destination).toBe('care')
     expect(view.careRecommendations[0].title).toContain('Remove 1 dead resident')
 
     const cleaned = dispatchPocketAction(state, { type: 'REMOVE_DEAD', id: deceased.id })
@@ -38,8 +38,9 @@ describe('tank care guidance and resident inspection', () => {
     state.equipment.ato = 'none'
     state.water.levelL = 60
     state.water.salinity = 38
+    const tested = dispatchPocketAction(state, { type: 'WATER_TEST' })
 
-    const recommendation = projectPocketState(state).careRecommendations
+    const recommendation = projectPocketState(tested).careRecommendations
       .find((item) => item.title.includes('Evaporation'))
     expect(recommendation?.action).toEqual({ type: 'WATER_TOP_OFF' })
     expect(recommendation?.suggestedOfferId).toBe('ato:ato')
@@ -47,15 +48,21 @@ describe('tank care guidance and resident inspection', () => {
 
   it('does not mislabel the deliberate fishless ammonia dose as an emergency', () => {
     let state = createStarterPocketState()
+    state = dispatchPocketAction(state, { type: 'CHOOSE_HABITAT', habitat: 'freshwater' })
     state = dispatchPocketAction(state, { type: 'SETUP_FILL' })
     state = dispatchPocketAction(state, { type: 'SETUP_LIFE_SUPPORT', on: true })
     state = dispatchPocketAction(state, { type: 'ADD_AMMONIA_SOURCE', on: true })
     state = dispatchPocketAction(state, { type: 'INOCULATE_BACTERIA' })
     state.water.ammonia = .8
+    state = dispatchPocketAction(state, { type: 'WATER_TEST' })
 
     expect(state.water.ammonia).toBeGreaterThan(.25)
-    expect(projectPocketState(state).careRecommendations).toEqual([])
-    expect(projectPocketState(state).objective.title).toBe('Watch the nitrogen cycle')
+    const view = projectPocketState(state)
+    expect(view.careRecommendations[0]).toMatchObject({ severity: 'watch',
+      title: 'Fishless cycle is processing nitrogen' })
+    expect(view.objective.title).toBe('Watch the nitrogen cycle')
+    expect(view.testedWater.map(({ key }) => key)).toContain('hardness')
+    expect(view.testedWater.map(({ key }) => key)).not.toContain('salinity')
   })
 
   it('frames toxic nitrogen as a cause, immediate action, and filtration upgrade', () => {
@@ -63,8 +70,9 @@ describe('tank care guidance and resident inspection', () => {
     state.water.ammonia = .62
     state.water.nitrite = .4
     state.equipment.filter = 'sponge'
+    const tested = dispatchPocketAction(state, { type: 'WATER_TEST' })
 
-    const view = projectPocketState(state)
+    const view = projectPocketState(tested)
     const recommendation = view.careRecommendations.find((item) => item.title.includes('Toxic nitrogen'))
     expect(recommendation?.severity).toBe('urgent')
     expect(recommendation?.action).toEqual({ type: 'WATER_CHANGE', fraction: .25 })
