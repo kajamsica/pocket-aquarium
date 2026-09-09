@@ -128,6 +128,118 @@ class Body:
 
 # ---------------------------------------------------------------- fins
 
+def _bounded_number(value, label: str, minimum: float, maximum: float) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{label} must be a number")
+    value = float(value)
+    if not math.isfinite(value) or not minimum <= value <= maximum:
+        raise ValueError(f"{label} must be between {minimum} and {maximum}")
+    return value
+
+
+def _offset_pair(options: dict, key: str, default: tuple[float, float], label: str) -> tuple[float, float]:
+    value = options.get(key, default)
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise ValueError(f"{label}.{key} must contain [x, z]")
+    return (_bounded_number(value[0], f"{label}.{key}[0]", -0.02, 0.02),
+            _bounded_number(value[1], f"{label}.{key}[1]", -0.02, 0.02))
+
+
+def _lip_geometry(mouth: dict, scale: float, snout_x: float, mouth_z: float, mouth_w: float, mouth_r: float):
+    defaults = {
+        "upperLip": {"centerOffset": (0.0008, 0.0), "cornerOffset": (-0.0012, 0.0005),
+                     "widthScale": 1.0, "cornerRadiusScale": 0.6, "centerRadiusScale": 1.0},
+        "lowerLip": {"centerOffset": (0.0002, -0.0011), "cornerOffset": (-0.0016, -0.0009),
+                     "widthScale": 0.9, "cornerRadiusScale": 0.5, "centerRadiusScale": 0.8},
+    }
+    output = []
+    for label, legacy in defaults.items():
+        options = mouth.get(label, {})
+        if not isinstance(options, dict):
+            raise ValueError(f"mouth.{label} must be an object")
+        unknown = set(options) - set(legacy)
+        if unknown:
+            raise ValueError(f"mouth.{label} has unknown fields: {', '.join(sorted(unknown))}")
+        center_x, center_z = _offset_pair(options, "centerOffset", legacy["centerOffset"], f"mouth.{label}")
+        corner_x, corner_z = _offset_pair(options, "cornerOffset", legacy["cornerOffset"], f"mouth.{label}")
+        width_scale = _bounded_number(options.get("widthScale", legacy["widthScale"]),
+                                      f"mouth.{label}.widthScale", 0.05, 4.0)
+        corner_radius = _bounded_number(options.get("cornerRadiusScale", legacy["cornerRadiusScale"]),
+                                        f"mouth.{label}.cornerRadiusScale", 0.05, 4.0)
+        center_radius = _bounded_number(options.get("centerRadiusScale", legacy["centerRadiusScale"]),
+                                        f"mouth.{label}.centerRadiusScale", 0.05, 4.0)
+        points = [(snout_x + corner_x * scale, -mouth_w * width_scale, mouth_z + corner_z * scale),
+                  (snout_x + center_x * scale, 0.0, mouth_z + center_z * scale),
+                  (snout_x + corner_x * scale, mouth_w * width_scale, mouth_z + corner_z * scale)]
+        output.append((points, [mouth_r * corner_radius, mouth_r * center_radius, mouth_r * corner_radius]))
+    return output
+
+
+def _paired_filament_options(fin: dict):
+    options = fin.get("distalFilament")
+    if options is None:
+        return None
+    if not isinstance(options, dict):
+        raise ValueError(f"Fin {fin.get('name', '<unnamed>')} distalFilament must be an object")
+    allowed = {"length", "center", "width", "taperPower", "distalPower"}
+    unknown = set(options) - allowed
+    if unknown:
+        raise ValueError(f"Fin {fin.get('name', '<unnamed>')} distalFilament has unknown fields: {', '.join(sorted(unknown))}")
+    if "length" not in options:
+        raise ValueError(f"Fin {fin.get('name', '<unnamed>')} distalFilament.length is required")
+    label = f"Fin {fin.get('name', '<unnamed>')} distalFilament"
+    return {
+        "length": _bounded_number(options["length"], f"{label}.length", 0.0, 0.05),
+        "center": _bounded_number(options.get("center", 0.5), f"{label}.center", 0.0, 1.0),
+        "width": _bounded_number(options.get("width", 0.25), f"{label}.width", 0.01, 0.5),
+        "taperPower": _bounded_number(options.get("taperPower", 1.5), f"{label}.taperPower", 0.25, 8.0),
+        "distalPower": _bounded_number(options.get("distalPower", 2.0), f"{label}.distalPower", 1.0, 8.0),
+    }
+
+
+def _filament_reach(options: dict | None, s: float, t: float) -> float:
+    if options is None:
+        return 0.0
+    lateral = abs(s - options["center"]) / options["width"]
+    if lateral >= 1.0:
+        return 0.0
+    return options["length"] * (1.0 - lateral) ** options["taperPower"] * t ** options["distalPower"]
+
+
+def _tube_adornment_geometry(adorn: dict):
+    allowed = {"type", "name", "points", "radii", "segments", "material", "bone"}
+    unknown = set(adorn) - allowed
+    if unknown:
+        raise ValueError(f"Tube adornment has unknown fields: {', '.join(sorted(unknown))}")
+    name = adorn.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("Tube adornment name must be a non-empty string")
+    points = adorn.get("points")
+    radii = adorn.get("radii")
+    if not isinstance(points, (list, tuple)) or not 2 <= len(points) <= 64:
+        raise ValueError(f"Tube adornment {name} points must contain 2 to 64 xyz coordinates")
+    if not isinstance(radii, (list, tuple)) or len(radii) != len(points):
+        raise ValueError(f"Tube adornment {name} radii must match points")
+    validated_points = []
+    for index, point in enumerate(points):
+        if not isinstance(point, (list, tuple)) or len(point) != 3:
+            raise ValueError(f"Tube adornment {name} point {index} must contain [x, y, z]")
+        validated = tuple(_bounded_number(value, f"Tube adornment {name} point {index}", -1.0, 1.0)
+                          for value in point)
+        if validated_points and sum((validated[i] - validated_points[-1][i]) ** 2 for i in range(3)) <= 1e-16:
+            raise ValueError(f"Tube adornment {name} has duplicate consecutive points")
+        validated_points.append(validated)
+    validated_radii = [_bounded_number(radius, f"Tube adornment {name} radius {index}", 0.000001, 0.05)
+                       for index, radius in enumerate(radii)]
+    segments = adorn.get("segments", 8)
+    if isinstance(segments, bool) or not isinstance(segments, int) or not 3 <= segments <= 32:
+        raise ValueError(f"Tube adornment {name} segments must be an integer from 3 to 32")
+    for field in ("material", "bone"):
+        value = adorn.get(field)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(f"Tube adornment {name} {field} must be a non-empty string")
+    return validated_points, validated_radii, segments
+
 def sheet_normals(rows):
     """Per-vertex unit normals of a grid sheet (rows x columns of Vectors)."""
     normals = []
@@ -290,6 +402,7 @@ def paired_rows(body: Body, fin: dict, scale: float, side: int, embed: float = 0
     power = float(fin.get("power", 0.7))
     spread = float(fin.get("spread", 1.0))
     flare = float(fin.get("flare", 0.6))
+    filament = _paired_filament_options(fin)
     rows = []
     for r in range(rows_n):
         t = r / (rows_n - 1)
@@ -304,6 +417,8 @@ def paired_rows(body: Body, fin: dict, scale: float, side: int, embed: float = 0
             direction = Vector((-math.sin(sweep), math.cos(sweep) * spread, -math.sin(droop)))
             direction.normalize()
             reach = length * extension * t
+            if filament is not None:
+                reach += _filament_reach(filament, s, t)
             along = (0.5 - s) * root_length * flare * t
             row.append((x + direction.x * reach + along,
                         side * (y + direction.y * reach),
@@ -672,13 +787,10 @@ def build(spec: dict, species, ctx) -> BuildResult:
     mouth_r = float(mouth.get("radius", 0.00032)) * scale
     snout_x = body.head_x
     mouth_z = jaw_z
-    mouth_points = [(snout_x - 0.0012 * scale, -mouth_w, mouth_z + 0.0005 * scale), (snout_x + 0.0008 * scale, 0.0, mouth_z),
-                    (snout_x - 0.0012 * scale, mouth_w, mouth_z + 0.0005 * scale)]
-    detail_parts.append(msh.make_part("mouth", msh.tube(mouth_points, [mouth_r * 0.6, mouth_r, mouth_r * 0.6], 8), "cue",
+    (mouth_points, mouth_radii), (lip_points, lip_radii) = _lip_geometry(mouth, scale, snout_x, mouth_z, mouth_w, mouth_r)
+    detail_parts.append(msh.make_part("mouth", msh.tube(mouth_points, mouth_radii, 8), "cue",
                                       lambda i, v: {"Jaw": 1.0}, closed=True))
-    lip_points = [(snout_x - 0.0016 * scale, -mouth_w * 0.9, mouth_z - 0.0009 * scale), (snout_x + 0.0002 * scale, 0.0, mouth_z - 0.0011 * scale),
-                  (snout_x - 0.0016 * scale, mouth_w * 0.9, mouth_z - 0.0009 * scale)]
-    detail_parts.append(msh.make_part("lower_lip", msh.tube(lip_points, [mouth_r * 0.5, mouth_r * 0.8, mouth_r * 0.5], 8), "cue",
+    detail_parts.append(msh.make_part("lower_lip", msh.tube(lip_points, lip_radii, 8), "cue",
                                       lambda i, v: {"Jaw": 1.0}, closed=True))
     # gill arcs on both flanks
     gill_r = float(gill.get("radius", 0.0002)) * scale
@@ -694,7 +806,13 @@ def build(spec: dict, species, ctx) -> BuildResult:
             points.append((x, side * y, z))
         detail_parts.append(msh.make_part(f"gill_{suffix}", msh.tube(points, [gill_r] * gill_points, 6), "cue",
                                           lambda i, v: {"Gill": 1.0}, closed=True))
-    for adorn in morphology.get("adornments", []):
+    adornments = morphology.get("adornments", [])
+    if not isinstance(adornments, list):
+        raise ValueError("morphology.adornments must be a list")
+    tube_names = set()
+    for adorn in adornments:
+        if not isinstance(adorn, dict) or not isinstance(adorn.get("type"), str):
+            raise ValueError("Each adornment must be an object with a string type")
         if adorn["type"] == "scalpel":
             ax = float(adorn["x"])
             az = body.center_z(ax) + float(adorn.get("zFraction", 0.0)) * body.dorsal(ax)
@@ -709,6 +827,20 @@ def build(spec: dict, species, ctx) -> BuildResult:
             geometry = msh.ellipsoid(center, tuple(adorn["radii"]), 12, 8)
             detail_parts.append(msh.make_part(adorn["name"], geometry, adorn.get("material", "adornment"),
                                               lambda i, v, b=adorn.get("bone", "Body"): {b: 1.0}, closed=True))
+        elif adorn["type"] == "tube":
+            points, radii, segments = _tube_adornment_geometry(adorn)
+            if adorn["name"] in tube_names:
+                raise ValueError(f"Tube adornment name must be unique: {adorn['name']}")
+            tube_names.add(adorn["name"])
+            material = adorn.get("material", "adornment")
+            bone = adorn.get("bone", "Body")
+            if material not in material_map:
+                raise ValueError(f"Tube adornment {adorn['name']} uses unknown material {material}")
+            if rig.pose.bones.get(bone) is None:
+                raise ValueError(f"Tube adornment {adorn['name']} uses unknown bone {bone}")
+            geometry = msh.tube(points, radii, segments)
+            detail_parts.append(msh.make_part(adorn["name"], geometry, material,
+                                              lambda i, v, b=bone: {b: 1.0}, closed=True))
         else:
             raise ValueError(f"Unknown adornment {adorn['type']}")
     details_obj = msh.assemble(f"{prefix}_Details", detail_parts, material_map, rig, f"{prefix}_Armature")
