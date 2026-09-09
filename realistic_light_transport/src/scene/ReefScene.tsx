@@ -290,8 +290,8 @@ interface ReefRockscapeSceneProps {
   readonly onRockTransformPreview: (rockId: number, patch: RockTransformPatch) => void
 }
 
-type ReefWorldProps = ReefSceneProps & ReefPlacementSceneProps & ReefRockscapeSceneProps
-  & { readonly visualProfile?: AquariumVisualProfile }
+type ReefSceneWorldProps = ReefSceneProps & ReefPlacementSceneProps & ReefRockscapeSceneProps
+type ReefWorldProps = ReefSceneWorldProps & { readonly visualProfile: AquariumVisualProfile }
 
 function ReefWorld({
   snapshot,
@@ -307,7 +307,7 @@ function ReefWorld({
   selectedRockId,
   onRockSelect,
   onRockTransformPreview,
-  visualProfile = 'reef',
+  visualProfile,
 }: ReefWorldProps) {
   const keyLight = useRef<THREE.SpotLight>(null)
   const fillLight = useRef<THREE.PointLight>(null)
@@ -445,9 +445,9 @@ export function ReefScene({
   selectedRockId,
   onRockSelect,
   onRockTransformPreview,
-  visualProfile = 'reef',
-}: ReefWorldProps) {
+}: ReefSceneWorldProps) {
   const [hintDismissed, setHintDismissed] = useState(false)
+  const visualProfile: AquariumVisualProfile = snapshot.namespace === 'freshwater' ? 'freshwater' : 'reef'
   return (
     <div className="canvas-shell" aria-label={`Interactive three-dimensional ${visualProfile === 'freshwater' ? 'freshwater' : 'marine reef'} aquarium`}>
       {!hintDismissed ? <button type="button" className="tank-orbit-hint" onClick={() => setHintDismissed(true)}

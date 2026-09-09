@@ -435,7 +435,6 @@ function AquariumApp() {
           onHoverSpecimen={setHoveredSpecimen}>
           <ReefScene
             snapshot={view.reefSnapshot}
-            visualProfile={reef ? 'reef' : 'freshwater'}
             renderSettings={renderSettings}
             onRenderTelemetry={updateRenderTelemetry}
             placedCorals={displayedCorals}
