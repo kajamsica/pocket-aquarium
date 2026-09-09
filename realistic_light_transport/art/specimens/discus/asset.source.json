@@ -12,7 +12,7 @@
   "textureStyle": "discus_wild_heckel",
   "assetVersion": "0.1.0-source",
   "referenceGrade": "B",
-  "referenceSize": {"meters": 0.16, "kind": "adult_display_total_length", "note": "A representative adult inside the 15 to 20 cm total-length range reported by UF/IFAS; FishBase separately records 12.3 cm maximum standard length and 20 cm maximum total length."},
+  "referenceSize": {"meters": 0.15, "kind": "adult_display_total_length", "note": "A representative adult at the lower end of the 15 to 20 cm total-length range reported by UF/IFAS; FishBase separately records 12.3 cm maximum standard length and 20 cm maximum total length."},
   "origin": "anatomical_midbody",
   "clipRoles": {"idle": "idle", "locomotion": "swim", "response": "display"},
   "palette": {"skin": [0.30, 0.20, 0.10], "fin": [0.40, 0.25, 0.12], "iris": [0.72, 0.34, 0.08], "cue": [0.055, 0.035, 0.025], "adornment": [0.05, 0.48, 0.52]},
