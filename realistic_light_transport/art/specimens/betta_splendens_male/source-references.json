@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "betta_splendens_male",
+  "revision": 1,
+  "policy": "References informed taxonomy, adult size, proportions, fin placement and colour strategy only. No pixels were sampled, traced, copied or redistributed.",
+  "sources": [
+    {
+      "id": "FISHBASE-BETTA-SPLENDENS",
+      "title": "Betta splendens species summary",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Betta_splendens.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "OATA-BETTA",
+      "title": "Bettas, Siamese Fighting Fish",
+      "publisher": "Ornamental Aquatic Trade Association",
+      "url": "https://ornamentalfish.org/wp-content/uploads/Bettas-Siamese-Fighting-Fish.pdf",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-BETTA-SPLENDENS",
+      "title": "Category: Betta splendens",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Betta_splendens",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file open license; nothing copied"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "FishBase supports adult size and basic meristics. Openly licensed lateral views support domestic male proportions, while top and front thickness remain inferred from osphronemid anatomy."
+}
