@@ -53,6 +53,21 @@
     "Nitrate present", "Cycled", "Young biome", "Mature biome"
   ];
 
+  /* Public husbandry references behind the freshwater V1 rules. Values in the
+     catalog stay broad because source guidance varies by strain and locality. */
+  var HUSBANDRY_SOURCES = {
+    OATA_FRESHWATER: "https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/",
+    OATA_MALAWI: "https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/how-to-look-after-african-malawi-cichlids/",
+    MERCK_MANAGEMENT: "https://www.merckvetmanual.com/exotic-and-laboratory-animals/aquarium-fish/management-of-aquarium-fish",
+    MERCK_HOUSING: "https://www.merckvetmanual.com/all-other-pets/fish/providing-a-home-for-fish",
+    RSPCA_FISH: "https://science.rspca.org.uk/en/web/rspca/adviceandwelfare/pets/fish",
+    FISHBASE_BETTA: "https://www.fishbase.se/summary/Betta-splendens",
+    OLDFIELD_MURPHY_2024: "https://pubmed.ncbi.nlm.nih.gov/38487786/",
+    MCKNIGHT_2025: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12704419/",
+    TROPICA_PLANTS: "https://tropica.com/en/plants",
+    FRESHWATER_PACKET: "realistic_light_transport/work/freshwater_ecology_packet.md"
+  };
+
   /* ------------------------------------------------------------------ *
    * Habitats.
    * ------------------------------------------------------------------ */
@@ -138,11 +153,12 @@
    * ------------------------------------------------------------------ */
   var EQUIPMENT = {
     filter: {
-      category: "filter", label: "Filtration",
+      category: "filter", label: "Filtration", waterTypes: ["fresh", "salt"],
       levels: [
-        { id: "sponge",   name: "Sponge filter",  price: 0,   biofilterSurface: 1.0, flow: 0.10 },
-        { id: "hob",      name: "HOB power filter", price: 60,  biofilterSurface: 1.9, flow: 0.25 },
-        { id: "canister", name: "Canister filter", price: 180, biofilterSurface: 3.1, flow: 0.40 }
+        { id: "sponge",   name: "Sponge filter",  price: 0,   biofilterSurface: 1.0, flow: 0.10, adjustableFlow: false, aeration: 0.7 },
+        { id: "hob",      name: "Adjustable HOB/internal filter", price: 60, biofilterSurface: 1.9, flow: 0.25, adjustableFlow: true, aeration: 0.55 },
+        { id: "canister", name: "Canister filter + spray bar", price: 180, biofilterSurface: 3.1, flow: 0.40, adjustableFlow: true, aeration: 0.65 },
+        { id: "high_capacity", name: "High-capacity filter + aeration", price: 320, biofilterSurface: 4.5, flow: 0.60, adjustableFlow: true, aeration: 0.95 }
       ]
     },
     heater: {
@@ -162,15 +178,15 @@
       ]
     },
     light: {
-      category: "light", label: "Lighting / PAR",
+      category: "light", label: "Lighting / PAR", waterTypes: ["fresh", "salt"],
       levels: [
-        { id: "basic",   name: "Basic strip",        price: 0,   parCeiling: 60,  photoperiodControl: false },
-        { id: "led",     name: "Reef/plant LED",     price: 90,  parCeiling: 160, photoperiodControl: true },
-        { id: "pro_led", name: "Programmable LED",   price: 220, parCeiling: 340, photoperiodControl: true }
+        { id: "basic",   name: "Basic strip",      freshwaterPreset: "low-light daylight", price: 0,   parCeiling: 60,  photoperiodControl: false },
+        { id: "led",     name: "Reef/plant LED",   freshwaterPreset: "planted daylight",   price: 90,  parCeiling: 160, photoperiodControl: true },
+        { id: "pro_led", name: "Programmable LED", freshwaterPreset: "high-growth planted", price: 220, parCeiling: 340, photoperiodControl: true }
       ]
     },
     skimmer: {
-      category: "skimmer", label: "Protein skimmer", reefOnly: true,
+      category: "skimmer", label: "Protein skimmer", reefOnly: true, waterTypes: ["salt"],
       levels: [
         { id: "none", name: "No skimmer",        price: 0,   organicExport: 0.0 },
         { id: "hob",  name: "HOB skimmer",       price: 80,  organicExport: 0.4 },
@@ -199,7 +215,7 @@
       ]
     },
     algae_clip: {
-      category: "algae_clip", label: "Wall algae clip", reefOnly: true,
+      category: "algae_clip", label: "Wall algae clip", reefOnly: true, waterTypes: ["salt"],
       levels: [
         { id: "none", name: "No algae clip", price: 0, noriCapacity: 0 },
         { id: "clip", name: "Magnetic nori grazing clip", price: 35, noriCapacity: 8 }
@@ -221,9 +237,12 @@
       waterType: "fresh", habitat: "amazon", nativeHabitat: "Amazon black/clearwater streams",
       adultSizeCm: 3.5, price: 6, bioload: 1.0,
       minTier: "nano20", minVolumeL: 45, minFootprintCm2: 1400,
-      socialMin: 5, socialMax: 30, layer: "mid", territoriality: 0.05,
+      socialMin: 6, socialMax: 30, layer: "mid", territoriality: 0.05,
       predator: false, preysOn: [], preyTags: ["nano_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: null, expert: false,
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: null, cleanupRoles: [], expert: false,
+      communityClass: "placid", shoaler: true, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [20, 26], pH: [5, 7.5], hardness: [1, 10] }, flowPreference: [0.08, 0.6], oxygenMin: 5.5,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"],
       diet: "micro-omnivore", feedIntervalDays: 0.9, mealSize: 0.85, metabolic: 1.0,
       maturityDays: 18,
       breeding: {
@@ -240,9 +259,112 @@
       minTier: "mid151", minVolumeL: 90, minFootprintCm2: 3000,
       socialMin: 6, socialMax: 24, layer: "bottom", territoriality: 0.05,
       predator: false, preysOn: [], preyTags: ["nano_fish"],
-      coralSafe: true, invertSafe: true, requiredFeature: "fine_sand", expert: false,
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: "fine_sand", cleanupRoles: ["leftover_food"], expert: false,
+      communityClass: "placid", shoaler: true, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [22, 26], pH: [6, 7.5], hardness: [2, 12] }, flowPreference: [0.08, 0.55], oxygenMin: 5.5,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"],
       diet: "benthic-omnivore", feedIntervalDays: 1.0, mealSize: 0.8, metabolic: 0.9,
       maturityDays: 24, breeding: null
+    },
+    betta_splendens_male: {
+      id: "betta_splendens_male", kind: "fish", name: "Male Betta", sci: "Betta splendens",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Still and slow tropical floodplain water",
+      adultSizeCm: 7, price: 18, bioload: 2, minTier: "nano20", minVolumeL: 20, minFootprintCm2: 900,
+      socialMin: 1, socialMax: 1, layer: "top", territoriality: 0.75, predator: false,
+      preysOn: ["fry", "small_shrimp"], preyTags: ["small_fish", "long_fin"], coralSafe: true, invertSafe: false, plantSafe: true,
+      requiredFeature: "cover", cleanupRoles: [], expert: false, communityClass: "betta", shoaler: false,
+      temperatureClass: "tropical", finNipper: false, waterEnvelope: { tempC: [24, 28], pH: [6, 8], hardness: [1, 15] },
+      flowPreference: [0.05, 0.3], oxygenMin: 4.5, diet: "carnivore", feedIntervalDays: 1, mealSize: 0.75, metabolic: 0.8,
+      maturityDays: 30, breeding: null, sourceRefs: ["OATA_FRESHWATER", "RSPCA_FISH", "FISHBASE_BETTA", "OLDFIELD_MURPHY_2024", "FRESHWATER_PACKET"]
+    },
+    harlequin_rasbora: {
+      id: "harlequin_rasbora", kind: "fish", name: "Harlequin Rasbora", sci: "Trigonostigma heteromorpha",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Shaded Southeast Asian forest streams",
+      adultSizeCm: 5, price: 7, bioload: 1, minTier: "nano20", minVolumeL: 45, minFootprintCm2: 1200,
+      socialMin: 6, socialMax: 24, layer: "mid", territoriality: 0.05, predator: false, preysOn: [], preyTags: ["nano_fish"],
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: "cover", cleanupRoles: [], expert: false,
+      communityClass: "placid", shoaler: true, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [22, 27], pH: [5.5, 7.5], hardness: [1, 12] }, flowPreference: [0.08, 0.55], oxygenMin: 5,
+      diet: "micro-omnivore", feedIntervalDays: 1, mealSize: 0.8, metabolic: 0.9, maturityDays: 24, breeding: null,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"]
+    },
+    bronze_cory: {
+      id: "bronze_cory", kind: "fish", name: "Bronze Corydoras", sci: "Corydoras aeneus",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "South American soft-bottom tributaries",
+      adultSizeCm: 7, price: 9, bioload: 1.4, minTier: "mid151", minVolumeL: 75, minFootprintCm2: 2500,
+      socialMin: 6, socialMax: 18, layer: "bottom", territoriality: 0.05, predator: false, preysOn: [], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: "fine_sand", cleanupRoles: ["leftover_food"], expert: false,
+      communityClass: "placid", shoaler: true, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [20, 27], pH: [6, 8], hardness: [2, 15] }, flowPreference: [0.08, 0.55], oxygenMin: 5,
+      diet: "benthic-omnivore", feedIntervalDays: 1, mealSize: 0.85, metabolic: 1, maturityDays: 30, breeding: null,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"]
+    },
+    southern_platy: {
+      id: "southern_platy", kind: "fish", name: "Southern Platy", sci: "Xiphophorus maculatus",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Warm vegetated Central American waters",
+      adultSizeCm: 6, price: 7, bioload: 1.5, minTier: "nano20", minVolumeL: 60, minFootprintCm2: 1500,
+      socialMin: 3, socialMax: 15, layer: "mid", territoriality: 0.1, predator: false, preysOn: ["fry"], preyTags: ["small_fish"],
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: "cover", cleanupRoles: [], expert: false,
+      communityClass: "placid", shoaler: false, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [20, 26], pH: [7, 8.2], hardness: [8, 20] }, flowPreference: [0.08, 0.6], oxygenMin: 5,
+      diet: "omnivore", feedIntervalDays: 1, mealSize: 0.85, metabolic: 1.1, maturityDays: 25, breeding: null,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"]
+    },
+    yellow_lab_cichlid: {
+      id: "yellow_lab_cichlid", kind: "fish", name: "Electric Yellow Lab", sci: "Labidochromis caeruleus",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Rocky Lake Malawi littoral zones",
+      adultSizeCm: 12, price: 18, bioload: 2, minTier: "large284", minVolumeL: 200, minFootprintCm2: 5000,
+      socialMin: 15, socialMax: 30, layer: "mid", territoriality: 0.75, predator: false, preysOn: ["fry", "small_shrimp"], preyTags: [],
+      coralSafe: true, invertSafe: false, plantSafe: false, requiredFeature: "rock_complex", cleanupRoles: [], expert: false,
+      communityClass: "malawi", shoaler: false, temperatureClass: "tropical", finNipper: true,
+      waterEnvelope: { tempC: [23, 27], pH: [8, 8.6], hardness: [12, 18] }, flowPreference: [0.25, 0.8], oxygenMin: 6,
+      needsStrongFiltration: true, diet: "herbivore-omnivore", feedIntervalDays: 0.5, mealSize: 0.75, metabolic: 1.4,
+      maturityDays: 45, breeding: null, sourceRefs: ["OATA_MALAWI", "MERCK_HOUSING", "FRESHWATER_PACKET"]
+    },
+    oscar_cichlid: {
+      id: "oscar_cichlid", kind: "fish", name: "Oscar", sci: "Astronotus ocellatus",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Slow South American rivers and floodplains",
+      adultSizeCm: 35, price: 35, bioload: 14, minTier: "xl757", minVolumeL: 500, minFootprintCm2: 10000,
+      socialMin: 1, socialMax: 1, layer: "mid", territoriality: 0.85, predator: true,
+      preysOn: ["nano_fish", "small_fish", "fry", "small_shrimp", "invert"], preyTags: [],
+      coralSafe: true, invertSafe: false, plantSafe: false, requiredFeature: "open_swim", cleanupRoles: [], expert: true,
+      communityClass: "predator", shoaler: false, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [23, 28], pH: [6, 8], hardness: [2, 15] }, flowPreference: [0.15, 0.65], oxygenMin: 5.5,
+      needsStrongFiltration: true, diet: "predator-omnivore", feedIntervalDays: 1, mealSize: 1.1, metabolic: 2,
+      maturityDays: 70, breeding: null, sourceRefs: ["OATA_FRESHWATER", "MERCK_HOUSING", "FRESHWATER_PACKET"]
+    },
+    fancy_goldfish: {
+      id: "fancy_goldfish", kind: "fish", name: "Fancy Goldfish", sci: "Carassius auratus",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Domesticated cool-water pond fish",
+      adultSizeCm: 20, price: 24, bioload: 5, minTier: "mid151", minVolumeL: 150, minFootprintCm2: 3500,
+      socialMin: 2, socialMax: 6, layer: "mid", territoriality: 0.05, predator: false, preysOn: ["fry"], preyTags: ["large_fish"],
+      coralSafe: true, invertSafe: false, plantSafe: false, requiredFeature: "open_swim", cleanupRoles: [], expert: false,
+      communityClass: "goldfish", shoaler: false, temperatureClass: "cool", finNipper: false,
+      waterEnvelope: { tempC: [16, 24], pH: [6, 8], hardness: [4, 18] }, flowPreference: [0.1, 0.55], oxygenMin: 6,
+      needsStrongFiltration: true, diet: "omnivore", feedIntervalDays: 0.8, mealSize: 0.9, metabolic: 1.4,
+      maturityDays: 50, breeding: null, sourceRefs: ["OATA_FRESHWATER", "MERCK_MANAGEMENT", "FRESHWATER_PACKET"]
+    },
+    amano_shrimp: {
+      id: "amano_shrimp", kind: "invert", name: "Amano Shrimp", sci: "Caridina multidentata",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "Japanese and Taiwanese freshwater streams",
+      adultSizeCm: 5, price: 8, bioload: 0.2, minTier: "nano20", minVolumeL: 30, minFootprintCm2: 900,
+      socialMin: 3, socialMax: 20, layer: "bottom", territoriality: 0, predator: false, preysOn: [], preyTags: ["invert", "small_shrimp"],
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: "cover", cleanupRoles: ["film_algae", "detritus"], expert: false,
+      communityClass: "cleanup", shoaler: false, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [20, 26], pH: [6.5, 7.8], hardness: [4, 15] }, flowPreference: [0.08, 0.65], oxygenMin: 5,
+      diet: "algae-detritivore", feedIntervalDays: 1.4, mealSize: 0.25, metabolic: 0.25, maturityDays: 24, breeding: null,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"]
+    },
+    spotted_nerite: {
+      id: "spotted_nerite", kind: "invert", name: "Spotted Nerite Snail", sci: "Vittina natalensis",
+      waterType: "fresh", habitat: "amazon", nativeHabitat: "African freshwater and estuarine hard surfaces",
+      adultSizeCm: 3, price: 6, bioload: 0.1, minTier: "nano20", minVolumeL: 20, minFootprintCm2: 700,
+      socialMin: 1, socialMax: 12, layer: "bottom", territoriality: 0, predator: false, preysOn: [], preyTags: ["invert"],
+      coralSafe: true, invertSafe: true, plantSafe: true, requiredFeature: "hard_surface", cleanupRoles: ["film_algae", "diatoms"], expert: false,
+      communityClass: "cleanup", shoaler: false, temperatureClass: "tropical", finNipper: false,
+      waterEnvelope: { tempC: [20, 28], pH: [7, 8.2], hardness: [6, 20] }, flowPreference: [0.05, 0.7], oxygenMin: 5,
+      diet: "biofilm-grazer", feedIntervalDays: 1.6, mealSize: 0.2, metabolic: 0.2, maturityDays: 20, breeding: null,
+      sourceRefs: ["OATA_FRESHWATER", "FRESHWATER_PACKET"]
     },
     ocellaris: {
       id: "ocellaris", kind: "fish", name: "Ocellaris Clownfish", sci: "Amphiprion ocellaris",
@@ -689,10 +811,40 @@
     }
   };
 
+  /* Freshwater plants are a separate catalog surface, not livestock and not
+     reef coral. Placement and growth can consume these profiles later without
+     teaching the shared animal simulator that a plant is a resident animal. */
+  var PLANTS = {
+    anubias_nana: {
+      id: "anubias_nana", kind: "plant", name: "Anubias nana", sci: "Anubias barteri var. nana",
+      waterType: "fresh", habitat: "amazon", price: 12, adultSizeCm: 15, layer: "bottom",
+      placement: "attach_to_wood_or_rock", lightDemand: "low", growthRate: "slow", fishSafe: true,
+      sourceRefs: ["TROPICA_PLANTS", "FRESHWATER_PACKET"]
+    },
+    java_fern: {
+      id: "java_fern", kind: "plant", name: "Java Fern", sci: "Microsorum pteropus",
+      waterType: "fresh", habitat: "amazon", price: 14, adultSizeCm: 30, layer: "mid",
+      placement: "attach_to_wood_or_rock", lightDemand: "low", growthRate: "slow", fishSafe: true,
+      sourceRefs: ["TROPICA_PLANTS", "FRESHWATER_PACKET"]
+    },
+    vallisneria: {
+      id: "vallisneria", kind: "plant", name: "Vallisneria", sci: "Vallisneria americana 'Natans'",
+      waterType: "fresh", habitat: "amazon", price: 10, adultSizeCm: 50, layer: "background",
+      placement: "root_in_substrate", lightDemand: "low", growthRate: "fast", fishSafe: true,
+      sourceRefs: ["TROPICA_PLANTS", "FRESHWATER_PACKET"]
+    }
+  };
+
   /* group bundles: buying a school in one action. */
   var BUNDLES = {
     neon_tetra: 6,
     pygmy_cory: 6,
+    harlequin_rasbora: 6,
+    bronze_cory: 6,
+    southern_platy: 3,
+    yellow_lab_cichlid: 15,
+    fancy_goldfish: 2,
+    amano_shrimp: 3,
     ocellaris: 1,
     /* Banggai cardinalfish are the only accepted reef fish with a group policy:
        a simultaneous cohort spreads dominance, while a pair or trio does not. */
@@ -718,12 +870,14 @@
     offlineCapDays: 2,
     ACTIONS: ACTIONS,
     CYCLE_STAGES: CYCLE_STAGES,
+    HUSBANDRY_SOURCES: HUSBANDRY_SOURCES,
     HABITATS: HABITATS,
     PARAMS: PARAMS,
     TIER_ORDER: TIER_ORDER,
     TIERS: TIERS,
     EQUIPMENT: EQUIPMENT,
     SPECIES: SPECIES,
+    PLANTS: PLANTS,
     CORALS: CORALS,
     BUNDLES: BUNDLES,
     KEEPER_RANKS: KEEPER_RANKS
@@ -854,7 +1008,12 @@
   function tankFeatures(state) {
     var feats = {};
     var hab = state && state.habitat;
-    if (hab === "amazon") { feats.fine_sand = true; feats.cover = true; feats.infusoria = hasMicrofauna(state, "infusoria"); }
+    if (hab === "amazon") {
+      feats.fine_sand = true; feats.cover = true; feats.hard_surface = true;
+      feats.open_swim = tierIndex(currentTierId(state)) >= tierIndex("mid151");
+      feats.rock_complex = tierIndex(currentTierId(state)) >= tierIndex("large284");
+      feats.infusoria = hasMicrofauna(state, "infusoria");
+    }
     if (hab === "reef") {
       feats.sand_burrow = true; feats.deep_sand = tierIndex(currentTierId(state)) >= tierIndex("large284");
       feats.host = true; // live rock / host territory available on a reef
@@ -866,7 +1025,7 @@
     var eq = state && state.equipment;
     if (eq) {
       var f = equipLevel("filter", eq.filter);
-      feats.strong_filtration = !!(f && f.biofilterSurface >= 3.0) && tierIndex(currentTierId(state)) >= tierIndex("xl757");
+      feats.strong_filtration = !!(f && f.biofilterSurface >= 3.0);
     }
     return feats;
   }
@@ -924,6 +1083,137 @@
     return n;
   }
 
+  /* One deterministic compatibility report shared by the store and purchase
+     gate. Decisions are emitted in husbandry order so UI copy cannot reorder a
+     more fundamental biome or space failure behind a softer behavior risk. */
+  function assessCompatibility(state, sp, reqCount) {
+    state = state || {}; reqCount = Math.max(1, Math.floor(reqCount || 1));
+    var decisions = [], conflicts = [], conflictBuckets = {}, residents = [], ls = state.livestock || [];
+    for (var ri = 0; ri < ls.length; ri++) if (ls[ri] && ls[ri].alive !== false) {
+      var residentSpecies = resolveSpecies(state, ls[ri].species);
+      if (residentSpecies) residents.push({ animal: ls[ri], species: residentSpecies });
+    }
+    function add(outcome, code, message, resident, riskTag) {
+      decisions.push({ outcome: outcome, reasonCode: code, message: message,
+        residentSpeciesId: resident ? resident.species.id : null });
+      if (outcome !== "conditional" || !resident) return;
+      var key = resident.species.id, item = conflictBuckets[key];
+      if (!item) item = conflictBuckets[key] = { riskTag: riskTag || code, reasonCode: code, message: message,
+        residentSpeciesId: resident.species.id, residentName: resident.species.name, residentIds: [], refundCredits: 0 }, conflicts.push(item);
+      if (item.residentIds.indexOf(resident.animal.id) < 0) {
+        item.residentIds.push(resident.animal.id);
+        item.refundCredits += Math.floor((resident.species.price || 0) * 0.5);
+      }
+    }
+    var hab = HABITATS[state.habitat], totalAfter = aliveOf(state, sp.id) + reqCount;
+
+    // 1. Biome.
+    if (hab && sp.waterType !== hab.waterType) add("block", "biome.water_type",
+      sp.name + " needs " + sp.waterType + "water; this is a " + hab.waterType + "water tank.");
+    if (state.habitat && sp.habitat !== state.habitat) add("block", "biome.habitat",
+      sp.name + " belongs to the " + (HABITATS[sp.habitat] ? HABITATS[sp.habitat].name : sp.habitat) + ", not this habitat.");
+
+    // 2. Adult volume and footprint.
+    if (tierIndex(currentTierId(state)) < tierIndex(sp.minTier)) add("block", "space.tier",
+      sp.name + " needs at least the " + TIERS[sp.minTier].name + " tank.");
+    if (sp.minVolumeL - tankVolumeL(state) > 1) add("block", "space.volume",
+      sp.name + " needs at least " + sp.minVolumeL + " L of water (this tank holds " + tankVolumeL(state) + " L).");
+    if (tankFootprint(state) < sp.minFootprintCm2) add("block", "space.footprint",
+      sp.name + " needs at least " + sp.minFootprintCm2 + " cm² of floor space.");
+
+    // 3. Water envelope.
+    var envelope = sp.waterEnvelope, water = state.water || {};
+    if (envelope && state.cycle && state.cycle.filled) ["tempC", "pH", "hardness"].forEach(function (key) {
+      var range = envelope[key], value = water[key];
+      if (range && isFinite(value) && (value < range[0] || value > range[1])) add("block", "water." + key,
+        sp.name + " needs " + key + " between " + range[0] + " and " + range[1] + " (current " + value + ").");
+    });
+
+    // 4. Group and sex.
+    if (totalAfter < sp.socialMin) add("block", "group.minimum",
+      sp.name + " is a social animal and needs a group of at least " + sp.socialMin + " (you would have " + totalAfter + ").");
+    if (sp.id === "betta_splendens_male" && totalAfter > 1) add("block", "group.two_male_bettas",
+      "Two male bettas cannot share one aquarium.");
+
+    // 5. Conspecific and husbandry-class mixing.
+    if (totalAfter > sp.socialMax) add("block", "conspecific.maximum",
+      sp.name + " should not exceed " + sp.socialMax + " in this system (you would have " + totalAfter + ").");
+    for (ri = 0; ri < residents.length; ri++) {
+      var other = residents[ri], os = other.species;
+      if ((sp.communityClass === "malawi") !== (os.communityClass === "malawi")) add("block", "community.malawi_only",
+        "Malawi cichlids cannot be mixed with an ordinary freshwater community.", other);
+      if (sp.kind === "fish" && os.kind === "fish" && (sp.communityClass === "goldfish" || os.communityClass === "goldfish") && sp.temperatureClass !== os.temperatureClass)
+        add("block", "community.goldfish_temperature", "Fancy goldfish cannot be mixed with tropical fish.", other);
+    }
+
+    // 6. Predation and fin nipping.
+    for (ri = 0; ri < residents.length; ri++) {
+      other = residents[ri]; os = other.species;
+      var oscarPair = sp.id === "oscar_cichlid" || os.id === "oscar_cichlid";
+      if (oscarPair && sp.id !== os.id && ((sp.kind === "invert" && sp.preyTags.indexOf("small_shrimp") >= 0) ||
+          (os.kind === "invert" && os.preyTags.indexOf("small_shrimp") >= 0) ||
+          (sp.kind === "fish" && os.kind === "fish" && Math.min(sp.adultSizeCm, os.adultSizeCm) < 20))) {
+        add("block", os.kind === "invert" || sp.kind === "invert" ? "predation.oscar_shrimp" : "predation.oscar_smaller_fish",
+          "Oscar will prey on smaller fish and shrimp.", other);
+        continue;
+      }
+      var bettaPair = sp.id === "betta_splendens_male" || os.id === "betta_splendens_male";
+      if (bettaPair && (sp.finNipper || os.finNipper)) {
+        add("block", "fin_nip.betta", "Fin-nipping fish cannot be housed with a male betta.", other); continue;
+      }
+      if (bettaPair && sp.kind === "fish" && os.kind === "fish" && sp.id !== os.id) {
+        var companion = sp.id === "betta_splendens_male" ? os : sp;
+        if (companion.communityClass === "placid" && (!companion.shoaler ||
+            (companion.id === sp.id ? totalAfter : aliveOf(state, companion.id)) >= companion.socialMin))
+          add("conditional", "temperament.betta_community", "A male betta may share a calm, covered community, but individual temperament requires monitoring and a separation plan.", other, "temperament");
+        else add("block", "temperament.betta_unsuitable", "This is not a suitable placid companion for a male betta.", other);
+      }
+      if (sp.predator && tagsIntersect(sp.preysOn, os.preyTags)) add("conditional", "predation.proposed",
+        sp.name + " will prey on your " + os.name + ".", other, "predation");
+      else if (os.predator && tagsIntersect(os.preysOn, sp.preyTags)) add("conditional", "predation.resident",
+        "Your " + os.name + " would hunt and eat " + sp.name + ".", other, "predation");
+    }
+
+    // 7. Territory, cover, and zone.
+    for (ri = 0; ri < residents.length; ri++) {
+      other = residents[ri]; os = other.species;
+      if (sp.territoriality >= 0.45 && os.id !== sp.id && os.layer === sp.layer && os.territoriality >= 0.45)
+        add("conditional", "territory.shared_zone", sp.name + " will fight your " + os.name + " over the same territory.", other, "territoriality");
+    }
+    var feats = tankFeatures(state);
+    if (sp.requiredFeature && !feats[sp.requiredFeature]) add("block", "territory.feature",
+      sp.name + " needs the tank feature: " + featureLabel(sp.requiredFeature) + ".");
+
+    // 8. Flow.
+    if (sp.flowPreference && state.cycle && state.cycle.lifeSupport) {
+      var equipment = state.equipment || {}, filter = equipLevel("filter", equipment.filter), circ = equipLevel("circulation", equipment.circulation);
+      var flow = Math.max(filter ? filter.flow : 0, circ ? circ.flow : 0);
+      if (flow < sp.flowPreference[0]) add("block", "flow.too_low", sp.name + " needs more water movement.");
+      if (flow > sp.flowPreference[1]) add("block", "flow.too_high", sp.name + " needs gentler water movement.");
+    }
+
+    // 9. Filtration and oxygen.
+    if (currentBioload(state) + sp.bioload * reqCount > bioloadCapacity(state) + 1e-9) add("block", "filtration.capacity",
+      "Not enough biological capacity for " + reqCount + " more " + sp.name + "; upgrade filtration or tank size.");
+    if (sp.needsStrongFiltration && !feats.strong_filtration) add("block", "filtration.strong",
+      sp.name + " needs strong filtration (canister-class or high-capacity filter).");
+    if (sp.oxygenMin && state.cycle && state.cycle.filled && isFinite(water.oxygen) && water.oxygen < sp.oxygenMin)
+      add("block", "oxygen.minimum", sp.name + " needs oxygen at or above " + sp.oxygenMin + " mg/L.");
+
+    // 10. Plant and invert safety.
+    for (ri = 0; ri < residents.length; ri++) {
+      other = residents[ri]; os = other.species;
+      if (!sp.invertSafe && os.kind === "invert") add("conditional", "invert.unsafe", sp.name + " may harm your " + os.name + ".", other, "invert_safety");
+    }
+    if (sp.plantSafe === false && state.plants && state.plants.length) add("block", "plant.unsafe",
+      sp.name + " may uproot or eat live plants.");
+
+    var outcome = decisions.some(function (d) { return d.outcome === "block"; }) ? "block" :
+      (decisions.some(function (d) { return d.outcome === "conditional"; }) ? "conditional" : "allow");
+    return { outcome: outcome, reasonCodes: decisions.map(function (d) { return d.reasonCode; }), decisions: decisions, conflicts: conflicts };
+  }
+  DATA.assessCompatibility = assessCompatibility;
+
   /* Coral light readiness. The only evidence the store accepts is the player's own
      PAR test: still fresh (Care's 0.75-day window) and captured near the schedule's
      peak, which is where reef PAR is specified — dawn/dusk are programmed ramps, not
@@ -961,6 +1251,9 @@
       var catDef = EQUIPMENT[request.category];
       if (catDef && catDef.reefOnly && state.habitat !== "reef")
         reasons.push(catDef.label + " is only useful on a saltwater reef.");
+      var equipmentWater = HABITATS[state.habitat] && HABITATS[state.habitat].waterType;
+      if (catDef && catDef.waterTypes && equipmentWater && catDef.waterTypes.indexOf(equipmentWater) < 0 && !catDef.reefOnly)
+        reasons.push(catDef.label + " is not available for this water type.");
       // Repurchase / downgrade gate: the same installed level is never purchasable, and any
       // lower level in the category is not an upgrade. Higher levels fall through to credits.
       if (catDef && state.equipment) {
@@ -1029,52 +1322,20 @@
     var sp = resolveSpecies(state, request.id);
     if (!sp) { reasons.push("Unknown species."); return { ok: false, reasons: reasons }; }
     var reqCount = Math.max(1, Math.floor(request.count || BUNDLES[request.id] || 1));
-    var already = aliveOf(state, request.id);
 
-    // water type / habitat
-    var habWater = HABITATS[state.habitat] ? HABITATS[state.habitat].waterType : null;
-    if (habWater && sp.waterType !== habWater)
-      reasons.push(sp.name + " needs " + sp.waterType + "water; this is a " + habWater + "water tank.");
-    if (state.habitat && sp.habitat !== state.habitat)
-      reasons.push(sp.name + " belongs to the " + (HABITATS[sp.habitat] ? HABITATS[sp.habitat].name : sp.habitat) + ", not this habitat.");
+    var compatibility = assessCompatibility(state, sp, reqCount);
+    for (var d = 0; d < compatibility.decisions.length; d++)
+      if (compatibility.decisions[d].outcome === "block") reasons.push(compatibility.decisions[d].message);
 
     // cycled / water stability gate — never place livestock into measurable ammonia/nitrite
     if (!isCycled(state))
       reasons.push("The tank is not cycled yet — ammonia/nitrite must be safe with nitrate present before stocking.");
-
-    // tank volume / tier / footprint
-    if (tierIndex(currentTierId(state)) < tierIndex(sp.minTier))
-      reasons.push(sp.name + " needs at least the " + TIERS[sp.minTier].name + " tank.");
-    // Published aquarium sizes are nominal; allow at most 1 L of conversion/rounding drift.
-    if (sp.minVolumeL - tankVolumeL(state) > 1)
-      reasons.push(sp.name + " needs at least " + sp.minVolumeL + " L of water (this tank holds " + tankVolumeL(state) + " L).");
-    if (tankFootprint(state) < sp.minFootprintCm2)
-      reasons.push(sp.name + " needs at least " + sp.minFootprintCm2 + " cm² of floor space.");
-
-    // social group minimum / maximum
-    var totalAfter = already + reqCount;
-    if (totalAfter < sp.socialMin)
-      reasons.push(sp.name + " is a social animal and needs a group of at least " + sp.socialMin + " (you would have " + totalAfter + ").");
-    if (totalAfter > sp.socialMax)
-      reasons.push(sp.name + " should not exceed " + sp.socialMax + " in this system (you would have " + totalAfter + ").");
-
-    // capacity / bioload
-    var addBioload = sp.bioload * reqCount;
-    if (currentBioload(state) + addBioload > bioloadCapacity(state) + 1e-9)
-      reasons.push("Not enough biological capacity for " + reqCount + " more " + sp.name + " — upgrade filtration or tank size.");
-
-    // required feature
-    var feats = tankFeatures(state);
-    if (sp.requiredFeature && !feats[sp.requiredFeature])
-      reasons.push(sp.name + " needs the tank feature: " + featureLabel(sp.requiredFeature) + ".");
-    if (sp.needsStrongFiltration && !feats.strong_filtration)
-      reasons.push(sp.name + " needs strong filtration (large tank + canister-class filter).");
     if (sp.expert && tierIndex(currentTierId(state)) < tierIndex("xl757"))
       reasons.push(sp.name + " is an expert-only animal for a mature large system.");
 
     // Structured compatibility risks require an explicit player choice. Legacy
     // callers still see their messages in reasons until acceptRisk is supplied.
-    var conflicts = livestockConflicts(state, sp);
+    var conflicts = compatibility.conflicts;
     if (request.acceptRisk !== true) for (var c = 0; c < conflicts.length; c++) reasons.push(conflicts[c].message);
 
     // credits
@@ -1082,7 +1343,7 @@
     if ((state.credits || 0) < cost)
       reasons.push("Not enough credits (need " + cost + ", have " + Math.floor(state.credits || 0) + ").");
 
-    return { ok: reasons.length === 0, reasons: reasons, conflicts: conflicts };
+    return { ok: reasons.length === 0, reasons: reasons, conflicts: conflicts, compatibility: compatibility };
   }
 
   function withinWarn(habitat, key, value) {
@@ -1097,40 +1358,12 @@
       fine_sand: "fine sand bottom", sand_burrow: "open sand for burrowing",
       deep_sand: "a deep sand bed", host: "a host anemone / live rock",
       cover: "planted cover", strong_filtration: "strong filtration",
-      sand_bed: "an open sand bed", hard_surface: "established reef rock",
+      sand_bed: "an open sand bed", hard_surface: "an established hard surface",
       rock_shelter: "reef-rock shelter", spare_shells: "spare empty shells",
-      open_swim: "open swimming room", mature_live_rock: "mature live rock"
+      open_swim: "open swimming room", rock_complex: "complex rockwork with broken sight lines",
+      mature_live_rock: "mature live rock"
     };
     return map[f] || f;
-  }
-
-  function livestockConflicts(state, sp) {
-    var out = [], buckets = {}, ls = (state && state.livestock) || [];
-    for (var i = 0; i < ls.length; i++) {
-      var resident = ls[i]; if (!resident || resident.alive === false) continue;
-      var os = resolveSpecies(state, resident.species); if (!os) continue;
-      var tag = null, message = null;
-      var territorial = sp.territoriality >= 0.45 && os.id !== sp.id && os.layer === sp.layer && os.territoriality >= 0.45;
-      if (sp.predator && tagsIntersect(sp.preysOn, os.preyTags)) {
-        tag = "predation"; message = sp.name + " will prey on your " + os.name + ".";
-      } else if (os.predator && tagsIntersect(os.preysOn, sp.preyTags)) {
-        tag = "predation"; message = "Your " + os.name + " would hunt and eat " + sp.name + ".";
-      }
-      if (territorial) {
-        if (tag) message += " They may also fight over the same territory.";
-        else { tag = "territoriality"; message = sp.name + " will fight your " + os.name + " over the same territory."; }
-      }
-      if (!tag && !sp.invertSafe && os.kind === "invert") {
-        tag = "invert_safety"; message = sp.name + " may harm your " + os.name + ".";
-      }
-      if (!tag) continue;
-      var key = tag + ":" + os.id, item = buckets[key];
-      if (!item) item = buckets[key] = { riskTag: tag, message: message, residentSpeciesId: os.id,
-        residentName: os.name, residentIds: [], refundCredits: 0 }, out.push(item);
-      item.residentIds.push(resident.id);
-      item.refundCredits += Math.floor((os.price || 0) * 0.5);
-    }
-    return out;
   }
 
   function tagsIntersect(a, b) {
