@@ -2,20 +2,49 @@ import * as THREE from 'three'
 
 export const REEF_SAND_Y = -1.44
 
+export type ReefRockTuple = readonly [x: number, y: number, z: number]
+
+/** Structural input accepted from the bridge without importing its PocketRockView type. */
+export interface ReefRockSource {
+  readonly id: number
+  readonly index: number
+  readonly position: ReefRockTuple
+  readonly rotation: ReefRockTuple
+  readonly scale: ReefRockTuple
+}
+
+/** Scene-local immutable layout entry. Collision intentionally approximates rotation for now. */
+export interface ReefRock {
+  readonly id: number
+  readonly index: number
+  readonly position: THREE.Vector3
+  readonly rotation: THREE.Euler
+  readonly scale: THREE.Vector3
+}
+
+export function materializeReefRocks(sources: readonly ReefRockSource[]): readonly ReefRock[] {
+  return Object.freeze(sources.map((source) => Object.freeze({
+    id: source.id,
+    index: source.index,
+    position: new THREE.Vector3(...source.position),
+    rotation: new THREE.Euler(...source.rotation),
+    scale: new THREE.Vector3(...source.scale),
+  })))
+}
+
 export function seededUnit(index: number, salt = 0) {
   const value = Math.sin((index + 1) * 12.9898 + salt * 78.233) * 43758.5453
   return value - Math.floor(value)
 }
 
-/** One shared live-rock layout drives both rendering and fish collision clearance.
- *  TODO(aquascaping): this fixed seeded layout is engine-owned. Player-authored
- *  aquascaping is a future system that would supply these rocks from saved state;
- *  it is intentionally out of scope here. */
-export const REEF_ROCKS = Array.from({ length: 13 }, (_, index) => {
+/** Backward-compatible seeded layout for callers without a projected saved rockscape. */
+export const REEF_ROCKS: readonly ReefRock[] = Object.freeze(Array.from({ length: 13 }, (_, index) => {
   const arc = (index / 12) * Math.PI * 1.74 + 0.16
   const radius = 0.66 + seededUnit(index, 1) * 1.12
   const side = index < 7 ? -0.62 : 0.82
   return {
+    id: index,
+    index,
     position: new THREE.Vector3(
       side + Math.cos(arc) * radius,
       REEF_SAND_Y + 0.22 + seededUnit(index, 2) * 0.4,
@@ -32,7 +61,7 @@ export const REEF_ROCKS = Array.from({ length: 13 }, (_, index) => {
       0.34 + seededUnit(index, 9) * 0.36,
     ),
   }
-})
+}))
 
 const ROCK_COLLISION_PAD = 1.2
 const PELLET_ROUTE_CLEARANCE = 0.16
@@ -44,14 +73,15 @@ const PELLET_HALF_DEPTH = 1.08
 /** Keep a falling pellet's authoritative depth while deterministically routing its scene
  *  x/z lane around the complete rock footprint. Once deflected, the route persists to
  *  the substrate so a pellet cannot pop back through the underside of the hardscape. */
-export function resolveReefPelletPosition(position: THREE.Vector3, pelletId: number, clearance: number) {
+export function resolveReefPelletPosition(position: THREE.Vector3, pelletId: number, clearance: number,
+  rocks: readonly ReefRock[] = REEF_ROCKS) {
   const sourceX = position.x
   const sourceZ = position.z
   let safeX = sourceX
   let safeZ = sourceZ
   let highestObstruction = -Infinity
 
-  for (const rock of REEF_ROCKS) {
+  for (const rock of rocks) {
     const rx = rock.scale.x * ROCK_COLLISION_PAD + clearance
     const ry = rock.scale.y * ROCK_COLLISION_PAD + clearance
     const rz = rock.scale.z * ROCK_COLLISION_PAD + clearance
@@ -66,7 +96,7 @@ export function resolveReefPelletPosition(position: THREE.Vector3, pelletId: num
 
   // Find the nearest sampled substrate lane with enough room for a benthic fish
   // body to approach. The seeded spoke offset prevents every portion taking one path.
-  const laneIsClear = (x: number, z: number) => REEF_ROCKS.every((rock) => {
+  const laneIsClear = (x: number, z: number) => rocks.every((rock) => {
     const nx = (x - rock.position.x) / (rock.scale.x * ROCK_COLLISION_PAD + PELLET_ROUTE_CLEARANCE)
     const nz = (z - rock.position.z) / (rock.scale.z * ROCK_COLLISION_PAD + PELLET_ROUTE_CLEARANCE)
     return nx * nx + nz * nz >= 1
@@ -102,7 +132,7 @@ export function resolveReefPelletPosition(position: THREE.Vector3, pelletId: num
   // Preserve y exactly; any intermediate blend that enters a rock is moved sideways to
   // the closest cross-section edge rather than being projected upward or below it.
   for (let pass = 0; pass < 6; pass += 1) {
-    for (const rock of REEF_ROCKS) {
+    for (const rock of rocks) {
       const rx = rock.scale.x * ROCK_COLLISION_PAD + clearance
       const ry = rock.scale.y * ROCK_COLLISION_PAD + clearance
       const rz = rock.scale.z * ROCK_COLLISION_PAD + clearance

@@ -306,6 +306,180 @@ group("bounded cleaner-shrimp parasite treatment");
   eq(second.parasiteLoad, 0.35, "a newer station cycle can serve a different client");
 })();
 
+group("authoritative rockscape lifecycle and transform state");
+(function () {
+  function meanRock(state, field) {
+    return state.rockscape.rocks.reduce(function (sum, rock) { return sum + rock.biology[field]; }, 0) /
+      state.rockscape.rocks.length;
+  }
+  var fresh = PA.createState({ seed: 54, habitat: "reef" });
+  eq(fresh.rockscape.version, 1, "fresh state carries the versioned rockscape");
+  eq(fresh.rockscape.rocks.length, 13, "fresh state owns all 13 stable rocks");
+  eq(fresh.rockscape.rocks.map(function (rock) { return rock.id; }).join(","), "0,1,2,3,4,5,6,7,8,9,10,11,12",
+    "rock identities are stable and ordered");
+  approx(fresh.rockscape.rocks[0].position[0], 0.8498777691, 1e-9,
+    "root transform seed matches the existing scene layout");
+  eq(meanRock(fresh, "diatom"), 0, "fresh rock starts free of diatoms");
+  eq(meanRock(fresh, "nuisanceAlgae"), 0, "fresh rock starts free of nuisance algae");
+  eq(meanRock(fresh, "coralline"), 0, "fresh rock starts without coralline");
+  eq(meanRock(fresh, "encruster"), 0, "fresh rock starts without late encrusters");
+
+  var ugly = cycledReef(55, { light: "led" }); ugly.succession.age = 2;
+  PA.stepDays(ugly, 2);
+  gt(meanRock(ugly, "diatom"), 0, "young rock develops patchy diatoms from global succession");
+  gt(new Set(ugly.rockscape.rocks.map(function (rock) { return rock.biology.diatom.toFixed(5); })).size, 1,
+    "per-rock diatom cover is spatially patchy");
+  eq(meanRock(ugly, "coralline"), 0, "coralline waits for stabilization");
+  eq(meanRock(ugly, "encruster"), 0, "encrusters do not precede coralline");
+
+  var stable = cycledReef(56, { light: "led" }); stable.succession.age = 10;
+  PA.stepDays(stable, 5);
+  gt(meanRock(stable, "coralline"), 0, "stable reef chemistry starts coralline growth");
+  eq(meanRock(stable, "encruster"), 0, "encrusters wait beyond the stabilization phase");
+  var poorChemistry = cycledReef(56, { light: "led" }); poorChemistry.succession.age = 10;
+  poorChemistry.water.calcium = 0; PA.stepDays(poorChemistry, 5);
+  eq(meanRock(poorChemistry, "coralline"), 0, "coralline establishment depends on reef chemistry");
+  var mature = cycledReef(57, { light: "led" }); mature.succession.age = 30;
+  PA.stepDays(mature, 10);
+  gt(meanRock(mature, "encruster"), 0, "late encrusters begin only after reef maturity");
+
+  var control = cycledReef(58, { light: "pro_led" }), grazed = cycledReef(58, { light: "pro_led" });
+  control.succession.age = grazed.succession.age = 12;
+  control.succession.silicate = grazed.succession.silicate = 0;
+  control.succession.greenFilm = grazed.succession.greenFilm = 0.5;
+  control.water.nitrate = grazed.water.nitrate = 30; control.water.phosphate = grazed.water.phosphate = 0.15;
+  control.rockscape.rocks.forEach(function (rock) { rock.biology.coralline = 0.4; });
+  grazed.rockscape.rocks.forEach(function (rock) { rock.biology.coralline = 0.4; });
+  addAdult(grazed, "trochus_snail", 1);
+  PA.stepDays(control, 2); PA.stepDays(grazed, 2);
+  lt(grazed.succession.greenFilm, control.succession.greenFilm,
+    "a grazer lowers the authoritative global nuisance target");
+  lt(meanRock(grazed, "nuisanceAlgae"), meanRock(control, "nuisanceAlgae"),
+    "per-rock nuisance cover follows the grazer-reduced global target");
+  ok(grazed.rockscape.rocks.every(function (rock) { return rock.biology.coralline >= 0.4; }),
+    "nuisance cleanup never erases established coralline");
+
+  var moved = coralReadyReef(59);
+  PA.dispatch(moved, { type: "PURCHASE_CORAL", coral: "zoanthid", variantId: "blue_green" });
+  var coral = lockCoral(moved, 0, coralPlacement("rock", "rock:4", [0, 0.3, 0], [0, 1, 0], 0));
+  var rock = moved.rockscape.rocks[4], oldPosition = rock.position.slice();
+  var oldRotation = rock.rotation.slice(), oldScale = rock.scale.slice();
+  var untouched = JSON.stringify(moved.rockscape.rocks[5]);
+  PA.dispatch(moved, { type: D.ACTIONS.UPDATE_ROCK_TRANSFORM, rockId: 4,
+    position: [oldPosition[0] + 0.2, oldPosition[1] + 0.1, oldPosition[2] - 0.1],
+    rotation: [9, 9, 9], scale: [9, 9, 9] });
+  eq(JSON.stringify(rock.rotation), JSON.stringify(oldRotation), "occupied rock rotation stays fixed");
+  eq(JSON.stringify(rock.scale), JSON.stringify(oldScale), "occupied rock scale stays fixed");
+  approx(coral.placement.position[0], 0.2 / 2.76, 1e-9,
+    "moving an occupied rock converts scene X into normalized coral space");
+  approx(coral.placement.position[1], 0.3, 1e-9,
+    "occupied rock height and normalized coral height stay fixed during horizontal rescape");
+  approx(coral.placement.position[2], -0.1 / 1.18, 1e-9,
+    "moving an occupied rock converts scene Z into normalized coral space");
+  eq(JSON.stringify(moved.rockscape.rocks[5]), untouched, "transform action changes only the addressed rock");
+  PA.dispatch(moved, { type: D.ACTIONS.UPDATE_ROCK_TRANSFORM, rockId: 4, position: [99, 99, -99] });
+  ok(coral.placement.position[0] <= 1 && coral.placement.position[1] <= 1 && coral.placement.position[2] >= -1,
+    "attached coral translation stays inside the placement sanitizer bounds");
+  PA.dispatch(moved, { type: D.ACTIONS.UPDATE_ROCK_TRANSFORM, rockId: 5,
+    position: [99, 99, -99], rotation: [9, -9, 9], scale: [9, 0, -2] });
+  eq(JSON.stringify(moved.rockscape.rocks[5].position), JSON.stringify([2.2, 0.5, -0.9]),
+    "unoccupied rock position clamps to aquarium bounds");
+  eq(JSON.stringify(moved.rockscape.rocks[5].scale), JSON.stringify([0.9, 0.18, 0.18]),
+    "unoccupied rock scale clamps to safe bounds");
+  var restoredMove = PA.sanitizeState(JSON.parse(JSON.stringify(moved)));
+  eq(JSON.stringify(restoredMove.rockscape), JSON.stringify(moved.rockscape),
+    "rock transforms and biology survive save sanitization");
+  eq(JSON.stringify(restoredMove.corals[0].placement), JSON.stringify(coral.placement),
+    "translated coral attachment survives save sanitization");
+
+  var legacyRaw = cycledReef(60); delete legacyRaw.rockscape;
+  var legacy = PA.sanitizeState(legacyRaw);
+  eq(legacy.rockscape.rocks.length, 13, "legacy saves backfill all stable rock identities");
+  eq(legacy.rockscape.rocks[12].id, 12, "legacy backfill preserves the final stable identity");
+  var malformedRaw = cycledReef(61);
+  malformedRaw.rockscape = { version: 1, rocks: [
+    { id: 2, index: 2, position: [99, -99, 0], rotation: [99, -99, 0], scale: [0, 99, 0.5],
+      biology: { diatom: -1, nuisanceAlgae: 2, coralline: 0.3, encruster: 9 } },
+    { id: 2, index: 2, position: [-2, -1, 0], biology: { diatom: 0.8 } },
+    { id: 99, index: 99, position: [0, 0, 0] }, { id: 3, index: 4, position: [0, 0, 0] }
+  ] };
+  var repaired = PA.sanitizeState(malformedRaw);
+  eq(repaired.rockscape.rocks.length, 13, "malformed saves repair to exactly 13 rocks");
+  eq(JSON.stringify(repaired.rockscape.rocks[2].position), JSON.stringify([2.2, -1.3, 0]),
+    "saved rock transforms clamp and the first stable identity wins duplicates");
+  eq(JSON.stringify(repaired.rockscape.rocks[2].biology),
+    JSON.stringify({ diatom: 0, nuisanceAlgae: 1, coralline: 0.3, encruster: 1 }),
+    "all saved per-rock biology fields clamp independently");
+  eq(repaired.rockscape.rocks[3].position[0], fresh.rockscape.rocks[3].position[0],
+    "identity mismatch is ignored and the missing rock is deterministically backfilled");
+})();
+
+group("authoritative dirty-sand ecology");
+(function () {
+  function dirtyFixture(seed) {
+    var s = cycledReef(seed, { light: "pro_led" });
+    s.substrate.detritus = 0.7; s.substrate.surfaceFilm = 0.6; s.substrate.cleanliness = 0.338;
+    s.succession.diatom = 0.4; s.succession.greenFilm = 0.5; s.succession.cyano = 0.3;
+    s.water.nitrate = 30; s.water.phosphate = 0.15;
+    return s;
+  }
+  var fresh = PA.createState({ seed: 62, habitat: "reef" });
+  eq(JSON.stringify(fresh.substrate), JSON.stringify({ version: 1, detritus: 0, surfaceFilm: 0,
+    turnover: 0, cleanliness: 1 }), "fresh substrate starts clean with normalized signals");
+
+  var control = cycledReef(63), overfed = cycledReef(63);
+  for (var i = 0; i < 12; i++) PA.dispatch(overfed, { type: "FEED", x: 0.5 });
+  PA.stepDays(control, 0.5); PA.stepDays(overfed, 0.5);
+  gt(overfed.substrate.detritus, control.substrate.detritus + 0.1,
+    "uneaten sunk food makes uncrewed sand dirtier than an unfed control");
+  lt(overfed.substrate.cleanliness, control.substrate.cleanliness,
+    "overfeeding lowers the authoritative cleanliness signal");
+
+  var crew = ["diamond_goby", "nassarius_snail", "fighting_conch"];
+  for (i = 0; i < crew.length; i++) {
+    var bare = dirtyFixture(64 + i), cleaned = dirtyFixture(64 + i); addAdult(cleaned, crew[i], 1);
+    PA.stepDays(bare, 2); PA.stepDays(cleaned, 2);
+    lt(cleaned.substrate.detritus, bare.substrate.detritus, crew[i] + " reduces settled detritus");
+    lt(cleaned.substrate.surfaceFilm, bare.substrate.surfaceFilm, crew[i] + " reduces sand-surface film");
+    gt(cleaned.substrate.turnover, bare.substrate.turnover, crew[i] + " raises bounded sand turnover");
+    gt(cleaned.substrate.detritus, 0.3, crew[i] + " improves sand gradually instead of sterilizing it");
+  }
+
+  var noCrew = dirtyFixture(68), deadCrew = dirtyFixture(68); addAdult(deadCrew, "fighting_conch", 1);
+  deadCrew.livestock[0].alive = false;
+  PA.stepDays(noCrew, 2); PA.stepDays(deadCrew, 2);
+  approx(deadCrew.substrate.detritus, noCrew.substrate.detritus, 1e-9,
+    "dead cleanup residents provide no detritus removal");
+  approx(deadCrew.substrate.surfaceFilm, noCrew.substrate.surfaceFilm, 1e-6,
+    "dead cleanup residents provide no material film removal");
+  eq(deadCrew.substrate.turnover, 0, "dead cleanup residents provide no turnover");
+
+  var cleanerOnly = dirtyFixture(69); addAdult(cleanerOnly, "cleaner_shrimp", 1);
+  var cleanerControl = dirtyFixture(69);
+  PA.stepDays(cleanerOnly, 2); PA.stepDays(cleanerControl, 2);
+  approx(cleanerOnly.substrate.surfaceFilm, cleanerControl.substrate.surfaceFilm, 1e-6,
+    "fish-cleaning does not remove sand film");
+  eq(cleanerOnly.substrate.turnover, 0, "fish-cleaning does not turn over sand");
+
+  var exhausted = dirtyFixture(70); exhausted.substrate.detritus = exhausted.substrate.surfaceFilm = 0.01;
+  addAdult(exhausted, "diamond_goby", 8); PA.stepDays(exhausted, 8);
+  ok(exhausted.substrate.detritus >= 0 && exhausted.substrate.surfaceFilm >= 0 &&
+    exhausted.substrate.turnover >= 0 && exhausted.substrate.cleanliness >= 0,
+  "heavy cleanup cannot create negative substrate values");
+
+  var saved = dirtyFixture(71); saved.substrate = { version: 1, detritus: 0.42, surfaceFilm: 0.31,
+    turnover: 0.26, cleanliness: 0.62 };
+  eq(JSON.stringify(PA.sanitizeState(JSON.parse(JSON.stringify(saved))).substrate), JSON.stringify(saved.substrate),
+    "substrate state survives a save/sanitize round trip");
+  var legacy = dirtyFixture(72); delete legacy.substrate;
+  eq(JSON.stringify(PA.sanitizeState(legacy).substrate), JSON.stringify({ version: 1, detritus: 0,
+    surfaceFilm: 0, turnover: 0, cleanliness: 1 }), "legacy saves backfill a safe clean substrate");
+  var malformed = dirtyFixture(73); malformed.substrate = { version: 1, detritus: -4, surfaceFilm: 8,
+    turnover: Infinity, cleanliness: -2 };
+  eq(JSON.stringify(PA.sanitizeState(malformed).substrate), JSON.stringify({ version: 1, detritus: 0,
+    surfaceFilm: 1, turnover: 0, cleanliness: 0 }), "malformed substrate fields clamp independently");
+})();
+
 /* ============================================================ *
  * 4. Reef evaporation raises salinity; top-off + ATO control it
  * ============================================================ */

@@ -6,7 +6,7 @@ import {
   LIVE_ROCK_SEED_OFFSET,
   type LiveRockSurfaceSample,
 } from './liveRockGeometry'
-import { REEF_ROCKS, REEF_SAND_Y, seededUnit } from './reefLayout'
+import { REEF_ROCKS, REEF_SAND_Y, seededUnit, type ReefRock } from './reefLayout'
 
 export type SurfaceMode = 'sand' | 'sand_glass' | 'sand_rock' | 'glass_rock' |
   'sand_burrow' | 'rock_station'
@@ -187,7 +187,7 @@ interface LineSegment {
 
 interface RockSegment {
   readonly kind: 'rock'
-  readonly rock: (typeof REEF_ROCKS)[number]
+  readonly rock: ReefRock
   readonly points: readonly THREE.Vector3[]
   readonly normals: readonly THREE.Vector3[]
   readonly distances: readonly number[]
@@ -251,7 +251,7 @@ function rockPoint(segment: RockSegment, t: number, target: THREE.Vector3,
 
 const rockContours = new WeakMap<object, Map<number, readonly LiveRockSurfaceSample[]>>()
 
-function surfaceContourForRock(rock: (typeof REEF_ROCKS)[number], rockIndex: number) {
+function surfaceContourForRock(rock: ReefRock, rockIndex: number) {
   const seed = rockIndex + LIVE_ROCK_SEED_OFFSET
   let contours = rockContours.get(rock)
   if (!contours) {
@@ -297,12 +297,9 @@ function clipRockContourToSand(contour: readonly LiveRockSurfaceSample[], sandY:
 }
 
 function createRockSegment(seed: number, sandY: number,
-  rocks: readonly (typeof REEF_ROCKS)[number][]): RockSegment | undefined {
+  rocks: readonly ReefRock[]): RockSegment | undefined {
   const radiusScale = 1.035
-  const eligible = rocks.map((rock, index) => {
-    const sharedIndex = REEF_ROCKS.indexOf(rock)
-    return { rock, index: sharedIndex >= 0 ? sharedIndex : index }
-  }).filter(({ rock }) => Math.abs(
+  const eligible = rocks.map((rock) => ({ rock, index: rock.index })).filter(({ rock }) => Math.abs(
     (sandY - rock.position.y) / (rock.scale.y * radiusScale)) < .96)
   const preferred = Math.floor(seededUnit(seed, 711) * eligible.length)
   for (let attempt = 0; attempt < eligible.length; attempt += 1) {
@@ -347,7 +344,7 @@ function createGlassExcursion(seed: number, halfWidth: number, halfDepth: number
 
 export function createSurfaceCircuit(speciesId: string, seed: number, halfWidth = 2.76,
   halfDepth = 1.2, sandY = REEF_SAND_Y,
-  rocks: readonly (typeof REEF_ROCKS)[number][] = REEF_ROCKS): SurfaceCircuit {
+  rocks: readonly ReefRock[] = REEF_ROCKS): SurfaceCircuit {
   const mode = surfaceModeForSpecies(speciesId)
   const width = Math.max(.4, Math.abs(halfWidth))
   const depth = Math.max(.3, Math.abs(halfDepth))

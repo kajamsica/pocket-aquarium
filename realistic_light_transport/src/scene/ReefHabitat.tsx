@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 import type { LifecyclePhase, ReefSceneProps } from '../contracts'
-import type { PocketCoralView } from '../integration/pocketAquariumBridge'
+import type { PocketCoralView, PocketRockView, PocketSandView } from '../integration/pocketAquariumBridge'
 import { sampleFlowField, type FlowFieldState } from '../sim/flowField'
 import {
   CORAL_PLACEMENT_SURFACE_ID_KEY,
@@ -20,7 +20,8 @@ import {
 } from './feeding'
 import { createProceduralMaterialTextures, type ProceduralMaterialTextures } from './materials/proceduralMaterials'
 import { createLiveRockGeometry } from './liveRockGeometry'
-import { REEF_ROCKS as ROCKS, resolveReefPelletPosition, seededUnit } from './reefLayout'
+import { materializeReefRocks, REEF_ROCKS as ROCKS, resolveReefPelletPosition, seededUnit,
+  type ReefRock } from './reefLayout'
 import { SpecimenFish } from './SpecimenFish'
 import { tankDragInProgress, tankPinchInProgress } from './tankGestures'
 
@@ -120,12 +121,64 @@ export interface FlowFieldSource {
 
 interface ReefHabitatProps extends ReefSceneProps {
   readonly flowField: FlowFieldSource
+  readonly rockscape?: readonly PocketRockView[]
+  readonly sand: PocketSandView
+  readonly rockscapeEditing?: boolean
+  readonly selectedRockId?: number | null
+  readonly onRockSelect?: (rockId: number) => void
+  readonly onRockTransformPreview?: (rockId: number,
+    patch: Readonly<{ position: PocketRockView['position'] }>) => void
   readonly placedCorals: readonly PocketCoralView[]
   readonly activeCoral?: PocketCoralView
   readonly previewCandidate: CoralPlacementCandidate | null
   readonly onPlacementCandidate: (candidate: CoralPlacementCandidate | null,
     intent?: 'follow' | 'freeze') => void
 }
+
+export type LiveRockPatchKind = 'diatom' | 'nuisanceAlgae' | 'coralline' | 'encruster'
+
+export interface LiveRockVisualPlan {
+  readonly baseColor: string
+  readonly visiblePatches: Readonly<Record<LiveRockPatchKind, readonly number[]>>
+}
+
+const LIVE_ROCK_PATCH_KINDS: readonly LiveRockPatchKind[] = [
+  'diatom', 'nuisanceAlgae', 'coralline', 'encruster',
+]
+const LIVE_ROCK_PATCHES_PER_KIND = 7
+const DECORATION_NO_RAYCAST = () => undefined
+
+function boundedBiology(value: number) {
+  return THREE.MathUtils.clamp(Number.isFinite(value) ? value : 0, 0, 1)
+}
+
+function rockUnit(id: number, salt: number) {
+  return seededUnit(id, salt)
+}
+
+export function resolveLiveRockVisualPlan(rock: PocketRockView): LiveRockVisualPlan {
+  const hue = .09 + rockUnit(rock.id, 121) * .025
+  const saturation = .22 + rockUnit(rock.id, 122) * .08
+  const lightness = .58 + rockUnit(rock.id, 123) * .08
+  const baseColor = `#${new THREE.Color().setHSL(hue, saturation, lightness).getHexString()}`
+  const visiblePatches: Record<LiveRockPatchKind, readonly number[]> = {
+    diatom: [], nuisanceAlgae: [], coralline: [], encruster: [],
+  }
+  LIVE_ROCK_PATCH_KINDS.forEach((kind) => {
+    const count = Math.round(boundedBiology(rock.biology[kind]) * LIVE_ROCK_PATCHES_PER_KIND)
+    visiblePatches[kind] = Array.from({ length: count }, (_, index) => index)
+  })
+  return { baseColor, visiblePatches }
+}
+
+export const FALLBACK_LIVE_ROCKSCAPE: readonly PocketRockView[] = ROCKS.map((rock, index) => ({
+  id: index,
+  index,
+  position: [rock.position.x, rock.position.y, rock.position.z],
+  rotation: [rock.rotation.x, rock.rotation.y, rock.rotation.z],
+  scale: [rock.scale.x, rock.scale.y, rock.scale.z],
+  biology: { diatom: 0, nuisanceAlgae: 0, coralline: 0, encruster: 0 },
+}))
 
 interface HabitatMaterials {
   readonly rock: ProceduralMaterialTextures
@@ -168,37 +221,36 @@ function sampleSceneFlow(flowField: FlowFieldSource, x: number, y: number, water
   )
 }
 
-function constrainScenePellet(pellet: THREE.Vector3, pelletId: number, waterSurfaceY: number) {
+function constrainScenePellet(pellet: THREE.Vector3, pelletId: number, waterSurfaceY: number,
+  rocks: readonly ReefRock[]) {
   pellet.x = THREE.MathUtils.clamp(pellet.x, -FOOD_SAFE_HALF_WIDTH, FOOD_SAFE_HALF_WIDTH)
   pellet.y = THREE.MathUtils.clamp(pellet.y, DYNAMIC_FLOOR_Y, waterSurfaceY - PARTICLE_SURFACE_CLEARANCE)
   pellet.z = THREE.MathUtils.clamp(pellet.z, -FOOD_SAFE_HALF_DEPTH, FOOD_SAFE_HALF_DEPTH)
-  resolveReefPelletPosition(pellet, pelletId, FOOD_FLAKE_CLEARANCE)
+  resolveReefPelletPosition(pellet, pelletId, FOOD_FLAKE_CLEARANCE, rocks)
   pellet.x = THREE.MathUtils.clamp(pellet.x, -FOOD_SAFE_HALF_WIDTH, FOOD_SAFE_HALF_WIDTH)
   pellet.z = THREE.MathUtils.clamp(pellet.z, -FOOD_SAFE_HALF_DEPTH, FOOD_SAFE_HALF_DEPTH)
 }
 
-const PORE_PATCHES = Array.from({ length: 32 }, (_, index) => {
-  const host = ROCKS[index % ROCKS.length]
-  return {
-    position: new THREE.Vector3(
-      host.position.x + (seededUnit(index, 10) - 0.5) * host.scale.x * 1.2,
-      host.position.y + (0.12 + seededUnit(index, 11) * 0.7) * host.scale.y,
-      host.position.z + (seededUnit(index, 12) - 0.5) * host.scale.z * 1.2,
-    ),
-    rotation: new THREE.Euler(
-      seededUnit(index, 13) * Math.PI,
-      seededUnit(index, 14) * Math.PI,
-      seededUnit(index, 15) * Math.PI,
-    ),
-    scale: 0.025 + seededUnit(index, 16) * 0.065,
-  }
-})
-
 type FilmKind = 'diatom' | 'green' | 'cyano'
 
-function SandBed({ material }: { readonly material: ProceduralMaterialTextures }) {
+export function sandVisualPlan(sand: PocketSandView) {
+  const detritus = THREE.MathUtils.clamp(sand.detritus, 0, 1)
+  const film = THREE.MathUtils.clamp(sand.surfaceFilm, 0, 1)
+  const cleanliness = THREE.MathUtils.clamp(sand.cleanliness, 0, 1)
+  return {
+    detritusInstances: Math.round(detritus * 120),
+    filmInstances: Math.round(film * 42),
+    baseColor: `#${new THREE.Color('#d6c8a1').lerp(new THREE.Color('#81704f'), (1 - cleanliness) * .42).getHexString()}`,
+  }
+}
+
+function SandBed({ material, sand }: {
+  readonly material: ProceduralMaterialTextures
+  readonly sand: PocketSandView
+}) {
   const moundRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
+  const plan = sandVisualPlan(sand)
 
   useLayoutEffect(() => {
     const mound = moundRef.current
@@ -229,7 +281,7 @@ function SandBed({ material }: { readonly material: ProceduralMaterialTextures }
       }}>
         <boxGeometry args={[5.55, 0.12, 2.34]} />
         <meshStandardMaterial
-          color="#c7b991"
+          color={plan.baseColor}
           map={material.albedoMap}
           normalMap={material.normalMap}
           roughnessMap={material.roughnessMap}
@@ -242,7 +294,7 @@ function SandBed({ material }: { readonly material: ProceduralMaterialTextures }
       }}>
         <sphereGeometry args={[1, 12, 7]} />
         <meshStandardMaterial
-          color="#d6c8a1"
+          color={plan.baseColor}
           map={material.albedoMap}
           normalMap={material.normalMap}
           roughnessMap={material.roughnessMap}
@@ -253,41 +305,179 @@ function SandBed({ material }: { readonly material: ProceduralMaterialTextures }
   )
 }
 
-function Rockwork({ material }: { readonly material: ProceduralMaterialTextures }) {
-  const poreRef = useRef<THREE.InstancedMesh>(null)
+function SandCondition({ sand }: { readonly sand: PocketSandView }) {
+  const detritusRef = useRef<THREE.InstancedMesh>(null)
+  const filmRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const geometries = useMemo(() => ROCKS.map((_, index) => createLiveRockGeometry(index + 29)), [])
-  const colors = useMemo(() => {
-    const baseRockColor = new THREE.Color('#635d54')
-    return ROCKS.map((_, index) => new THREE.Color().setHSL(
-      0.075 + seededUnit(index, 40) * 0.035,
-      0.09,
-      0.25 + seededUnit(index, 41) * 0.08,
-    ).multiply(baseRockColor))
-  }, [])
+  const plan = sandVisualPlan(sand)
+
+  useLayoutEffect(() => {
+    const detritus = detritusRef.current
+    const film = filmRef.current
+    if (!detritus || !film) return
+    detritus.count = plan.detritusInstances
+    film.count = plan.filmInstances
+    for (let index = 0; index < 120; index += 1) {
+      dummy.position.set(-2.52 + seededUnit(index, 320) * 5.04, SAND_Y + .073,
+        -1.04 + seededUnit(index, 321) * 2.08)
+      dummy.rotation.set(seededUnit(index, 322) * Math.PI, seededUnit(index, 323) * Math.PI,
+        seededUnit(index, 324) * Math.PI)
+      const size = .008 + seededUnit(index, 325) * .021
+      dummy.scale.set(size * 1.5, size * .45, size)
+      dummy.updateMatrix()
+      detritus.setMatrixAt(index, dummy.matrix)
+    }
+    for (let index = 0; index < 42; index += 1) {
+      const pocket = index % 4
+      const centerX = [-1.95, -.58, .72, 1.94][pocket]
+      const centerZ = [-.68, .68, -.54, .62][pocket]
+      dummy.position.set(centerX + (seededUnit(index, 326) - .5) * .72, SAND_Y + .075,
+        centerZ + (seededUnit(index, 327) - .5) * .5)
+      dummy.rotation.set(-Math.PI / 2, 0, seededUnit(index, 328) * Math.PI)
+      const size = .035 + seededUnit(index, 329) * .09
+      dummy.scale.set(size, size * (.45 + seededUnit(index, 330) * .45), 1)
+      dummy.updateMatrix()
+      film.setMatrixAt(index, dummy.matrix)
+    }
+    detritus.instanceMatrix.needsUpdate = true
+    film.instanceMatrix.needsUpdate = true
+  }, [dummy, plan.detritusInstances, plan.filmInstances])
+
+  return <group name="sand-condition">
+    <instancedMesh ref={detritusRef} args={[undefined, undefined, 120]} raycast={DECORATION_NO_RAYCAST}>
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshStandardMaterial color="#4d3b28" roughness={1} />
+    </instancedMesh>
+    <instancedMesh ref={filmRef} args={[undefined, undefined, 42]} raycast={DECORATION_NO_RAYCAST}>
+      <circleGeometry args={[1, 10]} />
+      <meshStandardMaterial color="#79653a" roughness={1} transparent opacity={.58} depthWrite={false} />
+    </instancedMesh>
+  </group>
+}
+
+function setRockSurfacePatchMatrix(dummy: THREE.Object3D, rock: PocketRockView, slot: number,
+  salt: number, radius: number, lift: number) {
+  const azimuth = rockUnit(rock.id, salt + slot * 3) * Math.PI * 2
+  const elevation = .1 + rockUnit(rock.id, salt + slot * 3 + 1) * 1.05
+  const normal = new THREE.Vector3(
+    Math.cos(azimuth) * Math.cos(elevation),
+    Math.sin(elevation),
+    Math.sin(azimuth) * Math.cos(elevation),
+  )
+  const rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(...rock.rotation))
+  const offset = new THREE.Vector3(
+    normal.x * rock.scale[0] * lift,
+    normal.y * rock.scale[1] * lift,
+    normal.z * rock.scale[2] * lift,
+  ).applyQuaternion(rotation)
+  const worldNormal = normal.applyQuaternion(rotation).normalize()
+  dummy.position.set(...rock.position).add(offset)
+  dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), worldNormal)
+  dummy.scale.set(radius, radius * (.52 + rockUnit(rock.id, salt + slot * 3 + 2) * .42), 1)
+  dummy.updateMatrix()
+}
+
+function LiveRockPatches({ rocks, kind }: {
+  readonly rocks: readonly PocketRockView[]
+  readonly kind: LiveRockPatchKind
+}) {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+  const maximum = Math.max(1, rocks.length * LIVE_ROCK_PATCHES_PER_KIND)
+
+  useLayoutEffect(() => {
+    const mesh = meshRef.current
+    if (!mesh) return
+    let instance = 0
+    rocks.forEach((rock) => {
+      const slots = resolveLiveRockVisualPlan(rock).visiblePatches[kind]
+      slots.forEach((slot) => {
+        const radius = .045 + rockUnit(rock.id, 180 + slot) * .075
+        setRockSurfacePatchMatrix(dummy, rock, slot, 210 + LIVE_ROCK_PATCH_KINDS.indexOf(kind) * 40,
+          radius, 1.025 + LIVE_ROCK_PATCH_KINDS.indexOf(kind) * .006)
+        mesh.setMatrixAt(instance, dummy.matrix)
+        instance += 1
+      })
+    })
+    mesh.count = instance
+    mesh.instanceMatrix.needsUpdate = true
+  }, [dummy, kind, rocks])
+
+  const color: Record<LiveRockPatchKind, string> = {
+    diatom: '#8b6740', nuisanceAlgae: '#4d6d37', coralline: '#a35c86', encruster: '#b8a47f',
+  }
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, maximum]} receiveShadow renderOrder={2}
+      raycast={DECORATION_NO_RAYCAST}>
+      <circleGeometry args={[1, 9]} />
+      <meshStandardMaterial color={color[kind]} roughness={.9} transparent opacity={kind === 'encruster' ? .7 : .82}
+        depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
+    </instancedMesh>
+  )
+}
+
+function Rockwork({ material, rockscape, editing = false, selectedRockId = null,
+  onRockSelect, onRockTransformPreview }: {
+  readonly material: ProceduralMaterialTextures
+  readonly rockscape?: readonly PocketRockView[]
+  readonly editing?: boolean
+  readonly selectedRockId?: number | null
+  readonly onRockSelect?: (rockId: number) => void
+  readonly onRockTransformPreview?: (rockId: number,
+    patch: Readonly<{ position: PocketRockView['position'] }>) => void
+}) {
+  const rocks = useMemo(() => [...(rockscape ?? FALLBACK_LIVE_ROCKSCAPE)]
+    .sort((a, b) => a.index - b.index), [rockscape])
+  const geometrySeeds = rocks.map((rock) => rock.index + 29).join(',')
+  const geometries = useMemo(() => geometrySeeds.split(',').filter(Boolean)
+    .map((seed) => createLiveRockGeometry(Number(seed))), [geometrySeeds])
+  const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), -SAND_Y), [])
+  const dragPoint = useMemo(() => new THREE.Vector3(), [])
+  const drag = useRef<{ rockId: number; pointerId: number; offsetX: number; offsetZ: number } | null>(null)
 
   useEffect(() => () => geometries.forEach((geometry) => geometry.dispose()), [geometries])
 
-  useLayoutEffect(() => {
-    const pore = poreRef.current
-    if (!pore) return
-
-    PORE_PATCHES.forEach((patch, index) => {
-      dummy.position.copy(patch.position)
-      dummy.rotation.copy(patch.rotation)
-      dummy.scale.set(patch.scale, patch.scale * 0.28, patch.scale * 0.8)
-      dummy.updateMatrix()
-      pore.setMatrixAt(index, dummy.matrix)
-    })
-
-    pore.instanceMatrix.needsUpdate = true
-  }, [dummy])
+  const selectRock = (event: ThreeEvent<MouseEvent>, rock: PocketRockView) => {
+    if (!editing) return
+    event.stopPropagation()
+    onRockSelect?.(rock.id)
+  }
+  const beginRockDrag = (event: ThreeEvent<PointerEvent>, rock: PocketRockView) => {
+    if (!editing || !event.ray.intersectPlane(dragPlane, dragPoint)) return
+    event.stopPropagation()
+    onRockSelect?.(rock.id)
+    const pointerTarget = event.nativeEvent.target as Element | null
+    pointerTarget?.setPointerCapture(event.pointerId)
+    drag.current = { rockId: rock.id, pointerId: event.pointerId,
+      offsetX: dragPoint.x - rock.position[0], offsetZ: dragPoint.z - rock.position[2] }
+  }
+  const moveRock = (event: ThreeEvent<PointerEvent>) => {
+    const active = drag.current
+    const rock = active && rocks.find(({ id }) => id === active.rockId)
+    if (!active || !rock || !event.ray.intersectPlane(dragPlane, dragPoint)) return
+    event.stopPropagation()
+    onRockTransformPreview?.(rock.id, { position: [
+      THREE.MathUtils.clamp(dragPoint.x - active.offsetX, -2.2, 2.2),
+      rock.position[1],
+      THREE.MathUtils.clamp(dragPoint.z - active.offsetZ, -.9, .9),
+    ] })
+  }
+  const endRockDrag = (event: ThreeEvent<PointerEvent>) => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return
+    event.stopPropagation()
+    const pointerTarget = event.nativeEvent.target as Element | null
+    if (pointerTarget?.hasPointerCapture(event.pointerId)) pointerTarget.releasePointerCapture(event.pointerId)
+    drag.current = null
+  }
 
   return (
-    <group>
-      {ROCKS.map((piece, index) => (
-        <mesh
-          key={`live-rock-${index}`}
+    <group onPointerMove={moveRock} onPointerUp={endRockDrag} onPointerCancel={endRockDrag}>
+      {rocks.map((piece, index) => {
+        const plan = resolveLiveRockVisualPlan(piece)
+        const color = new THREE.Color(plan.baseColor)
+        if (editing && piece.id === selectedRockId) color.lerp(new THREE.Color('#7fe8da'), .32)
+        return <mesh
+          key={piece.id}
           geometry={geometries[index]}
           position={piece.position}
           rotation={piece.rotation}
@@ -296,11 +486,13 @@ function Rockwork({ material }: { readonly material: ProceduralMaterialTextures 
           receiveShadow
           userData={{
             [CORAL_PLACEMENT_SURFACE_KEY]: 'rock',
-            [CORAL_PLACEMENT_SURFACE_ID_KEY]: `rock:${index}`,
+            [CORAL_PLACEMENT_SURFACE_ID_KEY]: `rock:${piece.id}`,
           }}
+          onPointerDown={(event) => beginRockDrag(event, piece)}
+          onClick={(event) => selectRock(event, piece)}
         >
           <meshStandardMaterial
-            color={colors[index]}
+            color={color}
             map={material.albedoMap}
             normalMap={material.normalMap}
             roughnessMap={material.roughnessMap}
@@ -310,16 +502,23 @@ function Rockwork({ material }: { readonly material: ProceduralMaterialTextures 
             roughness={0.93}
           />
         </mesh>
-      ))}
-      <instancedMesh ref={poreRef} args={[undefined, undefined, PORE_PATCHES.length]}>
-        <sphereGeometry args={[1, 8, 5]} />
-        <meshStandardMaterial color="#241f1e" roughness={1} />
-      </instancedMesh>
+      })}
+      {LIVE_ROCK_PATCH_KINDS.map((kind) => <LiveRockPatches key={kind} rocks={rocks} kind={kind} />)}
+      {editing ? <mesh position={[0, SAND_Y + .01, 0]} rotation={[-Math.PI / 2, 0, 0]}
+        onPointerMove={moveRock} onPointerUp={endRockDrag} onPointerCancel={endRockDrag}>
+        <planeGeometry args={[5.3, 2.18]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh> : null}
     </group>
   )
 }
 
-function BenthicFilm({ kind, coverage, flowPower }: { kind: FilmKind; coverage: number; flowPower: number }) {
+function BenthicFilm({ kind, coverage, flowPower, rocks = ROCKS }: {
+  kind: FilmKind
+  coverage: number
+  flowPower: number
+  rocks?: readonly ReefRock[]
+}) {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const maximum = kind === 'green' ? 34 : 28
@@ -334,7 +533,7 @@ function BenthicFilm({ kind, coverage, flowPower }: { kind: FilmKind; coverage: 
 
     for (let index = 0; index < maximum; index += 1) {
       if (kind === 'green') {
-        const host = ROCKS[index % ROCKS.length]
+        const host = rocks[index % rocks.length]
         dummy.position.set(
           host.position.x + (seededUnit(index, 50) - 0.5) * host.scale.x,
           host.position.y + host.scale.y * (0.55 + seededUnit(index, 51) * 0.42),
@@ -365,7 +564,7 @@ function BenthicFilm({ kind, coverage, flowPower }: { kind: FilmKind; coverage: 
       mesh.setMatrixAt(index, dummy.matrix)
     }
     mesh.instanceMatrix.needsUpdate = true
-  }, [boundedCoverage, dummy, kind, maximum, visibleCount])
+  }, [boundedCoverage, dummy, kind, maximum, rocks, visibleCount])
 
   const color = kind === 'cyano' ? '#651f2b' : kind === 'diatom' ? '#8e6841' : '#315f2f'
   const emissive = kind === 'cyano' ? '#2d0710' : '#07120a'
@@ -779,10 +978,15 @@ function InstalledEquipmentHardware({ equipment, waterSurfaceY }: {
   )
 }
 
-export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, previewCandidate,
+export function ReefHabitat({ snapshot, flowField, rockscape, sand, rockscapeEditing, selectedRockId,
+  onRockSelect, onRockTransformPreview, placedCorals, activeCoral, previewCandidate,
   onPlacementCandidate }: ReefHabitatProps) {
   const { ecology, equipment } = snapshot
   const habitatRef = useRef<THREE.Group>(null)
+  const rockTransformKey = (rockscape ?? FALLBACK_LIVE_ROCKSCAPE).map((rock) =>
+    `${rock.id}:${rock.position.join(',')}:${rock.rotation.join(',')}:${rock.scale.join(',')}`).join('|')
+  const sceneRocks = useMemo(() => materializeReefRocks(rockscape ?? FALLBACK_LIVE_ROCKSCAPE),
+    [rockTransformKey])
   const placementRaycaster = useMemo(() => new THREE.Raycaster(), [])
   const waterSurfaceY = waterSurfaceFor(snapshot.tank)
   const sceneUnitsPerMeter = TANK_HALF_WIDTH * 2 / snapshot.tank.widthMeters
@@ -833,12 +1037,12 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
       pelletCurrentOffsets.current.set(pellet.id, offset)
       const resolved = base.clone().add(offset)
       if (pellet.sunk) resolved.y = base.y
-      constrainScenePellet(resolved, pellet.id, waterSurfaceY)
+      constrainScenePellet(resolved, pellet.id, waterSurfaceY, sceneRocks)
       offset.copy(resolved).sub(base)
       return Object.assign(resolved, { id: pellet.id, sunk: pellet.sunk, ageDays: pellet.ageDays })
     })
     return { basePositions, pellets }
-  }, [feeding.food, waterSurfaceY])
+  }, [feeding.food, sceneRocks, waterSurfaceY])
   const scenePellets = projectedFood.pellets
 
   useEffect(() => {
@@ -861,7 +1065,7 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
         -MAX_FOOD_FLOW_STEP, MAX_FOOD_FLOW_STEP)
       pellet.y += THREE.MathUtils.clamp(flow.yMetersPerSecond * FOOD_FLOW_SCENE_UNITS_PER_METER * step,
         -MAX_FOOD_FLOW_STEP, MAX_FOOD_FLOW_STEP)
-      constrainScenePellet(pellet, pellet.id, waterSurfaceY)
+      constrainScenePellet(pellet, pellet.id, waterSurfaceY, sceneRocks)
       offset.set(pellet.x - base.x, pellet.y - base.y, pellet.z - base.z)
     }
   }, PELLET_ADVECTION_FRAME_PRIORITY)
@@ -885,11 +1089,15 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
 
   return (
     <group ref={habitatRef} name="living-reef-habitat">
-      <SandBed material={materials.sand} />
+      <SandBed material={materials.sand} sand={sand} />
+      <SandCondition sand={sand} />
       <BenthicFilm kind="diatom" coverage={ecology.diatomCoverage} flowPower={equipment.flowPower} />
       <BenthicFilm kind="cyano" coverage={ecology.cyanobacteriaCoverage} flowPower={equipment.flowPower} />
-      <Rockwork material={materials.rock} />
-      <BenthicFilm kind="green" coverage={ecology.greenAlgaeCoverage} flowPower={equipment.flowPower} />
+      <Rockwork material={materials.rock} rockscape={rockscape} editing={rockscapeEditing}
+        selectedRockId={selectedRockId} onRockSelect={onRockSelect}
+        onRockTransformPreview={onRockTransformPreview} />
+      <BenthicFilm kind="green" coverage={ecology.greenAlgaeCoverage} flowPower={equipment.flowPower}
+        rocks={sceneRocks} />
       {placedCorals.map((coral) => coral.placement ? <CoralPlacement key={coral.id}
         speciesId={coral.speciesId} variantId={coral.variantId} individualId={coral.id}
         placement={coral.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
@@ -900,14 +1108,15 @@ export function ReefHabitat({ snapshot, flowField, placedCorals, activeCoral, pr
         placement={previewCandidate.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
         mode="preview" valid={previewCandidate.valid} active /> : null}
       <SpecimenFish snapshot={snapshot} waterSurfaceY={waterSurfaceY} pellets={scenePellets}
-        flowField={flowField} consume={feeding.consume} />
+        flowField={flowField} consume={feeding.consume} rocks={sceneRocks} />
       <SuspendedParticles flowField={flowField} profile={particleProfile} waterSurfaceY={waterSurfaceY} />
       <Microfauna activity={ecology.microfaunaActivity} waterSurfaceY={waterSurfaceY} />
       <FoodPellets pellets={scenePellets} />
       <AutoFeederHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       <AtoHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
       <InstalledEquipmentHardware equipment={equipment} waterSurfaceY={waterSurfaceY} />
-      {!activeCoral && <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />}
+      {!activeCoral && !rockscapeEditing
+        && <WaterFeedTarget waterSurfaceY={waterSurfaceY} feed={feeding.feed} />}
       {activeCoral && <mesh name="coral-placement-input" position={[0, (SAND_Y + waterSurfaceY) / 2,
         TANK_HALF_DEPTH + .035]} onPointerMove={(event) => updatePlacementCandidate(event, 'follow')}
         onClick={(event) => updatePlacementCandidate(event, 'freeze')} renderOrder={100}>

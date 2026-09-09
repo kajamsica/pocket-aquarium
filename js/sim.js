@@ -12,6 +12,7 @@
   var STAGES = DATA.CYCLE_STAGES;
   var LOCK_CORAL_PLACEMENT = ACT.LOCK_CORAL_PLACEMENT || "LOCK_CORAL_PLACEMENT";
   var CLEAN_PARASITES = ACT.CLEAN_PARASITES || "CLEAN_PARASITES";
+  var UPDATE_ROCK_TRANSFORM = ACT.UPDATE_ROCK_TRANSFORM || "UPDATE_ROCK_TRANSFORM";
 
   /* ============================ tuning ============================ *
    * Broad, documented coefficients — a readable game model, not a
@@ -76,6 +77,82 @@
       position: [x * 2 - 1, 0, z * 2 - 1], normal: [0, 1, 0], yaw: (x * 2 - 1) * Math.PI };
   }
   function coralVariant(value) { return typeof value === "string" && value ? value : null; }
+
+  var ROCK_COUNT = 13, ROCKSCAPE_VERSION = 1;
+  // Rock transforms use the scene's physical coordinate space. Coral placements use a
+  // normalized tank space, so horizontal rock motion must cross this boundary explicitly.
+  var ROCK_SCENE_HALF_WIDTH = 2.76, ROCK_SCENE_HALF_DEPTH = 1.18;
+  var ROCK_POSITION_BOUNDS = [[-2.2, 2.2], [-1.3, 0.5], [-0.9, 0.9]];
+  var ROCK_ROTATION_BOUNDS = [[-Math.PI, Math.PI], [-Math.PI, Math.PI], [-Math.PI, Math.PI]];
+  var ROCK_SCALE_BOUNDS = [[0.18, 0.9], [0.18, 0.9], [0.18, 0.9]];
+  function seededRockUnit(index, salt) {
+    var value = Math.sin((index + 1) * 12.9898 + (salt || 0) * 78.233) * 43758.5453;
+    return value - Math.floor(value);
+  }
+  function freshRock(index) {
+    var arc = (index / 12) * Math.PI * 1.74 + 0.16;
+    var radius = 0.66 + seededRockUnit(index, 1) * 1.12;
+    var side = index < 7 ? -0.62 : 0.82;
+    return {
+      id: index, index: index,
+      position: [side + Math.cos(arc) * radius, -1.44 + 0.22 + seededRockUnit(index, 2) * 0.4,
+        Math.sin(arc) * 0.52 + (seededRockUnit(index, 3) - 0.5) * 0.42],
+      rotation: [seededRockUnit(index, 4) * 0.45, seededRockUnit(index, 5) * Math.PI,
+        (seededRockUnit(index, 6) - 0.5) * 0.48],
+      scale: [0.36 + seededRockUnit(index, 7) * 0.4, 0.32 + seededRockUnit(index, 8) * 0.42,
+        0.34 + seededRockUnit(index, 9) * 0.36],
+      biology: { diatom: 0, nuisanceAlgae: 0, coralline: 0, encruster: 0 }
+    };
+  }
+  function freshRockscape() {
+    var rocks = [];
+    for (var i = 0; i < ROCK_COUNT; i++) rocks.push(freshRock(i));
+    return { version: ROCKSCAPE_VERSION, rocks: rocks };
+  }
+  function sanitizeRockVector(value, fallback, bounds) {
+    var source = Array.isArray(value) && value.length === 3 ? value : fallback;
+    return [clamp(num(source[0], fallback[0]), bounds[0][0], bounds[0][1]),
+      clamp(num(source[1], fallback[1]), bounds[1][0], bounds[1][1]),
+      clamp(num(source[2], fallback[2]), bounds[2][0], bounds[2][1])];
+  }
+  function sanitizeRockscape(value) {
+    var repaired = freshRockscape();
+    if (!value || value.version !== ROCKSCAPE_VERSION || !Array.isArray(value.rocks)) return repaired;
+    var seen = {};
+    for (var i = 0; i < value.rocks.length; i++) {
+      var raw = value.rocks[i];
+      if (!raw || typeof raw !== "object") continue;
+      var id = Number.isInteger(raw.id) ? raw.id : raw.index;
+      if (!Number.isInteger(id) || id < 0 || id >= ROCK_COUNT || seen[id] ||
+          (raw.id != null && raw.index != null && raw.id !== raw.index)) continue;
+      seen[id] = true;
+      var rock = repaired.rocks[id], biology = raw.biology && typeof raw.biology === "object" ? raw.biology : {};
+      rock.position = sanitizeRockVector(raw.position, rock.position, ROCK_POSITION_BOUNDS);
+      rock.rotation = sanitizeRockVector(raw.rotation, rock.rotation, ROCK_ROTATION_BOUNDS);
+      rock.scale = sanitizeRockVector(raw.scale, rock.scale, ROCK_SCALE_BOUNDS);
+      rock.biology = {
+        diatom: clamp(num(biology.diatom, 0), 0, 1),
+        nuisanceAlgae: clamp(num(biology.nuisanceAlgae, 0), 0, 1),
+        coralline: clamp(num(biology.coralline, 0), 0, 1),
+        encruster: clamp(num(biology.encruster, 0), 0, 1)
+      };
+    }
+    return repaired;
+  }
+  function freshSubstrate() {
+    return { version: 1, detritus: 0, surfaceFilm: 0, turnover: 0, cleanliness: 1 };
+  }
+  function sanitizeSubstrate(value) {
+    var clean = freshSubstrate();
+    if (!value || value.version !== 1 || typeof value !== "object") return clean;
+    return {
+      version: 1,
+      detritus: clamp(num(value.detritus, 0), 0, 1),
+      surfaceFilm: clamp(num(value.surfaceFilm, 0), 0, 1),
+      turnover: clamp(num(value.turnover, 0), 0, 1),
+      cleanliness: clamp(num(value.cleanliness, 1), 0, 1)
+    };
+  }
 
   /* seeded mulberry32 — advances and returns a value in [0,1). state carries the int. */
   function rng(state) {
@@ -167,6 +244,8 @@
       water: emptyWater(),
       cycle: { stage: "Setup", aob: 0.02, nob: 0.01, ammoniaSource: false, inoculated: false, lifeSupport: false, filled: false, validationDays: 0 },
       succession: { age: 0, haze: 0, diatom: 0, greenFilm: 0, cyano: 0, silicate: 1.0 },
+      rockscape: freshRockscape(),
+      substrate: freshSubstrate(),
       livestock: [], corals: [], clutches: [],
       microfauna: { pods: 0, worms: 0, infusoria: 0, biodiversity: 0 },
       food: [],
@@ -195,6 +274,8 @@
     state.water = emptyWater();
     state.cycle = { stage: "Setup", aob: 0.02, nob: 0.01, ammoniaSource: false, inoculated: false, lifeSupport: false, filled: false, validationDays: 0 };
     state.succession = { age: 0, haze: 0, diatom: 0, greenFilm: 0, cyano: 0, silicate: 1.0 };
+    state.rockscape = freshRockscape();
+    state.substrate = freshSubstrate();
     state.livestock = []; state.corals = []; state.clutches = []; state.food = [];
     state.microfauna = { pods: 0, worms: 0, infusoria: 0, biodiversity: 0 };
     // live rock / leaf litter carry a starter microfauna seed
@@ -428,7 +509,34 @@
   }
 
   /* ============================ succession / ugly phases ============================ */
-  function stepSuccession(state, dt) {
+  var CLEANUP_ROLE_WEIGHTS = {
+    film_algae: [1, 0.35, 0], film_algae_grazing: [1.1, 0.35, 0],
+    algae_grazing: [0.8, 0, 0], turf_algae: [0.7, 0, 0], sand_algae: [0.55, 0.6, 0],
+    diatoms: [0, 1, 0], leftover_food: [0, 0, 1], detritus: [0, 0, 0.65],
+    detritus_turnover: [0, 0, 0.5], sand_sifting: [0, 0, 0.4], sand_turnover: [0, 0, 0.45]
+  };
+  var SUBSTRATE_ROLE_WEIGHTS = {
+    sand_sifting: [1, 0.75, 0.35], sand_turnover: [0.9, 0.7, 0.3], sand_algae: [0.35, 0.15, 1],
+    detritus_turnover: [0.7, 0.8, 0.15], detritus: [0.2, 0.85, 0.05], leftover_food: [0, 0.75, 0]
+  };
+  function cleanupCapacity(state) {
+    var total = [0, 0, 0], sand = [0, 0, 0], livestock = state.livestock || [];
+    for (var i = 0; i < livestock.length; i++) {
+      var resident = livestock[i]; if (!resident || resident.alive === false) continue;
+      var species = DATA.resolveSpecies(state, resident.species); if (!species) continue;
+      var vitality = clamp(num(resident.health, 0) * num(resident.condition, 0), 0, 1);
+      for (var r = 0; r < (species.cleanupRoles || []).length; r++) {
+        var role = species.cleanupRoles[r], weight = CLEANUP_ROLE_WEIGHTS[role];
+        if (weight) for (var k = 0; k < total.length; k++) total[k] += weight[k] * vitality;
+        var sandWeight = SUBSTRATE_ROLE_WEIGHTS[role];
+        if (sandWeight) for (k = 0; k < sand.length; k++) sand[k] += sandWeight[k] * vitality;
+      }
+    }
+    return { greenFilm: total[0] / (2 + total[0]), diatom: total[1] / (2 + total[1]),
+      oldFood: total[2] / (2 + total[2]), turnover: sand[0] / (1.5 + sand[0]),
+      sandDetritus: sand[1] / (1.5 + sand[1]), sandFilm: sand[2] / (1.5 + sand[2]) };
+  }
+  function stepSuccession(state, dt, cleanup) {
     var s = state.succession, w = state.water, c = state.cycle;
     if (!c.filled) return;
     s.age += dt;
@@ -444,17 +552,66 @@
 
     // diatoms: young tank + silicate + light; silicate depletes as diatoms consume it
     var diatomT = clamp(s.silicate * (0.4 + 0.6 * parNorm) * clamp(1 - (s.age - 10) / 20, 0, 1), 0, 1);
-    s.diatom = approach(s.diatom, diatomT, 0.5, dt);
+    s.diatom = clamp(approach(s.diatom, diatomT, 0.5, dt) - cleanup.diatom * 0.18 * dt, 0, 1);
     s.silicate = Math.max(0, s.silicate - s.diatom * 0.08 * dt);
 
     // green film: nutrients + light, mid age
     var greenT = clamp(nutrient * (0.3 + 0.7 * parNorm) - 0.15 * exportP, 0, 1);
-    s.greenFilm = approach(s.greenFilm, greenT, 0.4, dt);
+    s.greenFilm = clamp(approach(s.greenFilm, greenT, 0.4, dt) - cleanup.greenFilm * 0.15 * dt, 0, 1);
 
     // cyanobacteria: nutrients * dead-zone(flow) * long/high light, minus export + biodiversity + flow
     var deadzone = c.lifeSupport ? eq.circ.deadzone : 0.95;
     var cyanoT = clamp(nutrient * deadzone * (0.4 + 0.6 * parNorm) - 0.4 * exportP - 0.4 * bio - 0.2 * w.flow, 0, 1);
     s.cyano = approach(s.cyano, cyanoT, 0.4, dt);
+  }
+
+  function reefChemistryFitness(water) {
+    return Math.min(
+      clamp(1 - Math.abs(water.salinity - 35) / 6, 0, 1),
+      clamp(1 - Math.abs(water.pH - 8.2) / 0.8, 0, 1),
+      clamp(1 - Math.abs(water.alkalinity - 8.5) / 4, 0, 1),
+      clamp(1 - Math.abs(water.calcium - 420) / 220, 0, 1),
+      clamp(1 - Math.abs(water.magnesium - 1300) / 500, 0, 1)
+    );
+  }
+  function stepRockscape(state, dt) {
+    if (!isReef(state) || !state.cycle.filled) return;
+    var age = state.succession.age, chemistry = reefChemistryFitness(state.water);
+    var stabilized = DATA.isCycled(state) ? clamp((age - YOUNG_DAYS) / (MATURE_DAYS - YOUNG_DAYS), 0, 1) : 0;
+    var mature = DATA.isCycled(state) ? clamp((age - (MATURE_DAYS + 8)) / 20, 0, 1) : 0;
+    for (var i = 0; i < state.rockscape.rocks.length; i++) {
+      var rock = state.rockscape.rocks[i], biology = rock.biology;
+      var diatomPatch = 0.65 + seededRockUnit(rock.id, 31) * 0.7;
+      var nuisancePatch = 0.65 + seededRockUnit(rock.id, 32) * 0.7;
+      biology.diatom = clamp(approach(biology.diatom,
+        clamp(state.succession.diatom * diatomPatch, 0, 1), 0.45, dt), 0, 1);
+      biology.nuisanceAlgae = clamp(approach(biology.nuisanceAlgae,
+        clamp(state.succession.greenFilm * nuisancePatch, 0, 1), 0.32, dt), 0, 1);
+      var corallineTarget = stabilized * chemistry * (0.42 + seededRockUnit(rock.id, 33) * 0.32);
+      if (corallineTarget > biology.coralline)
+        biology.coralline = clamp(approach(biology.coralline, corallineTarget, 0.055, dt), 0, 1);
+      var encrusterTarget = mature * chemistry * (0.12 + seededRockUnit(rock.id, 34) * 0.2)
+        * (0.35 + biology.coralline);
+      if (encrusterTarget > biology.encruster)
+        biology.encruster = clamp(approach(biology.encruster, encrusterTarget, 0.035, dt), 0, 1);
+    }
+  }
+  function stepSubstrate(state, dt, cleanup) {
+    if (!state.cycle.filled) return;
+    var substrate = state.substrate, eq = EQ(state), tier = DATA.TIERS[state.tier];
+    var bioload = clamp(DATA.currentBioload(state) / Math.max(tier.bioloadCap, 1), 0, 1.5);
+    var sunkFood = 0;
+    for (var i = 0; i < state.food.length; i++) if (state.food[i].sunk) sunkFood += state.food[i].amount;
+    var foodPressure = clamp(sunkFood / 6, 0, 2);
+    var equipmentExport = clamp(eq.filter.flow * 0.18 + eq.circ.flow * 0.12, 0, 0.2);
+    substrate.detritus = clamp(substrate.detritus +
+      (bioload * 0.055 + foodPressure * 0.16 - cleanup.sandDetritus * 0.16 - equipmentExport * 0.08) * dt, 0, 1);
+    var filmTarget = clamp(state.succession.diatom * 0.35 + state.succession.greenFilm * 0.45 +
+      state.succession.cyano * 0.25, 0, 1);
+    substrate.surfaceFilm = clamp(approach(substrate.surfaceFilm, filmTarget, 0.34, dt) -
+      (cleanup.sandFilm * 0.12 + equipmentExport * 0.035) * dt, 0, 1);
+    substrate.turnover = clamp(approach(substrate.turnover, cleanup.turnover, 0.8, dt), 0, 1);
+    substrate.cleanliness = clamp(1 - substrate.detritus * 0.62 - substrate.surfaceFilm * 0.38, 0, 1);
   }
 
   /* ============================ light / PAR ============================ */
@@ -761,7 +918,10 @@
     stepCorals(state, dt);
     stepMicrofauna(state, dt);
     stepBreeding(state, dt);
-    stepSuccession(state, dt);
+    var cleanup = cleanupCapacity(state);
+    stepSuccession(state, dt, cleanup);
+    stepRockscape(state, dt);
+    stepSubstrate(state, dt, cleanup);
     classifyCycle(state, dt);
     // stable-day credit: reward keeping water safe with living stock
     if (DATA.waterSafeForLife(state) && aliveCount(state) > 0) {
@@ -849,6 +1009,7 @@
       case ACT.SELL_LIVESTOCK: doSellLivestock(state, action.ids); break;
       case ACT.PURCHASE_CORAL: doBuyCoral(state, action.coral, action.variantId); break;
       case LOCK_CORAL_PLACEMENT: doLockCoralPlacement(state, action.coralId, action.placement); break;
+      case UPDATE_ROCK_TRANSFORM: doUpdateRockTransform(state, action); break;
       case ACT.SEED_MICROFAUNA: doSeedMicrofauna(state, action.culture); break;
 
       case ACT.FEED:
@@ -1102,6 +1263,43 @@
     if (!coral || coral.placement !== null || !placement) return false;
     coral.placement = placement;
     log(state, "coral", "Locked " + DATA.CORALS[coral.species].name + " placement.");
+    return true;
+  }
+  function doUpdateRockTransform(state, action) {
+    var rockId = action.rockId;
+    if (!Number.isInteger(rockId) || rockId < 0 || rockId >= ROCK_COUNT) return false;
+    state.rockscape = sanitizeRockscape(state.rockscape);
+    var rock = state.rockscape.rocks[rockId], surfaceId = "rock:" + rockId;
+    var occupied = false, i;
+    for (i = 0; i < state.corals.length; i++) {
+      if (state.corals[i].placement && state.corals[i].placement.surface === "rock" &&
+          state.corals[i].placement.surfaceId === surfaceId) { occupied = true; break; }
+    }
+    var oldPosition = rock.position.slice();
+    var nextScale = occupied ? rock.scale.slice()
+      : sanitizeRockVector(action.scale, rock.scale, ROCK_SCALE_BOUNDS);
+    var nextRotation = occupied ? rock.rotation.slice()
+      : sanitizeRockVector(action.rotation, rock.rotation, ROCK_ROTATION_BOUNDS);
+    var nextPosition = sanitizeRockVector(action.position, rock.position, ROCK_POSITION_BOUNDS);
+    // The editor only rescapes occupied rock horizontally. Keeping its height fixed avoids
+    // detaching a locked coral whose normalized vertical position depends on the live waterline.
+    if (occupied) nextPosition[1] = rock.position[1];
+    var delta = [nextPosition[0] - oldPosition[0], nextPosition[1] - oldPosition[1],
+      nextPosition[2] - oldPosition[2]];
+    rock.position = nextPosition; rock.rotation = nextRotation; rock.scale = nextScale;
+    if (delta[0] || delta[1] || delta[2]) for (i = 0; i < state.corals.length; i++) {
+      var coral = state.corals[i], placement = coral.placement;
+      if (!placement || placement.surface !== "rock" || placement.surfaceId !== surfaceId) continue;
+      var translated = {
+        version: 1, surface: "rock", surfaceId: surfaceId,
+        position: [clamp(placement.position[0] + delta[0] / ROCK_SCENE_HALF_WIDTH, -1, 1),
+          placement.position[1],
+          clamp(placement.position[2] + delta[2] / ROCK_SCENE_HALF_DEPTH, -1, 1)],
+        normal: placement.normal.slice(), yaw: placement.yaw
+      };
+      var safePlacement = sanitizeCoralPlacement(translated);
+      if (safePlacement) coral.placement = safePlacement;
+    }
     return true;
   }
   function doSeedMicrofauna(state, culture) {
@@ -1393,6 +1591,8 @@
       base.succession.cyano = clamp(num(raw.succession.cyano, 0), 0, 1);
       base.succession.silicate = clamp(num(raw.succession.silicate, 1), 0, 1);
     }
+    base.rockscape = sanitizeRockscape(raw.rockscape);
+    base.substrate = sanitizeSubstrate(raw.substrate);
     // livestock: quarantine invalid to the log rather than crash
     if (Array.isArray(raw.livestock)) {
       for (var li = 0; li < raw.livestock.length; li++) {

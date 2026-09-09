@@ -18,7 +18,7 @@ import {
   surfaceXToNormalizedX,
 } from '../scene/feeding'
 import { assignPelletTargets, resolveReefHardscape } from '../scene/SpecimenFish'
-import { REEF_ROCKS } from '../scene/reefLayout'
+import { materializeReefRocks, REEF_ROCKS, resolveReefPelletPosition } from '../scene/reefLayout'
 
 function memoryStorage(): Storage {
   const map = new Map<string, string>()
@@ -141,6 +141,24 @@ describe('mouth-contact consumption', () => {
 })
 
 describe('fair physical targeting', () => {
+  it('routes pellets around an injected moved rock while preserving depth', () => {
+    const rocks = materializeReefRocks([{
+      id: 606, index: 2, position: [2, -.7, .6], rotation: [0, .5, 0], scale: [.4, .4, .4],
+    }])
+    const original = rocks[0].position.clone()
+    const withoutRocks = original.clone()
+    const routed = original.clone()
+
+    resolveReefPelletPosition(withoutRocks, 17, .04, [])
+    resolveReefPelletPosition(routed, 17, .04, rocks)
+
+    expect(Object.isFrozen(rocks)).toBe(true)
+    expect(rocks[0].id).toBe(606)
+    expect(withoutRocks).toEqual(original)
+    expect(routed.y).toBe(original.y)
+    expect(Math.hypot(routed.x - original.x, routed.z - original.z)).toBeGreaterThan(.1)
+  })
+
   it('reserves sunk portions for hungry bottom fish and distributes a meal', () => {
     const state = createPocketReefShowcase()
     const fish = state.livestock.filter((animal) => animal.kind === 'fish')

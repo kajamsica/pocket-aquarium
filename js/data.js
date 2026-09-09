@@ -34,6 +34,7 @@
     SELL_LIVESTOCK: "SELL_LIVESTOCK",         // {ids}
     PURCHASE_CORAL: "PURCHASE_CORAL",         // {coral, variantId?}
     LOCK_CORAL_PLACEMENT: "LOCK_CORAL_PLACEMENT", // {coralId, placement}
+    UPDATE_ROCK_TRANSFORM: "UPDATE_ROCK_TRANSFORM", // {rockId, position?, rotation?, scale?}
     SEED_MICROFAUNA: "SEED_MICROFAUNA",       // {culture} pods / infusoria culture
     // ---- interaction ----
     FEED: "FEED",                           // {x, y} normalized [0,1] tank coordinates

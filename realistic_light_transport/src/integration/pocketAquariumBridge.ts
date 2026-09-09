@@ -120,6 +120,29 @@ export interface PocketCoralPlacement {
   readonly yaw: number
 }
 
+export interface PocketRockBiology {
+  readonly diatom: number
+  readonly nuisanceAlgae: number
+  readonly coralline: number
+  readonly encruster: number
+}
+
+export interface PocketRockView {
+  readonly id: number
+  readonly index: number
+  readonly position: readonly [number, number, number]
+  readonly rotation: readonly [number, number, number]
+  readonly scale: readonly [number, number, number]
+  readonly biology: PocketRockBiology
+}
+
+export interface PocketSandView {
+  readonly detritus: number
+  readonly surfaceFilm: number
+  readonly turnover: number
+  readonly cleanliness: number
+}
+
 interface PocketClutch {
   id: number
   species: string
@@ -162,6 +185,8 @@ export interface PocketState {
     validationDays: number
   }
   succession: { age: number; haze: number; diatom: number; greenFilm: number; cyano: number }
+  rockscape: { version: 1; rocks: PocketRockView[] }
+  substrate: { version: 1 } & PocketSandView
   livestock: PocketAnimal[]
   corals: PocketCoral[]
   clutches: PocketClutch[]
@@ -372,6 +397,8 @@ export interface PocketGameView {
   readonly water: Readonly<PocketWater>
   readonly specimens: readonly PocketSpecimen[]
   readonly residents: readonly PocketSpecimen[]
+  readonly rockscape: readonly PocketRockView[]
+  readonly sand: PocketSandView
   readonly coralInventory: readonly PocketCoralView[]
   readonly placedCorals: readonly PocketCoralView[]
   readonly selectedSpecimen?: PocketSpecimen
@@ -1099,6 +1126,16 @@ export function projectPocketState(
   const nori: PocketNoriView = { installed: Boolean(noriLevel?.noriCapacity),
     remaining: noriResource.remaining, capacity: noriResource.capacity,
     lastBiteCycle: noriResource.lastBiteCycle }
+  const rockscape: PocketRockView[] = state.rockscape.rocks.map((rock) => ({
+    id: rock.id, index: rock.index,
+    position: [rock.position[0], rock.position[1], rock.position[2]],
+    rotation: [rock.rotation[0], rock.rotation[1], rock.rotation[2]],
+    scale: [rock.scale[0], rock.scale[1], rock.scale[2]],
+    biology: { ...rock.biology },
+  }))
+  const sand: PocketSandView = { detritus: state.substrate.detritus,
+    surfaceFilm: state.substrate.surfaceFilm, turnover: state.substrate.turnover,
+    cleanliness: state.substrate.cleanliness }
   const living = state.livestock.filter((animal) => animal.alive !== false)
   const fish = living.filter((animal) => animal.kind === 'fish')
   const corals = state.corals
@@ -1217,7 +1254,7 @@ export function projectPocketState(
   return { authority: pocketShowcasePopulationAuthority, habitatName: 'Indo-Pacific sheltered lagoon reef', tierName: tier.name,
     credits: Math.floor(state.credits), unlimitedCredits: godMode, xp: Math.floor(state.xp), progression: keeperProgression(state), cycleStage: state.cycle.stage,
     cycled: biologicalCycleEstablished(state), filled: state.cycle.filled, cycle: { ...state.cycle }, water: { ...state.water },
-    objective, residents, coralInventory, placedCorals,
+    objective, residents, rockscape, sand, coralInventory, placedCorals,
     selectedSpecimen: residents.find((animal) => animal.id === state.selection?.id),
     specimens: residents.filter((animal) => animal.alive !== false),
     food: state.food.map(({ id, x, y, amount, ageDays, sunk }) => ({ id, x, y, amount, ageDays, sunk })),

@@ -1678,6 +1678,59 @@ input:focus-visible {
   }
 }
 
+.rockscape-editor-launcher,
+.rockscape-editor {
+  position: fixed;
+  z-index: 4;
+  left: clamp(16px, 2.4vw, 34px);
+  bottom: max(82px, calc(env(safe-area-inset-bottom) + 82px));
+  color: #ecfbff;
+  pointer-events: auto;
+}
+
+.rockscape-editor-launcher button,
+.rockscape-editor button,
+.rockscape-editor select {
+  min-height: 44px;
+  border: 1px solid rgba(169, 226, 235, .28);
+  border-radius: 10px;
+  color: #ecfbff;
+  background: rgba(4, 25, 32, .94);
+}
+
+.rockscape-editor-launcher button { padding: 0 15px; cursor: pointer; }
+.rockscape-editor {
+  display: grid;
+  width: min(390px, calc(100vw - 32px));
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid rgba(122, 224, 234, .38);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(3, 17, 23, .97), rgba(4, 28, 35, .94));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(20px) saturate(120%);
+}
+.rockscape-editor header { display: grid; gap: 4px; }
+.rockscape-editor header div { display: flex; justify-content: space-between; gap: 12px; }
+.rockscape-editor header span { color: #78e3c5; font-size: .56rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.rockscape-editor header strong { font-size: .72rem; }
+.rockscape-editor header small,
+.rockscape-editor p { margin: 0; color: rgba(218, 242, 246, .66); font-size: .62rem; line-height: 1.45; }
+.rockscape-editor label { display: grid; gap: 5px; color: rgba(218, 242, 246, .76); font-size: .62rem; }
+.rockscape-editor select { width: 100%; padding: 0 10px; }
+.rockscape-editor-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.rockscape-editor-grid button { padding: 5px; font-size: .62rem; cursor: pointer; }
+.rockscape-editor-grid button:disabled { cursor: not-allowed; opacity: .42; }
+.rockscape-editor .rockscape-editor-note { color: rgba(255, 214, 145, .8); font-size: .6rem; line-height: 1.4; }
+.rockscape-editor footer { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.rockscape-editor footer button { cursor: pointer; }
+.rockscape-editor .rockscape-editor-lock { border-color: rgba(111, 230, 189, .58); background: rgba(34, 118, 99, .78); }
+
+@media (max-width: 560px) {
+  .rockscape-editor { bottom: max(74px, calc(env(safe-area-inset-bottom) + 74px)); }
+  .rockscape-editor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 560px) {
   .reef-app {
     min-height: 820px;
@@ -4003,7 +4056,9 @@ input:focus-visible {
   position: fixed;
   right: clamp(16px, 2.4vw, 34px);
   bottom: max(18px, env(safe-area-inset-bottom));
-  z-index: 10002;
+  /* The inventory remains above the tank/optical overlay (z=1), but below the HUD
+     stacking context (z=3), so it cannot swallow Store or Care controls. */
+  z-index: 2;
   width: min(360px, calc(100vw - 32px));
   color: #ecfbff;
   pointer-events: auto;

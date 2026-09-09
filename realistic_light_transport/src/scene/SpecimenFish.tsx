@@ -11,7 +11,7 @@ import type { ScenePellet } from './feeding'
 import { FOOD_CONTACT_RADIUS, type ScenePoint, visibleFoodContact } from './foodContact'
 import { createLiveRockCollisionField, LIVE_ROCK_SEED_OFFSET } from './liveRockGeometry'
 import type { FlowFieldSource } from './ReefHabitat'
-import { REEF_ROCKS } from './reefLayout'
+import { REEF_ROCKS, type ReefRock } from './reefLayout'
 import {
   cleaningStation,
   cleaningStationScheduleTime,
@@ -136,6 +136,7 @@ export interface SpecimenFishProps {
   readonly pellets: readonly ScenePellet[]
   readonly flowField: FlowFieldSource
   readonly consume: (foodId: number, eaterId: number) => void
+  readonly rocks?: readonly ReefRock[]
 }
 
 type BodyProfile = readonly (readonly [x: number, yRadius: number, zRadius: number])[]
@@ -619,12 +620,26 @@ const BODY_SAMPLE_OFFSETS = [-1, 0, 1] as const
 const MOTION_HEADING_SPEED_EPSILON = .01
 const HARDSCAPE_SAMPLE = new THREE.Vector3()
 const HARDSCAPE_NORMAL = new THREE.Vector3()
-const REEF_ROCK_COLLISION_FIELDS = REEF_ROCKS.map((rock, index) => createLiveRockCollisionField(
-  index + LIVE_ROCK_SEED_OFFSET, rock.position, rock.rotation, rock.scale))
+type ReefRockCollisionField = ReturnType<typeof createLiveRockCollisionField>
+const REEF_ROCK_COLLISION_FIELDS = REEF_ROCKS.map((rock) => createLiveRockCollisionField(
+  rock.index + LIVE_ROCK_SEED_OFFSET, rock.position, rock.rotation, rock.scale))
+const ROCK_COLLISION_FIELD_CACHE = new WeakMap<readonly ReefRock[], readonly ReefRockCollisionField[]>([
+  [REEF_ROCKS, REEF_ROCK_COLLISION_FIELDS],
+])
+
+function rockCollisionFieldsFor(rocks: readonly ReefRock[]) {
+  const cached = ROCK_COLLISION_FIELD_CACHE.get(rocks)
+  if (cached) return cached
+  const fields = rocks.map((rock) => createLiveRockCollisionField(
+    rock.index + LIVE_ROCK_SEED_OFFSET, rock.position, rock.rotation, rock.scale))
+  ROCK_COLLISION_FIELD_CACHE.set(rocks, fields)
+  return fields
+}
 
 function specimenRockClearance(position: THREE.Vector3, heading: THREE.Vector3,
-  halfSpan: number, bodyRadius: number, rockIndex: number) {
-  const field = REEF_ROCK_COLLISION_FIELDS[rockIndex]
+  halfSpan: number, bodyRadius: number, rockIndex: number,
+  fields: readonly ReefRockCollisionField[]) {
+  const field = fields[rockIndex]
   if (!field) return Infinity
   let minimum = Infinity
   for (const offset of BODY_SAMPLE_OFFSETS) {
@@ -636,14 +651,17 @@ function specimenRockClearance(position: THREE.Vector3, heading: THREE.Vector3,
 }
 
 export function minimumSpecimenHardscapeClearance(position: THREE.Vector3, heading: THREE.Vector3,
-  halfSpan: number, bodyRadius: number) {
-  return Math.min(...REEF_ROCKS.map((_, rockIndex) => specimenRockClearance(
-    position, heading, halfSpan, bodyRadius, rockIndex)))
+  halfSpan: number, bodyRadius: number, rocks: readonly ReefRock[] = REEF_ROCKS) {
+  const fields = rockCollisionFieldsFor(rocks)
+  return Math.min(...rocks.map((_, rockIndex) => specimenRockClearance(
+    position, heading, halfSpan, bodyRadius, rockIndex, fields)))
 }
 
 /** Bias the route toward one deterministic passing arc before the body reaches a rendered rock. */
 export function guideSpecimenAroundHardscape(desiredHeading: THREE.Vector3, currentHeading: THREE.Vector3,
-  position: THREE.Vector3, specimenId: number, halfSpan: number, bodyRadius: number) {
+  position: THREE.Vector3, specimenId: number, halfSpan: number, bodyRadius: number,
+  rocks: readonly ReefRock[] = REEF_ROCKS) {
+  const fields = rockCollisionFieldsFor(rocks)
   const forwardLength = Math.hypot(currentHeading.x, currentHeading.z)
   const forwardX = forwardLength > 1e-5 ? currentHeading.x / forwardLength : 1
   const forwardZ = forwardLength > 1e-5 ? currentHeading.z / forwardLength : 0
@@ -652,9 +670,9 @@ export function guideSpecimenAroundHardscape(desiredHeading: THREE.Vector3, curr
     position.z + forwardZ * lookAhead)
   let strongest = 0
   let passingSide = 0
-  for (let rockIndex = 0; rockIndex < REEF_ROCKS.length; rockIndex += 1) {
-    const rock = REEF_ROCKS[rockIndex]
-    const clearance = specimenRockClearance(predicted, currentHeading, halfSpan, bodyRadius, rockIndex)
+  for (let rockIndex = 0; rockIndex < rocks.length; rockIndex += 1) {
+    const rock = rocks[rockIndex]
+    const clearance = specimenRockClearance(predicted, currentHeading, halfSpan, bodyRadius, rockIndex, fields)
     const strength = THREE.MathUtils.clamp(
       (SPECIMEN_ROCK_AVOIDANCE_RANGE - clearance) / SPECIMEN_ROCK_AVOIDANCE_RANGE, 0, 1)
     if (strength <= strongest) continue
@@ -676,10 +694,11 @@ export function guideSpecimenAroundHardscape(desiredHeading: THREE.Vector3, curr
 /** Last-resort X/Z guard. A safe prior frame is clipped to the last clear point on its
  * forward segment, so the result stays within the existing travel cap and never changes Y. */
 export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, proposed: THREE.Vector3,
-  heading: THREE.Vector3, halfSpan: number, bodyRadius: number) {
-  if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 0) return false
+  heading: THREE.Vector3, halfSpan: number, bodyRadius: number,
+  rocks: readonly ReefRock[] = REEF_ROCKS) {
+  if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius, rocks) >= 0) return false
   const start = new THREE.Vector3(previous.x, proposed.y, previous.z)
-  if (minimumSpecimenHardscapeClearance(start, heading, halfSpan, bodyRadius) < 0) {
+  if (minimumSpecimenHardscapeClearance(start, heading, halfSpan, bodyRadius, rocks) < 0) {
     proposed.x = previous.x
     proposed.z = previous.z
     return true
@@ -692,7 +711,7 @@ export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, propos
     const sample = (clear + blocked) * .5
     proposed.x = THREE.MathUtils.lerp(previous.x, endX, sample)
     proposed.z = THREE.MathUtils.lerp(previous.z, endZ, sample)
-    if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius) >= 0) clear = sample
+    if (minimumSpecimenHardscapeClearance(proposed, heading, halfSpan, bodyRadius, rocks) >= 0) clear = sample
     else blocked = sample
   }
   proposed.x = THREE.MathUtils.lerp(previous.x, endX, clear)
@@ -702,8 +721,9 @@ export function constrainSpecimenHardscapeTravel(previous: THREE.Vector3, propos
 
 /** Keep a body's yaw arc from rotating its nose through rock before forward travel begins. */
 export function constrainSpecimenHardscapeTurn(position: THREE.Vector3, previousHeading: THREE.Vector3,
-  proposedHeading: THREE.Vector3, halfSpan: number, bodyRadius: number) {
-  if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 0) return false
+  proposedHeading: THREE.Vector3, halfSpan: number, bodyRadius: number,
+  rocks: readonly ReefRock[] = REEF_ROCKS) {
+  if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius, rocks) >= 0) return false
   const previousYaw = Math.atan2(previousHeading.z, previousHeading.x)
   const proposedYaw = Math.atan2(proposedHeading.z, proposedHeading.x)
   const yawDelta = Math.atan2(Math.sin(proposedYaw - previousYaw), Math.cos(proposedYaw - previousYaw))
@@ -713,7 +733,7 @@ export function constrainSpecimenHardscapeTurn(position: THREE.Vector3, previous
     const sample = (clear + blocked) * .5
     proposedHeading.set(Math.cos(previousYaw + yawDelta * sample), 0,
       Math.sin(previousYaw + yawDelta * sample))
-    if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius) >= 0) clear = sample
+    if (minimumSpecimenHardscapeClearance(position, proposedHeading, halfSpan, bodyRadius, rocks) >= 0) clear = sample
     else blocked = sample
   }
   proposedHeading.set(Math.cos(previousYaw + yawDelta * clear), 0,
@@ -944,18 +964,19 @@ function clampBodyToTank(position: THREE.Vector3, forward: THREE.Vector3, halfSp
  *  to avoid these corrections during ordinary movement; each sample is projected by
  *  the shortest radial displacement from a padded rock ellipsoid. */
 function resolveReefBodyHardscape(position: THREE.Vector3, forward: THREE.Vector3, halfSpan: number,
-  bodyRadius: number, benthic: boolean, sample: THREE.Vector3, correction: THREE.Vector3) {
+  bodyRadius: number, benthic: boolean, sample: THREE.Vector3, correction: THREE.Vector3,
+  rocks: readonly ReefRock[], fields: readonly ReefRockCollisionField[]) {
   for (let pass = 0; pass < 7; pass += 1) {
     let corrected = false
     for (const offset of BODY_SAMPLE_OFFSETS) {
       sample.copy(forward).multiplyScalar(offset * halfSpan).add(position)
-      for (let rockIndex = 0; rockIndex < REEF_ROCK_COLLISION_FIELDS.length; rockIndex += 1) {
-        const field = REEF_ROCK_COLLISION_FIELDS[rockIndex]
+      for (let rockIndex = 0; rockIndex < fields.length; rockIndex += 1) {
+        const field = fields[rockIndex]
         const clearance = field.surfaceClearance(sample, correction)
         if (clearance >= bodyRadius) continue
         if (benthic) correction.y = 0
         if (correction.lengthSq() < 1e-8) {
-          correction.copy(sample).sub(REEF_ROCKS[rockIndex].position)
+          correction.copy(sample).sub(rocks[rockIndex].position)
           if (benthic) correction.y = 0
           if (correction.lengthSq() < 1e-8) correction.set(offset || 1, 0, .5)
         }
@@ -970,7 +991,8 @@ function resolveReefBodyHardscape(position: THREE.Vector3, forward: THREE.Vector
 }
 
 function addPredictiveAvoidance(state: FishPhysicsState, halfSpan: number, bodyRadius: number,
-  benthic: boolean, clearance: number, waterSurfaceY: number, lookAhead: number) {
+  benthic: boolean, clearance: number, waterSurfaceY: number, lookAhead: number,
+  rocks: readonly ReefRock[], fields: readonly ReefRockCollisionField[]) {
   const { avoidance, predicted, sample } = state
   avoidance.set(0, 0, 0)
   predicted.copy(state.velocity).multiplyScalar(lookAhead).add(state.position)
@@ -993,11 +1015,11 @@ function addPredictiveAvoidance(state: FishPhysicsState, halfSpan: number, bodyR
 
   for (const offset of BODY_SAMPLE_OFFSETS) {
     sample.copy(state.forward).multiplyScalar(offset * halfSpan).add(predicted)
-    for (let rockIndex = 0; rockIndex < REEF_ROCK_COLLISION_FIELDS.length; rockIndex += 1) {
-      const clearance = REEF_ROCK_COLLISION_FIELDS[rockIndex].surfaceClearance(sample, state.correction) - bodyRadius
+    for (let rockIndex = 0; rockIndex < fields.length; rockIndex += 1) {
+      const clearance = fields[rockIndex].surfaceClearance(sample, state.correction) - bodyRadius
       if (clearance >= SPECIMEN_ROCK_AVOIDANCE_RANGE) continue
       if (state.correction.lengthSq() < 1e-6) {
-        state.correction.copy(sample).sub(REEF_ROCKS[rockIndex].position)
+        state.correction.copy(sample).sub(rocks[rockIndex].position)
         if (state.correction.lengthSq() < 1e-6) state.correction.set(offset || 1, benthic ? .03 : .5, .6)
       }
       if (benthic) state.correction.y *= .12
@@ -1010,16 +1032,18 @@ function addPredictiveAvoidance(state: FishPhysicsState, halfSpan: number, bodyR
 }
 
 /** Resolve against the same padded ellipsoids that render the live-rock hardscape. */
-export function resolveReefHardscape(position: THREE.Vector3, bodyRadius: number, benthic: boolean) {
+export function resolveReefHardscape(position: THREE.Vector3, bodyRadius: number, benthic: boolean,
+  rocks: readonly ReefRock[] = REEF_ROCKS,
+  fields: readonly ReefRockCollisionField[] = rockCollisionFieldsFor(rocks)) {
   for (let pass = 0; pass < 6; pass += 1) {
-    for (let rockIndex = 0; rockIndex < REEF_ROCK_COLLISION_FIELDS.length; rockIndex += 1) {
-      const field = REEF_ROCK_COLLISION_FIELDS[rockIndex]
+    for (let rockIndex = 0; rockIndex < fields.length; rockIndex += 1) {
+      const field = fields[rockIndex]
       const clearance = field.surfaceClearance(position, HARDSCAPE_NORMAL)
       if (clearance >= bodyRadius) continue
       const originalY = position.y
       if (benthic) HARDSCAPE_NORMAL.y = 0
       if (HARDSCAPE_NORMAL.lengthSq() < 1e-8) {
-        HARDSCAPE_NORMAL.copy(position).sub(REEF_ROCKS[rockIndex].position)
+        HARDSCAPE_NORMAL.copy(position).sub(rocks[rockIndex].position)
         if (benthic) HARDSCAPE_NORMAL.y = 0
         if (HARDSCAPE_NORMAL.lengthSq() < 1e-8) HARDSCAPE_NORMAL.set(1, 0, 0)
       }
@@ -1133,7 +1157,8 @@ const publishFeedTrace = () => {
   node.textContent = JSON.stringify(feedTraceStore())
 }
 
-function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, assignments, mouths, positions, cleaningIntent, noriClientId, dispatch, geometry, skins, morphologyOverride }: {
+function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, assignments, mouths, positions,
+  cleaningIntent, noriClientId, rocks, rockCollisionFields, dispatch, geometry, skins, morphologyOverride }: {
   readonly specimen: PocketSpecimen
   readonly snapshot: ReefSnapshot
   readonly waterSurfaceY: number
@@ -1144,6 +1169,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   readonly positions: SpecimenPositions
   readonly cleaningIntent: RefObject<CleaningVisitIntent | null>
   readonly noriClientId: number | null
+  readonly rocks: readonly ReefRock[]
+  readonly rockCollisionFields: readonly ReefRockCollisionField[]
   readonly dispatch?: (action: PocketAction) => void
   readonly geometry: SpecimenGeometry
   readonly skins: SpeciesSkins
@@ -1189,16 +1216,16 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
   const verticalBounds = specimenVerticalBounds(specimen.layer, waterSurfaceY, bodyRadius)
   const habitatPolicy = behaviorPolicy.fishHabitat
   const interactionSite = useMemo(() => specimen.speciesId === 'watchman_goby' || specimen.speciesId === 'pistol_shrimp'
-    ? sharedBurrowSite() : null, [specimen.id, specimen.speciesId])
+    ? sharedBurrowSite(rocks) : null, [rocks, specimen.id, specimen.speciesId])
   const interactionTarget = useMemo(() => new THREE.Vector3(), [])
   const habitatWaypoints = useMemo(() => surfaceBound || !habitatPolicy || interactionSite || diamondGoby ? [] : fishRouteWaypoints(habitatPolicy, specimen.id, {
     x: [-TANK_HALF_WIDTH + bodyRadius + length * .34, TANK_HALF_WIDTH - bodyRadius - length * .34],
     z: [-TANK_HALF_DEPTH + bodyRadius, TANK_HALF_DEPTH - bodyRadius],
-  }, verticalBounds, REEF_ROCKS.map((rock) => new THREE.Vector3(...rock.position.toArray()))),
-  [bodyRadius, diamondGoby, habitatPolicy, interactionSite, length, specimen.id, surfaceBound, verticalBounds])
+  }, verticalBounds, rocks.map((rock) => new THREE.Vector3(...rock.position.toArray()))),
+  [bodyRadius, diamondGoby, habitatPolicy, interactionSite, length, rocks, specimen.id, surfaceBound, verticalBounds])
   const surfaceCircuit = useMemo(() => surfaceBound ? createSurfaceCircuit(
-    specimen.speciesId, specimen.id, TANK_HALF_WIDTH - bodyRadius, TANK_HALF_DEPTH - bodyRadius, SAND_Y) : undefined,
-  [bodyRadius, specimen.id, specimen.speciesId, surfaceBound])
+    specimen.speciesId, specimen.id, TANK_HALF_WIDTH - bodyRadius, TANK_HALF_DEPTH - bodyRadius, SAND_Y, rocks) : undefined,
+  [bodyRadius, rocks, specimen.id, specimen.speciesId, surfaceBound])
   const surfacePose = useMemo<SurfacePose>(() => ({ position: new THREE.Vector3(),
     normal: new THREE.Vector3(), tangent: new THREE.Vector3() }), [])
   const motion = useMemo<FishPhysicsState>(() => ({
@@ -1312,7 +1339,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       motion.crowdHeading.set(motion.forward.x, 0, motion.forward.z).normalize()
       clampBodyToTank(motion.position, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
       resolveReefBodyHardscape(motion.position, motion.forward, bodyHalfSpan, bodyRadius, benthic,
-        motion.sample, motion.correction)
+        motion.sample, motion.correction, rocks, rockCollisionFields)
       clampBodyToTank(motion.position, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
       motion.velocity.copy(motion.forward).multiplyScalar(profile.cruiseSpeed * .42)
       motion.initialized = true
@@ -1320,7 +1347,8 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     }
 
     if (diamondGoby) {
-      diamondGobyMode = sampleDiamondGobyHabitatTarget(specimen.id + motion.roamIndex, now, interactionTarget)
+      diamondGobyMode = sampleDiamondGobyHabitatTarget(
+        specimen.id + motion.roamIndex, now, interactionTarget, rocks)
       sifting = diamondGobyMode === 'sand_sift'
       if (!activeTarget && now >= motion.nextRoamAt) {
         const targetDistanceSq = motion.position.distanceToSquared(interactionTarget)
@@ -1329,10 +1357,10 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
         if (targetDistanceSq > .04 && targetDistanceSq >= previousDistanceSq - 1e-4) {
           motion.roamIndex += 1
           diamondGobyMode = sampleDiamondGobyHabitatTarget(
-            specimen.id + motion.roamIndex, now, interactionTarget)
+            specimen.id + motion.roamIndex, now, interactionTarget, rocks)
           if (diamondGobyMode === 'rock_excursion') {
             diamondGobyMode = 'sand_transfer'
-            interactionTarget.copy(diamondGobyBurrowSite(specimen.id + motion.roamIndex).position)
+            interactionTarget.copy(diamondGobyBurrowSite(specimen.id + motion.roamIndex, rocks).position)
           }
           sifting = diamondGobyMode === 'sand_sift'
         }
@@ -1347,7 +1375,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     } else if (!activeTarget && interactionSite) {
       motion.roamTarget.copy(interactionTarget)
       const sandLevel = motion.roamTarget.y
-      resolveReefHardscape(motion.roamTarget, bodyRadius, benthic)
+      resolveReefHardscape(motion.roamTarget, bodyRadius, benthic, rocks, rockCollisionFields)
       motion.roamTarget.y = sandLevel
       clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
     } else if (!activeTarget && (now >= motion.nextRoamAt || motion.position.distanceToSquared(motion.roamTarget) < .04)) {
@@ -1361,7 +1389,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       motion.roamTarget.copy(habitatTarget ?? motion.position)
       motion.roamTarget.x += crowd.awayX * crowd.pressure * Math.min(profile.roamX, .35)
       motion.roamTarget.z += crowd.awayZ * crowd.pressure * Math.min(profile.roamZ, .25)
-      resolveReefHardscape(motion.roamTarget, bodyRadius, benthic)
+      resolveReefHardscape(motion.roamTarget, bodyRadius, benthic, rocks, rockCollisionFields)
       clampBodyToTank(motion.roamTarget, motion.forward, bodyHalfSpan, bodyRadius, benthic, clearance, waterSurfaceY)
       motion.roamIndex += 1
       motion.nextRoamAt = now + profile.retargetSeconds * (.82 + seededUnit(specimen.id, 80 + index) * .36)
@@ -1409,7 +1437,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
       motion.desiredDirection.z = motion.crowdHeading.z * horizontalDrive
     }
     addPredictiveAvoidance(motion, bodyHalfSpan, bodyRadius,
-      habitatBenthic, clearance, waterSurfaceY, profile.lookAhead)
+      habitatBenthic, clearance, waterSurfaceY, profile.lookAhead, rocks, rockCollisionFields)
     // Portions only ever settle in a rock-free lane, so the summed potential field has nothing
     // real to avoid at the destination. At full strength it matches the unit pursuit vector and
     // parks a benthic eater in orbit, so fade it out over the final approach; the hardscape and
@@ -1466,7 +1494,7 @@ function RenderedSpecimen({ specimen, snapshot, waterSurfaceY, food, flowField, 
     // make this a no-op; it remains a guard for frame spikes and newly moving targets.
     for (let i = 0; i < 5; i += 1) {
       resolveReefBodyHardscape(motion.position, motion.forward, bodyHalfSpan, bodyRadius, habitatBenthic,
-        motion.sample, motion.correction)
+        motion.sample, motion.correction, rocks, rockCollisionFields)
       clampBodyToTank(motion.position, motion.forward, bodyHalfSpan, bodyRadius,
         habitatBenthic, clearance, waterSurfaceY)
     }
@@ -1594,7 +1622,8 @@ export function resolveSpecimenPopulations(roster: readonly PocketSpecimen[]) {
   }
 }
 
-function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flowField, consume, roster, positions, nori, morphologyOverride, dispatch }: SpecimenFishProps & {
+function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flowField, consume,
+  rocks = REEF_ROCKS, roster, positions, nori, morphologyOverride, dispatch }: SpecimenFishProps & {
   readonly roster: readonly PocketSpecimen[]
   readonly positions: SpecimenPositions
   readonly nori: PocketNoriView
@@ -1602,6 +1631,7 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
   readonly dispatch?: (action: PocketAction) => void
 }) {
   const mouths = useMemo<MouthPositions>(() => new Map(), [])
+  const rockCollisionFields = useMemo(() => rockCollisionFieldsFor(rocks), [rocks])
   const geometry = useSpecimenGeometry()
   const gobySource = useLoader(THREE.TextureLoader, VISUAL_SKINS.watchman_goby.url)
   const skins = useMemo(() => ({
@@ -1611,7 +1641,7 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
   const assignments = assignPelletTargets(roster, pellets, mouths, waterSurfaceY)
   const feedingResidents = new Set(assignments.values())
   const cleaner = roster.find((specimen) => specimen.speciesId === 'cleaner_shrimp')
-  const station = useMemo(() => cleaner ? cleaningStation(cleaner.id) : null, [cleaner?.id])
+  const station = useMemo(() => cleaner ? cleaningStation(cleaner.id, rocks) : null, [cleaner?.id, rocks])
   const activeStation = useMemo<CleaningStation | null>(() => station ? {
     ...station,
     position: station.position.clone(), normal: station.normal.clone(),
@@ -1658,8 +1688,8 @@ function AuthoritativeSpecimenPopulation({ snapshot, waterSurfaceY, pellets, flo
     <NoriClipHardware nori={nori} />
     {roster.map((specimen) => <RenderedSpecimen key={specimen.id} specimen={specimen} snapshot={snapshot}
       waterSurfaceY={waterSurfaceY} food={pellets} flowField={flowField} mouths={mouths} assignments={assignments}
-      positions={positions} cleaningIntent={cleaningIntent} noriClientId={noriClientId} dispatch={dispatch}
-      geometry={geometry} skins={skins}
+      positions={positions} cleaningIntent={cleaningIntent} rocks={rocks} rockCollisionFields={rockCollisionFields}
+      noriClientId={noriClientId} dispatch={dispatch} geometry={geometry} skins={skins}
       morphologyOverride={morphologyOverride?.speciesId === specimen.speciesId ? morphologyOverride : undefined} />)}
   </group>
 }

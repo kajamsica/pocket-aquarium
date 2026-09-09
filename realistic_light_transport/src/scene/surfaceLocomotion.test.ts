@@ -5,7 +5,7 @@ import {
   createLiveRockSurfaceContour,
   LIVE_ROCK_SEED_OFFSET,
 } from './liveRockGeometry'
-import { REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
+import { materializeReefRocks, REEF_ROCKS, REEF_SAND_Y } from './reefLayout'
 
 import { resolveSpecimenLocomotionPlan } from './speciesBehavior'
 import {
@@ -206,6 +206,18 @@ describe('surface locomotion policy', () => {
       }
     },
   )
+
+  it('builds rock excursions from the injected saved layout and carries its stable id', () => {
+    const rocks = materializeReefRocks([{
+      id: 808, index: 12, position: [2, -1, .6], rotation: [0, .7, 0], scale: [.4, .6, .3],
+    }])
+    const circuit = createSurfaceCircuit('blue_linckia', 4, 2.76, 1.2, -1.44, rocks)
+    const rockSegments = circuit.segments.filter((segment) => segment.kind === 'rock')
+
+    expect(rockSegments).toHaveLength(1)
+    expect(rockSegments[0].rock.id).toBe(808)
+    expect(rockSegments[0].rock.position.toArray()).toEqual([2, -1, .6])
+  })
 })
 
 describe('reef scape support preparation', () => {
