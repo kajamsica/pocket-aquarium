@@ -114,6 +114,24 @@ group("initial state");
   ok(snap.nextAction && /habitat/i.test(snap.nextAction.title), "next action asks to choose a habitat");
 })();
 
+group("tank tier catalog");
+(function () {
+  var ids = ["nano20", "mid151", "large284", "xl757", "xxl946", "mega1893", "monster3785", "cylinder5678"];
+  var volumes = [75, 151, 284, 757, 946, 1893, 3785, 5678];
+  eq(JSON.stringify(D.TIER_ORDER), JSON.stringify(ids), "tank tiers keep their exact upgrade order");
+  eq(PA.createState({ seed: 6, habitat: "reef" }).tier, "nano20", "nano tank remains the starter tier");
+  ids.forEach(function (id, i) {
+    var tier = D.TIERS[id];
+    eq(tier.volumeL, volumes[i], id + " keeps its exact volume");
+    eq(tier.form || "rectangular", id === "cylinder5678" ? "cylinder" : "rectangular", id + " keeps its tank form");
+    if (i > 0) {
+      gt(tier.price, D.TIERS[ids[i - 1]].price, id + " costs more than the prior tier");
+      gt(tier.bioloadCap, D.TIERS[ids[i - 1]].bioloadCap, id + " raises bioload capacity");
+      gt(tier.footprintCm2, D.TIERS[ids[i - 1]].footprintCm2, id + " raises usable footprint");
+    }
+  });
+})();
+
 group("habitat choice flows");
 (function () {
   var a = PA.createState({ seed: 5 });
@@ -314,6 +332,44 @@ group("equipment + tier purchases change coefficients/outcomes");
   gt(D.bioloadCapacity(t), cap0, "tier upgrade raises bioload capacity");
   var pyAfter = PA.validatePurchase(t, { kind: "livestock", id: "pygmy_cory", count: 6 });
   ok(!pyAfter.reasons.some(function (x) { return /needs at least the/.test(x); }), "tier upgrade clears pygmy cory tier gate");
+
+  // Large-tank path: every transfer uses matched habitat water, dilutes only accumulated
+  // nutrients, invalidates old samples, and never permits a downgrade.
+  var reef = cycledReef(48);
+  reef.tier = "xl757"; reef.water.levelL = D.TIERS.xl757.volumeL; reef.credits = 50000;
+  reef.water.ammonia = 0.8; reef.water.nitrite = 0.6; reef.water.nitrate = 40; reef.water.phosphate = 0.4;
+  reef.water.salinity = 34; reef.water.alkalinity = 9; reef.water.calcium = 430; reef.water.magnesium = 1350;
+  ["xxl946", "mega1893", "monster3785", "cylinder5678"].forEach(function (tierId) {
+    PA.dispatch(reef, { type: "WATER_TEST" });
+    var oldVolume = reef.water.levelL;
+    var wastes = { ammonia: reef.water.ammonia, nitrite: reef.water.nitrite,
+      nitrate: reef.water.nitrate, phosphate: reef.water.phosphate };
+    var matched = { salinity: reef.water.salinity, alkalinity: reef.water.alkalinity,
+      calcium: reef.water.calcium, magnesium: reef.water.magnesium };
+    PA.dispatch(reef, { type: "PURCHASE_TIER", tier: tierId });
+    eq(reef.tier, tierId, tierId + " purchases in sequence");
+    eq(reef.water.levelL, D.TIERS[tierId].volumeL, tierId + " fills to its exact volume");
+    ["ammonia", "nitrite", "nitrate", "phosphate"].forEach(function (key) {
+      approx(reef.water[key], wastes[key] * oldVolume / reef.water.levelL, 1e-9,
+        tierId + " dilutes " + key + " by transferred-water volume");
+    });
+    ["salinity", "alkalinity", "calcium", "magnesium"].forEach(function (key) {
+      eq(reef.water[key], matched[key], tierId + " matched water preserves " + key);
+    });
+    ok(Object.keys(reef.tests).length > 0 && Object.keys(reef.tests).every(function (key) {
+      return reef.tests[key].known === false;
+    }), tierId + " makes every prior water reading stale");
+  });
+  var finalTier = reef.tier, finalVolume = reef.water.levelL;
+  var downgrade = PA.validatePurchase(reef, { kind: "tier", id: "monster3785" });
+  ok(!downgrade.ok, "a smaller tank remains locked after sequential upgrades");
+  has(downgrade.reasons, "not larger", "downgrade explains the size lock");
+  PA.dispatch(reef, { type: "PURCHASE_TIER", tier: "monster3785" });
+  eq(reef.tier, finalTier, "dispatch cannot bypass the downgrade lock");
+  eq(reef.water.levelL, finalVolume, "blocked downgrade cannot change water volume");
+  var restoredCylinder = PA.sanitizeState(JSON.parse(JSON.stringify(reef)));
+  eq(restoredCylinder.tier, "cylinder5678", "the cylinder tier survives save reload");
+  eq(restoredCylinder.water.levelL, 5678, "a full cylinder remains at 5,678 L after save reload");
 })();
 
 /* ============================================================ *

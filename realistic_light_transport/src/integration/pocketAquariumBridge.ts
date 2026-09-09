@@ -196,7 +196,7 @@ interface CatalogCoral {
   defaultVariantId: string
   variants: readonly Readonly<{ id: string; displayName: string }>[]
 }
-interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number }
+interface CatalogTier { id: string; name: string; volumeL: number; price: number; bioloadCap: number; hardscapeSlots: number; form?: 'rectangular' | 'cylinder' }
 interface CatalogKeeperRank { id: string; name: string; minXp: number; rewardCredits: number }
 interface EquipmentLevel { id: string; name: string; price: number; parCeiling?: number; autoTopOff?: boolean; reservoirCapacityL?: number; autoFeed?: boolean; hopperCapacity?: number }
 interface Validation { ok: boolean; reasons: string[]; conflicts?: PocketPurchaseConflict[] }
@@ -872,7 +872,7 @@ function storeOffers(state: PocketState, godMode = false): PocketStoreOffer[] {
       { type: runtime.ACTIONS.PURCHASE_TIER, tier: id }, { levelIndex: runtime.DATA.TIER_ORDER.indexOf(id),
         levelCount: runtime.DATA.TIER_ORDER.length, installedLevelIndex: runtime.DATA.TIER_ORDER.indexOf(state.tier),
         installedName: runtime.DATA.TIERS[state.tier]?.name,
-        detail: `${item.volumeL} L · ${item.bioloadCap} bioload capacity · ${item.hardscapeSlots} hardscape slots`
+        detail: `${item.volumeL} L · ${item.form === 'cylinder' ? 'cylindrical display' : 'rectangular tank'} · ${item.bioloadCap} bioload capacity · ${item.hardscapeSlots} hardscape slots`
           + ' · arrives filled with habitat-matched conditioned water: salinity, alkalinity, calcium, and magnesium hold,'
           + ' accumulated nutrients dilute into the larger volume, and every water test needs a retest.' })
   })

@@ -110,12 +110,16 @@
    * Tank tiers. footprintCm2 = usable bottom area (benthic gate).
    * biofilterBase scales nitrifier carrying capacity / bioload capacity.
    * ------------------------------------------------------------------ */
-  var TIER_ORDER = ["nano20", "mid151", "large284", "xl757"];
+  var TIER_ORDER = ["nano20", "mid151", "large284", "xl757", "xxl946", "mega1893", "monster3785", "cylinder5678"];
   var TIERS = {
     nano20:   { id: "nano20",   name: "20 gal long (75 L)",  volumeL: 75,  footprintCm2: 1800,  biofilterBase: 1.0, hardscapeSlots: 2, bioloadCap: 10, price: 0 },
     mid151:   { id: "mid151",   name: "40 gal (151 L)",      volumeL: 151, footprintCm2: 3600,  biofilterBase: 1.6, hardscapeSlots: 4, bioloadCap: 22, price: 220 },
     large284: { id: "large284", name: "75 gal (284 L)",      volumeL: 284, footprintCm2: 6000,  biofilterBase: 2.4, hardscapeSlots: 6, bioloadCap: 42, price: 480 },
-    xl757:    { id: "xl757",    name: "200 gal (757 L)",     volumeL: 757, footprintCm2: 12000, biofilterBase: 4.0, hardscapeSlots: 10, bioloadCap: 120, price: 1200 }
+    xl757:    { id: "xl757",    name: "200 gal (757 L)",     volumeL: 757, footprintCm2: 12000, biofilterBase: 4.0, hardscapeSlots: 10, bioloadCap: 120, price: 1200 },
+    xxl946:   { id: "xxl946",   name: "250 gal (946 L)", volumeL: 946, footprintCm2: 15000, biofilterBase: 5.0, hardscapeSlots: 12, bioloadCap: 150, price: 1800, form: "rectangular" },
+    mega1893: { id: "mega1893", name: "500 gal (1,893 L)", volumeL: 1893, footprintCm2: 34000, biofilterBase: 7.0, hardscapeSlots: 20, bioloadCap: 300, price: 4200, form: "rectangular" },
+    monster3785: { id: "monster3785", name: "1,000 gal monster tank (3,785 L)", volumeL: 3785, footprintCm2: 62000, biofilterBase: 10.0, hardscapeSlots: 32, bioloadCap: 600, price: 9000, form: "rectangular" },
+    cylinder5678: { id: "cylinder5678", name: "1,500 gal cylindrical display (5,678 L)", volumeL: 5678, footprintCm2: 75000, biofilterBase: 13.0, hardscapeSlots: 40, bioloadCap: 850, price: 16000, form: "cylinder" }
   };
 
   /* ------------------------------------------------------------------ *

@@ -74,6 +74,39 @@ describe('integrated reef showcase mechanics', () => {
     expect(advanced.water.salinity).toBeCloseTo(35, 1)
   })
 
+  it('offers each large-tank upgrade in sequence with its declared display form', () => {
+    let state: PocketState = { ...createPocketReefShowcase(), credits: 50000 }
+    const oldTierIds = ['nano20', 'mid151', 'large284']
+    const firstOffers = projectPocketState(state).storeOffers.filter((offer) => offer.kind === 'tier')
+
+    for (const id of oldTierIds) {
+      expect(firstOffers.find((offer) => offer.id === id)).toMatchObject({
+        group: 'tank', allowed: false, detail: expect.stringContaining('rectangular tank'),
+      })
+    }
+
+    const upgrades = [
+      ['xxl946', 946, 'rectangular tank'],
+      ['mega1893', 1893, 'rectangular tank'],
+      ['monster3785', 3785, 'rectangular tank'],
+      ['cylinder5678', 5678, 'cylindrical display'],
+    ] as const
+    for (const [id, volumeL, form] of upgrades) {
+      const offer = projectPocketState(state).storeOffers.find((item) => item.kind === 'tier' && item.id === id)
+      expect(offer).toMatchObject({
+        group: 'tank', allowed: true, action: { type: pocketActions.PURCHASE_TIER, tier: id },
+        detail: expect.stringContaining(`${volumeL} L · ${form}`),
+      })
+      state = dispatchPocketAction(state, offer!.action)
+      expect(state.tier).toBe(id)
+      expect(projectPocketState(state).reefSnapshot.tank.nominalVolumeLiters).toBe(volumeL)
+      if (id === 'xxl946') {
+        expect(projectPocketState(state).storeOffers.find((item) => item.id === 'xl757')?.detail)
+          .toContain('757 L · rectangular tank')
+      }
+    }
+  })
+
   it('projects accepted showcase defaults from root state with ordinary interactions available', () => {
     const state = createPocketReefShowcase()
     const view = projectPocketState(state)
