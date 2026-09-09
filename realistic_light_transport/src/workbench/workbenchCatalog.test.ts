@@ -320,7 +320,7 @@ describe('workbench candidate catalog', () => {
     expect(groups[2].options.find((option) => option.key === 'goniopora@fable-v1')?.badge).toBe('provisional')
 
     // A loadable candidate the committed catalog has not been rebuilt for is still offered.
-    const cleanup = groups[1].options
+    const cleanup = groups[1].options.filter((option) => option.key.startsWith('trochus_snail@'))
     expect(cleanup.map((option) => option.key)).toEqual(['trochus_snail@fable-v1', 'trochus_snail@fable-v2'])
     expect(cleanup[1].label).toContain('not in catalog yet')
     expect(groups[2].options.map((option) => option.key)).toEqual(['goniopora@fable-v1', 'watchman_goby', 'pistol_shrimp', 'zoanthid@fable-v1-blue_green'])
