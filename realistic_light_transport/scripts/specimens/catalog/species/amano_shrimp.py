@@ -247,7 +247,7 @@ def _clips(rig):
 
     clip("rest", 96, True, 1.8, 4.0, 2.5, 1.0, 1.5)
     clip("bottom_walk", 84, True, 9.0, 4.0, 4.0, 1.8, 2.5)
-    clip("graze", 54, False, 15.0, 10.0, 5.0, 2.0, 3.0, "bell")
+    clip("graze", 54, False, 15.0, 4.0, 5.0, 2.0, 3.0, "bell")
     clip("reposition_swim", 42, False, 3.0, 5.0, 16.0, 8.0, 18.0, "bell")
     for item in clips:
         bake_clip(rig, item)
