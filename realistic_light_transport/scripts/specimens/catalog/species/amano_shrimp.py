@@ -247,7 +247,7 @@ def _clips(rig):
     def clip(name, frames, loop, leg, antenna, pleopod, abdomen, tail, envelope=None):
         channels = []
         env = None if loop else envelope
-        slow_frequency = 1.0 if name == "rest" else 1.5
+        slow_frequency = (1.0 if name == "rest" else 2.0) if loop else 1.5
         for side, suffix in SIDES:
             side_phase = 0.0 if side < 0 else math.pi
             for index in range(5):
