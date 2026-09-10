@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.bronze_cory",
   "textureStyle": "bronze_cory",
-  "assetVersion": "0.2.0",
+  "assetVersion": "0.2.1",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.075,
@@ -21,12 +21,12 @@
   "clipRoles": { "idle": "rest", "locomotion": "swim", "response": "forage" },
   "palette": {
     "skin": [0.34, 0.34, 0.22],
-    "fin": [0.68, 0.58, 0.34],
+    "fin": [0.74, 0.58, 0.24],
     "iris": [0.24, 0.15, 0.05],
     "cue": [0.18, 0.12, 0.07],
     "adornment": [0.58, 0.52, 0.36]
   },
-  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.52, "finReliefStrength": 1.15, "finNormalStrength": 0.42 },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.52, "finReliefStrength": 0.82, "finNormalStrength": 0.32 },
   "morphology": {
     "notes": "Armored high-backed Cory profile with a deep pectoral-girdle shoulder, a continuously sloping head roof, short rounded snout, flattened belly and small inferior mouth. FishBase record 7777 gives body height 2.5 to 2.9 times in standard length, one dorsal spine, seven dorsal soft rays and 23 to 24 dorsal plus 20 to 22 ventral plates. Exact licensed lateral and frontal photographs constrain the silhouette, eye seating, mouth and tapered barbels; live whole-body top width remains inferred.",
     "controlStations": [
@@ -55,11 +55,11 @@
     "finAdjacency": [],
     "eyes": { "x": 0.025, "zFraction": 0.58, "radius": 0.0021, "protrude": 0.12, "aspect": 0.36, "seat": 0.85, "roughness": 0.22, "coat": 0.16, "pupilFraction": 0.58, "pupilAspect": 0.18 },
     "mouth": {
-      "zOffset": -0.82,
-      "width": 0.0028,
-      "radius": 0.00025,
-      "upperLip": { "centerOffset": [-0.0009, -0.0005], "cornerOffset": [-0.0020, 0.0001], "widthScale": 1.0, "cornerRadiusScale": 0.55, "centerRadiusScale": 0.80 },
-      "lowerLip": { "centerOffset": [-0.0012, -0.0012], "cornerOffset": [-0.0021, -0.0007], "widthScale": 0.92, "cornerRadiusScale": 0.45, "centerRadiusScale": 0.65 }
+      "zOffset": -0.90,
+      "width": 0.0024,
+      "radius": 0.00014,
+      "upperLip": { "centerOffset": [-0.00125, -0.00090], "cornerOffset": [-0.00135, -0.00084], "widthScale": 1.0, "cornerRadiusScale": 0.72, "centerRadiusScale": 0.82 },
+      "lowerLip": { "centerOffset": [-0.00128, -0.00130], "cornerOffset": [-0.00138, -0.00124], "widthScale": 0.90, "cornerRadiusScale": 0.62, "centerRadiusScale": 0.72 }
     },
     "gill": { "x": 0.015, "radius": 0.00028, "points": 15, "bulge": 0.042 },
     "adornments": [

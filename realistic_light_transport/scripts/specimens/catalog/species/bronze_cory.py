@@ -20,20 +20,29 @@ FLANK_DARK = (0.15, 0.20, 0.14)
 BRONZE_SHEEN = (0.58, 0.50, 0.27)
 BELLY = (0.73, 0.68, 0.51)
 PLATE = (0.12, 0.16, 0.11)
-FIN = (0.68, 0.58, 0.34)
-FIN_EDGE = (0.29, 0.27, 0.16)
+FIN = (0.74, 0.58, 0.24)
+FIN_EDGE = (0.34, 0.27, 0.11)
 
 
 def _plate_row(u, zeta, center, half_height, count, offset):
-    """One shallow row of overlapping armor with a raised trailing margin."""
+    """One shallow row of staggered, overlapping scute-shaped islands."""
     trunk = smoothstep(0.11, 0.17, u) * (1.0 - smoothstep(0.74, 0.82, u))
-    row = 1.0 - smoothstep(half_height * 0.62, half_height, np.abs(zeta - center))
     plate_u = np.clip((u - 0.13) / 0.67, 0.0, 1.0)
-    phase = np.mod(plate_u * count + offset, 1.0)
-    crown = smoothstep(0.05, 0.22, phase) * (1.0 - smoothstep(0.72, 0.98, phase))
-    trailing_margin = 1.0 - smoothstep(0.03, 0.15, phase)
-    relief = row * trunk * (0.34 * crown + 0.66 * trailing_margin)
-    return relief, row * trunk * trailing_margin
+    plate_coordinate = plate_u * count + offset
+    plate_index = np.floor(plate_coordinate)
+    phase = np.mod(plate_coordinate, 1.0)
+
+    # Alternating centers let adjacent scutes overlap like shingles. Localising
+    # both the crown and margin in two dimensions avoids a row of uniform ribs.
+    stagger = np.where(np.mod(plate_index, 2.0) < 1.0, -1.0, 1.0) * half_height * 0.075
+    local_z = np.abs(zeta - (center + stagger)) / half_height
+    local_x = np.abs(phase - (0.54 - 0.07 * np.minimum(local_z, 1.0))) / 0.50
+    island_distance = np.power(local_x, 1.65) + np.power(local_z, 2.05)
+    crown = 1.0 - smoothstep(0.66, 1.0, island_distance)
+    edge_center = 0.09 + 0.07 * np.power(np.minimum(local_z, 1.0), 1.7)
+    trailing_margin = (1.0 - smoothstep(0.025, 0.085, np.abs(phase - edge_center))) * (1.0 - smoothstep(0.68, 0.98, local_z))
+    relief = trunk * (0.62 * crown + 0.38 * trailing_margin)
+    return relief, trunk * trailing_margin
 
 
 def _plate_relief(ctx):
@@ -76,14 +85,15 @@ def paint_fin(ctx):
         raise ValueError(f"Unsupported freshwater fish textureStyle: {ctx.spec.get('textureStyle')}")
     count = {"dorsal1": 8, "adipose": 6, "anal": 8, "caudal": 14, "pectoral": 9, "pelvic": 6}.get(ctx.fin, 10)
     ray = paint.rays(ctx.U, float(count), 4.0)
-    albedo = textures.rgba(FIN, 0.80, ctx.shape)
-    albedo = textures.mix(albedo, FIN_EDGE, ray * 0.25)
+    albedo = textures.rgba(FIN, 0.48, ctx.shape)
+    albedo = textures.mix(albedo, FIN_EDGE, ray * 0.18)
     leading_spine = np.zeros(ctx.shape)
     if ctx.fin in ("dorsal1", "pectoral"):
         leading_spine = 1.0 - smoothstep(0.02, 0.11, ctx.U)
         albedo = textures.mix(albedo, FIN_EDGE, leading_spine * 0.72)
     albedo = textures.scale_rgb(albedo, 0.90 + 0.14 * fbm(ctx.U * 18.0, ctx.V * 8.0, octaves=2, seed=41))
-    albedo[..., 3] = np.clip(0.76 - 0.20 * smoothstep(0.70, 1.0, ctx.V) + 0.10 * ray + 0.18 * leading_spine, 0.0, 1.0)
+    membrane_edge = smoothstep(0.62, 1.0, ctx.V)
+    albedo[..., 3] = np.clip(0.48 - 0.22 * membrane_edge + 0.08 * ray + 0.34 * leading_spine, 0.0, 0.88)
     root_fade = 0.30 + 0.70 * smoothstep(0.0, 0.28, ctx.V)
     height = np.clip(0.35 + 0.42 * ray * root_fade + 0.40 * leading_spine, 0.0, 1.0)
     return {"albedo": albedo, "height": height}
