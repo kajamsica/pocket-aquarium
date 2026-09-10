@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..lib import animation, paint, textures
+from ..lib import paint, textures
 from ..lib.noise import fbm, smoothstep
 
 
@@ -90,11 +90,3 @@ def paint_fin(ctx):
     albedo[..., 3] = np.clip(alpha, 0.0, 1.0)
     height = np.clip(0.36 + 0.48 * rays + 0.08 * (grain - 0.5), 0.0, 1.0)
     return {"albedo": albedo, "height": height}
-
-
-def extra_channels(clip_name, spec, envelope):
-    """Add a restrained whole-body yaw for the non-looping display/turn response."""
-    if clip_name != "display":
-        return []
-    return [animation.Channel("Body", "rotation", (0.0, 0.0, 1.0), 18.0, 1.0, 0.0,
-                              "const", envelope=envelope)]
