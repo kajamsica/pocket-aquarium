@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.neon_tetra",
   "textureStyle": "neon_tetra",
-  "assetVersion": "0.1.0-source",
+  "assetVersion": "0.2.0-source",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.035,
@@ -30,15 +30,15 @@
   "morphology": {
     "notes": "Small, slender, laterally compressed tetra. FishBase morphometrics for a 3 cm total-length specimen record standard length at 82.6 percent of total length, body depth at 26.0 percent, head length at 18.5 percent, and eye diameter at 45.9 percent of head length. The source retains a small adipose fin, a short triangular dorsal, a longer low anal fin, and a symmetrical forked caudal.",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.0140, "halfWidth": 0.0009, "dorsalHeight": 0.0018, "ventralDepth": 0.0015, "centerZ": 0.0000 },
-      { "id": "peduncle", "x": -0.0110, "halfWidth": 0.0013, "dorsalHeight": 0.0027, "ventralDepth": 0.0022, "centerZ": 0.0001 },
-      { "id": "posterior", "x": -0.0060, "halfWidth": 0.0019, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
-      { "id": "midbody", "x": 0.0005, "halfWidth": 0.0023, "dorsalHeight": 0.0050, "ventralDepth": 0.0041, "centerZ": 0.0003 },
-      { "id": "anterior", "x": 0.0060, "halfWidth": 0.0024, "dorsalHeight": 0.0048, "ventralDepth": 0.0039, "centerZ": 0.0003 },
-      { "id": "operculum", "x": 0.0095, "halfWidth": 0.0023, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
-      { "id": "head", "x": 0.0120, "halfWidth": 0.0020, "dorsalHeight": 0.0035, "ventralDepth": 0.0028, "centerZ": 0.0000 },
-      { "id": "snout", "x": 0.0140, "halfWidth": 0.0013, "dorsalHeight": 0.0022, "ventralDepth": 0.0016, "centerZ": -0.0001 },
-      { "id": "snout-tip", "x": 0.0150, "halfWidth": 0.0004, "dorsalHeight": 0.0006, "ventralDepth": 0.0004, "centerZ": -0.0001 }
+      { "id": "caudal-base", "x": -0.0140, "halfWidth": 0.0007, "dorsalHeight": 0.0018, "ventralDepth": 0.0015, "centerZ": 0.0000 },
+      { "id": "peduncle", "x": -0.0110, "halfWidth": 0.0009, "dorsalHeight": 0.0027, "ventralDepth": 0.0022, "centerZ": 0.0001 },
+      { "id": "posterior", "x": -0.0060, "halfWidth": 0.00135, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
+      { "id": "midbody", "x": 0.0005, "halfWidth": 0.0017, "dorsalHeight": 0.0050, "ventralDepth": 0.0041, "centerZ": 0.0003 },
+      { "id": "anterior", "x": 0.0060, "halfWidth": 0.0018, "dorsalHeight": 0.0048, "ventralDepth": 0.0039, "centerZ": 0.0003 },
+      { "id": "operculum", "x": 0.0095, "halfWidth": 0.00165, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
+      { "id": "head", "x": 0.0120, "halfWidth": 0.00145, "dorsalHeight": 0.0035, "ventralDepth": 0.0028, "centerZ": 0.0000 },
+      { "id": "snout", "x": 0.0140, "halfWidth": 0.0009, "dorsalHeight": 0.0022, "ventralDepth": 0.0016, "centerZ": -0.0001 },
+      { "id": "snout-tip", "x": 0.0150, "halfWidth": 0.00028, "dorsalHeight": 0.0006, "ventralDepth": 0.0004, "centerZ": -0.0001 }
     ],
     "crossSection": { "dorsalExponent": 1.82, "ventralExponent": 1.72 },
     "sampling": { "ringSegments": 48, "ringCount": 48 },
@@ -67,7 +67,7 @@
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -52, "elevationDegrees": 18 },
   "visualDebt": [
-    "No calibrated orthographic top or frontal live image was found, so width and frontal head shape remain conservative inferences from the FishBase compressed-body morphometrics and oblique source imagery.",
+    "No calibrated orthographic top or frontal live image was found, so the revised 0.374 midbody width-to-depth ratio remains a conservative inference from the FishBase compressed-body morphometrics and oblique source imagery.",
     "The iridescent lateral band is a deterministic display-referred approximation; real iridophore color changes with incident angle, light, circadian state, and adrenergic response.",
     "Fin rays and scales are represented by procedural relief rather than individually modeled structures."
   ]

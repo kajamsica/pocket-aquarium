@@ -79,12 +79,12 @@
     "top": {
       "status": "inferred",
       "uncertainty": "High. No calibrated orthographic dorsal original was found; moving oblique views show only qualitative lateral compression.",
-      "notes": "Station half-widths stay conservative and symmetrical rather than claiming a measured dorsal outline."
+      "notes": "The rejected fable-v1 looked cylindrical from above. Revised station half-widths reduce the midbody width-to-depth ratio from 0.505 to 0.374 while staying symmetrical and explicitly inferred."
     },
     "front": {
       "status": "inferred",
       "uncertainty": "High. No verified sharp orthographic frontal original was found, and video frames include motion and perspective distortion.",
-      "notes": "Frontal head width, cross-section exponent, and eye protrusion are conservative inferences from lateral morphometrics and qualitative oblique motion."
+      "notes": "The rejected fable-v1 looked cylindrical from the front. Revised head and trunk half-widths create a clearly compressed section without changing the verified lateral outline, eye, or body depth."
     }
   },
   "silhouetteLandmarks": [
@@ -101,7 +101,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.controlStations[*].halfWidth"
       ],
-      "notes": "The station envelope targets FishBase's 26 percent total-length body depth, then narrows continuously into a short, fine peduncle without the deep belly or disc profile of larger tetras."
+      "notes": "The station envelope retains FishBase's 26 percent total-length body depth and verified lateral silhouette. Narrower half-widths now produce a visibly compressed trunk that tapers continuously into a short, fine peduncle."
     },
     {
       "name": "short head, large seated eye, and small terminal mouth",
@@ -192,6 +192,18 @@
       "uncertainty": "Moderate. FishBase records 2.5 cm maximum standard length and a 3.0 cm total-length morphometric specimen, while USGS reports 4 cm. The source chooses a representative 3.5 cm display adult between those records.",
       "sourceControls": ["referenceSize.meters", "referenceSize.kind"],
       "notes": "The display scale is explicit and source-bounded rather than presented as a single published maximum."
+    },
+    {
+      "name": "midbody width divided by body depth",
+      "status": "inferred",
+      "referenceValue": { "value": 0.374, "unit": "ratio" },
+      "uncertainty": "High. FishBase provides lateral body depth but no calibrated width, and no verified orthographic top or frontal source was found.",
+      "sourceControls": [
+        "morphology.controlStations[midbody].halfWidth",
+        "morphology.controlStations[midbody].dorsalHeight",
+        "morphology.controlStations[midbody].ventralDepth"
+      ],
+      "notes": "The revised 3.4 mm full width over the preserved 9.1 mm midbody depth corrects the cylindrical fable-v1 section while keeping the width explicitly provisional."
     }
   ],
   "colorPatternBoundaries": [
@@ -207,7 +219,7 @@
         "catalog.species.neon_tetra._blue_stripe",
         "palette.cue"
       ],
-      "notes": "A narrow, gently arced procedural band begins behind the eye and terminates under the adipose region. Deterministic blue-cyan variation suggests iridescence without pretending to reproduce true view-dependent guanine platelet optics."
+      "notes": "A narrow, gently arced procedural band begins behind the eye and now fades within the authored adipose-fin span rather than continuing to the caudal base. Deterministic blue-cyan variation suggests iridescence without pretending to reproduce true view-dependent guanine platelet optics."
     },
     {
       "name": "posterior-only red ventrolateral band",
@@ -219,7 +231,7 @@
         "catalog.species.neon_tetra._red_stripe",
         "palette.adornment"
       ],
-      "notes": "The red mask starts near midbody and reaches the caudal base below the blue stripe. Its anterior stop is deliberately diagnostic, preventing the full-length red flank of a cardinal tetra."
+      "notes": "The red mask starts as a narrow anterior point near midbody, deepens progressively across the posterior flank, and reaches the caudal base below the blue stripe. This tapered boundary replaces the rejected rectangular slab and remains diagnostic against a cardinal tetra."
     },
     {
       "name": "olive-translucent dorsum, silver belly, and clear fins",
@@ -234,33 +246,70 @@
         "palette.skin",
         "palette.fin"
       ],
-      "notes": "Procedural vertical blends separate the subdued olive dorsum from the silvery belly, while low-alpha fin materials keep the fins visually clear with restrained ray relief."
+      "notes": "Procedural vertical blends separate the subdued olive dorsum from the silvery belly. The revised caudal uses a neutral pale tint and 0.14 to 0.34 alpha range so it reads as a clear ray-supported membrane rather than an opaque brown tail."
     }
   ],
   "candidateComparison": {
+    "previousCandidate": {
+      "candidate": "fable-v1",
+      "commit": "3ccdb5d326469515dda6fce720ba0c79c7526ec2",
+      "candidateHash": "4ccb1f503c09d6b6cb5bc07a06a7eb9d1223d3bdc9bf8bb081b67e90fcf5d79d",
+      "status": "rejected",
+      "receipt": "REJECT_AND_REFINE",
+      "notes": "The technically validated candidate preserved the correct lateral length, depth, head, and forked tail, but independent visual review rejected its cylindrical top/front section, caudal-reaching blue stripe, rectangular posterior red patch, and opaque caudal material."
+    },
+    "repairSource": {
+      "candidate": "fable-v2",
+      "status": "source_repaired_unbuilt",
+      "notes": "The handwritten v2 source narrows only body half-widths, moves the blue posterior fade into the adipose span, tapers the red band from midbody to the fuller posterior flank, and makes the caudal membrane clear. Lateral station positions, body depth, head, fork geometry, and validated animation values remain unchanged."
+    },
     "mismatches": [
       {
-        "area": "unbuilt source",
-        "note": "No candidate has been built in this memory-light source lane. Side silhouette, fin scale, eye seating, stripe boundaries, translucency, and runtime animation remain pending Blender build and independent visual review."
+        "area": "fable-v1 top and front section",
+        "note": "Rejected: the body read as cylindrical. V2 reduces trunk and head half-widths, with a midbody width-to-depth ratio of 0.374, while preserving the verified lateral length and 0.26 depth-to-length ratio."
       },
       {
-        "area": "top and front calibration",
-        "note": "Body width and frontal head shape are explicitly inferred because no verified orthographic top or front source was found."
+        "area": "fable-v1 blue stripe endpoint",
+        "note": "Rejected: the blue band extended toward the caudal base. V2 begins its posterior fade at U 0.14 and completes it at U 0.23, aligned to the adipose-fin span."
       },
       {
-        "area": "iridescent material",
-        "note": "The procedural color approximates the blue-cyan appearance in static display space and cannot yet reproduce the real stripe's angle-, light-, and physiological-state-dependent reflection."
+        "area": "fable-v1 red stripe boundary",
+        "note": "Rejected: the posterior red area looked like a rectangular slab. V2 narrows it to a point near midbody and increases its vertical fill gradually toward the caudal base."
+      },
+      {
+        "area": "fable-v1 caudal material",
+        "note": "Rejected: the forked tail looked opaque and brown. V2 retains the correct fork silhouette but uses a pale neutral tint and a substantially lower alpha range."
+      },
+      {
+        "area": "remaining top and front calibration",
+        "note": "The compression repair is source-grounded but still inferred. A v2 build requires independent top/front review because no verified orthographic width source exists."
+      },
+      {
+        "area": "remaining iridescent material",
+        "note": "The procedural color approximates the blue-cyan appearance in static display space and cannot reproduce the real stripe's angle-, light-, and physiological-state-dependent reflection."
       }
     ],
-    "acceptanceBlockers": []
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "clearly compressed top and front section without a cylindrical trunk",
+      "blue stripe ending beneath the adipose fin",
+      "posterior red stripe tapering to a narrow anterior point",
+      "clear translucent forked caudal membrane",
+      "unchanged correct lateral scale, body depth, head, and tail fork"
+    ]
   },
-  "uncertainty": "True orthographic top and front proportions remain unmeasured. Adult display length is a bounded representative value between authoritative records, not a newly claimed species maximum.",
+  "uncertainty": "True orthographic top and front proportions remain unmeasured. Fable-v1 was technically validated but visually rejected. The repaired v2 source remains unbuilt and requires independent visual review; adult display length remains a bounded representative value rather than a newly claimed species maximum.",
   "pixelPolicy": "No reference pixels were copied, sampled, traced, hotlinked, or redistributed.",
   "deliveryStatus": {
     "sourceEdited": true,
-    "candidateBuilt": false,
-    "candidateValidated": false,
+    "candidateBuilt": true,
+    "candidateValidated": true,
     "candidateAccepted": false,
-    "promotionAttempted": false
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v1",
+    "latestReviewedCandidateCommit": "3ccdb5d326469515dda6fce720ba0c79c7526ec2",
+    "latestReviewedCandidateStatus": "rejected",
+    "repairCandidate": "fable-v2",
+    "repairCandidateStatus": "source_repaired_unbuilt"
   }
 }

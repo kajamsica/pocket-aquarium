@@ -34,17 +34,21 @@ def _blue_stripe(ctx):
     center = 0.16 + 0.11 * ctx.U
     band = paint.band(ctx.ZETA, center, 0.085, 0.025)
     anterior = 1.0 - smoothstep(0.84, 0.92, ctx.U)
-    posterior = smoothstep(0.08, 0.15, ctx.U)
+    # U=0 is the caudal base. Fade the band inside the adipose-fin span
+    # (approximately U 0.145 to 0.228) rather than carrying it to the tail.
+    posterior = smoothstep(0.14, 0.23, ctx.U)
     return np.clip(band * anterior * posterior, 0.0, 1.0)
 
 
 def _red_stripe(ctx):
     """Posterior ventrolateral stripe that stops near midbody, unlike a cardinal tetra."""
-    posterior_half = 1.0 - smoothstep(0.53, 0.62, ctx.U)
-    dorsal_edge = smoothstep(0.06, -0.07, ctx.ZETA)
-    ventral_edge = smoothstep(-0.82, -0.63, ctx.ZETA)
-    caudal_fade = smoothstep(0.0, 0.035, ctx.U)
-    return np.clip(posterior_half * dorsal_edge * ventral_edge * caudal_fade, 0.0, 1.0)
+    anterior_extent = 1.0 - smoothstep(0.53, 0.64, ctx.U)
+    posterior_fill = 1.0 - smoothstep(0.10, 0.58, ctx.U)
+    center = -0.31 + 0.06 * posterior_fill
+    half_width = 0.08 + 0.23 * posterior_fill
+    tapered_band = paint.band(ctx.ZETA, center, half_width, 0.035)
+    caudal_fade = smoothstep(0.0, 0.045, ctx.U)
+    return np.clip(anterior_extent * tapered_band * caudal_fade, 0.0, 1.0)
 
 
 def paint_body(ctx):
@@ -81,14 +85,16 @@ def paint_fin(ctx):
     grain = fbm(ctx.U * 19.0, ctx.V * 8.0, octaves=2, seed=47)
     tint = FIN_CLEAR
     alpha = 0.50
+    minimum_alpha = 0.24
     if ctx.fin == "adipose":
         tint = (0.20, 0.31, 0.30)
         alpha = 0.42
     elif ctx.fin == "caudal":
-        tint = (0.54, 0.47, 0.40)
-        alpha = 0.47
+        tint = (0.58, 0.66, 0.63)
+        alpha = 0.34
+        minimum_alpha = 0.14
     albedo = textures.rgba(tint, alpha, ctx.shape)
     albedo = textures.scale_rgb(albedo, 0.84 + 0.13 * rays + 0.05 * grain)
-    albedo[..., 3] = np.clip(alpha - 0.16 * smoothstep(0.72, 1.0, ctx.V), 0.24, 0.58)
+    albedo[..., 3] = np.clip(alpha - 0.16 * smoothstep(0.72, 1.0, ctx.V), minimum_alpha, 0.58)
     height = np.clip(0.38 + 0.42 * rays + 0.08 * (grain - 0.5), 0.0, 1.0)
     return {"albedo": albedo, "height": height}
