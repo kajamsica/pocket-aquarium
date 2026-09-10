@@ -247,6 +247,7 @@ def _clips(rig):
     def clip(name, frames, loop, leg, antenna, pleopod, abdomen, tail, envelope=None):
         channels = []
         env = None if loop else envelope
+        slow_frequency = 1.0 if name == "rest" else 1.5
         for side, suffix in SIDES:
             side_phase = 0.0 if side < 0 else math.pi
             for index in range(5):
@@ -257,10 +258,10 @@ def _clips(rig):
                     amplitude = leg * (1.15 if index >= 2 else 0.72)
                 channels.append(Channel(f"Leg{index + 1}_{suffix}", "rotation", _local_axis(rig, f"Leg{index + 1}_{suffix}", (0.0, 1.0, 0.0)), amplitude, 2.0, phase, envelope=env))
             channels.append(Channel(f"Pleo_{suffix}", "rotation", _local_axis(rig, f"Pleo_{suffix}", (0.0, 1.0, 0.0)), pleopod, 3.0, side_phase, envelope=env))
-            channels.append(Channel(f"Antenna_{suffix}", "rotation", _local_axis(rig, f"Antenna_{suffix}", (0.0, 0.0, 1.0)), side * antenna, 1.5, side_phase * 0.25, envelope=env))
-        channels.append(Channel("Abd_A", "rotation", _local_axis(rig, "Abd_A", (0.0, 1.0, 0.0)), abdomen * 0.45, 1.5, 0.0, envelope=env))
-        channels.append(Channel("Abd_B", "rotation", _local_axis(rig, "Abd_B", (0.0, 1.0, 0.0)), abdomen, 1.5, -0.7, envelope=env))
-        channels.append(Channel("Tail", "rotation", _local_axis(rig, "Tail", (0.0, 1.0, 0.0)), tail, 1.5, -1.3, envelope=env))
+            channels.append(Channel(f"Antenna_{suffix}", "rotation", _local_axis(rig, f"Antenna_{suffix}", (0.0, 0.0, 1.0)), side * antenna, slow_frequency, side_phase * 0.25, envelope=env))
+        channels.append(Channel("Abd_A", "rotation", _local_axis(rig, "Abd_A", (0.0, 1.0, 0.0)), abdomen * 0.45, slow_frequency, 0.0, envelope=env))
+        channels.append(Channel("Abd_B", "rotation", _local_axis(rig, "Abd_B", (0.0, 1.0, 0.0)), abdomen, slow_frequency, -0.7, envelope=env))
+        channels.append(Channel("Tail", "rotation", _local_axis(rig, "Tail", (0.0, 1.0, 0.0)), tail, slow_frequency, -1.3, envelope=env))
         clips.append(ClipSpec(name, frames, loop, channels))
 
     clip("rest", 96, True, 1.8, 4.0, 2.5, 1.0, 1.5)
