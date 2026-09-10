@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "pocket-aquarium.specimen-validation/v2",
+  "speciesId": "flowerhorn",
+  "variantId": null,
+  "status": "passed",
+  "state": "awaiting_user_acceptance",
+  "candidateHash": "10b2e293863a447a43c460958e869183688f421ef0a42efe8927f828c9d162f1",
+  "sourceSha256": "023e5c057a233cee6c7b04541b951050066080dd2098f4c15d5841a6d9b55023",
+  "sourceReferencesSha256": "e88913f5bf35f65c67faa88f3ab7cbb80c1d9c7aa82a3660801240452b813f5f",
+  "candidateGlbHash": "7a57d45f6df96eb8a1457ad498d530351fcb783f2cad3f0330c0cba035b3eb04",
+  "geometryDigest": "94e4570f93f158a2229ed842c2561e65d99d59b5514cbe905823f9ced95b8055",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "8f5ced5ce1fb79c76183fafad218cf8f38d4927d7a53ec7be3b9a19e613b33a8",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "blenderVersion": "5.2.1 LTS",
+  "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+  "stages": {
+    "source": {
+      "status": "passed",
+      "sha256": "b40c32c83d91e3c1b90348ea2edd3ac5b6d7df4a386e195086e21ef760bf2d74"
+    },
+    "runtime": {
+      "status": "passed",
+      "sha256": "7355482fbc99a5247c5bc774a50b558f79268dbb7b2623e68235c0b83850a878"
+    },
+    "determinism": {
+      "status": "passed"
+    }
+  },
+  "acceptance": {
+    "performed": false,
+    "requiredAction": "explicit_accept_candidate"
+  }
+}
