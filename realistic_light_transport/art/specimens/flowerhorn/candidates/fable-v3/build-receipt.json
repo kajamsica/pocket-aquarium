@@ -1,0 +1,66 @@
+{
+  "asset": "flowerhorn",
+  "variant": null,
+  "candidateDir": "art/specimens/flowerhorn/candidates/fable-v3",
+  "startedAt": "2026-09-10T00:48:21.680Z",
+  "pid": 12566,
+  "stages": [
+    {
+      "stage": "reference-evidence",
+      "exitCode": 0,
+      "durationMs": 0,
+      "tail": "passed"
+    },
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 3173,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 7263,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1122,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 886,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1477,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 736,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 726,
+      "tail": "Blender quit"
+    }
+  ],
+  "referenceEvidence": {
+    "status": "passed",
+    "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+    "path": "art/specimens/flowerhorn/reference-comparison.json",
+    "sha256": "b4709099a8e3ee7291cb1dbe714e0f0bbb04c2d02b89ea99012d4e1ed5a3fa02"
+  },
+  "finishedAt": "2026-09-10T00:48:37.067Z",
+  "status": "passed",
+  "failure": null
+}
