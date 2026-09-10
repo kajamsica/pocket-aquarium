@@ -62,7 +62,7 @@
   "animation": {
     "idle": { "frames": 84, "loop": true, "axial": [1.0, 1.7, 2.8, 4.2], "axialFrequency": 1, "axialLag": 0.50, "pectoral": 16, "pectoralFrequency": 4, "pelvic": 1.5, "median": 0.8, "gill": 1.8, "gillFrequency": 3, "jaw": 1.2, "jawFrequency": 3 },
     "swim": { "frames": 54, "loop": true, "axial": [3.0, 4.8, 7.5, 11.5], "axialFrequency": 3, "axialLag": 0.50, "pectoral": 20, "pectoralFrequency": 5, "pelvic": 2.8, "median": 1.4, "gill": 1.8, "gillFrequency": 3, "jaw": 1.0, "jawFrequency": 2 },
-    "burst": { "frames": 24, "loop": false, "envelope": "bell", "axial": [4.5, 6.5, 10.0, 15.0], "axialFrequency": 3, "axialLag": 0.50, "pectoral": 9, "pectoralFrequency": 5, "pelvic": 3.0, "median": 2.4, "gill": 2.8, "gillFrequency": 4, "jaw": 2.2, "jawFrequency": 4 }
+    "burst": { "frames": 24, "loop": false, "envelope": "bell", "axial": [4.5, 6.5, 8.0, 15.0], "axialFrequency": 3, "axialLag": 0.50, "pectoral": 9, "pectoralFrequency": 5, "pelvic": 3.0, "median": 2.4, "gill": 2.8, "gillFrequency": 4, "jaw": 2.2, "jawFrequency": 4 }
   },
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -52, "elevationDegrees": 18 },
