@@ -113,15 +113,12 @@ def paint_fin(ctx):
 
 
 def extra_channels(clip_name, spec, envelope):
-    """Keep the heavy cichlid upright and add a readable display yaw."""
+    """Keep the heavy cichlid upright while its fins and jaw carry the display."""
     clip = spec["animation"][clip_name]
     channels = []
     roll = float(clip.get("bodyRoll", 0.0))
     if roll:
         channels.append(Channel("Body", "rotation", (0.0, 1.0, 0.0), roll,
                                 float(clip.get("pectoralFrequency", 2.0)), math.pi / 2,
-                                envelope=envelope))
-    if clip_name == "display":
-        channels.append(Channel("Body", "rotation", (0.0, 0.0, 1.0), 13.0, 1.0, 0.0,
                                 envelope=envelope))
     return channels
