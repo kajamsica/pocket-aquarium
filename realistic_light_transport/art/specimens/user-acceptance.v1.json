@@ -570,6 +570,94 @@
       "geometryDigest": "6306b40a2e62380a30f791f18c9519b3d54cc9170413561e02988bf5746ffaeb",
       "status": "user_accepted",
       "userApprovedLook": false
+    },
+    {
+      "speciesId": "freshwater_angelfish",
+      "candidate": "fable-v3",
+      "candidateHash": "e1c9f1f073f833c28ddc946ac957f38c4d979f370fa7aca62867b7e6fbcf8b5b",
+      "glbSha256": "52d913d62382b5223eadf1cf6b65d7e1cbcc8c9eae07ef7bfb3de5bc4c4f8d74",
+      "geometryDigest": "42df43f760aa9b44474cbf6c6cb390d29bcc0bd715969e15e418916838ed73df",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "discus",
+      "candidate": "fable-v2",
+      "candidateHash": "e03b057c8c96a73bc0c33a17ccd1bead1cf56577a11fe7dd8f9bf1b4cd379bd1",
+      "glbSha256": "ff31e64495d7941789bcbdec07c1526164bab7da7eab1d5b63b1b98590f9428e",
+      "geometryDigest": "a5ae9488a15fb5baad3398ad6af94fad0cc59d75426f4d197448b8eff5040ce0",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "neon_tetra",
+      "candidate": "fable-v3",
+      "candidateHash": "3fac63b05f0a81c7bd66744ca2fcda39b23e1a2fa1e48ae49de75e170de70a60",
+      "glbSha256": "a35903a3d7e7f107e5a2cd9ccf89084d388e78ebad63e5ca48a082f5085e6f6a",
+      "geometryDigest": "70824990a15d6007019b6067238fe9b985271e81a3519c37c08fc18bbc4d47e2",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "pygmy_cory",
+      "candidate": "fable-v3",
+      "candidateHash": "1364a745d14bab5b6d235e1c0e0f506a45f8f9589a833aca7860cc18c3404bcd",
+      "glbSha256": "be08a53f0c501d6d342fb5030298a8306f1887b63d61cded2646d28731246870",
+      "geometryDigest": "af98a167eef763874c1312a44bda3c3ea84728ceef5e3c04b123a980ca7bb134",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "flowerhorn",
+      "candidate": "fable-v4",
+      "candidateHash": "90788a2f92d29c928b75a1b8af2b0c5099ac4b92fb77a583e92a87c41e45b677",
+      "glbSha256": "65368e253e7b4b0557460ec78eb14649f2be926e7f78fdf4e6b41e54a4c5b9b5",
+      "geometryDigest": "2d2a7a32ebe0d7ba2ab57cfb6a761b1ea71ff94dafe55d224c5464fed18fe7fc",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "harlequin_rasbora",
+      "candidate": "fable-v3",
+      "candidateHash": "37c97fa22a7dad4129d65afb24394ba8d1bb825411f1b06a4413de071b5f2872",
+      "glbSha256": "ec3b6354d69bcbf0fd41b519758b13637873c2c86f23af9caddc921dbfb2e5ec",
+      "geometryDigest": "3ac6d65817fe5092bd5f2c44f996755e5baa07a067f05a4c835dbdd4bd852479",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "bronze_cory",
+      "candidate": "fable-v5",
+      "candidateHash": "e3cb2cb7209cb2b3e2225006a5a613fc6df446db8c1d11e415d275b49d629a68",
+      "glbSha256": "e06fd027ab9382ccb57f6f9e742f42a90264b3834c3817289a5d79aff9b88caf",
+      "geometryDigest": "5f3f59d3ff2673ae9c9eb1a95122a1f0f62585f06c99415a868a24fcfc62223d",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
+    },
+    {
+      "speciesId": "betta_splendens_male",
+      "candidate": "fable-v4",
+      "candidateHash": "ac5cd654b24a54f2bb41381153dea04c25c47e07d8a7679ed53e29e7b19c1e9b",
+      "glbSha256": "4c732e174b97be1921287ce0e553b727be24df297ecb8aef2deb84bb837cc06d",
+      "geometryDigest": "8cc2638eb55ec0bc77f7e04b17a702fa1bd2c3662b2630f2707bbf084ad1b872",
+      "status": "user_accepted",
+      "userApprovedLook": true,
+      "acceptedAt": "2026-09-10T15:09:33-04:00",
+      "statement": "Looks good for now, make a PR"
     }
   ]
 }

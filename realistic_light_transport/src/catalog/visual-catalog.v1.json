@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-09T21:33:03.575Z",
+  "generatedAt": "2026-09-10T19:10:03.163Z",
   "categories": [
     "fish",
     "coral",
@@ -16,33 +16,41 @@
   ],
   "userApprovals": {
     "banggai_cardinal": "fable-v3",
+    "betta_splendens_male": "fable-v4",
     "blue_hippo_tang": "approved-v2",
     "brittle_star": "fable-v1",
+    "bronze_cory": "fable-v5",
+    "discus": "fable-v2",
+    "flowerhorn": "fable-v4",
+    "freshwater_angelfish": "fable-v3",
     "gem_tang": "round-v2",
+    "harlequin_rasbora": "fable-v3",
     "montipora": "fable-v1-encrusting",
+    "neon_tetra": "fable-v3",
+    "pygmy_cory": "fable-v3",
     "regal_angelfish": "fable-v1",
     "tomini_tang": "fable-v1"
   },
   "summary": {
-    "rows": 39,
+    "rows": 44,
     "byCategory": {
-      "fish": 17,
+      "fish": 22,
       "coral": 9,
       "invertebrate": 4,
       "cleanup_crew": 9
     },
     "byStatus": {
-      "accepted": 1,
-      "candidate": 37,
+      "accepted": 9,
+      "candidate": 34,
       "provisional": 1,
       "failed": 0,
       "missing": 0
     },
     "candidates": {
-      "total": 61,
-      "loadable": 60,
+      "total": 86,
+      "loadable": 85,
       "missing": 1,
-      "userApproved": 6
+      "userApproved": 14
     }
   },
   "rows": [
@@ -393,14 +401,27 @@
         "kind": "adult_display_reference_length"
       },
       "referenceGrade": "B",
-      "assetStatus": "candidate",
-      "assetVersion": "0.1.0",
+      "assetStatus": "accepted",
+      "assetVersion": "0.3.0",
       "provisional": false,
       "accepted": {
-        "glb": null,
-        "sha256": null,
-        "clips": [],
-        "statistics": null
+        "glb": "src/assets/specimens/bronze_cory/v1/lod1.glb",
+        "sha256": "e06fd027ab9382ccb57f6f9e742f42a90264b3834c3817289a5d79aff9b88caf",
+        "clips": [
+          "forage",
+          "rest",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 8216,
+          "materials": 7,
+          "bones": 14,
+          "clips": [
+            "forage",
+            "rest",
+            "swim"
+          ]
+        }
       },
       "candidates": [
         {
@@ -444,6 +465,174 @@
             "authorPreview": "art/specimens/bronze_cory/candidates/fable-v1/renders/author-preview.png",
             "threeView": "art/specimens/bronze_cory/candidates/fable-v1/renders/three-view.png"
           }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Bronze Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/bronze_cory/candidates/fable-v2/lod1.glb",
+          "glbSha256": "9f51b852f57a34ba15ad383ccef015ea18c7175e03e138ac7c4b58daa6377c8d",
+          "glbSha256Verified": true,
+          "geometryDigest": "b3195e4a178e25299f001f4183f236f94e9dedcfde1cf9bafb8274b3cf552f7f",
+          "statistics": {
+            "triangles": 8216,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.075,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/bronze_cory/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/bronze_cory/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Bronze Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.1",
+          "loadable": true,
+          "glb": "art/specimens/bronze_cory/candidates/fable-v3/lod1.glb",
+          "glbSha256": "cfecce84c4d2a9e452991ca283d28dec2c648cf02b6848d8de821b861c20cccb",
+          "glbSha256Verified": true,
+          "geometryDigest": "424ad4d27248bedf3f1eb841c68af89e9d156b5c11c1675741d75572a7bbf577",
+          "statistics": {
+            "triangles": 8216,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.075,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/bronze_cory/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/bronze_cory/candidates/fable-v3/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v4",
+          "variantId": null,
+          "displayName": "Bronze Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.2",
+          "loadable": true,
+          "glb": "art/specimens/bronze_cory/candidates/fable-v4/lod1.glb",
+          "glbSha256": "f2aa42ed4dbc3d4541662d5166e98c43dc6dedf79e7154f403d91265a836878b",
+          "glbSha256Verified": true,
+          "geometryDigest": "429bc179a233d5534fba959f78fb9db6776255885912b1cc5bde6e2789637a16",
+          "statistics": {
+            "triangles": 8216,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.075,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/bronze_cory/candidates/fable-v4/renders/author-preview.png",
+            "threeView": "art/specimens/bronze_cory/candidates/fable-v4/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v5",
+          "variantId": null,
+          "displayName": "Bronze Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.3.0",
+          "loadable": true,
+          "glb": "art/specimens/bronze_cory/candidates/fable-v5/lod1.glb",
+          "glbSha256": "e06fd027ab9382ccb57f6f9e742f42a90264b3834c3817289a5d79aff9b88caf",
+          "glbSha256Verified": true,
+          "geometryDigest": "5f3f59d3ff2673ae9c9eb1a95122a1f0f62585f06c99415a868a24fcfc62223d",
+          "statistics": {
+            "triangles": 8216,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.075,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/bronze_cory/candidates/fable-v5/renders/author-preview.png",
+            "threeView": "art/specimens/bronze_cory/candidates/fable-v5/renders/three-view.png"
+          }
         }
       ],
       "variants": [],
@@ -458,9 +647,10 @@
         "referenceGrade": "B"
       },
       "visualDebt": [
-        "The shared fish plan approximates the paired lateral bony plate rows with normal relief rather than modeled scutes.",
-        "Barbels are simple slender ellipsoids and do not yet flex independently.",
-        "The pectoral spine is represented by the leading edge of the pectoral fin rather than a separate denticulated ray."
+        "The paired lateral bony plate rows use species-local procedural normal relief rather than individually modeled overlapping scutes.",
+        "Four source-authored tapered barbels follow the frontal reference, but remain rigidly skinned to the Jaw bone rather than flexing independently.",
+        "The long pectoral spine is emphasized by fin silhouette and normal relief rather than modeled as a separate denticulated ray.",
+        "No calibrated live whole-body dorsal photograph was found, so body width remains an explicitly documented inference."
       ]
     },
     {
@@ -633,6 +823,411 @@
       ]
     },
     {
+      "id": "flowerhorn",
+      "displayName": "Flowerhorn Cichlid",
+      "scientificLabel": "Cichlidae hybrid (Flowerhorn)",
+      "taxonomyConfidence": "ornamental_hybrid",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.3,
+        "kind": "representative_adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "accepted",
+      "assetVersion": "0.4.3",
+      "provisional": false,
+      "accepted": {
+        "glb": "src/assets/specimens/flowerhorn/v1/lod1.glb",
+        "sha256": "65368e253e7b4b0557460ec78eb14649f2be926e7f78fdf4e6b41e54a4c5b9b5",
+        "clips": [
+          "display",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 10644,
+          "materials": 6,
+          "bones": 13,
+          "clips": [
+            "display",
+            "idle",
+            "swim"
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Flowerhorn Cichlid",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/flowerhorn/candidates/fable-v1/lod1.glb",
+          "glbSha256": "a18f9b76e83a9e14e1ebd7777e809417826a755a1029ae1c7f23e18e9716e1ba",
+          "glbSha256Verified": true,
+          "geometryDigest": "526a2aa666a87cac3cd352e86b74e586d91438c334a8f4d24df5df8d678b628b",
+          "statistics": {
+            "triangles": 9820,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.3,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/flowerhorn/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/flowerhorn/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Flowerhorn Cichlid",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/flowerhorn/candidates/fable-v2/lod1.glb",
+          "glbSha256": "7a57d45f6df96eb8a1457ad498d530351fcb783f2cad3f0330c0cba035b3eb04",
+          "glbSha256Verified": true,
+          "geometryDigest": "94e4570f93f158a2229ed842c2561e65d99d59b5514cbe905823f9ced95b8055",
+          "statistics": {
+            "triangles": 10012,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.3,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/flowerhorn/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/flowerhorn/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Flowerhorn Cichlid",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.3.0",
+          "loadable": true,
+          "glb": "art/specimens/flowerhorn/candidates/fable-v3/lod1.glb",
+          "glbSha256": "75d7bd1377edc4e59682178d18e25b7da8fcc640de5e0bf25ff577ea3c09d895",
+          "glbSha256Verified": true,
+          "geometryDigest": "b808db8f373c04e82d16bdf5718c2a4fb42ff7095dfc2574a40c0894b0d09be7",
+          "statistics": {
+            "triangles": 10364,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.3,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/flowerhorn/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/flowerhorn/candidates/fable-v3/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v4",
+          "variantId": null,
+          "displayName": "Flowerhorn Cichlid",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.4.3",
+          "loadable": true,
+          "glb": "art/specimens/flowerhorn/candidates/fable-v4/lod1.glb",
+          "glbSha256": "65368e253e7b4b0557460ec78eb14649f2be926e7f78fdf4e6b41e54a4c5b9b5",
+          "glbSha256Verified": true,
+          "geometryDigest": "2d2a7a32ebe0d7ba2ab57cfb6a761b1ea71ff94dafe55d224c5464fed18fe7fc",
+          "statistics": {
+            "triangles": 10644,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.3,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/flowerhorn/candidates/fable-v4/renders/author-preview.png",
+            "threeView": "art/specimens/flowerhorn/candidates/fable-v4/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "display"
+      },
+      "provenance": {
+        "source": "art/specimens/flowerhorn/asset.source.json",
+        "sourceReferences": "art/specimens/flowerhorn/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Flowerhorn is a variable ornamental hybrid complex rather than a valid biological species. This source targets one adult male red-pearl phenotype and must not be treated as representing every strain or sex.",
+        "No calibrated orthographic top or frontal reference was found. Body width, hump volume, lip projection, and eye seating outside the lateral view are conservative inferences.",
+        "The rounded nuchal dome is encoded in the shared body station envelope rather than a separately deformable fatty soft-tissue mass, so close-up compression, asymmetry, and condition-dependent volume are not represented.",
+        "The rounded caudal is one continuous skinned membrane; individual soft-ray spreading and edge scalloping are represented only by procedural relief.",
+        "Pearling and the broken lateral flower line are deterministic procedural approximations. They require downstream three-view review and explicit user acceptance before promotion."
+      ]
+    },
+    {
+      "id": "freshwater_angelfish",
+      "displayName": "Freshwater Angelfish",
+      "scientificLabel": "Pterophyllum scalare",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.105,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "accepted",
+      "assetVersion": "0.3.0-source",
+      "provisional": false,
+      "accepted": {
+        "glb": "src/assets/specimens/freshwater_angelfish/v1/lod1.glb",
+        "sha256": "52d913d62382b5223eadf1cf6b65d7e1cbcc8c9eae07ef7bfb3de5bc4c4f8d74",
+        "clips": [
+          "display",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 9160,
+          "materials": 6,
+          "bones": 13,
+          "clips": [
+            "display",
+            "idle",
+            "swim"
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Freshwater Angelfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/freshwater_angelfish/candidates/fable-v1/lod1.glb",
+          "glbSha256": "385d329f45c6d40d544807f58419d89b357cbdc3f2ec897bd97213d796808fdf",
+          "glbSha256Verified": true,
+          "geometryDigest": "0df2f5e05233a572228d3c25a6bde00a5fab5f123da8c41e8e0e95aa55d3b8a9",
+          "statistics": {
+            "triangles": 8716,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.105,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/freshwater_angelfish/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/freshwater_angelfish/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Freshwater Angelfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/freshwater_angelfish/candidates/fable-v2/lod1.glb",
+          "glbSha256": "fa71495ea81cae2ee4c3a1373c3f4a28dd23daa3283971ed814b0487107f7a4c",
+          "glbSha256Verified": true,
+          "geometryDigest": "00b4376def70dae0c3c6deb98ef5087ee0137bf4c1176ff7a083864c9cf8ff6d",
+          "statistics": {
+            "triangles": 9160,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.105,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/freshwater_angelfish/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/freshwater_angelfish/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Freshwater Angelfish",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.3.0-source",
+          "loadable": true,
+          "glb": "art/specimens/freshwater_angelfish/candidates/fable-v3/lod1.glb",
+          "glbSha256": "52d913d62382b5223eadf1cf6b65d7e1cbcc8c9eae07ef7bfb3de5bc4c4f8d74",
+          "glbSha256Verified": true,
+          "geometryDigest": "42df43f760aa9b44474cbf6c6cb390d29bcc0bd715969e15e418916838ed73df",
+          "statistics": {
+            "triangles": 9160,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.105,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/freshwater_angelfish/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/freshwater_angelfish/candidates/fable-v3/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "display"
+      },
+      "provenance": {
+        "source": "art/specimens/freshwater_angelfish/asset.source.json",
+        "sourceReferences": "art/specimens/freshwater_angelfish/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "No verified true orthographic top or frontal photograph was found; width and frontal head volume are conservative inferences.",
+        "The restrained caudal fan shares one skinned membrane rather than separately deformable rays.",
+        "Dorsal and anal rays are represented by a swept envelope plus procedural relief and translucency, not individually modeled ray bones.",
+        "The paired thoracic pelvic filaments use very narrow shared-plan membranes with a distal centre filament, so they remain less threadlike than true individual fin rays at extreme close range."
+      ]
+    },
+    {
       "id": "gem_tang",
       "displayName": "Gem Tang",
       "scientificLabel": "Zebrasoma gemmatum",
@@ -771,14 +1366,27 @@
         "kind": "adult_total_length"
       },
       "referenceGrade": "B",
-      "assetStatus": "candidate",
-      "assetVersion": "0.1.2",
+      "assetStatus": "accepted",
+      "assetVersion": "0.3.0-source",
       "provisional": false,
       "accepted": {
-        "glb": null,
-        "sha256": null,
-        "clips": [],
-        "statistics": null
+        "glb": "src/assets/specimens/harlequin_rasbora/v1/lod1.glb",
+        "sha256": "ec3b6354d69bcbf0fd41b519758b13637873c2c86f23af9caddc921dbfb2e5ec",
+        "clips": [
+          "burst",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 7150,
+          "materials": 6,
+          "bones": 13,
+          "clips": [
+            "burst",
+            "idle",
+            "swim"
+          ]
+        }
       },
       "candidates": [
         {
@@ -822,6 +1430,90 @@
             "authorPreview": "art/specimens/harlequin_rasbora/candidates/fable-v1/renders/author-preview.png",
             "threeView": "art/specimens/harlequin_rasbora/candidates/fable-v1/renders/three-view.png"
           }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Harlequin Rasbora",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0-source",
+          "loadable": true,
+          "glb": "art/specimens/harlequin_rasbora/candidates/fable-v2/lod1.glb",
+          "glbSha256": "11a53dfde307306e4e739416cc3727c4d0bb96a0ac8db61185fe51eed52aae1a",
+          "glbSha256Verified": true,
+          "geometryDigest": "5674b9e62cdcc21ade6d449027107161a5604b3cf264d180aaf2b4950d3e6512",
+          "statistics": {
+            "triangles": 7342,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.05,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/harlequin_rasbora/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/harlequin_rasbora/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Harlequin Rasbora",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.3.0-source",
+          "loadable": true,
+          "glb": "art/specimens/harlequin_rasbora/candidates/fable-v3/lod1.glb",
+          "glbSha256": "ec3b6354d69bcbf0fd41b519758b13637873c2c86f23af9caddc921dbfb2e5ec",
+          "glbSha256Verified": true,
+          "geometryDigest": "3ac6d65817fe5092bd5f2c44f996755e5baa07a067f05a4c835dbdd4bd852479",
+          "statistics": {
+            "triangles": 7150,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.05,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/harlequin_rasbora/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/harlequin_rasbora/candidates/fable-v3/renders/three-view.png"
+          }
         }
       ],
       "variants": [],
@@ -836,7 +1528,7 @@
         "referenceGrade": "B"
       },
       "visualDebt": [
-        "The black axine is procedural texture geometry and must be checked against side-view references before acceptance.",
+        "The black axine is procedural texture geometry and must be checked against the licensed side-view target before acceptance.",
         "Fin rays are normal-map relief rather than separately modeled rays."
       ]
     },
@@ -853,14 +1545,27 @@
         "kind": "adult_total_length"
       },
       "referenceGrade": "B",
-      "assetStatus": "candidate",
-      "assetVersion": "0.1.0",
+      "assetStatus": "accepted",
+      "assetVersion": "0.1.3",
       "provisional": false,
       "accepted": {
-        "glb": null,
-        "sha256": null,
-        "clips": [],
-        "statistics": null
+        "glb": "src/assets/specimens/betta_splendens_male/v1/lod1.glb",
+        "sha256": "4c732e174b97be1921287ce0e553b727be24df297ecb8aef2deb84bb837cc06d",
+        "clips": [
+          "display",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 11552,
+          "materials": 6,
+          "bones": 13,
+          "clips": [
+            "display",
+            "idle",
+            "swim"
+          ]
+        }
       },
       "candidates": [
         {
@@ -904,6 +1609,132 @@
             "authorPreview": "art/specimens/betta_splendens_male/candidates/fable-v1/renders/author-preview.png",
             "threeView": "art/specimens/betta_splendens_male/candidates/fable-v1/renders/three-view.png"
           }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Male Betta",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.1",
+          "loadable": true,
+          "glb": "art/specimens/betta_splendens_male/candidates/fable-v2/lod1.glb",
+          "glbSha256": "2aa7a7a36cd430f78456c44eb4b029dbcb1e6bd47735d41ed5be961ac5b762b8",
+          "glbSha256Verified": true,
+          "geometryDigest": "f06b26a92331f57a326327ce03a0a3e2e042b017ea62dbaf8e1b4c9fd963a235",
+          "statistics": {
+            "triangles": 8236,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.065,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/betta_splendens_male/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/betta_splendens_male/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Male Betta",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.2",
+          "loadable": true,
+          "glb": "art/specimens/betta_splendens_male/candidates/fable-v3/lod1.glb",
+          "glbSha256": "21dec9bbcf9ded3e3931cc8e3833c8451686c3e977ff75ad4cc6b39242af4987",
+          "glbSha256Verified": true,
+          "geometryDigest": "0b86c2d78a8cfc5c3b3afe7a986861750084c30bf7eb660ae97311a9f7888873",
+          "statistics": {
+            "triangles": 10552,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.065,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/betta_splendens_male/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/betta_splendens_male/candidates/fable-v3/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v4",
+          "variantId": null,
+          "displayName": "Male Betta",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.3",
+          "loadable": true,
+          "glb": "art/specimens/betta_splendens_male/candidates/fable-v4/lod1.glb",
+          "glbSha256": "4c732e174b97be1921287ce0e553b727be24df297ecb8aef2deb84bb837cc06d",
+          "glbSha256Verified": true,
+          "geometryDigest": "8cc2638eb55ec0bc77f7e04b17a702fa1bd2c3662b2630f2707bbf084ad1b872",
+          "statistics": {
+            "triangles": 11552,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.065,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/betta_splendens_male/candidates/fable-v4/renders/author-preview.png",
+            "threeView": "art/specimens/betta_splendens_male/candidates/fable-v4/renders/three-view.png"
+          }
         }
       ],
       "variants": [],
@@ -918,9 +1749,190 @@
         "referenceGrade": "B"
       },
       "visualDebt": [
-        "Domestic Betta splendens fin shapes vary widely; this source targets a rounded halfmoon-like male rather than every strain.",
-        "The paired pelvic fin filaments are thin fans because the shared fish plan does not yet support isolated soft rays.",
-        "Fin rays are normal-map relief on thin membranes rather than separate modeled rays."
+        "Domestic Betta splendens fin shapes and colour morphs vary widely; this source targets a documented long-finned single-tail halfmoon blue-red male rather than every strain.",
+        "The paired pelvic fins use narrow source sheets with a distal filament ridge. They remain simplified paired membranes rather than independently modeled soft rays.",
+        "Lip projection is independently authored with the shared optional controls, but the lower-jaw volume remains part of the station body rather than a separate deformable mesh.",
+        "Fin rays and natural edge breakup are procedural relief and transparency on thin membranes rather than separately modeled rays."
+      ]
+    },
+    {
+      "id": "neon_tetra",
+      "displayName": "Neon Tetra",
+      "scientificLabel": "Paracheirodon innesi",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.035,
+        "kind": "adult_display_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "accepted",
+      "assetVersion": "0.3.0-source",
+      "provisional": false,
+      "accepted": {
+        "glb": "src/assets/specimens/neon_tetra/v1/lod1.glb",
+        "sha256": "a35903a3d7e7f107e5a2cd9ccf89084d388e78ebad63e5ca48a082f5085e6f6a",
+        "clips": [
+          "burst",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 7314,
+          "materials": 6,
+          "bones": 14,
+          "clips": [
+            "burst",
+            "idle",
+            "swim"
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Neon Tetra",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0-source",
+          "loadable": true,
+          "glb": "art/specimens/neon_tetra/candidates/fable-v1/lod1.glb",
+          "glbSha256": "e40a8591d7c1941f7771aace08c74112916fab76ff1d36f15a3fda01d6ce748c",
+          "glbSha256Verified": true,
+          "geometryDigest": "ecda3312f42b5ba68405e61ab632832297041417904f509e14a50be21389fbdd",
+          "statistics": {
+            "triangles": 7328,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.035,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/neon_tetra/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/neon_tetra/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Neon Tetra",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0-source",
+          "loadable": true,
+          "glb": "art/specimens/neon_tetra/candidates/fable-v2/lod1.glb",
+          "glbSha256": "47c245e7ecd954e0de0e1a23888cfe8d2f373e47f0ac0bb51b27b34c2912d8a1",
+          "glbSha256Verified": true,
+          "geometryDigest": "e8547b8fc1a09caba2f05368499664570a6866c96c7e4f7ab8e9cb05aef49bbe",
+          "statistics": {
+            "triangles": 7328,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.035,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/neon_tetra/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/neon_tetra/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Neon Tetra",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.3.0-source",
+          "loadable": true,
+          "glb": "art/specimens/neon_tetra/candidates/fable-v3/lod1.glb",
+          "glbSha256": "a35903a3d7e7f107e5a2cd9ccf89084d388e78ebad63e5ca48a082f5085e6f6a",
+          "glbSha256Verified": true,
+          "geometryDigest": "70824990a15d6007019b6067238fe9b985271e81a3519c37c08fc18bbc4d47e2",
+          "statistics": {
+            "triangles": 7314,
+            "materials": 6,
+            "bones": 14,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.035,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/neon_tetra/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/neon_tetra/candidates/fable-v3/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/neon_tetra/asset.source.json",
+        "sourceReferences": "art/specimens/neon_tetra/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "No calibrated orthographic top or frontal live image was found, so the revised 0.330 midbody width-to-depth ratio remains a conservative inference from the FishBase compressed-body morphometrics and oblique source imagery.",
+        "The iridescent lateral band is a deterministic display-referred approximation; real iridophore color changes with incident angle, light, circadian state, and adrenergic response.",
+        "Fin rays and scales are represented by procedural relief rather than individually modeled structures."
       ]
     },
     {
@@ -1055,6 +2067,144 @@
       ]
     },
     {
+      "id": "discus",
+      "displayName": "Ornamental Discus",
+      "scientificLabel": "Symphysodon discus",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.15,
+        "kind": "adult_display_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "accepted",
+      "assetVersion": "0.2.1-source",
+      "provisional": false,
+      "accepted": {
+        "glb": "src/assets/specimens/discus/v1/lod1.glb",
+        "sha256": "ff31e64495d7941789bcbdec07c1526164bab7da7eab1d5b63b1b98590f9428e",
+        "clips": [
+          "display",
+          "idle",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 9522,
+          "materials": 6,
+          "bones": 13,
+          "clips": [
+            "display",
+            "idle",
+            "swim"
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Heckel Discus",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0-source",
+          "loadable": true,
+          "glb": "art/specimens/discus/candidates/fable-v1/lod1.glb",
+          "glbSha256": "681f7d4c31d3ca5d95364bd46dfc349c55b86553fe60c4523b4c451b83a1a52b",
+          "glbSha256Verified": true,
+          "geometryDigest": "597aae1eeed5ed1da22915867da9fc5e8c7692cfa226e9e70d00ba9f9c791379",
+          "statistics": {
+            "triangles": 9106,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/discus/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/discus/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Ornamental Discus",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.1-source",
+          "loadable": true,
+          "glb": "art/specimens/discus/candidates/fable-v2/lod1.glb",
+          "glbSha256": "ff31e64495d7941789bcbdec07c1526164bab7da7eab1d5b63b1b98590f9428e",
+          "glbSha256Verified": true,
+          "geometryDigest": "a5ae9488a15fb5baad3398ad6af94fad0cc59d75426f4d197448b8eff5040ce0",
+          "statistics": {
+            "triangles": 9522,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.15,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/discus/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/discus/candidates/fable-v2/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "display"
+      },
+      "provenance": {
+        "source": "art/specimens/discus/asset.source.json",
+        "sourceReferences": "art/specimens/discus/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "No calibrated true dorsal or frontal photograph was found, so the extreme lateral width and frontal head section remain conservative inferences.",
+        "Fin rays and fine turquoise striations are procedural texture relief rather than individually modeled structures.",
+        "Domestic discus phenotypes vary widely. This source deliberately targets one vivid blue-turquoise and warm orange ornamental presentation without claiming a named strain, locality, or sex."
+      ]
+    },
+    {
       "id": "purple_tang",
       "displayName": "Purple Tang",
       "scientificLabel": "Zebrasoma xanthurum",
@@ -1177,6 +2327,187 @@
         "Head spots and flank lines are procedural approximations of the real pattern density and irregularity.",
         "Fin ray relief is a normal-map only; membranes are single thin shells without modelled rays.",
         "Roughness and normal PNGs come out flat black with the shared textures.write_image at this commit (colourspace is set after the pixels); see the lane's shared-change request. Skin reads glossier than authored until the shared fix lands."
+      ]
+    },
+    {
+      "id": "pygmy_cory",
+      "displayName": "Pygmy Cory",
+      "scientificLabel": "Gastrodermus pygmaeus",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.021,
+        "kind": "adult_display_reference_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "accepted",
+      "assetVersion": "0.3.0",
+      "provisional": false,
+      "accepted": {
+        "glb": "src/assets/specimens/pygmy_cory/v1/lod1.glb",
+        "sha256": "be08a53f0c501d6d342fb5030298a8306f1887b63d61cded2646d28731246870",
+        "clips": [
+          "forage",
+          "rest",
+          "swim"
+        ],
+        "statistics": {
+          "triangles": 7880,
+          "materials": 7,
+          "bones": 14,
+          "clips": [
+            "forage",
+            "rest",
+            "swim"
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Pygmy Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/pygmy_cory/candidates/fable-v1/lod1.glb",
+          "glbSha256": "6d333897fc9ae4d5692599bffaccc102cbaff891d436e513fe34d507ce550a3b",
+          "glbSha256Verified": true,
+          "geometryDigest": "9ff4db8e1af54359b431d088ebd01e7701d79322bcb3d23a92b6767baeefbf81",
+          "statistics": {
+            "triangles": 7880,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.021,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/pygmy_cory/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/pygmy_cory/candidates/fable-v1/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v2",
+          "variantId": null,
+          "displayName": "Pygmy Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.2.0",
+          "loadable": true,
+          "glb": "art/specimens/pygmy_cory/candidates/fable-v2/lod1.glb",
+          "glbSha256": "77a7a4bc9af4d027482b6d52cee87906dbccfa263223358ff65ee193b502a03f",
+          "glbSha256Verified": true,
+          "geometryDigest": "89491c1750bd773b582733bf46589f19b81bfa28a4509b6bdc482aba88cb00e4",
+          "statistics": {
+            "triangles": 7880,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.021,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/pygmy_cory/candidates/fable-v2/renders/author-preview.png",
+            "threeView": "art/specimens/pygmy_cory/candidates/fable-v2/renders/three-view.png"
+          }
+        },
+        {
+          "name": "fable-v3",
+          "variantId": null,
+          "displayName": "Pygmy Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.3.0",
+          "loadable": true,
+          "glb": "art/specimens/pygmy_cory/candidates/fable-v3/lod1.glb",
+          "glbSha256": "be08a53f0c501d6d342fb5030298a8306f1887b63d61cded2646d28731246870",
+          "glbSha256Verified": true,
+          "geometryDigest": "af98a167eef763874c1312a44bda3c3ea84728ceef5e3c04b123a980ca7bb134",
+          "statistics": {
+            "triangles": 7880,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.021,
+          "userApproved": true,
+          "renders": {
+            "authorPreview": "art/specimens/pygmy_cory/candidates/fable-v3/renders/author-preview.png",
+            "threeView": "art/specimens/pygmy_cory/candidates/fable-v3/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "swim",
+        "response": "forage"
+      },
+      "provenance": {
+        "source": "art/specimens/pygmy_cory/asset.source.json",
+        "sourceReferences": "art/specimens/pygmy_cory/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "The two visible armor rows use species-local procedural normal and color relief rather than individually modeled overlapping scutes.",
+        "Four subtle tapered barbels are rigidly skinned to the Jaw bone instead of flexing independently.",
+        "No verified live whole-body orthographic top or frontal image was found, so trunk width remains an explicit conservative inference.",
+        "The 2.1 cm FishBase standard-length maximum is used as a visible display reference without an invented standard-to-total-length conversion."
       ]
     },
     {
@@ -3319,7 +4650,52 @@
         "clips": [],
         "statistics": null
       },
-      "candidates": [],
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Amano Shrimp",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/amano_shrimp/candidates/fable-v1/lod1.glb",
+          "glbSha256": "cd77921368849c61fa3653d361ea2f9bb7f3307cff090d7eeb6e93747a2444e7",
+          "glbSha256Verified": true,
+          "geometryDigest": "8b8358c3093d65e0ef41b28932a22e8b4ec5a852a540952223ddc8a01fb470ec",
+          "statistics": {
+            "triangles": 11152,
+            "materials": 6,
+            "bones": 18,
+            "clips": [
+              "bottom_walk",
+              "graze",
+              "reposition_swim",
+              "rest"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "bottom_walk",
+            "response": "graze"
+          },
+          "clipLoops": {
+            "bottom_walk": true,
+            "graze": false,
+            "reposition_swim": false,
+            "rest": true
+          },
+          "referenceSizeMeters": 0.05,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/amano_shrimp/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/amano_shrimp/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
       "variants": [],
       "clipRoles": {
         "idle": "rest",

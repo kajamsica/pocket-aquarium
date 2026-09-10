@@ -1,7 +1,7 @@
 {
   "schemaVersion": "pocket-aquarium.reference-comparison/v1",
   "speciesId": "pygmy_cory",
-  "sourceRevision": 1,
+  "sourceRevision": 2,
   "referencePacket": "source-references.json",
   "targetForm": "adult normally pigmented Pygmy Cory",
   "comparisonPolicy": "Search results may locate references, but only the exact original pages below govern design. Comparisons use landmarks, qualitative proportions and pattern boundaries without sampling, tracing, copying, redistributing or hotlinking pixels.",
@@ -110,7 +110,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.crossSection"
       ],
-      "notes": "The station sequence keeps the two-centimeter body lower and more elongate than Bronze Cory while retaining a gently arched armored back and relatively flat ventral surface."
+      "notes": "The revised station sequence lowers the two-centimeter body to a depth-to-length ratio near 0.237 while retaining a gently arched armored back, a relatively flat belly and a broad enough cheek region to read as Corydoradinae rather than a generic torpedo."
     },
     {
       "name": "short rounded snout, small inferior mouth and tapered barbels",
@@ -129,7 +129,7 @@
         "morphology.adornments[barbel_L_lower]",
         "morphology.adornments[barbel_R_lower]"
       ],
-      "notes": "The revised head stations taper sooner and more narrowly into the rounded snout. A much smaller mouth radius and width, lower jaw placement, shallow separated lip arcs and shorter finer barbels replace the rejected candidate's large terminal sucker ring."
+      "notes": "The revised head stations retain cheek breadth but end in a blunt rounded snout instead of collapsing to a point. A smaller mouth radius, lower jaw placement, separated lip arcs and fine barbels preserve an inferior feeding apparatus without a terminal sucker-ring read."
     },
     {
       "name": "narrow peduncle with a moderately forked translucent caudal",
@@ -144,7 +144,7 @@
         "morphology.fins[caudal]",
         "catalog.species.pygmy_cory.paint_fin"
       ],
-      "notes": "Early posterior taper leads into a small peduncle and forked tail. The fin remains lightly ray-marked and translucent rather than opaque or paddle-shaped."
+      "notes": "Early posterior taper leads into a narrow peduncle and moderately forked tail. Reduced caudal span and compact median and paired fins preserve the exact references' delicate appendage scale instead of producing a shark-like silhouette."
     },
     {
       "name": "two lateral armor rows with delicate leading fin spines",
@@ -182,7 +182,7 @@
       "name": "maximum body depth divided by station-defined standard length",
       "status": "inferred",
       "referenceValue": {
-        "value": 0.308,
+        "value": 0.237,
         "unit": "depth/length ratio"
       },
       "sourceIds": [
@@ -195,13 +195,13 @@
         "morphology.controlStations[*].dorsalHeight",
         "morphology.controlStations[*].ventralDepth"
       ],
-      "notes": "The deepest station is approximately 30.8 percent of the 17.2 mm station-defined snout-to-caudal-base length, preserving the exact images' slender dwarf profile."
+      "notes": "The deepest station is approximately 23.7 percent of the unchanged 17.2 mm station-defined snout-to-caudal-base length, matching the exact images' slender dwarf profile without erasing the armored shoulder."
     },
     {
       "name": "maximum body width relative to maximum body depth",
       "status": "inferred",
       "referenceValue": {
-        "value": 0.611,
+        "value": 0.737,
         "unit": "width/depth ratio"
       },
       "sourceIds": [
@@ -212,7 +212,7 @@
         "morphology.controlStations[*].halfWidth",
         "morphology.crossSection"
       ],
-      "notes": "The maximum full width remains smaller than vertical depth while the armored cheek region stays broader than the caudal peduncle."
+      "notes": "The maximum full width remains smaller than vertical depth while the armored opercular cheek region stays broader than the trunk and much broader than the caudal peduncle."
     },
     {
       "name": "caudal length relative to visible display reference",
@@ -261,71 +261,62 @@
       "notes": "The procedural ground separates a subdued grey dorsal field from a lighter belly and retains low-contrast iridescence without turning bronze, gold or uniform beige."
     },
     {
-      "name": "hyaline adipose and translucent ray-marked fins",
+      "name": "compact hyaline adipose and translucent ray-marked fins",
       "sourceIds": [
         "TENCATT-PAVANELLI-2015",
         "COMMONS-PYGMY-CORY-SESARMA",
         "COMMONS-PYGMY-CORY-CARNAT"
       ],
       "sourceControls": [
+        "morphology.fins[dorsal1]",
+        "morphology.fins[adipose]",
+        "morphology.fins[anal]",
+        "morphology.fins[caudal]",
+        "morphology.fins[pectoral]",
+        "morphology.fins[pelvic]",
         "catalog.species.pygmy_cory.paint_fin",
         "palette.fin"
       ],
-      "notes": "Fin alpha, ray contrast and normal strength are reduced throughout, with an additional adipose alpha reduction. This replaces the rejected opaque beige sheets with hyaline membranes and restrained leading-spine cues."
+      "notes": "Fin spans and paired-fin lengths are reduced while the existing alpha, ray contrast and adipose treatment remain in place. The result should read as compact translucent Cory fins rather than oversized shark-like planes."
     }
   ],
   "candidateComparison": {
     "reviewedCandidate": {
       "candidate": "fable-v2",
       "commit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
-      "status": "awaiting_user_acceptance",
-      "receipt": "ACCEPT_FOR_USER_REVIEW",
-      "notes": "Independent visual review found the repaired dwarf silhouette, inferior mouth, raised tapered stripe, armor-row treatment, hyaline fins and forked tail suitable for explicit user review. This receipt is not user acceptance and does not authorize promotion."
+      "status": "rejected_by_user",
+      "receipt": "REJECTED_FOR_REFERENCE_MISMATCH",
+      "notes": "The candidate retained the correct stripe and dwarf scale, but the user rejected its pale shark-like body, pointed terminal profile and oversized fins as subpar. It remains preserved and unpromoted."
     },
+    "plannedCandidate": "fable-v3",
     "mismatches": [
       {
-        "area": "rejected fable-v1 head and mouth",
-        "note": "The preserved candidate has a bulbous blunt head, conspicuous terminal sucker ring and overlong whisker read. Revised head stations, an inferior jaw offset, smaller transverse lip arcs and shorter finer barbels address those source-level failures."
+        "area": "rejected fable-v2 body silhouette",
+        "note": "The body remains too deep and smooth through the trunk and narrows to a pointed terminal profile, which makes the small catfish read as a pale shark. Future fable-v3 lowers the trunk, flattens the belly, preserves opercular breadth and ends in a blunter rounded snout."
       },
       {
-        "area": "rejected fable-v1 stripe placement",
-        "note": "The preserved candidate's stripe is too broad and low, missing the eye region. The revised mask narrows the band, raises it through the eye and snout, and tapers it into the caudal peduncle."
+        "area": "rejected fable-v2 appendage scale",
+        "note": "The tall dorsal, broad caudal and long paired fins dominate the silhouette. Future fable-v3 keeps the same fin inventory and clips but reduces every appendage span to the compact proportions visible in the licensed lateral references."
       },
       {
-        "area": "rejected fable-v1 armor readability",
-        "note": "The preserved candidate reads as smooth because both armor rows are visually lost. The revised backend separates the row centers and increases bounded normal and color relief while keeping the plates shallow."
-      },
-      {
-        "area": "rejected fable-v1 fin opacity",
-        "note": "The preserved dorsal, adipose, anal, caudal and paired fins read as opaque beige sheets. Lower alpha, reduced ray contrast, reduced fin-normal strength and an extra hyaline adipose treatment address the mismatch."
+        "area": "retained source-backed pattern",
+        "note": "The continuous eye-level stripe, pearly flank, two procedural armor rows and translucent material treatment remain valid and are reused unchanged for future fable-v3."
       },
       {
         "area": "top and front calibration",
-        "note": "Whole-body width and frontal trunk depth remain explicitly inferred. The reviewed fable-v2 candidate must not be represented as measured and should retain a conservative narrow body."
-      },
-      {
-        "area": "fable-v2 frontal lip read",
-        "note": "The smaller inferior transverse mouth is materially improved, but the frontal view may still make the lip edges read slightly more prominent than the subtle live-fish reference."
-      },
-      {
-        "area": "fable-v2 armor subtlety",
-        "note": "Both armor rows now read under the reviewed lighting, although their shallow relief remains intentionally subtle and may soften further at game scale."
-      },
-      {
-        "area": "fable-v2 animation coverage",
-        "note": "Independent review covered the recorded candidate surfaces. Barbel, fin and body deformation through the complete animation range remains a downstream runtime caveat."
+        "note": "Whole-body width and frontal trunk depth remain explicitly inferred. Future fable-v3 must keep the head wider than the trunk without representing the inferred width as an orthographic measurement."
       }
     ],
     "acceptanceBlockers": [],
     "pendingVisualChecks": [
-      "subtle inferior transverse lip in the frontal view",
-      "two armor rows remaining legible at game scale",
-      "barbel, fin and body deformation throughout animation",
-      "top and front proportions under inferred-view uncertainty"
+      "elongated low Cory silhouette in side view",
+      "blunt rounded snout and inferior transverse lip in front and side views",
+      "compact dorsal, adipose, caudal and paired fins remain distinct, translucent and free of body intersections",
+      "two armor rows and barbels remaining legible at game scale"
     ]
   },
   "backendRepresentation": {
-    "status": "source_controls_present",
+    "status": "source_controls_revised_for_fable-v3",
     "clearedSourceBlockers": [
       "two-centimeter adult display scale",
       "slender dwarf Cory silhouette",
@@ -336,25 +327,26 @@
       "hyaline adipose and translucent fins",
       "forked caudal"
     ],
-    "note": "Each source blocker maps to dedicated asset or backend controls. Rendered acceptance remains downstream and explicit."
+    "note": "Each source blocker maps to existing asset or species-paint controls. Future fable-v3 render validation and explicit user acceptance remain downstream."
   },
   "failedCandidateEvidence": {
-    "path": "art/specimens/pygmy_cory/candidates/fable-v1",
-    "candidateId": "fable-v1",
-    "commit": "e43a6ce2f86b9c8a57407f4add19b53f1c4cc0c1",
-    "status": "unaccepted_reference_mismatch",
+    "path": "art/specimens/pygmy_cory/candidates/fable-v2",
+    "candidateId": "fable-v2",
+    "commit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
+    "status": "rejected_by_user",
     "render": "renders/three-view.png",
-    "review": "Independent visual review rejected the large terminal sucker ring, low broad stripe, hidden armor rows, bulbous head and opaque beige fins. The correct dwarf silhouette and forked tail remain preserved as the repair baseline."
+    "review": "The user rejected the candidate's pale shark-like silhouette and overall quality. Its licensed-source stripe, armor treatment and scale remain useful, but its body and appendage proportions are superseded by the fable-v3 source."
   },
   "deliveryStatus": {
     "sourceEdited": true,
-    "candidateBuilt": true,
-    "candidateValidated": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
     "candidateAccepted": false,
     "promotionAttempted": false,
     "latestReviewedCandidate": "fable-v2",
     "latestReviewedCandidateCommit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
-    "latestReviewedCandidateStatus": "awaiting_user_acceptance",
-    "independentReviewStatus": "complete"
+    "latestReviewedCandidateStatus": "rejected_by_user",
+    "plannedCandidate": "fable-v3",
+    "independentReviewStatus": "required_after_build"
   }
 }

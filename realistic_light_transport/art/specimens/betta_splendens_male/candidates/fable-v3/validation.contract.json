@@ -1,0 +1,584 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "betta_splendens_male",
+  "rig": "PA_betta_splendens_male_Rig",
+  "root": "PA_betta_splendens_male_Root",
+  "meshes": [
+    "PA_betta_splendens_male_Body",
+    "PA_betta_splendens_male_Fins",
+    "PA_betta_splendens_male_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_betta_splendens_male_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.0005062500000000001,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_dorsal"
+      ],
+      "label": "fin_body_dorsal"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal_anal"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_betta_splendens_male_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_betta_splendens_male_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_betta_splendens_male_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_betta_splendens_male_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_betta_splendens_male_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.065,
+    "tolerance": 0.03,
+    "kind": "adult_total_length"
+  },
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "display": {
+      "loop": false,
+      "frames": 45,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "display"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_betta_splendens_male_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.0002025
+    },
+    {
+      "object": "PA_betta_splendens_male_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.0002025
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.038476,
+      -0.008028,
+      -0.024463
+    ],
+    "max": [
+      0.026525,
+      0.008028,
+      0.023039
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.0405,
+    "fins": [
+      "dorsal",
+      "anal",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pa-fw-realism-build/realistic_light_transport/art/specimens/betta_splendens_male/candidates/fable-v3/renders/author-preview.png",
+    "threeView": "/private/tmp/pa-fw-realism-build/realistic_light_transport/art/specimens/betta_splendens_male/candidates/fable-v3/renders/three-view.png",
+    "boundsMin": [
+      -0.038475893437862396,
+      -0.008027580566704273,
+      -0.024463385343551636
+    ],
+    "boundsMax": [
+      0.02652515098452568,
+      0.008027580566704273,
+      0.02303922548890114
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}
