@@ -1,0 +1,66 @@
+{
+  "asset": "betta_splendens_male",
+  "variant": null,
+  "candidateDir": "art/specimens/betta_splendens_male/candidates/fable-v3",
+  "startedAt": "2026-09-10T16:09:17.724Z",
+  "pid": 97680,
+  "stages": [
+    {
+      "stage": "reference-evidence",
+      "exitCode": 0,
+      "durationMs": 0,
+      "tail": "passed"
+    },
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 6931,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 7592,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1193,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 922,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1264,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 799,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 738,
+      "tail": "Blender quit"
+    }
+  ],
+  "referenceEvidence": {
+    "status": "passed",
+    "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+    "path": "art/specimens/betta_splendens_male/reference-comparison.json",
+    "sha256": "7fd9945277d2187fe70aed62185320f0b952247c97009f4c6c876a68cf2d3ef9"
+  },
+  "finishedAt": "2026-09-10T16:09:37.169Z",
+  "status": "passed",
+  "failure": null
+}

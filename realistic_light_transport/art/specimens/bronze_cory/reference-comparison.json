@@ -1,8 +1,9 @@
 {
   "schemaVersion": "pocket-aquarium.reference-comparison/v1",
   "speciesId": "bronze_cory",
-  "sourceRevision": 2,
+  "sourceRevision": 3,
   "referencePacket": "source-references.json",
+  "targetForm": "adult normally pigmented Bronze Cory",
   "sourceAssetPolicy": {
     "copiedPixels": false,
     "redistributedSourceImages": false,
@@ -90,7 +91,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.controlStations[*].centerZ"
       ],
-      "notes": "Maximum depth is held at the pectoral-girdle shoulder while successive operculum, head and snout stations descend continuously. This replaces the rejected candidate's capsule-like forehead."
+      "notes": "Maximum depth remains within FishBase's observed range at the pectoral-girdle shoulder, while the posterior tapers earlier and successive operculum, head and snout stations descend continuously. This breaks the rejected candidate's uniformly inflated capsule shape."
     },
     {
       "name": "flattened belly, short rounded snout and inferior mouth",
@@ -106,7 +107,7 @@
         "morphology.controlStations[snout-tip]",
         "morphology.mouth"
       ],
-      "notes": "A flatter ventral exponent and aligned belly stations support the resting body plan. Source-configurable upper and lower lip offsets move the small transverse mouth beneath the snout instead of leaving a circular terminal ring."
+      "notes": "A flatter ventral exponent and nearly aligned ventral ridges support the resting body plan. A broader blunt snout plus clearly separated shallow upper and lower lip arcs place a small transverse mouth beneath the head without a circular terminal ring."
     },
     {
       "name": "embedded eyes and tapered maxillary and lower barbels",
@@ -121,7 +122,7 @@
         "morphology.adornments[barbel_L_lower]",
         "morphology.adornments[barbel_R_lower]"
       ],
-      "notes": "Smaller surface-seated eyes replace the failed bead-like eyes. Four tapered tube adornments replace the short ellipsoids and are rooted at the inferior mouth."
+      "notes": "Smaller, more deeply seated eyes follow the lateral head contour. Four tapered tube adornments now root directly beside and beneath the inferior mouth, following the exact frontal barbel image."
     },
     {
       "name": "narrow peduncle, forked caudal and strong leading fin spines",
@@ -138,7 +139,7 @@
         "morphology.fins[caudal]",
         "catalog.species.bronze_cory.paint_fin"
       ],
-      "notes": "The posterior trunk narrows earlier, the caudal is longer and more forked, and the dorsal and pectoral leading edges receive both silhouette and procedural relief emphasis."
+      "notes": "The posterior trunk narrows earlier into a distinct peduncle. Reduced caudal, dorsal and paired-fin spans preserve the tall triangular dorsal and leading pectoral spine without turning them into oversized planar sails."
     }
   ],
   "proportions": [
@@ -162,7 +163,7 @@
       "name": "maximum body depth divided by station-defined standard length",
       "status": "observed",
       "referenceValue": {
-        "value": 0.366,
+        "value": 0.345,
         "unit": "target ratio"
       },
       "sourceIds": [
@@ -173,13 +174,13 @@
         "morphology.controlStations[*].dorsalHeight",
         "morphology.controlStations[*].ventralDepth"
       ],
-      "notes": "FishBase's body-height range is 1/2.9 to 1/2.5 of standard length, or about 0.345 to 0.400. The revised source is 0.366 at the deepest shoulder over the 62 mm station-defined standard length."
+      "notes": "FishBase's body-height range is 1/2.9 to 1/2.5 of standard length, or about 0.345 to 0.400. The revised source is approximately 0.345 at the deepest shoulder over the unchanged 62 mm station-defined standard length."
     },
     {
       "name": "maximum body width relative to maximum body depth",
       "status": "inferred",
       "referenceValue": {
-        "value": 0.63,
+        "value": 0.682,
         "unit": "width/depth ratio"
       },
       "sourceIds": [
@@ -191,7 +192,7 @@
         "morphology.controlStations[*].halfWidth",
         "morphology.crossSection"
       ],
-      "notes": "The source is deliberately narrower than the rejected rounded candidate while retaining a robust Cory pectoral girdle. A future verified dorsal photograph can supersede this estimate."
+      "notes": "The broad armored head and operculum remain wider than the trunk while the peduncle tapers sharply. A future verified dorsal photograph can supersede this conservative live-width estimate."
     }
   ],
   "colorPatternBoundaries": [
@@ -235,32 +236,44 @@
     }
   ],
   "candidateComparison": {
+    "reviewedCandidate": {
+      "candidate": "fable-v4",
+      "status": "rejected_by_user",
+      "receipt": "REJECTED_FOR_REFERENCE_MISMATCH",
+      "notes": "The user rejected the runtime result as subpar. The candidate remains too capsule-like, its head and fins lack a convincing Cory read, and the inferior mouth and barbels are not legible enough at game scale."
+    },
+    "plannedCandidate": "fable-v5",
     "mismatches": [
       {
-        "area": "fable-v3 retained improvements",
-        "note": "Independent review retained the revised sloping head, tapered trunk, olive-bronze body and overlapping armor treatment. This repair intentionally leaves those body controls and armor paint byte-for-byte unchanged."
+        "area": "rejected fable-v4 body silhouette",
+        "note": "The body still reads as a smooth inflated capsule with an indistinct head. Future fable-v5 preserves observed adult depth at the shoulder but narrows the posterior earlier, steepens the head-roof descent and retains a broader blunt snout."
       },
       {
-        "area": "rejected fable-v3 mouth",
-        "note": "The smaller, lower mouth still reads as a vertical oval sucker ring in front view. The revised controls place two extremely shallow horizontal lip bars just forward of the inferior snout, reduce their radius and vertical separation, and give the lower bar a shorter span so their end caps cannot visually close into a ring. The four subtle tapered barbels remain intact."
+        "area": "rejected fable-v4 mouth and barbels",
+        "note": "The frontal read does not clearly communicate the exact reference's small inferior transverse mouth and two barbel lengths. Future fable-v5 separates the shallow lip arcs, seats them against the ventral snout, and reroots longer tapered barbels around the mouth corners."
       },
       {
-        "area": "rejected fable-v3 fin material",
-        "note": "The warmer fins still read as opaque planar sheets. Non-spine membrane alpha is now substantially below v3, while higher amber ray contrast and a tightly bounded near-opaque leading-spine band preserve the fin structure. Fin geometry and placement are unchanged."
+        "area": "rejected fable-v4 appendage scale",
+        "note": "The dorsal, caudal and paired fins overpower the catfish body and contribute to a generic fish silhouette. Future fable-v5 reduces those spans while retaining the dorsal and pectoral leading-spine cues and existing animation clips."
       },
       {
-        "area": "top-view calibration",
-        "note": "Whole-body width remains intentionally uncertain because no verified live orthographic top source was found. The narrower controls are a documented inference, not a claim of measured top-view fidelity."
+        "area": "retained source-backed surface treatment",
+        "note": "The olive-bronze flank, pale belly, staggered armor rows and translucent amber fin paint remain valid and are reused unchanged for future fable-v5."
       }
     ],
-    "acceptanceBlockers": []
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "robust armored Cory silhouette remains clearly distinct from the Pygmy Cory in side, front and oblique views",
+      "inferior transverse mouth and both barbel lengths remain visible in front and oblique views",
+      "reduced fins preserve a tall triangular dorsal, adipose fin and forked caudal without body intersections"
+    ]
   },
   "failedCandidateEvidence": {
-    "path": "art/specimens/bronze_cory/candidates/fable-v3",
-    "candidateId": "fable-v3",
-    "status": "unaccepted_independent_visual_rejection",
+    "path": "art/specimens/bronze_cory/candidates/fable-v4",
+    "candidateId": "fable-v4",
+    "status": "rejected_by_user",
     "render": "renders/three-view.png",
-    "review": "Independent review of candidate commit a674504 retained the improved body silhouette, olive-bronze color and overlapping armor relief but rejected the vertical oval sucker-ring mouth and visually opaque planar fin membranes. The candidate remains preserved and unpromoted."
+    "review": "The user rejected the candidate as subpar. The source-backed olive-bronze color and armor treatment remain useful, but the capsule silhouette, oversized fins and weak inferior-mouth read are superseded by the fable-v5 source."
   },
   "uncertainty": "No verified live whole-body orthographic top photograph was found. Trunk width is inferred conservatively from the frontal head image, dorsal skull anatomy and observed lateral depth.",
   "pixelPolicy": "No source pixels were copied, sampled, traced, hotlinked or redistributed.",
@@ -269,6 +282,10 @@
     "candidateBuilt": false,
     "candidateValidated": false,
     "candidateAccepted": false,
-    "promotionAttempted": false
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v4",
+    "latestReviewedCandidateStatus": "rejected_by_user",
+    "plannedCandidate": "fable-v5",
+    "independentReviewStatus": "required_after_build"
   }
 }

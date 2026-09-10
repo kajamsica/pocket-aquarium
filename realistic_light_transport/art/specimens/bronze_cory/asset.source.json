@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.bronze_cory",
   "textureStyle": "bronze_cory",
-  "assetVersion": "0.2.2",
+  "assetVersion": "0.3.0",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.075,
@@ -28,45 +28,45 @@
   },
   "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.52, "finReliefStrength": 0.82, "finNormalStrength": 0.32 },
   "morphology": {
-    "notes": "Armored high-backed Cory profile with a deep pectoral-girdle shoulder, a continuously sloping head roof, short rounded snout, flattened belly and small inferior mouth. FishBase record 7777 gives body height 2.5 to 2.9 times in standard length, one dorsal spine, seven dorsal soft rays and 23 to 24 dorsal plus 20 to 22 ventral plates. Exact licensed lateral and frontal photographs constrain the silhouette, eye seating, mouth and tapered barbels; live whole-body top width remains inferred.",
+    "notes": "Robust armored Cory profile with a deep pectoral-girdle shoulder, broad head, steep posterior taper, continuously sloping head roof, short rounded snout, flattened belly and small inferior mouth. FishBase record 7777 gives body height 2.5 to 2.9 times in standard length, one dorsal spine, seven dorsal soft rays and 23 to 24 dorsal plus 20 to 22 ventral plates. Exact licensed lateral and frontal photographs constrain the silhouette, embedded eye, transverse mouth and paired tapered barbels; live whole-body top width remains inferred.",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.025, "halfWidth": 0.0026, "dorsalHeight": 0.0044, "ventralDepth": 0.0035, "centerZ": 0.0004 },
-      { "id": "peduncle", "x": -0.020, "halfWidth": 0.0033, "dorsalHeight": 0.0056, "ventralDepth": 0.0040, "centerZ": 0.0005 },
-      { "id": "posterior", "x": -0.013, "halfWidth": 0.0050, "dorsalHeight": 0.0105, "ventralDepth": 0.0054, "centerZ": 0.0016 },
-      { "id": "midbody", "x": -0.002, "halfWidth": 0.0068, "dorsalHeight": 0.0148, "ventralDepth": 0.0064, "centerZ": 0.0022 },
-      { "id": "anterior", "x": 0.010, "halfWidth": 0.0072, "dorsalHeight": 0.0160, "ventralDepth": 0.0067, "centerZ": 0.0022 },
-      { "id": "operculum", "x": 0.020, "halfWidth": 0.0074, "dorsalHeight": 0.0133, "ventralDepth": 0.0068, "centerZ": 0.0015 },
-      { "id": "head", "x": 0.029, "halfWidth": 0.0064, "dorsalHeight": 0.0092, "ventralDepth": 0.0062, "centerZ": 0.0002 },
-      { "id": "snout", "x": 0.035, "halfWidth": 0.0042, "dorsalHeight": 0.0052, "ventralDepth": 0.0045, "centerZ": -0.0012 },
-      { "id": "snout-tip", "x": 0.037, "halfWidth": 0.0015, "dorsalHeight": 0.0020, "ventralDepth": 0.0016, "centerZ": -0.0034 }
+      { "id": "caudal-base", "x": -0.025, "halfWidth": 0.0025, "dorsalHeight": 0.0037, "ventralDepth": 0.0030, "centerZ": 0.0002 },
+      { "id": "peduncle", "x": -0.020, "halfWidth": 0.0032, "dorsalHeight": 0.0049, "ventralDepth": 0.0037, "centerZ": 0.0003 },
+      { "id": "posterior", "x": -0.013, "halfWidth": 0.0048, "dorsalHeight": 0.0082, "ventralDepth": 0.0046, "centerZ": 0.0009 },
+      { "id": "midbody", "x": -0.002, "halfWidth": 0.0065, "dorsalHeight": 0.0130, "ventralDepth": 0.0060, "centerZ": 0.0018 },
+      { "id": "anterior", "x": 0.010, "halfWidth": 0.0070, "dorsalHeight": 0.0150, "ventralDepth": 0.0064, "centerZ": 0.0018 },
+      { "id": "operculum", "x": 0.020, "halfWidth": 0.0073, "dorsalHeight": 0.0120, "ventralDepth": 0.0062, "centerZ": 0.0012 },
+      { "id": "head", "x": 0.029, "halfWidth": 0.0067, "dorsalHeight": 0.0084, "ventralDepth": 0.0055, "centerZ": -0.0002 },
+      { "id": "snout", "x": 0.035, "halfWidth": 0.0052, "dorsalHeight": 0.0047, "ventralDepth": 0.0041, "centerZ": -0.0014 },
+      { "id": "snout-tip", "x": 0.037, "halfWidth": 0.0031, "dorsalHeight": 0.0025, "ventralDepth": 0.0023, "centerZ": -0.0030 }
     ],
-    "crossSection": { "dorsalExponent": 1.88, "ventralExponent": 3.20 },
+    "crossSection": { "dorsalExponent": 1.72, "ventralExponent": 3.70 },
     "sampling": { "ringSegments": 48, "ringCount": 54 },
     "zoneFractions": [0.1, 0.28, 0.55, 0.78],
     "finThickness": { "base": 0.0009, "edge": 0.00010 },
     "fins": [
-      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": 0.001, "xEnd": 0.014, "rows": 4, "columns": 9, "lean": -0.002, "heights": [[0.0, 0.0035], [0.22, 0.0155], [0.60, 0.0100], [1.0, 0.0030]] },
-      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.019, "xEnd": -0.011, "rows": 3, "columns": 6, "lean": -0.001, "heights": [[0.0, 0.0015], [0.45, 0.0040], [1.0, 0.0012]] },
-      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.019, "xEnd": -0.007, "rows": 4, "columns": 8, "lean": -0.002, "heights": [[0.0, 0.0025], [0.30, 0.0055], [0.70, 0.0045], [1.0, 0.0018]] },
-      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0115, "spanBottom": 0.0110, "length": 0.012, "fork": 0.38, "forkPower": 1.7, "rounding": 0.12, "baseFraction": 0.86 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.015, "rootLength": 0.009, "rootHeight": -0.46, "length": 0.020, "sweepDegrees": 56, "droopDegrees": 36, "spread": 0.56, "taper": 0.22, "power": 1.05, "flare": 0.42, "rayCount": 9, "rows": 4, "columns": 7 },
-      { "name": "pelvic", "type": "paired", "rootX": -0.002, "rootLength": 0.006, "rootHeight": -0.90, "length": 0.011, "sweepDegrees": 50, "droopDegrees": 42, "spread": 0.30, "taper": 0.36, "power": 0.75, "flare": 0.45, "rayCount": 6, "rows": 3, "columns": 5 }
+      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": 0.002, "xEnd": 0.014, "rows": 4, "columns": 9, "lean": -0.002, "heights": [[0.0, 0.0025], [0.22, 0.0125], [0.60, 0.0078], [1.0, 0.0021]] },
+      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.019, "xEnd": -0.012, "rows": 3, "columns": 6, "lean": -0.001, "heights": [[0.0, 0.0011], [0.45, 0.0033], [1.0, 0.0009]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.019, "xEnd": -0.008, "rows": 4, "columns": 8, "lean": -0.002, "heights": [[0.0, 0.0018], [0.30, 0.0045], [0.70, 0.0035], [1.0, 0.0012]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0087, "spanBottom": 0.0084, "length": 0.0125, "fork": 0.35, "forkPower": 1.7, "rounding": 0.16, "baseFraction": 0.84 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.015, "rootLength": 0.0075, "rootHeight": -0.50, "length": 0.015, "sweepDegrees": 52, "droopDegrees": 39, "spread": 0.48, "taper": 0.25, "power": 1.0, "flare": 0.38, "rayCount": 9, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": -0.002, "rootLength": 0.0050, "rootHeight": -0.92, "length": 0.0080, "sweepDegrees": 47, "droopDegrees": 44, "spread": 0.26, "taper": 0.38, "power": 0.72, "flare": 0.38, "rayCount": 6, "rows": 3, "columns": 5 }
     ],
     "finAdjacency": [],
-    "eyes": { "x": 0.025, "zFraction": 0.58, "radius": 0.0021, "protrude": 0.12, "aspect": 0.36, "seat": 0.85, "roughness": 0.22, "coat": 0.16, "pupilFraction": 0.58, "pupilAspect": 0.18 },
+    "eyes": { "x": 0.025, "zFraction": 0.50, "radius": 0.00175, "protrude": 0.06, "aspect": 0.30, "seat": 0.95, "roughness": 0.24, "coat": 0.12, "pupilFraction": 0.57, "pupilAspect": 0.16 },
     "mouth": {
-      "zOffset": -0.90,
-      "width": 0.0021,
-      "radius": 0.000065,
-      "upperLip": { "centerOffset": [0.00018, -0.00072], "cornerOffset": [0.00018, -0.00072], "widthScale": 1.0, "cornerRadiusScale": 0.70, "centerRadiusScale": 0.85 },
-      "lowerLip": { "centerOffset": [0.00019, -0.00084], "cornerOffset": [0.00019, -0.00084], "widthScale": 0.82, "cornerRadiusScale": 0.62, "centerRadiusScale": 0.76 }
+      "zOffset": -1.05,
+      "width": 0.0018,
+      "radius": 0.000045,
+      "upperLip": { "centerOffset": [0.00015, -0.00055], "cornerOffset": [-0.00020, -0.00045], "widthScale": 1.0, "cornerRadiusScale": 0.55, "centerRadiusScale": 0.68 },
+      "lowerLip": { "centerOffset": [0.00010, -0.00085], "cornerOffset": [-0.00025, -0.00075], "widthScale": 0.80, "cornerRadiusScale": 0.44, "centerRadiusScale": 0.56 }
     },
     "gill": { "x": 0.015, "radius": 0.00028, "points": 15, "bulge": 0.042 },
     "adornments": [
-      { "type": "tube", "name": "barbel_L_outer", "points": [[0.0355, -0.0022, -0.0048], [0.0372, -0.0044, -0.0053], [0.0380, -0.0068, -0.0055]], "radii": [0.00022, 0.00013, 0.00003], "segments": 6, "bone": "Jaw" },
-      { "type": "tube", "name": "barbel_R_outer", "points": [[0.0355, 0.0022, -0.0048], [0.0372, 0.0044, -0.0053], [0.0380, 0.0068, -0.0055]], "radii": [0.00022, 0.00013, 0.00003], "segments": 6, "bone": "Jaw" },
-      { "type": "tube", "name": "barbel_L_lower", "points": [[0.0354, -0.0011, -0.0053], [0.0365, -0.0021, -0.0060], [0.0370, -0.0032, -0.0062]], "radii": [0.00016, 0.00009, 0.00002], "segments": 6, "bone": "Jaw" },
-      { "type": "tube", "name": "barbel_R_lower", "points": [[0.0354, 0.0011, -0.0053], [0.0365, 0.0021, -0.0060], [0.0370, 0.0032, -0.0062]], "radii": [0.00016, 0.00009, 0.00002], "segments": 6, "bone": "Jaw" }
+      { "type": "tube", "name": "barbel_L_outer", "points": [[0.0362, -0.0013, -0.0049], [0.0380, -0.0035, -0.0052], [0.0390, -0.0068, -0.0053]], "radii": [0.00018, 0.00010, 0.000025], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_R_outer", "points": [[0.0362, 0.0013, -0.0049], [0.0380, 0.0035, -0.0052], [0.0390, 0.0068, -0.0053]], "radii": [0.00018, 0.00010, 0.000025], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_L_lower", "points": [[0.0364, -0.0007, -0.0051], [0.0375, -0.0017, -0.0056], [0.0380, -0.0030, -0.0058]], "radii": [0.00013, 0.00007, 0.000018], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_R_lower", "points": [[0.0364, 0.0007, -0.0051], [0.0375, 0.0017, -0.0056], [0.0380, 0.0030, -0.0058]], "radii": [0.00013, 0.00007, 0.000018], "segments": 6, "bone": "Jaw" }
     ]
   },
   "rig": { "axialJoints": [0.030, 0.010, -0.002, -0.014, -0.022, -0.028] },

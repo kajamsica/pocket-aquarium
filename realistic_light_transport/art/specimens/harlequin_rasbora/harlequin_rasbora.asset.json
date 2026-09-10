@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "harlequin_rasbora",
+  "variantId": null,
+  "scientificName": "Trigonostigma heteromorpha",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.3.0-source",
+  "referenceSizeMeters": 0.05,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "sourceManifest": "candidates/fable-v3/candidate.manifest.json",
+  "displayName": "Harlequin Rasbora",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+      "title": "Trigonostigma heteromorpha species summary",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/10881",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "evidenceCues": [
+        "Maximum adult total length is 5.0 cm.",
+        "Cross section is compressed; the head-to-predorsal profile is steep and the mouth is terminal.",
+        "The axine has dorsal, ventral and caudal apices near the dorsal-fin origin, pelvic-fin origin and caudal-fin base."
+      ]
+    },
+    {
+      "id": "TAN-2020-TRIGONOSTIGMA",
+      "title": "Trigonostigma truncata, a new species of harlequin rasbora from Malay Peninsula (Teleostei: Danionidae)",
+      "publisher": "Raffles Bulletin of Zoology",
+      "author": "Tan Heok Hui",
+      "url": "https://lkcnhm.nus.edu.sg/wp-content/uploads/sites/11/app/uploads/2020/01/RBZ-2020-0058.pdf",
+      "doi": "10.26107/RBZ-2020-0058",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_morphology",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright National University of Singapore; no image reuse performed",
+      "evidenceCues": [
+        "The T. heteromorpha axine is large and velvety black, with a straight anterior margin and dorsal, ventral and caudal apices.",
+        "The caudal apex extends along the peduncle to the caudal-fin base; the broad anterior span exceeds two-thirds of body depth.",
+        "The species has a steep convex predorsal profile, terminal mouth, orange-red dorsal base and forked caudal."
+      ]
+    },
+    {
+      "id": "COMMONS-HARLEQUIN-RASBORA-MALE",
+      "title": "Harlequin Rasbora.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Mariusz Dabrowski",
+      "url": "https://commons.wikimedia.org/wiki/File:Harlequin_Rasbora.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "near-lateral male",
+      "provenance": "Author's own work, 21 July 2011; original 5184 by 3456 file page, not the later crop.",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 3.0",
+      "evidenceCues": [
+        "Deep compressed trunk, steep dorsal head-to-back rise, large eye and small terminal mouth.",
+        "Dorsal, pelvic and anal placement plus a fully visible forked caudal silhouette.",
+        "Axine is a bounded flank triangle that narrows toward the peduncle instead of filling the posterior body."
+      ]
+    },
+    {
+      "id": "COMMONS-RASBORA-H",
+      "title": "Rasbora h.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "-serwacy01-",
+      "url": "https://commons.wikimedia.org/wiki/File:Rasbora_h.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "high-detail lateral head and anterior fins",
+      "provenance": "Author's own work, photographed 23 December 2022; original 5184 by 3456 file page.",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 4.0",
+      "evidenceCues": [
+        "Bluntly pointed snout, terminal mouth at the midline, large round eye and short opercular region.",
+        "Steep predorsal slope, deep chest, orange-red dorsal and translucent paired and anal fins.",
+        "Posterior tail is cropped, so this image does not control caudal proportions."
+      ]
+    },
+    {
+      "id": "INATURALIST-251680901",
+      "title": "Trigonostigma heteromorpha in Malaysia, photo 251680901",
+      "publisher": "iNaturalist",
+      "author": "Zakqary Roy",
+      "url": "https://www.inaturalist.org/photos/251680901",
+      "observationUrl": "https://www.inaturalist.org/observations/146396004",
+      "provenanceVerificationUrl": "https://commons.wikimedia.org/wiki/File:Trigonostigma_heteromorpha_251680901.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "native-context lateral specimens with scale",
+      "provenance": "Original iNaturalist photo from Malaysia, 12 January 2023; license reviewed by INaturalistReviewBot on Wikimedia Commons.",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY 4.0",
+      "evidenceCues": [
+        "Wild-specimen proportions and full forked caudal silhouettes guard against exaggerated aquarium-bred depth.",
+        "Axine reaches the caudal-fin base and dorsal-fin position aligns with the broad anterior end of the wedge."
+      ]
+    },
+    {
+      "id": "COMMONS-BREEDING2",
+      "title": "Trigonostigma heteromorpha breeding2.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Stefan Maurer",
+      "url": "https://commons.wikimedia.org/wiki/File:Trigonostigma_heteromorpha_breeding2.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "inverted head-on and ventral-oblique spawning view",
+      "provenance": "Originally posted to Flickr as DSC02740; Commons verified the license on upload.",
+      "allowedUse": "qualitative_cross_section_reference_only",
+      "license": "CC BY-SA 2.0",
+      "evidenceCues": [
+        "Qualitatively supports a narrow side-to-side section relative to vertical body depth.",
+        "Motion blur, foreshortening and spawning posture prohibit calibrated head width or top-outline inference."
+      ]
+    },
+    {
+      "id": "SIGNIFY-MNHN1912-0141",
+      "title": "Trigonostigma heteromorpha, MNHN1912-0141",
+      "publisher": "SIGNIFY, Lee Kong Chian Natural History Museum",
+      "author": "SIGNIFY, Lee Kong Chian Natural History Museum",
+      "url": "https://signifynaturalhistory.sg/specimens/MNHN1912-0141_Rasbora_heteromorpha_nontype",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "museum_specimen_imagery",
+      "view": "preserved lateral voucher",
+      "provenance": "Nontype specimen from Singapore, catalog MNHN1912-0141; copyright Muséum national d'Histoire naturelle.",
+      "allowedUse": "view_and_citation_only",
+      "license": "No open reuse license stated",
+      "evidenceCues": [
+        "Corroborates deep trunk, short peduncle, steep head-to-back transition and bilateral fin placement.",
+        "Preservation and collapsed fins prohibit using it for live fin outline or coloration."
+      ]
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "53e3fc53741e14a7d9c667c7ab398184d9c33d5d2f93d54e159a47a1585b5d81",
+  "sourceReferencesSha256": "b7b526fac5fb1aaa9c608018c81d40b37ff0a429ab26d233bcae9bfb98e884c4",
+  "sourceBlendSha256": "7d1eb9489e8a43fb5b3e8022ae07676394a1baa70e67944fdf12df728c887fcd",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "c81199d42cc4f1c68c92de019aef10c2ab07386f907563ac858069559300969a",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "ec3b6354d69bcbf0fd41b519758b13637873c2c86f23af9caddc921dbfb2e5ec"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "candidates/fable-v3/textures/body-albedo.png",
+      "sha256": "077b527c3373f0defa8dd252e4258d9bb58de7884476df929329523c7a72cef0"
+    },
+    {
+      "path": "candidates/fable-v3/textures/body-normal.png",
+      "sha256": "22d645a50861d29c21711d4c6ecb04e79bb70fe4faf24364b4e551de0dddfffe"
+    },
+    {
+      "path": "candidates/fable-v3/textures/body-roughness.png",
+      "sha256": "b86ebdca1c55e153b29148e87c2f9f561af562a0527f4e69a77d22aa9887ebd4"
+    },
+    {
+      "path": "candidates/fable-v3/textures/fin-atlas.png",
+      "sha256": "ffb89d070b70ed41dfcb10c7e2b4dd8bd789c4880dc12cabd20b098546548830"
+    },
+    {
+      "path": "candidates/fable-v3/textures/fin-normal.png",
+      "sha256": "9ca56d2dd13fa98179ffb633567ede05dea38146a92e1e30632bf819f5b22812"
+    }
+  ],
+  "statistics": {
+    "triangles": 7150,
+    "materials": 6,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_harlequin_rasbora_Body": 2210,
+      "PA_harlequin_rasbora_Fins": 418,
+      "PA_harlequin_rasbora_Details": 1028
+    },
+    "runtimeBytes": 1353672
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.02813,
+      -0.005398,
+      -0.008555
+    ],
+    "max": [
+      0.020429,
+      0.005398,
+      0.012533
+    ]
+  },
+  "renders": {
+    "authorPreview": "candidates/fable-v3/renders/author-preview.png",
+    "threeView": "candidates/fable-v3/renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "candidates/fable-v3/validation-source.json",
+    "runtimeReport": "candidates/fable-v3/validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  },
+  "promotion": {
+    "status": "accepted",
+    "acceptedBy": "user",
+    "acceptedOn": "2026-09-10",
+    "promotedAssetVersion": "0.3.0-source",
+    "rollback": null
+  }
+}

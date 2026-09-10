@@ -79,12 +79,12 @@
     "top": {
       "status": "inferred",
       "uncertainty": "High. No calibrated orthographic dorsal original was found; moving oblique views show only qualitative lateral compression.",
-      "notes": "The rejected fable-v1 looked cylindrical from above. Revised station half-widths reduce the midbody width-to-depth ratio from 0.505 to 0.374 while staying symmetrical and explicitly inferred."
+      "notes": "The in-tank fable-v2 still read too thick for a tiny compressed characin. The next source narrows the midbody width-to-depth ratio from 0.374 to 0.330 while staying symmetrical and explicitly inferred."
     },
     "front": {
       "status": "inferred",
       "uncertainty": "High. No verified sharp orthographic frontal original was found, and video frames include motion and perspective distortion.",
-      "notes": "The rejected fable-v1 looked cylindrical from the front. Revised head and trunk half-widths create a clearly compressed section without changing the verified lateral outline, eye, or body depth."
+      "notes": "The next source narrows the head and trunk sections and fully seats a smaller eye so the frontal view reads as a tiny compressed characin rather than a scaled-down generic fish. The verified total length, body depth, rig, and clips remain unchanged."
     }
   },
   "silhouetteLandmarks": [
@@ -101,7 +101,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.controlStations[*].halfWidth"
       ],
-      "notes": "The station envelope retains FishBase's 26 percent total-length body depth and verified lateral silhouette. Narrower half-widths now produce a visibly compressed trunk that tapers continuously into a short, fine peduncle."
+      "notes": "The station envelope retains FishBase's 26 percent total-length maximum body depth while shifting fullness to the midbody, tapering the anterior envelope sooner, and narrowing the section. The result is intended to read as a smooth torpedo with a short, fine peduncle rather than a blunt capsule."
     },
     {
       "name": "short head, large seated eye, and small terminal mouth",
@@ -117,7 +117,7 @@
         "morphology.eyes",
         "morphology.mouth"
       ],
-      "notes": "Head stations target the measured 18.5 percent total-length head while the eye control reflects the unusually large 45.9 percent eye-diameter to head-length ratio."
+      "notes": "Head stations retain the measured head interval but taper sooner into the terminal mouth. The eye is reduced from 2.7 to 2.2 mm diameter, flattened, fully seated, and given a dark iris so the shared eye plan does not render a protruding bead."
     },
     {
       "name": "triangular dorsal, small adipose, low anal, paired fins, and forked caudal",
@@ -133,7 +133,7 @@
         "morphology.fins[caudal].fork",
         "morphology.fins[caudal].length"
       ],
-      "notes": "Median and paired fin positions follow the FishBase predorsal, prepelvic, and preanal ratios. A dedicated adipose mesh and deeply forked symmetrical caudal preserve the exact adult lateral cues."
+      "notes": "Median and paired fin origins remain tied to the FishBase predorsal, prepelvic, and preanal ratios. Fin spans and thickness are reduced so the short dorsal, tiny adipose, low anal, paired fins, and forked caudal remain subordinate to the tiny body instead of reading as rigid paddles."
     }
   ],
   "proportions": [
@@ -183,7 +183,7 @@
         "morphology.controlStations[operculum].x",
         "morphology.controlStations[snout-tip].x"
       ],
-      "notes": "A 2.7 mm authored eye diameter over the conservative 5.5 mm operculum-to-snout interval is 0.491. Candidate review must verify that the shared eye plan does not make this large eye look protrusive."
+      "notes": "A 2.2 mm authored eye diameter over the conservative 5.5 mm operculum-to-snout interval is 0.400. That is smaller than the measured 0.459 ratio, intentionally prioritizing the in-tank requirement for a small seated eye while preserving a visibly large characin eye."
     },
     {
       "name": "adult display total length",
@@ -196,14 +196,14 @@
     {
       "name": "midbody width divided by body depth",
       "status": "inferred",
-      "referenceValue": { "value": 0.374, "unit": "ratio" },
+      "referenceValue": { "value": 0.33, "unit": "ratio" },
       "uncertainty": "High. FishBase provides lateral body depth but no calibrated width, and no verified orthographic top or frontal source was found.",
       "sourceControls": [
         "morphology.controlStations[midbody].halfWidth",
         "morphology.controlStations[midbody].dorsalHeight",
         "morphology.controlStations[midbody].ventralDepth"
       ],
-      "notes": "The revised 3.4 mm full width over the preserved 9.1 mm midbody depth corrects the cylindrical fable-v1 section while keeping the width explicitly provisional."
+      "notes": "The revised 3.0 mm full width over the preserved 9.1 mm midbody depth further corrects the thick fable-v2 section while keeping the width explicitly provisional."
     }
   ],
   "colorPatternBoundaries": [
@@ -251,24 +251,22 @@
   ],
   "candidateComparison": {
     "previousCandidate": {
-      "candidate": "fable-v1",
-      "commit": "3ccdb5d326469515dda6fce720ba0c79c7526ec2",
-      "candidateHash": "4ccb1f503c09d6b6cb5bc07a06a7eb9d1223d3bdc9bf8bb081b67e90fcf5d79d",
-      "status": "rejected",
-      "receipt": "REJECT_AND_REFINE",
-      "notes": "The technically validated candidate preserved the correct lateral length, depth, head, and forked tail, but independent visual review rejected its cylindrical top/front section, caudal-reaching blue stripe, rectangular posterior red patch, and opaque caudal material."
-    },
-    "reviewedCandidate": {
       "candidate": "fable-v2",
       "commit": "6c0ae6892c99a8d0b01d6935a8c0020ba6a4869d",
-      "status": "awaiting_user_acceptance",
-      "receipt": "ACCEPT_FOR_USER_REVIEW",
-      "notes": "Independent review accepted fable-v2 for explicit user review. The candidate resolves the cylindrical body section, blue-stripe endpoint, red-stripe taper, and caudal-translucency objections recorded against fable-v1. This review does not constitute user acceptance or authorize promotion. The relatively large eye, conservative anterior body depth, and animation appearance remain caveats for the user gate."
+      "status": "rejected_after_in_tank_user_review",
+      "receipt": "REJECT_AND_REFINE",
+      "notes": "Fable-v2 resolved the first candidate's stripe boundaries and opaque caudal, but the integrated tank review still found the specimen subpar. It reads too thick and generic, with an overlarge bead-like eye and fins that dominate the tiny body."
+    },
+    "plannedCandidate": {
+      "candidate": "fable-v3",
+      "status": "source_ready_unbuilt",
+      "receipt": "REBUILD_REQUIRED",
+      "notes": "The next source preserves the exact 3.5 cm scale, rig, clips, blue eye-to-adipose stripe, posterior-only red stripe, silver belly, and clear-fin paint. It narrows and streamlines the envelope, tapers the head, seats a smaller eye, and reduces every fin span and thickness. A new build and visual gate are required."
     },
     "mismatches": [
       {
-        "area": "fable-v1 top and front section",
-        "note": "Rejected: the body read as cylindrical. V2 reduces trunk and head half-widths, with a midbody width-to-depth ratio of 0.374, while preserving the verified lateral length and 0.26 depth-to-length ratio."
+        "area": "fable-v2 body section and envelope",
+        "note": "Rejected in tank: the fish still read as a generic thick capsule. V3 source narrows the midbody width-to-depth ratio to 0.330 and moves the maximum verified 0.26 depth-to-length envelope to a smoother midbody peak."
       },
       {
         "area": "fable-v1 blue stripe endpoint",
@@ -283,47 +281,44 @@
         "note": "Rejected: the forked tail looked opaque and brown. V2 retains the correct fork silhouette but uses a pale neutral tint and a substantially lower alpha range."
       },
       {
-        "area": "remaining top and front calibration",
-        "note": "Independent review found the fable-v2 compression suitable for user review, but its top and front calibration remains inferred because no verified orthographic width source exists."
+        "area": "fable-v2 eye and head",
+        "note": "Rejected in tank: the eye and blunt anterior profile overwhelm this tiny species. V3 source reduces and fully seats the eye, darkens the iris, and tapers the head continuously into a smaller terminal mouth."
       },
       {
         "area": "remaining iridescent material",
         "note": "The procedural color approximates the blue-cyan appearance in static display space and cannot reproduce the real stripe's angle-, light-, and physiological-state-dependent reflection."
       },
       {
-        "area": "residual eye scale",
-        "note": "The large eye is supported by the measured eye-diameter ratio, but it may still read as visually prominent and requires explicit user judgment."
-      },
-      {
-        "area": "residual anterior body depth",
-        "note": "The anterior body remains conservatively deep relative to some individual reference photographs even though the verified lateral body-depth ratio is preserved."
+        "area": "fable-v2 fin scale",
+        "note": "Rejected in tank: the rigid median and paired fins read too large. V3 source reduces their spans and root-to-edge thickness while retaining all anatomically required fins and their source-backed origins."
       },
       {
         "area": "residual animation review",
-        "note": "Animation values passed technical validation, but the swim and burst clips were not independently verified for perceptual naturalism in the visual-review receipt."
+        "note": "The exact accepted rig and clip definitions are intentionally unchanged. The rebuilt source still requires perceptual review of the swim and burst clips on the refined silhouette."
       }
     ],
     "acceptanceBlockers": [],
     "pendingVisualChecks": [
-      "user judgment of the proportionally supported but visually large eye",
-      "user judgment of conservative anterior body depth",
+      "slender torpedo silhouette and tiny in-tank read",
+      "small fully seated eye and terminal mouth",
+      "clear subordinate fins without rigid paddle silhouettes",
       "perceptual naturalism of swim and burst animation",
       "top and front proportions under explicit inferred-view uncertainty"
     ]
   },
-  "uncertainty": "True orthographic top and front proportions remain unmeasured. Fable-v1 was technically validated but visually rejected. Independent review accepted built fable-v2 for user review, not final acceptance. Its large eye, conservative anterior body depth, and animation appearance remain explicit caveats. Adult display length remains a bounded representative value rather than a newly claimed species maximum.",
+  "uncertainty": "True orthographic top and front proportions remain unmeasured. Integrated tank review rejected built fable-v2 as subpar. Fable-v3 is a source-only refinement and has not been built or visually validated. Adult display length remains a bounded representative value rather than a newly claimed species maximum.",
   "pixelPolicy": "No reference pixels were copied, sampled, traced, hotlinked, or redistributed.",
   "deliveryStatus": {
     "sourceEdited": true,
-    "candidateBuilt": true,
-    "candidateValidated": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
     "candidateAccepted": false,
-    "promotionAttempted": false,
+    "promotionAttempted": true,
     "latestReviewedCandidate": "fable-v2",
     "latestReviewedCandidateCommit": "6c0ae6892c99a8d0b01d6935a8c0020ba6a4869d",
-    "latestReviewedCandidateStatus": "awaiting_user_acceptance",
-    "independentReviewReceipt": "ACCEPT_FOR_USER_REVIEW",
-    "repairCandidate": "fable-v2",
-    "repairCandidateStatus": "awaiting_user_acceptance"
+    "latestReviewedCandidateStatus": "rejected_after_in_tank_user_review",
+    "independentReviewReceipt": "REJECT_AND_REFINE",
+    "repairCandidate": "fable-v3",
+    "repairCandidateStatus": "source_ready_unbuilt"
   }
 }
