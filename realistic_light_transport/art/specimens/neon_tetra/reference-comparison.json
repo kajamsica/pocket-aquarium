@@ -258,10 +258,12 @@
       "receipt": "REJECT_AND_REFINE",
       "notes": "The technically validated candidate preserved the correct lateral length, depth, head, and forked tail, but independent visual review rejected its cylindrical top/front section, caudal-reaching blue stripe, rectangular posterior red patch, and opaque caudal material."
     },
-    "repairSource": {
+    "reviewedCandidate": {
       "candidate": "fable-v2",
-      "status": "source_repaired_unbuilt",
-      "notes": "The handwritten v2 source narrows only body half-widths, moves the blue posterior fade into the adipose span, tapers the red band from midbody to the fuller posterior flank, and makes the caudal membrane clear. Lateral station positions, body depth, head, fork geometry, and validated animation values remain unchanged."
+      "commit": "6c0ae6892c99a8d0b01d6935a8c0020ba6a4869d",
+      "status": "awaiting_user_acceptance",
+      "receipt": "ACCEPT_FOR_USER_REVIEW",
+      "notes": "Independent review accepted fable-v2 for explicit user review. The candidate resolves the cylindrical body section, blue-stripe endpoint, red-stripe taper, and caudal-translucency objections recorded against fable-v1. This review does not constitute user acceptance or authorize promotion. The relatively large eye, conservative anterior body depth, and animation appearance remain caveats for the user gate."
     },
     "mismatches": [
       {
@@ -282,23 +284,34 @@
       },
       {
         "area": "remaining top and front calibration",
-        "note": "The compression repair is source-grounded but still inferred. A v2 build requires independent top/front review because no verified orthographic width source exists."
+        "note": "Independent review found the fable-v2 compression suitable for user review, but its top and front calibration remains inferred because no verified orthographic width source exists."
       },
       {
         "area": "remaining iridescent material",
         "note": "The procedural color approximates the blue-cyan appearance in static display space and cannot reproduce the real stripe's angle-, light-, and physiological-state-dependent reflection."
+      },
+      {
+        "area": "residual eye scale",
+        "note": "The large eye is supported by the measured eye-diameter ratio, but it may still read as visually prominent and requires explicit user judgment."
+      },
+      {
+        "area": "residual anterior body depth",
+        "note": "The anterior body remains conservatively deep relative to some individual reference photographs even though the verified lateral body-depth ratio is preserved."
+      },
+      {
+        "area": "residual animation review",
+        "note": "Animation values passed technical validation, but the swim and burst clips were not independently verified for perceptual naturalism in the visual-review receipt."
       }
     ],
     "acceptanceBlockers": [],
     "pendingVisualChecks": [
-      "clearly compressed top and front section without a cylindrical trunk",
-      "blue stripe ending beneath the adipose fin",
-      "posterior red stripe tapering to a narrow anterior point",
-      "clear translucent forked caudal membrane",
-      "unchanged correct lateral scale, body depth, head, and tail fork"
+      "user judgment of the proportionally supported but visually large eye",
+      "user judgment of conservative anterior body depth",
+      "perceptual naturalism of swim and burst animation",
+      "top and front proportions under explicit inferred-view uncertainty"
     ]
   },
-  "uncertainty": "True orthographic top and front proportions remain unmeasured. Fable-v1 was technically validated but visually rejected. The repaired v2 source remains unbuilt and requires independent visual review; adult display length remains a bounded representative value rather than a newly claimed species maximum.",
+  "uncertainty": "True orthographic top and front proportions remain unmeasured. Fable-v1 was technically validated but visually rejected. Independent review accepted built fable-v2 for user review, not final acceptance. Its large eye, conservative anterior body depth, and animation appearance remain explicit caveats. Adult display length remains a bounded representative value rather than a newly claimed species maximum.",
   "pixelPolicy": "No reference pixels were copied, sampled, traced, hotlinked, or redistributed.",
   "deliveryStatus": {
     "sourceEdited": true,
@@ -306,10 +319,11 @@
     "candidateValidated": true,
     "candidateAccepted": false,
     "promotionAttempted": false,
-    "latestReviewedCandidate": "fable-v1",
-    "latestReviewedCandidateCommit": "3ccdb5d326469515dda6fce720ba0c79c7526ec2",
-    "latestReviewedCandidateStatus": "rejected",
+    "latestReviewedCandidate": "fable-v2",
+    "latestReviewedCandidateCommit": "6c0ae6892c99a8d0b01d6935a8c0020ba6a4869d",
+    "latestReviewedCandidateStatus": "awaiting_user_acceptance",
+    "independentReviewReceipt": "ACCEPT_FOR_USER_REVIEW",
     "repairCandidate": "fable-v2",
-    "repairCandidateStatus": "source_repaired_unbuilt"
+    "repairCandidateStatus": "awaiting_user_acceptance"
   }
 }
