@@ -259,26 +259,66 @@
     }
   ],
   "candidateComparison": {
-    "mismatches": [
+    "previousCandidates": [
       {
-        "area": "preserved fable-v1 silhouette",
-        "note": "The current three-view remains rejected and stale after this source revision: it has a capsule snout, bead-like eyes, forward oversized dorsal, rounded delta-like caudal, broad pelvic blades and excess anterior width. The revised source maps each issue to declarative controls, but only a separately authorized serialized build and human review can verify the output."
-      },
-      {
-        "area": "preserved fable-v1 colour",
-        "note": "The current body has broad pale turquoise procedural islands and neon red fin rims. The backend revision replaces those with coherent fine scale sheen and a broad blue-to-red fin transition tied to an exact blue-red halfmoon reference page. No new textures or candidate files are generated in this source-only checkpoint."
-      },
-      {
-        "area": "top and dimensional calibration",
-        "note": "Body width remains medium-to-high uncertainty because the verified top photograph is oblique and no calibrated preserved specimen measurements were found. The source does not claim orthographic precision."
-      },
-      {
-        "area": "soft rays and lower jaw",
-        "note": "Optional shared controls now express independent lip projection and a narrow distal pelvic filament, resolving the earlier authoring blockers. The result remains a game-scale approximation: the lower jaw is not a separate deformable mesh and fin rays remain normal-map relief."
+        "candidate": "fable-v1",
+        "status": "rejected",
+        "receipt": "REJECT_AND_REFINE",
+        "notes": "The preserved fable-v1 candidate was rejected for its capsule snout, bead-like eyes, forward oversized dorsal, rounded delta-like caudal, broad pelvic blades, pale camouflage-like flank islands and excess anterior width."
       }
     ],
-    "acceptanceBlockers": []
+    "reviewedCandidate": {
+      "candidate": "fable-v2",
+      "commit": "5a47257ff56b07e71972a10df429c096ba233836",
+      "status": "awaiting_user_acceptance",
+      "receipt": "ACCEPT_FOR_USER_REVIEW",
+      "notes": "Independent three-view review found the repaired halfmoon silhouette, seated eyes, upturned lips, rear-set dorsal, long anal base, broader capital-D-like caudal, narrow pelvic reach and coherent blue-red surface suitable for explicit user review. This receipt is not user acceptance and does not authorize promotion. Residual planar fin construction, animation appearance, capsule-like surface smoothness, and inferred top and front proportions remain caveats for the user gate."
+    },
+    "mismatches": [
+      {
+        "area": "rejected fable-v1 silhouette",
+        "note": "The preserved fable-v1 candidate remains rejected for its capsule snout, bead-like eyes, forward oversized dorsal, rounded delta-like caudal, broad pelvic blades and excess anterior width. Fable-v2 materially repairs those failures and does not replace the preserved rejection record."
+      },
+      {
+        "area": "rejected fable-v1 colour",
+        "note": "The preserved fable-v1 body has broad pale turquoise procedural islands and neon red fin rims. Fable-v2 replaces those with coherent fine scale sheen and a broad blue-to-red fin transition tied to the exact blue-red halfmoon reference page."
+      },
+      {
+        "area": "fable-v2 planar fin construction",
+        "note": "The median and paired fins retain game-scale planar membrane construction with normal-map ray relief. Their silhouettes are materially improved, but they do not reproduce individually modeled soft-ray curvature or full membrane volume."
+      },
+      {
+        "area": "fable-v2 capsule smoothness",
+        "note": "The revised head and body stations remove the worst capsule proportions, but the shared procedural body surface remains smoother and more uniformly inflated than a fully sculpted real Betta under close inspection."
+      },
+      {
+        "area": "fable-v2 animation review",
+        "note": "Recorded technical animation validation passed, but the complete idle, swim and display clips have not been explicitly accepted for perceptual naturalism, fin drag, or soft-ray motion."
+      },
+      {
+        "area": "top and front calibration",
+        "note": "Body width and frontal head shape remain medium-to-high uncertainty because the verified top photograph is oblique and neither top nor front source is dimensionally calibrated. Fable-v2 must not be represented as an orthographically measured reconstruction."
+      }
+    ],
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "user judgment of residual planar fin construction",
+      "idle, swim and display animation naturalism",
+      "residual capsule-like body smoothness under close inspection",
+      "top and front proportions under inferred-view uncertainty"
+    ]
   },
-  "acceptanceStatus": "source_revised_candidate_stale_rejected_unaccepted",
-  "nextRequiredEvidence": "Build a new candidate only in an authorized serialized Blender lane, then compare side, top and front renders against this packet and request explicit user acceptance."
+  "acceptanceStatus": "fable_v2_independently_reviewed_awaiting_user_acceptance",
+  "nextRequiredEvidence": "Explicit user acceptance of fable-v2 is required before any promotion or runtime use.",
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": true,
+    "candidateValidated": true,
+    "candidateAccepted": false,
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v2",
+    "latestReviewedCandidateCommit": "5a47257ff56b07e71972a10df429c096ba233836",
+    "latestReviewedCandidateStatus": "awaiting_user_acceptance",
+    "independentReviewReceipt": "ACCEPT_FOR_USER_REVIEW"
+  }
 }
