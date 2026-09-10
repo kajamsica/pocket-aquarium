@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "flowerhorn",
+  "sourceRevision": 1,
+  "referencePacket": "source-references.json",
+  "targetForm": "adult male red-pearl Flowerhorn cichlid",
+  "comparisonPolicy": "Google Images may locate candidates, but only the exact original pages recorded here govern design. Comparisons use qualitative landmarks, proportions, and pattern boundaries without sampling, tracing, copying, redistributing, or hotlinking pixels.",
+  "sourceAssetPolicy": { "copiedPixels": false, "redistributedSourceImages": false, "hotlinkedAssets": false },
+  "sources": [
+    { "id": "JOTT-ALIEN-ORNAMENTAL-FISH", "originalPageUrl": "https://www.threatenedtaxa.org/index.php/JoTT/article/download/465/780/851?inline=1", "creator": "J. D. Marcus Knight", "license": "CC BY 3.0 Unported, with JoTT non-commercial reuse terms stated in the article", "accessedAt": "2026-09-09", "allowedUse": "Hybrid-origin, adult-scale, and behavior facts with citation; no figures copied or redistributed." },
+    { "id": "NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "originalPageUrl": "https://repository.nfrdi.da.gov.ph/server/api/core/bitstreams/2bf1341f-a16d-4c35-8792-c605b985ed3c/content", "creator": "Maria Theresa M. Mutia, Lilian C. Garcia, Frederick B. Muyot, Myla C. Muyot, Myleen L. Magistrado, Ma. Lourdes D. Merilles, Lea Mae S. Dela Cruz, and Norvida C. Gatdula", "license": "CC BY-NC", "accessedAt": "2026-09-09", "allowedUse": "Adult male form and selected ornamental-trait facts with citation; no figures copied or redistributed." },
+    { "id": "INFANTE-2018-NUCHAL-HUMP", "originalPageUrl": "https://jurnal.unai.edu/index.php/isc/article/view/1196", "creator": "Kristine Mae G. Infante and coauthors", "license": "Copyright ISC Committee", "accessedAt": "2026-09-09", "allowedUse": "Nuchal-hump anatomy and development facts with citation; no figures copied or redistributed." },
+    { "id": "COMMONS-FLOWERHORN-COMPETITION", "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Flowerhorn.jpg", "creator": "Lerdsuwa", "license": "CC BY-SA 3.0", "accessedAt": "2026-09-09", "allowedUse": "Adult lateral-oblique silhouette and ornamental-pattern comparison only; no pixels copied, sampled, traced, redistributed, embedded, or hotlinked." },
+    { "id": "COMMONS-FLOWERHORN-48821775218", "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Flowerhorn_(48821775218).jpg", "creator": "Garry Knight", "license": "CC BY 2.0", "accessedAt": "2026-09-09", "allowedUse": "Additional adult lateral-oblique anatomy comparison only; no pixels copied, sampled, traced, redistributed, embedded, or hotlinked." }
+  ],
+  "views": {
+    "side": { "status": "observed", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION", "COMMONS-FLOWERHORN-48821775218"], "notes": "The adult references agree on an exaggerated rounded hump, small eye below the hump, terminal fleshy lips, robust deep cichlid trunk, long-based median fins, strong peduncle, and broad rounded tail." },
+    "top": { "status": "inferred", "uncertainty": "High. No calibrated orthographic dorsal photograph was found. The broad cichlid width is inferred from adult oblique images and the government description of a robust, stout body.", "notes": "Maximum width and hump breadth are intentionally provisional and require downstream top-view review." },
+    "front": { "status": "inferred", "uncertainty": "High. No calibrated orthographic frontal photograph was found. Lip projection, eye seating, cheek volume, and hump symmetry are inferred from lateral-oblique originals.", "notes": "The front view cannot be accepted as measured until a verified frontal original is added." }
+  },
+  "silhouetteLandmarks": [
+    { "name": "continuous exaggerated nuchal hump above eye and skull", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "INFANTE-2018-NUCHAL-HUMP", "COMMONS-FLOWERHORN-COMPETITION", "COMMONS-FLOWERHORN-48821775218"], "sourceControls": ["morphology.controlStations[hump-posterior]", "morphology.controlStations[hump-crest]", "morphology.controlStations[head]"], "notes": "Two elevated, broad head stations form a smooth fatty forehead mass continuous with the body, rather than a detached sphere or a sharp horn." },
+    { "name": "deep robust cichlid trunk and strong peduncle", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION", "COMMONS-FLOWERHORN-48821775218"], "sourceControls": ["morphology.controlStations[*]", "morphology.crossSection"], "notes": "Broad anterior and midbody stations preserve the stout breeder form while posterior stations narrow gradually into a substantial peduncle." },
+    { "name": "terminal fleshy mouth, long median fins, and broad rounded tail", "sourceIds": ["COMMONS-FLOWERHORN-COMPETITION", "COMMONS-FLOWERHORN-48821775218"], "sourceControls": ["morphology.mouth", "morphology.fins[dorsal]", "morphology.fins[anal]", "morphology.fins[caudal]"], "notes": "Paired lip controls build a compact projecting cichlid mouth, while long dorsal and anal bases taper into a nearly unforked rounded caudal envelope." }
+  ],
+  "proportions": [
+    { "name": "representative adult total length", "status": "observed", "referenceValue": { "value": 0.30, "unit": "meters total length" }, "sourceIds": ["JOTT-ALIEN-ORNAMENTAL-FISH"], "sourceControls": ["referenceSize.meters", "referenceSize.kind", "morphology.controlStations[*].x", "morphology.fins[caudal].length"], "notes": "The 0.230 m axial station span plus 0.070 m caudal envelope targets the almost-30-cm adult reported in peer-reviewed invasion literature." },
+    { "name": "maximum trunk height divided by total length", "status": "inferred", "referenceValue": { "value": 0.52, "unit": "trunk-height/total-length ratio" }, "uncertainty": "Moderate. The deep robust form is strongly supported, but no calibrated morphometric of the selected red-pearl strain was found.", "sourceControls": ["morphology.controlStations[*].dorsalHeight", "morphology.controlStations[*].ventralDepth"], "notes": "The maximum non-hump trunk depth is approximately 0.156 m, producing a stout cichlid profile without confusing the hump with ordinary body depth." },
+    { "name": "maximum body width divided by maximum trunk height", "status": "inferred", "referenceValue": { "value": 0.59, "unit": "width/trunk-height ratio" }, "uncertainty": "High. This is a conservative interpretation of robust, stout body language and oblique images, not a published orthographic measurement.", "sourceControls": ["morphology.controlStations[*].halfWidth", "morphology.crossSection"], "notes": "The source is intentionally thicker than an angelfish or discus but remains laterally compressed like a large Central American cichlid." },
+    { "name": "nuchal-hump rise above ordinary dorsal trunk", "status": "inferred", "referenceValue": { "value": 0.048, "unit": "meters additional dorsal rise" }, "uncertainty": "Moderate. The hump is diagnostic and biologically supported, but magnitude varies strongly by sex, strain, age, condition, and husbandry.", "sourceControls": ["morphology.controlStations[hump-crest].dorsalHeight", "morphology.controlStations[operculum].dorsalHeight"], "notes": "The crest rises 48 mm beyond the opercular dorsal height in source space, giving a prominent adult male silhouette without treating the variable ornamental extreme as universal." }
+  ],
+  "colorPatternBoundaries": [
+    { "name": "red-orange adult ground with paler posterior and belly", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION"], "sourceControls": ["catalog.species.flowerhorn.paint_body", "palette.skin"], "notes": "A warm red head and shoulder transition through orange-red flank tones rather than forming a single flat red material." },
+    { "name": "turquoise-white pearling over body and median fins", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION", "COMMONS-FLOWERHORN-48821775218"], "sourceControls": ["catalog.species.flowerhorn._pearl_mask", "catalog.species.flowerhorn.paint_body", "catalog.species.flowerhorn.paint_fin"], "notes": "Seeded cellular spots create small brilliant scale-associated pearls with irregular spacing and brightness, without copying any source pixels." },
+    { "name": "broken dark lateral flower line", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION"], "sourceControls": ["catalog.species.flowerhorn._flower_line", "catalog.species.flowerhorn.paint_body"], "notes": "A narrow mid-lateral field of irregular dark characters is broken into multiple marks rather than rendered as a continuous stripe." }
+  ],
+  "candidateComparison": {
+    "mismatches": [
+      { "area": "source-only candidate state", "note": "No GLB or render exists in this lane. Downstream review must reject any build whose hump is detached, angular, too small, or hides the eye, or whose trunk reads as a generic oval, discus, angelfish, or short-bodied parrot cichlid." },
+      { "area": "mouth, eye, and caudal identity", "note": "Reject bead-like eyes, oversized lips, a pointed snout, a narrow peduncle, a forked tail, or long angelfish-like fin streamers." },
+      { "area": "pattern identity", "note": "Reject flat red paint, large random turquoise camouflage patches, a continuous black stripe, uniformly distributed dots, or opaque fins without ray-led pearling." },
+      { "area": "top and front calibration", "note": "Body thickness, hump breadth, and frontal lip volume remain high-uncertainty inferences and require independent three-view review before acceptance." }
+    ],
+    "acceptanceBlockers": []
+  },
+  "backendRepresentation": {
+    "status": "source_controls_present",
+    "clearedSourceBlockers": ["continuous nuchal hump", "deep robust trunk", "strong peduncle", "terminal fleshy mouth", "broad rounded caudal", "red-orange ground", "irregular pearling", "broken flower line"],
+    "note": "Each source blocker maps to dedicated geometry or procedural paint controls. Rendered acceptance remains downstream and explicit."
+  },
+  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": false, "candidateValidated": false, "candidateAccepted": false, "promotionAttempted": false }
+}
