@@ -1,0 +1,266 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "neon_tetra",
+  "sourceRevision": 1,
+  "referencePacket": "source-references.json",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-PARACHEIRODON-INNESI",
+      "originalPageUrl": "https://www.fishbase.se/summary/Paracheirodon_innesi.html",
+      "creator": "Rainer Froese and Daniel Pauly, editors",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic, adult-size, distribution, and ecology facts with citation; no source imagery copied or redistributed."
+    },
+    {
+      "id": "FISHBASE-MORPHMET-PAINN-U7",
+      "originalPageUrl": "https://www.fishbase.se/physiology/MorphMetSummaryV2.php?genusname=Paracheirodon&id=10691&picname=Painn_u7.jpg&speciesname=innesi",
+      "creator": "FishBase morphometrics contributors",
+      "license": "CC BY-NC 3.0 (FishBase text and measurements)",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Published image-derived morphometric values with citation; no source image copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "USGS-NAS-PARACHEIRODON-INNESI",
+      "originalPageUrl": "https://nas.er.usgs.gov/queries/FactSheet.aspx?lang=en&speciesID=426",
+      "creator": "U.S. Geological Survey",
+      "license": "U.S. federal government work; facts and citation only",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Adult-size and identification facts with citation."
+    },
+    {
+      "id": "LYTHGOE-SHAND-FOSTER-1984",
+      "originalPageUrl": "https://www.nature.com/articles/308083a0",
+      "creator": "J. N. Lythgoe, Julia Shand, and R. G. Foster",
+      "license": "Copyright Springer Nature",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Iridophore material facts with citation; no article figures or text copied into the asset."
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_neon_tetra.jpg",
+      "creator": "SOK",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual proportion, fin, material, and stripe-boundary reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-AKA",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_(aka).jpg",
+      "creator": "Andre Karwath aka Aka",
+      "license": "CC BY-SA 2.5",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual lateral proportion and pattern reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-NEON-TETRA-AQUARIUM-VIDEO",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Neon_tetra_(Paracheirodon_innesi)_in_an_aquarium.webm",
+      "creator": "The Nature Box",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Qualitative motion, oblique-width, fin-translucency, and angle-dependent material reference only; no frames copied or redistributed."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "notes": "The measured FishBase lateral image and two exact licensed adult file pages agree on a slender compressed trunk, short head, large eye, dorsal and anal origins, small adipose fin, narrow peduncle, and forked caudal."
+    },
+    "top": {
+      "status": "inferred",
+      "uncertainty": "High. No calibrated orthographic dorsal original was found; moving oblique views show only qualitative lateral compression.",
+      "notes": "Station half-widths stay conservative and symmetrical rather than claiming a measured dorsal outline."
+    },
+    "front": {
+      "status": "inferred",
+      "uncertainty": "High. No verified sharp orthographic frontal original was found, and video frames include motion and perspective distortion.",
+      "notes": "Frontal head width, cross-section exponent, and eye protrusion are conservative inferences from lateral morphometrics and qualitative oblique motion."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "slender compressed trunk and narrow caudal peduncle",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.controlStations[*].halfWidth"
+      ],
+      "notes": "The station envelope targets FishBase's 26 percent total-length body depth, then narrows continuously into a short, fine peduncle without the deep belly or disc profile of larger tetras."
+    },
+    {
+      "name": "short head, large seated eye, and small terminal mouth",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[operculum]",
+        "morphology.controlStations[head]",
+        "morphology.controlStations[snout]",
+        "morphology.eyes",
+        "morphology.mouth"
+      ],
+      "notes": "Head stations target the measured 18.5 percent total-length head while the eye control reflects the unusually large 45.9 percent eye-diameter to head-length ratio."
+    },
+    {
+      "name": "triangular dorsal, small adipose, low anal, paired fins, and forked caudal",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "morphology.fins[*].xStart",
+        "morphology.fins[*].xEnd",
+        "morphology.fins[*].rootX",
+        "morphology.fins[caudal].fork",
+        "morphology.fins[caudal].length"
+      ],
+      "notes": "Median and paired fin positions follow the FishBase predorsal, prepelvic, and preanal ratios. A dedicated adipose mesh and deeply forked symmetrical caudal preserve the exact adult lateral cues."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "standard length divided by total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.826, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.controlStations[caudal-base].x",
+        "morphology.controlStations[snout-tip].x",
+        "morphology.fins[caudal].length"
+      ],
+      "notes": "The source body from snout tip to caudal base is 29 mm within a 35 mm total-length envelope, a ratio of 0.829 and within rounding of the FishBase measured 0.826."
+    },
+    {
+      "name": "body depth divided by total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.26, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.controlStations[midbody].dorsalHeight",
+        "morphology.controlStations[midbody].ventralDepth",
+        "referenceSize.meters"
+      ],
+      "notes": "The 9.1 mm midbody depth divided by the 35 mm display total length is exactly 0.26."
+    },
+    {
+      "name": "head length divided by total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.185, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.controlStations[operculum].x",
+        "morphology.controlStations[snout-tip].x",
+        "referenceSize.meters"
+      ],
+      "notes": "The 5.5 mm snout-tip to operculum station interval is 15.7 percent of the display total length, intentionally conservative because the operculum station is not the FishBase posterior head landmark. Head, snout, and eye placement require visual review after build."
+    },
+    {
+      "name": "eye diameter divided by head length",
+      "status": "observed",
+      "referenceValue": { "value": 0.459, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.eyes.radius",
+        "morphology.controlStations[operculum].x",
+        "morphology.controlStations[snout-tip].x"
+      ],
+      "notes": "A 2.7 mm authored eye diameter over the conservative 5.5 mm operculum-to-snout interval is 0.491. Candidate review must verify that the shared eye plan does not make this large eye look protrusive."
+    },
+    {
+      "name": "adult display total length",
+      "status": "inferred",
+      "referenceValue": { "value": 0.035, "unit": "meters" },
+      "uncertainty": "Moderate. FishBase records 2.5 cm maximum standard length and a 3.0 cm total-length morphometric specimen, while USGS reports 4 cm. The source chooses a representative 3.5 cm display adult between those records.",
+      "sourceControls": ["referenceSize.meters", "referenceSize.kind"],
+      "notes": "The display scale is explicit and source-bounded rather than presented as a single published maximum."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "iridescent blue eye-to-adipose lateral band",
+      "sourceIds": [
+        "LYTHGOE-SHAND-FOSTER-1984",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA",
+        "COMMONS-NEON-TETRA-AQUARIUM-VIDEO"
+      ],
+      "sourceControls": [
+        "catalog.species.neon_tetra._blue_stripe",
+        "palette.cue"
+      ],
+      "notes": "A narrow, gently arced procedural band begins behind the eye and terminates under the adipose region. Deterministic blue-cyan variation suggests iridescence without pretending to reproduce true view-dependent guanine platelet optics."
+    },
+    {
+      "name": "posterior-only red ventrolateral band",
+      "sourceIds": [
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "catalog.species.neon_tetra._red_stripe",
+        "palette.adornment"
+      ],
+      "notes": "The red mask starts near midbody and reaches the caudal base below the blue stripe. Its anterior stop is deliberately diagnostic, preventing the full-length red flank of a cardinal tetra."
+    },
+    {
+      "name": "olive-translucent dorsum, silver belly, and clear fins",
+      "sourceIds": [
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA",
+        "COMMONS-NEON-TETRA-AQUARIUM-VIDEO"
+      ],
+      "sourceControls": [
+        "catalog.species.neon_tetra.paint_body",
+        "catalog.species.neon_tetra.paint_fin",
+        "palette.skin",
+        "palette.fin"
+      ],
+      "notes": "Procedural vertical blends separate the subdued olive dorsum from the silvery belly, while low-alpha fin materials keep the fins visually clear with restrained ray relief."
+    }
+  ],
+  "candidateComparison": {
+    "mismatches": [
+      {
+        "area": "unbuilt source",
+        "note": "No candidate has been built in this memory-light source lane. Side silhouette, fin scale, eye seating, stripe boundaries, translucency, and runtime animation remain pending Blender build and independent visual review."
+      },
+      {
+        "area": "top and front calibration",
+        "note": "Body width and frontal head shape are explicitly inferred because no verified orthographic top or front source was found."
+      },
+      {
+        "area": "iridescent material",
+        "note": "The procedural color approximates the blue-cyan appearance in static display space and cannot yet reproduce the real stripe's angle-, light-, and physiological-state-dependent reflection."
+      }
+    ],
+    "acceptanceBlockers": []
+  },
+  "uncertainty": "True orthographic top and front proportions remain unmeasured. Adult display length is a bounded representative value between authoritative records, not a newly claimed species maximum.",
+  "pixelPolicy": "No reference pixels were copied, sampled, traced, hotlinked, or redistributed.",
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": false
+  }
+}
