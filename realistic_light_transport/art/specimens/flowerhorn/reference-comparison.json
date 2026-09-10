@@ -35,18 +35,27 @@
     { "name": "broken dark lateral flower line", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION"], "sourceControls": ["catalog.species.flowerhorn._flower_line", "catalog.species.flowerhorn.paint_body"], "notes": "A narrow mid-lateral field of irregular dark characters is broken into multiple marks rather than rendered as a continuous stripe." }
   ],
   "candidateComparison": {
+    "previousCandidates": [
+      { "candidate": "fable-v1", "commit": "e1b555ca8aeffae1e6ee858ddb492a4d579f3adc", "status": "rejected", "receipt": "REJECT_AND_REFINE", "notes": "Independent three-view review rejected the narrow pointed horn, abrupt forehead-to-snout transition, detached gray rod-like lips, angular fan-like caudal, uniform pearls, and circular lateral marks." },
+      { "candidate": "fable-v2", "commit": "c4335fedd4c241a04939104068b01da057be55cb", "status": "rejected", "receipt": "REJECT_AND_REFINE", "notes": "Independent review found the revised pearling and flower markings acceptable but rejected the remaining pointed crest, abrupt face, puckered ring mouth, and pointed caudal corners." }
+    ],
+    "reviewedCandidate": { "candidate": "fable-v3", "commit": "3dd019907dc90f9dffbe006c22e65f2568559dbe", "status": "awaiting_user_acceptance", "receipt": "ACCEPT_FOR_USER_REVIEW", "notes": "Independent review found the broad low fatty dome, continuous skull and snout transition, smaller seated terminal lips, and materially rounder caudal suitable for explicit user review. This receipt is not user acceptance and does not authorize promotion. Frontal lip prominence, mild residual caudal corners, inferred top and front proportions, and animation appearance remain caveats for the user gate." },
     "mismatches": [
       { "area": "fable-v2 hump and face", "note": "Independent three-view review still rejected a pointed crest and abrupt face. Revision 3 lowers the crest, keeps adjacent dome stations within 4 mm of its top, broadens the full dome, and steps the brow, head, and snout down continuously. The lip arcs are reduced to small seated terminal folds rather than a puckered ring." },
       { "area": "fable-v2 caudal identity", "note": "Independent review still rejected pointed caudal corners. Revision 3 increases distal-edge sampling from 15 to 31 columns, seats the root across more of the peduncle, and rebalances span with corner shortening so the unforked outline resolves as a continuous broad curve." },
       { "area": "fable-v2 pattern identity", "note": "Independent review found the revised pearling and lateral flower markings acceptable. Revision 3 deliberately preserves the Flowerhorn paint backend unchanged." },
-      { "area": "top and front calibration", "note": "Body thickness, hump breadth, and frontal lip volume remain high-uncertainty inferences and require independent three-view review before acceptance." }
+      { "area": "fable-v3 frontal lip read", "note": "The compact seated lips are materially improved, but their pale frontal outline remains mildly prominent and requires explicit user judgment." },
+      { "area": "fable-v3 caudal outline", "note": "The 31-column caudal is materially rounder than both rejected candidates, although mild upper and lower corner transitions remain visible under close inspection." },
+      { "area": "top and front calibration", "note": "Body thickness, hump breadth, and frontal lip volume remain high-uncertainty inferences because no verified orthographic top or frontal source is available." },
+      { "area": "animation review", "note": "Source and candidate validation passed, but full swim, idle, and display motion were not independently accepted for perceptual naturalism." }
     ],
-    "acceptanceBlockers": []
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": ["user judgment of mild frontal lip prominence", "user judgment of residual caudal-corner transitions", "top and front proportions under explicit inferred-view uncertainty", "perceptual naturalism of swim, idle, and display animation"]
   },
   "backendRepresentation": {
     "status": "source_controls_present",
     "clearedSourceBlockers": ["continuous nuchal hump", "deep robust trunk", "strong peduncle", "terminal fleshy mouth", "broad rounded caudal", "red-orange ground", "irregular pearling", "broken flower line"],
     "note": "Each source blocker maps to dedicated geometry or procedural paint controls. Rendered acceptance remains downstream and explicit."
   },
-  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": true, "candidateValidated": true, "candidateAccepted": false, "latestReviewedCandidate": "fable-v2", "latestReviewDecision": "rejected", "repairCandidate": "fable-v3", "repairCandidateStatus": "source-ready-pending-regeneration", "promotionAttempted": false }
+  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": true, "candidateValidated": true, "candidateAccepted": false, "promotionAttempted": false, "latestReviewedCandidate": "fable-v3", "latestReviewedCandidateCommit": "3dd019907dc90f9dffbe006c22e65f2568559dbe", "latestReviewedCandidateStatus": "awaiting_user_acceptance", "independentReviewReceipt": "ACCEPT_FOR_USER_REVIEW", "repairCandidate": "fable-v3", "repairCandidateStatus": "awaiting_user_acceptance" }
 }
