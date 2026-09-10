@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.bronze_cory",
   "textureStyle": "bronze_cory",
-  "assetVersion": "0.2.1",
+  "assetVersion": "0.2.2",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.075,
@@ -56,10 +56,10 @@
     "eyes": { "x": 0.025, "zFraction": 0.58, "radius": 0.0021, "protrude": 0.12, "aspect": 0.36, "seat": 0.85, "roughness": 0.22, "coat": 0.16, "pupilFraction": 0.58, "pupilAspect": 0.18 },
     "mouth": {
       "zOffset": -0.90,
-      "width": 0.0024,
-      "radius": 0.00014,
-      "upperLip": { "centerOffset": [-0.00125, -0.00090], "cornerOffset": [-0.00135, -0.00084], "widthScale": 1.0, "cornerRadiusScale": 0.72, "centerRadiusScale": 0.82 },
-      "lowerLip": { "centerOffset": [-0.00128, -0.00130], "cornerOffset": [-0.00138, -0.00124], "widthScale": 0.90, "cornerRadiusScale": 0.62, "centerRadiusScale": 0.72 }
+      "width": 0.0021,
+      "radius": 0.000065,
+      "upperLip": { "centerOffset": [0.00018, -0.00072], "cornerOffset": [0.00018, -0.00072], "widthScale": 1.0, "cornerRadiusScale": 0.70, "centerRadiusScale": 0.85 },
+      "lowerLip": { "centerOffset": [0.00019, -0.00084], "cornerOffset": [0.00019, -0.00084], "widthScale": 0.82, "cornerRadiusScale": 0.62, "centerRadiusScale": 0.76 }
     },
     "gill": { "x": 0.015, "radius": 0.00028, "points": 15, "bulge": 0.042 },
     "adornments": [

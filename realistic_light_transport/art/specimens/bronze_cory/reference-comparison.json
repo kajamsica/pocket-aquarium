@@ -237,20 +237,16 @@
   "candidateComparison": {
     "mismatches": [
       {
-        "area": "fable-v2 retained improvements",
-        "note": "Independent review found the revised sloping head, tapered trunk and olive-bronze body substantially improved over fable-v1. This repair intentionally preserves those body control stations and flank color boundaries."
+        "area": "fable-v3 retained improvements",
+        "note": "Independent review retained the revised sloping head, tapered trunk, olive-bronze body and overlapping armor treatment. This repair intentionally leaves those body controls and armor paint byte-for-byte unchanged."
       },
       {
-        "area": "rejected fable-v2 mouth",
-        "note": "The two curved lip tubes still close into a circular terminal ring in front view. The revised controls move a much thinner pair of nearly horizontal lips farther beneath the snout, with a narrow vertical separation, while retaining the four subtle tapered barbels."
+        "area": "rejected fable-v3 mouth",
+        "note": "The smaller, lower mouth still reads as a vertical oval sucker ring in front view. The revised controls place two extremely shallow horizontal lip bars just forward of the inferior snout, reduce their radius and vertical separation, and give the lower bar a shorter span so their end caps cannot visually close into a ring. The four subtle tapered barbels remain intact."
       },
       {
-        "area": "rejected fable-v2 fin material",
-        "note": "The fin membranes read as opaque beige planar sheets. Lower membrane alpha, warmer yellow-amber color, restrained ray contrast and stronger but bounded leading-spine alpha target the translucent live-fish appearance without changing fin placement."
-      },
-      {
-        "area": "rejected fable-v2 armor relief",
-        "note": "The lateral armor reads as a continuous row of uniform vertical ribs. The source-local procedural mask now forms staggered two-dimensional scute islands with short curved overlap margins rather than full-height stripes."
+        "area": "rejected fable-v3 fin material",
+        "note": "The warmer fins still read as opaque planar sheets. Non-spine membrane alpha is now substantially below v3, while higher amber ray contrast and a tightly bounded near-opaque leading-spine band preserve the fin structure. Fin geometry and placement are unchanged."
       },
       {
         "area": "top-view calibration",
@@ -260,11 +256,11 @@
     "acceptanceBlockers": []
   },
   "failedCandidateEvidence": {
-    "path": "art/specimens/bronze_cory/candidates/fable-v2",
-    "candidateId": "fable-v2",
+    "path": "art/specimens/bronze_cory/candidates/fable-v3",
+    "candidateId": "fable-v3",
     "status": "unaccepted_independent_visual_rejection",
     "render": "renders/three-view.png",
-    "review": "Independent review of candidate commit e4516e1 retained the improved body silhouette and olive-bronze color but rejected the circular terminal mouth ring, opaque beige planar fins and uniformly ribbed armor relief. The candidate remains preserved and unpromoted."
+    "review": "Independent review of candidate commit a674504 retained the improved body silhouette, olive-bronze color and overlapping armor relief but rejected the vertical oval sucker-ring mouth and visually opaque planar fin membranes. The candidate remains preserved and unpromoted."
   },
   "uncertainty": "No verified live whole-body orthographic top photograph was found. Trunk width is inferred conservatively from the frontal head image, dorsal skull anatomy and observed lateral depth.",
   "pixelPolicy": "No source pixels were copied, sampled, traced, hotlinked or redistributed.",
