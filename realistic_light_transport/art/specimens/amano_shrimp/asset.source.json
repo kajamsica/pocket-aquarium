@@ -8,6 +8,7 @@
   "waterType": "freshwater",
   "biome": "freshwater_community",
   "bodyPlan": "decapod_shrimp",
+  "backend": "catalog.species.amano_shrimp",
   "assetVersion": "0.1.0",
   "referenceGrade": "B",
   "provisional": true,
@@ -110,10 +111,10 @@
     ]
   },
   "schemaGap": {
-    "status": "blocking_for_geometry",
-    "reason": "The current catalog has no shared translucent atyid shrimp body plan. Cleaner Shrimp and Pistol Shrimp are species-local backends with hardcoded colour, appendage and chela assumptions; reusing either would produce the wrong animal.",
-    "smallest_future_owner": "a dedicated amano_shrimp species author module, or a separately reviewed shared atyid plan only after a second freshwater atyid requires it",
-    "requiredProof": "A future candidate must show source-only geometry and animation validation before any runtime promotion."
+    "status": "resolved_by_species_backend",
+    "reason": "The catalog still has no shared translucent atyid shrimp plan. The dedicated Amano backend preserves translucent dotted colour, small chelae, six abdominal somites, five walking-leg pairs and surface-contact behavior without inheriting saltwater cleaner-shrimp or snapping-shrimp assumptions.",
+    "smallest_future_owner": "Keep the species-local backend until a second freshwater atyid demonstrates a stable shared interface.",
+    "requiredProof": "A future candidate must still pass source geometry and animation validation before any runtime promotion."
   },
   "visualDebt": [
     "No geometry, source.blend, GLB, candidate manifest or runtime registration is included in this source-only package.",
