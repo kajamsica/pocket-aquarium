@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.flowerhorn",
   "textureStyle": "flowerhorn_red_pearl",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.2.0",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.30,
@@ -41,11 +41,13 @@
       { "id": "posterior", "x": -0.074, "halfWidth": 0.0285, "dorsalHeight": 0.0470, "ventralDepth": 0.0440, "centerZ": 0.0010 },
       { "id": "midbody", "x": -0.040, "halfWidth": 0.0410, "dorsalHeight": 0.0660, "ventralDepth": 0.0580, "centerZ": 0.0020 },
       { "id": "anterior", "x": -0.004, "halfWidth": 0.0460, "dorsalHeight": 0.0750, "ventralDepth": 0.0610, "centerZ": 0.0040 },
-      { "id": "operculum", "x": 0.036, "halfWidth": 0.0440, "dorsalHeight": 0.0810, "ventralDepth": 0.0570, "centerZ": 0.0060 },
-      { "id": "hump-posterior", "x": 0.063, "halfWidth": 0.0400, "dorsalHeight": 0.1050, "ventralDepth": 0.0500, "centerZ": 0.0110 },
-      { "id": "hump-crest", "x": 0.084, "halfWidth": 0.0340, "dorsalHeight": 0.1180, "ventralDepth": 0.0440, "centerZ": 0.0130 },
-      { "id": "head", "x": 0.103, "halfWidth": 0.0300, "dorsalHeight": 0.0680, "ventralDepth": 0.0390, "centerZ": 0.0040 },
-      { "id": "snout", "x": 0.118, "halfWidth": 0.0190, "dorsalHeight": 0.0310, "ventralDepth": 0.0250, "centerZ": -0.0030 },
+      { "id": "operculum", "x": 0.036, "halfWidth": 0.0440, "dorsalHeight": 0.0860, "ventralDepth": 0.0570, "centerZ": 0.0060 },
+      { "id": "hump-posterior", "x": 0.056, "halfWidth": 0.0430, "dorsalHeight": 0.1080, "ventralDepth": 0.0520, "centerZ": 0.0100 },
+      { "id": "hump-crest", "x": 0.074, "halfWidth": 0.0400, "dorsalHeight": 0.1180, "ventralDepth": 0.0480, "centerZ": 0.0120 },
+      { "id": "hump-anterior", "x": 0.091, "halfWidth": 0.0370, "dorsalHeight": 0.1090, "ventralDepth": 0.0440, "centerZ": 0.0110 },
+      { "id": "brow", "x": 0.103, "halfWidth": 0.0320, "dorsalHeight": 0.0860, "ventralDepth": 0.0390, "centerZ": 0.0080 },
+      { "id": "head", "x": 0.112, "halfWidth": 0.0260, "dorsalHeight": 0.0580, "ventralDepth": 0.0330, "centerZ": 0.0020 },
+      { "id": "snout", "x": 0.121, "halfWidth": 0.0160, "dorsalHeight": 0.0270, "ventralDepth": 0.0220, "centerZ": -0.0030 },
       { "id": "snout-tip", "x": 0.125, "halfWidth": 0.0080, "dorsalHeight": 0.0085, "ventralDepth": 0.0080, "centerZ": -0.0050 }
     ],
     "crossSection": { "dorsalExponent": 1.70, "ventralExponent": 1.76 },
@@ -55,7 +57,7 @@
     "fins": [
       { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.088, "xEnd": 0.058, "rows": 6, "columns": 22, "lean": -0.012, "curve": -0.003, "rayCount": 28, "heights": [[0.0,0.010],[0.10,0.024],[0.25,0.038],[0.43,0.045],[0.62,0.041],[0.80,0.032],[0.93,0.020],[1.0,0.009]] },
       { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.082, "xEnd": 0.034, "rows": 6, "columns": 20, "lean": -0.011, "curve": -0.003, "rayCount": 20, "heights": [[0.0,0.008],[0.12,0.019],[0.30,0.031],[0.50,0.038],[0.69,0.035],[0.85,0.026],[1.0,0.009]] },
-      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 15, "spanTop": 0.051, "spanBottom": 0.049, "length": 0.070, "topLobeLength": 1.02, "bottomLobeLength": 1.0, "fork": 0.04, "forkPower": 3.5, "rounding": 0.24, "baseFraction": 0.90, "rayCount": 18 },
+      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 15, "spanTop": 0.051, "spanBottom": 0.049, "length": 0.070, "topLobeLength": 1.0, "bottomLobeLength": 1.0, "fork": 0.00, "forkPower": 3.5, "rounding": 0.52, "baseFraction": 0.86, "rayCount": 18 },
       { "name": "pectoral", "type": "paired", "rootX": 0.042, "rootLength": 0.025, "rootHeight": -0.10, "length": 0.050, "sweepDegrees": 37, "droopDegrees": 10, "spread": 0.74, "taper": 0.48, "power": 0.67, "flare": 0.58, "rayCount": 14, "rows": 4, "columns": 8 },
       { "name": "pelvic", "type": "paired", "rootX": 0.017, "rootLength": 0.020, "rootHeight": -0.86, "length": 0.052, "sweepDegrees": 47, "droopDegrees": 49, "spread": 0.28, "taper": 0.20, "power": 0.88, "flare": 0.30, "rayCount": 8, "rows": 4, "columns": 7 }
     ],
@@ -63,10 +65,10 @@
     "eyes": { "x": 0.088, "zFraction": 0.08, "radius": 0.0090, "protrude": 0.06, "aspect": 0.30, "seat": 0.91, "roughness": 0.24, "coat": 0.16, "pupilFraction": 0.55, "pupilAspect": 0.20 },
     "mouth": {
       "zOffset": -0.08,
-      "width": 0.0075,
-      "radius": 0.0013,
-      "upperLip": { "centerOffset": [0.0010,0.0008], "cornerOffset": [-0.0020,0.0002], "widthScale": 1.03, "cornerRadiusScale": 0.75, "centerRadiusScale": 1.05 },
-      "lowerLip": { "centerOffset": [0.0008,-0.0012], "cornerOffset": [-0.0022,-0.0005], "widthScale": 1.08, "cornerRadiusScale": 0.80, "centerRadiusScale": 1.12 }
+      "width": 0.0044,
+      "radius": 0.00075,
+      "upperLip": { "centerOffset": [0.0004,0.0003], "cornerOffset": [-0.0010,0.0002], "widthScale": 0.96, "cornerRadiusScale": 0.58, "centerRadiusScale": 0.88 },
+      "lowerLip": { "centerOffset": [0.0002,-0.0006], "cornerOffset": [-0.0011,-0.0004], "widthScale": 0.90, "cornerRadiusScale": 0.52, "centerRadiusScale": 0.78 }
     },
     "gill": { "x": 0.038, "radius": 0.00075, "points": 15, "bulge": 0.032 },
     "adornments": []

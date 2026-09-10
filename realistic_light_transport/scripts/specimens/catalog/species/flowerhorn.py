@@ -37,22 +37,28 @@ def _require_species(ctx):
 
 
 def _pearl_mask(u, v, zeta):
-    """Small irregular scale-associated pearls, concentrated on the lateral flank."""
-    fine = paint.spots(u, v, density=38.0, radius=0.22, seed=73, jitter_radius=0.42)
-    broken = smoothstep(0.44, 0.72, fbm(u * 31.0, v * 19.0, octaves=2, seed=79))
+    """Varied, clustered scale-associated pearls concentrated on the lateral flank."""
+    warp_u = (fbm(u * 9.0, v * 7.0, octaves=2, seed=71) - 0.5) * 0.035
+    warp_v = (fbm(u * 7.0, v * 11.0, octaves=2, seed=72) - 0.5) * 0.055
+    fine = paint.spots(u + warp_u, v + warp_v, density=44.0, radius=0.15, seed=73, jitter_radius=0.72)
+    coarse = paint.spots(u - warp_u * 0.6, v + warp_v * 0.4, density=27.0, radius=0.18, seed=75, jitter_radius=0.65)
+    clusters = smoothstep(0.43, 0.68, fbm(u * 17.0, v * 11.0, octaves=3, seed=79))
+    sparse = smoothstep(0.56, 0.78, fbm(u * 31.0, v * 19.0, octaves=2, seed=81))
     lateral = 1.0 - smoothstep(0.76, 0.98, np.abs(zeta))
     head_keep = 1.0 - 0.38 * smoothstep(0.80, 0.97, u)
-    return np.clip(fine * (0.42 + 0.58 * broken) * lateral * head_keep, 0.0, 1.0)
+    varied = np.maximum(fine * clusters, coarse * sparse * 0.72)
+    return np.clip(varied * lateral * head_keep, 0.0, 1.0)
 
 
 def _flower_line(u, v, zeta):
     """Broken mid-lateral characters, never a continuous stripe."""
-    center = 0.03 * np.sin(u * math.pi * 7.0) + (fbm(u * 18.0, v * 5.0, octaves=2, seed=43) - 0.5) * 0.10
-    corridor = 1.0 - smoothstep(0.14, 0.30, np.abs(zeta - center))
-    cells = smoothstep(0.54, 0.72, fbm(u * 12.0, v * 7.0, octaves=3, seed=47))
-    segments = (0.5 + 0.5 * np.cos((u * 12.0 + 0.18 * np.sin(v * math.pi * 5.0)) * math.pi)) ** 4
+    center = 0.025 * np.sin(u * math.pi * 5.0) + (fbm(u * 13.0, zeta * 6.0, octaves=2, seed=43) - 0.5) * 0.09
+    corridor = 1.0 - smoothstep(0.12, 0.29, np.abs(zeta - center))
+    broad = smoothstep(0.47, 0.66, fbm(u * 15.0, zeta * 6.0, octaves=3, seed=47))
+    narrow = smoothstep(0.50, 0.67, fbm(u * 29.0 + zeta * 3.0, zeta * 11.0, octaves=2, seed=51))
+    breaks = smoothstep(0.41, 0.63, fbm(u * 9.0, zeta * 15.0, octaves=2, seed=53))
     end_fade = smoothstep(0.09, 0.19, u) * (1.0 - smoothstep(0.78, 0.93, u))
-    return np.clip(corridor * np.maximum(cells * 0.90, segments * 0.72) * end_fade, 0.0, 1.0)
+    return np.clip(corridor * np.maximum(broad, narrow * 0.68) * breaks * end_fade, 0.0, 1.0)
 
 
 def paint_body(ctx):
@@ -97,10 +103,13 @@ def paint_fin(ctx):
     albedo = textures.scale_rgb(albedo, 0.84 + 0.20 * rays)
 
     if ctx.fin in ("dorsal", "anal", "caudal"):
-        pearls = paint.spots(ctx.U, ctx.V, density=25.0, radius=0.20, seed=97, jitter_radius=0.38)
+        warp = (fbm(ctx.U * 8.0, ctx.V * 12.0, octaves=2, seed=95) - 0.5) * 0.045
+        fine = paint.spots(ctx.U + warp, ctx.V, density=31.0, radius=0.14, seed=97, jitter_radius=0.72)
+        coarse = paint.spots(ctx.U - warp, ctx.V, density=19.0, radius=0.18, seed=99, jitter_radius=0.62)
+        clusters = smoothstep(0.46, 0.70, fbm(ctx.U * 18.0, ctx.V * 13.0, octaves=2, seed=101))
+        pearls = np.maximum(fine * clusters, coarse * (1.0 - clusters) * 0.58)
         pearls *= smoothstep(0.05, 0.24, ctx.V) * (1.0 - smoothstep(0.84, 0.98, ctx.V))
-        breaks = smoothstep(0.42, 0.68, fbm(ctx.U * 24.0, ctx.V * 15.0, octaves=2, seed=101))
-        albedo = textures.mix(albedo, PEARL_BLUE, pearls * (0.45 + 0.55 * breaks) * 0.80)
+        albedo = textures.mix(albedo, PEARL_BLUE, pearls * 0.80)
         albedo = textures.mix(albedo, FIN_DARK, (1.0 - smoothstep(0.0, 0.12, ctx.V)) * 0.38)
         alpha = 0.94 - 0.10 * smoothstep(0.76, 1.0, ctx.V)
     else:
