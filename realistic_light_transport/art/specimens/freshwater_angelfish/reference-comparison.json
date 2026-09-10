@@ -26,12 +26,21 @@
     { "name": "adult four-bar silver pattern", "sourceIds": ["FISHBASE-PTEROPHYLLUM-SCALARE","FISHBASE-PTEROPHYLLUM-MORPHOLOGY","COMMONS-PTEROPHYLLUM-SCALARE-PNG","COMMONS-PTEROPHYLLUM-SCALARE-JPG"], "sourceControls": ["catalog.species.freshwater_angelfish._bar_mask","catalog.species.freshwater_angelfish.paint_body","catalog.species.freshwater_angelfish.paint_fin"], "notes": "Four procedural dark bars cross the eye, shoulder, midbody, and caudal base; the seven-bar juvenile pattern is explicitly excluded." },
     { "name": "silver-olive body and translucent ray-supported fins", "sourceIds": ["COMMONS-PTEROPHYLLUM-SCALARE-PNG","COMMONS-PTEROPHYLLUM-SCALARE-JPG"], "sourceControls": ["catalog.species.freshwater_angelfish.paint_body","catalog.species.freshwater_angelfish.paint_fin","palette.skin","palette.fin"], "notes": "Silver flank sheen, restrained olive dorsum, pale belly, and translucent fins are generated procedurally with fixed seeds." }
   ],
-  "candidateComparison": { "mismatches": [
-    { "area": "prebuild silhouette rejection check", "note": "Reject any candidate that reads as a generic oval cichlid, tang, or balloon. The side view must preserve the narrow disc/diamond trunk, forehead saddle, tiny terminal mouth, narrow peduncle, tall median-fin triangles, and long pelvic threads." },
-    { "area": "prebuild adult-pattern rejection check", "note": "Reject seven juvenile bars, decorative striping, or a uniform silver body. The baseline is an adult four-bar wild-type pattern." },
-    { "area": "top and front calibration", "note": "Do not promote a candidate merely because the side view is recognizable. Top width and frontal head volume remain high-uncertainty inferences requiring downstream visual review." }
-  ], "acceptanceBlockers": [] },
-  "uncertainty": "True top and frontal views are unavailable. Backend geometry can represent the sourced side silhouette, measured depth ratio, fins, terminal mouth, and four-bar adult pattern, but a built candidate still requires explicit visual acceptance.",
+  "candidateComparison": {
+    "reviewedCandidate": { "candidate": "fable-v1", "status": "rejected", "receipt": "REJECT_AND_REFINE", "notes": "The technically valid v1 render was visually rejected because its forked triangular tail, stepped blunt head, monolithic median fins, thick pelvic spears, oversized pectorals, opaque cream body, and mechanical bars contradicted the recorded adult references." },
+    "repairCandidate": { "candidate": "fable-v2", "status": "source_ready_pending_regeneration", "notes": "The v2 source narrows and seats the eye and snout, makes the dorsal head transition concave, broadens and truncates the caudal, reshapes the dorsal and anal ray progression, narrows the pelvic filaments, reduces the pectorals, and softens the silver-olive four-bar paint." },
+    "mismatches": [
+      { "area": "fable-v1 caudal silhouette", "note": "Rejected: v1 ended in a small forked triangle. V2 must render a broad truncate fan with only modest upper and lower streamer reach and no deep central fork." },
+      { "area": "fable-v1 head and eye", "note": "Rejected: v1 had a blunt stepped snout and bead-like eye. V2 must show the FishBase-recorded clearly concave dorsal head transition, a slimmer snout, a natural small terminal mouth, and an eye seated into the head." },
+      { "area": "fable-v1 dorsal and anal fins", "note": "Rejected: v1 read as two opaque monolithic sails. V2 must show sharper posterior-to-anterior ray progression, natural posterior taper, visible ray relief, and translucent membranes." },
+      { "area": "fable-v1 paired fins", "note": "Rejected: v1 pelvic fins were thick dark spears and its pectorals were rigid and oversized. V2 must show narrow thoracic filaments and smaller translucent pectoral fans." },
+      { "area": "fable-v1 body finish and bars", "note": "Rejected: v1 was opaque cream with ruler-straight mechanical bars. V2 must show silver-olive flank variation, softer irregular adult four-bar boundaries, and translucent fins." },
+      { "area": "top and front calibration", "note": "Do not promote v2 merely because the repaired side view is recognizable. Top width and frontal head volume remain high-uncertainty inferences requiring downstream visual review and explicit user acceptance." }
+    ],
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": ["broad truncate caudal with modest edge streamers", "concave head transition and slim terminal snout", "seated non-bead eye", "ray-led translucent dorsal and anal envelopes", "narrow pelvic filaments and compact pectorals", "silver-olive flank with organic four-bar boundaries"]
+  },
+  "uncertainty": "True top and frontal views are unavailable. Fable-v1 was built and technically validated but visually rejected. The fable-v2 source encodes the six requested repairs, but its regenerated side, top, front, and author-preview renders still require explicit visual acceptance before promotion.",
   "pixelPolicy": "No reference pixels are copied, sampled, traced, redistributed, embedded, or hotlinked.",
-  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": false, "candidateValidated": false, "candidateAccepted": false, "promotionAttempted": false }
+  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": true, "candidateValidated": true, "candidateAccepted": false, "promotionAttempted": false, "latestReviewedCandidate": "fable-v1", "latestReviewedCandidateStatus": "rejected", "repairCandidate": "fable-v2", "repairCandidateStatus": "source_ready_pending_regeneration" }
 }
