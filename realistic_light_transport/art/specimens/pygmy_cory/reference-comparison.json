@@ -275,6 +275,13 @@
     }
   ],
   "candidateComparison": {
+    "reviewedCandidate": {
+      "candidate": "fable-v2",
+      "commit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
+      "status": "awaiting_user_acceptance",
+      "receipt": "ACCEPT_FOR_USER_REVIEW",
+      "notes": "Independent visual review found the repaired dwarf silhouette, inferior mouth, raised tapered stripe, armor-row treatment, hyaline fins and forked tail suitable for explicit user review. This receipt is not user acceptance and does not authorize promotion."
+    },
     "mismatches": [
       {
         "area": "rejected fable-v1 head and mouth",
@@ -294,10 +301,28 @@
       },
       {
         "area": "top and front calibration",
-        "note": "Whole-body width and frontal trunk depth remain explicitly inferred. Downstream review must not represent them as measured and should favor a conservative narrow body."
+        "note": "Whole-body width and frontal trunk depth remain explicitly inferred. The reviewed fable-v2 candidate must not be represented as measured and should retain a conservative narrow body."
+      },
+      {
+        "area": "fable-v2 frontal lip read",
+        "note": "The smaller inferior transverse mouth is materially improved, but the frontal view may still make the lip edges read slightly more prominent than the subtle live-fish reference."
+      },
+      {
+        "area": "fable-v2 armor subtlety",
+        "note": "Both armor rows now read under the reviewed lighting, although their shallow relief remains intentionally subtle and may soften further at game scale."
+      },
+      {
+        "area": "fable-v2 animation coverage",
+        "note": "Independent review covered the recorded candidate surfaces. Barbel, fin and body deformation through the complete animation range remains a downstream runtime caveat."
       }
     ],
-    "acceptanceBlockers": []
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "subtle inferior transverse lip in the frontal view",
+      "two armor rows remaining legible at game scale",
+      "barbel, fin and body deformation throughout animation",
+      "top and front proportions under inferred-view uncertainty"
+    ]
   },
   "backendRepresentation": {
     "status": "source_controls_present",
@@ -323,9 +348,13 @@
   },
   "deliveryStatus": {
     "sourceEdited": true,
-    "candidateBuilt": false,
-    "candidateValidated": false,
+    "candidateBuilt": true,
+    "candidateValidated": true,
     "candidateAccepted": false,
-    "promotionAttempted": false
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v2",
+    "latestReviewedCandidateCommit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
+    "latestReviewedCandidateStatus": "awaiting_user_acceptance",
+    "independentReviewStatus": "complete"
   }
 }
