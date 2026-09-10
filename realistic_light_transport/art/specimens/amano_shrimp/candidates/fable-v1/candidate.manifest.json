@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "amano_shrimp",
+  "variantId": null,
+  "scientificName": "Caridina multidentata",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.05,
+  "referenceSizeKind": "adult_body_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "596e9c21ac702e6ccf2f453a87a509795e8dcf504dbf8698d683801af2fefceb",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Amano Shrimp",
+  "bodyPlan": "decapod_shrimp",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "WORMS-CARIDINA-MULTIDENTATA",
+      "title": "Caridina multidentata Stimpson, 1860 taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=586329",
+      "creator": "WoRMS Editorial Board",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "taxonomy_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+      "title": "On the species of Japanese atyid shrimps (Decapoda: Caridea) described by William Stimpson (1860)",
+      "publisher": "Journal of Crustacean Biology / National Museum of Natural History research mirror",
+      "url": "https://decapoda.nhm.org/pdfs/25084/25084.pdf",
+      "creator": "Yixiong Cai, Peter K. L. Ng, Shigemitsu Shokita, and Kiyoshi Satake",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_morphology_reference",
+      "allowedUse": "morphology_habitat_and_taxonomic_citation",
+      "license": "Copyright The Crustacean Society; citation use only"
+    },
+    {
+      "id": "OKINAWA-AMANO-SHRIMP",
+      "title": "Amano Shrimp (Caridina multidentata), Okinawa creature reference",
+      "publisher": "Okinawa Ikimono Lab",
+      "url": "https://biodiversity.okinawa/en/video_pages/reference/yamatonumaebi.html",
+      "creator": "Okinawa Ikimono Lab",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "institutional_species_reference",
+      "allowedUse": "adult_size_colour_habitat_and_activity_citation",
+      "license": "Copyright Okinawa Ikimono Lab; citation use only"
+    },
+    {
+      "id": "COMMONS-AMANO-SHRIMP",
+      "title": "Amano Shrimp feeding on plant remains",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Amano_Shrimp.jpg",
+      "creator": "Atulbhats",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "openly_licensed_visual_reference",
+      "allowedUse": "side_oblique_silhouette_colour_and_appendage_reference_without_copying_pixels",
+      "license": "CC BY-SA 4.0"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "f9f2d578c5f1ec3337027277c89fc1641cd4f756c7d4d421618c57f7893e56b4",
+  "sourceReferencesSha256": "723b958b0ae4b9728778a359659ed60349c5d274db0f2fab326ab010933d0664",
+  "sourceBlendSha256": "e1c002990722fea18cdd954a677d7008ce3b5a586ad0735b3dcceffcb9fbfde6",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "species_local:703cdbc217c71749d7e3192ad8794e5e04083341a2228f1f3db2bb973d4529c1",
+    "speciesBackend": "703cdbc217c71749d7e3192ad8794e5e04083341a2228f1f3db2bb973d4529c1",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "cd77921368849c61fa3653d361ea2f9bb7f3307cff090d7eeb6e93747a2444e7"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/shell-albedo.png",
+      "sha256": "f056e36ef35f35e215fbf24babaea9de6601b5917ad446ccd08eb4038559e949"
+    }
+  ],
+  "statistics": {
+    "triangles": 11152,
+    "materials": 6,
+    "bones": 18,
+    "nodes": 24,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "bottom_walk",
+      "graze",
+      "reposition_swim",
+      "rest"
+    ],
+    "vertices": {
+      "PA_amano_shrimp_Body": 2638,
+      "PA_amano_shrimp_Limbs": 1096,
+      "PA_amano_shrimp_Details": 1990
+    },
+    "runtimeBytes": 918600
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "bottom_walk",
+    "response": "graze"
+  },
+  "clipLoops": {
+    "rest": true,
+    "bottom_walk": true,
+    "graze": false,
+    "reposition_swim": false
+  },
+  "restBounds": {
+    "min": [
+      -0.024957,
+      -0.020044,
+      -0.009599
+    ],
+    "max": [
+      0.025031,
+      0.020044,
+      0.007096
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

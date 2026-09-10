@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "betta_splendens_male",
+  "sourceSha256": "dee3c9fad421cdcd6aa74978a0011ca4f9df8c6a915f02c61736a9ce398254a0",
+  "objects": [
+    {
+      "name": "PA_betta_splendens_male_Body",
+      "vertexCount": 2498,
+      "triangleCount": 4992,
+      "vertexDigest": "0d1256b380e25ea1eed62dc8c7f611d14080aeefcf571ce3aba878bb7c4023d0",
+      "topologyDigest": "c97cf6b2d515e9eb30825cf1bb49b250acbdbe5f76864b7eb0cebf28cc99c1aa",
+      "uvDigest": "8c26e600f5fa4cd313c26788070b185724b0f7023e35075ece743fad239671dc",
+      "weightDigest": "45e7bd8ef7facc7f00a35ae73fbee9ba0e162abedf50553098ec9ecbbd7d075f",
+      "materials": [
+        "PA_betta_splendens_male_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_betta_splendens_male_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "7328bcb8e94e5a7f1721978d2df42774f19c3bcacfb3af1c43cf8c327080a6ec",
+      "topologyDigest": "af5d890e334b2cd282952f0a44dae55bd4ac9e200ce5af8c2c8b4ca427ae9d1a",
+      "uvDigest": "faa6d14466565dda8bc493f5bfafe6418526a05591b15255928b2720248e6183",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_betta_splendens_male_Cue",
+        "PA_betta_splendens_male_Eye",
+        "PA_betta_splendens_male_Glint",
+        "PA_betta_splendens_male_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_betta_splendens_male_Fins",
+      "vertexCount": 692,
+      "triangleCount": 1228,
+      "vertexDigest": "a6d192bdd12e0b3964404ee430d8fd36b5e2133ae8219418f31aa45df7063dbb",
+      "topologyDigest": "9103d6363dea114440a1e13f4b5952d63e07af24ab581279d8c966b5e367d815",
+      "uvDigest": "374ced5d638317e3284fd0b9e74b80195b4143189b6423e83e51d1dfcd13f24d",
+      "weightDigest": "cf034f963d07badfc32f0a350bba3e744143b568f5c8a0a14084c1fe372e9a17",
+      "materials": [
+        "PA_betta_splendens_male_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_betta_splendens_male_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "4d574e87e0f348c3d8dc9818caa6bea53e7d236df477ca56d5a8886da5fe604b"
+  },
+  "geometryDigest": "f06b26a92331f57a326327ce03a0a3e2e042b017ea62dbaf8e1b4c9fd963a235",
+  "variantId": null
+}

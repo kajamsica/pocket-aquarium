@@ -1,6 +1,6 @@
 {
   "schemaVersion": "pocket-aquarium.visual-catalog/v1",
-  "generatedAt": "2026-09-05T13:47:42.638Z",
+  "generatedAt": "2026-09-09T21:33:03.575Z",
   "categories": [
     "fish",
     "coral",
@@ -24,23 +24,23 @@
     "tomini_tang": "fable-v1"
   },
   "summary": {
-    "rows": 35,
+    "rows": 39,
     "byCategory": {
-      "fish": 14,
+      "fish": 17,
       "coral": 9,
-      "invertebrate": 3,
+      "invertebrate": 4,
       "cleanup_crew": 9
     },
     "byStatus": {
       "accepted": 1,
-      "candidate": 34,
-      "provisional": 0,
+      "candidate": 37,
+      "provisional": 1,
       "failed": 0,
       "missing": 0
     },
     "candidates": {
-      "total": 58,
-      "loadable": 57,
+      "total": 61,
+      "loadable": 60,
       "missing": 1,
       "userApproved": 6
     }
@@ -381,6 +381,89 @@
       ]
     },
     {
+      "id": "bronze_cory",
+      "displayName": "Bronze Cory",
+      "scientificLabel": "Corydoras aeneus",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.075,
+        "kind": "adult_display_reference_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Bronze Cory",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/bronze_cory/candidates/fable-v1/lod1.glb",
+          "glbSha256": "d54b6a3545b3b055c01a6e2fd64ee795e0006c81f2fbeecdf68540ae01229d1e",
+          "glbSha256Verified": true,
+          "geometryDigest": "4e34999b6b20d6e7aa29d0c167dd370cc1d35af984aa979b42bcd02277dec6eb",
+          "statistics": {
+            "triangles": 8312,
+            "materials": 7,
+            "bones": 14,
+            "clips": [
+              "forage",
+              "rest",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "rest",
+            "locomotion": "swim",
+            "response": "forage"
+          },
+          "clipLoops": {
+            "forage": false,
+            "rest": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.075,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/bronze_cory/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/bronze_cory/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "swim",
+        "response": "forage"
+      },
+      "provenance": {
+        "source": "art/specimens/bronze_cory/asset.source.json",
+        "sourceReferences": "art/specimens/bronze_cory/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "The shared fish plan approximates the paired lateral bony plate rows with normal relief rather than modeled scutes.",
+        "Barbels are simple slender ellipsoids and do not yet flex independently.",
+        "The pectoral spine is represented by the leading edge of the pectoral fin rather than a separate denticulated ray."
+      ]
+    },
+    {
       "id": "diamond_goby",
       "displayName": "Diamond Goby",
       "scientificLabel": "Valenciennea puellaris",
@@ -673,6 +756,171 @@
         "Spot pattern is mirrored left/right (one lattice shared by both flanks) to avoid a UV seam on the dorsal ridge.",
         "Lips are a simple cue tube; the crenulated Zebrasoma lip margin is not modelled.",
         "Roughness and normal PNGs are written blank by the shared lib/textures.py at the build commit (colorspace set after pixel upload); the candidate needs a rebuild once the shared fix lands (see /tmp/pa-lanes/gem_tang/shared-change-request.md)."
+      ]
+    },
+    {
+      "id": "harlequin_rasbora",
+      "displayName": "Harlequin Rasbora",
+      "scientificLabel": "Trigonostigma heteromorpha",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.05,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.2",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Harlequin Rasbora",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.2",
+          "loadable": true,
+          "glb": "art/specimens/harlequin_rasbora/candidates/fable-v1/lod1.glb",
+          "glbSha256": "842a3f85bdac1af9f67f56019f46d146e8ebb9ec5644f111f1bf6068358351d5",
+          "glbSha256Verified": true,
+          "geometryDigest": "12a9faf37c99be898908aea9342b8dde91312c31e92c2f35bd868d4e2347fabc",
+          "statistics": {
+            "triangles": 7342,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "burst",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "burst"
+          },
+          "clipLoops": {
+            "burst": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.05,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/harlequin_rasbora/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/harlequin_rasbora/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "burst"
+      },
+      "provenance": {
+        "source": "art/specimens/harlequin_rasbora/asset.source.json",
+        "sourceReferences": "art/specimens/harlequin_rasbora/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "The black axine is procedural texture geometry and must be checked against side-view references before acceptance.",
+        "Fin rays are normal-map relief rather than separately modeled rays."
+      ]
+    },
+    {
+      "id": "betta_splendens_male",
+      "displayName": "Male Betta",
+      "scientificLabel": "Betta splendens",
+      "taxonomyConfidence": "species",
+      "category": "fish",
+      "waterType": "freshwater",
+      "bodyPlan": "fish",
+      "referenceSize": {
+        "meters": 0.065,
+        "kind": "adult_total_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "candidate",
+      "assetVersion": "0.1.0",
+      "provisional": false,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [
+        {
+          "name": "fable-v1",
+          "variantId": null,
+          "displayName": "Male Betta",
+          "state": "awaiting_user_acceptance",
+          "manifest": "present",
+          "validatorStatus": "passed",
+          "buildStatus": "passed",
+          "buildFailedStage": null,
+          "assetVersion": "0.1.0",
+          "loadable": true,
+          "glb": "art/specimens/betta_splendens_male/candidates/fable-v1/lod1.glb",
+          "glbSha256": "ecd51915201b0bf6c33bda407a006e8131280d3502baad0e76b5302d9916034b",
+          "glbSha256Verified": true,
+          "geometryDigest": "aa2a770c953b4ae777a16820a1da116e842b74a6001882b4c18736667f5b2e3c",
+          "statistics": {
+            "triangles": 7942,
+            "materials": 6,
+            "bones": 13,
+            "clips": [
+              "display",
+              "idle",
+              "swim"
+            ]
+          },
+          "clipRoles": {
+            "idle": "idle",
+            "locomotion": "swim",
+            "response": "display"
+          },
+          "clipLoops": {
+            "display": false,
+            "idle": true,
+            "swim": true
+          },
+          "referenceSizeMeters": 0.065,
+          "userApproved": false,
+          "renders": {
+            "authorPreview": "art/specimens/betta_splendens_male/candidates/fable-v1/renders/author-preview.png",
+            "threeView": "art/specimens/betta_splendens_male/candidates/fable-v1/renders/three-view.png"
+          }
+        }
+      ],
+      "variants": [],
+      "clipRoles": {
+        "idle": "idle",
+        "locomotion": "swim",
+        "response": "display"
+      },
+      "provenance": {
+        "source": "art/specimens/betta_splendens_male/asset.source.json",
+        "sourceReferences": "art/specimens/betta_splendens_male/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "Domestic Betta splendens fin shapes vary widely; this source targets a rounded halfmoon-like male rather than every strain.",
+        "The paired pelvic fin filaments are thin fans because the shared fish plan does not yet support isolated soft rays.",
+        "Fin rays are normal-map relief on thin membranes rather than separate modeled rays."
       ]
     },
     {
@@ -3047,6 +3295,47 @@
         "Closing is a single staggered pulse per cluster; real polyps close in seconds and reopen over minutes.",
         "Polyps are bone-parented rigid objects that sway about their base; the column itself does not bend (this keeps shape-key clips importable, see the lane's shared-change request).",
         "Neighbouring discs stop short of touching by the flattest tentacle reach plus a sway margin, because the clearance gates forbid tentacle and disc interpenetration; real mats overlap discs and interleave fringes."
+      ]
+    },
+    {
+      "id": "amano_shrimp",
+      "displayName": "Amano Shrimp",
+      "scientificLabel": "Caridina multidentata",
+      "taxonomyConfidence": "species",
+      "category": "invertebrate",
+      "waterType": "freshwater",
+      "bodyPlan": "decapod_shrimp",
+      "referenceSize": {
+        "meters": 0.05,
+        "kind": "adult_body_length"
+      },
+      "referenceGrade": "B",
+      "assetStatus": "provisional",
+      "assetVersion": "0.1.0",
+      "provisional": true,
+      "accepted": {
+        "glb": null,
+        "sha256": null,
+        "clips": [],
+        "statistics": null
+      },
+      "candidates": [],
+      "variants": [],
+      "clipRoles": {
+        "idle": "rest",
+        "locomotion": "bottom_walk",
+        "response": "graze"
+      },
+      "provenance": {
+        "source": "art/specimens/amano_shrimp/asset.source.json",
+        "sourceReferences": "art/specimens/amano_shrimp/source-references.json",
+        "referenceGrade": "B"
+      },
+      "visualDebt": [
+        "No geometry, source.blend, GLB, candidate manifest or runtime registration is included in this source-only package.",
+        "Rostral teeth, fine setae, pleopod setules and the uropodal diaeresis are identification cues to be validated during a later candidate build.",
+        "Optical transmission, internal organs and exact dot density require later reference review and light-transport calibration.",
+        "Freshwater bottom and hard-surface locomotion are an intent contract only; runtime/store/workbench behavior is intentionally untouched."
       ]
     },
     {

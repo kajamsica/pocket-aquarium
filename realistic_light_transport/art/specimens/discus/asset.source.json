@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "discus",
+  "displayName": "Heckel Discus",
+  "scientificLabel": "Symphysodon discus",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "freshwater",
+  "biome": "freshwater_community",
+  "bodyPlan": "fish",
+  "backend": "catalog.species.discus",
+  "textureStyle": "discus_wild_heckel",
+  "assetVersion": "0.1.0-source",
+  "referenceGrade": "B",
+  "referenceSize": {"meters": 0.15, "kind": "adult_display_total_length", "note": "A representative adult at the lower end of the 15 to 20 cm total-length range reported by UF/IFAS; FishBase separately records 12.3 cm maximum standard length and 20 cm maximum total length."},
+  "origin": "anatomical_midbody",
+  "clipRoles": {"idle": "idle", "locomotion": "swim", "response": "display"},
+  "palette": {"skin": [0.30, 0.20, 0.10], "fin": [0.40, 0.25, 0.12], "iris": [0.72, 0.34, 0.08], "cue": [0.055, 0.035, 0.025], "adornment": [0.05, 0.48, 0.52]},
+  "textures": {"bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.42, "finReliefStrength": 1.0, "finNormalStrength": 0.38},
+  "morphology": {
+    "notes": "Adult wild-type Heckel discus: nearly circular lateral outline, extreme lateral compression, short caudal peduncle, small terminal mouth, seated eye, and long continuous dorsal and anal envelopes that complete the disc without angelfish-like trailers.",
+    "controlStations": [
+      {"id":"caudal-base","x":-0.053,"halfWidth":0.0045,"dorsalHeight":0.008,"ventralDepth":0.008,"centerZ":0.000},
+      {"id":"peduncle","x":-0.046,"halfWidth":0.0060,"dorsalHeight":0.015,"ventralDepth":0.014,"centerZ":0.001},
+      {"id":"posterior","x":-0.035,"halfWidth":0.0105,"dorsalHeight":0.032,"ventralDepth":0.031,"centerZ":0.001},
+      {"id":"rear-mid","x":-0.020,"halfWidth":0.0135,"dorsalHeight":0.043,"ventralDepth":0.043,"centerZ":0.001},
+      {"id":"midbody","x":0.000,"halfWidth":0.0150,"dorsalHeight":0.047,"ventralDepth":0.047,"centerZ":0.001},
+      {"id":"anterior","x":0.020,"halfWidth":0.0150,"dorsalHeight":0.045,"ventralDepth":0.044,"centerZ":0.001},
+      {"id":"operculum","x":0.040,"halfWidth":0.0135,"dorsalHeight":0.039,"ventralDepth":0.037,"centerZ":0.000},
+      {"id":"head","x":0.052,"halfWidth":0.0115,"dorsalHeight":0.029,"ventralDepth":0.027,"centerZ":-0.001},
+      {"id":"snout","x":0.060,"halfWidth":0.0070,"dorsalHeight":0.016,"ventralDepth":0.014,"centerZ":-0.002},
+      {"id":"snout-tip","x":0.063,"halfWidth":0.0020,"dorsalHeight":0.004,"ventralDepth":0.003,"centerZ":-0.003}
+    ],
+    "crossSection": {"dorsalExponent": 1.92, "ventralExponent": 1.92},
+    "sampling": {"ringSegments": 48, "ringCount": 56},
+    "zoneFractions": [0.10, 0.28, 0.55, 0.78],
+    "finThickness": {"base": 0.0010, "edge": 0.00010},
+    "fins": [
+      {"name":"dorsal","type":"median","side":"dorsal","xStart":-0.043,"xEnd":0.041,"rows":5,"columns":25,"lean":-0.002,"heights":[[0.0,0.004],[0.18,0.011],[0.52,0.014],[0.82,0.010],[1.0,0.003]]},
+      {"name":"anal","type":"median","side":"ventral","xStart":-0.043,"xEnd":0.038,"rows":5,"columns":24,"lean":-0.002,"heights":[[0.0,0.004],[0.18,0.010],[0.52,0.014],[0.82,0.010],[1.0,0.003]]},
+      {"name":"caudal","type":"caudal","rows":6,"columns":15,"spanTop":0.024,"spanBottom":0.024,"length":0.030,"fork":0.03,"forkPower":1.4,"rounding":0.48,"baseFraction":0.92},
+      {"name":"pectoral","type":"paired","rootX":0.032,"rootLength":0.012,"rootHeight":-0.04,"length":0.022,"sweepDegrees":42,"droopDegrees":12,"spread":0.55,"taper":0.32,"power":0.85,"flare":0.42,"rayCount":14,"rows":4,"columns":8},
+      {"name":"pelvic","type":"paired","rootX":0.018,"rootLength":0.008,"rootHeight":-0.88,"length":0.018,"sweepDegrees":48,"droopDegrees":28,"spread":0.34,"taper":0.42,"power":0.75,"flare":0.40,"rayCount":7,"rows":4,"columns":7}
+    ],
+    "finAdjacency": [],
+    "eyes": {"x":0.046,"zFraction":0.34,"radius":0.0038,"protrude":0.08,"aspect":0.30,"seat":0.92,"roughness":0.20,"coat":0.18,"pupilFraction":0.58,"pupilAspect":0.16},
+    "mouth": {"zOffset":-0.08,"width":0.0023,"radius":0.00032,"upperLip":{"centerOffset":[0.0010,0.0003],"cornerOffset":[-0.0010,0.0004],"widthScale":0.90,"cornerRadiusScale":0.55,"centerRadiusScale":0.90},"lowerLip":{"centerOffset":[0.0007,-0.0007],"cornerOffset":[-0.0011,-0.0005],"widthScale":0.86,"cornerRadiusScale":0.48,"centerRadiusScale":0.78}},
+    "gill": {"x":0.034,"radius":0.00030,"points":15,"bulge":0.035},
+    "adornments": []
+  },
+  "rig": {"axialJoints": [0.052, 0.018, -0.006, -0.030, -0.045, -0.055]},
+  "animation": {
+    "idle": {"frames":96,"loop":true,"axial":[0.5,0.8,1.3,2.0],"axialFrequency":1,"axialLag":0.48,"pectoral":9,"pectoralFrequency":3,"pelvic":2.0,"median":0.8,"gill":1.6,"gillFrequency":3,"jaw":1.5,"jawFrequency":3},
+    "swim": {"frames":72,"loop":true,"axial":[1.4,2.3,3.8,6.2],"axialFrequency":2,"axialLag":0.48,"pectoral":17,"pectoralFrequency":4,"pelvic":3.2,"median":1.5,"gill":1.8,"gillFrequency":3,"jaw":1.2,"jawFrequency":2},
+    "display": {"frames":54,"loop":false,"envelope":"bell","axial":[1.2,2.0,3.2,5.2],"axialFrequency":1,"axialLag":0.48,"pectoral":24,"pectoralFrequency":3,"pelvic":5.0,"median":3.8,"gill":3.0,"gillFrequency":4,"jaw":2.5,"jawFrequency":3}
+  },
+  "validation": {"triangleBudget":[5000,20000],"maxJointDegrees":20,"maxJointDegreesResponse":30},
+  "preview": {"frame":14,"azimuthDegrees":-50,"elevationDegrees":16},
+  "visualDebt": [
+    "No calibrated true dorsal or frontal photograph was found, so the extreme lateral width and frontal head section remain conservative inferences.",
+    "Fin rays and fine turquoise striations are procedural texture relief rather than individually modeled structures.",
+    "Wild Symphysodon discus populations and domestic strains vary; this source targets a brown wild-type Heckel form with the diagnostic broader central bar."
+  ]
+}

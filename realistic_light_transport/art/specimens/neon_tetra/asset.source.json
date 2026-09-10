@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "neon_tetra",
+  "displayName": "Neon Tetra",
+  "scientificLabel": "Paracheirodon innesi",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "freshwater",
+  "biome": "freshwater_community",
+  "bodyPlan": "fish",
+  "backend": "catalog.species.neon_tetra",
+  "textureStyle": "neon_tetra",
+  "assetVersion": "0.2.0-source",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.035,
+    "kind": "adult_display_total_length",
+    "note": "A representative adult display length between the FishBase 3.0 cm measured total-length specimen and the 4.0 cm adult size reported by the USGS NAS profile. FishBase separately records 2.5 cm maximum standard length."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": {
+    "skin": [0.44, 0.53, 0.50],
+    "fin": [0.46, 0.56, 0.54],
+    "iris": [0.11, 0.38, 0.44],
+    "cue": [0.025, 0.74, 0.90],
+    "adornment": [0.88, 0.07, 0.04]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.26, "finReliefStrength": 0.85, "finNormalStrength": 0.28 },
+  "morphology": {
+    "notes": "Small, slender, laterally compressed tetra. FishBase morphometrics for a 3 cm total-length specimen record standard length at 82.6 percent of total length, body depth at 26.0 percent, head length at 18.5 percent, and eye diameter at 45.9 percent of head length. The source retains a small adipose fin, a short triangular dorsal, a longer low anal fin, and a symmetrical forked caudal.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.0140, "halfWidth": 0.0007, "dorsalHeight": 0.0018, "ventralDepth": 0.0015, "centerZ": 0.0000 },
+      { "id": "peduncle", "x": -0.0110, "halfWidth": 0.0009, "dorsalHeight": 0.0027, "ventralDepth": 0.0022, "centerZ": 0.0001 },
+      { "id": "posterior", "x": -0.0060, "halfWidth": 0.00135, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
+      { "id": "midbody", "x": 0.0005, "halfWidth": 0.0017, "dorsalHeight": 0.0050, "ventralDepth": 0.0041, "centerZ": 0.0003 },
+      { "id": "anterior", "x": 0.0060, "halfWidth": 0.0018, "dorsalHeight": 0.0048, "ventralDepth": 0.0039, "centerZ": 0.0003 },
+      { "id": "operculum", "x": 0.0095, "halfWidth": 0.00165, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
+      { "id": "head", "x": 0.0120, "halfWidth": 0.00145, "dorsalHeight": 0.0035, "ventralDepth": 0.0028, "centerZ": 0.0000 },
+      { "id": "snout", "x": 0.0140, "halfWidth": 0.0009, "dorsalHeight": 0.0022, "ventralDepth": 0.0016, "centerZ": -0.0001 },
+      { "id": "snout-tip", "x": 0.0150, "halfWidth": 0.00028, "dorsalHeight": 0.0006, "ventralDepth": 0.0004, "centerZ": -0.0001 }
+    ],
+    "crossSection": { "dorsalExponent": 1.82, "ventralExponent": 1.72 },
+    "sampling": { "ringSegments": 48, "ringCount": 48 },
+    "zoneFractions": [0.10, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.00042, "edge": 0.00005 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "bone": "Dorsal", "xStart": -0.0042, "xEnd": 0.0010, "rows": 4, "columns": 8, "lean": -0.0010, "heights": [[0.0, 0.0008], [0.38, 0.0030], [0.78, 0.0044], [1.0, 0.0012]] },
+      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.0098, "xEnd": -0.0074, "rows": 3, "columns": 5, "lean": -0.0003, "heights": [[0.0, 0.0004], [0.48, 0.0016], [1.0, 0.0003]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.0096, "xEnd": -0.0030, "rows": 4, "columns": 10, "lean": -0.0010, "heights": [[0.0, 0.0006], [0.38, 0.0023], [0.80, 0.0030], [1.0, 0.0010]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0042, "spanBottom": 0.0042, "length": 0.0060, "fork": 0.46, "forkPower": 1.65, "rounding": 0.10, "baseFraction": 0.86 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0088, "rootLength": 0.0032, "rootHeight": -0.08, "length": 0.0048, "sweepDegrees": 44, "droopDegrees": 12, "spread": 0.48, "taper": 0.36, "power": 0.78, "flare": 0.42, "rayCount": 10, "rows": 3, "columns": 6 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0025, "rootLength": 0.0024, "rootHeight": -0.88, "length": 0.0038, "sweepDegrees": 48, "droopDegrees": 34, "spread": 0.28, "taper": 0.34, "power": 0.76, "flare": 0.38, "rayCount": 8, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0112, "zFraction": 0.40, "radius": 0.00135, "protrude": 0.07, "aspect": 0.28, "seat": 0.92, "roughness": 0.16, "coat": 0.22, "pupilFraction": 0.56, "pupilAspect": 0.16 },
+    "mouth": { "zOffset": -0.04, "width": 0.0010, "radius": 0.00016 },
+    "gill": { "x": 0.0082, "radius": 0.00013, "points": 11, "bulge": 0.022 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.0120, 0.0055, -0.0005, -0.0065, -0.0115, -0.0150] },
+  "animation": {
+    "idle": { "frames": 84, "loop": true, "axial": [1.0, 1.7, 2.8, 4.2], "axialFrequency": 1, "axialLag": 0.50, "pectoral": 16, "pectoralFrequency": 4, "pelvic": 1.5, "median": 0.8, "gill": 1.8, "gillFrequency": 3, "jaw": 1.2, "jawFrequency": 3 },
+    "swim": { "frames": 54, "loop": true, "axial": [3.0, 4.8, 7.5, 11.5], "axialFrequency": 3, "axialLag": 0.50, "pectoral": 20, "pectoralFrequency": 5, "pelvic": 2.8, "median": 1.4, "gill": 1.8, "gillFrequency": 3, "jaw": 1.0, "jawFrequency": 2 },
+    "burst": { "frames": 24, "loop": false, "envelope": "bell", "axial": [4.5, 6.5, 8.0, 15.0], "axialFrequency": 3, "axialLag": 0.50, "pectoral": 9, "pectoralFrequency": 5, "pelvic": 3.0, "median": 2.4, "gill": 2.8, "gillFrequency": 4, "jaw": 2.2, "jawFrequency": 4 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -52, "elevationDegrees": 18 },
+  "visualDebt": [
+    "No calibrated orthographic top or frontal live image was found, so the revised 0.374 midbody width-to-depth ratio remains a conservative inference from the FishBase compressed-body morphometrics and oblique source imagery.",
+    "The iridescent lateral band is a deterministic display-referred approximation; real iridophore color changes with incident angle, light, circadian state, and adrenergic response.",
+    "Fin rays and scales are represented by procedural relief rather than individually modeled structures."
+  ]
+}

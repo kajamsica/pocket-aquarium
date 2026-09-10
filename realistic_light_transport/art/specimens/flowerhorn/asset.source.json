@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "flowerhorn",
+  "displayName": "Flowerhorn Cichlid",
+  "scientificLabel": "Cichlidae hybrid (Flowerhorn)",
+  "taxonomyConfidence": "ornamental_hybrid",
+  "category": "fish",
+  "waterType": "freshwater",
+  "biome": "freshwater_cichlid",
+  "bodyPlan": "fish",
+  "backend": "catalog.species.flowerhorn",
+  "textureStyle": "flowerhorn_red_pearl",
+  "assetVersion": "0.3.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.30,
+    "kind": "representative_adult_total_length",
+    "note": "The source targets a representative 30 cm adult ornamental male. Peer-reviewed invasion literature reports almost 30 cm, while lineage and husbandry sources warn that strain and sex produce substantial size variation."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "display" },
+  "palette": {
+    "skin": [0.72, 0.12, 0.045],
+    "fin": [0.66, 0.10, 0.035],
+    "iris": [0.78, 0.20, 0.035],
+    "cue": [0.055, 0.030, 0.025],
+    "adornment": [0.10, 0.72, 0.72]
+  },
+  "textures": {
+    "bodyResolution": [1024, 512],
+    "finResolution": [1024, 512],
+    "normalStrength": 0.38,
+    "finReliefStrength": 1.08,
+    "finNormalStrength": 0.40
+  },
+  "morphology": {
+    "notes": "Adult male red-pearl Flowerhorn target form, treated truthfully as a selectively bred hybrid rather than a biological species. A stout deep cichlid trunk narrows into a strong peduncle, while a smooth exaggerated nuchal hump rises above the eye and skull. The mouth is terminal with fleshy lips. Long-based dorsal and anal fins taper toward a broad rounded caudal. Exact top and front proportions, hump volume, strain-specific pearling, and the broken lateral flower line remain explicit inferences from licensed oblique and lateral imagery.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.105, "halfWidth": 0.0070, "dorsalHeight": 0.0100, "ventralDepth": 0.0095, "centerZ": 0.0000 },
+      { "id": "peduncle", "x": -0.095, "halfWidth": 0.0155, "dorsalHeight": 0.0200, "ventralDepth": 0.0190, "centerZ": 0.0000 },
+      { "id": "posterior", "x": -0.074, "halfWidth": 0.0285, "dorsalHeight": 0.0470, "ventralDepth": 0.0440, "centerZ": 0.0010 },
+      { "id": "midbody", "x": -0.040, "halfWidth": 0.0410, "dorsalHeight": 0.0660, "ventralDepth": 0.0580, "centerZ": 0.0020 },
+      { "id": "anterior", "x": -0.004, "halfWidth": 0.0460, "dorsalHeight": 0.0750, "ventralDepth": 0.0610, "centerZ": 0.0040 },
+      { "id": "operculum", "x": 0.036, "halfWidth": 0.0440, "dorsalHeight": 0.0880, "ventralDepth": 0.0570, "centerZ": 0.0060 },
+      { "id": "hump-posterior", "x": 0.052, "halfWidth": 0.0440, "dorsalHeight": 0.1010, "ventralDepth": 0.0530, "centerZ": 0.0090 },
+      { "id": "hump-crest", "x": 0.068, "halfWidth": 0.0430, "dorsalHeight": 0.1040, "ventralDepth": 0.0500, "centerZ": 0.0100 },
+      { "id": "hump-anterior", "x": 0.084, "halfWidth": 0.0400, "dorsalHeight": 0.1030, "ventralDepth": 0.0460, "centerZ": 0.0090 },
+      { "id": "brow", "x": 0.098, "halfWidth": 0.0360, "dorsalHeight": 0.0950, "ventralDepth": 0.0420, "centerZ": 0.0070 },
+      { "id": "head", "x": 0.109, "halfWidth": 0.0280, "dorsalHeight": 0.0770, "ventralDepth": 0.0350, "centerZ": 0.0030 },
+      { "id": "snout", "x": 0.119, "halfWidth": 0.0170, "dorsalHeight": 0.0440, "ventralDepth": 0.0230, "centerZ": -0.0010 },
+      { "id": "snout-tip", "x": 0.125, "halfWidth": 0.0080, "dorsalHeight": 0.0120, "ventralDepth": 0.0080, "centerZ": -0.0040 }
+    ],
+    "crossSection": { "dorsalExponent": 1.70, "ventralExponent": 1.76 },
+    "sampling": { "ringSegments": 48, "ringCount": 64 },
+    "zoneFractions": [0.10, 0.29, 0.55, 0.79],
+    "finThickness": { "base": 0.00135, "edge": 0.00010 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.088, "xEnd": 0.058, "rows": 6, "columns": 22, "lean": -0.012, "curve": -0.003, "rayCount": 28, "heights": [[0.0,0.010],[0.10,0.024],[0.25,0.038],[0.43,0.045],[0.62,0.041],[0.80,0.032],[0.93,0.020],[1.0,0.009]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.082, "xEnd": 0.034, "rows": 6, "columns": 20, "lean": -0.011, "curve": -0.003, "rayCount": 20, "heights": [[0.0,0.008],[0.12,0.019],[0.30,0.031],[0.50,0.038],[0.69,0.035],[0.85,0.026],[1.0,0.009]] },
+      { "name": "caudal", "type": "caudal", "rows": 6, "columns": 31, "spanTop": 0.038, "spanBottom": 0.036, "length": 0.070, "topLobeLength": 1.0, "bottomLobeLength": 1.0, "fork": 0.00, "forkPower": 3.5, "rounding": 0.45, "baseFraction": 0.96, "rayCount": 18 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.042, "rootLength": 0.025, "rootHeight": -0.10, "length": 0.050, "sweepDegrees": 37, "droopDegrees": 10, "spread": 0.74, "taper": 0.48, "power": 0.67, "flare": 0.58, "rayCount": 14, "rows": 4, "columns": 8 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.017, "rootLength": 0.020, "rootHeight": -0.86, "length": 0.052, "sweepDegrees": 47, "droopDegrees": 49, "spread": 0.28, "taper": 0.20, "power": 0.88, "flare": 0.30, "rayCount": 8, "rows": 4, "columns": 7 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.088, "zFraction": 0.08, "radius": 0.0090, "protrude": 0.06, "aspect": 0.30, "seat": 0.91, "roughness": 0.24, "coat": 0.16, "pupilFraction": 0.55, "pupilAspect": 0.20 },
+    "mouth": {
+      "zOffset": -0.08,
+      "width": 0.0032,
+      "radius": 0.00042,
+      "upperLip": { "centerOffset": [0.00025,0.00020], "cornerOffset": [-0.00060,0.00010], "widthScale": 0.94, "cornerRadiusScale": 0.55, "centerRadiusScale": 0.82 },
+      "lowerLip": { "centerOffset": [0.00015,-0.00035], "cornerOffset": [-0.00070,-0.00020], "widthScale": 0.88, "cornerRadiusScale": 0.48, "centerRadiusScale": 0.72 }
+    },
+    "gill": { "x": 0.038, "radius": 0.00075, "points": 15, "bulge": 0.032 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.092, 0.046, 0.010, -0.030, -0.070, -0.108] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [0.5,1.2,2.2,4.0], "axialFrequency": 1, "axialLag": 0.52, "pectoral": 15, "pectoralFrequency": 2, "pelvic": 2.0, "median": 0.7, "gill": 2.0, "gillFrequency": 3, "jaw": 1.2, "jawFrequency": 3, "bodyRoll": 0.5 },
+    "swim": { "frames": 70, "loop": true, "axial": [1.1,2.8,5.5,9.5], "axialFrequency": 2, "axialLag": 0.50, "pectoral": 20, "pectoralFrequency": 3, "pelvic": 3.2, "median": 1.2, "gill": 2.0, "gillFrequency": 2, "jaw": 1.2, "jawFrequency": 2, "bodyRoll": 0.9 },
+    "display": { "frames": 48, "loop": false, "envelope": "bell", "axial": [1.5,3.4,6.8,12.0], "axialFrequency": 2, "axialLag": 0.48, "pectoral": 28, "pectoralFrequency": 3, "pelvic": 5.0, "median": 4.0, "gill": 3.5, "gillFrequency": 3, "jaw": 5.0, "jawFrequency": 3, "bodyRoll": 2.0 }
+  },
+  "validation": { "triangleBudget": [5000, 22000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 14, "azimuthDegrees": -55, "elevationDegrees": 14 },
+  "visualDebt": [
+    "Flowerhorn is a variable ornamental hybrid complex rather than a valid biological species. This source targets one adult male red-pearl phenotype and must not be treated as representing every strain or sex.",
+    "No calibrated orthographic top or frontal reference was found. Body width, hump volume, lip projection, and eye seating outside the lateral view are conservative inferences.",
+    "The broad low nuchal dome is encoded in the shared body station envelope rather than a separately deformable fatty soft-tissue mass, so close-up compression, asymmetry, and condition-dependent volume are not represented.",
+    "The rounded caudal is one continuous skinned membrane; individual soft-ray spreading and edge scalloping are represented only by procedural relief.",
+    "Pearling and the broken lateral flower line are deterministic procedural approximations. They require downstream three-view review and explicit user acceptance before promotion."
+  ]
+}
