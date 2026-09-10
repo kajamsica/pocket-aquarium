@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "pygmy_cory",
+  "sourceSha256": "49955e932fa6ad5114cb169e92174e460bd5ca635b43ed562e980f38e2f42f45",
+  "objects": [
+    {
+      "name": "PA_pygmy_cory_Body",
+      "vertexCount": 2450,
+      "triangleCount": 4896,
+      "vertexDigest": "421e798081c0c9a5b8962f61cf0ce823cc3d9384e9ad582bbcf4366e99d412af",
+      "topologyDigest": "17d061f55aaaab44b13bcd7a30f5ee14c1998643640b7c0353bf0ab60c20d09b",
+      "uvDigest": "a103da640ccbed87006474abe36657faf063e015a50dc4662890ca8fa51d8437",
+      "weightDigest": "8d301f58e4f9222f75be92d2d2b8f10a750f3d85bda6f5bc5737c190251b97ef",
+      "materials": [
+        "PA_pygmy_cory_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_pygmy_cory_Details",
+      "vertexCount": 1132,
+      "triangleCount": 2208,
+      "vertexDigest": "8636289dd53205d694e1f410cfa8c038fdfb40995490db3e056d59aeb2f1c68c",
+      "topologyDigest": "89b574cfed7e10d68d6e118c23baa26bfa82e4bf15f7ef150ddc7f6331f46a37",
+      "uvDigest": "19dd348dcfc39e6a16de5182f5296d1c45ddb09bfcaa35a5a12036620c1514c1",
+      "weightDigest": "dad491987604b0cee50662909daf9984f8be3f962e4506b970f8f578e70d7571",
+      "materials": [
+        "PA_pygmy_cory_Adornment",
+        "PA_pygmy_cory_Cue",
+        "PA_pygmy_cory_Eye",
+        "PA_pygmy_cory_Glint",
+        "PA_pygmy_cory_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_pygmy_cory_Fins",
+      "vertexCount": 454,
+      "triangleCount": 776,
+      "vertexDigest": "e87e3d9244099bdd2e923282ba4a3c829183144c667a1bc338022d53d3ec03a9",
+      "topologyDigest": "6574ca3c312b4b04a694113c5fa603f6f0de8475352baae66fa51921e0bfbfa2",
+      "uvDigest": "64102f67c936c5073b1c6cc52621f97b9513e9a26150627e0b716e0d8df4e103",
+      "weightDigest": "c6d80dbca08dca30ae39856b8f387d33ae20a1b24dff65d9be6662049460bd40",
+      "materials": [
+        "PA_pygmy_cory_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_pygmy_cory_Rig",
+    "boneCount": 15,
+    "deformBoneCount": 14,
+    "boneDigest": "348f6452e07dba0c50c99603dcc7519963f19748fa09122fcdaf0eff0bba4c57"
+  },
+  "geometryDigest": "9ff4db8e1af54359b431d088ebd01e7701d79322bcb3d23a92b6767baeefbf81",
+  "variantId": null
+}
