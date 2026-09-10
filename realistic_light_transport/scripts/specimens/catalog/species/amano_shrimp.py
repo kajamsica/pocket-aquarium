@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 from mathutils import Vector
 
 from ..lib import materials as mat
 from ..lib import meshing as msh
+from ..lib import textures
 from ..lib.animation import Channel, ClipSpec, bake_clip
 from ..lib.contract import BuildResult, base_contract, register_clips
 from ..lib.rigging import RigBuilder
@@ -62,7 +64,20 @@ def _set_transmission(material, value):
             break
 
 
-def _materials(spec):
+def _paint_shell_albedo(spec, width=256, height=128):
+    """Deterministic translucent-shell colour supporting the modeled flank marks."""
+    palette = spec["palette"]
+    u, v = textures.uv_grid(width, height)
+    grain = 0.5 + 0.25 * np.sin(math.tau * (u * 11.0 + v * 3.0)) + 0.25 * np.sin(math.tau * (u * 23.0 - v * 7.0))
+    albedo = textures.rgba(palette["body"], 1.0, u.shape)
+    albedo = textures.mix(albedo, palette["bodyWarm"], np.clip(0.10 + 0.12 * grain, 0.0, 0.24))
+    lateral_rows = np.exp(-((v - 0.25) / 0.055) ** 2) + np.exp(-((v - 0.75) / 0.055) ** 2)
+    broken = np.maximum(np.cos(math.tau * (u * 7.0 + 0.16 * np.sin(v * math.tau * 3.0))), 0.0) ** 12
+    albedo = textures.mix(albedo, palette["dottedMark"], np.clip(lateral_rows * broken * 0.28, 0.0, 0.28))
+    return textures.scale_rgb(albedo, np.clip(0.93 + 0.10 * grain, 0.90, 1.05))
+
+
+def _materials(spec, ctx):
     palette = spec["palette"]
     intent = spec["materialIntent"]
     body_intent = intent["body"]
@@ -77,6 +92,9 @@ def _materials(spec):
         specular=0.34,
     )
     _set_transmission(shell, float(body_intent["transmission"]))
+    texture_path = ctx.texture_dir / "shell-albedo.png"
+    shell_albedo = textures.write_image(f"{ctx.prefix}_Shell_Albedo", texture_path, _paint_shell_albedo(spec))
+    mat.attach_textures(shell, albedo=shell_albedo)
     limb = mat.principled(
         "PA_amano_shrimp_Appendage",
         palette["appendage"],
@@ -91,7 +109,7 @@ def _materials(spec):
     eye = mat.principled("PA_amano_shrimp_Eye", palette["eye"], 0.16, coat=0.50, subsurface=0.0, specular=0.48)
     internal = mat.principled("PA_amano_shrimp_Internal", palette["internalCue"], 0.55, coat=0.0, alpha=0.24, specular=0.20)
     tail = mat.principled("PA_amano_shrimp_TailCue", (0.32, 0.48, 0.50), 0.46, coat=0.05, alpha=0.38, specular=0.26)
-    return {"shell": shell, "limb": limb, "mark": mark, "eye": eye, "internal": internal, "tail": tail}
+    return {"shell": shell, "limb": limb, "mark": mark, "eye": eye, "internal": internal, "tail": tail}, [texture_path]
 
 
 def _body_parts():
@@ -257,7 +275,7 @@ def _clips(rig):
 def build(spec: dict, _species, ctx) -> BuildResult:
     if spec["id"] != "amano_shrimp" or spec["bodyPlan"] != "decapod_shrimp":
         raise ValueError("Amano backend only supports the amano_shrimp decapod source")
-    materials = _materials(spec)
+    materials, written = _materials(spec, ctx)
     rig, rb = _rig()
     body_parts = _body_parts() + _tail_parts()
     limb_parts = _limb_parts()
@@ -292,7 +310,7 @@ def build(spec: dict, _species, ctx) -> BuildResult:
         clips=clips,
         contract=contract,
         preview_action="bottom_walk",
-        textures=[],
+        textures=written,
         notes={
             "bodyLengthMeters": BODY_LENGTH,
             "bodyLengthExcludesAntennae": True,
