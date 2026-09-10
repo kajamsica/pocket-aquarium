@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "bronze_cory",
+  "variantId": null,
+  "scientificName": "Corydoras aeneus",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.3.0",
+  "referenceSizeMeters": 0.075,
+  "referenceSizeKind": "adult_display_reference_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "sourceManifest": "candidates/fable-v5/candidate.manifest.json",
+  "displayName": "Bronze Cory",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-7777",
+      "title": "Osteogaster aenea (Gill, 1858), Bronze corydoras, species summary record 7777",
+      "publisher": "FishBase",
+      "author": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/7777",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain their own licenses",
+      "evidenceCues": [
+        "Maximum length is 7.5 cm standard length and body height is 2.5 to 2.9 times in standard length.",
+        "The snout is short and rounded, with one dorsal spine, seven dorsal soft rays, 23 to 24 dorsal plates and 20 to 22 ventral plates.",
+        "The pectoral spine is long and internally denticulated; fins are yellow or pink without strong markings.",
+        "A brownish-orange predorsal patch is particularly visible from above."
+      ]
+    },
+    {
+      "id": "COMMONS-FEMALE-BRONZE-CORY",
+      "title": "File:Female Bronze Corydoras (Corydoras aeneus).jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Andrew Keller",
+      "url": "https://commons.wikimedia.org/wiki/File:Female_Bronze_Corydoras_(Corydoras_aeneus).jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "near-lateral adult female live fish",
+      "provenance": "Author's own work, photographed 12 October 2020 and released by the copyright holder under CC0.",
+      "allowedUse": "qualitative_proportion_reference_only",
+      "license": "CC0 1.0 Universal Public Domain Dedication",
+      "evidenceCues": [
+        "Deep armored shoulder and trunk taper sharply into a narrow caudal peduncle.",
+        "The dorsal roof rises over the pectoral girdle, then slopes continuously to the short rounded snout.",
+        "The belly is distinctly flatter than the dorsal outline and the mouth sits below the snout axis.",
+        "The flank carries a dark olive-bronze field over a pale lower body; the fins remain translucent amber."
+      ]
+    },
+    {
+      "id": "COMMONS-CORY-AENEUS-BARBELS",
+      "title": "File:Corydoras aeneus barbels.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Ude",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_aeneus_barbels.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "frontal head and inferior mouth",
+      "provenance": "Author's own work, photographed and uploaded 29 December 2010.",
+      "allowedUse": "qualitative_proportion_reference_only",
+      "license": "CC BY-SA 3.0 or GNU Free Documentation License 1.2 or later",
+      "evidenceCues": [
+        "The broad armored cheeks narrow into a short snout; the eyes are embedded laterally instead of projecting as beads.",
+        "The inferior mouth is a small transverse opening beneath the snout, not a circular terminal sucker.",
+        "Long maxillary barbels taper from the mouth corners and shorter lower barbels originate beneath the mouth.",
+        "The underside is flattened relative to the arched head roof."
+      ]
+    },
+    {
+      "id": "COMMONS-CORY-AENEUS-WILD-32182319",
+      "title": "File:Corydoras aeneus 32182319.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "karsten_s",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_aeneus_32182319.jpg",
+      "originalPhotoUrl": "https://www.inaturalist.org/photos/32182319",
+      "observationUrl": "https://www.inaturalist.org/observations/20860231",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "wild specimen in Suriname, oblique lateral context",
+      "provenance": "Original iNaturalist photograph from Suriname, 27 September 2016; license reviewed by INaturalistReviewBot before the Commons import.",
+      "allowedUse": "qualitative_proportion_and_colour_reference_only",
+      "license": "CC BY 4.0",
+      "evidenceCues": [
+        "Wild colour is muted olive-bronze rather than uniform tan or saturated gold.",
+        "The head and pectoral girdle are robust while the posterior body and peduncle taper visibly.",
+        "Foreshortening and field posture prohibit calibrated width measurements."
+      ]
+    },
+    {
+      "id": "CYBIUM-2005-CORY-OSTEOLOGY",
+      "title": "Descriptive osteology of Corydoras aeneus (Siluriformes: Callichthyidae)",
+      "publisher": "Cybium, Société Française d'Ichtyologie",
+      "author": "Frank Huysentruyt and Dominique Adriaens",
+      "url": "https://sfi-cybium.fr/en/descriptive-osteology-corydoras-aeneus-siluriformes-callichthyidae",
+      "pdfUrl": "https://evomorph.ugent.be/Publications/Publ35.pdf",
+      "doi": "10.26028/cybium/2005-293-004",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_morphology",
+      "view": "dorsal, ventral and lateral adult skull drawings plus fin and girdle osteology",
+      "allowedUse": "facts_and_citation_only",
+      "license": "No Creative Commons image-reuse license stated; no figures were copied or redistributed",
+      "evidenceCues": [
+        "The adult neurocranium is pyriform, narrow anteriorly and broadening posteriorly, which supports a short narrow snout leading into broader cheeks.",
+        "The dorsal skull view constrains the head roof qualitatively but does not calibrate live whole-body width.",
+        "The infraorbitals, opercle and pectoral girdle form substantial armor plates.",
+        "The adipose fin includes a spine derived from a dorsal bony plate."
+      ]
+    },
+    {
+      "id": "OATA-FRESHWATER-CATFISH",
+      "title": "How to look after freshwater catfish",
+      "publisher": "Ornamental Aquatic Trade Association Ltd",
+      "author": "Ornamental Aquatic Trade Association Ltd",
+      "url": "https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/how-to-look-after-freshwater-catfish/",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation_only",
+      "license": "Copyright OATA; no open reuse license stated",
+      "evidenceCues": [
+        "Corydoras are shoaling catfish with sensitive head barbels and strong front pectoral spines.",
+        "This husbandry source is not used to calibrate body proportions or coloration."
+      ]
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "f42a49261ed2ad581b01cc67455e78d4dfc6b618325926c60d37d74eb3c46dd9",
+  "sourceReferencesSha256": "66d21aeb0322759f0c4f1371310f4a9d619a538e35a726db89f1c62709d063ad",
+  "sourceBlendSha256": "2ff3e66c4f6265fcdda3e0fc814ab52b3d8f1879a84c9e2257e129e9d058ec92",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "15989a9634c23ba09199a9de50d901514c0c22f799a723de45ae48350b457bcf",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "e06fd027ab9382ccb57f6f9e742f42a90264b3834c3817289a5d79aff9b88caf"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "candidates/fable-v5/textures/body-albedo.png",
+      "sha256": "288266013f829343735314d9cc34436aaf837eaec8cf556de70cfc0a8b4fd735"
+    },
+    {
+      "path": "candidates/fable-v5/textures/body-normal.png",
+      "sha256": "c30972ab2d39f717221f9174159f36ddad76a9310e7f4e868b5a3cae74f6b949"
+    },
+    {
+      "path": "candidates/fable-v5/textures/body-roughness.png",
+      "sha256": "3b9194386ab4d741db594a55ee564694235e99f9473ce5fd2def3e5a59914609"
+    },
+    {
+      "path": "candidates/fable-v5/textures/fin-atlas.png",
+      "sha256": "f0a8c203abc6026645724d05209d3dc58c3d0d4dc3fe1f03aeff8457d5315277"
+    },
+    {
+      "path": "candidates/fable-v5/textures/fin-normal.png",
+      "sha256": "feb1f2f60af1ec503f28341a0e53801c4c07777675b0014dcc053027ae98212e"
+    }
+  ],
+  "statistics": {
+    "triangles": 8216,
+    "materials": 7,
+    "bones": 14,
+    "nodes": 20,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "forage",
+      "rest",
+      "swim"
+    ],
+    "vertices": {
+      "PA_bronze_cory_Body": 2594,
+      "PA_bronze_cory_Fins": 454,
+      "PA_bronze_cory_Details": 1156
+    },
+    "runtimeBytes": 1484264
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "swim",
+    "response": "forage"
+  },
+  "clipLoops": {
+    "rest": true,
+    "swim": true,
+    "forage": false
+  },
+  "restBounds": {
+    "min": [
+      -0.034881,
+      -0.010869,
+      -0.010412
+    ],
+    "max": [
+      0.039021,
+      0.010869,
+      0.028323
+    ]
+  },
+  "renders": {
+    "authorPreview": "candidates/fable-v5/renders/author-preview.png",
+    "threeView": "candidates/fable-v5/renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "candidates/fable-v5/validation-source.json",
+    "runtimeReport": "candidates/fable-v5/validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  },
+  "promotion": {
+    "status": "accepted",
+    "acceptedBy": "user",
+    "acceptedOn": "2026-09-10",
+    "promotedAssetVersion": "0.3.0",
+    "rollback": null
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "discus",
+  "variantId": null,
+  "scientificName": "Symphysodon discus",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.2.1-source",
+  "referenceSizeMeters": 0.15,
+  "referenceSizeKind": "adult_display_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "e03b057c8c96a73bc0c33a17ccd1bead1cf56577a11fe7dd8f9bf1b4cd379bd1",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Ornamental Discus",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-SYMPHYSODON-DISCUS",
+      "title": "Symphysodon discus summary page",
+      "publisher": "FishBase",
+      "creator": "Rainer Froese and Daniel Pauly (editors)",
+      "url": "https://www.fishbase.se/summary/Symphysodon-discus",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "Taxonomy, freshwater classification, size, and linked morphology facts with citation only; no imagery copied or redistributed.",
+      "license": "CC BY-NC 3.0 for FishBase content; cited underlying references retain their own rights",
+      "pose": "not_applicable",
+      "evidence": [
+        "accepted species name Symphysodon discus Heckel, 1840",
+        "Cichlidae classification",
+        "12.3 cm maximum standard length and 20 cm maximum total length"
+      ]
+    },
+    {
+      "id": "UFIFAS-FA166",
+      "title": "Candidate Species for Florida Aquaculture: Discus Symphysodon spp.",
+      "publisher": "University of Florida IFAS Extension",
+      "creator": "E. J. Livengood, C. L. Ohs, and F. A. Chapman",
+      "url": "https://ask.ifas.ufl.edu/publication/FA166",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "institutional_reference",
+      "allowedUse": "Morphology, adult-size range, and qualitative color facts with citation only; no figures copied or redistributed.",
+      "license": "Copyright University of Florida IFAS Extension; no open image-reuse license stated",
+      "pose": "not_applicable",
+      "evidence": [
+        "very laterally compressed disc-shaped body",
+        "15 to 20 cm adult total length and comparable height",
+        "brown, blue, and green base colors with black, yellow, and red markings"
+      ]
+    },
+    {
+      "id": "COMMONS-DISCUS-3149751218",
+      "title": "File:Discus (Symphysodon discus) (3149751218).jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Carl Cliff, Flickr account Cliff from Arlington, Virginia, USA",
+      "url": "https://commons.wikimedia.org/wiki/File:Discus_(Symphysodon_discus)_(3149751218).jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Lateral proportion, eye, mouth, peduncle, and fin-envelope reference only; no pixels copied, sampled, traced, redistributed, or hotlinked.",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "pose": "primary_lateral",
+      "evidence": [
+        "near-circular side silhouette",
+        "short caudal peduncle and rounded caudal",
+        "small terminal mouth and eye seating",
+        "continuous dorsal and anal envelopes"
+      ]
+    },
+    {
+      "id": "COMMONS-SYMPHYSODON-DISCUS1",
+      "title": "File:Symphysodon discus1.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Valenzuela400",
+      "url": "https://commons.wikimedia.org/wiki/File:Symphysodon_discus1.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Additional exact species lateral and oblique proportion reference only; no pixels copied, sampled, traced, redistributed, or hotlinked.",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "pose": "lateral_oblique",
+      "evidence": [
+        "disc outline and strong lateral compression",
+        "median-fin continuity",
+        "eye and snout relationship"
+      ]
+    },
+    {
+      "id": "READY-2006-DIVERSIFICATION",
+      "title": "Patterns of diversification in the discus fishes (Symphysodon spp. Cichlidae) of the Amazon basin",
+      "publisher": "Molecular Phylogenetics and Evolution",
+      "creator": "J. S. Ready, E. J. G. Ferreira, and S. O. Kullander",
+      "url": "https://www.sciencedirect.com/science/article/pii/S1055790308002716",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_reference",
+      "allowedUse": "Diagnostic color-pattern facts with citation only; no figures or source imagery copied or redistributed.",
+      "license": "Copyright Elsevier; no open figure-reuse license stated",
+      "pose": "not_applicable",
+      "evidence": [
+        "Symphysodon discus has a distinctive broad central black vertical bar",
+        "faint horizontal silvery-blue striations help distinguish the wild form"
+      ]
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "87ad543915c3095bb0d6d1a6b3319f21f361c9fb810f3b72056ca2ad2ef3ced5",
+  "sourceReferencesSha256": "7fa3bd4022d0ca668232f86dd55dc8ac5bc7ed73e53ee94050d24cb75ff4fc3c",
+  "sourceBlendSha256": "e9835585773cab43b0c706330f1e938bb0df34a3bbe8d00e10a9ca73151eb981",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "e37665a7308797f67931c881a4ac5be4579530391a02e0e6abd6c182fa7236c5",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "ff31e64495d7941789bcbdec07c1526164bab7da7eab1d5b63b1b98590f9428e"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "b42726b51aa69f0257a7f2c3543648cf768e730049187230c781849c4e257cfa"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "9bc529d4365a1111dc9c565cec4c71d1b04b0d7afcf210d5dd50ad5e4a791397"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "253a0689b75cd0370a62ca1de43bfc48a2326a18f3603b164bc08f3c72db1491"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "b67b4569f506db8310bc87ebe92ffd8025bf8ff5c3dcc6013b487e3ed7cb6806"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "2d4bdf2286c92bc28745e6c6d30fbf41753584302cc49d40cbab5f8c8fb93e2a"
+    }
+  ],
+  "statistics": {
+    "triangles": 9522,
+    "materials": 6,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "display",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_discus_Body": 2690,
+      "PA_discus_Fins": 1128,
+      "PA_discus_Details": 1076
+    },
+    "runtimeBytes": 2239552
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "display"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "display": false
+  },
+  "restBounds": {
+    "min": [
+      -0.081241,
+      -0.018459,
+      -0.065084
+    ],
+    "max": [
+      0.065019,
+      0.018459,
+      0.068066
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

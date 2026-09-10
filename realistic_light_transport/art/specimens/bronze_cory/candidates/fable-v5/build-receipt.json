@@ -1,0 +1,66 @@
+{
+  "asset": "bronze_cory",
+  "variant": null,
+  "candidateDir": "art/specimens/bronze_cory/candidates/fable-v5",
+  "startedAt": "2026-09-10T16:06:36.090Z",
+  "pid": 96084,
+  "stages": [
+    {
+      "stage": "reference-evidence",
+      "exitCode": 0,
+      "durationMs": 0,
+      "tail": "passed"
+    },
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 7242,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 5994,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1196,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 890,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1246,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 924,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 741,
+      "tail": "Blender quit"
+    }
+  ],
+  "referenceEvidence": {
+    "status": "passed",
+    "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+    "path": "art/specimens/bronze_cory/reference-comparison.json",
+    "sha256": "90860a9caa4c5739674497677bc43b171597d8395393e6a92e47edda08f0872c"
+  },
+  "finishedAt": "2026-09-10T16:06:54.329Z",
+  "status": "passed",
+  "failure": null
+}

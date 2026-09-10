@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "discus",
+  "sourceSha256": "87ad543915c3095bb0d6d1a6b3319f21f361c9fb810f3b72056ca2ad2ef3ced5",
+  "objects": [
+    {
+      "name": "PA_discus_Body",
+      "vertexCount": 2690,
+      "triangleCount": 5376,
+      "vertexDigest": "1499343aab85f3edd205a8ce1840f784eb5f2dd642c33d6818fec2290743d1d4",
+      "topologyDigest": "3c709fb2e4b3f9185104af416cabcbed0e381ea53d1a05ea80c9415d37cf3026",
+      "uvDigest": "905cd9b8ceed5091fed2402d08d8345bed44f30dd51c8a63583e2a7aa37e0f84",
+      "weightDigest": "df5273d51523ac2c955fc33993b6c84cd2a3fa664e31cd47f2a1967bcc2be2f2",
+      "materials": [
+        "PA_discus_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_discus_Details",
+      "vertexCount": 1076,
+      "triangleCount": 2112,
+      "vertexDigest": "c13b7cf420b910cd41d98c3c3acf30500045faec7ea3ea4dece1c22d30df80ea",
+      "topologyDigest": "77a85b7190580b8598be29ab6593cc0d76748ac88501e2b3941199f9c045f545",
+      "uvDigest": "6c759a404e012ac809cac169102de9a8b1e4472ee1fd399148c52d8f8cfd17ca",
+      "weightDigest": "afb44a6a5d4bdd868c7b38f8ba48fa4cd9fdb113804f8dc6e2767373750d4bbf",
+      "materials": [
+        "PA_discus_Cue",
+        "PA_discus_Eye",
+        "PA_discus_Glint",
+        "PA_discus_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_discus_Fins",
+      "vertexCount": 1128,
+      "triangleCount": 2034,
+      "vertexDigest": "5cd6eccf7143d5b9ea57cf4dc2d2c4f8a40793e19b402e650a4d77d5e934d633",
+      "topologyDigest": "ae9053511b37345587aec6bdb6898c21435c0212b86c4e423d3793e98566bdbb",
+      "uvDigest": "c4eadd438edef65f0dc4b50b2768f6e8842c0b292bc7deeb97cb97470ec5d72d",
+      "weightDigest": "3950616734aed19171476d9b32f082ed140d014dcbb9d40841471641e13d479c",
+      "materials": [
+        "PA_discus_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_discus_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "10d0f2734afa0fd8f37d1bd7e327160b3e337fe02be7c8284f8fcd02b157d77f"
+  },
+  "geometryDigest": "a5ae9488a15fb5baad3398ad6af94fad0cc59d75426f4d197448b8eff5040ce0",
+  "variantId": null
+}

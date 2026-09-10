@@ -1,7 +1,7 @@
 {
   "schemaVersion": "pocket-aquarium.reference-comparison/v1",
   "speciesId": "betta_splendens_male",
-  "sourceRevision": 2,
+  "sourceRevision": 4,
   "referencePacket": "source-references.json",
   "targetForm": "long-finned single-tail halfmoon blue-red male",
   "comparisonPolicy": "Landmarks, qualitative proportions and broad colour fields were compared by observation only. No reference pixels were sampled, traced, copied, hotlinked or redistributed.",
@@ -76,7 +76,7 @@
         "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
         "COMMONS-BETTA-HALF-MOON-LERDSUWA"
       ],
-      "notes": "Exact Betta photographs and the halfmoon standard show a sloping forehead, upturned terminal lips, an eye seated in the head, rear-set dorsal, long anal base, narrow pelvic fins and a continuous dorsal-caudal-anal envelope."
+      "notes": "Exact Betta photographs and the halfmoon standard show a slender body beneath a much larger soft-fin envelope, with a gently sloping forehead, small upturned terminal mouth, seated eye, rear-set dorsal, deep long anal, narrow pelvic streamers and a continuous dorsal-caudal-anal silhouette."
     },
     "top": {
       "status": "observed",
@@ -91,12 +91,12 @@
       "sourceIds": [
         "COMMONS-BETTA-FACE"
       ],
-      "notes": "The exact frontal Betta photograph shows laterally seated eyes, a compressed head, an upturned mouth and paired narrow pelvic fins."
+      "notes": "The exact frontal Betta photograph shows small laterally seated eyes, a compressed tapered head, a compact upturned mouth and paired narrow pelvic streamers."
     }
   },
   "silhouetteLandmarks": [
     {
-      "name": "sloping forehead, tapered snout and projecting upturned lips",
+      "name": "gently sloping forehead, tapered snout and compact upturned lips",
       "sourceIds": [
         "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
         "COMMONS-BETTA-HALF-MOON-LERDSUWA",
@@ -110,7 +110,7 @@
         "morphology.mouth.upperLip",
         "morphology.mouth.lowerLip"
       ],
-      "notes": "A new forehead station breaks the rejected capsule outline. The optional independent lip controls now provide a raised forward terminal mouth without requiring shared-plan changes."
+      "notes": "Revision 4 reduces trunk width and depth again, preserves the shorter station body, steps the forehead down gently and reduces the seated eye and lip arcs so the head reads as a small biological Betta head rather than a blunt capsule."
     },
     {
       "name": "seated lateral eye within the head contour",
@@ -125,7 +125,7 @@
         "morphology.eyes.pupilAspect",
         "morphology.eyes.seat"
       ],
-      "notes": "Reduced radius and protrusion plus full surface seating replace the rejected bead-like eye silhouette."
+      "notes": "A further reduced radius and protrusion plus full surface seating keep the eye subordinate to the head contour rather than reading as a bead."
     },
     {
       "name": "rear-set dorsal, long anal and capital-D-like halfmoon caudal envelope",
@@ -138,7 +138,7 @@
         "morphology.fins[anal]",
         "morphology.fins[caudal]"
       ],
-      "notes": "The dorsal origin moves rearward, the anal base and posterior region lengthen, and equal expanded caudal spans with low rounding target the continuous halfmoon outline."
+      "notes": "Revision 4 preserves the 24.5 mm capital-D caudal, pulls the outer dorsal and anal rays rearward to overlap its root, increases median-fin sampling and uses transparency to soften the geometric edge. This targets one continuous flowing envelope instead of three rigid detached sails."
     },
     {
       "name": "narrow pointed pelvic fins with distal soft-ray reach",
@@ -152,7 +152,7 @@
         "morphology.fins[pelvic].flare",
         "morphology.fins[pelvic].distalFilament"
       ],
-      "notes": "The shared optional distal-filament control is now used with a narrow sheet root, resolving the prior broad-blade source limitation while retaining a lightweight fin mesh."
+      "notes": "The shared optional distal-filament control now supplies most of each pelvic fin's reach from a narrower root, producing two pointed streamers without widening the shared fish plan."
     }
   ],
   "proportions": [
@@ -172,7 +172,7 @@
     {
       "name": "maximum body depth divided by station-defined body length",
       "status": "inferred",
-      "referenceValue": { "value": 0.374, "unit": "depth/body-length ratio" },
+      "referenceValue": { "value": 0.321, "unit": "depth/body-length ratio" },
       "sourceIds": [
         "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
         "COMMONS-BETTA-HALF-MOON-LERDSUWA"
@@ -183,12 +183,12 @@
         "morphology.controlStations[*].dorsalHeight",
         "morphology.controlStations[*].ventralDepth"
       ],
-      "notes": "The target retains an elongate compressed Betta body without the rejected anterior capsule fullness."
+      "notes": "The 13.0 mm maximum station depth over a 40.5 mm station body produces the narrower fusiform trunk requested after reviewing fable-v3 while reserving most of the visible envelope for the fins."
     },
     {
       "name": "maximum body width divided by maximum body depth",
       "status": "inferred",
-      "referenceValue": { "value": 0.506, "unit": "width/depth ratio" },
+      "referenceValue": { "value": 0.477, "unit": "width/depth ratio" },
       "sourceIds": [
         "COMMONS-BETTA-MALE-TOP",
         "COMMONS-BETTA-FACE"
@@ -200,12 +200,12 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.crossSection"
       ],
-      "notes": "The revised anterior half-width no longer exceeds the midbody and tapers through head, forehead and snout."
+      "notes": "The 6.2 mm maximum width is laterally compressed and tapers continuously through the smaller operculum, head, forehead, snout and snout tip."
     },
     {
       "name": "halfmoon caudal vertical span divided by total length",
       "status": "inferred",
-      "referenceValue": { "value": 0.60, "unit": "caudal-span/total-length ratio" },
+      "referenceValue": { "value": 0.662, "unit": "caudal-span/total-length ratio" },
       "sourceIds": [
         "IBC-2022-HALFMOON-STANDARD",
         "COMMONS-BETTA-HALFMOON-EDUARDOBLAS"
@@ -217,12 +217,12 @@
         "morphology.fins[caudal].length",
         "morphology.fins[caudal].rounding"
       ],
-      "notes": "Equal 19.5 mm upper and lower spans create a 39 mm vertical envelope against the 65 mm total-length reference."
+      "notes": "Equal 21.5 mm upper and lower spans create a 43 mm vertical envelope against the 65 mm total-length reference, while the 24.5 mm caudal length and low rounding create the requested broad capital-D halfmoon."
     }
   ],
   "colorPatternBoundaries": [
     {
-      "name": "coherent blue-green metallic flank without pale camouflage islands",
+      "name": "coherent saturated blue metallic flank without pale camouflage islands",
       "sourceIds": [
         "COMMONS-BETTA-BLUE-RED-HALFMOON",
         "COMMONS-BETTA-FACE"
@@ -231,7 +231,7 @@
         "catalog.species.freshwater_fish.paint_body",
         "palette.skin"
       ],
-      "notes": "Scale-row relief and fine low-amplitude variation now drive a continuous cobalt-to-turquoise sheen. The rejected broad thresholded FBM patches are removed. Exact RGB is not sampled from either photograph."
+      "notes": "Scale-row relief and fine low-amplitude variation drive a continuous navy-to-electric-blue sheen with higher roughness to control pale glare. Exact RGB is not sampled from either photograph."
     },
     {
       "name": "dark face and dorsum framing the iridescent flank",
@@ -255,7 +255,7 @@
         "catalog.species.freshwater_fish.paint_fin",
         "palette.fin"
       ],
-      "notes": "A broad smooth distal transition and ray modulation replace the thin neon rim of the rejected candidate while preserving translucent fin membranes. Hue placement is qualitative because domestic colour and camera response vary."
+      "notes": "A broad blue-proximal to crimson-distal transition follows warped primary and secondary ray cadence. Seeded edge transparency breaks up the outer rhythm while retaining translucent membrane between rays. Hue placement is qualitative because domestic colour and camera response vary."
     }
   ],
   "candidateComparison": {
@@ -265,60 +265,78 @@
         "status": "rejected",
         "receipt": "REJECT_AND_REFINE",
         "notes": "The preserved fable-v1 candidate was rejected for its capsule snout, bead-like eyes, forward oversized dorsal, rounded delta-like caudal, broad pelvic blades, pale camouflage-like flank islands and excess anterior width."
+      },
+      {
+        "candidate": "fable-v2",
+        "commit": "5a47257ff56b07e71972a10df429c096ba233836",
+        "status": "user_rejected",
+        "receipt": "REJECT_AND_REFINE",
+        "notes": "The user rejected the current runtime Betta as subpar against the supplied blue-red male target. Its body remains a pale inflated capsule, the eye and mouth are too conspicuous, and the dorsal, anal and caudal read as small rigid plates instead of the target's dominant flowing halfmoon envelope."
+      },
+      {
+        "candidate": "fable-v3",
+        "commit": "76ca93ac85cedcad894672cdf7850db96e041689",
+        "status": "independent_review_rejected",
+        "receipt": "REJECT_AND_REFINE",
+        "notes": "Exact target comparison found that fable-v3 still has a thick blunt trunk and its large dorsal, anal and caudal remain visibly separate rigid geometric sails rather than the target's slender body inside a continuous flowing veil envelope."
       }
     ],
-    "reviewedCandidate": {
-      "candidate": "fable-v2",
-      "commit": "5a47257ff56b07e71972a10df429c096ba233836",
-      "status": "awaiting_user_acceptance",
-      "receipt": "ACCEPT_FOR_USER_REVIEW",
-      "notes": "Independent three-view review found the repaired halfmoon silhouette, seated eyes, upturned lips, rear-set dorsal, long anal base, broader capital-D-like caudal, narrow pelvic reach and coherent blue-red surface suitable for explicit user review. This receipt is not user acceptance and does not authorize promotion. Residual planar fin construction, animation appearance, capsule-like surface smoothness, and inferred top and front proportions remain caveats for the user gate."
+    "plannedCandidate": {
+      "candidate": "fable-v4",
+      "status": "source_ready_not_built",
+      "receipt": "BUILD_AND_REVIEW_REQUIRED",
+      "notes": "Revision 4 reduces body depth and width by roughly one quarter, further reduces the eye and mouth, pulls the outer dorsal and anal rays back into the caudal root, increases median-fin sampling, weakens hard ray relief and feathers the distal silhouette through seeded transparency. A serialized build and independent three-view review are still required before user review."
     },
     "mismatches": [
       {
-        "area": "rejected fable-v1 silhouette",
-        "note": "The preserved fable-v1 candidate remains rejected for its capsule snout, bead-like eyes, forward oversized dorsal, rounded delta-like caudal, broad pelvic blades and excess anterior width. Fable-v2 materially repairs those failures and does not replace the preserved rejection record."
+        "area": "fable-v3 body and face",
+        "note": "Fable-v3 remains too thick and blunt against the exact target. Revision 4 preserves the shorter 40.5 mm station body but reduces maximum depth from 15.7 to 13.0 mm, maximum width from 8.2 to 6.2 mm, and further reduces the head, seated eye and lip controls."
       },
       {
-        "area": "rejected fable-v1 colour",
-        "note": "The preserved fable-v1 body has broad pale turquoise procedural islands and neon red fin rims. Fable-v2 replaces those with coherent fine scale sheen and a broad blue-to-red fin transition tied to the exact blue-red halfmoon reference page."
+        "area": "fable-v3 fin flow and continuity",
+        "note": "Fable-v3's enlarged fins still read as three separate geometric sails. Revision 4 pulls the dorsal and anal outer rows rearward by 18 to 20 mm, adds extra row and column sampling, and feathers their distal transparency so the overlapping caudal-root region and edge rhythm can read as one trailing veil."
       },
       {
-        "area": "fable-v2 planar fin construction",
-        "note": "The median and paired fins retain game-scale planar membrane construction with normal-map ray relief. Their silhouettes are materially improved, but they do not reproduce individually modeled soft-ray curvature or full membrane volume."
+        "area": "fable-v3 rigid ray surface",
+        "note": "Fable-v3's ray bands and opaque outer boundary reinforce a rigid plate read. Revision 4 lowers fin normal and relief strengths, reduces ray-height contrast, retains warped dual cadence, and makes the distal membrane strongly translucent between more visible rays."
       },
       {
-        "area": "fable-v2 capsule smoothness",
-        "note": "The revised head and body stations remove the worst capsule proportions, but the shared procedural body surface remains smoother and more uniformly inflated than a fully sculpted real Betta under close inspection."
+        "area": "target colour balance",
+        "note": "The exact target's distal red field dominates its flowing fins. Revision 4 begins the crimson transition earlier, retains the saturated blue proximal field and raises body roughness further to reduce pale specular wash."
       },
       {
-        "area": "fable-v2 animation review",
-        "note": "Recorded technical animation validation passed, but the complete idle, swim and display clips have not been explicitly accepted for perceptual naturalism, fin drag, or soft-ray motion."
+        "area": "shared planar membrane limitation",
+        "note": "The revised source can improve silhouette, thickness, sampling, transparency and ray relief without changing the shared fish plan. Individually simulated soft rays, volumetric folds and torn edge geometry remain outside this source-only lane and must not be claimed."
       },
       {
         "area": "top and front calibration",
-        "note": "Body width and frontal head shape remain medium-to-high uncertainty because the verified top photograph is oblique and neither top nor front source is dimensionally calibrated. Fable-v2 must not be represented as an orthographically measured reconstruction."
+        "note": "Body width and frontal head shape remain medium-to-high uncertainty because the verified top photograph is oblique and neither top nor front source is dimensionally calibrated. Fable-v4 must not be represented as an orthographically measured reconstruction."
       }
     ],
     "acceptanceBlockers": [],
     "pendingVisualChecks": [
-      "user judgment of residual planar fin construction",
-      "idle, swim and display animation naturalism",
-      "residual capsule-like body smoothness under close inspection",
+      "serialized fable-v4 build and independent side, top and front render review",
+      "capital-D 180-degree caudal and continuous dorsal-caudal-anal envelope",
+      "soft translucent ray-supported fin read without rigid plate silhouette",
+      "slender tapered body, small seated eye and compact upturned mouth",
+      "saturated blue body and broad coherent red distal fins",
+      "idle, swim and display animation naturalism with the larger membranes",
       "top and front proportions under inferred-view uncertainty"
     ]
   },
-  "acceptanceStatus": "fable_v2_independently_reviewed_awaiting_user_acceptance",
-  "nextRequiredEvidence": "Explicit user acceptance of fable-v2 is required before any promotion or runtime use.",
+  "acceptanceStatus": "source_revision_4_candidate_not_built",
+  "nextRequiredEvidence": "Build fable-v4 only in the authorized serialized Blender lane, then compare side, top and front renders against this packet and the user-supplied blue-red halfmoon preference before requesting explicit acceptance.",
   "deliveryStatus": {
     "sourceEdited": true,
-    "candidateBuilt": true,
-    "candidateValidated": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
     "candidateAccepted": false,
     "promotionAttempted": false,
-    "latestReviewedCandidate": "fable-v2",
-    "latestReviewedCandidateCommit": "5a47257ff56b07e71972a10df429c096ba233836",
-    "latestReviewedCandidateStatus": "awaiting_user_acceptance",
-    "independentReviewReceipt": "ACCEPT_FOR_USER_REVIEW"
+    "latestReviewedCandidate": "fable-v3",
+    "latestReviewedCandidateCommit": "76ca93ac85cedcad894672cdf7850db96e041689",
+    "latestReviewedCandidateStatus": "independent_review_rejected",
+    "independentReviewReceipt": "REJECT_AND_REFINE",
+    "repairCandidate": "fable-v4",
+    "repairCandidateStatus": "source_ready_not_built"
   }
 }

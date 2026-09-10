@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "freshwater_angelfish",
+  "variantId": null,
+  "scientificName": "Pterophyllum scalare",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.3.0-source",
+  "referenceSizeMeters": 0.105,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "sourceManifest": "candidates/fable-v3/candidate.manifest.json",
+  "displayName": "Freshwater Angelfish",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-PTEROPHYLLUM-SCALARE",
+      "title": "Pterophyllum scalare species summary",
+      "publisher": "FishBase",
+      "author": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/Pterophyllum_scalare.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation_only; no FishBase imagery copied or redistributed",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain separate licenses",
+      "evidenceCues": [
+        "Maximum reported length is 10.5 cm total length.",
+        "The body is compressed and disc-shaped, silvery with four dark bars in adults rather than seven juvenile bars."
+      ]
+    },
+    {
+      "id": "FISHBASE-PTEROPHYLLUM-MORPHOLOGY",
+      "title": "Morphology Summary: Pterophyllum scalare",
+      "publisher": "FishBase",
+      "author": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/physiology/Pterophyllum_scalare",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_morphology",
+      "allowedUse": "morphology facts and citation only; no FishBase imagery copied or redistributed",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain separate licenses",
+      "evidenceCues": [
+        "Cross section is compressed, dorsal head profile is clearly concave, and the mouth is terminal.",
+        "SL/body height at the anal level is 1.07 to 1.29.",
+        "Dorsal and anal spiny rays increase posteriorly and the first branched rays are very long."
+      ]
+    },
+    {
+      "id": "COMMONS-PTEROPHYLLUM-SCALARE-PNG",
+      "title": "File:Pterophyllum scalare.png",
+      "publisher": "Wikimedia Commons",
+      "author": "batataxpto69",
+      "url": "https://commons.wikimedia.org/wiki/File:Pterophyllum_scalare.png",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "adult live-fish lateral-oblique view",
+      "provenance": "Creator's own work, made 17 January 2007; original file page states the license.",
+      "allowedUse": "qualitative silhouette, fin, eye, and adult-bar reference only; no pixels copied, sampled, traced, redistributed, embedded, or hotlinked",
+      "license": "CC BY-SA 2.5",
+      "evidenceCues": [
+        "Tall diamond silhouette and laterally compressed body.",
+        "Elongated triangular dorsal, anal, and threadlike thoracic pelvic fins."
+      ]
+    },
+    {
+      "id": "COMMONS-PTEROPHYLLUM-SCALARE-JPG",
+      "title": "File:Pterophyllum scalare.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Ldehaen",
+      "url": "https://commons.wikimedia.org/wiki/File:Pterophyllum_scalare.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "additional adult live-fish lateral context",
+      "provenance": "Creator's own work, photographed 8 March 2009; original file page states the license.",
+      "allowedUse": "qualitative adult proportions and four-bar pattern corroboration only; no pixels copied, sampled, traced, redistributed, embedded, or hotlinked",
+      "license": "CC BY-SA 3.0",
+      "evidenceCues": [
+        "Deep disc-like trunk, concave forehead, terminal mouth, tall median fins and narrow peduncle.",
+        "Adult silver body carries four dark vertical bars."
+      ]
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "bc26a538fd486ae1ae626349f4bb6f58a9aa529eb92d8ef51aa9621a69e5fbc2",
+  "sourceReferencesSha256": "546842a0d240d47ce5111e9c59e8319471dab779633049798985bf63d3945be5",
+  "sourceBlendSha256": "b25e303d4ab16816993e00b9c0c01c89022555bbf91e717c1ea347c9be14f5d6",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "2342956a281804957534cd29d10b6847c363a619c13aa28c79345dd8ccb48fc4",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "52d913d62382b5223eadf1cf6b65d7e1cbcc8c9eae07ef7bfb3de5bc4c4f8d74"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "candidates/fable-v3/textures/body-albedo.png",
+      "sha256": "4903efeb026bb25d9a851be7c75f4bc93b5dd17eb3cf1c10607e09c5078fa5dc"
+    },
+    {
+      "path": "candidates/fable-v3/textures/body-normal.png",
+      "sha256": "ccee4f20a99010f081f1e01bbdc958b04d6738cd107ff5057f79b4920c845701"
+    },
+    {
+      "path": "candidates/fable-v3/textures/body-roughness.png",
+      "sha256": "3af1357614cc79fc361ca8acf32710d123ca2cad8e5c75d989321276952e23d3"
+    },
+    {
+      "path": "candidates/fable-v3/textures/fin-atlas.png",
+      "sha256": "52653fe8fc660262d61d97170a2513015c413f57d0e4b8dc1400743f26bd3835"
+    },
+    {
+      "path": "candidates/fable-v3/textures/fin-normal.png",
+      "sha256": "1542c44f3697a7786682280403bb95971f3b4a27515233fe7538fe273a64372e"
+    }
+  ],
+  "statistics": {
+    "triangles": 9160,
+    "materials": 6,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "display",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_freshwater_angelfish_Body": 2642,
+      "PA_freshwater_angelfish_Fins": 1002,
+      "PA_freshwater_angelfish_Details": 1052
+    },
+    "runtimeBytes": 1766968
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "display"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "display": false
+  },
+  "restBounds": {
+    "min": [
+      -0.05944,
+      -0.011196,
+      -0.090036
+    ],
+    "max": [
+      0.044493,
+      0.011196,
+      0.10085
+    ]
+  },
+  "renders": {
+    "authorPreview": "candidates/fable-v3/renders/author-preview.png",
+    "threeView": "candidates/fable-v3/renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "candidates/fable-v3/validation-source.json",
+    "runtimeReport": "candidates/fable-v3/validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  },
+  "promotion": {
+    "status": "accepted",
+    "acceptedBy": "user",
+    "acceptedOn": "2026-09-10",
+    "promotedAssetVersion": "0.3.0-source",
+    "rollback": null
+  }
+}

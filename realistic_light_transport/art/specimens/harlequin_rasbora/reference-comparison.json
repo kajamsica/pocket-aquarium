@@ -1,7 +1,7 @@
 {
   "schemaVersion": "pocket-aquarium.reference-comparison/v1",
   "speciesId": "harlequin_rasbora",
-  "sourceRevision": 2,
+  "sourceRevision": 3,
   "referencePacket": "source-references.json",
   "sourceAssetPolicy": {
     "copiedPixels": false,
@@ -114,7 +114,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.controlStations[*].centerZ"
       ],
-      "notes": "Revised station heights hold depth at the dorsal-fin origin near Tan's reported mean while moving maximum depth behind the shortened head, flattening the swollen belly transition, and preserving the steep convex predorsal rise."
+      "notes": "The primary licensed male photograph shows a compact rhomboid fish. The validated fable-v2 render fixes the earlier red capsule but remains too long and shallow. Revised stations shorten the snout-defined standard length from 39 to 37 mm, add 0.2 mm of depth through the midbody and anterior flank, and preserve the steep convex predorsal rise."
     },
     {
       "name": "short caudal peduncle and symmetrical forked caudal",
@@ -132,7 +132,7 @@
         "morphology.fins[caudal].length",
         "morphology.fins[caudal].fork"
       ],
-      "notes": "Peduncle stations narrow rapidly before equal caudal spans and a fork control form the symmetric tail silhouette."
+      "notes": "Peduncle stations narrow rapidly before equal caudal spans and a fork control form the symmetric tail silhouette observed in the primary target. Caudal length increases only enough to preserve the 5 cm total-length contract after the body is shortened."
     },
     {
       "name": "large eye, short opercular region, and small terminal mouth",
@@ -148,7 +148,7 @@
         "morphology.eyes",
         "morphology.mouth"
       ],
-      "notes": "The shortened head and snout stations retain the terminal mouth, while a smaller, tilted, deeply seated eye preserves the observed large lateral eye without the failed candidate's bead-like protrusion."
+      "notes": "The shortened head and snout stations retain the terminal mouth. A flatter, fully seated eye preserves the primary target's large lateral eye without the failed candidate's bead-like protrusion."
     },
     {
       "name": "dorsal, pelvic, anal, pectoral, and caudal fin placement",
@@ -164,7 +164,7 @@
         "morphology.fins[*].rootX",
         "morphology.fins[*].rootHeight"
       ],
-      "notes": "Median-fin extents and paired-fin roots map the observed lateral origins without changing unrelated fin geometry."
+      "notes": "Median-fin extents and paired-fin roots retain the observed lateral origins, while smaller spans, thinner roots, and translucent species paint keep every fin subordinate to the compact body."
     }
   ],
   "proportions": [
@@ -186,7 +186,7 @@
         "morphology.controlStations[*].dorsalHeight",
         "morphology.controlStations[*].ventralDepth"
       ],
-      "notes": "Tan reports 32.6 to 38.2 percent of standard length, mean 35.8 percent, for T. heteromorpha. The revised source evaluates to 35.34 percent at the dorsal-fin origin over the 39 mm station-defined standard length. This source calculation is in range, but the unbuilt candidate still requires visual comparison."
+      "notes": "Tan reports 32.6 to 38.2 percent of standard length, mean 35.8 percent, for T. heteromorpha. The revised source evaluates to 38.10 percent at the dorsal-fin origin over the shortened 37 mm station-defined standard length. This remains inside the observed range while correcting the fable-v2 render's shallow side silhouette."
     },
     {
       "name": "axine anterior depth divided by body depth",
@@ -202,7 +202,7 @@
     {
       "name": "side-to-side width relative to vertical body depth",
       "status": "inferred",
-      "referenceValue": { "value": 0.48, "unit": "width/depth ratio" },
+      "referenceValue": { "value": 0.432, "unit": "width/depth ratio" },
       "sourceIds": [
         "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
         "COMMONS-BREEDING2"
@@ -214,7 +214,7 @@
         "morphology.controlStations[*].ventralDepth",
         "morphology.crossSection"
       ],
-      "notes": "FishBase's compressed classification and the spawning oblique support a narrow section qualitatively, but they do not justify a calibrated observed ratio."
+      "notes": "The revised 6.3 mm midbody width over 14.6 mm depth yields a 0.432 inferred ratio. FishBase's compressed classification and the spawning oblique support the narrower section qualitatively, but they do not justify treating this as a calibrated observation."
     }
   ],
   "colorPatternBoundaries": [
@@ -228,7 +228,7 @@
       ],
       "sourceControls": [
         "catalog.species.harlequin_rasbora._axine",
-        "catalog.species.harlequin_rasbora._body_textures",
+        "catalog.species.harlequin_rasbora.paint_body",
         "palette.cue"
       ],
       "notes": "The black field begins with dorsal and ventral apices near their fin origins, has a straight to gently sloped anterior boundary, and narrows to a caudal apex at the caudal-fin base."
@@ -246,7 +246,7 @@
         "palette.skin",
         "palette.adornment"
       ],
-      "notes": "Procedural vertical blends keep the warm live-fish body color separate from both the dark dorsum and sharply bounded axine."
+      "notes": "Procedural vertical blends now separate the primary target's copper-pink dorsum, silver flank, and pale belly from the sharply bounded black axine instead of painting the whole fish saturated red-orange."
     },
     {
       "name": "orange-red dorsal with translucent paired and anal fins",
@@ -256,32 +256,46 @@
         "COMMONS-RASBORA-H"
       ],
       "sourceControls": [
-        "catalog.species.harlequin_rasbora._fin_textures",
+        "catalog.species.harlequin_rasbora.paint_fin",
         "palette.fin"
       ],
-      "notes": "Fin-type branches control opaque warm dorsal and caudal color separately from the more translucent paired and anal fins."
+      "notes": "Fin-type branches keep a subtle clear orange cast and ray relief while lowering alpha across the dorsal, anal, caudal, pelvic, and especially pectoral membranes, matching the primary target's small translucent fins."
     }
   ],
   "candidateComparison": {
+    "plannedCandidate": {
+      "candidate": "fable-v3",
+      "status": "source_ready_unbuilt",
+      "receipt": "REBUILD_REQUIRED",
+      "notes": "Preserve the exact 5 cm scale, rig, clip definitions, licensed-reference policy, and accepted fable-v2 axine. Rebuild from the shorter, relatively deeper rhomboid source before any user-acceptance decision."
+    },
     "mismatches": [
       {
-        "area": "preserved candidate side silhouette",
-        "note": "The preserved rebuild shows the corrected axine but remains too capsule-like, with a blunt head, swollen belly-to-head transition, protrusive eye, and oversized median fins. The revised lateral stations reduce the anterior and ventral fullness, shorten the head transition, seat the eye, and reduce fin spans. These are source-level resolutions of the known prebuild blockers, not a claim that the unbuilt result has passed visual review."
+        "area": "fable-v2 side silhouette",
+        "note": "Exact three-view and author-preview inspection against the licensed Commons male target found the wedge acceptable, but the body remains too long and shallow. The fable-v3 source shortens station-defined standard length from 39 to 37 mm, raises midbody and anterior depth by 0.2 mm, and transfers the removed 2 mm to caudal length so total scale remains stable."
+      },
+      {
+        "area": "fable-v1 side silhouette",
+        "note": "The preserved candidate had the correct axine concept but read as a saturated red capsule with a blunt head, swollen anterior transition, protrusive eye, and oversized fins. The fable-v2 source corrected those larger defects before its remaining silhouette mismatch was isolated."
       },
       {
         "area": "preserved candidate burst axial parity",
         "note": "The original axial tuple [7, 11, 18, 27] first failed Spine_B at quarter phase by 0.7672 degrees. The coordinated tuple [5, 7.5, 12, 17] advanced past earlier failures but exposed Peduncle at half phase by 1.0806 degrees. Shared plan code proves the four values map to Spine_A, Spine_B, Peduncle and Caudal, so reducing only the third value from 12 to 8 predicts 0.7204 degrees under the observed amplitude-linear parity error, leaving 0.0296 degrees margin. A new build must verify the prediction."
       },
       {
-        "area": "top and front calibration",
-        "note": "Exact width and frontal head shape remain uncertain because no verified orthographic top or frontal original was found. Existing compressed-body controls are retained and explicitly treated as inference."
+        "area": "fable-v1 body and fin materials",
+        "note": "The preserved candidate is uniformly saturated red-orange with opaque red fins. The fable-v2 source separates copper-pink dorsum, silver flank, pale belly, black axine, and small clear orange fins without sampling reference pixels."
       },
       {
         "area": "fin rays",
         "note": "Fin rays remain normal-map relief rather than individually modeled structures; this representational simplification was not a rejection cause."
       }
     ],
-    "acceptanceBlockers": []
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "shorter, relatively deeper rhomboid side silhouette against the exact licensed target",
+      "accepted fable-v2 wedge placement on the shortened fable-v3 body"
+    ]
   },
   "failedCandidateEvidence": {
     "path": "/tmp/pocket-aquarium-fw-failed-rasbora-final-Q37icS/fable-v1",
@@ -292,36 +306,48 @@
     "runtimeError": "Parity burst 0.50 Peduncle: 1.0806 degrees with the coordinated [5, 7.5, 12, 17] tuple",
     "priorAxialTuple": [5, 7.5, 12, 17],
     "rebuildAxialTuple": [5, 7.5, 8, 17],
-    "renderReview": "The bounded three-apex axine reads correctly and must remain unchanged. The revised side silhouette, head taper, eye seating, body depth and fin scale passed the required static three-view review; top and front remain explicitly high-uncertainty inferred views."
+    "renderReview": "The preserved fable-v1 render confirms that a bounded three-apex axine is achievable, but its capsule silhouette, bead eye, saturated body, and opaque oversized fins were rejected. Fable-v2 later cleared those larger defects before the remaining long, shallow silhouette mismatch was isolated."
+  },
+  "currentCandidateEvidence": {
+    "candidateId": "fable-v2",
+    "candidateState": "awaiting_user_acceptance",
+    "sourceValidation": "passed",
+    "runtimeValidation": "passed",
+    "rendersInspected": [
+      "art/specimens/harlequin_rasbora/candidates/fable-v2/renders/three-view.png",
+      "art/specimens/harlequin_rasbora/candidates/fable-v2/renders/author-preview.png"
+    ],
+    "visualReview": "rejected_body_silhouette",
+    "notes": "The diagnostic black wedge is accepted. Against the exact licensed Commons male target, the body is too long and shallow and requires the source-only fable-v3 geometry repair."
   },
   "cueComparison": [
     {
       "cue": "axine",
       "reference": "A straight-edged posterior triangle with dorsal and ventral apices near their fin origins and a caudal apex tapering along the peduncle to the caudal-fin base.",
       "before": "The earlier rejected candidate used a U-threshold that filled nearly the full posterior body depth.",
-      "afterSourceLogic": "The preserved rebuild proves the independent dorsal and ventral bounds form the intended three-apex wedge. This source logic is retained unchanged.",
-      "status": "rebuild_observed_correct_retained"
+      "afterSourceLogic": "Independent dorsal and ventral bounds retain the broad anterior span and caudal taper, while a deterministic straight edge removes unnecessary noise and keeps the diagnostic wedge sharply separate from the copper-silver body.",
+      "status": "source_refined_unbuilt"
     },
     {
       "cue": "side-profile silhouette",
       "reference": "Deep, laterally compressed trunk; steep convex predorsal profile; short peduncle; forked caudal.",
-      "before": "The preserved rebuild is deep but too uniformly rounded, with excess anterior and ventral fullness that reads as a capsule rather than a compressed cyprinid.",
-      "afterSourceLogic": "Anterior, opercular, head, and snout depths taper sooner; the belly is reduced more than the predorsal ridge. At the dorsal-fin origin, source depth is 35.34 percent of the station-defined standard length, within Tan's 32.6 to 38.2 percent range.",
+      "before": "The validated fable-v2 is improved but its body occupies too much of the total length and still reads shallow beside the compact licensed target.",
+      "afterSourceLogic": "The snout-defined standard length contracts from 39 to 37 mm while midbody and anterior depth increase by 0.2 mm. The body-to-station-plus-caudal ratio falls from 0.804 to 0.763, and dorsal-origin depth becomes 38.10 percent of standard length, still within Tan's 32.6 to 38.2 percent range.",
       "status": "source_repaired_unbuilt"
     },
     {
       "cue": "head and fin morphology",
       "reference": "Large round eye, short opercular region, small terminal mouth, orange-red dorsal, translucent paired fins and forked caudal.",
       "before": "The preserved rebuild has a blunt swollen head, a bead-like eye standing proud of the flank, and median and paired fins that dominate the small body.",
-      "afterSourceLogic": "The head transition and snout are shortened and tapered, eye radius and proud depth are reduced with local-surface seating, and dorsal, anal, caudal, pectoral, and pelvic spans are reduced without changing the diagnostic axine or terminal mouth.",
+      "afterSourceLogic": "The head transition and snout are shortened and tapered, the large lateral eye is flattened and fully seated, and dorsal, anal, caudal, pectoral, and pelvic spans are reduced. The local fin paint lowers membrane alpha while preserving subtle orange rays.",
       "status": "source_repaired_unbuilt"
     },
     {
       "cue": "top and body depth",
       "reference": "FishBase states a compressed cross section; oblique spawning imagery supports narrow width only qualitatively.",
-      "before": "The failed three-view is compatible with lateral compression, but no calibrated top reference exists.",
-      "afterSourceLogic": "Half-width stations and cross-section exponents remain unchanged; no unsupported top-outline or frontal correction is introduced.",
-      "status": "uncertain_retained"
+      "before": "The fable-v2 three-view remains compatible with lateral compression, but no calibrated top reference exists.",
+      "afterSourceLogic": "Unchanged half-width stations over the deeper midbody yield a 0.432 width-to-depth ratio while cross-section exponents remain unchanged. This remains an explicitly inferred correction that requires three-view inspection after build.",
+      "status": "uncertain_source_refined_unbuilt"
     }
   ],
   "parityPrediction": {
@@ -346,13 +372,17 @@
     ],
     "rationale": "The newest failure is isolated to the third travelling-wave channel, which shared plan code maps to Peduncle. Only that amplitude is reduced, while Spine_A, Spine_B, Caudal, frequency, lag, envelope and non-axial channels remain unchanged. This is a prebuild prediction, not runtime validation."
   },
-  "uncertainty": "No verified true dorsal/top or sharp frontal original was found. Width and frontal head shape remain constrained only by the authoritative compressed classification plus qualitative oblique views.",
+  "uncertainty": "The exact primary licensed side target and fable-v2 three-view and author-preview renders were visually inspected. They strongly constrain the shorter, deeper fable-v3 side silhouette while preserving fable-v2's accepted wedge. No verified true dorsal/top or sharp frontal original was found. Width and frontal head shape remain constrained only by the authoritative compressed classification plus qualitative oblique views. The revised fable-v3 source is unbuilt and unvalidated.",
   "pixelPolicy": "No reference pixels were copied, sampled, traced or redistributed.",
   "deliveryStatus": {
     "sourceEdited": true,
     "candidateBuilt": false,
     "candidateValidated": false,
     "candidateAccepted": false,
-    "promotionAttempted": false
+    "promotionAttempted": true,
+    "latestReviewedCandidate": "fable-v2",
+    "latestReviewedCandidateStatus": "validated_but_rejected_body_silhouette",
+    "repairCandidate": "fable-v3",
+    "repairCandidateStatus": "source_ready_unbuilt"
   }
 }

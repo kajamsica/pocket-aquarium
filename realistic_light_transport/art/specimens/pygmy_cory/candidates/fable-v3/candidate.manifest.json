@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "pygmy_cory",
+  "variantId": null,
+  "scientificName": "Gastrodermus pygmaeus",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.3.0",
+  "referenceSizeMeters": 0.021,
+  "referenceSizeKind": "adult_display_reference_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "1364a745d14bab5b6d235e1c0e0f506a45f8f9589a833aca7860cc18c3404bcd",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Pygmy Cory",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-12194",
+      "title": "Gastrodermus pygmaeus (Knaack, 1966), Pygmy corydoras, species summary record 12194",
+      "publisher": "FishBase",
+      "creator": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/corydoras-pygmaeus.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "Taxonomy, maximum standard length, habitat and freshwater classification with citation only; contributed imagery retains its own license and was not copied or redistributed.",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain their own licenses",
+      "pose": "not_applicable",
+      "evidence": [
+        "current FishBase combination Gastrodermus pygmaeus",
+        "maximum length 2.1 cm standard length",
+        "freshwater demersal species from the Madeira River basin"
+      ]
+    },
+    {
+      "id": "CAS-ESCHMEYER-4897",
+      "title": "Eschmeyer's Catalog of Fishes species record 4897: pygmaeus, Corydoras Knaack 1966",
+      "publisher": "California Academy of Sciences, Institute for Biodiversity Science and Sustainability",
+      "creator": "Ronald Fricke, William N. Eschmeyer and Richard van der Laan, editors",
+      "url": "https://researcharchive.calacademy.org/research/ichthyology/catalog/fishcatget.asp?spid=4897",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_taxonomic_catalog",
+      "allowedUse": "Taxonomic authorship, type locality, type holdings and current-status facts with citation only.",
+      "license": "Copyright California Academy of Sciences; no open image-reuse license stated",
+      "pose": "not_applicable",
+      "evidence": [
+        "original combination Corydoras pygmaeus Knaack 1966",
+        "holotype ZMB 21620 and paratype ZMB 21621",
+        "current status Gastrodermus pygmaeus after Dias et al. 2024"
+      ]
+    },
+    {
+      "id": "DIAS-2024-CORYDORADINAE",
+      "title": "Phylogenomic analyses in the complex Neotropical subfamily Corydoradinae with a new classification based on morphological and molecular data",
+      "publisher": "Zoological Journal of the Linnean Society",
+      "creator": "A. C. Dias, L. F. C. Tencatt, F. F. Roxo, G. S. S. C. Silva, S. A. Santos, M. R. Britto, M. I. Taylor and C. Oliveira",
+      "url": "https://doi.org/10.1093/zoolinnean/zlae053",
+      "doi": "10.1093/zoolinnean/zlae053",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_taxonomy",
+      "allowedUse": "Current combination and clade-level morphology facts with citation only; no figures copied or redistributed.",
+      "license": "Copyright Oxford University Press; no open figure-reuse license relied upon",
+      "pose": "not_applicable",
+      "evidence": [
+        "moves Corydoras pygmaeus to Gastrodermus pygmaeus",
+        "places G. pygmaeus with G. hastatus as an early-diverging Gastrodermus clade",
+        "notes pectoral-spine serration pattern as the only putative diagnostic feature separating former Microcorydoras"
+      ]
+    },
+    {
+      "id": "TENCATT-PAVANELLI-2015",
+      "title": "Redescription of Corydoras guapore Knaack, 1961, a midwater Corydoradinae species from the rio Guapore basin",
+      "publisher": "Neotropical Ichthyology",
+      "creator": "Luiz Fernando Caserta Tencatt and Carla Simone Pavanelli",
+      "url": "https://www.scielo.br/j/ni/a/k5sMRpdJK3cPW9RG4n37KNR/?lang=en",
+      "doi": "10.1590/1982-0224-20150018",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_comparative_morphology",
+      "allowedUse": "Comparative external-morphology and diagnostic color-pattern facts with citation only; no figures copied or redistributed.",
+      "license": "Article text available through SciELO; source figures were not copied, sampled or redistributed",
+      "pose": "not_applicable",
+      "evidence": [
+        "recognizes C. pygmaeus among the dwarf C. hastatus group",
+        "describes the dwarf group as short-snouted with a short, rounded snout aspect",
+        "distinguishes C. pygmaeus by a thick conspicuous longitudinal black stripe on the flank midline",
+        "records the adipose fin of C. pygmaeus as entirely hyaline in the comparative diagnosis"
+      ]
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-SESARMA",
+      "title": "File:Corydoras pygmaeus.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Sesarma",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Qualitative live-fish lateral silhouette, stripe, eye, fin and barbel reference only; no pixels copied, sampled, traced, redistributed or hotlinked.",
+      "license": "CC BY-SA 3.0 and GNU Free Documentation License 1.2 or later",
+      "pose": "near_lateral_live_fish",
+      "evidence": [
+        "slender miniature Cory profile with a gently arched back and relatively flat belly",
+        "small seated eye and inferior barbelled mouth",
+        "continuous dark stripe from the snout and eye region to the caudal peduncle",
+        "translucent fins and a visibly forked tail"
+      ]
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-CARNAT",
+      "title": "File:Corydoras pygmaeus carnat joel.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Carnat Joel",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus_carnat_joel.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Additional qualitative live-fish lateral proportion, armor, stripe and fin reference only; no pixels copied, sampled, traced, redistributed or hotlinked.",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "pose": "lateral_oblique_live_fish",
+      "evidence": [
+        "elongate trunk relative to deeper common Cory forms",
+        "paired lateral armor-row surface rhythm",
+        "dark mid-lateral stripe remains conspicuous across changing aquarium light",
+        "delicate translucent paired and median fins"
+      ]
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-CARNAT-5",
+      "title": "File:Corydoras pygmaeus carnat joel 5.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Carnat Joel",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus_carnat_joel_5.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Oblique live-fish cross-check for relative head width, body compression and appendage placement only; no pixels copied, sampled, traced, redistributed or hotlinked.",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "pose": "oblique_live_fish",
+      "evidence": [
+        "head remains wider than the narrow peduncle without becoming bulbous",
+        "body is compressed and slender rather than cylindrical",
+        "paired fins and barbels are small relative to the two-centimeter body"
+      ]
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "9b576f869ad08e8000bab88ac5bae2f00079a1f0a103d3f1a23e62ff8a98108b",
+  "sourceReferencesSha256": "8a2b49e4203e96fad6bae1b3a6efa26fa2e8643a42872d77d12c0f969fc6744c",
+  "sourceBlendSha256": "73df0fa7f1f5c2762ef11b6facc7ae6862435f08e6387b9caec50bbaf5563b25",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "f1ae279f41e27bf4b2afedd8262d03a529b3e50a0d52b0545d09a2e4e73f7c6a",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "be08a53f0c501d6d342fb5030298a8306f1887b63d61cded2646d28731246870"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "afe7de1503f7a2b640ace768c61608ba11f98d3db26489c40d88d63c4e3e8bca"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "5b75a9aa17a97f8144632a13d21df697e2c0da905443c9d21d9f90746eeccd48"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "2583b580b63c307d9c6ea2286f2721b3cbc04e30865807f7941372f9ac6ce579"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "e9e0ecf5dad894aaac8eaece5c46f2edf324534217607934bc3e54e73237d6b2"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "3cee9dcf7a4fb5a003d848420a8fa4f624cb429bf6cf4489ac3e5e26dde339fb"
+    }
+  ],
+  "statistics": {
+    "triangles": 7880,
+    "materials": 7,
+    "bones": 14,
+    "nodes": 20,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "forage",
+      "rest",
+      "swim"
+    ],
+    "vertices": {
+      "PA_pygmy_cory_Body": 2450,
+      "PA_pygmy_cory_Fins": 454,
+      "PA_pygmy_cory_Details": 1132
+    },
+    "runtimeBytes": 1158336
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "swim",
+    "response": "forage"
+  },
+  "clipLoops": {
+    "rest": true,
+    "swim": true,
+    "forage": false
+  },
+  "restBounds": {
+    "min": [
+      -0.009972,
+      -0.002333,
+      -0.002537
+    ],
+    "max": [
+      0.010706,
+      0.002333,
+      0.005628
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

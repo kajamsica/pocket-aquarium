@@ -1,43 +1,43 @@
 {
   "schemaVersion": "pocket-aquarium.asset-source/v1", "id": "freshwater_angelfish", "displayName": "Freshwater Angelfish", "scientificLabel": "Pterophyllum scalare", "taxonomyConfidence": "species",
-  "category": "fish", "waterType": "freshwater", "biome": "freshwater_community", "bodyPlan": "fish", "backend": "catalog.species.freshwater_angelfish", "textureStyle": "freshwater_angelfish", "assetVersion": "0.2.0", "referenceGrade": "B",
+  "category": "fish", "waterType": "freshwater", "biome": "freshwater_community", "bodyPlan": "fish", "backend": "catalog.species.freshwater_angelfish", "textureStyle": "freshwater_angelfish", "assetVersion": "0.3.0-source", "referenceGrade": "B",
   "referenceSize": { "meters": 0.105, "kind": "adult_total_length", "note": "FishBase reports 10.5 cm maximum total length. The 84 mm station-defined standard length plus the 21 mm truncate caudal envelope preserves that scope." },
   "origin": "anatomical_midbody", "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "display" },
-  "palette": { "skin": [0.47, 0.54, 0.51], "fin": [0.42, 0.49, 0.47], "iris": [0.58, 0.42, 0.11], "cue": [0.035, 0.04, 0.038], "adornment": [0.30, 0.31, 0.29] },
+  "palette": { "skin": [0.56, 0.63, 0.60], "fin": [0.55, 0.55, 0.43], "iris": [0.78, 0.45, 0.09], "cue": [0.025, 0.030, 0.028], "adornment": [0.82, 0.48, 0.10] },
   "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.34, "finReliefStrength": 1.1, "finNormalStrength": 0.38 },
   "morphology": {
-    "notes": "Wild-type adult Pterophyllum scalare: a highly laterally compressed disc/diamond body, clearly concave dorsal head profile, small terminal mouth, four-bar silver pattern, tall triangular dorsal and anal envelopes, truncate caudal with modest dorsal and ventral streamers, and very elongated thoracic pelvic rays. FishBase's SL/body-height range of 1.07 to 1.29 is encoded at 1.167 at the anal level; top and front widths remain explicit inferences.",
+    "notes": "Wild-type adult Pterophyllum scalare: a highly laterally compressed tall triangular body, steep concave dorsal head profile, small terminal mouth, correctly placed four-bar silver pattern, swept dorsal and anal envelopes, narrow caudal, and very elongated threadlike thoracic pelvic rays. FishBase's SL/body-height range of 1.07 to 1.29 is encoded at 1.135 at the anal level; top and front widths remain explicit inferences.",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.040, "halfWidth": 0.0015, "dorsalHeight": 0.0044, "ventralDepth": 0.0042, "centerZ": 0.0000 },
-      { "id": "peduncle", "x": -0.035, "halfWidth": 0.0026, "dorsalHeight": 0.0075, "ventralDepth": 0.0070, "centerZ": 0.0002 },
-      { "id": "posterior", "x": -0.027, "halfWidth": 0.0046, "dorsalHeight": 0.0240, "ventralDepth": 0.0220, "centerZ": 0.0005 },
-      { "id": "midbody", "x": -0.015, "halfWidth": 0.0061, "dorsalHeight": 0.0345, "ventralDepth": 0.0325, "centerZ": 0.0007 },
-      { "id": "anal-level", "x": -0.004, "halfWidth": 0.0065, "dorsalHeight": 0.0370, "ventralDepth": 0.0350, "centerZ": 0.0007 },
-      { "id": "anterior", "x": 0.009, "halfWidth": 0.0064, "dorsalHeight": 0.0360, "ventralDepth": 0.0320, "centerZ": 0.0005 },
-      { "id": "operculum", "x": 0.022, "halfWidth": 0.0057, "dorsalHeight": 0.0290, "ventralDepth": 0.0260, "centerZ": 0.0008 },
-      { "id": "head", "x": 0.031, "halfWidth": 0.0047, "dorsalHeight": 0.0210, "ventralDepth": 0.0185, "centerZ": 0.0006 },
-      { "id": "forehead-saddle", "x": 0.037, "halfWidth": 0.0035, "dorsalHeight": 0.0110, "ventralDepth": 0.0140, "centerZ": 0.0004 },
-      { "id": "snout", "x": 0.0415, "halfWidth": 0.0024, "dorsalHeight": 0.0090, "ventralDepth": 0.0090, "centerZ": 0.0000 },
-      { "id": "snout-tip", "x": 0.044, "halfWidth": 0.0009, "dorsalHeight": 0.0022, "ventralDepth": 0.0024, "centerZ": -0.0005 }
+      { "id": "caudal-base", "x": -0.040, "halfWidth": 0.0013, "dorsalHeight": 0.0044, "ventralDepth": 0.0042, "centerZ": 0.0000 },
+      { "id": "peduncle", "x": -0.035, "halfWidth": 0.0022, "dorsalHeight": 0.0075, "ventralDepth": 0.0070, "centerZ": 0.0002 },
+      { "id": "posterior", "x": -0.027, "halfWidth": 0.0037, "dorsalHeight": 0.0240, "ventralDepth": 0.0220, "centerZ": 0.0005 },
+      { "id": "midbody", "x": -0.015, "halfWidth": 0.0048, "dorsalHeight": 0.0355, "ventralDepth": 0.0335, "centerZ": 0.0007 },
+      { "id": "anal-level", "x": -0.004, "halfWidth": 0.0053, "dorsalHeight": 0.0380, "ventralDepth": 0.0360, "centerZ": 0.0007 },
+      { "id": "anterior", "x": 0.009, "halfWidth": 0.0052, "dorsalHeight": 0.0375, "ventralDepth": 0.0330, "centerZ": 0.0005 },
+      { "id": "operculum", "x": 0.022, "halfWidth": 0.0046, "dorsalHeight": 0.0310, "ventralDepth": 0.0260, "centerZ": 0.0008 },
+      { "id": "head", "x": 0.031, "halfWidth": 0.0038, "dorsalHeight": 0.0220, "ventralDepth": 0.0185, "centerZ": 0.0006 },
+      { "id": "forehead-saddle", "x": 0.037, "halfWidth": 0.0028, "dorsalHeight": 0.0120, "ventralDepth": 0.0140, "centerZ": 0.0004 },
+      { "id": "snout", "x": 0.0415, "halfWidth": 0.0019, "dorsalHeight": 0.0075, "ventralDepth": 0.0080, "centerZ": 0.0000 },
+      { "id": "snout-tip", "x": 0.044, "halfWidth": 0.0007, "dorsalHeight": 0.0018, "ventralDepth": 0.0020, "centerZ": -0.0005 }
     ],
     "crossSection": { "dorsalExponent": 1.84, "ventralExponent": 1.90 }, "sampling": { "ringSegments": 48, "ringCount": 56 }, "zoneFractions": [0.10, 0.28, 0.55, 0.78], "finThickness": { "base": 0.00055, "edge": 0.00005 },
     "fins": [
-      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.038, "xEnd": 0.024, "rows": 7, "columns": 21, "lean": -0.0055, "curve": -0.0015, "rayCount": 31, "heights": [[0.0,0.004],[0.08,0.012],[0.18,0.028],[0.30,0.047],[0.42,0.058],[0.55,0.055],[0.67,0.048],[0.77,0.039],[0.86,0.028],[0.94,0.016],[1.0,0.005]] },
-      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.038, "xEnd": 0.008, "rows": 7, "columns": 19, "lean": -0.0050, "curve": -0.0015, "rayCount": 27, "heights": [[0.0,0.004],[0.09,0.011],[0.20,0.027],[0.32,0.046],[0.44,0.054],[0.57,0.051],[0.70,0.042],[0.82,0.030],[0.92,0.017],[1.0,0.005]] },
-      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 15, "spanTop": 0.025, "spanBottom": 0.025, "length": 0.0195, "topLobeLength": 1.10, "bottomLobeLength": 1.10, "fork": 0.04, "forkPower": 4.0, "rounding": 0.01, "baseFraction": 0.94, "rayCount": 19 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.023, "rootLength": 0.008, "rootHeight": -0.05, "length": 0.014, "sweepDegrees": 25, "droopDegrees": 6, "spread": 0.40, "taper": 0.22, "power": 0.78, "flare": 0.35, "rayCount": 13, "rows": 4, "columns": 7 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.020, "rootLength": 0.0033, "rootHeight": -0.88, "length": 0.010, "sweepDegrees": 8, "droopDegrees": 82, "spread": 0.05, "taper": 0.02, "power": 2.4, "flare": 0.02, "rayCount": 5, "rows": 5, "columns": 9, "distalFilament": { "length": 0.044, "center": 0.50, "width": 0.10, "taperPower": 2.4, "distalPower": 2.4 } }
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.038, "xEnd": 0.024, "rows": 7, "columns": 21, "lean": -0.0060, "curve": -0.0022, "rayCount": 31, "heights": [[0.0,0.004],[0.08,0.012],[0.18,0.028],[0.30,0.047],[0.42,0.064],[0.55,0.060],[0.67,0.052],[0.77,0.039],[0.86,0.028],[0.94,0.016],[1.0,0.005]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.038, "xEnd": 0.008, "rows": 7, "columns": 19, "lean": -0.0050, "curve": -0.0020, "rayCount": 27, "heights": [[0.0,0.004],[0.09,0.011],[0.20,0.027],[0.32,0.046],[0.44,0.059],[0.57,0.055],[0.70,0.046],[0.82,0.030],[0.92,0.017],[1.0,0.005]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 15, "spanTop": 0.020, "spanBottom": 0.020, "length": 0.0195, "topLobeLength": 1.06, "bottomLobeLength": 1.06, "fork": 0.02, "forkPower": 4.0, "rounding": 0.04, "baseFraction": 0.94, "rayCount": 19 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.023, "rootLength": 0.008, "rootHeight": -0.05, "length": 0.0115, "sweepDegrees": 25, "droopDegrees": 6, "spread": 0.34, "taper": 0.22, "power": 0.78, "flare": 0.35, "rayCount": 13, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.020, "rootLength": 0.0024, "rootHeight": -0.88, "length": 0.007, "sweepDegrees": 8, "droopDegrees": 82, "spread": 0.025, "taper": 0.01, "power": 2.8, "flare": 0.01, "rayCount": 5, "rows": 5, "columns": 9, "distalFilament": { "length": 0.050, "center": 0.50, "width": 0.065, "taperPower": 2.8, "distalPower": 2.8 } }
     ],
-    "finAdjacency": [], "eyes": { "x": 0.032, "zFraction": 0.34, "radius": 0.0035, "protrude": 0.07, "aspect": 0.25, "seat": 0.92, "roughness": 0.26, "coat": 0.12, "pupilFraction": 0.55, "pupilAspect": 0.16 },
-    "mouth": { "zOffset": 0.0, "width": 0.0015, "radius": 0.00018, "upperLip": { "centerOffset": [0.00035,0.00025], "cornerOffset": [-0.0007,0.0001], "widthScale": 0.92, "cornerRadiusScale": 0.50, "centerRadiusScale": 0.75 }, "lowerLip": { "centerOffset": [0.00015,-0.00045], "cornerOffset": [-0.00075,-0.0003], "widthScale": 0.86, "cornerRadiusScale": 0.45, "centerRadiusScale": 0.66 } },
+    "finAdjacency": [], "eyes": { "x": 0.032, "zFraction": 0.34, "radius": 0.0032, "protrude": 0.04, "aspect": 0.23, "seat": 0.96, "roughness": 0.26, "coat": 0.12, "pupilFraction": 0.55, "pupilAspect": 0.15 },
+    "mouth": { "zOffset": 0.0, "width": 0.0013, "radius": 0.00016, "upperLip": { "centerOffset": [0.00035,0.00025], "cornerOffset": [-0.0007,0.0001], "widthScale": 0.92, "cornerRadiusScale": 0.50, "centerRadiusScale": 0.75 }, "lowerLip": { "centerOffset": [0.00015,-0.00045], "cornerOffset": [-0.00075,-0.0003], "widthScale": 0.86, "cornerRadiusScale": 0.45, "centerRadiusScale": 0.66 } },
     "gill": { "x": 0.021, "radius": 0.00022, "points": 13, "bulge": 0.025 }, "adornments": []
   },
   "rig": { "axialJoints": [0.037, 0.014, 0.001, -0.015, -0.030, -0.043] },
   "animation": {
     "idle": { "frames": 90, "loop": true, "axial": [0.6,1.2,2.0,3.5], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 18, "pectoralFrequency": 2, "pelvic": 2.5, "median": 0.8, "gill": 1.5, "gillFrequency": 3, "jaw": 1.5, "jawFrequency": 3, "bodyRoll": 0.8, "hoverPitch": 0.7, "hoverFrequency": 1 },
     "swim": { "frames": 60, "loop": true, "axial": [1.4,2.8,5.5,8.0], "axialFrequency": 2, "axialLag": 0.5, "pectoral": 24, "pectoralFrequency": 4, "pelvic": 4.0, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 1.5, "jawFrequency": 2, "bodyRoll": 1.2, "hoverPitch": 0.0, "hoverFrequency": 2 },
-    "display": { "frames": 45, "loop": false, "envelope": "bell", "axial": [1.0,2.0,3.0,5.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 32, "pectoralFrequency": 3, "pelvic": 7.0, "median": 4.5, "gill": 2.5, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 3, "bodyRoll": 2.5, "hoverPitch": 0.5, "hoverFrequency": 1 }
+    "display": { "frames": 45, "loop": false, "envelope": "bell", "axial": [1.0,2.0,3.0,5.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 32, "pectoralFrequency": 3, "pelvic": 7.0, "median": 4.5, "gill": 2.5, "gillFrequency": 3, "jaw": 2.0, "jawFrequency": 3, "bodyRoll": 2.2, "hoverPitch": 0.5, "hoverFrequency": 1 }
   },
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 }, "preview": { "frame": 12, "azimuthDegrees": -55, "elevationDegrees": 14 },
-  "visualDebt": ["No verified true orthographic top or frontal photograph was found; width and frontal head volume are conservative inferences.", "The broad truncate caudal and modest upper/lower streamers share one skinned membrane rather than separately deformable streamer rays.", "Dorsal and anal rays are represented by a denser envelope plus procedural relief and translucency, not individually modeled ray bones.", "The paired thoracic pelvic filaments use narrow shared-plan membranes with a distal centre filament, so they remain less threadlike than true individual fin rays at extreme close range."]
+  "visualDebt": ["No verified true orthographic top or frontal photograph was found; width and frontal head volume are conservative inferences.", "The restrained caudal fan shares one skinned membrane rather than separately deformable rays.", "Dorsal and anal rays are represented by a swept envelope plus procedural relief and translucency, not individually modeled ray bones.", "The paired thoracic pelvic filaments use very narrow shared-plan membranes with a distal centre filament, so they remain less threadlike than true individual fin rays at extreme close range."]
 }

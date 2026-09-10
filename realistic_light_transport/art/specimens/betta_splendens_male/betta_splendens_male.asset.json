@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "betta_splendens_male",
+  "variantId": null,
+  "scientificName": "Betta splendens",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.1.3",
+  "referenceSizeMeters": 0.065,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "sourceManifest": "candidates/fable-v4/candidate.manifest.json",
+  "displayName": "Male Betta",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-BETTA-SPLENDENS",
+      "title": "Betta splendens species summary",
+      "publisher": "FishBase",
+      "creator": "Rainer Froese and Daniel Pauly (editors)",
+      "url": "https://www.fishbase.se/summary/Betta_splendens.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 for FishBase content; individual source citations retain their own rights",
+      "pose": "not_applicable",
+      "evidence": [
+        "6.5 cm maximum total length for male or unsexed fish",
+        "fusiform normal body-shape classification",
+        "species identity and basic meristics"
+      ]
+    },
+    {
+      "id": "OATA-BETTA",
+      "title": "How to care for bettas (Siamese Fighting Fish)",
+      "publisher": "Ornamental Aquatic Trade Association",
+      "creator": "Ornamental Aquatic Trade Association",
+      "url": "https://ornamentalfish.org/wp-content/uploads/Bettas-Siamese-Fighting-Fish.pdf",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright retained by OATA; no reuse license stated in the PDF",
+      "pose": "not_applicable",
+      "evidence": [
+        "domestic males have significantly longer finnage than females",
+        "aquarium-trade context for the selected domestic male form"
+      ]
+    },
+    {
+      "id": "IBC-2022-HALFMOON-STANDARD",
+      "title": "IBC 2022 Exhibition Standards Book 01 Final, Halfmoon Longfin",
+      "publisher": "International Betta Congress",
+      "creator": "International Betta Congress Judging Board",
+      "url": "https://www.ibcbettas.org/wp-content/uploads/2025/06/IBC-2022-Exhibition-Standards-Book-01-Final.pdf",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright retained by the International Betta Congress; no open reuse license stated",
+      "pose": "diagrammatic_side_and_rear",
+      "evidence": [
+        "long-finned halfmoon is defined by a full 180-degree caudal spread",
+        "overall dorsal, caudal and anal silhouette should be continuous without open spaces",
+        "caudal should read as a capital-D-like halfmoon rather than a rounded delta"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+      "title": "File:Betta halfmoon.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Eduardoblas",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta_halfmoon.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "pose": "primary_lateral",
+      "evidence": [
+        "long-finned male halfmoon body silhouette",
+        "sloping forehead and upturned terminal lips",
+        "rear-set dorsal and long anal placement",
+        "large continuous caudal envelope",
+        "narrow pointed pelvic fins"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-HALF-MOON-LERDSUWA",
+      "title": "File:Betta Half Moon.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Lerdsuwa",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta_Half_Moon.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "delta_anatomy_reference_only",
+      "license": "Multi-licensed: GFDL 1.2 or later; CC BY-SA 3.0, 2.5, 2.0 or 1.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "pose": "lateral_delta_control",
+      "evidence": [
+        "delta-form head, eye, lip, dorsal-origin, anal-base and pelvic-fin landmarks",
+        "excluded from halfmoon caudal-outline calibration because the file description identifies the photographed fish as delta"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-FACE",
+      "title": "File:Betta face.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Editor at Large",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta_face.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "pose": "primary_front",
+      "evidence": [
+        "front-view head depth and width relationship",
+        "eyes seated into the lateral head contour",
+        "paired pelvic-fin separation and narrowness",
+        "upturned mouth position"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-MALE-TOP",
+      "title": "File:Betta-splendens-male.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Denise Chan",
+      "url": "https://commons.wikimedia.org/wiki/File:Betta-splendens-male.jpg",
+      "sourceUrl": "https://www.flickr.com/photos/denn/3782105452/",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "pose": "primary_top_oblique",
+      "evidence": [
+        "male Betta splendens photographed from above",
+        "streamlined anterior taper and caudal-peduncle width transition",
+        "body-width calibration with medium uncertainty because the pose and camera are not orthographic"
+      ]
+    },
+    {
+      "id": "COMMONS-BETTA-BLUE-RED-HALFMOON",
+      "title": "File:Silk define as Red also Blue.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Farahalida88",
+      "url": "https://commons.wikimedia.org/wiki/File:Silk_define_as_Red_also_Blue.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "qualitative_colour_and_fin_boundary_reference_only",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "pose": "colour_reference_oblique",
+      "evidence": [
+        "file caption identifies a blue-red halfmoon Betta",
+        "coherent blue body and proximal fin colour rather than broad pale camouflage-like patches",
+        "red distal fin field and translucent ray-supported membrane"
+      ],
+      "uncertainty": "Hue and saturation are camera-, lighting- and individual-dependent. The source supports broad colour placement only, not exact sampled RGB values."
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "728701709bfdbf072d68c9ebbb4d0e39cc790638b28b19b0ef4e4191336f7585",
+  "sourceReferencesSha256": "678eed91fcc44dfb90fbae4f5f38796c3cedce71d3cf6c45f1b188825fbebdca",
+  "sourceBlendSha256": "7dc7f038a2a8ca898d1a18daeea6d9aed40ad3e66b2d05e7baddbafdffd15e82",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "264afbc212b7652c0eb2a34840b4c5869cd3d1d4cb0710b19a713c56a23f4f5d",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "4c732e174b97be1921287ce0e553b727be24df297ecb8aef2deb84bb837cc06d"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "candidates/fable-v4/textures/body-albedo.png",
+      "sha256": "36bdf4c06c5c8dc5ec238d883f143747eda93b5257aa50390ad5a5d8b4c5a55c"
+    },
+    {
+      "path": "candidates/fable-v4/textures/body-normal.png",
+      "sha256": "50622f4057dd20f47cc3666525a460bd6d60a613ff237d46425b2f260e9707ed"
+    },
+    {
+      "path": "candidates/fable-v4/textures/body-roughness.png",
+      "sha256": "0b38ac3a5f14512c0423a144ef3fc9db0d954d3f716e5d3c47d69162af4dc6ce"
+    },
+    {
+      "path": "candidates/fable-v4/textures/fin-atlas.png",
+      "sha256": "751b8c0624a62feecf69fca36acfbcdce1aa11b35d2894b6a3e83ff2c4d1088b"
+    },
+    {
+      "path": "candidates/fable-v4/textures/fin-normal.png",
+      "sha256": "bdb32417d17cf576cc8349415fb8c9efb2829bc152cf0a0506684df904d36c27"
+    }
+  ],
+  "statistics": {
+    "triangles": 11552,
+    "materials": 6,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "display",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_betta_splendens_male_Body": 2306,
+      "PA_betta_splendens_male_Fins": 2608,
+      "PA_betta_splendens_male_Details": 1028
+    },
+    "runtimeBytes": 1984644
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "display"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "display": false
+  },
+  "restBounds": {
+    "min": [
+      -0.038476,
+      -0.007037,
+      -0.02301
+    ],
+    "max": [
+      0.026359,
+      0.007037,
+      0.021636
+    ]
+  },
+  "renders": {
+    "authorPreview": "candidates/fable-v4/renders/author-preview.png",
+    "threeView": "candidates/fable-v4/renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "candidates/fable-v4/validation-source.json",
+    "runtimeReport": "candidates/fable-v4/validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  },
+  "promotion": {
+    "status": "accepted",
+    "acceptedBy": "user",
+    "acceptedOn": "2026-09-10",
+    "promotedAssetVersion": "0.1.3",
+    "rollback": null
+  }
+}

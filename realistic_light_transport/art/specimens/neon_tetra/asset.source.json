@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.neon_tetra",
   "textureStyle": "neon_tetra",
-  "assetVersion": "0.2.0-source",
+  "assetVersion": "0.3.0-source",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.035,
@@ -20,42 +20,42 @@
   "origin": "anatomical_midbody",
   "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
   "palette": {
-    "skin": [0.44, 0.53, 0.50],
-    "fin": [0.46, 0.56, 0.54],
-    "iris": [0.11, 0.38, 0.44],
+    "skin": [0.52, 0.59, 0.55],
+    "fin": [0.58, 0.64, 0.61],
+    "iris": [0.03, 0.04, 0.035],
     "cue": [0.025, 0.74, 0.90],
     "adornment": [0.88, 0.07, 0.04]
   },
   "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.26, "finReliefStrength": 0.85, "finNormalStrength": 0.28 },
   "morphology": {
-    "notes": "Small, slender, laterally compressed tetra. FishBase morphometrics for a 3 cm total-length specimen record standard length at 82.6 percent of total length, body depth at 26.0 percent, head length at 18.5 percent, and eye diameter at 45.9 percent of head length. The source retains a small adipose fin, a short triangular dorsal, a longer low anal fin, and a symmetrical forked caudal.",
+    "notes": "Tiny, slender, laterally compressed tetra with a continuous torpedo envelope and a short tapered head. FishBase morphometrics for a 3 cm total-length specimen record standard length at 82.6 percent of total length, body depth at 26.0 percent, head length at 18.5 percent, and eye diameter at 45.9 percent of head length. The source retains a small adipose fin, a modest triangular dorsal, a low anal fin, clear paired fins, and a symmetrical forked caudal.",
     "controlStations": [
-      { "id": "caudal-base", "x": -0.0140, "halfWidth": 0.0007, "dorsalHeight": 0.0018, "ventralDepth": 0.0015, "centerZ": 0.0000 },
-      { "id": "peduncle", "x": -0.0110, "halfWidth": 0.0009, "dorsalHeight": 0.0027, "ventralDepth": 0.0022, "centerZ": 0.0001 },
-      { "id": "posterior", "x": -0.0060, "halfWidth": 0.00135, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
-      { "id": "midbody", "x": 0.0005, "halfWidth": 0.0017, "dorsalHeight": 0.0050, "ventralDepth": 0.0041, "centerZ": 0.0003 },
-      { "id": "anterior", "x": 0.0060, "halfWidth": 0.0018, "dorsalHeight": 0.0048, "ventralDepth": 0.0039, "centerZ": 0.0003 },
-      { "id": "operculum", "x": 0.0095, "halfWidth": 0.00165, "dorsalHeight": 0.0043, "ventralDepth": 0.0035, "centerZ": 0.0002 },
-      { "id": "head", "x": 0.0120, "halfWidth": 0.00145, "dorsalHeight": 0.0035, "ventralDepth": 0.0028, "centerZ": 0.0000 },
-      { "id": "snout", "x": 0.0140, "halfWidth": 0.0009, "dorsalHeight": 0.0022, "ventralDepth": 0.0016, "centerZ": -0.0001 },
-      { "id": "snout-tip", "x": 0.0150, "halfWidth": 0.00028, "dorsalHeight": 0.0006, "ventralDepth": 0.0004, "centerZ": -0.0001 }
+      { "id": "caudal-base", "x": -0.0140, "halfWidth": 0.00055, "dorsalHeight": 0.0016, "ventralDepth": 0.0013, "centerZ": 0.0000 },
+      { "id": "peduncle", "x": -0.0110, "halfWidth": 0.00075, "dorsalHeight": 0.0025, "ventralDepth": 0.0020, "centerZ": 0.0001 },
+      { "id": "posterior", "x": -0.0060, "halfWidth": 0.00115, "dorsalHeight": 0.0042, "ventralDepth": 0.0036, "centerZ": 0.0002 },
+      { "id": "midbody", "x": 0.0005, "halfWidth": 0.00150, "dorsalHeight": 0.0049, "ventralDepth": 0.0042, "centerZ": 0.0002 },
+      { "id": "anterior", "x": 0.0060, "halfWidth": 0.00155, "dorsalHeight": 0.00455, "ventralDepth": 0.00385, "centerZ": 0.0002 },
+      { "id": "operculum", "x": 0.0095, "halfWidth": 0.00135, "dorsalHeight": 0.00375, "ventralDepth": 0.0030, "centerZ": 0.0001 },
+      { "id": "head", "x": 0.0120, "halfWidth": 0.00110, "dorsalHeight": 0.00275, "ventralDepth": 0.00205, "centerZ": 0.0000 },
+      { "id": "snout", "x": 0.0140, "halfWidth": 0.00065, "dorsalHeight": 0.00135, "ventralDepth": 0.0010, "centerZ": -0.00005 },
+      { "id": "snout-tip", "x": 0.0150, "halfWidth": 0.00020, "dorsalHeight": 0.0003, "ventralDepth": 0.00022, "centerZ": -0.00005 }
     ],
     "crossSection": { "dorsalExponent": 1.82, "ventralExponent": 1.72 },
     "sampling": { "ringSegments": 48, "ringCount": 48 },
     "zoneFractions": [0.10, 0.28, 0.55, 0.78],
-    "finThickness": { "base": 0.00042, "edge": 0.00005 },
+    "finThickness": { "base": 0.00030, "edge": 0.000035 },
     "fins": [
-      { "name": "dorsal", "type": "median", "side": "dorsal", "bone": "Dorsal", "xStart": -0.0042, "xEnd": 0.0010, "rows": 4, "columns": 8, "lean": -0.0010, "heights": [[0.0, 0.0008], [0.38, 0.0030], [0.78, 0.0044], [1.0, 0.0012]] },
-      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.0098, "xEnd": -0.0074, "rows": 3, "columns": 5, "lean": -0.0003, "heights": [[0.0, 0.0004], [0.48, 0.0016], [1.0, 0.0003]] },
-      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.0096, "xEnd": -0.0030, "rows": 4, "columns": 10, "lean": -0.0010, "heights": [[0.0, 0.0006], [0.38, 0.0023], [0.80, 0.0030], [1.0, 0.0010]] },
-      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0042, "spanBottom": 0.0042, "length": 0.0060, "fork": 0.46, "forkPower": 1.65, "rounding": 0.10, "baseFraction": 0.86 },
-      { "name": "pectoral", "type": "paired", "rootX": 0.0088, "rootLength": 0.0032, "rootHeight": -0.08, "length": 0.0048, "sweepDegrees": 44, "droopDegrees": 12, "spread": 0.48, "taper": 0.36, "power": 0.78, "flare": 0.42, "rayCount": 10, "rows": 3, "columns": 6 },
-      { "name": "pelvic", "type": "paired", "rootX": 0.0025, "rootLength": 0.0024, "rootHeight": -0.88, "length": 0.0038, "sweepDegrees": 48, "droopDegrees": 34, "spread": 0.28, "taper": 0.34, "power": 0.76, "flare": 0.38, "rayCount": 8, "rows": 3, "columns": 5 }
+      { "name": "dorsal", "type": "median", "side": "dorsal", "bone": "Dorsal", "xStart": -0.0036, "xEnd": 0.0007, "rows": 4, "columns": 8, "lean": -0.0008, "heights": [[0.0, 0.0005], [0.35, 0.0025], [0.70, 0.0030], [1.0, 0.0007]] },
+      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.0094, "xEnd": -0.0076, "rows": 3, "columns": 5, "lean": -0.0002, "heights": [[0.0, 0.0002], [0.48, 0.0010], [1.0, 0.0002]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.0088, "xEnd": -0.0032, "rows": 4, "columns": 9, "lean": -0.0007, "heights": [[0.0, 0.0004], [0.36, 0.0017], [0.76, 0.0020], [1.0, 0.0006]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0035, "spanBottom": 0.0035, "length": 0.0060, "fork": 0.44, "forkPower": 1.65, "rounding": 0.08, "baseFraction": 0.84 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0084, "rootLength": 0.0026, "rootHeight": -0.08, "length": 0.0034, "sweepDegrees": 44, "droopDegrees": 11, "spread": 0.42, "taper": 0.34, "power": 0.78, "flare": 0.38, "rayCount": 9, "rows": 3, "columns": 6 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0022, "rootLength": 0.0018, "rootHeight": -0.88, "length": 0.0026, "sweepDegrees": 48, "droopDegrees": 31, "spread": 0.24, "taper": 0.32, "power": 0.76, "flare": 0.32, "rayCount": 7, "rows": 3, "columns": 5 }
     ],
     "finAdjacency": [],
-    "eyes": { "x": 0.0112, "zFraction": 0.40, "radius": 0.00135, "protrude": 0.07, "aspect": 0.28, "seat": 0.92, "roughness": 0.16, "coat": 0.22, "pupilFraction": 0.56, "pupilAspect": 0.16 },
-    "mouth": { "zOffset": -0.04, "width": 0.0010, "radius": 0.00016 },
-    "gill": { "x": 0.0082, "radius": 0.00013, "points": 11, "bulge": 0.022 },
+    "eyes": { "x": 0.0113, "zFraction": 0.42, "radius": 0.00110, "protrude": 0.025, "aspect": 0.22, "seat": 1.0, "roughness": 0.20, "coat": 0.10, "pupilFraction": 0.58, "pupilAspect": 0.12 },
+    "mouth": { "zOffset": -0.03, "width": 0.00065, "radius": 0.00009 },
+    "gill": { "x": 0.0080, "radius": 0.00009, "points": 11, "bulge": 0.016 },
     "adornments": []
   },
   "rig": { "axialJoints": [0.0120, 0.0055, -0.0005, -0.0065, -0.0115, -0.0150] },
@@ -67,7 +67,7 @@
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -52, "elevationDegrees": 18 },
   "visualDebt": [
-    "No calibrated orthographic top or frontal live image was found, so the revised 0.374 midbody width-to-depth ratio remains a conservative inference from the FishBase compressed-body morphometrics and oblique source imagery.",
+    "No calibrated orthographic top or frontal live image was found, so the revised 0.330 midbody width-to-depth ratio remains a conservative inference from the FishBase compressed-body morphometrics and oblique source imagery.",
     "The iridescent lateral band is a deterministic display-referred approximation; real iridophore color changes with incident angle, light, circadian state, and adrenergic response.",
     "Fin rays and scales are represented by procedural relief rather than individually modeled structures."
   ]
