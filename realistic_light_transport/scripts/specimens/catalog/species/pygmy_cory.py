@@ -19,9 +19,9 @@ PEARL_LIGHT = (0.76, 0.75, 0.65)
 DORSAL_GREY = (0.29, 0.31, 0.27)
 STRIPE = (0.035, 0.045, 0.039)
 STRIPE_EDGE = (0.12, 0.14, 0.12)
-PLATE = (0.32, 0.34, 0.29)
-FIN = (0.61, 0.61, 0.52)
-FIN_RAY = (0.34, 0.35, 0.30)
+PLATE = (0.27, 0.30, 0.26)
+FIN = (0.68, 0.70, 0.67)
+FIN_RAY = (0.44, 0.47, 0.43)
 
 
 def _require_species(ctx):
@@ -30,7 +30,7 @@ def _require_species(ctx):
 
 
 def _plate_row(u, zeta, center, half_height, count, offset):
-    """One restrained row of overlapping bony plates."""
+    """One readable but shallow row of overlapping bony plates."""
     trunk = smoothstep(0.06, 0.13, u) * (1.0 - smoothstep(0.78, 0.92, u))
     row = 1.0 - smoothstep(half_height * 0.62, half_height, np.abs(zeta - center))
     phase = np.mod(np.clip((u - 0.08) / 0.82, 0.0, 1.0) * count + offset, 1.0)
@@ -40,20 +40,23 @@ def _plate_row(u, zeta, center, half_height, count, offset):
 
 
 def _plate_relief(ctx):
-    upper, upper_edge = _plate_row(ctx.U, ctx.ZETA, 0.18, 0.22, 23.0, 0.08)
-    lower, lower_edge = _plate_row(ctx.U, ctx.ZETA, -0.19, 0.22, 21.0, 0.55)
+    upper, upper_edge = _plate_row(ctx.U, ctx.ZETA, 0.22, 0.18, 23.0, 0.08)
+    lower, lower_edge = _plate_row(ctx.U, ctx.ZETA, -0.23, 0.18, 21.0, 0.55)
     grain = fbm(ctx.U * 70.0, ctx.V * 31.0, octaves=2, seed=59)
-    height = 0.44 + 0.24 * upper + 0.24 * lower + 0.045 * (grain - 0.5)
+    height = 0.40 + 0.36 * upper + 0.36 * lower + 0.035 * (grain - 0.5)
     return np.clip(height, 0.0, 1.0), np.maximum(upper_edge, lower_edge)
 
 
 def _lateral_stripe(ctx):
-    """Continuous snout-to-peduncle stripe with naturally softened margins."""
+    """Narrow peduncle stripe that rises through the eye and snout region."""
     u, z, v = ctx.U, ctx.ZETA, ctx.V
-    center = -0.04 + 0.035 * np.sin((u * 2.2 + v * 0.13) * np.pi)
-    width = 0.125 + 0.025 * smoothstep(0.15, 0.72, u)
-    stripe = 1.0 - smoothstep(width - 0.018, width + 0.018, np.abs(z - center))
-    axial = smoothstep(0.015, 0.07, u) * (1.0 - smoothstep(0.94, 0.995, u))
+    head_lift = 0.54 * smoothstep(0.62, 0.88, u)
+    center = -0.02 + head_lift + 0.008 * np.sin((u * 2.0 + v * 0.10) * np.pi)
+    head_taper = 1.0 - 0.28 * smoothstep(0.70, 0.97, u)
+    peduncle_taper = 0.60 + 0.40 * smoothstep(0.02, 0.15, u)
+    width = 0.085 * head_taper * peduncle_taper
+    stripe = 1.0 - smoothstep(width - 0.012, width + 0.012, np.abs(z - center))
+    axial = smoothstep(0.005, 0.04, u) * (1.0 - smoothstep(0.982, 0.998, u))
     return np.clip(stripe * axial, 0.0, 1.0)
 
 
@@ -77,12 +80,12 @@ def paint_body(ctx):
     albedo = textures.mix(albedo, STRIPE_EDGE, lower_line * 0.42)
 
     plate_height, plate_edges = _plate_relief(ctx)
-    albedo = textures.mix(albedo, PLATE, plate_edges * (1.0 - stripe) * 0.13)
+    albedo = textures.mix(albedo, PLATE, plate_edges * (1.0 - stripe) * 0.30)
     roughness = 0.43 + 0.13 * plate_height + 0.08 * stripe
     return {
         "albedo": albedo,
         "roughness": textures.grey(roughness),
-        "normal": textures.normal_from_height(plate_height, 0.78),
+        "normal": textures.normal_from_height(plate_height, 1.15),
     }
 
 
@@ -92,14 +95,17 @@ def paint_fin(ctx):
               "pectoral": 8.0, "pelvic": 6.0}
     count = counts.get(ctx.fin, 8.0)
     ray = paint.rays(ctx.U, count, 4.5)
-    albedo = textures.rgba(FIN, 0.68, ctx.shape)
-    albedo = textures.mix(albedo, FIN_RAY, ray * 0.22)
+    albedo = textures.rgba(FIN, 0.30, ctx.shape)
+    albedo = textures.mix(albedo, FIN_RAY, ray * 0.14)
     leading_spine = np.zeros(ctx.shape)
     if ctx.fin in ("dorsal1", "pectoral"):
         leading_spine = 1.0 - smoothstep(0.02, 0.12, ctx.U)
-        albedo = textures.mix(albedo, FIN_RAY, leading_spine * 0.46)
+        albedo = textures.mix(albedo, FIN_RAY, leading_spine * 0.28)
+    alpha = 0.28 - 0.14 * smoothstep(0.58, 1.0, ctx.V) + 0.04 * ray + 0.08 * leading_spine
+    if ctx.fin == "adipose":
+        alpha *= 0.58
     albedo[..., 3] = np.clip(
-        0.68 - 0.24 * smoothstep(0.64, 1.0, ctx.V) + 0.11 * ray + 0.14 * leading_spine,
+        alpha,
         0.0,
         1.0,
     )

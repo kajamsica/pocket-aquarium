@@ -129,7 +129,7 @@
         "morphology.adornments[barbel_L_lower]",
         "morphology.adornments[barbel_R_lower]"
       ],
-      "notes": "The head roof descends continuously to a small rounded snout. Two barbel pairs taper from a transverse mouth below the snout instead of producing a terminal ring or whisker beads."
+      "notes": "The revised head stations taper sooner and more narrowly into the rounded snout. A much smaller mouth radius and width, lower jaw placement, shallow separated lip arcs and shorter finer barbels replace the rejected candidate's large terminal sucker ring."
     },
     {
       "name": "narrow peduncle with a moderately forked translucent caudal",
@@ -158,7 +158,7 @@
         "catalog.species.pygmy_cory._plate_relief",
         "catalog.species.pygmy_cory.paint_fin"
       ],
-      "notes": "Two staggered procedural plate rows preserve armored-catfish identity without importing the heavier relief and oversized spines of the much larger Bronze Cory."
+      "notes": "Two narrower, separated procedural plate rows now receive stronger normal relief and bounded color contrast. They preserve armored-catfish identity without importing the oversized scutes or spines of the much larger Bronze Cory."
     }
   ],
   "proportions": [
@@ -246,7 +246,7 @@
         "catalog.species.pygmy_cory.paint_body",
         "palette.cue"
       ],
-      "notes": "A dedicated bounded stripe mask crosses the eye region and flank to the peduncle. It does not become a tail spot, a broken dash or a whole-side dark wash."
+      "notes": "The revised mask is narrower across the flank, rises through the exact eye station and snout region, then tapers at the peduncle. It replaces the rejected candidate's broad low stripe without becoming a tail spot, broken dash or whole-side dark wash."
     },
     {
       "name": "pearl-grey flank, darker back and pale lower surface",
@@ -271,14 +271,26 @@
         "catalog.species.pygmy_cory.paint_fin",
         "palette.fin"
       ],
-      "notes": "All fins remain translucent, including the adipose fin documented as entirely hyaline, with restrained ray and leading-spine cues rather than opaque blocks."
+      "notes": "Fin alpha, ray contrast and normal strength are reduced throughout, with an additional adipose alpha reduction. This replaces the rejected opaque beige sheets with hyaline membranes and restrained leading-spine cues."
     }
   ],
   "candidateComparison": {
     "mismatches": [
       {
-        "area": "source-only candidate state",
-        "note": "No GLB or render exists in this lane. Downstream review must reject any build that resembles a scaled-down Bronze Cory capsule, lacks the continuous stripe, has a terminal sucker-like mouth, oversized barbels, bead eyes, an opaque adipose fin or an unforked paddle tail."
+        "area": "rejected fable-v1 head and mouth",
+        "note": "The preserved candidate has a bulbous blunt head, conspicuous terminal sucker ring and overlong whisker read. Revised head stations, an inferior jaw offset, smaller transverse lip arcs and shorter finer barbels address those source-level failures."
+      },
+      {
+        "area": "rejected fable-v1 stripe placement",
+        "note": "The preserved candidate's stripe is too broad and low, missing the eye region. The revised mask narrows the band, raises it through the eye and snout, and tapers it into the caudal peduncle."
+      },
+      {
+        "area": "rejected fable-v1 armor readability",
+        "note": "The preserved candidate reads as smooth because both armor rows are visually lost. The revised backend separates the row centers and increases bounded normal and color relief while keeping the plates shallow."
+      },
+      {
+        "area": "rejected fable-v1 fin opacity",
+        "note": "The preserved dorsal, adipose, anal, caudal and paired fins read as opaque beige sheets. Lower alpha, reduced ray contrast, reduced fin-normal strength and an extra hyaline adipose treatment address the mismatch."
       },
       {
         "area": "top and front calibration",
@@ -300,6 +312,14 @@
       "forked caudal"
     ],
     "note": "Each source blocker maps to dedicated asset or backend controls. Rendered acceptance remains downstream and explicit."
+  },
+  "failedCandidateEvidence": {
+    "path": "art/specimens/pygmy_cory/candidates/fable-v1",
+    "candidateId": "fable-v1",
+    "commit": "e43a6ce2f86b9c8a57407f4add19b53f1c4cc0c1",
+    "status": "unaccepted_reference_mismatch",
+    "render": "renders/three-view.png",
+    "review": "Independent visual review rejected the large terminal sucker ring, low broad stripe, hidden armor rows, bulbous head and opaque beige fins. The correct dwarf silhouette and forked tail remain preserved as the repair baseline."
   },
   "deliveryStatus": {
     "sourceEdited": true,

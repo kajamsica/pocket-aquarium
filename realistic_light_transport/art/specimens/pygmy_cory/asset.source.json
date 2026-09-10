@@ -10,7 +10,7 @@
   "bodyPlan": "fish",
   "backend": "catalog.species.pygmy_cory",
   "textureStyle": "pygmy_cory",
-  "assetVersion": "0.1.0",
+  "assetVersion": "0.2.0",
   "referenceGrade": "B",
   "referenceSize": {
     "meters": 0.021,
@@ -21,24 +21,24 @@
   "clipRoles": { "idle": "rest", "locomotion": "swim", "response": "forage" },
   "palette": {
     "skin": [0.56, 0.57, 0.50],
-    "fin": [0.61, 0.61, 0.52],
+    "fin": [0.68, 0.70, 0.67],
     "iris": [0.11, 0.10, 0.07],
     "cue": [0.035, 0.045, 0.039],
-    "adornment": [0.49, 0.48, 0.40]
+    "adornment": [0.36, 0.37, 0.32]
   },
-  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.42, "finReliefStrength": 0.90, "finNormalStrength": 0.32 },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.62, "finReliefStrength": 0.62, "finNormalStrength": 0.20 },
   "morphology": {
-    "notes": "Miniature, more elongate Corydoradinae profile with two armor rows, a low flattened belly, a gently arched back, small inferior mouth and tapered barbels. Exact licensed lateral photographs constrain the continuous dark mid-lateral stripe, small seated eye, translucent fins and moderately forked tail. Whole-body top width and full frontal trunk depth remain inferred rather than claimed as measured.",
+    "notes": "Miniature, more elongate Corydoradinae profile with two visibly distinct armor rows, a low flattened belly, a gently arched back, restrained head taper, small inferior transverse mouth and subtle tapered barbels. Exact licensed lateral photographs constrain the narrow stripe rising through the snout and eye region before tapering to the peduncle, small seated eye, hyaline fins and moderately forked tail. Whole-body top width and full frontal trunk depth remain inferred rather than claimed as measured.",
     "controlStations": [
       { "id": "caudal-base", "x": -0.0068, "halfWidth": 0.00072, "dorsalHeight": 0.00135, "ventralDepth": 0.00110, "centerZ": 0.00020 },
       { "id": "peduncle", "x": -0.0058, "halfWidth": 0.00088, "dorsalHeight": 0.00170, "ventralDepth": 0.00130, "centerZ": 0.00028 },
       { "id": "posterior", "x": -0.0037, "halfWidth": 0.00118, "dorsalHeight": 0.00245, "ventralDepth": 0.00150, "centerZ": 0.00036 },
       { "id": "midbody", "x": -0.0002, "halfWidth": 0.00152, "dorsalHeight": 0.00315, "ventralDepth": 0.00182, "centerZ": 0.00044 },
       { "id": "anterior", "x": 0.0034, "halfWidth": 0.00162, "dorsalHeight": 0.00342, "ventralDepth": 0.00188, "centerZ": 0.00046 },
-      { "id": "operculum", "x": 0.0066, "halfWidth": 0.00156, "dorsalHeight": 0.00302, "ventralDepth": 0.00187, "centerZ": 0.00022 },
-      { "id": "head", "x": 0.0087, "halfWidth": 0.00137, "dorsalHeight": 0.00230, "ventralDepth": 0.00172, "centerZ": -0.00012 },
-      { "id": "snout", "x": 0.0100, "halfWidth": 0.00100, "dorsalHeight": 0.00130, "ventralDepth": 0.00112, "centerZ": -0.00052 },
-      { "id": "snout-tip", "x": 0.0104, "halfWidth": 0.00040, "dorsalHeight": 0.00042, "ventralDepth": 0.00046, "centerZ": -0.00075 }
+      { "id": "operculum", "x": 0.0066, "halfWidth": 0.00148, "dorsalHeight": 0.00292, "ventralDepth": 0.00180, "centerZ": 0.00020 },
+      { "id": "head", "x": 0.0087, "halfWidth": 0.00124, "dorsalHeight": 0.00212, "ventralDepth": 0.00152, "centerZ": -0.00008 },
+      { "id": "snout", "x": 0.0100, "halfWidth": 0.00078, "dorsalHeight": 0.00106, "ventralDepth": 0.00086, "centerZ": -0.00046 },
+      { "id": "snout-tip", "x": 0.0104, "halfWidth": 0.00027, "dorsalHeight": 0.00031, "ventralDepth": 0.00035, "centerZ": -0.00078 }
     ],
     "crossSection": { "dorsalExponent": 1.86, "ventralExponent": 3.05 },
     "sampling": { "ringSegments": 48, "ringCount": 52 },
@@ -55,18 +55,18 @@
     "finAdjacency": [],
     "eyes": { "x": 0.0076, "zFraction": 0.52, "radius": 0.00052, "protrude": 0.08, "aspect": 0.34, "seat": 0.90, "roughness": 0.22, "coat": 0.14, "pupilFraction": 0.58, "pupilAspect": 0.18 },
     "mouth": {
-      "zOffset": -0.82,
-      "width": 0.00078,
-      "radius": 0.00007,
-      "upperLip": { "centerOffset": [-0.00020, -0.00012], "cornerOffset": [-0.00048, 0.00002], "widthScale": 1.0, "cornerRadiusScale": 0.54, "centerRadiusScale": 0.76 },
-      "lowerLip": { "centerOffset": [-0.00028, -0.00030], "cornerOffset": [-0.00050, -0.00016], "widthScale": 0.92, "cornerRadiusScale": 0.44, "centerRadiusScale": 0.62 }
+      "zOffset": -1.36,
+      "width": 0.00040,
+      "radius": 0.000034,
+      "upperLip": { "centerOffset": [-0.00035, 0.00000], "cornerOffset": [-0.00060, 0.000015], "widthScale": 1.0, "cornerRadiusScale": 0.46, "centerRadiusScale": 0.58 },
+      "lowerLip": { "centerOffset": [-0.00040, -0.000070], "cornerOffset": [-0.00062, -0.000045], "widthScale": 0.84, "cornerRadiusScale": 0.38, "centerRadiusScale": 0.50 }
     },
     "gill": { "x": 0.0052, "radius": 0.000075, "points": 13, "bulge": 0.035 },
     "adornments": [
-      { "type": "tube", "name": "barbel_L_outer", "points": [[0.0099, -0.00055, -0.00162], [0.0105, -0.00115, -0.00178], [0.0108, -0.00178, -0.00182]], "radii": [0.000065, 0.000035, 0.000010], "segments": 6, "bone": "Jaw" },
-      { "type": "tube", "name": "barbel_R_outer", "points": [[0.0099, 0.00055, -0.00162], [0.0105, 0.00115, -0.00178], [0.0108, 0.00178, -0.00182]], "radii": [0.000065, 0.000035, 0.000010], "segments": 6, "bone": "Jaw" },
-      { "type": "tube", "name": "barbel_L_lower", "points": [[0.0100, -0.00028, -0.00178], [0.0104, -0.00058, -0.00202], [0.0106, -0.00090, -0.00208]], "radii": [0.000045, 0.000025, 0.000008], "segments": 6, "bone": "Jaw" },
-      { "type": "tube", "name": "barbel_R_lower", "points": [[0.0100, 0.00028, -0.00178], [0.0104, 0.00058, -0.00202], [0.0106, 0.00090, -0.00208]], "radii": [0.000045, 0.000025, 0.000008], "segments": 6, "bone": "Jaw" }
+      { "type": "tube", "name": "barbel_L_outer", "points": [[0.0099, -0.00038, -0.00105], [0.0104, -0.00076, -0.00120], [0.0107, -0.00116, -0.00127]], "radii": [0.000045, 0.000024, 0.000008], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_R_outer", "points": [[0.0099, 0.00038, -0.00105], [0.0104, 0.00076, -0.00120], [0.0107, 0.00116, -0.00127]], "radii": [0.000045, 0.000024, 0.000008], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_L_lower", "points": [[0.0100, -0.00020, -0.00110], [0.0103, -0.00040, -0.00127], [0.0105, -0.00064, -0.00132]], "radii": [0.000032, 0.000017, 0.000006], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_R_lower", "points": [[0.0100, 0.00020, -0.00110], [0.0103, 0.00040, -0.00127], [0.0105, 0.00064, -0.00132]], "radii": [0.000032, 0.000017, 0.000006], "segments": 6, "bone": "Jaw" }
     ]
   },
   "rig": { "axialJoints": [0.0086, 0.0034, -0.0002, -0.0037, -0.0058, -0.0071] },
@@ -78,8 +78,8 @@
   "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
   "preview": { "frame": 10, "azimuthDegrees": -50, "elevationDegrees": 20 },
   "visualDebt": [
-    "The two armor rows use species-local procedural normal relief rather than individually modeled overlapping scutes.",
-    "Four tapered barbels are rigidly skinned to the Jaw bone instead of flexing independently.",
+    "The two visible armor rows use species-local procedural normal and color relief rather than individually modeled overlapping scutes.",
+    "Four subtle tapered barbels are rigidly skinned to the Jaw bone instead of flexing independently.",
     "No verified live whole-body orthographic top or frontal image was found, so trunk width remains an explicit conservative inference.",
     "The 2.1 cm FishBase standard-length maximum is used as a visible display reference without an invented standard-to-total-length conversion."
   ]
