@@ -1,7 +1,7 @@
 {
   "schemaVersion": "pocket-aquarium.reference-comparison/v1",
   "speciesId": "flowerhorn",
-  "sourceRevision": 2,
+  "sourceRevision": 3,
   "referencePacket": "source-references.json",
   "targetForm": "adult male red-pearl Flowerhorn cichlid",
   "comparisonPolicy": "Google Images may locate candidates, but only the exact original pages recorded here govern design. Comparisons use qualitative landmarks, proportions, and pattern boundaries without sampling, tracing, copying, redistributing, or hotlinking pixels.",
@@ -27,7 +27,7 @@
     { "name": "representative adult total length", "status": "observed", "referenceValue": { "value": 0.30, "unit": "meters total length" }, "sourceIds": ["JOTT-ALIEN-ORNAMENTAL-FISH"], "sourceControls": ["referenceSize.meters", "referenceSize.kind", "morphology.controlStations[*].x", "morphology.fins[caudal].length"], "notes": "The 0.230 m axial station span plus 0.070 m caudal envelope targets the almost-30-cm adult reported in peer-reviewed invasion literature." },
     { "name": "maximum trunk height divided by total length", "status": "inferred", "referenceValue": { "value": 0.52, "unit": "trunk-height/total-length ratio" }, "uncertainty": "Moderate. The deep robust form is strongly supported, but no calibrated morphometric of the selected red-pearl strain was found.", "sourceControls": ["morphology.controlStations[*].dorsalHeight", "morphology.controlStations[*].ventralDepth"], "notes": "The maximum non-hump trunk depth is approximately 0.156 m, producing a stout cichlid profile without confusing the hump with ordinary body depth." },
     { "name": "maximum body width divided by maximum trunk height", "status": "inferred", "referenceValue": { "value": 0.59, "unit": "width/trunk-height ratio" }, "uncertainty": "High. This is a conservative interpretation of robust, stout body language and oblique images, not a published orthographic measurement.", "sourceControls": ["morphology.controlStations[*].halfWidth", "morphology.crossSection"], "notes": "The source is intentionally thicker than an angelfish or discus but remains laterally compressed like a large Central American cichlid." },
-    { "name": "nuchal-hump rise above ordinary dorsal trunk", "status": "inferred", "referenceValue": { "value": 0.038, "unit": "meters additional dorsal rise" }, "uncertainty": "Moderate. The hump is diagnostic and biologically supported, but magnitude varies strongly by sex, strain, age, condition, and husbandry.", "sourceControls": ["morphology.controlStations[hump-crest].dorsalHeight", "morphology.controlStations[hump-crest].centerZ", "morphology.controlStations[operculum].dorsalHeight", "morphology.controlStations[operculum].centerZ"], "notes": "The crest top rises 38 mm beyond the opercular top contour in source space, giving a prominent adult male silhouette without treating the variable ornamental extreme as universal." }
+    { "name": "nuchal-hump rise above ordinary dorsal trunk", "status": "inferred", "referenceValue": { "value": 0.020, "unit": "meters additional dorsal rise" }, "uncertainty": "Moderate. The hump is diagnostic and biologically supported, but magnitude varies strongly by sex, strain, age, condition, and husbandry.", "sourceControls": ["morphology.controlStations[hump-crest].dorsalHeight", "morphology.controlStations[hump-crest].centerZ", "morphology.controlStations[operculum].dorsalHeight", "morphology.controlStations[operculum].centerZ"], "notes": "The broad crest top rises 20 mm beyond the opercular top contour in source space. Its diagnostic volume comes from sustained height and width across the posterior, crest, anterior, and brow stations rather than a narrow tall apex." }
   ],
   "colorPatternBoundaries": [
     { "name": "red-orange adult ground with paler posterior and belly", "sourceIds": ["NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "COMMONS-FLOWERHORN-COMPETITION"], "sourceControls": ["catalog.species.flowerhorn.paint_body", "palette.skin"], "notes": "A warm red head and shoulder transition through orange-red flank tones rather than forming a single flat red material." },
@@ -36,9 +36,9 @@
   ],
   "candidateComparison": {
     "mismatches": [
-      { "area": "fable-v1 hump and face", "note": "Independent three-view review rejected the narrow pointed horn, abrupt forehead-to-snout transition, and detached gray rod-like lips. Revision 2 broadens the fatty dome across four continuous skull stations, adds a brow transition, and compacts both lip arcs against the terminal snout." },
-      { "area": "fable-v1 caudal identity", "note": "Independent review rejected the angular fan-like caudal outline. Revision 2 removes the residual fork and increases edge shortening to form a broad rounded caudal while retaining the strong peduncle." },
-      { "area": "fable-v1 pattern identity", "note": "Independent review rejected uniformly spaced, similarly sized pearls and circular lateral marks. Revision 2 warps and clusters two pearl scales and replaces periodic circles with broken anisotropic flower characters." },
+      { "area": "fable-v2 hump and face", "note": "Independent three-view review still rejected a pointed crest and abrupt face. Revision 3 lowers the crest, keeps adjacent dome stations within 4 mm of its top, broadens the full dome, and steps the brow, head, and snout down continuously. The lip arcs are reduced to small seated terminal folds rather than a puckered ring." },
+      { "area": "fable-v2 caudal identity", "note": "Independent review still rejected pointed caudal corners. Revision 3 increases distal-edge sampling from 15 to 31 columns, seats the root across more of the peduncle, and rebalances span with corner shortening so the unforked outline resolves as a continuous broad curve." },
+      { "area": "fable-v2 pattern identity", "note": "Independent review found the revised pearling and lateral flower markings acceptable. Revision 3 deliberately preserves the Flowerhorn paint backend unchanged." },
       { "area": "top and front calibration", "note": "Body thickness, hump breadth, and frontal lip volume remain high-uncertainty inferences and require independent three-view review before acceptance." }
     ],
     "acceptanceBlockers": []
@@ -48,5 +48,5 @@
     "clearedSourceBlockers": ["continuous nuchal hump", "deep robust trunk", "strong peduncle", "terminal fleshy mouth", "broad rounded caudal", "red-orange ground", "irregular pearling", "broken flower line"],
     "note": "Each source blocker maps to dedicated geometry or procedural paint controls. Rendered acceptance remains downstream and explicit."
   },
-  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": true, "candidateValidated": true, "candidateAccepted": false, "latestReviewedCandidate": "fable-v1", "latestReviewDecision": "rejected", "repairCandidate": "fable-v2", "repairCandidateStatus": "source-ready-pending-regeneration", "promotionAttempted": false }
+  "deliveryStatus": { "sourceEdited": true, "candidateBuilt": true, "candidateValidated": true, "candidateAccepted": false, "latestReviewedCandidate": "fable-v2", "latestReviewDecision": "rejected", "repairCandidate": "fable-v3", "repairCandidateStatus": "source-ready-pending-regeneration", "promotionAttempted": false }
 }
