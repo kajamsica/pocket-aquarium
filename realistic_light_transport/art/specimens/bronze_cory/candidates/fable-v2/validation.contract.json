@@ -1,0 +1,720 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "bronze_cory",
+  "rig": "PA_bronze_cory_Rig",
+  "root": "PA_bronze_cory_Root",
+  "meshes": [
+    "PA_bronze_cory_Body",
+    "PA_bronze_cory_Fins",
+    "PA_bronze_cory_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_bronze_cory_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.0007750000000000001,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_dorsal1"
+      ],
+      "label": "fin_body_dorsal1"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_adipose"
+      ],
+      "label": "fin_body_adipose"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_bronze_cory_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "label": "fin_fin_dorsal1_adipose"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal1_anal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal1_caudal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal1_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal1_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal1_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_dorsal1",
+        "attach_dorsal1"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal1_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_adipose_anal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_adipose_caudal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_adipose_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_adipose_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_adipose_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_adipose",
+        "attach_adipose"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_adipose_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_caudal"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_bronze_cory_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_bronze_cory_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_bronze_cory_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_bronze_cory_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_bronze_cory_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_bronze_cory_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.075,
+    "tolerance": 0.03,
+    "kind": "adult_display_reference_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Adipose",
+        "Anal",
+        "Caudal",
+        "Dorsal1",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Adipose",
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal1",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "forage": {
+      "loop": false,
+      "frames": 66,
+      "bones": [
+        "Adipose",
+        "Anal",
+        "Body",
+        "Caudal",
+        "Dorsal1",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "swim",
+    "response": "forage"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_bronze_cory_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.00031
+    },
+    {
+      "object": "PA_bronze_cory_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.00031
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.034941,
+      -0.012664,
+      -0.011961
+    ],
+    "max": [
+      0.038026,
+      0.012664,
+      0.03284
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.062,
+    "fins": [
+      "dorsal1",
+      "adipose",
+      "anal",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fw-asset/realistic_light_transport/art/specimens/bronze_cory/candidates/fable-v2/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fw-asset/realistic_light_transport/art/specimens/bronze_cory/candidates/fable-v2/renders/three-view.png",
+    "boundsMin": [
+      -0.034940771758556366,
+      -0.012663637287914753,
+      -0.011961307376623154
+    ],
+    "boundsMax": [
+      0.03802567720413208,
+      0.012663637287914753,
+      0.03284010291099548
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "amano_shrimp",
+  "revision": 1,
+  "policy": "References informed taxonomy, adult-size scale, morphology, habitat cues and colour intent only. No pixels were sampled, traced, copied or redistributed. The source is candidate-only and has no geometry or runtime asset.",
+  "sources": [
+    {
+      "id": "WORMS-CARIDINA-MULTIDENTATA",
+      "title": "Caridina multidentata Stimpson, 1860 taxon record",
+      "publisher": "World Register of Marine Species",
+      "url": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=586329",
+      "creator": "WoRMS Editorial Board",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "taxonomy_and_citation",
+      "license": "CC BY 4.0 (WoRMS data)"
+    },
+    {
+      "id": "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+      "title": "On the species of Japanese atyid shrimps (Decapoda: Caridea) described by William Stimpson (1860)",
+      "publisher": "Journal of Crustacean Biology / National Museum of Natural History research mirror",
+      "url": "https://decapoda.nhm.org/pdfs/25084/25084.pdf",
+      "creator": "Yixiong Cai, Peter K. L. Ng, Shigemitsu Shokita, and Kiyoshi Satake",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_morphology_reference",
+      "allowedUse": "morphology_habitat_and_taxonomic_citation",
+      "license": "Copyright The Crustacean Society; citation use only"
+    },
+    {
+      "id": "OKINAWA-AMANO-SHRIMP",
+      "title": "Amano Shrimp (Caridina multidentata), Okinawa creature reference",
+      "publisher": "Okinawa Ikimono Lab",
+      "url": "https://biodiversity.okinawa/en/video_pages/reference/yamatonumaebi.html",
+      "creator": "Okinawa Ikimono Lab",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "institutional_species_reference",
+      "allowedUse": "adult_size_colour_habitat_and_activity_citation",
+      "license": "Copyright Okinawa Ikimono Lab; citation use only"
+    },
+    {
+      "id": "COMMONS-AMANO-SHRIMP",
+      "title": "Amano Shrimp feeding on plant remains",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Amano_Shrimp.jpg",
+      "creator": "Atulbhats",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "openly_licensed_visual_reference",
+      "allowedUse": "side_oblique_silhouette_colour_and_appendage_reference_without_copying_pixels",
+      "license": "CC BY-SA 4.0"
+    }
+  ],
+  "referenceGrade": "B",
+  "referenceGradeRationale": "WoRMS and the peer-reviewed Japanese atyid revision anchor the accepted species name, diagnostic morphology and river habitat. The Okinawa institutional account supplies a 3 to 5 cm size range and mottled reddish-brown appearance. Lateral colour and fine appendage detail remain candidate-build questions, so no asset is built or promoted here."
+}

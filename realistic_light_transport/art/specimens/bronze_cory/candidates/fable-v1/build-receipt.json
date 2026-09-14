@@ -1,0 +1,54 @@
+{
+  "asset": "bronze_cory",
+  "variant": null,
+  "candidateDir": "art/specimens/bronze_cory/candidates/fable-v1",
+  "startedAt": "2026-09-09T20:59:53.775Z",
+  "pid": 69307,
+  "stages": [
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 5344,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 6714,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1527,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 852,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 1251,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 735,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 696,
+      "tail": "Blender quit"
+    }
+  ],
+  "finishedAt": "2026-09-09T21:00:10.898Z",
+  "status": "passed",
+  "failure": null
+}

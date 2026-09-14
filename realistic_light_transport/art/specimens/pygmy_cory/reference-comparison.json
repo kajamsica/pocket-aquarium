@@ -1,0 +1,352 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "pygmy_cory",
+  "sourceRevision": 2,
+  "referencePacket": "source-references.json",
+  "targetForm": "adult normally pigmented Pygmy Cory",
+  "comparisonPolicy": "Search results may locate references, but only the exact original pages below govern design. Comparisons use landmarks, qualitative proportions and pattern boundaries without sampling, tracing, copying, redistributing or hotlinking pixels.",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-12194",
+      "originalPageUrl": "https://www.fishbase.se/summary/corydoras-pygmaeus.html",
+      "creator": "FishBase editors",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain their own licenses",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomy, maximum standard length and freshwater facts with citation; no imagery copied or redistributed."
+    },
+    {
+      "id": "CAS-ESCHMEYER-4897",
+      "originalPageUrl": "https://researcharchive.calacademy.org/research/ichthyology/catalog/fishcatget.asp?spid=4897",
+      "creator": "Eschmeyer's Catalog of Fishes editors",
+      "license": "Copyright California Academy of Sciences",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic authorship, type locality and current-status facts with citation."
+    },
+    {
+      "id": "DIAS-2024-CORYDORADINAE",
+      "originalPageUrl": "https://doi.org/10.1093/zoolinnean/zlae053",
+      "creator": "A. C. Dias, L. F. C. Tencatt, F. F. Roxo and colleagues",
+      "license": "Copyright Oxford University Press",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Current combination and clade-level morphology facts with citation; no figures copied or redistributed."
+    },
+    {
+      "id": "TENCATT-PAVANELLI-2015",
+      "originalPageUrl": "https://www.scielo.br/j/ni/a/k5sMRpdJK3cPW9RG4n37KNR/?lang=en",
+      "creator": "Luiz Fernando Caserta Tencatt and Carla Simone Pavanelli",
+      "license": "Article text available through SciELO; source figures were not reused",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Comparative external-morphology and diagnostic color-pattern facts with citation; no figures copied or redistributed."
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-SESARMA",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus.jpg",
+      "creator": "Sesarma",
+      "license": "CC BY-SA 3.0 and GNU Free Documentation License 1.2 or later",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Qualitative live-fish lateral visual reference only; no pixels copied, sampled, traced, redistributed or hotlinked."
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-CARNAT",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus_carnat_joel.jpg",
+      "creator": "Carnat Joel",
+      "license": "CC BY 2.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Additional exact-species lateral and oblique visual reference only; no pixels copied, sampled, traced, redistributed or hotlinked."
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-CARNAT-5",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus_carnat_joel_5.jpg",
+      "creator": "Carnat Joel",
+      "license": "CC BY 2.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Oblique visual cross-check for relative head width and appendage placement only; no pixels copied, sampled, traced, redistributed or hotlinked."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT",
+        "TENCATT-PAVANELLI-2015"
+      ],
+      "notes": "Exact licensed live-fish pages and the comparative diagnosis constrain the miniature elongate Cory outline, short rounded snout, inferior mouth, conspicuous continuous stripe, translucent fins and forked caudal."
+    },
+    "top": {
+      "status": "inferred",
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-CARNAT-5"
+      ],
+      "uncertainty": "Moderate to high. An oblique exact-species image constrains the taper qualitatively, but no verified whole-body orthographic dorsal original was found.",
+      "notes": "Half-width stations preserve a narrow trunk, broader armored cheek region and narrow peduncle. They are not claimed as calibrated soft-tissue measurements."
+    },
+    "front": {
+      "status": "inferred",
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-CARNAT-5",
+        "TENCATT-PAVANELLI-2015"
+      ],
+      "uncertainty": "Moderate to high. Oblique live-fish views reveal relative head breadth and barbel placement, but no verified orthographic frontal original was found.",
+      "notes": "The small inferior lips, paired barbels, seated eyes and flattened belly are conservative Corydoradinae interpretations bounded by exact-species oblique views."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "miniature elongate armored trunk rather than a stocky common-Cory capsule",
+      "sourceIds": [
+        "FISHBASE-12194",
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.crossSection"
+      ],
+      "notes": "The revised station sequence lowers the two-centimeter body to a depth-to-length ratio near 0.237 while retaining a gently arched armored back, a relatively flat belly and a broad enough cheek region to read as Corydoradinae rather than a generic torpedo."
+    },
+    {
+      "name": "short rounded snout, small inferior mouth and tapered barbels",
+      "sourceIds": [
+        "TENCATT-PAVANELLI-2015",
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT-5"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[head]",
+        "morphology.controlStations[snout]",
+        "morphology.controlStations[snout-tip]",
+        "morphology.mouth",
+        "morphology.adornments[barbel_L_outer]",
+        "morphology.adornments[barbel_R_outer]",
+        "morphology.adornments[barbel_L_lower]",
+        "morphology.adornments[barbel_R_lower]"
+      ],
+      "notes": "The revised head stations retain cheek breadth but end in a blunt rounded snout instead of collapsing to a point. A smaller mouth radius, lower jaw placement, separated lip arcs and fine barbels preserve an inferior feeding apparatus without a terminal sucker-ring read."
+    },
+    {
+      "name": "narrow peduncle with a moderately forked translucent caudal",
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT",
+        "TENCATT-PAVANELLI-2015"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[caudal-base]",
+        "morphology.controlStations[peduncle]",
+        "morphology.fins[caudal]",
+        "catalog.species.pygmy_cory.paint_fin"
+      ],
+      "notes": "Early posterior taper leads into a narrow peduncle and moderately forked tail. Reduced caudal span and compact median and paired fins preserve the exact references' delicate appendage scale instead of producing a shark-like silhouette."
+    },
+    {
+      "name": "two lateral armor rows with delicate leading fin spines",
+      "sourceIds": [
+        "DIAS-2024-CORYDORADINAE",
+        "TENCATT-PAVANELLI-2015",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "sourceControls": [
+        "catalog.species.pygmy_cory._plate_row",
+        "catalog.species.pygmy_cory._plate_relief",
+        "catalog.species.pygmy_cory.paint_fin"
+      ],
+      "notes": "Two narrower, separated procedural plate rows now receive stronger normal relief and bounded color contrast. They preserve armored-catfish identity without importing the oversized scutes or spines of the much larger Bronze Cory."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "maximum adult standard length",
+      "status": "observed",
+      "referenceValue": {
+        "value": 0.021,
+        "unit": "meters standard length"
+      },
+      "sourceIds": [
+        "FISHBASE-12194"
+      ],
+      "sourceControls": [
+        "referenceSize.meters",
+        "referenceSize.kind"
+      ],
+      "notes": "FishBase reports 2.1 cm standard length. The source uses that value as the conservative visible display reference and records the scope rather than inventing a total-length conversion."
+    },
+    {
+      "name": "maximum body depth divided by station-defined standard length",
+      "status": "inferred",
+      "referenceValue": {
+        "value": 0.237,
+        "unit": "depth/length ratio"
+      },
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "uncertainty": "Moderate. The exact lateral photographs constrain a visibly slender outline but do not include a calibration ruler or verified orthographic setup.",
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth"
+      ],
+      "notes": "The deepest station is approximately 23.7 percent of the unchanged 17.2 mm station-defined snout-to-caudal-base length, matching the exact images' slender dwarf profile without erasing the armored shoulder."
+    },
+    {
+      "name": "maximum body width relative to maximum body depth",
+      "status": "inferred",
+      "referenceValue": {
+        "value": 0.737,
+        "unit": "width/depth ratio"
+      },
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-CARNAT-5"
+      ],
+      "uncertainty": "Moderate to high. The exact image is oblique and supplies no scale, so the ratio is a conservative soft-tissue estimate rather than a measured orthographic value.",
+      "sourceControls": [
+        "morphology.controlStations[*].halfWidth",
+        "morphology.crossSection"
+      ],
+      "notes": "The maximum full width remains smaller than vertical depth while the armored opercular cheek region stays broader than the trunk and much broader than the caudal peduncle."
+    },
+    {
+      "name": "caudal length relative to visible display reference",
+      "status": "inferred",
+      "referenceValue": {
+        "value": 0.181,
+        "unit": "caudal length/display length ratio"
+      },
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "uncertainty": "Moderate. Aquarium photographs constrain a modest forked caudal but do not provide a calibrated standard-to-total-length ratio.",
+      "sourceControls": [
+        "morphology.fins[caudal].length",
+        "referenceSize.meters"
+      ],
+      "notes": "The caudal is large enough to read as forked and mobile without overwhelming the tiny armored body."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "thick continuous dark mid-lateral stripe from snout to peduncle",
+      "sourceIds": [
+        "TENCATT-PAVANELLI-2015",
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "sourceControls": [
+        "catalog.species.pygmy_cory._lateral_stripe",
+        "catalog.species.pygmy_cory.paint_body",
+        "palette.cue"
+      ],
+      "notes": "The revised mask is narrower across the flank, rises through the exact eye station and snout region, then tapers at the peduncle. It replaces the rejected candidate's broad low stripe without becoming a tail spot, broken dash or whole-side dark wash."
+    },
+    {
+      "name": "pearl-grey flank, darker back and pale lower surface",
+      "sourceIds": [
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "sourceControls": [
+        "catalog.species.pygmy_cory.paint_body",
+        "palette.skin"
+      ],
+      "notes": "The procedural ground separates a subdued grey dorsal field from a lighter belly and retains low-contrast iridescence without turning bronze, gold or uniform beige."
+    },
+    {
+      "name": "compact hyaline adipose and translucent ray-marked fins",
+      "sourceIds": [
+        "TENCATT-PAVANELLI-2015",
+        "COMMONS-PYGMY-CORY-SESARMA",
+        "COMMONS-PYGMY-CORY-CARNAT"
+      ],
+      "sourceControls": [
+        "morphology.fins[dorsal1]",
+        "morphology.fins[adipose]",
+        "morphology.fins[anal]",
+        "morphology.fins[caudal]",
+        "morphology.fins[pectoral]",
+        "morphology.fins[pelvic]",
+        "catalog.species.pygmy_cory.paint_fin",
+        "palette.fin"
+      ],
+      "notes": "Fin spans and paired-fin lengths are reduced while the existing alpha, ray contrast and adipose treatment remain in place. The result should read as compact translucent Cory fins rather than oversized shark-like planes."
+    }
+  ],
+  "candidateComparison": {
+    "reviewedCandidate": {
+      "candidate": "fable-v2",
+      "commit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
+      "status": "rejected_by_user",
+      "receipt": "REJECTED_FOR_REFERENCE_MISMATCH",
+      "notes": "The candidate retained the correct stripe and dwarf scale, but the user rejected its pale shark-like body, pointed terminal profile and oversized fins as subpar. It remains preserved and unpromoted."
+    },
+    "plannedCandidate": "fable-v3",
+    "mismatches": [
+      {
+        "area": "rejected fable-v2 body silhouette",
+        "note": "The body remains too deep and smooth through the trunk and narrows to a pointed terminal profile, which makes the small catfish read as a pale shark. Future fable-v3 lowers the trunk, flattens the belly, preserves opercular breadth and ends in a blunter rounded snout."
+      },
+      {
+        "area": "rejected fable-v2 appendage scale",
+        "note": "The tall dorsal, broad caudal and long paired fins dominate the silhouette. Future fable-v3 keeps the same fin inventory and clips but reduces every appendage span to the compact proportions visible in the licensed lateral references."
+      },
+      {
+        "area": "retained source-backed pattern",
+        "note": "The continuous eye-level stripe, pearly flank, two procedural armor rows and translucent material treatment remain valid and are reused unchanged for future fable-v3."
+      },
+      {
+        "area": "top and front calibration",
+        "note": "Whole-body width and frontal trunk depth remain explicitly inferred. Future fable-v3 must keep the head wider than the trunk without representing the inferred width as an orthographic measurement."
+      }
+    ],
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "elongated low Cory silhouette in side view",
+      "blunt rounded snout and inferior transverse lip in front and side views",
+      "compact dorsal, adipose, caudal and paired fins remain distinct, translucent and free of body intersections",
+      "two armor rows and barbels remaining legible at game scale"
+    ]
+  },
+  "backendRepresentation": {
+    "status": "source_controls_revised_for_fable-v3",
+    "clearedSourceBlockers": [
+      "two-centimeter adult display scale",
+      "slender dwarf Cory silhouette",
+      "short rounded snout",
+      "inferior mouth and tapered barbels",
+      "two armor rows",
+      "continuous mid-lateral stripe",
+      "hyaline adipose and translucent fins",
+      "forked caudal"
+    ],
+    "note": "Each source blocker maps to existing asset or species-paint controls. Future fable-v3 render validation and explicit user acceptance remain downstream."
+  },
+  "failedCandidateEvidence": {
+    "path": "art/specimens/pygmy_cory/candidates/fable-v2",
+    "candidateId": "fable-v2",
+    "commit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
+    "status": "rejected_by_user",
+    "render": "renders/three-view.png",
+    "review": "The user rejected the candidate's pale shark-like silhouette and overall quality. Its licensed-source stripe, armor treatment and scale remain useful, but its body and appendage proportions are superseded by the fable-v3 source."
+  },
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v2",
+    "latestReviewedCandidateCommit": "4dd99584cf72690cdfb5fc6b64808f3531a3fd52",
+    "latestReviewedCandidateStatus": "rejected_by_user",
+    "plannedCandidate": "fable-v3",
+    "independentReviewStatus": "required_after_build"
+  }
+}

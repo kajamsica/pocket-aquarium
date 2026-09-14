@@ -1,0 +1,580 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "amano_shrimp",
+  "rig": "PA_amano_shrimp_Rig",
+  "root": "PA_amano_shrimp_Root",
+  "meshes": [
+    "PA_amano_shrimp_Body",
+    "PA_amano_shrimp_Limbs",
+    "PA_amano_shrimp_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_carapace",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_somite_1",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_somite_2",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_somite_3",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_somite_4",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_somite_5",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_somite_6",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_internal_cue",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_telson",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_uropod_outer_L",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_uropod_outer_R",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_uropod_inner_L",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "group": "part_uropod_inner_R",
+      "volumeFloor": 0.58
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_1_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_1_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_chela_1_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_chela_1_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_2_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_2_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_chela_2_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_chela_2_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_3_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_3_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_4_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_4_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_5_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_leg_5_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_1_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_1_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_2_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_2_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_3_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_3_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_4_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_4_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_5_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "group": "part_pleopod_5_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostrum",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostral_tooth_d_1",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostral_tooth_d_2",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostral_tooth_d_3",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostral_tooth_d_4",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostral_tooth_v_1",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_rostral_tooth_v_2",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_eyestalk_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_eyestalk_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_eye_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_eye_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_scaphocerite_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_scaphocerite_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_antenna_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_antenna_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_antennule_outer_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_antennule_outer_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_antennule_inner_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_antennule_inner_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_1_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_1_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_2_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_2_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_3_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_3_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_4_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_4_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_5_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_5_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_6_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_6_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_7_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_7_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_8_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_8_R",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_9_L",
+      "volumeFloor": 0.5
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "group": "part_flank_mark_9_R",
+      "volumeFloor": 0.5
+    }
+  ],
+  "clearance": [],
+  "centerPlane": [],
+  "axialChain": null,
+  "size": {
+    "axis": "x",
+    "meters": 0.05,
+    "tolerance": 0.06,
+    "kind": "adult_body_length"
+  },
+  "clips": {
+    "rest": {
+      "loop": true,
+      "frames": 96,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    },
+    "bottom_walk": {
+      "loop": true,
+      "frames": 84,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    },
+    "graze": {
+      "loop": false,
+      "frames": 54,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    },
+    "reposition_swim": {
+      "loop": false,
+      "frames": 42,
+      "bones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "bottom_walk",
+    "response": "graze"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "left": "legs_L",
+      "right": "legs_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_amano_shrimp_Limbs",
+      "left": "pleopods_L",
+      "right": "pleopods_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "left": "antennae_L",
+      "right": "antennae_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_amano_shrimp_Details",
+      "left": "eyes_L",
+      "right": "eyes_R",
+      "tolerance": 0.0002
+    },
+    {
+      "object": "PA_amano_shrimp_Body",
+      "left": "uropods_L",
+      "right": "uropods_R",
+      "tolerance": 0.0002
+    }
+  ],
+  "variantId": null,
+  "previewAction": "bottom_walk",
+  "restBounds": {
+    "min": [
+      -0.024957,
+      -0.020044,
+      -0.009599
+    ],
+    "max": [
+      0.025031,
+      0.020044,
+      0.007096
+    ]
+  },
+  "textures": [
+    "textures/shell-albedo.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.05,
+    "bodyLengthExcludesAntennae": true,
+    "bodyPlan": "species_local_freshwater_atyid",
+    "deformBones": 18,
+    "locomotion": [
+      "benthic_walk",
+      "surface_graze",
+      "brief_reposition_swim"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pocket-aquarium-fw-asset/realistic_light_transport/art/specimens/amano_shrimp/candidates/fable-v1/renders/author-preview.png",
+    "threeView": "/private/tmp/pocket-aquarium-fw-asset/realistic_light_transport/art/specimens/amano_shrimp/candidates/fable-v1/renders/three-view.png",
+    "boundsMin": [
+      -0.024957459419965744,
+      -0.02004399336874485,
+      -0.00959919486194849
+    ],
+    "boundsMax": [
+      0.025031378492712975,
+      0.02004399336874485,
+      0.007095976732671261
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

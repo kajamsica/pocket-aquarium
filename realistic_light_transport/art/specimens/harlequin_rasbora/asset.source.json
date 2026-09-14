@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "harlequin_rasbora",
+  "displayName": "Harlequin Rasbora",
+  "scientificLabel": "Trigonostigma heteromorpha",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "freshwater",
+  "biome": "freshwater_community",
+  "bodyPlan": "fish",
+  "backend": "catalog.species.harlequin_rasbora",
+  "textureStyle": "harlequin_rasbora",
+  "assetVersion": "0.3.0-source",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.05,
+    "kind": "adult_total_length",
+    "note": "FishBase reports a maximum adult total length of 5.0 cm."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "idle", "locomotion": "swim", "response": "burst" },
+  "palette": {
+    "skin": [0.74, 0.42, 0.29],
+    "fin": [0.80, 0.39, 0.20],
+    "iris": [0.07, 0.045, 0.025],
+    "cue": [0.14, 0.07, 0.04],
+    "adornment": [0.84, 0.40, 0.16]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.28, "finReliefStrength": 1.0, "finNormalStrength": 0.36 },
+  "morphology": {
+    "notes": "Small copper-pink, laterally compressed rasbora with a compact rhomboid trunk, short streamlined head, narrow peduncle, terminal mouth and modest forked caudal. The sharply bounded black axine has a broad anterior base below the dorsal-fin origin and above the pelvic-fin origin, then narrows across the posterior flank to a caudal apex along the peduncle.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.017, "halfWidth": 0.0010, "dorsalHeight": 0.0025, "ventralDepth": 0.0022, "centerZ": 0.0 },
+      { "id": "peduncle", "x": -0.013, "halfWidth": 0.00145, "dorsalHeight": 0.0035, "ventralDepth": 0.0032, "centerZ": 0.0 },
+      { "id": "posterior", "x": -0.007, "halfWidth": 0.00255, "dorsalHeight": 0.0067, "ventralDepth": 0.0058, "centerZ": 0.00015 },
+      { "id": "midbody", "x": 0.001, "halfWidth": 0.00315, "dorsalHeight": 0.0080, "ventralDepth": 0.0066, "centerZ": 0.00045 },
+      { "id": "anterior", "x": 0.008, "halfWidth": 0.0032, "dorsalHeight": 0.0077, "ventralDepth": 0.0059, "centerZ": 0.00045 },
+      { "id": "operculum", "x": 0.014, "halfWidth": 0.00285, "dorsalHeight": 0.0064, "ventralDepth": 0.0049, "centerZ": 0.0002 },
+      { "id": "head", "x": 0.018, "halfWidth": 0.00215, "dorsalHeight": 0.0044, "ventralDepth": 0.00335, "centerZ": 0.0 },
+      { "id": "snout", "x": 0.0194, "halfWidth": 0.00095, "dorsalHeight": 0.0018, "ventralDepth": 0.00125, "centerZ": -0.0001 },
+      { "id": "snout-tip", "x": 0.020, "halfWidth": 0.0003, "dorsalHeight": 0.00035, "ventralDepth": 0.00025, "centerZ": -0.00005 }
+    ],
+    "crossSection": { "dorsalExponent": 1.88, "ventralExponent": 1.78 },
+    "sampling": { "ringSegments": 48, "ringCount": 48 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.00042, "edge": 0.000035 },
+    "fins": [
+      { "name": "dorsal", "type": "median", "side": "dorsal", "xStart": -0.0025, "xEnd": 0.0055, "rows": 4, "columns": 9, "lean": -0.0015, "heights": [[0.0, 0.0016], [0.32, 0.0044], [0.68, 0.0035], [1.0, 0.0012]] },
+      { "name": "anal", "type": "median", "side": "ventral", "xStart": -0.0075, "xEnd": -0.0008, "rows": 4, "columns": 8, "lean": -0.0014, "heights": [[0.0, 0.0013], [0.28, 0.0030], [0.72, 0.0024], [1.0, 0.0010]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.0058, "spanBottom": 0.0058, "length": 0.0115, "fork": 0.34, "forkPower": 1.7, "baseFraction": 0.86 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0110, "rootLength": 0.0032, "rootHeight": -0.05, "length": 0.0044, "sweepDegrees": 43, "droopDegrees": 12, "spread": 0.60, "taper": 0.44, "power": 0.62, "flare": 0.58, "rayCount": 11, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0040, "rootLength": 0.0026, "rootHeight": -0.88, "length": 0.0038, "sweepDegrees": 49, "droopDegrees": 41, "spread": 0.28, "taper": 0.28, "power": 0.8, "flare": 0.34, "rayCount": 7, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0162, "zFraction": 0.40, "radius": 0.00130, "protrude": 0.025, "aspect": 0.22, "seat": 1.0, "pupilFraction": 0.56, "pupilAspect": 0.12 },
+    "mouth": { "zOffset": -0.035, "width": 0.00085, "radius": 0.00013 },
+    "gill": { "x": 0.0105, "radius": 0.00012, "points": 11, "bulge": 0.018 },
+    "adornments": []
+  },
+  "rig": { "axialJoints": [0.018, 0.006, -0.001, -0.008, -0.014, -0.019] },
+  "animation": {
+    "idle": { "frames": 90, "loop": true, "axial": [1.2, 2.0, 3.5, 5.0], "axialFrequency": 1, "axialLag": 0.5, "pectoral": 18, "pectoralFrequency": 3, "median": 1.0, "gill": 1.5, "gillFrequency": 3, "jaw": 1.6, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [3.5, 5.5, 9.0, 13.0], "axialFrequency": 3, "axialLag": 0.48, "pectoral": 20, "pectoralFrequency": 4, "median": 1.5, "gill": 1.5, "gillFrequency": 2, "jaw": 1.5, "jawFrequency": 2 },
+    "burst": { "frames": 24, "loop": false, "envelope": "bell", "axial": [5.0, 7.5, 8.0, 17.0], "axialFrequency": 3, "axialLag": 0.48, "pectoral": 10, "pectoralFrequency": 4, "median": 3.0, "gill": 2.5, "gillFrequency": 3, "jaw": 2.5, "jawFrequency": 3 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -55, "elevationDegrees": 18 },
+  "visualDebt": [
+    "The black axine is procedural texture geometry and must be checked against the licensed side-view target before acceptance.",
+    "Fin rays are normal-map relief rather than separately modeled rays."
+  ]
+}

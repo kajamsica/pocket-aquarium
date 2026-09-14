@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "bronze_cory",
+  "variantId": null,
+  "scientificName": "Corydoras aeneus",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.075,
+  "referenceSizeKind": "adult_display_reference_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "ffb93690f27c2628c92f662a83fbe6a76561392780c20ca6fdc1f5e57e0d9842",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Bronze Cory",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-CORYDORAS-AENEUS",
+      "title": "Corydoras aeneus species summary",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Corydoras-aeneus.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "OATA-CATFISH",
+      "title": "Catfish",
+      "publisher": "Ornamental Aquatic Trade Association",
+      "url": "https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/how-to-look-after-freshwater-catfish/",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-CORYDORAS-AENEUS",
+      "title": "Category: Corydoras aeneus",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Corydoras_aeneus",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file open license; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "38aa1fd6e260bc55e0408bb6148db48436b8da2199f14ca12d61f1c9a8815da5",
+  "sourceReferencesSha256": "914d449a2b30c8614b1637b598b07b5391860065f1fdca5d38257a594c3ba2e4",
+  "sourceBlendSha256": "d3ba583e7542382154deb797383ecf61fe057577d95345fb611e61c7c6956ead",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "eca253ef9eb7a6436c7bbccb614ef99fc62d9181e65fd8666dcc76ca6cb1c148",
+    "speciesBackend": "94d5b3265cdb63b7f4487a6715a30a3ddfdd0bb12bc4caf727565e80ee497214",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "d54b6a3545b3b055c01a6e2fd64ee795e0006c81f2fbeecdf68540ae01229d1e"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "d2158adb65751a557fe6cfde389f003758ac5a7c6f18c8b991f1b2e523a2d8ed"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "019555f839a792552f25747451e02967e3193a638e45453e4435b532b9213f3c"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "69211f80744451a103b6a39afe5f3cba6df2add447e2b6c4760e5c987bf43ad4"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "c47257881d15afc32cc4d256e12299caef04b0c6774be329175554c8ee65f15c"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "b27318550af5494a964a181e6aa1b716a2f934f3438d827856da5dbf665f1165"
+    }
+  ],
+  "statistics": {
+    "triangles": 8312,
+    "materials": 7,
+    "bones": 14,
+    "nodes": 20,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "forage",
+      "rest",
+      "swim"
+    ],
+    "vertices": {
+      "PA_bronze_cory_Body": 2594,
+      "PA_bronze_cory_Fins": 454,
+      "PA_bronze_cory_Details": 1200
+    },
+    "runtimeBytes": 1789764
+  },
+  "clipRoles": {
+    "idle": "rest",
+    "locomotion": "swim",
+    "response": "forage"
+  },
+  "clipLoops": {
+    "rest": true,
+    "swim": true,
+    "forage": false
+  },
+  "restBounds": {
+    "min": [
+      -0.033181,
+      -0.015964,
+      -0.012369
+    ],
+    "max": [
+      0.04,
+      0.015964,
+      0.030534
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

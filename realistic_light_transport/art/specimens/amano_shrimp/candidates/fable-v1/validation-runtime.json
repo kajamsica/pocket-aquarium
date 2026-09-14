@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "binary": "5.2.1 LTS",
+  "gates": [
+    "accessors_in_bounds_and_finite",
+    "skin_weights_normalised",
+    "inventory_matches_manifest",
+    "single_skin",
+    "embedded_png_textures",
+    "clip_inventory",
+    "clip_roles_resolve",
+    "clip_channels_animate_declared_targets",
+    "blender_import_parity",
+    "loop_seam",
+    "rest_bounds_parity"
+  ],
+  "clips": {
+    "bottom_walk": {
+      "durationSeconds": 2.799999952316284,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": true
+    },
+    "graze": {
+      "durationSeconds": 1.7999999523162842,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "reposition_swim": {
+      "durationSeconds": 1.399999976158142,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": false
+    },
+    "rest": {
+      "durationSeconds": 3.200000047683716,
+      "targetedBones": [
+        "Abd_A",
+        "Abd_B",
+        "Antenna_L",
+        "Antenna_R",
+        "Leg1_L",
+        "Leg1_R",
+        "Leg2_L",
+        "Leg2_R",
+        "Leg3_L",
+        "Leg3_R",
+        "Leg4_L",
+        "Leg4_R",
+        "Leg5_L",
+        "Leg5_R",
+        "Pleo_L",
+        "Pleo_R",
+        "Tail"
+      ],
+      "morphTargets": [],
+      "loop": true
+    }
+  },
+  "inventory": {
+    "triangles": 11152,
+    "materials": 6,
+    "nodes": 24,
+    "skinJoints": 19,
+    "images": 1,
+    "meshes": [
+      "PA_amano_shrimp_Body",
+      "PA_amano_shrimp_Details",
+      "PA_amano_shrimp_Limbs"
+    ]
+  },
+  "parity": {
+    "rest": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "bottom_walk": {
+      "maxBoneRotationErrorDegrees": 0.0,
+      "loopSeamDegrees": 0.0
+    },
+    "graze": {
+      "maxBoneRotationErrorDegrees": 0.11190581936148891,
+      "loopSeamDegrees": null
+    },
+    "reposition_swim": {
+      "maxBoneRotationErrorDegrees": 0.06852804166478502,
+      "loopSeamDegrees": null
+    }
+  },
+  "importedRestBounds": {
+    "min": [
+      -0.024957459419965744,
+      -0.02004399523139,
+      -0.009599193930625916
+    ],
+    "max": [
+      0.025031378492712975,
+      0.0200439915060997,
+      0.0070959776639938354
+    ],
+    "deviationMeters": 2.08250058582033e-09
+  }
+}

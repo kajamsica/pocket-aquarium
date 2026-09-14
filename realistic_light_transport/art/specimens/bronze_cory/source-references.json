@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "bronze_cory",
+  "revision": 2,
+  "policy": "References informed taxonomy, adult size, armor, body proportions, appendage layout and colour placement only. No source pixels were sampled, traced, copied, hotlinked or redistributed.",
+  "taxonomyNote": "Corydoras aeneus is retained as the familiar aquarium-trade label. FishBase record 7777 currently presents the accepted combination Osteogaster aenea and lists Corydoras aeneus as a synonym; this source-only refinement does not change the stable game identifier.",
+  "sources": [
+    {
+      "id": "FISHBASE-7777",
+      "title": "Osteogaster aenea (Gill, 1858), Bronze corydoras, species summary record 7777",
+      "publisher": "FishBase",
+      "author": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/7777",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain their own licenses",
+      "evidenceCues": [
+        "Maximum length is 7.5 cm standard length and body height is 2.5 to 2.9 times in standard length.",
+        "The snout is short and rounded, with one dorsal spine, seven dorsal soft rays, 23 to 24 dorsal plates and 20 to 22 ventral plates.",
+        "The pectoral spine is long and internally denticulated; fins are yellow or pink without strong markings.",
+        "A brownish-orange predorsal patch is particularly visible from above."
+      ]
+    },
+    {
+      "id": "COMMONS-FEMALE-BRONZE-CORY",
+      "title": "File:Female Bronze Corydoras (Corydoras aeneus).jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Andrew Keller",
+      "url": "https://commons.wikimedia.org/wiki/File:Female_Bronze_Corydoras_(Corydoras_aeneus).jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "near-lateral adult female live fish",
+      "provenance": "Author's own work, photographed 12 October 2020 and released by the copyright holder under CC0.",
+      "allowedUse": "qualitative_proportion_reference_only",
+      "license": "CC0 1.0 Universal Public Domain Dedication",
+      "evidenceCues": [
+        "Deep armored shoulder and trunk taper sharply into a narrow caudal peduncle.",
+        "The dorsal roof rises over the pectoral girdle, then slopes continuously to the short rounded snout.",
+        "The belly is distinctly flatter than the dorsal outline and the mouth sits below the snout axis.",
+        "The flank carries a dark olive-bronze field over a pale lower body; the fins remain translucent amber."
+      ]
+    },
+    {
+      "id": "COMMONS-CORY-AENEUS-BARBELS",
+      "title": "File:Corydoras aeneus barbels.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Ude",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_aeneus_barbels.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "frontal head and inferior mouth",
+      "provenance": "Author's own work, photographed and uploaded 29 December 2010.",
+      "allowedUse": "qualitative_proportion_reference_only",
+      "license": "CC BY-SA 3.0 or GNU Free Documentation License 1.2 or later",
+      "evidenceCues": [
+        "The broad armored cheeks narrow into a short snout; the eyes are embedded laterally instead of projecting as beads.",
+        "The inferior mouth is a small transverse opening beneath the snout, not a circular terminal sucker.",
+        "Long maxillary barbels taper from the mouth corners and shorter lower barbels originate beneath the mouth.",
+        "The underside is flattened relative to the arched head roof."
+      ]
+    },
+    {
+      "id": "COMMONS-CORY-AENEUS-WILD-32182319",
+      "title": "File:Corydoras aeneus 32182319.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "karsten_s",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_aeneus_32182319.jpg",
+      "originalPhotoUrl": "https://www.inaturalist.org/photos/32182319",
+      "observationUrl": "https://www.inaturalist.org/observations/20860231",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "wild specimen in Suriname, oblique lateral context",
+      "provenance": "Original iNaturalist photograph from Suriname, 27 September 2016; license reviewed by INaturalistReviewBot before the Commons import.",
+      "allowedUse": "qualitative_proportion_and_colour_reference_only",
+      "license": "CC BY 4.0",
+      "evidenceCues": [
+        "Wild colour is muted olive-bronze rather than uniform tan or saturated gold.",
+        "The head and pectoral girdle are robust while the posterior body and peduncle taper visibly.",
+        "Foreshortening and field posture prohibit calibrated width measurements."
+      ]
+    },
+    {
+      "id": "CYBIUM-2005-CORY-OSTEOLOGY",
+      "title": "Descriptive osteology of Corydoras aeneus (Siluriformes: Callichthyidae)",
+      "publisher": "Cybium, Société Française d'Ichtyologie",
+      "author": "Frank Huysentruyt and Dominique Adriaens",
+      "url": "https://sfi-cybium.fr/en/descriptive-osteology-corydoras-aeneus-siluriformes-callichthyidae",
+      "pdfUrl": "https://evomorph.ugent.be/Publications/Publ35.pdf",
+      "doi": "10.26028/cybium/2005-293-004",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_morphology",
+      "view": "dorsal, ventral and lateral adult skull drawings plus fin and girdle osteology",
+      "allowedUse": "facts_and_citation_only",
+      "license": "No Creative Commons image-reuse license stated; no figures were copied or redistributed",
+      "evidenceCues": [
+        "The adult neurocranium is pyriform, narrow anteriorly and broadening posteriorly, which supports a short narrow snout leading into broader cheeks.",
+        "The dorsal skull view constrains the head roof qualitatively but does not calibrate live whole-body width.",
+        "The infraorbitals, opercle and pectoral girdle form substantial armor plates.",
+        "The adipose fin includes a spine derived from a dorsal bony plate."
+      ]
+    },
+    {
+      "id": "OATA-FRESHWATER-CATFISH",
+      "title": "How to look after freshwater catfish",
+      "publisher": "Ornamental Aquatic Trade Association Ltd",
+      "author": "Ornamental Aquatic Trade Association Ltd",
+      "url": "https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/how-to-look-after-freshwater-catfish/",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation_only",
+      "license": "Copyright OATA; no open reuse license stated",
+      "evidenceCues": [
+        "Corydoras are shoaling catfish with sensitive head barbels and strong front pectoral spines.",
+        "This husbandry source is not used to calibrate body proportions or coloration."
+      ]
+    }
+  ],
+  "observationMapping": {
+    "side": [
+      "FISHBASE-7777",
+      "COMMONS-FEMALE-BRONZE-CORY",
+      "COMMONS-CORY-AENEUS-WILD-32182319"
+    ],
+    "frontAndMouth": [
+      "COMMONS-CORY-AENEUS-BARBELS"
+    ],
+    "topHeadOnly": [
+      "CYBIUM-2005-CORY-OSTEOLOGY",
+      "FISHBASE-7777"
+    ],
+    "armorAndFinStructure": [
+      "FISHBASE-7777",
+      "COMMONS-FEMALE-BRONZE-CORY",
+      "CYBIUM-2005-CORY-OSTEOLOGY"
+    ]
+  },
+  "viewCoverage": {
+    "side": "Strong: exact live-fish file pages plus FishBase proportions and meristics constrain the outline and fin placement.",
+    "front": "Strong for the head, inferior mouth and barbel origins: an exact licensed frontal file page is available.",
+    "top": "Partial: peer-reviewed dorsal skull anatomy and the FishBase predorsal colour note constrain the head roof, but no verified live whole-body orthographic top photograph was found.",
+    "bodyWidth": "Moderate uncertainty: live soft-tissue width is inferred from the frontal head photograph, pyriform skull description and lateral body depth. It is not claimed as a calibrated measurement."
+  },
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Authoritative morphology plus exact lateral and frontal originals strongly constrain body depth, head, mouth, barbels, armor and fins. Whole-body top width remains uncalibrated, so the source does not claim orthographic top-view acceptance."
+}

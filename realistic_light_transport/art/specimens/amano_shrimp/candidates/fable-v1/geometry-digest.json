@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "amano_shrimp",
+  "sourceSha256": "f9f2d578c5f1ec3337027277c89fc1641cd4f756c7d4d421618c57f7893e56b4",
+  "objects": [
+    {
+      "name": "PA_amano_shrimp_Body",
+      "vertexCount": 2638,
+      "triangleCount": 5224,
+      "vertexDigest": "c63d4bc66f428ee8f5531e37775b518de17b67499bc66749594ad18c437d5992",
+      "topologyDigest": "124387533fbb06bd2b8e88877ff24f2bcef1f1b09539e4d03fb97fbb28a33aea",
+      "uvDigest": "ec32160759eee05172f052af90375fd89f8ac6d7732233e65017952b346068a1",
+      "weightDigest": "fe945f5c8aa2cc11f165b34d6f0e0a104c7de527852b5a05e03a3e49413911a6",
+      "materials": [
+        "PA_amano_shrimp_Internal",
+        "PA_amano_shrimp_Shell",
+        "PA_amano_shrimp_TailCue"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_amano_shrimp_Details",
+      "vertexCount": 1990,
+      "triangleCount": 3832,
+      "vertexDigest": "3d549b14b55aac9e1cf7c856b404bb5a3b124d8090a1e7c913320c5d7ba39b9d",
+      "topologyDigest": "1cd17e018817f4f6a285f5071399a373a152ba34557e9c294df8bf4f90fc9f82",
+      "uvDigest": "efe20e8bdc45e00a0b0f578dcedda8477f6e7cfd012540d65b9e6623b1712f28",
+      "weightDigest": "3847618efb19dc20f402ac76890ce832f50195206f20f424f12972de8561306c",
+      "materials": [
+        "PA_amano_shrimp_Eye",
+        "PA_amano_shrimp_Appendage",
+        "PA_amano_shrimp_Marks",
+        "PA_amano_shrimp_Shell"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_amano_shrimp_Limbs",
+      "vertexCount": 1096,
+      "triangleCount": 2096,
+      "vertexDigest": "c53404d3aa8e899283ece3b947bd3fef229d506485c190476144da595f422e68",
+      "topologyDigest": "d205018c2d714dab0d71bf03ea03f75bf9a10a98b97a22c398ac4a4c459c7813",
+      "uvDigest": "bcfa64288d47423c1938dacf39c175e23b7caa9fd120ef1134576ec63e68ef8f",
+      "weightDigest": "fbc8c3edf4d8af777d03a2e6bf7fd2ba09887ee42906aba3d85593dc17e2e9cb",
+      "materials": [
+        "PA_amano_shrimp_Appendage"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_amano_shrimp_Rig",
+    "boneCount": 19,
+    "deformBoneCount": 18,
+    "boneDigest": "ca860e15dbe1467d7fce439aa8ecd975e97cea171a7c8740812b3063265b7c61"
+  },
+  "geometryDigest": "8b8358c3093d65e0ef41b28932a22e8b4ec5a852a540952223ddc8a01fb470ec",
+  "variantId": null
+}

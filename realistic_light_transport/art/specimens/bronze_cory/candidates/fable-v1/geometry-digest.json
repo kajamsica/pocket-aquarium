@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "bronze_cory",
+  "sourceSha256": "38aa1fd6e260bc55e0408bb6148db48436b8da2199f14ca12d61f1c9a8815da5",
+  "objects": [
+    {
+      "name": "PA_bronze_cory_Body",
+      "vertexCount": 2594,
+      "triangleCount": 5184,
+      "vertexDigest": "2b006abc5a51f49402ba3ca478619b9af3c6fe27d74f026a84deb29b821c70b3",
+      "topologyDigest": "8028a5a7fd59f16cdb89b19218a2e19af975aa9e53c74a79ef29f8de187de484",
+      "uvDigest": "0efb5a85f50ecb3cb30bf1ac91ba566b141444aff068535890fd7c3d161cd517",
+      "weightDigest": "37dccc575d438901ce16dc5ff17ecc65218b59d6006aef6d0c38f461e1a750f2",
+      "materials": [
+        "PA_bronze_cory_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_bronze_cory_Details",
+      "vertexCount": 1200,
+      "triangleCount": 2352,
+      "vertexDigest": "40a5eb93964b7167f59997ac02a43369146971d6247d31c76216451e8e021603",
+      "topologyDigest": "82f0fa3fcff9dd99119e7fee0d254c6dccd8f0c25e0e182ddc139257ab56d4bf",
+      "uvDigest": "561ad76b410fc61e0ee6986fa0e9adef015a3739eb048eefb7adffb0db300791",
+      "weightDigest": "8e68f7a64d1bda4076f4b8ef6793f10ca51303dd32edc92c79dbf9f240cb3679",
+      "materials": [
+        "PA_bronze_cory_Adornment",
+        "PA_bronze_cory_Cue",
+        "PA_bronze_cory_Eye",
+        "PA_bronze_cory_Glint",
+        "PA_bronze_cory_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_bronze_cory_Fins",
+      "vertexCount": 454,
+      "triangleCount": 776,
+      "vertexDigest": "a2fa8e1e3feb9323b519e0d04df0f2e9e3ea46be36a54f8d9eb66978437fcc7a",
+      "topologyDigest": "b345edcdf753436172a88fcee87d1caabe44654ac386c43961704a937c209946",
+      "uvDigest": "64102f67c936c5073b1c6cc52621f97b9513e9a26150627e0b716e0d8df4e103",
+      "weightDigest": "cc5ac8f45d403fd20e9e93e1ed1621c4cb67ff73859f938a74d50e171999c281",
+      "materials": [
+        "PA_bronze_cory_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_bronze_cory_Rig",
+    "boneCount": 15,
+    "deformBoneCount": 14,
+    "boneDigest": "0ec5c52d2a18a5aa454a0a4a70cb2e69788ac5921669fcf2a2cab2fd5711f814"
+  },
+  "geometryDigest": "4e34999b6b20d6e7aa29d0c167dd370cc1d35af984aa979b42bcd02277dec6eb",
+  "variantId": null
+}

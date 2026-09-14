@@ -1,0 +1,342 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "betta_splendens_male",
+  "sourceRevision": 4,
+  "referencePacket": "source-references.json",
+  "targetForm": "long-finned single-tail halfmoon blue-red male",
+  "comparisonPolicy": "Landmarks, qualitative proportions and broad colour fields were compared by observation only. No reference pixels were sampled, traced, copied, hotlinked or redistributed.",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-BETTA-SPLENDENS",
+      "originalPageUrl": "https://www.fishbase.se/summary/Betta_splendens.html",
+      "creator": "FishBase editors",
+      "license": "CC BY-NC 3.0 for FishBase content",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic, adult-size and body-shape facts with citation; no source imagery copied or redistributed."
+    },
+    {
+      "id": "IBC-2022-HALFMOON-STANDARD",
+      "originalPageUrl": "https://www.ibcbettas.org/wp-content/uploads/2025/06/IBC-2022-Exhibition-Standards-Book-01-Final.pdf",
+      "creator": "International Betta Congress Judging Board",
+      "license": "Copyright retained by the International Betta Congress",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Halfmoon form definition and fin-outline facts with citation; no figures copied or redistributed."
+    },
+    {
+      "id": "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Betta_halfmoon.jpg",
+      "creator": "Eduardoblas",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Lateral silhouette and landmark reference only; no pixels copied, sampled, traced or redistributed."
+    },
+    {
+      "id": "COMMONS-BETTA-HALF-MOON-LERDSUWA",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Betta_Half_Moon.jpg",
+      "creator": "Lerdsuwa",
+      "license": "GFDL 1.2 or later; CC BY-SA 3.0, 2.5, 2.0 or 1.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Lateral head and fin-origin anatomy reference only; no pixels copied, sampled, traced or redistributed. The file description identifies this individual as delta, so it is excluded from halfmoon caudal-outline calibration."
+    },
+    {
+      "id": "COMMONS-BETTA-FACE",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Betta_face.jpg",
+      "creator": "Editor at Large",
+      "license": "CC BY-SA 2.5",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Frontal head, eye, mouth and paired-fin reference only; no pixels copied, sampled, traced or redistributed."
+    },
+    {
+      "id": "COMMONS-BETTA-MALE-TOP",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Betta-splendens-male.jpg",
+      "creator": "Denise Chan",
+      "license": "CC BY-SA 2.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Top-oblique body-taper reference only; no pixels copied, sampled, traced or redistributed."
+    },
+    {
+      "id": "COMMONS-BETTA-BLUE-RED-HALFMOON",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Silk_define_as_Red_also_Blue.jpg",
+      "creator": "Farahalida88",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Qualitative blue-red halfmoon colour and fin-boundary reference only; no pixels copied, sampled, traced or redistributed."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "IBC-2022-HALFMOON-STANDARD",
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+        "COMMONS-BETTA-HALF-MOON-LERDSUWA"
+      ],
+      "notes": "Exact Betta photographs and the halfmoon standard show a slender body beneath a much larger soft-fin envelope, with a gently sloping forehead, small upturned terminal mouth, seated eye, rear-set dorsal, deep long anal, narrow pelvic streamers and a continuous dorsal-caudal-anal silhouette."
+    },
+    "top": {
+      "status": "observed",
+      "sourceIds": [
+        "COMMONS-BETTA-MALE-TOP"
+      ],
+      "uncertainty": "Medium. The photograph is genuinely from above but not orthographic, so it supports taper direction rather than calibrated width.",
+      "notes": "The top-oblique live-fish photograph supports a streamlined anterior taper and narrow caudal-peduncle transition. Numeric width remains an explicitly inferred source value."
+    },
+    "front": {
+      "status": "observed",
+      "sourceIds": [
+        "COMMONS-BETTA-FACE"
+      ],
+      "notes": "The exact frontal Betta photograph shows small laterally seated eyes, a compressed tapered head, a compact upturned mouth and paired narrow pelvic streamers."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "gently sloping forehead, tapered snout and compact upturned lips",
+      "sourceIds": [
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+        "COMMONS-BETTA-HALF-MOON-LERDSUWA",
+        "COMMONS-BETTA-FACE"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[head]",
+        "morphology.controlStations[forehead]",
+        "morphology.controlStations[snout]",
+        "morphology.controlStations[snout-tip]",
+        "morphology.mouth.upperLip",
+        "morphology.mouth.lowerLip"
+      ],
+      "notes": "Revision 4 reduces trunk width and depth again, preserves the shorter station body, steps the forehead down gently and reduces the seated eye and lip arcs so the head reads as a small biological Betta head rather than a blunt capsule."
+    },
+    {
+      "name": "seated lateral eye within the head contour",
+      "sourceIds": [
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+        "COMMONS-BETTA-FACE"
+      ],
+      "sourceControls": [
+        "morphology.eyes.radius",
+        "morphology.eyes.aspect",
+        "morphology.eyes.protrude",
+        "morphology.eyes.pupilAspect",
+        "morphology.eyes.seat"
+      ],
+      "notes": "A further reduced radius and protrusion plus full surface seating keep the eye subordinate to the head contour rather than reading as a bead."
+    },
+    {
+      "name": "rear-set dorsal, long anal and capital-D-like halfmoon caudal envelope",
+      "sourceIds": [
+        "IBC-2022-HALFMOON-STANDARD",
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS"
+      ],
+      "sourceControls": [
+        "morphology.fins[dorsal]",
+        "morphology.fins[anal]",
+        "morphology.fins[caudal]"
+      ],
+      "notes": "Revision 4 preserves the 24.5 mm capital-D caudal, pulls the outer dorsal and anal rays rearward to overlap its root, increases median-fin sampling and uses transparency to soften the geometric edge. This targets one continuous flowing envelope instead of three rigid detached sails."
+    },
+    {
+      "name": "narrow pointed pelvic fins with distal soft-ray reach",
+      "sourceIds": [
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+        "COMMONS-BETTA-FACE"
+      ],
+      "sourceControls": [
+        "morphology.fins[pelvic].rootLength",
+        "morphology.fins[pelvic].taper",
+        "morphology.fins[pelvic].flare",
+        "morphology.fins[pelvic].distalFilament"
+      ],
+      "notes": "The shared optional distal-filament control now supplies most of each pelvic fin's reach from a narrower root, producing two pointed streamers without widening the shared fish plan."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "maximum adult total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.065, "unit": "meters total length" },
+      "sourceIds": [
+        "FISHBASE-BETTA-SPLENDENS"
+      ],
+      "sourceControls": [
+        "referenceSize.meters",
+        "referenceSize.kind"
+      ],
+      "notes": "FishBase reports 6.5 cm maximum total length; the package records that value directly while selecting one domestic male fin form."
+    },
+    {
+      "name": "maximum body depth divided by station-defined body length",
+      "status": "inferred",
+      "referenceValue": { "value": 0.321, "unit": "depth/body-length ratio" },
+      "sourceIds": [
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS",
+        "COMMONS-BETTA-HALF-MOON-LERDSUWA"
+      ],
+      "uncertainty": "Medium. The value is computed from the declarative target stations and checked qualitatively against uncalibrated lateral photographs, not measured from a preserved specimen.",
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth"
+      ],
+      "notes": "The 13.0 mm maximum station depth over a 40.5 mm station body produces the narrower fusiform trunk requested after reviewing fable-v3 while reserving most of the visible envelope for the fins."
+    },
+    {
+      "name": "maximum body width divided by maximum body depth",
+      "status": "inferred",
+      "referenceValue": { "value": 0.477, "unit": "width/depth ratio" },
+      "sourceIds": [
+        "COMMONS-BETTA-MALE-TOP",
+        "COMMONS-BETTA-FACE"
+      ],
+      "uncertainty": "Medium to high. One top source is oblique and the frontal source is not dimensionally calibrated, so the ratio is a conservative compressed-body target rather than an observed measurement.",
+      "sourceControls": [
+        "morphology.controlStations[*].halfWidth",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.crossSection"
+      ],
+      "notes": "The 6.2 mm maximum width is laterally compressed and tapers continuously through the smaller operculum, head, forehead, snout and snout tip."
+    },
+    {
+      "name": "halfmoon caudal vertical span divided by total length",
+      "status": "inferred",
+      "referenceValue": { "value": 0.662, "unit": "caudal-span/total-length ratio" },
+      "sourceIds": [
+        "IBC-2022-HALFMOON-STANDARD",
+        "COMMONS-BETTA-HALFMOON-EDUARDOBLAS"
+      ],
+      "uncertainty": "Medium. The IBC defines the 180-degree envelope, but the declarative span ratio is a source target checked against an uncalibrated photograph rather than a published morphometric measurement.",
+      "sourceControls": [
+        "morphology.fins[caudal].spanTop",
+        "morphology.fins[caudal].spanBottom",
+        "morphology.fins[caudal].length",
+        "morphology.fins[caudal].rounding"
+      ],
+      "notes": "Equal 21.5 mm upper and lower spans create a 43 mm vertical envelope against the 65 mm total-length reference, while the 24.5 mm caudal length and low rounding create the requested broad capital-D halfmoon."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "coherent saturated blue metallic flank without pale camouflage islands",
+      "sourceIds": [
+        "COMMONS-BETTA-BLUE-RED-HALFMOON",
+        "COMMONS-BETTA-FACE"
+      ],
+      "sourceControls": [
+        "catalog.species.freshwater_fish.paint_body",
+        "palette.skin"
+      ],
+      "notes": "Scale-row relief and fine low-amplitude variation drive a continuous navy-to-electric-blue sheen with higher roughness to control pale glare. Exact RGB is not sampled from either photograph."
+    },
+    {
+      "name": "dark face and dorsum framing the iridescent flank",
+      "sourceIds": [
+        "COMMONS-BETTA-BLUE-RED-HALFMOON",
+        "COMMONS-BETTA-FACE"
+      ],
+      "sourceControls": [
+        "catalog.species.freshwater_fish.paint_body",
+        "palette.cue"
+      ],
+      "notes": "Smooth anatomical gradients darken the face and dorsum without inventing a hard-edged body patch."
+    },
+    {
+      "name": "blue proximal to red distal median-fin field",
+      "sourceIds": [
+        "COMMONS-BETTA-BLUE-RED-HALFMOON"
+      ],
+      "sourceControls": [
+        "catalog.species.freshwater_fish._fin_base",
+        "catalog.species.freshwater_fish.paint_fin",
+        "palette.fin"
+      ],
+      "notes": "A broad blue-proximal to crimson-distal transition follows warped primary and secondary ray cadence. Seeded edge transparency breaks up the outer rhythm while retaining translucent membrane between rays. Hue placement is qualitative because domestic colour and camera response vary."
+    }
+  ],
+  "candidateComparison": {
+    "previousCandidates": [
+      {
+        "candidate": "fable-v1",
+        "status": "rejected",
+        "receipt": "REJECT_AND_REFINE",
+        "notes": "The preserved fable-v1 candidate was rejected for its capsule snout, bead-like eyes, forward oversized dorsal, rounded delta-like caudal, broad pelvic blades, pale camouflage-like flank islands and excess anterior width."
+      },
+      {
+        "candidate": "fable-v2",
+        "commit": "5a47257ff56b07e71972a10df429c096ba233836",
+        "status": "user_rejected",
+        "receipt": "REJECT_AND_REFINE",
+        "notes": "The user rejected the current runtime Betta as subpar against the supplied blue-red male target. Its body remains a pale inflated capsule, the eye and mouth are too conspicuous, and the dorsal, anal and caudal read as small rigid plates instead of the target's dominant flowing halfmoon envelope."
+      },
+      {
+        "candidate": "fable-v3",
+        "commit": "76ca93ac85cedcad894672cdf7850db96e041689",
+        "status": "independent_review_rejected",
+        "receipt": "REJECT_AND_REFINE",
+        "notes": "Exact target comparison found that fable-v3 still has a thick blunt trunk and its large dorsal, anal and caudal remain visibly separate rigid geometric sails rather than the target's slender body inside a continuous flowing veil envelope."
+      }
+    ],
+    "plannedCandidate": {
+      "candidate": "fable-v4",
+      "status": "source_ready_not_built",
+      "receipt": "BUILD_AND_REVIEW_REQUIRED",
+      "notes": "Revision 4 reduces body depth and width by roughly one quarter, further reduces the eye and mouth, pulls the outer dorsal and anal rays back into the caudal root, increases median-fin sampling, weakens hard ray relief and feathers the distal silhouette through seeded transparency. A serialized build and independent three-view review are still required before user review."
+    },
+    "mismatches": [
+      {
+        "area": "fable-v3 body and face",
+        "note": "Fable-v3 remains too thick and blunt against the exact target. Revision 4 preserves the shorter 40.5 mm station body but reduces maximum depth from 15.7 to 13.0 mm, maximum width from 8.2 to 6.2 mm, and further reduces the head, seated eye and lip controls."
+      },
+      {
+        "area": "fable-v3 fin flow and continuity",
+        "note": "Fable-v3's enlarged fins still read as three separate geometric sails. Revision 4 pulls the dorsal and anal outer rows rearward by 18 to 20 mm, adds extra row and column sampling, and feathers their distal transparency so the overlapping caudal-root region and edge rhythm can read as one trailing veil."
+      },
+      {
+        "area": "fable-v3 rigid ray surface",
+        "note": "Fable-v3's ray bands and opaque outer boundary reinforce a rigid plate read. Revision 4 lowers fin normal and relief strengths, reduces ray-height contrast, retains warped dual cadence, and makes the distal membrane strongly translucent between more visible rays."
+      },
+      {
+        "area": "target colour balance",
+        "note": "The exact target's distal red field dominates its flowing fins. Revision 4 begins the crimson transition earlier, retains the saturated blue proximal field and raises body roughness further to reduce pale specular wash."
+      },
+      {
+        "area": "shared planar membrane limitation",
+        "note": "The revised source can improve silhouette, thickness, sampling, transparency and ray relief without changing the shared fish plan. Individually simulated soft rays, volumetric folds and torn edge geometry remain outside this source-only lane and must not be claimed."
+      },
+      {
+        "area": "top and front calibration",
+        "note": "Body width and frontal head shape remain medium-to-high uncertainty because the verified top photograph is oblique and neither top nor front source is dimensionally calibrated. Fable-v4 must not be represented as an orthographically measured reconstruction."
+      }
+    ],
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "serialized fable-v4 build and independent side, top and front render review",
+      "capital-D 180-degree caudal and continuous dorsal-caudal-anal envelope",
+      "soft translucent ray-supported fin read without rigid plate silhouette",
+      "slender tapered body, small seated eye and compact upturned mouth",
+      "saturated blue body and broad coherent red distal fins",
+      "idle, swim and display animation naturalism with the larger membranes",
+      "top and front proportions under inferred-view uncertainty"
+    ]
+  },
+  "acceptanceStatus": "source_revision_4_candidate_not_built",
+  "nextRequiredEvidence": "Build fable-v4 only in the authorized serialized Blender lane, then compare side, top and front renders against this packet and the user-supplied blue-red halfmoon preference before requesting explicit acceptance.",
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v3",
+    "latestReviewedCandidateCommit": "76ca93ac85cedcad894672cdf7850db96e041689",
+    "latestReviewedCandidateStatus": "independent_review_rejected",
+    "independentReviewReceipt": "REJECT_AND_REFINE",
+    "repairCandidate": "fable-v4",
+    "repairCandidateStatus": "source_ready_not_built"
+  }
+}

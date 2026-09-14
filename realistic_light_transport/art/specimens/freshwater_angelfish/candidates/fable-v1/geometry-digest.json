@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "freshwater_angelfish",
+  "sourceSha256": "57ae311b0379ca41c1eb0695ae208f74e584bf0712bb6df987379486ea5abd5c",
+  "objects": [
+    {
+      "name": "PA_freshwater_angelfish_Body",
+      "vertexCount": 2642,
+      "triangleCount": 5280,
+      "vertexDigest": "f1eaad478804e5177af35a2fd36911208326a7aac17fa37a6d388c842310925d",
+      "topologyDigest": "2e440761b4f8946cbdd49ff6e923f8a4bc0ebeb3c4e1af95cac001ca381e0e8a",
+      "uvDigest": "c46e51a3483adc7eaf900e8a2f63fbe4a3c6a5b226815aa34b5fdf27a974bf8c",
+      "weightDigest": "0a8c4eb6cbc234e4299824e136d3e9790a950fb2b8b64a81812723360c1be11d",
+      "materials": [
+        "PA_freshwater_angelfish_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_freshwater_angelfish_Details",
+      "vertexCount": 1052,
+      "triangleCount": 2064,
+      "vertexDigest": "877a4468868e5d47c42e421de522a178518b31afef5cf79e5bb5673c8b68f732",
+      "topologyDigest": "31aa14417f788f08d95284333e3391dc0f66e3d2d03022de91b207f61c9967be",
+      "uvDigest": "11605797f97297ed0976e76575d6acd11b483663ca45472abfee99c39b5408cc",
+      "weightDigest": "f10aab11c0eed721440971135425f9602ee5d2cac1471120490aebca98a9ac80",
+      "materials": [
+        "PA_freshwater_angelfish_Cue",
+        "PA_freshwater_angelfish_Eye",
+        "PA_freshwater_angelfish_Glint",
+        "PA_freshwater_angelfish_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_freshwater_angelfish_Fins",
+      "vertexCount": 766,
+      "triangleCount": 1372,
+      "vertexDigest": "bbe48273f1e196696a40b7f2836a167a47e2f26b49eb6b0e8038e35aaadb4704",
+      "topologyDigest": "8b9efc4ce993ad6034c38ec363c2f7ae9de2134f4c2e4cb6b8e8253c4fbd4701",
+      "uvDigest": "1a96104091239abb487624752f32b67196321e9d0d613cdbb4e0134cb1d51046",
+      "weightDigest": "17beec7fb5499799e616fd91cbee50cc501acb77ecdc0d908f721c9cd45cf652",
+      "materials": [
+        "PA_freshwater_angelfish_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_freshwater_angelfish_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "3c3c959c0da485822621caac43d24c8b1f0c716c8fe0865be948f16610bcc59d"
+  },
+  "geometryDigest": "0df2f5e05233a572228d3c25a6bde00a5fab5f123da8c41e8e0e95aa55d3b8a9",
+  "variantId": null
+}

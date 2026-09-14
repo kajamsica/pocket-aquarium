@@ -345,7 +345,7 @@ export function SpecimenWorkbench() {
             }}
           >
             {optionGroups.map((group) => (
-              <optgroup key={group.category} label={group.label}>
+              <optgroup key={group.waterType} label={group.label}>
                 {group.options.map((option) => (
                   <option key={option.key} value={option.key} disabled={option.disabled} data-badge={option.badge}>{option.label}</option>
                 ))}

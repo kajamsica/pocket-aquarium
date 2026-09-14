@@ -1,0 +1,177 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "pygmy_cory",
+  "revision": 1,
+  "policy": "Original pages informed taxonomy, adult scale, lateral silhouette, armor, appendage layout and qualitative color boundaries only. No source pixels were sampled, traced, copied, redistributed or hotlinked.",
+  "taxonomyNote": "The stable game identifier keeps the familiar Pygmy Cory trade name. The current combination is Gastrodermus pygmaeus (Knaack, 1966); Corydoras pygmaeus is the basionym and remains widespread in aquarium literature.",
+  "targetForm": {
+    "name": "adult normally pigmented Pygmy Cory",
+    "definition": "Gastrodermus pygmaeus with a miniature elongate armored body, short rounded snout, inferior mouth with barbels, continuous dark mid-lateral stripe, translucent fins and moderately forked caudal.",
+    "sourceRefs": [
+      "FISHBASE-12194",
+      "CAS-ESCHMEYER-4897",
+      "DIAS-2024-CORYDORADINAE",
+      "TENCATT-PAVANELLI-2015",
+      "COMMONS-PYGMY-CORY-SESARMA",
+      "COMMONS-PYGMY-CORY-CARNAT"
+    ]
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-12194",
+      "title": "Gastrodermus pygmaeus (Knaack, 1966), Pygmy corydoras, species summary record 12194",
+      "publisher": "FishBase",
+      "creator": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/corydoras-pygmaeus.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "Taxonomy, maximum standard length, habitat and freshwater classification with citation only; contributed imagery retains its own license and was not copied or redistributed.",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain their own licenses",
+      "pose": "not_applicable",
+      "evidence": [
+        "current FishBase combination Gastrodermus pygmaeus",
+        "maximum length 2.1 cm standard length",
+        "freshwater demersal species from the Madeira River basin"
+      ]
+    },
+    {
+      "id": "CAS-ESCHMEYER-4897",
+      "title": "Eschmeyer's Catalog of Fishes species record 4897: pygmaeus, Corydoras Knaack 1966",
+      "publisher": "California Academy of Sciences, Institute for Biodiversity Science and Sustainability",
+      "creator": "Ronald Fricke, William N. Eschmeyer and Richard van der Laan, editors",
+      "url": "https://researcharchive.calacademy.org/research/ichthyology/catalog/fishcatget.asp?spid=4897",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_taxonomic_catalog",
+      "allowedUse": "Taxonomic authorship, type locality, type holdings and current-status facts with citation only.",
+      "license": "Copyright California Academy of Sciences; no open image-reuse license stated",
+      "pose": "not_applicable",
+      "evidence": [
+        "original combination Corydoras pygmaeus Knaack 1966",
+        "holotype ZMB 21620 and paratype ZMB 21621",
+        "current status Gastrodermus pygmaeus after Dias et al. 2024"
+      ]
+    },
+    {
+      "id": "DIAS-2024-CORYDORADINAE",
+      "title": "Phylogenomic analyses in the complex Neotropical subfamily Corydoradinae with a new classification based on morphological and molecular data",
+      "publisher": "Zoological Journal of the Linnean Society",
+      "creator": "A. C. Dias, L. F. C. Tencatt, F. F. Roxo, G. S. S. C. Silva, S. A. Santos, M. R. Britto, M. I. Taylor and C. Oliveira",
+      "url": "https://doi.org/10.1093/zoolinnean/zlae053",
+      "doi": "10.1093/zoolinnean/zlae053",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_taxonomy",
+      "allowedUse": "Current combination and clade-level morphology facts with citation only; no figures copied or redistributed.",
+      "license": "Copyright Oxford University Press; no open figure-reuse license relied upon",
+      "pose": "not_applicable",
+      "evidence": [
+        "moves Corydoras pygmaeus to Gastrodermus pygmaeus",
+        "places G. pygmaeus with G. hastatus as an early-diverging Gastrodermus clade",
+        "notes pectoral-spine serration pattern as the only putative diagnostic feature separating former Microcorydoras"
+      ]
+    },
+    {
+      "id": "TENCATT-PAVANELLI-2015",
+      "title": "Redescription of Corydoras guapore Knaack, 1961, a midwater Corydoradinae species from the rio Guapore basin",
+      "publisher": "Neotropical Ichthyology",
+      "creator": "Luiz Fernando Caserta Tencatt and Carla Simone Pavanelli",
+      "url": "https://www.scielo.br/j/ni/a/k5sMRpdJK3cPW9RG4n37KNR/?lang=en",
+      "doi": "10.1590/1982-0224-20150018",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_comparative_morphology",
+      "allowedUse": "Comparative external-morphology and diagnostic color-pattern facts with citation only; no figures copied or redistributed.",
+      "license": "Article text available through SciELO; source figures were not copied, sampled or redistributed",
+      "pose": "not_applicable",
+      "evidence": [
+        "recognizes C. pygmaeus among the dwarf C. hastatus group",
+        "describes the dwarf group as short-snouted with a short, rounded snout aspect",
+        "distinguishes C. pygmaeus by a thick conspicuous longitudinal black stripe on the flank midline",
+        "records the adipose fin of C. pygmaeus as entirely hyaline in the comparative diagnosis"
+      ]
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-SESARMA",
+      "title": "File:Corydoras pygmaeus.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Sesarma",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Qualitative live-fish lateral silhouette, stripe, eye, fin and barbel reference only; no pixels copied, sampled, traced, redistributed or hotlinked.",
+      "license": "CC BY-SA 3.0 and GNU Free Documentation License 1.2 or later",
+      "pose": "near_lateral_live_fish",
+      "evidence": [
+        "slender miniature Cory profile with a gently arched back and relatively flat belly",
+        "small seated eye and inferior barbelled mouth",
+        "continuous dark stripe from the snout and eye region to the caudal peduncle",
+        "translucent fins and a visibly forked tail"
+      ]
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-CARNAT",
+      "title": "File:Corydoras pygmaeus carnat joel.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Carnat Joel",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus_carnat_joel.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Additional qualitative live-fish lateral proportion, armor, stripe and fin reference only; no pixels copied, sampled, traced, redistributed or hotlinked.",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "pose": "lateral_oblique_live_fish",
+      "evidence": [
+        "elongate trunk relative to deeper common Cory forms",
+        "paired lateral armor-row surface rhythm",
+        "dark mid-lateral stripe remains conspicuous across changing aquarium light",
+        "delicate translucent paired and median fins"
+      ]
+    },
+    {
+      "id": "COMMONS-PYGMY-CORY-CARNAT-5",
+      "title": "File:Corydoras pygmaeus carnat joel 5.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Carnat Joel",
+      "url": "https://commons.wikimedia.org/wiki/File:Corydoras_pygmaeus_carnat_joel_5.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Oblique live-fish cross-check for relative head width, body compression and appendage placement only; no pixels copied, sampled, traced, redistributed or hotlinked.",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "pose": "oblique_live_fish",
+      "evidence": [
+        "head remains wider than the narrow peduncle without becoming bulbous",
+        "body is compressed and slender rather than cylindrical",
+        "paired fins and barbels are small relative to the two-centimeter body"
+      ]
+    }
+  ],
+  "observationMapping": {
+    "side": [
+      "COMMONS-PYGMY-CORY-SESARMA",
+      "COMMONS-PYGMY-CORY-CARNAT",
+      "TENCATT-PAVANELLI-2015"
+    ],
+    "frontAndMouth": [
+      "COMMONS-PYGMY-CORY-CARNAT-5",
+      "TENCATT-PAVANELLI-2015"
+    ],
+    "top": [
+      "COMMONS-PYGMY-CORY-CARNAT-5"
+    ],
+    "armorAndFinStructure": [
+      "DIAS-2024-CORYDORADINAE",
+      "TENCATT-PAVANELLI-2015",
+      "COMMONS-PYGMY-CORY-CARNAT"
+    ],
+    "adultScale": [
+      "FISHBASE-12194"
+    ]
+  },
+  "viewCoverage": {
+    "side": "Strong: two exact licensed live-fish file pages plus a peer-reviewed comparative diagnosis constrain the elongate silhouette, short snout, stripe and fins.",
+    "front": "Partial: an oblique exact file page constrains relative head width and barbel placement, but no verified orthographic frontal original was found.",
+    "top": "Partial: an oblique exact file page constrains the head-to-peduncle taper qualitatively, but no verified live whole-body orthographic dorsal original was found.",
+    "bodyWidth": "Moderate uncertainty: width is a conservative inference from oblique views and the shared armored-catfish plan, not a calibrated measurement."
+  },
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Authoritative size and taxonomy, peer-reviewed comparative external morphology, and exact licensed lateral images strongly constrain species identity and side appearance. Orthographic front and top views remain unavailable, so width is explicitly inferred."
+}

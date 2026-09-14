@@ -1,0 +1,291 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "bronze_cory",
+  "sourceRevision": 3,
+  "referencePacket": "source-references.json",
+  "targetForm": "adult normally pigmented Bronze Cory",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-7777",
+      "originalPageUrl": "https://www.fishbase.se/summary/7777",
+      "creator": "FishBase editors",
+      "license": "CC BY-NC 4.0 for FishBase text and data; contributed images retain their own licenses",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomy, size, proportions and meristics with citation; no source imagery copied or redistributed."
+    },
+    {
+      "id": "COMMONS-FEMALE-BRONZE-CORY",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Female_Bronze_Corydoras_(Corydoras_aeneus).jpg",
+      "creator": "Andrew Keller",
+      "license": "CC0 1.0 Universal Public Domain Dedication",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Live-fish lateral proportion and color reference only; no pixels copied, sampled, traced or redistributed."
+    },
+    {
+      "id": "COMMONS-CORY-AENEUS-BARBELS",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Corydoras_aeneus_barbels.jpg",
+      "creator": "Ude",
+      "license": "CC BY-SA 3.0 or GNU Free Documentation License 1.2 or later",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Frontal head, inferior mouth and barbel reference only; no pixels copied, sampled, traced or redistributed."
+    },
+    {
+      "id": "COMMONS-CORY-AENEUS-WILD-32182319",
+      "originalPageUrl": "https://www.inaturalist.org/photos/32182319",
+      "creator": "karsten_s",
+      "license": "CC BY 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Wild-specimen proportion and color reference only; no pixels copied, sampled, traced or redistributed."
+    },
+    {
+      "id": "CYBIUM-2005-CORY-OSTEOLOGY",
+      "originalPageUrl": "https://sfi-cybium.fr/en/descriptive-osteology-corydoras-aeneus-siluriformes-callichthyidae",
+      "creator": "Frank Huysentruyt and Dominique Adriaens",
+      "license": "No Creative Commons image-reuse license stated",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Morphology facts and qualitative anatomical comparison with citation; no figures copied or redistributed."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "COMMONS-FEMALE-BRONZE-CORY",
+        "COMMONS-CORY-AENEUS-WILD-32182319"
+      ],
+      "notes": "Exact live-fish pages and FishBase proportions show the deep armored shoulder, steep taper into the peduncle, sloping head roof, short snout, flatter belly and fin placement."
+    },
+    "top": {
+      "status": "inferred",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "CYBIUM-2005-CORY-OSTEOLOGY"
+      ],
+      "uncertainty": "Moderate to high. The osteology supplies a dorsal skull outline and FishBase notes a predorsal color patch, but no verified live whole-body orthographic top photograph was found.",
+      "notes": "The revised half-width stations use the pyriform head-roof evidence and frontal cheek width qualitatively. They are not claimed as calibrated soft-tissue measurements."
+    },
+    "front": {
+      "status": "observed",
+      "sourceIds": [
+        "COMMONS-CORY-AENEUS-BARBELS"
+      ],
+      "notes": "The exact frontal head page clearly shows embedded lateral eyes, broad armored cheeks, a flattened underside, a small transverse inferior mouth and two sizes of tapered barbels. Full-trunk frontal depth remains outside the photograph's scope."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "deep armored shoulder with a sloping head roof",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "COMMONS-FEMALE-BRONZE-CORY",
+        "CYBIUM-2005-CORY-OSTEOLOGY"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.controlStations[*].centerZ"
+      ],
+      "notes": "Maximum depth remains within FishBase's observed range at the pectoral-girdle shoulder, while the posterior tapers earlier and successive operculum, head and snout stations descend continuously. This breaks the rejected candidate's uniformly inflated capsule shape."
+    },
+    {
+      "name": "flattened belly, short rounded snout and inferior mouth",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "COMMONS-FEMALE-BRONZE-CORY",
+        "COMMONS-CORY-AENEUS-BARBELS"
+      ],
+      "sourceControls": [
+        "morphology.crossSection.ventralExponent",
+        "morphology.controlStations[head]",
+        "morphology.controlStations[snout]",
+        "morphology.controlStations[snout-tip]",
+        "morphology.mouth"
+      ],
+      "notes": "A flatter ventral exponent and nearly aligned ventral ridges support the resting body plan. A broader blunt snout plus clearly separated shallow upper and lower lip arcs place a small transverse mouth beneath the head without a circular terminal ring."
+    },
+    {
+      "name": "embedded eyes and tapered maxillary and lower barbels",
+      "sourceIds": [
+        "COMMONS-CORY-AENEUS-BARBELS",
+        "CYBIUM-2005-CORY-OSTEOLOGY"
+      ],
+      "sourceControls": [
+        "morphology.eyes",
+        "morphology.adornments[barbel_L_outer]",
+        "morphology.adornments[barbel_R_outer]",
+        "morphology.adornments[barbel_L_lower]",
+        "morphology.adornments[barbel_R_lower]"
+      ],
+      "notes": "Smaller, more deeply seated eyes follow the lateral head contour. Four tapered tube adornments now root directly beside and beneath the inferior mouth, following the exact frontal barbel image."
+    },
+    {
+      "name": "narrow peduncle, forked caudal and strong leading fin spines",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "COMMONS-FEMALE-BRONZE-CORY",
+        "CYBIUM-2005-CORY-OSTEOLOGY"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[caudal-base]",
+        "morphology.controlStations[peduncle]",
+        "morphology.fins[dorsal1]",
+        "morphology.fins[pectoral]",
+        "morphology.fins[caudal]",
+        "catalog.species.bronze_cory.paint_fin"
+      ],
+      "notes": "The posterior trunk narrows earlier into a distinct peduncle. Reduced caudal, dorsal and paired-fin spans preserve the tall triangular dorsal and leading pectoral spine without turning them into oversized planar sails."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "maximum adult standard length",
+      "status": "observed",
+      "referenceValue": {
+        "value": 0.075,
+        "unit": "meters standard length"
+      },
+      "sourceIds": [
+        "FISHBASE-7777"
+      ],
+      "sourceControls": [
+        "referenceSize.meters",
+        "referenceSize.kind"
+      ],
+      "notes": "FishBase reports 7.5 cm standard length. The source records that exact scope and does not silently convert it to total length."
+    },
+    {
+      "name": "maximum body depth divided by station-defined standard length",
+      "status": "observed",
+      "referenceValue": {
+        "value": 0.345,
+        "unit": "target ratio"
+      },
+      "sourceIds": [
+        "FISHBASE-7777"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth"
+      ],
+      "notes": "FishBase's body-height range is 1/2.9 to 1/2.5 of standard length, or about 0.345 to 0.400. The revised source is approximately 0.345 at the deepest shoulder over the unchanged 62 mm station-defined standard length."
+    },
+    {
+      "name": "maximum body width relative to maximum body depth",
+      "status": "inferred",
+      "referenceValue": {
+        "value": 0.682,
+        "unit": "width/depth ratio"
+      },
+      "sourceIds": [
+        "COMMONS-CORY-AENEUS-BARBELS",
+        "CYBIUM-2005-CORY-OSTEOLOGY"
+      ],
+      "uncertainty": "Moderate to high. The frontal photograph covers the head, and the osteology covers the skull, but neither calibrates live whole-trunk soft-tissue width.",
+      "sourceControls": [
+        "morphology.controlStations[*].halfWidth",
+        "morphology.crossSection"
+      ],
+      "notes": "The broad armored head and operculum remain wider than the trunk while the peduncle tapers sharply. A future verified dorsal photograph can supersede this conservative live-width estimate."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "dark olive-bronze lateral field over a pale belly",
+      "sourceIds": [
+        "COMMONS-FEMALE-BRONZE-CORY",
+        "COMMONS-CORY-AENEUS-WILD-32182319",
+        "FISHBASE-7777"
+      ],
+      "sourceControls": [
+        "catalog.species.bronze_cory.paint_body",
+        "palette.skin"
+      ],
+      "notes": "A bounded trunk mask now separates the olive-bronze lateral field from the pale ventral surface instead of producing a nearly uniform beige body."
+    },
+    {
+      "name": "two staggered rows of lateral armor plates",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "COMMONS-FEMALE-BRONZE-CORY",
+        "CYBIUM-2005-CORY-OSTEOLOGY"
+      ],
+      "sourceControls": [
+        "catalog.species.bronze_cory._plate_row",
+        "catalog.species.bronze_cory._plate_relief"
+      ],
+      "notes": "Two independently centered and staggered procedural rows replace generic whole-body scale relief. The plates remain normal relief rather than separate scute meshes."
+    },
+    {
+      "name": "translucent yellow-amber fins with stronger leading spines",
+      "sourceIds": [
+        "FISHBASE-7777",
+        "COMMONS-FEMALE-BRONZE-CORY"
+      ],
+      "sourceControls": [
+        "catalog.species.bronze_cory.paint_fin",
+        "palette.fin"
+      ],
+      "notes": "Fin alpha and amber color remain light while dorsal and pectoral leading edges receive darker relief cues."
+    }
+  ],
+  "candidateComparison": {
+    "reviewedCandidate": {
+      "candidate": "fable-v4",
+      "status": "rejected_by_user",
+      "receipt": "REJECTED_FOR_REFERENCE_MISMATCH",
+      "notes": "The user rejected the runtime result as subpar. The candidate remains too capsule-like, its head and fins lack a convincing Cory read, and the inferior mouth and barbels are not legible enough at game scale."
+    },
+    "plannedCandidate": "fable-v5",
+    "mismatches": [
+      {
+        "area": "rejected fable-v4 body silhouette",
+        "note": "The body still reads as a smooth inflated capsule with an indistinct head. Future fable-v5 preserves observed adult depth at the shoulder but narrows the posterior earlier, steepens the head-roof descent and retains a broader blunt snout."
+      },
+      {
+        "area": "rejected fable-v4 mouth and barbels",
+        "note": "The frontal read does not clearly communicate the exact reference's small inferior transverse mouth and two barbel lengths. Future fable-v5 separates the shallow lip arcs, seats them against the ventral snout, and reroots longer tapered barbels around the mouth corners."
+      },
+      {
+        "area": "rejected fable-v4 appendage scale",
+        "note": "The dorsal, caudal and paired fins overpower the catfish body and contribute to a generic fish silhouette. Future fable-v5 reduces those spans while retaining the dorsal and pectoral leading-spine cues and existing animation clips."
+      },
+      {
+        "area": "retained source-backed surface treatment",
+        "note": "The olive-bronze flank, pale belly, staggered armor rows and translucent amber fin paint remain valid and are reused unchanged for future fable-v5."
+      }
+    ],
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "robust armored Cory silhouette remains clearly distinct from the Pygmy Cory in side, front and oblique views",
+      "inferior transverse mouth and both barbel lengths remain visible in front and oblique views",
+      "reduced fins preserve a tall triangular dorsal, adipose fin and forked caudal without body intersections"
+    ]
+  },
+  "failedCandidateEvidence": {
+    "path": "art/specimens/bronze_cory/candidates/fable-v4",
+    "candidateId": "fable-v4",
+    "status": "rejected_by_user",
+    "render": "renders/three-view.png",
+    "review": "The user rejected the candidate as subpar. The source-backed olive-bronze color and armor treatment remain useful, but the capsule silhouette, oversized fins and weak inferior-mouth read are superseded by the fable-v5 source."
+  },
+  "uncertainty": "No verified live whole-body orthographic top photograph was found. Trunk width is inferred conservatively from the frontal head image, dorsal skull anatomy and observed lateral depth.",
+  "pixelPolicy": "No source pixels were copied, sampled, traced, hotlinked or redistributed.",
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": false,
+    "latestReviewedCandidate": "fable-v4",
+    "latestReviewedCandidateStatus": "rejected_by_user",
+    "plannedCandidate": "fable-v5",
+    "independentReviewStatus": "required_after_build"
+  }
+}

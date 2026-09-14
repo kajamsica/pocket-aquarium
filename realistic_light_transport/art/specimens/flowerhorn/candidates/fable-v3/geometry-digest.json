@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "flowerhorn",
+  "sourceSha256": "cdedd6e656993d266ade6a5de2ea5544219ab311831fdf19581807bac79ff752",
+  "objects": [
+    {
+      "name": "PA_flowerhorn_Body",
+      "vertexCount": 3122,
+      "triangleCount": 6240,
+      "vertexDigest": "b633920312711e74a134128f54f324432c09bbdcd8bafe8b26464cc924e7c468",
+      "topologyDigest": "09e1ee6abea8d5f0772c7128dbad8278fa8759da4d0f934681d2023f37a49043",
+      "uvDigest": "972f7217a7e1d33ad62475703ab7c916dcd1130224350a033156243253c11e9f",
+      "weightDigest": "0584d92d23eeec2a6c1aff5aad3e9239d900d898bd9ad967dfbe389a1852242d",
+      "materials": [
+        "PA_flowerhorn_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_flowerhorn_Details",
+      "vertexCount": 1076,
+      "triangleCount": 2112,
+      "vertexDigest": "d5226f324829851f42a0745171d4182746a29bb0cdc157b670349d25a158834f",
+      "topologyDigest": "77a85b7190580b8598be29ab6593cc0d76748ac88501e2b3941199f9c045f545",
+      "uvDigest": "6c759a404e012ac809cac169102de9a8b1e4472ee1fd399148c52d8f8cfd17ca",
+      "weightDigest": "afb44a6a5d4bdd868c7b38f8ba48fa4cd9fdb113804f8dc6e2767373750d4bbf",
+      "materials": [
+        "PA_flowerhorn_Cue",
+        "PA_flowerhorn_Eye",
+        "PA_flowerhorn_Glint",
+        "PA_flowerhorn_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_flowerhorn_Fins",
+      "vertexCount": 1116,
+      "triangleCount": 2012,
+      "vertexDigest": "7ca6e3b23c0f9174958b0e1eeb76137a8cbdd3448a03cbeed7016576c118f31e",
+      "topologyDigest": "3876c84f2d036558c25e226232d12fc70d464a6d25ce59e484e4638eeec1da59",
+      "uvDigest": "6d03642980fabd448314dd94191bc995dab97a95464354fd2cd66e9b9ce38a9b",
+      "weightDigest": "f137d3ef5bc3b7a17598d19127ee5f0ac542b7b1e55613e3e10215d8b7572a27",
+      "materials": [
+        "PA_flowerhorn_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_flowerhorn_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "e32d5d30d7c68bdaf58ec23d9209e3aa65052d946aa244b6959a9cbae625d056"
+  },
+  "geometryDigest": "b808db8f373c04e82d16bdf5718c2a4fb42ff7095dfc2574a40c0894b0d09be7",
+  "variantId": null
+}

@@ -1,0 +1,324 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "neon_tetra",
+  "sourceRevision": 1,
+  "referencePacket": "source-references.json",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "FISHBASE-PARACHEIRODON-INNESI",
+      "originalPageUrl": "https://www.fishbase.se/summary/Paracheirodon_innesi.html",
+      "creator": "Rainer Froese and Daniel Pauly, editors",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic, adult-size, distribution, and ecology facts with citation; no source imagery copied or redistributed."
+    },
+    {
+      "id": "FISHBASE-MORPHMET-PAINN-U7",
+      "originalPageUrl": "https://www.fishbase.se/physiology/MorphMetSummaryV2.php?genusname=Paracheirodon&id=10691&picname=Painn_u7.jpg&speciesname=innesi",
+      "creator": "FishBase morphometrics contributors",
+      "license": "CC BY-NC 3.0 (FishBase text and measurements)",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Published image-derived morphometric values with citation; no source image copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "USGS-NAS-PARACHEIRODON-INNESI",
+      "originalPageUrl": "https://nas.er.usgs.gov/queries/FactSheet.aspx?lang=en&speciesID=426",
+      "creator": "U.S. Geological Survey",
+      "license": "U.S. federal government work; facts and citation only",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Adult-size and identification facts with citation."
+    },
+    {
+      "id": "LYTHGOE-SHAND-FOSTER-1984",
+      "originalPageUrl": "https://www.nature.com/articles/308083a0",
+      "creator": "J. N. Lythgoe, Julia Shand, and R. G. Foster",
+      "license": "Copyright Springer Nature",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Iridophore material facts with citation; no article figures or text copied into the asset."
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_neon_tetra.jpg",
+      "creator": "SOK",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual proportion, fin, material, and stripe-boundary reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-AKA",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_(aka).jpg",
+      "creator": "Andre Karwath aka Aka",
+      "license": "CC BY-SA 2.5",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Visual lateral proportion and pattern reference only; no pixels copied, sampled, traced, or redistributed."
+    },
+    {
+      "id": "COMMONS-NEON-TETRA-AQUARIUM-VIDEO",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Neon_tetra_(Paracheirodon_innesi)_in_an_aquarium.webm",
+      "creator": "The Nature Box",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Qualitative motion, oblique-width, fin-translucency, and angle-dependent material reference only; no frames copied or redistributed."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "notes": "The measured FishBase lateral image and two exact licensed adult file pages agree on a slender compressed trunk, short head, large eye, dorsal and anal origins, small adipose fin, narrow peduncle, and forked caudal."
+    },
+    "top": {
+      "status": "inferred",
+      "uncertainty": "High. No calibrated orthographic dorsal original was found; moving oblique views show only qualitative lateral compression.",
+      "notes": "The in-tank fable-v2 still read too thick for a tiny compressed characin. The next source narrows the midbody width-to-depth ratio from 0.374 to 0.330 while staying symmetrical and explicitly inferred."
+    },
+    "front": {
+      "status": "inferred",
+      "uncertainty": "High. No verified sharp orthographic frontal original was found, and video frames include motion and perspective distortion.",
+      "notes": "The next source narrows the head and trunk sections and fully seats a smaller eye so the frontal view reads as a tiny compressed characin rather than a scaled-down generic fish. The verified total length, body depth, rig, and clips remain unchanged."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "slender compressed trunk and narrow caudal peduncle",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[*].x",
+        "morphology.controlStations[*].dorsalHeight",
+        "morphology.controlStations[*].ventralDepth",
+        "morphology.controlStations[*].halfWidth"
+      ],
+      "notes": "The station envelope retains FishBase's 26 percent total-length maximum body depth while shifting fullness to the midbody, tapering the anterior envelope sooner, and narrowing the section. The result is intended to read as a smooth torpedo with a short, fine peduncle rather than a blunt capsule."
+    },
+    {
+      "name": "short head, large seated eye, and small terminal mouth",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "morphology.controlStations[operculum]",
+        "morphology.controlStations[head]",
+        "morphology.controlStations[snout]",
+        "morphology.eyes",
+        "morphology.mouth"
+      ],
+      "notes": "Head stations retain the measured head interval but taper sooner into the terminal mouth. The eye is reduced from 2.7 to 2.2 mm diameter, flattened, fully seated, and given a dark iris so the shared eye plan does not render a protruding bead."
+    },
+    {
+      "name": "triangular dorsal, small adipose, low anal, paired fins, and forked caudal",
+      "sourceIds": [
+        "FISHBASE-MORPHMET-PAINN-U7",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "morphology.fins[*].xStart",
+        "morphology.fins[*].xEnd",
+        "morphology.fins[*].rootX",
+        "morphology.fins[caudal].fork",
+        "morphology.fins[caudal].length"
+      ],
+      "notes": "Median and paired fin origins remain tied to the FishBase predorsal, prepelvic, and preanal ratios. Fin spans and thickness are reduced so the short dorsal, tiny adipose, low anal, paired fins, and forked caudal remain subordinate to the tiny body instead of reading as rigid paddles."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "standard length divided by total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.826, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.controlStations[caudal-base].x",
+        "morphology.controlStations[snout-tip].x",
+        "morphology.fins[caudal].length"
+      ],
+      "notes": "The source body from snout tip to caudal base is 29 mm within a 35 mm total-length envelope, a ratio of 0.829 and within rounding of the FishBase measured 0.826."
+    },
+    {
+      "name": "body depth divided by total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.26, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.controlStations[midbody].dorsalHeight",
+        "morphology.controlStations[midbody].ventralDepth",
+        "referenceSize.meters"
+      ],
+      "notes": "The 9.1 mm midbody depth divided by the 35 mm display total length is exactly 0.26."
+    },
+    {
+      "name": "head length divided by total length",
+      "status": "observed",
+      "referenceValue": { "value": 0.185, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.controlStations[operculum].x",
+        "morphology.controlStations[snout-tip].x",
+        "referenceSize.meters"
+      ],
+      "notes": "The 5.5 mm snout-tip to operculum station interval is 15.7 percent of the display total length, intentionally conservative because the operculum station is not the FishBase posterior head landmark. Head, snout, and eye placement require visual review after build."
+    },
+    {
+      "name": "eye diameter divided by head length",
+      "status": "observed",
+      "referenceValue": { "value": 0.459, "unit": "ratio" },
+      "sourceIds": ["FISHBASE-MORPHMET-PAINN-U7"],
+      "sourceControls": [
+        "morphology.eyes.radius",
+        "morphology.controlStations[operculum].x",
+        "morphology.controlStations[snout-tip].x"
+      ],
+      "notes": "A 2.2 mm authored eye diameter over the conservative 5.5 mm operculum-to-snout interval is 0.400. That is smaller than the measured 0.459 ratio, intentionally prioritizing the in-tank requirement for a small seated eye while preserving a visibly large characin eye."
+    },
+    {
+      "name": "adult display total length",
+      "status": "inferred",
+      "referenceValue": { "value": 0.035, "unit": "meters" },
+      "uncertainty": "Moderate. FishBase records 2.5 cm maximum standard length and a 3.0 cm total-length morphometric specimen, while USGS reports 4 cm. The source chooses a representative 3.5 cm display adult between those records.",
+      "sourceControls": ["referenceSize.meters", "referenceSize.kind"],
+      "notes": "The display scale is explicit and source-bounded rather than presented as a single published maximum."
+    },
+    {
+      "name": "midbody width divided by body depth",
+      "status": "inferred",
+      "referenceValue": { "value": 0.33, "unit": "ratio" },
+      "uncertainty": "High. FishBase provides lateral body depth but no calibrated width, and no verified orthographic top or frontal source was found.",
+      "sourceControls": [
+        "morphology.controlStations[midbody].halfWidth",
+        "morphology.controlStations[midbody].dorsalHeight",
+        "morphology.controlStations[midbody].ventralDepth"
+      ],
+      "notes": "The revised 3.0 mm full width over the preserved 9.1 mm midbody depth further corrects the thick fable-v2 section while keeping the width explicitly provisional."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "iridescent blue eye-to-adipose lateral band",
+      "sourceIds": [
+        "LYTHGOE-SHAND-FOSTER-1984",
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA",
+        "COMMONS-NEON-TETRA-AQUARIUM-VIDEO"
+      ],
+      "sourceControls": [
+        "catalog.species.neon_tetra._blue_stripe",
+        "palette.cue"
+      ],
+      "notes": "A narrow, gently arced procedural band begins behind the eye and now fades within the authored adipose-fin span rather than continuing to the caudal base. Deterministic blue-cyan variation suggests iridescence without pretending to reproduce true view-dependent guanine platelet optics."
+    },
+    {
+      "name": "posterior-only red ventrolateral band",
+      "sourceIds": [
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA"
+      ],
+      "sourceControls": [
+        "catalog.species.neon_tetra._red_stripe",
+        "palette.adornment"
+      ],
+      "notes": "The red mask starts as a narrow anterior point near midbody, deepens progressively across the posterior flank, and reaches the caudal base below the blue stripe. This tapered boundary replaces the rejected rectangular slab and remains diagnostic against a cardinal tetra."
+    },
+    {
+      "name": "olive-translucent dorsum, silver belly, and clear fins",
+      "sourceIds": [
+        "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+        "COMMONS-PARACHEIRODON-INNESI-AKA",
+        "COMMONS-NEON-TETRA-AQUARIUM-VIDEO"
+      ],
+      "sourceControls": [
+        "catalog.species.neon_tetra.paint_body",
+        "catalog.species.neon_tetra.paint_fin",
+        "palette.skin",
+        "palette.fin"
+      ],
+      "notes": "Procedural vertical blends separate the subdued olive dorsum from the silvery belly. The revised caudal uses a neutral pale tint and 0.14 to 0.34 alpha range so it reads as a clear ray-supported membrane rather than an opaque brown tail."
+    }
+  ],
+  "candidateComparison": {
+    "previousCandidate": {
+      "candidate": "fable-v2",
+      "commit": "6c0ae6892c99a8d0b01d6935a8c0020ba6a4869d",
+      "status": "rejected_after_in_tank_user_review",
+      "receipt": "REJECT_AND_REFINE",
+      "notes": "Fable-v2 resolved the first candidate's stripe boundaries and opaque caudal, but the integrated tank review still found the specimen subpar. It reads too thick and generic, with an overlarge bead-like eye and fins that dominate the tiny body."
+    },
+    "plannedCandidate": {
+      "candidate": "fable-v3",
+      "status": "source_ready_unbuilt",
+      "receipt": "REBUILD_REQUIRED",
+      "notes": "The next source preserves the exact 3.5 cm scale, rig, clips, blue eye-to-adipose stripe, posterior-only red stripe, silver belly, and clear-fin paint. It narrows and streamlines the envelope, tapers the head, seats a smaller eye, and reduces every fin span and thickness. A new build and visual gate are required."
+    },
+    "mismatches": [
+      {
+        "area": "fable-v2 body section and envelope",
+        "note": "Rejected in tank: the fish still read as a generic thick capsule. V3 source narrows the midbody width-to-depth ratio to 0.330 and moves the maximum verified 0.26 depth-to-length envelope to a smoother midbody peak."
+      },
+      {
+        "area": "fable-v1 blue stripe endpoint",
+        "note": "Rejected: the blue band extended toward the caudal base. V2 begins its posterior fade at U 0.14 and completes it at U 0.23, aligned to the adipose-fin span."
+      },
+      {
+        "area": "fable-v1 red stripe boundary",
+        "note": "Rejected: the posterior red area looked like a rectangular slab. V2 narrows it to a point near midbody and increases its vertical fill gradually toward the caudal base."
+      },
+      {
+        "area": "fable-v1 caudal material",
+        "note": "Rejected: the forked tail looked opaque and brown. V2 retains the correct fork silhouette but uses a pale neutral tint and a substantially lower alpha range."
+      },
+      {
+        "area": "fable-v2 eye and head",
+        "note": "Rejected in tank: the eye and blunt anterior profile overwhelm this tiny species. V3 source reduces and fully seats the eye, darkens the iris, and tapers the head continuously into a smaller terminal mouth."
+      },
+      {
+        "area": "remaining iridescent material",
+        "note": "The procedural color approximates the blue-cyan appearance in static display space and cannot reproduce the real stripe's angle-, light-, and physiological-state-dependent reflection."
+      },
+      {
+        "area": "fable-v2 fin scale",
+        "note": "Rejected in tank: the rigid median and paired fins read too large. V3 source reduces their spans and root-to-edge thickness while retaining all anatomically required fins and their source-backed origins."
+      },
+      {
+        "area": "residual animation review",
+        "note": "The exact accepted rig and clip definitions are intentionally unchanged. The rebuilt source still requires perceptual review of the swim and burst clips on the refined silhouette."
+      }
+    ],
+    "acceptanceBlockers": [],
+    "pendingVisualChecks": [
+      "slender torpedo silhouette and tiny in-tank read",
+      "small fully seated eye and terminal mouth",
+      "clear subordinate fins without rigid paddle silhouettes",
+      "perceptual naturalism of swim and burst animation",
+      "top and front proportions under explicit inferred-view uncertainty"
+    ]
+  },
+  "uncertainty": "True orthographic top and front proportions remain unmeasured. Integrated tank review rejected built fable-v2 as subpar. Fable-v3 is a source-only refinement and has not been built or visually validated. Adult display length remains a bounded representative value rather than a newly claimed species maximum.",
+  "pixelPolicy": "No reference pixels were copied, sampled, traced, hotlinked, or redistributed.",
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": true,
+    "latestReviewedCandidate": "fable-v2",
+    "latestReviewedCandidateCommit": "6c0ae6892c99a8d0b01d6935a8c0020ba6a4869d",
+    "latestReviewedCandidateStatus": "rejected_after_in_tank_user_review",
+    "independentReviewReceipt": "REJECT_AND_REFINE",
+    "repairCandidate": "fable-v3",
+    "repairCandidateStatus": "source_ready_unbuilt"
+  }
+}

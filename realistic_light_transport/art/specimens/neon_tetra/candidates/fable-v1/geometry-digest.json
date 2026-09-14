@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "neon_tetra",
+  "sourceSha256": "f932aaec41afff6a7cdf84c5eb57c6bd21e82b21e5d597ed7289cc4474b4bf14",
+  "objects": [
+    {
+      "name": "PA_neon_tetra_Body",
+      "vertexCount": 2306,
+      "triangleCount": 4608,
+      "vertexDigest": "f3e52a3db941afbdd8c1eb20979aa2fcb2f2ef574e98c87bd6527d2b8a232f75",
+      "topologyDigest": "3576880dab2ab124d6d387ff91f97acacbbe5f5f468df0de584fd5ee8e1b28ca",
+      "uvDigest": "ef309cbbec44a621be16609ca56a56868860583053a8b89ff3b9b1464988d786",
+      "weightDigest": "10c318f73312377b0ec10ecb3088e5844474e184b262ba48cfa6884b72a9f752",
+      "materials": [
+        "PA_neon_tetra_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_neon_tetra_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "3213a6eace30b4b04d169daa9d6329af3752a73d8224579b0043cfbd0fe2a09c",
+      "topologyDigest": "af5d890e334b2cd282952f0a44dae55bd4ac9e200ce5af8c2c8b4ca427ae9d1a",
+      "uvDigest": "faa6d14466565dda8bc493f5bfafe6418526a05591b15255928b2720248e6183",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_neon_tetra_Cue",
+        "PA_neon_tetra_Eye",
+        "PA_neon_tetra_Glint",
+        "PA_neon_tetra_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_neon_tetra_Fins",
+      "vertexCount": 416,
+      "triangleCount": 704,
+      "vertexDigest": "b1c097e7e63e67023a2b7b6b4c261cbf1309460ecd6e5132ed873f78f70f4e28",
+      "topologyDigest": "dd4c252d0428bffc884d8b577c621306b4ef9ad3e966620d9c68d9a0912d56df",
+      "uvDigest": "7e7b4153a51aa05ba521c0d14c55e62d10aecc905f7c637958dc63094608a2fc",
+      "weightDigest": "96f3db5b422c127bc6119413450306ddaa1d55032db75e918a749add59791c67",
+      "materials": [
+        "PA_neon_tetra_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_neon_tetra_Rig",
+    "boneCount": 15,
+    "deformBoneCount": 14,
+    "boneDigest": "8d45320a9184f326ccb3f2e7918fe64b7ca9926ecdaeecd0d2c5cb616b084662"
+  },
+  "geometryDigest": "ecda3312f42b5ba68405e61ab632832297041417904f509e14a50be21389fbdd",
+  "variantId": null
+}

@@ -13,6 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateReferenceEvidence } from "./reference_evidence.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const rltRoot = path.resolve(here, "..", "..");
@@ -36,7 +37,6 @@ for (let index = 0; index < args.length; index += 1) {
   else throw new Error(`Unknown argument ${arg}`);
 }
 if (assets.length === 0) throw new Error("Pass at least one --asset <id[:variant]>");
-if (!fs.existsSync(blender)) throw new Error(`Blender binary not found at ${blender}`);
 
 function run(command, commandArgs, logPath) {
   return new Promise((resolve) => {
@@ -65,6 +65,27 @@ async function buildAsset(entry) {
   fs.mkdirSync(absCandidate, { recursive: true });
   const logPath = path.join(absCandidate, "build.log");
   fs.writeFileSync(logPath, `# build ${entry} ${new Date().toISOString()} pid ${process.pid}\n`);
+  const receipt = { asset: assetId, variant: variant || null, candidateDir, startedAt: new Date().toISOString(), pid: process.pid, stages: [] };
+  try {
+    receipt.referenceEvidence = validateReferenceEvidence({ root: rltRoot, speciesId: assetId, candidate: suffix });
+    receipt.stages.push({ stage: "reference-evidence", exitCode: 0, durationMs: 0, tail: receipt.referenceEvidence.status });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    receipt.stages.push({ stage: "reference-evidence", exitCode: 1, durationMs: 0, tail: message.slice(0, 300) });
+    receipt.finishedAt = new Date().toISOString();
+    receipt.status = "failed";
+    receipt.failure = { stage: "reference-evidence", tail: message };
+    fs.writeFileSync(path.join(absCandidate, "build-receipt.json"), `${JSON.stringify(receipt, null, 2)}\n`);
+    process.stdout.write(`[${entry}] reference-evidence: exit 1\n`);
+    return receipt;
+  }
+  if (!fs.existsSync(blender)) {
+    receipt.finishedAt = new Date().toISOString();
+    receipt.status = "failed";
+    receipt.failure = { stage: "toolchain", tail: `Blender binary not found at ${blender}` };
+    fs.writeFileSync(path.join(absCandidate, "build-receipt.json"), `${JSON.stringify(receipt, null, 2)}\n`);
+    return receipt;
+  }
   const blend = path.join(candidateDir, "source.blend");
   const variantArgs = variant ? ["--variant", variant] : [];
   const author = ["--background", "--factory-startup", "--python", "scripts/specimens/catalog/author.py", "--", "--asset", assetId, "--candidate-dir", candidateDir, "--mode", "author", ...variantArgs];
@@ -75,7 +96,6 @@ async function buildAsset(entry) {
     ["export", [blend, "--background", "--python", "scripts/specimens/catalog/author.py", "--", "--asset", assetId, "--candidate-dir", candidateDir, "--mode", "export", ...variantArgs]],
     ["runtime", ["--background", "--factory-startup", "--python", "scripts/specimens/catalog/validate.py", "--", "--asset", assetId, "--candidate-dir", candidateDir, "--stage", "runtime"]],
   ];
-  const receipt = { asset: assetId, variant: variant || null, candidateDir, startedAt: new Date().toISOString(), pid: process.pid, stages: [] };
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), `pa-rebuild-${assetId}-`));
   if (!skipDeterminism) {
     plan.push(["determinism", ["--background", "--factory-startup", "--python", "scripts/specimens/catalog/author.py", "--", "--asset", assetId, "--candidate-dir", scratch, "--mode", "author", "--no-render", "--allow-scratch", ...variantArgs]]);

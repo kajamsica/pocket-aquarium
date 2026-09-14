@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "betta_splendens_male",
+  "variantId": null,
+  "scientificName": "Betta splendens",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.1.0",
+  "referenceSizeMeters": 0.065,
+  "referenceSizeKind": "adult_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "1cb7ee2ebd439bbe23e8d3560fb38ba0636094e88198544ba0d52b6b28f194a3",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Male Betta",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-BETTA-SPLENDENS",
+      "title": "Betta splendens species summary",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/Betta_splendens.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (text)"
+    },
+    {
+      "id": "OATA-BETTA",
+      "title": "Bettas, Siamese Fighting Fish",
+      "publisher": "Ornamental Aquatic Trade Association",
+      "url": "https://ornamentalfish.org/wp-content/uploads/Bettas-Siamese-Fighting-Fish.pdf",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "expert_consensus",
+      "allowedUse": "facts_and_citation"
+    },
+    {
+      "id": "COMMONS-BETTA-SPLENDENS",
+      "title": "Category: Betta splendens",
+      "publisher": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Betta_splendens",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "proportion_reference_only",
+      "license": "Per-file open license; nothing copied"
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "4bb1bcdc97679d9ea8880debb90ebf9dbe4e927bb4b245c4988a99efe84622a0",
+  "sourceReferencesSha256": "2522b2c4e3cd39846429abab267c5e6dc82c6f7ae844777b3a72fb5e90c2fbb7",
+  "sourceBlendSha256": "8a2d0b48c679454b456707b22d23a9a2eebb0ec85fe57a1ccab0475ecc250f11",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "eca253ef9eb7a6436c7bbccb614ef99fc62d9181e65fd8666dcc76ca6cb1c148",
+    "speciesBackend": "73e6a8c57912ae5236419df3dba17773f55f548621c84a6339c513a0808da4df",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "ecd51915201b0bf6c33bda407a006e8131280d3502baad0e76b5302d9916034b"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "a97c5699377a03138bb1395b5addf388abda6ea8590386115269521569f6ae14"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "0a3fd2d4490fdf577aee7d655ce0f81d6a4f983c19fef723343aa798aa4286fe"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "1de27f7b9b4e4c26160e72fa58b6761823dbdc87311f8738d86fa078940741c3"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "8e05c5f12967111e2a6805d1ba5e9da8b15cbfaecedd071bb651cb332d4ccfd9"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "483399d551d856a651d416788d615d376a05babf1420eda37b766312f4a64e56"
+    }
+  ],
+  "statistics": {
+    "triangles": 7942,
+    "materials": 6,
+    "bones": 13,
+    "nodes": 19,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "display",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_betta_splendens_male_Body": 2402,
+      "PA_betta_splendens_male_Fins": 638,
+      "PA_betta_splendens_male_Details": 1028
+    },
+    "runtimeBytes": 1619140
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "display"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "display": false
+  },
+  "restBounds": {
+    "min": [
+      -0.038535,
+      -0.0123,
+      -0.024407
+    ],
+    "max": [
+      0.026626,
+      0.0123,
+      0.024901
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

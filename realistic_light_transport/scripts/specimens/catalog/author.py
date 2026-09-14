@@ -16,6 +16,7 @@ import argparse
 import copy
 import importlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -35,6 +36,9 @@ ROOT = SCRIPTS_ROOT.parents[1]  # realistic_light_transport/
 SCHEMA = "pocket-aquarium.asset-source/v1"
 BUILDER_VERSION = "catalog-author/1.0.0"
 ACCEPTED_OCELLARIS = "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0"
+WATER_TYPE_METADATA = {"saltwater": "salt", "freshwater": "fresh"}
+LEGACY_BIOME_DEFAULT = {"saltwater": "reef"}
+BIOME_ID = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 
 
 class Context:
@@ -57,6 +61,27 @@ def deep_merge(base: dict, overrides: dict) -> dict:
     return result
 
 
+def environment_metadata(spec: dict, source_path: Path) -> tuple[str, str]:
+    """Validate source-owned environment fields and return GLB metadata values.
+
+    Historic reef sources did not carry ``biome``. They retain their exact exported
+    ``reef``/``salt`` values through a saltwater-only compatibility default. New source
+    packages, including every freshwater package, must declare both fields.
+    """
+    water_type = spec.get("waterType")
+    if water_type not in WATER_TYPE_METADATA:
+        allowed = ", ".join(sorted(WATER_TYPE_METADATA))
+        raise ValueError(f"{source_path}: waterType must be one of {allowed}")
+    biome = spec.get("biome") or LEGACY_BIOME_DEFAULT.get(water_type)
+    if not isinstance(biome, str) or not BIOME_ID.fullmatch(biome):
+        raise ValueError(f"{source_path}: biome must be an explicit lowercase identifier")
+    if water_type == "freshwater" and biome == "reef":
+        raise ValueError(f"{source_path}: freshwater assets cannot use the reef biome")
+    if water_type == "saltwater" and biome.startswith("freshwater"):
+        raise ValueError(f"{source_path}: saltwater assets cannot use a freshwater biome")
+    return biome, WATER_TYPE_METADATA[water_type]
+
+
 def load_spec(asset_id: str, variant: str | None):
     source_dir = (ROOT / "art" / "specimens" / asset_id).resolve()
     source_path = source_dir / "asset.source.json"
@@ -76,6 +101,7 @@ def load_spec(asset_id: str, variant: str | None):
         spec["variantDisplayName"] = variants[variant].get("displayName", variant)
     elif variants:
         raise ValueError(f"{asset_id} defines variants; pass --variant")
+    environment_metadata(spec, source_path)
     return source_dir, source_path, spec
 
 
@@ -120,7 +146,10 @@ def import_species(spec: dict):
 
 def builder_hashes(spec: dict) -> dict:
     lib_dir = Path(__file__).resolve().parent / "lib"
-    species_file = Path(__file__).resolve().parent / "species" / f"{spec['id']}.py"
+    backend = spec.get("backend", f"catalog.species.{spec['id']}")
+    species_file = SCRIPTS_ROOT.joinpath(*backend.split(".")).with_suffix(".py")
+    if not species_file.is_file():
+        raise ValueError(f"Backend source file does not exist: {species_file}")
     shared_plan = plan_path(spec["bodyPlan"])
     return {
         "entrypoint": digest.sha256_file(Path(__file__)),
@@ -193,6 +222,7 @@ def author(asset_id: str, candidate_dir: Path, variant: str | None, render: bool
 
 def export(asset_id: str, candidate_dir: Path, variant: str | None):
     source_dir, source_path, spec = load_spec(asset_id, variant)
+    biome, water_type = environment_metadata(spec, source_path)
     contract = digest.read_json(candidate_dir / "validation.contract.json")
     rig = bpy.data.objects.get(contract["rig"])
     if rig is None:
@@ -220,8 +250,8 @@ def export(asset_id: str, candidate_dir: Path, variant: str | None):
         "speciesId": asset_id,
         "variantId": variant,
         "scientificName": spec["scientificLabel"],
-        "biome": "reef",
-        "waterType": "salt",
+        "biome": biome,
+        "waterType": water_type,
         "assetVersion": spec["assetVersion"],
         "referenceSizeMeters": spec["referenceSize"]["meters"],
         "referenceSizeKind": spec["referenceSize"].get("kind", "adult_total_length"),

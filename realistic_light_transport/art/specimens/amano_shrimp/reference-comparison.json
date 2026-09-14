@@ -1,0 +1,232 @@
+{
+  "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+  "speciesId": "amano_shrimp",
+  "sourceRevision": 1,
+  "referencePacket": "source-references.json",
+  "targetForm": "adult Caridina multidentata",
+  "comparisonPolicy": "Discovery results are not design evidence. Only the exact original pages recorded below constrain taxonomy, scale, morphology, behaviour and appearance. No source pixels are sampled, traced, copied, redistributed or hotlinked.",
+  "sourceAssetPolicy": {
+    "copiedPixels": false,
+    "redistributedSourceImages": false,
+    "hotlinkedAssets": false
+  },
+  "sources": [
+    {
+      "id": "WORMS-CARIDINA-MULTIDENTATA",
+      "originalPageUrl": "https://www.marinespecies.org/aphia.php?p=taxdetails&id=586329",
+      "creator": "WoRMS Editorial Board",
+      "license": "CC BY 4.0 for WoRMS data",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic facts and citation only; no imagery copied or redistributed."
+    },
+    {
+      "id": "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+      "originalPageUrl": "https://decapoda.nhm.org/pdfs/25084/25084.pdf",
+      "creator": "Yixiong Cai, Peter K. L. Ng, Shigemitsu Shokita, and Kiyoshi Satake",
+      "license": "Copyright The Crustacean Society; citation use only",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Taxonomic and morphological facts with citation; no figures copied, traced or redistributed."
+    },
+    {
+      "id": "OKINAWA-AMANO-SHRIMP",
+      "originalPageUrl": "https://biodiversity.okinawa/en/video_pages/reference/yamatonumaebi.html",
+      "creator": "Okinawa Ikimono Lab",
+      "license": "Copyright Okinawa Ikimono Lab; citation use only",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Adult scale, colour, habitat and activity facts with citation; no imagery copied or redistributed."
+    },
+    {
+      "id": "COMMONS-AMANO-SHRIMP",
+      "originalPageUrl": "https://commons.wikimedia.org/wiki/File:Amano_Shrimp.jpg",
+      "creator": "Atulbhats",
+      "license": "CC BY-SA 4.0",
+      "accessedAt": "2026-09-09",
+      "allowedUse": "Side-oblique silhouette, transparency, marking and appendage reference; no pixels copied, sampled, traced, redistributed or hotlinked."
+    }
+  ],
+  "views": {
+    "side": {
+      "status": "observed",
+      "sourceIds": [
+        "COMMONS-AMANO-SHRIMP",
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+        "OKINAWA-AMANO-SHRIMP"
+      ],
+      "notes": "The exact photograph and taxonomic description constrain the slender caridean profile, toothed rostrum, six-somite abdomen, tapered telson, paired tail fan, stalked eyes, fine antennae and five walking-leg pairs."
+    },
+    "top": {
+      "status": "inferred",
+      "sourceIds": [
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS"
+      ],
+      "uncertainty": "Medium. The paper provides diagnostic structures and measured parts, but no calibrated live orthographic dorsal photograph was verified.",
+      "notes": "Bilateral width, appendage splay and carapace taper remain conservative inferences rather than measured top-view contours."
+    },
+    "front": {
+      "status": "inferred",
+      "sourceIds": [
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+        "COMMONS-AMANO-SHRIMP"
+      ],
+      "uncertainty": "Medium. Rostrum, eye and antennal seating are constrained by lateral and oblique evidence, not a calibrated frontal original.",
+      "notes": "The backend keeps the body narrow, eyes paired and rostrum centered without claiming measured frontal precision."
+    }
+  },
+  "silhouetteLandmarks": [
+    {
+      "name": "slender cephalothorax and six articulated abdominal somites",
+      "sourceIds": [
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+        "COMMONS-AMANO-SHRIMP"
+      ],
+      "sourceControls": [
+        "catalog.species.amano_shrimp.CARAPACE",
+        "catalog.species.amano_shrimp.ABDOMEN"
+      ],
+      "notes": "A narrow translucent carapace flows into six separately represented tapering pleomeres rather than a fish-shaped capsule."
+    },
+    {
+      "name": "toothed median rostrum and stalked eyes",
+      "sourceIds": [
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS",
+        "COMMONS-AMANO-SHRIMP"
+      ],
+      "sourceControls": [
+        "catalog.species.amano_shrimp.ROSTRUM",
+        "catalog.species.amano_shrimp._head_parts"
+      ],
+      "notes": "The rostrum extends forward over the paired eyes with small dorsal and ventral tooth cues, while the eyes remain on short stalks."
+    },
+    {
+      "name": "five walking-leg pairs, five pleopod pairs and paired uropod fan",
+      "sourceIds": [
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS"
+      ],
+      "sourceControls": [
+        "catalog.species.amano_shrimp._limb_parts",
+        "catalog.species.amano_shrimp._tail_parts"
+      ],
+      "notes": "The appendage counts and tail-fan topology remain explicit, with small anterior chelae and stronger posterior walking legs."
+    }
+  ],
+  "proportions": [
+    {
+      "name": "upper adult body length",
+      "status": "observed",
+      "referenceValue": {
+        "value": 0.05,
+        "unit": "meters rostrum-tip to telson-tip"
+      },
+      "sourceIds": [
+        "OKINAWA-AMANO-SHRIMP"
+      ],
+      "sourceControls": [
+        "referenceSize.meters",
+        "catalog.species.amano_shrimp.BODY_LENGTH"
+      ],
+      "notes": "The procedural body uses the upper end of the institutional 3 to 5 cm range; antennae remain outside the body-length measurement."
+    },
+    {
+      "name": "maximum body depth relative to body length",
+      "status": "inferred",
+      "referenceValue": {
+        "value": 0.26,
+        "unit": "depth/body-length ratio"
+      },
+      "sourceIds": [
+        "COMMONS-AMANO-SHRIMP",
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS"
+      ],
+      "uncertainty": "Medium. This is a conservative procedural ratio derived from live side-oblique silhouette and descriptive morphology, not a published total-body morphometric.",
+      "sourceControls": [
+        "catalog.species.amano_shrimp.CARAPACE",
+        "catalog.species.amano_shrimp.ABDOMEN"
+      ],
+      "notes": "The ratio keeps the shrimp slender while allowing a readable carapace and abdominal arch at game scale."
+    },
+    {
+      "name": "walking-leg and pleopod pair counts",
+      "status": "observed",
+      "referenceValue": {
+        "value": 5,
+        "unit": "bilateral pairs per appendage series"
+      },
+      "sourceIds": [
+        "CAI-NG-SHOKITA-SATAKE-2006-JAPANESE-ATYIDS"
+      ],
+      "sourceControls": [
+        "morphology.appendages.pereiopods.pairs",
+        "catalog.species.amano_shrimp.LEG_ROOTS",
+        "catalog.species.amano_shrimp.PLEOPOD_ROOTS"
+      ],
+      "notes": "Five pereiopod pairs support benthic walking and grazing; five abdominal pleopod pairs support only brief repositioning swims."
+    }
+  ],
+  "colorPatternBoundaries": [
+    {
+      "name": "translucent grey-olive shell",
+      "sourceIds": [
+        "COMMONS-AMANO-SHRIMP",
+        "OKINAWA-AMANO-SHRIMP"
+      ],
+      "sourceControls": [
+        "materialIntent.body",
+        "catalog.species.amano_shrimp._materials"
+      ],
+      "notes": "The shell remains translucent and muted, with a subordinate internal warm cue instead of opaque cleaner-shrimp banding."
+    },
+    {
+      "name": "broken reddish-brown lateral dots and dashes",
+      "sourceIds": [
+        "COMMONS-AMANO-SHRIMP",
+        "OKINAWA-AMANO-SHRIMP"
+      ],
+      "sourceControls": [
+        "morphology.markings",
+        "catalog.species.amano_shrimp._mark_parts"
+      ],
+      "notes": "Two irregular flank rows use discrete procedural marks; no source pixels or claimed sex-specific pattern rule are reproduced."
+    }
+  ],
+  "candidateComparison": {
+    "mismatches": [
+      {
+        "area": "source-only state",
+        "note": "No candidate, GLB or render exists. A later serialized build must verify the translucent shell, leg contact, rostrum readability, appendage clearance and six-somite silhouette."
+      },
+      {
+        "area": "top and front calibration",
+        "note": "Body width, eye separation and appendage splay remain inferred from descriptive and oblique evidence."
+      },
+      {
+        "area": "fine anatomy",
+        "note": "Setae, pleopod setules, exact rostral dentition and uropodal diaeresis are represented as restrained game-scale cues, not microscopic anatomy."
+      }
+    ],
+    "acceptanceBlockers": []
+  },
+  "backendRepresentation": {
+    "status": "source_controls_present",
+    "clearedSourceBlockers": [
+      "adult body scale",
+      "slender translucent caridean silhouette",
+      "six abdominal somites",
+      "median rostrum and stalked eyes",
+      "five walking-leg pairs",
+      "five pleopod pairs",
+      "paired uropod fan",
+      "long antennae",
+      "broken lateral dots and dashes",
+      "benthic walking and grazing clips",
+      "brief repositioning swim clip"
+    ],
+    "note": "The dedicated species backend supplies the controls without reusing saltwater shrimp paint, oversized chelae or free-water hover behavior. Rendered acceptance remains downstream and explicit."
+  },
+  "deliveryStatus": {
+    "sourceEdited": true,
+    "candidateBuilt": false,
+    "candidateValidated": false,
+    "candidateAccepted": false,
+    "promotionAttempted": false
+  }
+}

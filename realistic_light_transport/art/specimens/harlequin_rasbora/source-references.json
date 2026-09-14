@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "harlequin_rasbora",
+  "revision": 2,
+  "policy": "References informed taxonomy, adult size, body proportions, fin placement and the diagnostic axine only. No pixels were sampled, traced, copied or redistributed.",
+  "sources": [
+    {
+      "id": "FISHBASE-TRIGONOSTIGMA-HETEROMORPHA",
+      "title": "Trigonostigma heteromorpha species summary",
+      "publisher": "FishBase",
+      "url": "https://www.fishbase.se/summary/10881",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "evidenceCues": [
+        "Maximum adult total length is 5.0 cm.",
+        "Cross section is compressed; the head-to-predorsal profile is steep and the mouth is terminal.",
+        "The axine has dorsal, ventral and caudal apices near the dorsal-fin origin, pelvic-fin origin and caudal-fin base."
+      ]
+    },
+    {
+      "id": "TAN-2020-TRIGONOSTIGMA",
+      "title": "Trigonostigma truncata, a new species of harlequin rasbora from Malay Peninsula (Teleostei: Danionidae)",
+      "publisher": "Raffles Bulletin of Zoology",
+      "author": "Tan Heok Hui",
+      "url": "https://lkcnhm.nus.edu.sg/wp-content/uploads/sites/11/app/uploads/2020/01/RBZ-2020-0058.pdf",
+      "doi": "10.26107/RBZ-2020-0058",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_morphology",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright National University of Singapore; no image reuse performed",
+      "evidenceCues": [
+        "The T. heteromorpha axine is large and velvety black, with a straight anterior margin and dorsal, ventral and caudal apices.",
+        "The caudal apex extends along the peduncle to the caudal-fin base; the broad anterior span exceeds two-thirds of body depth.",
+        "The species has a steep convex predorsal profile, terminal mouth, orange-red dorsal base and forked caudal."
+      ]
+    },
+    {
+      "id": "COMMONS-HARLEQUIN-RASBORA-MALE",
+      "title": "Harlequin Rasbora.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Mariusz Dabrowski",
+      "url": "https://commons.wikimedia.org/wiki/File:Harlequin_Rasbora.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "near-lateral male",
+      "provenance": "Author's own work, 21 July 2011; original 5184 by 3456 file page, not the later crop.",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 3.0",
+      "evidenceCues": [
+        "Deep compressed trunk, steep dorsal head-to-back rise, large eye and small terminal mouth.",
+        "Dorsal, pelvic and anal placement plus a fully visible forked caudal silhouette.",
+        "Axine is a bounded flank triangle that narrows toward the peduncle instead of filling the posterior body."
+      ]
+    },
+    {
+      "id": "COMMONS-RASBORA-H",
+      "title": "Rasbora h.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "-serwacy01-",
+      "url": "https://commons.wikimedia.org/wiki/File:Rasbora_h.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "high-detail lateral head and anterior fins",
+      "provenance": "Author's own work, photographed 23 December 2022; original 5184 by 3456 file page.",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY-SA 4.0",
+      "evidenceCues": [
+        "Bluntly pointed snout, terminal mouth at the midline, large round eye and short opercular region.",
+        "Steep predorsal slope, deep chest, orange-red dorsal and translucent paired and anal fins.",
+        "Posterior tail is cropped, so this image does not control caudal proportions."
+      ]
+    },
+    {
+      "id": "INATURALIST-251680901",
+      "title": "Trigonostigma heteromorpha in Malaysia, photo 251680901",
+      "publisher": "iNaturalist",
+      "author": "Zakqary Roy",
+      "url": "https://www.inaturalist.org/photos/251680901",
+      "observationUrl": "https://www.inaturalist.org/observations/146396004",
+      "provenanceVerificationUrl": "https://commons.wikimedia.org/wiki/File:Trigonostigma_heteromorpha_251680901.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "native-context lateral specimens with scale",
+      "provenance": "Original iNaturalist photo from Malaysia, 12 January 2023; license reviewed by INaturalistReviewBot on Wikimedia Commons.",
+      "allowedUse": "proportion_reference_only",
+      "license": "CC BY 4.0",
+      "evidenceCues": [
+        "Wild-specimen proportions and full forked caudal silhouettes guard against exaggerated aquarium-bred depth.",
+        "Axine reaches the caudal-fin base and dorsal-fin position aligns with the broad anterior end of the wedge."
+      ]
+    },
+    {
+      "id": "COMMONS-BREEDING2",
+      "title": "Trigonostigma heteromorpha breeding2.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Stefan Maurer",
+      "url": "https://commons.wikimedia.org/wiki/File:Trigonostigma_heteromorpha_breeding2.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "inverted head-on and ventral-oblique spawning view",
+      "provenance": "Originally posted to Flickr as DSC02740; Commons verified the license on upload.",
+      "allowedUse": "qualitative_cross_section_reference_only",
+      "license": "CC BY-SA 2.0",
+      "evidenceCues": [
+        "Qualitatively supports a narrow side-to-side section relative to vertical body depth.",
+        "Motion blur, foreshortening and spawning posture prohibit calibrated head width or top-outline inference."
+      ]
+    },
+    {
+      "id": "SIGNIFY-MNHN1912-0141",
+      "title": "Trigonostigma heteromorpha, MNHN1912-0141",
+      "publisher": "SIGNIFY, Lee Kong Chian Natural History Museum",
+      "author": "SIGNIFY, Lee Kong Chian Natural History Museum",
+      "url": "https://signifynaturalhistory.sg/specimens/MNHN1912-0141_Rasbora_heteromorpha_nontype",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "museum_specimen_imagery",
+      "view": "preserved lateral voucher",
+      "provenance": "Nontype specimen from Singapore, catalog MNHN1912-0141; copyright Muséum national d'Histoire naturelle.",
+      "allowedUse": "view_and_citation_only",
+      "license": "No open reuse license stated",
+      "evidenceCues": [
+        "Corroborates deep trunk, short peduncle, steep head-to-back transition and bilateral fin placement.",
+        "Preservation and collapsed fins prohibit using it for live fin outline or coloration."
+      ]
+    }
+  ],
+  "viewCoverage": {
+    "lateral": "Strong: multiple original live-fish pages plus a museum voucher and peer-reviewed figure.",
+    "headAndFins": "Strong laterally: high-detail original imagery and FishBase morphology agree on the terminal mouth, steep predorsal profile and fin positions.",
+    "topAndBodyDepth": "Limited: FishBase explicitly classifies the cross section as compressed, and one oblique spawning image corroborates it qualitatively.",
+    "front": "Limited: no verified sharp orthographic frontal original was found."
+  },
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Authoritative morphology and several exact, licensed lateral originals strongly constrain the outline, fins and three-apex axine. No verified true dorsal/top or sharp frontal original was found, so exact width and frontal head shape remain intentionally uncertain."
+}

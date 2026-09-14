@@ -1,0 +1,66 @@
+{
+  "asset": "amano_shrimp",
+  "variant": null,
+  "candidateDir": "art/specimens/amano_shrimp/candidates/fable-v1",
+  "startedAt": "2026-09-10T01:19:02.941Z",
+  "pid": 35260,
+  "stages": [
+    {
+      "stage": "reference-evidence",
+      "exitCode": 0,
+      "durationMs": 0,
+      "tail": "passed"
+    },
+    {
+      "stage": "author",
+      "exitCode": 0,
+      "durationMs": 2057,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "source",
+      "exitCode": 0,
+      "durationMs": 2544,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "export",
+      "exitCode": 0,
+      "durationMs": 1061,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "runtime",
+      "exitCode": 0,
+      "durationMs": 745,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism",
+      "exitCode": 0,
+      "durationMs": 861,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "determinism-compare",
+      "exitCode": 0,
+      "durationMs": 641,
+      "tail": "Blender quit"
+    },
+    {
+      "stage": "receipt",
+      "exitCode": 0,
+      "durationMs": 625,
+      "tail": "Blender quit"
+    }
+  ],
+  "referenceEvidence": {
+    "status": "passed",
+    "schemaVersion": "pocket-aquarium.reference-comparison/v1",
+    "path": "art/specimens/amano_shrimp/reference-comparison.json",
+    "sha256": "a08befa2cb86ca542edc97c51f4bf7cdb2a73dde766f2c46cc8c3a4afe7c9790"
+  },
+  "finishedAt": "2026-09-10T01:19:11.477Z",
+  "status": "passed",
+  "failure": null
+}

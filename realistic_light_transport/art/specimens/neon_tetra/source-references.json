@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "neon_tetra",
+  "revision": 1,
+  "policy": "References informed taxonomy, adult scale, lateral proportions, fin placement, stripe boundaries, and visible material character only. No source pixels were sampled, traced, copied, hotlinked, or redistributed.",
+  "sources": [
+    {
+      "id": "FISHBASE-PARACHEIRODON-INNESI",
+      "title": "Paracheirodon innesi species summary",
+      "publisher": "FishBase",
+      "author": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/Paracheirodon_innesi.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "evidenceCues": [
+        "Accepted scientific name is Paracheirodon innesi (Myers, 1936).",
+        "Maximum length is recorded as 2.5 cm standard length.",
+        "The species is a small freshwater pelagic tetra from blackwater and clearwater tributaries of the Solimoes River."
+      ]
+    },
+    {
+      "id": "FISHBASE-MORPHMET-PAINN-U7",
+      "title": "Morphometrics of Paracheirodon innesi, image Painn_u7.jpg",
+      "publisher": "FishBase",
+      "author": "FishBase morphometrics contributors",
+      "url": "https://www.fishbase.se/physiology/MorphMetSummaryV2.php?genusname=Paracheirodon&id=10691&picname=Painn_u7.jpg&speciesname=innesi",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_morphometrics",
+      "allowedUse": "measurements_and_citation",
+      "license": "CC BY-NC 3.0 (FishBase text and measurements)",
+      "evidenceCues": [
+        "Measured reference specimen is 3.0 cm total length and 82.6 percent standard length.",
+        "Body depth is 26.0 percent of total length; head length is 18.5 percent; eye diameter is 45.9 percent of head length.",
+        "Predorsal, prepelvic, and preanal distances are 40.4, 38.7, and 50.9 percent of total length; fork length is 90.7 percent and caudal aspect ratio is 2.23588."
+      ]
+    },
+    {
+      "id": "USGS-NAS-PARACHEIRODON-INNESI",
+      "title": "Paracheirodon innesi, neon tetra, species profile",
+      "publisher": "U.S. Geological Survey Nonindigenous Aquatic Species Database",
+      "author": "U.S. Geological Survey",
+      "url": "https://nas.er.usgs.gov/queries/FactSheet.aspx?lang=en&speciesID=426",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "government_species_profile",
+      "allowedUse": "facts_and_citation",
+      "license": "U.S. federal government work; facts and citation only",
+      "evidenceCues": [
+        "The profile reports an adult size of 4 cm.",
+        "Identification is tied to the Weitzman and Fink 1983 group revision and its distinguishing characters, key, and photographs."
+      ]
+    },
+    {
+      "id": "LYTHGOE-SHAND-FOSTER-1984",
+      "title": "Visual pigment in fish iridocytes",
+      "publisher": "Nature",
+      "author": "J. N. Lythgoe, Julia Shand, and R. G. Foster",
+      "url": "https://www.nature.com/articles/308083a0",
+      "doi": "10.1038/308083a0",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_material_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright Springer Nature; no source imagery reused",
+      "evidenceCues": [
+        "The bright lateral stripe includes the iris and is produced by iridophores between dermal collagen and muscle.",
+        "Regular guanine and cytoplasm layers change spacing in response to light, changing the reflected color."
+      ]
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+      "title": "Paracheirodon innesi neon tetra.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "SOK",
+      "url": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_neon_tetra.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "high-resolution near-lateral adult",
+      "provenance": "Author's own work, photographed 16 December 2019; original 4214 by 2194 file page.",
+      "allowedUse": "proportion_and_pattern_reference_only",
+      "license": "CC BY-SA 4.0",
+      "evidenceCues": [
+        "Slender compressed body, large seated eye, short snout, clear fins, small adipose fin, and symmetrical forked caudal.",
+        "Electric blue band begins at the eye and ends beneath the adipose region; the red band occupies only the posterior ventrolateral half.",
+        "Olive-translucent dorsum and silver belly separate the two saturated stripes."
+      ]
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-AKA",
+      "title": "Paracheirodon innesi (aka).jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Andre Karwath aka Aka",
+      "url": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_(aka).jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "sharp lateral adult",
+      "provenance": "Author's own macro photograph, 7 April 2007; original 2144 by 1116 file page.",
+      "allowedUse": "proportion_and_pattern_reference_only",
+      "license": "CC BY-SA 2.5",
+      "evidenceCues": [
+        "Full lateral silhouette corroborates body depth, fin origins, short peduncle, forked tail, and large eye.",
+        "The blue stripe arches gently high on the flank while the red stripe begins near midbody and reaches the caudal base."
+      ]
+    },
+    {
+      "id": "COMMONS-NEON-TETRA-AQUARIUM-VIDEO",
+      "title": "Neon tetra (Paracheirodon innesi) in an aquarium.webm",
+      "publisher": "Wikimedia Commons",
+      "author": "The Nature Box",
+      "url": "https://commons.wikimedia.org/wiki/File:Neon_tetra_(Paracheirodon_innesi)_in_an_aquarium.webm",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_motion_reference",
+      "view": "multi-angle live aquarium motion, 1.5 to 2 cm juveniles",
+      "provenance": "Author's own work, recorded 15 January 2016; original 1920 by 1080, 2 minute 9 second file page.",
+      "allowedUse": "qualitative_motion_and_material_reference_only",
+      "license": "CC BY-SA 4.0",
+      "evidenceCues": [
+        "Live schooling motion is forward-led with small rapid tail beats and restrained body roll.",
+        "Multi-angle movement shows translucent fins and angle-dependent lateral-stripe brightness.",
+        "Juvenile size and non-orthographic motion prohibit direct adult proportion calibration."
+      ]
+    }
+  ],
+  "viewCoverage": {
+    "lateral": "Strong: FishBase morphometrics and two exact licensed adult file pages constrain the side silhouette, fins, eye, and diagnostic stripe boundaries.",
+    "motionAndMaterial": "Moderate: an exact licensed aquarium video supports small-fish tail cadence, translucent fins, and angle-dependent iridescence qualitatively.",
+    "topAndBodyWidth": "Limited: lateral compression is visible in moving oblique views, but no calibrated orthographic top original was found.",
+    "front": "Limited: moving oblique frames provide qualitative corroboration only; no sharp orthographic frontal original was found."
+  },
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Authoritative scale and detailed lateral morphometrics combine with multiple exact, licensed adult references and a licensed motion source. Top and front calibration remains intentionally uncertain because no verified orthographic sources were found."
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "harlequin_rasbora",
+  "sourceSha256": "8817d539663fe8846f5efe3dbb4e5a332db0f7904b57534916609f20e9ccdb39",
+  "objects": [
+    {
+      "name": "PA_harlequin_rasbora_Body",
+      "vertexCount": 2306,
+      "triangleCount": 4608,
+      "vertexDigest": "a57410f65c07ddd22708e888fe2cfea7b5c5309de555bab397a47b5d8734b67f",
+      "topologyDigest": "3576880dab2ab124d6d387ff91f97acacbbe5f5f468df0de584fd5ee8e1b28ca",
+      "uvDigest": "c1ae42dca89193ffc765df506c8cc57510846b785ac02e870c1a1a4778e845f8",
+      "weightDigest": "26840afa2eb9d508c87441fc2661aca1bb44d0751a60be06aae1c7c8b87ce659",
+      "materials": [
+        "PA_harlequin_rasbora_Skin"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_harlequin_rasbora_Details",
+      "vertexCount": 1028,
+      "triangleCount": 2016,
+      "vertexDigest": "401a50311ac5e4d17faff387aedbbb8b1f1b2c5be90471c57a80fe054c5b1b2e",
+      "topologyDigest": "af5d890e334b2cd282952f0a44dae55bd4ac9e200ce5af8c2c8b4ca427ae9d1a",
+      "uvDigest": "faa6d14466565dda8bc493f5bfafe6418526a05591b15255928b2720248e6183",
+      "weightDigest": "7249a796c31fc7ba6068ba84e9422d8c52debcf9f66deb47a4caf78b7c2e1c11",
+      "materials": [
+        "PA_harlequin_rasbora_Cue",
+        "PA_harlequin_rasbora_Eye",
+        "PA_harlequin_rasbora_Glint",
+        "PA_harlequin_rasbora_Pupil"
+      ],
+      "shapeKeys": []
+    },
+    {
+      "name": "PA_harlequin_rasbora_Fins",
+      "vertexCount": 418,
+      "triangleCount": 718,
+      "vertexDigest": "26313a136f7e0910f3fb1af2e531b649c1fa23b511612efbc550e6305d231224",
+      "topologyDigest": "ed7d767ff8596b8f764893b8b69af46306f92a965b5ca69f94b205f01488146b",
+      "uvDigest": "5b59bc415f7824b7878ffdfadb7a0288b435c6c63be795baea5e5c3aa4f77f51",
+      "weightDigest": "d58ab4a900de4a4388c7f3f7ff7da1c960b464722e6bf4c59ad0a0a5fcf38620",
+      "materials": [
+        "PA_harlequin_rasbora_Fin"
+      ],
+      "shapeKeys": []
+    }
+  ],
+  "rig": {
+    "name": "PA_harlequin_rasbora_Rig",
+    "boneCount": 14,
+    "deformBoneCount": 13,
+    "boneDigest": "8eddb4bf39300971e8fb9ef3600b3fc06842419f96b61f9f48f74d0bf277bf35"
+  },
+  "geometryDigest": "12a9faf37c99be898908aea9342b8dde91312c31e92c2f35bd868d4e2347fabc",
+  "variantId": null
+}

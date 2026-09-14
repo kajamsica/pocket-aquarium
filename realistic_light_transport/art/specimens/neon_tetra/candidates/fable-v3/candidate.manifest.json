@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 2,
+  "speciesId": "neon_tetra",
+  "variantId": null,
+  "scientificName": "Paracheirodon innesi",
+  "biome": "freshwater_community",
+  "waterType": "fresh",
+  "assetVersion": "0.3.0-source",
+  "referenceSizeMeters": 0.035,
+  "referenceSizeKind": "adult_display_total_length",
+  "origin": "anatomical_midbody",
+  "forwardAxis": "+X",
+  "upAxis": "+Y",
+  "lod": 1,
+  "candidate": {
+    "state": "awaiting_user_acceptance",
+    "acceptedOcellarisHash": "ed4d447b2c7d88e91f45699a76b2ff3768144b57e6acb4199000567bafe37ac0",
+    "candidateHash": "3fac63b05f0a81c7bd66744ca2fcda39b23e1a2fa1e48ae49de75e170de70a60",
+    "validationReceipt": "validation-receipt.json",
+    "determinism": "passed"
+  },
+  "sourceManifest": "candidate.manifest.json",
+  "displayName": "Neon Tetra",
+  "bodyPlan": "fish",
+  "referenceGrade": "B",
+  "author": "Pocket Aquarium project",
+  "contributors": [
+    "Fable species-assets lane"
+  ],
+  "rightsStatus": "PROJECT_OWNED",
+  "licenseExpression": "NOASSERTION",
+  "sourceReferences": [
+    {
+      "id": "FISHBASE-PARACHEIRODON-INNESI",
+      "title": "Paracheirodon innesi species summary",
+      "publisher": "FishBase",
+      "author": "Rainer Froese and Daniel Pauly, editors",
+      "url": "https://www.fishbase.se/summary/Paracheirodon_innesi.html",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "CC BY-NC 3.0 (FishBase text)",
+      "evidenceCues": [
+        "Accepted scientific name is Paracheirodon innesi (Myers, 1936).",
+        "Maximum length is recorded as 2.5 cm standard length.",
+        "The species is a small freshwater pelagic tetra from blackwater and clearwater tributaries of the Solimoes River."
+      ]
+    },
+    {
+      "id": "FISHBASE-MORPHMET-PAINN-U7",
+      "title": "Morphometrics of Paracheirodon innesi, image Painn_u7.jpg",
+      "publisher": "FishBase",
+      "author": "FishBase morphometrics contributors",
+      "url": "https://www.fishbase.se/physiology/MorphMetSummaryV2.php?genusname=Paracheirodon&id=10691&picname=Painn_u7.jpg&speciesname=innesi",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "authoritative_morphometrics",
+      "allowedUse": "measurements_and_citation",
+      "license": "CC BY-NC 3.0 (FishBase text and measurements)",
+      "evidenceCues": [
+        "Measured reference specimen is 3.0 cm total length and 82.6 percent standard length.",
+        "Body depth is 26.0 percent of total length; head length is 18.5 percent; eye diameter is 45.9 percent of head length.",
+        "Predorsal, prepelvic, and preanal distances are 40.4, 38.7, and 50.9 percent of total length; fork length is 90.7 percent and caudal aspect ratio is 2.23588."
+      ]
+    },
+    {
+      "id": "USGS-NAS-PARACHEIRODON-INNESI",
+      "title": "Paracheirodon innesi, neon tetra, species profile",
+      "publisher": "U.S. Geological Survey Nonindigenous Aquatic Species Database",
+      "author": "U.S. Geological Survey",
+      "url": "https://nas.er.usgs.gov/queries/FactSheet.aspx?lang=en&speciesID=426",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "government_species_profile",
+      "allowedUse": "facts_and_citation",
+      "license": "U.S. federal government work; facts and citation only",
+      "evidenceCues": [
+        "The profile reports an adult size of 4 cm.",
+        "Identification is tied to the Weitzman and Fink 1983 group revision and its distinguishing characters, key, and photographs."
+      ]
+    },
+    {
+      "id": "LYTHGOE-SHAND-FOSTER-1984",
+      "title": "Visual pigment in fish iridocytes",
+      "publisher": "Nature",
+      "author": "J. N. Lythgoe, Julia Shand, and R. G. Foster",
+      "url": "https://www.nature.com/articles/308083a0",
+      "doi": "10.1038/308083a0",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_material_reference",
+      "allowedUse": "facts_and_citation",
+      "license": "Copyright Springer Nature; no source imagery reused",
+      "evidenceCues": [
+        "The bright lateral stripe includes the iris and is produced by iridophores between dermal collagen and muscle.",
+        "Regular guanine and cytoplasm layers change spacing in response to light, changing the reflected color."
+      ]
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-NEON-TETRA",
+      "title": "Paracheirodon innesi neon tetra.jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "SOK",
+      "url": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_neon_tetra.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "high-resolution near-lateral adult",
+      "provenance": "Author's own work, photographed 16 December 2019; original 4214 by 2194 file page.",
+      "allowedUse": "proportion_and_pattern_reference_only",
+      "license": "CC BY-SA 4.0",
+      "evidenceCues": [
+        "Slender compressed body, large seated eye, short snout, clear fins, small adipose fin, and symmetrical forked caudal.",
+        "Electric blue band begins at the eye and ends beneath the adipose region; the red band occupies only the posterior ventrolateral half.",
+        "Olive-translucent dorsum and silver belly separate the two saturated stripes."
+      ]
+    },
+    {
+      "id": "COMMONS-PARACHEIRODON-INNESI-AKA",
+      "title": "Paracheirodon innesi (aka).jpg",
+      "publisher": "Wikimedia Commons",
+      "author": "Andre Karwath aka Aka",
+      "url": "https://commons.wikimedia.org/wiki/File:Paracheirodon_innesi_(aka).jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "view": "sharp lateral adult",
+      "provenance": "Author's own macro photograph, 7 April 2007; original 2144 by 1116 file page.",
+      "allowedUse": "proportion_and_pattern_reference_only",
+      "license": "CC BY-SA 2.5",
+      "evidenceCues": [
+        "Full lateral silhouette corroborates body depth, fin origins, short peduncle, forked tail, and large eye.",
+        "The blue stripe arches gently high on the flank while the red stripe begins near midbody and reaches the caudal base."
+      ]
+    },
+    {
+      "id": "COMMONS-NEON-TETRA-AQUARIUM-VIDEO",
+      "title": "Neon tetra (Paracheirodon innesi) in an aquarium.webm",
+      "publisher": "Wikimedia Commons",
+      "author": "The Nature Box",
+      "url": "https://commons.wikimedia.org/wiki/File:Neon_tetra_(Paracheirodon_innesi)_in_an_aquarium.webm",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_motion_reference",
+      "view": "multi-angle live aquarium motion, 1.5 to 2 cm juveniles",
+      "provenance": "Author's own work, recorded 15 January 2016; original 1920 by 1080, 2 minute 9 second file page.",
+      "allowedUse": "qualitative_motion_and_material_reference_only",
+      "license": "CC BY-SA 4.0",
+      "evidenceCues": [
+        "Live schooling motion is forward-led with small rapid tail beats and restrained body roll.",
+        "Multi-angle movement shows translucent fins and angle-dependent lateral-stripe brightness.",
+        "Juvenile size and non-orthographic motion prohibit direct adult proportion calibration."
+      ]
+    }
+  ],
+  "referenceUsagePolicy": "References guided proportions and colour placement only; no pixels were sampled, traced or copied.",
+  "toolchain": {
+    "blender": "5.2.1 LTS",
+    "exporter": "Blender native glTF 2.0 exporter"
+  },
+  "sourceSha256": "e40ad3ead76ab7fc544b37250bc1d323043d40d3d419f846c697ece0ad220fb4",
+  "sourceReferencesSha256": "46442aa5679fce83c044d5d1fc48dc8d5400f97ab61f9c9f6f00e5a55f617baf",
+  "sourceBlendSha256": "f7db35cc75d46b2832d0e406a2a0816418e980d8a6248eb1313fcf27c4b1660c",
+  "builder": {
+    "entrypoint": "9f4bdc4d687b1a17e42a4dd10cc5dedbb9ed21e71895b4a2454b9b6854abf4d8",
+    "validator": "274cd8f107c0241006723b7eb7355d012f9d09c1cdb4f8a594fbcd361a3be4a0",
+    "plan": "55de4439779bedeef5aa3f19090e337f12a502a991590de0a257df39b2913eea",
+    "speciesBackend": "2032b1b5be1dc79c38a151f539e7cba9cd8ef060736a3050c37be412b883cd1f",
+    "lib": {
+      "__init__.py": "b1899a47c11dae74c2b030831d15c258ebbdefffdfe2841c73e77813080b2e97",
+      "animation.py": "2039f2b925e0de457e77fe926b7aad63e0a6504ddd2fb687d5b0f7338ed24ecb",
+      "contract.py": "101a2f4b7e7e51d1bacb6a8782579d22b36c0d7198dcc32d94991200155ff6e5",
+      "digest.py": "9d0baaa78a96795d98d70b4325567d729e163be9733ccf644478bd09e013ca6a",
+      "glb.py": "bb5588d7cb0f0f7029afc7107456c64be632720f68bd7d2bdbb34cff8f977f38",
+      "materials.py": "7a6778f5720a068c667fce316344c6b016054623a73b66bcca662a48f320d758",
+      "meshing.py": "05d7646d0eca213a5d98a582a346266356c5829d7f5610f7a619dca2e88565e0",
+      "noise.py": "461bdb2e35b8f35f6bb1f32655458ec7e723fb4ba76b643b5284e5286e7e6cb9",
+      "paint.py": "81944f49d839dc03f63ee1599ee8d1bf413805daa00ba6d8ffef067dbd389ca5",
+      "render.py": "e2ee10caf65c695547fa803ee9d6ebe7b4baa017983b55ba980548cc2f858755",
+      "rigging.py": "df547785762340679f3f97b4a6ed70138c865b57b3c1f6d445143febf5aedc9a",
+      "scene.py": "a2568557b03ffb586172f4510b45466742b240660c84919538c1f95b6755e75f",
+      "textures.py": "524c27afe3bcd7bc152583836556b8e24d4df65ed28875dbc6b2fd61f00b7f93"
+    },
+    "builderVersion": "catalog-author/1.0.0"
+  },
+  "runtimeGlbSha256": {
+    "lod1": "a35903a3d7e7f107e5a2cd9ccf89084d388e78ebad63e5ca48a082f5085e6f6a"
+  },
+  "coordinateContract": {
+    "unitMeters": 1,
+    "source": {
+      "forwardAxis": "+X",
+      "upAxis": "+Z"
+    },
+    "runtime": {
+      "forwardAxis": "+X",
+      "upAxis": "+Y"
+    },
+    "origin": "anatomical_midbody"
+  },
+  "proceduralTextures": [
+    {
+      "path": "textures/body-albedo.png",
+      "sha256": "c0eae81525f177b946ba4528601a6f843ceb0cce5a5ad97ae072b528f5dd568f"
+    },
+    {
+      "path": "textures/body-normal.png",
+      "sha256": "b1dc48837804f01e51fd8b976df831561cc78ebcf22b5e23b54219d6a50dd2e0"
+    },
+    {
+      "path": "textures/body-roughness.png",
+      "sha256": "6b7baa252fa4b2496f29d8d3476fb1baa353c8964b0eb474a5870dd64ba82166"
+    },
+    {
+      "path": "textures/fin-atlas.png",
+      "sha256": "20ada2f58f6455d5c03bc9dae4e6c0733027077a1a4df212de9ff1296581a39b"
+    },
+    {
+      "path": "textures/fin-normal.png",
+      "sha256": "37ad29b456795c88c55886732e0dc43fab8d9d1b8c0cabbba6e27d9d04e39e62"
+    }
+  ],
+  "statistics": {
+    "triangles": 7314,
+    "materials": 6,
+    "bones": 14,
+    "nodes": 20,
+    "skins": 1,
+    "morphTargets": 0,
+    "clips": [
+      "burst",
+      "idle",
+      "swim"
+    ],
+    "vertices": {
+      "PA_neon_tetra_Body": 2306,
+      "PA_neon_tetra_Fins": 408,
+      "PA_neon_tetra_Details": 1028
+    },
+    "runtimeBytes": 1388908
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "clipLoops": {
+    "idle": true,
+    "swim": true,
+    "burst": false
+  },
+  "restBounds": {
+    "min": [
+      -0.01923,
+      -0.002762,
+      -0.00538
+    ],
+    "max": [
+      0.015322,
+      0.002762,
+      0.007851
+    ]
+  },
+  "renders": {
+    "authorPreview": "renders/author-preview.png",
+    "threeView": "renders/three-view.png",
+    "threeViewPanelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  },
+  "validator": {
+    "status": "passed",
+    "sourceReport": "validation-source.json",
+    "runtimeReport": "validation-runtime.json",
+    "gates": [
+      "finite_vertices_and_weights",
+      "triangle_budget",
+      "reference_size",
+      "closed_parts_watertight_manifold",
+      "bilateral_symmetry",
+      "animated_clearance_bvh",
+      "closed_part_orientation_and_volume",
+      "clip_targets_move",
+      "axial_curvature",
+      "center_plane",
+      "clip_roles_resolve",
+      "accessors_in_bounds_and_finite",
+      "skin_weights_normalised",
+      "inventory_matches_manifest",
+      "single_skin",
+      "embedded_png_textures",
+      "clip_inventory",
+      "clip_roles_resolve",
+      "clip_channels_animate_declared_targets",
+      "blender_import_parity",
+      "loop_seam",
+      "rest_bounds_parity"
+    ]
+  }
+}

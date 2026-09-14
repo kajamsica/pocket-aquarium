@@ -309,8 +309,22 @@ export interface WorkbenchOption {
   readonly badge?: WorkbenchBadge
 }
 
+export const WORKBENCH_WATER_GROUP_ORDER = ['freshwater', 'saltwater', 'unknown'] as const
+export type WorkbenchWaterGroup = (typeof WORKBENCH_WATER_GROUP_ORDER)[number]
+
+const WORKBENCH_WATER_GROUP_LABELS: Readonly<Record<WorkbenchWaterGroup, string>> = {
+  freshwater: 'Freshwater',
+  saltwater: 'Saltwater',
+  unknown: 'Unknown / Unclassified',
+}
+
+export function workbenchWaterGroup(value: string | null | undefined): WorkbenchWaterGroup {
+  if (value === 'freshwater' || value === 'saltwater') return value
+  return 'unknown'
+}
+
 export interface WorkbenchOptionGroup {
-  readonly category: string
+  readonly waterType: WorkbenchWaterGroup
   readonly label: string
   readonly options: readonly WorkbenchOption[]
 }
@@ -339,11 +353,13 @@ export function workbenchOptionGroups(catalog: Pick<WorkbenchCatalog, 'assets' |
     .filter((asset) => asset.state === 'accepted' && asset.sourceCandidate)
     .map((asset) => [candidateKey(asset.speciesId, asset.sourceCandidate!), asset]))
   const seenKeys = new Set<string>()
-  const groups: WorkbenchOptionGroup[] = []
+  const optionsByWaterType = new Map<WorkbenchWaterGroup, WorkbenchOption[]>(
+    WORKBENCH_WATER_GROUP_ORDER.map((waterType): [WorkbenchWaterGroup, WorkbenchOption[]] => [waterType, []]),
+  )
 
   for (const group of rowsByCategory(catalog.rows)) {
-    const options: WorkbenchOption[] = []
     for (const row of group.rows) {
+      const options = optionsByWaterType.get(workbenchWaterGroup(row.waterType))!
       const rowLabel = row.displayName
       const accepted = byKey.get(row.id)
       if (accepted?.state === 'accepted') {
@@ -382,21 +398,24 @@ export function workbenchOptionGroups(catalog: Pick<WorkbenchCatalog, 'assets' |
         options.push({ key: `row:${row.id}`, speciesId: row.id, label: `${rowLabel} (${rowStatusText(row)})`, disabled: true, status: rowStatusText(row) })
       }
     }
-    if (options.length) groups.push({ category: group.category, label: group.label, options })
   }
 
   const orphans = catalog.assets.filter((asset) => !seenKeys.has(asset.key))
-  if (orphans.length) {
-    groups.push({
-      category: 'uncatalogued',
-      label: 'Not in catalog yet',
-      options: orphans.map((asset) => {
-        const badge = assetBadge(asset)
-        return { key: asset.key, speciesId: asset.speciesId, candidate: asset.candidate, label: `${asset.displayName}${asset.candidate ? ` (${asset.candidate})` : ''}`, disabled: false, status: BADGE_LABELS[badge], badge }
-      }),
+  for (const asset of orphans) {
+    const badge = assetBadge(asset)
+    optionsByWaterType.get(workbenchWaterGroup(asset.waterType))!.push({
+      key: asset.key,
+      speciesId: asset.speciesId,
+      candidate: asset.candidate,
+      label: `${asset.displayName}${asset.candidate ? ` (${asset.candidate})` : ''}`,
+      disabled: false,
+      status: BADGE_LABELS[badge],
+      badge,
     })
   }
-  return groups
+  return WORKBENCH_WATER_GROUP_ORDER
+    .map((waterType) => ({ waterType, label: WORKBENCH_WATER_GROUP_LABELS[waterType], options: optionsByWaterType.get(waterType)! }))
+    .filter((group) => group.options.length > 0)
 }
 
 export { categoryLabel }

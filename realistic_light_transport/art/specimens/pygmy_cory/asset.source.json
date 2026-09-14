@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "pocket-aquarium.asset-source/v1",
+  "id": "pygmy_cory",
+  "displayName": "Pygmy Cory",
+  "scientificLabel": "Gastrodermus pygmaeus",
+  "taxonomyConfidence": "species",
+  "category": "fish",
+  "waterType": "freshwater",
+  "biome": "freshwater_community",
+  "bodyPlan": "fish",
+  "backend": "catalog.species.pygmy_cory",
+  "textureStyle": "pygmy_cory",
+  "assetVersion": "0.3.0",
+  "referenceGrade": "B",
+  "referenceSize": {
+    "meters": 0.021,
+    "kind": "adult_display_reference_length",
+    "note": "FishBase reports 2.1 cm maximum standard length. The candidate uses 2.1 cm as a conservative visible display reference without silently inventing a standard-to-total-length conversion; the measurement scope remains explicit in the evidence packet."
+  },
+  "origin": "anatomical_midbody",
+  "clipRoles": { "idle": "rest", "locomotion": "swim", "response": "forage" },
+  "palette": {
+    "skin": [0.56, 0.57, 0.50],
+    "fin": [0.68, 0.70, 0.67],
+    "iris": [0.11, 0.10, 0.07],
+    "cue": [0.035, 0.045, 0.039],
+    "adornment": [0.36, 0.37, 0.32]
+  },
+  "textures": { "bodyResolution": [1024, 512], "finResolution": [1024, 512], "normalStrength": 0.62, "finReliefStrength": 0.62, "finNormalStrength": 0.20 },
+  "morphology": {
+    "notes": "Miniature elongated Corydoradinae profile with a gently arched armored dorsum, relatively flat belly, short rounded snout, small inferior transverse mouth and delicate tapered barbels. The compact median and paired fins, moderately forked caudal, seated eye and continuous mid-lateral stripe follow the exact licensed lateral references and prevent the silhouette from reading as a pale shark or generic torpedo. Whole-body top width and full frontal trunk depth remain inferred rather than claimed as measured.",
+    "controlStations": [
+      { "id": "caudal-base", "x": -0.0068, "halfWidth": 0.00065, "dorsalHeight": 0.00110, "ventralDepth": 0.00085, "centerZ": 0.00010 },
+      { "id": "peduncle", "x": -0.0058, "halfWidth": 0.00078, "dorsalHeight": 0.00125, "ventralDepth": 0.00095, "centerZ": 0.00014 },
+      { "id": "posterior", "x": -0.0037, "halfWidth": 0.00100, "dorsalHeight": 0.00185, "ventralDepth": 0.00110, "centerZ": 0.00022 },
+      { "id": "midbody", "x": -0.0002, "halfWidth": 0.00130, "dorsalHeight": 0.00245, "ventralDepth": 0.00130, "centerZ": 0.00028 },
+      { "id": "anterior", "x": 0.0034, "halfWidth": 0.00146, "dorsalHeight": 0.00265, "ventralDepth": 0.00142, "centerZ": 0.00028 },
+      { "id": "operculum", "x": 0.0066, "halfWidth": 0.00150, "dorsalHeight": 0.00245, "ventralDepth": 0.00146, "centerZ": 0.00012 },
+      { "id": "head", "x": 0.0087, "halfWidth": 0.00138, "dorsalHeight": 0.00190, "ventralDepth": 0.00138, "centerZ": -0.00012 },
+      { "id": "snout", "x": 0.0100, "halfWidth": 0.00105, "dorsalHeight": 0.00112, "ventralDepth": 0.00094, "centerZ": -0.00045 },
+      { "id": "snout-tip", "x": 0.0104, "halfWidth": 0.00058, "dorsalHeight": 0.00058, "ventralDepth": 0.00052, "centerZ": -0.00062 }
+    ],
+    "crossSection": { "dorsalExponent": 1.68, "ventralExponent": 3.60 },
+    "sampling": { "ringSegments": 48, "ringCount": 52 },
+    "zoneFractions": [0.1, 0.28, 0.55, 0.78],
+    "finThickness": { "base": 0.00028, "edge": 0.000035 },
+    "fins": [
+      { "name": "dorsal1", "type": "median", "side": "dorsal", "bone": "Dorsal1", "xStart": 0.0005, "xEnd": 0.0043, "rows": 4, "columns": 9, "lean": -0.0006, "heights": [[0.0, 0.00055], [0.24, 0.00290], [0.60, 0.00185], [1.0, 0.00045]] },
+      { "name": "adipose", "type": "median", "side": "dorsal", "bone": "Adipose", "xStart": -0.0053, "xEnd": -0.0036, "rows": 3, "columns": 6, "lean": -0.0002, "heights": [[0.0, 0.00022], [0.44, 0.00078], [1.0, 0.00018]] },
+      { "name": "anal", "type": "median", "side": "ventral", "bone": "Anal", "xStart": -0.0050, "xEnd": -0.0017, "rows": 4, "columns": 8, "lean": -0.0005, "heights": [[0.0, 0.00034], [0.30, 0.00105], [0.70, 0.00082], [1.0, 0.00028]] },
+      { "name": "caudal", "type": "caudal", "rows": 5, "columns": 11, "spanTop": 0.00215, "spanBottom": 0.00205, "length": 0.0038, "fork": 0.34, "forkPower": 1.65, "rounding": 0.12, "baseFraction": 0.82 },
+      { "name": "pectoral", "type": "paired", "rootX": 0.0049, "rootLength": 0.0021, "rootHeight": -0.52, "length": 0.0034, "sweepDegrees": 49, "droopDegrees": 38, "spread": 0.42, "taper": 0.28, "power": 0.95, "flare": 0.38, "rayCount": 8, "rows": 4, "columns": 7 },
+      { "name": "pelvic", "type": "paired", "rootX": 0.0004, "rootLength": 0.0014, "rootHeight": -0.92, "length": 0.0019, "sweepDegrees": 46, "droopDegrees": 42, "spread": 0.24, "taper": 0.38, "power": 0.78, "flare": 0.36, "rayCount": 6, "rows": 3, "columns": 5 }
+    ],
+    "finAdjacency": [],
+    "eyes": { "x": 0.0074, "zFraction": 0.48, "radius": 0.00045, "protrude": 0.06, "aspect": 0.30, "seat": 0.95, "roughness": 0.24, "coat": 0.12, "pupilFraction": 0.57, "pupilAspect": 0.16 },
+    "mouth": {
+      "zOffset": -1.15,
+      "width": 0.00042,
+      "radius": 0.000026,
+      "upperLip": { "centerOffset": [-0.00020, -0.00010], "cornerOffset": [-0.00043, -0.00006], "widthScale": 1.0, "cornerRadiusScale": 0.42, "centerRadiusScale": 0.52 },
+      "lowerLip": { "centerOffset": [-0.00023, -0.00024], "cornerOffset": [-0.00045, -0.00019], "widthScale": 0.82, "cornerRadiusScale": 0.34, "centerRadiusScale": 0.44 }
+    },
+    "gill": { "x": 0.0052, "radius": 0.000075, "points": 13, "bulge": 0.035 },
+    "adornments": [
+      { "type": "tube", "name": "barbel_L_outer", "points": [[0.0099, -0.00038, -0.00105], [0.0104, -0.00076, -0.00120], [0.0107, -0.00116, -0.00127]], "radii": [0.000045, 0.000024, 0.000008], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_R_outer", "points": [[0.0099, 0.00038, -0.00105], [0.0104, 0.00076, -0.00120], [0.0107, 0.00116, -0.00127]], "radii": [0.000045, 0.000024, 0.000008], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_L_lower", "points": [[0.0100, -0.00020, -0.00110], [0.0103, -0.00040, -0.00127], [0.0105, -0.00064, -0.00132]], "radii": [0.000032, 0.000017, 0.000006], "segments": 6, "bone": "Jaw" },
+      { "type": "tube", "name": "barbel_R_lower", "points": [[0.0100, 0.00020, -0.00110], [0.0103, 0.00040, -0.00127], [0.0105, 0.00064, -0.00132]], "radii": [0.000032, 0.000017, 0.000006], "segments": 6, "bone": "Jaw" }
+    ]
+  },
+  "rig": { "axialJoints": [0.0086, 0.0034, -0.0002, -0.0037, -0.0058, -0.0071] },
+  "animation": {
+    "rest": { "frames": 90, "loop": true, "axial": [0.8, 1.3, 2.2, 3.5], "axialFrequency": 1, "axialLag": 0.50, "pectoral": 9, "pectoralFrequency": 3, "pelvic": 2.0, "median": 0.7, "gill": 2.0, "gillFrequency": 3, "jaw": 2.4, "jawFrequency": 3 },
+    "swim": { "frames": 60, "loop": true, "axial": [2.6, 4.1, 7.0, 10.5], "axialFrequency": 3, "axialLag": 0.48, "pectoral": 20, "pectoralFrequency": 4, "pelvic": 3.6, "median": 1.3, "gill": 1.8, "gillFrequency": 2, "jaw": 1.8, "jawFrequency": 2 },
+    "forage": { "frames": 66, "loop": false, "envelope": "hold", "axial": [1.0, 1.6, 2.5, 3.8], "axialFrequency": 2, "axialLag": 0.50, "pectoral": 15, "pectoralFrequency": 3, "pelvic": 3.0, "median": 0.9, "gill": 4.0, "gillFrequency": 4, "jaw": 7.0, "jawFrequency": 5 }
+  },
+  "validation": { "triangleBudget": [5000, 20000], "maxJointDegrees": 24, "maxJointDegreesResponse": 36 },
+  "preview": { "frame": 10, "azimuthDegrees": -50, "elevationDegrees": 20 },
+  "visualDebt": [
+    "The two visible armor rows use species-local procedural normal and color relief rather than individually modeled overlapping scutes.",
+    "Four subtle tapered barbels are rigidly skinned to the Jaw bone instead of flexing independently.",
+    "No verified live whole-body orthographic top or frontal image was found, so trunk width remains an explicit conservative inference.",
+    "The 2.1 cm FishBase standard-length maximum is used as a visible display reference without an invented standard-to-total-length conversion."
+  ]
+}

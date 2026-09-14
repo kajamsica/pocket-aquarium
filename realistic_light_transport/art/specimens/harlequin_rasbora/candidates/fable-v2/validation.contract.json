@@ -1,0 +1,610 @@
+{
+  "schemaVersion": "pocket-aquarium.validation-contract/v1",
+  "speciesId": "harlequin_rasbora",
+  "rig": "PA_harlequin_rasbora_Rig",
+  "root": "PA_harlequin_rasbora_Root",
+  "meshes": [
+    "PA_harlequin_rasbora_Body",
+    "PA_harlequin_rasbora_Fins",
+    "PA_harlequin_rasbora_Details"
+  ],
+  "closedParts": [
+    {
+      "object": "PA_harlequin_rasbora_Body",
+      "group": "part_body",
+      "volumeFloor": 0.7
+    }
+  ],
+  "clearance": [
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "zone_midbody"
+      ]
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "zone_peduncle"
+      ]
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_anterior"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_midbody"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "zone_caudal"
+      ]
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Body",
+        "zone_head"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal"
+      ],
+      "minDistance": 0.00048750000000000003,
+      "label": "head_tail_clearance"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_dorsal"
+      ],
+      "label": "fin_body_dorsal"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_anal"
+      ],
+      "label": "fin_body_anal"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_caudal"
+      ],
+      "label": "fin_body_caudal"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_body_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_body_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_body_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Body",
+        "part_body",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_body_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "label": "fin_fin_dorsal_anal"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_dorsal_caudal"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_dorsal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_dorsal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_dorsal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_dorsal",
+        "attach_dorsal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_dorsal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "label": "fin_fin_anal_caudal"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_anal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_anal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_anal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_anal",
+        "attach_anal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_anal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "label": "fin_fin_caudal_pectoral_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "label": "fin_fin_caudal_pectoral_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_caudal_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_caudal",
+        "attach_caudal"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_caudal_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_L",
+        "attach_pectoral_L"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_L_pelvic_R"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_L",
+        "attach_pelvic_L"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_L"
+    },
+    {
+      "a": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pectoral_R",
+        "attach_pectoral_R"
+      ],
+      "b": [
+        "PA_harlequin_rasbora_Fins",
+        "fin_pelvic_R",
+        "attach_pelvic_R"
+      ],
+      "label": "fin_fin_pectoral_R_pelvic_R"
+    }
+  ],
+  "centerPlane": [
+    {
+      "object": "PA_harlequin_rasbora_Fins",
+      "group": "fin_pectoral_L",
+      "exclude": "attach_pectoral_L",
+      "side": -1
+    },
+    {
+      "object": "PA_harlequin_rasbora_Fins",
+      "group": "fin_pectoral_R",
+      "exclude": "attach_pectoral_R",
+      "side": 1
+    },
+    {
+      "object": "PA_harlequin_rasbora_Fins",
+      "group": "fin_pelvic_L",
+      "exclude": "attach_pelvic_L",
+      "side": -1
+    },
+    {
+      "object": "PA_harlequin_rasbora_Fins",
+      "group": "fin_pelvic_R",
+      "exclude": "attach_pelvic_R",
+      "side": 1
+    }
+  ],
+  "axialChain": {
+    "bones": [
+      "Body",
+      "Spine_A",
+      "Spine_B",
+      "Peduncle",
+      "Caudal"
+    ],
+    "maxJointDegrees": 24.0,
+    "maxJointDegreesResponse": 36.0,
+    "maxCumulativeDegrees": 75.0
+  },
+  "size": {
+    "axis": "x",
+    "meters": 0.05,
+    "tolerance": 0.03,
+    "kind": "adult_total_length"
+  },
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": 90,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "swim": {
+      "loop": true,
+      "frames": 60,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    },
+    "burst": {
+      "loop": false,
+      "frames": 24,
+      "bones": [
+        "Anal",
+        "Caudal",
+        "Dorsal",
+        "Gill",
+        "Jaw",
+        "Pectoral_L",
+        "Pectoral_R",
+        "Peduncle",
+        "Pelvic_L",
+        "Pelvic_R",
+        "Spine_A",
+        "Spine_B"
+      ],
+      "shapeKeys": []
+    }
+  },
+  "clipRoles": {
+    "idle": "idle",
+    "locomotion": "swim",
+    "response": "burst"
+  },
+  "triangleBudget": [
+    5000,
+    20000
+  ],
+  "maxDeformBones": 32,
+  "sampleStride": 2,
+  "symmetry": [
+    {
+      "object": "PA_harlequin_rasbora_Fins",
+      "left": "fin_pectoral_L",
+      "right": "fin_pectoral_R",
+      "tolerance": 0.000195
+    },
+    {
+      "object": "PA_harlequin_rasbora_Fins",
+      "left": "fin_pelvic_L",
+      "right": "fin_pelvic_R",
+      "tolerance": 0.000195
+    }
+  ],
+  "variantId": null,
+  "previewAction": "swim",
+  "restBounds": {
+    "min": [
+      -0.02611,
+      -0.005394,
+      -0.008506
+    ],
+    "max": [
+      0.022452,
+      0.005394,
+      0.012419
+    ]
+  },
+  "textures": [
+    "textures/body-albedo.png",
+    "textures/body-roughness.png",
+    "textures/body-normal.png",
+    "textures/fin-atlas.png",
+    "textures/fin-normal.png"
+  ],
+  "notes": {
+    "bodyLengthMeters": 0.039,
+    "fins": [
+      "dorsal",
+      "anal",
+      "caudal",
+      "pectoral_L",
+      "pectoral_R",
+      "pelvic_L",
+      "pelvic_R"
+    ]
+  },
+  "render": {
+    "preview": "/private/tmp/pa-fw-realism-build/realistic_light_transport/art/specimens/harlequin_rasbora/candidates/fable-v2/renders/author-preview.png",
+    "threeView": "/private/tmp/pa-fw-realism-build/realistic_light_transport/art/specimens/harlequin_rasbora/candidates/fable-v2/renders/three-view.png",
+    "boundsMin": [
+      -0.026110123842954636,
+      -0.0053939977660775185,
+      -0.008506069891154766
+    ],
+    "boundsMax": [
+      0.02245200052857399,
+      0.005393997300416231,
+      0.012418633326888084
+    ],
+    "panelOrder": [
+      "side",
+      "top",
+      "front"
+    ]
+  }
+}

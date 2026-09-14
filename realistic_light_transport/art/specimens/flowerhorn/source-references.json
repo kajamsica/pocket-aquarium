@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "pocket-aquarium.source-references/v1",
+  "speciesId": "flowerhorn",
+  "revision": 1,
+  "policy": "Google Images may locate candidate references only. Every retained visual reference is an exact original page with an explicit license. References inform facts and qualitative design only. No pixels are copied, sampled, traced, redistributed, embedded, or hotlinked.",
+  "targetForm": {
+    "name": "adult male red-pearl Flowerhorn cichlid",
+    "definition": "A selectively bred ornamental cichlid hybrid with a stout deep body, exaggerated nuchal hump, terminal fleshy mouth, red-orange ground, turquoise-white pearling, and an irregular dark lateral flower line.",
+    "sourceRefs": ["JOTT-ALIEN-ORNAMENTAL-FISH", "NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION", "INFANTE-2018-NUCHAL-HUMP", "COMMONS-FLOWERHORN-COMPETITION", "COMMONS-FLOWERHORN-48821775218"]
+  },
+  "sources": [
+    {
+      "id": "JOTT-ALIEN-ORNAMENTAL-FISH",
+      "title": "Invasive ornamental fish: a potential threat to aquatic biodiversity in peninsular India",
+      "publisher": "Journal of Threatened Taxa",
+      "creator": "J. D. Marcus Knight",
+      "url": "https://www.threatenedtaxa.org/index.php/JoTT/article/download/465/780/851?inline=1",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "peer_reviewed_reference",
+      "allowedUse": "Hybrid-origin, adult-scale, predatory-behavior, and citation facts only; no figures copied or redistributed.",
+      "license": "CC BY 3.0 Unported, with JoTT non-commercial reuse terms stated in the article",
+      "pose": "not_applicable",
+      "evidence": ["Flowerhorn is a product of hybridisation among ornamental Cichlasoma and Amphilophus lineages.", "The exact ancestry is uncertain and was treated as a trade secret.", "The fish is reported to grow to almost 30 cm and to prey on smaller fish."]
+    },
+    {
+      "id": "NFRDI-FRESHWATER-ORNAMENTAL-PRODUCTION",
+      "title": "Freshwater Ornamental Fish Breeding and Production",
+      "publisher": "National Fisheries Research and Development Institute, Philippines",
+      "creator": "Maria Theresa M. Mutia, Lilian C. Garcia, Frederick B. Muyot, Myla C. Muyot, Myleen L. Magistrado, Ma. Lourdes D. Merilles, Lea Mae S. Dela Cruz, and Norvida C. Gatdula",
+      "url": "https://repository.nfrdi.da.gov.ph/server/api/core/bitstreams/2bf1341f-a16d-4c35-8792-c605b985ed3c/content",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "government_training_reference",
+      "allowedUse": "Sexual dimorphism and breeder morphology facts with citation only; no figures copied or redistributed.",
+      "license": "CC BY-NC",
+      "pose": "not_applicable",
+      "evidence": ["Mature males are larger than females and develop a humped head after six months.", "Selected breeders should have a large humped head and a robust, stout body.", "A shiny reddish abdomen or body, pearly scale dots, and four or more dark flower characters are desired ornamental traits.", "Flowerhorns are highly aggressive and territorial, and the module advises separation from their own and other species.", "Breeding guidance specifies pH 6.0 to 8.0, ideally 6.5 to 7.4, hardness 89 to 340 ppm CaCO3, and temperature 24 to 30 degrees Celsius.", "For prime six-inch fish, the module recommends individual aquariums, weekly 30 to 40 percent water changes, and daily removal of uneaten feed and fecal matter."]
+    },
+    {
+      "id": "INFANTE-2018-NUCHAL-HUMP",
+      "title": "Specialized Feed Induced Growth, Nuchal Hump Development and Histological Changes in Flowerhorn",
+      "publisher": "11th International Scholars Conference",
+      "creator": "Kristine Mae G. Infante and coauthors",
+      "url": "https://jurnal.unai.edu/index.php/isc/article/view/1196",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "conference_research_reference",
+      "allowedUse": "Nuchal-hump anatomy and biological-development facts with citation only; no figures copied or redistributed.",
+      "license": "Copyright ISC Committee; no source imagery reused",
+      "pose": "not_applicable",
+      "evidence": ["The prominent forehead structure is a nuchal hump with vertical and horizontal growth components.", "Histology identified fat deposits under the stratum compactum and increased dermal thickness in the hump."]
+    },
+    {
+      "id": "COMMONS-FLOWERHORN-COMPETITION",
+      "title": "File:Flowerhorn.jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Lerdsuwa",
+      "url": "https://commons.wikimedia.org/wiki/File:Flowerhorn.jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Qualitative adult competition-form lateral silhouette, hump, fin, mouth, and pattern reference only; no pixels copied, sampled, traced, redistributed, embedded, or hotlinked.",
+      "license": "CC BY-SA 3.0, with additional GFDL and CC BY-SA options stated on the exact file page",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "pose": "primary_lateral_oblique",
+      "evidence": ["Exaggerated rounded nuchal hump rises above the seated eye and skull.", "Stout deep cichlid trunk tapers through a strong peduncle into a broad rounded tail.", "Red-orange ground, iridescent pearling, and an irregular dark lateral flower line are visible ornamental cues."]
+    },
+    {
+      "id": "COMMONS-FLOWERHORN-48821775218",
+      "title": "File:Flowerhorn (48821775218).jpg",
+      "publisher": "Wikimedia Commons",
+      "creator": "Garry Knight",
+      "url": "https://commons.wikimedia.org/wiki/File:Flowerhorn_(48821775218).jpg",
+      "accessedAt": "2026-09-09",
+      "evidenceClass": "open_reference_imagery",
+      "allowedUse": "Additional adult lateral-oblique body-volume, hump, eye, lip, peduncle, and fin-envelope reference only; no pixels copied, sampled, traced, redistributed, embedded, or hotlinked.",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "pose": "secondary_lateral_oblique",
+      "evidence": ["The head hump is continuous with the dorsal body profile rather than a detached sphere.", "The small eye sits below the hump and behind the terminal fleshy lips.", "Long-based dorsal and anal fins frame the deep body without producing an angelfish silhouette."]
+    }
+  ],
+  "viewCoverage": {
+    "side": "Strong qualitative coverage from two exact licensed adult Flowerhorn pages, supported by government morphology criteria.",
+    "top": "Inferred with high uncertainty because no calibrated orthographic dorsal original was found.",
+    "front": "Inferred with high uncertainty because no calibrated orthographic frontal original was found."
+  },
+  "referenceGrade": "B",
+  "referenceGradeRationale": "Peer-reviewed, government, and conference sources establish hybrid status, adult scale, robust male form, and hump anatomy. Two exact licensed adult photographs constrain the characteristic side view. Strain variation and missing orthographic top and front views prevent an A grade."
+}

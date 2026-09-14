@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "geometryDigestMatch": true,
+  "geometryDigest": "8b8358c3093d65e0ef41b28932a22e8b4ec5a852a540952223ddc8a01fb470ec",
+  "rebuildGeometryDigest": "8b8358c3093d65e0ef41b28932a22e8b4ec5a852a540952223ddc8a01fb470ec",
+  "textureHashMatch": true,
+  "textures": {
+    "shell-albedo.png": "f056e36ef35f35e215fbf24babaea9de6601b5917ad446ccd08eb4038559e949"
+  },
+  "rigDigestMatch": true,
+  "status": "passed"
+}
