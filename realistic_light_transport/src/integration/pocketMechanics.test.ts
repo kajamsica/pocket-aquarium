@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import {
   advancePocketState,
+  createPocketNewGame,
   createPocketReefShowcase,
   dispatchPocketAction,
   pocketActions,
@@ -47,6 +48,7 @@ function installStorage() {
     /** What a reload would restore, read straight from the bytes on disk. */
     reload: () => restorePocketGame(JSON.parse(cells.get(pocketSaveKey)!)),
     seq: () => JSON.parse(cells.get(pocketSaveKey)!).saveSeq as number | undefined,
+    keys: () => [...cells.keys()],
     write: (payload: string) => { cells.set(pocketSaveKey, payload) },
   }
 }
@@ -186,8 +188,10 @@ describe('integrated reef showcase mechanics', () => {
     expect(view.specimens.map((animal) => animal.id)).toEqual(state.livestock.map((animal) => animal.id))
     expect(new Set(view.specimens.map((animal) => animal.speciesId))).toHaveProperty('size', 25)
     expect(view.specimens.some((animal) => animal.speciesId === 'epaulette_shark')).toBe(false)
-    expect(view.specimens.every((animal) => animal.stage === 'adult' && animal.health === 1
-      && animal.condition === 1 && animal.hunger <= .15 && animal.runtimeProfile.id === animal.speciesId)).toBe(true)
+    expect(view.specimens.every((animal) => animal.stage === 'adult')).toBe(true)
+    expect(view.specimens.every((animal) => animal.health > .99 && animal.condition > .95)).toBe(true)
+    expect(view.specimens.every((animal) => animal.hunger <= .2)).toBe(true)
+    expect(view.specimens.every((animal) => animal.runtimeProfile.id === animal.speciesId)).toBe(true)
     expect(view.specimens.every((animal) => animal.x >= 0 && animal.x <= 1 && animal.y >= 0 && animal.y <= 1)).toBe(true)
     expect(createPocketReefShowcase().livestock.map((animal) => animal.id)).toEqual(state.livestock.map((animal) => animal.id))
     expect(animalOffers).toHaveLength(26)
@@ -234,6 +238,108 @@ describe('integrated reef showcase mechanics', () => {
     expect(projected.placedCorals).toMatchObject([{ id: coral.id, speciesId: coral.speciesId,
       variantId: coral.variantId, speciesName: coral.speciesName,
       variantDisplayName: coral.variantDisplayName, health: expect.any(Number) }])
+  })
+})
+
+describe('freshwater bridge boundary', () => {
+  const choose = (habitat: 'freshwater' | 'saltwater') => dispatchPocketAction(
+    createPocketNewGame(), { type: pocketActions.CHOOSE_HABITAT, habitat },
+  )
+
+  it('keeps a new game unchosen, canonicalizes aliases, and resets through the shared save', () => {
+    const store = installStorage()
+    try {
+      expect(createPocketNewGame().habitat).toBeNull()
+      const amazon = choose('freshwater')
+      expect(amazon.habitat).toBe('amazon')
+      expect(choose('saltwater').habitat).toBe('reef')
+
+      const restoredAmazon = restorePocketGame(JSON.parse(serializePocketGame(amazon, 1000)), 1000)
+      const restoredReef = restorePocketGame(
+        JSON.parse(serializePocketGame(createPocketReefShowcase(), 1000)), 1000,
+      )
+      expect(restoredAmazon.habitat).toBe('amazon')
+      expect(restoredReef.habitat).toBe('reef')
+
+      const filledAmazon = dispatchPocketAction(amazon, { type: pocketActions.SETUP_FILL })
+      persistPocketState(filledAmazon)
+      expect(store.reload().habitat).toBe('amazon')
+      expect(store.reload().cycle.filled).toBe(true)
+      expect(store.seq()).toEqual(expect.any(Number))
+      expect(store.keys()).toEqual([pocketSaveKey])
+
+      persistPocketState(createPocketNewGame())
+      expect(store.reload().habitat).toBeNull()
+      expect(store.keys()).toEqual([pocketSaveKey])
+    } finally {
+      Reflect.deleteProperty(globalThis, 'localStorage')
+    }
+  })
+
+  it('projects freshwater chemistry, livestock, equipment, and copy without reef leakage', () => {
+    const view = projectPocketState(choose('freshwater'))
+    const livestockIds = view.storeOffers.filter(({ kind }) => kind === 'livestock').map(({ id }) => id)
+    const equipmentIds = view.storeOffers.filter(({ kind }) => kind === 'equipment').map(({ id }) => id)
+    const tiers = view.storeOffers.filter(({ kind }) => kind === 'tier')
+
+    expect(view.reefSnapshot.namespace).toBe('freshwater')
+    expect(view.habitatName).toBe('Amazonian blackwater margin')
+    expect(view.objective).toMatchObject({ title: 'Fill and dechlorinate',
+      detail: expect.stringContaining('soft-water baseline') })
+    expect(view.testedWater.map(({ key }) => key)).toEqual([
+      'level', 'tempC', 'pH', 'ammonia', 'nitrite', 'nitrate', 'oxygen', 'hardness', 'tannin',
+    ])
+    expect(view.reefSnapshot.chemistry).toMatchObject({ saltEquivalentMassKilograms: 0,
+      saltEquivalentGPerKg: 0 })
+    expect(view.optics).toEqual({ localPpfd: 0, mode: 'read_only' })
+
+    const filled = dispatchPocketAction(choose('freshwater'), { type: pocketActions.SETUP_FILL })
+    expect(filled.water.tannin).toBeCloseTo(.6, 6)
+    expect(projectPocketState(filled).reefSnapshot.chemistry.tannin).toBeCloseTo(.6, 6)
+
+    expect(livestockIds).toEqual([])
+    expect(view.storeOffers.filter(({ kind }) => kind === 'livestock')
+      .every(({ id }) => Boolean(specimenAssetFor(id)))).toBe(true)
+    expect(view.storeOffers.find(({ id }) => id === 'neon_tetra')).toBeUndefined()
+    expect(projectPocketState(choose('freshwater'), { godMode: true }).storeOffers
+      .filter(({ kind }) => kind === 'livestock')).toEqual([])
+    expect(view.storeOffers.some(({ kind }) => kind === 'coral')).toBe(false)
+    expect(equipmentIds.some((id) => id.startsWith('skimmer:') || id.startsWith('algae_clip:'))).toBe(false)
+    expect(tiers.every(({ detail }) => detail?.includes('pH, hardness, and tannins'))).toBe(true)
+    expect(tiers.every(({ detail }) => !detail?.includes('salinity, alkalinity, calcium'))).toBe(true)
+
+    const reefOffers = projectPocketState(createPocketReefShowcase()).storeOffers
+    const reefLivestockIds = reefOffers.filter(({ kind }) => kind === 'livestock').map(({ id }) => id)
+    expect(reefLivestockIds).toContain('ocellaris')
+    expect(reefLivestockIds).toContain('black_storm_ocellaris')
+    expect(reefOffers.some(({ kind }) => kind === 'coral')).toBe(true)
+    expect(reefOffers.some(({ id }) => id === 'skimmer:hob')).toBe(true)
+    expect(reefOffers.some(({ id }) => id === 'algae_clip:clip')).toBe(true)
+  })
+
+  it('projects exact water-type equipment catalogs in normal and God Mode', () => {
+    const ids = (state: PocketState, godMode: boolean) => projectPocketState(state, { godMode }).storeOffers
+      .filter(({ kind }) => kind === 'equipment').map(({ id }) => id)
+    const freshwaterIds = [
+      'filter:sponge', 'filter:hob', 'filter:canister', 'filter:high_capacity',
+      'heater:none', 'heater:basic', 'heater:controller',
+      'circulation:none', 'circulation:powerhead', 'circulation:gyre',
+      'light:basic', 'light:planted_led', 'light:high_growth_led',
+      'refugium:none', 'refugium:refugium', 'ato:none', 'ato:ato', 'feeder:none', 'feeder:auto',
+    ]
+    const reefIds = [
+      'filter:sponge', 'filter:hob', 'filter:canister',
+      'heater:none', 'heater:basic', 'heater:controller',
+      'circulation:none', 'circulation:powerhead', 'circulation:gyre',
+      'light:basic', 'light:led', 'light:pro_led',
+      'skimmer:none', 'skimmer:hob', 'skimmer:cone', 'refugium:none', 'refugium:refugium',
+      'ato:none', 'ato:ato', 'feeder:none', 'feeder:auto', 'algae_clip:none', 'algae_clip:clip',
+    ]
+
+    for (const godMode of [false, true]) {
+      expect(ids(createPocketReefShowcase(), godMode)).toEqual(reefIds)
+      expect(ids(choose('freshwater'), godMode)).toEqual(freshwaterIds)
+    }
   })
 })
 

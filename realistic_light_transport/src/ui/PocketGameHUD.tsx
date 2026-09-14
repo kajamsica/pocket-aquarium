@@ -44,6 +44,7 @@ interface PocketGameHUDProps {
   readonly godMode?: GodModeControls
   readonly showcaseCatalog?: AcceptedShowcaseCatalog
   readonly hoveredSpecimen?: SpecimenHover | null
+  readonly onStartOver: () => void
 }
 
 /* Which readings are pinned is a per-profile preference like window geometry: the phone rail
@@ -157,8 +158,10 @@ function signal(label: string, value: number, inverted = false) {
   </div>
 }
 
-export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen }: PocketGameHUDProps) {
+export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry, onRenderSettingsChange, godMode, showcaseCatalog, hoveredSpecimen, onStartOver }: PocketGameHUDProps) {
   const workspace = useHudWorkspace()
+  const reef = view.reefSnapshot.namespace === 'marine_reef'
+  const availableStoreFilters = reef ? STORE_FILTERS : STORE_FILTERS.filter((filter) => filter !== 'coral')
   const [launcherCollapsed, setLauncherCollapsed] = useState(() => workspace.profile === 'compact')
   const [pinnedByProfile, setPinnedByProfile] = useState<PinnedReadings>(readPinnedReadings)
   const pinnedReadings = pinnedByProfile[workspace.profile]
@@ -267,7 +270,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
 
   useEffect(() => {
     if (storeFilter === 'recommended' && !hasRecommendedOffers) setStoreFilter('equipment')
-  }, [hasRecommendedOffers, storeFilter])
+    if (!reef && storeFilter === 'coral') setStoreFilter('livestock')
+  }, [hasRecommendedOffers, reef, storeFilter])
 
   /* Only a change of selected resident reopens the inspector, so a window the player
    * closed stays closed while the simulation keeps re-rendering the same selection. */
@@ -286,7 +290,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
   return <div className="reef-hud pocket-game-hud" data-arranging={workspace.isArranging}>
     <header className="hud-topbar">
       <div className="hud-brand"><span className="hud-brand-mark" aria-hidden="true">PA</span><div>
-        <p>Guided reef care</p><h1>Pocket Reef Lab</h1>
+        <p>{reef ? 'Guided reef care' : 'Guided freshwater care'}</p><h1>{reef ? 'Pocket Reef Lab' : 'Pocket Freshwater Lab'}</h1>
       </div></div>
       <span className="hud-phone-clock">{gameClock} · {lightsOn ? 'Lights on' : 'Lights off'}</span>
       <div className="hud-run-state" aria-label="Authoritative game status">
@@ -376,7 +380,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       </>}
     </nav>
 
-    <HudWindow id="guide" title="Next step" eyebrow="Guided reef care" className="pocket-guide-window" workspace={workspace}>
+    <HudWindow id="guide" title="Next step" eyebrow={reef ? 'Guided reef care' : 'Guided freshwater care'} className="pocket-guide-window" workspace={workspace}>
       <section className="pocket-guide" aria-labelledby="pocket-guide-title">
         <div><p>Next guided step · {view.guide.stage.replaceAll('_', ' ')}</p><h2 id="pocket-guide-title">{view.guide.title}</h2></div>
         <p>{view.guide.body}</p>
@@ -444,7 +448,9 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       </dl>
       <div className="hud-ato" data-enabled={view.reefSnapshot.equipment.atoEnabled}><div className="hud-ato-icon" aria-hidden="true">H₂O</div><div>
         <span>Freshwater auto top-off</span><strong>{view.reefSnapshot.equipment.atoEnabled ? 'Installed and active' : 'Manual top-off'}</strong>
-        <small>{view.reefSnapshot.equipment.atoEnabled ? 'Replaces evaporated water without adding salt.' : 'Install an ATO in the store or top off manually.'}</small>
+        <small>{view.reefSnapshot.equipment.atoEnabled
+          ? reef ? 'Replaces evaporated water without adding salt.' : 'Replaces evaporation and holds the freshwater waterline.'
+          : 'Install an ATO in the store or top off manually.'}</small>
       </div></div>
       <div className="hud-light-reading"><div><span>Local PPFD</span><strong>{Math.round(lightField.localPpfd)}</strong><small>µmol photons m⁻² s⁻¹</small></div>
         <p>Read-only RLT physical sample at {lightField.sampleDepthMeters.toFixed(2)} m. It is not a water-test result.</p></div>
@@ -453,10 +459,10 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
     </HudWindow>
 
     <HudWindow id="store" title="Store" eyebrow="Livestock and equipment" className="hud-panel hud-ecology-panel" workspace={workspace}>
-      <section className="pocket-store" aria-labelledby="pocket-store-heading"><div className="hud-panel-heading pocket-store-heading"><div><p>Build a healthier reef</p>
+      <section className="pocket-store" aria-labelledby="pocket-store-heading"><div className="hud-panel-heading pocket-store-heading"><div><p>{reef ? 'Build a healthier reef' : 'Build a healthier freshwater habitat'}</p>
         <h2 id="pocket-store-heading">Aquarium supply</h2></div><span className="pocket-store-wallet"><small>Tank credits</small><strong>{view.unlimitedCredits ? '∞' : view.credits}</strong></span></div>
         <div className="pocket-store-filters" role="group" aria-label="Store category">
-          {STORE_FILTERS.map((filter) => <button key={filter} type="button" aria-pressed={storeFilter === filter}
+          {availableStoreFilters.map((filter) => <button key={filter} type="button" aria-pressed={storeFilter === filter}
             disabled={filter === 'recommended' && !hasRecommendedOffers}
             onClick={() => { setStoreFilter(filter); setFocusedOfferId(null) }}><span aria-hidden="true">{STORE_FILTER_META[filter][1]}</span>
             {STORE_FILTER_META[filter][0]} <small>{storeCounts[filter]}</small></button>)}
@@ -592,11 +598,8 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
         <button className="hud-button" type="button" onClick={() => dispatch({ type: 'WATER_CHANGE', fraction: 0.25 })}>25% water change</button>
         <button className="hud-button hud-button-ato" type="button" onClick={() => dispatch({ type: 'WATER_TOP_OFF' })}>Freshwater top-off</button>
         <button className="hud-button" type="button" onClick={() => {
-          if (window.confirm('Start a new dry reef? This replaces the current aquarium save.')) {
-            dispatch({ type: 'CHOOSE_HABITAT', habitat: 'reef' })
-            workspace.openPanel('water')
-          }
-        }}>Start new dry reef</button>
+          if (window.confirm(`Start a new ${reef ? 'reef' : 'freshwater aquarium'}? This replaces the current aquarium save and returns to habitat choice.`)) onStartOver()
+        }}>Start over</button>
       </div>
       <details className="pocket-automation-details">
         <summary>Automation</summary>
@@ -625,7 +628,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
             </div>
           </> : <small>Buy the auto feeder in the store to schedule feeding.</small>}
         </div>
-        <div className="pocket-automation-device" data-empty={view.nori.installed && view.nori.remaining <= 0}>
+        {reef ? <div className="pocket-automation-device" data-empty={view.nori.installed && view.nori.remaining <= 0}>
           <div className="pocket-automation-head"><span>Wall algae clip</span>
             <strong>{view.nori.installed ? `${view.nori.remaining}/${view.nori.capacity} nori` : 'Not installed'}</strong></div>
           {view.nori.installed ? <>
@@ -637,13 +640,15 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
                 onClick={() => dispatch({ type: 'REFILL_NORI' })}>{view.nori.remaining >= view.nori.capacity ? 'Nori full' : 'Refill nori'}</button>
             </div>
           </> : <small>Buy the magnetic nori grazing clip in the equipment store.</small>}
-        </div>
+        </div> : null}
         <div className="pocket-automation-device" data-empty={view.ato.installed && view.ato.reservoirL <= 0.05}>
           <div className="pocket-automation-head"><span>ATO reservoir</span>
             <strong>{!view.ato.installed ? 'Not installed'
               : `${view.ato.reservoirL.toFixed(1)} / ${view.ato.capacityL.toFixed(0)} L`}</strong></div>
           {view.ato.installed ? <>
-            <small>{view.ato.reservoirL <= 0.05 ? 'Empty — evaporation now concentrates salt.' : view.ato.topping ? 'Topping off evaporated freshwater.' : 'Holding the waterline.'}</small>
+            <small>{view.ato.reservoirL <= 0.05
+              ? reef ? 'Empty. Evaporation now concentrates salt.' : 'Empty. Evaporation now lowers the waterline.'
+              : view.ato.topping ? 'Topping off evaporated freshwater.' : 'Holding the waterline.'}</small>
             <div className="pocket-automation-actions">
               <button className="hud-button hud-button-ato" type="button"
                 onClick={() => dispatch({ type: 'REFILL_RESERVOIR' })}>Refill reservoir</button>

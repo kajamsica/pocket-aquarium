@@ -3,6 +3,11 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { ReefRenderSettings, ReefSceneProps } from '../contracts'
 import {
+  resolveHabitatVisualSettings,
+  snapshotTannin,
+  type AquariumVisualProfile,
+} from './habitatVisualProfile'
+import {
   OPTICAL_IOR,
   causticFragmentShader,
   causticVertexShader,
@@ -21,6 +26,7 @@ const PANEL_THICKNESS = 0.055
 
 export interface OpticalTankProps extends ReefSceneProps {
   readonly onOpticsTelemetry?: (telemetry: SpectralTransportTelemetry) => void
+  readonly visualProfile?: AquariumVisualProfile
 }
 
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
@@ -79,6 +85,7 @@ export function OpticalTank({
   snapshot,
   renderSettings = DEFAULT_RENDER_SETTINGS,
   onOpticsTelemetry,
+  visualProfile = 'reef',
 }: OpticalTankProps) {
   const { camera, gl, scene, size } = useThree()
   const opticalGroup = useRef<THREE.Group>(null)
@@ -115,7 +122,11 @@ export function OpticalTank({
     0,
     1,
   )
-  const attenuation = Math.max(snapshot.lightField.attenuationPerMeter, 0.01)
+  const visualSettings = resolveHabitatVisualSettings(visualProfile, snapshotTannin(snapshot))
+  const attenuation = Math.max(
+    snapshot.lightField.attenuationPerMeter * visualSettings.opticalAttenuationScale,
+    0.01,
+  )
   const flowPower = THREE.MathUtils.clamp(snapshot.equipment.flowPower, 0, 1)
 
   const volumeUniforms = useMemo(
@@ -245,7 +256,7 @@ export function OpticalTank({
       {/* A moving local light lets the procedural caustic cue reach rock-facing materials. */}
       <pointLight
         ref={causticLight}
-        color="#45bfff"
+        color={visualSettings.caustic}
         intensity={(7 + lightEnergy * 28) * interfaceTransmission}
         distance={4.6}
         decay={2}
@@ -276,7 +287,7 @@ export function OpticalTank({
           >
             <cylinderGeometry args={[0.055, 0.34, 1, 14, 1, true]} />
             <meshBasicMaterial
-              color={index === 1 ? '#7ecbff' : '#4a9eff'}
+              color={index === 1 ? visualSettings.shaftColors[1] : visualSettings.shaftColors[0]}
               transparent
               opacity={shaftOpacity}
               blending={THREE.AdditiveBlending}
