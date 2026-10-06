@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import {
   createPocketFreshwaterDevTank,
-  createPocketReefShowcase,
+  createPocketNewGame,
   DEV_FRESHWATER_50_TANK_ID,
+  devSafeSaveKey,
   dispatchPocketAction,
   loadSavedPocketState,
   pocketActions,
@@ -11,7 +12,7 @@ import {
   serializePocketGame,
   type PocketState,
 } from './pocketAquariumBridge'
-import { createPocketTankRepository } from './pocketTankRepository'
+import { createPocketTankRepository, eraseAllPocketAquariumData } from './pocketTankRepository'
 
 const NOW = 1_700_000_000_000
 const BASE = pocketSaveKey
@@ -49,12 +50,58 @@ class MemoryStorage implements Storage {
   entries() { return [...this.cells.entries()].sort(([a], [b]) => a.localeCompare(b)) }
 }
 
-const reef = (credits = 100) => Object.assign(createPocketReefShowcase(), { credits })
+const reef = (credits = 100) => Object.assign(dispatchPocketAction(createPocketNewGame(), {
+  type: pocketActions.CHOOSE_HABITAT, habitat: 'reef',
+}), { credits })
 const freshwater = (credits = 200) => Object.assign(createPocketFreshwaterDevTank(NOW), { credits })
 const repository = (storage: MemoryStorage, makeId?: () => string) =>
   createPocketTankRepository({ storage, baseKey: BASE, now: () => NOW, makeId })
 
 describe('pocket tank repository storage contract', () => {
+  it('erases every owned save and preference key while preserving unrelated origin data', () => {
+    const owned = [
+      BASE,
+      INDEX,
+      tankKey('display-reef'),
+      devSafeSaveKey,
+      `${devSafeSaveKey}:tank-index-v1`,
+      `${devSafeSaveKey}:tank-v1:freshwater-50`,
+      `${devSafeSaveKey}:god-mode`,
+      `${devSafeSaveKey}:god-mode:legacy`,
+      `${devSafeSaveKey}:god-mode:freshwater-50`,
+      'pocket-aquarium-hud-layout-v3',
+      'pocket-aquarium-hud-layout-v4',
+      'pocket-aquarium-pinned-readings-v1',
+      'pocket-aquarium-pinned-readings-v2',
+      'pocket-aquarium:coral-tray-open',
+      'pocket-aquarium:coral-tray-open:compact',
+    ]
+    const unrelated = [
+      ['pocket-aquarium-third-party', 'keep'],
+      [`${BASE}-backup`, 'keep too'],
+    ] as const
+    const storage = new MemoryStorage([
+      ...owned.map((key) => [key, 'owned'] as const),
+      ...unrelated,
+    ])
+
+    expect(eraseAllPocketAquariumData(storage, BASE)).toBe(owned.length)
+    expect(storage.entries()).toEqual([...unrelated].sort(([a], [b]) => a.localeCompare(b)))
+  })
+
+  it('does not let a stale pagehide-style save recreate an erased aquarium', () => {
+    const storage = new MemoryStorage([['unrelated-app-state', 'survives']])
+    const staleView = repository(storage)
+    const active = staleView.createTank({ name: 'Home reef', state: reef(17) }).active!
+
+    eraseAllPocketAquariumData(storage, BASE)
+    const result = staleView.saveActive(active.id, active.state)
+
+    expect(result.status).toBe('active_changed')
+    expect(result.snapshot.active).toBeNull()
+    expect(storage.entries()).toEqual([['unrelated-app-state', 'survives']])
+  })
+
   it('keeps empty storage unpersisted until the first ordinary tank is created', () => {
     const storage = new MemoryStorage()
     const repo = repository(storage)
