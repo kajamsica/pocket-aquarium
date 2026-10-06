@@ -41,4 +41,3 @@ Build your dream aquarium and watch a living underwater ecosystem grow.
 ## Primary landscape hero
 
 ![Pocket Aquarium reef hero](../assets/marketing/pocket-aquarium-reef-hero-v1.png)
-

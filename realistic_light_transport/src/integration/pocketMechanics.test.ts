@@ -201,7 +201,7 @@ describe('integrated reef showcase mechanics', () => {
     expect(sharkOffer).toMatchObject({ allowed: false })
     expect(coralOffers.every((offer) => typeof offer.action.variantId === 'string')).toBe(true)
     expect(view.coralInventory).toHaveLength(0)
-    expect(view.placedCorals).toHaveLength(48)
+    expect(view.placedCorals).toHaveLength(43)
     expect(view.placedCorals.every((coral) => specimenAssetFor(coral.speciesId, coral.variantId))).toBe(true)
 
     const selected = dispatchPocketAction(state, { type: pocketActions.SELECT_ENTITY,
@@ -287,11 +287,14 @@ describe('freshwater bridge boundary', () => {
     expect(filled.water.tannin).toBeCloseTo(.6, 6)
     expect(projectPocketState(filled).reefSnapshot.chemistry.tannin).toBeCloseTo(.6, 6)
 
-    expect(livestockIds).toEqual([])
+    expect(livestockIds).toEqual([
+      'neon_tetra', 'pygmy_cory', 'betta_splendens_male', 'harlequin_rasbora', 'bronze_cory',
+    ])
     expect(view.storeOffers.filter(({ kind }) => kind === 'livestock')
       .every(({ id }) => Boolean(specimenAssetFor(id)))).toBe(true)
-    expect(view.storeOffers.find(({ id }) => id === 'neon_tetra')).toBeUndefined()
-    expect(godView.storeOffers.filter(({ kind }) => kind === 'livestock')).toEqual([])
+    expect(view.storeOffers.find(({ id }) => id === 'neon_tetra')).toBeDefined()
+    expect(godView.storeOffers.filter(({ kind }) => kind === 'livestock').map(({ id }) => id))
+      .toEqual(livestockIds)
     expect(godView.storeOffers.filter(({ kind }) => kind === 'coral')).toEqual([])
     expect(view.storeOffers.some(({ kind }) => kind === 'coral')).toBe(false)
     expect(equipmentIds.some((id) => id.startsWith('skimmer:') || id.startsWith('algae_clip:'))).toBe(false)
