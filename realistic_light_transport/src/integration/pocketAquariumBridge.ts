@@ -573,18 +573,23 @@ export function createPocketReefShowcase(
       surfaceSamples.set(preferredRock.id, samples)
     }
     const start = (index * 17 + preferredRock.index * 7) % samples.length
-    let best: { point: THREE.Vector3; normal: THREE.Vector3; clearance: number } | undefined
+    let best: { point: THREE.Vector3; spacingPoint: THREE.Vector3;
+      normal: THREE.Vector3; clearance: number } | undefined
     for (let attempt = 0; attempt < samples.length; attempt += 1) {
       const sample = samples[(start + attempt) % samples.length]
       if (sample.normal.y < minimumUp) continue
-      const embed = surfaceHugging ? Math.min(.035, footprintRadius * .12) : 0
+      const spacingEmbed = surfaceHugging ? Math.min(.035, footprintRadius * .12) : 0
+      const embed = entry.speciesId === 'stylophora' ? .045 : spacingEmbed
+      const spacingPoint = sample.position.clone().addScaledVector(sample.normal, -spacingEmbed)
       const point = sample.position.clone().addScaledVector(sample.normal, -embed)
       const clearance = occupied.reduce((nearest, prior) => Math.min(nearest,
-        point.distanceTo(prior.point) - footprintRadius - prior.radius), Infinity)
-      if (!best || clearance > best.clearance) best = { point, normal: sample.normal, clearance }
+        spacingPoint.distanceTo(prior.point) - footprintRadius - prior.radius), Infinity)
+      if (!best || clearance > best.clearance) best = {
+        point, spacingPoint, normal: sample.normal, clearance,
+      }
     }
     if (!best) throw new Error(`Showcase coral has no upper surface on ${entry.placement.surfaceId}`)
-    occupied.push({ point: best.point, radius: footprintRadius })
+    occupied.push({ point: best.spacingPoint, radius: footprintRadius })
     const normal = best.normal.clone().normalize()
     const placement: PocketCoralPlacement = { ...entry.placement,
       position: localTankPointToNormalized(best.point, SHOWCASE_PLACEMENT_SPACE),

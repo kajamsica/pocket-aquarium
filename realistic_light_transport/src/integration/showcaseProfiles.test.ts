@@ -129,6 +129,7 @@ describe('reef showcase preset registry', () => {
       waterlineY: -1.56 + 3.1 * .78 }
     const samplesByRock = new Map<number,
       ReturnType<typeof createLiveRockUpperSurfaceSamples>>()
+    const spacingPoints: THREE.Vector3[] = []
     const points = state.corals.map((coral, index) => {
       const entry = profile.coralGarden[index]
       const rockId = Number(/^rock:(\d+)$/.exec(coral.placement?.surfaceId ?? '')?.[1])
@@ -147,13 +148,22 @@ describe('reef showcase preset registry', () => {
       expect(normal.y, entry.key).toBeGreaterThanOrEqual(
         entry.morphology === 'table' || entry.morphology === 'plating' ? .56
           : entry.morphology === 'encrusting' ? .42 : .3)
-      expect(samples.some((sample) => {
-        const delta = point.clone().sub(sample.position)
-        return sample.normal.distanceTo(normal) < 1e-8 && delta.length() <= .035001
-          && (delta.length() < 1e-8 || Math.abs(delta.normalize().dot(normal)) > .999999)
-      }), entry.key).toBe(true)
+      const attachment = samples.filter((sample) => sample.normal.distanceTo(normal) < 1e-8)
+        .map((sample) => point.clone().sub(sample.position))
+        .sort((a, b) => a.lengthSq() - b.lengthSq())[0]
+      expect(attachment, entry.key).toBeDefined()
+      if (entry.speciesId === 'stylophora') {
+        expect(attachment.length(), entry.key).toBeCloseTo(.045, 8)
+        expect(attachment.dot(normal), entry.key).toBeCloseTo(-.045, 8)
+      } else {
+        expect(attachment.length(), entry.key).toBeLessThanOrEqual(.035001)
+      }
+      spacingPoints.push(entry.speciesId === 'stylophora'
+        ? point.clone().addScaledVector(normal, .045) : point)
       return point
     })
+    expect(new Set(profile.coralGarden.filter(({ speciesId }) => speciesId === 'stylophora')
+      .map(({ variantId }) => variantId))).toEqual(new Set(['blueberry', 'pink']))
     expect(replay.corals.map(({ placement }) => placement))
       .toEqual(state.corals.map(({ placement }) => placement))
     expect(new Set(points.map((point) => point.toArray().map((value) => value.toFixed(4)).join(':'))).size)
@@ -177,7 +187,8 @@ describe('reef showcase preset registry', () => {
     let closestPair = ''
     for (let index = 0; index < points.length; index += 1) {
       for (let other = index + 1; other < points.length; other += 1) {
-        const clearance = points[index].distanceTo(points[other]) - radii[index] - radii[other]
+        const clearance = spacingPoints[index].distanceTo(spacingPoints[other])
+          - radii[index] - radii[other]
         if (clearance < minimumClearance) {
           minimumClearance = clearance
           closestPair = `${profile.coralGarden[index].key}/${profile.coralGarden[other].key}`
