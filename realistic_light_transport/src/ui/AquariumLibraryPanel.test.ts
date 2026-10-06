@@ -13,7 +13,7 @@ import { eraseAllPocketAquariumData } from '../integration/pocketTankRepository'
 import { AquariumLibraryPanel, type AquariumLibraryModel } from './AquariumLibraryPanel'
 import { PocketGameHUD } from './PocketGameHUD'
 
-const hookHarness = vi.hoisted(() => ({ enabled: false, value: false }))
+const hookHarness = vi.hoisted(() => ({ enabled: false, value: false as unknown }))
 
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>()
@@ -21,8 +21,8 @@ vi.mock('react', async (importOriginal) => {
     if (!hookHarness.enabled) return actual.useState(initial)
     const value = hookHarness.value as T
     return [value, (next: T | ((previous: T) => T)) => {
-      hookHarness.value = (typeof next === 'function'
-        ? (next as (previous: T) => T)(value) : next) as boolean
+      hookHarness.value = typeof next === 'function'
+        ? (next as (previous: T) => T)(value) : next
     }] as const
   } }
 })
@@ -60,8 +60,13 @@ describe('aquarium library UI contract', () => {
       get length() { return cells.size },
       key: (index: number) => [...cells.keys()][index] ?? null,
       removeItem: (key: string) => { cells.delete(key) },
+      getItem: (key: string) => cells.get(key) ?? null,
+      setItem: (key: string, value: string) => { cells.set(key, value) },
     }
-    const onEraseAll = vi.fn(() => eraseAllPocketAquariumData(storage, pocketSaveKey))
+    const onEraseAll = vi.fn(() => {
+      eraseAllPocketAquariumData(storage, pocketSaveKey)
+      return true
+    })
     const model: AquariumLibraryModel = {
       tanks: [
         { id: 'reef', name: 'Reef Display', habitat: 'reef', active: true },
@@ -119,12 +124,40 @@ describe('aquarium library UI contract', () => {
       expect(onEraseAll).not.toHaveBeenCalled()
       expect([...cells.entries()]).toEqual([[pocketSaveKey, 'tank'], ['unrelated', 'keep']])
 
-      hookHarness.value = true
+      hookHarness.value = 'confirming'
       panel = AquariumLibraryPanel({ model })
       buttons = descendants(panel).filter(({ type }) => type === 'button')
       ;(buttons.find(({ props }) => props.children === 'Erase everything')!.props.onClick as () => void)()
       expect(onEraseAll).toHaveBeenCalledOnce()
-      expect([...cells.entries()]).toEqual([['unrelated', 'keep']])
+      expect([...cells.keys()].sort()).toEqual([`${pocketSaveKey}:tank-index-v1`, 'unrelated'].sort())
+    } finally {
+      hookHarness.enabled = false
+    }
+  })
+
+  it('shows an accessible retry when confirmed erasure fails', () => {
+    const onEraseAll = vi.fn(() => false)
+    const model: AquariumLibraryModel = {
+      tanks: [],
+      onCreate: vi.fn(),
+      onActivate: vi.fn(),
+      onRename: vi.fn(),
+      onEraseAll,
+    }
+    hookHarness.enabled = true
+    hookHarness.value = 'confirming'
+    try {
+      let panel = AquariumLibraryPanel({ model })
+      let erase = descendants(panel).find(({ props }) => props.children === 'Erase everything')!
+      ;(erase.props.onClick as () => void)()
+
+      panel = AquariumLibraryPanel({ model })
+      const markup = renderToStaticMarkup(panel)
+      expect(markup).toContain('role="alert"')
+      expect(markup).toContain('Aquarium data could not be erased')
+      erase = descendants(panel).find(({ props }) => props.children === 'Try erase again')!
+      ;(erase.props.onClick as () => void)()
+      expect(onEraseAll).toHaveBeenCalledTimes(2)
     } finally {
       hookHarness.enabled = false
     }

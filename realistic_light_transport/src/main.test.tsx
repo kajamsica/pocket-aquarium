@@ -34,6 +34,8 @@ function storage() {
     get length() { return cells.size },
     key: (index: number) => [...cells.keys()][index] ?? null,
     removeItem: (key: string) => { cells.delete(key) },
+    getItem: (key: string) => cells.get(key) ?? null,
+    setItem: (key: string, value: string) => { cells.set(key, value) },
   }
 }
 
@@ -104,7 +106,14 @@ describe('root recovery UI contract', () => {
     confirmErase.mockReturnValue(true)
     erase()
 
-    expect([...cells.entries()]).toEqual([['unrelated-origin-key', 'keep']])
+    expect([...cells.keys()].sort()).toEqual([
+      `${pocketSaveKey}:tank-index-v1`,
+      'unrelated-origin-key',
+    ].sort())
+    expect(JSON.parse(cells.get(`${pocketSaveKey}:tank-index-v1`)!)).toEqual({
+      schemaVersion: 'pocket-aquarium.tank-index/v1', revision: 0,
+      activeTankId: null, tanks: [],
+    })
     expect(replace).toHaveBeenCalledWith('https://aquarium.test/')
   })
 })

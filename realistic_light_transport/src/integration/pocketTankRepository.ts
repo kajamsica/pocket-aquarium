@@ -42,20 +42,29 @@ interface StoredTank { readonly raw: string; readonly state: PocketState; readon
 interface SeenTank { readonly raw: string | null; readonly seq: number }
 type TankSlot = Readonly<{ kind: 'missing' } | { kind: 'invalid'; raw: string } | { kind: 'valid'; stored: StoredTank }>
 interface IndexRecord { readonly raw: string | null; readonly index: PocketTankIndex }
-const emptyIndex = (): PocketTankIndex => ({ schemaVersion: INDEX_SCHEMA, revision: 0,
+const emptyIndex = (revision = 0): PocketTankIndex => ({ schemaVersion: INDEX_SCHEMA, revision,
   activeTankId: null, tanks: [] })
 
 /** Remove only Pocket Aquarium saves and preferences from this origin. The save-key family owns
  * legacy, indexed, per-tank, developer-safe, and God Mode records. UI preferences use separate
  * historical names, so they stay explicit here rather than widening deletion to unrelated data. */
 export function eraseAllPocketAquariumData(
-  storage: Pick<Storage, 'key' | 'length' | 'removeItem'>,
+  storage: Pick<Storage, 'getItem' | 'setItem' | 'key' | 'length' | 'removeItem'>,
   baseKey: string,
 ) {
+  const indexKey = `${baseKey}:tank-index-v1`
+  let tombstoneRevision = 0
+  const currentIndex = storage.getItem(indexKey)
+  if (currentIndex !== null) {
+    try { tombstoneRevision = parseIndex(currentIndex).revision + 1 } catch { /* replace malformed bytes */ }
+  }
+  storage.setItem(indexKey, JSON.stringify(emptyIndex(tombstoneRevision)))
+
   const ownedKeys: string[] = []
   for (let index = 0; index < storage.length; index++) {
     const key = storage.key(index)
-    if (key !== null && (key === baseKey || key.startsWith(`${baseKey}:`) || UI_STORAGE_KEYS.has(key))) {
+    if (key !== null && key !== indexKey
+      && (key === baseKey || key.startsWith(`${baseKey}:`) || UI_STORAGE_KEYS.has(key))) {
       ownedKeys.push(key)
     }
   }

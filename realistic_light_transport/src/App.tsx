@@ -534,8 +534,8 @@ function AquariumApp() {
   }, [refreshTankIndex])
 
   const eraseAllData = useCallback(() => {
-    if (!TANK_STORAGE) return
-    try { eraseAllPocketAquariumData(TANK_STORAGE, pocketSaveKey) } catch { return }
+    if (!TANK_STORAGE) return false
+    try { eraseAllPocketAquariumData(TANK_STORAGE, pocketSaveKey) } catch { return false }
     tankSnapshotRef.current = null
     setTankSnapshot(null)
     const next = createPocketNewGame()
@@ -547,6 +547,7 @@ function AquariumApp() {
     freshUrl.search = ''
     freshUrl.hash = ''
     window.location.replace(freshUrl.toString())
+    return true
   }, [clearTankTransientState])
 
   const chooseHabitat = useCallback((habitat: 'reef' | 'amazon') => {
