@@ -209,6 +209,7 @@ function main(mod) {
   /* ------------------ 9. generated iOS / SPM project wiring ------------------ */
   group("generated iOS project");
   var iosApp = path.join(NATIVE, "ios", "App");
+  var trackedFiles = childProcess.execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8" }).trim().split("\n");
   ok(exists(path.join(iosApp, "App.xcodeproj", "project.pbxproj")), "Xcode project.pbxproj is committed");
   ok(exists(path.join(iosApp, "App", "AppDelegate.swift")), "App sources are committed (AppDelegate.swift)");
   var pkgSwift = readText(path.join(iosApp, "CapApp-SPM", "Package.swift"));
@@ -226,9 +227,74 @@ function main(mod) {
   var masterSize = pngSize(master);
   ok(masterSize && masterSize.width === 1254 && masterSize.height === 1254, "root icon master is preserved at 1254x1254");
 
+  group("production iOS app metadata");
+  var info = readText(path.join(iosApp, "App", "Info.plist"));
+  var project = readText(path.join(iosApp, "App.xcodeproj", "project.pbxproj"));
+  ok(!/<key>UIRequiredDeviceCapabilities<\/key>/.test(info) && !/<string>armv7<\/string>/.test(info),
+    "Info.plist does not require the obsolete armv7 capability");
+  ok(/<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\s*\/>/.test(info),
+    "Info.plist declares that the app does not use non-exempt encryption");
+  ok(/<key>CFBundleIdentifier<\/key>\s*<string>\$\(PRODUCT_BUNDLE_IDENTIFIER\)<\/string>/.test(info) &&
+     /<key>CFBundleShortVersionString<\/key>\s*<string>\$\(MARKETING_VERSION\)<\/string>/.test(info) &&
+     /<key>CFBundleVersion<\/key>\s*<string>\$\(CURRENT_PROJECT_VERSION\)<\/string>/.test(info),
+    "Info.plist continues to source bundle ID and versions from Xcode settings");
+  var orientationBlock = (info.match(/<key>UISupportedInterfaceOrientations<\/key>\s*<array>([\s\S]*?)<\/array>/) || ["", ""])[1];
+  var orientations = Array.from(orientationBlock.matchAll(/<string>([^<]+)<\/string>/g), function (m) { return m[1]; });
+  ok(eqArrays(orientations, ["UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"]),
+    "supported iPhone orientations remain portrait and both landscape directions");
+  ok((project.match(/TARGETED_DEVICE_FAMILY = 1;/g) || []).length === 2,
+    "App target Debug and Release configurations remain iPhone-only");
+  ok((project.match(/PRODUCT_BUNDLE_IDENTIFIER = com\.kajamsica\.pocketaquarium;/g) || []).length === 2,
+    "App target Debug and Release keep the production bundle ID");
+  ok((project.match(/MARKETING_VERSION = 1\.0;/g) || []).length === 2 &&
+     (project.match(/CURRENT_PROJECT_VERSION = 1;/g) || []).length === 2,
+    "App target Debug and Release keep version 1.0 build 1");
+
+  var privacyRel = "native/ios/App/App/PrivacyInfo.xcprivacy";
+  var privacy = readText(path.join(ROOT, privacyRel));
+  ok(trackedFiles.indexOf(privacyRel) >= 0, "PrivacyInfo.xcprivacy is committed");
+  ok(/PBXFileReference;[^}]*path = PrivacyInfo\.xcprivacy;/.test(project) &&
+     /PBXBuildFile;[^}]*\/\* PrivacyInfo\.xcprivacy \*\//.test(project) &&
+     (project.match(/\/\* PrivacyInfo\.xcprivacy in Resources \*\//g) || []).length === 2,
+    "PrivacyInfo.xcprivacy is referenced and copied by the App target");
+  ok(/<plist version="1\.0">\s*<dict>[\s\S]*<\/dict>\s*<\/plist>/.test(privacy), "privacy manifest has a valid plist dictionary shape");
+  ok(/<key>NSPrivacyTracking<\/key>\s*<false\s*\/>/.test(privacy), "privacy manifest declares tracking false");
+  ok(/<key>NSPrivacyTrackingDomains<\/key>\s*<array\s*\/>/.test(privacy), "privacy manifest declares no tracking domains");
+  ok(/<key>NSPrivacyCollectedDataTypes<\/key>\s*<array\s*\/>/.test(privacy), "privacy manifest declares no collected data types");
+  ok(/<key>NSPrivacyAccessedAPITypes<\/key>\s*<array\s*\/>/.test(privacy), "privacy manifest declares no required-reason API use");
+
+  var splashNames = ["splash-2732x2732-1.png", "splash-2732x2732-2.png", "splash-2732x2732.png"];
+  var splashDir = path.join(iosApp, "App", "Assets.xcassets", "Splash.imageset");
+  var splashContents = readText(path.join(splashDir, "Contents.json"));
+  var splashGeneratorRel = "assets/icons/generate-ios-splash.mjs";
+  var splashProvenanceRel = "assets/icons/IOS_SPLASH_PROVENANCE.md";
+  var splashProvenance = readText(path.join(ROOT, splashProvenanceRel));
+  var expectedSplashHash = "250ed7c22db15f1105b578edcd9ee39ff92259f2e1b643bb9e7bed8c1d0d0592";
+  ok(!exists(path.join(ROOT, splashGeneratorRel)) && trackedFiles.indexOf(splashProvenanceRel) >= 0,
+    "obsolete procedural generator is removed and capture provenance is committed");
+  ok(/direct WebGL render of the Pocket Aquarium game/.test(splashProvenance) &&
+     /No photograph, stock asset, external image, model output, or other third-party visual input was added/.test(splashProvenance) &&
+     /Account Holder must review[\s\S]*make the final ownership and commercial-rights attestation\./.test(splashProvenance),
+    "provenance identifies the app-owned render and preserves the human rights-attestation gate");
+  ok(/repository commit `bc972ea`/.test(splashProvenance) && /Source route: `http:\/\/127\.0\.0\.1:4221\/\?dev=1`/.test(splashProvenance) &&
+     /one Playwright browser page/.test(splashProvenance) && /does not claim byte-reproducible recapture/.test(splashProvenance) &&
+     splashProvenance.indexOf(expectedSplashHash) >= 0,
+    "provenance pins the source receipt, capture method, and exact committed-file hash");
+  var splashHashes = splashNames.map(function (name) {
+    var rel = "native/ios/App/App/Assets.xcassets/Splash.imageset/" + name;
+    var bytes = read(path.join(ROOT, rel));
+    var size = pngSize(bytes);
+    ok(trackedFiles.indexOf(rel) >= 0 && new RegExp('"filename"\\s*:\\s*"' + name.replace(/\./g, "\\.") + '"').test(splashContents), name + " is committed and catalog-wired");
+    ok(size && size.width === 2732 && size.height === 2732 && bytes[25] === 2, name + " is 2732x2732 RGB without alpha");
+    return sha256(bytes);
+  });
+  ok(new Set(splashHashes).size === 1, "all splash scales intentionally share the same branded bytes");
+  ok(splashHashes[0] === expectedSplashHash, "committed splash bytes match the provenance hash");
+  ok(splashHashes[0] !== "1b5002b74a5500e697298ced06ca2811ac33f2771f236f3c720ff23243890530",
+    "branded splash differs from the prior generic Capacitor asset");
+
   /* ------------------ 10. generated Android project wiring ------------------ */
   group("generated Android project");
-  var trackedFiles = childProcess.execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8" }).trim().split("\n");
   var androidMain = "native/android/app/src/main/java/com/kajamsica/pocketaquarium/MainActivity.java";
   [
     "native/android/settings.gradle",

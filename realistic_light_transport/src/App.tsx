@@ -24,9 +24,16 @@ import {
 } from './integration/pocketAquariumBridge'
 import {
   createPocketTankRepository,
+  eraseAllPocketAquariumData,
   type PocketActiveTank,
   type PocketTankRepositorySnapshot,
 } from './integration/pocketTankRepository'
+import {
+  DEV_TANK_VIEWS,
+  devTankViewFromSearch,
+  devTankViewUrl,
+  type DevTankViewId,
+} from './integration/devTankViews'
 import { ReefScene } from './scene/ReefScene'
 import type { CoralPlacementCandidate } from './scene/CoralPlacement'
 import { FeedingProvider, type FeedingApi } from './scene/feeding'
@@ -57,8 +64,10 @@ const SHOWCASE_MODE = SEARCH_PARAMS.get('showcase') === '1'
 const DEV_SAFE = isDevSafeActive()
 const SAVE_KEY = DEV_SAFE ? devSafeSaveKey : pocketSaveKey
 const LEGACY_GOD_MODE_KEY = `${devSafeSaveKey}:god-mode`
-const DEV_TANK = DEV_SAFE ? SEARCH_PARAMS.get('devTank') : null
-const TANK_STORAGE = WORKBENCH_SPECIES !== null || SHOWCASE_MODE ? null : (() => {
+const DEV_TANK = DEV_SAFE ? devTankViewFromSearch(window.location.search) : null
+const DEV_REEF_PROFILE_ID = DEV_TANK?.waterType === 'reef' ? DEV_TANK.id : null
+const FIXTURE_MODE = SHOWCASE_MODE || DEV_REEF_PROFILE_ID !== null
+const TANK_STORAGE = WORKBENCH_SPECIES !== null || FIXTURE_MODE ? null : (() => {
   try { return window.localStorage } catch { return null }
 })()
 const TANK_REPOSITORY = TANK_STORAGE ? createPocketTankRepository({
@@ -127,7 +136,7 @@ function initializeTankRepository() {
   if (!TANK_REPOSITORY) return null
   try {
     let snapshot = TANK_REPOSITORY.getSnapshot()
-    if (DEV_TANK !== 'freshwater-50') return snapshot
+    if (DEV_TANK?.waterType !== 'freshwater') return snapshot
     const exists = snapshot.index.tanks.some(({ id }) => id === DEV_FRESHWATER_50_TANK_ID)
     if (!exists) {
       snapshot = TANK_REPOSITORY.createTank({
@@ -175,7 +184,7 @@ let seenSeq = 0
 let seenRaw: string | null = null
 
 function readSaveRecord(): SaveRecord | null {
-  if (SHOWCASE_MODE) return null
+  if (FIXTURE_MODE) return null
   let raw: string | null = null
   try { raw = window.localStorage.getItem(SAVE_KEY) } catch { return null } // storage is optional
   if (raw === null) return null
@@ -221,7 +230,7 @@ export function rebaseOnStoredSave(local: PocketState): PocketState {
  *  sequence clears both this view's and storage's high mark. Callers reach here only after yielding
  *  to or rebasing onto anything newer, so this always writes rather than losing a race. */
 export function persistPocketState(state: PocketState) {
-  if (SHOWCASE_MODE) return
+  if (FIXTURE_MODE) return
   const stamped = { ...state, saveSeq: Math.max(readSaveRecord()?.seq ?? 0, seenSeq) + 1 }
   const payload = serializePocketGame(stamped)
   try { window.localStorage.setItem(SAVE_KEY, payload) } catch { return } // storage is optional
@@ -238,9 +247,9 @@ if (WORKBENCH_SPECIES !== null) {
 
 function AquariumApp() {
   const [initial] = useState(() => {
-    if (SHOWCASE_MODE) return {
+    if (FIXTURE_MODE) return {
       snapshot: null,
-      state: createPocketReefShowcase(),
+      state: createPocketReefShowcase(DEV_REEF_PROFILE_ID ?? undefined),
       protectionOn: godModePreferred(),
     }
     const snapshot = initializeTankRepository()
@@ -278,6 +287,12 @@ function AquariumApp() {
     rockscapeBase.current = null
     setRockscapeDraft(null)
     setSelectedRockId(null)
+  }, [])
+
+  useEffect(() => {
+    if (!DEV_TANK) return
+    const canonicalUrl = devTankViewUrl(window.location.href, DEV_TANK.id)
+    if (canonicalUrl !== window.location.href) window.history.replaceState(null, '', canonicalUrl)
   }, [])
   const adoptTankSnapshot = useCallback((snapshot: PocketTankRepositorySnapshot) => {
     const previousTankId = tankSnapshotRef.current?.active?.id ?? null
@@ -431,11 +446,18 @@ function AquariumApp() {
       protectionRef.current = next
       setProtectionOn(next)
       const activeTankId = tankSnapshot?.active?.id
-      const key = SHOWCASE_MODE ? LEGACY_GOD_MODE_KEY
+      const key = FIXTURE_MODE ? LEGACY_GOD_MODE_KEY
         : activeTankId ? tankGodModeKey(activeTankId) : null
       if (!key) return
       try { window.localStorage.setItem(key, next ? '1' : '0') } catch { /* storage is optional */ }
     },
+    tankView: DEV_TANK ? {
+      selectedId: DEV_TANK.id,
+      options: DEV_TANK_VIEWS,
+      select: (id: DevTankViewId) => {
+        if (id !== DEV_TANK.id) window.location.assign(devTankViewUrl(window.location.href, id))
+      },
+    } : undefined,
   } : undefined, [prevented, protectionOn, tankSnapshot?.active?.id])
 
   const feeding = useMemo<FeedingApi>(() => ({
@@ -532,6 +554,23 @@ function AquariumApp() {
     catch { /* invalid names leave the existing library unchanged */ }
   }, [refreshTankIndex])
 
+  const eraseAllData = useCallback(() => {
+    if (!TANK_STORAGE) return false
+    try { eraseAllPocketAquariumData(TANK_STORAGE, pocketSaveKey) } catch { return false }
+    tankSnapshotRef.current = null
+    setTankSnapshot(null)
+    const next = createPocketNewGame()
+    pocketStateRef.current = next
+    setPocketState(next)
+    setCreatingTank(false)
+    clearTankTransientState()
+    const freshUrl = new URL(window.location.href)
+    freshUrl.search = ''
+    freshUrl.hash = ''
+    window.location.replace(freshUrl.toString())
+    return true
+  }, [clearTankTransientState])
+
   const chooseHabitat = useCallback((habitat: 'reef' | 'amazon') => {
     const next = dispatchPocketAction(createPocketNewGame(), {
       type: pocketActions.CHOOSE_HABITAT,
@@ -589,7 +628,8 @@ function AquariumApp() {
     onCreate: beginCreateTank,
     onActivate: activateTank,
     onRename: renameTank,
-  } : undefined, [activateTank, beginCreateTank, renameTank, tankSnapshot])
+    onEraseAll: eraseAllData,
+  } : undefined, [activateTank, beginCreateTank, eraseAllData, renameTank, tankSnapshot])
   const candidateStatus = previewCandidate ? {
     valid: previewCandidate.valid,
     frozen: coralDraft?.phase === 'frozen',
@@ -620,7 +660,7 @@ function AquariumApp() {
   const reef = view.reefSnapshot.namespace === 'marine_reef'
 
   return (
-    <main key={tankSnapshot?.active?.id ?? 'showcase'} className="reef-app pocket-reef-app"
+    <main key={DEV_TANK?.id ?? tankSnapshot?.active?.id ?? 'showcase'} className="reef-app pocket-reef-app"
       data-aquarium={view.reefSnapshot.namespace}>
       <FeedingProvider value={feeding}>
         {/* Root `view.selection` stays the single selection authority: the tank marks whichever

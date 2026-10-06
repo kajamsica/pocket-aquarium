@@ -2,9 +2,37 @@ import { Children, createElement, isValidElement, type ReactElement, type ReactN
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 
-import { createPocketReefShowcase, projectPocketState } from '../integration/pocketAquariumBridge'
+import {
+  createPocketNewGame,
+  createPocketReefShowcase,
+  dispatchPocketAction,
+  pocketActions,
+  pocketSaveKey,
+  projectPocketState,
+} from '../integration/pocketAquariumBridge'
+import { eraseAllPocketAquariumData } from '../integration/pocketTankRepository'
+import {
+  DEV_FRESHWATER_50_VIEW_ID,
+  DEV_TANK_VIEWS,
+  devTankViewFromSearch,
+  devTankViewUrl,
+} from '../integration/devTankViews'
 import { AquariumLibraryPanel, type AquariumLibraryModel } from './AquariumLibraryPanel'
-import { PocketGameHUD } from './PocketGameHUD'
+import { PocketGameHUD, TankViewSelector } from './PocketGameHUD'
+
+const hookHarness = vi.hoisted(() => ({ enabled: false, value: false as unknown }))
+
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>()
+  return { ...actual, useState: <T,>(initial: T | (() => T)) => {
+    if (!hookHarness.enabled) return actual.useState(initial)
+    const value = hookHarness.value as T
+    return [value, (next: T | ((previous: T) => T)) => {
+      hookHarness.value = typeof next === 'function'
+        ? (next as (previous: T) => T)(value) : next
+    }] as const
+  } }
+})
 
 type TestElement = ReactElement<Record<string, unknown>>
 
@@ -30,10 +58,22 @@ function withServerWindow<T>(render: () => T): T {
 }
 
 describe('aquarium library UI contract', () => {
-  it('renders active, switch, bounded rename, and new-tank controls wired to the model', () => {
+  it('requires confirmation, preserves data on cancel, and delegates confirmed erase', () => {
     const onCreate = vi.fn()
     const onActivate = vi.fn()
     const onRename = vi.fn()
+    const cells = new Map([[pocketSaveKey, 'tank'], ['unrelated', 'keep']])
+    const storage = {
+      get length() { return cells.size },
+      key: (index: number) => [...cells.keys()][index] ?? null,
+      removeItem: (key: string) => { cells.delete(key) },
+      getItem: (key: string) => cells.get(key) ?? null,
+      setItem: (key: string, value: string) => { cells.set(key, value) },
+    }
+    const onEraseAll = vi.fn(() => {
+      eraseAllPocketAquariumData(storage, pocketSaveKey)
+      return true
+    })
     const model: AquariumLibraryModel = {
       tanks: [
         { id: 'reef', name: 'Reef Display', habitat: 'reef', active: true },
@@ -42,44 +82,100 @@ describe('aquarium library UI contract', () => {
       onCreate,
       onActivate,
       onRename,
+      onEraseAll,
     }
-    const panel = AquariumLibraryPanel({ model })
-    const elements = descendants(panel)
-    const buttons = elements.filter(({ type }) => type === 'button')
-    const markup = renderToStaticMarkup(panel)
-
-    expect(markup).toContain('2 tanks')
-    expect(markup).toMatch(/data-active="true"[\s\S]*Reef Display[\s\S]*Active[\s\S]*disabled=""[\s\S]*Current/)
-    expect(markup).toMatch(/data-active="false"[\s\S]*Amazon Margin[\s\S]*Freshwater[\s\S]*Switch/)
-    expect(elements.filter(({ type }) => type === 'input').map(({ props }) => props.maxLength)).toEqual([24, 24])
-
-    const createTank = buttons.find(({ props }) => props.children === 'New tank')!.props.onClick as () => void
-    const activateTank = buttons.find(({ props }) => props.children === 'Switch')!.props.onClick as () => void
-    createTank()
-    activateTank()
-    expect(onCreate).toHaveBeenCalledOnce()
-    expect(onActivate).toHaveBeenCalledWith('amazon')
-
-    class TestInput { constructor(readonly value: string) {} }
-    const previousInput = Object.getOwnPropertyDescriptor(globalThis, 'HTMLInputElement')
-    Object.defineProperty(globalThis, 'HTMLInputElement', { configurable: true, value: TestInput })
+    hookHarness.enabled = true
+    hookHarness.value = false
     try {
-      const renameForms = elements.filter(({ type }) => type === 'form')
-      const renameTank = renameForms[1].props.onSubmit as (event: unknown) => void
-      renameTank({
-        preventDefault: vi.fn(),
-        currentTarget: { elements: { namedItem: () => new TestInput('  Amazon Home  ') } },
-      })
+      let panel = AquariumLibraryPanel({ model })
+      let elements = descendants(panel)
+      let buttons = elements.filter(({ type }) => type === 'button')
+      const markup = renderToStaticMarkup(panel)
+
+      expect(markup).toContain('2 tanks')
+      expect(markup).toMatch(/data-active="true"[\s\S]*Reef Display[\s\S]*Active[\s\S]*disabled=""[\s\S]*Current/)
+      expect(markup).toMatch(/data-active="false"[\s\S]*Amazon Margin[\s\S]*Freshwater[\s\S]*Switch/)
+      expect(markup).toContain('Erase all aquarium data')
+      expect(markup).not.toContain('Erase everything')
+      expect(elements.filter(({ type }) => type === 'input').map(({ props }) => props.maxLength)).toEqual([24, 24])
+
+      const createTank = buttons.find(({ props }) => props.children === 'New tank')!.props.onClick as () => void
+      const activateTank = buttons.find(({ props }) => props.children === 'Switch')!.props.onClick as () => void
+      createTank()
+      activateTank()
+      expect(onCreate).toHaveBeenCalledOnce()
+      expect(onActivate).toHaveBeenCalledWith('amazon')
+
+      class TestInput { constructor(readonly value: string) {} }
+      const previousInput = Object.getOwnPropertyDescriptor(globalThis, 'HTMLInputElement')
+      Object.defineProperty(globalThis, 'HTMLInputElement', { configurable: true, value: TestInput })
+      try {
+        const renameTank = elements.filter(({ type }) => type === 'form')[1].props.onSubmit as
+          (event: unknown) => void
+        renameTank({
+          preventDefault: vi.fn(),
+          currentTarget: { elements: { namedItem: () => new TestInput('  Amazon Home  ') } },
+        })
+      } finally {
+        if (previousInput) Object.defineProperty(globalThis, 'HTMLInputElement', previousInput)
+        else Reflect.deleteProperty(globalThis, 'HTMLInputElement')
+      }
+      expect(onRename).toHaveBeenCalledWith('amazon', 'Amazon Home')
+
+      ;(buttons.find(({ props }) => props.children === 'Erase all aquarium data')!.props.onClick as () => void)()
+      panel = AquariumLibraryPanel({ model })
+      elements = descendants(panel)
+      buttons = elements.filter(({ type }) => type === 'button')
+      expect(elements.some(({ props }) => props.role === 'alertdialog')).toBe(true)
+      ;(buttons.find(({ props }) => props.children === 'Cancel')!.props.onClick as () => void)()
+      expect(onEraseAll).not.toHaveBeenCalled()
+      expect([...cells.entries()]).toEqual([[pocketSaveKey, 'tank'], ['unrelated', 'keep']])
+
+      hookHarness.value = 'confirming'
+      panel = AquariumLibraryPanel({ model })
+      buttons = descendants(panel).filter(({ type }) => type === 'button')
+      ;(buttons.find(({ props }) => props.children === 'Erase everything')!.props.onClick as () => void)()
+      expect(onEraseAll).toHaveBeenCalledOnce()
+      expect([...cells.keys()].sort()).toEqual([`${pocketSaveKey}:tank-index-v1`, 'unrelated'].sort())
     } finally {
-      if (previousInput) Object.defineProperty(globalThis, 'HTMLInputElement', previousInput)
-      else Reflect.deleteProperty(globalThis, 'HTMLInputElement')
+      hookHarness.enabled = false
     }
-    expect(onRename).toHaveBeenCalledWith('amazon', 'Amazon Home')
+  })
+
+  it('shows an accessible retry when confirmed erasure fails', () => {
+    const onEraseAll = vi.fn(() => false)
+    const model: AquariumLibraryModel = {
+      tanks: [],
+      onCreate: vi.fn(),
+      onActivate: vi.fn(),
+      onRename: vi.fn(),
+      onEraseAll,
+    }
+    hookHarness.enabled = true
+    hookHarness.value = 'confirming'
+    try {
+      let panel = AquariumLibraryPanel({ model })
+      let erase = descendants(panel).find(({ props }) => props.children === 'Erase everything')!
+      ;(erase.props.onClick as () => void)()
+
+      panel = AquariumLibraryPanel({ model })
+      const markup = renderToStaticMarkup(panel)
+      expect(markup).toContain('role="alert"')
+      expect(markup).toContain('Aquarium data could not be erased')
+      erase = descendants(panel).find(({ props }) => props.children === 'Try erase again')!
+      ;(erase.props.onClick as () => void)()
+      expect(onEraseAll).toHaveBeenCalledTimes(2)
+    } finally {
+      hookHarness.enabled = false
+    }
   })
 
   it('keeps the optional library absent when legacy or showcase callers omit it', () => {
+    const reef = dispatchPocketAction(createPocketNewGame(), {
+      type: pocketActions.CHOOSE_HABITAT, habitat: 'reef',
+    })
     const markup = withServerWindow(() => renderToStaticMarkup(createElement(PocketGameHUD, {
-      view: projectPocketState(createPocketReefShowcase()),
+      view: projectPocketState(reef),
       dispatch: vi.fn(),
       renderSettings: { quality: 'balanced', diagnosticView: 'beauty', brightness: 1 },
       onRenderSettingsChange: vi.fn(),
@@ -90,5 +186,59 @@ describe('aquarium library UI contract', () => {
     expect(markup).not.toContain('pocket-library-entry')
     expect(markup).not.toContain('pocket-library-panel')
     expect(markup).not.toContain('Open aquarium library')
+    expect(markup).not.toContain('Tank view')
+  })
+})
+
+describe('God Mode tank view routing', () => {
+  it('uses stable reef IDs, defaults unknown values to the monster reef, and keeps freshwater separate', () => {
+    expect(devTankViewFromSearch('?dev=1').id).toBe('reef-monster-1000')
+    expect(devTankViewFromSearch('?dev=1&devTank=not-a-profile').id).toBe('reef-monster-1000')
+    expect(devTankViewFromSearch('?dev=1&devTank=reef-standard-200')).toMatchObject({
+      id: 'reef-standard-200', waterType: 'reef',
+    })
+    expect(devTankViewFromSearch(`?dev=1&devTank=${DEV_FRESHWATER_50_VIEW_ID}`)).toMatchObject({
+      id: DEV_FRESHWATER_50_VIEW_ID, waterType: 'freshwater',
+    })
+    expect(DEV_TANK_VIEWS.map(({ id }) => id)).toEqual([
+      'reef-nano-20', 'reef-standard-40', 'reef-standard-200', 'reef-250', 'reef-500',
+      'reef-monster-1000', 'reef-cylinder-1500', DEV_FRESHWATER_50_VIEW_ID,
+    ])
+    expect(DEV_TANK_VIEWS.filter(({ waterType }) => waterType === 'freshwater').map(({ id }) => id))
+      .toEqual([DEV_FRESHWATER_50_VIEW_ID])
+  })
+
+  it('builds directly reopenable URLs for deterministic back and forth switching', () => {
+    const monster = devTankViewUrl('http://127.0.0.1:4173/?dev=1&devTank=reef-standard-200#tank', 'reef-monster-1000')
+    const cylinder = devTankViewUrl(monster, 'reef-cylinder-1500')
+    const standard = devTankViewUrl(cylinder, 'reef-standard-200')
+
+    expect(new URL(monster).searchParams.get('devTank')).toBe('reef-monster-1000')
+    expect(new URL(cylinder).searchParams.get('devTank')).toBe('reef-cylinder-1500')
+    expect(new URL(standard).searchParams.get('devTank')).toBe('reef-standard-200')
+    expect(new URL(standard).hash).toBe('#tank')
+  })
+
+  it('renders one labeled selector and sends its stable selected value', () => {
+    const select = vi.fn()
+    const selector = TankViewSelector({ controls: {
+      selectedId: 'reef-standard-200',
+      options: DEV_TANK_VIEWS,
+      select,
+    } })
+    const elements = descendants(selector)
+    const input = elements.find(({ type }) => type === 'select')!
+    const markup = renderToStaticMarkup(selector)
+
+    expect(markup).toContain('<small>Tank view</small>')
+    expect(markup).toContain('aria-label="Tank view"')
+    expect(markup).toContain('label="Reef tank presets"')
+    expect(markup).toContain('label="Freshwater development tank"')
+    expect(markup).toContain('value="reef-cylinder-1500"')
+    expect(markup).toContain('Freshwater 50 gallon')
+    ;(input.props.onChange as (event: { target: { value: string } }) => void)({
+      target: { value: 'reef-cylinder-1500' },
+    })
+    expect(select).toHaveBeenCalledWith('reef-cylinder-1500')
   })
 })

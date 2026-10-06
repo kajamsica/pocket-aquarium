@@ -194,6 +194,57 @@ export function createLiveRockGeometry(seed: number, detail = 3) {
   return geometry
 }
 
+/** Deterministically raycast the exact transformed render mesh from outward, upper
+ * directions. Rejected underside/backface hits are retried before a top-down fallback. */
+export function createLiveRockUpperSurfaceSamples(seed: number, position: THREE.Vector3,
+  rotation: THREE.Euler, scale: THREE.Vector3, sampleSeed: number, sampleCount = 72) {
+  const targetCount = Math.max(1, Math.floor(sampleCount))
+  const geometry = createLiveRockGeometry(seed)
+  const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.position.copy(position)
+  mesh.rotation.copy(rotation)
+  mesh.scale.copy(scale)
+  mesh.updateMatrixWorld(true)
+
+  const raycaster = new THREE.Raycaster()
+  const radial = new THREE.Vector3()
+  const rayOrigin = new THREE.Vector3()
+  const rayDirection = new THREE.Vector3()
+  const normalMatrix = new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld)
+  const rayDistance = Math.max(scale.x, scale.y, scale.z) * LIVE_ROCK_MAX_RADIUS * 2 + .5
+  const samples: LiveRockSurfaceSample[] = []
+  const tryDirection = (direction: THREE.Vector3) => {
+    rayOrigin.copy(position).addScaledVector(direction, rayDistance)
+    rayDirection.copy(direction).negate()
+    raycaster.set(rayOrigin, rayDirection)
+    raycaster.far = rayDistance * 2
+    const hit = raycaster.intersectObject(mesh, false)[0]
+    if (!hit?.face) return
+    const normal = hit.face.normal.clone().applyNormalMatrix(normalMatrix).normalize()
+    if (normal.dot(direction) < 0) normal.negate()
+    if (normal.y < .24 || normal.dot(direction) < .12) return
+    if (samples.some((sample) => sample.position.distanceToSquared(hit.point) < .0009)) return
+    samples.push({ position: hit.point.clone(), normal })
+  }
+
+  try {
+    for (let attempt = 0; attempt < targetCount * 4 && samples.length < targetCount; attempt += 1) {
+      const upward = .26 + unit(sampleSeed, 401 + attempt * 2) * .7
+      const azimuth = (unit(sampleSeed, 402) + attempt * .61803398875) * TWO_PI
+      const horizontal = Math.sqrt(Math.max(0, 1 - upward * upward))
+      tryDirection(radial.set(Math.cos(azimuth) * horizontal, upward,
+        Math.sin(azimuth) * horizontal))
+    }
+    if (!samples.length) tryDirection(radial.set(0, 1, 0))
+    if (!samples.length) throw new Error(`Unable to sample upper live-rock surface for seed ${seed}`)
+    return samples
+  } finally {
+    geometry.dispose()
+    material.dispose()
+  }
+}
+
 /** Sample the rendered compound hull's outer silhouette in the world XY plane.
  * This is intentionally a build-time batch for deterministic surface circuits,
  * not a per-frame raycast path. */

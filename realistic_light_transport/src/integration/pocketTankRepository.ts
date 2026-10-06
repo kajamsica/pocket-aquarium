@@ -5,6 +5,14 @@ const INDEX_SCHEMA = 'pocket-aquarium.tank-index/v1' as const
 const LEGACY_TANK_ID = 'legacy'
 const TANK_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const MAX_NAME_LENGTH = 24
+const UI_STORAGE_KEYS = new Set([
+  'pocket-aquarium-hud-layout-v3',
+  'pocket-aquarium-hud-layout-v4',
+  'pocket-aquarium-pinned-readings-v1',
+  'pocket-aquarium-pinned-readings-v2',
+  'pocket-aquarium:coral-tray-open',
+  'pocket-aquarium:coral-tray-open:compact',
+])
 
 type TankHabitat = 'reef' | 'amazon' | null
 type TankStorage = Pick<Storage, 'getItem' | 'setItem'>
@@ -34,8 +42,35 @@ interface StoredTank { readonly raw: string; readonly state: PocketState; readon
 interface SeenTank { readonly raw: string | null; readonly seq: number }
 type TankSlot = Readonly<{ kind: 'missing' } | { kind: 'invalid'; raw: string } | { kind: 'valid'; stored: StoredTank }>
 interface IndexRecord { readonly raw: string | null; readonly index: PocketTankIndex }
-const emptyIndex = (): PocketTankIndex => ({ schemaVersion: INDEX_SCHEMA, revision: 0,
+const emptyIndex = (revision = 0): PocketTankIndex => ({ schemaVersion: INDEX_SCHEMA, revision,
   activeTankId: null, tanks: [] })
+
+/** Remove only Pocket Aquarium saves and preferences from this origin. The save-key family owns
+ * legacy, indexed, per-tank, developer-safe, and God Mode records. UI preferences use separate
+ * historical names, so they stay explicit here rather than widening deletion to unrelated data. */
+export function eraseAllPocketAquariumData(
+  storage: Pick<Storage, 'getItem' | 'setItem' | 'key' | 'length' | 'removeItem'>,
+  baseKey: string,
+) {
+  const indexKey = `${baseKey}:tank-index-v1`
+  let tombstoneRevision = 0
+  const currentIndex = storage.getItem(indexKey)
+  if (currentIndex !== null) {
+    try { tombstoneRevision = parseIndex(currentIndex).revision + 1 } catch { /* replace malformed bytes */ }
+  }
+  storage.setItem(indexKey, JSON.stringify(emptyIndex(tombstoneRevision)))
+
+  const ownedKeys: string[] = []
+  for (let index = 0; index < storage.length; index++) {
+    const key = storage.key(index)
+    if (key !== null && key !== indexKey
+      && (key === baseKey || key.startsWith(`${baseKey}:`) || UI_STORAGE_KEYS.has(key))) {
+      ownedKeys.push(key)
+    }
+  }
+  ownedKeys.forEach((key) => storage.removeItem(key))
+  return ownedKeys.length
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

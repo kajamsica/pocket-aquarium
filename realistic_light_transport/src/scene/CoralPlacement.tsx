@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import * as THREE from 'three'
 
+import type { ReefShowcaseCoralPresentation } from '../integration/showcaseProfiles'
 import { useSpecimenDispatch } from './SpecimenFish'
 import { specimenAssetFor, type SpecimenAsset } from './specimens/assetRegistry'
 import { RiggedSpecimen, type SpecimenAppearance } from './specimens/RiggedSpecimen'
@@ -166,11 +167,13 @@ export function resolveCoralLifecycleVisualPlan(inputs: CoralLifecycleInputs): C
 }
 
 export function resolveCoralRenderPlan(speciesId: string, variantId: string | undefined,
-  sceneUnitsPerMeter: number, mode: 'preview' | 'locked', valid = true): CoralRenderPlan | undefined {
+  sceneUnitsPerMeter: number, mode: 'preview' | 'locked', valid = true,
+  presentation?: ReefShowcaseCoralPresentation): CoralRenderPlan | undefined {
   const asset = specimenAssetFor(speciesId, variantId)
   if (!asset || asset.category !== 'coral') return undefined
   return {
-    asset, targetWidth: asset.referenceAdultLengthMeters * sceneUnitsPerMeter,
+    asset, targetWidth: asset.referenceAdultLengthMeters * sceneUnitsPerMeter
+      * (presentation?.colonyScale ?? 1),
     ...(mode === 'preview' ? { ringColor: valid ? '#48e08b' as const : '#ff5f6d' as const } : {}),
   }
 }
@@ -184,6 +187,7 @@ export interface CoralPlacementProps {
   readonly sceneUnitsPerMeter: number
   readonly mode: 'preview' | 'locked'
   readonly lifecycle?: CoralLifecycleInputs
+  readonly presentation?: ReefShowcaseCoralPresentation
   readonly valid?: boolean
   readonly active?: boolean
 }
@@ -192,10 +196,10 @@ function stopPlacementEvent(event: { stopPropagation(): void }) { event.stopProp
 
 /** Controlled renderer only. Persistence and placement-mode ownership remain above the scene. */
 export function CoralPlacement({ speciesId, variantId, individualId, placement, space,
-  sceneUnitsPerMeter, mode, lifecycle, valid = true, active = false }: CoralPlacementProps) {
+  sceneUnitsPerMeter, mode, lifecycle, presentation, valid = true, active = false }: CoralPlacementProps) {
   const dispatch = useSpecimenDispatch()
   const feedDrive = useRef(0)
-  const plan = resolveCoralRenderPlan(speciesId, variantId, sceneUnitsPerMeter, mode, valid)
+  const plan = resolveCoralRenderPlan(speciesId, variantId, sceneUnitsPerMeter, mode, valid, presentation)
   if (!plan) return null
   const lifecyclePlan = lifecycle ? resolveCoralLifecycleVisualPlan(lifecycle) : undefined
   const transform = coralPlacementTransform(placement, space)
@@ -216,7 +220,10 @@ export function CoralPlacement({ speciesId, variantId, individualId, placement, 
         <RiggedSpecimen asset={plan.asset} individualId={individualId}
           targetLengthSceneUnits={plan.targetWidth * (lifecyclePlan?.widthScale ?? 1)}
           stage="adult" hunger={0} feedDrive={feedDrive} semanticDrive={lifecyclePlan?.animationDrive}
-          appearance={lifecyclePlan?.appearance} />
+          appearance={lifecyclePlan ? { ...lifecyclePlan.appearance,
+            ...(presentation?.fluorescence ? { fluorescence: presentation.fluorescence } : {}) }
+            : presentation?.fluorescence ? { saturation: 1, opacity: 1,
+              fluorescence: presentation.fluorescence } : undefined} />
       {plan.ringColor && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .006, 0]} renderOrder={20}>
         <ringGeometry args={[ringRadius * .78, ringRadius, 36]} />
         <meshBasicMaterial color={plan.ringColor} transparent opacity={.9} depthTest={false} />

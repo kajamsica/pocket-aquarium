@@ -28,41 +28,80 @@ export interface RiggedSpecimenProps {
 export interface SpecimenAppearance {
   readonly saturation: number
   readonly opacity: number
+  readonly fluorescence?: Readonly<{ color: string; intensity: number }>
 }
 
 export function resolveSpecimenAppearance(appearance?: SpecimenAppearance): SpecimenAppearance | undefined {
   if (!appearance) return undefined
   const unit = (value: number) => THREE.MathUtils.clamp(Number.isFinite(value) ? value : 0, 0, 1)
-  return { saturation: unit(appearance.saturation), opacity: unit(appearance.opacity) }
+  return { saturation: unit(appearance.saturation), opacity: unit(appearance.opacity),
+    ...(appearance.fluorescence ? { fluorescence: {
+      color: appearance.fluorescence.color,
+      intensity: unit(appearance.fluorescence.intensity),
+    } } : {}) }
 }
 
 type ColorMaterial = THREE.Material & { color: THREE.Color }
 const materialColor = (material: THREE.Material) =>
   'color' in material && material.color instanceof THREE.Color ? material as ColorMaterial : undefined
 
-function applyResolvedAppearance(material: THREE.Material, baseColor: THREE.Color | undefined,
-  baseOpacity: number, baseTransparent: boolean, baseDepthWrite: boolean, appearance: SpecimenAppearance) {
+type EmissiveMaterial = THREE.Material & {
+  emissive: THREE.Color
+  emissiveIntensity: number
+  emissiveMap: THREE.Texture | null
+  map?: THREE.Texture | null
+}
+const emissiveMaterial = (material: THREE.Material) =>
+  'emissive' in material && material.emissive instanceof THREE.Color
+    ? material as EmissiveMaterial : undefined
+
+const TISSUE_COVERED_SKELETONS = new Set(['acropora_branching', 'millepora', 'stylophora'])
+
+/** Keep bare plugs, rock, and skeletal undersides dark. Fluorescence belongs to living tissue,
+ *  polyps, tentacles, branch tissue, and their authored texture detail. */
+export function materialAcceptsCoralFluorescence(materialName: string, speciesId: string) {
+  if (/rock|base/i.test(materialName)) return false
+  if (/polyp|tissue|tentacle|disc|hair|branch/i.test(materialName)) return true
+  return TISSUE_COVERED_SKELETONS.has(speciesId) && /skeleton/i.test(materialName)
+}
+
+function applyResolvedAppearance(material: THREE.Material, source: THREE.Material,
+  appearance: SpecimenAppearance, speciesId: string) {
   const colored = materialColor(material)
-  if (colored && baseColor) {
-    if (appearance.saturation === 1) colored.color.copy(baseColor)
+  const sourceColor = materialColor(source)?.color
+  if (colored && sourceColor) {
+    if (appearance.saturation === 1) colored.color.copy(sourceColor)
     else {
-      const luminance = baseColor.r * .2126 + baseColor.g * .7152 + baseColor.b * .0722
-      colored.color.setRGB(luminance, luminance, luminance).lerp(baseColor, appearance.saturation)
+      const luminance = sourceColor.r * .2126 + sourceColor.g * .7152 + sourceColor.b * .0722
+      colored.color.setRGB(luminance, luminance, luminance).lerp(sourceColor, appearance.saturation)
     }
   }
-  material.opacity = baseOpacity * appearance.opacity
-  material.transparent = baseTransparent || material.opacity < 1
-  material.depthWrite = baseDepthWrite && material.opacity >= 1
+  material.opacity = source.opacity * appearance.opacity
+  material.transparent = source.transparent || material.opacity < 1
+  material.depthWrite = source.depthWrite && material.opacity >= 1
+  const emissive = emissiveMaterial(material)
+  const sourceEmission = emissiveMaterial(source)
+  if (emissive && sourceEmission) {
+    emissive.emissive.copy(sourceEmission.emissive)
+    emissive.emissiveIntensity = sourceEmission.emissiveIntensity
+    emissive.emissiveMap = sourceEmission.emissiveMap
+    if (appearance.fluorescence && materialAcceptsCoralFluorescence(source.name, speciesId)) {
+      emissive.emissive.set(appearance.fluorescence.color)
+      emissive.emissiveIntensity = appearance.fluorescence.intensity
+      // The accepted albedo carries polyp, ridge, margin, and tip detail. Reusing it as the
+      // emission mask keeps those features strongest without turning the whole colony neon.
+      emissive.emissiveMap = sourceEmission.map ?? sourceEmission.emissiveMap
+    }
+  }
   material.needsUpdate = true
 }
 
 /** Clone before applying lifecycle appearance so accepted source assets and sibling instances stay immutable. */
 export function specimenMaterialWithAppearance(source: THREE.Material,
-  appearance: SpecimenAppearance): THREE.Material {
+  appearance: SpecimenAppearance, speciesId = ''): THREE.Material {
   const resolved = resolveSpecimenAppearance(appearance)!
   const material = source.clone()
-  applyResolvedAppearance(material, materialColor(source)?.color, source.opacity, source.transparent,
-    source.depthWrite, resolved)
+  applyResolvedAppearance(material, source, resolved, speciesId)
   return material
 }
 
@@ -225,18 +264,16 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
   turnDrive, locomotionDrive, semanticDrive, appearance }: RiggedSpecimenProps) {
   const source = useLoader(GLTFLoader, asset.url)
   const appearancePlan = useMemo(() => resolveSpecimenAppearance(appearance),
-    [appearance?.opacity, appearance?.saturation])
+    [appearance?.fluorescence?.color, appearance?.fluorescence?.intensity,
+      appearance?.opacity, appearance?.saturation])
   const instance = useMemo(() => {
     const root = cloneSkinned(source.scene) as THREE.Group
-    const materials: Array<{ material: THREE.Material; baseColor?: THREE.Color;
-      baseOpacity: number; baseTransparent: boolean; baseDepthWrite: boolean }> = []
+    const materials: Array<{ material: THREE.Material; source: THREE.Material }> = []
     if (appearancePlan) root.traverse((node) => {
       if (!(node instanceof THREE.Mesh)) return
       const own = (sourceMaterial: THREE.Material) => {
-        const material = specimenMaterialWithAppearance(sourceMaterial, appearancePlan)
-        materials.push({ material, baseColor: materialColor(sourceMaterial)?.color.clone(),
-          baseOpacity: sourceMaterial.opacity, baseTransparent: sourceMaterial.transparent,
-          baseDepthWrite: sourceMaterial.depthWrite })
+        const material = specimenMaterialWithAppearance(sourceMaterial, appearancePlan, asset.speciesId)
+        materials.push({ material, source: sourceMaterial })
         return material
       }
       node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material)
@@ -307,9 +344,9 @@ export function RiggedSpecimen({ asset, individualId, targetLengthSceneUnits, st
 
   useEffect(() => {
     if (!appearancePlan) return
-    for (const record of instanceMaterials) applyResolvedAppearance(record.material, record.baseColor,
-      record.baseOpacity, record.baseTransparent, record.baseDepthWrite, appearancePlan)
-  }, [appearancePlan, instanceMaterials])
+    for (const record of instanceMaterials)
+      applyResolvedAppearance(record.material, record.source, appearancePlan, asset.speciesId)
+  }, [appearancePlan, asset.speciesId, instanceMaterials])
 
   useEffect(() => () => {
     for (const record of instanceMaterials) record.material.dispose()

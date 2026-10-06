@@ -23,6 +23,7 @@ import {
 } from './habitatVisualProfile'
 import type { SpectralTransportTelemetry } from './materials/spectralTransport'
 import { endTankDrag, noteTankDrag, noteTankPointerDown, noteTankPointerUp } from './tankGestures'
+import { cameraFitForEnvelope, resolveTankSceneEnvelope, type TankSceneEnvelope } from './tankSceneEnvelope'
 
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
@@ -35,6 +36,30 @@ export function cameraDistanceForAspect(aspect: number) {
   if (aspect < .72) return 8.55
   if (aspect > 1.5) return 6.95
   return 7.7
+}
+
+/** Scale inverse-square scene lights with the display envelope, then add a restrained
+ * cyan/blue shadow lift only for mature reefs in the beauty view. */
+export function resolveReefLightRig(envelope: TankSceneEnvelope, lightPower: number,
+  visualProfile: AquariumVisualProfile, diagnosticView: ReefRenderSettings['diagnosticView'],
+  maturity: number) {
+  const power = THREE.MathUtils.clamp(lightPower, 0, 1)
+  const scale = Math.max(...envelope.scale)
+  const intensityScale = scale * scale
+  const beautyLift = visualProfile === 'reef' && diagnosticView === 'beauty'
+    ? THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(maturity, 0, 1), .55, 1) : 0
+  return {
+    scale,
+    keyPosition: [0, 5.8 * scale, 1.4 * scale] as const,
+    keyDistance: 14 * scale,
+    keyIntensity: (70 + power * 150) * intensityScale * (1 + beautyLift * .08),
+    fillPosition: [-3.4 * scale, .6 * scale, 3.2 * scale] as const,
+    fillDistance: 7 * scale,
+    fillIntensity: (12 + power * 18) * intensityScale * (1 + beautyLift * .28),
+    directionalPosition: [1.8 * scale, 2.5 * scale, 5 * scale] as const,
+    directionalIntensity: .42 * (1 + beautyLift * .14),
+    hemisphereIntensity: .6 * (1 + beautyLift * .22),
+  }
 }
 
 /** Orbit look target and framing constants. Radius comes from the aspect/zoom distance so
@@ -55,10 +80,6 @@ const ORBIT_PITCH_PER_KEY = 0.08
 const PINCH_ZOOM_EXPONENT = 4.5
 /** Wheel/trackpad scene units per deltaY unit; one notch (~100) moves a fifth of the range. */
 const WHEEL_ZOOM_PER_DELTA = 0.02
-/** Near bound sits inside the front glass (habitat half-depth 1.18) so the camera enters the
- *  water volume, and stays far enough from the orbit target to clear the 0.1 near plane. */
-const MIN_CAMERA_DISTANCE = 0.95
-const MAX_CAMERA_DISTANCE = 10.2
 /** Exponential convergence rate toward the requested orbit position: prompt, still smoothed. */
 const CAMERA_CONVERGENCE = 6.5
 
@@ -82,8 +103,13 @@ export function orbitCameraPosition(
   )
 }
 
-function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
+function CameraRig({ envelope, disabled = false }: {
+  readonly envelope: TankSceneEnvelope
+  readonly disabled?: boolean
+}) {
   const { gl, size } = useThree()
+  const aspect = size.width / Math.max(size.height, 1)
+  const fit = useMemo(() => cameraFitForEnvelope(envelope, aspect), [aspect, envelope])
   const target = useMemo(() => new THREE.Vector3(ORBIT_TARGET.x, ORBIT_TARGET.y, ORBIT_TARGET.z), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
   const cameraDistance = useRef<number | null>(null)
@@ -108,7 +134,7 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
         if (touches.current.size === 2) {
           drag.current = null
           const [a, b] = [...touches.current.values()]
-          pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? 7.7 }
+          pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? fit.distance }
           return
         }
       }
@@ -124,8 +150,8 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
         const distance = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 20)
         cameraDistance.current = THREE.MathUtils.clamp(
           pinch.current.cameraDistance * (pinch.current.distance / distance) ** PINCH_ZOOM_EXPONENT,
-          MIN_CAMERA_DISTANCE,
-          MAX_CAMERA_DISTANCE,
+          fit.minDistance,
+          fit.maxDistance,
         )
         event.preventDefault()
         return
@@ -158,11 +184,11 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
       if (touches.current.size < 2) pinch.current = null
     }
     const wheel = (event: WheelEvent) => {
-      const base = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
+      const base = cameraDistance.current ?? fit.distance
       cameraDistance.current = THREE.MathUtils.clamp(
         base + event.deltaY * WHEEL_ZOOM_PER_DELTA,
-        MIN_CAMERA_DISTANCE,
-        MAX_CAMERA_DISTANCE,
+        fit.minDistance,
+        fit.maxDistance,
       )
       event.preventDefault()
     }
@@ -203,10 +229,18 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
       window.removeEventListener(REEF_CAMERA_RESET_EVENT, resetView)
       window.removeEventListener('keydown', keydown)
     }
-  }, [disabled, gl, size.height, size.width])
+  }, [disabled, fit.distance, fit.maxDistance, fit.minDistance, gl])
+
+  useEffect(() => {
+    cameraDistance.current = null
+  }, [envelope.key])
 
   useFrame(({ camera }, delta) => {
-    const radius = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
+    if (camera instanceof THREE.PerspectiveCamera && camera.fov !== fit.fov) {
+      camera.fov = fit.fov
+      camera.updateProjectionMatrix()
+    }
+    const radius = cameraDistance.current ?? fit.distance
     orbitCameraPosition(desired, radius, yaw.current, pitch.current, target)
     camera.position.lerp(desired, 1 - Math.exp(-delta * CAMERA_CONVERGENCE))
     camera.lookAt(target)
@@ -316,6 +350,14 @@ function ReefWorld({
   const lastTelemetryEmit = useRef(0)
   const lightPower = THREE.MathUtils.clamp(snapshot.equipment.lightPower, 0, 1)
   const visualSettings = resolveHabitatVisualSettings(visualProfile, snapshotTannin(snapshot))
+  const sceneEnvelope = useMemo(() => resolveTankSceneEnvelope(snapshot.tank), [
+    snapshot.tank.form,
+    snapshot.tank.nominalVolumeLiters,
+  ])
+  const lightRig = useMemo(() => resolveReefLightRig(sceneEnvelope, lightPower, visualProfile,
+    renderSettings.diagnosticView, snapshot.ecology.maturity), [
+    lightPower, renderSettings.diagnosticView, sceneEnvelope, snapshot.ecology.maturity, visualProfile,
+  ])
   const daylight = useMemo(() => new THREE.Color(), [])
   const updateOpticsTelemetry = useCallback((telemetry: SpectralTransportTelemetry) => {
     opticsTelemetry.current = telemetry
@@ -359,11 +401,11 @@ function ReefWorld({
 
     if (keyLight.current) {
       keyLight.current.color.copy(daylight)
-      keyLight.current.intensity = 70 + lightPower * 150
-      keyLight.current.position.x = Math.sin(elapsed * 0.09) * 0.16
+      keyLight.current.intensity = lightRig.keyIntensity
+      keyLight.current.position.x = Math.sin(elapsed * 0.09) * 0.16 * lightRig.scale
     }
     if (fillLight.current) {
-      fillLight.current.intensity = 12 + lightPower * 18
+      fillLight.current.intensity = lightRig.fillIntensity
     }
   })
 
@@ -371,18 +413,20 @@ function ReefWorld({
     <>
       <color attach="background" args={[visualSettings.background]} />
       <fogExp2 attach="fog" args={[visualSettings.fog, visualSettings.fogDensity]} />
-      <hemisphereLight args={[visualSettings.hemisphereSky, visualSettings.hemisphereGround, 0.6]} />
-      <directionalLight color={visualSettings.directional} intensity={0.42} position={[1.8, 2.5, 5]} />
+      <hemisphereLight args={[visualSettings.hemisphereSky, visualSettings.hemisphereGround,
+        lightRig.hemisphereIntensity]} />
+      <directionalLight color={visualSettings.directional} intensity={lightRig.directionalIntensity}
+        position={[...lightRig.directionalPosition]} />
       <spotLight
         ref={keyLight}
         castShadow
         color={visualSettings.keyInitial}
-        intensity={70 + lightPower * 150}
+        intensity={lightRig.keyIntensity}
         angle={0.58}
         penumbra={0.72}
         decay={2}
-        distance={14}
-        position={[0, 5.8, 1.4]}
+        distance={lightRig.keyDistance}
+        position={[...lightRig.keyPosition]}
         shadow-bias={-0.0004}
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
@@ -390,10 +434,10 @@ function ReefWorld({
       <pointLight
         ref={fillLight}
         color={visualSettings.fill}
-        intensity={12 + lightPower * 18}
+        intensity={lightRig.fillIntensity}
         decay={2}
-        distance={7}
-        position={[-3.4, 0.6, 3.2]}
+        distance={lightRig.fillDistance}
+        position={[...lightRig.fillPosition]}
       />
 
       <mesh position={[0, 0.08, -1.78]} receiveShadow>
@@ -401,11 +445,15 @@ function ReefWorld({
         <meshStandardMaterial color={visualSettings.backing} roughness={0.88} metalness={0.08} />
       </mesh>
       <mesh position={[0, -1.86, 0]} receiveShadow>
-        <boxGeometry args={[6.7, 0.34, 3.35]} />
+        <boxGeometry args={[
+          Math.max(6.7, sceneEnvelope.width + .9),
+          0.34,
+          Math.max(3.35, sceneEnvelope.depth + .65),
+        ]} />
         <meshStandardMaterial color={visualSettings.stand} roughness={0.74} metalness={0.22} />
       </mesh>
 
-      <group position={[0, 0.03, 0]}>
+      <group position={[0, 0.03, 0]} scale={[...sceneEnvelope.scale]}>
         <ReefHabitat snapshot={snapshot} flowField={flowField} placedCorals={placedCorals}
           activeCoral={activeCoral} previewCandidate={previewCandidate}
           onPlacementCandidate={onPlacementCandidate} rockscape={rockscape}
@@ -426,7 +474,7 @@ function ReefWorld({
         />
       </group>
       <ExposureController lightPower={lightPower} brightness={renderSettings.brightness} />
-      <CameraRig disabled={Boolean(activeCoral) || rockscapeEditing} />
+      <CameraRig envelope={sceneEnvelope} disabled={Boolean(activeCoral) || rockscapeEditing} />
     </>
   )
 }
