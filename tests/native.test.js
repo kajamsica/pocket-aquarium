@@ -16,7 +16,6 @@ var os = require("os");
 var path = require("path");
 var crypto = require("crypto");
 var childProcess = require("child_process");
-var zlib = require("zlib");
 var pathToFileURL = require("url").pathToFileURL;
 
 var ROOT = path.resolve(__dirname, "..");
@@ -36,15 +35,6 @@ function pngSize(buf) {
   if (buf.length < 24) return null;
   if (buf.slice(0, 8).toString("hex") !== "89504e470d0a1a0a") return null;
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
-}
-function pngScanlines(buf) {
-  var chunks = [], offset = 8;
-  while (offset + 12 <= buf.length) {
-    var length = buf.readUInt32BE(offset);
-    if (buf.slice(offset + 4, offset + 8).toString("ascii") === "IDAT") chunks.push(buf.slice(offset + 8, offset + 8 + length));
-    offset += length + 12;
-  }
-  return zlib.inflateSync(Buffer.concat(chunks));
 }
 function eqArrays(a, b) {
   if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
@@ -278,36 +268,30 @@ function main(mod) {
   var splashContents = readText(path.join(splashDir, "Contents.json"));
   var splashGeneratorRel = "assets/icons/generate-ios-splash.mjs";
   var splashProvenanceRel = "assets/icons/IOS_SPLASH_PROVENANCE.md";
-  var splashGenerator = readText(path.join(ROOT, splashGeneratorRel));
   var splashProvenance = readText(path.join(ROOT, splashProvenanceRel));
-  var expectedSplashHash = "fcbf9303701e70e9f0f3186e41f3e2325e063759d74e31f088e9e83f5c6b5600";
-  var expectedSplashScanlinesHash = "0334c26be2d919784f3a35032ccf8d9468b2d70616eb6c01f6946aa4916f8cca";
-  ok(trackedFiles.indexOf(splashGeneratorRel) >= 0 && trackedFiles.indexOf(splashProvenanceRel) >= 0,
-    "splash generator and provenance record are committed");
-  ok(!/readFile|fetch\s*\(|https?:\/\//.test(splashGenerator),
-    "splash generator consumes no external or repository image input");
-  ok(/No photograph, stock asset, external image, model output, or other third-party visual input is used\./.test(splashProvenance) &&
-     /Account Holder must review this record and make the final ownership and commercial-rights attestation\./.test(splashProvenance),
-    "provenance records original inputs and preserves the human rights-attestation gate");
-  ok(splashProvenance.indexOf(expectedSplashHash) >= 0 && splashProvenance.indexOf(expectedSplashScanlinesHash) >= 0,
-    "provenance pins committed-file and decoded-scanline SHA-256 values");
+  var expectedSplashHash = "250ed7c22db15f1105b578edcd9ee39ff92259f2e1b643bb9e7bed8c1d0d0592";
+  ok(!exists(path.join(ROOT, splashGeneratorRel)) && trackedFiles.indexOf(splashProvenanceRel) >= 0,
+    "obsolete procedural generator is removed and capture provenance is committed");
+  ok(/direct WebGL render of the Pocket Aquarium game/.test(splashProvenance) &&
+     /No photograph, stock asset, external image, model output, or other third-party visual input was added/.test(splashProvenance) &&
+     /Account Holder must review[\s\S]*make the final ownership and commercial-rights attestation\./.test(splashProvenance),
+    "provenance identifies the app-owned render and preserves the human rights-attestation gate");
+  ok(/repository commit `bc972ea`/.test(splashProvenance) && /Source route: `http:\/\/127\.0\.0\.1:4221\/\?dev=1`/.test(splashProvenance) &&
+     /one Playwright browser page/.test(splashProvenance) && /does not claim byte-reproducible recapture/.test(splashProvenance) &&
+     splashProvenance.indexOf(expectedSplashHash) >= 0,
+    "provenance pins the source receipt, capture method, and exact committed-file hash");
   var splashHashes = splashNames.map(function (name) {
     var rel = "native/ios/App/App/Assets.xcassets/Splash.imageset/" + name;
     var bytes = read(path.join(ROOT, rel));
     var size = pngSize(bytes);
     ok(trackedFiles.indexOf(rel) >= 0 && new RegExp('"filename"\\s*:\\s*"' + name.replace(/\./g, "\\.") + '"').test(splashContents), name + " is committed and catalog-wired");
     ok(size && size.width === 2732 && size.height === 2732 && bytes[25] === 2, name + " is 2732x2732 RGB without alpha");
-    ok(sha256(pngScanlines(bytes)) === expectedSplashScanlinesHash, name + " matches the provenance scanline hash");
     return sha256(bytes);
   });
   ok(new Set(splashHashes).size === 1, "all splash scales intentionally share the same branded bytes");
   ok(splashHashes[0] === expectedSplashHash, "committed splash bytes match the provenance hash");
   ok(splashHashes[0] !== "1b5002b74a5500e697298ced06ca2811ac33f2771f236f3c720ff23243890530",
     "branded splash differs from the prior generic Capacitor asset");
-  var generatedSplashDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-splash-"));
-  childProcess.execFileSync("node", [path.join(ROOT, splashGeneratorRel), "--output", generatedSplashDir], { stdio: "ignore" });
-  ok(splashNames.every(function (name) { return sha256(pngScanlines(read(path.join(generatedSplashDir, name)))) === expectedSplashScanlinesHash; }),
-    "dependency-free generator reproduces every decoded splash scanline exactly across zlib encoders");
 
   /* ------------------ 10. generated Android project wiring ------------------ */
   group("generated Android project");
@@ -436,7 +420,7 @@ function main(mod) {
   ok(/No signed IPA or TestFlight build exists yet/i.test(iosDocs), "deployment guide explicitly says no signed/TestFlight build exists yet");
 
   /* cleanup temp dirs */
-  [dest1, fixSrc, fixDest, generatedSplashDir].forEach(function (d) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) {} });
+  [dest1, fixSrc, fixDest].forEach(function (d) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) {} });
 }
 
 /* Ask git whether a path is ignored; treat a git failure as "not committed" is unsafe,
