@@ -266,6 +266,19 @@ function main(mod) {
   var splashNames = ["splash-2732x2732-1.png", "splash-2732x2732-2.png", "splash-2732x2732.png"];
   var splashDir = path.join(iosApp, "App", "Assets.xcassets", "Splash.imageset");
   var splashContents = readText(path.join(splashDir, "Contents.json"));
+  var splashGeneratorRel = "assets/icons/generate-ios-splash.mjs";
+  var splashProvenanceRel = "assets/icons/IOS_SPLASH_PROVENANCE.md";
+  var splashGenerator = readText(path.join(ROOT, splashGeneratorRel));
+  var splashProvenance = readText(path.join(ROOT, splashProvenanceRel));
+  var expectedSplashHash = "fcbf9303701e70e9f0f3186e41f3e2325e063759d74e31f088e9e83f5c6b5600";
+  ok(trackedFiles.indexOf(splashGeneratorRel) >= 0 && trackedFiles.indexOf(splashProvenanceRel) >= 0,
+    "splash generator and provenance record are committed");
+  ok(!/readFile|fetch\s*\(|https?:\/\//.test(splashGenerator),
+    "splash generator consumes no external or repository image input");
+  ok(/No photograph, stock asset, external image, model output, or other third-party visual input is used\./.test(splashProvenance) &&
+     /Account Holder must review this record and make the final ownership and commercial-rights attestation\./.test(splashProvenance),
+    "provenance records original inputs and preserves the human rights-attestation gate");
+  ok(splashProvenance.indexOf(expectedSplashHash) >= 0, "provenance pins the expected splash SHA-256");
   var splashHashes = splashNames.map(function (name) {
     var rel = "native/ios/App/App/Assets.xcassets/Splash.imageset/" + name;
     var bytes = read(path.join(ROOT, rel));
@@ -275,8 +288,13 @@ function main(mod) {
     return sha256(bytes);
   });
   ok(new Set(splashHashes).size === 1, "all splash scales intentionally share the same branded bytes");
+  ok(splashHashes[0] === expectedSplashHash, "committed splash bytes match the provenance hash");
   ok(splashHashes[0] !== "1b5002b74a5500e697298ced06ca2811ac33f2771f236f3c720ff23243890530",
     "branded splash differs from the prior generic Capacitor asset");
+  var generatedSplashDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-splash-"));
+  childProcess.execFileSync("node", [path.join(ROOT, splashGeneratorRel), "--output", generatedSplashDir], { stdio: "ignore" });
+  ok(splashNames.every(function (name) { return sha256(read(path.join(generatedSplashDir, name))) === expectedSplashHash; }),
+    "dependency-free generator reproduces every committed splash byte exactly");
 
   /* ------------------ 10. generated Android project wiring ------------------ */
   group("generated Android project");
@@ -405,7 +423,7 @@ function main(mod) {
   ok(/No signed IPA or TestFlight build exists yet/i.test(iosDocs), "deployment guide explicitly says no signed/TestFlight build exists yet");
 
   /* cleanup temp dirs */
-  [dest1, fixSrc, fixDest].forEach(function (d) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) {} });
+  [dest1, fixSrc, fixDest, generatedSplashDir].forEach(function (d) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) {} });
 }
 
 /* Ask git whether a path is ignored; treat a git failure as "not committed" is unsafe,
