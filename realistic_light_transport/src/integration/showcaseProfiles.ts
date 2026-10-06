@@ -100,6 +100,13 @@ const ROCK_ANCHORS = [
   [-.06, .31, -.43], [.19, .38, -.47], [.30, .44, -.35], [.51, .43, -.35], [.62, .31, -.40],
 ] as const
 
+// Prepack the monster garden across the 13 reef faces so hero colonies do not recur
+// on the same neighboring shoulders and close the central water corridors.
+const MONSTER_ROCK_SEQUENCE = [
+  12, 9, 12, 11, 5, 5, 11, 8, 6, 0, 2, 6, 3, 11, 10, 0, 11, 7, 7, 1, 12, 2,
+  12, 3, 6, 5, 4, 8, 0, 4, 1, 12, 9, 4, 12, 8, 10, 0, 10, 9, 1, 9, 1,
+] as const
+
 const PIGMENT_LOOK: Readonly<Record<ReefCoralPigment, Readonly<{ color: string; intensity: number }>>> = {
   green_cyan_fp: { color: '#4dffd0', intensity: .42 },
   red_orange_fp: { color: '#ff2f77', intensity: .56 },
@@ -116,7 +123,8 @@ const seeded = (index: number, salt: number) => {
 function coralGarden(profileId: ReefShowcaseProfileId, count: number, seed: number,
   baseScale: number): readonly ReefShowcaseCoral[] {
   return Object.freeze(Array.from({ length: count }, (_, index) => {
-    const rockId = (index * 5 + seed) % ROCK_ANCHORS.length
+    const rockId = profileId === 'reef-monster-1000'
+      ? MONSTER_ROCK_SEQUENCE[index] : (index * 5 + seed) % ROCK_ANCHORS.length
     const anchor = ROCK_ANCHORS[rockId]
     const angle = seeded(index, seed + 11) * Math.PI * 2
     const radius = .03 + seeded(index, seed + 19) * .1
@@ -240,8 +248,8 @@ export const REEF_SHOWCASE_PROFILES: readonly ReefShowcaseProfile[] = Object.fre
     cleanupRoster: [clean('astrea_snail', 8), clean('cerith_snail', 6), clean('trochus_snail', 6),
       clean('turbo_snail', 3), clean('fighting_conch', 2), clean('nassarius_snail', 6),
       clean('brittle_star', 3), clean('blue_linckia', 1), clean('cleaner_shrimp', 2), clean('pistol_shrimp', 2)],
-    coralCount: 48, coralSeed: 11, coralScale: 2.65,
-    performanceCaps: { maxFish: 34, maxCleanupCrew: 42, maxCorals: 48, maxRenderedResidents: 124 } }),
+    coralCount: 43, coralSeed: 11, coralScale: 2.385,
+    performanceCaps: { maxFish: 34, maxCleanupCrew: 42, maxCorals: 43, maxRenderedResidents: 119 } }),
   profile({ id: 'reef-cylinder-1500', label: 'Huge 1,500 gal cylinder reef', tierId: 'cylinder5678', form: 'cylinder',
     composition: 'A radial coral crown with a clear perimeter circuit and open upper-water schooling space.',
     lighting: { fixture: 'pro_led', actinicPeakNanometers: 450, blueFraction: .8, naturalShadowFraction: .24 },

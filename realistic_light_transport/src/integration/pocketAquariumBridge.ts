@@ -3,8 +3,13 @@ import '../../../js/data.js'
 import '../../../js/sim.js'
 import '../../../js/sessionGuide.js'
 
+import * as THREE from 'three'
+
 import type { AquariumNamespace, LifecyclePhase, ReefSnapshot } from '../contracts'
+import { localTankPointToNormalized, type TankPlacementSpace } from '../scene/CoralPlacement'
+import { createLiveRockUpperSurfaceSamples, LIVE_ROCK_SEED_OFFSET } from '../scene/liveRockGeometry'
 import { sampleSpectralTransmittance } from '../scene/materials/spectralTransport'
+import { materializeReefRocks, REEF_SAND_Y } from '../scene/reefLayout'
 import { ACCEPTED_SPECIES_IDS, specimenAssetFor } from '../scene/specimens/assetRegistry'
 import {
   reefShowcaseProfile,
@@ -467,6 +472,11 @@ export const residentNameMaxLength = runtime.DATA.residentNameMaxLength
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value))
 const clone = (state: PocketState): PocketState => structuredClone(state)
 
+// ReefHabitat renders full showcase tanks in this fixed optical placement space.
+const SHOWCASE_PLACEMENT_SPACE: TankPlacementSpace = Object.freeze({
+  halfWidth: 2.76, halfDepth: 1.18, floorY: REEF_SAND_Y, waterlineY: -1.56 + 3.1 * .78,
+})
+
 function preparePocketHabitat(state: PocketState) {
   const act = runtime.ACTIONS
   const send = (action: PocketAction) => runtime.dispatch(state, action)
@@ -525,18 +535,66 @@ export function createPocketReefShowcase(
       y: clamp(bandY + (memberIndex - (entry.count - 1) / 2) * .018, .08, .92) }
   }))
 
-  state.corals = showcase.coralGarden.map((entry, index) => {
+  const sceneTankDepth = showcase.form === 'cylinder'
+    ? Math.cbrt(tier.volumeL / 1000 / (Math.PI / 4 * 1.45 * .78))
+    : Math.cbrt(tier.volumeL / 1000 / (2.4 * 1.1 * .78))
+  const sceneTankWidth = showcase.form === 'cylinder' ? sceneTankDepth : sceneTankDepth * 2.4
+  const sceneUnitsPerMeter = SHOWCASE_PLACEMENT_SPACE.halfWidth * 2 / sceneTankWidth
+  const rocks = materializeReefRocks(state.rockscape.rocks)
+  const surfaceSamples = new Map<number, ReturnType<typeof createLiveRockUpperSurfaceSamples>>()
+  const occupied: Array<{ point: THREE.Vector3; radius: number }> = []
+  const coralPlans = showcase.coralGarden.map((entry, index) => {
     const asset = specimenAssetFor(entry.speciesId, entry.variantId)
     const coral = runtime.DATA.CORALS[entry.speciesId]
     if (!asset || asset.category !== 'coral')
       throw new Error(`Showcase coral has no accepted asset: ${entry.speciesId}@${entry.variantId}`)
     if (!coral || !coral.variants.some((variant) => variant.id === entry.variantId))
       throw new Error(`Showcase coral has no runtime variant: ${entry.speciesId}@${entry.variantId}`)
+    const footprintFactor = entry.morphology === 'table' || entry.morphology === 'plating' ? .5
+      : entry.morphology === 'encrusting' ? .44 : entry.morphology === 'lps' ? .43
+        : entry.morphology === 'soft_colony' ? .41 : entry.morphology === 'blade' ? .4 : .36
+    const footprintRadius = asset.referenceAdultLengthMeters * sceneUnitsPerMeter
+      * entry.presentation.colonyScale * 1.2576 * footprintFactor
+    return { entry, index, coral, footprintRadius }
+  }).sort((a, b) => b.footprintRadius - a.footprintRadius || a.index - b.index)
+
+  state.corals = coralPlans.map(({ entry, index, coral, footprintRadius }) => {
+    const rockId = Number(/^rock:(\d+)$/.exec(entry.placement.surfaceId)?.[1])
+    const preferredRock = rocks.find(({ id }) => id === rockId)
+    if (!preferredRock) throw new Error(`Showcase coral references unknown rock: ${entry.placement.surfaceId}`)
+    const surfaceHugging = entry.morphology === 'table' || entry.morphology === 'plating'
+      || entry.morphology === 'encrusting'
+    const minimumUp = entry.morphology === 'table' || entry.morphology === 'plating' ? .56
+      : entry.morphology === 'encrusting' ? .42 : .3
+    let samples = surfaceSamples.get(preferredRock.id)
+    if (!samples) {
+      samples = createLiveRockUpperSurfaceSamples(preferredRock.index + LIVE_ROCK_SEED_OFFSET,
+        preferredRock.position, preferredRock.rotation, preferredRock.scale, preferredRock.index + 701, 192)
+      surfaceSamples.set(preferredRock.id, samples)
+    }
+    const start = (index * 17 + preferredRock.index * 7) % samples.length
+    let best: { point: THREE.Vector3; normal: THREE.Vector3; clearance: number } | undefined
+    for (let attempt = 0; attempt < samples.length; attempt += 1) {
+      const sample = samples[(start + attempt) % samples.length]
+      if (sample.normal.y < minimumUp) continue
+      const embed = surfaceHugging ? Math.min(.035, footprintRadius * .12) : 0
+      const point = sample.position.clone().addScaledVector(sample.normal, -embed)
+      const clearance = occupied.reduce((nearest, prior) => Math.min(nearest,
+        point.distanceTo(prior.point) - footprintRadius - prior.radius), Infinity)
+      if (!best || clearance > best.clearance) best = { point, normal: sample.normal, clearance }
+    }
+    if (!best) throw new Error(`Showcase coral has no upper surface on ${entry.placement.surfaceId}`)
+    occupied.push({ point: best.point, radius: footprintRadius })
+    const normal = best.normal.clone().normalize()
+    const placement: PocketCoralPlacement = { ...entry.placement,
+      position: localTankPointToNormalized(best.point, SHOWCASE_PLACEMENT_SPACE),
+      normal: [normal.x, normal.y, normal.z],
+    }
     return { id: state.livestock.length + index + 1, species: coral.id, variantId: entry.variantId,
-      placement: entry.placement, presentation: entry.presentation,
+      placement, presentation: entry.presentation,
       health: 1, tissue: 1, extension: .94, polyps: Math.min(coral.startPolyps * 3, 5000), growth: .96,
       feedingReserve: .85, stress: 0 }
-  })
+  }).sort((a, b) => a.id - b.id)
   state.nextId = state.livestock.length + state.corals.length + 1
   state.time.days = 180.55
   state.succession.age = 180

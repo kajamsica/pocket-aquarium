@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import * as THREE from 'three'
 
+import { normalizedTankPointToLocal } from '../scene/CoralPlacement'
+import { createLiveRockUpperSurfaceSamples, LIVE_ROCK_SEED_OFFSET } from '../scene/liveRockGeometry'
 import { specimenAssetFor } from '../scene/specimens/assetRegistry'
 import { createPocketReefShowcase, projectPocketState } from './pocketAquariumBridge'
 import { REEF_SHOWCASE_PROFILES, reefShowcaseProfile } from './showcaseProfiles'
@@ -59,7 +62,7 @@ describe('reef showcase preset registry', () => {
     expect(total(profile.fishRoster)).toBe(30)
     expect(total(profile.cleanupRoster)).toBe(39)
     expect(state.livestock).toHaveLength(69)
-    expect(view.placedCorals).toHaveLength(48)
+    expect(view.placedCorals).toHaveLength(43)
     expect(view.coralInventory).toHaveLength(0)
     expect(new Set(profile.fishRoster.map(({ swimBand }) => swimBand)).size).toBe(3)
     expect(tangs.every((speciesId) => profile.fishRoster.some((row) => row.speciesId === speciesId))).toBe(true)
@@ -94,30 +97,111 @@ describe('reef showcase preset registry', () => {
     expect(pigments.every(({ color }) => !/^#(?:ffff|ffee|ffd)/i.test(color))).toBe(true)
   })
 
-  it('varies large-preset colony scale, height, spacing, and morphology-bounded orientation', () => {
+  it('samples deterministic upward faces from the transformed rendered rock mesh', () => {
+    const position = new THREE.Vector3(.3, -.8, .15)
+    const rotation = new THREE.Euler(.28, .71, -.19)
+    const scale = new THREE.Vector3(.72, .46, .61)
+    const samples = createLiveRockUpperSurfaceSamples(37, position, rotation, scale, 703, 12)
+    const replay = createLiveRockUpperSurfaceSamples(37, position, rotation, scale, 703, 12)
+    const translated = createLiveRockUpperSurfaceSamples(37,
+      position.clone().add(new THREE.Vector3(.4, .2, -.3)), rotation, scale, 703, 12)
+    const rotated = createLiveRockUpperSurfaceSamples(37, position,
+      new THREE.Euler(.08, 1.13, .17), scale, 703, 12)
+    const otherMesh = createLiveRockUpperSurfaceSamples(38, position, rotation, scale, 703, 12)
+
+    expect(replay.map(({ position: point, normal }) => [point.toArray(), normal.toArray()]))
+      .toEqual(samples.map(({ position: point, normal }) => [point.toArray(), normal.toArray()]))
+    expect(translated[0].position.clone().sub(samples[0].position)
+      .distanceTo(new THREE.Vector3(.4, .2, -.3))).toBeLessThan(1e-12)
+    expect(rotated[0].normal.distanceTo(samples[0].normal)).toBeGreaterThan(.01)
+    expect(otherMesh[0].position.distanceTo(samples[0].position)).toBeGreaterThan(.01)
+    for (const sample of samples) {
+      expect(sample.normal.length()).toBeCloseTo(1, 8)
+      expect(sample.normal.y).toBeGreaterThanOrEqual(.24)
+    }
+  })
+
+  it('ties massive-preset colonies to distinct exact rock faces with conservative clearance', () => {
+    const profile = reefShowcaseProfile('reef-monster-1000')
+    const state = createPocketReefShowcase('reef-monster-1000')
+    const replay = createPocketReefShowcase('reef-monster-1000')
+    const space = { halfWidth: 2.76, halfDepth: 1.18, floorY: -1.44,
+      waterlineY: -1.56 + 3.1 * .78 }
+    const samplesByRock = new Map<number,
+      ReturnType<typeof createLiveRockUpperSurfaceSamples>>()
+    const points = state.corals.map((coral, index) => {
+      const entry = profile.coralGarden[index]
+      const rockId = Number(/^rock:(\d+)$/.exec(coral.placement?.surfaceId ?? '')?.[1])
+      const rock = state.rockscape.rocks.find(({ id }) => id === rockId)!
+      let samples = samplesByRock.get(rock.id)
+      if (!samples) {
+        samples = createLiveRockUpperSurfaceSamples(rock.index + LIVE_ROCK_SEED_OFFSET,
+          new THREE.Vector3(...rock.position), new THREE.Euler(...rock.rotation),
+          new THREE.Vector3(...rock.scale), rock.index + 701, 192)
+        samplesByRock.set(rock.id, samples)
+      }
+      const point = normalizedTankPointToLocal(coral.placement!.position, space)
+      const normal = new THREE.Vector3(...coral.placement!.normal)
+      expect(normal.length(), entry.key).toBeCloseTo(1, 8)
+      expect(coral.placement?.surfaceId, entry.key).toBe(entry.placement.surfaceId)
+      expect(normal.y, entry.key).toBeGreaterThanOrEqual(
+        entry.morphology === 'table' || entry.morphology === 'plating' ? .56
+          : entry.morphology === 'encrusting' ? .42 : .3)
+      expect(samples.some((sample) => {
+        const delta = point.clone().sub(sample.position)
+        return sample.normal.distanceTo(normal) < 1e-8 && delta.length() <= .035001
+          && (delta.length() < 1e-8 || Math.abs(delta.normalize().dot(normal)) > .999999)
+      }), entry.key).toBe(true)
+      return point
+    })
+    expect(replay.corals.map(({ placement }) => placement))
+      .toEqual(state.corals.map(({ placement }) => placement))
+    expect(new Set(points.map((point) => point.toArray().map((value) => value.toFixed(4)).join(':'))).size)
+      .toBe(points.length)
+    expect(Math.max(...points.map(({ y }) => y)) - Math.min(...points.map(({ y }) => y)))
+      .toBeGreaterThan(.5)
+    expect(new Set(state.corals.map(({ placement }) => placement!.normal
+      .map((value) => value.toFixed(3)).join(':'))).size).toBeGreaterThan(24)
+
+    const sceneDepth = Math.cbrt(3.785 / (2.4 * 1.1 * .78))
+    const sceneUnitsPerMeter = 5.52 / (sceneDepth * 2.4)
+    const radii = profile.coralGarden.map((entry) => {
+      const asset = specimenAssetFor(entry.speciesId, entry.variantId)!
+      const factor = entry.morphology === 'table' || entry.morphology === 'plating' ? .5
+        : entry.morphology === 'encrusting' ? .44 : entry.morphology === 'lps' ? .43
+          : entry.morphology === 'soft_colony' ? .41 : entry.morphology === 'blade' ? .4 : .36
+      return asset.referenceAdultLengthMeters * sceneUnitsPerMeter
+        * entry.presentation.colonyScale * 1.2576 * factor
+    })
+    let minimumClearance = Infinity
+    let closestPair = ''
+    for (let index = 0; index < points.length; index += 1) {
+      for (let other = index + 1; other < points.length; other += 1) {
+        const clearance = points[index].distanceTo(points[other]) - radii[index] - radii[other]
+        if (clearance < minimumClearance) {
+          minimumClearance = clearance
+          closestPair = `${profile.coralGarden[index].key}/${profile.coralGarden[other].key}`
+        }
+      }
+    }
+    // The radii deliberately overestimate sparse branches and irregular encrusting rims;
+    // even that conservative envelope may overlap by no more than this shallow margin.
+    expect(minimumClearance, closestPair).toBeGreaterThanOrEqual(-.07)
+  })
+
+  it('keeps large-preset counts, rosters, and scale bands within their intended budgets', () => {
     const large = ['reef-500', 'reef-monster-1000', 'reef-cylinder-1500'].map(reefShowcaseProfile)
     expect(large.map((item) => [total(item.fishRoster), total(item.cleanupRoster), item.coralGarden.length]))
-      .toEqual([[22, 28, 38], [30, 39, 48], [36, 36, 42]])
-
-    for (const profile of large) {
-      const heights = profile.coralGarden.map(({ placement }) => placement.position[1])
-      for (const coral of profile.coralGarden) {
-        const [x, y, z] = coral.placement.normal
-        const tilt = Math.acos(y) * 180 / Math.PI
-        expect(Math.hypot(x, y, z), coral.key).toBeCloseTo(1, 8)
-        expect(y, coral.key).toBeGreaterThan(.92)
-        expect(Math.hypot(x, z), coral.key).toBeGreaterThan(.015)
-        if (coral.morphology === 'table' || coral.morphology === 'plating'
-          || coral.morphology === 'encrusting') expect(tilt, coral.key).toBeLessThan(6.5)
-        else expect(tilt, coral.key).toBeGreaterThan(3)
-      }
-      expect(Math.max(...heights) - Math.min(...heights), profile.id).toBeGreaterThan(.15)
-    }
+      .toEqual([[22, 28, 38], [30, 39, 43], [36, 36, 42]])
+    expect(large.map((item) => item.coralGarden[0].presentation.colonyScale))
+      .toEqual([1.9564743102388455, 1.2580686460025814, 1.4366439854151563])
+    expect(large[1].coralGarden[0].presentation.colonyScale)
+      .toBeCloseTo(1.3978540511139796 * .9, 12)
 
     const scales = reefShowcaseProfile('reef-monster-1000').coralGarden
       .map(({ presentation }) => presentation.colonyScale)
-    expect(Math.max(...scales)).toBeLessThan(3.3)
-    expect(new Set(scales.map((scale) => scale < 1.8 ? 'small' : scale < 2.7 ? 'medium' : 'hero')))
+    expect(Math.max(...scales)).toBeLessThan(3)
+    expect(new Set(scales.map((scale) => scale < 1.62 ? 'small' : scale < 2.43 ? 'medium' : 'hero')))
       .toEqual(new Set(['small', 'medium', 'hero']))
   })
 })
