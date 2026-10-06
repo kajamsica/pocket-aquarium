@@ -6,7 +6,7 @@ import {
   dispatchPocketAction,
   projectPocketState,
 } from './pocketAquariumBridge'
-import { cameraDistanceForAspect } from '../scene/ReefScene'
+import { cameraDistanceForAspect, resolveReefLightRig } from '../scene/ReefScene'
 import { opticalTankShape } from '../scene/OpticalTank'
 import { cameraFitForEnvelope, resolveTankSceneEnvelope } from '../scene/tankSceneEnvelope'
 
@@ -111,6 +111,31 @@ describe('tank framing', () => {
     expect(massiveEnvelope.scale[0]).toBeLessThanOrEqual(1.45)
     expect(cameraFitForEnvelope(massiveEnvelope, 16 / 9).distance)
       .toBeGreaterThan(cameraFitForEnvelope(starterEnvelope, 16 / 9).distance)
+  })
+
+  it('scales inverse-square light reach with 75 L and 3,785 L envelopes', () => {
+    const starter = resolveTankSceneEnvelope(projectPocketState(createEmptyReef()).reefSnapshot.tank)
+    const massiveState = createEmptyReef()
+    massiveState.tier = 'monster3785'
+    massiveState.water.levelL = 3785
+    const massive = resolveTankSceneEnvelope(projectPocketState(massiveState).reefSnapshot.tank)
+    const starterRig = resolveReefLightRig(starter, .8, 'reef', 'spectral', 1)
+    const massiveRig = resolveReefLightRig(massive, .8, 'reef', 'spectral', 1)
+    const scale = massiveRig.scale / starterRig.scale
+
+    expect(massiveRig.keyPosition[1] / starterRig.keyPosition[1]).toBeCloseTo(scale, 10)
+    expect(massiveRig.fillDistance / starterRig.fillDistance).toBeCloseTo(scale, 10)
+    expect(massiveRig.keyIntensity / starterRig.keyIntensity).toBeCloseTo(scale * scale, 10)
+    expect(massiveRig.keyIntensity / massiveRig.keyDistance ** 2)
+      .toBeCloseTo(starterRig.keyIntensity / starterRig.keyDistance ** 2, 10)
+
+    const established = resolveReefLightRig(starter, .8, 'reef', 'beauty', 1)
+    const immature = resolveReefLightRig(starter, .8, 'reef', 'beauty', 0)
+    const freshwater = resolveReefLightRig(starter, .8, 'freshwater', 'beauty', 1)
+    expect(established.fillIntensity).toBeGreaterThan(immature.fillIntensity * 1.25)
+    expect(established.hemisphereIntensity).toBeGreaterThan(immature.hemisphereIntensity)
+    expect(freshwater).toMatchObject({ fillIntensity: immature.fillIntensity,
+      hemisphereIntensity: immature.hemisphereIntensity })
   })
 
   it('projects the cylinder as a tall round-footprint envelope that fits phone and desktop', () => {

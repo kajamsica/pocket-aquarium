@@ -108,9 +108,9 @@ const MONSTER_ROCK_SEQUENCE = [
 ] as const
 
 const PIGMENT_LOOK: Readonly<Record<ReefCoralPigment, Readonly<{ color: string; intensity: number }>>> = {
-  green_cyan_fp: { color: '#4dffd0', intensity: .42 },
-  red_orange_fp: { color: '#ff2f77', intensity: .56 },
-  mixed_fp: { color: '#7dffc2', intensity: .28 },
+  green_cyan_fp: { color: '#4dffd0', intensity: .5 },
+  red_orange_fp: { color: '#ff2f77', intensity: .62 },
+  mixed_fp: { color: '#7dffc2', intensity: .34 },
   chromoprotein: { color: '#778cff', intensity: .055 },
 }
 

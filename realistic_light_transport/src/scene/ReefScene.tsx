@@ -38,6 +38,30 @@ export function cameraDistanceForAspect(aspect: number) {
   return 7.7
 }
 
+/** Scale inverse-square scene lights with the display envelope, then add a restrained
+ * cyan/blue shadow lift only for mature reefs in the beauty view. */
+export function resolveReefLightRig(envelope: TankSceneEnvelope, lightPower: number,
+  visualProfile: AquariumVisualProfile, diagnosticView: ReefRenderSettings['diagnosticView'],
+  maturity: number) {
+  const power = THREE.MathUtils.clamp(lightPower, 0, 1)
+  const scale = Math.max(...envelope.scale)
+  const intensityScale = scale * scale
+  const beautyLift = visualProfile === 'reef' && diagnosticView === 'beauty'
+    ? THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(maturity, 0, 1), .55, 1) : 0
+  return {
+    scale,
+    keyPosition: [0, 5.8 * scale, 1.4 * scale] as const,
+    keyDistance: 14 * scale,
+    keyIntensity: (70 + power * 150) * intensityScale * (1 + beautyLift * .08),
+    fillPosition: [-3.4 * scale, .6 * scale, 3.2 * scale] as const,
+    fillDistance: 7 * scale,
+    fillIntensity: (12 + power * 18) * intensityScale * (1 + beautyLift * .28),
+    directionalPosition: [1.8 * scale, 2.5 * scale, 5 * scale] as const,
+    directionalIntensity: .42 * (1 + beautyLift * .14),
+    hemisphereIntensity: .6 * (1 + beautyLift * .22),
+  }
+}
+
 /** Orbit look target and framing constants. Radius comes from the aspect/zoom distance so
  *  the default yaw/pitch reproduces the prior head-on framing (0, 0.48, ~7.7). */
 export const ORBIT_TARGET = { x: 0, y: -0.12, z: 0 } as const
@@ -330,6 +354,10 @@ function ReefWorld({
     snapshot.tank.form,
     snapshot.tank.nominalVolumeLiters,
   ])
+  const lightRig = useMemo(() => resolveReefLightRig(sceneEnvelope, lightPower, visualProfile,
+    renderSettings.diagnosticView, snapshot.ecology.maturity), [
+    lightPower, renderSettings.diagnosticView, sceneEnvelope, snapshot.ecology.maturity, visualProfile,
+  ])
   const daylight = useMemo(() => new THREE.Color(), [])
   const updateOpticsTelemetry = useCallback((telemetry: SpectralTransportTelemetry) => {
     opticsTelemetry.current = telemetry
@@ -373,11 +401,11 @@ function ReefWorld({
 
     if (keyLight.current) {
       keyLight.current.color.copy(daylight)
-      keyLight.current.intensity = 70 + lightPower * 150
-      keyLight.current.position.x = Math.sin(elapsed * 0.09) * 0.16
+      keyLight.current.intensity = lightRig.keyIntensity
+      keyLight.current.position.x = Math.sin(elapsed * 0.09) * 0.16 * lightRig.scale
     }
     if (fillLight.current) {
-      fillLight.current.intensity = 12 + lightPower * 18
+      fillLight.current.intensity = lightRig.fillIntensity
     }
   })
 
@@ -385,18 +413,20 @@ function ReefWorld({
     <>
       <color attach="background" args={[visualSettings.background]} />
       <fogExp2 attach="fog" args={[visualSettings.fog, visualSettings.fogDensity]} />
-      <hemisphereLight args={[visualSettings.hemisphereSky, visualSettings.hemisphereGround, 0.6]} />
-      <directionalLight color={visualSettings.directional} intensity={0.42} position={[1.8, 2.5, 5]} />
+      <hemisphereLight args={[visualSettings.hemisphereSky, visualSettings.hemisphereGround,
+        lightRig.hemisphereIntensity]} />
+      <directionalLight color={visualSettings.directional} intensity={lightRig.directionalIntensity}
+        position={[...lightRig.directionalPosition]} />
       <spotLight
         ref={keyLight}
         castShadow
         color={visualSettings.keyInitial}
-        intensity={70 + lightPower * 150}
+        intensity={lightRig.keyIntensity}
         angle={0.58}
         penumbra={0.72}
         decay={2}
-        distance={14}
-        position={[0, 5.8, 1.4]}
+        distance={lightRig.keyDistance}
+        position={[...lightRig.keyPosition]}
         shadow-bias={-0.0004}
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
@@ -404,10 +434,10 @@ function ReefWorld({
       <pointLight
         ref={fillLight}
         color={visualSettings.fill}
-        intensity={12 + lightPower * 18}
+        intensity={lightRig.fillIntensity}
         decay={2}
-        distance={7}
-        position={[-3.4, 0.6, 3.2]}
+        distance={lightRig.fillDistance}
+        position={[...lightRig.fillPosition]}
       />
 
       <mesh position={[0, 0.08, -1.78]} receiveShadow>
