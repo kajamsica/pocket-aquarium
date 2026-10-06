@@ -24,6 +24,7 @@ import {
 } from './integration/pocketAquariumBridge'
 import {
   createPocketTankRepository,
+  eraseAllPocketAquariumData,
   type PocketActiveTank,
   type PocketTankRepositorySnapshot,
 } from './integration/pocketTankRepository'
@@ -532,6 +533,22 @@ function AquariumApp() {
     catch { /* invalid names leave the existing library unchanged */ }
   }, [refreshTankIndex])
 
+  const eraseAllData = useCallback(() => {
+    if (!TANK_STORAGE) return
+    try { eraseAllPocketAquariumData(TANK_STORAGE, pocketSaveKey) } catch { return }
+    tankSnapshotRef.current = null
+    setTankSnapshot(null)
+    const next = createPocketNewGame()
+    pocketStateRef.current = next
+    setPocketState(next)
+    setCreatingTank(false)
+    clearTankTransientState()
+    const freshUrl = new URL(window.location.href)
+    freshUrl.search = ''
+    freshUrl.hash = ''
+    window.location.replace(freshUrl.toString())
+  }, [clearTankTransientState])
+
   const chooseHabitat = useCallback((habitat: 'reef' | 'amazon') => {
     const next = dispatchPocketAction(createPocketNewGame(), {
       type: pocketActions.CHOOSE_HABITAT,
@@ -589,7 +606,8 @@ function AquariumApp() {
     onCreate: beginCreateTank,
     onActivate: activateTank,
     onRename: renameTank,
-  } : undefined, [activateTank, beginCreateTank, renameTank, tankSnapshot])
+    onEraseAll: eraseAllData,
+  } : undefined, [activateTank, beginCreateTank, eraseAllData, renameTank, tankSnapshot])
   const candidateStatus = previewCandidate ? {
     valid: previewCandidate.valid,
     frozen: coralDraft?.phase === 'frozen',

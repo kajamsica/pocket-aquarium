@@ -3494,6 +3494,63 @@ input:focus-visible {
   outline-offset: 1px;
 }
 
+.pocket-library-danger {
+  padding-top: 10px;
+  border-top: 1px solid rgba(238, 142, 128, .2);
+}
+
+.pocket-library-danger > div {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(238, 142, 128, .38);
+  border-radius: 10px;
+  background: rgba(83, 26, 25, .32);
+}
+
+.pocket-library-danger strong { color: #ffd5cc; font-size: .7rem; }
+.pocket-library-danger p { margin: 0; color: rgba(255, 224, 217, .72); font-size: .58rem; line-height: 1.45; }
+.pocket-library-danger > div > div { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.pocket-destructive-action {
+  border-color: rgba(238, 142, 128, .38);
+  color: #ffd0c6;
+  background: rgba(112, 36, 31, .28);
+}
+
+.pocket-destructive-action:hover {
+  border-color: rgba(255, 171, 156, .62);
+  background: rgba(139, 46, 39, .4);
+}
+
+.pocket-recovery-screen {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 22px;
+  color: #eefeff;
+  background: radial-gradient(circle at 50% 30%, rgba(16, 92, 104, .72), transparent 42%), #021016;
+}
+
+.pocket-recovery-screen > section {
+  display: grid;
+  width: min(520px, 100%);
+  gap: 12px;
+  padding: clamp(24px, 7vw, 42px);
+  border: 1px solid rgba(157, 228, 237, .22);
+  border-radius: 24px;
+  background: rgba(4, 27, 34, .9);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .48);
+  text-align: center;
+}
+
+.pocket-recovery-screen > section > span { color: #78e3c5; font-size: 2.4rem; }
+.pocket-recovery-screen h1 { margin: 0; font-size: clamp(1.55rem, 7vw, 2.3rem); }
+.pocket-recovery-screen p { margin: 0; color: rgba(218, 242, 246, .7); line-height: 1.5; }
+.pocket-recovery-screen > section > p:first-of-type { color: #78e3c5; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.pocket-recovery-screen > section > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 4px; }
+.pocket-recovery-screen > section > strong { color: #ffc1b6; font-size: .7rem; }
+
 /* Hover identity: a compact read-only companion to the pointer, not a window. It takes no
  * pointer input at all, so feeding taps, camera drag, and pinch keep working underneath it,
  * and it stays clear of the viewport edges so it never covers the reef it is describing. */

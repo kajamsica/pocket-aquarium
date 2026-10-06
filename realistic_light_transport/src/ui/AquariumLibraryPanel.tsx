@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 export type AquariumLibraryTank = {
   id: string
   name: string
@@ -10,6 +12,7 @@ export type AquariumLibraryModel = {
   onCreate(): void
   onActivate(id: string): void
   onRename(id: string, name: string): void
+  onEraseAll?(): void
 }
 
 function waterType(habitat: AquariumLibraryTank['habitat']) {
@@ -19,6 +22,8 @@ function waterType(habitat: AquariumLibraryTank['habitat']) {
 }
 
 export function AquariumLibraryPanel({ model }: { readonly model: AquariumLibraryModel }) {
+  const [confirmingErase, setConfirmingErase] = useState(false)
+
   return <section className="pocket-aquarium-library" aria-label="Your aquariums">
     <div className="pocket-library-summary">
       <div><p>Aquarium library</p><strong>{model.tanks.length} {model.tanks.length === 1 ? 'tank' : 'tanks'}</strong></div>
@@ -45,5 +50,17 @@ export function AquariumLibraryPanel({ model }: { readonly model: AquariumLibrar
           <button className="hud-button" type="submit">Rename</button>
         </form>
       </li>)}</ul> : <p className="pocket-empty-state">No aquariums yet. Start a new tank to choose its water type.</p>}
+    <div className="pocket-library-danger">
+      {confirmingErase ? <div role="alertdialog" aria-labelledby="erase-aquarium-data-title"
+        aria-describedby="erase-aquarium-data-description">
+        <strong id="erase-aquarium-data-title">Permanently erase all aquarium data?</strong>
+        <p id="erase-aquarium-data-description">Every tank and local preference on this device will be deleted. This cannot be undone.</p>
+        <div>
+          <button className="hud-button" type="button" autoFocus onClick={() => setConfirmingErase(false)}>Cancel</button>
+          <button className="hud-button pocket-destructive-action" type="button" onClick={model.onEraseAll}>Erase everything</button>
+        </div>
+      </div> : <button className="hud-button pocket-destructive-action" type="button"
+        onClick={() => setConfirmingErase(true)}>Erase all aquarium data</button>}
+    </div>
   </section>
 }
