@@ -1011,7 +1011,8 @@ export function ReefHabitat({ snapshot, flowField, rockscape, sand, rockscapeEdi
     ? resolveCoralRenderPlan(activeCoral.speciesId, activeCoral.variantId, sceneUnitsPerMeter, 'preview')
     : undefined
   const occupied = useMemo(() => isFreshwater ? [] : placedCorals.flatMap((coral) => {
-    const plan = resolveCoralRenderPlan(coral.speciesId, coral.variantId, sceneUnitsPerMeter, 'locked')
+    const plan = resolveCoralRenderPlan(coral.speciesId, coral.variantId, sceneUnitsPerMeter,
+      'locked', true, coral.presentation)
     return coral.placement && plan ? [{ placement: coral.placement, radius: plan.targetWidth * .45 }] : []
   }), [isFreshwater, placedCorals, sceneUnitsPerMeter])
   const updatePlacementCandidate = useCallback((event: ThreeEvent<PointerEvent | MouseEvent>,
@@ -1117,7 +1118,7 @@ export function ReefHabitat({ snapshot, flowField, rockscape, sand, rockscapeEdi
         speciesId={coral.speciesId} variantId={coral.variantId} individualId={coral.id}
         placement={coral.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}
         mode="locked" lifecycle={{ health: coral.health, tissue: coral.tissue, extension: coral.extension,
-          polyps: coral.polyps, growth: coral.growth }} /> : null)}
+          polyps: coral.polyps, growth: coral.growth }} presentation={coral.presentation} /> : null)}
       {!isFreshwater && activeCoral && previewCandidate ? <CoralPlacement speciesId={activeCoral.speciesId}
         variantId={activeCoral.variantId} individualId={activeCoral.id}
         placement={previewCandidate.placement} space={placementSpace} sceneUnitsPerMeter={sceneUnitsPerMeter}

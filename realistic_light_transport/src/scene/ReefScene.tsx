@@ -23,6 +23,7 @@ import {
 } from './habitatVisualProfile'
 import type { SpectralTransportTelemetry } from './materials/spectralTransport'
 import { endTankDrag, noteTankDrag, noteTankPointerDown, noteTankPointerUp } from './tankGestures'
+import { cameraFitForEnvelope, resolveTankSceneEnvelope, type TankSceneEnvelope } from './tankSceneEnvelope'
 
 const DEFAULT_RENDER_SETTINGS: ReefRenderSettings = {
   quality: 'balanced',
@@ -55,10 +56,6 @@ const ORBIT_PITCH_PER_KEY = 0.08
 const PINCH_ZOOM_EXPONENT = 4.5
 /** Wheel/trackpad scene units per deltaY unit; one notch (~100) moves a fifth of the range. */
 const WHEEL_ZOOM_PER_DELTA = 0.02
-/** Near bound sits inside the front glass (habitat half-depth 1.18) so the camera enters the
- *  water volume, and stays far enough from the orbit target to clear the 0.1 near plane. */
-const MIN_CAMERA_DISTANCE = 0.95
-const MAX_CAMERA_DISTANCE = 10.2
 /** Exponential convergence rate toward the requested orbit position: prompt, still smoothed. */
 const CAMERA_CONVERGENCE = 6.5
 
@@ -82,8 +79,13 @@ export function orbitCameraPosition(
   )
 }
 
-function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
+function CameraRig({ envelope, disabled = false }: {
+  readonly envelope: TankSceneEnvelope
+  readonly disabled?: boolean
+}) {
   const { gl, size } = useThree()
+  const aspect = size.width / Math.max(size.height, 1)
+  const fit = useMemo(() => cameraFitForEnvelope(envelope, aspect), [aspect, envelope])
   const target = useMemo(() => new THREE.Vector3(ORBIT_TARGET.x, ORBIT_TARGET.y, ORBIT_TARGET.z), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
   const cameraDistance = useRef<number | null>(null)
@@ -108,7 +110,7 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
         if (touches.current.size === 2) {
           drag.current = null
           const [a, b] = [...touches.current.values()]
-          pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? 7.7 }
+          pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), cameraDistance: cameraDistance.current ?? fit.distance }
           return
         }
       }
@@ -124,8 +126,8 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
         const distance = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 20)
         cameraDistance.current = THREE.MathUtils.clamp(
           pinch.current.cameraDistance * (pinch.current.distance / distance) ** PINCH_ZOOM_EXPONENT,
-          MIN_CAMERA_DISTANCE,
-          MAX_CAMERA_DISTANCE,
+          fit.minDistance,
+          fit.maxDistance,
         )
         event.preventDefault()
         return
@@ -158,11 +160,11 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
       if (touches.current.size < 2) pinch.current = null
     }
     const wheel = (event: WheelEvent) => {
-      const base = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
+      const base = cameraDistance.current ?? fit.distance
       cameraDistance.current = THREE.MathUtils.clamp(
         base + event.deltaY * WHEEL_ZOOM_PER_DELTA,
-        MIN_CAMERA_DISTANCE,
-        MAX_CAMERA_DISTANCE,
+        fit.minDistance,
+        fit.maxDistance,
       )
       event.preventDefault()
     }
@@ -203,10 +205,18 @@ function CameraRig({ disabled = false }: { readonly disabled?: boolean }) {
       window.removeEventListener(REEF_CAMERA_RESET_EVENT, resetView)
       window.removeEventListener('keydown', keydown)
     }
-  }, [disabled, gl, size.height, size.width])
+  }, [disabled, fit.distance, fit.maxDistance, fit.minDistance, gl])
+
+  useEffect(() => {
+    cameraDistance.current = null
+  }, [envelope.key])
 
   useFrame(({ camera }, delta) => {
-    const radius = cameraDistance.current ?? cameraDistanceForAspect(size.width / Math.max(size.height, 1))
+    if (camera instanceof THREE.PerspectiveCamera && camera.fov !== fit.fov) {
+      camera.fov = fit.fov
+      camera.updateProjectionMatrix()
+    }
+    const radius = cameraDistance.current ?? fit.distance
     orbitCameraPosition(desired, radius, yaw.current, pitch.current, target)
     camera.position.lerp(desired, 1 - Math.exp(-delta * CAMERA_CONVERGENCE))
     camera.lookAt(target)
@@ -316,6 +326,10 @@ function ReefWorld({
   const lastTelemetryEmit = useRef(0)
   const lightPower = THREE.MathUtils.clamp(snapshot.equipment.lightPower, 0, 1)
   const visualSettings = resolveHabitatVisualSettings(visualProfile, snapshotTannin(snapshot))
+  const sceneEnvelope = useMemo(() => resolveTankSceneEnvelope(snapshot.tank), [
+    snapshot.tank.form,
+    snapshot.tank.nominalVolumeLiters,
+  ])
   const daylight = useMemo(() => new THREE.Color(), [])
   const updateOpticsTelemetry = useCallback((telemetry: SpectralTransportTelemetry) => {
     opticsTelemetry.current = telemetry
@@ -401,11 +415,15 @@ function ReefWorld({
         <meshStandardMaterial color={visualSettings.backing} roughness={0.88} metalness={0.08} />
       </mesh>
       <mesh position={[0, -1.86, 0]} receiveShadow>
-        <boxGeometry args={[6.7, 0.34, 3.35]} />
+        <boxGeometry args={[
+          Math.max(6.7, sceneEnvelope.width + .9),
+          0.34,
+          Math.max(3.35, sceneEnvelope.depth + .65),
+        ]} />
         <meshStandardMaterial color={visualSettings.stand} roughness={0.74} metalness={0.22} />
       </mesh>
 
-      <group position={[0, 0.03, 0]}>
+      <group position={[0, 0.03, 0]} scale={[...sceneEnvelope.scale]}>
         <ReefHabitat snapshot={snapshot} flowField={flowField} placedCorals={placedCorals}
           activeCoral={activeCoral} previewCandidate={previewCandidate}
           onPlacementCandidate={onPlacementCandidate} rockscape={rockscape}
@@ -426,7 +444,7 @@ function ReefWorld({
         />
       </group>
       <ExposureController lightPower={lightPower} brightness={renderSettings.brightness} />
-      <CameraRig disabled={Boolean(activeCoral) || rockscapeEditing} />
+      <CameraRig envelope={sceneEnvelope} disabled={Boolean(activeCoral) || rockscapeEditing} />
     </>
   )
 }

@@ -6,6 +6,11 @@ import '../../../js/sessionGuide.js'
 import type { AquariumNamespace, LifecyclePhase, ReefSnapshot } from '../contracts'
 import { sampleSpectralTransmittance } from '../scene/materials/spectralTransport'
 import { ACCEPTED_SPECIES_IDS, specimenAssetFor } from '../scene/specimens/assetRegistry'
+import {
+  reefShowcaseProfile,
+  type ReefShowcaseCoralPresentation,
+  type ReefShowcaseProfileId,
+} from './showcaseProfiles'
 
 export const pocketShowcasePopulationAuthority = 'root_pa' as const
 export type PocketAction = Readonly<{ type: string } & Record<string, unknown>>
@@ -110,6 +115,7 @@ interface PocketCoral {
   growth: number
   feedingReserve: number
   stress: number
+  presentation?: ReefShowcaseCoralPresentation
 }
 
 export interface PocketCoralPlacement {
@@ -212,6 +218,9 @@ export interface CatalogSpecies {
   layer: 'bottom' | 'mid' | 'top'
   maturityDays: number
   diet: string
+  predator: boolean
+  coralSafe: boolean
+  invertSafe: boolean
   profileRevision?: Readonly<{ package: number; biology: number; calibration: number; morphology: number; asset: string }>
 }
 
@@ -435,6 +444,7 @@ export interface PocketCoralView {
   readonly polyps: number
   readonly growth: number
   readonly placement: PocketCoralPlacement | null
+  readonly presentation?: ReefShowcaseCoralPresentation
 }
 
 export interface PocketProgressionView {
@@ -475,43 +485,69 @@ function preparePocketHabitat(state: PocketState) {
   return send
 }
 
-export function createPocketReefShowcase(): PocketState {
-  const state = runtime.createState({ habitat: 'reef', credits: 3000, seed: 0x51f15e })
+export function createPocketReefShowcase(
+  profileId: ReefShowcaseProfileId = 'reef-monster-1000',
+): PocketState {
+  const showcase = reefShowcaseProfile(profileId)
+  const state = runtime.createState({ habitat: 'reef', credits: 50_000, seed: 0x51f15e })
   const send = preparePocketHabitat(state)
   const act = runtime.ACTIONS
-  send({ type: act.PURCHASE_TIER, tier: 'xl757' })
-  const acceptedDefaults = [...ACCEPTED_SPECIES_IDS].sort().map((speciesId) => {
-    const asset = specimenAssetFor(speciesId)
-    if (!asset) throw new Error(`Accepted showcase default is missing: ${speciesId}`)
-    return asset
-  })
-  const animalDefaults = acceptedDefaults.filter((asset) => asset.category !== 'coral'
-    && asset.speciesId !== 'epaulette_shark')
-  state.livestock = animalDefaults.map((asset, index) => {
-    const profile = runtime.DATA.resolveSpecies(state, asset.speciesId)
-    if (!profile || profile.habitat !== 'reef')
-      throw new Error(`Accepted showcase animal has no reef runtime profile: ${asset.speciesId}`)
-    const row = Math.floor(index / 5)
-    const layerY = profile.layer === 'bottom' ? .86 : profile.layer === 'top' ? .18 : .5
-    return { id: index + 1, species: profile.id, kind: profile.kind, ageDays: profile.maturityDays,
+  const tier = runtime.DATA.TIERS[showcase.tierId]
+  if (!tier) throw new Error(`Unknown showcase tank tier: ${showcase.tierId}`)
+  state.tier = tier.id
+  state.water.levelL = tier.volumeL
+  // `preparePocketHabitat` commissions the ATO in the standard tank, so its finite reservoir is
+  // exhausted by the cycling run. Refill it after sizing the showcase so the visible preset starts
+  // at its intended waterline while retaining the simulator's finite-reservoir behavior.
+  state.automation.ato.reservoirL = state.automation.ato.capacityL
+  ;([
+    ['circulation', 'gyre'], ['light', showcase.lighting.fixture], ['skimmer', 'cone'],
+    ['refugium', 'refugium'], ['feeder', 'auto'], ['algae_clip', 'clip'],
+  ] as const).forEach(([category, levelId]) => send({
+    type: act.PURCHASE_EQUIPMENT, category, levelId,
+  }))
+
+  const roster = [...showcase.fishRoster, ...showcase.cleanupRoster]
+  state.livestock = roster.flatMap((entry, cohortIndex) => Array.from({ length: entry.count }, (_, memberIndex) => {
+    const asset = specimenAssetFor(entry.speciesId)
+    const species = runtime.DATA.resolveSpecies(state, entry.speciesId)
+    if (!asset || asset.category === 'coral')
+      throw new Error(`Showcase resident has no accepted animal asset: ${entry.speciesId}`)
+    if (!species || species.habitat !== 'reef')
+      throw new Error(`Showcase resident has no reef runtime profile: ${entry.speciesId}`)
+    const id = roster.slice(0, cohortIndex).reduce((sum, row) => sum + row.count, 0) + memberIndex + 1
+    const bandY = entry.swimBand === 'bottom' ? .86 : entry.swimBand === 'top' ? .18 : .5
+    return { id, species: species.id, kind: species.kind, ageDays: species.maturityDays,
       stage: 'adult', sex: 'unknown', hunger: .1, condition: 1, health: 1,
-      parasiteLoad: profile.id === 'ocellaris' ? .6 : 0, lastParasiteCleaningCycle: -1, alive: true,
+      parasiteLoad: species.id === 'ocellaris' ? .2 : 0, lastParasiteCleaningCycle: -1, alive: true,
       causeOfDeath: null, decayDays: 0, lastFedDay: state.time.days,
-      x: .1 + (index % 5) * .2, y: clamp(layerY + (row - 2) * .03, .1, .92) }
-  })
-  const coralDefaults = acceptedDefaults.filter((asset) => asset.category === 'coral')
-  state.corals = coralDefaults.map((asset, index) => {
-    const profile = runtime.DATA.CORALS[asset.speciesId]
-    const variantId = asset.variantId ?? profile?.defaultVariantId
-    if (!profile || !profile.variants.some((variant) => variant.id === variantId))
-      throw new Error(`Accepted showcase coral has no runtime variant: ${asset.key}`)
-    return { id: animalDefaults.length + index + 1, species: profile.id, variantId, placement: null,
-      health: 1, tissue: 1, extension: .8, polyps: profile.startPolyps, growth: .3,
-      feedingReserve: .6, stress: 0 }
+      x: .07 + ((id * 5 + cohortIndex * 3) % 15) / 15 * .86,
+      y: clamp(bandY + (memberIndex - (entry.count - 1) / 2) * .018, .08, .92) }
+  }))
+
+  state.corals = showcase.coralGarden.map((entry, index) => {
+    const asset = specimenAssetFor(entry.speciesId, entry.variantId)
+    const coral = runtime.DATA.CORALS[entry.speciesId]
+    if (!asset || asset.category !== 'coral')
+      throw new Error(`Showcase coral has no accepted asset: ${entry.speciesId}@${entry.variantId}`)
+    if (!coral || !coral.variants.some((variant) => variant.id === entry.variantId))
+      throw new Error(`Showcase coral has no runtime variant: ${entry.speciesId}@${entry.variantId}`)
+    return { id: state.livestock.length + index + 1, species: coral.id, variantId: entry.variantId,
+      placement: entry.placement, presentation: entry.presentation,
+      health: 1, tissue: 1, extension: .94, polyps: Math.min(coral.startPolyps * 3, 5000), growth: .96,
+      feedingReserve: .85, stress: 0 }
   })
   state.nextId = state.livestock.length + state.corals.length + 1
-  send({ type: act.WATER_TEST })  // the store needs a peak-light PAR reading on file before it sells coral
+  state.time.days = 180.55
+  state.succession.age = 180
+  Object.assign(state.microfauna, { pods: .72, worms: .58, infusoria: .42, biodiversity: .9 })
+  state.rockscape.rocks.forEach((rock, index) => Object.assign(rock.biology, {
+    diatom: .03, nuisanceAlgae: .025,
+    coralline: .48 + (index % 4) * .07,
+    encruster: .42 + (index % 3) * .08,
+  }))
   runtime.stepDays(state, 0.02)
+  send({ type: act.WATER_TEST })  // the store needs a fresh peak-light PAR reading to sell coral
   send({ type: act.WATER_TEST })
   return state
 }
@@ -1206,7 +1242,7 @@ export function projectPocketState(
     return { id: coral.id, speciesId: coral.species, variantId, speciesName: species.name,
       variantDisplayName: variant?.displayName ?? species.name, health: coral.health,
       tissue: coral.tissue, extension: coral.extension, polyps: coral.polyps, growth: coral.growth,
-      placement: coral.placement }
+      placement: coral.placement, presentation: coral.presentation }
   })
   const coralInventory = coralViews.filter((coral) => coral.placement === null)
   const placedCorals = coralViews.filter((coral) => coral.placement !== null)
@@ -1215,8 +1251,16 @@ export function projectPocketState(
   const attenuation = clamp(0.78 + state.succession.haze * 0.4 + state.succession.greenFilm * 0.22, 0.2, 2.4)
   const spectrum = sampleSpectralTransmittance(depth, attenuation, 0.96)
   const transmission = spectrum.reduce((sum, value) => sum + value, 0) / spectrum.length
-  const footprint = Math.max(tier.volumeL / 1000 / (0.4 * 0.78), 0.01)
-  const tankDepth = Math.sqrt(footprint / 2.4)
+  const tankForm = tier.form === 'cylinder' ? 'cylinder' : 'rectangular'
+  const operatingVolumeCubicMeters = Math.max(tier.volumeL / 1000, 0.001)
+  const operatingFillRatio = 0.78
+  const tankDepth = tankForm === 'cylinder'
+    ? Math.cbrt(operatingVolumeCubicMeters / (Math.PI / 4 * 1.45 * operatingFillRatio))
+    : Math.cbrt(operatingVolumeCubicMeters / (2.4 * 1.1 * operatingFillRatio))
+  const tankWidth = tankForm === 'cylinder' ? tankDepth : tankDepth * 2.4
+  const tankHeight = tankForm === 'cylinder' ? tankDepth * 1.45 : tankDepth * 1.1
+  const footprint = tankForm === 'cylinder'
+    ? Math.PI * (tankDepth * 0.5) ** 2 : tankWidth * tankDepth
   const hunger = fish.length ? fish.reduce((sum, animal) => sum + animal.hunger, 0) / fish.length : 1
   const health = fish.length ? fish.reduce((sum, animal) => sum + animal.health, 0) / fish.length : 0
   const lastFed = living.reduce((latest, animal) => Math.max(latest, animal.lastFedDay), -Infinity)
@@ -1275,9 +1319,9 @@ export function projectPocketState(
     namespace,
     clock: { elapsedHours: state.time.days * 24, day: Math.floor(state.time.days) + 1,
       timeOfDayHours: (state.time.days % 1) * 24, speed: state.speed, paused: state.speed === 0 },
-    tank: { nominalVolumeLiters: tier.volumeL, targetWaterVolumeLiters: tier.volumeL,
+    tank: { form: tankForm, nominalVolumeLiters: tier.volumeL, targetWaterVolumeLiters: tier.volumeL,
       waterVolumeLiters: state.water.levelL, waterLevelMeters: state.water.levelL / 1000 / footprint,
-      widthMeters: tankDepth * 2.4, heightMeters: 0.4, depthMeters: tankDepth,
+      widthMeters: tankWidth, heightMeters: tankHeight, depthMeters: tankDepth,
       evaporationLitersPerDay: tier.volumeL * 0.012 },
     chemistry: { saltEquivalentMassKilograms: state.water.levelL * 0.997 * saltFraction / (1 - saltFraction),
       saltEquivalentGPerKg: state.water.salinity, totalAmmoniaNitrogenMassMilligrams: state.water.ammonia * state.water.levelL,

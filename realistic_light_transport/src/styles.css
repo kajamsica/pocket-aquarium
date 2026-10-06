@@ -2367,6 +2367,10 @@ input:focus-visible {
     gap: 5px;
   }
 
+  .pocket-game-hud .pocket-utility:has(.pocket-tank-view) {
+    flex-wrap: wrap;
+  }
+
   .pocket-game-hud .pocket-credit-pill {
     padding: 5px 9px;
   }
@@ -3370,6 +3374,15 @@ input:focus-visible {
 .pocket-credit-pill strong {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 0.78rem;
+}
+
+.pocket-tank-view select {
+  max-width: min(32vw, 210px);
+  border: 0;
+  color: #eefeff;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .pocket-library-entry {

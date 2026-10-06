@@ -3,7 +3,7 @@ import * as THREE from 'three'
 
 import { specimenAssetFor } from './assetRegistry'
 import { applySemanticAnimationDrive, applySpecimenTurnPose, initializeSemanticActions, makeAnimationClipInPlace,
-  resolveSemanticAnimationPlan, resolveSpecimenAppearance, specimenMaterialWithAppearance,
+  materialAcceptsCoralFluorescence, resolveSemanticAnimationPlan, resolveSpecimenAppearance, specimenMaterialWithAppearance,
   supportsSpecimenTurnPose, type SemanticAnimationActions, type SemanticAnimationPlan } from './RiggedSpecimen'
 
 function createActions(plan: SemanticAnimationPlan): SemanticAnimationActions {
@@ -237,5 +237,28 @@ describe('rigged specimen semantic animation plan', () => {
     expect(shared.opacity).toBe(1)
     expect(healthy.color).toEqual(sourceColor)
     stressed.dispose(); healthy.dispose(); shared.dispose()
+  })
+
+  it('adds bounded texture-masked fluorescence only to living coral surfaces', () => {
+    const texture = new THREE.Texture()
+    const tissue = new THREE.MeshStandardMaterial({ color: '#f06482', map: texture })
+    tissue.name = 'PA_stylophora_Tissue'
+    const rock = new THREE.MeshStandardMaterial({ color: '#594d3d', map: texture })
+    rock.name = 'PA_stylophora_Rock'
+    const appearance = { saturation: 1, opacity: 1,
+      fluorescence: { color: '#ff4d72', intensity: .34 } }
+    const fluorescent = specimenMaterialWithAppearance(tissue, appearance,
+      'stylophora') as THREE.MeshStandardMaterial
+    const darkBase = specimenMaterialWithAppearance(rock, appearance,
+      'stylophora') as THREE.MeshStandardMaterial
+
+    expect(materialAcceptsCoralFluorescence(tissue.name, 'stylophora')).toBe(true)
+    expect(materialAcceptsCoralFluorescence(rock.name, 'stylophora')).toBe(false)
+    expect(fluorescent.emissive.getHexString()).toBe('ff4d72')
+    expect(fluorescent.emissiveIntensity).toBeCloseTo(.34)
+    expect(fluorescent.emissiveMap).toBe(texture)
+    expect(darkBase.emissive.getHex()).toBe(0)
+    expect(tissue.emissive.getHex()).toBe(0)
+    fluorescent.dispose(); darkBase.dispose(); tissue.dispose(); rock.dispose(); texture.dispose()
   })
 })

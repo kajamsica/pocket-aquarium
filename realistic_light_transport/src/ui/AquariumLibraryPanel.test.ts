@@ -4,14 +4,21 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   createPocketNewGame,
+  createPocketReefShowcase,
   dispatchPocketAction,
   pocketActions,
   pocketSaveKey,
   projectPocketState,
 } from '../integration/pocketAquariumBridge'
 import { eraseAllPocketAquariumData } from '../integration/pocketTankRepository'
+import {
+  DEV_FRESHWATER_50_VIEW_ID,
+  DEV_TANK_VIEWS,
+  devTankViewFromSearch,
+  devTankViewUrl,
+} from '../integration/devTankViews'
 import { AquariumLibraryPanel, type AquariumLibraryModel } from './AquariumLibraryPanel'
-import { PocketGameHUD } from './PocketGameHUD'
+import { PocketGameHUD, TankViewSelector } from './PocketGameHUD'
 
 const hookHarness = vi.hoisted(() => ({ enabled: false, value: false as unknown }))
 
@@ -179,5 +186,59 @@ describe('aquarium library UI contract', () => {
     expect(markup).not.toContain('pocket-library-entry')
     expect(markup).not.toContain('pocket-library-panel')
     expect(markup).not.toContain('Open aquarium library')
+    expect(markup).not.toContain('Tank view')
+  })
+})
+
+describe('God Mode tank view routing', () => {
+  it('uses stable reef IDs, defaults unknown values to the monster reef, and keeps freshwater separate', () => {
+    expect(devTankViewFromSearch('?dev=1').id).toBe('reef-monster-1000')
+    expect(devTankViewFromSearch('?dev=1&devTank=not-a-profile').id).toBe('reef-monster-1000')
+    expect(devTankViewFromSearch('?dev=1&devTank=reef-standard-200')).toMatchObject({
+      id: 'reef-standard-200', waterType: 'reef',
+    })
+    expect(devTankViewFromSearch(`?dev=1&devTank=${DEV_FRESHWATER_50_VIEW_ID}`)).toMatchObject({
+      id: DEV_FRESHWATER_50_VIEW_ID, waterType: 'freshwater',
+    })
+    expect(DEV_TANK_VIEWS.map(({ id }) => id)).toEqual([
+      'reef-nano-20', 'reef-standard-40', 'reef-standard-200', 'reef-250', 'reef-500',
+      'reef-monster-1000', 'reef-cylinder-1500', DEV_FRESHWATER_50_VIEW_ID,
+    ])
+    expect(DEV_TANK_VIEWS.filter(({ waterType }) => waterType === 'freshwater').map(({ id }) => id))
+      .toEqual([DEV_FRESHWATER_50_VIEW_ID])
+  })
+
+  it('builds directly reopenable URLs for deterministic back and forth switching', () => {
+    const monster = devTankViewUrl('http://127.0.0.1:4173/?dev=1&devTank=reef-standard-200#tank', 'reef-monster-1000')
+    const cylinder = devTankViewUrl(monster, 'reef-cylinder-1500')
+    const standard = devTankViewUrl(cylinder, 'reef-standard-200')
+
+    expect(new URL(monster).searchParams.get('devTank')).toBe('reef-monster-1000')
+    expect(new URL(cylinder).searchParams.get('devTank')).toBe('reef-cylinder-1500')
+    expect(new URL(standard).searchParams.get('devTank')).toBe('reef-standard-200')
+    expect(new URL(standard).hash).toBe('#tank')
+  })
+
+  it('renders one labeled selector and sends its stable selected value', () => {
+    const select = vi.fn()
+    const selector = TankViewSelector({ controls: {
+      selectedId: 'reef-standard-200',
+      options: DEV_TANK_VIEWS,
+      select,
+    } })
+    const elements = descendants(selector)
+    const input = elements.find(({ type }) => type === 'select')!
+    const markup = renderToStaticMarkup(selector)
+
+    expect(markup).toContain('<small>Tank view</small>')
+    expect(markup).toContain('aria-label="Tank view"')
+    expect(markup).toContain('label="Reef tank presets"')
+    expect(markup).toContain('label="Freshwater development tank"')
+    expect(markup).toContain('value="reef-cylinder-1500"')
+    expect(markup).toContain('Freshwater 50 gallon')
+    ;(input.props.onChange as (event: { target: { value: string } }) => void)({
+      target: { value: 'reef-cylinder-1500' },
+    })
+    expect(select).toHaveBeenCalledWith('reef-cylinder-1500')
   })
 })

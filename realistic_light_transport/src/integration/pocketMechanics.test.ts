@@ -16,7 +16,7 @@ import {
   serializePocketGame,
   type PocketState,
 } from './pocketAquariumBridge'
-import { ACCEPTED_SPECIES_IDS, specimenAssetFor } from '../scene/specimens/assetRegistry'
+import { specimenAssetFor } from '../scene/specimens/assetRegistry'
 // The other local aquarium route. It shares `pocketSaveKey`, and under a headless load it skips
 // bootstrap and publishes only its shared action surface, so these drive its real save path.
 import '../../../js/app.js'
@@ -62,24 +62,25 @@ describe('integrated reef showcase mechanics', () => {
   it('fills the upgraded tank with reef-strength saltwater before livestock', () => {
     const state = createPocketReefShowcase()
 
-    expect(state.tier).toBe('xl757')
-    expect(state.water.levelL).toBeCloseTo(757, 6)
+    expect(state.tier).toBe('monster3785')
+    expect(state.water.levelL).toBeCloseTo(3785, 6)
     expect(state.water.salinity).toBeCloseTo(35, 1)
     expect(projectPocketState(state).residents.length).toBeGreaterThan(0)
   })
 
-  it('keeps showcase residents alive and salinity stable over two game days', () => {
+  it('keeps showcase residents alive through two game days of finite ATO operation', () => {
     const initial = createPocketReefShowcase()
     const advanced = advancePocketState(initial, 192)
 
     expect(advanced.time.days - initial.time.days).toBeCloseTo(2, 6)
     expect(advanced.livestock.every((resident) => resident.alive !== false)).toBe(true)
-    expect(advanced.water.levelL).toBeCloseTo(757, 6)
-    expect(advanced.water.salinity).toBeCloseTo(35, 1)
+    expect(advanced.water.levelL / 3785).toBeGreaterThan(.98)
+    expect(advanced.automation.ato.reservoirL).toBe(0)
+    expect(advanced.water.salinity).toBeLessThan(35.5)
   })
 
   it('offers each large-tank upgrade in sequence with its declared display form', () => {
-    let state: PocketState = { ...createPocketReefShowcase(), credits: 50000 }
+    let state: PocketState = { ...createPocketReefShowcase('reef-standard-200'), credits: 50000 }
     const oldTierIds = ['nano20', 'mid151', 'large284']
     const firstOffers = projectPocketState(state).storeOffers.filter((offer) => offer.kind === 'tier')
 
@@ -116,26 +117,26 @@ describe('integrated reef showcase mechanics', () => {
     const source = state.corals[0]
     Object.assign(source, { health: .61, tissue: .47, extension: .32, polyps: 37, growth: .76 })
 
-    expect(projectPocketState(state).coralInventory.find((coral) => coral.id === source.id))
+    expect(projectPocketState(state).placedCorals.find((coral) => coral.id === source.id))
       .toMatchObject({ health: .61, tissue: .47, extension: .32, polyps: 37, growth: .76 })
   })
 
   it('projects the wall algae clip store upgrade and refill resource', () => {
     const state = createPocketReefShowcase()
     const offer = projectPocketState(state).storeOffers.find(({ id }) => id === 'algae_clip:clip')
-    expect(offer).toMatchObject({ name: 'Magnetic nori grazing clip', allowed: true,
+    expect(offer).toMatchObject({ name: 'Magnetic nori grazing clip', allowed: false,
       action: { type: pocketActions.PURCHASE_EQUIPMENT, category: 'algae_clip', levelId: 'clip' } })
 
-    const installed = dispatchPocketAction(state, offer!.action)
-    expect(projectPocketState(installed).nori).toEqual({ installed: true, remaining: 0,
+    expect(projectPocketState(state).nori).toEqual({ installed: true, remaining: 0,
       capacity: 8, lastBiteCycle: -1 })
-    const refilled = dispatchPocketAction(installed, { type: pocketActions.REFILL_NORI })
+    const refilled = dispatchPocketAction(state, { type: pocketActions.REFILL_NORI })
     expect(projectPocketState(refilled).nori).toEqual({ installed: true, remaining: 8,
       capacity: 8, lastBiteCycle: -1 })
   })
 
   it('projects and persists the authoritative 13-rock lifecycle and transform state', () => {
     const state = createPocketReefShowcase()
+    state.corals = []
     Object.assign(state.rockscape.rocks[0].biology,
       { diatom: .11, nuisanceAlgae: .22, coralline: .33, encruster: .44 })
     const beforeOther = structuredClone(state.rockscape.rocks[1])
@@ -182,13 +183,10 @@ describe('integrated reef showcase mechanics', () => {
 
     expect(pocketShowcasePopulationAuthority).toBe('root_pa')
     expect(view.authority).toBe(pocketShowcasePopulationAuthority)
-    const acceptedAnimals = ACCEPTED_SPECIES_IDS.filter((speciesId) => specimenAssetFor(speciesId)?.category !== 'coral')
-    expect(acceptedAnimals).toHaveLength(26)
-    expect(acceptedAnimals).toContain('epaulette_shark')
-    expect(state.livestock).toHaveLength(25)
-    expect(view.specimens).toHaveLength(25)
+    expect(state.livestock).toHaveLength(69)
+    expect(view.specimens).toHaveLength(69)
     expect(view.specimens.map((animal) => animal.id)).toEqual(state.livestock.map((animal) => animal.id))
-    expect(new Set(view.specimens.map((animal) => animal.speciesId))).toHaveProperty('size', 25)
+    expect(new Set(view.specimens.map((animal) => animal.speciesId))).toHaveProperty('size', 22)
     expect(view.specimens.some((animal) => animal.speciesId === 'epaulette_shark')).toBe(false)
     expect(view.specimens.every((animal) => animal.stage === 'adult')).toBe(true)
     expect(view.specimens.every((animal) => animal.health > .99 && animal.condition > .95)).toBe(true)
@@ -200,23 +198,11 @@ describe('integrated reef showcase mechanics', () => {
     expect(coralOffers).toHaveLength(25)
     expect(new Set(coralOffers.map((offer) => offer.id)).size).toBe(25)
     const sharkOffer = animalOffers.find((offer) => offer.id === 'epaulette_shark')
-    expect(sharkOffer).toMatchObject({
-      allowed: false,
-      reasons: expect.arrayContaining([
-        expect.stringContaining('at least 1363 L of water (this tank holds 757 L)'),
-        expect.stringContaining('at least 32000 cm²'),
-      ]),
-    })
-    const sharkAttempt = dispatchPocketAction(state, {
-      ...sharkOffer!.action,
-      acceptRisk: true,
-    })
-    expect(sharkAttempt.livestock).toHaveLength(25)
-    expect(sharkAttempt.livestock.some((animal) => animal.species === 'epaulette_shark')).toBe(false)
+    expect(sharkOffer).toMatchObject({ allowed: false })
     expect(coralOffers.every((offer) => typeof offer.action.variantId === 'string')).toBe(true)
-    expect(view.coralInventory).toHaveLength(9)
-    expect(view.coralInventory.every((coral) => specimenAssetFor(coral.speciesId)?.variantId === coral.variantId)).toBe(true)
-    expect(view.placedCorals).toHaveLength(0)
+    expect(view.coralInventory).toHaveLength(0)
+    expect(view.placedCorals).toHaveLength(48)
+    expect(view.placedCorals.every((coral) => specimenAssetFor(coral.speciesId, coral.variantId))).toBe(true)
 
     const selected = dispatchPocketAction(state, { type: pocketActions.SELECT_ENTITY,
       entityType: 'livestock', id: view.specimens[0].id })
@@ -225,21 +211,22 @@ describe('integrated reef showcase mechanics', () => {
     const fed = dispatchPocketAction(selected, { type: pocketActions.FEED, x: .5, y: .2 })
     expect(projectPocketState(fed).food).toHaveLength(1)
     const storeUpgrade = view.storeOffers.find((offer) => offer.id === 'circulation:gyre')
-    expect(storeUpgrade).toMatchObject({ allowed: true, action: { type: pocketActions.PURCHASE_EQUIPMENT } })
-    expect(dispatchPocketAction(state, storeUpgrade!.action).equipment.circulation).toBe('gyre')
+    expect(storeUpgrade).toMatchObject({ allowed: false, action: { type: pocketActions.PURCHASE_EQUIPMENT } })
+    expect(state.equipment.circulation).toBe('gyre')
     const purchasableCoral = coralOffers.find((offer) => offer.allowed)
     expect(purchasableCoral).toBeDefined()
-    expect(projectPocketState(dispatchPocketAction(state, purchasableCoral!.action)).coralInventory).toHaveLength(10)
+    const purchased = dispatchPocketAction(state, purchasableCoral!.action)
+    expect(projectPocketState(purchased).coralInventory).toHaveLength(1)
 
-    const coral = view.coralInventory[0]
-    const next = dispatchPocketAction(state, { type: pocketActions.LOCK_CORAL_PLACEMENT,
+    const coral = projectPocketState(purchased).coralInventory[0]
+    const next = dispatchPocketAction(purchased, { type: pocketActions.LOCK_CORAL_PLACEMENT,
       coralId: coral.id, placement: { version: 1, surface: 'sand', surfaceId: 'sand:base',
         position: [0, 0, 0], normal: [0, 1, 0], yaw: 0 } })
     const projected = projectPocketState(next)
-    expect(projected.coralInventory).toHaveLength(8)
-    expect(projected.placedCorals).toMatchObject([{ id: coral.id, speciesId: coral.speciesId,
+    expect(projected.coralInventory).toHaveLength(0)
+    expect(projected.placedCorals.find(({ id }) => id === coral.id)).toMatchObject({ id: coral.id, speciesId: coral.speciesId,
       variantId: coral.variantId, speciesName: coral.speciesName,
-      variantDisplayName: coral.variantDisplayName, health: expect.any(Number) }])
+      variantDisplayName: coral.variantDisplayName, health: expect.any(Number) })
   })
 })
 

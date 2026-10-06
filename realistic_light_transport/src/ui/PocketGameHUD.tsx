@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { DiagnosticView, ReefRenderSettings, ReefRenderTelemetry, RenderQuality } from '../contracts'
+import type { DevTankView, DevTankViewId } from '../integration/devTankViews'
 import { residentNameMaxLength } from '../integration/pocketAquariumBridge'
 import type { PocketAction, PocketGameView, PocketPreventedDeath, PocketStoreOffer } from '../integration/pocketAquariumBridge'
 import { REEF_CAMERA_RESET_EVENT } from '../scene/ReefScene'
@@ -12,6 +13,28 @@ export interface GodModeControls {
   readonly on: boolean
   readonly prevented: readonly PocketPreventedDeath[]
   readonly toggle: () => void
+  readonly tankView?: {
+    readonly selectedId: DevTankViewId
+    readonly options: readonly DevTankView[]
+    readonly select: (id: DevTankViewId) => void
+  }
+}
+
+export function TankViewSelector({ controls }: { readonly controls: NonNullable<GodModeControls['tankView']> }) {
+  const reefOptions = controls.options.filter(({ waterType }) => waterType === 'reef')
+  const freshwaterOptions = controls.options.filter(({ waterType }) => waterType === 'freshwater')
+  return <label className="pocket-credit-pill pocket-tank-view">
+    <small>Tank view</small>
+    <select aria-label="Tank view" value={controls.selectedId}
+      onChange={(event) => controls.select(event.target.value as DevTankViewId)}>
+      <optgroup label="Reef tank presets">
+        {reefOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+      </optgroup>
+      <optgroup label="Freshwater development tank">
+        {freshwaterOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+      </optgroup>
+    </select>
+  </label>
 }
 
 const SPEEDS = [0, 1, 4, 8] as const
@@ -318,6 +341,7 @@ export function PocketGameHUD({ view, dispatch, renderSettings, renderTelemetry,
       </span> : null}
       <span className="pocket-credit-pill" title="Available tank credits">
         <small>Tank credits</small><strong>{godMode?.on ? '∞' : view.credits}</strong></span>
+      {godMode?.tankView ? <TankViewSelector controls={godMode.tankView} /> : null}
       {godMode ? <button type="button" className="pocket-god-mode" aria-pressed={godMode.on} onClick={godMode.toggle}
         title={`God mode protects residents and makes purchases free · ${godMode.prevented.length} deaths prevented this session`}>
         <span aria-hidden="true">●</span> GOD MODE

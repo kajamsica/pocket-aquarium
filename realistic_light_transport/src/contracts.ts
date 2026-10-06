@@ -60,6 +60,8 @@ export interface AquariumSnapshot {
     readonly paused: boolean
   }
   readonly tank: {
+    /** Display geometry. Older snapshot producers omit this and remain rectangular. */
+    readonly form?: 'rectangular' | 'cylinder'
     readonly nominalVolumeLiters: number
     readonly targetWaterVolumeLiters: number
     readonly waterVolumeLiters: number

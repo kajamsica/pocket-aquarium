@@ -61,24 +61,32 @@ type PanelProps = {
   readonly renderOrder: number
 }
 
+function AcrylicMaterial() {
+  return <meshPhysicalMaterial
+    color="#bcecff"
+    transparent
+    opacity={0.28}
+    transmission={0.72}
+    thickness={PANEL_THICKNESS}
+    ior={OPTICAL_IOR.acrylic}
+    roughness={0.075}
+    metalness={0}
+    depthWrite={false}
+    side={THREE.DoubleSide}
+  />
+}
+
 function AcrylicPanel({ args, position, renderOrder }: PanelProps) {
   return (
     <mesh position={position} renderOrder={renderOrder}>
       <boxGeometry args={args} />
-      <meshPhysicalMaterial
-        color="#bcecff"
-        transparent
-        opacity={0.28}
-        transmission={0.72}
-        thickness={PANEL_THICKNESS}
-        ior={OPTICAL_IOR.acrylic}
-        roughness={0.075}
-        metalness={0}
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      />
+      <AcrylicMaterial />
     </mesh>
   )
+}
+
+export function opticalTankShape(form: ReefSceneProps['snapshot']['tank']['form']) {
+  return form === 'cylinder' ? 'cylinder' : 'box'
 }
 
 export function OpticalTank({
@@ -123,6 +131,7 @@ export function OpticalTank({
     1,
   )
   const visualSettings = resolveHabitatVisualSettings(visualProfile, snapshotTannin(snapshot))
+  const tankShape = opticalTankShape(snapshot.tank.form)
   const attenuation = Math.max(
     snapshot.lightField.attenuationPerMeter * visualSettings.opticalAttenuationScale,
     0.01,
@@ -164,16 +173,18 @@ export function OpticalTank({
   )
   const edgeGeometry = useMemo(
     () => {
-      const tankGeometry = new THREE.BoxGeometry(
-        TANK_WIDTH + PANEL_THICKNESS * 2,
-        INTERIOR_HEIGHT + PANEL_THICKNESS * 2,
-        TANK_DEPTH + PANEL_THICKNESS * 2,
-      )
-      const edges = new THREE.EdgesGeometry(tankGeometry)
+      const tankGeometry = tankShape === 'cylinder'
+        ? new THREE.CylinderGeometry(1, 1, INTERIOR_HEIGHT + PANEL_THICKNESS * 2, 64, 1, true)
+        : new THREE.BoxGeometry(
+          TANK_WIDTH + PANEL_THICKNESS * 2,
+          INTERIOR_HEIGHT + PANEL_THICKNESS * 2,
+          TANK_DEPTH + PANEL_THICKNESS * 2,
+        )
+      const edges = new THREE.EdgesGeometry(tankGeometry, tankShape === 'cylinder' ? 10 : 1)
       tankGeometry.dispose()
       return edges
     },
-    [],
+    [tankShape],
   )
 
   useEffect(() => {
@@ -193,8 +204,11 @@ export function OpticalTank({
 
   useEffect(() => () => {
     habitatTarget.dispose()
+  }, [habitatTarget])
+
+  useEffect(() => () => {
     edgeGeometry.dispose()
-  }, [edgeGeometry, habitatTarget])
+  }, [edgeGeometry])
 
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime()
@@ -263,8 +277,12 @@ export function OpticalTank({
         position={[0, -0.82, 0]}
       />
 
-      <mesh position={[0, waterCenterY, 0]} renderOrder={4}>
-        <boxGeometry args={[TANK_WIDTH - 0.04, waterHeight, TANK_DEPTH - 0.04]} />
+      <mesh position={[0, waterCenterY, 0]}
+        scale={tankShape === 'cylinder' ? [(TANK_WIDTH - .04) * .5, 1, (TANK_DEPTH - .04) * .5] : 1}
+        renderOrder={4}>
+        {tankShape === 'cylinder'
+          ? <cylinderGeometry args={[1, 1, waterHeight, 64]} />
+          : <boxGeometry args={[TANK_WIDTH - 0.04, waterHeight, TANK_DEPTH - 0.04]} />}
         <shaderMaterial
           ref={volumeMaterial}
           uniforms={volumeUniforms}
@@ -301,9 +319,12 @@ export function OpticalTank({
       <mesh
         position={[0, SAND_FLOOR_Y + 0.018, 0]}
         rotation-x={-Math.PI / 2}
+        scale={tankShape === 'cylinder' ? [(TANK_WIDTH - .08) * .5, (TANK_DEPTH - .08) * .5, 1] : 1}
         renderOrder={9}
       >
-        <planeGeometry args={[TANK_WIDTH - 0.08, TANK_DEPTH - 0.08, 1, 1]} />
+        {tankShape === 'cylinder'
+          ? <circleGeometry args={[1, 64]} />
+          : <planeGeometry args={[TANK_WIDTH - 0.08, TANK_DEPTH - 0.08, 1, 1]} />}
         <shaderMaterial
           ref={causticMaterial}
           uniforms={causticUniforms}
@@ -320,9 +341,12 @@ export function OpticalTank({
       <mesh
         position={[0, waterSurfaceY, 0]}
         rotation-x={-Math.PI / 2}
+        scale={tankShape === 'cylinder' ? [(TANK_WIDTH - .035) * .5, (TANK_DEPTH - .035) * .5, 1] : 1}
         renderOrder={30}
       >
-        <planeGeometry args={[TANK_WIDTH - 0.035, TANK_DEPTH - 0.035, 56, 28]} />
+        {tankShape === 'cylinder'
+          ? <circleGeometry args={[1, 64]} />
+          : <planeGeometry args={[TANK_WIDTH - 0.035, TANK_DEPTH - 0.035, 56, 28]} />}
         <shaderMaterial
           ref={surfaceMaterial}
           uniforms={surfaceUniforms}
@@ -334,34 +358,51 @@ export function OpticalTank({
         />
       </mesh>
 
-      {/* Acrylic is approximated as flat parallel interfaces around the water medium. */}
-      <AcrylicPanel
-        args={[TANK_WIDTH + PANEL_THICKNESS, INTERIOR_HEIGHT, PANEL_THICKNESS]}
-        position={[0, -0.01, TANK_DEPTH * 0.5 + PANEL_THICKNESS * 0.5]}
-        renderOrder={40}
-      />
-      <AcrylicPanel
-        args={[TANK_WIDTH + PANEL_THICKNESS, INTERIOR_HEIGHT, PANEL_THICKNESS]}
-        position={[0, -0.01, -TANK_DEPTH * 0.5 - PANEL_THICKNESS * 0.5]}
-        renderOrder={39}
-      />
-      <AcrylicPanel
-        args={[PANEL_THICKNESS, INTERIOR_HEIGHT, TANK_DEPTH]}
-        position={[-TANK_WIDTH * 0.5 - PANEL_THICKNESS * 0.5, -0.01, 0]}
-        renderOrder={41}
-      />
-      <AcrylicPanel
-        args={[PANEL_THICKNESS, INTERIOR_HEIGHT, TANK_DEPTH]}
-        position={[TANK_WIDTH * 0.5 + PANEL_THICKNESS * 0.5, -0.01, 0]}
-        renderOrder={41}
-      />
-      <AcrylicPanel
-        args={[TANK_WIDTH + PANEL_THICKNESS, PANEL_THICKNESS, TANK_DEPTH]}
-        position={[0, SAND_FLOOR_Y - PANEL_THICKNESS * 0.5, 0]}
-        renderOrder={38}
-      />
+      {tankShape === 'cylinder' ? <>
+        <mesh position={[0, -0.01, 0]}
+          scale={[TANK_WIDTH * .5 + PANEL_THICKNESS, 1, TANK_DEPTH * .5 + PANEL_THICKNESS]}
+          renderOrder={41}>
+          <cylinderGeometry args={[1, 1, INTERIOR_HEIGHT, 64, 1, true]} />
+          <AcrylicMaterial />
+        </mesh>
+        <mesh position={[0, SAND_FLOOR_Y - PANEL_THICKNESS * .5, 0]} rotation-x={-Math.PI / 2}
+          scale={[TANK_WIDTH * .5 + PANEL_THICKNESS, TANK_DEPTH * .5 + PANEL_THICKNESS, 1]}
+          renderOrder={38}>
+          <circleGeometry args={[1, 64]} />
+          <AcrylicMaterial />
+        </mesh>
+      </> : <>
+        {/* Acrylic is approximated as flat parallel interfaces around the water medium. */}
+        <AcrylicPanel
+          args={[TANK_WIDTH + PANEL_THICKNESS, INTERIOR_HEIGHT, PANEL_THICKNESS]}
+          position={[0, -0.01, TANK_DEPTH * 0.5 + PANEL_THICKNESS * 0.5]}
+          renderOrder={40}
+        />
+        <AcrylicPanel
+          args={[TANK_WIDTH + PANEL_THICKNESS, INTERIOR_HEIGHT, PANEL_THICKNESS]}
+          position={[0, -0.01, -TANK_DEPTH * 0.5 - PANEL_THICKNESS * 0.5]}
+          renderOrder={39}
+        />
+        <AcrylicPanel
+          args={[PANEL_THICKNESS, INTERIOR_HEIGHT, TANK_DEPTH]}
+          position={[-TANK_WIDTH * 0.5 - PANEL_THICKNESS * 0.5, -0.01, 0]}
+          renderOrder={41}
+        />
+        <AcrylicPanel
+          args={[PANEL_THICKNESS, INTERIOR_HEIGHT, TANK_DEPTH]}
+          position={[TANK_WIDTH * 0.5 + PANEL_THICKNESS * 0.5, -0.01, 0]}
+          renderOrder={41}
+        />
+        <AcrylicPanel
+          args={[TANK_WIDTH + PANEL_THICKNESS, PANEL_THICKNESS, TANK_DEPTH]}
+          position={[0, SAND_FLOOR_Y - PANEL_THICKNESS * 0.5, 0]}
+          renderOrder={38}
+        />
+      </>}
 
-      <lineSegments geometry={edgeGeometry} position={[0, -0.01, 0]} renderOrder={55}>
+      <lineSegments geometry={edgeGeometry} position={[0, -0.01, 0]}
+        scale={tankShape === 'cylinder' ? [TANK_WIDTH * .5 + PANEL_THICKNESS, 1, TANK_DEPTH * .5 + PANEL_THICKNESS] : 1}
+        renderOrder={55}>
         <lineBasicMaterial color="#9de7ff" transparent opacity={0.28} depthWrite={false} />
       </lineSegments>
     </group>

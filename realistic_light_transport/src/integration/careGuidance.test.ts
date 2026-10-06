@@ -7,6 +7,8 @@ import {
   projectPocketState,
 } from './pocketAquariumBridge'
 import { cameraDistanceForAspect } from '../scene/ReefScene'
+import { opticalTankShape } from '../scene/OpticalTank'
+import { cameraFitForEnvelope, resolveTankSceneEnvelope } from '../scene/tankSceneEnvelope'
 
 describe('tank care guidance and resident inspection', () => {
   it('keeps dead residents visible until the keeper removes them', () => {
@@ -82,8 +84,53 @@ describe('tank care guidance and resident inspection', () => {
 })
 
 describe('tank framing', () => {
+  const createEmptyReef = () => dispatchPocketAction(
+    createStarterPocketState(),
+    { type: 'CHOOSE_HABITAT', habitat: 'reef' },
+  )
+
   it('moves back on tall screens and closer on wide screens before gesture zoom', () => {
     expect(cameraDistanceForAspect(9 / 19.5)).toBeGreaterThan(cameraDistanceForAspect(1))
     expect(cameraDistanceForAspect(19.5 / 9)).toBeLessThan(cameraDistanceForAspect(1))
+  })
+
+  it('keeps the starter scene unchanged and bounds massive rectangular growth', () => {
+    const starter = projectPocketState(createEmptyReef()).reefSnapshot.tank
+    const massiveState = createEmptyReef()
+    massiveState.tier = 'monster3785'
+    massiveState.water.levelL = 3785
+    const massive = projectPocketState(massiveState).reefSnapshot.tank
+    const starterEnvelope = resolveTankSceneEnvelope(starter)
+    const massiveEnvelope = resolveTankSceneEnvelope(massive)
+
+    expect(starterEnvelope.scale).toEqual([1, 1, 1])
+    expect(massive).toMatchObject({ form: 'rectangular', nominalVolumeLiters: 3785 })
+    expect(massive.widthMeters).toBeGreaterThan(massive.heightMeters)
+    expect(massive.heightMeters).toBeGreaterThan(starter.heightMeters)
+    expect(massiveEnvelope.width).toBeGreaterThan(starterEnvelope.width)
+    expect(massiveEnvelope.scale[0]).toBeLessThanOrEqual(1.45)
+    expect(cameraFitForEnvelope(massiveEnvelope, 16 / 9).distance)
+      .toBeGreaterThan(cameraFitForEnvelope(starterEnvelope, 16 / 9).distance)
+  })
+
+  it('projects the cylinder as a tall round-footprint envelope that fits phone and desktop', () => {
+    const cylinderState = createEmptyReef()
+    cylinderState.tier = 'cylinder5678'
+    cylinderState.water.levelL = 5678
+    const tank = projectPocketState(cylinderState).reefSnapshot.tank
+    const envelope = resolveTankSceneEnvelope(tank)
+    const desktop = cameraFitForEnvelope(envelope, 16 / 9)
+    const phone = cameraFitForEnvelope(envelope, 9 / 19.5)
+
+    expect(tank.form).toBe('cylinder')
+    expect(opticalTankShape(tank.form)).toBe('cylinder')
+    expect(opticalTankShape('rectangular')).toBe('box')
+    expect(tank.widthMeters).toBeCloseTo(tank.depthMeters, 8)
+    expect(tank.heightMeters).toBeGreaterThan(tank.widthMeters)
+    expect(envelope.width).toBeCloseTo(envelope.depth, 8)
+    expect(envelope.height).toBeCloseTo(envelope.width, 1)
+    expect(phone.fov).toBeGreaterThan(desktop.fov)
+    expect(phone.distance).toBeGreaterThan(desktop.distance)
+    expect(phone.maxDistance).toBeGreaterThan(phone.distance)
   })
 })

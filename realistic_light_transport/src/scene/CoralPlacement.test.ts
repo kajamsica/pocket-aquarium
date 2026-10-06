@@ -97,6 +97,17 @@ describe('accepted coral render plans', () => {
     expect(resolveCoralRenderPlan('ocellaris', undefined, 10, 'locked')).toBeUndefined()
   })
 
+  it('scales only authored mature showcase colonies while preserving ordinary frag size', () => {
+    const ordinary = resolveCoralRenderPlan('stylophora', 'pink', 2, 'locked')
+    const mature = resolveCoralRenderPlan('stylophora', 'pink', 2, 'locked', true, {
+      colonyScale: 3,
+      fluorescence: { pigment: 'red_orange_fp', color: '#ff4d72', intensity: .34 },
+    })
+
+    expect(ordinary?.targetWidth).toBeCloseTo(.2)
+    expect(mature?.targetWidth).toBeCloseTo(.6)
+  })
+
   it('maps growth, polyp activity, and tissue condition to separate clamped visual channels', () => {
     const newColony = resolveCoralLifecycleVisualPlan({ health: 1, tissue: 1, extension: .2,
       polyps: 5, growth: 0 })
