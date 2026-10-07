@@ -65,7 +65,7 @@ Today, every rejection has a typed reason and every projection carries the local
 
 ### Coordinates
 
-The vertical slice uses right-handed meters. `X` increases east, `Y` increases upward, and `Z` increases north. It currently uses a fixed seven-by-seven tile world. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
+The vertical slice uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. It currently uses a fixed seven-by-seven tile world. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
 
 ```text
 chunkX = floor(worldX / 64)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls } from './WizardSurface'
-import { mapSheetMode, mapToggleForKey } from './WizardMap'
+import { mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 
 describe('third-person control grammar', () => {
   it('keeps forward, backward, and pivot axes independent', () => {
@@ -32,6 +32,22 @@ describe('third-person control grammar', () => {
     expect(mapToggleForKey(false, 'KeyW')).toBe(false)
     expect(mapSheetMode(719)).toBe('sheet')
     expect(mapSheetMode(720)).toBe('modal')
+  })
+
+  it('uses negative Z as north and keeps yaw zero pointing up', () => {
+    const ordered = northUpGridOrder([
+      { id: 'south', gridX: 0, gridZ: 1 },
+      { id: 'north-east', gridX: 1, gridZ: -1 },
+      { id: 'north-west', gridX: -1, gridZ: -1 },
+    ])
+    expect(ordered.map((tile) => tile.id)).toEqual(['north-west', 'north-east', 'south'])
+    expect(mapHeadingRotation(0)).toBe(0)
+  })
+
+  it('traps Tab and Shift+Tab on the map dialog close control', () => {
+    expect(mapDialogTabTarget(true, 'Tab', false)).toBe('close')
+    expect(mapDialogTabTarget(true, 'Tab', true)).toBe('close')
+    expect(mapDialogTabTarget(false, 'Tab', false)).toBeNull()
   })
 
   it.each(['window blur', 'document visibility loss'])('releases W/S/A/D after %s', () => {

@@ -3,7 +3,7 @@ import {
   advanceWizardWorld, createWizardWorld, restoreWizardWorld, serializeWizardWorld,
   type WizardWorldState,
 } from './index'
-import { terrainHeightAt } from './generation'
+import { areaAt, terrainHeightAt } from './generation'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 
@@ -18,7 +18,9 @@ describe('Wizard world domain', () => {
       .not.toEqual(first.tiles.map((tile) => [tile.biome, tile.terrain, tile.elevation]))
     expect(first.resources.filter((resource) => resource.id.startsWith('resource-')).map((resource) => [resource.tileId, resource.kind]))
       .toEqual(first.tiles.map((tile) => [tile.id, resourceKindForBiome(tile.biome)]))
-    expect(first.resources.filter((resource) => resource.id.startsWith('greenway-journey-tree-'))).toHaveLength(4)
+    const journeyTrees = first.resources.filter((resource) => resource.id.startsWith('greenway-journey-tree-'))
+    expect(journeyTrees).toHaveLength(4)
+    expect(journeyTrees.every((tree) => areaAt(first.areas, tree.position.x, tree.position.z).id === 'greenway')).toBe(true)
     expect(replay.routes).toEqual(first.routes)
     expect(replay.areas).toEqual(first.areas)
   })
@@ -256,6 +258,24 @@ describe('Wizard world domain', () => {
     expect(restored.unlockedRecipeIds).toEqual(['greenway_ladder', 'highland_bridge'])
     expect(restored.discoveredTileIds).toEqual([...new Set([...migrated.discoveredTileIds, migrated.tiles[0].id])].sort())
     expect(advanceWizardWorld(restored, [])).toEqual(advanceWizardWorld(restoreWizardWorld(serializeWizardWorld(restored)), []))
+  })
+
+  it('quarantines a built Highland bridge restored below its minimum level', () => {
+    const corrupt = copy(createWizardWorld('greenway-alpha'))
+    corrupt.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+    corrupt.unlockedRecipeIds = ['greenway_ladder', 'highland_bridge']
+    corrupt.player.xp = 0
+    corrupt.player.level = 1
+    const bridge = corrupt.routes.find((route) => route.id === 'highland_bridge')!
+    corrupt.player.position = { ...bridge.to }
+
+    const restored = restoreWizardWorld(serializeWizardWorld(corrupt))
+    expect(restored.builtRouteIds).toEqual(['greenway_ladder'])
+    expect(restored.unlockedRecipeIds).toEqual(['greenway_ladder'])
+    const before = { ...restored.player.position }
+    const traversed = advanceWizardWorld(restored, [{ type: 'traverse_route', routeId: 'highland_bridge' }])
+    expect(traversed.rejections[0]?.code).toBe('recipe_locked')
+    expect(traversed.state.player.position).toEqual(before)
   })
 })
 

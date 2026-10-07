@@ -123,11 +123,14 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
       state.player.equipment[slot] = requested && canEquipItem(requested, slot) && assigned < owned ? requested : null
     })
   }
-  if (state.builtRouteIds.includes('highland_bridge') && !state.builtRouteIds.includes('greenway_ladder')) {
+  const highlandRecipe = state.recipes.find((recipe) => recipe.id === 'highland_bridge')!
+  const highlandProgressValid = state.builtRouteIds.includes('greenway_ladder') && state.player.level >= highlandRecipe.minimumLevel
+  if (!highlandProgressValid) {
     state.builtRouteIds = state.builtRouteIds.filter((id) => id !== 'highland_bridge')
-  }
-  if (!state.builtRouteIds.includes('greenway_ladder') || state.player.level < 2) {
     state.unlockedRecipeIds = state.unlockedRecipeIds.filter((id) => id !== 'highland_bridge')
+  } else if (!state.unlockedRecipeIds.includes('highland_bridge')) {
+    state.unlockedRecipeIds.push('highland_bridge')
+    state.unlockedRecipeIds.sort()
   }
   state.resources.forEach((resource) => { resource.position.y = terrainHeightAt(state.tiles, resource.position.x, resource.position.z) })
   state.fairyRings.forEach((ring) => { ring.position.y = terrainHeightAt(state.tiles, ring.position.x, ring.position.z) })

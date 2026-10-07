@@ -5,18 +5,22 @@ const TERRAIN = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', snow: '
 
 export const mapToggleForKey = (open: boolean, code: string, repeat = false) => code === 'KeyM' && !repeat ? !open : open
 export const mapSheetMode = (width: number) => width < 720 ? 'sheet' : 'modal'
+export const mapHeadingRotation = (yaw: number) => yaw
+export const northUpGridOrder = <T extends { gridX: number; gridZ: number }>(tiles: readonly T[]) =>
+  [...tiles].sort((left, right) => left.gridZ - right.gridZ || left.gridX - right.gridX)
+export const mapDialogTabTarget = (open: boolean, code: string, _shiftKey: boolean) => open && code === 'Tab' ? 'close' : null
 
 function Tile({ tile, player }: { tile: WizardMapTile; player: WizardViewProjection['map']['player'] }) {
   const occupied = tile.gridX === player.gridX && tile.gridZ === player.gridZ
   const marker = occupied ? '▲' : tile.hasStore ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : tile.discovered ? '' : '?'
   return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}`}>
-    <b style={occupied ? { transform: `rotate(${player.yaw}rad)` } : undefined}>{marker}</b>
+    <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : undefined}>{marker}</b>
   </span>
 }
 
 function MapGrid({ projection }: { projection: WizardViewProjection }) {
-  const tiles = [...projection.map.tiles].sort((left, right) => left.gridZ - right.gridZ || left.gridX - right.gridX)
-  return <div className="wr-map-grid" aria-label="North-up world map">{tiles.map((tile) => <Tile key={tile.id} tile={tile} player={projection.map.player} />)}</div>
+  const tiles = northUpGridOrder(projection.map.tiles)
+  return <div className="wr-map-grid" aria-label="North-up world map, negative Z is north">{tiles.map((tile) => <Tile key={tile.id} tile={tile} player={projection.map.player} />)}</div>
 }
 
 function RouteKey({ routes }: { routes: readonly WizardRoute[] }) {

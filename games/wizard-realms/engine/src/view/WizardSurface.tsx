@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { WizardViewIntent, WizardViewProjection } from './contracts'
 import { WizardHud } from './WizardHud'
-import { WizardMap, mapToggleForKey } from './WizardMap'
+import { WizardMap, mapDialogTabTarget, mapToggleForKey } from './WizardMap'
 import { WizardScene } from './WizardScene'
 
 export interface WizardSurfaceProps {
@@ -67,6 +67,11 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
         return
       }
       if (event.repeat || /INPUT|TEXTAREA|SELECT/.test((event.target as HTMLElement)?.tagName)) return
+      if (mapDialogTabTarget(mapOpen, event.code, event.shiftKey)) {
+        event.preventDefault()
+        mapCloseRef.current?.focus()
+        return
+      }
       if (event.code === 'KeyM') {
         event.preventDefault()
         if (mapToggleForKey(mapOpen, event.code, event.repeat) !== mapOpen) toggleMap()

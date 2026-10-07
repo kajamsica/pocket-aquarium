@@ -93,7 +93,7 @@ export function createGeneratedWorld(seed: string): WizardWorldState {
   })
   const greenwayTrees = tiles.filter((tile) => tile.center.z >= -4).slice(0, 4).map((tile, index) => ({
     id: `greenway-journey-tree-${index}`, tileId: tile.id, kind: 'tree' as const,
-    position: { x: tile.center.x + 1.15, y: tile.center.y, z: tile.center.z - 1.15 },
+    position: { x: tile.center.x + 1.15, y: tile.center.y, z: tile.center.z + 1.15 },
     health: 2, maxHealth: 2, depleted: false,
   }))
   resources.push(...greenwayTrees)
