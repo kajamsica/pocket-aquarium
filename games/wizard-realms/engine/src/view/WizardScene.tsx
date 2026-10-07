@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import type { WizardFairyRing, WizardResourceNode, WizardStore, WizardViewProjection } from './contracts'
+import type { WizardFairyRing, WizardResourceNode, WizardRoute, WizardStore, WizardViewProjection } from './contracts'
 
 function CameraRig({ player, cameraOrbit, orbiting }: {
   player: WizardViewProjection['player']
@@ -120,6 +120,35 @@ function FairyRing({ ring }: { ring: WizardFairyRing }) {
   )
 }
 
+function ConstructionRoute({ route }: { route: WizardRoute }) {
+  const from = new THREE.Vector3(...route.from)
+  const to = new THREE.Vector3(...route.to)
+  const midpoint = from.clone().lerp(to, 0.5)
+  const length = from.distanceTo(to)
+  const yaw = Math.atan2(to.x - from.x, to.z - from.z)
+  return (
+    <group>
+      {[route.from, route.to].map((position, index) => (
+        <mesh key={index} position={[position[0], position[1] + 0.45, position[2]]} castShadow>
+          <cylinderGeometry args={[0.12, 0.18, 0.9, 6]} />
+          <meshStandardMaterial color={route.built ? '#77502f' : '#8a755d'} />
+        </mesh>
+      ))}
+      <group position={[midpoint.x, midpoint.y + 0.25, midpoint.z]} rotation={[0, yaw, 0]}>
+        {route.built ? Array.from({ length: 7 }, (_, index) => (
+          <mesh key={index} position={[0, 0, -length / 2 + length * index / 6]} castShadow>
+            <boxGeometry args={[1.35, 0.16, 0.46]} />
+            <meshStandardMaterial color="#8a5f36" roughness={0.9} />
+          </mesh>
+        )) : <>
+          <mesh position={[-0.55, 0, 0]}><boxGeometry args={[0.12, 0.12, length]} /><meshStandardMaterial color="#74624e" /></mesh>
+          <mesh position={[0.55, 0, 0]}><boxGeometry args={[0.12, 0.12, length]} /><meshStandardMaterial color="#74624e" /></mesh>
+        </>}
+      </group>
+    </group>
+  )
+}
+
 export function WizardScene({ projection, cameraOrbit, orbiting }: {
   projection: WizardViewProjection
   cameraOrbit: readonly [number, number]
@@ -142,6 +171,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.resources.map((node) => <Resource key={node.id} node={node} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
+      {projection.routes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
       <WizardAvatar player={projection.player} />
     </Canvas>
   )

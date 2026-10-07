@@ -106,7 +106,7 @@ State records what an instance is doing now, such as tree progress, vendor stock
 
 ## Current save and future migration schema
 
-The current `wizard-world/v1` save contains the local world state, seed, tick, simulation RNG, and event sequence, then sanitizes it on restore. It does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
+The current `wizard-world/v2` save contains the local world state, seed, tick, simulation RNG, event sequence, built routes, unlocked route recipes, and discovered map tiles, then sanitizes it on restore. A deterministic migration reads `wizard-world/v1` without rewriting its original storage key. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
 
 ```text
 schemaVersion, saveSequence, worldId, worldSeed

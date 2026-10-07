@@ -1,6 +1,6 @@
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { canEquipItem } from './world'
-import type { EquipmentSlot, ItemId, WizardWorldState } from './types'
+import type { EquipmentSlot, ItemId, RecipeId, RouteId, WizardWorldState } from './types'
 
 const itemIds: ItemId[] = [
   'woodcutters_axe', 'logs', 'marsh_herb', 'stone', 'iron_ore', 'apprentice_hat',
@@ -18,6 +18,10 @@ const vec3 = (value: unknown, fallback: { x: number; y: number; z: number }) => 
   z: number(value.z, fallback.z, -1_000, 1_000),
 }) : { ...fallback }
 const itemId = (value: unknown): value is ItemId => typeof value === 'string' && itemIds.includes(value as ItemId)
+const validIds = <T extends string>(value: unknown, allowed: readonly T[], required: readonly T[] = []): T[] => {
+  const values = Array.isArray(value) ? value.filter((id): id is T => typeof id === 'string' && allowed.includes(id as T)) : []
+  return [...new Set([...required, ...values])].sort()
+}
 
 export function serializeWizardWorld(state: WizardWorldState): string {
   return JSON.stringify(state)
@@ -32,6 +36,9 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
   const state: WizardWorldState = JSON.parse(JSON.stringify(base)) as WizardWorldState
   state.tick = integer(source.tick, base.tick)
   state.eventSequence = integer(source.eventSequence, base.eventSequence)
+  state.builtRouteIds = validIds<RouteId>(source.builtRouteIds, base.routes.map((route) => route.id))
+  state.unlockedRecipeIds = validIds<RecipeId>(source.unlockedRecipeIds, base.recipes.map((recipe) => recipe.id), ['greenway_ladder'])
+  state.discoveredTileIds = validIds(source.discoveredTileIds, base.tiles.map((tile) => tile.id), base.discoveredTileIds)
 
   if (record(source.rng)) {
     state.rng.generation = integer(source.rng.generation, base.rng.generation, 1, 0xffffffff)
@@ -45,8 +52,9 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
   })
 
   const rawResources = Array.isArray(source.resources) ? source.resources : []
-  if (rawResources.length === base.resources.length) state.resources = base.resources.map((fallback, index) => {
-    const value = record(rawResources[index]) ? rawResources[index] : {}
+  if (rawResources.length > 0) state.resources = base.resources.map((fallback) => {
+    const saved = rawResources.find((candidate) => record(candidate) && candidate.id === fallback.id)
+    const value = record(saved) ? saved : {}
     const maxHealth = integer(value.maxHealth, fallback.maxHealth, 1, 1_000)
     const health = integer(value.health, fallback.health, 0, maxHealth)
     return { ...fallback, position: vec3(value.position, fallback.position), maxHealth, health, depleted: typeof value.depleted === 'boolean' ? value.depleted || health === 0 : health === 0 }
@@ -114,6 +122,12 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
         .filter((candidate) => candidate !== slot && state.player.equipment[candidate] === requested).length : 0
       state.player.equipment[slot] = requested && canEquipItem(requested, slot) && assigned < owned ? requested : null
     })
+  }
+  if (state.builtRouteIds.includes('highland_bridge') && !state.builtRouteIds.includes('greenway_ladder')) {
+    state.builtRouteIds = state.builtRouteIds.filter((id) => id !== 'highland_bridge')
+  }
+  if (!state.builtRouteIds.includes('greenway_ladder') || state.player.level < 2) {
+    state.unlockedRecipeIds = state.unlockedRecipeIds.filter((id) => id !== 'highland_bridge')
   }
   state.resources.forEach((resource) => { resource.position.y = terrainHeightAt(state.tiles, resource.position.x, resource.position.z) })
   state.fairyRings.forEach((ring) => { ring.position.y = terrainHeightAt(state.tiles, ring.position.x, ring.position.z) })

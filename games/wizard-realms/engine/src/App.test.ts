@@ -15,6 +15,9 @@ describe('Wizard view adapter', () => {
     expect(projection.resources).toHaveLength(state.resources.length)
     expect(projection.stores).toHaveLength(2)
     expect(projection.fairyRings).toHaveLength(2)
+    expect(projection.routes).toHaveLength(2)
+    expect(projection.map.tiles).toHaveLength(state.tiles.length)
+    expect(projection.map.tiles.some((tile) => !tile.discovered && tile.terrain === null && tile.biome === null)).toBe(true)
     expect(projection.recentEvents).toEqual(['Visible event'])
     expect(projection.equipment.focus).toBeNull()
     expect(projection.equipment.hands).toBeNull()
@@ -77,5 +80,17 @@ describe('Wizard view adapter', () => {
     ringState.player.position = { ...ringState.fairyRings[0].position }
     expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Choose destination', actionable: false })
     expect(intentForView(ringState, { type: 'interact' })).toBeNull()
+  })
+
+  it('maps route construction and traversal through the nearest route scaffold', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.resources.forEach((resource) => { resource.depleted = true })
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    state.player.position = { ...ladder.from }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', action: 'Build', actionable: true })
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'build_route', routeId: 'greenway_ladder' })
+    state.builtRouteIds.push('greenway_ladder')
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', action: 'Cross', actionable: true })
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'traverse_route', routeId: 'greenway_ladder' })
   })
 })

@@ -2,7 +2,7 @@ import type {
   EquipmentSlot, IntentRejection, ItemId, PlayerState, ResourceKind, Vec3, WizardAdvanceResult,
   WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
-import { createGeneratedWorld, terrainHeightAt } from './generation'
+import { areaAt, createGeneratedWorld, terrainHeightAt } from './generation'
 
 const INTERACT_DISTANCE = 3
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
@@ -24,6 +24,13 @@ const equippedCount = (player: PlayerState, itemId: ItemId, except?: EquipmentSl
   (Object.entries(player.equipment) as [EquipmentSlot, ItemId | null][])
     .filter(([slot, equipped]) => slot !== except && equipped === itemId).length
 
+const routeEndpointDistance = (player: Vec3, route: WizardWorldState['routes'][number]) =>
+  Math.min(distance(player, route.from), distance(player, route.to))
+
+function tileAt(state: WizardWorldState, position: Vec3) {
+  return state.tiles.reduce((closest, tile) => distance(position, tile.center) < distance(position, closest.center) ? tile : closest)
+}
+
 function addItem(player: PlayerState, itemId: ItemId, quantity: number): boolean {
   if (inventoryCount(player) + reservedCount(player) + quantity > player.backpackCapacity) return false
   const stack = player.inventory.find((candidate) => candidate.itemId === itemId)
@@ -33,11 +40,16 @@ function addItem(player: PlayerState, itemId: ItemId, quantity: number): boolean
 }
 
 function removeItem(player: PlayerState, itemId: ItemId, quantity: number): boolean {
-  const stack = player.inventory.find((candidate) => candidate.itemId === itemId)
-  if (!stack || stack.quantity < quantity) return false
-  stack.quantity -= quantity
-  if (stack.quantity === 0) player.inventory.splice(player.inventory.indexOf(stack), 1)
-  return true
+  if (owns(player, itemId) < quantity) return false
+  let remaining = quantity
+  for (const stack of player.inventory.filter((candidate) => candidate.itemId === itemId)) {
+    const removed = Math.min(stack.quantity, remaining)
+    stack.quantity -= removed
+    remaining -= removed
+    if (remaining === 0) break
+  }
+  player.inventory = player.inventory.filter((stack) => stack.quantity > 0)
+  return remaining === 0
 }
 
 function rejection(index: number, intent: WizardIntent, code: IntentRejection['code'], message: string): IntentRejection {
@@ -61,7 +73,7 @@ function stepRng(value: number): number {
 
 function applyIntent(
   current: WizardWorldState, intent: WizardIntent, index: number, tick: number,
-): { state: WizardWorldState; event?: WizardEvent; rejection?: IntentRejection } {
+): { state: WizardWorldState; events?: WizardEvent[]; rejection?: IntentRejection } {
   const fail = (code: IntentRejection['code'], message: string) => ({ state: current, rejection: rejection(index, intent, code, message) })
 
   if (intent.type === 'move') {
@@ -69,10 +81,13 @@ function applyIntent(
     const state = cloneState(current)
     const x = Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x))
     const z = Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z))
+    const currentArea = areaAt(state.areas, state.player.position.x, state.player.position.z)
+    const nextArea = areaAt(state.areas, x, z)
+    if (currentArea.id !== nextArea.id) return fail('locked_area', 'Use a completed route to cross into another area.')
     const ground = terrainHeightAt(state.tiles, x, z)
     state.player.position = { x, y: Math.max(state.player.position.y, ground), z }
     if (state.player.position.y === ground) state.player.verticalVelocity = 0
-    return { state, event: event(state, tick, { type: 'player_moved', position: { ...state.player.position } }) }
+    return { state, events: [event(state, tick, { type: 'player_moved', position: { ...state.player.position } })] }
   }
 
   if (intent.type === 'look') {
@@ -80,7 +95,7 @@ function applyIntent(
     const state = cloneState(current)
     state.player.yaw += intent.yawDelta
     state.player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.player.pitch + intent.pitchDelta))
-    return { state, event: event(state, tick, { type: 'player_looked', yaw: state.player.yaw, pitch: state.player.pitch }) }
+    return { state, events: [event(state, tick, { type: 'player_looked', yaw: state.player.yaw, pitch: state.player.pitch })] }
   }
 
   if (intent.type === 'jump') {
@@ -88,7 +103,47 @@ function applyIntent(
     if (Math.abs(current.player.position.y - ground) > 0.001 || current.player.verticalVelocity !== 0) return fail('invalid_value', 'Player is already airborne.')
     const state = cloneState(current)
     state.player.verticalVelocity = 5
-    return { state, event: event(state, tick, { type: 'player_jumped' }) }
+    return { state, events: [event(state, tick, { type: 'player_jumped' })] }
+  }
+
+  if (intent.type === 'build_route') {
+    const route = current.routes.find((candidate) => candidate.id === intent.routeId)
+    const recipe = current.recipes.find((candidate) => candidate.routeId === intent.routeId)
+    if (!route || !recipe) return fail('not_found', 'Construction route does not exist.')
+    if (current.builtRouteIds.includes(route.id)) return fail('already_built', 'This route is already complete.')
+    if (!current.unlockedRecipeIds.includes(recipe.id)) return fail('recipe_locked', 'This route recipe is not unlocked.')
+    if (current.player.level < recipe.minimumLevel || (recipe.prerequisiteRouteId && !current.builtRouteIds.includes(recipe.prerequisiteRouteId))) return fail('recipe_locked', 'This route requires more progression.')
+    if (routeEndpointDistance(current.player.position, route) > INTERACT_DISTANCE) return fail('too_far', 'Move to the route scaffold to build it.')
+    if (owns(current.player, 'logs') < recipe.logCost) return fail('not_owned', `This route requires ${recipe.logCost} logs.`)
+    const state = cloneState(current)
+    removeItem(state.player, 'logs', recipe.logCost)
+    state.builtRouteIds.push(route.id)
+    state.builtRouteIds.sort()
+    state.player.xp += recipe.xpReward
+    state.player.level = levelForXp(state.player.xp)
+    return { state, events: [event(state, tick, { type: 'route_built', routeId: route.id, logCost: recipe.logCost, xp: recipe.xpReward })] }
+  }
+
+  if (intent.type === 'traverse_route') {
+    const route = current.routes.find((candidate) => candidate.id === intent.routeId)
+    if (!route) return fail('not_found', 'Construction route does not exist.')
+    if (!current.builtRouteIds.includes(route.id)) return fail('recipe_locked', 'Finish this route before crossing it.')
+    if (routeEndpointDistance(current.player.position, route) > INTERACT_DISTANCE) return fail('too_far', 'Move to a route endpoint to cross it.')
+    const fromStart = distance(current.player.position, route.from) <= distance(current.player.position, route.to)
+    const destination = fromStart ? route.to : route.from
+    const fromAreaId = fromStart ? route.fromAreaId : route.toAreaId
+    const toAreaId = fromStart ? route.toAreaId : route.fromAreaId
+    const state = cloneState(current)
+    state.player.position = { ...destination }
+    state.player.verticalVelocity = 0
+    const discovered = tileAt(state, destination)
+    const events = [event(state, tick, { type: 'route_used', routeId: route.id, fromAreaId, toAreaId, position: { ...destination } })]
+    if (!state.discoveredTileIds.includes(discovered.id)) {
+      state.discoveredTileIds.push(discovered.id)
+      state.discoveredTileIds.sort()
+      events.push(event(state, tick, { type: 'tile_discovered', tileId: discovered.id }))
+    }
+    return { state, events }
   }
 
   if (intent.type === 'harvest') {
@@ -102,13 +157,13 @@ function applyIntent(
     const state = cloneState(current)
     const target = state.resources.find((candidate) => candidate.id === intent.resourceId)!
     target.health -= 1
-    if (target.health > 0) return { state, event: event(state, tick, { type: 'resource_damaged', resourceId: target.id, health: target.health }) }
+    if (target.health > 0) return { state, events: [event(state, tick, { type: 'resource_damaged', resourceId: target.id, health: target.health })] }
     target.health = 0
     target.depleted = true
     addItem(state.player, itemForResource[target.kind], yieldQuantity)
     state.player.xp += 20
     state.player.level = levelForXp(state.player.xp)
-    return { state, event: event(state, tick, { type: 'resource_harvested', resourceId: target.id, itemId: 'logs', quantity: yieldQuantity, xp: 20 }) }
+    return { state, events: [event(state, tick, { type: 'resource_harvested', resourceId: target.id, itemId: 'logs', quantity: yieldQuantity, xp: 20 })] }
   }
 
   if (intent.type === 'discover_fairy_ring') {
@@ -118,7 +173,7 @@ function applyIntent(
     if (current.player.discoveredRingIds.includes(ring.id)) return fail('invalid_value', 'Fairy ring is already discovered.')
     const state = cloneState(current)
     state.player.discoveredRingIds.push(ring.id)
-    return { state, event: event(state, tick, { type: 'fairy_ring_discovered', ringId: ring.id }) }
+    return { state, events: [event(state, tick, { type: 'fairy_ring_discovered', ringId: ring.id })] }
   }
 
   if (intent.type === 'teleport_fairy_ring') {
@@ -129,7 +184,10 @@ function applyIntent(
     if (!current.player.discoveredRingIds.includes(source.id) || !current.player.discoveredRingIds.includes(target.id)) return fail('undiscovered', 'Both fairy rings must be discovered.')
     const state = cloneState(current)
     state.player.position = { ...target.position }
-    return { state, event: event(state, tick, { type: 'fairy_ring_teleported', sourceRingId: source.id, targetRingId: target.id, position: { ...target.position } }) }
+    const targetArea = areaAt(current.areas, target.position.x, target.position.z)
+    const targetRoutes = current.routes.filter((route) => route.toAreaId === targetArea.id)
+    if (targetRoutes.some((route) => !current.builtRouteIds.includes(route.id))) return fail('locked_area', 'Build the route into that area before using its fairy ring.')
+    return { state, events: [event(state, tick, { type: 'fairy_ring_teleported', sourceRingId: source.id, targetRingId: target.id, position: { ...target.position } })] }
   }
 
   if (intent.type === 'buy_store_listing') {
@@ -145,7 +203,7 @@ function applyIntent(
     state.player.coins -= listing.price
     nextListing.stock -= 1
     addItem(state.player, listing.itemId, 1)
-    return { state, event: event(state, tick, { type: 'store_item_bought', storeId: store.id, listingId: listing.id, itemId: listing.itemId, price: listing.price }) }
+    return { state, events: [event(state, tick, { type: 'store_item_bought', storeId: store.id, listingId: listing.id, itemId: listing.itemId, price: listing.price })] }
   }
 
   if (intent.type === 'equip_item') {
@@ -154,7 +212,7 @@ function applyIntent(
     if (equippedCount(current.player, intent.itemId, intent.slot) >= owns(current.player, intent.itemId)) return fail('not_owned', 'No unassigned copy of this item is available.')
     const state = cloneState(current)
     state.player.equipment[intent.slot] = intent.itemId
-    return { state, event: event(state, tick, { type: 'item_equipped', itemId: intent.itemId, slot: intent.slot }) }
+    return { state, events: [event(state, tick, { type: 'item_equipped', itemId: intent.itemId, slot: intent.slot })] }
   }
 
   if (intent.type === 'create_trade_listing') {
@@ -166,7 +224,7 @@ function applyIntent(
     const state = cloneState(current)
     removeItem(state.player, intent.itemId, intent.quantity)
     state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
-    return { state, event: event(state, tick, { type: 'trade_listing_created', slotIndex: intent.slotIndex, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice }) }
+    return { state, events: [event(state, tick, { type: 'trade_listing_created', slotIndex: intent.slotIndex, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice })] }
   }
 
   if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3) return fail('invalid_value', 'Trade slot must be between zero and three.')
@@ -175,7 +233,7 @@ function applyIntent(
   const state = cloneState(current)
   state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: null, quantity: 0, unitPrice: 0 }
   if (!addItem(state.player, slot.itemId, slot.quantity)) return fail('capacity', 'Backpack cannot accept the escrowed item.')
-  return { state, event: event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity }) }
+  return { state, events: [event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity })] }
 }
 
 export function createWizardWorld(seed: string): WizardWorldState { return createGeneratedWorld(seed) }
@@ -188,9 +246,16 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
   intents.forEach((intent, index) => {
     const result = applyIntent(next, intent, index, tick)
     next = result.state
-    if (result.event) events.push(result.event)
+    if (result.events) events.push(...result.events)
     if (result.rejection) rejections.push(result.rejection)
   })
+  for (const recipe of next.recipes) {
+    if (next.unlockedRecipeIds.includes(recipe.id)) continue
+    if (next.player.level < recipe.minimumLevel || (recipe.prerequisiteRouteId && !next.builtRouteIds.includes(recipe.prerequisiteRouteId))) continue
+    next.unlockedRecipeIds.push(recipe.id)
+    next.unlockedRecipeIds.sort()
+    events.push(event(next, tick, { type: 'recipe_unlocked', recipeId: recipe.id }))
+  }
   const ground = terrainHeightAt(next.tiles, next.player.position.x, next.player.position.z)
   if (next.player.position.y > ground || next.player.verticalVelocity > 0) {
     next.player.position.y += next.player.verticalVelocity * next.fixedStepMs / 1_000
@@ -218,5 +283,9 @@ export function createWizardProjection(state: WizardWorldState): WizardProjectio
     nearbyResources: nearby(state.resources).filter((resource) => !resource.depleted),
     nearbyFairyRings: nearby(state.fairyRings).map((ring) => ({ ...ring, discovered: state.player.discoveredRingIds.includes(ring.id) })),
     nearbyStores: nearby(state.stores),
+    nearbyRoutes: state.routes.filter((route) => routeEndpointDistance(state.player.position, route) <= 6),
+    builtRouteIds: state.builtRouteIds,
+    unlockedRecipeIds: state.unlockedRecipeIds,
+    discoveredTileIds: state.discoveredTileIds,
   })) as WizardProjection
 }

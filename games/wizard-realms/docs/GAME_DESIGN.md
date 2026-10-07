@@ -106,13 +106,15 @@ The renderer may show anticipatory movement and impact effects, but it never gra
 
 Players can buy, find, maintain, improve, and eventually craft tools. A tool profile defines legal actions, efficiency, durability, handling, quality, repair rules, and presentation assets.
 
-The first tool set should stay small: axe, pick, gathering knife, and simple magical focus. Building systems are later than basic tool production. The first slice needs a workbench interaction and recipes, not free-form construction.
+The first tool set should stay small: axe, pick, gathering knife, and simple magical focus. General building systems are later than basic tool production. The first slice proves only two bounded route recipes, not free-form construction.
 
 ### Building and placement
 
 V1 may add bounded structures, camps, or regional projects after the world has transactional editing. Placement must follow `begin -> preview -> validate -> freeze -> commit or cancel`. Preview geometry cannot consume materials, alter terrain, or create collision until commit.
 
 Construction checks land permissions, support, overlap, resource ownership, biome restrictions, and a safe rollback path. Free-form building, shared claims, and large settlements remain outside MVP.
+
+The current vertical slice proves only two fixed, profiled regional projects. The known Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Each project has stable endpoints, a deterministic recipe, atomic resource use, and authoritative two-way traversal. It is not a general placement or building system.
 
 ### Shops
 
@@ -214,7 +216,8 @@ The first 30 to 45 minutes should prove the game's identity:
 6. Use a workbench to repair or improve the starter tool.
 7. Sell surplus material or post one of four trade listings.
 8. Discover a dormant fairy ring and a distant destination clue.
-9. Save, reload, and resume with the same inventory, world state, discoveries, and time contract.
+9. Open the north-up map, gather 10 logs, build the ladder and bridge route, and see fog clear only after authoritative traversal.
+10. Save, reload, and resume with the same inventory, world state, discoveries, routes, and time contract.
 
 This loop is the first vertical-slice acceptance journey.
 
@@ -267,6 +270,7 @@ MVP includes:
 - starter tools, equipment, and armor data;
 - day and one weather transition;
 - one dormant or two linked fairy rings with discovery-gated travel;
+- a compact and expanded fog-of-discovery map, plus the two fixed Greenway ladder and Highland bridge projects;
 - death and recovery;
 - save, migration seed, replay, diagnostics, and one real player surface.
 

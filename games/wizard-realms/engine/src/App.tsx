@@ -19,7 +19,8 @@ import {
 import type { EquipmentSlot as ViewEquipmentSlot } from './view/contracts'
 
 const WORLD_SEED = 'greenway-alpha'
-const SAVE_KEY = 'wizard-realms:world:v1'
+const SAVE_KEY = 'wizard-realms:world:v2'
+const LEGACY_SAVE_KEY = 'wizard-realms:world:v1'
 const FIXED_STEP_MS = 50
 const MOVE_METERS_PER_TICK = 0.16
 const PIVOT_RADIANS_PER_TICK = 0.045
@@ -41,11 +42,11 @@ const TERRAIN_COLORS = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', 
 type RecentMessage = { id: number; text: string }
 
 function loadWorld(): WizardWorldState {
-  const saved = window.localStorage.getItem(SAVE_KEY)
+  const saved = window.localStorage.getItem(SAVE_KEY) ?? window.localStorage.getItem(LEGACY_SAVE_KEY)
   if (!saved) return createWizardWorld(WORLD_SEED)
   try {
     const value = JSON.parse(saved) as { schemaVersion?: unknown; seed?: unknown }
-    return value.schemaVersion === 'wizard-world/v1' && value.seed === WORLD_SEED
+    return (value.schemaVersion === 'wizard-world/v1' || value.schemaVersion === 'wizard-world/v2') && value.seed === WORLD_SEED
       ? restoreWizardWorld(saved)
       : createWizardWorld(WORLD_SEED)
   } catch {
@@ -62,6 +63,7 @@ function closestInteraction(state: WizardWorldState) {
       .map((resource) => ({ distance: distance(state.player.position, resource.position), kind: 'resource' as const, target: resource })),
     ...state.fairyRings.map((ring) => ({ distance: distance(state.player.position, ring.position), kind: 'fairy-ring' as const, target: ring })),
     ...state.stores.map((store) => ({ distance: distance(state.player.position, store.position), kind: 'store' as const, target: store })),
+    ...state.routes.map((route) => ({ distance: Math.min(distance(state.player.position, route.from), distance(state.player.position, route.to)), kind: 'route' as const, target: route })),
   ].filter((candidate) => candidate.distance <= INTERACTION_RANGE)
   return candidates.sort((left, right) => left.distance - right.distance)[0] ?? null
 }
@@ -84,6 +86,10 @@ function eventText(event: WizardEvent): string {
     case 'trade_listing_created': return `Listed ${event.quantity} ${ITEM_NAMES[event.itemId]} for trade.`
     case 'trade_listing_cancelled': return `Returned ${ITEM_NAMES[event.itemId]} to your backpack.`
     case 'player_jumped': return 'You spring over the trail.'
+    case 'route_built': return `Built ${event.routeId === 'greenway_ladder' ? 'the Greenway ladder' : 'the Highland bridge'} for ${event.logCost} logs.`
+    case 'route_used': return 'You cross the completed route.'
+    case 'recipe_unlocked': return 'A new construction recipe is ready.'
+    case 'tile_discovered': return 'The map reveals a new tile.'
     default: return ''
   }
 }
@@ -96,6 +102,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   const domain = createWizardProjection(state)
   const interaction = closestInteraction(state)
   const inventory = domain.player.inventory.map((stack) => itemStack(stack.itemId, stack.quantity))
+  const currentTile = state.tiles.reduce((closest, tile) => distance(state.player.position, tile.center) < distance(state.player.position, closest.center) ? tile : closest)
   const equipped = (slot: ViewEquipmentSlot) => {
     const itemId = domain.player.equipment[domainSlot(slot)]
     return itemId ? itemStack(itemId, 1) : null
@@ -111,6 +118,23 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       discovered: domain.player.discoveredRingIds.includes(ring.id),
       destinations: state.fairyRings.filter((target) => target.id !== ring.id).map((target) => ({ ringId: target.id, label: target.name, discovered: domain.player.discoveredRingIds.includes(target.id) })),
     })),
+    routes: state.routes.map((route) => {
+      const recipe = state.recipes.find((candidate) => candidate.routeId === route.id)!
+      return { id: route.id, label: route.name, from: [route.from.x, route.from.y, route.from.z], to: [route.to.x, route.to.y, route.to.z], built: state.builtRouteIds.includes(route.id), unlocked: state.unlockedRecipeIds.includes(recipe.id), logCost: recipe.logCost }
+    }),
+    map: {
+      tiles: state.tiles.map((tile) => {
+        const discovered = state.discoveredTileIds.includes(tile.id)
+        return {
+          id: tile.id, gridX: tile.gridX, gridZ: tile.gridZ,
+          terrain: discovered ? tile.terrain : null, biome: discovered ? tile.biome : null, discovered,
+          hasResource: discovered && state.resources.some((resource) => resource.tileId === tile.id && !resource.depleted),
+          hasStore: discovered && state.stores.some((store) => distance(store.position, tile.center) < 3),
+          hasRing: discovered && state.fairyRings.some((ring) => distance(ring.position, tile.center) < 3),
+        }
+      }),
+      player: { gridX: currentTile.gridX, gridZ: currentTile.gridZ, yaw: state.player.yaw },
+    },
     stores: state.stores.map((store) => ({ id: store.id, name: store.name, position: [store.position.x, store.position.y, store.position.z], listings: store.listings.map((listing) => ({ id: listing.id, name: ITEM_NAMES[listing.itemId], price: listing.price, stock: listing.stock })) })),
     backpack: { capacity: domain.player.backpackCapacity, stacks: inventory },
     coins: domain.player.coins,
@@ -120,8 +144,13 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     nearbyInteraction: interaction ? {
       kind: interaction.kind, targetId: interaction.target.id,
       label: interaction.kind === 'resource' ? 'Greenway oak' : interaction.target.name,
-      action: interaction.kind === 'resource' ? 'Chop' : interaction.kind === 'store' ? 'Store open' : domain.player.discoveredRingIds.includes(interaction.target.id) ? 'Choose destination' : 'Discover',
-      actionable: interaction.kind === 'resource' || (interaction.kind === 'fairy-ring' && !domain.player.discoveredRingIds.includes(interaction.target.id)),
+      action: interaction.kind === 'resource' ? 'Chop'
+        : interaction.kind === 'store' ? 'Store open'
+        : interaction.kind === 'route' ? (state.builtRouteIds.includes(interaction.target.id) ? 'Cross' : state.unlockedRecipeIds.includes(interaction.target.id) ? 'Build' : 'Locked')
+        : domain.player.discoveredRingIds.includes(interaction.target.id) ? 'Choose destination' : 'Discover',
+      actionable: interaction.kind === 'resource'
+        || interaction.kind === 'route' && (state.builtRouteIds.includes(interaction.target.id) || state.unlockedRecipeIds.includes(interaction.target.id))
+        || (interaction.kind === 'fairy-ring' && !domain.player.discoveredRingIds.includes(interaction.target.id)),
     } : null,
     recentEvents: messages.map((message) => message.text),
   }
@@ -133,6 +162,9 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
     const interaction = closestInteraction(state)
     if (interaction?.kind === 'resource') return { type: 'harvest', resourceId: interaction.target.id }
     if (interaction?.kind === 'fairy-ring' && !state.player.discoveredRingIds.includes(interaction.target.id)) return { type: 'discover_fairy_ring', ringId: interaction.target.id }
+    if (interaction?.kind === 'route') return state.builtRouteIds.includes(interaction.target.id)
+      ? { type: 'traverse_route', routeId: interaction.target.id }
+      : { type: 'build_route', routeId: interaction.target.id }
     return null
   }
   if (intent.type === 'store.select-listing') return { type: 'buy_store_listing', storeId: intent.storeId, listingId: intent.listingId }

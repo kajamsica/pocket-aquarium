@@ -66,11 +66,33 @@ export interface WizardTradeListing {
 }
 
 export interface WizardInteractionPrompt {
-  kind: 'resource' | 'store' | 'fairy-ring' | 'other'
+  kind: 'resource' | 'store' | 'fairy-ring' | 'route' | 'other'
   targetId: string
   label: string
   action: string
   actionable: boolean
+}
+
+export interface WizardRoute {
+  id: string
+  label: string
+  from: Vec3
+  to: Vec3
+  built: boolean
+  unlocked: boolean
+  logCost: number
+}
+
+export interface WizardMapTile {
+  id: string
+  gridX: number
+  gridZ: number
+  terrain: string | null
+  biome: string | null
+  discovered: boolean
+  hasResource: boolean
+  hasStore: boolean
+  hasRing: boolean
 }
 
 export interface WizardViewProjection {
@@ -84,6 +106,11 @@ export interface WizardViewProjection {
   terrain: readonly WizardTerrainCell[]
   resources: readonly WizardResourceNode[]
   fairyRings: readonly WizardFairyRing[]
+  routes: readonly WizardRoute[]
+  map: {
+    tiles: readonly WizardMapTile[]
+    player: { gridX: number; gridZ: number; yaw: number }
+  }
   stores: readonly WizardStore[]
   backpack: {
     capacity: number

@@ -41,6 +41,38 @@ export interface TradeSlot {
   unitPrice: number
 }
 
+export type AreaId = 'greenway' | 'northern_ridge' | 'eastern_highland'
+export type RouteId = 'greenway_ladder' | 'highland_bridge'
+export type RecipeId = RouteId
+
+export interface AreaProfile {
+  id: AreaId
+  name: string
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+}
+
+export interface RouteProfile {
+  id: RouteId
+  name: string
+  fromAreaId: AreaId
+  toAreaId: AreaId
+  from: Vec3
+  to: Vec3
+}
+
+export interface RecipeProfile {
+  id: RecipeId
+  name: string
+  routeId: RouteId
+  logCost: number
+  xpReward: number
+  minimumLevel: number
+  prerequisiteRouteId: RouteId | null
+}
+
 export interface PlayerState {
   position: Vec3
   verticalVelocity: number
@@ -57,7 +89,7 @@ export interface PlayerState {
 }
 
 export interface WizardWorldState {
-  schemaVersion: 'wizard-world/v1'
+  schemaVersion: 'wizard-world/v2'
   seed: string
   tick: number
   fixedStepMs: 50
@@ -66,6 +98,12 @@ export interface WizardWorldState {
   resources: ResourceNode[]
   stores: [StoreState, StoreState]
   fairyRings: FairyRing[]
+  areas: AreaProfile[]
+  routes: RouteProfile[]
+  recipes: RecipeProfile[]
+  builtRouteIds: RouteId[]
+  unlockedRecipeIds: RecipeId[]
+  discoveredTileIds: string[]
   player: PlayerState
   eventSequence: number
 }
@@ -74,6 +112,8 @@ export type WizardIntent =
   | { type: 'move'; delta: Vec3 }
   | { type: 'look'; yawDelta: number; pitchDelta: number }
   | { type: 'jump' }
+  | { type: 'build_route'; routeId: RouteId }
+  | { type: 'traverse_route'; routeId: RouteId }
   | { type: 'harvest'; resourceId: string }
   | { type: 'discover_fairy_ring'; ringId: string }
   | { type: 'teleport_fairy_ring'; sourceRingId: string; targetRingId: string }
@@ -87,6 +127,10 @@ export type WizardEvent = EventBase & (
   | { type: 'player_moved'; position: Vec3 }
   | { type: 'player_looked'; yaw: number; pitch: number }
   | { type: 'player_jumped' }
+  | { type: 'route_built'; routeId: RouteId; logCost: number; xp: number }
+  | { type: 'route_used'; routeId: RouteId; fromAreaId: AreaId; toAreaId: AreaId; position: Vec3 }
+  | { type: 'recipe_unlocked'; recipeId: RecipeId }
+  | { type: 'tile_discovered'; tileId: string }
   | { type: 'resource_damaged'; resourceId: string; health: number }
   | { type: 'resource_harvested'; resourceId: string; itemId: ItemId; quantity: number; xp: number }
   | { type: 'fairy_ring_discovered'; ringId: string }
@@ -102,7 +146,7 @@ export interface IntentRejection {
   intentType: WizardIntent['type']
   code: 'invalid_value' | 'not_found' | 'too_far' | 'requires_axe' | 'depleted' | 'capacity' |
     'insufficient_coins' | 'out_of_stock' | 'not_owned' | 'wrong_slot' | 'undiscovered' |
-    'trade_slot_unavailable'
+    'trade_slot_unavailable' | 'locked_area' | 'recipe_locked' | 'already_built'
   message: string
 }
 
@@ -117,6 +161,10 @@ export type WizardProjection = DeepReadonly<{
   nearbyResources: ResourceNode[]
   nearbyFairyRings: Array<FairyRing & { discovered: boolean }>
   nearbyStores: StoreState[]
+  nearbyRoutes: RouteProfile[]
+  builtRouteIds: RouteId[]
+  unlockedRecipeIds: RecipeId[]
+  discoveredTileIds: string[]
 }>
 
 export interface WizardAdvanceResult {

@@ -16,8 +16,11 @@ describe('Wizard world domain', () => {
     expect(other.rng).not.toEqual(first.rng)
     expect(other.tiles.map((tile) => [tile.biome, tile.terrain, tile.elevation]))
       .not.toEqual(first.tiles.map((tile) => [tile.biome, tile.terrain, tile.elevation]))
-    expect(first.resources.map((resource) => [resource.tileId, resource.kind]))
+    expect(first.resources.filter((resource) => resource.id.startsWith('resource-')).map((resource) => [resource.tileId, resource.kind]))
       .toEqual(first.tiles.map((tile) => [tile.id, resourceKindForBiome(tile.biome)]))
+    expect(first.resources.filter((resource) => resource.id.startsWith('greenway-journey-tree-'))).toHaveLength(4)
+    expect(replay.routes).toEqual(first.routes)
+    expect(replay.areas).toEqual(first.areas)
   })
 
   it('harvests an in-range tree and rejects invalid harvest without mutation', () => {
@@ -59,6 +62,8 @@ describe('Wizard world domain', () => {
     const discoveredTarget = advanceWizardWorld(state, [{ type: 'discover_fairy_ring', ringId: target.id }]).state
     state = copy(discoveredTarget)
     state.player.position = { ...source.position }
+    expect(advanceWizardWorld(state, [{ type: 'teleport_fairy_ring', sourceRingId: source.id, targetRingId: target.id }]).rejections[0]?.code).toBe('locked_area')
+    state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
     const teleported = advanceWizardWorld(state, [{ type: 'teleport_fairy_ring', sourceRingId: source.id, targetRingId: target.id }])
     expect(teleported.events[0]?.type).toBe('fairy_ring_teleported')
     expect(teleported.state.player.position).toEqual(target.position)
@@ -170,6 +175,87 @@ describe('Wizard world domain', () => {
     const restored = restoreWizardWorld(serializeWizardWorld(initial))
     const intent = { type: 'move' as const, delta: { x: 0.1, y: 0, z: -0.1 } }
     expect(advanceWizardWorld(restored, [intent])).toEqual(advanceWizardWorld(initial, [intent]))
+  })
+
+  it('builds the exact ladder and bridge progression, enforces boundaries, and traverses both ways', () => {
+    let state = copy(createWizardWorld('greenway-alpha'))
+    state.player.inventory.push({ itemId: 'logs', quantity: 4 }, { itemId: 'logs', quantity: 6 })
+    state.player.xp = 40
+    state.player.level = 1
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    state.player.position = { ...ladder.from }
+
+    const lockedMove = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0, y: 0, z: -0.2 } }])
+    expect(lockedMove.rejections[0]?.code).toBe('locked_area')
+    expect(lockedMove.state.player.position).toEqual(state.player.position)
+
+    const builtLadder = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder' }])
+    expect(builtLadder.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 6 })
+    expect(builtLadder.state.player.xp).toBe(100)
+    expect(builtLadder.state.player.level).toBe(2)
+    expect(builtLadder.state.builtRouteIds).toEqual(['greenway_ladder'])
+    expect(builtLadder.state.unlockedRecipeIds).toEqual(['greenway_ladder', 'highland_bridge'])
+    expect(builtLadder.events.map((entry) => entry.type)).toEqual(['route_built', 'recipe_unlocked'])
+
+    const crossedLadder = advanceWizardWorld(builtLadder.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+    expect(crossedLadder.state.player.position).toEqual(ladder.to)
+    expect(crossedLadder.events.map((entry) => entry.type)).toEqual(['route_used', 'tile_discovered'])
+    const returnedLadder = advanceWizardWorld(crossedLadder.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+    expect(returnedLadder.state.player.position).toEqual(ladder.from)
+
+    const bridge = returnedLadder.state.routes.find((route) => route.id === 'highland_bridge')!
+    state = copy(returnedLadder.state)
+    state.player.position = { ...bridge.from }
+    const builtBridge = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'highland_bridge' }])
+    expect(builtBridge.state.player.inventory.find((stack) => stack.itemId === 'logs')).toBeUndefined()
+    expect(builtBridge.state.player.xp).toBe(180)
+    expect(builtBridge.state.builtRouteIds).toEqual(['greenway_ladder', 'highland_bridge'])
+    const crossedBridge = advanceWizardWorld(builtBridge.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }])
+    expect(crossedBridge.state.player.position).toEqual(bridge.to)
+    expect(advanceWizardWorld(crossedBridge.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }]).state.player.position).toEqual(bridge.from)
+  })
+
+  it('rejects route construction atomically and reveals fog only through traversal', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    state.player.position = { ...ladder.from }
+    const beforePlayer = structuredClone(state.player)
+    const beforeFog = [...state.discoveredTileIds]
+    const rejected = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder' }])
+    expect(rejected.rejections[0]?.code).toBe('not_owned')
+    expect(rejected.state.player).toEqual(beforePlayer)
+    expect(rejected.state.builtRouteIds).toEqual([])
+    expect(rejected.state.discoveredTileIds).toEqual(beforeFog)
+    expect(rejected.state.tick).toBe(state.tick + 1)
+
+    const looked = advanceWizardWorld(state, [{ type: 'look', yawDelta: 1, pitchDelta: 0 }])
+    const moved = advanceWizardWorld(looked.state, [{ type: 'move', delta: { x: 0.1, y: 0, z: 0 } }])
+    expect(moved.state.discoveredTileIds).toEqual(beforeFog)
+  })
+
+  it('migrates v1 progress deterministically and filters v2 progress identifiers', () => {
+    const legacy = JSON.parse(serializeWizardWorld(createWizardWorld('greenway-alpha'))) as unknown as Record<string, unknown>
+    legacy.schemaVersion = 'wizard-world/v1'
+    delete legacy.builtRouteIds
+    delete legacy.unlockedRecipeIds
+    delete legacy.discoveredTileIds
+    const migrated = restoreWizardWorld(JSON.stringify(legacy))
+    expect(migrated.schemaVersion).toBe('wizard-world/v2')
+    expect(migrated.builtRouteIds).toEqual([])
+    expect(migrated.unlockedRecipeIds).toEqual(['greenway_ladder'])
+    expect(migrated.discoveredTileIds.length).toBeGreaterThan(0)
+
+    const corrupt = JSON.parse(serializeWizardWorld(migrated)) as Record<string, unknown>
+    corrupt.builtRouteIds = ['highland_bridge', 'greenway_ladder', 'greenway_ladder', 'bogus']
+    corrupt.unlockedRecipeIds = ['highland_bridge', 'bogus', 'greenway_ladder']
+    corrupt.discoveredTileIds = [migrated.tiles[0].id, 'bogus', migrated.tiles[0].id]
+    const corruptPlayer = corrupt.player as Record<string, unknown>
+    corruptPlayer.xp = 100
+    const restored = restoreWizardWorld(JSON.stringify(corrupt))
+    expect(restored.builtRouteIds).toEqual(['greenway_ladder', 'highland_bridge'])
+    expect(restored.unlockedRecipeIds).toEqual(['greenway_ladder', 'highland_bridge'])
+    expect(restored.discoveredTileIds).toEqual([...new Set([...migrated.discoveredTileIds, migrated.tiles[0].id])].sort())
+    expect(advanceWizardWorld(restored, [])).toEqual(advanceWizardWorld(restoreWizardWorld(serializeWizardWorld(restored)), []))
   })
 })
 

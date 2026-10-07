@@ -25,7 +25,9 @@ npm run dev
 Open the local URL printed by Vite. The current vertical slice uses the deterministic seed
 `greenway-alpha`, saves committed state in local browser storage, and includes third-person movement,
 pivot, jump, drag-orbit camera control, harvesting, stores, equipment, four trade-listing slots, and
-fairy-ring travel.
+fairy-ring travel. A north-up map tracks authoritative discovery. The current progression route spends
+4 logs on the Greenway ladder, then unlocks a 6-log Highland bridge at level 2. These two profiled
+projects are the only construction in the slice.
 
 Run deterministic tests and make a production build with:
 
@@ -34,8 +36,8 @@ npm test -- --run
 npm run build
 ```
 
-This is an honest systems vertical slice. Combat, spells, quests, NPC AI, construction, and multiplayer
-are deliberately outside this build.
+This is an honest systems vertical slice. Combat, spells, quests, NPC AI, free-form building, and
+multiplayer are deliberately outside this build.
 
 ## Design documents
 
@@ -52,4 +54,4 @@ Wizard Realms adopts the repository's existing game-development contracts rather
 - [Product Tooling, Validation, and Release Operations](../../docs/game-development/PRODUCT_TOOLING_AND_VALIDATION.md)
 - [Reusable Specification Templates](../../docs/game-development/REUSABLE_SPEC_TEMPLATES.md)
 
-These documents are design contracts. They do not claim that the game, networking, combat, questing, building, controller support, or touch support already exists.
+These documents are design contracts. They do not claim that networking, combat, questing, free-form building, controller completion, or touch completion already exists.
