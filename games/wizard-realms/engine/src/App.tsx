@@ -40,6 +40,7 @@ export const OBJECTIVE_STYLES = `
 @media(max-width:719px) and (max-height:590px){.wr-surface:has(.wr-context) .wr-backpack,.wr-surface .wr-events{display:none}}
 @media(max-width:719px) and (max-height:400px){.wr-surface{min-height:0}.wr-surface .wr-prompt,.wr-surface .wr-context{box-sizing:border-box;top:54px;bottom:auto;max-height:80px;overflow-y:auto}}
 @media(min-width:440px) and (max-width:719px) and (max-height:400px){.wr-surface .wr-backpack,.wr-surface .wr-context{left:8px;top:54px;max-height:80px;width:220px;overflow-y:auto;transform:none}.wr-surface .wr-prompt{left:auto;right:72px;max-width:160px;transform:none}}
+@media(min-width:720px) and (max-width:900px) and (max-height:420px){.wr-surface .wr-context{top:54px;bottom:auto;max-height:calc(100vh - 254px);overflow-y:auto}}
 `
 
 const ITEM_NAMES: Record<ItemId, string> = {
