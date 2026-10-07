@@ -217,6 +217,17 @@ describe('Wizard world domain', () => {
     expect(advanceWizardWorld(crossedBridge.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }]).state.player.position).toEqual(bridge.from)
   })
 
+  it('slides along a locked area boundary while preserving the blocked component', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.player.position = { x: 0, y: terrainHeightAt(state.tiles, 0, -4), z: -4 }
+    const result = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0.12, y: 0, z: -0.12 } }])
+    expect(result.rejections).toEqual([])
+    expect(result.events.map((entry) => entry.type)).toEqual(['player_moved'])
+    expect(result.state.player.position.x).toBeCloseTo(0.12)
+    expect(result.state.player.position.z).toBe(-4)
+    expect(areaAt(result.state.areas, result.state.player.position.x, result.state.player.position.z).id).toBe('greenway')
+  })
+
   it('rejects route construction atomically and reveals fog only through traversal', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!

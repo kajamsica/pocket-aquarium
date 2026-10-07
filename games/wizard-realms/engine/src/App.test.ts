@@ -54,6 +54,24 @@ describe('Wizard view adapter', () => {
     expect(movementIntent(state, [0, 0])).toBeNull()
   })
 
+  it('keeps moving tangentially after turning along a locked boundary', () => {
+    let state = createWizardWorld('greenway-alpha')
+    state.player.position = { x: 0, y: state.player.position.y, z: -4 }
+    const headOn = advanceWizardWorld(state, controlIntents(state, [0, 1]))
+    expect(headOn.rejections[0]?.code).toBe('locked_area')
+    expect(headOn.state.player.position.x).toBe(0)
+
+    for (let step = 0; step < 9; step += 1) state = advanceWizardWorld(state, controlIntents(state, [1, 1])).state
+    expect(state.player.yaw).toBeCloseTo(-9 * PIVOT_RADIANS_PER_TICK)
+    expect(state.player.position.x).toBeGreaterThan(0)
+    expect(state.player.position.z).toBe(-4)
+    const afterTurn = advanceWizardWorld(state, controlIntents(state, [0, 1]))
+    expect(afterTurn.rejections).toEqual([])
+    expect(afterTurn.state.player.position.x).toBeGreaterThan(state.player.position.x)
+    expect(afterTurn.state.player.position.z).toBe(-4)
+    expect(afterTurn.state.tick).toBe(state.tick + 1)
+  })
+
   it('maps jump, store, equipment, trade, and ring controls to exact domain intents', () => {
     const state = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(state)

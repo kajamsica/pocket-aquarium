@@ -79,11 +79,17 @@ function applyIntent(
   if (intent.type === 'move') {
     if (![intent.delta.x, intent.delta.y, intent.delta.z].every(finite) || Math.hypot(intent.delta.x, intent.delta.y, intent.delta.z) > 4) return fail('invalid_value', 'Movement must be finite and at most four meters per tick.')
     const state = cloneState(current)
-    const x = Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x))
-    const z = Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z))
+    let x = Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x))
+    let z = Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z))
     const currentArea = areaAt(state.areas, state.player.position.x, state.player.position.z)
     const nextArea = areaAt(state.areas, x, z)
-    if (currentArea.id !== nextArea.id) return fail('locked_area', 'Use a completed route to cross into another area.')
+    if (currentArea.id !== nextArea.id) {
+      const startX = state.player.position.x
+      const startZ = state.player.position.z
+      if (x !== startX && areaAt(state.areas, x, startZ).id === currentArea.id) z = startZ
+      else if (z !== startZ && areaAt(state.areas, startX, z).id === currentArea.id) x = startX
+      else return fail('locked_area', 'Use a completed route to cross into another area.')
+    }
     const ground = terrainHeightAt(state.tiles, x, z)
     state.player.position = { x, y: Math.max(state.player.position.y, ground), z }
     if (state.player.position.y === ground) state.player.verticalVelocity = 0
