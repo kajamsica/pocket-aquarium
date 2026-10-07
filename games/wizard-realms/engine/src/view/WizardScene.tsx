@@ -1,10 +1,58 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { WizardFairyRing, WizardResourceNode, WizardRoute, WizardStore, WizardViewProjection } from './contracts'
 
-function CameraRig({ player, cameraOrbit, orbiting }: {
-  player: WizardViewProjection['player']
+// Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
+const TELEPORT_SNAP_DISTANCE_M = 3
+const POSITION_DAMPING_PER_S = 14
+const YAW_DAMPING_PER_S = 16
+const SPEED_DAMPING_PER_S = 10
+const WALK_SPEED_M_PER_S = 3.2
+const STRIDE_LENGTH_M = 1.4
+const LEG_SWING_RAD = 0.5
+const ARM_SWING_RAD = 0.3
+const BODY_BOB_M = 0.05
+
+/** View-only pose shared by avatar and camera. It is derived from the projection and never fed back to the domain. */
+interface PresentationPose {
+  position: THREE.Vector3
+  yaw: number
+  speed: number
+  phase: number
+}
+
+function damping(ratePerSecond: number, delta: number) {
+  return 1 - Math.exp(-ratePerSecond * delta)
+}
+
+function shortestArc(from: number, to: number) {
+  return Math.atan2(Math.sin(to - from), Math.cos(to - from))
+}
+
+function PresentationPoseDriver({ player, pose }: { player: WizardViewProjection['player']; pose: PresentationPose }) {
+  const target = useMemo(() => new THREE.Vector3(), [])
+  useFrame((_, delta) => {
+    target.set(player.position[0], player.position[1], player.position[2])
+    if (Math.hypot(target.x - pose.position.x, target.z - pose.position.z) > TELEPORT_SNAP_DISTANCE_M) {
+      pose.position.copy(target)
+      pose.yaw = player.yaw
+      pose.speed = 0
+      return
+    }
+    const previousX = pose.position.x
+    const previousZ = pose.position.z
+    pose.position.lerp(target, damping(POSITION_DAMPING_PER_S, delta))
+    pose.yaw += shortestArc(pose.yaw, player.yaw) * damping(YAW_DAMPING_PER_S, delta)
+    const realizedSpeed = delta > 0 ? Math.hypot(pose.position.x - previousX, pose.position.z - previousZ) / delta : 0
+    pose.speed += (realizedSpeed - pose.speed) * damping(SPEED_DAMPING_PER_S, delta)
+    pose.phase = (pose.phase + pose.speed / STRIDE_LENGTH_M * Math.PI * 2 * delta) % (Math.PI * 2)
+  }, -1)
+  return null
+}
+
+function CameraRig({ pose, cameraOrbit, orbiting }: {
+  pose: PresentationPose
   cameraOrbit: readonly [number, number]
   orbiting: boolean
 }) {
@@ -16,10 +64,10 @@ function CameraRig({ player, cameraOrbit, orbiting }: {
     const blend = 1 - Math.exp(-(orbiting ? 18 : 2.6) * delta)
     orbitYaw.current += ((orbiting ? cameraOrbit[0] : 0) - orbitYaw.current) * blend
     orbitPitch.current += ((orbiting ? cameraOrbit[1] : 0.28) - orbitPitch.current) * blend
-    const heading = player.yaw + orbitYaw.current
+    const heading = pose.yaw + orbitYaw.current
     const distance = 6.4
     const horizontal = Math.cos(orbitPitch.current) * distance
-    target.set(player.position[0], player.position[1] + 1.35, player.position[2])
+    target.set(pose.position.x, pose.position.y + 1.35, pose.position.z)
     desired.set(
       target.x + Math.sin(heading) * horizontal,
       target.y + 1.2 + Math.sin(orbitPitch.current) * distance,
@@ -31,16 +79,43 @@ function CameraRig({ player, cameraOrbit, orbiting }: {
   return null
 }
 
-function WizardAvatar({ player }: { player: WizardViewProjection['player'] }) {
+function WizardAvatar({ pose }: { pose: PresentationPose }) {
+  const root = useRef<THREE.Group>(null)
+  const torso = useRef<THREE.Group>(null)
+  const leftLeg = useRef<THREE.Group>(null)
+  const rightLeg = useRef<THREE.Group>(null)
+  const leftArm = useRef<THREE.Group>(null)
+  const rightArm = useRef<THREE.Group>(null)
+  useFrame(() => {
+    if (!root.current || !torso.current || !leftLeg.current || !rightLeg.current || !leftArm.current || !rightArm.current) return
+    root.current.position.copy(pose.position)
+    root.current.rotation.y = pose.yaw
+    // Swing amplitude follows realized speed, so stopping fades to idle while the phase stays continuous.
+    const stride = Math.min(pose.speed / WALK_SPEED_M_PER_S, 1)
+    const swing = Math.sin(pose.phase) * stride
+    leftLeg.current.rotation.x = swing * LEG_SWING_RAD
+    rightLeg.current.rotation.x = -swing * LEG_SWING_RAD
+    leftArm.current.rotation.x = -swing * ARM_SWING_RAD
+    rightArm.current.rotation.x = swing * ARM_SWING_RAD
+    torso.current.position.y = BODY_BOB_M * stride * 0.5 * (1 + Math.cos(2 * pose.phase))
+  })
   return (
-    <group position={player.position as [number, number, number]} rotation={[0, player.yaw, 0]} aria-label="Player wizard">
-      <mesh position={[0, 0.92, 0]} castShadow><coneGeometry args={[0.52, 1.65, 7]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh>
-      <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 10, 8]} /><meshStandardMaterial color="#c9946c" roughness={0.9} /></mesh>
-      <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.78} /></mesh>
-      <mesh position={[0, 1.98, 0]} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /><meshStandardMaterial color="#34234f" /></mesh>
-      <mesh position={[0, 1.78, -0.31]} castShadow><coneGeometry args={[0.08, 0.2, 6]} /><meshStandardMaterial color="#bd805d" /></mesh>
-      <mesh position={[0.48, 1.08, 0]} rotation={[0.05, 0, 0.12]} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /><meshStandardMaterial color="#6d472c" /></mesh>
-      <pointLight position={[0.5, 2.28, 0]} color="#bd82ff" intensity={2.2} distance={3.5} />
+    <group ref={root} aria-label="Player wizard">
+      <group ref={leftLeg} position={[-0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /><meshStandardMaterial color="#34234f" roughness={0.9} /></mesh></group>
+      <group ref={rightLeg} position={[0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /><meshStandardMaterial color="#34234f" roughness={0.9} /></mesh></group>
+      <group ref={torso}>
+        <mesh position={[0, 0.92, 0]} castShadow><coneGeometry args={[0.52, 1.65, 7]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh>
+        <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 10, 8]} /><meshStandardMaterial color="#c9946c" roughness={0.9} /></mesh>
+        <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.78} /></mesh>
+        <mesh position={[0, 1.98, 0]} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /><meshStandardMaterial color="#34234f" /></mesh>
+        <mesh position={[0, 1.78, -0.31]} castShadow><coneGeometry args={[0.08, 0.2, 6]} /><meshStandardMaterial color="#bd805d" /></mesh>
+        <group ref={leftArm} position={[-0.3, 1.4, 0]}><mesh position={[-0.08, -0.3, 0]} rotation={[0, 0, 0.25]} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh></group>
+        <group ref={rightArm} position={[0.3, 1.4, 0]}>
+          <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, -0.25]} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh>
+          <mesh position={[0.18, -0.32, 0]} rotation={[0.05, 0, 0.12]} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /><meshStandardMaterial color="#6d472c" /></mesh>
+        </group>
+        <pointLight position={[0.5, 2.28, 0]} color="#bd82ff" intensity={2.2} distance={3.5} />
+      </group>
     </group>
   )
 }
@@ -154,6 +229,9 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   cameraOrbit: readonly [number, number]
   orbiting: boolean
 }) {
+  const [pose] = useState<PresentationPose>(() => ({
+    position: new THREE.Vector3(...projection.player.position), yaw: projection.player.yaw, speed: 0, phase: 0,
+  }))
   return (
     <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 1.5]} camera={{ fov: 68, near: 0.08, far: 180 }}>
       <color attach="background" args={['#82b8c4']} />
@@ -161,7 +239,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       <ambientLight intensity={1.15} color="#b8d7f0" />
       <directionalLight position={[18, 30, 12]} intensity={3.2} color="#fff1c4" castShadow />
       <hemisphereLight args={['#a9ddff', '#355321', 1.2]} />
-      <CameraRig player={projection.player} cameraOrbit={cameraOrbit} orbiting={orbiting} />
+      <PresentationPoseDriver player={projection.player} pose={pose} />
+      <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} />
       {projection.terrain.map((cell) => (
         <mesh key={cell.id} position={[cell.position[0], cell.position[1] - cell.height / 2, cell.position[2]]} receiveShadow>
           <boxGeometry args={[cell.size[0], cell.height, cell.size[1]]} />
@@ -172,7 +251,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {projection.routes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
-      <WizardAvatar player={projection.player} />
+      <WizardAvatar pose={pose} />
     </Canvas>
   )
 }
