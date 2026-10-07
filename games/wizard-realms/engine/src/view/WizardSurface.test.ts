@@ -14,8 +14,8 @@ const projection = {
   ],
   map: {
     tiles: [
-      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false, hasRouteSite: false },
-      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false },
+      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false, hasRouteSite: false, hasBuiltRoute: false },
+      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false, hasBuiltRoute: false },
     ],
     player: { gridX: 0, gridZ: 0, yaw: 0 },
   },
@@ -30,7 +30,7 @@ const gridProjection = (size: number, gridX: number, gridZ: number) => ({
     tiles: Array.from({ length: size * size }, (_, index) => {
       const x = index % size
       const z = Math.floor(index / size)
-      return { id: `tile-${x}-${z}`, gridX: x, gridZ: z, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false }
+      return { id: `tile-${x}-${z}`, gridX: x, gridZ: z, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false, hasBuiltRoute: false }
     }),
     player: { gridX, gridZ, yaw: 0 },
   },

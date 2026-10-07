@@ -5,6 +5,7 @@ import type {
 
 const SIZE = 7
 const TILE_METERS = 4
+export const WORLD_CONTENT_REVISION = 'greenway-region-v1' as const
 export const STORE_HALF_WIDTH = 3.5 / 2 + 0.55
 export const STORE_HALF_DEPTH = 2.5 / 2 + 0.55
 const RESOURCE_STORE_MARGIN = 0.2
@@ -165,7 +166,7 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
   const discoveredTileIds = coreTiles.filter((tile) => areaAt(areas, tile.center.x, tile.center.z).id === 'greenway').map((tile) => tile.id).sort()
   const generation = hashSeed(`${normalizedSeed}:generation`)
   return {
-    schemaVersion: 'wizard-world/v2', seed: normalizedSeed, generationProfile, tick: 0, fixedStepMs: 50,
+    schemaVersion: 'wizard-world/v3', contentRevision: WORLD_CONTENT_REVISION, seed: normalizedSeed, generationProfile, tick: 0, fixedStepMs: 50,
     rng: { generation, simulation: hashSeed(`${normalizedSeed}:simulation`) }, tiles, resources, stores,
     fairyRings, areas, routes, recipes, builtRouteIds: [], unlockedRecipeIds: ['greenway_ladder'],
     discoveredTileIds, player, eventSequence: 0,

@@ -290,6 +290,8 @@ After the expanded region, completion requires:
 - defensive magic and combat after separate interaction contracts pass, plus richer weather, day schedules, death recovery, and endgame projects;
 - workbench, creator, accessibility, desktop, controller, and touch journeys as individually proven capabilities.
 
+Full-game acceptance requires a connected, streamed world roughly 2 km across with at least three mechanically distinct regions. A fresh character must be able to finish an authored campaign and a repeatable endgame project; recorded journeys must exercise each travel tier, regional shops and single-player trade, and save/reload persistence for discoveries, equipment, built routes, excavations, and economy state.
+
 The full single-player game does not require networked multiplayer or an online economy.
 
 ### Later multiplayer and MMO direction

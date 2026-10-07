@@ -65,7 +65,7 @@ Today, every rejection has a typed reason and every projection carries the local
 
 ### Coordinates
 
-The local world uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. The default profile has seven by seven tiles; the opt-in expanded profile has 16 by 16 tiles around the preserved core. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
+The local world uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. The default profile has seven by seven 4 m tiles; the opt-in 16 by 16 profile is a roughly 64 m preview around the preserved core, without streaming. The full single-player game targets a connected, streamed world roughly 2 km across. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
 
 ```text
 chunkX = floor(worldX / 64)
@@ -106,7 +106,7 @@ State records what an instance is doing now, such as tree progress, vendor stock
 
 ## Current save and future migration schema
 
-The current `wizard-world/v2` save contains the local world state, seed, generation profile, tick, simulation RNG, event sequence, built routes, unlocked route recipes, and discovered map tiles, then sanitizes it on restore. A deterministic migration reads `wizard-world/v1` without rewriting its original storage key. Older v2 saves without a profile restore as the original seven-by-seven world. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
+The current `wizard-world/v3` save pins `greenway-region-v1` content and contains the local world state, seed, generation profile, tick, simulation RNG, event sequence, built routes, unlocked route recipes, and discovered map tiles. Valid v1/v2 saves migrate into a new v3 storage key while their original bytes remain untouched; profile-less legacy saves restore as the original seven-by-seven world. Unknown schemas, profiles, and content revisions fail closed before autosave. Structural validation precedes restore, but nested values are still sanitized, not fully audited. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
 
 ```text
 schemaVersion, saveSequence, worldId, worldSeed
@@ -233,7 +233,7 @@ Targets are provisional until measured on named hardware and deployment profiles
 | Milestone | Capacity target | Measurable exit gates |
 |---|---|---|
 | Local systems foundation | 1 player, 7 by 7 default or opt-in 16 by 16 tile profile, 20 ticks per second | 30-minute journey, p95 tick under 35 ms, save and replay digest pass, no client grants |
-| Full single-player RPG | Several validated regions, exploration and traversal systems, economy, and endgame | Sustained expedition and return loops, persistent world changes, save and reload, performance and accessibility evidence |
+| Full single-player RPG | Connected streamed world roughly 2 km across, at least 3 distinct regions, exploration, traversal, economy, and endgame | Complete fresh-save campaign and repeatable endgame journeys, exercise each travel tier and regional trade, preserve world changes across reload, p95 tick under 35 ms on named target hardware |
 | Co-op authority proof | 2 to 8 players, 64 active chunks, region handoff | 2-hour soak, p95 tick under 40 ms and p99 under 50 ms, reconnect idempotency, transaction disconnect tests, hostile-client bounds |
 | Small persistent realm | 100 concurrent players, multiple authorities and durable services | 24-hour soak at 150 players, no sustained tick debt, zero loss of acknowledged economy events, authority recovery, transfer, privacy, moderation, backup and rollback drills |
 | MMORPG launch candidate | At least 1,000 concurrent players across a realm group, horizontal regions, shards, and instances | 24-hour soak at 1.5 times launch target, hotspot degradation without corruption, security and privacy review, disaster and abuse drills, state-safe rollback, alarms tied to practiced actions |

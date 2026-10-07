@@ -90,7 +90,8 @@ export interface PlayerState {
 }
 
 export interface WizardWorldState {
-  schemaVersion: 'wizard-world/v2'
+  schemaVersion: 'wizard-world/v3'
+  contentRevision: 'greenway-region-v1'
   seed: string
   generationProfile: GenerationProfile
   tick: number

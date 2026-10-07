@@ -1,6 +1,6 @@
-import { createGeneratedWorld, terrainHeightAt } from './generation'
+import { createGeneratedWorld, terrainHeightAt, WORLD_CONTENT_REVISION } from './generation'
 import { canEquipItem } from './world'
-import type { EquipmentSlot, ItemId, RecipeId, RouteId, WizardWorldState } from './types'
+import type { EquipmentSlot, GenerationProfile, ItemId, RecipeId, RouteId, WizardWorldState } from './types'
 
 const itemIds: ItemId[] = [
   'woodcutters_axe', 'logs', 'marsh_herb', 'stone', 'iron_ore', 'apprentice_hat',
@@ -22,17 +22,40 @@ const validIds = <T extends string>(value: unknown, allowed: readonly T[], requi
   const values = Array.isArray(value) ? value.filter((id): id is T => typeof id === 'string' && allowed.includes(id as T)) : []
   return [...new Set([...required, ...values])].sort()
 }
+const commonSaveArrays = ['tiles', 'resources', 'stores', 'fairyRings'] as const
+const routeMapArrays = ['areas', 'routes', 'recipes', 'builtRouteIds', 'unlockedRecipeIds', 'discoveredTileIds'] as const
+
+function parseRestorableSave(serialized: string, expectedProfile?: GenerationProfile) {
+  let source: unknown
+  try { source = JSON.parse(serialized) } catch { return null }
+  if (!record(source) || typeof source.seed !== 'string' || !source.seed) return null
+  const version = source.schemaVersion
+  if (version !== 'wizard-world/v1' && version !== 'wizard-world/v2' && version !== 'wizard-world/v3') return null
+  const profile: unknown = source.generationProfile === undefined && version !== 'wizard-world/v3'
+    ? 'greenway-classic-v1' : source.generationProfile
+  if (profile !== 'greenway-classic-v1' && profile !== 'greenway-expanded-v1') return null
+  if (version === 'wizard-world/v1' && profile !== 'greenway-classic-v1') return null
+  if (expectedProfile && profile !== expectedProfile) return null
+  if (version === 'wizard-world/v3' && source.contentRevision !== WORLD_CONTENT_REVISION) return null
+  if (!commonSaveArrays.every((key) => Array.isArray(source[key])) || !record(source.player) || !record(source.rng)) return null
+  if (!record(source.player.position) || !Array.isArray(source.player.inventory) || !record(source.player.equipment)
+    || !Array.isArray(source.player.tradeSlots) || !Array.isArray(source.player.discoveredRingIds)) return null
+  if (version !== 'wizard-world/v1' && !routeMapArrays.every((key) => Array.isArray(source[key]))) return null
+  return { source, seed: source.seed, profile: profile as GenerationProfile }
+}
+
+export function isRestorableWizardSave(serialized: string, profile: GenerationProfile): boolean {
+  return parseRestorableSave(serialized, profile) !== null
+}
 
 export function serializeWizardWorld(state: WizardWorldState): string {
   return JSON.stringify(state)
 }
 
 export function restoreWizardWorld(serialized: string): WizardWorldState {
-  let raw: unknown
-  try { raw = JSON.parse(serialized) } catch { raw = {} }
-  const source = record(raw) ? raw : {}
-  const seed = typeof source.seed === 'string' && source.seed.length > 0 ? source.seed : 'wizard-realms'
-  const profile = source.generationProfile === 'greenway-expanded-v1' ? 'greenway-expanded-v1' : 'greenway-classic-v1'
+  const parsed = parseRestorableSave(serialized)
+  if (!parsed) throw new Error('Invalid or unsupported Wizard Realms save')
+  const { source, seed, profile } = parsed
   const base = createGeneratedWorld(seed, profile)
   const state: WizardWorldState = JSON.parse(JSON.stringify(base)) as WizardWorldState
   state.tick = integer(source.tick, base.tick)

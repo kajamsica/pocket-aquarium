@@ -4,6 +4,7 @@ import {
   type WizardEvent, type WizardIntent, type WizardWorldState,
 } from './index'
 import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
+import { isRestorableWizardSave } from './persistence'
 import { storeSellUnitPrice } from './world'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
@@ -240,7 +241,7 @@ describe('Wizard world domain', () => {
     expect(advanceWizardWorld(state, [intent])).toEqual(first)
     expect(serializeWizardWorld(state)).toBe(before)
     const restored = restoreWizardWorld(serializeWizardWorld(first.state))
-    expect(restored.schemaVersion).toBe('wizard-world/v2')
+    expect(restored.schemaVersion).toBe('wizard-world/v3')
     expect(restored.player.inventory).toEqual(first.state.player.inventory)
     expect(restored.player.coins).toBe(first.state.player.coins)
     const second = { ...intent, quantity: 3 }
@@ -604,13 +605,42 @@ describe('Wizard world domain', () => {
   })
 
   it('migrates v1 progress deterministically and filters v2 progress identifiers', () => {
-    const legacy = JSON.parse(serializeWizardWorld(createWizardWorld('greenway-alpha'))) as unknown as Record<string, unknown>
+    const source = createWizardWorld('greenway-alpha')
+    source.tick = 11
+    source.eventSequence = 7
+    source.rng.simulation = 54321
+    source.player.coins = 42
+    source.player.inventory.push({ itemId: 'logs', quantity: 2 })
+    source.player.equipment.mainHand = 'woodcutters_axe'
+    source.resources[0].health = 0
+    source.resources[0].depleted = true
+    source.stores[0].listings[0].stock = 1
+    const legacy = JSON.parse(serializeWizardWorld(source)) as unknown as Record<string, unknown>
     legacy.schemaVersion = 'wizard-world/v1'
+    legacy.resources = source.resources.filter((resource) => !resource.id.startsWith('greenway-journey-tree-'))
+    delete legacy.contentRevision
+    delete legacy.generationProfile
+    delete legacy.areas
+    delete legacy.routes
+    delete legacy.recipes
     delete legacy.builtRouteIds
     delete legacy.unlockedRecipeIds
     delete legacy.discoveredTileIds
+    delete (legacy.player as Record<string, unknown>).verticalVelocity
+    expect(isRestorableWizardSave(JSON.stringify(legacy), 'greenway-classic-v1')).toBe(true)
     const migrated = restoreWizardWorld(JSON.stringify(legacy))
-    expect(migrated.schemaVersion).toBe('wizard-world/v2')
+    expect(migrated.schemaVersion).toBe('wizard-world/v3')
+    expect(migrated.contentRevision).toBe('greenway-region-v1')
+    expect(migrated.seed).toBe(source.seed)
+    expect(migrated.generationProfile).toBe('greenway-classic-v1')
+    expect(migrated.tick).toBe(11)
+    expect(migrated.eventSequence).toBe(7)
+    expect(migrated.rng.simulation).toBe(54321)
+    expect(migrated.player.coins).toBe(42)
+    expect(migrated.player.inventory).toEqual(source.player.inventory)
+    expect(migrated.player.equipment).toEqual(source.player.equipment)
+    expect(migrated.resources[0]).toEqual(source.resources[0])
+    expect(migrated.stores[0].listings[0].stock).toBe(1)
     expect(migrated.builtRouteIds).toEqual([])
     expect(migrated.unlockedRecipeIds).toEqual(['greenway_ladder'])
     expect(migrated.discoveredTileIds.length).toBeGreaterThan(0)

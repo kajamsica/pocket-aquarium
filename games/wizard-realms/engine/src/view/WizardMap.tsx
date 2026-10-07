@@ -12,8 +12,8 @@ export const mapDialogTabTarget = (open: boolean, code: string, _shiftKey: boole
 
 function Tile({ tile, player }: { tile: WizardMapTile; player: WizardViewProjection['map']['player'] }) {
   const occupied = tile.gridX === player.gridX && tile.gridZ === player.gridZ
-  const marker = occupied ? '▲' : tile.hasRouteSite ? '◇' : tile.hasStore ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : tile.discovered ? '' : '?'
-  return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${tile.hasRouteSite ? ', route build site' : ''}`}>
+  const marker = occupied ? '▲' : tile.hasBuiltRoute ? '✓' : tile.hasRouteSite ? '◇' : tile.hasStore ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : tile.discovered ? '' : '?'
+  return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${tile.hasRouteSite ? ', route build site' : ''}${tile.hasBuiltRoute ? ', completed route' : ''}`}>
     <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : undefined}>{marker}</b>
   </span>
 }
@@ -53,7 +53,7 @@ export function WizardMap({ projection, open, onToggle, buttonRef, closeRef }: {
       <header><div><small>NORTH-UP EXPLORATION MAP</small><h2 id="wizard-world-map-title">Greenway atlas</h2></div><button ref={closeRef} onClick={onToggle} aria-label="Close map">×</button></header>
       <MapGrid projection={projection} />
       <RouteKey routes={projection.routes} />
-      <p>▲ you · ◇ route build site · S store · R fairy ring · • resource · ? unexplored</p>
+      <p>▲ you · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored</p>
     </section></div>}
   </>
 }

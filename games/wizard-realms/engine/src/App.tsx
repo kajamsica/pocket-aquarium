@@ -18,12 +18,15 @@ import {
 } from './view'
 import type { EquipmentSlot } from './view/contracts'
 import { areaAt } from './domain/generation'
+import { isRestorableWizardSave } from './domain/persistence'
 import { storeSellUnitPrice } from './domain/world'
 
 const WORLD_SEED = 'greenway-alpha'
-const SAVE_KEY = 'wizard-realms:world:v2'
+const SAVE_KEY = 'wizard-realms:world:v3'
+const PREVIOUS_SAVE_KEY = 'wizard-realms:world:v2'
 const LEGACY_SAVE_KEY = 'wizard-realms:world:v1'
-const EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v1'
+const EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v2'
+const PREVIOUS_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v1'
 const CLASSIC_PROFILE = 'greenway-classic-v1'
 const EXPANDED_PROFILE = 'greenway-expanded-v1'
 const FIXED_STEP_MS = 50
@@ -72,20 +75,13 @@ export function worldProfileForSearch(search: string): WorldProfile {
 }
 
 function isLoadableSave(saved: string, profile: WorldProfile): boolean {
-  try {
-    const value = JSON.parse(saved) as { schemaVersion?: unknown; seed?: unknown; generationProfile?: unknown }
-    if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.seed !== 'string' || !value.seed) return false
-    // Saves written before profiles existed belong to the classic world.
-    const savedProfile = value.generationProfile === undefined ? CLASSIC_PROFILE : value.generationProfile
-    return savedProfile === profile && (value.schemaVersion === 'wizard-world/v2'
-      || value.schemaVersion === 'wizard-world/v1' && profile === CLASSIC_PROFILE)
-  } catch {
-    return false
-  }
+  return isRestorableWizardSave(saved, profile)
 }
 
 function activeSave(storage: Pick<Storage, 'getItem'>, profile: WorldProfile): string | null {
-  return profile === EXPANDED_PROFILE ? storage.getItem(EXPANDED_SAVE_KEY) : storage.getItem(SAVE_KEY) ?? storage.getItem(LEGACY_SAVE_KEY)
+  return profile === EXPANDED_PROFILE
+    ? storage.getItem(EXPANDED_SAVE_KEY) ?? storage.getItem(PREVIOUS_EXPANDED_SAVE_KEY)
+    : storage.getItem(SAVE_KEY) ?? storage.getItem(PREVIOUS_SAVE_KEY) ?? storage.getItem(LEGACY_SAVE_KEY)
 }
 
 function hasIncompatibleSave(storage: Pick<Storage, 'getItem'>, profile: WorldProfile): boolean {
@@ -108,7 +104,6 @@ export function persistWorld(storage: Pick<Storage, 'getItem' | 'setItem'>, stat
 export function resetSavedWorld(storage: Pick<Storage, 'setItem' | 'removeItem'>, seed = WORLD_SEED, createWorld: typeof createWizardWorld = createWizardWorld, profile: WorldProfile = CLASSIC_PROFILE): WizardWorldState {
   const fresh = createWorld(seed, profile)
   storage.setItem(profile === EXPANDED_PROFILE ? EXPANDED_SAVE_KEY : SAVE_KEY, serializeWizardWorld(fresh))
-  if (profile === CLASSIC_PROFILE) storage.removeItem(LEGACY_SAVE_KEY)
   return fresh
 }
 
@@ -213,6 +208,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   const ringTileIds = new Set(state.fairyRings.filter((ring) => areaDiscovered(ring.position)).map((ring) => tileIdAt(ring.position)))
   const unlockedRouteIds = new Set(state.recipes.filter((recipe) => state.unlockedRecipeIds.includes(recipe.id)).map((recipe) => recipe.routeId))
   const routeSiteTileIds = new Set(state.routes.filter((route) => unlockedRouteIds.has(route.id) && !state.builtRouteIds.includes(route.id)).map((route) => tileIdAt(route.from)))
+  const builtRouteTileIds = new Set(state.routes.filter((route) => state.builtRouteIds.includes(route.id)).map((route) => tileIdAt(route.from)))
   const activeStoreId = retainOpenStoreId(state, openStoreId)
   const interaction = activeStoreId
     ? { kind: 'store' as const, target: state.stores.find((store) => store.id === activeStoreId)! }
@@ -252,6 +248,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
           hasStore: discovered && storeTileIds.has(tile.id),
           hasRing: discovered && ringTileIds.has(tile.id),
           hasRouteSite: discovered && routeSiteTileIds.has(tile.id),
+          hasBuiltRoute: discovered && builtRouteTileIds.has(tile.id),
         }
       }),
       player: { gridX: currentTile.gridX, gridZ: currentTile.gridZ, yaw: state.player.yaw },

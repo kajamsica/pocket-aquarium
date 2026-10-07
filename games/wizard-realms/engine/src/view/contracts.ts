@@ -95,6 +95,7 @@ export interface WizardMapTile {
   hasStore: boolean
   hasRing: boolean
   hasRouteSite: boolean
+  hasBuiltRoute: boolean
 }
 
 export interface WizardViewProjection {
