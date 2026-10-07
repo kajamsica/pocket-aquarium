@@ -95,7 +95,7 @@ If any answer is missing, the team SHOULD resolve it before broad asset or featu
 
 ## Pocket Aquarium evidence boundary
 
-**Observed in Pocket Aquarium:** At evidence revision `a2f65b788faa89dce59fb0bf826547f96648da83`, [`js/sim.js`](../../js/sim.js) owns deterministic ecosystem state, [`realistic_light_transport/src/App.tsx`](../../realistic_light_transport/src/App.tsx) owns production scheduling and persistence, and [`pocketAquariumBridge.ts`](../../realistic_light_transport/src/integration/pocketAquariumBridge.ts) projects that state into the React and Three.js player surface.
+**Observed in Pocket Aquarium:** At evidence revision `a2f65b788faa89dce59fb0bf826547f96648da83`, [`js/sim.js`](../../js/sim.js) owns deterministic ecosystem state, [`games/pocket-aquarium/engine/src/App.tsx`](../../games/pocket-aquarium/engine/src/App.tsx) owns production scheduling and persistence, and [`pocketAquariumBridge.ts`](../../games/pocket-aquarium/engine/src/integration/pocketAquariumBridge.ts) projects that state into the React and Three.js player surface.
 
 **Observed gap:** Consequential spatial causes such as locomotion and several contacts still cross a frame-driven renderer boundary. The active workbench proves inspection, not catalog-wide semantic editing or generic atomic promotion. The Android evidence at revision `dd987d3169e0f0b33012c74f12858f86c3a3736b` proves a debug APK path, not a signed Play Store release.
 

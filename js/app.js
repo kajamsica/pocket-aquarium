@@ -113,7 +113,7 @@
   var DOM_INTERVAL = 170; // ~6 Hz DOM cadence (not per Canvas frame)
 
   /* ============================ persistence ============================ */
-  /* One save key, two routes: this page and the 3D view (realistic_light_transport/src/App.tsx)
+  /* One save key, two routes: this page and the 3D view (games/pocket-aquarium/engine/src/App.tsx)
      both write DATA.saveKey, so both obey one ordering. Every write stamps a monotonic saveSeq
      one above whatever is stored, and a writer that finds a higher saveSeq is holding stale state,
      so it adopts the stored aquarium instead of overwriting it. Every writer yields that way,
@@ -133,7 +133,7 @@
     var seq = parsed ? parsed.saveSeq : null;
     return { raw: raw, parsed: parsed, seq: (typeof seq === "number" && isFinite(seq)) ? seq : null };
   }
-  // Mirror of savedRecordSupersedes() in realistic_light_transport/src/integration/pocketAquariumBridge.ts.
+  // Mirror of savedRecordSupersedes() in games/pocket-aquarium/engine/src/integration/pocketAquariumBridge.ts.
   function supersedes(record) {
     return record.seq === null ? (seenSeq === 0 && record.raw !== seenRaw) : record.seq > seenSeq;
   }

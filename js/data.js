@@ -65,7 +65,7 @@
     OLDFIELD_MURPHY_2024: "https://pubmed.ncbi.nlm.nih.gov/38487786/",
     MCKNIGHT_2025: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12704419/",
     TROPICA_PLANTS: "https://tropica.com/en/plants",
-    FRESHWATER_PACKET: "realistic_light_transport/work/freshwater_ecology_packet.md"
+    FRESHWATER_PACKET: "games/pocket-aquarium/engine/work/freshwater_ecology_packet.md"
   };
 
   /* ------------------------------------------------------------------ *

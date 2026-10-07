@@ -1,7 +1,7 @@
 # Visual iteration loop
 
 One observation, one owner, one rebuild, same view. Paths are relative to
-`realistic_light_transport/`.
+`games/pocket-aquarium/engine/`.
 
 ## 1. Capture the failing view exactly
 

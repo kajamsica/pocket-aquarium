@@ -4,9 +4,17 @@ A tank-first aquarium game built with React Three Fiber and the deterministic Po
 simulation. Establish and cycle a reef, manage real chemistry and equipment, stock compatible
 animals, and feed fish through physical food/contact rather than a feed-button shortcut.
 
+## Game workspace
+
+The repository now hosts independent games under [`games/`](games/README.md). Pocket Aquarium
+remains the shipping Pages and native product at [`games/pocket-aquarium/`](games/pocket-aquarium/README.md).
+The new [`Wizard Realms`](games/wizard-realms/README.md) package is a playable first-person systems
+vertical slice built on the same deterministic simulation and validation principles, without
+introducing a premature shared runtime.
+
 - **Canonical source folder:** `/Users/jamessicard/Documents/RESEARCH/Games/PocketAquarium`
 - **Ecology model & research anchors:** [`docs/ECOLOGY_MODEL.md`](docs/ECOLOGY_MODEL.md)
-- **Player source:** [`realistic_light_transport/`](realistic_light_transport/)
+- **Player source:** [`games/pocket-aquarium/engine/`](games/pocket-aquarium/engine/)
 - **Deterministic tests:** root simulation/PWA/native contracts plus the 3D app's Vitest suite
 - **Installable:** iPhone-ready Progressive Web App with an offline shell — see [Install on iPhone](#install-on-iphone-and-other-devices)
 - **Android build:** GitHub Actions produces an installable debug APK for direct device testing;
@@ -22,7 +30,7 @@ single input to both GitHub Pages and the Capacitor iOS host.
 ### From a local server (recommended)
 
 ```sh
-cd realistic_light_transport
+cd games/pocket-aquarium/engine
 npm ci
 npm run dev
 ```
@@ -34,7 +42,7 @@ cd /Users/jamessicard/Documents/RESEARCH/Games/PocketAquarium
 node tests/sim.test.js
 node tests/pwa.test.js
 node tests/native.test.js
-cd realistic_light_transport && npm test && npm run build
+cd games/pocket-aquarium/engine && npm test && npm run build
 ```
 
 The root Node harnesses preserve the deterministic model, PWA, and native packaging contracts.
@@ -57,12 +65,12 @@ the iPhone Home Screen and open full-screen with no browser chrome.
 The install surface is emitted with the compiled 3D artifact and is safe under the
 `/pocket-aquarium/` subpath:
 
-- `realistic_light_transport/public/manifest.webmanifest` — `display: standalone`, flexible
+- `games/pocket-aquarium/engine/public/manifest.webmanifest` — `display: standalone`, flexible
   portrait/landscape orientation, theme/background colours, and relative 192/512 icon URLs.
-- `realistic_light_transport/public/assets/icons/` — `icon-192.png`, `icon-512.png`, and
+- `games/pocket-aquarium/engine/public/assets/icons/` — `icon-192.png`, `icon-512.png`, and
   `apple-touch-icon.png` (180 px) copied from derivatives of the preserved validated RGB
   master `app-icon-master-v1.png`.
-- `realistic_light_transport/public/sw.js` plus Vite's `asset-manifest.json` — a versioned
+- `games/pocket-aquarium/engine/public/sw.js` plus Vite's `asset-manifest.json` — a versioned
   service worker that precaches the complete hashed JavaScript/CSS, GLB, specimen texture,
   shell, and icons; prunes older caches; and falls back to cached `index.html` offline.
   `src/main.tsx` registers it only for production HTTP(S), never the Vite dev server or
@@ -87,7 +95,7 @@ This game lives in its own standalone repository, **`kajamsica/pocket-aquarium`*
 free-plan Pages deployment requires a public source. A **write-access invitation** is pending
 for collaborator **Ben Fowlersmith** (`Bioscopics`).
 GitHub Pages (`.github/workflows/pages.yml`) builds and publishes
-`realistic_light_transport/dist` only. Ben's Three.js renderer is no longer an experimental
+`games/pocket-aquarium/engine/dist` only. Ben's Three.js renderer is no longer an experimental
 side lab: it is the product surface where the Pocket Aquarium simulation and gameplay live.
 
 ---

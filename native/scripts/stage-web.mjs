@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Pocket Aquarium — native web staging boundary.
  *
- * Pages and Capacitor both ship the compiled `realistic_light_transport/dist` tree. Vite
+ * Pages and Capacitor both ship the compiled `games/pocket-aquarium/engine/dist` tree. Vite
  * owns hashed filenames, so this boundary discovers the complete built artifact rather than
  * maintaining a second hand-written runtime list that can silently keep packaging the old app.
  * The destination is rebuilt from scratch, paths are confined to native/www, symlinks are
@@ -15,7 +15,7 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_SRC = path.resolve(HERE, "..", "..", "realistic_light_transport", "dist");
+const DEFAULT_SRC = path.resolve(HERE, "..", "..", "games/pocket-aquarium/engine", "dist");
 const DEFAULT_DEST = path.resolve(HERE, "..", "www");
 
 export function isSafeRelative(rel) {
@@ -39,7 +39,7 @@ function removeWithin(root, target) {
 export function manifestFor(srcRoot) {
   const root = path.resolve(srcRoot);
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
-    throw new Error("missing built 3D runtime: " + root + " (run the realistic_light_transport build first)");
+    throw new Error("missing built 3D runtime: " + root + " (run the games/pocket-aquarium/engine build first)");
   }
   const files = [];
   function walk(directory, base) {

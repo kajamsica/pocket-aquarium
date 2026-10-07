@@ -16,14 +16,25 @@ Each game owns its engine. The games share architecture laws and production meth
 
 ## Quick start
 
-The integration lane will replace this placeholder with the exact install, development, test, and production commands after the Wizard Realms engine and workspace manifests land. Until then, do not infer a runnable command from this design-only package.
+```sh
+cd games/wizard-realms/engine
+npm ci
+npm run dev
+```
 
-Expected entrypoints after integration:
+Open the local URL printed by Vite, then choose **Enter the realm**. The current vertical slice uses
+the deterministic seed `greenway-alpha`, saves committed state in local browser storage, and includes
+first-person movement, harvesting, stores, equipment, four trade-listing slots, and fairy-ring travel.
 
-1. Install workspace dependencies from the repository root.
-2. Start the Wizard Realms development client.
-3. Select a deterministic development seed.
-4. Enter the first-session vertical slice.
+Run deterministic tests and make a production build with:
+
+```sh
+npm test -- --run
+npm run build
+```
+
+This is an honest systems vertical slice. Combat, spells, quests, NPC AI, construction, and multiplayer
+are deliberately outside this build.
 
 ## Design documents
 

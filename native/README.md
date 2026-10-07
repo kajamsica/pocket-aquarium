@@ -2,7 +2,7 @@
 
 An **isolated** Capacitor 8.5.1 shell that packages the accepted React/Three.js Pocket
 Aquarium build as native iOS and Android apps. GitHub Pages and both native hosts consume the same
-`realistic_light_transport/dist` artifact, so the browser and native hosts cannot drift.
+`games/pocket-aquarium/engine/dist` artifact, so the browser and native hosts cannot drift.
 
 The merged native workflow compiles an unsigned iOS Simulator app and an installable Android
 debug APK. Signed iPhone distribution is the next environment-gated step.
@@ -40,7 +40,7 @@ npm run open:android       # open the Android project in Android Studio
 ```
 
 `npm run stage` is intentionally build-free: it copies every file in an existing
-`realistic_light_transport/dist` tree into `www` and prints a checksum receipt. It
+`games/pocket-aquarium/engine/dist` tree into `www` and prints a checksum receipt. It
 requires Vite's hashed JavaScript and CSS entries, rejects symlinks and unsafe paths,
 and never copies source, docs, tests, or repository metadata. Use `sync:fresh` from a
 clean checkout; use `stage` only when the 3D build already exists.

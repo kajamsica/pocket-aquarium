@@ -65,7 +65,7 @@ Enterprise Cloud). That is why this repository is public rather than private.
 
 - Live site: `https://kajamsica.github.io/pocket-aquarium/`
 - Build type: **GitHub Actions custom workflow** — `.github/workflows/pages.yml`
-- The workflow builds `realistic_light_transport/` and publishes its compiled **`dist/`
+- The workflow builds `games/pocket-aquarium/engine/` and publishes its compiled **`dist/`
   artifact only**. Source, docs, tests, labs, and checkpoints are never published.
 
 Primary sources: GitHub — *Using custom workflows with GitHub Pages*
@@ -116,7 +116,7 @@ Native iOS and Android apps wrap the same compiled web app with **Capacitor 8**.
 **checked-in, isolated** package at [`native/`](../native/): pinned Capacitor 8.5.1 dependencies,
 a deterministic staging boundary, an Xcode project using Swift Package Manager, and an Android
 Gradle project. This changes nothing about the web runtime or Pages deployment. All hosts consume
-`realistic_light_transport/dist`.
+`games/pocket-aquarium/engine/dist`.
 
 ### What is committed vs. regenerated
 
@@ -145,7 +145,7 @@ Android build output, `DerivedData/`, `xcuserdata/`, and any signing material.
 It requires `index.html` plus hashed JavaScript and CSS entrypoints, recursively includes runtime
 assets such as GLB models, rejects symlinks and unsafe paths, removes stale destination bytes
 safely, and prints a deterministic per-file checksum receipt. `tests/native.test.js` proves the
-staged tree is byte-identical to `realistic_light_transport/dist` and contains nothing extra.
+staged tree is byte-identical to `games/pocket-aquarium/engine/dist` and contains nothing extra.
 
 ### Reproduce the host from a clean checkout
 

@@ -7,7 +7,7 @@ global.window = global;
 require("../js/data.js");
 
 var D = global.PA.DATA;
-var accepted = require("../realistic_light_transport/src/assets/specimens/runtime-acceptance.v1.json").assets;
+var accepted = require("../games/pocket-aquarium/engine/src/assets/specimens/runtime-acceptance.v1.json").assets;
 var acceptedAnimals = accepted.filter(function (entry) { return entry.category !== "coral"; });
 var acceptedCorals = accepted.filter(function (entry) { return entry.category === "coral"; });
 var marineIds = Object.keys(D.SPECIES).filter(function (id) { return D.SPECIES[id].habitat === "reef"; }).sort();
@@ -19,7 +19,7 @@ assert.ok(D.SPECIES.neon_tetra && D.SPECIES.pygmy_cory, "freshwater catalog rema
 assert.equal(D.ACTIONS.LOCK_CORAL_PLACEMENT, "LOCK_CORAL_PLACEMENT");
 
 acceptedAnimals.forEach(function (entry) {
-  var source = require(path.join("..", "realistic_light_transport", "art", "specimens", entry.speciesId, "asset.source.json"));
+  var source = require(path.join("..", "games/pocket-aquarium/engine", "art", "specimens", entry.speciesId, "asset.source.json"));
   var profile = D.SPECIES[entry.speciesId];
   assert.equal(profile.name, source.displayName, entry.speciesId + " display name");
   assert.equal(profile.sci, source.scientificLabel, entry.speciesId + " scientific label");
@@ -46,7 +46,7 @@ assert.deepEqual(coralIds, acceptedCoralIds);
 var actualVariants = [];
 coralIds.forEach(function (id) {
   var coral = D.CORALS[id];
-  var source = require(path.join("..", "realistic_light_transport", "art", "specimens", id, "asset.source.json"));
+  var source = require(path.join("..", "games/pocket-aquarium/engine", "art", "specimens", id, "asset.source.json"));
   assert.equal(coral.name, source.displayName, id + " display name");
   assert.equal(coral.sci, source.scientificLabel, id + " scientific label");
   assert.equal(coral.referenceSizeCm, source.referenceSize.meters * 100, id + " accepted size");

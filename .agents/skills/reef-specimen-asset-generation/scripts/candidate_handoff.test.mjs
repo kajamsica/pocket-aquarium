@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT = path.join(here, "candidate_handoff.mjs");
-const REAL_RLT = path.resolve(here, "..", "..", "..", "..", "realistic_light_transport");
+const REAL_RLT = path.resolve(here, "..", "..", "..", "..", "games/pocket-aquarium/engine");
 const ASSET = "ocellaris";
 const CANDIDATE = "fable-v2";
 // Formally excluded package with no acceptance entry under its own name (see user-acceptance.v1.json#excluded).
@@ -115,7 +115,7 @@ const reset = () => { git("checkout", "-q", "--", "."); git("clean", "-qfd"); };
 
 before(() => {
   work = fs.mkdtempSync(path.join(os.tmpdir(), "handoff-fixture-"));
-  rlt = path.join(work, "realistic_light_transport");
+  rlt = path.join(work, "games/pocket-aquarium/engine");
   cdir = inRlt("art", "specimens", ASSET, "candidates", CANDIDATE);
   for (const relative of [
     `art/specimens/${ASSET}/asset.source.json`, `art/specimens/${ASSET}/source-references.json`, `art/specimens/${ASSET}/specimen.package.json`,
@@ -350,9 +350,9 @@ test("fixture: every protected path fails when dirty, including renames and untr
   }
   const untracked = mutated(() => write(inRlt("src", "assets", "specimens", "newfish", "v1", "lod1.glb"), "x"));
   assert.ok(has(untracked, "FAIL:boundary"), untracked.codes.join(" "));
-  const renamedOut = mutated(() => git("mv", "realistic_light_transport/src/scene/SpecimenFish.test.ts", "realistic_light_transport/src/scene/Moved.test.ts"));
+  const renamedOut = mutated(() => git("mv", "games/pocket-aquarium/engine/src/scene/SpecimenFish.test.ts", "games/pocket-aquarium/engine/src/scene/Moved.test.ts"));
   assert.ok(has(renamedOut, "FAIL:boundary"), renamedOut.codes.join(" "));
-  const renamedIn = mutated(() => git("mv", "-f", "realistic_light_transport/scripts/specimens/catalog/species/ocellaris.py", "realistic_light_transport/scripts/specimens/promote_specimen.mjs"));
+  const renamedIn = mutated(() => git("mv", "-f", "games/pocket-aquarium/engine/scripts/specimens/catalog/species/ocellaris.py", "games/pocket-aquarium/engine/scripts/specimens/promote_specimen.mjs"));
   assert.ok(has(renamedIn, "FAIL:boundary"), renamedIn.codes.join(" "));
   const committed = (() => {
     try {
@@ -384,8 +384,8 @@ test("fixture: in-scope species, allowed paths and shared-library edits do not f
 test("fixture: a root outside any git worktree fails the boundary audit", () => {
   const plain = fs.mkdtempSync(path.join(os.tmpdir(), "handoff-plain-"));
   try {
-    fs.cpSync(rlt, path.join(plain, "realistic_light_transport"), { recursive: true });
-    const result = forCandidate([], path.join(plain, "realistic_light_transport"));
+    fs.cpSync(rlt, path.join(plain, "games/pocket-aquarium/engine"), { recursive: true });
+    const result = forCandidate([], path.join(plain, "games/pocket-aquarium/engine"));
     assert.equal(result.code, 1);
     assert.ok(has(result, "FAIL:boundary_audit"), result.codes.join(" "));
     assert.match(result.stdout, /boundary audit FAILED/);

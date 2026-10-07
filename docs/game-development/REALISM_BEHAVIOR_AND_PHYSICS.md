@@ -1216,17 +1216,17 @@ The universal method above is the normative guidance. The following observations
 
 ### 15.1 Authority and clocks
 
-**Observed:** [`js/sim.js`](../../js/sim.js) is the effective domain authority for water chemistry, cycling, ecology, welfare, equipment, economy, food inventory, breeding, coral state, and progression. It stores RNG state and advances through fixed game-day substeps. [`realistic_light_transport/src/App.tsx`](../../realistic_light_transport/src/App.tsx) owns production scheduling and persistence, while [`pocketAquariumBridge.ts`](../../realistic_light_transport/src/integration/pocketAquariumBridge.ts) projects the root state into the 3D application and translates actions back.
+**Observed:** [`js/sim.js`](../../js/sim.js) is the effective domain authority for water chemistry, cycling, ecology, welfare, equipment, economy, food inventory, breeding, coral state, and progression. It stores RNG state and advances through fixed game-day substeps. [`games/pocket-aquarium/engine/src/App.tsx`](../../games/pocket-aquarium/engine/src/App.tsx) owns production scheduling and persistence, while [`pocketAquariumBridge.ts`](../../games/pocket-aquarium/engine/src/integration/pocketAquariumBridge.ts) projects the root state into the 3D application and translates actions back.
 
-**Observed gap:** resident pose, velocity, route progress, collision correction, and several consequential contacts remain frame-driven in [`SpecimenFish.tsx`](../../realistic_light_transport/src/scene/SpecimenFish.tsx). Renderer-observed food, nori, and cleaner contact can trigger root actions. The deterministic ecosystem and the visible spatial cause therefore do not yet share one causal clock.
+**Observed gap:** resident pose, velocity, route progress, collision correction, and several consequential contacts remain frame-driven in [`SpecimenFish.tsx`](../../games/pocket-aquarium/engine/src/scene/SpecimenFish.tsx). Renderer-observed food, nori, and cleaner contact can trigger root actions. The deterministic ecosystem and the visible spatial cause therefore do not yet share one causal clock.
 
-**Recommended:** preserve the mature root ecosystem model and migrate consequential spatial continuation into the authoritative state. Do not describe [`reefSimulation.ts`](../../realistic_light_transport/src/sim/reefSimulation.ts) or [`pocketGameController.ts`](../../realistic_light_transport/src/integration/pocketGameController.ts) as production authorities unless production imports change and new revision-bound evidence proves that status.
+**Recommended:** preserve the mature root ecosystem model and migrate consequential spatial continuation into the authoritative state. Do not describe [`reefSimulation.ts`](../../games/pocket-aquarium/engine/src/sim/reefSimulation.ts) or [`pocketGameController.ts`](../../games/pocket-aquarium/engine/src/integration/pocketGameController.ts) as production authorities unless production imports change and new revision-bound evidence proves that status.
 
 ### 15.2 Motion recoveries
 
 **Observed failure:** generic circular routes, hard positional repulsion, vertical avoidance, and intended-heading presentation produced recognizable failure families: synchronized motion, bouncing, sideways translation, corner loops, clipping, implausible hopping, and animals using the wrong locomotion class.
 
-**Observed recovery:** the project added seeded route diversity, bounded frame travel, realized-velocity prediction, stable passing sides, species behavior profiles, anisotropic body sampling, exact rendered-rock collision fields, support-specific locomotion, and pose and clip speed derived from actual displacement. The relevant current anchors include [`speciesBehavior.ts`](../../realistic_light_transport/src/scene/speciesBehavior.ts), [`surfaceLocomotion.ts`](../../realistic_light_transport/src/scene/surfaceLocomotion.ts), [`speciesInteractions.ts`](../../realistic_light_transport/src/scene/speciesInteractions.ts), and [`SpecimenFish.test.ts`](../../realistic_light_transport/src/scene/SpecimenFish.test.ts).
+**Observed recovery:** the project added seeded route diversity, bounded frame travel, realized-velocity prediction, stable passing sides, species behavior profiles, anisotropic body sampling, exact rendered-rock collision fields, support-specific locomotion, and pose and clip speed derived from actual displacement. The relevant current anchors include [`speciesBehavior.ts`](../../games/pocket-aquarium/engine/src/scene/speciesBehavior.ts), [`surfaceLocomotion.ts`](../../games/pocket-aquarium/engine/src/scene/surfaceLocomotion.ts), [`speciesInteractions.ts`](../../games/pocket-aquarium/engine/src/scene/speciesInteractions.ts), and [`SpecimenFish.test.ts`](../../games/pocket-aquarium/engine/src/scene/SpecimenFish.test.ts).
 
 **Recommended:** retain those behavior-family and geometry lessons while moving their causal state into a deterministic fixed-step solver. Pure helper tests are useful, but they do not prove the full live integrator.
 
@@ -1243,7 +1243,7 @@ The universal method above is the normative guidance. The following observations
 - sea-star support sampling follows rock and rock-to-sand contours;
 - tangs receive a strong nori-grazing target while the root owns resource capacity and bite validation.
 
-**Observed:** these behaviors are represented in [`speciesInteractions.ts`](../../realistic_light_transport/src/scene/speciesInteractions.ts), [`surfaceLocomotion.ts`](../../realistic_light_transport/src/scene/surfaceLocomotion.ts), and root ecology in [`js/sim.js`](../../js/sim.js). The exact asset and support presentation is owned outside the domain model.
+**Observed:** these behaviors are represented in [`speciesInteractions.ts`](../../games/pocket-aquarium/engine/src/scene/speciesInteractions.ts), [`surfaceLocomotion.ts`](../../games/pocket-aquarium/engine/src/scene/surfaceLocomotion.ts), and root ecology in [`js/sim.js`](../../js/sim.js). The exact asset and support presentation is owned outside the domain model.
 
 **Recommended:** use the same state-machine pattern for feeding, cleaning, pairing, grazing, predation, territory, treatment, and breeding. Consequential contact should be resolved by the deterministic spatial service and committed exactly once by the domain reducer.
 
@@ -1251,13 +1251,13 @@ The universal method above is the normative guidance. The following observations
 
 **Observed:** the root ecology models equipment and husbandry as causes, including environmental fluxes, cycling, succession, cleanup capacity, rock maturation, sand detritus, food decomposition, welfare, disease stress, breeding, and coral growth. [`tests/sim.test.js`](../../tests/sim.test.js) provides deterministic coverage for these interactions.
 
-**Observed:** [`flowField.ts`](../../realistic_light_transport/src/sim/flowField.ts) is deliberately a bounded reduced-order flow model. Display flow and the canonical biological scalar are related but not identical.
+**Observed:** [`flowField.ts`](../../games/pocket-aquarium/engine/src/sim/flowField.ts) is deliberately a bounded reduced-order flow model. Display flow and the canonical biological scalar are related but not identical.
 
 **Recommended:** keep reduced-order models when they preserve the intended causal distinction, but declare which representation is authoritative for each consumer. A particle field may be display-only. A food-contact or biological-exposure sampler must be deterministic if it changes gameplay.
 
 ### 15.5 Persistence and proof
 
-**Observed recovery:** monotonic save sequencing, action-time persistence, peer adoption, sanitation, and capped offline catch-up reduced cross-view rollback and absence-related failures in [`App.tsx`](../../realistic_light_transport/src/App.tsx).
+**Observed recovery:** monotonic save sequencing, action-time persistence, peer adoption, sanitation, and capped offline catch-up reduced cross-view rollback and absence-related failures in [`App.tsx`](../../games/pocket-aquarium/engine/src/App.tsx).
 
 **Observed gap:** render-owned spatial continuation is not fully persisted, so reload or remount can reconstruct movement separately from domain history.
 
@@ -1337,10 +1337,10 @@ A behavior and physics backbone is ready for broader content only when all of th
 ## Repository Evidence Anchors
 
 - Root deterministic ecology: [`js/sim.js`](../../js/sim.js), [`tests/sim.test.js`](../../tests/sim.test.js), and [`docs/ECOLOGY_MODEL.md`](../ECOLOGY_MODEL.md)
-- Production state and projection: [`realistic_light_transport/src/App.tsx`](../../realistic_light_transport/src/App.tsx) and [`pocketAquariumBridge.ts`](../../realistic_light_transport/src/integration/pocketAquariumBridge.ts)
-- Resident behavior and collision: [`SpecimenFish.tsx`](../../realistic_light_transport/src/scene/SpecimenFish.tsx) and [`SpecimenFish.test.ts`](../../realistic_light_transport/src/scene/SpecimenFish.test.ts)
-- Species policies and special interactions: [`speciesBehavior.ts`](../../realistic_light_transport/src/scene/speciesBehavior.ts), [`speciesBehavior.test.ts`](../../realistic_light_transport/src/scene/speciesBehavior.test.ts), and [`speciesInteractions.ts`](../../realistic_light_transport/src/scene/speciesInteractions.ts)
-- Surface support: [`surfaceLocomotion.ts`](../../realistic_light_transport/src/scene/surfaceLocomotion.ts) and [`surfaceLocomotion.test.ts`](../../realistic_light_transport/src/scene/surfaceLocomotion.test.ts)
-- Reduced-order flow: [`flowField.ts`](../../realistic_light_transport/src/sim/flowField.ts) and [`flowField.test.ts`](../../realistic_light_transport/src/sim/flowField.test.ts)
+- Production state and projection: [`games/pocket-aquarium/engine/src/App.tsx`](../../games/pocket-aquarium/engine/src/App.tsx) and [`pocketAquariumBridge.ts`](../../games/pocket-aquarium/engine/src/integration/pocketAquariumBridge.ts)
+- Resident behavior and collision: [`SpecimenFish.tsx`](../../games/pocket-aquarium/engine/src/scene/SpecimenFish.tsx) and [`SpecimenFish.test.ts`](../../games/pocket-aquarium/engine/src/scene/SpecimenFish.test.ts)
+- Species policies and special interactions: [`speciesBehavior.ts`](../../games/pocket-aquarium/engine/src/scene/speciesBehavior.ts), [`speciesBehavior.test.ts`](../../games/pocket-aquarium/engine/src/scene/speciesBehavior.test.ts), and [`speciesInteractions.ts`](../../games/pocket-aquarium/engine/src/scene/speciesInteractions.ts)
+- Surface support: [`surfaceLocomotion.ts`](../../games/pocket-aquarium/engine/src/scene/surfaceLocomotion.ts) and [`surfaceLocomotion.test.ts`](../../games/pocket-aquarium/engine/src/scene/surfaceLocomotion.test.ts)
+- Reduced-order flow: [`flowField.ts`](../../games/pocket-aquarium/engine/src/sim/flowField.ts) and [`flowField.test.ts`](../../games/pocket-aquarium/engine/src/sim/flowField.test.ts)
 - Current architecture intent: [`docs/THREE_D_MAIN_GAME_TICKET_PACK.md`](../THREE_D_MAIN_GAME_TICKET_PACK.md)
-- Integration disposition practice: [`realistic_light_transport/work/pr7-convergence-ledger.md`](../../realistic_light_transport/work/pr7-convergence-ledger.md)
+- Integration disposition practice: [`games/pocket-aquarium/engine/work/pr7-convergence-ledger.md`](../../games/pocket-aquarium/engine/work/pr7-convergence-ledger.md)
