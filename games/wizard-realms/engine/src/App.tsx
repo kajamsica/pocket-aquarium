@@ -87,7 +87,7 @@ export function objectiveFor(state: WizardWorldState): string {
   const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
   const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
   if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
-    ? 'Back in Greenway. Explore, trade, or travel to Highland again.'
+    ? 'Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.'
     : 'Both fairy rings are linked. Use the Highland Ring to travel home.'
   if (highlandRing) return 'Return to the Greenway and discover its fairy ring near the start to link travel home.'
   if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'

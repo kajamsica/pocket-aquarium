@@ -224,13 +224,13 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
-    expect(objectiveFor(state)).toBe('Back in Greenway. Explore, trade, or travel to Highland again.')
+    expect(objectiveFor(state)).toBe('Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.')
     state.player.position = { ...state.fairyRings.find((ring) => ring.id === 'ring-highland')!.position }
     expect(objectiveFor(state)).toBe('Both fairy rings are linked. Use the Highland Ring to travel home.')
   })
 
   it('only announces linked travel once both fairy rings are discovered', () => {
-    const linked = 'Back in Greenway. Explore, trade, or travel to Highland again.'
+    const linked = 'Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.'
     const state = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
 
