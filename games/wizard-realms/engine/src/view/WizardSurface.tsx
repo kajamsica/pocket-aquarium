@@ -36,16 +36,16 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
   const mapButtonRef = useRef<HTMLButtonElement>(null)
   const mapCloseRef = useRef<HTMLButtonElement>(null)
 
-  const toggleMap = () => setMapOpen((current) => {
-    const next = !current
+  const toggleMap = () => {
+    const next = !mapOpen
     if (next) {
       pressedKeys.current.clear()
       onIntent({ type: 'movement', vector: [0, 0] })
       setDragging(false)
       window.requestAnimationFrame(() => mapCloseRef.current?.focus())
     } else window.requestAnimationFrame(() => mapButtonRef.current?.focus())
-    return next
-  })
+    setMapOpen(next)
+  }
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
