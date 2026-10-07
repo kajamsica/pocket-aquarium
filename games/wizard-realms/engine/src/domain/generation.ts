@@ -99,11 +99,11 @@ export function createGeneratedWorld(seed: string): WizardWorldState {
   resources.push(...greenwayTrees)
   const stores: [StoreState, StoreState] = [
     { id: 'store-greenway', name: 'Greenway Outfitters', position: { x: -2, y: terrainHeightAt(tiles, -2, 2), z: 2 }, listings: [{ id: 'hat', itemId: 'apprentice_hat', price: 20, stock: 3 }, { id: 'axe', itemId: 'woodcutters_axe', price: 35, stock: 2 }] },
-    { id: 'store-highland', name: 'Highland Arcanum', position: { x: 8, y: terrainHeightAt(tiles, 8, -8), z: -8 }, listings: [{ id: 'wand', itemId: 'oak_wand', price: 45, stock: 2 }, { id: 'shield', itemId: 'wooden_shield', price: 40, stock: 2 }] },
+    { id: 'store-highland', name: 'Highland Arcanum', position: { x: 8, y: terrainHeightAt(tiles, 8, -6), z: -6 }, listings: [{ id: 'wand', itemId: 'oak_wand', price: 45, stock: 2 }, { id: 'shield', itemId: 'wooden_shield', price: 40, stock: 2 }] },
   ]
   const fairyRings: FairyRing[] = [
     { id: 'ring-greenway', name: 'Greenway Ring', kind: 'mushroom', position: { x: 2, y: terrainHeightAt(tiles, 2, -2), z: -2 } },
-    { id: 'ring-highland', name: 'Highland Ring', kind: 'mushroom', position: { x: 8, y: terrainHeightAt(tiles, 8, -8), z: -8 } },
+    { id: 'ring-highland', name: 'Highland Ring', kind: 'mushroom', position: { x: 8, y: terrainHeightAt(tiles, 8, -10), z: -10 } },
   ]
   const route = (profile: Omit<RouteProfile, 'from' | 'to'>, from: [number, number], to: [number, number]): RouteProfile => ({
     ...profile,
@@ -112,7 +112,7 @@ export function createGeneratedWorld(seed: string): WizardWorldState {
   })
   const routes: RouteProfile[] = [
     route({ id: 'greenway_ladder', name: 'Greenway ladder', fromAreaId: 'greenway', toAreaId: 'northern_ridge' }, [0, -4], [0, -8]),
-    route({ id: 'highland_bridge', name: 'Highland bridge', fromAreaId: 'northern_ridge', toAreaId: 'eastern_highland' }, [4, -8], [8, -8]),
+    route({ id: 'highland_bridge', name: 'Highland bridge', fromAreaId: 'northern_ridge', toAreaId: 'eastern_highland' }, [4, -8], [6, -8]),
   ]
   const areas = AREA_PROFILES.map((area) => ({ ...area }))
   const recipes = RECIPE_PROFILES.map((recipe) => ({ ...recipe }))

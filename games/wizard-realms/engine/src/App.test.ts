@@ -93,4 +93,21 @@ describe('Wizard view adapter', () => {
     expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', action: 'Cross', actionable: true })
     expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'traverse_route', routeId: 'greenway_ladder' })
   })
+
+  it('keeps Highland store access and reverse bridge traversal distinct at generated anchors', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.resources.forEach((resource) => { resource.depleted = true })
+    state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+    const bridge = state.routes.find((route) => route.id === 'highland_bridge')!
+    const store = state.stores.find((candidate) => candidate.id === 'store-highland')!
+    const ring = state.fairyRings.find((candidate) => candidate.id === 'ring-highland')!
+    expect(new Set([[bridge.to.x, bridge.to.z], [store.position.x, store.position.z], [ring.position.x, ring.position.z]].map(String)).size).toBe(3)
+
+    state.player.position = { ...store.position }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'store', targetId: store.id, action: 'Store open' })
+
+    state.player.position = { ...bridge.to }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', targetId: bridge.id, action: 'Cross', actionable: true })
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'traverse_route', routeId: bridge.id })
+  })
 })
