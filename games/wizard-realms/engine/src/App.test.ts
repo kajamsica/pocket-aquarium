@@ -209,7 +209,7 @@ describe('Wizard view adapter', () => {
   })
 
   it('reflows the objective pill above the mobile touch controls instead of a nowrap overlay', () => {
-    const mobile = /@media\(max-width:719px\)\{(.*?)\}\n@media/s.exec(OBJECTIVE_STYLES)?.[1]
+    const mobile = /@media\(max-width:719px\)[^{]*\{(.*?)\}\n@media/s.exec(OBJECTIVE_STYLES)?.[1]
     expect(mobile).toBeDefined()
     const pill = /\.wr-objective\{([^}]*)\}/.exec(mobile!)?.[1] ?? ''
     const button = /\.wr-objective button\{([^}]*)\}/.exec(mobile!)?.[1] ?? ''
@@ -224,8 +224,8 @@ describe('Wizard view adapter', () => {
     expect(button).toContain('min-height:44px')
   })
 
-  it('keeps mobile prompt, context, and event surfaces out of the objective band', () => {
-    const mobile = /@media\(max-width:719px\)\{(.*?)\}\n@media/s.exec(OBJECTIVE_STYLES)![1]
+  it('keeps mobile prompt and context surfaces out of the objective band', () => {
+    const mobile = /@media\(max-width:719px\)[^{]*\{(.*?)\}\n@media/s.exec(OBJECTIVE_STYLES)![1]
     const rules = [...mobile.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(([, selectors, body]) => ({ selectors: selectors.split(',').map((selector) => selector.trim()), body }))
     const declaration = (selector: string, property: string) => rules
       .filter((rule) => rule.selectors.includes(selector))
@@ -241,7 +241,7 @@ describe('Wizard view adapter', () => {
     expect(declaration('.wr-objective span', 'overflow-y')).toBe('auto')
 
     const objectiveTop = objectiveBottom + objectiveMaxHeight
-    for (const surface of ['.wr-surface .wr-prompt', '.wr-surface .wr-context', '.wr-surface .wr-events']) {
+    for (const surface of ['.wr-surface .wr-prompt', '.wr-surface .wr-context']) {
       const value = declaration(surface, 'bottom')
       expect(value ?? '', `${surface} must be repositioned on mobile`).toContain('env(safe-area-inset-bottom')
       expect(px(value), `${surface} must sit above the objective band (${objectiveTop}px)`).toBeGreaterThanOrEqual(objectiveTop + 8)
@@ -254,7 +254,7 @@ describe('Wizard view adapter', () => {
 
   it('removes the backpack collision while a compact-height context panel is open', () => {
     expect(OBJECTIVE_STYLES).toContain('@media(max-width:719px) and (max-height:590px)')
-    expect(OBJECTIVE_STYLES).toContain('.wr-surface:has(.wr-context) .wr-backpack{display:none}')
+    expect(OBJECTIVE_STYLES).toContain('.wr-surface:has(.wr-context) .wr-backpack,.wr-surface .wr-events{display:none}')
   })
 
   it('restarts by clearing current and legacy saves and recreating the seeded world', () => {
