@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createWizardWorld, type WizardWorldState } from './domain'
-import { controlIntents, intentForView, movementIntent, toViewProjection } from './App'
+import { PIVOT_RADIANS_PER_TICK, controlIntents, intentForView, movementIntent, objectiveFor, resetSavedWorld, toViewProjection } from './App'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
+const withAxeEquipped = (state: WizardWorldState) => { state.player.equipment.mainHand = 'woodcutters_axe'; return state }
+const withLogs = (state: WizardWorldState, quantity: number) => { state.player.inventory.push({ itemId: 'logs', quantity }); return state }
 
 describe('Wizard view adapter', () => {
   it('projects all world surfaces without mutating authoritative state', () => {
@@ -28,11 +30,15 @@ describe('Wizard view adapter', () => {
     const state = createWizardWorld('greenway-alpha')
     expect(movementIntent(state, [0, 1])).toEqual({ type: 'move', delta: { x: 0, y: 0, z: -0.16 } })
     expect(movementIntent(state, [1, 0])).toBeNull()
-    expect(controlIntents(state, [1, 0])).toEqual([{ type: 'look', yawDelta: -0.045, pitchDelta: 0 }])
-    expect(controlIntents(state, [-1, 0])).toEqual([{ type: 'look', yawDelta: 0.045, pitchDelta: 0 }])
+    expect(PIVOT_RADIANS_PER_TICK).toBe(0.13)
+    expect(controlIntents(state, [1, 0])).toEqual([{ type: 'look', yawDelta: -0.13, pitchDelta: 0 }])
+    expect(controlIntents(state, [-1, 0])).toEqual([{ type: 'look', yawDelta: 0.13, pitchDelta: 0 }])
+    expect(controlIntents(state, [0, 0])).toEqual([])
     const pivotingForward = controlIntents(state, [1, 1])
-    expect(pivotingForward[0]).toEqual({ type: 'look', yawDelta: -0.045, pitchDelta: 0 })
+    expect(pivotingForward).toHaveLength(2)
+    expect(pivotingForward[0]).toEqual({ type: 'look', yawDelta: -0.13, pitchDelta: 0 })
     expect(pivotingForward[1]?.type).toBe('move')
+    expect(Math.ceil(Math.PI / PIVOT_RADIANS_PER_TICK) * 50).toBeLessThanOrEqual(1250)
     state.player.yaw = -Math.PI / 2
     const forward = movementIntent(state, [0, 1])
     expect(forward?.type).toBe('move')
@@ -56,15 +62,70 @@ describe('Wizard view adapter', () => {
   })
 
   it('resolves interaction to the closest actionable tree or undiscovered ring', () => {
-    const state = copy(createWizardWorld('greenway-alpha'))
+    const state = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
     const tree = state.resources.find((resource) => resource.kind === 'tree')!
     state.player.position = { ...tree.position }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'resource', action: 'Chop', actionable: true })
     expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'harvest', resourceId: tree.id })
 
     const ringState = copy(createWizardWorld('greenway-alpha'))
     ringState.resources.forEach((resource) => { resource.depleted = true })
     ringState.player.position = { ...ringState.fairyRings[0].position }
     expect(intentForView(ringState, { type: 'interact' })).toEqual({ type: 'discover_fairy_ring', ringId: ringState.fairyRings[0].id })
+  })
+
+  it('offers Equip axe at a tree when the axe is owned but unequipped, and Needs axe when unowned', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const tree = state.resources.find((resource) => resource.kind === 'tree')!
+    state.player.position = { ...tree.position }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'resource', action: 'Equip axe', actionable: true })
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
+
+    state.player.inventory = state.player.inventory.filter((stack) => stack.itemId !== 'woodcutters_axe')
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'resource', action: 'Needs axe', actionable: false })
+    expect(intentForView(state, { type: 'interact' })).toBeNull()
+  })
+
+  it('derives the guided objective from authoritative world state without mutating it', () => {
+    const fresh = createWizardWorld('greenway-alpha')
+    const before = JSON.stringify(fresh)
+    expect(objectiveFor(fresh)).toBe('Equip the woodcutter axe from your backpack.')
+    expect(JSON.stringify(fresh)).toBe(before)
+
+    const unowned = copy(fresh)
+    unowned.player.inventory = []
+    expect(objectiveFor(unowned)).toBe('Buy a woodcutter axe at Greenway Outfitters.')
+
+    const state = withAxeEquipped(copy(fresh))
+    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (0/4), then build the Greenway ladder north.')
+    withLogs(state, 2)
+    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (2/4), then build the Greenway ladder north.')
+    withLogs(state, 3)
+    expect(objectiveFor(state)).toBe('Build the Greenway ladder north (4 logs).')
+
+    state.builtRouteIds = ['greenway_ladder']
+    state.player.inventory = state.player.inventory.filter((stack) => stack.itemId !== 'logs')
+    withLogs(state, 1)
+    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (1/6), then build the Highland bridge east along the ridge.')
+    withLogs(state, 5)
+    expect(objectiveFor(state)).toBe('Build the Highland bridge east along the ridge (6 logs).')
+
+    state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+
+    state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
+    expect(objectiveFor(state)).toBe('Greenway linked. Use a fairy ring to travel home.')
+  })
+
+  it('restarts by clearing current and legacy saves and recreating the seeded world', () => {
+    const removed: string[] = []
+    const storage = { removeItem: (key: string) => { removed.push(key) } }
+    const fresh = resetSavedWorld(storage)
+    expect(removed).toEqual(['wizard-realms:world:v2', 'wizard-realms:world:v1'])
+    expect(fresh.seed).toBe('greenway-alpha')
+    expect(fresh.builtRouteIds).toEqual([])
+    expect(fresh.player.equipment.mainHand).toBeNull()
+    expect(JSON.stringify(fresh)).toBe(JSON.stringify(createWizardWorld('greenway-alpha')))
   })
 
   it('renders store and discovered-ring context as honest non-actionable prompts', () => {

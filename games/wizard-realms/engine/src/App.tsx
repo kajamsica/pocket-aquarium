@@ -23,8 +23,10 @@ const SAVE_KEY = 'wizard-realms:world:v2'
 const LEGACY_SAVE_KEY = 'wizard-realms:world:v1'
 const FIXED_STEP_MS = 50
 const MOVE_METERS_PER_TICK = 0.16
-const PIVOT_RADIANS_PER_TICK = 0.045
+// ~149 deg/s: a 180-degree turn takes ~1.2 s instead of ~3.5 s at the previous 0.045.
+export const PIVOT_RADIANS_PER_TICK = 0.13
 const INTERACTION_RANGE = 3
+const WELCOME_MESSAGE = 'Welcome to the Greenway vertical slice.'
 
 const ITEM_NAMES: Record<ItemId, string> = {
   woodcutters_axe: 'Woodcutter axe', logs: 'Greenway logs', marsh_herb: 'Marsh herb',
@@ -54,8 +56,28 @@ function loadWorld(): WizardWorldState {
   }
 }
 
+export function resetSavedWorld(storage: Pick<Storage, 'removeItem'>): WizardWorldState {
+  storage.removeItem(SAVE_KEY)
+  storage.removeItem(LEGACY_SAVE_KEY)
+  return createWizardWorld(WORLD_SEED)
+}
+
 const distance = (a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
+
+const owned = (state: WizardWorldState, itemId: ItemId) =>
+  state.player.inventory.filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
+const axeEquipped = (state: WizardWorldState) => state.player.equipment.mainHand === 'woodcutters_axe'
+
+export function objectiveFor(state: WizardWorldState): string {
+  const logs = owned(state, 'logs')
+  const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
+  if (state.player.discoveredRingIds.includes('ring-highland')) return 'Greenway linked. Use a fairy ring to travel home.'
+  if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'
+  if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Build the Highland bridge east along the ridge (6 logs).' : `${gather(6)}, then build the Highland bridge east along the ridge.`
+  if (axeEquipped(state)) return logs >= 4 ? 'Build the Greenway ladder north (4 logs).' : `${gather(4)}, then build the Greenway ladder north.`
+  return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : 'Buy a woodcutter axe at Greenway Outfitters.'
+}
 
 function closestInteraction(state: WizardWorldState) {
   const candidates = [
@@ -144,11 +166,11 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     nearbyInteraction: interaction ? {
       kind: interaction.kind, targetId: interaction.target.id,
       label: interaction.kind === 'resource' ? 'Greenway oak' : interaction.target.name,
-      action: interaction.kind === 'resource' ? 'Chop'
+      action: interaction.kind === 'resource' ? (axeEquipped(state) ? 'Chop' : owned(state, 'woodcutters_axe') > 0 ? 'Equip axe' : 'Needs axe')
         : interaction.kind === 'store' ? 'Store open'
         : interaction.kind === 'route' ? (state.builtRouteIds.includes(interaction.target.id) ? 'Cross' : state.unlockedRecipeIds.includes(interaction.target.id) ? 'Build' : 'Locked')
         : domain.player.discoveredRingIds.includes(interaction.target.id) ? 'Choose destination' : 'Discover',
-      actionable: interaction.kind === 'resource'
+      actionable: interaction.kind === 'resource' && (axeEquipped(state) || owned(state, 'woodcutters_axe') > 0)
         || interaction.kind === 'route' && (state.builtRouteIds.includes(interaction.target.id) || state.unlockedRecipeIds.includes(interaction.target.id))
         || (interaction.kind === 'fairy-ring' && !domain.player.discoveredRingIds.includes(interaction.target.id)),
     } : null,
@@ -160,7 +182,10 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
   if (intent.type === 'jump') return { type: 'jump' }
   if (intent.type === 'interact') {
     const interaction = closestInteraction(state)
-    if (interaction?.kind === 'resource') return { type: 'harvest', resourceId: interaction.target.id }
+    if (interaction?.kind === 'resource') {
+      if (axeEquipped(state)) return { type: 'harvest', resourceId: interaction.target.id }
+      return owned(state, 'woodcutters_axe') > 0 ? { type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' } : null
+    }
     if (interaction?.kind === 'fairy-ring' && !state.player.discoveredRingIds.includes(interaction.target.id)) return { type: 'discover_fairy_ring', ringId: interaction.target.id }
     if (interaction?.kind === 'route') return state.builtRouteIds.includes(interaction.target.id)
       ? { type: 'traverse_route', routeId: interaction.target.id }
@@ -199,7 +224,7 @@ export function controlIntents(state: WizardWorldState, vector: readonly [number
 
 export default function App() {
   const [world, setWorld] = useState(loadWorld)
-  const [messages, setMessages] = useState<RecentMessage[]>([{ id: 0, text: 'Welcome to the Greenway vertical slice.' }])
+  const [messages, setMessages] = useState<RecentMessage[]>([{ id: 0, text: WELCOME_MESSAGE }])
   const worldRef = useRef(world)
   const movementRef = useRef<readonly [number, number]>([0, 0])
   const queuedRef = useRef<WizardIntent[]>([])
@@ -231,12 +256,21 @@ export default function App() {
     const domainIntent = intentForView(worldRef.current, intent)
     if (domainIntent) queuedRef.current.push(domainIntent)
   }, [])
+  const restart = useCallback(() => {
+    const fresh = resetSavedWorld(window.localStorage)
+    worldRef.current = fresh
+    queuedRef.current = []
+    movementRef.current = [0, 0]
+    setWorld(fresh)
+    setMessages([{ id: messageId.current++, text: WELCOME_MESSAGE }])
+  }, [])
   const projection = useMemo(() => toViewProjection(world, messages), [world, messages])
 
   return <main style={{ position: 'fixed', inset: 0, background: '#14221f' }}>
     <WizardSurface projection={projection} onIntent={onIntent} diagnostics />
-    <div style={{ position: 'absolute', left: '50%', bottom: 8, transform: 'translateX(-50%)', zIndex: 4, padding: '5px 10px', borderRadius: 999, background: '#101a17dd', color: '#d8c987', font: '11px system-ui' }}>
-      Playable systems vertical slice. World, economy, and persistence are real. Combat and quests are not in this build.
+    <div role="status" style={{ position: 'absolute', left: '50%', bottom: 8, transform: 'translateX(-50%)', zIndex: 4, display: 'flex', gap: 10, alignItems: 'center', padding: '5px 5px 5px 10px', borderRadius: 999, background: '#101a17dd', color: '#d8c987', font: '11px system-ui', whiteSpace: 'nowrap' }}>
+      <span><b style={{ color: '#f5d889', letterSpacing: '.12em' }}>OBJECTIVE</b> {objectiveFor(world)}</span>
+      <button type="button" onClick={restart} style={{ padding: '3px 9px', border: '1px solid #cfb66b55', borderRadius: 999, background: '#374b3d', color: '#f8e8b2', font: 'inherit', cursor: 'pointer' }}>Restart</button>
     </div>
   </main>
 }
