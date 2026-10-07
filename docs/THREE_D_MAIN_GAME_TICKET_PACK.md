@@ -2,7 +2,7 @@
 
 ## North star
 
-`realistic_light_transport` is the Pocket Aquarium product surface. The aquarium is a persistent, full-viewport 3D world on phone and desktop. The existing deterministic Pocket Aquarium simulation remains the single source of truth for saved state, chemistry, ecology, livestock, progression, economy, and validation until it is extracted behind the same contract. React Three Fiber renders that truth and sends player actions back through one bidirectional adapter.
+`games/pocket-aquarium/engine` is the Pocket Aquarium product surface. The aquarium is a persistent, full-viewport 3D world on phone and desktop. The existing deterministic Pocket Aquarium simulation remains the single source of truth for saved state, chemistry, ecology, livestock, progression, economy, and validation until it is extracted behind the same contract. React Three Fiber renders that truth and sends player actions back through one bidirectional adapter.
 
 The player loop is:
 

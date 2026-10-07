@@ -128,7 +128,7 @@ These tickets are serial because they overlap the app shell, HUD, scene interact
 
 - Expected: one standalone dev HTML file, under 260 lines, zero dependencies/config/build changes.
 - Reuse: current Vite dev server, same-origin iframe, and the existing dark/cyan visual vocabulary; keep styles local to the harness.
-- Expected file: `realistic_light_transport/responsive.html` only.
+- Expected file: `games/pocket-aquarium/engine/responsive.html` only.
 - Forbidden: app/HUD code, production build entry, Vite config, save state, dependency/lockfile changes.
 - Validation: open the visible harness; cycle every preset, custom size, rotate, and fit; verify iframe URL and that state survives resizing.
 - Tripwire: any production-bundle or app-runtime change requires replan.

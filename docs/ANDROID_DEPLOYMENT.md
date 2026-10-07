@@ -22,7 +22,7 @@ prevent direct APK installation through an administrator policy.
 
 ## What the artifact contains
 
-The workflow builds `realistic_light_transport`, stages its compiled output into the native
+The workflow builds `games/pocket-aquarium/engine`, stages its compiled output into the native
 Capacitor host, and syncs those local web bytes into Android before Gradle runs. The installed
 app opens the packaged game. It does not load the live GitHub Pages site as its application
 runtime.
@@ -62,7 +62,7 @@ After the native Android host is generated and its dependencies are installed, t
 and build contract is:
 
 ```sh
-cd realistic_light_transport
+cd games/pocket-aquarium/engine
 npm ci
 npm run build
 cd ../native

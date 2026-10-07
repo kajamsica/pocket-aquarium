@@ -5,7 +5,7 @@ on:
     paths:
       - ".github/workflows/ios.yml"
       - "native/**"
-      - "realistic_light_transport/**"
+      - "games/pocket-aquarium/engine/**"
       - "tests/native.test.js"
       - "index.html"
       - "styles.css"
@@ -18,7 +18,7 @@ on:
     paths:
       - ".github/workflows/ios.yml"
       - "native/**"
-      - "realistic_light_transport/**"
+      - "games/pocket-aquarium/engine/**"
       - "tests/native.test.js"
       - "index.html"
       - "styles.css"
@@ -54,14 +54,14 @@ jobs:
           cache: npm
           cache-dependency-path: |
             native/package-lock.json
-            realistic_light_transport/package-lock.json
+            games/pocket-aquarium/engine/package-lock.json
 
       - name: Install 3D app dependencies
-        working-directory: realistic_light_transport
+        working-directory: games/pocket-aquarium/engine
         run: npm ci
 
       - name: Build the accepted 3D web runtime
-        working-directory: realistic_light_transport
+        working-directory: games/pocket-aquarium/engine
         run: npm run build
 
       - name: Install pinned Capacitor toolchain
@@ -121,7 +121,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             native/package-lock.json
-            realistic_light_transport/package-lock.json
+            games/pocket-aquarium/engine/package-lock.json
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -133,11 +133,11 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Install 3D app dependencies
-        working-directory: realistic_light_transport
+        working-directory: games/pocket-aquarium/engine
         run: npm ci
 
       - name: Build the accepted 3D web runtime
-        working-directory: realistic_light_transport
+        working-directory: games/pocket-aquarium/engine
         run: npm run build
 
       - name: Install pinned Capacitor toolchain
@@ -210,14 +210,14 @@ jobs:
           cache: npm
           cache-dependency-path: |
             native/package-lock.json
-            realistic_light_transport/package-lock.json
+            games/pocket-aquarium/engine/package-lock.json
 
       - name: Install 3D app dependencies
-        working-directory: realistic_light_transport
+        working-directory: games/pocket-aquarium/engine
         run: npm ci
 
       - name: Build the accepted 3D web runtime
-        working-directory: realistic_light_transport
+        working-directory: games/pocket-aquarium/engine
         run: npm run build
 
       - name: Install pinned Capacitor toolchain

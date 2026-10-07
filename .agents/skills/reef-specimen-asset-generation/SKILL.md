@@ -1,17 +1,17 @@
 ---
 name: reef-specimen-asset-generation
-description: Research a real marine species and author, gate, review, and hand off a Blender-built animated GLB candidate for the Pocket Aquarium visual catalog (realistic_light_transport/art/specimens). Use for a new species or colour variant, for refining an existing candidate's morphology, paint, or clips, or for diagnosing source/runtime/determinism gate and workbench failures. Not for accepting or promoting candidates, editing bundled runtime GLBs or acceptance records, or gameplay, husbandry, chemistry, store, or UI work.
+description: Research a real marine species and author, gate, review, and hand off a Blender-built animated GLB candidate for the Pocket Aquarium visual catalog (games/pocket-aquarium/engine/art/specimens). Use for a new species or colour variant, for refining an existing candidate's morphology, paint, or clips, or for diagnosing source/runtime/determinism gate and workbench failures. Not for accepting or promoting candidates, editing bundled runtime GLBs or acceptance records, or gameplay, husbandry, chemistry, store, or UI work.
 ---
 
 # Reef specimen asset generation
 
 Produces one `awaiting_user_acceptance` candidate package under
-`realistic_light_transport/art/specimens/<species_id>/candidates/<candidate>/`, built by the
+`games/pocket-aquarium/engine/art/specimens/<species_id>/candidates/<candidate>/`, built by the
 pinned Blender through the existing catalog pipeline, reviewed in the specimen workbench, and
 handed to a human with evidence. The candidate is the deliverable. Acceptance and runtime
 promotion are separate human-gated steps that this skill never performs.
 
-All paths and commands below are relative to `realistic_light_transport/` (the Vite app) unless
+All paths and commands below are relative to `games/pocket-aquarium/engine/` (the Vite app) unless
 prefixed with the repository root.
 
 ## When this applies
@@ -54,7 +54,7 @@ file under `art/specimens/` or `src/`.
   `build(spec, species, ctx)`); pick by anatomy, see the contracts reference.
 - Pinned Blender: `art/toolchain.json` -> `/tmp/pocket-aquarium-tools/blender-5.2.1/...`.
   Verify the DMG sha256 against the manifest before first use; never install globally.
-- Node 20+ with `npm ci` run once in `realistic_light_transport/` (needed for `tsc`, `vitest`,
+- Node 20+ with `npm ci` run once in `games/pocket-aquarium/engine/` (needed for `tsc`, `vitest`,
   and the dev server; the build driver and catalog builder are dependency-free).
 
 ## Workflow

@@ -18,7 +18,7 @@ Done when the running build lets a player keep multiple useful windows open, mov
 
 ## Pack HUD-01 — Window foundation
 
-Owned files: `realistic_light_transport/src/ui/HudWorkspace.tsx`, `PocketGameHUD.tsx`, and scoped workspace CSS.
+Owned files: `games/pocket-aquarium/engine/src/ui/HudWorkspace.tsx`, `PocketGameHUD.tsx`, and scoped workspace CSS.
 
 - Desktop windows open independently rather than replacing one another.
 - Title bars drag with mouse or pointer.
@@ -30,7 +30,7 @@ Owned files: `realistic_light_transport/src/ui/HudWorkspace.tsx`, `PocketGameHUD
 
 ## Pack HUD-02 — Semantic separation
 
-Owned file: `realistic_light_transport/src/ui/PocketGameHUD.tsx`.
+Owned file: `games/pocket-aquarium/engine/src/ui/PocketGameHUD.tsx`.
 
 - Move clutches and fry from Store to Care.
 - Move optics and flow from Store to View.

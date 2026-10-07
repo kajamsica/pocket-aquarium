@@ -1,6 +1,6 @@
 # Candidate versus accepted boundary
 
-Paths are relative to `realistic_light_transport/`. A generation lane ends at a candidate
+Paths are relative to `games/pocket-aquarium/engine/`. A generation lane ends at a candidate
 package in `awaiting_user_acceptance`. Everything past that line is a human decision recorded
 by the human, then a separate promotion lane. Violating this boundary is the one failure mode
 that cannot be fixed by a rebuild, so `scripts/candidate_handoff.mjs` checks it mechanically.

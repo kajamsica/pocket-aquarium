@@ -213,12 +213,12 @@ A related subject MAY reuse a body-plan library. It MUST NOT be a palette swap w
 
 **Observed:** Pocket Aquarium uses checksum-pinned Blender 5.2.1 LTS, launched with factory startup and Python. Repository scripts author `.blend` sources, generate procedural materials and textures, create rigs and clips, export GLB, render proofs, validate source and runtime forms, and compare deterministic rebuilds. The relevant observed anchors are:
 
-- [`realistic_light_transport/art/toolchain.json`](../../realistic_light_transport/art/toolchain.json)
-- [`realistic_light_transport/art/README.md`](../../realistic_light_transport/art/README.md)
-- [`realistic_light_transport/scripts/specimens/author_specimen.py`](../../realistic_light_transport/scripts/specimens/author_specimen.py)
-- [`realistic_light_transport/scripts/specimens/build_catalog_asset.mjs`](../../realistic_light_transport/scripts/specimens/build_catalog_asset.mjs)
-- [`realistic_light_transport/scripts/specimens/catalog/author.py`](../../realistic_light_transport/scripts/specimens/catalog/author.py)
-- [`realistic_light_transport/scripts/specimens/catalog/validate.py`](../../realistic_light_transport/scripts/specimens/catalog/validate.py)
+- [`games/pocket-aquarium/engine/art/toolchain.json`](../../games/pocket-aquarium/engine/art/toolchain.json)
+- [`games/pocket-aquarium/engine/art/README.md`](../../games/pocket-aquarium/engine/art/README.md)
+- [`games/pocket-aquarium/engine/scripts/specimens/author_specimen.py`](../../games/pocket-aquarium/engine/scripts/specimens/author_specimen.py)
+- [`games/pocket-aquarium/engine/scripts/specimens/build_catalog_asset.mjs`](../../games/pocket-aquarium/engine/scripts/specimens/build_catalog_asset.mjs)
+- [`games/pocket-aquarium/engine/scripts/specimens/catalog/author.py`](../../games/pocket-aquarium/engine/scripts/specimens/catalog/author.py)
+- [`games/pocket-aquarium/engine/scripts/specimens/catalog/validate.py`](../../games/pocket-aquarium/engine/scripts/specimens/catalog/validate.py)
 
 No accepted evidence shows that Pocket Aquarium used commercial photogrammetry, automatic multiview reconstruction, motion capture, or an AI mesh service. Do not attribute those methods to the observed project.
 
@@ -673,7 +673,7 @@ Semantic controls MAY include body depth, snout length, peduncle width, shoulder
 
 Arbitrary browser vertex editing SHOULD NOT be the default. It bypasses anatomical semantics, topology intent, and reproducibility. Freeform correction belongs in Blender.
 
-**Observed:** Pocket Aquarium's active workbench already provides catalog and candidate selection, true-size and fit scale, camera presets, perspective and orthographic modes, turntable, orbit, zoom, pan, clip selection, speed and phase controls, pause, turn preview, wireframe, skeleton, generated renders, and technical statistics. See [`SpecimenWorkbench.tsx`](../../realistic_light_transport/src/workbench/SpecimenWorkbench.tsx) and [`WorkbenchSpecimen.tsx`](../../realistic_light_transport/src/workbench/WorkbenchSpecimen.tsx).
+**Observed:** Pocket Aquarium's active workbench already provides catalog and candidate selection, true-size and fit scale, camera presets, perspective and orthographic modes, turntable, orbit, zoom, pan, clip selection, speed and phase controls, pause, turn preview, wireframe, skeleton, generated renders, and technical statistics. See [`SpecimenWorkbench.tsx`](../../games/pocket-aquarium/engine/src/workbench/SpecimenWorkbench.tsx) and [`WorkbenchSpecimen.tsx`](../../games/pocket-aquarium/engine/src/workbench/WorkbenchSpecimen.tsx).
 
 **Observed gap:** Morphology and profile editor components exist in source, but the accepted evidence found no active import from the workbench. The strongest accept and promotion service is Ocellaris-specific. Therefore catalog-wide in-place semantic editing and generic atomic acceptance are recommendations until active-route and transaction tests prove them.
 
@@ -730,7 +730,7 @@ The record MUST use `VisualApprovalStatus`. It MUST NOT set runtime defaults.
 
 Promotion MUST be compare-and-swap, serialized, and rollback capable. It MUST fail if the current registry changed after review began.
 
-**Observed:** Pocket Aquarium separates candidate receipts, [`user-acceptance.v1.json`](../../realistic_light_transport/art/specimens/user-acceptance.v1.json), and [`runtime-acceptance.v1.json`](../../realistic_light_transport/src/assets/specimens/runtime-acceptance.v1.json). The Ocellaris promotion path implements an exact confirmation, lock, rollback copy, validation, and restoration. Generic catalog promotion is test-guarded repository work, not yet the same generic atomic service.
+**Observed:** Pocket Aquarium separates candidate receipts, [`user-acceptance.v1.json`](../../games/pocket-aquarium/engine/art/specimens/user-acceptance.v1.json), and [`runtime-acceptance.v1.json`](../../games/pocket-aquarium/engine/src/assets/specimens/runtime-acceptance.v1.json). The Ocellaris promotion path implements an exact confirmation, lock, rollback copy, validation, and restoration. Generic catalog promotion is test-guarded repository work, not yet the same generic atomic service.
 
 ### 12.3 In-world proof
 

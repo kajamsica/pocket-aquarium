@@ -5,7 +5,7 @@
 // candidate is not formally excluded or relabeled, and that no acceptance/promotion path is dirty in
 // the worktree. Prints the handoff block; exits 1 on any FAIL, 2 on usage errors. Never writes.
 //
-//   node candidate_handoff.mjs --asset <species_id> --candidate <name> [--root <realistic_light_transport>]
+//   node candidate_handoff.mjs --asset <species_id> --candidate <name> [--root <games/pocket-aquarium/engine>]
 //                              [--base <git ref>] [--scope <species_id>]... [--json]
 
 import { execFileSync } from "node:child_process";
@@ -15,7 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_ROOT = path.resolve(here, "..", "..", "..", "..", "realistic_light_transport");
+const DEFAULT_ROOT = path.resolve(here, "..", "..", "..", "..", "games/pocket-aquarium/engine");
 const SPEC_SCHEMA = "pocket-aquarium.asset-source/v1";
 const RECEIPT_SCHEMA = "pocket-aquarium.specimen-validation/v2";
 const AWAITING = "awaiting_user_acceptance";

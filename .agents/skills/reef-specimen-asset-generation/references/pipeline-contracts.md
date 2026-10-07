@@ -1,6 +1,6 @@
 # Pipeline contracts
 
-Paths are relative to `realistic_light_transport/`. Read the accepted examples named here before
+Paths are relative to `games/pocket-aquarium/engine/`. Read the accepted examples named here before
 writing a new spec; they are the contract in practice.
 
 ## Files a generation lane writes

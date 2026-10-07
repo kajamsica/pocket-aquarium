@@ -21,7 +21,7 @@ var pathToFileURL = require("url").pathToFileURL;
 var ROOT = path.resolve(__dirname, "..");
 var NATIVE = path.join(ROOT, "native");
 var STAGE_SCRIPT = path.join(NATIVE, "scripts", "stage-web.mjs");
-var WEB_DIST = path.join(ROOT, "realistic_light_transport", "dist");
+var WEB_DIST = path.join(ROOT, "games/pocket-aquarium/engine", "dist");
 
 /* ------------------------------ tiny harness ------------------------------ */
 var passed = 0, failed = 0, failures = [], curr = "";
@@ -99,7 +99,7 @@ function main(mod) {
   ok(pkg.dependencies["@capacitor/android"] === "8.5.1", "@capacitor/android pinned exactly to 8.5.1");
   ok(pkg.devDependencies["@capacitor/cli"] === "8.5.1", "@capacitor/cli pinned exactly to 8.5.1");
   ok(pkg.type === "module", "native package is an ESM module");
-  ok(/realistic_light_transport/.test(pkg.scripts["build:web"] || ""), "build:web compiles the Three.js product source");
+  ok((pkg.scripts["build:web"] || "").includes("games/pocket-aquarium/engine"), "build:web compiles the Three.js product source");
   ok(/build:web/.test(pkg.scripts["sync:fresh"] || "") && /sync/.test(pkg.scripts["sync:fresh"] || ""), "sync:fresh builds then syncs one accepted runtime");
   ok(exists(path.join(NATIVE, "package-lock.json")), "committed package-lock.json exists");
   var lock = JSON.parse(readText(path.join(NATIVE, "package-lock.json")));

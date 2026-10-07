@@ -220,7 +220,7 @@ The workbench MUST keep `Candidate Validation`, `Visual Approval`, and `Runtime 
 
 **Observed.** Pocket Aquarium has strong inspection controls and a loopback candidate service. Morphology and profile editor components exist in the source tree but were not mounted in the active workbench at the accepted revision. Catalog-wide semantic editing and generic atomic promotion are therefore recommended capabilities, not observed active features.
 
-For candidate construction and Blender-specific gates, use [Asset and Animation Pipeline](./ASSET_AND_ANIMATION_PIPELINE.md). The source record is also summarized in the accepted repository under `realistic_light_transport/art/README.md`.
+For candidate construction and Blender-specific gates, use [Asset and Animation Pipeline](./ASSET_AND_ANIMATION_PIPELINE.md). The source record is also summarized in the accepted repository under `games/pocket-aquarium/engine/art/README.md`.
 
 ### 4.4 Showcase, developer-safe mode, and God Mode
 
@@ -485,7 +485,7 @@ node tests/sim.test.js
 node tests/render.test.js
 node tests/pwa.test.js
 node tests/native.test.js
-npm --prefix realistic_light_transport run build
+npm --prefix games/pocket-aquarium/engine run build
 ```
 
 Commands prove only the revision and environment in which they were actually run. Documentation MUST attach their result receipts rather than list them as implied success.
