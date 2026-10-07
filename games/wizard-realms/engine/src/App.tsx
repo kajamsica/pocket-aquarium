@@ -22,6 +22,7 @@ const WORLD_SEED = 'greenway-alpha'
 const SAVE_KEY = 'wizard-realms:world:v1'
 const FIXED_STEP_MS = 50
 const MOVE_METERS_PER_TICK = 0.16
+const PIVOT_RADIANS_PER_TICK = 0.045
 const INTERACTION_RANGE = 3
 
 const ITEM_NAMES: Record<ItemId, string> = {
@@ -82,6 +83,7 @@ function eventText(event: WizardEvent): string {
     case 'item_equipped': return `Equipped ${ITEM_NAMES[event.itemId]}.`
     case 'trade_listing_created': return `Listed ${event.quantity} ${ITEM_NAMES[event.itemId]} for trade.`
     case 'trade_listing_cancelled': return `Returned ${ITEM_NAMES[event.itemId]} to your backpack.`
+    case 'player_jumped': return 'You spring over the trail.'
     default: return ''
   }
 }
@@ -101,7 +103,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   return {
     seed: state.seed,
     tick: domain.tick,
-    player: { position: [domain.player.position.x, domain.player.position.y + 1.7, domain.player.position.z], yaw: domain.player.yaw, pitch: domain.player.pitch },
+    player: { position: [domain.player.position.x, domain.player.position.y, domain.player.position.z], yaw: domain.player.yaw, pitch: domain.player.pitch },
     terrain: state.tiles.map((tile) => ({ id: tile.id, position: [tile.center.x, tile.center.y, tile.center.z], size: [4, 4], height: 0.7 + tile.elevation * 3, climate: tile.biome, color: TERRAIN_COLORS[tile.terrain] })),
     resources: state.resources.map((resource) => ({ id: resource.id, kind: resource.kind === 'stone' ? 'other' : resource.kind, label: resource.kind === 'tree' ? 'Greenway oak' : resource.kind, position: [resource.position.x, resource.position.y, resource.position.z], available: !resource.depleted })),
     fairyRings: state.fairyRings.map((ring) => ({
@@ -118,14 +120,15 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     nearbyInteraction: interaction ? {
       kind: interaction.kind, targetId: interaction.target.id,
       label: interaction.kind === 'resource' ? 'Greenway oak' : interaction.target.name,
-      action: interaction.kind === 'resource' ? 'Chop' : interaction.kind === 'store' ? 'Browse' : domain.player.discoveredRingIds.includes(interaction.target.id) ? 'Travel' : 'Discover',
+      action: interaction.kind === 'resource' ? 'Chop' : interaction.kind === 'store' ? 'Store open' : domain.player.discoveredRingIds.includes(interaction.target.id) ? 'Choose destination' : 'Discover',
+      actionable: interaction.kind === 'resource' || (interaction.kind === 'fairy-ring' && !domain.player.discoveredRingIds.includes(interaction.target.id)),
     } : null,
     recentEvents: messages.map((message) => message.text),
   }
 }
 
 export function intentForView(state: WizardWorldState, intent: Exclude<WizardViewIntent, { type: 'movement' }>): WizardIntent | null {
-  if (intent.type === 'look') return { type: 'look', yawDelta: -intent.delta[0], pitchDelta: -intent.delta[1] }
+  if (intent.type === 'jump') return { type: 'jump' }
   if (intent.type === 'interact') {
     const interaction = closestInteraction(state)
     if (interaction?.kind === 'resource') return { type: 'harvest', resourceId: interaction.target.id }
@@ -140,13 +143,26 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
 }
 
 export function movementIntent(state: WizardWorldState, vector: readonly [number, number]): WizardIntent | null {
-  if (vector[0] === 0 && vector[1] === 0) return null
+  if (vector[1] === 0) return null
   const { yaw } = state.player
+  const x = -vector[1] * Math.sin(yaw) * MOVE_METERS_PER_TICK
   return { type: 'move', delta: {
-    x: (vector[0] * Math.cos(yaw) - vector[1] * Math.sin(yaw)) * MOVE_METERS_PER_TICK,
+    x: Math.abs(x) < 1e-12 ? 0 : x,
     y: 0,
-    z: (-vector[0] * Math.sin(yaw) - vector[1] * Math.cos(yaw)) * MOVE_METERS_PER_TICK,
+    z: -vector[1] * Math.cos(yaw) * MOVE_METERS_PER_TICK,
   } }
+}
+
+export function controlIntents(state: WizardWorldState, vector: readonly [number, number]): WizardIntent[] {
+  const intents: WizardIntent[] = []
+  const yawDelta = -vector[0] * PIVOT_RADIANS_PER_TICK
+  if (yawDelta !== 0) intents.push({ type: 'look', yawDelta, pitchDelta: 0 })
+  if (vector[1] !== 0) {
+    const facing = { ...state, player: { ...state.player, yaw: state.player.yaw + yawDelta } }
+    const movement = movementIntent(facing, vector)
+    if (movement) intents.push(movement)
+  }
+  return intents
 }
 
 export default function App() {
@@ -161,15 +177,11 @@ export default function App() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       const intents = queuedRef.current.splice(0)
-      const movement = movementIntent(worldRef.current, movementRef.current)
-      if (movement) intents.push(movement)
-      if (intents.length === 0) return
+      intents.push(...controlIntents(worldRef.current, movementRef.current))
       const result = advanceWizardWorld(worldRef.current, intents)
-      if (result.state !== worldRef.current) {
-        worldRef.current = result.state
-        setWorld(result.state)
-        window.localStorage.setItem(SAVE_KEY, serializeWizardWorld(result.state))
-      }
+      worldRef.current = result.state
+      setWorld(result.state)
+      window.localStorage.setItem(SAVE_KEY, serializeWizardWorld(result.state))
       const nextMessages = [
         ...result.events.map(eventText).filter(Boolean),
         ...result.rejections.map((rejection) => rejection.message),

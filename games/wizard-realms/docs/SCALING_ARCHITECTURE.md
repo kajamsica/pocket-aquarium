@@ -23,7 +23,9 @@ The first authority runs locally. Later authorities may run on servers. The boun
 
 ### Local authority today
 
-The local world process owns clock, tick ordering, seeded randomness, terrain, chunks, player movement, resources, weather, shops, creatures, interactions, inventory, coins, XP, equipment, discoveries, fairy-ring travel, trade listings, saves, events, and projections.
+The current vertical slice locally owns its 50 ms clock, tick ordering, seeded randomness, seven-by-seven terrain, player movement and jump state, resource nodes, two shops, interactions, inventory, coins, XP, equipment, discoveries, fairy-ring travel, four trade slots, saves, events, and projections. It does not yet implement weather, creatures, regional chunks, remote services, request IDs, revision pins, authority epochs, state digests, or a durable event log.
+
+Weather, creatures, chunk streaming, and every networked authority named later in this document are future milestones. Their descriptions are requirements for those milestones, not claims about the current package.
 
 Renderer, UI, audio, and input submit intents and interpolate projections. They never award resources, move items, grant XP, change coins, discover locations, or finalize travel.
 
@@ -33,18 +35,18 @@ When networking begins, the same interface is hosted by authoritative servers. A
 
 The client may predict reversible locomotion. It never commits economy, inventory, progression, death, discovery, portal, combat, or trade outcomes.
 
-## Fixed tick and transition order
+## Fixed tick and future transition order
 
-The initial target is 20 fixed ticks per second, subject to measurement before promotion and pinned in a simulation profile.
+The vertical slice advances one deterministic local step every 50 ms, including idle and rejected-intent steps. That is a 20-tick-per-second implementation target, not a measured capacity claim.
 
-Each tick:
+The current step orders and validates intents, advances player terrain and jump physics, advances the simulation RNG, commits accepted state, emits events or typed rejections, and produces a projection. Later simulation profiles must add the following ordered phases:
 
 1. orders and validates intents;
 2. advances time, weather, shops, and regional fields;
 3. advances resources, regrowth, creature needs, and player conditions;
 4. selects goals and desired motion;
 5. resolves terrain, structures, agents, and safe movement;
-6. resolves interaction contact and exactly-once consequences;
+6. resolves interaction contact and transaction consequences;
 7. updates inventory, economy, skills, equipment, discovery, and travel;
 8. emits events and immutable projections;
 9. appends durable events and snapshots under the persistence policy.
@@ -57,13 +59,13 @@ Representative intents include move, interact, gather, use tool, buy, sell, crea
 
 Representative committed events include player moved, resource harvested, tool durability changed, item transferred, coins changed, XP granted, listing created or settled, location discovered, fairy-ring travel committed, player died, and recovery pack created.
 
-Every rejection has a typed reason. Every projection carries world revision, content revision, generator version, authority epoch, and tick. Projected data is immutable to the client.
+Today, every rejection has a typed reason and every projection carries the local tick. Projection objects are detached from authoritative state. World revision, content revision, generator version, authority epoch, and digest fields are future protocol requirements.
 
-## Deterministic world and chunk contract
+## Deterministic world today and future chunk contract
 
 ### Coordinates
 
-The world uses right-handed meters. `X` increases east, `Y` increases upward, and `Z` increases north. Outdoor chunks are 64 by 64 meters.
+The vertical slice uses right-handed meters. `X` increases east, `Y` increases upward, and `Z` increases north. It currently uses a fixed seven-by-seven tile world. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
 
 ```text
 chunkX = floor(worldX / 64)
@@ -82,9 +84,9 @@ worldId / generatorVersion / chunkX / chunkZ
 
 Entity and landmark IDs must not depend on render or generation completion order.
 
-### Seed, versions, and lifecycle
+### Future seed versions and chunk lifecycle
 
-Base generation depends only on world seed, generator version, content revision, biome and landmark rule revisions, coordinates, and named deterministic random substreams. Equal pinned inputs reproduce terrain, eligibility, resource anchors, landmarks, and connectivity. Runtime changes are deltas over that base.
+Today, base generation depends on the world seed and deterministic named inputs in the generator. Generator version, content revision, biome and landmark revisions, named substream records, and persisted chunk deltas are future requirements. When added, equal pinned inputs must reproduce terrain, eligibility, resource anchors, landmarks, and connectivity.
 
 Generator upgrades never silently rewrite a save. A migration keeps the old generator, transforms stored deltas through a named migration, or creates a new world.
 
@@ -102,9 +104,9 @@ Profiles define what a tree, tool, item, creature, vendor, biome, weather patter
 
 State records what an instance is doing now, such as tree progress, vendor stock, durability, XP, equipment, discoveries, and active listings. Saves reference stable profile IDs and pinned content revisions. They do not serialize meshes or UI labels as gameplay truth.
 
-## Save schema and migrations
+## Current save and future migration schema
 
-Every save represents these version pins and values, even if its serialized shape groups them differently:
+The current `wizard-world/v1` save contains the local world state, seed, tick, simulation RNG, and event sequence, then sanitizes it on restore. It does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
 
 ```text
 schemaVersion, saveSequence, worldId, worldSeed
@@ -122,9 +124,9 @@ Migration rules:
 5. Save, close, reopen, and replay must reach the expected next digest.
 6. Multi-device writes require monotonic sequence or compare-and-swap, not timestamps alone.
 
-## Identity, ownership, and event IDs
+## Future identity, ownership, and event IDs
 
-Single player keeps these logical boundaries even when one process hosts them:
+The vertical slice has one local owner and a monotonic local event sequence. The following ownership split and identifiers are future network protocol requirements:
 
 | Fact | Current owner | Later owner |
 |---|---|---|
@@ -138,15 +140,17 @@ Single player keeps these logical boundaries even when one process hosts them:
 
 No durable fact has simultaneous writers.
 
-Each consequential command carries a client request ID. Committed event identity is:
+Future consequential commands must carry a client request ID. Their committed event identity will be:
 
 ```text
 worldId / authorityEpoch / tick / authoritySequence
 ```
 
-The authority retains processed IDs for a bounded period and returns the original result for an exact retry. Reusing an ID with a different payload is rejected. Sequence is monotonic within an epoch. Restore, leader replacement, or handoff changes the persisted epoch.
+A future authority must retain processed IDs for a bounded period and return the original result for an exact retry. Reusing an ID with a different payload must be rejected. Sequence must be monotonic within an epoch. Restore, leader replacement, or handoff must change the persisted epoch. None of those request-ID or epoch behaviors exists in the local vertical slice.
 
-## Fairy-ring travel transaction
+## Future networked fairy-ring travel transaction
+
+The current local domain validates range and discovery, then commits one in-memory teleport event. Cross-authority preparation, request-ID recovery, revisions, and distributed exactly-once delivery are not implemented. A networked milestone must use this transaction:
 
 1. Receive request ID, player, origin, destination, and expected player revision.
 2. Validate proximity, discovery of both rings, destination, cooldown, state, and cost.
@@ -158,9 +162,9 @@ The authority retains processed IDs for a bounded period and returns the origina
 
 Preparation failure leaves the player and cost at the origin. Lost acknowledgement is recovered by request ID. The player never exists authoritatively at both endpoints.
 
-## Trade-listing transaction
+## Future persistent trade-listing transaction
 
-The player starts with four listing slots.
+The current player has four local listing slots. Listing and cancellation move owned inventory into and out of local escrow atomically for one step. Settlement, expiry, fees, request IDs, revisions, and crash recovery are future work. A persistent economy milestone must use this transaction:
 
 1. Receive request ID, expected inventory revision, stack IDs, quantity, price, and duration.
 2. Validate listing capacity, ownership, quantity, tradability, price bounds, and fee.
@@ -170,7 +174,9 @@ The player starts with four listing slots.
 
 Settlement atomically transfers items and coins. Cancellation or expiry returns escrow exactly once. A crash produces either old state or full committed state, never duplication or a listing without escrow. The single-player simulated market calls this same boundary.
 
-## Rollback, replay, and reconciliation
+## Future rollback, replay, and reconciliation
+
+The current package supports deterministic generation, serialized restore, and next-step equivalence tests. It does not yet ship snapshots plus replay, state digests, administrative epochs, compensation ledgers, or network prediction reconciliation. Those milestones require:
 
 - Periodic snapshots record last included event ID and state digest.
 - Restore loads a valid snapshot and replays later events.
@@ -203,7 +209,9 @@ Authority that moves server-side:
 
 Shared deterministic libraries may run on both sides for prediction, but only the named authority commits.
 
-## Services for persistent scale
+## Future services for persistent scale
+
+No service in this section exists in the vertical slice. They are possible later ownership boundaries after co-op measurement proves they are needed.
 
 - **Regional authorities:** Own groups of chunks and transfer players through prepared handoff.
 - **Interest management:** Sends only relevant, permitted projections based on distance, visibility, audio, interaction, group, and UI subscription.
@@ -238,7 +246,7 @@ vertical slice -> co-op proof -> persistent realm
 
 Each transition consumes replay, transaction, failure, security, and capacity evidence. Failure keeps the project at the earlier honest capability level. MMORPG promotion is also a product, safety, support, and operations decision.
 
-## Architecture acceptance
+## Future architecture acceptance
 
 Implementation planning may begin only when:
 
@@ -247,7 +255,7 @@ Implementation planning may begin only when:
 - chunk coordinates and IDs are stable across generation order;
 - local play uses the intent and event boundary intended for servers;
 - save and replay preserve causal continuation;
-- fairy-ring and listing transactions are exactly once;
+- networked fairy-ring and listing transactions prove retry-safe, exactly-once outcomes;
 - retained client and future server responsibilities are explicit;
 - each capacity milestone has a measurable exit gate;
 - the product claim remains single player until later gates pass.

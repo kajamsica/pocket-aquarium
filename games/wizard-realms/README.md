@@ -2,7 +2,7 @@
 
 > **Working title:** Wizard Realms is a project name, not a final product or trademark decision.
 
-Wizard Realms is a first-person fantasy RPG about arriving alone in a vast, seeded world and gradually learning how to live within it. The player explores distinct climates, gathers local resources, fells trees, makes and improves tools, trades in regional stores, equips practical and magical gear, and discovers mushroom fairy rings that reconnect places they have already reached. The immediate goal is a rich single-player adventure with readable, colorful stylized art. Its simulation contracts are designed so a later multiplayer realm can replace local authority without replacing the game.
+Wizard Realms is a third-person fantasy RPG about arriving alone in a vast, seeded world and gradually learning how to live within it. The player explores distinct climates, gathers local resources, fells trees, makes and improves tools, trades in regional stores, equips practical and magical gear, and discovers mushroom fairy rings that reconnect places they have already reached. The immediate goal is a rich single-player adventure with readable, colorful stylized art. Its simulation contracts are designed so a later multiplayer realm can replace local authority without replacing the game.
 
 ## Project boundary
 
@@ -22,9 +22,10 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite, then choose **Enter the realm**. The current vertical slice uses
-the deterministic seed `greenway-alpha`, saves committed state in local browser storage, and includes
-first-person movement, harvesting, stores, equipment, four trade-listing slots, and fairy-ring travel.
+Open the local URL printed by Vite. The current vertical slice uses the deterministic seed
+`greenway-alpha`, saves committed state in local browser storage, and includes third-person movement,
+pivot, jump, drag-orbit camera control, harvesting, stores, equipment, four trade-listing slots, and
+fairy-ring travel.
 
 Run deterministic tests and make a production build with:
 

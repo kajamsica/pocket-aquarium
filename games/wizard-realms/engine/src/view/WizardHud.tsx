@@ -27,12 +27,15 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         <div className="wr-coins" aria-label={`${projection.coins} coins`}>◉ {projection.coins.toLocaleString()}</div>
       </div>
 
-      <div className="wr-crosshair" aria-hidden="true"><i /><i /></div>
-
-      {projection.nearbyInteraction && (
-        <button className="wr-prompt" onClick={() => onIntent({ type: 'interact' })}>
+      {projection.nearbyInteraction?.actionable && (
+        <button className="wr-prompt" data-actionable="true" onClick={() => onIntent({ type: 'interact' })}>
           <kbd>E</kbd><span><b>{projection.nearbyInteraction.action}</b>{projection.nearbyInteraction.label}</span>
         </button>
+      )}
+      {projection.nearbyInteraction && !projection.nearbyInteraction.actionable && (
+        <div className="wr-prompt" data-actionable="false" role="status">
+          <span><b>{projection.nearbyInteraction.action}</b>{projection.nearbyInteraction.label}</span>
+        </div>
       )}
 
       <aside className="wr-panel wr-backpack">
@@ -85,7 +88,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             <button key={label} onPointerDown={() => onIntent({ type: 'movement', vector })} onPointerUp={() => onIntent({ type: 'movement', vector: [0, 0] })} onPointerCancel={() => onIntent({ type: 'movement', vector: [0, 0] })}>{label}</button>
           ))}
         </div>
-        <button className="wr-touch-action" onClick={() => onIntent({ type: 'interact' })}>Interact</button>
+        <div className="wr-touch-actions">
+          <button className="wr-touch-action" onClick={() => onIntent({ type: 'jump' })}>Jump</button>
+          <button className="wr-touch-action" onClick={() => onIntent({ type: 'interact' })}>Interact</button>
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
-import { createGeneratedWorld } from './generation'
+import { createGeneratedWorld, terrainHeightAt } from './generation'
+import { canEquipItem } from './world'
 import type { EquipmentSlot, ItemId, WizardWorldState } from './types'
 
 const itemIds: ItemId[] = [
@@ -72,6 +73,7 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
   if (record(source.player)) {
     const player = source.player
     state.player.position = vec3(player.position, base.player.position)
+    state.player.verticalVelocity = number(player.verticalVelocity, 0, -50, 50)
     state.player.yaw = number(player.yaw, base.player.yaw, -1_000_000, 1_000_000)
     state.player.pitch = number(player.pitch, base.player.pitch, -Math.PI / 2, Math.PI / 2)
     state.player.coins = integer(player.coins, base.player.coins)
@@ -82,10 +84,6 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
       if (!record(entry) || !itemId(entry.itemId)) return []
       const quantity = integer(entry.quantity, 0, 0, state.player.backpackCapacity)
       return quantity > 0 ? [{ itemId: entry.itemId, quantity }] : []
-    })
-    if (record(player.equipment)) equipmentSlots.forEach((slot) => {
-      const equipped = player.equipment as Record<string, unknown>
-      state.player.equipment[slot] = equipped[slot] === null || itemId(equipped[slot]) ? equipped[slot] as ItemId | null : null
     })
     state.player.discoveredRingIds = Array.isArray(player.discoveredRingIds)
       ? player.discoveredRingIds.filter((id): id is string => typeof id === 'string' && state.fairyRings.some((ring) => ring.id === id)).filter((id, index, values) => values.indexOf(id) === index)
@@ -107,6 +105,23 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
       remaining -= quantity
       return slot.itemId && quantity > 0 ? { ...slot, quantity } : base.player.tradeSlots[slot.slotIndex]
     }) as WizardWorldState['player']['tradeSlots']
+    const requestedEquipment = record(player.equipment) ? player.equipment : {}
+    equipmentSlots.forEach((slot) => {
+      const requested = itemId(requestedEquipment[slot]) ? requestedEquipment[slot] as ItemId : null
+      const owned = requested ? state.player.inventory
+        .filter((stack) => stack.itemId === requested).reduce((sum, stack) => sum + stack.quantity, 0) : 0
+      const assigned = requested ? equipmentSlots
+        .filter((candidate) => candidate !== slot && state.player.equipment[candidate] === requested).length : 0
+      state.player.equipment[slot] = requested && canEquipItem(requested, slot) && assigned < owned ? requested : null
+    })
+  }
+  state.resources.forEach((resource) => { resource.position.y = terrainHeightAt(state.tiles, resource.position.x, resource.position.z) })
+  state.fairyRings.forEach((ring) => { ring.position.y = terrainHeightAt(state.tiles, ring.position.x, ring.position.z) })
+  state.stores.forEach((store) => { store.position.y = terrainHeightAt(state.tiles, store.position.x, store.position.z) })
+  const ground = terrainHeightAt(state.tiles, state.player.position.x, state.player.position.z)
+  if (state.player.position.y < ground) {
+    state.player.position.y = ground
+    state.player.verticalVelocity = 0
   }
   return state
 }

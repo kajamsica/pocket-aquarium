@@ -1,14 +1,48 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
+import * as THREE from 'three'
 import type { WizardFairyRing, WizardResourceNode, WizardStore, WizardViewProjection } from './contracts'
 
-function CameraRig({ player }: { player: WizardViewProjection['player'] }) {
-  useFrame(({ camera }) => {
-    camera.position.set(...player.position)
-    camera.rotation.order = 'YXZ'
-    camera.rotation.set(player.pitch, player.yaw, 0)
+function CameraRig({ player, cameraOrbit, orbiting }: {
+  player: WizardViewProjection['player']
+  cameraOrbit: readonly [number, number]
+  orbiting: boolean
+}) {
+  const orbitYaw = useRef(cameraOrbit[0])
+  const orbitPitch = useRef(cameraOrbit[1])
+  const target = useMemo(() => new THREE.Vector3(), [])
+  const desired = useMemo(() => new THREE.Vector3(), [])
+  useFrame(({ camera }, delta) => {
+    const blend = 1 - Math.exp(-(orbiting ? 18 : 2.6) * delta)
+    orbitYaw.current += ((orbiting ? cameraOrbit[0] : 0) - orbitYaw.current) * blend
+    orbitPitch.current += ((orbiting ? cameraOrbit[1] : 0.28) - orbitPitch.current) * blend
+    const heading = player.yaw + orbitYaw.current
+    const distance = 6.4
+    const horizontal = Math.cos(orbitPitch.current) * distance
+    target.set(player.position[0], player.position[1] + 1.35, player.position[2])
+    desired.set(
+      target.x + Math.sin(heading) * horizontal,
+      target.y + 1.2 + Math.sin(orbitPitch.current) * distance,
+      target.z + Math.cos(heading) * horizontal,
+    )
+    camera.position.lerp(desired, 1 - Math.exp(-10 * delta))
+    camera.lookAt(target)
   })
   return null
+}
+
+function WizardAvatar({ player }: { player: WizardViewProjection['player'] }) {
+  return (
+    <group position={player.position as [number, number, number]} rotation={[0, player.yaw, 0]} aria-label="Player wizard">
+      <mesh position={[0, 0.92, 0]} castShadow><coneGeometry args={[0.52, 1.65, 7]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh>
+      <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 10, 8]} /><meshStandardMaterial color="#c9946c" roughness={0.9} /></mesh>
+      <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.78} /></mesh>
+      <mesh position={[0, 1.98, 0]} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /><meshStandardMaterial color="#34234f" /></mesh>
+      <mesh position={[0, 1.78, -0.31]} castShadow><coneGeometry args={[0.08, 0.2, 6]} /><meshStandardMaterial color="#bd805d" /></mesh>
+      <mesh position={[0.48, 1.08, 0]} rotation={[0.05, 0, 0.12]} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /><meshStandardMaterial color="#6d472c" /></mesh>
+      <pointLight position={[0.5, 2.28, 0]} color="#bd82ff" intensity={2.2} distance={3.5} />
+    </group>
+  )
 }
 
 function Resource({ node }: { node: WizardResourceNode }) {
@@ -86,7 +120,11 @@ function FairyRing({ ring }: { ring: WizardFairyRing }) {
   )
 }
 
-export function WizardScene({ projection }: { projection: WizardViewProjection }) {
+export function WizardScene({ projection, cameraOrbit, orbiting }: {
+  projection: WizardViewProjection
+  cameraOrbit: readonly [number, number]
+  orbiting: boolean
+}) {
   return (
     <Canvas shadows dpr={[1, 1.5]} camera={{ fov: 68, near: 0.08, far: 180 }}>
       <color attach="background" args={['#82b8c4']} />
@@ -94,7 +132,7 @@ export function WizardScene({ projection }: { projection: WizardViewProjection }
       <ambientLight intensity={1.15} color="#b8d7f0" />
       <directionalLight position={[18, 30, 12]} intensity={3.2} color="#fff1c4" castShadow />
       <hemisphereLight args={['#a9ddff', '#355321', 1.2]} />
-      <CameraRig player={projection.player} />
+      <CameraRig player={projection.player} cameraOrbit={cameraOrbit} orbiting={orbiting} />
       {projection.terrain.map((cell) => (
         <mesh key={cell.id} position={[cell.position[0], cell.position[1] - cell.height / 2, cell.position[2]]} receiveShadow>
           <boxGeometry args={[cell.size[0], cell.height, cell.size[1]]} />
@@ -104,6 +142,7 @@ export function WizardScene({ projection }: { projection: WizardViewProjection }
       {projection.resources.map((node) => <Resource key={node.id} node={node} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
+      <WizardAvatar player={projection.player} />
     </Canvas>
   )
 }

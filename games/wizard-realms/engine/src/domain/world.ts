@@ -2,7 +2,7 @@ import type {
   EquipmentSlot, IntentRejection, ItemId, PlayerState, ResourceKind, Vec3, WizardAdvanceResult,
   WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
-import { createGeneratedWorld } from './generation'
+import { createGeneratedWorld, terrainHeightAt } from './generation'
 
 const INTERACT_DISTANCE = 3
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
@@ -10,6 +10,7 @@ const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
   woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
 }
+export const canEquipItem = (itemId: ItemId, slot: EquipmentSlot) => itemSlots[itemId]?.includes(slot) ?? false
 
 const finite = (value: number) => Number.isFinite(value)
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
@@ -17,7 +18,11 @@ const cloneState = (state: WizardWorldState): WizardWorldState => JSON.parse(JSO
 const levelForXp = (xp: number) => 1 + Math.floor(Math.max(0, xp) / 100)
 const inventoryCount = (player: PlayerState) => player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
 const reservedCount = (player: PlayerState) => player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-const owns = (player: PlayerState, itemId: ItemId) => player.inventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0
+const owns = (player: PlayerState, itemId: ItemId) => player.inventory
+  .filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
+const equippedCount = (player: PlayerState, itemId: ItemId, except?: EquipmentSlot) =>
+  (Object.entries(player.equipment) as [EquipmentSlot, ItemId | null][])
+    .filter(([slot, equipped]) => slot !== except && equipped === itemId).length
 
 function addItem(player: PlayerState, itemId: ItemId, quantity: number): boolean {
   if (inventoryCount(player) + reservedCount(player) + quantity > player.backpackCapacity) return false
@@ -62,11 +67,11 @@ function applyIntent(
   if (intent.type === 'move') {
     if (![intent.delta.x, intent.delta.y, intent.delta.z].every(finite) || Math.hypot(intent.delta.x, intent.delta.y, intent.delta.z) > 4) return fail('invalid_value', 'Movement must be finite and at most four meters per tick.')
     const state = cloneState(current)
-    state.player.position = {
-      x: Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x)),
-      y: Math.max(0, Math.min(6, state.player.position.y + intent.delta.y)),
-      z: Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z)),
-    }
+    const x = Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x))
+    const z = Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z))
+    const ground = terrainHeightAt(state.tiles, x, z)
+    state.player.position = { x, y: Math.max(state.player.position.y, ground), z }
+    if (state.player.position.y === ground) state.player.verticalVelocity = 0
     return { state, event: event(state, tick, { type: 'player_moved', position: { ...state.player.position } }) }
   }
 
@@ -76,6 +81,14 @@ function applyIntent(
     state.player.yaw += intent.yawDelta
     state.player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.player.pitch + intent.pitchDelta))
     return { state, event: event(state, tick, { type: 'player_looked', yaw: state.player.yaw, pitch: state.player.pitch }) }
+  }
+
+  if (intent.type === 'jump') {
+    const ground = terrainHeightAt(current.tiles, current.player.position.x, current.player.position.z)
+    if (Math.abs(current.player.position.y - ground) > 0.001 || current.player.verticalVelocity !== 0) return fail('invalid_value', 'Player is already airborne.')
+    const state = cloneState(current)
+    state.player.verticalVelocity = 5
+    return { state, event: event(state, tick, { type: 'player_jumped' }) }
   }
 
   if (intent.type === 'harvest') {
@@ -137,7 +150,8 @@ function applyIntent(
 
   if (intent.type === 'equip_item') {
     if (owns(current.player, intent.itemId) < 1) return fail('not_owned', 'Item is not in the backpack.')
-    if (!itemSlots[intent.itemId]?.includes(intent.slot)) return fail('wrong_slot', 'Item cannot use that equipment slot.')
+    if (!canEquipItem(intent.itemId, intent.slot)) return fail('wrong_slot', 'Item cannot use that equipment slot.')
+    if (equippedCount(current.player, intent.itemId, intent.slot) >= owns(current.player, intent.itemId)) return fail('not_owned', 'No unassigned copy of this item is available.')
     const state = cloneState(current)
     state.player.equipment[intent.slot] = intent.itemId
     return { state, event: event(state, tick, { type: 'item_equipped', itemId: intent.itemId, slot: intent.slot }) }
@@ -148,6 +162,7 @@ function applyIntent(
     const slot = current.player.tradeSlots[intent.slotIndex]
     if (slot.itemId !== null) return fail('trade_slot_unavailable', 'Trade slot is occupied.')
     if (owns(current.player, intent.itemId) < intent.quantity) return fail('not_owned', 'Not enough items to reserve.')
+    if (owns(current.player, intent.itemId) - intent.quantity < equippedCount(current.player, intent.itemId)) return fail('not_owned', 'Equipped items cannot be listed for trade.')
     const state = cloneState(current)
     removeItem(state.player, intent.itemId, intent.quantity)
     state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
@@ -158,15 +173,15 @@ function applyIntent(
   const slot = current.player.tradeSlots[intent.slotIndex]
   if (slot.itemId === null) return fail('trade_slot_unavailable', 'Trade slot is already empty.')
   const state = cloneState(current)
-  addItem(state.player, slot.itemId, slot.quantity)
   state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: null, quantity: 0, unitPrice: 0 }
+  if (!addItem(state.player, slot.itemId, slot.quantity)) return fail('capacity', 'Backpack cannot accept the escrowed item.')
   return { state, event: event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity }) }
 }
 
 export function createWizardWorld(seed: string): WizardWorldState { return createGeneratedWorld(seed) }
 
 export function advanceWizardWorld(state: WizardWorldState, intents: readonly WizardIntent[]): WizardAdvanceResult {
-  let next = state
+  let next = cloneState(state)
   const events: WizardEvent[] = []
   const rejections: IntentRejection[] = []
   const tick = state.tick + 1
@@ -176,10 +191,20 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
     if (result.event) events.push(result.event)
     if (result.rejection) rejections.push(result.rejection)
   })
-  if (events.length > 0) {
-    next.tick = tick
-    next.rng.simulation = stepRng(next.rng.simulation)
+  const ground = terrainHeightAt(next.tiles, next.player.position.x, next.player.position.z)
+  if (next.player.position.y > ground || next.player.verticalVelocity > 0) {
+    next.player.position.y += next.player.verticalVelocity * next.fixedStepMs / 1_000
+    next.player.verticalVelocity -= 9.8 * next.fixedStepMs / 1_000
+    if (next.player.position.y <= ground) {
+      next.player.position.y = ground
+      next.player.verticalVelocity = 0
+    }
+  } else {
+    next.player.position.y = ground
+    next.player.verticalVelocity = 0
   }
+  next.tick = tick
+  next.rng.simulation = stepRng(next.rng.simulation)
   return { state: next, events, rejections }
 }
 

@@ -70,6 +70,7 @@ export interface WizardInteractionPrompt {
   targetId: string
   label: string
   action: string
+  actionable: boolean
 }
 
 export interface WizardViewProjection {
@@ -107,7 +108,7 @@ export interface WizardViewProjection {
 
 export type WizardViewIntent =
   | { type: 'movement'; vector: Vec2 }
-  | { type: 'look'; delta: Vec2 }
+  | { type: 'jump' }
   | { type: 'interact' }
   | { type: 'store.select-listing'; storeId: string; listingId: string }
   | { type: 'equipment.equip'; stackId: string; slot: EquipmentSlot }

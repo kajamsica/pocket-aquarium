@@ -49,10 +49,18 @@ function makeTiles(seed: string): WorldTile[] {
   return tiles
 }
 
-function makePlayer(): PlayerState {
+export function terrainHeightAt(tiles: readonly WorldTile[], x: number, z: number): number {
+  return tiles.reduce((closest, tile) => {
+    const closestDistance = Math.hypot(x - closest.center.x, z - closest.center.z)
+    return Math.hypot(x - tile.center.x, z - tile.center.z) < closestDistance ? tile : closest
+  }).center.y
+}
+
+function makePlayer(tiles: readonly WorldTile[]): PlayerState {
   const empty = (slotIndex: 0 | 1 | 2 | 3) => ({ slotIndex, itemId: null, quantity: 0, unitPrice: 0 } as const)
   return {
-    position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, coins: 120, xp: 0, level: 1,
+    position: { x: 0, y: terrainHeightAt(tiles, 0, 0), z: 0 }, verticalVelocity: 0,
+    yaw: 0, pitch: 0, coins: 120, xp: 0, level: 1,
     backpackCapacity: 20, inventory: [{ itemId: 'woodcutters_axe', quantity: 1 }],
     equipment: { head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null },
     tradeSlots: [empty(0), empty(1), empty(2), empty(3)], discoveredRingIds: [],
@@ -68,13 +76,13 @@ export function createGeneratedWorld(seed: string): WizardWorldState {
     return { id: `resource-${tile.id}`, tileId: tile.id, kind, position: { x: tile.center.x + (unit(`${normalizedSeed}:${tile.id}:x`) - 0.5) * 1.5, y: tile.center.y, z: tile.center.z + (unit(`${normalizedSeed}:${tile.id}:z`) - 0.5) * 1.5 }, health: maxHealth, maxHealth, depleted: false }
   })
   const stores: [StoreState, StoreState] = [
-    { id: 'store-greenway', name: 'Greenway Outfitters', position: { x: -2, y: 0, z: 2 }, listings: [{ id: 'hat', itemId: 'apprentice_hat', price: 20, stock: 3 }, { id: 'axe', itemId: 'woodcutters_axe', price: 35, stock: 2 }] },
-    { id: 'store-highland', name: 'Highland Arcanum', position: { x: 8, y: 0, z: 8 }, listings: [{ id: 'wand', itemId: 'oak_wand', price: 45, stock: 2 }, { id: 'shield', itemId: 'wooden_shield', price: 40, stock: 2 }] },
+    { id: 'store-greenway', name: 'Greenway Outfitters', position: { x: -2, y: terrainHeightAt(tiles, -2, 2), z: 2 }, listings: [{ id: 'hat', itemId: 'apprentice_hat', price: 20, stock: 3 }, { id: 'axe', itemId: 'woodcutters_axe', price: 35, stock: 2 }] },
+    { id: 'store-highland', name: 'Highland Arcanum', position: { x: 8, y: terrainHeightAt(tiles, 8, 8), z: 8 }, listings: [{ id: 'wand', itemId: 'oak_wand', price: 45, stock: 2 }, { id: 'shield', itemId: 'wooden_shield', price: 40, stock: 2 }] },
   ]
   const fairyRings: FairyRing[] = [
-    { id: 'ring-greenway', name: 'Greenway Ring', kind: 'mushroom', position: { x: 2, y: 0, z: -2 } },
-    { id: 'ring-highland', name: 'Highland Ring', kind: 'mushroom', position: { x: 8, y: 0, z: 8 } },
+    { id: 'ring-greenway', name: 'Greenway Ring', kind: 'mushroom', position: { x: 2, y: terrainHeightAt(tiles, 2, -2), z: -2 } },
+    { id: 'ring-highland', name: 'Highland Ring', kind: 'mushroom', position: { x: 8, y: terrainHeightAt(tiles, 8, 8), z: 8 } },
   ]
   const generation = hashSeed(`${normalizedSeed}:generation`)
-  return { schemaVersion: 'wizard-world/v1', seed: normalizedSeed, tick: 0, fixedStepMs: 50, rng: { generation, simulation: hashSeed(`${normalizedSeed}:simulation`) }, tiles, resources, stores, fairyRings, player: makePlayer(), eventSequence: 0 }
+  return { schemaVersion: 'wizard-world/v1', seed: normalizedSeed, tick: 0, fixedStepMs: 50, rng: { generation, simulation: hashSeed(`${normalizedSeed}:simulation`) }, tiles, resources, stores, fairyRings, player: makePlayer(tiles), eventSequence: 0 }
 }

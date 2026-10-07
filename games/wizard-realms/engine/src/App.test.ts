@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createWizardWorld, type WizardWorldState } from './domain'
-import { intentForView, movementIntent, toViewProjection } from './App'
+import { controlIntents, intentForView, movementIntent, toViewProjection } from './App'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 
@@ -18,11 +18,18 @@ describe('Wizard view adapter', () => {
     expect(projection.recentEvents).toEqual(['Visible event'])
     expect(projection.equipment.focus).toBeNull()
     expect(projection.equipment.hands).toBeNull()
+    expect(projection.player.position).toEqual([state.player.position.x, state.player.position.y, state.player.position.z])
   })
 
-  it('maps movement relative to yaw at the bounded per-tick speed', () => {
+  it('maps W/S to facing-relative movement and A/D to pivot without strafing', () => {
     const state = createWizardWorld('greenway-alpha')
     expect(movementIntent(state, [0, 1])).toEqual({ type: 'move', delta: { x: 0, y: 0, z: -0.16 } })
+    expect(movementIntent(state, [1, 0])).toBeNull()
+    expect(controlIntents(state, [1, 0])).toEqual([{ type: 'look', yawDelta: -0.045, pitchDelta: 0 }])
+    expect(controlIntents(state, [-1, 0])).toEqual([{ type: 'look', yawDelta: 0.045, pitchDelta: 0 }])
+    const pivotingForward = controlIntents(state, [1, 1])
+    expect(pivotingForward[0]).toEqual({ type: 'look', yawDelta: -0.045, pitchDelta: 0 })
+    expect(pivotingForward[1]?.type).toBe('move')
     state.player.yaw = -Math.PI / 2
     const forward = movementIntent(state, [0, 1])
     expect(forward?.type).toBe('move')
@@ -32,10 +39,10 @@ describe('Wizard view adapter', () => {
     expect(movementIntent(state, [0, 0])).toBeNull()
   })
 
-  it('maps look, store, equipment, trade, and ring controls to exact domain intents', () => {
+  it('maps jump, store, equipment, trade, and ring controls to exact domain intents', () => {
     const state = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(state)
-    expect(intentForView(state, { type: 'look', delta: [0.25, -0.1] })).toEqual({ type: 'look', yawDelta: -0.25, pitchDelta: 0.1 })
+    expect(intentForView(state, { type: 'jump' })).toEqual({ type: 'jump' })
     expect(intentForView(state, { type: 'store.select-listing', storeId: 'store-greenway', listingId: 'hat' })).toEqual({ type: 'buy_store_listing', storeId: 'store-greenway', listingId: 'hat' })
     expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'focus' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
     expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-wooden_shield', slot: 'hands' })).toEqual({ type: 'equip_item', itemId: 'wooden_shield', slot: 'offHand' })
@@ -55,5 +62,20 @@ describe('Wizard view adapter', () => {
     ringState.resources.forEach((resource) => { resource.depleted = true })
     ringState.player.position = { ...ringState.fairyRings[0].position }
     expect(intentForView(ringState, { type: 'interact' })).toEqual({ type: 'discover_fairy_ring', ringId: ringState.fairyRings[0].id })
+  })
+
+  it('renders store and discovered-ring context as honest non-actionable prompts', () => {
+    const storeState = copy(createWizardWorld('greenway-alpha'))
+    storeState.resources.forEach((resource) => { resource.depleted = true })
+    storeState.player.position = { ...storeState.stores[0].position }
+    expect(toViewProjection(storeState, []).nearbyInteraction).toMatchObject({ kind: 'store', action: 'Store open', actionable: false })
+    expect(intentForView(storeState, { type: 'interact' })).toBeNull()
+
+    const ringState = copy(createWizardWorld('greenway-alpha'))
+    ringState.resources.forEach((resource) => { resource.depleted = true })
+    ringState.player.discoveredRingIds = ringState.fairyRings.map((ring) => ring.id)
+    ringState.player.position = { ...ringState.fairyRings[0].position }
+    expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Choose destination', actionable: false })
+    expect(intentForView(ringState, { type: 'interact' })).toBeNull()
   })
 })

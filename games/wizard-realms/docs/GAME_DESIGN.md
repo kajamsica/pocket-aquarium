@@ -4,7 +4,7 @@
 
 Wizard Realms is a working title and a design target. This document defines what the team intends to build. It does not describe a finished game.
 
-The first product is a first-person, single-player fantasy RPG. The simulation and content boundaries must leave a credible path to cooperative play and, only after measured proofs, a persistent massively multiplayer world.
+The first product is a third-person, single-player fantasy RPG. The simulation and content boundaries must leave a credible path to cooperative play and, only after measured proofs, a persistent massively multiplayer world.
 
 The design inherits the authority, behavior, asset, tooling, and validation methods in the [Simulation-Rich Game Development Playbook](../../../docs/game-development/README.md). In particular:
 
@@ -25,7 +25,7 @@ Magic is part of the world, not a menu pasted over it. The player learns by obse
 1. **A world worth reading:** Climate, terrain, vegetation, creatures, materials, settlements, and weather should make each region legible before the map label does.
 2. **Actions leave useful consequences:** Gathering changes inventory and local availability. Tools wear and improve. Discovery opens routes. Trade changes purchasing power.
 3. **Progress comes from practiced life:** Exploration, woodcutting, gathering, crafting, tool use, commerce, and magic each produce relevant skill growth.
-4. **Readable fantasy:** Silhouettes, colors, effects, landmarks, and interaction affordances remain clear in first person and at modest hardware budgets.
+4. **Readable fantasy:** Silhouettes, colors, effects, landmarks, and interaction affordances remain clear from an over-the-shoulder camera and at modest hardware budgets.
 5. **One game at every scale:** Single-player rules must not be throwaway rules. Later servers may own them, but must not redefine them.
 
 ## Visual direction
@@ -84,7 +84,7 @@ A region should be recognizable through at least four channels: silhouette, mate
 
 ### Explore and discover
 
-The player travels in first person, reads terrain, marks or names useful locations, discovers settlements and fairy rings, and gradually replaces uncertainty with a reliable personal map.
+The player travels in third person, reads terrain, marks or names useful locations, discovers settlements and fairy rings, and gradually replaces uncertainty with a reliable personal map.
 
 Discovery is authoritative state. A location is discovered only after the player crosses its validation volume or completes its discovery interaction. Seeing a distant landmark is not sufficient unless a content profile explicitly permits sight discovery.
 
@@ -206,7 +206,7 @@ The exact penalties are calibration, not foundation law.
 
 The first 30 to 45 minutes should prove the game's identity:
 
-1. Wake at a safe woodland edge and learn first-person movement and interaction.
+1. Wake at a safe woodland edge and learn third-person movement, pivot, jump, camera orbit, and interaction.
 2. Inspect the backpack, starter coins, worn axe, clothing, and empty equipment slots.
 3. Follow environmental cues to a settlement while collecting one herb and one fallen branch.
 4. Meet a provisioner or craftsperson and learn the store transaction.
@@ -260,7 +260,7 @@ Controller and touch support are intentions only until real-device journeys pass
 MVP includes:
 
 - one deterministic seed and one validated woodland region with a neighboring subregion;
-- first-person movement, collision, interaction focus, and pause;
+- third-person movement, pivot, jump, camera orbit, collision, interaction focus, and pause;
 - basic gathering and representative tree chopping;
 - small backpack, capacity, coins, one store, and four trade-listing slots;
 - a minimal XP and skill loop;
@@ -297,7 +297,7 @@ No MMO feature enters production until the measurable gates in [Scaling Architec
 
 The design remains aligned only if:
 
-- first-person exploration and practical wizard progression remain the core fantasy;
+- third-person exploration and practical wizard progression remain the core fantasy;
 - regions are mechanically and visually distinct;
 - world changes follow typed, deterministic authority;
 - backpack, coins, XP, equipment, shops, and trade listings survive save and replay;

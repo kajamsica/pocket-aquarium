@@ -43,6 +43,7 @@ export interface TradeSlot {
 
 export interface PlayerState {
   position: Vec3
+  verticalVelocity: number
   yaw: number
   pitch: number
   coins: number
@@ -72,6 +73,7 @@ export interface WizardWorldState {
 export type WizardIntent =
   | { type: 'move'; delta: Vec3 }
   | { type: 'look'; yawDelta: number; pitchDelta: number }
+  | { type: 'jump' }
   | { type: 'harvest'; resourceId: string }
   | { type: 'discover_fairy_ring'; ringId: string }
   | { type: 'teleport_fairy_ring'; sourceRingId: string; targetRingId: string }
@@ -84,6 +86,7 @@ type EventBase = { sequence: number; tick: number }
 export type WizardEvent = EventBase & (
   | { type: 'player_moved'; position: Vec3 }
   | { type: 'player_looked'; yaw: number; pitch: number }
+  | { type: 'player_jumped' }
   | { type: 'resource_damaged'; resourceId: string; health: number }
   | { type: 'resource_harvested'; resourceId: string; itemId: ItemId; quantity: number; xp: number }
   | { type: 'fairy_ring_discovered'; ringId: string }
