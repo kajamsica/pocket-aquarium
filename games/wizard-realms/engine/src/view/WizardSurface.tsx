@@ -11,6 +11,7 @@ export interface WizardSurfaceProps {
 }
 
 const MOVEMENT_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
+export const CENTERED_CAMERA_ORBIT = [0, 0.28] as const
 
 export function movementVector(keys: ReadonlySet<string>): readonly [number, number] {
   const x = Number(keys.has('KeyD')) - Number(keys.has('KeyA'))
@@ -36,7 +37,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
   const rootRef = useRef<HTMLDivElement>(null)
   const pressedKeys = useRef(new Set<string>())
   const [dragging, setDragging] = useState(false)
-  const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>([0, 0.28])
+  const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
   const mapButtonRef = useRef<HTMLButtonElement>(null)
   const mapCloseRef = useRef<HTMLButtonElement>(null)
@@ -46,6 +47,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
     if (next) {
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
+      setCameraOrbit(CENTERED_CAMERA_ORBIT)
       window.requestAnimationFrame(() => mapCloseRef.current?.focus())
     } else window.requestAnimationFrame(() => mapButtonRef.current?.focus())
     setMapOpen(next)
@@ -55,6 +57,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
     const clearControls = () => {
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
+      setCameraOrbit(CENTERED_CAMERA_ORBIT)
     }
     const onVisibilityChange = () => { if (document.visibilityState !== 'visible') clearControls() }
     const onKeyDown = (event: KeyboardEvent) => {
@@ -103,8 +106,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
       <div className="wr-scene" data-dragging={dragging}
         onPointerDown={(event) => { rootRef.current?.focus(); event.currentTarget.setPointerCapture(event.pointerId); setDragging(true) }}
         onPointerMove={(event) => { if (dragging) setCameraOrbit((current) => cameraOrbitFromDrag(current, [event.movementX, event.movementY])) }}
-        onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setDragging(false) }}
-        onPointerCancel={() => setDragging(false)}>
+        onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setDragging(false); setCameraOrbit(CENTERED_CAMERA_ORBIT) }}
+        onPointerCancel={() => { setDragging(false); setCameraOrbit(CENTERED_CAMERA_ORBIT) }}>
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging} />
       </div>
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />
