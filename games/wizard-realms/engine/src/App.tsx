@@ -330,6 +330,7 @@ export default function App() {
     if (domainIntent) queuedRef.current.push(domainIntent)
   }, [])
   const restart = useCallback(() => {
+    if (!window.confirm('Restart Wizard Realms? This clears your saved progress and starts over.')) return
     const fresh = resetSavedWorld(window.localStorage)
     worldRef.current = fresh
     queuedRef.current = []
