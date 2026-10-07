@@ -16,6 +16,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const nearbyRing = projection.nearbyInteraction?.kind === 'fairy-ring'
     ? projection.fairyRings.find((ring) => ring.id === projection.nearbyInteraction?.targetId)
     : undefined
+  const discoveredDestinations = nearbyRing?.destinations.filter((destination) => destination.discovered) ?? []
   const usedCapacity = projection.backpack.stacks.reduce((total, stack) => total + stack.quantity, 0)
   const firstTradeSlot = projection.tradeListings.findIndex((listing) => listing === null)
   const xpPercent = Math.min(100, projection.experience.nextLevelXp > 0
@@ -79,10 +80,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         {nearbyStore.listings.map((listing) => <button key={listing.id} onClick={() => onIntent({ type: 'store.select-listing', storeId: nearbyStore.id, listingId: listing.id })}><b>{listing.name}</b><span>{listing.price}g{listing.stock === undefined ? '' : ` · ${listing.stock} left`}</span></button>)}
       </aside>}
 
-      {nearbyRing && <aside className="wr-panel wr-context">
+      {nearbyRing?.discovered && <aside className="wr-panel wr-context">
         <header>{nearbyRing.label}</header>
-        <p className="wr-caption">{nearbyRing.destinations.some((destination) => destination.discovered) ? 'Discovered fairy paths' : 'Discover another fairy ring to unlock travel.'}</p>
-        {nearbyRing.destinations.filter((destination) => destination.discovered).map((destination) => <button key={destination.ringId} onClick={() => onIntent({ type: 'fairy-ring.teleport', ringId: nearbyRing.id, destinationRingId: destination.ringId })}><b>{destination.label}</b><span>Travel</span></button>)}
+        <p className="wr-caption">{discoveredDestinations.length ? 'Discovered fairy paths' : 'Discover another fairy ring to unlock travel.'}</p>
+        {discoveredDestinations.map((destination) => <button key={destination.ringId} onClick={() => onIntent({ type: 'fairy-ring.teleport', ringId: nearbyRing.id, destinationRingId: destination.ringId })}><b>{destination.label}</b><span>Travel</span></button>)}
       </aside>}
 
       <div className="wr-events" aria-live="polite">{projection.recentEvents.slice(-3).map((event, index) => <p key={`${index}-${event}`}>{event}</p>)}</div>
