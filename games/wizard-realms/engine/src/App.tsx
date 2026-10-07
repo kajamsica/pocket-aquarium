@@ -27,6 +27,17 @@ const MOVE_METERS_PER_TICK = 0.16
 export const PIVOT_RADIANS_PER_TICK = 0.13
 const INTERACTION_RANGE = 3
 const WELCOME_MESSAGE = 'Welcome to the Greenway vertical slice.'
+// Mobile vertical bands, measured from the bottom edge (plus safe-area inset):
+//   0-135   .wr-touch cluster (14px inset + two 58px d-pad rows + 5px gap)
+//   142-222 objective pill (max-height 80px; long text scrolls inside the pill)
+//   230+    .wr-prompt / .wr-context / .wr-events, relocated from the view's 148-152px anchors
+export const OBJECTIVE_STYLES = `
+.wr-objective{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:4;display:flex;gap:10px;align-items:center;padding:5px 5px 5px 10px;border-radius:999px;background:#101a17dd;color:#d8c987;font:11px system-ui;white-space:nowrap}
+.wr-objective b{color:#f5d889;letter-spacing:.12em}
+.wr-objective button{padding:3px 9px;border:1px solid #cfb66b55;border-radius:999px;background:#374b3d;color:#f8e8b2;font:inherit;cursor:pointer}
+@media(max-width:719px){.wr-objective{left:10px;right:10px;bottom:calc(142px + env(safe-area-inset-bottom,0px));transform:none;box-sizing:border-box;max-height:80px;border-radius:12px;white-space:normal;font-size:12px;line-height:1.3}.wr-objective span{flex:1;min-width:0;max-height:70px;overflow-y:auto}.wr-objective button{flex:none;min-width:44px;min-height:44px}.wr-surface .wr-prompt,.wr-surface .wr-context,.wr-surface .wr-events{bottom:calc(230px + env(safe-area-inset-bottom,0px))}.wr-surface .wr-context{box-sizing:border-box;max-height:max(140px,calc(100vh - 340px));overflow-y:auto}}
+@media(max-width:719px) and (max-height:590px){.wr-surface:has(.wr-context) .wr-backpack{display:none}}
+`
 
 const ITEM_NAMES: Record<ItemId, string> = {
   woodcutters_axe: 'Woodcutter axe', logs: 'Greenway logs', marsh_herb: 'Marsh herb',
@@ -72,7 +83,10 @@ const axeEquipped = (state: WizardWorldState) => state.player.equipment.mainHand
 export function objectiveFor(state: WizardWorldState): string {
   const logs = owned(state, 'logs')
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
-  if (state.player.discoveredRingIds.includes('ring-highland')) return 'Greenway linked. Use a fairy ring to travel home.'
+  const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
+  const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
+  if (greenwayRing && highlandRing) return 'Greenway linked. Use a fairy ring to travel home.'
+  if (highlandRing) return 'Return to the Greenway and discover its fairy ring near the start to link travel home.'
   if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'
   if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Build the Highland bridge east along the ridge (6 logs).' : `${gather(6)}, then build the Highland bridge east along the ridge.`
   if (axeEquipped(state)) return logs >= 4 ? 'Build the Greenway ladder north (4 logs).' : `${gather(4)}, then build the Greenway ladder north.`
@@ -268,9 +282,10 @@ export default function App() {
 
   return <main style={{ position: 'fixed', inset: 0, background: '#14221f' }}>
     <WizardSurface projection={projection} onIntent={onIntent} diagnostics />
-    <div role="status" style={{ position: 'absolute', left: '50%', bottom: 8, transform: 'translateX(-50%)', zIndex: 4, display: 'flex', gap: 10, alignItems: 'center', padding: '5px 5px 5px 10px', borderRadius: 999, background: '#101a17dd', color: '#d8c987', font: '11px system-ui', whiteSpace: 'nowrap' }}>
-      <span><b style={{ color: '#f5d889', letterSpacing: '.12em' }}>OBJECTIVE</b> {objectiveFor(world)}</span>
-      <button type="button" onClick={restart} style={{ padding: '3px 9px', border: '1px solid #cfb66b55', borderRadius: 999, background: '#374b3d', color: '#f8e8b2', font: 'inherit', cursor: 'pointer' }}>Restart</button>
+    <style>{OBJECTIVE_STYLES}</style>
+    <div className="wr-objective" role="status">
+      <span><b>OBJECTIVE</b> {objectiveFor(world)}</span>
+      <button type="button" onClick={restart}>Restart</button>
     </div>
   </main>
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createWizardWorld, type WizardWorldState } from './domain'
-import { PIVOT_RADIANS_PER_TICK, controlIntents, intentForView, movementIntent, objectiveFor, resetSavedWorld, toViewProjection } from './App'
+import { OBJECTIVE_STYLES, PIVOT_RADIANS_PER_TICK, controlIntents, intentForView, movementIntent, objectiveFor, resetSavedWorld, toViewProjection } from './App'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 const withAxeEquipped = (state: WizardWorldState) => { state.player.equipment.mainHand = 'woodcutters_axe'; return state }
@@ -115,6 +115,77 @@ describe('Wizard view adapter', () => {
 
     state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
     expect(objectiveFor(state)).toBe('Greenway linked. Use a fairy ring to travel home.')
+  })
+
+  it('only announces linked travel once both fairy rings are discovered', () => {
+    const linked = 'Greenway linked. Use a fairy ring to travel home.'
+    const state = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
+    state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+
+    state.player.discoveredRingIds = []
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+
+    state.player.discoveredRingIds = ['ring-greenway']
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+
+    state.player.discoveredRingIds = ['ring-highland']
+    expect(objectiveFor(state)).toBe('Return to the Greenway and discover its fairy ring near the start to link travel home.')
+
+    state.player.discoveredRingIds = ['ring-highland', 'ring-greenway']
+    expect(objectiveFor(state)).toBe(linked)
+
+    const earlyGreenway = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
+    earlyGreenway.player.discoveredRingIds = ['ring-greenway']
+    expect(objectiveFor(earlyGreenway)).toBe('Gather logs from Greenway oaks (0/4), then build the Greenway ladder north.')
+  })
+
+  it('reflows the objective pill above the mobile touch controls instead of a nowrap overlay', () => {
+    const mobile = /@media\(max-width:719px\)\{(.*?)\}\n@media/s.exec(OBJECTIVE_STYLES)?.[1]
+    expect(mobile).toBeDefined()
+    const pill = /\.wr-objective\{([^}]*)\}/.exec(mobile!)?.[1] ?? ''
+    const button = /\.wr-objective button\{([^}]*)\}/.exec(mobile!)?.[1] ?? ''
+    expect(pill).toContain('white-space:normal')
+    expect(pill).toContain('left:10px;right:10px')
+    expect(pill).toContain('transform:none')
+    const bottom = /bottom:calc\((\d+)px \+ env\(safe-area-inset-bottom/.exec(pill)
+    expect(bottom).not.toBeNull()
+    // .wr-touch occupies 14px inset + 2 x 58px d-pad rows + 5px gap = 135px from the bottom edge.
+    expect(Number(bottom![1])).toBeGreaterThanOrEqual(135)
+    expect(button).toContain('min-width:44px')
+    expect(button).toContain('min-height:44px')
+  })
+
+  it('keeps mobile prompt, context, and event surfaces out of the objective band', () => {
+    const mobile = /@media\(max-width:719px\)\{(.*?)\}\n@media/s.exec(OBJECTIVE_STYLES)![1]
+    const rules = [...mobile.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(([, selectors, body]) => ({ selectors: selectors.split(',').map((selector) => selector.trim()), body }))
+    const declaration = (selector: string, property: string) => rules
+      .filter((rule) => rule.selectors.includes(selector))
+      .flatMap((rule) => rule.body.split(';'))
+      .filter((entry) => entry.startsWith(`${property}:`)).pop()?.slice(property.length + 1)
+    const px = (value: string | undefined) => Number(/^(?:calc\()?(\d+)px/.exec(value ?? '')?.[1] ?? NaN)
+
+    const objectiveBottom = px(declaration('.wr-objective', 'bottom'))
+    const objectiveMaxHeight = px(declaration('.wr-objective', 'max-height'))
+    expect(objectiveBottom).toBeGreaterThanOrEqual(135)
+    expect(objectiveMaxHeight).toBeGreaterThan(0)
+    expect(px(declaration('.wr-objective span', 'max-height'))).toBeLessThanOrEqual(objectiveMaxHeight - 10)
+    expect(declaration('.wr-objective span', 'overflow-y')).toBe('auto')
+
+    const objectiveTop = objectiveBottom + objectiveMaxHeight
+    for (const surface of ['.wr-surface .wr-prompt', '.wr-surface .wr-context', '.wr-surface .wr-events']) {
+      const value = declaration(surface, 'bottom')
+      expect(value ?? '', `${surface} must be repositioned on mobile`).toContain('env(safe-area-inset-bottom')
+      expect(px(value), `${surface} must sit above the objective band (${objectiveTop}px)`).toBeGreaterThanOrEqual(objectiveTop + 8)
+    }
+    expect(declaration('.wr-surface .wr-context', 'overflow-y')).toBe('auto')
+    expect(declaration('.wr-surface .wr-context', 'max-height')).toContain('100vh')
+    expect(mobile).not.toContain('pointer-events:none')
+    expect(mobile).not.toContain('display:none')
+  })
+
+  it('removes the backpack collision while a compact-height context panel is open', () => {
+    expect(OBJECTIVE_STYLES).toContain('@media(max-width:719px) and (max-height:590px)')
+    expect(OBJECTIVE_STYLES).toContain('.wr-surface:has(.wr-context) .wr-backpack{display:none}')
   })
 
   it('restarts by clearing current and legacy saves and recreating the seeded world', () => {
