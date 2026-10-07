@@ -1,6 +1,34 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls } from './WizardSurface'
-import { mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
+import { WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
+import type { WizardViewProjection } from './contracts'
+
+const projection = {
+  routes: [
+    { id: 'bridge', label: 'Greenway bridge', from: [0, 0, 0], to: [1, 0, 1], built: false, unlocked: true, logCost: 6 },
+    { id: 'pass', label: 'Highland pass', from: [1, 0, 1], to: [2, 0, 2], built: true, unlocked: true, logCost: 4 },
+    { id: 'ford', label: 'Wetland ford', from: [2, 0, 2], to: [3, 0, 3], built: false, unlocked: false, logCost: 8 },
+  ],
+  map: {
+    tiles: [
+      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false },
+      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false },
+    ],
+    player: { gridX: 0, gridZ: 0, yaw: 0 },
+  },
+} as unknown as WizardViewProjection
+
+type Props = Record<string, unknown>
+const mapProps = (open: boolean, onToggle = vi.fn()) => ({ projection, open, onToggle, buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>() })
+const renderMap = (open: boolean) => renderToStaticMarkup(createElement(WizardMap, mapProps(open)))
+const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) => boolean): ReactElement<Props>[] => {
+  if (Array.isArray(node)) return node.flatMap((child) => findElements(child, matches))
+  if (!isValidElement<Props>(node)) return []
+  const nested = findElements(node.props.children as ReactNode, matches)
+  return matches(node) ? [node, ...nested] : nested
+}
 
 describe('third-person control grammar', () => {
   it('keeps forward, backward, and pivot axes independent', () => {
@@ -55,5 +83,33 @@ describe('third-person control grammar', () => {
     expect(releaseHeldControls(held)).toEqual([0, 0])
     expect(held.size).toBe(0)
     expect(movementVector(held)).toEqual([0, 0])
+  })
+})
+
+describe('wizard atlas markup', () => {
+  it('renders the minimap preview inside the single toggle button whose click handler is the toggle', () => {
+    const onToggle = vi.fn()
+    const buttons = findElements(WizardMap(mapProps(false, onToggle)), (element) => element.type === 'button')
+    expect(buttons).toHaveLength(1)
+    expect(findElements(buttons[0], (element) => element.props.className === 'wr-map-compact')).toHaveLength(1)
+    ;(buttons[0].props.onClick as () => void)()
+    expect(onToggle).toHaveBeenCalledTimes(1)
+    const closed = renderMap(false)
+    expect(closed.match(/<button/g)).toHaveLength(1)
+    expect(closed).toMatch(/<button class="wr-map-toggle" aria-expanded="false">.*<span class="wr-map-compact" aria-hidden="true"><span class="wr-map-grid".*<\/button>/)
+    expect(closed.slice(closed.indexOf('<button'), closed.indexOf('</button>'))).not.toContain('<div')
+  })
+
+  it('keeps aria-expanded and aria-controls truthful across closed and open states', () => {
+    const closed = renderMap(false)
+    expect(closed).not.toContain('aria-controls')
+    expect(closed).not.toContain('id="wizard-world-map"')
+    const open = renderMap(true)
+    expect(open).toContain('<button class="wr-map-toggle" aria-expanded="true" aria-controls="wizard-world-map">')
+    expect(open).toContain('<section id="wizard-world-map" class="wr-map-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-world-map-title">')
+    expect(open).toContain('aria-label="Close map"')
+    expect(open).not.toContain('wr-map-compact')
+    expect(open.match(/<div><b>/g)).toHaveLength(projection.routes.length)
+    expect(open).toMatch(/6 logs.*completed.*locked.*\? unexplored/)
   })
 })

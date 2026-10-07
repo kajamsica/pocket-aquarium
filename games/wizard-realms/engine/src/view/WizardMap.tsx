@@ -20,7 +20,7 @@ function Tile({ tile, player }: { tile: WizardMapTile; player: WizardViewProject
 
 function MapGrid({ projection }: { projection: WizardViewProjection }) {
   const tiles = northUpGridOrder(projection.map.tiles)
-  return <div className="wr-map-grid" aria-label="North-up world map, negative Z is north">{tiles.map((tile) => <Tile key={tile.id} tile={tile} player={projection.map.player} />)}</div>
+  return <span className="wr-map-grid" aria-label="North-up world map, negative Z is north">{tiles.map((tile) => <Tile key={tile.id} tile={tile} player={projection.map.player} />)}</span>
 }
 
 function RouteKey({ routes }: { routes: readonly WizardRoute[] }) {
@@ -35,10 +35,10 @@ export function WizardMap({ projection, open, onToggle, buttonRef, closeRef }: {
   closeRef: RefObject<HTMLButtonElement | null>
 }) {
   return <>
-    <button ref={buttonRef} className="wr-map-toggle" aria-expanded={open} aria-controls="wizard-world-map" onClick={onToggle}>
-      <span>Map</span><small>M</small>
+    <button ref={buttonRef} className="wr-map-toggle" aria-expanded={open} aria-controls={open ? 'wizard-world-map' : undefined} onClick={onToggle}>
+      <span className="wr-map-toggle-label"><span>Map</span><small>M</small></span>
+      {!open && <span className="wr-map-compact" aria-hidden="true"><MapGrid projection={projection} /></span>}
     </button>
-    {!open && <div className="wr-map-compact" aria-hidden="true"><MapGrid projection={projection} /></div>}
     {open && <div className="wr-map-backdrop"><section id="wizard-world-map" className="wr-map-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-world-map-title">
       <header><div><small>NORTH-UP EXPLORATION MAP</small><h2 id="wizard-world-map-title">Greenway atlas</h2></div><button ref={closeRef} onClick={onToggle} aria-label="Close map">×</button></header>
       <MapGrid projection={projection} />
