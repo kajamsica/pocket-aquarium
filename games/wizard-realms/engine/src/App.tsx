@@ -288,13 +288,13 @@ export function runBatch(
 export default function App() {
   const [world, setWorld] = useState(loadWorld)
   const [messages, setMessages] = useState<RecentMessage[]>([{ id: 0, text: WELCOME_MESSAGE }])
+  // Only the fixed-step timer and Restart write this ref. Rendered state may lag a committed step.
   const worldRef = useRef(world)
   const movementRef = useRef<readonly [number, number]>([0, 0])
   const queuedRef = useRef<WizardIntent[]>([])
   const messageId = useRef(1)
   const clockRef = useRef<StepClock>(IDLE_CLOCK)
 
-  useEffect(() => { worldRef.current = world }, [world])
   useEffect(() => {
     const sink: BatchSink = {
       persist: (state) => window.localStorage.setItem(SAVE_KEY, serializeWizardWorld(state)),
