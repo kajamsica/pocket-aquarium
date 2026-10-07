@@ -8,7 +8,7 @@ animals, and feed fish through physical food/contact rather than a feed-button s
 
 The repository now hosts independent games under [`games/`](games/README.md). Pocket Aquarium
 remains the shipping Pages and native product at [`games/pocket-aquarium/`](games/pocket-aquarium/README.md).
-The new [`Wizard Realms`](games/wizard-realms/README.md) package is a playable first-person systems
+The new [`Wizard Realms`](games/wizard-realms/README.md) package is a playable third-person systems
 vertical slice built on the same deterministic simulation and validation principles, without
 introducing a premature shared runtime.
 

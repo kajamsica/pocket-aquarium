@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cameraOrbitFromDrag, movementVector } from './WizardSurface'
+import { cameraOrbitFromDrag, movementVector, releaseHeldControls } from './WizardSurface'
 import { mapSheetMode, mapToggleForKey } from './WizardMap'
 
 describe('third-person control grammar', () => {
@@ -23,5 +23,12 @@ describe('third-person control grammar', () => {
     expect(mapToggleForKey(false, 'KeyW')).toBe(false)
     expect(mapSheetMode(719)).toBe('sheet')
     expect(mapSheetMode(720)).toBe('modal')
+  })
+
+  it.each(['window blur', 'document visibility loss'])('releases W/S/A/D after %s', () => {
+    const held = new Set(['KeyW', 'KeyS', 'KeyA', 'KeyD'])
+    expect(releaseHeldControls(held)).toEqual([0, 0])
+    expect(held.size).toBe(0)
+    expect(movementVector(held)).toEqual([0, 0])
   })
 })

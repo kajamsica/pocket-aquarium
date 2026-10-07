@@ -18,6 +18,11 @@ export function movementVector(keys: ReadonlySet<string>): readonly [number, num
   return [x, y]
 }
 
+export function releaseHeldControls(keys: Set<string>): readonly [0, 0] {
+  keys.clear()
+  return [0, 0]
+}
+
 export function cameraOrbitFromDrag(current: readonly [number, number], delta: readonly [number, number]): readonly [number, number] {
   return [current[0] - delta[0] * 0.004, Math.max(0.08, Math.min(0.72, current[1] + delta[1] * 0.003))]
 }
@@ -39,8 +44,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
   const toggleMap = () => {
     const next = !mapOpen
     if (next) {
-      pressedKeys.current.clear()
-      onIntent({ type: 'movement', vector: [0, 0] })
+      onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
       window.requestAnimationFrame(() => mapCloseRef.current?.focus())
     } else window.requestAnimationFrame(() => mapButtonRef.current?.focus())
@@ -48,11 +52,14 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
   }
 
   useEffect(() => {
+    const clearControls = () => {
+      onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
+      setDragging(false)
+    }
+    const onVisibilityChange = () => { if (document.visibilityState !== 'visible') clearControls() }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
-        pressedKeys.current.clear()
-        onIntent({ type: 'movement', vector: [0, 0] })
-        setDragging(false)
+        clearControls()
         if (mapOpen) toggleMap()
         return
       }
@@ -80,9 +87,13 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup', onKeyUp)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('blur', clearControls)
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('keyup', onKeyUp)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('blur', clearControls)
     }
   }, [mapOpen, onIntent])
 

@@ -155,7 +155,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   orbiting: boolean
 }) {
   return (
-    <Canvas shadows dpr={[1, 1.5]} camera={{ fov: 68, near: 0.08, far: 180 }}>
+    <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 1.5]} camera={{ fov: 68, near: 0.08, far: 180 }}>
       <color attach="background" args={['#82b8c4']} />
       <fog attach="fog" args={['#91bdc0', 36, 125]} />
       <ambientLight intensity={1.15} color="#b8d7f0" />
