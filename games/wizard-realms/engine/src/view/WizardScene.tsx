@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import type { WizardFairyRing, WizardResourceNode, WizardRoute, WizardStore, WizardViewProjection } from './contracts'
+import type { WizardFairyRing, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -13,6 +13,48 @@ const STRIDE_LENGTH_M = 1.4
 const LEG_SWING_RAD = 0.5
 const ARM_SWING_RAD = 0.3
 const BODY_BOB_M = 0.05
+
+// Atmosphere palette. three applies fog after tone mapping and colour-space conversion, and both fog and clear colour
+// are converted as unlit output-space colours, so these values compare directly (neither is ACES-compressed).
+// The fog is kept marginally brighter than the sky on purpose, for a soft haze band above the far terrain edge.
+const SKY_COLOR = '#8fc0d6'
+const FOG_COLOR = '#a7cddb'
+const BEDROCK_COLOR = '#4a6a3e'
+
+// Shared geometry/material instances for primitives that have no per-instance variance.
+const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1)
+const LEAF_GEOMETRY = new THREE.IcosahedronGeometry(1, 1)
+const ROCK_GEOMETRY = new THREE.DodecahedronGeometry(1, 0)
+const CRYSTAL_GEOMETRY = new THREE.OctahedronGeometry(1, 0)
+const WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6e4a30', roughness: 0.92 })
+const DARK_WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4a3222', roughness: 0.9 })
+const STAKE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9a8a70', roughness: 0.9 })
+const ROBE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4f3176', roughness: 0.76 })
+const ROBE_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2d1f45', roughness: 0.82 })
+const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
+
+/** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
+const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
+  temperate_forest: { side: '#5a4330', roughness: 0.95 },
+  marsh: { side: '#40493a', roughness: 0.7 },
+  dry_highland: { side: '#6a6052', roughness: 0.92 },
+  alpine: { side: '#8a97a1', roughness: 0.58 },
+}
+
+const TREE_CANOPY = [[-0.5, 3.0, 0.15, 1.1, '#3a7c43'], [0.42, 3.3, -0.25, 1.0, '#4c9a4e'], [0.05, 3.95, 0.05, 0.9, '#64b35a']] as const
+
+// Camera-line tree occlusion. A tree whose canopy bounding sphere intersects the camera→avatar segment fades out;
+// enter/exit margins give hysteresis and the fade is damped so edges never flicker. Scalar math only, no allocation.
+// The same damped value drives the trunk/root flare, clamped to a higher floor so the tree's structure stays legible.
+const CANOPY_CENTRE_Y_M = 3.4
+const CANOPY_RADIUS_M = 1.75
+const OCCLUDE_ENTER_MARGIN_M = 0.25
+const OCCLUDE_EXIT_MARGIN_M = 0.8
+const OCCLUDED_OPACITY = 0.12
+const TRUNK_OCCLUDED_OPACITY = 0.3
+const AVATAR_FOCUS_HEIGHT_M = 1.5
+const FADE_OUT_PER_S = 12
+const FADE_IN_PER_S = 5
 
 /** View-only pose shared by avatar and camera. It is derived from the projection and never fed back to the domain. */
 interface PresentationPose {
@@ -28,6 +70,19 @@ function damping(ratePerSecond: number, delta: number) {
 
 function shortestArc(from: number, to: number) {
   return Math.atan2(Math.sin(to - from), Math.cos(to - from))
+}
+
+/** Deterministic [0, 1) from a stable id, so cosmetic variation never depends on randomness or time. */
+function hashUnit(id: string, salt: number) {
+  let hash = 2166136261 ^ salt
+  for (let index = 0; index < id.length; index += 1) {
+    hash ^= id.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  hash ^= hash >>> 15
+  hash = Math.imul(hash, 2246822507)
+  hash ^= hash >>> 13
+  return (hash >>> 0) / 4294967296
 }
 
 function PresentationPoseDriver({ player, pose }: { player: WizardViewProjection['player']; pose: PresentationPose }) {
@@ -101,57 +156,144 @@ function WizardAvatar({ pose }: { pose: PresentationPose }) {
   })
   return (
     <group ref={root} aria-label="Player wizard">
-      <group ref={leftLeg} position={[-0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /><meshStandardMaterial color="#34234f" roughness={0.9} /></mesh></group>
-      <group ref={rightLeg} position={[0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /><meshStandardMaterial color="#34234f" roughness={0.9} /></mesh></group>
+      <group ref={leftLeg} position={[-0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh></group>
+      <group ref={rightLeg} position={[0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh></group>
       <group ref={torso}>
-        <mesh position={[0, 0.92, 0]} castShadow><coneGeometry args={[0.52, 1.65, 7]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh>
-        <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 10, 8]} /><meshStandardMaterial color="#c9946c" roughness={0.9} /></mesh>
-        <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.78} /></mesh>
-        <mesh position={[0, 1.98, 0]} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /><meshStandardMaterial color="#34234f" /></mesh>
+        <mesh position={[0, 0.92, 0]} material={ROBE_MATERIAL} castShadow><coneGeometry args={[0.52, 1.65, 7]} /></mesh>
+        <mesh position={[0, 0.16, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.5, 0.54, 0.14, 7]} /></mesh>
+        <mesh position={[0, 1.2, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.2, 0.23, 0.08, 7]} /></mesh>
+        <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 12, 10]} /><meshStandardMaterial color="#d6a27a" roughness={0.78} /></mesh>
+        <mesh position={[0, 1.5, -0.2]} rotation={[Math.PI + 0.3, 0, 0]} castShadow><coneGeometry args={[0.19, 0.55, 7]} /><meshStandardMaterial color="#ece6dc" roughness={0.92} /></mesh>
+        <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.72} flatShading /></mesh>
+        <mesh position={[0, 2.06, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.31, 0.33, 0.1, 8]} /></mesh>
+        <mesh position={[0, 1.98, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /></mesh>
         <mesh position={[0, 1.78, -0.31]} castShadow><coneGeometry args={[0.08, 0.2, 6]} /><meshStandardMaterial color="#bd805d" /></mesh>
-        <group ref={leftArm} position={[-0.3, 1.4, 0]}><mesh position={[-0.08, -0.3, 0]} rotation={[0, 0, 0.25]} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh></group>
+        <group ref={leftArm} position={[-0.3, 1.4, 0]}><mesh position={[-0.08, -0.3, 0]} rotation={[0, 0, 0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh></group>
         <group ref={rightArm} position={[0.3, 1.4, 0]}>
-          <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, -0.25]} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /><meshStandardMaterial color="#513477" roughness={0.82} /></mesh>
-          <mesh position={[0.18, -0.32, 0]} rotation={[0.05, 0, 0.12]} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /><meshStandardMaterial color="#6d472c" /></mesh>
+          <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, -0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh>
+          <mesh position={[0.18, -0.32, 0]} rotation={[0.05, 0, 0.12]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /></mesh>
+          <mesh position={[0.04, 0.78, -0.06]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.06, 0.04, 0.12, 7]} /></mesh>
+          <mesh position={[0.03, 0.95, -0.07]}><sphereGeometry args={[0.12, 12, 10]} /><meshStandardMaterial color="#e9dcff" emissive="#bd82ff" emissiveIntensity={2.2} roughness={0.25} /></mesh>
+          <pointLight position={[0.03, 1.0, -0.07]} color="#bd82ff" intensity={2.6} distance={3.8} />
         </group>
-        <pointLight position={[0.5, 2.28, 0]} color="#bd82ff" intensity={2.2} distance={3.5} />
       </group>
     </group>
   )
 }
 
-function Resource({ node }: { node: WizardResourceNode }) {
-  const opacity = node.available ? 1 : 0.28
-  if (node.kind === 'tree') {
-    return (
-      <group position={node.position as [number, number, number]}>
-        <mesh position={[0, 1.7, 0]} castShadow>
-          <cylinderGeometry args={[0.28, 0.46, 3.4, 7]} />
-          <meshStandardMaterial color="#70442d" transparent opacity={opacity} />
+function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
+  const surface = TERRAIN_SURFACE[cell.climate] ?? TERRAIN_SURFACE.temperate_forest
+  const { top, side, cap } = useMemo(() => {
+    const jitter = hashUnit(cell.id, 1) - 0.5
+    // Higher cells catch more sun, so lift them a touch; per-cell jitter breaks the uniform grid read.
+    const lift = (cell.height - 2) * 0.02
+    return {
+      top: new THREE.Color(cell.color ?? '#56824b').offsetHSL(jitter * 0.03, (hashUnit(cell.id, 2) - 0.5) * 0.08, jitter * 0.05 + lift),
+      side: new THREE.Color(surface.side).offsetHSL(0, 0, jitter * 0.04),
+      cap: 0.1 + hashUnit(cell.id, 3) * 0.1,
+    }
+  }, [cell.id, cell.color, cell.height, surface.side])
+  const [x, y, z] = cell.position
+  const [width, depth] = cell.size
+  return (
+    <group position={[x, 0, z]}>
+      {/* Terrain only receives shadows: column-on-column casting produced heavy grid seams for little depth gain. */}
+      <mesh geometry={UNIT_BOX} position={[0, y - cap / 2, 0]} scale={[width, cap, depth]} receiveShadow>
+        <meshStandardMaterial color={top} roughness={surface.roughness} />
+      </mesh>
+      <mesh geometry={UNIT_BOX} position={[0, y - cap - (cell.height - cap) / 2, 0]} scale={[width, cell.height - cap, depth]} receiveShadow>
+        <meshStandardMaterial color={side} roughness={0.97} />
+      </mesh>
+    </group>
+  )
+}
+
+function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNode; pose: PresentationPose; yaw: number; scale: number; baseOpacity: number }) {
+  const trunk = useRef<THREE.Group>(null)
+  const canopy = useRef<THREE.Group>(null)
+  const occluded = useRef(false)
+  const treeOpacity = useRef(baseOpacity)
+  const [x, y, z] = node.position
+  useFrame(({ camera }, delta) => {
+    if (!canopy.current || !trunk.current) return
+    const centreY = y + CANOPY_CENTRE_Y_M * scale
+    const ax = camera.position.x
+    const ay = camera.position.y
+    const az = camera.position.z
+    const dx = pose.position.x - ax
+    const dy = pose.position.y + AVATAR_FOCUS_HEIGHT_M - ay
+    const dz = pose.position.z - az
+    const length2 = dx * dx + dy * dy + dz * dz
+    const t = length2 > 0 ? Math.min(1, Math.max(0, ((x - ax) * dx + (centreY - ay) * dy + (z - az) * dz) / length2)) : 0
+    const distance = Math.hypot(ax + dx * t - x, ay + dy * t - centreY, az + dz * t - z)
+    const radius = CANOPY_RADIUS_M * scale
+    if (occluded.current ? distance > radius + OCCLUDE_EXIT_MARGIN_M : distance < radius + OCCLUDE_ENTER_MARGIN_M) occluded.current = !occluded.current
+    const target = occluded.current ? Math.min(baseOpacity, OCCLUDED_OPACITY) : baseOpacity
+    treeOpacity.current += (target - treeOpacity.current) * damping(occluded.current ? FADE_OUT_PER_S : FADE_IN_PER_S, delta)
+    const trunkOpacity = Math.max(treeOpacity.current, Math.min(baseOpacity, TRUNK_OCCLUDED_OPACITY))
+    for (let index = 0; index < canopy.current.children.length; index += 1) {
+      ((canopy.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = treeOpacity.current
+    }
+    for (let index = 0; index < trunk.current.children.length; index += 1) {
+      ((trunk.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = trunkOpacity
+    }
+  })
+  // Shadow depth ignores opacity, so a faded (depleted) node stops casting rather than leaving a solid silhouette.
+  const castShadow = node.available
+  return (
+    <group position={[x, y, z]} rotation={[0, yaw, 0]} scale={scale}>
+      {/* Tree materials stay flagged transparent (opacity 1, depth write on) so the shader honours per-frame opacity without recompiles. */}
+      <group ref={trunk}>
+        <mesh geometry={ROCK_GEOMETRY} position={[0, 0.1, 0]} scale={[0.62, 0.28, 0.62]} castShadow={castShadow}><meshStandardMaterial color="#4e3322" roughness={0.95} flatShading transparent opacity={baseOpacity} /></mesh>
+        <mesh position={[0, 1.7, 0]} castShadow={castShadow}>
+          <cylinderGeometry args={[0.24, 0.42, 3.4, 7]} />
+          <meshStandardMaterial color="#5c3b27" roughness={0.95} transparent opacity={baseOpacity} />
         </mesh>
-        {([[-0.45, 3.1, 0.1], [0.38, 3.35, -0.2], [0, 3.85, 0]] as const).map((position, index) => (
-          <mesh key={index} position={position} castShadow>
-            <icosahedronGeometry args={[1.12 - index * 0.08, 1]} />
-            <meshStandardMaterial color={index === 1 ? '#3d8b4a' : '#52a456'} transparent opacity={opacity} roughness={0.9} />
+      </group>
+      <group ref={canopy}>
+        {TREE_CANOPY.map(([lx, ly, lz, radius, color], index) => (
+          <mesh key={index} geometry={LEAF_GEOMETRY} position={[lx, ly, lz]} scale={radius} castShadow={castShadow}>
+            <meshStandardMaterial color={color} roughness={0.88} flatShading transparent opacity={baseOpacity} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  )
+}
+
+function Resource({ node, pose }: { node: WizardResourceNode; pose: PresentationPose }) {
+  const faded = { transparent: !node.available, opacity: node.available ? 1 : 0.3 }
+  const yaw = hashUnit(node.id, 1) * Math.PI * 2
+  const scale = 0.88 + hashUnit(node.id, 2) * 0.24
+  const position = node.position as [number, number, number]
+  if (node.kind === 'tree') return <Tree node={node} pose={pose} yaw={yaw} scale={scale} baseOpacity={faded.opacity} />
+  if (node.kind === 'ore') {
+    return (
+      <group position={position} rotation={[0, yaw, 0]} scale={scale}>
+        <mesh geometry={ROCK_GEOMETRY} position={[0, 0.45, 0]} rotation={[0.15, 0.4, 0]} scale={0.7} castShadow={node.available}>
+          <meshStandardMaterial color="#5d6477" roughness={0.6} metalness={0.3} flatShading {...faded} />
+        </mesh>
+        {([[0.25, 1.0, 0.1, 0.22], [-0.3, 0.9, -0.15, 0.17]] as const).map(([x, y, z, size], index) => (
+          <mesh key={index} geometry={CRYSTAL_GEOMETRY} position={[x, y, z]} rotation={[0.3 * index, 0.5, -0.2]} scale={[size, size * 1.8, size]} castShadow={node.available}>
+            <meshStandardMaterial color="#a98cff" emissive="#7a52e8" emissiveIntensity={node.available ? 0.9 : 0.15} roughness={0.3} flatShading {...faded} />
           </mesh>
         ))}
       </group>
     )
   }
-  if (node.kind === 'ore') {
-    return (
-      <mesh position={node.position as [number, number, number]} rotation={[0.15, 0.4, 0]} castShadow>
-        <dodecahedronGeometry args={[0.7, 0]} />
-        <meshStandardMaterial color="#717b95" emissive="#6859aa" emissiveIntensity={0.24} transparent opacity={opacity} />
-      </mesh>
-    )
-  }
+  const herb = node.kind === 'herb'
   return (
-    <group position={node.position as [number, number, number]}>
-      {[-0.28, 0, 0.28].map((offset) => (
-        <mesh key={offset} position={[offset, 0.35, 0]} rotation={[0, 0, offset * 1.2]} castShadow>
-          <sphereGeometry args={[0.24, 8, 6]} />
-          <meshStandardMaterial color={node.kind === 'herb' ? '#7ad85c' : '#d9b162'} transparent opacity={opacity} />
+    <group position={position} rotation={[0, yaw, 0]} scale={scale}>
+      {[-0.28, 0, 0.28].map((offset, index) => herb ? (
+        <group key={offset} position={[offset, 0, 0]} rotation={[0, 0, offset * 1.2]}>
+          <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.025, 0.04, 0.4, 5]} /><meshStandardMaterial color="#3f7a2e" roughness={0.9} {...faded} /></mesh>
+          <mesh geometry={LEAF_GEOMETRY} position={[0, 0.46, 0]} scale={[0.26, 0.2, 0.26]} castShadow={node.available}>
+            <meshStandardMaterial color={index === 1 ? '#8fe066' : '#6fcf55'} emissive="#2d6a1c" emissiveIntensity={0.2} roughness={0.75} flatShading {...faded} />
+          </mesh>
+        </group>
+      ) : (
+        <mesh key={offset} geometry={ROCK_GEOMETRY} position={[offset, 0.22, offset * 0.4]} rotation={[0.2, offset * 2, 0]} scale={[0.3, 0.24 + index * 0.04, 0.3]} castShadow={node.available}>
+          <meshStandardMaterial color={index === 1 ? '#a89b84' : '#8f8370'} roughness={0.96} flatShading {...faded} />
         </mesh>
       ))}
     </group>
@@ -161,18 +303,17 @@ function Resource({ node }: { node: WizardResourceNode }) {
 function Store({ store }: { store: WizardStore }) {
   return (
     <group position={store.position as [number, number, number]}>
-      <mesh position={[0, 1.15, 0]} castShadow receiveShadow>
-        <boxGeometry args={[3.2, 2.3, 2.2]} />
-        <meshStandardMaterial color="#774b35" />
-      </mesh>
-      <mesh position={[0, 2.55, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-        <coneGeometry args={[2.25, 1.4, 4]} />
-        <meshStandardMaterial color="#7b2e45" />
-      </mesh>
-      <mesh position={[0, 1.3, 1.12]}>
-        <boxGeometry args={[1.8, 0.95, 0.12]} />
-        <meshStandardMaterial color="#d2ae70" />
-      </mesh>
+      <mesh geometry={UNIT_BOX} position={[0, 0.16, 0]} scale={[3.5, 0.32, 2.5]} castShadow receiveShadow><meshStandardMaterial color="#6d6a62" roughness={0.95} /></mesh>
+      <mesh geometry={UNIT_BOX} position={[0, 1.3, 0]} scale={[3.2, 2.0, 2.2]} castShadow receiveShadow><meshStandardMaterial color="#8a5a3e" roughness={0.86} /></mesh>
+      {([[-1.52, 1.03], [1.52, 1.03], [-1.52, -1.03], [1.52, -1.03]] as const).map(([x, z], index) => (
+        <mesh key={index} geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[x, 1.3, z]} scale={[0.18, 2.0, 0.18]} castShadow />
+      ))}
+      <mesh position={[0, 2.95, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.35, 1.5, 4]} /><meshStandardMaterial color="#7c2f49" roughness={0.7} flatShading /></mesh>
+      <mesh geometry={UNIT_BOX} position={[0.9, 3.35, -0.4]} scale={[0.36, 0.9, 0.36]} castShadow><meshStandardMaterial color="#5b5651" roughness={0.9} /></mesh>
+      <mesh geometry={UNIT_BOX} position={[0, 1.8, 1.12]} scale={[1.8, 0.7, 0.12]}><meshStandardMaterial color="#d9b872" roughness={0.6} /></mesh>
+      <mesh geometry={UNIT_BOX} position={[-0.9, 0.95, 1.12]} scale={[0.7, 1.25, 0.1]}><meshStandardMaterial color="#3d2a1c" roughness={0.9} /></mesh>
+      {/* The lit window is purely emissive; a per-store point light was not worth its per-fragment cost. */}
+      <mesh geometry={UNIT_BOX} position={[0.8, 1.15, 1.12]} scale={[0.6, 0.6, 0.1]}><meshStandardMaterial color="#ffd98a" emissive="#ffb650" emissiveIntensity={1.9} roughness={0.3} /></mesh>
     </group>
   )
 }
@@ -180,15 +321,20 @@ function Store({ store }: { store: WizardStore }) {
 function FairyRing({ ring }: { ring: WizardFairyRing }) {
   const mushrooms = useMemo(() => Array.from({ length: 11 }, (_, index) => {
     const angle = index / 11 * Math.PI * 2
-    return [Math.cos(angle) * 1.35, Math.sin(angle) * 1.35, angle] as const
-  }), [])
+    return [Math.cos(angle) * 1.35, Math.sin(angle) * 1.35, angle, 0.8 + hashUnit(`${ring.id}:${index}`, 4) * 0.45] as const
+  }), [ring.id])
+  const glow = ring.discovered ? 1 : 0.4
   return (
     <group position={ring.position as [number, number, number]}>
-      <pointLight color="#b085ff" intensity={ring.discovered ? 12 : 4} distance={7} />
-      {mushrooms.map(([x, z, angle], index) => (
-        <group key={index} position={[x, 0, z]} rotation={[0, -angle, 0]}>
-          <mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.06, 0.1, 0.44, 7]} /><meshStandardMaterial color="#eee6d5" /></mesh>
-          <mesh position={[0, 0.48, 0]}><coneGeometry args={[0.24, 0.22, 8]} /><meshStandardMaterial color={ring.discovered ? '#b06cea' : '#776a78'} emissive="#713ea5" emissiveIntensity={0.5} /></mesh>
+      <pointLight position={[0, 0.8, 0]} color="#b085ff" intensity={ring.discovered ? 12 : 4} distance={7} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+        <ringGeometry args={[0.95, 1.7, 40]} />
+        <meshStandardMaterial color="#5a3f7a" emissive="#8a5cff" emissiveIntensity={0.6 * glow} roughness={0.8} transparent opacity={0.55} depthWrite={false} />
+      </mesh>
+      {mushrooms.map(([x, z, angle, size], index) => (
+        <group key={index} position={[x, 0, z]} rotation={[0, -angle, 0]} scale={size}>
+          <mesh position={[0, 0.22, 0]} castShadow><cylinderGeometry args={[0.06, 0.1, 0.44, 7]} /><meshStandardMaterial color="#efe7d6" roughness={0.85} /></mesh>
+          <mesh position={[0, 0.48, 0]} castShadow><coneGeometry args={[0.24, 0.22, 8]} /><meshStandardMaterial color={ring.discovered ? '#b06cea' : '#776a78'} emissive="#713ea5" emissiveIntensity={0.9 * glow} roughness={0.55} flatShading /></mesh>
         </group>
       ))}
     </group>
@@ -204,20 +350,21 @@ function ConstructionRoute({ route }: { route: WizardRoute }) {
   return (
     <group>
       {[route.from, route.to].map((position, index) => (
-        <mesh key={index} position={[position[0], position[1] + 0.45, position[2]]} castShadow>
-          <cylinderGeometry args={[0.12, 0.18, 0.9, 6]} />
-          <meshStandardMaterial color={route.built ? '#77502f' : '#8a755d'} />
-        </mesh>
+        <group key={index} position={[position[0], position[1], position[2]]}>
+          <mesh position={[0, 0.5, 0]} material={route.built ? WOOD_MATERIAL : STAKE_MATERIAL} castShadow><cylinderGeometry args={[0.11, 0.17, 1.0, 6]} /></mesh>
+          <mesh geometry={CRYSTAL_GEOMETRY} position={[0, 1.1, 0]} scale={[0.1, 0.16, 0.1]}>
+            <meshStandardMaterial color="#d9b45c" emissive={route.built ? '#ffb347' : '#6b5c48'} emissiveIntensity={route.built ? 0.8 : 0.1} roughness={0.4} metalness={0.4} />
+          </mesh>
+        </group>
       ))}
       <group position={[midpoint.x, midpoint.y + 0.25, midpoint.z]} rotation={[0, yaw, 0]}>
         {route.built ? Array.from({ length: 7 }, (_, index) => (
-          <mesh key={index} position={[0, 0, -length / 2 + length * index / 6]} castShadow>
-            <boxGeometry args={[1.35, 0.16, 0.46]} />
-            <meshStandardMaterial color="#8a5f36" roughness={0.9} />
+          <mesh key={index} geometry={UNIT_BOX} position={[0, 0, -length / 2 + length * index / 6]} rotation={[0, (hashUnit(`${route.id}:${index}`, 5) - 0.5) * 0.12, 0]} scale={[1.35, 0.16, 0.46]} castShadow receiveShadow>
+            <meshStandardMaterial color={index % 2 ? '#8a5f36' : '#7d552f'} roughness={0.92} />
           </mesh>
         )) : <>
-          <mesh position={[-0.55, 0, 0]}><boxGeometry args={[0.12, 0.12, length]} /><meshStandardMaterial color="#74624e" /></mesh>
-          <mesh position={[0.55, 0, 0]}><boxGeometry args={[0.12, 0.12, length]} /><meshStandardMaterial color="#74624e" /></mesh>
+          {[-0.55, 0.55].map((x) => <mesh key={x} geometry={UNIT_BOX} material={STAKE_MATERIAL} position={[x, 0, 0]} scale={[0.08, 0.08, length]} />)}
+          <mesh geometry={UNIT_BOX} position={[0, -0.1, 0]} scale={[1.2, 0.04, length]}><meshStandardMaterial color="#d8c9a3" transparent opacity={0.22} depthWrite={false} /></mesh>
         </>}
       </group>
     </group>
@@ -233,21 +380,50 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
     position: new THREE.Vector3(...projection.player.position), yaw: projection.player.yaw, speed: 0, phase: 0,
   }))
   return (
-    <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 1.5]} camera={{ fov: 68, near: 0.08, far: 180 }}>
-      <color attach="background" args={['#82b8c4']} />
-      <fog attach="fog" args={['#91bdc0', 36, 125]} />
-      <ambientLight intensity={1.15} color="#b8d7f0" />
-      <directionalLight position={[18, 30, 12]} intensity={3.2} color="#fff1c4" castShadow />
-      <hemisphereLight args={['#a9ddff', '#355321', 1.2]} />
+    <Canvas
+      shadows={{ type: THREE.PCFShadowMap }}
+      dpr={[1, 1.5]}
+      gl={{
+        alpha: false,
+        antialias: true,
+        powerPreference: 'high-performance',
+        outputColorSpace: THREE.SRGBColorSpace,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.08,
+      }}
+      camera={{ fov: 68, near: 0.08, far: 180 }}
+    >
+      <color attach="background" args={[SKY_COLOR]} />
+      <fog attach="fog" args={[FOG_COLOR, 24, 100]} />
+      {/* Light hierarchy: warm sun key with shadows, sky/ground hemisphere fill, cool rim from the shaded side. */}
+      <hemisphereLight args={['#cde4ff', '#4f6a33', 0.85]} />
+      <ambientLight intensity={0.22} color="#dfe8ff" />
+      <directionalLight
+        position={[18, 30, 12]}
+        intensity={2.9}
+        color="#ffe6b8"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-radius={2.5}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.04}
+        shadow-camera-near={4}
+        shadow-camera-far={90}
+        shadow-camera-left={-26}
+        shadow-camera-right={26}
+        shadow-camera-top={26}
+        shadow-camera-bottom={-26}
+      />
+      <directionalLight position={[-16, 10, -20]} intensity={0.7} color="#9ec1ff" />
       <PresentationPoseDriver player={projection.player} pose={pose} />
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} />
-      {projection.terrain.map((cell) => (
-        <mesh key={cell.id} position={[cell.position[0], cell.position[1] - cell.height / 2, cell.position[2]]} receiveShadow>
-          <boxGeometry args={[cell.size[0], cell.height, cell.size[1]]} />
-          <meshStandardMaterial color={cell.color ?? '#56824b'} roughness={0.96} />
-        </mesh>
-      ))}
-      {projection.resources.map((node) => <Resource key={node.id} node={node} />)}
+      {/* Bedrock meadow under the tile columns so the world reads as raised land rather than islands over void. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.72, 0]} receiveShadow>
+        <planeGeometry args={[320, 320]} />
+        <meshStandardMaterial color={BEDROCK_COLOR} roughness={1} />
+      </mesh>
+      {projection.terrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
+      {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {projection.routes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
