@@ -403,6 +403,8 @@ describe('Wizard view adapter', () => {
     const landscape = OBJECTIVE_STYLES.split(breakpoint)[1]
     expect(landscape).toContain('.wr-objective{left:210px;right:96px;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:none}')
     expect(landscape).toContain('.wr-surface .wr-prompt{top:66px;bottom:auto}')
+    expect(OBJECTIVE_STYLES).toContain('.wr-surface:has(.wr-context) .wr-backpack{display:none}')
+    expect(OBJECTIVE_STYLES).toContain('.wr-surface .wr-context{left:8px;top:64px;bottom:auto;transform:none;box-sizing:border-box;width:min(300px,34vw);max-height:calc(100vh - 194px);overflow-y:auto}')
     expect(OBJECTIVE_STYLES).toContain('.wr-objective button{flex:none;min-width:44px;min-height:44px}')
   })
 
@@ -665,6 +667,30 @@ describe('Wizard view adapter', () => {
     expect(intentForView(ringState, { type: 'interact' })).toBeNull()
     ringState.player.discoveredRingIds = [ringState.fairyRings[0].id]
     expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Find another ring', actionable: false })
+  })
+
+  it('projects regional material offers and routes a committed sale back into saved progress', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.player.position = { ...state.stores[0].position }
+    state.player.inventory.push({ itemId: 'logs', quantity: 3 }, { itemId: 'marsh_herb', quantity: 2 })
+    state.player.equipment.mainHand = 'woodcutters_axe'
+    const projection = toViewProjection(state, [], state.stores[0].id)
+    expect(projection.stores[0].sellOffers).toEqual([
+      { itemId: 'logs', name: 'Greenway logs', quantity: 3, unitPrice: 2 },
+      { itemId: 'marsh_herb', name: 'Marsh herb', quantity: 2, unitPrice: 3 },
+    ])
+    expect(projection.stores[1].sellOffers).toEqual([
+      { itemId: 'logs', name: 'Greenway logs', quantity: 3, unitPrice: 1 },
+      { itemId: 'marsh_herb', name: 'Marsh herb', quantity: 2, unitPrice: 5 },
+    ])
+    const intent = intentForView(state, { type: 'store.sell-item', storeId: state.stores[0].id, itemId: 'logs', quantity: 3 }, state.stores[0].id)
+    expect(intent).toEqual({ type: 'sell_to_store', storeId: state.stores[0].id, itemId: 'logs', quantity: 3 })
+    if (!intent) throw new Error('Expected a sale intent')
+    const result = advanceWizardWorld(state, [intent])
+    expect(result.rejections).toEqual([])
+    expect(result.state.player.coins).toBe(state.player.coins + 6)
+    expect(result.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
+    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v2' ? serializeWizardWorld(result.state) : null })).toEqual(result.state)
   })
 
   it('forgets an open store on departure so returning does not reopen it', () => {

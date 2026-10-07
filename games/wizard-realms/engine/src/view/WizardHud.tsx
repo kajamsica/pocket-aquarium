@@ -79,6 +79,17 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         <header>{nearbyStore.name}</header>
         <button type="button" onClick={() => onIntent({ type: 'store.close' })}>Close</button>
         {nearbyStore.listings.map((listing) => <button key={listing.id} onClick={() => onIntent({ type: 'store.select-listing', storeId: nearbyStore.id, listingId: listing.id })}><b>{listing.name}</b><span>{listing.price}g{listing.stock === undefined ? '' : ` · ${listing.stock} left`}</span></button>)}
+        <section>
+          <h3 className="wr-caption">Sell materials</h3>
+          {nearbyStore.sellOffers.map((offer) => <div key={offer.itemId}>
+            <small>{offer.name} ×{offer.quantity} · {offer.unitPrice}g each</small>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <button type="button" style={{ minHeight: 44 }} aria-label={`Sell 1 ${offer.name}`} onClick={() => onIntent({ type: 'store.sell-item', storeId: nearbyStore.id, itemId: offer.itemId, quantity: 1 })}>Sell 1</button>
+              <button type="button" style={{ minHeight: 44 }} aria-label={`Sell all ${offer.quantity} ${offer.name} for ${offer.quantity * offer.unitPrice} gold`} onClick={() => onIntent({ type: 'store.sell-item', storeId: nearbyStore.id, itemId: offer.itemId, quantity: offer.quantity })}>Sell all ×{offer.quantity} · {offer.quantity * offer.unitPrice}g</button>
+            </div>
+          </div>)}
+          {nearbyStore.sellOffers.length === 0 && <p className="wr-empty">No materials to sell.</p>}
+        </section>
       </aside>}
 
       {nearbyRing?.discovered && <aside className="wr-panel wr-context">

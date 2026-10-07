@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls } from './WizardSurface'
+import { WizardHud } from './WizardHud'
 import { WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
 
@@ -34,6 +35,18 @@ const gridProjection = (size: number, gridX: number, gridZ: number) => ({
     player: { gridX, gridZ, yaw: 0 },
   },
 }) as WizardViewProjection
+const sellProjection = {
+  ...projection, seed: 'sell-test', tick: 0, player: { position: [0, 0, 0], yaw: 0, pitch: 0 },
+  terrain: [], resources: [], fairyRings: [], coins: 10, experience: { xp: 0, nextLevelXp: 100, level: 1 },
+  backpack: { capacity: 20, stacks: [] },
+  equipment: { head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null },
+  tradeListings: [null, null, null, null], nearbyInteraction: null, recentEvents: [],
+  openStoreId: 'store-greenway',
+  stores: [{ id: 'store-greenway', name: 'Greenway Outfitters', position: [0, 0, 0],
+    listings: [{ id: 'hat', name: 'Apprentice hat', price: 20, stock: 2 }],
+    sellOffers: [{ itemId: 'logs', name: 'Greenway logs', quantity: 3, unitPrice: 4 }],
+  }],
+} as WizardViewProjection
 const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) => boolean): ReactElement<Props>[] => {
   if (Array.isArray(node)) return node.flatMap((child) => findElements(child, matches))
   if (!isValidElement<Props>(node)) return []
@@ -149,5 +162,43 @@ describe('wizard atlas markup', () => {
     expect(open).not.toContain('wr-map-compact')
     expect(open.match(/<div><b>/g)).toHaveLength(projection.routes.length)
     expect(open).toMatch(/6 logs.*completed.*locked.*\? unexplored/)
+  })
+})
+
+describe('store selling controls', () => {
+  it('shows compact sell offers, payout, and the empty state without losing purchase or Close', () => {
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: sellProjection, onIntent: () => {} }))
+    expect(markup).toContain('Greenway Outfitters')
+    expect(markup).toContain('Apprentice hat')
+    expect(markup).toContain('>Close</button>')
+    expect(markup).toContain('>Sell materials</h3>')
+    expect(markup).toContain('Greenway logs ×3 · 4g each')
+    expect(markup).toContain('Sell all ×3 · 12g')
+    expect(markup.match(/min-height:44px/g)).toHaveLength(2)
+
+    const noOffers = { ...sellProjection, stores: [{ ...sellProjection.stores[0], sellOffers: [] }] }
+    const empty = renderToStaticMarkup(createElement(WizardHud, { projection: noOffers, onIntent: () => {} }))
+    expect(empty).toContain('No materials to sell.')
+    expect(empty).not.toContain('Sell all ×')
+  })
+
+  it('emits exact Sell 1 and Sell all quantities while preserving purchase and Close intents', () => {
+    const emitted: unknown[] = []
+    const buttons = findElements(WizardHud({ projection: sellProjection, onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
+    const click = (match: (button: ReactElement<Props>) => boolean) => {
+      const button = buttons.find(match)
+      if (!button) throw new Error('Expected store button')
+      ;(button.props.onClick as () => void)()
+    }
+    click((button) => button.props['aria-label'] === 'Sell 1 Greenway logs')
+    click((button) => button.props['aria-label'] === 'Sell all 3 Greenway logs for 12 gold')
+    click((button) => button.props.children === 'Close')
+    click((button) => Array.isArray(button.props.children) && button.props.children.some((child) => isValidElement<{ children: unknown }>(child) && child.props.children === 'Apprentice hat'))
+    expect(emitted).toEqual([
+      { type: 'store.sell-item', storeId: 'store-greenway', itemId: 'logs', quantity: 1 },
+      { type: 'store.sell-item', storeId: 'store-greenway', itemId: 'logs', quantity: 3 },
+      { type: 'store.close' },
+      { type: 'store.select-listing', storeId: 'store-greenway', listingId: 'hat' },
+    ])
   })
 })

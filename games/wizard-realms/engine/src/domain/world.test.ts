@@ -4,6 +4,7 @@ import {
   type WizardEvent, type WizardIntent, type WizardWorldState,
 } from './index'
 import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
+import { storeSellUnitPrice } from './world'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 const clearanceSeeds = ['expedition-19078', 'expedition-870', 'expedition-8407', 'expedition-11820', 'expedition-4', 'expedition-1']
@@ -132,6 +133,118 @@ describe('Wizard world domain', () => {
     expect(bought.state.player.inventory).toContainEqual({ itemId: 'apprentice_hat', quantity: 1 })
     const equipped = advanceWizardWorld(bought.state, [{ type: 'equip_item', itemId: 'apprentice_hat', slot: 'head' }])
     expect(equipped.state.player.equipment.head).toBe('apprentice_hat')
+  })
+
+  it.each([
+    { storeId: 'store-greenway', itemId: 'logs', unitPrice: 2 },
+    { storeId: 'store-greenway', itemId: 'marsh_herb', unitPrice: 3 },
+    { storeId: 'store-greenway', itemId: 'stone', unitPrice: 1 },
+    { storeId: 'store-greenway', itemId: 'iron_ore', unitPrice: 4 },
+    { storeId: 'store-highland', itemId: 'logs', unitPrice: 1 },
+    { storeId: 'store-highland', itemId: 'marsh_herb', unitPrice: 5 },
+    { storeId: 'store-highland', itemId: 'stone', unitPrice: 3 },
+    { storeId: 'store-highland', itemId: 'iron_ore', unitPrice: 7 },
+  ] as const)('sells $itemId to $storeId for $unitPrice coins each', ({ storeId, itemId, unitPrice }) => {
+    const state = createWizardWorld('regional-sale')
+    const store = state.stores.find((candidate) => candidate.id === storeId)!
+    state.player.position = { ...store.position }
+    state.player.inventory.push({ itemId, quantity: 2 })
+    const before = serializeWizardWorld(state)
+    const sold = advanceWizardWorld(state, [{ type: 'sell_to_store', storeId, itemId, quantity: 2 }])
+
+    expect(storeSellUnitPrice(storeId, itemId)).toBe(unitPrice)
+    expect(sold.rejections).toEqual([])
+    expect(sold.events).toEqual([{ type: 'store_item_sold', storeId, itemId, quantity: 2, unitPrice, totalPrice: 2 * unitPrice, sequence: 1, tick: 1 }])
+    expect(sold.state.player.inventory.some((stack) => stack.itemId === itemId)).toBe(false)
+    expect(sold.state.player.coins).toBe(state.player.coins + 2 * unitPrice)
+    expect(sold.state.stores).toEqual(state.stores)
+    expect(serializeWizardWorld(state)).toBe(before)
+  })
+
+  it('returns through the ladder and sells carried logs beside Greenway Outfitters', () => {
+    const state = createWizardWorld('regional-sale')
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
+    state.builtRouteIds.push(ladder.id)
+    state.player.position = { ...ladder.to }
+    state.player.inventory.push({ itemId: 'logs', quantity: 3 })
+
+    const returned = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }])
+    expect(returned.state.player.position).toEqual(ladder.from)
+    const approached = advanceWizardWorld(returned.state, [
+      { type: 'move', delta: { x: -4, y: 0, z: 0 } },
+      { type: 'move', delta: { x: 0, y: 0, z: 1 } },
+    ])
+    expect(approached.rejections).toEqual([])
+    expect(Math.hypot(approached.state.player.position.x - store.position.x, approached.state.player.position.z - store.position.z)).toBeLessThan(3)
+    const sold = advanceWizardWorld(approached.state, [{ type: 'sell_to_store', storeId: store.id, itemId: 'logs', quantity: 3 }])
+    expect(sold.rejections).toEqual([])
+    expect(sold.events).toEqual([{ type: 'store_item_sold', storeId: store.id, itemId: 'logs', quantity: 3, unitPrice: 2, totalPrice: 6, sequence: approached.state.eventSequence + 1, tick: approached.state.tick + 1 }])
+    expect(sold.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
+    expect(sold.state.player.coins).toBe(approached.state.player.coins + 6)
+  })
+
+  it('rejects invalid, distant, unsupported, unowned, and equipped-copy sales without changing player state', () => {
+    const state = createWizardWorld('regional-sale')
+    const store = state.stores[0]
+    state.player.position = { ...store.position }
+    state.player.inventory.push({ itemId: 'logs', quantity: 2 })
+    const cases: Array<{ intent: WizardIntent; code: string }> = [
+      ...[0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1].map((quantity) => ({ intent: { type: 'sell_to_store' as const, storeId: store.id, itemId: 'logs' as const, quantity }, code: 'invalid_value' })),
+      { intent: { type: 'sell_to_store', storeId: 'missing', itemId: 'logs', quantity: 1 }, code: 'not_found' },
+      { intent: { type: 'sell_to_store', storeId: store.id, itemId: 'woodcutters_axe', quantity: 1 }, code: 'invalid_value' },
+      { intent: { type: 'sell_to_store', storeId: store.id, itemId: 'logs', quantity: 3 }, code: 'not_owned' },
+    ]
+    expect(storeSellUnitPrice('missing', 'logs')).toBeNull()
+    expect(storeSellUnitPrice(store.id, 'woodcutters_axe')).toBeNull()
+    for (const { intent, code } of cases) {
+      const before = serializeWizardWorld(state)
+      const rejected = advanceWizardWorld(state, [intent])
+      expect(rejected.rejections[0]?.code).toBe(code)
+      expect(rejected.events).toEqual([])
+      expect(rejected.state.player).toEqual(state.player)
+      expect(serializeWizardWorld(state)).toBe(before)
+    }
+
+    const far = copy(state)
+    far.player.position = { ...state.player.position, x: state.player.position.x + 4 }
+    const distant = advanceWizardWorld(far, [{ type: 'sell_to_store', storeId: store.id, itemId: 'logs', quantity: 1 }])
+    expect(distant.rejections[0]?.code).toBe('too_far')
+    expect(distant.events).toEqual([])
+    expect(distant.state.player.inventory).toEqual(far.player.inventory)
+    expect(distant.state.player.coins).toBe(far.player.coins)
+
+    const equipped = copy(state)
+    equipped.player.equipment.mainHand = 'logs'
+    const reserved = advanceWizardWorld(equipped, [{ type: 'sell_to_store', storeId: store.id, itemId: 'logs', quantity: 2 }])
+    expect(reserved.rejections[0]?.code).toBe('not_owned')
+    expect(reserved.events).toEqual([])
+    expect(reserved.state.player).toEqual(equipped.player)
+
+    const maxCoins = copy(state)
+    maxCoins.player.coins = Number.MAX_SAFE_INTEGER
+    const overflow = advanceWizardWorld(maxCoins, [{ type: 'sell_to_store', storeId: store.id, itemId: 'logs', quantity: 1 }])
+    expect(overflow.rejections[0]?.code).toBe('invalid_value')
+    expect(overflow.events).toEqual([])
+    expect(overflow.state.player).toEqual(maxCoins.player)
+  })
+
+  it('replays a sale deterministically and continues identically after save restoration', () => {
+    const state = createWizardWorld('regional-sale')
+    const store = state.stores[0]
+    state.player.position = { ...store.position }
+    state.player.inventory.push({ itemId: 'logs', quantity: 5 })
+    const before = serializeWizardWorld(state)
+    const intent = { type: 'sell_to_store' as const, storeId: store.id, itemId: 'logs' as const, quantity: 2 }
+    const first = advanceWizardWorld(state, [intent])
+    expect(advanceWizardWorld(state, [intent])).toEqual(first)
+    expect(serializeWizardWorld(state)).toBe(before)
+    const restored = restoreWizardWorld(serializeWizardWorld(first.state))
+    expect(restored.schemaVersion).toBe('wizard-world/v2')
+    expect(restored.player.inventory).toEqual(first.state.player.inventory)
+    expect(restored.player.coins).toBe(first.state.player.coins)
+    const second = { ...intent, quantity: 3 }
+    expect(advanceWizardWorld(restored, [second])).toEqual(advanceWizardWorld(first.state, [second]))
   })
 
   it('stops at a store wall and preserves legal diagonal sliding without rejections', () => {

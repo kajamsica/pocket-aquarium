@@ -6,6 +6,14 @@ import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terra
 
 const INTERACT_DISTANCE = 3
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
+const storeSellPrices: Record<string, Partial<Record<ItemId, number>>> = {
+  'store-greenway': { logs: 2, marsh_herb: 3, stone: 1, iron_ore: 4 },
+  'store-highland': { logs: 1, marsh_herb: 5, stone: 3, iron_ore: 7 },
+}
+export function storeSellUnitPrice(storeId: string, itemId: ItemId): number | null {
+  const price = storeSellPrices[storeId]?.[itemId]
+  return typeof price === 'number' ? price : null
+}
 const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
   woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
@@ -284,6 +292,24 @@ function applyIntent(
     nextListing.stock -= 1
     addItem(state.player, listing.itemId, 1)
     return { state, events: [event(state, tick, { type: 'store_item_bought', storeId: store.id, listingId: listing.id, itemId: listing.itemId, price: listing.price })] }
+  }
+
+  if (intent.type === 'sell_to_store') {
+    if (!Number.isSafeInteger(intent.quantity) || intent.quantity < 1) return fail('invalid_value', 'Sale quantity must be a positive whole number.')
+    const store = current.stores.find((candidate) => candidate.id === intent.storeId)
+    if (!store) return fail('not_found', 'Store does not exist.')
+    const unitPrice = storeSellUnitPrice(store.id, intent.itemId)
+    if (unitPrice === null) return fail('invalid_value', 'This store cannot buy that item.')
+    if (distance(current.player.position, store.position) > INTERACT_DISTANCE) return fail('too_far', 'Store is out of reach.')
+    const owned = owns(current.player, intent.itemId)
+    if (owned < intent.quantity) return fail('not_owned', 'Not enough items to sell.')
+    if (owned - intent.quantity < equippedCount(current.player, intent.itemId)) return fail('not_owned', 'Equipped items cannot be sold.')
+    const totalPrice = intent.quantity * unitPrice
+    if (!Number.isSafeInteger(current.player.coins + totalPrice)) return fail('invalid_value', 'Sale total exceeds the coin range.')
+    const state = cloneState(current)
+    removeItem(state.player, intent.itemId, intent.quantity)
+    state.player.coins += totalPrice
+    return { state, events: [event(state, tick, { type: 'store_item_sold', storeId: store.id, itemId: intent.itemId, quantity: intent.quantity, unitPrice, totalPrice })] }
   }
 
   if (intent.type === 'equip_item') {

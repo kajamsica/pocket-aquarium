@@ -18,6 +18,7 @@ import {
 } from './view'
 import type { EquipmentSlot } from './view/contracts'
 import { areaAt } from './domain/generation'
+import { storeSellUnitPrice } from './domain/world'
 
 const WORLD_SEED = 'greenway-alpha'
 const SAVE_KEY = 'wizard-realms:world:v2'
@@ -47,6 +48,7 @@ export const OBJECTIVE_STYLES = `
 @media(min-width:440px) and (max-width:719px) and (max-height:400px){.wr-surface .wr-backpack,.wr-surface .wr-context{left:8px;top:54px;max-height:80px;width:220px;overflow-y:auto;transform:none}.wr-surface .wr-prompt{left:auto;right:72px;max-width:160px;transform:none}}
 @media(min-width:720px) and (max-width:900px) and (max-height:420px){.wr-surface .wr-context{top:54px;bottom:auto;max-height:calc(100vh - 254px);overflow-y:auto}}
 @media(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-objective{left:210px;right:96px;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:none}.wr-surface .wr-prompt{top:66px;bottom:auto}}
+@media(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-surface:has(.wr-context) .wr-backpack{display:none}.wr-surface .wr-context{left:8px;top:64px;bottom:auto;transform:none;box-sizing:border-box;width:min(300px,34vw);max-height:calc(100vh - 194px);overflow-y:auto}}
 `
 
 const ITEM_NAMES: Record<ItemId, string> = {
@@ -166,6 +168,7 @@ function eventText(event: WizardEvent): string {
     case 'fairy_ring_discovered': return 'A fairy ring answers your presence.'
     case 'fairy_ring_teleported': return 'The mushroom path folds the world around you.'
     case 'store_item_bought': return `Purchased ${ITEM_NAMES[event.itemId]}.`
+    case 'store_item_sold': return `Sold ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for ${event.totalPrice}g.`
     case 'item_equipped': return `Equipped ${ITEM_NAMES[event.itemId]}.`
     case 'trade_listing_created': return `Listed ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for trade.`
     case 'trade_listing_cancelled': return `Returned ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} to your backpack.`
@@ -215,6 +218,11 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     ? { kind: 'store' as const, target: state.stores.find((store) => store.id === activeStoreId)! }
     : closestInteraction(state)
   const inventory = domain.player.inventory.map((stack) => itemStack(stack.itemId, stack.quantity))
+  const saleOffers = (storeId: string) => [...new Set(domain.player.inventory.map((stack) => stack.itemId))].flatMap((itemId) => {
+    const unitPrice = storeSellUnitPrice(storeId, itemId)
+    const quantity = owned(state, itemId) - Object.values(domain.player.equipment).filter((equippedItem) => equippedItem === itemId).length
+    return unitPrice !== null && quantity > 0 ? [{ itemId, name: ITEM_NAMES[itemId], quantity, unitPrice }] : []
+  })
   const equipped = (slot: EquipmentSlot) => {
     const itemId = domain.player.equipment[slot]
     return itemId ? itemStack(itemId, 1) : null
@@ -248,7 +256,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       }),
       player: { gridX: currentTile.gridX, gridZ: currentTile.gridZ, yaw: state.player.yaw },
     },
-    stores: state.stores.map((store) => ({ id: store.id, name: store.name, position: [store.position.x, store.position.y, store.position.z], listings: store.listings.map((listing) => ({ id: listing.id, name: ITEM_NAMES[listing.itemId], price: listing.price, stock: listing.stock })) })),
+    stores: state.stores.map((store) => ({ id: store.id, name: store.name, position: [store.position.x, store.position.y, store.position.z], listings: store.listings.map((listing) => ({ id: listing.id, name: ITEM_NAMES[listing.itemId], price: listing.price, stock: listing.stock })), sellOffers: saleOffers(store.id) })),
     openStoreId: activeStoreId,
     backpack: { capacity: domain.player.backpackCapacity, stacks: inventory },
     coins: domain.player.coins,
@@ -290,6 +298,7 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
     return null
   }
   if (intent.type === 'store.select-listing') return { type: 'buy_store_listing', storeId: intent.storeId, listingId: intent.listingId }
+  if (intent.type === 'store.sell-item') return { type: 'sell_to_store', storeId: intent.storeId, itemId: intent.itemId as ItemId, quantity: intent.quantity }
   if (intent.type === 'equipment.equip') return { type: 'equip_item', itemId: intent.stackId.replace('inventory-', '') as ItemId, slot: intent.slot }
   if (intent.type === 'trade.create-listing') return { type: 'create_trade_listing', slotIndex: intent.slot, itemId: intent.stackId.replace('inventory-', '') as ItemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
   if (intent.type === 'trade.cancel-listing') return { type: 'cancel_trade_listing', slotIndex: intent.slot }

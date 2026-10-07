@@ -42,6 +42,7 @@ export interface WizardStore {
   name: string
   position: Vec3
   listings: readonly WizardStoreListing[]
+  sellOffers: readonly { itemId: string; name: string; quantity: number; unitPrice: number }[]
 }
 
 export interface WizardFairyRingDestination {
@@ -141,6 +142,7 @@ export type WizardViewIntent =
   | { type: 'interact' }
   | { type: 'store.close' }
   | { type: 'store.select-listing'; storeId: string; listingId: string }
+  | { type: 'store.sell-item'; storeId: string; itemId: string; quantity: number }
   | { type: 'equipment.equip'; stackId: string; slot: EquipmentSlot }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }
   | { type: 'trade.cancel-listing'; slot: number }

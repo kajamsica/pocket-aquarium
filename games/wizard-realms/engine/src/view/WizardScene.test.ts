@@ -30,7 +30,7 @@ describe('avatar gear projection', () => {
 describe('shop-aware follow camera', () => {
   const target = new THREE.Vector3(0, 1.35, 0)
   const desired = new THREE.Vector3(0, 4.32, 6.14)
-  const storeAt = (x: number) => ({ id: `store-${x}`, name: 'Outfitters', position: [x, 0, 2] as const, listings: [] })
+  const storeAt = (x: number) => ({ id: `store-${x}`, name: 'Outfitters', position: [x, 0, 2] as const, listings: [], sellOffers: [] })
 
   it('orbits away from the shop roof behind the fresh spawn without crowding the wizard', () => {
     const stores = [storeAt(-2)]
