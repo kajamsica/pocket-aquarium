@@ -26,8 +26,9 @@ describe('Wizard view adapter', () => {
     state.player.yaw = -Math.PI / 2
     const forward = movementIntent(state, [0, 1])
     expect(forward?.type).toBe('move')
-    expect(forward && Math.hypot(forward.delta.x, forward.delta.z)).toBeCloseTo(0.16)
-    expect(forward && forward.delta.x).toBeCloseTo(0.16)
+    if (!forward || forward.type !== 'move') throw new Error('Expected a movement intent')
+    expect(Math.hypot(forward.delta.x, forward.delta.z)).toBeCloseTo(0.16)
+    expect(forward.delta.x).toBeCloseTo(0.16)
     expect(movementIntent(state, [0, 0])).toBeNull()
   })
 
