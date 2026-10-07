@@ -17,6 +17,7 @@ import {
   type WizardViewProjection,
 } from './view'
 import type { EquipmentSlot } from './view/contracts'
+import { areaAt } from './domain/generation'
 
 const WORLD_SEED = 'greenway-alpha'
 const SAVE_KEY = 'wizard-realms:world:v2'
@@ -85,7 +86,9 @@ export function objectiveFor(state: WizardWorldState): string {
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
   const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
   const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
-  if (greenwayRing && highlandRing) return 'Greenway linked. Use a fairy ring to travel home.'
+  if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
+    ? 'Back in Greenway. Explore, trade, or travel to Highland again.'
+    : 'Both fairy rings are linked. Use the Highland Ring to travel home.'
   if (highlandRing) return 'Return to the Greenway and discover its fairy ring near the start to link travel home.'
   if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'
   if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Build the Highland bridge east along the ridge (6 logs).' : `${gather(6)}, then build the Highland bridge east along the ridge.`
@@ -111,16 +114,20 @@ function itemStack(itemId: ItemId, quantity: number) {
   }
 }
 
+function itemAmountName(itemId: ItemId, quantity: number) {
+  return itemId === 'logs' && quantity === 1 ? 'Greenway log' : ITEM_NAMES[itemId]
+}
+
 function eventText(event: WizardEvent): string {
   switch (event.type) {
     case 'resource_damaged': return 'The tree shudders under your axe.'
-    case 'resource_harvested': return `Gathered ${event.quantity} ${ITEM_NAMES[event.itemId]}.`
+    case 'resource_harvested': return `Gathered ${event.quantity} ${itemAmountName(event.itemId, event.quantity)}.`
     case 'fairy_ring_discovered': return 'A fairy ring answers your presence.'
     case 'fairy_ring_teleported': return 'The mushroom path folds the world around you.'
     case 'store_item_bought': return `Purchased ${ITEM_NAMES[event.itemId]}.`
     case 'item_equipped': return `Equipped ${ITEM_NAMES[event.itemId]}.`
-    case 'trade_listing_created': return `Listed ${event.quantity} ${ITEM_NAMES[event.itemId]} for trade.`
-    case 'trade_listing_cancelled': return `Returned ${ITEM_NAMES[event.itemId]} to your backpack.`
+    case 'trade_listing_created': return `Listed ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for trade.`
+    case 'trade_listing_cancelled': return `Returned ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} to your backpack.`
     case 'player_jumped': return 'You spring over the trail.'
     case 'route_built': return `Built ${event.routeId === 'greenway_ladder' ? 'the Greenway ladder' : 'the Highland bridge'} for ${event.logCost} logs.`
     case 'route_used': return 'You cross the completed route.'
@@ -179,7 +186,9 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       action: interaction.kind === 'resource' ? (axeEquipped(state) ? 'Chop' : owned(state, 'woodcutters_axe') > 0 ? 'Equip axe' : 'Needs axe')
         : interaction.kind === 'store' ? 'Store open'
         : interaction.kind === 'route' ? (state.builtRouteIds.includes(interaction.target.id) ? 'Cross' : state.unlockedRecipeIds.includes(interaction.target.id) ? 'Build' : 'Locked')
-        : domain.player.discoveredRingIds.includes(interaction.target.id) ? 'Choose destination' : 'Discover',
+        : domain.player.discoveredRingIds.includes(interaction.target.id)
+          ? state.fairyRings.some((ring) => ring.id !== interaction.target.id && domain.player.discoveredRingIds.includes(ring.id)) ? 'Choose destination' : 'Find another ring'
+          : 'Discover',
       actionable: interaction.kind === 'resource' && (axeEquipped(state) || owned(state, 'woodcutters_axe') > 0)
         || interaction.kind === 'route' && (state.builtRouteIds.includes(interaction.target.id) || state.unlockedRecipeIds.includes(interaction.target.id))
         || (interaction.kind === 'fairy-ring' && !domain.player.discoveredRingIds.includes(interaction.target.id)),

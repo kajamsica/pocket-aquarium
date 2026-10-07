@@ -81,12 +81,12 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 
       {nearbyRing && <aside className="wr-panel wr-context">
         <header>{nearbyRing.label}</header>
-        <p className="wr-caption">Discovered fairy paths</p>
+        <p className="wr-caption">{nearbyRing.destinations.some((destination) => destination.discovered) ? 'Discovered fairy paths' : 'Discover another fairy ring to unlock travel.'}</p>
         {nearbyRing.destinations.filter((destination) => destination.discovered).map((destination) => <button key={destination.ringId} onClick={() => onIntent({ type: 'fairy-ring.teleport', ringId: nearbyRing.id, destinationRingId: destination.ringId })}><b>{destination.label}</b><span>Travel</span></button>)}
       </aside>}
 
       <div className="wr-events" aria-live="polite">{projection.recentEvents.slice(-3).map((event, index) => <p key={`${index}-${event}`}>{event}</p>)}</div>
-      {diagnostics && <output className="wr-diagnostics">seed {projection.seed} · tick {projection.tick}</output>}
+      {diagnostics && <output className="wr-diagnostics">seed {projection.seed} · tick {projection.tick} · x {projection.player.position[0].toFixed(1)} z {projection.player.position[2].toFixed(1)} · yaw {projection.player.yaw.toFixed(2)}</output>}
 
       <div className="wr-touch" aria-label="Touch controls">
         <div className="wr-dpad">

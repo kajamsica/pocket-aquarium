@@ -72,6 +72,29 @@ describe('Wizard view adapter', () => {
     expect(afterTurn.state.tick).toBe(state.tick + 1)
   })
 
+  it('offers the required interaction at each seeded progression landmark', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    const bridge = state.routes.find((route) => route.id === 'highland_bridge')!
+    const greenwayRing = state.fairyRings.find((ring) => ring.id === 'ring-greenway')!
+    const highlandRing = state.fairyRings.find((ring) => ring.id === 'ring-highland')!
+    const store = state.stores.find((shop) => shop.id === 'store-greenway')!
+
+    state.player.position = { ...store.position }
+    expect(toViewProjection(state, []).nearbyInteraction?.targetId).toBe(store.id)
+    state.player.inventory.push({ itemId: 'logs', quantity: 10 })
+    state.player.position = { ...ladder.from }
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'build_route', routeId: ladder.id })
+    state.builtRouteIds.push(ladder.id)
+    state.player.position = { ...bridge.from }
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'build_route', routeId: bridge.id })
+    state.builtRouteIds.push(bridge.id)
+    state.player.position = { ...highlandRing.position }
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'discover_fairy_ring', ringId: highlandRing.id })
+    state.player.position = { ...greenwayRing.position }
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'discover_fairy_ring', ringId: greenwayRing.id })
+  })
+
   it('maps jump, store, equipment, trade, and ring controls to exact domain intents', () => {
     const state = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(state)
@@ -201,11 +224,13 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
-    expect(objectiveFor(state)).toBe('Greenway linked. Use a fairy ring to travel home.')
+    expect(objectiveFor(state)).toBe('Back in Greenway. Explore, trade, or travel to Highland again.')
+    state.player.position = { ...state.fairyRings.find((ring) => ring.id === 'ring-highland')!.position }
+    expect(objectiveFor(state)).toBe('Both fairy rings are linked. Use the Highland Ring to travel home.')
   })
 
   it('only announces linked travel once both fairy rings are discovered', () => {
-    const linked = 'Greenway linked. Use a fairy ring to travel home.'
+    const linked = 'Back in Greenway. Explore, trade, or travel to Highland again.'
     const state = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
 
@@ -299,6 +324,8 @@ describe('Wizard view adapter', () => {
     ringState.player.position = { ...ringState.fairyRings[0].position }
     expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Choose destination', actionable: false })
     expect(intentForView(ringState, { type: 'interact' })).toBeNull()
+    ringState.player.discoveredRingIds = [ringState.fairyRings[0].id]
+    expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Find another ring', actionable: false })
   })
 
   it('maps route construction and traversal through the nearest route scaffold', () => {
