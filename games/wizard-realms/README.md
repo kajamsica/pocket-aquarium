@@ -6,16 +6,17 @@ Wizard Realms is a first-person fantasy RPG about arriving alone in a vast, seed
 
 ## Project boundary
 
-- Shared engine: `games/engine`
+- Wizard Realms engine: `games/wizard-realms/engine`
 - Game package: `games/wizard-realms`
 - Pocket Aquarium sibling game: `games/pocket-aquarium`
+- Pocket Aquarium engine: `games/pocket-aquarium/engine`
 - Reusable development playbook: [Simulation-Rich Game Development Playbook](../../docs/game-development/README.md)
 
-The shared engine must provide mechanics and platform primitives. Wizard-specific world rules, content, progression, UI vocabulary, and assets belong in this package.
+Each game owns its engine. The games share architecture laws and production methods, not a runtime package. Extracting shared runtime code is deferred until both engines independently prove the same reusable implementation and compatibility contract. Wizard-specific world rules, content, progression, UI vocabulary, and assets belong in this package.
 
 ## Quick start
 
-The integration lane will replace this placeholder with the exact install, development, test, and production commands after the shared engine and workspace manifests land. Until then, do not infer a runnable command from this design-only package.
+The integration lane will replace this placeholder with the exact install, development, test, and production commands after the Wizard Realms engine and workspace manifests land. Until then, do not infer a runnable command from this design-only package.
 
 Expected entrypoints after integration:
 
