@@ -42,7 +42,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </div>
       )}
 
-      <aside className="wr-panel wr-backpack">
+      <aside id="wizard-backpack" className="wr-panel wr-backpack">
         <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
         <div className="wr-list">
           {projection.backpack.stacks.map((stack) => {
@@ -51,7 +51,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             const equipped = equippedSlot !== undefined
             return <div className="wr-item" key={stack.id}>
               <span className="wr-icon">{stack.icon ?? '◆'}</span><b>{stack.name}</b><small>×{stack.quantity}</small>
-              {targetSlot && <button disabled={equipped} aria-pressed={equipped} onClick={() => onIntent({ type: 'equipment.equip', stackId: stack.id, slot: targetSlot })}>{equipped ? 'Equipped' : 'Equip'}</button>}
+              {targetSlot && <button type="button" style={{ minHeight: 44 }} aria-pressed={equipped} aria-label={equipped ? `Unequip ${stack.name}` : `Equip ${stack.name}`} onClick={() => onIntent(equippedSlot ? { type: 'equipment.unequip', slot: equippedSlot } : { type: 'equipment.equip', stackId: stack.id, slot: targetSlot })}>{equipped ? 'Unequip' : 'Equip'}</button>}
               <button disabled={firstTradeSlot < 0} onClick={() => onIntent({ type: 'trade.create-listing', stackId: stack.id, slot: firstTradeSlot, quantity: 1, unitPrice: stack.suggestedTradePrice ?? 1 })}>List</button>
             </div>
           })}
@@ -62,7 +62,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       <aside className="wr-panel wr-gear">
         <header>Equipment</header>
         <div className="wr-slot-grid">
-          {EQUIPMENT_SLOTS.map((slot) => <div className="wr-slot" key={slot} data-slot={slot}><small>{EQUIPMENT_SLOT_LABELS[slot]}</small><b>{projection.equipment[slot]?.name ?? 'Empty'}</b></div>)}
+          {EQUIPMENT_SLOTS.map((slot) => <div className="wr-slot" key={slot} data-slot={slot}>
+            <small>{EQUIPMENT_SLOT_LABELS[slot]}</small><b>{projection.equipment[slot]?.name ?? 'Empty'}</b>
+            {projection.equipment[slot] && <button type="button" style={{ minHeight: 44, width: '100%' }} aria-label={`Unequip ${projection.equipment[slot].name} from ${EQUIPMENT_SLOT_LABELS[slot]}`} onClick={() => onIntent({ type: 'equipment.unequip', slot })}>Unequip</button>}
+          </div>)}
         </div>
       </aside>
 

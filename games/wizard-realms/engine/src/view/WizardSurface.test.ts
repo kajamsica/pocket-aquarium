@@ -202,3 +202,47 @@ describe('store selling controls', () => {
     ])
   })
 })
+
+describe('equipment controls', () => {
+  const equippedHat = { id: 'hat-stack', itemId: 'apprentice_hat', name: 'Apprentice hat', quantity: 1, equippableSlots: ['head'] as const }
+  const spareAxe = { id: 'axe-stack', itemId: 'woodcutters_axe', name: 'Woodcutter axe', quantity: 1, equippableSlots: ['mainHand'] as const }
+  const gearProjection = {
+    ...sellProjection,
+    openStoreId: null,
+    backpack: { capacity: 20, stacks: [equippedHat, spareAxe] },
+    equipment: { ...sellProjection.equipment, head: equippedHat },
+  } as WizardViewProjection
+
+  it('shows equipped names and only occupied slots have a touch-sized Unequip button', () => {
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: gearProjection, onIntent: () => {} }))
+    expect(markup).toContain('Apprentice hat')
+    expect(markup).toContain('Woodcutter axe')
+    expect(markup).toContain('aria-label="Unequip Apprentice hat from Head"')
+    expect(markup).toContain('min-height:44px;width:100%')
+    const slots = findElements(WizardHud({ projection: gearProjection, onIntent: () => {} }), (element) => element.props.className === 'wr-slot')
+    expect(slots).toHaveLength(6)
+    expect(findElements(slots[0], (element) => element.type === 'button')).toHaveLength(1)
+    expect(slots.slice(1).every((slot) => findElements(slot, (element) => element.type === 'button').length === 0)).toBe(true)
+    expect(markup).toContain('aria-label="Unequip Apprentice hat"')
+    expect(markup).toContain('>Equip</button>')
+  })
+
+  it('emits unequip from both Equipment and Backpack while preserving backpack equip', () => {
+    const emitted: unknown[] = []
+    const buttons = findElements(WizardHud({ projection: gearProjection, onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
+    const gearUnequip = buttons.find((button) => button.props['aria-label'] === 'Unequip Apprentice hat from Head')
+    const backpackUnequip = buttons.find((button) => button.props['aria-label'] === 'Unequip Apprentice hat')
+    const equip = buttons.find((button) => button.props.children === 'Equip')
+    expect(gearUnequip).toBeDefined()
+    expect(backpackUnequip).toBeDefined()
+    expect(equip).toBeDefined()
+    ;(gearUnequip?.props.onClick as () => void)()
+    ;(backpackUnequip?.props.onClick as () => void)()
+    ;(equip?.props.onClick as () => void)()
+    expect(emitted).toEqual([
+      { type: 'equipment.unequip', slot: 'head' },
+      { type: 'equipment.unequip', slot: 'head' },
+      { type: 'equipment.equip', stackId: 'axe-stack', slot: 'mainHand' },
+    ])
+  })
+})

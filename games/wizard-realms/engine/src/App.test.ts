@@ -221,24 +221,24 @@ describe('Wizard view adapter', () => {
     expect([...EQUIPMENT_SLOTS].sort()).toEqual(Object.keys(projection.equipment).sort())
   })
 
-  it('renders Main hand and Off hand labels and marks the equipped backpack stack as Equipped', () => {
+  it('renders Main hand and Off hand labels and offers to unequip the equipped backpack stack', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     state.player.equipment.mainHand = 'woodcutters_axe'
     const markup = renderToStaticMarkup(createElement(WizardHud, { projection: toViewProjection(state, []), onIntent: () => {} }))
-    expect(markup).toContain('<div class="wr-slot" data-slot="mainHand"><small>Main hand</small><b>Woodcutter axe</b></div>')
+    expect(markup).toContain('<div class="wr-slot" data-slot="mainHand"><small>Main hand</small><b>Woodcutter axe</b><button')
     expect(markup).toContain('<div class="wr-slot" data-slot="offHand"><small>Off hand</small><b>Empty</b></div>')
     expect(markup).not.toMatch(/<small>(focus|hands)<\/small>/i)
     expect(markup).toContain('aria-pressed="true"')
-    expect(markup).toContain('>Equipped</button>')
+    expect(markup).toContain('>Unequip</button>')
     expect(markup).toContain('<b>Woodcutter axe</b><small>×1</small>')
 
     const unequipped = renderToStaticMarkup(createElement(WizardHud, { projection: toViewProjection(createWizardWorld('greenway-alpha'), []), onIntent: () => {} }))
     expect(unequipped).toContain('aria-pressed="false"')
     expect(unequipped).toContain('>Equip</button>')
-    expect(unequipped).not.toContain('>Equipped</button>')
+    expect(unequipped).not.toContain('>Unequip</button>')
   })
 
-  it('recognizes equipment in every compatible slot instead of offering an invalid re-equip', () => {
+  it('recognizes equipment in every compatible slot and offers unequip instead of re-equip', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     state.player.inventory.push({ itemId: 'oak_wand', quantity: 1 })
     state.player.equipment.offHand = 'oak_wand'
@@ -246,8 +246,8 @@ describe('Wizard view adapter', () => {
     const wandRow = markup.match(/<div class="wr-item">(?:(?!<div class="wr-item">).)*?<b>Oak wand<\/b>(?:(?!<\/div>).)*?<\/div>/)?.[0]
     expect(wandRow).toBeDefined()
     expect(wandRow).toContain('aria-pressed="true"')
-    expect(wandRow).toContain('disabled=""')
-    expect(wandRow).toContain('>Equipped</button>')
+    expect(wandRow).not.toContain('disabled=""')
+    expect(wandRow).toContain('>Unequip</button>')
     expect(wandRow).not.toContain('>Equip</button>')
   })
 
@@ -740,6 +740,20 @@ describe('Wizard view adapter', () => {
     expect(result.state.player.coins).toBe(state.player.coins + 6)
     expect(result.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
     expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v3' ? serializeWizardWorld(result.state) : null })).toEqual(result.state)
+  })
+
+  it('maps unequip through authority and projects the cleared visual slot after reload', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.player.equipment.mainHand = 'woodcutters_axe'
+    expect(toViewProjection(state, []).equipment.mainHand?.itemId).toBe('woodcutters_axe')
+    const intent = intentForView(state, { type: 'equipment.unequip', slot: 'mainHand' })
+    expect(intent).toEqual({ type: 'unequip_item', slot: 'mainHand' })
+    if (!intent) throw new Error('Expected an unequip intent')
+    const result = advanceWizardWorld(state, [intent])
+    expect(result.rejections).toEqual([])
+    expect(toViewProjection(result.state, []).equipment.mainHand).toBeNull()
+    expect(result.state.player.inventory).toEqual(state.player.inventory)
+    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v3' ? serializeWizardWorld(result.state) : null }).player.equipment.mainHand).toBeNull()
   })
 
   it('forgets an open store on departure so returning does not reopen it', () => {

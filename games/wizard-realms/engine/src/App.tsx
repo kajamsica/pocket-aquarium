@@ -165,6 +165,7 @@ function eventText(event: WizardEvent): string {
     case 'store_item_bought': return `Purchased ${ITEM_NAMES[event.itemId]}.`
     case 'store_item_sold': return `Sold ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for ${event.totalPrice}g.`
     case 'item_equipped': return `Equipped ${ITEM_NAMES[event.itemId]}.`
+    case 'item_unequipped': return `Unequipped ${ITEM_NAMES[event.itemId]}.`
     case 'trade_listing_created': return `Listed ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for trade.`
     case 'trade_listing_cancelled': return `Returned ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} to your backpack.`
     case 'player_jumped': return 'You spring over the trail.'
@@ -297,6 +298,7 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
   if (intent.type === 'store.select-listing') return { type: 'buy_store_listing', storeId: intent.storeId, listingId: intent.listingId }
   if (intent.type === 'store.sell-item') return { type: 'sell_to_store', storeId: intent.storeId, itemId: intent.itemId as ItemId, quantity: intent.quantity }
   if (intent.type === 'equipment.equip') return { type: 'equip_item', itemId: intent.stackId.replace('inventory-', '') as ItemId, slot: intent.slot }
+  if (intent.type === 'equipment.unequip') return { type: 'unequip_item', slot: intent.slot }
   if (intent.type === 'trade.create-listing') return { type: 'create_trade_listing', slotIndex: intent.slot, itemId: intent.stackId.replace('inventory-', '') as ItemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
   if (intent.type === 'trade.cancel-listing') return { type: 'cancel_trade_listing', slotIndex: intent.slot }
   return { type: 'teleport_fairy_ring', sourceRingId: intent.ringId, targetRingId: intent.destinationRingId }

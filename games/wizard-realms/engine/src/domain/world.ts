@@ -18,6 +18,7 @@ const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
   woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
 }
+const equipmentSlots: readonly EquipmentSlot[] = ['head', 'chest', 'legs', 'feet', 'mainHand', 'offHand']
 export const canEquipItem = (itemId: ItemId, slot: EquipmentSlot) => itemSlots[itemId]?.includes(slot) ?? false
 
 const finite = (value: number) => Number.isFinite(value)
@@ -319,6 +320,15 @@ function applyIntent(
     const state = cloneState(current)
     state.player.equipment[intent.slot] = intent.itemId
     return { state, events: [event(state, tick, { type: 'item_equipped', itemId: intent.itemId, slot: intent.slot })] }
+  }
+
+  if (intent.type === 'unequip_item') {
+    if (!equipmentSlots.includes(intent.slot)) return fail('invalid_value', 'Equipment slot is invalid.')
+    const itemId = current.player.equipment[intent.slot]
+    if (!itemId) return fail('invalid_value', 'Equipment slot is empty.')
+    const state = cloneState(current)
+    state.player.equipment[intent.slot] = null
+    return { state, events: [event(state, tick, { type: 'item_unequipped', itemId, slot: intent.slot })] }
   }
 
   if (intent.type === 'create_trade_listing') {

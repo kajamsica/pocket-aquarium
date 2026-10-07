@@ -123,6 +123,7 @@ export type WizardIntent =
   | { type: 'buy_store_listing'; storeId: string; listingId: string }
   | { type: 'sell_to_store'; storeId: string; itemId: ItemId; quantity: number }
   | { type: 'equip_item'; itemId: ItemId; slot: EquipmentSlot }
+  | { type: 'unequip_item'; slot: EquipmentSlot }
   | { type: 'create_trade_listing'; slotIndex: number; itemId: ItemId; quantity: number; unitPrice: number }
   | { type: 'cancel_trade_listing'; slotIndex: number }
 
@@ -142,6 +143,7 @@ export type WizardEvent = EventBase & (
   | { type: 'store_item_bought'; storeId: string; listingId: string; itemId: ItemId; price: number }
   | { type: 'store_item_sold'; storeId: string; itemId: ItemId; quantity: number; unitPrice: number; totalPrice: number }
   | { type: 'item_equipped'; itemId: ItemId; slot: EquipmentSlot }
+  | { type: 'item_unequipped'; itemId: ItemId; slot: EquipmentSlot }
   | { type: 'trade_listing_created'; slotIndex: number; itemId: ItemId; quantity: number; unitPrice: number }
   | { type: 'trade_listing_cancelled'; slotIndex: number; itemId: ItemId; quantity: number }
 )

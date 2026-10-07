@@ -33,6 +33,8 @@ const STYLES = `
 .wr-context{bottom:60px}.wr-hud:has(.wr-context) .wr-prompt[data-actionable="false"]{display:none}.wr-backpack .wr-item{grid-template-columns:25px minmax(0,1fr) auto}.wr-backpack .wr-item button:first-of-type{grid-column:2}
 @media(max-width:719px),(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-surface{min-height:480px}.wr-backpack{box-sizing:border-box;left:8px;top:64px;width:220px}.wr-gear,.wr-trade,.wr-diagnostics{display:none}.wr-events{left:10px;top:205px;bottom:auto;width:calc(100% - 20px);max-height:80px;overflow-y:auto;font-size:12px}.wr-context{bottom:150px;width:min(280px,78vw)}.wr-prompt{bottom:148px}.wr-touch{display:flex;position:absolute;inset:auto 14px 14px;justify-content:space-between;align-items:end;pointer-events:none}.wr-touch button{pointer-events:auto;width:58px;height:58px;border:1px solid #ffe39577;border-radius:17px;background:#17231ed9;color:#fff;font-size:24px;touch-action:none}.wr-dpad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,58px);gap:5px}.wr-dpad button:nth-child(1){grid-column:2}.wr-dpad button:nth-child(2){grid-column:1}.wr-dpad button:nth-child(3){grid-column:2}.wr-dpad button:nth-child(4){grid-column:3}.wr-touch-actions{display:grid;gap:6px}.wr-touch .wr-touch-action{width:72px;height:54px;border-radius:18px;font-size:13px;background:#6c3e7ee8}.wr-focus-note{display:none}.wr-topbar{top:8px;min-width:min(300px,85vw)}.wr-map-toggle{left:auto;right:8px;top:64px;display:flex;justify-content:center;width:auto;min-width:44px;min-height:44px;padding:0 10px}.wr-map-toggle small,.wr-map-compact{display:none}.wr-map-backdrop{display:block}.wr-map-dialog{position:absolute;inset:0;width:auto;max-height:none;border:0;border-radius:0;padding:calc(14px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px))}.wr-map-dialog .wr-map-grid{width:min(75vh,100%)} }
 @media(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-surface{min-height:100%}.wr-backpack,.wr-events{display:none}}
+.wr-backpack-toggle{display:none}
+@media(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-backpack-toggle{position:absolute;z-index:7;left:8px;top:64px;display:block;min-width:88px;min-height:44px;padding:6px 10px;border:1px solid #d5b86f66;border-radius:9px;background:#101a17e8;color:#fff;cursor:pointer}.wr-surface[data-backpack-open="true"] .wr-backpack{display:block;top:114px;max-height:calc(100vh - 235px);overflow-y:auto;z-index:6}}
 @media(max-height:599px){.wr-map-backdrop{position:fixed}}
 `
 
@@ -42,12 +44,14 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
   const [dragging, setDragging] = useState(false)
   const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
+  const [backpackOpen, setBackpackOpen] = useState(false)
   const mapButtonRef = useRef<HTMLButtonElement>(null)
   const mapCloseRef = useRef<HTMLButtonElement>(null)
 
   const toggleMap = () => {
     const next = !mapOpen
     if (next) {
+      setBackpackOpen(false)
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
       setCameraOrbit(CENTERED_CAMERA_ORBIT)
@@ -67,6 +71,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
       if (event.code === 'Escape') {
         clearControls()
         if (mapOpen) toggleMap()
+        else setBackpackOpen(false)
         return
       }
       if (event.repeat || /INPUT|TEXTAREA|SELECT/.test((event.target as HTMLElement)?.tagName)) return
@@ -109,7 +114,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
   }, [mapOpen, onIntent])
 
   return (
-    <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world">
+    <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen}>
       <style>{STYLES}</style>
       <div className="wr-scene" data-dragging={dragging}
         onPointerDown={(event) => { rootRef.current?.focus(); event.currentTarget.setPointerCapture(event.pointerId); setDragging(true) }}
@@ -119,6 +124,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging} />
       </div>
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />
+      {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}
       <WizardMap projection={projection} open={mapOpen} onToggle={toggleMap} buttonRef={mapButtonRef} closeRef={mapCloseRef} />
       <div className="wr-focus-note">W/S move · A/D pivot · Space jump · hold and drag to orbit · E interact · M map</div>
     </div>

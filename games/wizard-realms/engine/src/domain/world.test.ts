@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   advanceWizardWorld, createWizardProjection, createWizardWorld, restoreWizardWorld, serializeWizardWorld,
-  type WizardEvent, type WizardIntent, type WizardWorldState,
+  type EquipmentSlot, type WizardEvent, type WizardIntent, type WizardWorldState,
 } from './index'
 import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 import { isRestorableWizardSave } from './persistence'
@@ -134,6 +134,59 @@ describe('Wizard world domain', () => {
     expect(bought.state.player.inventory).toContainEqual({ itemId: 'apprentice_hat', quantity: 1 })
     const equipped = advanceWizardWorld(bought.state, [{ type: 'equip_item', itemId: 'apprentice_hat', slot: 'head' }])
     expect(equipped.state.player.equipment.head).toBe('apprentice_hat')
+  })
+
+  it.each([
+    { slot: 'head', itemId: 'apprentice_hat' },
+    { slot: 'chest', itemId: 'traveler_tunic' },
+    { slot: 'legs', itemId: 'trail_leggings' },
+    { slot: 'feet', itemId: 'leather_boots' },
+    { slot: 'mainHand', itemId: 'woodcutters_axe' },
+    { slot: 'offHand', itemId: 'wooden_shield' },
+  ] as const)('unequips $slot without removing its owned $itemId', ({ slot, itemId }) => {
+    const state = createWizardWorld('unequip-slots')
+    if (itemId !== 'woodcutters_axe') state.player.inventory.push({ itemId, quantity: 1 })
+    const otherSlot = slot === 'mainHand' ? 'head' : 'mainHand'
+    const otherItemId = slot === 'mainHand' ? 'apprentice_hat' : 'woodcutters_axe'
+    if (otherItemId === 'apprentice_hat') state.player.inventory.push({ itemId: otherItemId, quantity: 1 })
+    state.player.equipment[otherSlot] = otherItemId
+    const equipped = advanceWizardWorld(state, [{ type: 'equip_item', itemId, slot }])
+    expect(equipped.rejections).toEqual([])
+    const before = serializeWizardWorld(equipped.state)
+    const unequipped = advanceWizardWorld(equipped.state, [{ type: 'unequip_item', slot }])
+    expect(unequipped.rejections).toEqual([])
+    expect(unequipped.events).toEqual([{ type: 'item_unequipped', itemId, slot, sequence: 2, tick: 2 }])
+    expect(unequipped.state.player.equipment).toEqual({ ...equipped.state.player.equipment, [slot]: null })
+    expect(unequipped.state.player.inventory).toEqual(equipped.state.player.inventory)
+    expect(serializeWizardWorld(equipped.state)).toBe(before)
+  })
+
+  it('rejects empty and unknown equipment slots without mutation', () => {
+    const state = createWizardWorld('unequip-slots')
+    const before = serializeWizardWorld(state)
+    for (const slot of ['head', 'unknown', 'toString']) {
+      const rejected = advanceWizardWorld(state, [{ type: 'unequip_item', slot: slot as EquipmentSlot }])
+      expect(rejected.rejections[0]?.code).toBe('invalid_value')
+      expect(rejected.events).toEqual([])
+      expect(rejected.state.player).toEqual(state.player)
+      expect(rejected.state.eventSequence).toBe(state.eventSequence)
+      expect(serializeWizardWorld(state)).toBe(before)
+    }
+  })
+
+  it('replays unequip deterministically and preserves its result through save restoration', () => {
+    const state = createWizardWorld('unequip-replay')
+    state.player.inventory.push({ itemId: 'apprentice_hat', quantity: 1 })
+    const equipped = advanceWizardWorld(state, [{ type: 'equip_item', itemId: 'apprentice_hat', slot: 'head' }])
+    const intent = { type: 'unequip_item' as const, slot: 'head' as const }
+    const first = advanceWizardWorld(equipped.state, [intent])
+    expect(advanceWizardWorld(equipped.state, [intent])).toEqual(first)
+    const restored = restoreWizardWorld(serializeWizardWorld(first.state))
+    expect(restored.player.equipment.head).toBeNull()
+    expect(restored.player.inventory).toEqual(first.state.player.inventory)
+    expect(advanceWizardWorld(restored, [{ type: 'equip_item', itemId: 'apprentice_hat', slot: 'head' }])).toEqual(
+      advanceWizardWorld(first.state, [{ type: 'equip_item', itemId: 'apprentice_hat', slot: 'head' }]),
+    )
   })
 
   it.each([

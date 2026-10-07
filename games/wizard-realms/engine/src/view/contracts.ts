@@ -145,6 +145,7 @@ export type WizardViewIntent =
   | { type: 'store.select-listing'; storeId: string; listingId: string }
   | { type: 'store.sell-item'; storeId: string; itemId: string; quantity: number }
   | { type: 'equipment.equip'; stackId: string; slot: EquipmentSlot }
+  | { type: 'equipment.unequip'; slot: EquipmentSlot }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }
   | { type: 'trade.cancel-listing'; slot: number }
   | { type: 'fairy-ring.teleport'; ringId: string; destinationRingId: string }
