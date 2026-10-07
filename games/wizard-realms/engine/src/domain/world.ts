@@ -1,8 +1,8 @@
 import type {
-  EquipmentSlot, IntentRejection, ItemId, PlayerState, ResourceKind, Vec3, WizardAdvanceResult,
+  AreaId, EquipmentSlot, GenerationProfile, IntentRejection, ItemId, PlayerState, ResourceKind, Vec3, WizardAdvanceResult,
   WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
-import { areaAt, createGeneratedWorld, terrainHeightAt } from './generation'
+import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 
 const INTERACT_DISTANCE = 3
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
@@ -27,8 +27,54 @@ const equippedCount = (player: PlayerState, itemId: ItemId, except?: EquipmentSl
 const routeEndpointDistance = (player: Vec3, route: WizardWorldState['routes'][number]) =>
   Math.min(distance(player, route.from), distance(player, route.to))
 
-function tileAt(state: WizardWorldState, position: Vec3) {
-  return state.tiles.reduce((closest, tile) => distance(position, tile.center) < distance(position, closest.center) ? tile : closest)
+function insideStoreFootprint(x: number, z: number, store: WizardWorldState['stores'][number]) {
+  return Math.abs(x - store.position.x) < STORE_HALF_WIDTH && Math.abs(z - store.position.z) < STORE_HALF_DEPTH
+}
+
+function segmentEntersStore(startX: number, startZ: number, endX: number, endZ: number, store: WizardWorldState['stores'][number]) {
+  let enter = 0
+  let exit = 1
+  const axes = [
+    [startX, endX, store.position.x - STORE_HALF_WIDTH, store.position.x + STORE_HALF_WIDTH],
+    [startZ, endZ, store.position.z - STORE_HALF_DEPTH, store.position.z + STORE_HALF_DEPTH],
+  ]
+  for (const [start, end, min, max] of axes) {
+    const delta = end - start
+    if (delta === 0) {
+      if (start <= min || start >= max) return false
+      continue
+    }
+    const first = (min - start) / delta
+    const second = (max - start) / delta
+    enter = Math.max(enter, Math.min(first, second))
+    exit = Math.min(exit, Math.max(first, second))
+    if (enter >= exit) return false
+  }
+  return enter < 1 && exit > 0
+}
+
+function allowsStoreMove(state: WizardWorldState, startX: number, startZ: number, endX: number, endZ: number) {
+  return state.stores.every((store) => {
+    if (!insideStoreFootprint(startX, startZ, store)) return !segmentEntersStore(startX, startZ, endX, endZ, store)
+    const start = [(startX - store.position.x) / STORE_HALF_WIDTH, (startZ - store.position.z) / STORE_HALF_DEPTH]
+    const end = [(endX - store.position.x) / STORE_HALF_WIDTH, (endZ - store.position.z) / STORE_HALF_DEPTH]
+    const outward = start[0] * (end[0] - start[0]) + start[1] * (end[1] - start[1]) >= 0
+    return outward && end[0] ** 2 + end[1] ** 2 > start[0] ** 2 + start[1] ** 2
+  })
+}
+
+function tileAt(state: WizardWorldState, position: Vec3, areaId: AreaId) {
+  let closest: WizardWorldState['tiles'][number] | undefined
+  let closestDistance = Infinity
+  for (const tile of state.tiles) {
+    if (areaAt(state.areas, tile.center.x, tile.center.z).id !== areaId) continue
+    const tileDistance = (position.x - tile.center.x) ** 2 + (position.z - tile.center.z) ** 2
+    if (tileDistance < closestDistance) {
+      closest = tile
+      closestDistance = tileDistance
+    }
+  }
+  return closest
 }
 
 function addItem(player: PlayerState, itemId: ItemId, quantity: number): boolean {
@@ -63,6 +109,14 @@ function event(state: WizardWorldState, tick: number, body: WizardEventBody): Wi
   return { ...body, sequence: state.eventSequence, tick } as WizardEvent
 }
 
+function discoverTile(state: WizardWorldState, position: Vec3, areaId: AreaId, tick: number): WizardEvent | undefined {
+  const tile = tileAt(state, position, areaId)
+  if (!tile || state.discoveredTileIds.includes(tile.id)) return undefined
+  state.discoveredTileIds.push(tile.id)
+  state.discoveredTileIds.sort()
+  return event(state, tick, { type: 'tile_discovered', tileId: tile.id })
+}
+
 function stepRng(value: number): number {
   let next = value | 0
   next ^= next << 13
@@ -78,9 +132,21 @@ function applyIntent(
 
   if (intent.type === 'move') {
     if (![intent.delta.x, intent.delta.y, intent.delta.z].every(finite) || Math.hypot(intent.delta.x, intent.delta.y, intent.delta.z) > 4) return fail('invalid_value', 'Movement must be finite and at most four meters per tick.')
-    const state = cloneState(current)
-    let x = Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x))
-    let z = Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z))
+    const state = current
+    const tileEdge = state.generationProfile === 'greenway-expanded-v1'
+      ? Math.abs(state.tiles[1].center.x - state.tiles[0].center.x) / 2 : 0
+    let minX = Infinity
+    let maxX = -Infinity
+    let minZ = Infinity
+    let maxZ = -Infinity
+    for (const tile of state.tiles) {
+      minX = Math.min(minX, tile.center.x)
+      maxX = Math.max(maxX, tile.center.x)
+      minZ = Math.min(minZ, tile.center.z)
+      maxZ = Math.max(maxZ, tile.center.z)
+    }
+    let x = Math.max(minX - tileEdge, Math.min(maxX + tileEdge, state.player.position.x + intent.delta.x))
+    let z = Math.max(minZ - tileEdge, Math.min(maxZ + tileEdge, state.player.position.z + intent.delta.z))
     const currentArea = areaAt(state.areas, state.player.position.x, state.player.position.z)
     const nextArea = areaAt(state.areas, x, z)
     if (currentArea.id !== nextArea.id) {
@@ -90,15 +156,27 @@ function applyIntent(
       else if (z !== startZ && areaAt(state.areas, startX, z).id === currentArea.id) x = startX
       else return fail('locked_area', 'Use a completed route to cross into another area.')
     }
+    const startX = state.player.position.x
+    const startZ = state.player.position.z
+    if (!allowsStoreMove(state, startX, startZ, x, z)) {
+      if (x !== startX && allowsStoreMove(state, startX, startZ, x, startZ)) z = startZ
+      else if (z !== startZ && allowsStoreMove(state, startX, startZ, startX, z)) x = startX
+      else return { state: current }
+    }
     const ground = terrainHeightAt(state.tiles, x, z)
     state.player.position = { x, y: Math.max(state.player.position.y, ground), z }
     if (state.player.position.y === ground) state.player.verticalVelocity = 0
-    return { state, events: [event(state, tick, { type: 'player_moved', position: { ...state.player.position } })] }
+    const events = [event(state, tick, { type: 'player_moved', position: { ...state.player.position } })]
+    if (x !== startX || z !== startZ) {
+      const discovered = discoverTile(state, state.player.position, areaAt(state.areas, x, z).id, tick)
+      if (discovered) events.push(discovered)
+    }
+    return { state, events }
   }
 
   if (intent.type === 'look') {
     if (!finite(intent.yawDelta) || !finite(intent.pitchDelta)) return fail('invalid_value', 'Look deltas must be finite.')
-    const state = cloneState(current)
+    const state = current
     state.player.yaw += intent.yawDelta
     state.player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.player.pitch + intent.pitchDelta))
     return { state, events: [event(state, tick, { type: 'player_looked', yaw: state.player.yaw, pitch: state.player.pitch })] }
@@ -142,13 +220,9 @@ function applyIntent(
     const state = cloneState(current)
     state.player.position = { ...destination }
     state.player.verticalVelocity = 0
-    const discovered = tileAt(state, destination)
     const events = [event(state, tick, { type: 'route_used', routeId: route.id, fromAreaId, toAreaId, position: { ...destination } })]
-    if (!state.discoveredTileIds.includes(discovered.id)) {
-      state.discoveredTileIds.push(discovered.id)
-      state.discoveredTileIds.sort()
-      events.push(event(state, tick, { type: 'tile_discovered', tileId: discovered.id }))
-    }
+    const discovered = discoverTile(state, destination, toAreaId, tick)
+    if (discovered) events.push(discovered)
     return { state, events }
   }
 
@@ -242,7 +316,7 @@ function applyIntent(
   return { state, events: [event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity })] }
 }
 
-export function createWizardWorld(seed: string): WizardWorldState { return createGeneratedWorld(seed) }
+export function createWizardWorld(seed: string, profile?: GenerationProfile): WizardWorldState { return createGeneratedWorld(seed, profile) }
 
 export function advanceWizardWorld(state: WizardWorldState, intents: readonly WizardIntent[]): WizardAdvanceResult {
   let next = cloneState(state)
@@ -281,7 +355,7 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
 
 export function createWizardProjection(state: WizardWorldState): WizardProjection {
   const nearby = <T extends { position: Vec3 }>(values: readonly T[]) => values.filter((value) => distance(state.player.position, value.position) <= 6)
-  const currentTile = state.tiles.reduce((closest, tile) => distance(state.player.position, tile.center) < distance(state.player.position, closest.center) ? tile : closest)
+  const currentTile = tileAt(state, state.player.position, areaAt(state.areas, state.player.position.x, state.player.position.z).id)!
   return JSON.parse(JSON.stringify({
     tick: state.tick,
     player: state.player,

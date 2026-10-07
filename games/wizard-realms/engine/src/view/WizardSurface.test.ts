@@ -13,8 +13,8 @@ const projection = {
   ],
   map: {
     tiles: [
-      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false },
-      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false },
+      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false, hasRouteSite: false },
+      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false },
     ],
     player: { gridX: 0, gridZ: 0, yaw: 0 },
   },
@@ -23,6 +23,17 @@ const projection = {
 type Props = Record<string, unknown>
 const mapProps = (open: boolean, onToggle = vi.fn()) => ({ projection, open, onToggle, buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>() })
 const renderMap = (open: boolean) => renderToStaticMarkup(createElement(WizardMap, mapProps(open)))
+const gridProjection = (size: number, gridX: number, gridZ: number) => ({
+  ...projection,
+  map: {
+    tiles: Array.from({ length: size * size }, (_, index) => {
+      const x = index % size
+      const z = Math.floor(index / size)
+      return { id: `tile-${x}-${z}`, gridX: x, gridZ: z, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false }
+    }),
+    player: { gridX, gridZ, yaw: 0 },
+  },
+}) as WizardViewProjection
 const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) => boolean): ReactElement<Props>[] => {
   if (Array.isArray(node)) return node.flatMap((child) => findElements(child, matches))
   if (!isValidElement<Props>(node)) return []
@@ -87,6 +98,33 @@ describe('third-person control grammar', () => {
 })
 
 describe('wizard atlas markup', () => {
+  it.each([7, 16])('scales a %i-column atlas while keeping the compact map focused on the player', (size) => {
+    const player = size === 16 ? { gridX: 14, gridZ: 12 } : { gridX: 3, gridZ: 3 }
+    const current = gridProjection(size, player.gridX, player.gridZ)
+    const compact = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(false), projection: current }))
+    const expanded = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+
+    expect(compact).toContain('grid-template-columns:repeat(7, minmax(0, 1fr))')
+    expect(compact.match(/class="wr-map-tile"/g)).toHaveLength(49)
+    expect(compact.match(/player location/g)).toHaveLength(1)
+    expect(expanded).toContain(`grid-template-columns:repeat(${size}, minmax(0, 1fr))`)
+    expect(expanded.match(/class="wr-map-tile"/g)).toHaveLength(size * size)
+    expect(expanded.indexOf('tile-0-0:')).toBeLessThan(expanded.indexOf(`tile-${size - 1}-${size - 1}:`))
+    if (size === 16) {
+      expect(compact).toContain('tile-9-9:')
+      expect(compact).toContain('tile-15-15:')
+      expect(compact).not.toContain('tile-0-0:')
+    }
+  })
+
+  it('clamps the compact viewport at the north-west edge without losing the player marker', () => {
+    const compact = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(false), projection: gridProjection(16, 0, 0) }))
+    expect(compact).toContain('tile-0-0:')
+    expect(compact).toContain('tile-6-6:')
+    expect(compact).not.toContain('tile-7-7:')
+    expect(compact.match(/player location/g)).toHaveLength(1)
+  })
+
   it('renders the minimap preview inside the single toggle button whose click handler is the toggle', () => {
     const onToggle = vi.fn()
     const buttons = findElements(WizardMap(mapProps(false, onToggle)), (element) => element.type === 'button')

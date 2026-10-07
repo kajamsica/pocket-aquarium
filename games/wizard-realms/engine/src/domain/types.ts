@@ -1,6 +1,7 @@
 export type Vec3 = { x: number; y: number; z: number }
 export type BiomeId = 'temperate_forest' | 'marsh' | 'dry_highland' | 'alpine'
 export type TerrainId = 'loam' | 'wetland' | 'rocky' | 'snow'
+export type GenerationProfile = 'greenway-classic-v1' | 'greenway-expanded-v1'
 export type ResourceKind = 'tree' | 'herb' | 'stone' | 'ore'
 export type ItemId =
   | 'woodcutters_axe' | 'logs' | 'marsh_herb' | 'stone' | 'iron_ore'
@@ -91,6 +92,7 @@ export interface PlayerState {
 export interface WizardWorldState {
   schemaVersion: 'wizard-world/v2'
   seed: string
+  generationProfile: GenerationProfile
   tick: number
   fixedStepMs: 50
   rng: { generation: number; simulation: number }

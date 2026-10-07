@@ -10,8 +10,8 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   onIntent: (intent: WizardViewIntent) => void
   diagnostics?: boolean
 }) {
-  const nearbyStore = projection.nearbyInteraction?.kind === 'store'
-    ? projection.stores.find((store) => store.id === projection.nearbyInteraction?.targetId)
+  const nearbyStore = projection.openStoreId
+    ? projection.stores.find((store) => store.id === projection.openStoreId)
     : undefined
   const nearbyRing = projection.nearbyInteraction?.kind === 'fairy-ring'
     ? projection.fairyRings.find((ring) => ring.id === projection.nearbyInteraction?.targetId)
@@ -77,6 +77,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 
       {nearbyStore && <aside className="wr-panel wr-context">
         <header>{nearbyStore.name}</header>
+        <button type="button" onClick={() => onIntent({ type: 'store.close' })}>Close</button>
         {nearbyStore.listings.map((listing) => <button key={listing.id} onClick={() => onIntent({ type: 'store.select-listing', storeId: nearbyStore.id, listingId: listing.id })}><b>{listing.name}</b><span>{listing.price}g{listing.stock === undefined ? '' : ` · ${listing.stock} left`}</span></button>)}
       </aside>}
 

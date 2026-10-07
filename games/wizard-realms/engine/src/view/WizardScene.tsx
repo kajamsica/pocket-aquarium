@@ -32,6 +32,7 @@ const STAKE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9a8a70', roughn
 const ROBE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4f3176', roughness: 0.76 })
 const ROBE_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2d1f45', roughness: 0.82 })
 const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
+const AXE_HEAD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ba4ad', roughness: 0.42, metalness: 0.6 })
 
 /** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
 const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
@@ -72,6 +73,81 @@ function shortestArc(from: number, to: number) {
   return Math.atan2(Math.sin(to - from), Math.cos(to - from))
 }
 
+// These bounds enclose the rendered shop body and pitched roof. They affect only the presentation camera.
+function segmentBoxHit(from: THREE.Vector3, to: THREE.Vector3, centre: THREE.Vector3, half: THREE.Vector3): number | null {
+  let enter = 0
+  let exit = 1
+  let fromInside = true
+  let toInside = true
+  for (const axis of ['x', 'y', 'z'] as const) {
+    const change = to[axis] - from[axis]
+    const low = centre[axis] - half[axis]
+    const high = centre[axis] + half[axis]
+    fromInside &&= from[axis] >= low && from[axis] <= high
+    toInside &&= to[axis] >= low && to[axis] <= high
+    if (Math.abs(change) < 1e-8) {
+      if (from[axis] < low || from[axis] > high) return null
+      continue
+    }
+    const first = (low - from[axis]) / change
+    const second = (high - from[axis]) / change
+    enter = Math.max(enter, Math.min(first, second))
+    exit = Math.min(exit, Math.max(first, second))
+    if (enter > exit) return null
+  }
+  // A legacy save may start inside a shop. Keep its camera before the exit wall, not at distance zero.
+  return fromInside ? (toInside ? null : exit) : enter
+}
+
+function firstStoreCameraHit(from: THREE.Vector3, to: THREE.Vector3, stores: readonly WizardStore[]): number | null {
+  let firstHit: number | null = null
+  for (const store of stores) {
+    const [x, y, z] = store.position
+    const body = segmentBoxHit(from, to, new THREE.Vector3(x, y + 1.2, z), new THREE.Vector3(1.7, 1.2, 1.2))
+    const roof = segmentBoxHit(from, to, new THREE.Vector3(x, y + 2.95, z), new THREE.Vector3(2.4, 0.8, 2.4))
+    for (const hit of [body, roof]) if (hit !== null) firstHit = firstHit === null ? hit : Math.min(firstHit, hit)
+  }
+  return firstHit
+}
+
+/** Keep the wizard visible when the requested follow orbit looks through a shop. Never changes world movement. */
+export function storeSafeCameraPosition(
+  target: THREE.Vector3, desired: THREE.Vector3, stores: readonly WizardStore[], previous: THREE.Vector3 | null, delta: number,
+): THREE.Vector3 {
+  let clear = desired
+  let bestHit = firstStoreCameraHit(target, desired, stores)
+  if (bestHit !== null) {
+    const offset = desired.clone().sub(target)
+    for (const angle of [0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.4, -1.4, 1.75, -1.75, Math.PI]) {
+      const sin = Math.sin(angle)
+      const cos = Math.cos(angle)
+      const candidate = target.clone().add(new THREE.Vector3(offset.x * cos + offset.z * sin, offset.y, offset.z * cos - offset.x * sin))
+      const hit = firstStoreCameraHit(target, candidate, stores)
+      if (hit === null) {
+        clear = candidate
+        break
+      }
+      if (hit > bestHit) {
+        clear = candidate
+        bestHit = hit
+      }
+    }
+  }
+  const next = previous ? previous.clone().lerp(clear, damping(10, Math.max(0, delta))) : clear.clone()
+  const hit = firstStoreCameraHit(target, next, stores)
+  if (hit === null) return next
+  const distance = target.distanceTo(next)
+  return target.clone().lerp(next, Math.max(0, hit - 0.12 / Math.max(distance, 0.12)))
+}
+
+const DESKTOP_CAMERA = { focusHeight: 1.35, eyeRise: 1.2, distance: 6.4, pitchScale: 1 } as const
+const COMPACT_CAMERA = { focusHeight: 0.45, eyeRise: 0.45, distance: 5.6, pitchScale: 0.65 } as const
+
+/** Match the HUD's compact breakpoint so the wizard stays above its lower objective and touch controls. */
+export function cameraFramingFor(width: number, height: number) {
+  return width < 720 || (width <= 900 && height <= 590) ? COMPACT_CAMERA : DESKTOP_CAMERA
+}
+
 /** Deterministic [0, 1) from a stable id, so cosmetic variation never depends on randomness or time. */
 function hashUnit(id: string, salt: number) {
   let hash = 2166136261 ^ salt
@@ -106,35 +182,83 @@ function PresentationPoseDriver({ player, pose }: { player: WizardViewProjection
   return null
 }
 
-function CameraRig({ pose, cameraOrbit, orbiting }: {
+function CameraRig({ pose, cameraOrbit, orbiting, stores }: {
   pose: PresentationPose
   cameraOrbit: readonly [number, number]
   orbiting: boolean
+  stores: readonly WizardStore[]
 }) {
   const orbitYaw = useRef(cameraOrbit[0])
   const orbitPitch = useRef(cameraOrbit[1])
+  const initialized = useRef(false)
   const target = useMemo(() => new THREE.Vector3(), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
-  useFrame(({ camera }, delta) => {
+  useFrame(({ camera, size }, delta) => {
     const blend = 1 - Math.exp(-(orbiting ? 18 : 2.6) * delta)
     orbitYaw.current += ((orbiting ? cameraOrbit[0] : 0) - orbitYaw.current) * blend
     orbitPitch.current += ((orbiting ? cameraOrbit[1] : 0.28) - orbitPitch.current) * blend
     const heading = pose.yaw + orbitYaw.current
-    const distance = 6.4
-    const horizontal = Math.cos(orbitPitch.current) * distance
-    target.set(pose.position.x, pose.position.y + 1.35, pose.position.z)
+    const framing = cameraFramingFor(size.width, size.height)
+    const horizontal = Math.cos(orbitPitch.current * framing.pitchScale) * framing.distance
+    target.set(pose.position.x, pose.position.y + framing.focusHeight, pose.position.z)
     desired.set(
       target.x + Math.sin(heading) * horizontal,
-      target.y + 1.2 + Math.sin(orbitPitch.current) * distance,
+      target.y + framing.eyeRise + Math.sin(orbitPitch.current * framing.pitchScale) * framing.distance,
       target.z + Math.cos(heading) * horizontal,
     )
-    camera.position.lerp(desired, 1 - Math.exp(-10 * delta))
+    camera.position.copy(storeSafeCameraPosition(target, desired, stores, initialized.current ? camera.position : null, delta))
+    initialized.current = true
     camera.lookAt(target)
   })
   return null
 }
 
-function WizardAvatar({ pose }: { pose: PresentationPose }) {
+type AvatarEquipment = WizardViewProjection['equipment']
+
+/** Pure mapping from authoritative equipment to the gear the avatar shows. Unknown or empty slots render nothing. */
+export function avatarGearFor(equipment: AvatarEquipment) {
+  const id = (slot: keyof AvatarEquipment) => equipment[slot]?.itemId ?? null
+  const mainHand = id('mainHand') === 'woodcutters_axe' ? 'axe' : id('mainHand') === 'oak_wand' ? 'wand' : null
+  const offHand = id('offHand') === 'wooden_shield' ? 'shield' : id('offHand') === 'oak_wand' ? 'wand' : null
+  return {
+    hat: id('head') === 'apprentice_hat',
+    tunic: id('chest') === 'traveler_tunic',
+    leggings: id('legs') === 'trail_leggings',
+    boots: id('feet') === 'leather_boots',
+    mainHand,
+    offHand,
+    // One wand light at most: two equipped wands share the main-hand light rather than doubling fragment cost.
+    offHandLight: offHand === 'wand' && mainHand !== 'wand',
+  } as const
+}
+
+function Wand({ side, light }: { side: 1 | -1; light: boolean }) {
+  return <>
+    <mesh position={[0.18 * side, -0.32, 0]} rotation={[0.05, 0, 0.12 * side]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /></mesh>
+    <mesh position={[0.04 * side, 0.78, -0.06]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.06, 0.04, 0.12, 7]} /></mesh>
+    <mesh position={[0.03 * side, 0.95, -0.07]}><sphereGeometry args={[0.12, 12, 10]} /><meshStandardMaterial color="#e9dcff" emissive="#bd82ff" emissiveIntensity={2.2} roughness={0.25} /></mesh>
+    {light && <pointLight position={[0.03 * side, 1.0, -0.07]} color="#bd82ff" intensity={2.6} distance={3.8} />}
+  </>
+}
+
+function Axe() {
+  return <group position={[0.2, -0.5, 0]} rotation={[0.1, 0, 0.1]}>
+    <mesh position={[0, 0.2, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.03, 0.04, 1.1, 6]} /></mesh>
+    <mesh geometry={UNIT_BOX} material={AXE_HEAD_MATERIAL} position={[0.13, 0.66, 0]} scale={[0.3, 0.2, 0.06]} castShadow />
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.66, 0.03]} scale={[0.07, 0.1, 0.08]} />
+  </group>
+}
+
+function Shield() {
+  return <group position={[-0.22, -0.38, 0.02]}>
+    <mesh geometry={UNIT_BOX} material={WOOD_MATERIAL} scale={[0.56, 0.72, 0.08]} castShadow />
+    <mesh position={[0, 0, 0.07]} rotation={[Math.PI / 2, 0, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.09, 0.09, 0.04, 8]} /></mesh>
+  </group>
+}
+
+function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: AvatarEquipment }) {
+  const gear = avatarGearFor(equipment)
+  const legMaterial = gear.leggings ? STAKE_MATERIAL : ROBE_TRIM_MATERIAL
   const root = useRef<THREE.Group>(null)
   const torso = useRef<THREE.Group>(null)
   const leftLeg = useRef<THREE.Group>(null)
@@ -156,25 +280,34 @@ function WizardAvatar({ pose }: { pose: PresentationPose }) {
   })
   return (
     <group ref={root} aria-label="Player wizard">
-      <group ref={leftLeg} position={[-0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh></group>
-      <group ref={rightLeg} position={[0.16, 0.6, 0]}><mesh position={[0, -0.3, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh></group>
+      {[leftLeg, rightLeg].map((leg, index) => (
+        <group key={index} ref={leg} position={[index === 0 ? -0.16 : 0.16, 0.6, 0]}>
+          <mesh position={[0, -0.3, 0]} material={legMaterial} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh>
+          {gear.boots && <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, -0.54, 0.05]} scale={[0.22, 0.14, 0.34]} castShadow />}
+        </group>
+      ))}
       <group ref={torso}>
         <mesh position={[0, 0.92, 0]} material={ROBE_MATERIAL} castShadow><coneGeometry args={[0.52, 1.65, 7]} /></mesh>
         <mesh position={[0, 0.16, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.5, 0.54, 0.14, 7]} /></mesh>
         <mesh position={[0, 1.2, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.2, 0.23, 0.08, 7]} /></mesh>
+        {gear.tunic && <mesh position={[0, 1.36, 0]} material={WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.24, 0.36, 0.5, 7]} /></mesh>}
         <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 12, 10]} /><meshStandardMaterial color="#d6a27a" roughness={0.78} /></mesh>
         <mesh position={[0, 1.5, -0.2]} rotation={[Math.PI + 0.3, 0, 0]} castShadow><coneGeometry args={[0.19, 0.55, 7]} /><meshStandardMaterial color="#ece6dc" roughness={0.92} /></mesh>
-        <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.72} flatShading /></mesh>
-        <mesh position={[0, 2.06, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.31, 0.33, 0.1, 8]} /></mesh>
-        <mesh position={[0, 1.98, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /></mesh>
+        {gear.hat && <>
+          <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.72} flatShading /></mesh>
+          <mesh position={[0, 2.06, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.31, 0.33, 0.1, 8]} /></mesh>
+          <mesh position={[0, 1.98, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /></mesh>
+        </>}
         <mesh position={[0, 1.78, -0.31]} castShadow><coneGeometry args={[0.08, 0.2, 6]} /><meshStandardMaterial color="#bd805d" /></mesh>
-        <group ref={leftArm} position={[-0.3, 1.4, 0]}><mesh position={[-0.08, -0.3, 0]} rotation={[0, 0, 0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh></group>
+        <group ref={leftArm} position={[-0.3, 1.4, 0]}>
+          <mesh position={[-0.08, -0.3, 0]} rotation={[0, 0, 0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh>
+          {gear.offHand === 'shield' && <Shield />}
+          {gear.offHand === 'wand' && <Wand side={-1} light={gear.offHandLight} />}
+        </group>
         <group ref={rightArm} position={[0.3, 1.4, 0]}>
           <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, -0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh>
-          <mesh position={[0.18, -0.32, 0]} rotation={[0.05, 0, 0.12]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /></mesh>
-          <mesh position={[0.04, 0.78, -0.06]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.06, 0.04, 0.12, 7]} /></mesh>
-          <mesh position={[0.03, 0.95, -0.07]}><sphereGeometry args={[0.12, 12, 10]} /><meshStandardMaterial color="#e9dcff" emissive="#bd82ff" emissiveIntensity={2.2} roughness={0.25} /></mesh>
-          <pointLight position={[0.03, 1.0, -0.07]} color="#bd82ff" intensity={2.6} distance={3.8} />
+          {gear.mainHand === 'axe' && <Axe />}
+          {gear.mainHand === 'wand' && <Wand side={1} light />}
         </group>
       </group>
     </group>
@@ -416,7 +549,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       />
       <directionalLight position={[-16, 10, -20]} intensity={0.7} color="#9ec1ff" />
       <PresentationPoseDriver player={projection.player} pose={pose} />
-      <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} />
+      <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
       {/* Bedrock meadow under the tile columns so the world reads as raised land rather than islands over void. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.72, 0]} receiveShadow>
         <planeGeometry args={[320, 320]} />
@@ -427,7 +560,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {projection.routes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
-      <WizardAvatar pose={pose} />
+      <WizardAvatar pose={pose} equipment={projection.equipment} />
     </Canvas>
   )
 }

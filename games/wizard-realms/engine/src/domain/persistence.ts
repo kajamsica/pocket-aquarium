@@ -32,7 +32,8 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
   try { raw = JSON.parse(serialized) } catch { raw = {} }
   const source = record(raw) ? raw : {}
   const seed = typeof source.seed === 'string' && source.seed.length > 0 ? source.seed : 'wizard-realms'
-  const base = createGeneratedWorld(seed)
+  const profile = source.generationProfile === 'greenway-expanded-v1' ? 'greenway-expanded-v1' : 'greenway-classic-v1'
+  const base = createGeneratedWorld(seed, profile)
   const state: WizardWorldState = JSON.parse(JSON.stringify(base)) as WizardWorldState
   state.tick = integer(source.tick, base.tick)
   state.eventSequence = integer(source.eventSequence, base.eventSequence)

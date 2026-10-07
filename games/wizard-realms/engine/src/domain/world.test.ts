@@ -1,11 +1,37 @@
 import { describe, expect, it } from 'vitest'
 import {
-  advanceWizardWorld, createWizardWorld, restoreWizardWorld, serializeWizardWorld,
-  type WizardWorldState,
+  advanceWizardWorld, createWizardProjection, createWizardWorld, restoreWizardWorld, serializeWizardWorld,
+  type WizardEvent, type WizardIntent, type WizardWorldState,
 } from './index'
-import { areaAt, terrainHeightAt } from './generation'
+import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
+const clearanceSeeds = ['expedition-19078', 'expedition-870', 'expedition-8407', 'expedition-11820', 'expedition-4', 'expedition-1']
+
+function expectResourceClearance(state: WizardWorldState) {
+  const landmarks = [
+    { id: 'spawn', position: state.player.position },
+    ...state.stores.map(({ id, position }) => ({ id, position })),
+    ...state.fairyRings.map(({ id, position }) => ({ id, position })),
+    ...state.routes.flatMap((route) => [
+      { id: `${route.id}:from`, position: route.from }, { id: `${route.id}:to`, position: route.to },
+    ]),
+  ]
+  let nearest = { distance: Infinity, resourceId: '', landmarkId: '' }
+  for (const resource of state.resources) for (const landmark of landmarks) {
+    const distance = Math.hypot(resource.position.x - landmark.position.x, resource.position.z - landmark.position.z)
+    if (distance < nearest.distance) nearest = { distance, resourceId: resource.id, landmarkId: landmark.id }
+  }
+  expect(nearest.distance, `${state.seed}: ${nearest.resourceId} near ${nearest.landmarkId}`).toBeGreaterThanOrEqual(1.5)
+  let storeOverlap = ''
+  for (const resource of state.resources) for (const store of state.stores) {
+    if (Math.abs(resource.position.x - store.position.x) < STORE_HALF_WIDTH + 0.2
+      && Math.abs(resource.position.z - store.position.z) < STORE_HALF_DEPTH + 0.2) {
+      storeOverlap ||= `${resource.id} inside ${store.id}`
+    }
+  }
+  expect(storeOverlap, state.seed).toBe('')
+}
 
 describe('Wizard world domain', () => {
   it('generates identical worlds for the same seed and different worlds for another seed', () => {
@@ -23,6 +49,30 @@ describe('Wizard world domain', () => {
     expect(journeyTrees.every((tree) => areaAt(first.areas, tree.position.x, tree.position.z).id === 'greenway')).toBe(true)
     expect(replay.routes).toEqual(first.routes)
     expect(replay.areas).toEqual(first.areas)
+  })
+
+  it.each(clearanceSeeds)('keeps resources clear of landmarks for %s', (seed) => {
+    expectResourceClearance(createWizardWorld(seed))
+  })
+
+  it('keeps resources clear across 20000 expedition seeds', () => {
+    for (let index = 0; index < 20000; index += 1) expectResourceClearance(createWizardWorld(`expedition-${index}`))
+  }, 30_000)
+
+  it.each(clearanceSeeds)('keeps four obtainable Greenway trees for %s', (seed) => {
+    let state = advanceWizardWorld(createWizardWorld(seed), [{ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' }]).state
+    const trees = state.resources.filter((resource) => resource.id.startsWith('greenway-journey-tree-'))
+    expect(trees).toHaveLength(4)
+    for (const tree of trees) {
+      expect(areaAt(state.areas, tree.position.x, tree.position.z).id).toBe('greenway')
+      state.player.position = { ...tree.position }
+      for (let hit = 0; hit < 2; hit += 1) {
+        const harvest = advanceWizardWorld(state, [{ type: 'harvest', resourceId: tree.id }])
+        expect(harvest.rejections).toEqual([])
+        state = harvest.state
+      }
+    }
+    expect(state.player.inventory.find((stack) => stack.itemId === 'logs')?.quantity).toBeGreaterThanOrEqual(10)
   })
 
   it('harvests an in-range tree and rejects invalid harvest without mutation', () => {
@@ -82,6 +132,74 @@ describe('Wizard world domain', () => {
     expect(bought.state.player.inventory).toContainEqual({ itemId: 'apprentice_hat', quantity: 1 })
     const equipped = advanceWizardWorld(bought.state, [{ type: 'equip_item', itemId: 'apprentice_hat', slot: 'head' }])
     expect(equipped.state.player.equipment.head).toBe('apprentice_hat')
+  })
+
+  it('stops at a store wall and preserves legal diagonal sliding without rejections', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const store = state.stores[0]
+    state.player.position = { x: store.position.x, y: store.position.y, z: store.position.z + 1.81 }
+    const stopped = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0, y: 0, z: -0.16 } }])
+    expect(stopped.rejections).toEqual([])
+    expect(stopped.events).toEqual([])
+    expect(stopped.state.player.position).toEqual(state.player.position)
+
+    const slid = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0.12, y: 0, z: -0.12 } }])
+    expect(slid.rejections).toEqual([])
+    expect(slid.events.map((entry) => entry.type)).toEqual(['player_moved'])
+    expect(slid.state.player.position.x).toBeCloseTo(state.player.position.x + 0.12)
+    expect(slid.state.player.position.z).toBe(state.player.position.z)
+  })
+
+  it('blocks four-meter store tunneling and lets an inside saved position move outward', () => {
+    let state = copy(createWizardWorld('greenway-alpha'))
+    const store = state.stores[0]
+    state.player.position = { x: store.position.x, y: store.position.y, z: store.position.z + 1.9 }
+    const tunnel = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0, y: 0, z: -4 } }])
+    expect(tunnel.rejections).toEqual([])
+    expect(tunnel.events).toEqual([])
+    expect(tunnel.state.player.position).toEqual(state.player.position)
+
+    state.player.position = { ...store.position }
+    for (let step = 0; step < 12; step += 1) {
+      state = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0, y: 0, z: 0.16 } }]).state
+    }
+    expect(state.player.position.z).toBeGreaterThan(store.position.z + 1.8)
+  })
+
+  it('keeps store purchases in range from outside the collision footprint', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const store = state.stores[0]
+    state.player.position = { x: store.position.x, y: store.position.y, z: store.position.z + 1.81 }
+    const bought = advanceWizardWorld(state, [{ type: 'buy_store_listing', storeId: store.id, listingId: store.listings[0].id }])
+    expect(bought.rejections).toEqual([])
+    expect(bought.events[0]?.type).toBe('store_item_bought')
+  })
+
+  it('preserves the exact trace and input world over 1000 W+D intents', () => {
+    const input = createWizardWorld('greenway-alpha')
+    const before = serializeWizardWorld(input)
+    const intents: WizardIntent[] = []
+    const expectedEvents: WizardEvent[] = []
+    let { x, y, z } = input.player.position
+    let { yaw } = input.player
+    for (let step = 0; step < 500; step += 1) {
+      intents.push({ type: 'look', yawDelta: 0.007, pitchDelta: 0 })
+      yaw += 0.007
+      expectedEvents.push({ type: 'player_looked', sequence: step * 2 + 1, tick: 1, yaw, pitch: 0 })
+      intents.push({ type: 'move', delta: { x: 0.005, y: 0, z: -0.005 } })
+      x += 0.005
+      z -= 0.005
+      y = Math.max(y, terrainHeightAt(input.tiles, x, z))
+      expectedEvents.push({ type: 'player_moved', sequence: step * 2 + 2, tick: 1, position: { x, y, z } })
+    }
+
+    const result = advanceWizardWorld(input, intents)
+    expect(result.events).toEqual(expectedEvents)
+    expect(result.rejections).toEqual([])
+    expect(result.state.player.position).toEqual({ x, y, z })
+    expect(result.state.player.yaw).toBe(yaw)
+    expect(result.state.eventSequence).toBe(1000)
+    expect(serializeWizardWorld(input)).toBe(before)
   })
 
   it('creates and cancels a trade listing', () => {
@@ -228,7 +346,133 @@ describe('Wizard world domain', () => {
     expect(areaAt(result.state.areas, result.state.player.position.x, result.state.player.position.z).id).toBe('greenway')
   })
 
-  it('rejects route construction atomically and reveals fog only through traversal', () => {
+  it('keeps the classic public profile and its exact 12-meter movement limits', () => {
+    expect(createWizardWorld('greenway-alpha')).toEqual(createWizardWorld('greenway-alpha', 'greenway-classic-v1'))
+    for (const [x, z, dx, dz, edgeX, edgeZ] of [
+      [-11, 8, -4, 0, -12, 8], [11, 8, 4, 0, 12, 8],
+      [0, 11, 0, 4, 0, 12], [-8, -11, 0, -4, -8, -12],
+    ]) {
+      const state = createWizardWorld('greenway-alpha')
+      state.player.position = { x, y: terrainHeightAt(state.tiles, x, z), z }
+      const moved = advanceWizardWorld(state, [{ type: 'move', delta: { x: dx, y: 0, z: dz } }])
+      expect(moved.rejections).toEqual([])
+      expect(moved.state.player.position).toMatchObject({ x: edgeX, z: edgeZ })
+    }
+  })
+
+  it('reaches all four expanded grid edges while clamping outside movement', () => {
+    for (const [x, z, dx, dz, edgeX, edgeZ] of [
+      [-28, 16, -4, 0, -30, 16], [32, 16, 4, 0, 34, 16],
+      [16, -28, 0, -4, 16, -30], [16, 32, 0, 4, 16, 34],
+    ]) {
+      const state = createWizardWorld('region-0', 'greenway-expanded-v1')
+      expect(state.tiles).toHaveLength(256)
+      state.player.position = { x, y: terrainHeightAt(state.tiles, x, z), z }
+      const moved = advanceWizardWorld(state, [{ type: 'move', delta: { x: dx, y: 0, z: dz } }])
+      expect(moved.rejections).toEqual([])
+      expect(moved.state.player.position).toMatchObject({ x: edgeX, z: edgeZ })
+      const beyond = advanceWizardWorld(moved.state, [{ type: 'move', delta: { x: dx, y: 0, z: dz } }])
+      expect(beyond.state.player.position).toMatchObject({ x: edgeX, z: edgeZ })
+    }
+  })
+
+  it('keeps expanded regions route-locked and replays movement after save restoration', () => {
+    const state = createWizardWorld('region-0', 'greenway-expanded-v1')
+    state.player.position = { x: -20, y: terrainHeightAt(state.tiles, -20, -4), z: -4 }
+    const locked = advanceWizardWorld(state, [{ type: 'move', delta: { x: 0, y: 0, z: -0.2 } }])
+    expect(locked.rejections[0]?.code).toBe('locked_area')
+    expect(locked.events).toEqual([])
+    expect(locked.state.player.position).toEqual(state.player.position)
+    expect(locked.state.discoveredTileIds).toEqual(state.discoveredTileIds)
+
+    state.player.position = { ...state.routes[0].from }
+    state.player.inventory.push({ itemId: 'logs', quantity: 4 })
+    const built = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder' }])
+    const crossed = advanceWizardWorld(built.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+    expect(crossed.rejections).toEqual([])
+    expect(areaAt(crossed.state.areas, crossed.state.player.position.x, crossed.state.player.position.z).id).toBe('northern_ridge')
+    const restored = restoreWizardWorld(serializeWizardWorld(crossed.state))
+    expect(restored.generationProfile).toBe('greenway-expanded-v1')
+    expect(restored.tiles).toHaveLength(256)
+    const northward = { type: 'move' as const, delta: { x: 0, y: 0, z: -4 } }
+    expect(advanceWizardWorld(restored, [northward])).toEqual(advanceWizardWorld(crossed.state, [northward]))
+    expect(advanceWizardWorld(restored, [northward]).state.player.position.z).toBe(-12)
+  })
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
+    'discovers the Eastern Highland tile at the bridge boundary in %s', (profile) => {
+      const state = createWizardWorld('greenway-alpha', profile)
+      const bridge = state.routes.find((route) => route.id === 'highland_bridge')!
+      state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+      state.player.position = { ...bridge.from }
+      const crossed = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: bridge.id }])
+
+      expect(crossed.rejections).toEqual([])
+      expect(crossed.state.player.position).toEqual({ ...bridge.to, x: 6, z: -8 })
+      expect(crossed.events).toEqual([
+        { type: 'route_used', routeId: bridge.id, fromAreaId: 'northern_ridge', toAreaId: 'eastern_highland', position: bridge.to, sequence: 1, tick: 1 },
+        { type: 'tile_discovered', tileId: 'tile-5-1', sequence: 2, tick: 1 },
+      ])
+      const projection = createWizardProjection(crossed.state)
+      expect(projection.currentTile.id).toBe('tile-5-1')
+      expect(areaAt(crossed.state.areas, projection.currentTile.center.x, projection.currentTile.center.z).id).toBe('eastern_highland')
+      expect(crossed.state.discoveredTileIds).toContain('tile-5-1')
+      expect(crossed.state.discoveredTileIds).not.toContain('tile-4-1')
+
+      const returned = advanceWizardWorld(crossed.state, [{ type: 'traverse_route', routeId: bridge.id }])
+      expect(returned.events.map((entry) => entry.type)).toEqual(['route_used', 'tile_discovered'])
+      expect(returned.events[1]).toMatchObject({ tileId: 'tile-4-1' })
+      const crossedAgain = advanceWizardWorld(returned.state, [{ type: 'traverse_route', routeId: bridge.id }])
+      expect(crossedAgain.events.map((entry) => entry.type)).toEqual(['route_used'])
+      expect(crossedAgain.state.discoveredTileIds).toEqual(returned.state.discoveredTileIds)
+    },
+  )
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
+    'discovers newly walked Northern Ridge tiles once and replays them after restore in %s', (profile) => {
+      const state = createWizardWorld('greenway-alpha', profile)
+      const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+      state.builtRouteIds = ['greenway_ladder']
+      state.player.position = { ...ladder.from }
+      const crossed = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }])
+      expect(crossed.events.map((entry) => entry.type)).toEqual(['route_used', 'tile_discovered'])
+      const northward = { type: 'move' as const, delta: { x: 0, y: 0, z: -4 } }
+      const walked = advanceWizardWorld(crossed.state, [northward])
+      expect(walked.rejections).toEqual([])
+      expect(walked.events.map((entry) => entry.type)).toEqual(['player_moved', 'tile_discovered'])
+      expect(walked.events[1]).toMatchObject({ tileId: 'tile-3-0', sequence: 4, tick: 2 })
+      expect(walked.state.discoveredTileIds).toContain('tile-3-0')
+
+      const smallStep = { type: 'move' as const, delta: { x: 0.1, y: 0, z: 0 } }
+      const repeated = advanceWizardWorld(walked.state, [smallStep])
+      expect(repeated.events.map((entry) => entry.type)).toEqual(['player_moved'])
+      expect(repeated.state.discoveredTileIds).toEqual(walked.state.discoveredTileIds)
+      expect(advanceWizardWorld(restoreWizardWorld(serializeWizardWorld(walked.state)), [smallStep])).toEqual(repeated)
+    },
+  )
+
+  it('reveals expanded outer tiles on walking while blocked movement keeps fog unchanged', () => {
+    const state = createWizardWorld('region-0', 'greenway-expanded-v1')
+    state.player.position = { x: 12, y: terrainHeightAt(state.tiles, 12, 0), z: 0 }
+    expect(state.discoveredTileIds).not.toContain('tile-7-3')
+    const walked = advanceWizardWorld(state, [{ type: 'move', delta: { x: 4, y: 0, z: 0 } }])
+    expect(walked.events.map((entry) => entry.type)).toEqual(['player_moved', 'tile_discovered'])
+    expect(walked.events[1]).toMatchObject({ tileId: 'tile-7-3' })
+    expect(walked.state.discoveredTileIds).toContain('tile-7-3')
+
+    const edge = createWizardWorld('region-0', 'greenway-expanded-v1')
+    edge.player.position = { x: 34, y: terrainHeightAt(edge.tiles, 34, 16), z: 16 }
+    const blocked = advanceWizardWorld(edge, [{ type: 'move', delta: { x: 4, y: 0, z: 0 } }])
+    expect(blocked.state.player.position).toEqual(edge.player.position)
+    expect(blocked.events.map((entry) => entry.type)).toEqual(['player_moved'])
+    expect(blocked.state.discoveredTileIds).toEqual(edge.discoveredTileIds)
+    const rejected = advanceWizardWorld(edge, [{ type: 'move', delta: { x: 5, y: 0, z: 0 } }])
+    expect(rejected.rejections[0]?.code).toBe('invalid_value')
+    expect(rejected.events).toEqual([])
+    expect(rejected.state.discoveredTileIds).toEqual(edge.discoveredTileIds)
+  })
+
+  it('rejects route construction atomically and keeps previously revealed tiles unchanged', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
     state.player.position = { ...ladder.from }

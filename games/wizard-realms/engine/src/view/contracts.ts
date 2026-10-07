@@ -93,6 +93,7 @@ export interface WizardMapTile {
   hasResource: boolean
   hasStore: boolean
   hasRing: boolean
+  hasRouteSite: boolean
 }
 
 export interface WizardViewProjection {
@@ -112,6 +113,7 @@ export interface WizardViewProjection {
     player: { gridX: number; gridZ: number; yaw: number }
   }
   stores: readonly WizardStore[]
+  openStoreId: string | null
   backpack: {
     capacity: number
     stacks: readonly WizardItemStack[]
@@ -137,6 +139,7 @@ export type WizardViewIntent =
   | { type: 'movement'; vector: Vec2 }
   | { type: 'jump' }
   | { type: 'interact' }
+  | { type: 'store.close' }
   | { type: 'store.select-listing'; storeId: string; listingId: string }
   | { type: 'equipment.equip'; stackId: string; slot: EquipmentSlot }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }

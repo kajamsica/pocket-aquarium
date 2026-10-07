@@ -4,7 +4,7 @@
 
 Wizard Realms is a working title and a design target. This document defines what the team intends to build. It does not describe a finished game.
 
-The first product is a third-person, single-player fantasy RPG. The simulation and content boundaries must leave a credible path to cooperative play and, only after measured proofs, a persistent massively multiplayer world.
+The first product is a full third-person, single-player wizard RPG, not a 15-minute vertical slice. Completion means a sustained adventure across distinct regions, with discovery, practical magic, visible equipment, meaningful progression, expeditions, return and trade, and an endgame worth pursuing. The simulation and content boundaries may leave a credible path to cooperative play and persistent realms, but multiplayer and MMO delivery are not part of the current product goal.
 
 The design inherits the authority, behavior, asset, tooling, and validation methods in the [Simulation-Rich Game Development Playbook](../../../docs/game-development/README.md). In particular:
 
@@ -65,7 +65,7 @@ Generation may select, combine, and place authored content. It must not invent u
 
 ### Initial biome set
 
-The vertical slice needs one temperate woodland and a neighboring meadow or river edge. V1 may expand to:
+The vertical slice needs one temperate woodland and a neighboring meadow or river edge. The full single-player game can expand through:
 
 - temperate woodland with common timber, mushrooms, herbs, and small settlements;
 - wetland with reeds, medicinal plants, bog resources, mist, and difficult ground;
@@ -106,15 +106,15 @@ The renderer may show anticipatory movement and impact effects, but it never gra
 
 Players can buy, find, maintain, improve, and eventually craft tools. A tool profile defines legal actions, efficiency, durability, handling, quality, repair rules, and presentation assets.
 
-The first tool set should stay small: axe, pick, gathering knife, and simple magical focus. General building systems are later than basic tool production. The first slice proves only two bounded route recipes, not free-form construction.
+The first tool set should stay small: axe, pick, gathering knife, and simple magical focus. General building systems are later than basic tool production. The current slice proves two bounded route recipes. The first expanded region must let players choose valid ladder and bridge placements based on terrain and carried materials; fixed project endpoints are only a foundation milestone.
 
 ### Building and placement
 
-V1 may add bounded structures, camps, or regional projects after the world has transactional editing. Placement must follow `begin -> preview -> validate -> freeze -> commit or cancel`. Preview geometry cannot consume materials, alter terrain, or create collision until commit.
+Later single-player milestones add bounded camps and regional projects after the world has transactional editing. Placement must follow `begin -> preview -> validate -> freeze -> commit or cancel`. Preview geometry cannot consume materials, alter terrain, or create collision until commit.
 
 Construction checks land permissions, support, overlap, resource ownership, biome restrictions, and a safe rollback path. Free-form building, shared claims, and large settlements remain outside MVP.
 
-The current vertical slice proves only two fixed, profiled regional projects. The known Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Each project has stable endpoints, a deterministic recipe, atomic resource use, and authoritative two-way traversal. It is not a general placement or building system.
+The current vertical slice proves only two fixed, profiled regional projects. The known Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Each project has stable endpoints, a deterministic recipe, atomic resource use, and authoritative two-way traversal. These fixed projects are not the terminal construction model or a general placement system.
 
 ### Shops
 
@@ -260,7 +260,7 @@ Controller and touch support are intentions only until real-device journeys pass
 
 ### MVP vertical slice
 
-MVP includes:
+This is an early systems milestone, not the full-game completion condition. The current browser build implements a subset of this planned scope, as described in the [README](../README.md). The milestone includes:
 
 - one deterministic seed and one validated woodland region with a neighboring subregion;
 - third-person movement, pivot, jump, camera orbit, collision, interaction focus, and pause;
@@ -276,20 +276,21 @@ MVP includes:
 
 MVP excludes multiplayer, persistent remote realms, player combat, deep questing, free-form building, mounts, guilds, global chat, raids, controller completion, and touch completion.
 
-### V1 single-player game
+### First expanded-region milestone
 
-V1 may add:
+The next playable milestone must provide one distinctive region large enough for an expedition beyond the current route demonstration. A player can discover and map its locations, use an exploration spell to reveal or interact with something in the world, see equipped gear change the character, gather materials and build a ladder or bridge at a valid player-selected site, and excavate a dig site only with the required tool and skill. The excavation and constructed route persist across save and reload. The player can return to a settlement and sell or list the expedition's finds. This complete outward-and-return journey is the milestone's acceptance proof, not the full-game finish.
 
-- several validated biomes and settlements;
-- broader resources, tools, recipes, equipment, shops, and progression;
-- active fairy-ring network and regional goals;
-- authored quests and characters;
-- creatures, defensive magic, and combat after separate interaction contracts pass;
-- bounded construction or regional projects after transactional editing exists;
-- richer weather, day schedules, death recovery, and endgame projects;
+### Full single-player game
+
+After the expanded region, completion requires:
+
+- several validated, mechanically distinct regions and settlements, with authored quests, characters, creatures, magic, and regional goals;
+- broader resources, tools, recipes, visible equipment, skill growth, regional shops, and single-player trade that deepen the economy before any online market;
+- travel progression from walking and built routes through discovered fairy rings and boats to hard-earned ground mounts captured or raised by the player; rare, expensive top-tier flying mounts open vertical and distant routes without trivializing ground travel, while camps support longer expeditions;
+- defensive magic and combat after separate interaction contracts pass, plus richer weather, day schedules, death recovery, and endgame projects;
 - workbench, creator, accessibility, desktop, controller, and touch journeys as individually proven capabilities.
 
-V1 does not require networked multiplayer or an online economy.
+The full single-player game does not require networked multiplayer or an online economy.
 
 ### Later multiplayer and MMO direction
 
@@ -307,5 +308,6 @@ The design remains aligned only if:
 - backpack, coins, XP, equipment, shops, and trade listings survive save and replay;
 - fairy rings connect only previously discovered locations;
 - procedural generation is versioned and validated;
-- the MVP remains a complete single-player loop rather than a thin MMO lobby;
+- the expanded region proves an expedition, persistent player-shaped access, a gated dig site, and return to trade;
+- the product finish is a full single-player RPG across distinct regions, not the MVP slice or its fixed routes;
 - later network scale does not require replacing client presentation or redefining world rules.
