@@ -38,6 +38,8 @@ export const OBJECTIVE_STYLES = `
 .wr-objective button{padding:3px 9px;border:1px solid #cfb66b55;border-radius:999px;background:#374b3d;color:#f8e8b2;font:inherit;cursor:pointer}
 @media(max-width:719px),(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-objective{left:10px;right:10px;bottom:calc(142px + env(safe-area-inset-bottom,0px));transform:none;box-sizing:border-box;max-height:80px;border-radius:12px;white-space:normal;font-size:12px;line-height:1.3}.wr-objective span{flex:1;min-width:0;max-height:70px;overflow-y:auto}.wr-objective button{flex:none;min-width:44px;min-height:44px}.wr-surface .wr-prompt,.wr-surface .wr-context{bottom:calc(230px + env(safe-area-inset-bottom,0px))}.wr-surface .wr-context{box-sizing:border-box;max-height:max(140px,calc(100vh - 340px));overflow-y:auto}}
 @media(max-width:719px) and (max-height:590px){.wr-surface:has(.wr-context) .wr-backpack,.wr-surface .wr-events{display:none}}
+@media(max-width:719px) and (max-height:400px){.wr-surface{min-height:0}.wr-surface .wr-prompt,.wr-surface .wr-context{box-sizing:border-box;top:54px;bottom:auto;max-height:80px;overflow-y:auto}}
+@media(min-width:440px) and (max-width:719px) and (max-height:400px){.wr-surface .wr-backpack,.wr-surface .wr-context{left:8px;top:54px;max-height:80px;width:220px;overflow-y:auto;transform:none}.wr-surface .wr-prompt{left:auto;right:72px;max-width:160px;transform:none}}
 `
 
 const ITEM_NAMES: Record<ItemId, string> = {
