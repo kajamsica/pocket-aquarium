@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createWizardWorld, type WizardWorldState } from './domain'
-import { OBJECTIVE_STYLES, PIVOT_RADIANS_PER_TICK, controlIntents, intentForView, movementIntent, objectiveFor, resetSavedWorld, toViewProjection } from './App'
+import { advanceWizardWorld, createWizardWorld, type WizardWorldState } from './domain'
+import {
+  IDLE_CLOCK, MAX_CATCH_UP_STEPS, OBJECTIVE_STYLES, PIVOT_RADIANS_PER_TICK, accumulateElapsed, controlIntents, intentForView,
+  movementIntent, objectiveFor, resetSavedWorld, runBatch, stepBatch, toViewProjection, type BatchSink,
+} from './App'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 const withAxeEquipped = (state: WizardWorldState) => { state.player.equipment.mainHand = 'woodcutters_axe'; return state }
@@ -241,5 +244,86 @@ describe('Wizard view adapter', () => {
     state.player.position = { ...bridge.to }
     expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', targetId: bridge.id, action: 'Cross', actionable: true })
     expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'traverse_route', routeId: bridge.id })
+  })
+})
+
+describe('Fixed-step scheduler', () => {
+  const world = () => createWizardWorld('greenway-alpha')
+  const recordingSink = () => {
+    const calls = { commit: 0, persist: 0, messages: [] as string[] }
+    const sink: BatchSink = {
+      commit: (_state, messages) => { calls.commit += 1; calls.messages.push(...messages) },
+      persist: () => { calls.persist += 1 },
+    }
+    return { sink, calls }
+  }
+
+  it('runs exactly ten 50 ms steps for a 500 ms backlog below the catch-up cap', () => {
+    expect(MAX_CATCH_UP_STEPS).toBeGreaterThanOrEqual(10)
+    const batch = stepBatch(world(), [], [0, 0], 500)
+    expect(batch.steps).toBe(10)
+    expect(batch.remainderMs).toBe(0)
+    expect(batch.state.tick).toBe(world().tick + 10)
+  })
+
+  it('caps catch-up at MAX_CATCH_UP_STEPS and discards the excess backlog', () => {
+    const batch = stepBatch(world(), [], [0, 0], MAX_CATCH_UP_STEPS * 50 + 730)
+    expect(batch.steps).toBe(MAX_CATCH_UP_STEPS)
+    expect(batch.remainderMs).toBe(0)
+  })
+
+  it('carries the fractional remainder into the next callback', () => {
+    const first = stepBatch(world(), [], [0, 0], 130)
+    expect(first).toMatchObject({ steps: 2, remainderMs: 30 })
+    const second = stepBatch(first.state, [], [0, 0], first.remainderMs + 70)
+    expect(second).toMatchObject({ steps: 2, remainderMs: 0 })
+    expect(stepBatch(world(), [], [0, 0], 49)).toMatchObject({ steps: 0, remainderMs: 49 })
+  })
+
+  it('produces the same state as sequential fixed-step advancement', () => {
+    let sequential = world()
+    for (let step = 0; step < 10; step += 1) sequential = advanceWizardWorld(sequential, controlIntents(sequential, [1, 1])).state
+    const batch = stepBatch(world(), [], [1, 1], 500)
+    expect(batch.state).toEqual(sequential)
+    expect(batch.state.player.yaw).toBeCloseTo(world().player.yaw - 10 * PIVOT_RADIANS_PER_TICK)
+  })
+
+  it('applies a queued discrete intent once while held movement runs every catch-up step', () => {
+    const start = world()
+    const batch = stepBatch(start, [{ type: 'jump' }], [0, 1], 250)
+    expect(batch.steps).toBe(5)
+    expect(batch.events.filter((event) => event.type === 'player_jumped')).toHaveLength(1)
+    expect(batch.events.map((event) => event.tick)).toEqual([...batch.events.map((event) => event.tick)].sort((a, b) => a - b))
+    const travelled = Math.hypot(batch.state.player.position.x - start.player.position.x, batch.state.player.position.z - start.player.position.z)
+    expect(travelled).toBeCloseTo(5 * 0.16, 5)
+  })
+
+  it('resets elapsed time on visibility change so resume does not replay the hidden interval', () => {
+    let clock = accumulateElapsed(IDLE_CLOCK, 1000)
+    expect(clock.accumulatedMs).toBe(0)
+    clock = accumulateElapsed(clock, 1050)
+    expect(clock.accumulatedMs).toBe(50)
+    clock = IDLE_CLOCK
+    const resumed = accumulateElapsed(clock, 61050)
+    expect(resumed.accumulatedMs).toBe(0)
+    expect(accumulateElapsed(resumed, 61100).accumulatedMs).toBe(50)
+    expect(accumulateElapsed(resumed, 61000).accumulatedMs).toBe(0)
+  })
+
+  it('persists and commits at most once per callback batch and leaves the queue intact until a step runs', () => {
+    const { sink, calls } = recordingSink()
+    const start = world()
+    const idle = runBatch({ clock: IDLE_CLOCK, nowMs: 0, world: start, queued: [{ type: 'jump' }], movement: [0, 0] }, sink)
+    expect(idle).toMatchObject({ queueConsumed: false, world: start, clock: { lastMs: 0, accumulatedMs: 0 } })
+    const partial = runBatch({ clock: idle.clock, nowMs: 20, world: start, queued: [{ type: 'jump' }], movement: [0, 0] }, sink)
+    expect(partial).toMatchObject({ queueConsumed: false, clock: { lastMs: 20, accumulatedMs: 20 } })
+    expect(calls).toMatchObject({ commit: 0, persist: 0 })
+
+    const busy = runBatch({ clock: partial.clock, nowMs: 520, world: start, queued: [{ type: 'jump' }], movement: [0, 1] }, sink)
+    expect(busy.queueConsumed).toBe(true)
+    expect(busy.clock).toEqual({ lastMs: 520, accumulatedMs: 20 })
+    expect(busy.world.tick).toBe(start.tick + 10)
+    expect(calls).toMatchObject({ commit: 1, persist: 1 })
+    expect(calls.messages.filter((text) => text === 'You spring over the trail.')).toHaveLength(1)
   })
 })

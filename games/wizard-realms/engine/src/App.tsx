@@ -6,6 +6,7 @@ import {
   restoreWizardWorld,
   serializeWizardWorld,
   type EquipmentSlot as DomainEquipmentSlot,
+  type IntentRejection,
   type ItemId,
   type WizardEvent,
   type WizardIntent,
@@ -236,6 +237,47 @@ export function controlIntents(state: WizardWorldState, vector: readonly [number
   return intents
 }
 
+// Catch-up cap: at most 12 fixed steps (600 ms) per callback; any excess backlog is discarded
+// rather than simulated, so a long stall cannot spiral into ever-longer batches.
+export const MAX_CATCH_UP_STEPS = 12
+export type StepClock = { lastMs: number | null; accumulatedMs: number }
+export const IDLE_CLOCK: StepClock = { lastMs: null, accumulatedMs: 0 }
+
+export function accumulateElapsed(clock: StepClock, nowMs: number): StepClock {
+  const elapsed = clock.lastMs === null ? 0 : Math.max(0, nowMs - clock.lastMs)
+  return { lastMs: nowMs, accumulatedMs: clock.accumulatedMs + elapsed }
+}
+
+export function stepBatch(world: WizardWorldState, queued: readonly WizardIntent[], movement: readonly [number, number], accumulatedMs: number) {
+  let steps = Math.floor(accumulatedMs / FIXED_STEP_MS)
+  let remainderMs = accumulatedMs - steps * FIXED_STEP_MS
+  if (steps > MAX_CATCH_UP_STEPS) { steps = MAX_CATCH_UP_STEPS; remainderMs = 0 }
+  let state = world
+  const events: WizardEvent[] = []
+  const rejections: IntentRejection[] = []
+  for (let index = 0; index < steps; index += 1) {
+    const result = advanceWizardWorld(state, [...(index === 0 ? queued : []), ...controlIntents(state, movement)])
+    state = result.state
+    events.push(...result.events)
+    rejections.push(...result.rejections)
+  }
+  return { state, events, rejections, steps, remainderMs }
+}
+
+export type BatchSink = { commit: (state: WizardWorldState, messages: string[]) => void; persist: (state: WizardWorldState) => void }
+
+export function runBatch(
+  input: { clock: StepClock; nowMs: number; world: WizardWorldState; queued: readonly WizardIntent[]; movement: readonly [number, number] },
+  sink: BatchSink,
+): { clock: StepClock; world: WizardWorldState; queueConsumed: boolean } {
+  const clock = accumulateElapsed(input.clock, input.nowMs)
+  const batch = stepBatch(input.world, input.queued, input.movement, clock.accumulatedMs)
+  if (batch.steps === 0) return { clock, world: input.world, queueConsumed: false }
+  sink.persist(batch.state)
+  sink.commit(batch.state, [...batch.events.map(eventText).filter(Boolean), ...batch.rejections.map((rejection) => rejection.message)])
+  return { clock: { ...clock, accumulatedMs: batch.remainderMs }, world: batch.state, queueConsumed: true }
+}
+
 export default function App() {
   const [world, setWorld] = useState(loadWorld)
   const [messages, setMessages] = useState<RecentMessage[]>([{ id: 0, text: WELCOME_MESSAGE }])
@@ -243,23 +285,33 @@ export default function App() {
   const movementRef = useRef<readonly [number, number]>([0, 0])
   const queuedRef = useRef<WizardIntent[]>([])
   const messageId = useRef(1)
+  const clockRef = useRef<StepClock>(IDLE_CLOCK)
 
   useEffect(() => { worldRef.current = world }, [world])
   useEffect(() => {
+    const sink: BatchSink = {
+      persist: (state) => window.localStorage.setItem(SAVE_KEY, serializeWizardWorld(state)),
+      commit: (state, texts) => {
+        setWorld(state)
+        if (texts.length) setMessages((current) => [...current, ...texts.map((text) => ({ id: messageId.current++, text }))].slice(-5))
+      },
+    }
+    const onVisibilityChange = () => {
+      movementRef.current = [0, 0]
+      clockRef.current = IDLE_CLOCK
+    }
     const timer = window.setInterval(() => {
-      const intents = queuedRef.current.splice(0)
-      intents.push(...controlIntents(worldRef.current, movementRef.current))
-      const result = advanceWizardWorld(worldRef.current, intents)
-      worldRef.current = result.state
-      setWorld(result.state)
-      window.localStorage.setItem(SAVE_KEY, serializeWizardWorld(result.state))
-      const nextMessages = [
-        ...result.events.map(eventText).filter(Boolean),
-        ...result.rejections.map((rejection) => rejection.message),
-      ]
-      if (nextMessages.length) setMessages((current) => [...current, ...nextMessages.map((text) => ({ id: messageId.current++, text }))].slice(-5))
+      if (document.hidden) return
+      const result = runBatch({ clock: clockRef.current, nowMs: performance.now(), world: worldRef.current, queued: queuedRef.current, movement: movementRef.current }, sink)
+      clockRef.current = result.clock
+      worldRef.current = result.world
+      if (result.queueConsumed) queuedRef.current = []
     }, FIXED_STEP_MS)
-    return () => window.clearInterval(timer)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   }, [])
 
   const onIntent = useCallback((intent: WizardViewIntent) => {
