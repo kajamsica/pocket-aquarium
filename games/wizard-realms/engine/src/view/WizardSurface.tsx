@@ -66,13 +66,13 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
         if (mapOpen) toggleMap()
         return
       }
+      if (event.repeat || /INPUT|TEXTAREA|SELECT/.test((event.target as HTMLElement)?.tagName)) return
       if (event.code === 'KeyM') {
         event.preventDefault()
-        if (mapToggleForKey(mapOpen, event.code) !== mapOpen) toggleMap()
+        if (mapToggleForKey(mapOpen, event.code, event.repeat) !== mapOpen) toggleMap()
         return
       }
       if (mapOpen) return
-      if (event.repeat || /INPUT|TEXTAREA|SELECT/.test((event.target as HTMLElement)?.tagName)) return
       if (event.code === 'KeyE') onIntent({ type: 'interact' })
       if (event.code === 'Space') {
         event.preventDefault()

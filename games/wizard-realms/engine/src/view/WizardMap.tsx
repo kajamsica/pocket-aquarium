@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 
 const TERRAIN = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', snow: '#d4e3df' } as const
 
-export const mapToggleForKey = (open: boolean, code: string) => code === 'KeyM' ? !open : open
+export const mapToggleForKey = (open: boolean, code: string, repeat = false) => code === 'KeyM' && !repeat ? !open : open
 export const mapSheetMode = (width: number) => width < 720 ? 'sheet' : 'modal'
 
 function Tile({ tile, player }: { tile: WizardMapTile; player: WizardViewProjection['map']['player'] }) {

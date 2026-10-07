@@ -25,8 +25,10 @@ describe('third-person control grammar', () => {
   })
 
   it('toggles the map from keyboard and selects a mobile full-screen sheet', () => {
-    expect(mapToggleForKey(false, 'KeyM')).toBe(true)
-    expect(mapToggleForKey(true, 'KeyM')).toBe(false)
+    const opened = mapToggleForKey(false, 'KeyM')
+    expect(opened).toBe(true)
+    expect(mapToggleForKey(opened, 'KeyM', true)).toBe(true)
+    expect(mapToggleForKey(opened, 'KeyM')).toBe(false)
     expect(mapToggleForKey(false, 'KeyW')).toBe(false)
     expect(mapSheetMode(719)).toBe('sheet')
     expect(mapSheetMode(720)).toBe('modal')
