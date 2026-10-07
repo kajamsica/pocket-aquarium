@@ -1,6 +1,9 @@
 import type { EquipmentSlot, WizardViewIntent, WizardViewProjection } from './contracts'
 
-const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['head', 'chest', 'hands', 'legs', 'feet', 'focus']
+export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['head', 'chest', 'mainHand', 'legs', 'feet', 'offHand']
+export const EQUIPMENT_SLOT_LABELS: Readonly<Record<EquipmentSlot, string>> = {
+  head: 'Head', chest: 'Chest', legs: 'Legs', feet: 'Feet', mainHand: 'Main hand', offHand: 'Off hand',
+}
 
 export function WizardHud({ projection, onIntent, diagnostics }: {
   projection: WizardViewProjection
@@ -41,13 +44,16 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       <aside className="wr-panel wr-backpack">
         <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
         <div className="wr-list">
-          {projection.backpack.stacks.map((stack) => (
-            <div className="wr-item" key={stack.id}>
+          {projection.backpack.stacks.map((stack) => {
+            const equippedSlot = stack.equippableSlots?.find((slot) => projection.equipment[slot]?.id === stack.id)
+            const targetSlot = stack.equippableSlots?.find((slot) => projection.equipment[slot] === null) ?? stack.equippableSlots?.[0]
+            const equipped = equippedSlot !== undefined
+            return <div className="wr-item" key={stack.id}>
               <span className="wr-icon">{stack.icon ?? '◆'}</span><b>{stack.name}</b><small>×{stack.quantity}</small>
-              {stack.equippableSlots?.[0] && <button onClick={() => onIntent({ type: 'equipment.equip', stackId: stack.id, slot: stack.equippableSlots![0] })}>Equip</button>}
+              {targetSlot && <button disabled={equipped} aria-pressed={equipped} onClick={() => onIntent({ type: 'equipment.equip', stackId: stack.id, slot: targetSlot })}>{equipped ? 'Equipped' : 'Equip'}</button>}
               <button disabled={firstTradeSlot < 0} onClick={() => onIntent({ type: 'trade.create-listing', stackId: stack.id, slot: firstTradeSlot, quantity: 1, unitPrice: stack.suggestedTradePrice ?? 1 })}>List</button>
             </div>
-          ))}
+          })}
           {projection.backpack.stacks.length === 0 && <p className="wr-empty">Your pack is empty.</p>}
         </div>
       </aside>
@@ -55,7 +61,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       <aside className="wr-panel wr-gear">
         <header>Equipment</header>
         <div className="wr-slot-grid">
-          {EQUIPMENT_SLOTS.map((slot) => <div className="wr-slot" key={slot}><small>{slot}</small><b>{projection.equipment[slot]?.name ?? 'Empty'}</b></div>)}
+          {EQUIPMENT_SLOTS.map((slot) => <div className="wr-slot" key={slot} data-slot={slot}><small>{EQUIPMENT_SLOT_LABELS[slot]}</small><b>{projection.equipment[slot]?.name ?? 'Empty'}</b></div>)}
         </div>
       </aside>
 

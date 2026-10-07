@@ -1,5 +1,8 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { advanceWizardWorld, createWizardWorld, type WizardWorldState } from './domain'
+import { EQUIPMENT_SLOTS, WizardHud } from './view/WizardHud'
 import {
   IDLE_CLOCK, MAX_CATCH_UP_STEPS, OBJECTIVE_STYLES, PIVOT_RADIANS_PER_TICK, accumulateElapsed, controlIntents, intentForView,
   movementIntent, objectiveFor, resetSavedWorld, runBatch, stepBatch, toViewProjection, type BatchSink,
@@ -24,8 +27,8 @@ describe('Wizard view adapter', () => {
     expect(projection.map.tiles).toHaveLength(state.tiles.length)
     expect(projection.map.tiles.some((tile) => !tile.discovered && tile.terrain === null && tile.biome === null)).toBe(true)
     expect(projection.recentEvents).toEqual(['Visible event'])
-    expect(projection.equipment.focus).toBeNull()
-    expect(projection.equipment.hands).toBeNull()
+    expect(projection.equipment.mainHand).toBeNull()
+    expect(projection.equipment.offHand).toBeNull()
     expect(projection.player.position).toEqual([state.player.position.x, state.player.position.y, state.player.position.z])
   })
 
@@ -56,12 +59,75 @@ describe('Wizard view adapter', () => {
     const before = JSON.stringify(state)
     expect(intentForView(state, { type: 'jump' })).toEqual({ type: 'jump' })
     expect(intentForView(state, { type: 'store.select-listing', storeId: 'store-greenway', listingId: 'hat' })).toEqual({ type: 'buy_store_listing', storeId: 'store-greenway', listingId: 'hat' })
-    expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'focus' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
-    expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-wooden_shield', slot: 'hands' })).toEqual({ type: 'equip_item', itemId: 'wooden_shield', slot: 'offHand' })
+    expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'mainHand' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
+    expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-wooden_shield', slot: 'offHand' })).toEqual({ type: 'equip_item', itemId: 'wooden_shield', slot: 'offHand' })
     expect(intentForView(state, { type: 'trade.create-listing', stackId: 'inventory-logs', slot: 2, quantity: 1, unitPrice: 5 })).toEqual({ type: 'create_trade_listing', itemId: 'logs', slotIndex: 2, quantity: 1, unitPrice: 5 })
     expect(intentForView(state, { type: 'trade.cancel-listing', slot: 2 })).toEqual({ type: 'cancel_trade_listing', slotIndex: 2 })
     expect(intentForView(state, { type: 'fairy-ring.teleport', ringId: 'ring-greenway', destinationRingId: 'ring-highland' })).toEqual({ type: 'teleport_fairy_ring', sourceRingId: 'ring-greenway', targetRingId: 'ring-highland' })
     expect(JSON.stringify(state)).toBe(before)
+  })
+
+  it('projects equipment under canonical mainHand/offHand slots with no alias slots', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.player.inventory.push({ itemId: 'wooden_shield', quantity: 1 })
+    state.player.equipment.mainHand = 'woodcutters_axe'
+    state.player.equipment.offHand = 'wooden_shield'
+    const projection = toViewProjection(state, [])
+    expect(Object.keys(projection.equipment).sort()).toEqual(['chest', 'feet', 'head', 'legs', 'mainHand', 'offHand'])
+    expect(projection.equipment).not.toHaveProperty('focus')
+    expect(projection.equipment).not.toHaveProperty('hands')
+    expect(projection.equipment.mainHand).toMatchObject({ id: 'inventory-woodcutters_axe', name: 'Woodcutter axe' })
+    expect(projection.equipment.offHand).toMatchObject({ id: 'inventory-wooden_shield', name: 'Wooden shield' })
+    const axeStack = projection.backpack.stacks.find((stack) => stack.id === 'inventory-woodcutters_axe')!
+    const shieldStack = projection.backpack.stacks.find((stack) => stack.id === 'inventory-wooden_shield')!
+    expect(axeStack.equippableSlots).toEqual(['mainHand'])
+    expect(shieldStack.equippableSlots).toEqual(['offHand'])
+    expect([...EQUIPMENT_SLOTS].sort()).toEqual(Object.keys(projection.equipment).sort())
+  })
+
+  it('renders Main hand and Off hand labels and marks the equipped backpack stack as Equipped', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.player.equipment.mainHand = 'woodcutters_axe'
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: toViewProjection(state, []), onIntent: () => {} }))
+    expect(markup).toContain('<div class="wr-slot" data-slot="mainHand"><small>Main hand</small><b>Woodcutter axe</b></div>')
+    expect(markup).toContain('<div class="wr-slot" data-slot="offHand"><small>Off hand</small><b>Empty</b></div>')
+    expect(markup).not.toMatch(/<small>(focus|hands)<\/small>/i)
+    expect(markup).toContain('aria-pressed="true"')
+    expect(markup).toContain('>Equipped</button>')
+    expect(markup).toContain('<b>Woodcutter axe</b><small>×1</small>')
+
+    const unequipped = renderToStaticMarkup(createElement(WizardHud, { projection: toViewProjection(createWizardWorld('greenway-alpha'), []), onIntent: () => {} }))
+    expect(unequipped).toContain('aria-pressed="false"')
+    expect(unequipped).toContain('>Equip</button>')
+    expect(unequipped).not.toContain('>Equipped</button>')
+  })
+
+  it('recognizes equipment in every compatible slot instead of offering an invalid re-equip', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.player.inventory.push({ itemId: 'oak_wand', quantity: 1 })
+    state.player.equipment.offHand = 'oak_wand'
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: toViewProjection(state, []), onIntent: () => {} }))
+    const wandRow = markup.match(/<div class="wr-item">(?:(?!<div class="wr-item">).)*?<b>Oak wand<\/b>(?:(?!<\/div>).)*?<\/div>/)?.[0]
+    expect(wandRow).toBeDefined()
+    expect(wandRow).toContain('aria-pressed="true"')
+    expect(wandRow).toContain('disabled=""')
+    expect(wandRow).toContain('>Equipped</button>')
+    expect(wandRow).not.toContain('>Equip</button>')
+  })
+
+  it('equips the axe through the view intent and then harvests in the authoritative domain', () => {
+    let state = createWizardWorld('greenway-alpha')
+    const tree = state.resources.find((resource) => resource.kind === 'tree')!
+    state = { ...state, player: { ...state.player, position: { ...tree.position } } }
+    const equip = intentForView(state, { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'mainHand' })!
+    const equipped = advanceWizardWorld(state, [equip])
+    expect(equipped.rejections).toEqual([])
+    expect(equipped.state.player.equipment.mainHand).toBe('woodcutters_axe')
+    const harvest = intentForView(equipped.state, { type: 'interact' })
+    expect(harvest).toEqual({ type: 'harvest', resourceId: tree.id })
+    const harvested = advanceWizardWorld(equipped.state, [harvest!])
+    expect(harvested.rejections).toEqual([])
+    expect(harvested.events.some((event) => event.type === 'resource_damaged' || event.type === 'resource_harvested')).toBe(true)
   })
 
   it('resolves interaction to the closest actionable tree or undiscovered ring', () => {

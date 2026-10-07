@@ -1,7 +1,7 @@
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
 
-export type EquipmentSlot = 'head' | 'chest' | 'hands' | 'legs' | 'feet' | 'focus'
+export type EquipmentSlot = 'head' | 'chest' | 'legs' | 'feet' | 'mainHand' | 'offHand'
 
 export interface WizardItemStack {
   id: string

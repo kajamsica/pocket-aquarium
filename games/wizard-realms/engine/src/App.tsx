@@ -5,7 +5,6 @@ import {
   createWizardWorld,
   restoreWizardWorld,
   serializeWizardWorld,
-  type EquipmentSlot as DomainEquipmentSlot,
   type IntentRejection,
   type ItemId,
   type WizardEvent,
@@ -17,7 +16,7 @@ import {
   type WizardViewIntent,
   type WizardViewProjection,
 } from './view'
-import type { EquipmentSlot as ViewEquipmentSlot } from './view/contracts'
+import type { EquipmentSlot } from './view/contracts'
 
 const WORLD_SEED = 'greenway-alpha'
 const SAVE_KEY = 'wizard-realms:world:v2'
@@ -46,10 +45,10 @@ const ITEM_NAMES: Record<ItemId, string> = {
   traveler_tunic: 'Traveler tunic', trail_leggings: 'Trail leggings',
   leather_boots: 'Leather boots', oak_wand: 'Oak wand', wooden_shield: 'Wooden shield',
 }
-const EQUIPPABLE: Partial<Record<ItemId, readonly ViewEquipmentSlot[]>> = {
-  woodcutters_axe: ['focus'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
-  trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['focus', 'hands'],
-  wooden_shield: ['hands'],
+const EQUIPPABLE: Partial<Record<ItemId, readonly EquipmentSlot[]>> = {
+  woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
+  trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'],
+  wooden_shield: ['offHand'],
 }
 const TERRAIN_COLORS = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', snow: '#d4e3df' } as const
 
@@ -131,17 +130,13 @@ function eventText(event: WizardEvent): string {
   }
 }
 
-function domainSlot(slot: ViewEquipmentSlot): DomainEquipmentSlot {
-  return slot === 'focus' ? 'mainHand' : slot === 'hands' ? 'offHand' : slot
-}
-
 export function toViewProjection(state: WizardWorldState, messages: readonly RecentMessage[]): WizardViewProjection {
   const domain = createWizardProjection(state)
   const interaction = closestInteraction(state)
   const inventory = domain.player.inventory.map((stack) => itemStack(stack.itemId, stack.quantity))
   const currentTile = state.tiles.reduce((closest, tile) => distance(state.player.position, tile.center) < distance(state.player.position, closest.center) ? tile : closest)
-  const equipped = (slot: ViewEquipmentSlot) => {
-    const itemId = domain.player.equipment[domainSlot(slot)]
+  const equipped = (slot: EquipmentSlot) => {
+    const itemId = domain.player.equipment[slot]
     return itemId ? itemStack(itemId, 1) : null
   }
   return {
@@ -176,7 +171,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     backpack: { capacity: domain.player.backpackCapacity, stacks: inventory },
     coins: domain.player.coins,
     experience: { xp: domain.player.xp, nextLevelXp: domain.player.level * 100, level: domain.player.level },
-    equipment: { head: equipped('head'), chest: equipped('chest'), hands: equipped('hands'), legs: equipped('legs'), feet: equipped('feet'), focus: equipped('focus') },
+    equipment: { head: equipped('head'), chest: equipped('chest'), legs: equipped('legs'), feet: equipped('feet'), mainHand: equipped('mainHand'), offHand: equipped('offHand') },
     tradeListings: domain.player.tradeSlots.map((slot) => slot.itemId ? ({ id: `trade-${slot.slotIndex}`, itemName: ITEM_NAMES[slot.itemId], quantity: slot.quantity, unitPrice: slot.unitPrice }) : null) as unknown as WizardViewProjection['tradeListings'],
     nearbyInteraction: interaction ? {
       kind: interaction.kind, targetId: interaction.target.id,
@@ -208,7 +203,7 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
     return null
   }
   if (intent.type === 'store.select-listing') return { type: 'buy_store_listing', storeId: intent.storeId, listingId: intent.listingId }
-  if (intent.type === 'equipment.equip') return { type: 'equip_item', itemId: intent.stackId.replace('inventory-', '') as ItemId, slot: domainSlot(intent.slot) }
+  if (intent.type === 'equipment.equip') return { type: 'equip_item', itemId: intent.stackId.replace('inventory-', '') as ItemId, slot: intent.slot }
   if (intent.type === 'trade.create-listing') return { type: 'create_trade_listing', slotIndex: intent.slot, itemId: intent.stackId.replace('inventory-', '') as ItemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
   if (intent.type === 'trade.cancel-listing') return { type: 'cancel_trade_listing', slotIndex: intent.slot }
   return { type: 'teleport_fairy_ring', sourceRingId: intent.ringId, targetRingId: intent.destinationRingId }
