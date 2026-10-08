@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardLandmark, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 import { visibleTerrainCells } from './visibleTerrain'
+import { LandscapeDressing } from './LandscapeDressingLayer'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -24,6 +25,8 @@ const BEDROCK_COLOR = '#4a6a3e'
 
 // Shared geometry/material instances for primitives that have no per-instance variance.
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1)
+const MIREGLASS_PATCH_GEOMETRY = new THREE.CircleGeometry(1, 9)
+MIREGLASS_PATCH_GEOMETRY.rotateX(-Math.PI / 2)
 const LEAF_GEOMETRY = new THREE.IcosahedronGeometry(1, 1)
 const ROCK_GEOMETRY = new THREE.DodecahedronGeometry(1, 0)
 const CRYSTAL_GEOMETRY = new THREE.OctahedronGeometry(1, 0)
@@ -544,13 +547,15 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
         <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_STRATA_MATERIAL}
           position={[0.24, 0.19, -0.09]} rotation={[0, 0.2, -0.08]} scale={[0.38, 0.11, 0.27]} castShadow />
       </group>}
-      {detail.water && <mesh geometry={UNIT_BOX} material={MIREGLASS_WATER_MATERIAL} position={[detail.x, y + 0.012, detail.z]} rotation={[0, detail.rotation, 0]} scale={[2.2, 0.024, 1.35]} />}
+      {detail.water && <mesh geometry={MIREGLASS_PATCH_GEOMETRY} material={MIREGLASS_WATER_MATERIAL}
+        position={[detail.x, y + 0.019, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.32, 1, 0.88]} />}
       {detail.reeds && <group position={[detail.x + 0.9, y, detail.z - 0.7]} rotation={[0, detail.rotation, 0]}>
         <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[-0.12, 0.24, 0]} rotation={[0, 0, -0.12]} scale={[0.045, 0.48, 0.045]} />
         <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.09, 0.31, 0.09]} rotation={[0, 0, 0.16]} scale={[0.04, 0.62, 0.04]} />
         <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.02, 0.18, -0.1]} scale={[0.04, 0.36, 0.04]} />
       </group>}
-      {detail.peat && <mesh geometry={UNIT_BOX} material={MIREGLASS_PEAT_MATERIAL} position={[detail.x, y + 0.01, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.8, 0.02, 1.25]} />}
+      {detail.peat && <mesh geometry={MIREGLASS_PATCH_GEOMETRY} material={MIREGLASS_PEAT_MATERIAL}
+        position={[detail.x, y + 0.018, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.08, 1, 0.74]} />}
       {detail.stone && <mesh geometry={ROCK_GEOMETRY} material={MIREGLASS_STONE_MATERIAL} position={[detail.x, y + 0.1, detail.z]} rotation={[0, detail.rotation, 0]} scale={[0.55, 0.16, 0.42]} />}
       {detail.soil && <mesh geometry={ROCK_GEOMETRY} material={APPROACH_SOIL_MATERIAL}
         position={[detail.x, y + 0.012, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.05, 0.025, 0.8]} />}
@@ -982,6 +987,22 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   const visibleRoutes = constructionVisuals(projection.routes, projection.buildSites, projection.selectedBuildSiteId)
   const visibleTerrain = visibleTerrainCells(projection.terrain, projection.player.position)
   const visibleCamps = fieldCampVisuals(projection.fieldCamp, visibleTerrain)
+  const landscapeClearings = [
+    ...projection.resources, ...projection.stores, ...projection.fairyRings,
+    ...projection.inscriptions, ...projection.digSites, ...(projection.landmarks ?? []),
+  ].map(({ position }) => [position[0], position[2]] as const)
+  for (const route of projection.routes) {
+    landscapeClearings.push([route.from[0], route.from[2]], [route.to[0], route.to[2]])
+  }
+  for (const site of projection.buildSites) {
+    landscapeClearings.push([site.from[0], site.from[2]], [site.to[0], site.to[2]])
+  }
+  for (const camp of visibleCamps) {
+    if (camp.status === 'built') landscapeClearings.push([camp.position[0], camp.position[2]])
+  }
+  if (projection.windwardStep?.glyph) landscapeClearings.push([
+    projection.windwardStep.glyph.position[0], projection.windwardStep.glyph.position[2],
+  ])
   return (
     <Canvas
       shadows={{ type: THREE.PCFShadowMap }}
@@ -1030,6 +1051,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport} />
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
       {visibleTerrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
+      <LandscapeDressing cells={visibleTerrain} clearings={landscapeClearings} />
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
