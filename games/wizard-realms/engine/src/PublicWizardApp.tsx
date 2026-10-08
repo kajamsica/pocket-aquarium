@@ -43,6 +43,10 @@ const SEED = 'greenway-alpha'
 const STEP_MS = 50
 const MAX_CATCH_UP_STEPS = 12
 const TRAVEL_SAVE_MS = 5_000
+export const publicSaveableVersion = (version: number, events: readonly PublicWorldEvent[]) =>
+  version + (events.length ? 1 : 0)
+export const publicTravelFlushNeeded = (dirty: boolean, version: number, lastQueuedVersion: number) =>
+  dirty && version !== lastQueuedVersion
 /** Shared across tabs. Every public v6 read that can lead to a write uses this lock. */
 export const PUBLIC_V6_LOCK_NAME = `${PUBLIC_V6_ROOT_KEY}:exclusive`
 
@@ -411,7 +415,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   const [blocked, setBlocked] = useState(false)
   const [blockedReason, setBlockedReason] = useState<string | null>(null)
   const [notice, setNotice] = useState(session
-    ? `Public ${v9Session ? 'v9' : 'v8'} save #${session.start.saveRevision} loaded. Greenway and Mireglass share one player.`
+    ? `Public ${v9Session ? 'v9' : 'v8'} save #${session.start.saveRevision} loaded at tick ${session.start.state.tick}. Greenway and Mireglass share one player.`
     : 'Checking this device for a Wizard Realms save…')
   const [confirmFresh, setConfirmFresh] = useState<GenerationProfile | null>(null)
   const [selectedRecovery, setSelectedRecovery] = useState<PublicRecoverySource | null>(null)
@@ -438,6 +442,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   const openStoreRef = useRef<string | null>(null)
   const travelDirty = useRef(false)
   const travelVersion = useRef(0)
+  const lastQueuedTravelVersion = useRef(-1)
   const lastSaveMs = useRef(performance.now())
   const lastReadoutMs = useRef(performance.now())
 
@@ -449,6 +454,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   const save = useCallback((snapshot: PublicWorldV7State) => {
     if (blockedRef.current) return
     const savedTravelVersion = travelVersion.current
+    lastQueuedTravelVersion.current = savedTravelVersion
     lastSaveMs.current = performance.now()
     saveQueue.current = saveQueue.current.then(async () => {
       if (blockedRef.current) return
@@ -476,7 +482,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   }, [stop, v8Session, v9Session])
   const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
-    travelDirty.current = false; travelVersion.current = 0
+    travelDirty.current = false; travelVersion.current = 0; lastQueuedTravelVersion.current = -1
     setWorld(start.state); setBusy(false); setBlocked(false); setBlockedReason(null)
     blockedRef.current = false; blockedReasonRef.current = null
     setNotice('Public v7 progress is saved. Greenway and Mireglass share one player.')
@@ -667,7 +673,8 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
       const samples = sampleFixedInputBatch(input.current, clock.current, now, STEP_MS, MAX_CATCH_UP_STEPS)
       const frames = pending.current.splice(0)
       if (!samples.length && !frames.length) {
-        if (forceSave && travelDirty.current) save(worldRef.current)
+        if (forceSave && publicTravelFlushNeeded(travelDirty.current, travelVersion.current,
+          lastQueuedTravelVersion.current)) save(worldRef.current)
         return
       }
       try {
@@ -686,11 +693,11 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
         const texts = [...publicFrameMessages(result), ...(transition ? [transition] : [])]
         if (texts.length) setMessages((current) => appendMessages(current, texts,
           result.rejections.length > 0 && result.events.length === 0 && !transition))
-        if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
-          || event.type === 'tile_discovered' || event.type === 'player_jumped')) {
-          travelDirty.current = true; travelVersion.current += 1
-        }
-        if ((frames.length && result.events.length) || (travelDirty.current
+        // Idle world events can change durable state too, notably a trade listing settling.
+        if (result.events.length) travelDirty.current = true
+        travelVersion.current = publicSaveableVersion(travelVersion.current, result.events)
+        if ((frames.length && result.events.length) || (publicTravelFlushNeeded(
+          travelDirty.current, travelVersion.current, lastQueuedTravelVersion.current)
           && (forceSave || now - lastSaveMs.current >= TRAVEL_SAVE_MS))) save(next)
       } catch { stop('world-frame-error') }
     }

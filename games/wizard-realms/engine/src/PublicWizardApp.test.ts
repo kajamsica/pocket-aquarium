@@ -35,6 +35,7 @@ import {
   publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
   publicFieldCampView, requirePublicV9State, unsavedPublicV9Bytes,
+  publicSaveableVersion, publicTravelFlushNeeded,
   PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
 
@@ -65,6 +66,25 @@ function webLocks() {
 }
 
 describe('public v8 play session seam', () => {
+  it('queues a newer idle trade settlement but not a duplicate blur of the same version', () => {
+    const base = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const before = { ...base, tick: 599, player: { ...base.player, tradeSlots: [
+      { ...base.player.tradeSlots[0], itemId: 'logs' as const, quantity: 1, unitPrice: 3 },
+      base.player.tradeSlots[1], base.player.tradeSlots[2], base.player.tradeSlots[3],
+    ] as typeof base.player.tradeSlots } }
+    const pendingTravelVersion = 1
+    const sold = advancePublicControls(before, [[]], [])
+    expect(sold.events.map((event) => event.type)).toContain('trade_listing_sold')
+    expect(sold.state.player.coins).toBe(before.player.coins + 3)
+    expect(sold.state.player.tradeSlots[0].itemId).toBeNull()
+    const settledVersion = publicSaveableVersion(pendingTravelVersion, sold.events)
+    expect(publicTravelFlushNeeded(true, settledVersion, pendingTravelVersion)).toBe(true)
+    expect(publicTravelFlushNeeded(true, settledVersion, settledVersion)).toBe(false)
+    const idle = advancePublicControls(sold.state, [[]], [])
+    expect(idle.events).toEqual([])
+    expect(publicSaveableVersion(settledVersion, idle.events)).toBe(settledVersion)
+  })
+
   it('renders the supplied world immediately while the no-prop v7 entry stays gated', () => {
     const state = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
     const source = commitPublicV7World(memoryStorage(), state, null)
@@ -73,6 +93,7 @@ describe('public v8 play session seam', () => {
       commit: async () => ({ ok: true, value: { state, saveRevision: 4, sourceV7Bytes: source.bytes } }) }
     const v8 = renderToStaticMarkup(createElement(PublicWizardApp, { v8Session: session }))
     expect(v8).toContain('Public v8 save #3 loaded')
+    expect(v8).toContain(`loaded at tick ${state.tick}`)
     expect(v8).toContain('World / Save')
     expect(v8).not.toContain('Choose how to begin.')
     const v7 = renderToStaticMarkup(createElement(PublicWizardApp))
@@ -158,6 +179,7 @@ describe('public v9 play session', () => {
       commit: async () => ({ ok: false as const, reason: 'source-changed' }),
     } }))
     expect(html).toContain('Public v9 save #7 loaded')
+    expect(html).toContain(`loaded at tick ${next.tick}`)
     expect(html).not.toContain('line-clamp')
     expect(html).toContain('overflow:auto;text-align:left;pointer-events:auto')
     expect(html).toContain('.wr-public:has([data-store-panel],.wr-build-preview) .wr-public-panel{display:none}')
