@@ -2,18 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { eventText as greenwayEventText, intentForView, objectiveFor, retainOpenStoreId } from './App'
 import { bearingText, mireglassActionChoices, mireglassEventText, mireglassNearestInteractChoice, mireglassNextObjective } from './MireglassPlayableApp'
 import { publicWorldViewProjection } from './PublicWorldView'
+import { publicWorldV11ViewProjection } from './PublicV11WorldView'
 import { streamedControlIntents } from './StreamedPreviewApp'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE } from './domain/mireglassContent'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
+import { mireglassRouteSites } from './domain/mireglassRouteSites'
+import { mireglassPlateauAt } from './domain/mireglassTerrain'
 import { areaAt } from './domain/generation'
 import { applyFieldCampAction, applyFieldCampV10Action, resolveFieldCampSite } from './domain/fieldCamp'
+import { classifyStreamedRegion } from './domain/highlandContent'
 import type { MireglassWorldState } from './domain/mireglassWorld'
 import { routeBuildOptions } from './domain/routeSites'
 import { actPublicMireglass, actPublicV10Mireglass, type PublicMireglassAction } from './domain/publicWorldActions'
 import { advancePublicWorldFrame, advancePublicWorldV10Frame,
   type PublicWorldAdvanceResult, type PublicWorldEvent, type PublicWorldIntent } from './domain/publicWorldRuntime'
+import { actPublicV11Highland, actPublicV11Mireglass, advancePublicWorldV11Frame, applyFieldCampV11Action,
+  type PublicV11LandmarkEvent } from './domain/publicWorldV11Authority'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap, type PublicWorldState } from './domain/publicWorldState'
 import {
   PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
@@ -38,8 +44,12 @@ import type { PublicWorldV9State } from './domain/publicWorldV9State'
 import type { PublicV10Operation, PublicV10Start } from './domain/publicWorldV10Flow'
 import { serializePublicV10Rescue, type PublicV10SourceReceipt } from './domain/publicWorldV10Snapshot'
 import type { PublicWorldV10State } from './domain/publicWorldV10State'
+import type { PublicV11Operation, PublicV11Start } from './domain/publicWorldV11Flow'
+import { serializePublicV11Rescue, type PublicV11SourceReceipt } from './domain/publicWorldV11Snapshot'
+import type { PublicWorldV11State } from './domain/publicWorldV11State'
 import type { PublicV6BootstrapRoot } from './domain/publicWorldV6'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
+import { WORLD_CELL_METERS } from './domain/worldChunks'
 import { WizardSurface, type WizardViewIntent } from './view'
 import type { WizardFieldCampView } from './view/contracts'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
@@ -48,7 +58,8 @@ const SEED = 'greenway-alpha'
 const STEP_MS = 50
 const MAX_CATCH_UP_STEPS = 12
 const TRAVEL_SAVE_MS = 5_000
-export const publicSaveableVersion = (version: number, events: readonly PublicWorldEvent[]) =>
+export const publicSaveableVersion = (version: number,
+  events: readonly (PublicWorldEvent | PublicV11LandmarkEvent)[]) =>
   version + (events.length ? 1 : 0)
 export const publicTravelFlushNeeded = (dirty: boolean, version: number, lastQueuedVersion: number) =>
   dirty && version !== lastQueuedVersion
@@ -187,13 +198,21 @@ export function mireglassForPublicView(state: PublicWorldState): MireglassWorldS
     player: state.player, discoveredTileIds: state.discoveredTileIds, expedition: state.mireglass }
 }
 /** Nonmovement frames stay separate; each sampled look+move occupies exactly one 50 ms frame. */
+export type PublicAnyAdvanceResult = {
+  state: PublicWorldState
+  events: Array<PublicWorldEvent | PublicV11LandmarkEvent>
+  rejections: PublicWorldAdvanceResult['rejections']
+}
 export function advancePublicControls(state: PublicWorldState, queued: readonly (readonly PublicWorldIntent[])[],
-  samples: readonly (readonly [number, number])[], v10Bootstrap: PublicV6BootstrapRoot | null = null): PublicWorldAdvanceResult {
+  samples: readonly (readonly [number, number])[], v10Bootstrap: PublicV6BootstrapRoot | null = null): PublicAnyAdvanceResult {
   let next = state
-  const events: PublicWorldAdvanceResult['events'] = []
+  const events: PublicAnyAdvanceResult['events'] = []
   const rejections: PublicWorldAdvanceResult['rejections'] = []
+  const isV11 = 'highlandContentRevision' in state
   const isV10 = 'terrainRevision' in state
-  const advance = (intents: readonly PublicWorldIntent[]) => isV10
+  const advance = (intents: readonly PublicWorldIntent[]) => isV11
+    ? advancePublicWorldV11Frame(requirePublicV11State(next), intents, v10Bootstrap)
+    : isV10
     ? advancePublicWorldV10Frame(requirePublicV10State(next), intents, v10Bootstrap)
     : advancePublicWorldFrame(next, intents)
   for (const frame of queued) {
@@ -238,7 +257,8 @@ const transientSaveFailure = (reason: string | null) => reason === 'storage-erro
 const errorText = (reason: string) => `Save blocked (${reason}). Existing bytes were preserved. ${transientSaveFailure(reason)
   ? 'Retry Save to keep your in-memory progress.' : 'Do not clear site data. Recovery requires a verified save operation.'}`
 const eventText = (type: string) => type.replaceAll('_', ' ')
-export function publicWorldEventText(event: PublicWorldEvent): string {
+export function publicWorldEventText(event: PublicWorldEvent | PublicV11LandmarkEvent): string {
+  if (event.type === 'highland_landmark_discovered') return 'Discovered the Highland Quarry Crown.'
   const itemId = 'itemId' in event && typeof event.itemId === 'string' ? event.itemId : null
   const regionalName = itemId === 'mireglass_reach/item/seal' ? 'Mireglass seal'
     : itemId === 'mireglass_reach/item/waders' ? 'Fen waders' : null
@@ -264,7 +284,7 @@ function publicRejectionText(state: PublicWorldState,
   }
   return rejection.message
 }
-export function publicFrameMessages(result: PublicWorldAdvanceResult): string[] {
+export function publicFrameMessages(result: PublicAnyAdvanceResult): string[] {
   const cast = result.events.find((event) => event.type === 'spell_cast')
   const otherEvents = result.events.filter((event) => event.type !== 'player_moved'
     && event.type !== 'player_looked' && event !== cast
@@ -310,9 +330,28 @@ export function requirePublicV10State(state: PublicWorldState, previous?: Public
   return next as PublicWorldV10State
 }
 
+export function requirePublicV11State(state: PublicWorldState, previous?: PublicWorldState): PublicWorldV11State {
+  const next = requirePublicV10State(state, previous)
+  const candidate = next as PublicWorldV11State
+  if (candidate.highlandContentRevision !== 'highland-quarry-v1'
+    || typeof candidate.highland !== 'object' || candidate.highland === null
+    || !Array.isArray(candidate.highland.stoneNodes)) throw new RangeError('The v11 Highland history was lost.')
+  const prior = previous && 'highland' in previous ? (previous as PublicWorldV11State).highland : null
+  if (prior && (prior.landmarkDiscovered && !candidate.highland.landmarkDiscovered
+    || prior.stoneNodes.length !== candidate.highland.stoneNodes.length
+    || prior.stoneNodes.some((node, index) => node.id !== candidate.highland.stoneNodes[index]?.id
+      || node.readyAtTick > candidate.highland.stoneNodes[index].readyAtTick))) {
+    throw new RangeError('A world transition changed the v11 Highland history.')
+  }
+  return candidate
+}
+
 export function publicFieldCampView(state: PublicWorldV9State, selectedTileId: string | null,
-  source: PublicV9SourceReceipt | PublicV10SourceReceipt, blocked: boolean): WizardFieldCampView {
+  source: PublicV9SourceReceipt | PublicV10SourceReceipt | PublicV11SourceReceipt,
+  blocked: boolean): WizardFieldCampView {
   const selectionEnabled = !blocked && state.movementOwner === 'streamed' && state.fieldCampTileIds.length === 0
+    && (!('highlandContentRevision' in state)
+      || classifyStreamedRegion(state.seed, state.player.position) === 'mireglass_reach')
   const tileId = selectionEnabled ? selectedTileId : null
   const previewPosition = tileId === null ? null : resolveFieldCampSite(state.seed, tileId)?.tile.center
   const position = state.player.position
@@ -321,13 +360,17 @@ export function publicFieldCampView(state: PublicWorldV9State, selectedTileId: s
     z: Math.max(MIREGLASS_CORE.minZ, Math.min(position.z, MIREGLASS_CORE.minZ + 32)) }
   const meters = Math.round(Math.hypot(approach.x - position.x, approach.z - position.z) / 10) * 10
   const guidance = blocked || state.fieldCampTileIds.length ? null
+    : 'highlandContentRevision' in state && state.movementOwner === 'streamed'
+      && classifyStreamedRegion(state.seed, state.player.position) !== 'mireglass_reach' ? null
     : `Inner basin approach is ${meters < 10 ? 'here' : `roughly ${bearingText(position, approach)} of here, about ${meters} m direct`}. A camp can be built on suitable loam before the fen bridge. It costs 4 logs + 1 stone; the bridge costs 8 logs, so reserve 4 additional logs beyond the bridge supply if building both. ⌂ appears on discovered suitable ground.`
   return { selectionEnabled, guidance, camps: state.fieldCampTileIds.flatMap((id) => {
     const site = resolveFieldCampSite(state.seed, id)
     return site ? [{ tileId: id, position: [site.tile.center.x, site.tile.center.y, site.tile.center.z] as const }] : []
   }), preview: tileId === null ? null : { tileId,
     position: previewPosition ? [previewPosition.x, previewPosition.y, previewPosition.z] : null,
-    rejection: 'sourceV9Head' in source
+    rejection: 'sourceV10Head' in source
+      ? applyFieldCampV11Action(requirePublicV11State(state), tileId, source.sourceV10Head.bootstrap).rejection ?? null
+      : 'sourceV9Head' in source
       ? applyFieldCampV10Action(requirePublicV10State(state), tileId, source.sourceV9Head.bootstrap).rejection ?? null
       : applyFieldCampAction(state, tileId, source.sourceV8Head.bootstrap).rejection ?? null } }
 }
@@ -341,6 +384,12 @@ export function unsavedPublicV9Bytes(state: PublicWorldV9State, source: PublicV9
 export function unsavedPublicV10Bytes(state: PublicWorldV10State, source: PublicV10SourceReceipt,
   savedRevision: number): string | null {
   try { return serializePublicV10Rescue(state, source.sourceV9Head.bootstrap, savedRevision + 1, source) }
+  catch { return null }
+}
+
+export function unsavedPublicV11Bytes(state: PublicWorldV11State, source: PublicV11SourceReceipt,
+  savedRevision: number): string | null {
+  try { return serializePublicV11Rescue(state, source.sourceV10Head.bootstrap, savedRevision + 1, source) }
   catch { return null }
 }
 
@@ -420,6 +469,17 @@ export function publicHerbRouteHint(state: PublicWorldState): string | null {
   const meters = Math.round(Math.hypot(nearest.tile.center.x - state.player.position.x,
     nearest.tile.center.z - state.player.position.z))
   if (meters < 3) return 'Gather the dry Bell Alder marsh herb here, then bring it to Greenway.'
+  const ladder = mireglassRouteSites(state.seed).find((site) => site.id === state.mireglass.builtRoutes.ladder)
+  const cellX = Math.ceil(state.player.position.x / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+  const cellZ = Math.ceil(state.player.position.z / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+  if (ladder && mireglassPlateauAt(state.seed, cellX, cellZ)
+    && !mireglassPlateauAt(state.seed, nearest.tile.center.x, nearest.tile.center.z)) {
+    const toLadder = Math.hypot(state.player.position.x - ladder.to.x,
+      state.player.position.y - ladder.to.y, state.player.position.z - ladder.to.z)
+    return toLadder <= 3
+      ? 'Use “Return by Slate ladder” here to descend toward Bell Alder, then follow the herb patch route.'
+      : `Head ${bearingText(state.player.position, ladder.to)} to the built Slate ladder, about ${Math.round(toLadder)} m to its top. Use “Return by Slate ladder” there to descend toward Bell Alder, then follow the herb patch route.`
+  }
   return `Find a dry Bell Alder herb patch ${bearingText(state.player.position, nearest.tile.center)} of here, about ${meters} m direct, then bring it to Greenway.`
 }
 
@@ -434,11 +494,24 @@ export function publicHerbGuidancePriority(state: PublicWorldState, expeditionCo
 }
 
 export function publicAreaTitle(state: PublicWorldState): string {
+  if ('highlandContentRevision' in state && state.movementOwner === 'streamed') {
+    const region = classifyStreamedRegion(state.seed, state.player.position)
+    return region === 'highland_quarry' ? 'Highland Quarry'
+      : region === 'mireglass_reach' ? 'Mireglass Reach' : 'Open Wilderness'
+  }
   return state.movementOwner === 'streamed' ? 'Mireglass Reach'
     : areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).name
 }
 
 export function publicRegionTransitionText(before: PublicWorldState, after: PublicWorldState): string | null {
+  if ('highlandContentRevision' in after) {
+    const beforeArea = publicAreaTitle(before), afterArea = publicAreaTitle(after)
+    if (beforeArea === afterArea) return null
+    return after.movementOwner === 'greenway' ? 'Returned to Greenway.'
+      : afterArea === 'Highland Quarry' ? 'Entered Highland Quarry. Follow the rocky trail to the Quarry Crown.'
+      : afterArea === 'Mireglass Reach' ? 'Entered Mireglass Reach. Follow the dry frontier trail to its marker.'
+      : 'Entered open wilderness.'
+  }
   if (before.movementOwner === after.movementOwner) return null
   return after.movementOwner === 'streamed'
     ? 'Entered Mireglass Reach. Follow the dry frontier trail to its marker.'
@@ -457,14 +530,19 @@ export type PublicV10PlayableSession = {
   start: PublicV10Start
   commit: (state: PublicWorldV10State, expectedRevision: number, sourceReceipt: PublicV10SourceReceipt) => Promise<PublicV10Operation<PublicV10Start>>
 }
+export type PublicV11PlayableSession = {
+  start: PublicV11Start
+  commit: (state: PublicWorldV11State, expectedRevision: number, sourceReceipt: PublicV11SourceReceipt) => Promise<PublicV11Operation<PublicV11Start>>
+}
 type PublicPlayableSessionProps =
-  | { v8Session?: PublicV8PlayableSession; v9Session?: never; v10Session?: never }
-  | { v8Session?: never; v9Session: PublicV9PlayableSession; v10Session?: never }
-  | { v8Session?: never; v9Session?: never; v10Session: PublicV10PlayableSession }
+  | { v8Session?: PublicV8PlayableSession; v9Session?: never; v10Session?: never; v11Session?: never }
+  | { v8Session?: never; v9Session: PublicV9PlayableSession; v10Session?: never; v11Session?: never }
+  | { v8Session?: never; v9Session?: never; v10Session: PublicV10PlayableSession; v11Session?: never }
+  | { v8Session?: never; v9Session?: never; v10Session?: never; v11Session: PublicV11PlayableSession }
 
-export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlayableSessionProps) {
-  const session = v10Session ?? v9Session ?? v8Session
-  const sessionVersion = v10Session ? 'v10' : v9Session ? 'v9' : 'v8'
+export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }: PublicPlayableSessionProps) {
+  const session = v11Session ?? v10Session ?? v9Session ?? v8Session
+  const sessionVersion = v11Session ? 'v11' : v10Session ? 'v10' : v9Session ? 'v9' : 'v8'
   const [entry, setEntry] = useState<PublicWorldV7EntryInspection | null>(null)
   const [world, setWorld] = useState<PublicWorldV7State | null>(session?.start.state ?? null)
   const [busy, setBusy] = useState(!session)
@@ -490,6 +568,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
   const sourceV7Bytes = useRef(v8Session?.start.sourceV7Bytes ?? null)
   const sourceReceipt = useRef(v9Session?.start.sourceReceipt ?? null)
   const sourceV10Receipt = useRef(v10Session?.start.sourceReceipt ?? null)
+  const sourceV11Receipt = useRef(v11Session?.start.sourceReceipt ?? null)
   const blockedRef = useRef(false)
   const blockedReasonRef = useRef<string | null>(null)
   const saveQueue = useRef<Promise<void>>(Promise.resolve())
@@ -515,8 +594,10 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
     lastSaveMs.current = performance.now()
     saveQueue.current = saveQueue.current.then(async () => {
       if (blockedRef.current) return
-      if (v10Session || v9Session || v8Session) {
-        const result = v10Session
+      if (v11Session || v10Session || v9Session || v8Session) {
+        const result = v11Session
+          ? await v11Session.commit(requirePublicV11State(snapshot), expectedRevision.current, sourceV11Receipt.current!)
+          : v10Session
           ? await v10Session.commit(requirePublicV10State(snapshot), expectedRevision.current, sourceV10Receipt.current!)
           : v9Session
           ? await v9Session.commit(requirePublicV9State(snapshot), expectedRevision.current, sourceReceipt.current!)
@@ -537,8 +618,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
       if (travelVersion.current === savedTravelVersion) travelDirty.current = false
       const saved = parsePublicV7PlayableRoot(result.value.bytes)
       setNotice(`Public v7 save #${saved?.saveRevision ?? '?'} completed on this device. Older saves remain untouched.`)
-    }).catch(() => { if (v10Session || v9Session || v8Session) setWorld(worldRef.current); stop('storage-error') })
-  }, [stop, v8Session, v9Session, v10Session, sessionVersion])
+    }).catch(() => { if (v11Session || v10Session || v9Session || v8Session) setWorld(worldRef.current); stop('storage-error') })
+  }, [stop, v8Session, v9Session, v10Session, v11Session, sessionVersion])
   const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
     travelDirty.current = false; travelVersion.current = 0; lastQueuedTravelVersion.current = -1
@@ -548,7 +629,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
     lastSaveMs.current = performance.now()
   }
   useEffect(() => {
-    if (v8Session || v9Session || v10Session) return
+    if (v8Session || v9Session || v10Session || v11Session) return
     let cancelled = false
     const currentStorage = storage()
     if (!currentStorage) { stop('storage-error'); setBusy(false); return }
@@ -566,7 +647,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
         : 'A public v7 world is available. Resume it explicitly to play.')
     }).catch(() => { if (!cancelled) { stop('storage-error'); setBusy(false) } })
     return () => { cancelled = true }
-  }, [stop, v8Session, v9Session, v10Session])
+  }, [stop, v8Session, v9Session, v10Session, v11Session])
 
   const choose = async (operation: Promise<PublicV7Operation<PublicV7Start>>) => {
     setBusy(true)
@@ -690,14 +771,16 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
     await saveQueue.current
     blockedRef.current = false; blockedReasonRef.current = null
     setBlocked(false); setBlockedReason(null)
-    setNotice(`Retrying the unchanged ${v10Session ? 'v10 revision' : v9Session ? 'v9 revision' : v8Session ? 'v8 revision' : 'v7 save root'}…`)
+    setNotice(`Retrying the unchanged ${v11Session ? 'v11 revision' : v10Session ? 'v10 revision' : v9Session ? 'v9 revision' : v8Session ? 'v8 revision' : 'v7 save root'}…`)
     save(worldRef.current)
     await saveQueue.current
     setBusy(false)
   }
   const exportUnsaved = () => {
     const current = worldRef.current
-    const bytes = current && (v10Session
+    const bytes = current && (v11Session
+      ? unsavedPublicV11Bytes(requirePublicV11State(current), sourceV11Receipt.current!, expectedRevision.current)
+      : v10Session
       ? unsavedPublicV10Bytes(requirePublicV10State(current), sourceV10Receipt.current!, expectedRevision.current)
       : v9Session
       ? unsavedPublicV9Bytes(requirePublicV9State(current), sourceReceipt.current!, expectedRevision.current)
@@ -708,10 +791,12 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
     try {
       url = URL.createObjectURL(new Blob([bytes], { type: 'application/json' }))
       link = document.createElement('a')
-      const version = v10Session ? 'v10' : v9Session ? 'v9' : 'v7'
+      const version = v11Session ? 'v11' : v10Session ? 'v10' : v9Session ? 'v9' : 'v7'
       link.href = url; link.download = `wizard-realms-unsaved-${version}-${Date.now()}.json`
       document.body.append(link); link.click()
-      setNotice(v10Session
+      setNotice(v11Session
+        ? 'V11 Highland, terrain, camp state, and source receipt downloaded for recovery. This preview cannot import this file. Keep the file and this site data; the download has not replaced your save.'
+        : v10Session
         ? 'V10 terrain, camp state, and source receipt downloaded for recovery. This preview cannot import this file. Keep the file and this site data; the download has not replaced your save.'
         : v9Session
         ? 'V9 camp state and source receipt downloaded for recovery. This preview cannot import this file. Keep the file and this site data; the download has not replaced your save.'
@@ -743,8 +828,10 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
       try {
         const previous = worldRef.current
         const result = advancePublicControls(previous, frames, samples,
-          v10Session ? sourceV10Receipt.current!.sourceV9Head.bootstrap : null)
-        const next = v10Session ? requirePublicV10State(result.state, previous)
+          v11Session ? sourceV11Receipt.current!.sourceV10Head.bootstrap
+            : v10Session ? sourceV10Receipt.current!.sourceV9Head.bootstrap : null)
+        const next = v11Session ? requirePublicV11State(result.state, previous)
+          : v10Session ? requirePublicV10State(result.state, previous)
           : v9Session ? requirePublicV9State(result.state, previous) : requirePublicV7State(result.state)
         worldRef.current = next
         if (result.events.length || result.rejections.length || now - lastReadoutMs.current >= 1_000) {
@@ -774,36 +861,53 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('blur', flush)
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('blur', flush) }
-  }, [world !== null, save, stop, v9Session, v10Session])
+  }, [world !== null, save, stop, v9Session, v10Session, v11Session])
 
   const actMireglass = useCallback((action: PublicMireglassAction) => {
     const current = worldRef.current
     if (!current || current.movementOwner !== 'streamed' || blockedRef.current) return
-    const result = v10Session
+    const result = v11Session
+      ? actPublicV11Mireglass(requirePublicV11State(current), action, sourceV11Receipt.current!.sourceV10Head.bootstrap)
+      : v10Session
       ? actPublicV10Mireglass(requirePublicV10State(current), action, sourceV10Receipt.current!.sourceV9Head.bootstrap)
       : actPublicMireglass(current, action)
     if (result.rejection) { report(result.rejection.message); return }
-    const next = v10Session ? requirePublicV10State(result.state, current)
+    const next = v11Session ? requirePublicV11State(result.state, current)
+      : v10Session ? requirePublicV10State(result.state, current)
       : v9Session ? requirePublicV9State(result.state, current) : requirePublicV7State(result.state)
     worldRef.current = next; setWorld(next)
     report(result.event.type === 'herb_foraged'
       ? 'Gathered a marsh herb. It will regrow after the next game-time cycle.'
       : mireglassEventText(result.event)); save(next)
-  }, [report, save, v9Session, v10Session])
+  }, [report, save, v9Session, v10Session, v11Session])
+  const actHighland = useCallback((nodeId: string) => {
+    const current = worldRef.current
+    if (!v11Session || !current || blockedRef.current) return
+    const result = actPublicV11Highland(requirePublicV11State(current),
+      { type: 'extract_highland_stone', nodeId }, sourceV11Receipt.current!.sourceV10Head.bootstrap)
+    if (result.rejection) { report(result.rejection.message); return }
+    const next = requirePublicV11State(result.state, current)
+    worldRef.current = next; setWorld(next)
+    report('Extracted 2 Highland stone. Gained 20 Excavation XP.'); save(next)
+  }, [report, save, v11Session])
   const onIntent = useCallback((intent: WizardViewIntent) => {
     const current = worldRef.current
     if (!current || blockedRef.current) return
     if (intent.type === 'field-camp.select' || intent.type === 'field-camp.confirm') {
-      if (!v9Session && !v10Session) return
+      if (!v9Session && !v10Session && !v11Session) return
       if (intent.type === 'field-camp.select' && intent.tileId === null) {
         selectedCampRef.current = null; setSelectedCampTileId(null); return
       }
-      const campWorld = v10Session ? requirePublicV10State(current) : requirePublicV9State(current)
+      const campWorld = v11Session ? requirePublicV11State(current)
+        : v10Session ? requirePublicV10State(current) : requirePublicV9State(current)
       if (campWorld.movementOwner !== 'streamed' || campWorld.fieldCampTileIds.length) return
       if (intent.type === 'field-camp.select') {
         selectedCampRef.current = intent.tileId; setSelectedCampTileId(intent.tileId); setSelectedSiteId(null); setWorld(current)
       } else if (selectedCampRef.current === intent.tileId) {
-        const result = v10Session
+        const result = v11Session
+          ? applyFieldCampV11Action(requirePublicV11State(campWorld), intent.tileId,
+            sourceV11Receipt.current!.sourceV10Head.bootstrap)
+          : v10Session
           ? applyFieldCampV10Action(requirePublicV10State(campWorld), intent.tileId,
             sourceV10Receipt.current!.sourceV9Head.bootstrap)
           : applyFieldCampAction(campWorld, intent.tileId, sourceReceipt.current!.sourceV8Head.bootstrap)
@@ -834,6 +938,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
       }
       return
     }
+    if (intent.type === 'highland.extract') { actHighland(intent.nodeId); return }
     if (current.movementOwner === 'greenway') {
       if (intent.type === 'store.close') { openStoreRef.current = null; setOpenStoreId(null); return }
       if (intent.type === 'store.open') {
@@ -853,6 +958,20 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
       if (action) pending.current.push([action]); else report('No eligible Greenway action here.')
       return
     }
+    if (v11Session && classifyStreamedRegion(current.seed, current.player.position) !== 'mireglass_reach') {
+      if (intent.type === 'interact') {
+        const extraction = publicWorldV11ViewProjection(requirePublicV11State(current), [],
+          selectedSiteId).highlandExtraction
+        if (extraction?.actionable) actHighland(extraction.nodeId)
+        else report(extraction?.reason ?? 'No nearby Highland interaction.')
+      } else if (intent.type === 'equipment.equip') {
+        const itemId = intent.stackId.replace(/^inventory-/, '')
+        if (itemId === 'woodcutters_axe' || itemId === 'field_spade'
+          || itemId === 'mireglass_reach/item/waders') actMireglass({ type: 'equip_item', itemId })
+        else report('That equipment is unavailable here.')
+      } else report('That action is unavailable in this region.')
+      return
+    }
     const region = mireglassForPublicView(current)
     if (intent.type === 'interact') {
       const choice = mireglassNearestInteractChoice(region) ?? publicHerbChoices(current)[0]
@@ -870,19 +989,25 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
     else if (intent.type === 'store.sell-item' && (intent.itemId === 'logs' || intent.itemId === 'mireglass_reach/item/seal'))
       actMireglass({ type: 'sell_item', itemId: intent.itemId, quantity: intent.quantity })
     else report('That frontier action is unavailable here.')
-  }, [actMireglass, report, save, selectedSiteId, v9Session, v10Session])
+  }, [actHighland, actMireglass, report, save, selectedSiteId, v9Session, v10Session, v11Session])
 
-  const projection = useMemo(() => world ? publicWorldViewProjection(world, messages, selectedSiteId, openStoreId,
+  const projection = useMemo(() => world ? v11Session
+    ? publicWorldV11ViewProjection(requirePublicV11State(world), messages, selectedSiteId, openStoreId,
+      publicFieldCampView(requirePublicV11State(world), selectedCampTileId,
+        sourceV11Receipt.current!, blocked))
+    : publicWorldViewProjection(world, messages, selectedSiteId, openStoreId,
     v10Session ? publicFieldCampView(requirePublicV10State(world), selectedCampTileId,
       sourceV10Receipt.current!, blocked)
       : v9Session ? publicFieldCampView(requirePublicV9State(world), selectedCampTileId,
         sourceReceipt.current!, blocked) : undefined,
     v10Session ? { cachePitDug: world.mireglass.cacheExcavated } : undefined) : null,
-    [world, messages, selectedSiteId, openStoreId, selectedCampTileId, v9Session, v10Session, blocked])
-  const region = world?.movementOwner === 'streamed' ? mireglassForPublicView(world) : null
+    [world, messages, selectedSiteId, openStoreId, selectedCampTileId, v9Session, v10Session, v11Session, blocked])
+  const region = world?.movementOwner === 'streamed'
+    && (!v11Session || classifyStreamedRegion(world.seed, world.player.position) === 'mireglass_reach')
+    ? mireglassForPublicView(world) : null
   const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
-  const herbRouteHint = world ? publicHerbRouteHint(world) : null
+  const herbRouteHint = region && world ? publicHerbRouteHint(world) : null
   if (!world || !projection) {
     const root = entry?.root
     const legacyPresent = entry && (entry.classic.status !== 'missing' || entry.expanded.status !== 'missing')
@@ -957,9 +1082,10 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
         <button onClick={() => window.location.reload()}>Reload to recheck storage</button></>}
     </section></main>
   }
-  const herbPriority = publicHerbGuidancePriority(world, !!objective?.complete)
+  const herbPriority = !!region && publicHerbGuidancePriority(world, !!objective?.complete)
   const nextGuidance = herbPriority && herbRouteHint
-    ? herbRouteHint : objective?.label ?? objectiveFor(greenwayForPublicView(world))
+    ? herbRouteHint : objective?.label ?? (v11Session && projection.map.guidance)
+      ?? objectiveFor(greenwayForPublicView(world))
   const playProjection = herbPriority && herbRouteHint
     ? { ...projection, map: { ...projection.map,
       guidance: publicHerbMapGuidance(projection.map.guidance, true, herbRouteHint) } }
@@ -978,8 +1104,9 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session }: PublicPlay
         <p><b>Next:</b> {nextGuidance}</p>
         {playProjection.fieldCamp?.guidance && <p><b>Camp:</b> {playProjection.fieldCamp.guidance}</p>}
         {herbRouteHint && !herbPriority && <p><b>Bell Alder route:</b> {herbRouteHint}</p>}
-        {!region && world.player.learnedSpellIds.includes('wayfinder_glow') &&
-          <p><b>Frontier trail:</b> Travel due west to the dry opening at z = 0 to enter Mireglass Reach. Greenway training remains available.</p>}
+        {world.movementOwner === 'greenway' && world.player.learnedSpellIds.includes('wayfinder_glow') &&
+          <p><b>Frontier trails:</b> Travel west at z = 0 to Mireglass Reach{v11Session
+            ? ', or east at z = 0 toward Highland Quarry' : ''}. Greenway training remains available.</p>}
         {region && <div className="wr-public-actions">{choices.map((choice) => <button key={choice.id} disabled={blocked}
           onClick={() => actMireglass(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>}
         <button disabled={blocked} onClick={() => { if (worldRef.current) save(worldRef.current) }}>Save now</button>

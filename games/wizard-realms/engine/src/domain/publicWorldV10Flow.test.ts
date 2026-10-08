@@ -17,7 +17,8 @@ import { encodePublicV8Head } from './publicWorldV8Snapshot'
 import { commitPublicV9Snapshot, migratePublicV8ToV9 } from './publicWorldV9Flow'
 import { encodePublicV9Head } from './publicWorldV9Snapshot'
 import { withFreshPublicV9Camps } from './publicWorldV9State'
-import { commitPublicV10Snapshot, inspectPublicV10, migratePublicV9ToV10, resumePublicV10 } from './publicWorldV10Flow'
+import { commitPublicV10Snapshot, inspectPublicV10, inspectPublicV10UnderLock,
+  migratePublicV9ToV10, resumePublicV10 } from './publicWorldV10Flow'
 import { encodePublicV10Head } from './publicWorldV10Snapshot'
 import { withPublicV10TerrainRevision } from './publicWorldV10State'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
@@ -115,6 +116,16 @@ async function excavatedSource(f: Fixture) {
 }
 
 describe('public v10 migration and source coherence', () => {
+  it('exposes an under-lock inspection for a successor without requesting a nested lock', async () => {
+    const f = await fixture()
+    expect((await migrate(f)).ok).toBe(true)
+    f.names.length = 0
+    const result = await f.locks.request(PUBLIC_V7_LOCK_NAME, { mode: 'exclusive' }, () =>
+      inspectPublicV10UnderLock(f.storage, f.v8, f.v9, f.v10))
+    expect(result.ok && result.value.status).toBe('valid')
+    expect(f.names).toEqual([PUBLIC_V7_LOCK_NAME])
+  })
+
   it('does not create an independent branch without a valid v9 source', async () => {
     const f = await fixture()
     const noV9 = { ...f, v9: createAtomicV9Store(new FakeFactory()), v10: createAtomicV10Store(new FakeFactory()) }

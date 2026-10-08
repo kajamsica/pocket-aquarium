@@ -6,6 +6,7 @@ import { PublicWizardApp } from './PublicWizardApp'
 import { PublicV8EntryApp } from './PublicV8Entry'
 import { PublicV9EntryApp } from './PublicV9Entry'
 import { PublicV10EntryApp } from './PublicV10Entry'
+import { PublicV11EntryApp } from './PublicV11Entry'
 import { StreamedPreviewApp } from './StreamedPreviewApp'
 
 const root = document.getElementById('root')
@@ -16,7 +17,8 @@ const streamedPreview = new URLSearchParams(window.location.search).get('devRegi
 const mireglassDev = new URLSearchParams(window.location.search).get('devRegion') === 'mireglass'
 const publicWorld = new URLSearchParams(window.location.search).get('publicWorld')
 createRoot(root).render(<StrictMode>{mireglassDev ? <MireglassPlayableApp />
-  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v10' ? <PublicV10EntryApp />
+  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v11' ? <PublicV11EntryApp />
+    : publicWorld === 'v10' ? <PublicV10EntryApp />
     : publicWorld === 'v9' ? <PublicV9EntryApp />
     : publicWorld === 'v8' ? <PublicV8EntryApp />
     : publicWorld === '1' ? <PublicWizardApp /> : <App />}</StrictMode>)

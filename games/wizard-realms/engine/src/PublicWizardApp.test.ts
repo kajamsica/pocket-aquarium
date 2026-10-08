@@ -8,13 +8,18 @@ import { publicWorldViewProjection } from './PublicWorldView'
 import { createGeneratedWorld } from './domain/generation'
 import { mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
+import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { applyFieldCampAction } from './domain/fieldCamp'
-import { worldTileAtGrid } from './domain/worldChunks'
+import { WORLD_CELL_METERS, worldTileAtGrid } from './domain/worldChunks'
 import { encodePublicV8Head } from './domain/publicWorldV8Snapshot'
 import { parsePublicV9Rescue } from './domain/publicWorldV9Snapshot'
 import { encodePublicV9Head } from './domain/publicWorldV9Snapshot'
 import { parsePublicV10Rescue } from './domain/publicWorldV10Snapshot'
+import { encodePublicV10Head } from './domain/publicWorldV10Snapshot'
 import { withPublicV10TerrainRevision } from './domain/publicWorldV10State'
+import { highlandStoneNodes } from './domain/highlandContent'
+import { parsePublicV11Rescue } from './domain/publicWorldV11Snapshot'
+import { withPublicV11Highland } from './domain/publicWorldV11State'
 import { withFreshPublicV9Camps } from './domain/publicWorldV9State'
 import { actPublicMireglass } from './domain/publicWorldActions'
 import { advancePublicWorldFrame, advancePublicWorldV10Frame, type PublicWorldAdvanceResult } from './domain/publicWorldRuntime'
@@ -39,8 +44,8 @@ import {
   publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority,
   publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
-  publicFieldCampView, requirePublicV9State, requirePublicV10State,
-  unsavedPublicV9Bytes, unsavedPublicV10Bytes,
+  publicFieldCampView, requirePublicV9State, requirePublicV10State, requirePublicV11State,
+  unsavedPublicV9Bytes, unsavedPublicV10Bytes, unsavedPublicV11Bytes,
   publicSaveableVersion, publicTravelFlushNeeded,
   PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
@@ -311,6 +316,68 @@ describe('public v9 play session', () => {
       }),
     }), 7, sourceReceipt)
   })
+
+  it('routes v11 frames and quarry extraction through the distinct v11 save session', async () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const v10Receipt = { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+      sourceV9Lineage: f.receipt }
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: v10Receipt }
+    const node = highlandStoneNodes(f.state.seed)[0]
+    const base = withPublicV11Highland(v10)
+    const state = { ...base, movementOwner: 'streamed' as const,
+      player: { ...base.player, position: { ...node.tile.center }, equipment: {
+        ...base.player.equipment, mainHand: 'field_spade' as const },
+        inventory: [...base.player.inventory, { itemId: 'field_spade' as const, quantity: 1 }],
+        skillXp: { ...base.player.skillXp, excavation: 30 } },
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, node.tile.id])].sort(),
+      highland: { ...base.highland, landmarkDiscovered: true } }
+    const controls = advancePublicControls(state, [[]], [], f.bootstrap)
+    expect(requirePublicV11State(controls.state, state).highlandContentRevision).toBe('highland-quarry-v1')
+    expect(requirePublicV11State(controls.state).highland).toEqual(state.highland)
+    const rescue = parsePublicV11Rescue(unsavedPublicV11Bytes(state, sourceReceipt, 7)!)
+    expect(rescue?.snapshot).toMatchObject({ schemaVersion: 'wizard-world/v11', saveRevision: 8,
+      state: { highlandContentRevision: 'highland-quarry-v1' } })
+    expect(rescue?.sourceReceipt).toEqual(sourceReceipt)
+    const commit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    const html = renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt }, commit,
+    } }))
+    expect(html).toContain('Public v11 save #7 loaded')
+    expect(html).toContain('Highland')
+    dispatch({ type: 'highland.extract', nodeId: node.id })
+    await Promise.resolve()
+    expect(commit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      highlandContentRevision: 'highland-quarry-v1',
+      highland: expect.objectContaining({ stoneNodes: expect.arrayContaining([
+        expect.objectContaining({ id: node.id, readyAtTick: state.tick + 3000 }),
+      ]) }),
+      player: expect.objectContaining({ skillXp: expect.objectContaining({ excavation: 50 }) }),
+    }), 7, sourceReceipt)
+    const interactCommit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt }, commit: interactCommit,
+    } }))
+    dispatch({ type: 'interact' })
+    await Promise.resolve()
+    expect(interactCommit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      highland: expect.objectContaining({ stoneNodes: expect.arrayContaining([
+        expect.objectContaining({ id: node.id, readyAtTick: state.tick + 3000 }),
+      ]) }),
+    }), 7, sourceReceipt)
+    const equipCommit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    const unequipped = { ...state, player: { ...state.player,
+      equipment: { ...state.player.equipment, mainHand: null } } }
+    renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state: unequipped, saveRevision: 7, sourceReceipt }, commit: equipCommit,
+    } }))
+    dispatch({ type: 'equipment.equip', stackId: 'inventory-field_spade', slot: 'mainHand' })
+    await Promise.resolve()
+    expect(equipCommit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      player: expect.objectContaining({ equipment: expect.objectContaining({ mainHand: 'field_spade' }) }),
+    }), 7, sourceReceipt)
+  })
 })
 
 describe('public v6 app boundary', () => {
@@ -394,6 +461,44 @@ describe('public v6 app boundary', () => {
     expect(publicHerbGuidancePriority({ ...picked.state, movementOwner: 'greenway' }, false)).toBe(true)
     expect(publicHerbGuidancePriority(fresh, false)).toBe(false)
     expect(publicHerbChoices({ ...picked.state, tick: 6_000 })).toHaveLength(1)
+  })
+
+  it('routes Bell Alder guidance down the built Slate ladder from the upper shelf', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const ladder = mireglassRouteSites(seed).filter((site) => site.kind === 'ladder')
+      .sort((a, b) => Math.hypot(a.to.x + 372, a.to.z - 428)
+        - Math.hypot(b.to.x + 372, b.to.z - 428))[0]
+    const built = { ...fresh, movementOwner: 'streamed' as const,
+      mireglass: { ...fresh.mireglass, builtRoutes: { ...fresh.mireglass.builtRoutes, ladder: ladder.id } } }
+    const positionAt = (x: number, z: number) => ({ x, z,
+      y: worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
+        Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y })
+    for (const [x, z] of [[-387.4, 447], [-358, 466]]) {
+      const upper = { ...built, player: { ...built.player, position: positionAt(x, z) } }
+      const hint = publicHerbRouteHint(upper)
+      expect(hint).toContain('built Slate ladder')
+      expect(hint).toContain('Return by Slate ladder')
+      expect(hint).not.toMatch(/Find a dry Bell Alder herb patch .* m direct/)
+      expect(publicHerbMapGuidance('Expedition complete.', true, hint)).toBe(`Next: ${hint}`)
+    }
+
+    const atTop = { ...built, player: { ...built.player, position: { ...ladder.to } } }
+    expect(publicHerbRouteHint(atTop)).toContain('“Return by Slate ladder” here')
+    const descent = mireglassActionChoices(mireglassForPublicView(atTop))
+      .find((choice) => choice.label === 'Return by Slate ladder')
+    expect(descent?.action).toEqual({ type: 'traverse_route', siteId: ladder.id, from: 'to' })
+    const descended = actPublicMireglass(atTop, descent!.action)
+    expect(descended.rejection).toBeUndefined()
+    expect(descended.state.player.position).toEqual(ladder.from)
+    expect(publicHerbRouteHint(descended.state)).toMatch(/^Find a dry Bell Alder herb patch /)
+
+    const patch = mireglassHerbPatches(seed)[0]
+    const atPatch = { ...descended.state,
+      player: { ...descended.state.player, position: { ...patch.tile.center } } }
+    expect(publicHerbChoices(atPatch)[0]?.action).toEqual({ type: 'forage_herb', patchId: patch.id })
+    expect(publicHerbRouteHint(atPatch)).toBe('Gather the dry Bell Alder marsh herb here, then bring it to Greenway.')
+    expect(publicHerbRouteHint({ ...atTop, mireglass: fresh.mireglass })).toMatch(/ m direct, then bring it to Greenway\.$/)
+    expect(publicHerbRouteHint(createFreshPublicWorld(seed, 'greenway-classic-v1'))).toBeNull()
   })
 
   it('keeps the map aligned with the herb route after the seal expedition is complete', () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
 import type { WizardLandmark, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, highlandDetailFor, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
 import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
@@ -101,6 +101,42 @@ describe('Mireglass terrain detail', () => {
     expect(mireglassDetailFor({ ...cell(-4), mireglassTrailSegment: undefined }).trailStake).toBe(false)
     expect(mireglassDetailFor({ ...cell(-4), mireglassTrailSegment: {
       from: [-18, -2] as const, to: [-14, 2] as const } }).trailStake).toBe(false)
+  })
+})
+
+describe('Highland quarry scenery', () => {
+  it('uses a distinct stone surface and sparse low relief without dressing older terrain', () => {
+    const cell = { id: 'tile-120--110', position: [468, 3, -452] as const,
+      size: [4, 4] as const, height: 2.4, climate: 'dry_highland', color: '#7b765e' }
+    const old = terrainAppearanceFor(cell).top
+    const quarry = terrainAppearanceFor({ ...cell, highlandSurface: 'quarry' as const }).top
+    expect(Math.hypot(quarry.r - old.r, quarry.g - old.g, quarry.b - old.b)).toBeGreaterThan(0.04)
+    expect(highlandDetailFor(cell)).toMatchObject({ trail: false, scree: false })
+    const details = Array.from({ length: 289 }, (_, index) => highlandDetailFor({ ...cell,
+      id: `quarry-${index}`, highlandSurface: 'quarry' as const }))
+    const scree = details.filter((detail) => detail.scree).length
+    expect(scree).toBeGreaterThan(55)
+    expect(scree).toBeLessThan(110)
+    expect(highlandDetailFor({ ...cell, highlandSurface: 'quarry' })).toEqual(
+      highlandDetailFor({ ...cell, highlandSurface: 'quarry' }))
+  })
+
+  it('draws a joined pale trail but leaves its centre clear of quarry scree', () => {
+    const first = highlandDetailFor({ id: 'highland-trail-a', position: [96, 0, 0],
+      size: [4, 4], height: 2, climate: 'dry_highland', highlandSurface: 'trail',
+      highlandTrailSegment: { from: [94, 0], to: [98, 0] } })
+    const second = highlandDetailFor({ id: 'highland-trail-b', position: [100, 0, 0],
+      size: [4, 4], height: 2, climate: 'dry_highland', highlandSurface: 'trail',
+      highlandTrailSegment: { from: [98, 0], to: [102, 0] } })
+    expect(first).toMatchObject({ trail: true, scree: false, yaw: Math.PI / 2, length: 4 })
+    expect(second).toMatchObject({ trail: true, scree: false, yaw: Math.PI / 2, length: 4 })
+    expect(96 + first.trailX + Math.sin(first.yaw) * first.length / 2).toBeCloseTo(
+      100 + second.trailX - Math.sin(second.yaw) * second.length / 2)
+  })
+
+  it('exposes the Quarry Crown silhouette only for the new landmark discriminator', () => {
+    expect(landmarkAppearance({ id: 'highland_quarry/landmark/quarry_crown',
+      kind: 'quarry-crown', position: [464, 3, -432], discovered: false })).toBe('quarry-crown')
   })
 })
 

@@ -45,7 +45,8 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       </div>
 
       {projection.nearbyInteraction?.actionable && (
-        <button className="wr-prompt" data-actionable="true" onClick={() => onIntent({ type: 'interact' })}>
+        <button className="wr-prompt" data-actionable="true" onClick={() => onIntent(projection.highlandExtraction
+          ? { type: 'highland.extract', nodeId: projection.highlandExtraction.nodeId } : { type: 'interact' })}>
           <kbd>E</kbd><span><b>{projection.nearbyInteraction.action}</b>{projection.nearbyInteraction.label}</span>
         </button>
       )}
@@ -64,6 +65,12 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} aria-label={`Open ${availableStore.name}`} onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>Open {availableStore.name}</button>}
         <section aria-label="Magic and skills" style={{ display: 'grid', gap: 5, marginBottom: 8 }}>
           <small className="wr-caption">Wayfinder Glow: {learnedGlow ? 'Learned' : 'Unknown'} · Excavation Lv{excavationLevel}</small>
+          {projection.highlandExtraction && <>
+            <button type="button" style={FIELD_ACTION_STYLE} disabled={!projection.highlandExtraction.actionable}
+              aria-label="Extract quarry stone"
+              onClick={() => onIntent({ type: 'highland.extract', nodeId: projection.highlandExtraction!.nodeId })}>Extract quarry stone</button>
+            <small className="wr-caption" role="status">{projection.highlandExtraction.reason}</small>
+          </>}
           <button type="button" style={FIELD_ACTION_STYLE} disabled={!learnedGlow} aria-label="Cast Wayfinder Glow" onClick={() => onIntent({ type: 'spell.cast', spellId: 'wayfinder_glow' })}>Cast Wayfinder Glow</button>
           {nearbyInscriptions.map((inscription) => <button key={inscription.id} type="button" style={FIELD_ACTION_STYLE} aria-label={`Study ${inscription.name}`} onClick={() => onIntent({ type: 'inscription.study', inscriptionId: inscription.id })}>Study {inscription.name}</button>)}
           {nearbyDigSites.map((site) => {

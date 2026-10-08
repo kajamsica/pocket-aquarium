@@ -35,15 +35,21 @@ function Tile({ tile, player, cacheLabel, onSelect, tabIndex, selected }: {
   const lowered = tile.discovered && tile.elevationMeters !== undefined
   const campSuitable = !!onSelect && tile.discovered && tile.campSuitable === true
   const westTrail = tile.hasWestTrail === true
+  const eastTrail = tile.discovered && tile.hasEastTrail === true
   const frontierMarker = tile.hasFrontierMarker === true
   const frontierTrail = tile.hasFrontierTrail === true
-  const landmark = westTrail ? '⇦' : frontierMarker ? 'M' : tile.discovered
-    ? camp ? 'C' : campSuitable ? '⌂' : tile.hasCache ? '✦' : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : store ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : frontierTrail ? '·' : ''
+  const highlandLandmark = tile.discovered && tile.hasHighlandLandmark === true
+  const highlandNode = tile.discovered && tile.hasHighlandNode === true
+  const highlandTrail = tile.discovered && tile.hasHighlandTrail === true
+  const landmark = westTrail ? '⇦' : eastTrail ? '⇨' : frontierMarker ? 'M' : tile.discovered
+    ? camp ? 'C' : campSuitable ? '⌂' : tile.hasCache ? '✦' : highlandLandmark ? 'Q'
+      : highlandNode ? tile.highlandNodeReady ? '◆' : '◌'
+        : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : store ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : highlandTrail || frontierTrail ? '·' : ''
     : frontierTrail ? '·' : '?'
   const Element = onSelect ? 'button' : 'span'
-  return <Element type={onSelect ? 'button' : undefined} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e', ...(lowered ? { boxShadow: 'inset 0 0 0 2px #d3a66f, inset 0 0 8px #101b18' } : {}) }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${westTrail ? ', west trail to Mireglass' : ''}${frontierTrail ? ', marked frontier trail' : ''}${frontierMarker ? ', frontier marker' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${lowered ? `, lowered ground at ${tile.elevationMeters!.toFixed(2)} m` : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
+  return <Element type={onSelect ? 'button' : undefined} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e', ...(lowered ? { boxShadow: 'inset 0 0 0 2px #d3a66f, inset 0 0 8px #101b18' } : {}) }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${westTrail ? ', west trail to Mireglass' : ''}${eastTrail ? ', east trail toward Highland Quarry' : ''}${frontierTrail ? ', marked frontier trail' : ''}${highlandTrail ? ', walked quarry path' : ''}${frontierMarker ? ', frontier marker' : ''}${highlandLandmark ? ', Quarry Crown' : ''}${highlandNode ? tile.highlandNodeReady ? ', ready stone shelf' : ', recovering stone shelf' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${lowered ? `, lowered ground at ${tile.elevationMeters!.toFixed(2)} m` : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
     <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : campSuitable ? { color: '#ffe395' } : undefined}>{occupied ? '▲' : landmark}</b>
-    {occupied && (camp || campSuitable || westTrail || store || waystone) && <small aria-hidden="true" style={{ position: 'absolute', right: 0, bottom: 0, fontSize: 8, lineHeight: 1, color: campSuitable ? '#ffe395' : undefined }}>{camp ? 'C' : campSuitable ? '⌂' : westTrail ? '⇦' : store ? 'S' : 'W'}</small>}
+    {occupied && (camp || campSuitable || westTrail || eastTrail || highlandLandmark || highlandNode || store || waystone) && <small aria-hidden="true" style={{ position: 'absolute', right: 0, bottom: 0, fontSize: 8, lineHeight: 1, color: campSuitable ? '#ffe395' : undefined }}>{camp ? 'C' : campSuitable ? '⌂' : westTrail ? '⇦' : eastTrail ? '⇨' : highlandLandmark ? 'Q' : highlandNode ? tile.highlandNodeReady ? '◆' : '◌' : store ? 'S' : 'W'}</small>}
     {lowered && <small aria-hidden="true" style={{ position: 'absolute', left: 1, bottom: 0, fontSize: 10, lineHeight: 1, color: '#ffe395' }}>▾</small>}
   </Element>
 }
@@ -95,7 +101,9 @@ function OverviewGrid({ overview }: { overview: WizardWorldOverview }) {
   return <span className="wr-overview-grid" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} aria-label="Discovered world overview, north up, each square is 64 meters">
     {cells.map((cell) => {
       const occupied = cell.gridX === overview.player.gridX && cell.gridZ === overview.player.gridZ
-      const marker = cell.markers.includes('Field camp') ? 'C' : cell.markers.find((label) => /Outfitters|Arcanum|salvager/.test(label)) ? 'S'
+      const marker = cell.markers.includes('Field camp') ? 'C' : cell.markers.includes('Quarry Crown') ? 'Q'
+        : cell.markers.some((label) => /Stone shelf/.test(label)) ? '◆'
+        : cell.markers.find((label) => /Outfitters|Arcanum|salvager/.test(label)) ? 'S'
         : cell.markers.some((label) => /Ring/.test(label)) ? 'R'
           : cell.markers.some((label) => /built/.test(label)) ? '✓'
             : cell.markers.some((label) => /cache/.test(label)) ? '✦'
@@ -142,6 +150,7 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
 }) {
   const localMap = <>
     {projection.map.guidance && <p className="wr-map-guidance" role="note" aria-label="Map guidance">{projection.map.guidance}</p>}
+    {projection.ambience === 'highland-wind' && <p className="wr-map-guidance" role="note" aria-label="Highland wind">Wind sweeps the open stone shelves; the pale path is visible only where you have walked.</p>}
     {projection.fieldCamp?.guidance && <p className="wr-map-guidance" role="note" aria-label="Camp guidance">{projection.fieldCamp.guidance}</p>}
     {projection.fieldCamp?.selectionEnabled && <p className="wr-map-guidance">Find flat 3×3 loam ground. Move within 3 m of a site to build. Scroll the map or use arrow keys to choose a cell; Enter or Space previews one.</p>}
     <MapGrid projection={projection} onSelect={(tileId) => { onIntent({ type: 'field-camp.select', tileId }); onToggle() }} />
@@ -169,7 +178,7 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
         <details className="wr-map-overview"><summary>World overview (toggle local map)</summary>
           <p>Each square is 64 m. Color shows only a sample of visited ground; dark squares remain unexplored.</p>
           <OverviewGrid overview={overview} />
-          <p>▲ you · S known store · R discovered ring · ✓ built route · ✦ revealed cache · ⇦ known trail · ? unexplored{projection.fieldCamp && ' · C field camp'}</p>
+          <p>▲ you · S known store · R discovered ring · ✓ built route · ✦ revealed cache · ⇦ known trail · ? unexplored{overview.cells.some((cell) => cell.markers.includes('Quarry Crown')) && ' · Q Quarry Crown'}{overview.cells.some((cell) => cell.markers.some((label) => /Stone shelf/.test(label))) && ' · ◆ stone shelf'}{projection.fieldCamp && ' · C field camp'}</p>
         </details>
         <div className="wr-map-local">{localMap}</div>
       </> : localMap}

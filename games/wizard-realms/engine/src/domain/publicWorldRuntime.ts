@@ -1,4 +1,5 @@
 import { areaAt, terrainHeightAt } from './generation'
+import { highlandCorridorCells } from './highlandContent'
 import { mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import type { MireglassItemId } from './mireglassExpedition'
@@ -8,6 +9,7 @@ import type { PublicWorldState } from './publicWorldState'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { isValidPublicWorldV10State } from './publicWorldV10State'
 import type { PublicWorldV10State } from './publicWorldV10State'
+import type { PublicWorldV11State } from './publicWorldV11State'
 import { createStreamedWorldFromState } from './streamedWorld'
 import type { TerrainFacts } from './mireglassCachePitOverlay'
 import type { StreamedWorldEvent, StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime } from './streamedWorld'
@@ -167,10 +169,32 @@ function connectorCrossing(state: PublicWorldState, from: { x: number; z: number
     && [edgeX, edgeX - 4].includes(cellAt(to.x) * 4)
 }
 
+/** V11's east connector alone joins Greenway to the dry Highland corridor. */
+function highlandConnectorCrossing(state: PublicWorldState, from: { x: number; z: number },
+  to: { x: number; z: number }): boolean {
+  const envelope = legacyMovementEnvelope({ generationProfile: state.generationProfile,
+    tiles: state.greenway.tiles })
+  const seamCenter = state.generationProfile === 'greenway-expanded-v1' ? 36 : 16
+  const corridor = highlandCorridorCells()
+  if (!corridor.some(({ x, z }) => x === seamCenter && z === 0)
+    || !corridor.some(({ x, z }) => x === seamCenter - 4 && z === 0)) return false
+  return cellAt(from.z) === 0 && cellAt(to.z) === 0
+    && from.x >= envelope.maxX - 6 && from.x <= envelope.maxX + 6
+    && to.x >= envelope.maxX - 6 && to.x <= envelope.maxX + 6
+    && [seamCenter - 4, seamCenter].includes(cellAt(from.x) * 4)
+    && [seamCenter - 4, seamCenter].includes(cellAt(to.x) * 4)
+}
+
 function returnTrailHint(z: number): string {
   if (cellAt(z) > 0) return 'The dry Greenway opening is north of you. Follow the marked trail, then head east.'
   if (cellAt(z) < 0) return 'The dry Greenway opening is south of you. Follow the marked trail, then head east.'
   return 'Return to Greenway through the dry eastern trail, aligned with z = 0.'
+}
+
+function returnHighlandHint(z: number): string {
+  if (cellAt(z) > 0) return 'The eastern Greenway opening is south of you. Follow the dry Highland track west.'
+  if (cellAt(z) < 0) return 'The eastern Greenway opening is north of you. Follow the dry Highland track west.'
+  return 'Return to Greenway through the dry western track, aligned with z = 0.'
 }
 
 function streamedSnapshot(state: PublicWorldState) {
@@ -295,14 +319,18 @@ function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
 }
 
 function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldIntent, { type: 'move' }>,
-  to: { x: number; z: number }, facts?: TerrainFacts): PublicWorldAdvanceResult {
+  to: { x: number; z: number }, facts?: TerrainFacts,
+  allowHighlandEast = false): PublicWorldAdvanceResult {
   const from = state.player.position
-  if (!connectorCrossing(state, from, to)) {
+  if (!connectorCrossing(state, from, to)
+    && !(allowHighlandEast && highlandConnectorCrossing(state, from, to))) {
     const boundary = legacyMovementEnvelope({ generationProfile: state.generationProfile,
       tiles: state.greenway.tiles })
     return reject(state, intent, 'off_connector', to.x < boundary.minX
       ? 'Leave Greenway through the dry western trail, aligned with z = 0.'
-      : 'The Greenway path ends here. Mireglass lies on the western trail at z = 0.')
+      : allowHighlandEast
+        ? 'Leave Greenway through the dry eastern Highland track, aligned with z = 0.'
+        : 'The Greenway path ends here. Mireglass lies on the western trail at z = 0.')
   }
   const barrier = mireglassMoveBarrier(state.seed, from, to)
   if (barrier) return reject(state, intent, barrier, `The ${barrier} blocks the connector.`)
@@ -343,7 +371,7 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
 
 function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWorldIntent[],
   move: Extract<PublicWorldIntent, { type: 'move' }>, to: { x: number; z: number },
-  facts?: TerrainFacts): PublicWorldAdvanceResult {
+  facts?: TerrainFacts, allowHighlandEast = false): PublicWorldAdvanceResult {
   const look = intents.length === 2 ? intents[0] as Extract<PublicWorldIntent, { type: 'look' }> : null
   const yaw = state.player.yaw + (look?.yawDelta ?? 0)
   const pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2,
@@ -354,7 +382,7 @@ function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWor
   }
   const afterLook: PublicWorldState = look
     ? { ...state, player: { ...state.player, yaw, pitch } } : state
-  const crossed = crossOutbound(afterLook, move, to, facts)
+  const crossed = crossOutbound(afterLook, move, to, facts, allowHighlandEast)
   if (crossed.rejections.length) return {
     state, events: [], rejections: crossed.rejections.map((rejection) => ({
       ...rejection, intentIndex: look ? 1 : 0,
@@ -378,6 +406,7 @@ function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWor
  */
 function advancePublicWorldFrameInternal(
   state: PublicWorldState, intents: readonly PublicWorldIntent[], facts?: TerrainFacts,
+  allowHighlandEast = false,
 ): PublicWorldAdvanceResult {
   if (intents.length > 2 || (intents.length === 2
     && (intents[0].type !== 'look' || intents[1].type !== 'move'))) {
@@ -408,11 +437,16 @@ function advancePublicWorldFrameInternal(
       tiles: state.greenway.tiles })
     const arrivingGreenway = within(to.x, to.z, envelope)
     if (state.movementOwner === 'greenway') {
-      return arrivingGreenway ? stepGreenway(state, intents) : crossOutboundFrame(state, intents, move, to, facts)
+      return arrivingGreenway ? stepGreenway(state, intents)
+        : crossOutboundFrame(state, intents, move, to, facts, allowHighlandEast)
     }
     if (arrivingGreenway) {
-      if (!connectorCrossing(state, from, to)) return reject(state, move, 'off_connector',
-        returnTrailHint(from.z), moveIndex)
+      if (!connectorCrossing(state, from, to)
+        && !(allowHighlandEast && highlandConnectorCrossing(state, from, to))) {
+        return reject(state, move, 'off_connector',
+          allowHighlandEast && from.x > envelope.maxX
+            ? returnHighlandHint(from.z) : returnTrailHint(from.z), moveIndex)
+      }
       const barrier = mireglassMoveBarrier(state.seed, from, to)
       if (barrier) return reject(state, move, barrier, `The ${barrier} blocks the connector.`, moveIndex)
       try {
@@ -485,6 +519,17 @@ export function advancePublicWorldV10Frame(state: PublicWorldV10State,
   trustedV10States.set(next, proof)
   if (currentStreamed?.state === result.state) currentStreamed = { ...currentStreamed, state: next }
   return { ...result, state: next }
+}
+
+/** Internal v11 movement step. The v11 boundary validates and freezes its input/output. */
+export function advancePublicWorldV11BaseFrame(state: PublicWorldV11State,
+  intents: readonly PublicWorldIntent[]): Omit<PublicWorldAdvanceResult, 'state'> & {
+  state: PublicWorldV11State
+} {
+  return advancePublicWorldFrameInternal(state, intents,
+    { cachePitDug: state.mireglass.cacheExcavated }, true) as Omit<PublicWorldAdvanceResult, 'state'> & {
+      state: PublicWorldV11State
+    }
 }
 
 /** Compatibility entrypoint for one-intent callers. */

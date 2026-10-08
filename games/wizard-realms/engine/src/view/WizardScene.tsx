@@ -58,6 +58,16 @@ const APPROACH_PEBBLE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a89e8
 const APPROACH_TRAIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#aa9672', roughness: 1, flatShading: true })
 const APPROACH_SOIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6c7255', roughness: 1, flatShading: true })
 const APPROACH_GROUND_COLOR = new THREE.Color('#687a59')
+const HIGHLAND_QUARRY_COLOR = new THREE.Color('#888a7d')
+const HIGHLAND_TRAIL_COLOR = new THREE.Color('#aaa188')
+const HIGHLAND_SCREE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#8b887a', roughness: 0.98, flatShading: true })
+const HIGHLAND_STRATA_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b5ab91', roughness: 0.96, flatShading: true })
+const HIGHLAND_TRAIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bfb395', roughness: 0.98, flatShading: true })
+const HIGHLAND_CROWN_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b8b2a4', roughness: 0.92, flatShading: true })
+const HIGHLAND_CROWN_SEAM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a6c3c1', emissive: '#6b9e9e', emissiveIntensity: 0.45, roughness: 0.75 })
+const HIGHLAND_DEPLETED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#686b66', roughness: 0.98, flatShading: true })
+const HIGHLAND_WIND_MATERIAL = new THREE.MeshBasicMaterial({ color: '#d6e1dc', transparent: true,
+  opacity: 0.22, depthWrite: false })
 const MARKER_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b9aa89', roughness: 0.95, flatShading: true })
 const MARKER_RUNE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bde4d0', emissive: '#4d9b82', emissiveIntensity: 0.9, roughness: 0.5 })
 const MARKER_DORMANT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#787d69', roughness: 0.9 })
@@ -278,6 +288,25 @@ export function mireglassDetailFor(cell: WizardTerrainCell) {
   }
 }
 
+/** Deterministic, low relief scree. No display-only cliff or wall obstructs the walkable route. */
+export function highlandDetailFor(cell: WizardTerrainCell) {
+  const segment = cell.highlandTrailSegment
+  const dx = segment ? segment.to[0] - segment.from[0] : 0
+  const dz = segment ? segment.to[1] - segment.from[1] : 0
+  const length = Math.hypot(dx, dz)
+  const trail = !!segment && length > 0.01
+  const yaw = trail ? Math.atan2(dx, dz) : 0
+  const trailX = trail ? (segment.from[0] + segment.to[0]) / 2 - cell.position[0] : 0
+  const trailZ = trail ? (segment.from[1] + segment.to[1]) / 2 - cell.position[2] : 0
+  return {
+    trail, yaw, length, trailX, trailZ,
+    scree: cell.highlandSurface === 'quarry' && !trail && hashUnit(cell.id, 35) < 0.28,
+    x: (hashUnit(cell.id, 36) - 0.5) * 2.0,
+    z: (hashUnit(cell.id, 37) - 0.5) * 2.0,
+    rotation: hashUnit(cell.id, 38) * Math.PI,
+  }
+}
+
 function PresentationPoseDriver({ player, pose, worldSupport }: {
   player: WizardViewProjection['player']; pose: PresentationPose; worldSupport: RefObject<THREE.Group | null>
 }) {
@@ -462,6 +491,8 @@ export function terrainAppearanceFor(cell: WizardTerrainCell) {
   const lift = (cell.height - 2) * 0.02
   const top = new THREE.Color(cell.color ?? '#56824b')
   if (cell.mireglassApproach) top.lerp(APPROACH_GROUND_COLOR, 0.42)
+  if (cell.highlandSurface === 'quarry') top.lerp(HIGHLAND_QUARRY_COLOR, 0.85)
+  else if (cell.highlandSurface === 'trail') top.lerp(HIGHLAND_TRAIL_COLOR, 0.48)
   top.offsetHSL(tint * (cell.mireglassApproach ? 0.008 : 0.02),
     tint * (cell.mireglassApproach ? 0.02 : 0.05),
     tint * (cell.mireglassApproach ? 0.018 : 0.04) + lift)
@@ -471,8 +502,11 @@ export function terrainAppearanceFor(cell: WizardTerrainCell) {
 function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
   const detail = useMemo(() => mireglassDetailFor(cell), [cell.id, cell.mireglassTerrain,
     cell.mireglassApproach, cell.mireglassTrailSegment])
+  const highland = useMemo(() => highlandDetailFor(cell), [cell.id, cell.highlandSurface,
+    cell.highlandTrailSegment])
   const { top, side, cap, roughness } = useMemo(() => terrainAppearanceFor(cell),
-    [cell.position[0], cell.position[2], cell.color, cell.climate, cell.height, cell.mireglassApproach])
+    [cell.position[0], cell.position[2], cell.color, cell.climate, cell.height,
+      cell.mireglassApproach, cell.highlandSurface])
   const [x, y, z] = cell.position
   const [width, depth] = cell.size
   return (
@@ -484,6 +518,15 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
       <mesh geometry={UNIT_BOX} position={[0, y - cap - (cell.height - cap) / 2, 0]} scale={[width, cell.height - cap, depth]} receiveShadow>
         <meshStandardMaterial color={side} roughness={0.97} />
       </mesh>
+      {highland.trail && <mesh geometry={UNIT_BOX} material={HIGHLAND_TRAIL_MATERIAL}
+        position={[highland.trailX, y + 0.023, highland.trailZ]} rotation={[0, highland.yaw, 0]}
+        scale={[1.16, 0.025, highland.length + 0.06]} receiveShadow />}
+      {highland.scree && <group position={[highland.x, y, highland.z]} rotation={[0, highland.rotation, 0]}>
+        <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_SCREE_MATERIAL}
+          position={[0, 0.12, 0]} scale={[0.64, 0.14, 0.43]} castShadow />
+        <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_STRATA_MATERIAL}
+          position={[0.24, 0.19, -0.09]} rotation={[0, 0.2, -0.08]} scale={[0.38, 0.11, 0.27]} castShadow />
+      </group>}
       {detail.water && <mesh geometry={UNIT_BOX} material={MIREGLASS_WATER_MATERIAL} position={[detail.x, y + 0.012, detail.z]} rotation={[0, detail.rotation, 0]} scale={[2.2, 0.024, 1.35]} />}
       {detail.reeds && <group position={[detail.x + 0.9, y, detail.z - 0.7]} rotation={[0, detail.rotation, 0]}>
         <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[-0.12, 0.24, 0]} rotation={[0, 0, -0.12]} scale={[0.045, 0.48, 0.045]} />
@@ -578,6 +621,21 @@ function Resource({ node, pose }: { node: WizardResourceNode; pose: Presentation
   const scale = 0.88 + hashUnit(node.id, 2) * 0.24
   const position = node.position as [number, number, number]
   if (node.kind === 'tree') return <Tree node={node} pose={pose} yaw={yaw} scale={scale} baseOpacity={faded.opacity} />
+  if (node.visualKind === 'highland-stone') return <group name={`Highland stone: ${node.label} (${node.available ? 'ready' : 'recovering'})`}
+    position={position} rotation={[0, yaw, 0]} scale={scale}>
+    {/* A depleted node remains a low, dark scar rather than a translucent intact rock. */}
+    <mesh geometry={ROCK_GEOMETRY} material={node.available ? HIGHLAND_SCREE_MATERIAL : HIGHLAND_DEPLETED_MATERIAL}
+      position={[0, node.available ? 0.27 : 0.08, 0]}
+      scale={node.available ? [0.85, 0.34, 0.69] : [0.72, 0.11, 0.6]} castShadow={node.available} />
+    {node.available && <>
+      <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_STRATA_MATERIAL}
+        position={[0.2, 0.48, -0.14]} rotation={[0.16, 0.3, -0.1]}
+        scale={[0.58, 0.21, 0.47]} castShadow />
+      <mesh geometry={UNIT_BOX} material={HIGHLAND_CROWN_SEAM_MATERIAL}
+        position={[-0.2, 0.52, 0.48]} rotation={[0, -0.25, -0.2]}
+        scale={[0.5, 0.055, 0.025]} />
+    </>}
+  </group>
   if (node.kind === 'ore') {
     return (
       <group position={position} rotation={[0, yaw, 0]} scale={scale}>
@@ -690,7 +748,7 @@ function DigSite({ site }: { site: WizardDigSite }) {
 }
 
 /** Display selection only. The campaign owns revelation, excavation, and interaction reach. */
-export function landmarkAppearance(landmark: WizardLandmark): 'west-trail-gate' | 'frontier-marker' | 'bell-alder' | 'hidden' | 'mound' | 'dug' {
+export function landmarkAppearance(landmark: WizardLandmark): 'west-trail-gate' | 'frontier-marker' | 'bell-alder' | 'quarry-crown' | 'hidden' | 'mound' | 'dug' {
   if (landmark.kind !== 'seal-cache') return landmark.kind
   if (!landmark.revealed) return 'hidden'
   return digSiteAppearance(landmark)
@@ -725,6 +783,22 @@ function Landmark({ landmark }: { landmark: WizardLandmark }) {
     <mesh geometry={LEAF_GEOMETRY} material={ALDER_LEAF_MATERIAL} position={[1.54, 3.25, -0.16]} scale={[0.86, 0.48, 0.62]} castShadow />
     <mesh geometry={UNIT_BOX} material={ALDER_BARK_MATERIAL} position={[-1.09, 2.26, 0]} scale={[0.035, 0.78, 0.035]} />
     <mesh geometry={CRYSTAL_GEOMETRY} material={ALDER_BELL_MATERIAL} position={[-1.09, 1.79, 0]} scale={[0.2, 0.25, 0.2]} />
+  </group>
+  if (landmark.kind === 'quarry-crown') return <group name={`Quarry Crown (${landmark.discovered ? 'discovered' : 'undiscovered'})`} position={position}>
+    {/* The wind gate frames the canonical path with a clear 3 m opening; it is not a false collision wall. */}
+    {[-1.58, 1.58].map((side) => <group key={side} position={[side, 0, 0]}>
+      <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_CROWN_MATERIAL}
+        position={[0, 1.48, 0]} rotation={[0, side * 0.1, side * -0.04]}
+        scale={[0.21, 1.48, 0.25]} castShadow />
+      <mesh geometry={CRYSTAL_GEOMETRY} material={HIGHLAND_CROWN_SEAM_MATERIAL}
+        position={[0, 2.83, 0]} scale={[0.1, 0.18, 0.13]} />
+      <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_SCREE_MATERIAL}
+        position={[side * 0.1, 0.09, 0]} scale={[0.31, 0.12, 0.37]} receiveShadow />
+    </group>)}
+    <mesh geometry={UNIT_BOX} material={HIGHLAND_CROWN_MATERIAL}
+      position={[0, 3.04, 0]} rotation={[0, 0, 0.03]} scale={[3.35, 0.22, 0.32]} castShadow />
+    <mesh geometry={CRYSTAL_GEOMETRY} material={HIGHLAND_CROWN_SEAM_MATERIAL}
+      position={[0, 3.34, 0]} scale={[0.21, 0.29, 0.14]} />
   </group>
   return <group name={`Mireglass seal cache (${appearance})`} position={position}>
     {appearance === 'mound' ? <>
@@ -850,6 +924,22 @@ function ConstructionRoute({ route }: { route: Pick<WizardRoute, 'id' | 'from' |
   )
 }
 
+/** Small, view-only wind threads around the camera focus, not a physical weather system. */
+function HighlandWind({ pose }: { pose: PresentationPose }) {
+  const wind = useRef<THREE.Group>(null)
+  useFrame(({ clock }) => {
+    if (!wind.current) return
+    const travel = (clock.elapsedTime * 2.8) % 9
+    wind.current.position.set(pose.position.x - 4 + travel, pose.position.y + 1.3,
+      pose.position.z - 2.2)
+  })
+  return <group ref={wind} name="Highland wind ambience">
+    {Array.from({ length: 5 }, (_, index) => <mesh key={index} geometry={UNIT_BOX}
+      material={HIGHLAND_WIND_MATERIAL} position={[index * -1.5, 0.35 * index, index % 2 ? 1.4 : 0]}
+      rotation={[0, -0.16, 0.09]} scale={[0.75 + (index % 3) * 0.25, 0.018, 0.018]} />)}
+  </group>
+}
+
 export function WizardScene({ projection, cameraOrbit, orbiting }: {
   projection: WizardViewProjection
   cameraOrbit: readonly [number, number]
@@ -919,6 +1009,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.landmarks?.map((landmark) => <Landmark key={landmark.id} landmark={landmark} />)}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
       {visibleCamps.map((camp) => <FieldCamp key={`${camp.status}:${camp.tileId}`} camp={camp} />)}
+      {projection.ambience === 'highland-wind' && <HighlandWind pose={pose} />}
       <WizardAvatar pose={pose} equipment={projection.equipment} />
     </Canvas>
   )

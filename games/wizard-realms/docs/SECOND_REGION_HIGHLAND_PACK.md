@@ -10,6 +10,8 @@ The player crosses from Greenway into a rocky highland pocket, discovers its lan
 
 Finish the v9 Mireglass out-and-back playtest and the explicit v10 persistent cache-pit upgrade first. Highland state then belongs to an explicit **v11** successor, never a new field in exact-key v9 or v10 saves. The v11 migration must take a validated v10 head, preserve its immutable source lineage, and write no older bytes. Resume and commit use the same shared Web Lock, revision compare-and-swap, prior head, rescue export, and source-drift blocking pattern. A player on v7 through v10 keeps that version's original world and terrain semantics until an explicit upgrade.
 
+The v11 frame entry keeps its own small bootstrap-proof and frozen-state trust chain. This deliberately duplicates the v10 boundary instead of widening a helper that protects already-shipped exact-key saves; a shared helper is appropriate only after a separate cross-version equivalence proof. The duplication is a compatibility cost, not an additional source of game authority.
+
 Keep `movementOwner` as the physics owner (`greenway` or `streamed`), not a biome label. Derive a separate region identity from the authoritative position and pinned content envelopes. One player, one tick, one inventory, and one event sequence cross all regional seams.
 
 ## First contracts to freeze

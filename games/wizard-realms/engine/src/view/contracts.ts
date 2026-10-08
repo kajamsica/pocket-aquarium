@@ -29,6 +29,9 @@ export interface WizardTerrainCell {
   mireglassApproach?: boolean
   /** Display-only world [x,z] centerline clipped to this cell; adjacent endpoints meet. */
   mireglassTrailSegment?: { from: Vec2; to: Vec2 }
+  /** V11 display-only stone palette or dry route. Never changes collision or terrain authority. */
+  highlandSurface?: 'trail' | 'quarry'
+  highlandTrailSegment?: { from: Vec2; to: Vec2 }
 }
 
 export interface WizardResourceNode {
@@ -37,6 +40,8 @@ export interface WizardResourceNode {
   label: string
   position: Vec3
   available: boolean
+  /** V11 quarry rock art; ordinary ore keeps its previous model. */
+  visualKind?: 'highland-stone'
 }
 
 export interface WizardStoreListing {
@@ -91,6 +96,7 @@ export type WizardLandmark =
   | { id: 'mireglass_reach/landmark/fringe_marker'; kind: 'frontier-marker'; position: Vec3; studied: boolean }
   | { id: 'mireglass_reach/landmark/bell_alder'; kind: 'bell-alder'; position: Vec3 }
   | { id: 'mireglass_reach/dig/seal_cache'; kind: 'seal-cache'; position: Vec3; revealed: boolean; excavated: boolean }
+  | { id: 'highland_quarry/landmark/quarry_crown'; kind: 'quarry-crown'; position: Vec3; discovered: boolean }
 
 export interface WizardTradeListing {
   id: string
@@ -163,6 +169,12 @@ export interface WizardMapTile {
   hasWaystone?: boolean
   /** A learned destination marker, which may sit on a still-unexplored tile. */
   hasWestTrail?: boolean
+  /** V11 only. These cues mark walked and discovered ground, never remote fog. */
+  hasEastTrail?: boolean
+  hasHighlandTrail?: boolean
+  hasHighlandLandmark?: boolean
+  hasHighlandNode?: boolean
+  highlandNodeReady?: boolean
   /** A known route/target does not reveal the surrounding terrain. */
   hasFrontierTrail?: boolean
   hasFrontierMarker?: boolean
@@ -211,6 +223,10 @@ export interface WizardViewProjection {
   buildSites: readonly WizardBuildSite[]
   selectedBuildSiteId: string | null
   fieldCamp?: WizardFieldCampView
+  /** V11-only, read from the committed node ledger. Actions still validate in authority. */
+  highlandExtraction?: { nodeId: string; label: string; actionable: boolean; reason: string }
+  /** V11-only ambient identity; no physical or simulation effect. */
+  ambience?: 'highland-wind'
   map: {
     tiles: readonly WizardMapTile[]
     player: { gridX: number; gridZ: number; yaw: number }
@@ -256,6 +272,7 @@ export type WizardViewIntent =
   | { type: 'movement.tap'; vector: Vec2; atMs?: number; source?: 'keyboard' }
   | { type: 'jump' }
   | { type: 'interact' }
+  | { type: 'highland.extract'; nodeId: string }
   | { type: 'store.close' }
   | { type: 'store.open'; storeId: string }
   | { type: 'store.select-listing'; storeId: string; listingId: string }
