@@ -32,6 +32,8 @@ const DARK_WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4a3222', ro
 const STAKE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9a8a70', roughness: 0.9 })
 const ROBE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4f3176', roughness: 0.76 })
 const ROBE_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2d1f45', roughness: 0.82 })
+const WADER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#41695f', roughness: 0.88, flatShading: true })
+const WADER_CUFF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ab6a0', roughness: 0.84, flatShading: true })
 const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
 const AXE_HEAD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ba4ad', roughness: 0.42, metalness: 0.6 })
 const MIREGLASS_WATER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#417b83', roughness: 0.28, metalness: 0.12 })
@@ -48,6 +50,7 @@ const CACHE_PEAT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#665442', r
 const CACHE_PIT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2e302a', roughness: 1 })
 const ALDER_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.18, 0.34, 3.4, 7)
 const CACHE_PIT_GEOMETRY = new THREE.CircleGeometry(0.72, 12)
+const WADER_SHAFT_GEOMETRY = new THREE.CylinderGeometry(0.13, 0.15, 0.5, 6)
 const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, x: 0, z: 0, rotation: 0 } as const
 
 /** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
@@ -268,13 +271,15 @@ type AvatarEquipment = WizardViewProjection['equipment']
 /** Pure mapping from authoritative equipment to the gear the avatar shows. Unknown or empty slots render nothing. */
 export function avatarGearFor(equipment: AvatarEquipment) {
   const id = (slot: keyof AvatarEquipment) => equipment[slot]?.itemId ?? null
+  const feet = id('feet')
   const mainHand = id('mainHand') === 'woodcutters_axe' ? 'axe' : id('mainHand') === 'field_spade' ? 'spade' : id('mainHand') === 'oak_wand' ? 'wand' : null
   const offHand = id('offHand') === 'wooden_shield' ? 'shield' : id('offHand') === 'oak_wand' ? 'wand' : null
   return {
     hat: id('head') === 'apprentice_hat',
     tunic: id('chest') === 'traveler_tunic',
     leggings: id('legs') === 'trail_leggings',
-    boots: id('feet') === 'leather_boots',
+    boots: feet === 'leather_boots',
+    waders: feet === 'mireglass_reach/item/waders',
     mainHand,
     offHand,
     // One wand light at most: two equipped wands share the main-hand light rather than doubling fragment cost.
@@ -341,10 +346,16 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
         <group key={index} ref={leg} position={[index === 0 ? -0.16 : 0.16, 0.6, 0]}>
           <mesh position={[0, -0.3, 0]} material={legMaterial} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh>
           {gear.boots && <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, -0.54, 0.05]} scale={[0.22, 0.14, 0.34]} castShadow />}
+          {gear.waders && <>
+            <mesh geometry={WADER_SHAFT_GEOMETRY} material={WADER_MATERIAL} position={[0, -0.3, 0]} castShadow />
+            <mesh geometry={UNIT_BOX} material={WADER_CUFF_MATERIAL} position={[0, -0.07, 0]} scale={[0.28, 0.06, 0.28]} castShadow />
+            <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, -0.52, 0.12]} scale={[0.27, 0.17, 0.45]} castShadow />
+          </>}
         </group>
       ))}
       <group ref={torso}>
         <mesh position={[0, 0.92, 0]} material={ROBE_MATERIAL} castShadow><coneGeometry args={[0.52, 1.65, 7]} /></mesh>
+        {gear.waders && <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, 0.75, 0.43]} scale={[0.42, 0.66, 0.1]} castShadow />}
         <mesh position={[0, 0.16, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.5, 0.54, 0.14, 7]} /></mesh>
         <mesh position={[0, 1.2, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.2, 0.23, 0.08, 7]} /></mesh>
         {gear.tunic && <mesh position={[0, 1.36, 0]} material={WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.24, 0.36, 0.5, 7]} /></mesh>}

@@ -34,7 +34,7 @@ describe('Mireglass terrain detail', () => {
 describe('avatar gear projection', () => {
   it('shows no hat, staff, axe, or shield on the bare starting wizard', () => {
     expect(avatarGearFor(equipment())).toEqual({
-      hat: false, tunic: false, leggings: false, boots: false, mainHand: null, offHand: null, offHandLight: false,
+      hat: false, tunic: false, leggings: false, boots: false, waders: false, mainHand: null, offHand: null, offHandLight: false,
     })
   })
 
@@ -43,7 +43,16 @@ describe('avatar gear projection', () => {
       .toMatchObject({ hat: true, mainHand: 'axe', offHand: 'shield', offHandLight: false })
     expect(avatarGearFor(equipment({ mainHand: stack('field_spade') }))).toMatchObject({ mainHand: 'spade' })
     expect(avatarGearFor(equipment({ chest: stack('traveler_tunic'), legs: stack('trail_leggings'), feet: stack('leather_boots') })))
-      .toMatchObject({ tunic: true, leggings: true, boots: true })
+      .toMatchObject({ tunic: true, leggings: true, boots: true, waders: false })
+  })
+
+  it('shows fen waders only when the authored waders occupy the feet slot', () => {
+    expect(avatarGearFor(equipment({ feet: stack('mireglass_reach/item/waders') })))
+      .toMatchObject({ boots: false, waders: true })
+    expect(avatarGearFor(equipment({ mainHand: stack('mireglass_reach/item/waders') })))
+      .toMatchObject({ boots: false, waders: false })
+    expect(avatarGearFor(equipment({ feet: stack('unknown_feet') })))
+      .toMatchObject({ boots: false, waders: false })
   })
 
   it('lights an off-hand wand only when the main hand does not already carry one', () => {
