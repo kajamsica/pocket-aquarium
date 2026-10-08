@@ -518,7 +518,7 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toContain('Cast Wayfinder Glow near the northern ridge')
   })
 
-  it('marks a revealed ridge cache on the map and guides an already-crossed player northwest', () => {
+  it('marks a revealed ridge cache and guides the crossed player to its authoritative position', () => {
     const state = createWizardWorld('greenway-alpha')
     state.player.learnedSpellIds = ['wayfinder_glow']
     state.player.skillXp.spellcraft = 40
@@ -529,7 +529,12 @@ describe('Wizard view adapter', () => {
     state.player.position = { ...state.player.position, x: 0, z: -8 }
     state.discoveredTileIds = state.tiles.map((tile) => tile.id)
     expect(toViewProjection(state, []).map.tiles.filter((tile) => tile.hasCache)).toHaveLength(1)
-    expect(objectiveFor(state)).toContain('Search northwest of the ladder')
+    expect(objectiveFor(state)).toBe('Ridge cache: 6m west and 1m north (✦ on the map). Excavate it.')
+    const cache = state.digSites.find((site) => site.id === 'ridge_cache')!
+    cache.position = { ...cache.position, x: 5, z: -10 }
+    expect(objectiveFor(state)).toBe('Ridge cache: 5m east and 2m north (✦ on the map). Excavate it.')
+    state.player.position = { ...cache.position }
+    expect(objectiveFor(state)).toBe('Excavate the revealed ridge cache.')
     state.excavatedDigSiteIds.push('ridge_cache')
     expect(toViewProjection(state, []).map.tiles.filter((tile) => tile.hasCache)).toHaveLength(0)
   })

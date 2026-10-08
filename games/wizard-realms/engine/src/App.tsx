@@ -217,11 +217,16 @@ export function objectiveFor(state: WizardWorldState): string {
     state.player.position.x, state.player.position.z).id === 'greenway'
     ? 'Stand at the foot of the completed ladder and press E to cross north, then cast Wayfinder Glow to reveal the ridge cache.'
     : 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
-  if (!state.excavatedDigSiteIds.includes('ridge_cache')) return state.player.equipment.mainHand === 'field_spade'
-    ? areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
-      ? 'Cross the ladder, then search northwest for the revealed ridge cache (✦ on the map).'
-      : 'Search northwest of the ladder for the ridge cache (✦ on the map), then excavate it.'
-    : 'Re-equip the field spade, then search northwest of the ladder for the ridge cache (✦ on the map).'
+  if (!state.excavatedDigSiteIds.includes('ridge_cache')) {
+    const cache = state.digSites.find((site) => site.id === 'ridge_cache')!
+    const target = `Ridge cache: ${bearingTo(cache.position)} (✦ on the map).`
+    if (state.player.equipment.mainHand !== 'field_spade') return `Re-equip the field spade, then find it. ${target}`
+    if (areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway') {
+      return 'Cross the ladder north, then find the revealed ridge cache (✦ on the map).'
+    }
+    return distance(state.player.position, cache.position) <= INTERACTION_RANGE
+      ? 'Excavate the revealed ridge cache.' : `${target} Excavate it.`
+  }
   if (owned(state, 'ancient_relic') > 0) return areaAt(state.areas,
     state.player.position.x, state.player.position.z).id === 'greenway'
     ? outfitters('Sell the ancient relic for 25g')
