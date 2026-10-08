@@ -1,5 +1,7 @@
-/** Authored, smoothly blended ground forms for the first streamed content revision. */
-export const MIREGLASS_CONTENT_REVISION = 'mireglass-reach-v1' as const
+import { hashSeed } from './generation'
+
+/** Authored ground forms for the first streamed region. */
+export const MIREGLASS_CONTENT_REVISION = 'mireglass-reach-v2' as const
 export const MIREGLASS_CORE = Object.freeze({ minX: -448, maxX: -256, minZ: 256, maxZ: 512 })
 
 export interface TerrainEnvelope { minX: number; maxX: number; minZ: number; maxZ: number }
@@ -21,26 +23,46 @@ const smoothstep = (value: number) => {
 const weightAt = (x: number, z: number, envelope: TerrainEnvelope) =>
   smoothstep((x - envelope.minX) / 8) * smoothstep((envelope.maxX - x) / 8)
   * smoothstep((z - envelope.minZ) / 8) * smoothstep((envelope.maxZ - z) / 8)
+const lateralWeightAt = (x: number, envelope: TerrainEnvelope, margin = 8) =>
+  smoothstep((x - envelope.minX + margin) / margin) * smoothstep((envelope.maxX + margin - x) / margin)
 const toward = (value: number, target: number, weight: number) => value + (target - value) * weight
 
+const rowAt = (seed: string, x: number, centerZ: number, name: string) => {
+  const phase = hashSeed(`${seed || 'wizard-realms'}:${MIREGLASS_CONTENT_REVISION}:${name}`) / 4294967296 * Math.PI * 2
+  return centerZ + 4 * Math.round(Math.sin((x - MIREGLASS_CORE.minX) / 12 + phase))
+}
+
+export const mireglassFenRowAt = (seed: string, x: number) => rowAt(seed, x, 364, 'fen-row')
+export const mireglassBermFaceRowAt = (seed: string, x: number) => rowAt(seed, x, 432, 'berm-face-row')
+
 /** A one-revision terrain layer. It never touches the preserved Greenway cells. */
-export function mireglassTerrainAt(x: number, z: number, climate: { elevation: number; temperature: number; moisture: number }) {
+export function mireglassTerrainAt(seed: string, x: number, z: number, climate: { elevation: number; temperature: number; moisture: number }) {
   let { elevation, temperature, moisture } = climate
   const alder = weightAt(x, z, MIREGLASS_ENVELOPES.bellAlder)
   moisture = toward(moisture, Math.max(moisture, 0.80), alder)
   elevation = toward(elevation, Math.min(elevation, 0.45), alder)
 
-  const channel = weightAt(x, z, MIREGLASS_ENVELOPES.fenChannel)
-  moisture = toward(moisture, Math.max(moisture, 0.86), channel)
-  elevation = toward(elevation, Math.min(elevation, 0.28), channel)
+  const fen = MIREGLASS_ENVELOPES.fenChannel
+  if (x >= MIREGLASS_CORE.minX - 8 && x <= MIREGLASS_CORE.maxX + 8 && z >= fen.minZ - 16 && z <= fen.maxZ + 16) {
+    const distance = Math.abs(z - mireglassFenRowAt(seed, x))
+    const channel = lateralWeightAt(x, MIREGLASS_CORE) * smoothstep((24 - distance) / 8)
+    moisture = toward(moisture, distance === 0 ? Math.max(moisture, 0.88) : Math.min(moisture, 0.54), channel)
+    elevation = toward(elevation, distance === 0 ? Math.min(elevation, 0.30) : 0.40, channel)
+  }
 
   const outpost = weightAt(x, z, MIREGLASS_ENVELOPES.salvager)
   moisture = toward(moisture, Math.min(moisture, 0.52), outpost)
   elevation = toward(elevation, 0.50, outpost)
 
-  const berm = weightAt(x, z, MIREGLASS_ENVELOPES.slateBerm)
-  moisture = toward(moisture, Math.min(moisture, 0.38), berm)
-  elevation = toward(elevation, Math.max(elevation, 0.72), berm)
+  const berm = MIREGLASS_ENVELOPES.slateBerm
+  if (x >= berm.minX - 12 && x <= berm.maxX + 12 && z >= berm.minZ && z <= berm.maxZ) {
+    const offset = z - mireglassBermFaceRowAt(seed, x)
+    if (offset >= -12 && offset <= 12) {
+      const weight = lateralWeightAt(x, berm, 12)
+      elevation = toward(elevation, offset < 0 ? 0.22 - offset * 0.015 : 0.80 - offset * 0.03, weight)
+      moisture = toward(moisture, offset < 0 ? 0.54 : offset <= 4 ? 0.34 : 0.58, weight)
+    }
+  }
 
   const cache = weightAt(x, z, MIREGLASS_ENVELOPES.sealCache)
   moisture = toward(moisture, Math.min(moisture, 0.50), cache)

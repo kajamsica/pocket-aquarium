@@ -58,7 +58,7 @@ export function worldTileAtGrid(seed: string, gx: number, gz: number): WorldTile
   if (outside === 0) return legacy
   const blend = smoothstep(0, 8, outside)
   const outer = outerClimate(normalizedSeed, gx, gz)
-  const climate = mireglassTerrainAt(gx * WORLD_CELL_METERS, gz * WORLD_CELL_METERS, {
+  const climate = mireglassTerrainAt(normalizedSeed, gx * WORLD_CELL_METERS, gz * WORLD_CELL_METERS, {
     elevation: clamp01(legacy.elevation * (1 - blend) + outer.elevation * blend),
     temperature: clamp01(legacy.temperature * (1 - blend) + outer.temperature * blend),
     moisture: clamp01(legacy.moisture * (1 - blend) + outer.moisture * blend),
