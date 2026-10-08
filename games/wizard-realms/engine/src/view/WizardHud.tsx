@@ -4,6 +4,8 @@ export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['head', 'chest', 'main
 export const EQUIPMENT_SLOT_LABELS: Readonly<Record<EquipmentSlot, string>> = {
   head: 'Head', chest: 'Chest', legs: 'Legs', feet: 'Feet', mainHand: 'Main hand', offHand: 'Off hand',
 }
+const FIELD_ACTION_STYLE = { minHeight: 44, padding: '6px 8px', border: '1px solid #cfb66b55', borderRadius: 6, background: '#374b3d', color: '#f8e8b2', cursor: 'pointer' } as const
+const SKILL_LABELS = { woodcutting: 'Woodcutting', construction: 'Construction', wayfinding: 'Wayfinding', spellcraft: 'Spellcraft', excavation: 'Excavation' } as const
 
 export function WizardHud({ projection, onIntent, diagnostics }: {
   projection: WizardViewProjection
@@ -13,12 +15,21 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const nearbyStore = projection.openStoreId
     ? projection.stores.find((store) => store.id === projection.openStoreId)
     : undefined
+  const availableStore = projection.nearbyStoreId && projection.openStoreId === null
+    ? projection.stores.find((store) => store.id === projection.nearbyStoreId)
+    : undefined
   const nearbyRing = projection.nearbyInteraction?.kind === 'fairy-ring'
     ? projection.fairyRings.find((ring) => ring.id === projection.nearbyInteraction?.targetId)
     : undefined
   const discoveredDestinations = nearbyRing?.destinations.filter((destination) => destination.discovered) ?? []
   const usedCapacity = projection.backpack.stacks.reduce((total, stack) => total + stack.quantity, 0)
   const firstTradeSlot = projection.tradeListings.findIndex((listing) => listing === null)
+  const learnedGlow = projection.learnedSpellIds.includes('wayfinder_glow')
+  const excavationLevel = 1 + Math.floor(projection.skillXp.excavation / 30)
+  const spadeEquipped = projection.equipment.mainHand?.itemId === 'field_spade'
+  const inReach = (position: readonly [number, number, number]) => Math.hypot(position[0] - projection.player.position[0], position[1] - projection.player.position[1], position[2] - projection.player.position[2]) <= 3
+  const nearbyInscriptions = projection.inscriptions.filter((inscription) => !inscription.studied && inReach(inscription.position))
+  const nearbyDigSites = projection.digSites.filter((site) => site.revealed && !site.excavated && inReach(site.position))
   const xpPercent = Math.min(100, projection.experience.nextLevelXp > 0
     ? projection.experience.xp / projection.experience.nextLevelXp * 100
     : 100)
@@ -44,6 +55,20 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 
       <aside id="wizard-backpack" className="wr-panel wr-backpack">
         <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
+        {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} aria-label={`Open ${availableStore.name}`} onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>Open {availableStore.name}</button>}
+        <section aria-label="Magic and skills" style={{ display: 'grid', gap: 5, marginBottom: 8 }}>
+          <small className="wr-caption">Wayfinder Glow: {learnedGlow ? 'Learned' : 'Unknown'} · Excavation Lv{excavationLevel}</small>
+          <button type="button" style={FIELD_ACTION_STYLE} disabled={!learnedGlow} aria-label="Cast Wayfinder Glow" onClick={() => onIntent({ type: 'spell.cast', spellId: 'wayfinder_glow' })}>Cast Wayfinder Glow</button>
+          {nearbyInscriptions.map((inscription) => <button key={inscription.id} type="button" style={FIELD_ACTION_STYLE} aria-label={`Study ${inscription.name}`} onClick={() => onIntent({ type: 'inscription.study', inscriptionId: inscription.id })}>Study {inscription.name}</button>)}
+          {nearbyDigSites.map((site) => {
+            const unmetLevel = excavationLevel < site.minimumExcavationLevel
+            return <div key={site.id}>
+              <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%' }} disabled={!spadeEquipped || unmetLevel} aria-label={`Excavate ${site.name}`} onClick={() => onIntent({ type: 'dig-site.excavate', digSiteId: site.id })}>Excavate {site.name}</button>
+              {(!spadeEquipped || unmetLevel) && <small className="wr-caption">{!spadeEquipped ? 'Equip a field spade' : `Excavation Lv${site.minimumExcavationLevel} required`}</small>}
+            </div>
+          })}
+          <details className="wr-caption"><summary>Skills</summary>{Object.entries(SKILL_LABELS).map(([id, label]) => <div key={id}>{label}: Lv{1 + Math.floor(projection.skillXp[id as keyof typeof SKILL_LABELS] / 30)} ({projection.skillXp[id as keyof typeof SKILL_LABELS]} XP)</div>)}</details>
+        </section>
         <div className="wr-list">
           {projection.backpack.stacks.map((stack) => {
             const equippedSlot = stack.equippableSlots?.find((slot) => projection.equipment[slot]?.id === stack.id)
@@ -107,12 +132,13 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       <div className="wr-touch" aria-label="Touch controls">
         <div className="wr-dpad">
           {([['↑', [0, 1]], ['←', [-1, 0]], ['↓', [0, -1]], ['→', [1, 0]]] as const).map(([label, vector]) => (
-            <button key={label} onPointerDown={() => onIntent({ type: 'movement', vector })} onPointerUp={() => onIntent({ type: 'movement', vector: [0, 0] })} onPointerCancel={() => onIntent({ type: 'movement', vector: [0, 0] })}>{label}</button>
+            <button key={label} onPointerDown={() => onIntent({ type: 'movement', vector })} onPointerUp={() => onIntent({ type: 'movement', vector: [0, 0] })} onPointerCancel={() => onIntent({ type: 'movement', vector: [0, 0] })} onClick={() => onIntent({ type: 'movement.tap', vector })}>{label}</button>
           ))}
         </div>
         <div className="wr-touch-actions">
           <button className="wr-touch-action" onClick={() => onIntent({ type: 'jump' })}>Jump</button>
           <button className="wr-touch-action" onClick={() => onIntent({ type: 'interact' })}>Interact</button>
+          <button className="wr-touch-action" disabled={!learnedGlow} aria-label="Cast Wayfinder Glow" onClick={() => onIntent({ type: 'spell.cast', spellId: 'wayfinder_glow' })}>Cast</button>
         </div>
       </div>
     </div>

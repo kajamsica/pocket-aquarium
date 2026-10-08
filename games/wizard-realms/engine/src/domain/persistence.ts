@@ -1,12 +1,18 @@
 import { createGeneratedWorld, terrainHeightAt, WORLD_CONTENT_REVISION } from './generation'
 import { canEquipItem } from './world'
-import type { EquipmentSlot, GenerationProfile, ItemId, RecipeId, RouteId, WizardWorldState } from './types'
+import type { DigSiteId, EquipmentSlot, GenerationProfile, InscriptionId, ItemId, RecipeId, RouteId, SkillId, SpellId, WizardWorldState } from './types'
 
 const itemIds: ItemId[] = [
   'woodcutters_axe', 'logs', 'marsh_herb', 'stone', 'iron_ore', 'apprentice_hat',
   'traveler_tunic', 'trail_leggings', 'leather_boots', 'oak_wand', 'wooden_shield',
+  'field_spade', 'ancient_relic',
 ]
 const equipmentSlots: EquipmentSlot[] = ['head', 'chest', 'legs', 'feet', 'mainHand', 'offHand']
+const skillIds: SkillId[] = ['woodcutting', 'construction', 'wayfinding', 'spellcraft', 'excavation']
+const spellIds: SpellId[] = ['wayfinder_glow']
+const inscriptionIds: InscriptionId[] = ['greenway_waystone']
+const digSiteIds: DigSiteId[] = ['practice_mound', 'ridge_cache']
+const LEGACY_V3_CONTENT_REVISION = 'greenway-region-v1'
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 const number = (value: unknown, fallback: number, minimum = 0, maximum = Number.MAX_SAFE_INTEGER) =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : fallback
@@ -24,24 +30,152 @@ const validIds = <T extends string>(value: unknown, allowed: readonly T[], requi
 }
 const commonSaveArrays = ['tiles', 'resources', 'stores', 'fairyRings'] as const
 const routeMapArrays = ['areas', 'routes', 'recipes', 'builtRouteIds', 'unlockedRecipeIds', 'discoveredTileIds'] as const
+const currentSaveArrays = ['inscriptions', 'digSites', 'studiedInscriptionIds', 'revealedDigSiteIds', 'excavatedDigSiteIds'] as const
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+const signedInteger = (value: unknown): value is number => Number.isSafeInteger(value)
+const nonnegativeInteger = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0
+const positiveInteger = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0
+const knownIds = (value: unknown, allowed: readonly string[]) => Array.isArray(value)
+  && value.every((id) => typeof id === 'string' && allowed.includes(id)) && new Set(value).size === value.length
+const vec3Record = (value: unknown): value is Record<'x' | 'y' | 'z', number> => record(value)
+  && [value.x, value.y, value.z].every(finite)
+const sameIds = (values: readonly unknown[], expected: readonly { id: string }[]) => values.length === expected.length
+  && values.every((value, index) => record(value) && value.id === expected[index].id)
+const completeIdSet = (values: readonly unknown[], expected: readonly { id: string }[]) => {
+  const expectedIds = new Set(expected.map((entry) => entry.id))
+  return values.length === expectedIds.size && values.every((value) => record(value) && expectedIds.has(value.id as string))
+    && new Set(values.map((value) => (value as { id: string }).id)).size === expectedIds.size
+}
+
+function validLegacyContent(source: Record<string, unknown>, version: string, base: WizardWorldState): boolean {
+  if (!record(source.player) || !record(source.rng)) return false
+  const player = source.player
+  const equipment = player.equipment
+  const tiles = source.tiles as unknown[]
+  const resources = source.resources as unknown[]
+  const stores = source.stores as unknown[]
+  const fairyRings = source.fairyRings as unknown[]
+  const expectedResources = version === 'wizard-world/v1'
+    ? base.resources.filter((resource) => resource.id.startsWith('resource-tile-')) : base.resources
+  return tiles.length === base.tiles.length
+    && tiles.every((tile) => record(tile) && typeof tile.id === 'string' && vec3Record(tile.center))
+    && completeIdSet(resources, expectedResources) && resources.every((resource) => record(resource)
+      && typeof resource.id === 'string' && vec3Record(resource.position)
+      && nonnegativeInteger(resource.health) && positiveInteger(resource.maxHealth) && typeof resource.depleted === 'boolean')
+    && sameIds(stores, base.stores) && stores.every((store, index) => record(store) && typeof store.id === 'string'
+      && vec3Record(store.position) && Array.isArray(store.listings)
+      && completeIdSet(store.listings, base.stores[index].listings.filter((listing) => listing.id !== 'spade'))
+      && store.listings.every((listing: unknown) => record(listing) && typeof listing.id === 'string'
+        && base.stores[index].listings.some((expected) => expected.id === listing.id && expected.itemId === listing.itemId)
+        && nonnegativeInteger(listing.price) && nonnegativeInteger(listing.stock)))
+    && fairyRings.length === 2 && fairyRings.every((ring) => record(ring) && typeof ring.id === 'string' && vec3Record(ring.position))
+    && positiveInteger(source.rng.generation) && positiveInteger(source.rng.simulation)
+    && vec3Record(player.position) && Array.isArray(player.inventory)
+    && player.inventory.every((entry: unknown) => record(entry) && itemId(entry.itemId) && positiveInteger(entry.quantity))
+    && record(equipment) && equipmentSlots.every((slot) => equipment[slot] === null || itemId(equipment[slot]))
+    && Array.isArray(player.tradeSlots) && player.tradeSlots.length === 4
+    && player.tradeSlots.every((slot: unknown, index: number) => record(slot) && slot.slotIndex === index
+      && (slot.itemId === null || itemId(slot.itemId)) && nonnegativeInteger(slot.quantity) && nonnegativeInteger(slot.unitPrice))
+    && Array.isArray(player.discoveredRingIds) && player.discoveredRingIds.every((id: unknown) => typeof id === 'string')
+    && (source.schemaVersion === 'wizard-world/v1'
+      || (Array.isArray(source.areas) && source.areas.length > 0
+        && Array.isArray(source.routes) && source.routes.length > 0
+        && Array.isArray(source.recipes) && source.recipes.length > 0))
+}
+
+function validCurrentContent(source: Record<string, unknown>, base: WizardWorldState): boolean {
+  if (!currentSaveArrays.every((key) => Array.isArray(source[key])) || !record(source.player) || !record(source.rng)) return false
+  const player = source.player
+  const skillXp = player.skillXp
+  const equipment = player.equipment
+  const backpackCapacity = player.backpackCapacity
+  if (!record(skillXp) || !skillIds.every((id) => nonnegativeInteger(skillXp[id]))
+    || !knownIds(player.learnedSpellIds, spellIds)
+    || !knownIds(source.studiedInscriptionIds, inscriptionIds)
+    || !knownIds(source.revealedDigSiteIds, digSiteIds)
+    || !knownIds(source.excavatedDigSiteIds, digSiteIds)
+    || !nonnegativeInteger(source.tick) || !nonnegativeInteger(source.eventSequence)
+    || source.fixedStepMs !== 50 || !positiveInteger(source.rng.generation) || !positiveInteger(source.rng.simulation)
+    || !vec3Record(player.position) || ![player.verticalVelocity, player.yaw, player.pitch].every(finite)
+    || ![player.coins, player.xp, player.level].every(nonnegativeInteger)
+    || !positiveInteger(backpackCapacity) || backpackCapacity > 1_000
+    || !Array.isArray(player.inventory) || !player.inventory.every((entry: unknown) => record(entry) && itemId(entry.itemId) && positiveInteger(entry.quantity))
+    || !record(equipment) || !equipmentSlots.every((slot) => equipment[slot] === null || itemId(equipment[slot]))
+    || !Array.isArray(player.tradeSlots) || player.tradeSlots.length !== 4
+    || !player.tradeSlots.every((slot: unknown, index: number) => record(slot) && slot.slotIndex === index
+      && (slot.itemId === null ? slot.quantity === 0 && slot.unitPrice === 0
+        : itemId(slot.itemId) && positiveInteger(slot.quantity) && positiveInteger(slot.unitPrice)))
+    || !knownIds(player.discoveredRingIds, ['ring-greenway', 'ring-highland'])) return false
+  const carried = (player.inventory as Array<{ quantity: number }>).reduce((sum, stack) => sum + stack.quantity, 0)
+  const reserved = (player.tradeSlots as Array<{ quantity: number }>).reduce((sum, slot) => sum + slot.quantity, 0)
+  if (carried + reserved > backpackCapacity) return false
+  const tiles = source.tiles as unknown[]
+  const resources = source.resources as unknown[]
+  const stores = source.stores as unknown[]
+  const fairyRings = source.fairyRings as unknown[]
+  const areas = source.areas as unknown[]
+  const routes = source.routes as unknown[]
+  const recipes = source.recipes as unknown[]
+  if (!sameIds(tiles, base.tiles) || !sameIds(resources, base.resources)
+    || !sameIds(stores, base.stores) || !sameIds(fairyRings, base.fairyRings)
+    || !sameIds(areas, base.areas) || !sameIds(routes, base.routes) || !sameIds(recipes, base.recipes)
+    || !tiles.every((tile) => record(tile) && typeof tile.id === 'string' && vec3Record(tile.center)
+      && [tile.gridX, tile.gridZ].every(signedInteger) && [tile.elevation, tile.temperature, tile.moisture].every(finite)
+      && typeof tile.terrain === 'string' && typeof tile.biome === 'string')
+    || !resources.every((resource) => record(resource) && typeof resource.id === 'string' && typeof resource.tileId === 'string'
+      && typeof resource.kind === 'string' && vec3Record(resource.position) && nonnegativeInteger(resource.health)
+      && positiveInteger(resource.maxHealth) && typeof resource.depleted === 'boolean')
+    || !stores.every((store, index) => record(store) && typeof store.id === 'string' && vec3Record(store.position)
+      && Array.isArray(store.listings) && sameIds(store.listings, base.stores[index].listings)
+      && store.listings.every((listing: unknown, listingIndex: number) => record(listing)
+        && listing.itemId === base.stores[index].listings[listingIndex].itemId
+        && nonnegativeInteger(listing.price) && nonnegativeInteger(listing.stock)))
+    || !fairyRings.every((ring) => record(ring) && typeof ring.id === 'string' && vec3Record(ring.position))
+    || !areas.every((area) => record(area) && typeof area.id === 'string')
+    || !routes.every((route) => record(route) && typeof route.id === 'string' && vec3Record(route.from) && vec3Record(route.to))
+    || !recipes.every((recipe) => record(recipe) && typeof recipe.id === 'string')) return false
+  const inscriptions = source.inscriptions as unknown[]
+  const digSites = source.digSites as unknown[]
+  return sameIds(inscriptions, base.inscriptions)
+    && inscriptions.every((value) => record(value)
+    && inscriptionIds.includes(value.id as InscriptionId) && typeof value.name === 'string'
+    && vec3Record(value.position) && value.position.x === 3 && value.position.z === 3 && value.spellId === 'wayfinder_glow')
+    && sameIds(digSites, base.digSites)
+    && digSites.every((value) => record(value)
+      && digSiteIds.includes(value.id as DigSiteId) && typeof value.name === 'string'
+      && vec3Record(value.position) && typeof value.visibleFromStart === 'boolean'
+      && positiveInteger(value.minimumExcavationLevel)
+      && record(value.reward) && itemId(value.reward.itemId)
+      && positiveInteger(value.reward.quantity) && positiveInteger(value.xpReward)
+      && (value.id === 'practice_mound'
+        ? value.position.x === 7 && value.position.z === 3 && value.visibleFromStart === true
+          && value.minimumExcavationLevel === 1 && value.reward.itemId === 'stone' && value.reward.quantity === 2 && value.xpReward === 30
+        : value.position.x === -6 && value.position.z === -9 && value.visibleFromStart === false
+          && value.minimumExcavationLevel === 2 && value.reward.itemId === 'ancient_relic' && value.reward.quantity === 1 && value.xpReward === 40))
+}
 
 function parseRestorableSave(serialized: string, expectedProfile?: GenerationProfile) {
   let source: unknown
   try { source = JSON.parse(serialized) } catch { return null }
   if (!record(source) || typeof source.seed !== 'string' || !source.seed) return null
   const version = source.schemaVersion
-  if (version !== 'wizard-world/v1' && version !== 'wizard-world/v2' && version !== 'wizard-world/v3') return null
-  const profile: unknown = source.generationProfile === undefined && version !== 'wizard-world/v3'
+  if (version !== 'wizard-world/v1' && version !== 'wizard-world/v2' && version !== 'wizard-world/v3' && version !== 'wizard-world/v4') return null
+  const profile: unknown = source.generationProfile === undefined && (version === 'wizard-world/v1' || version === 'wizard-world/v2')
     ? 'greenway-classic-v1' : source.generationProfile
   if (profile !== 'greenway-classic-v1' && profile !== 'greenway-expanded-v1') return null
   if (version === 'wizard-world/v1' && profile !== 'greenway-classic-v1') return null
   if (expectedProfile && profile !== expectedProfile) return null
-  if (version === 'wizard-world/v3' && source.contentRevision !== WORLD_CONTENT_REVISION) return null
+  if (version === 'wizard-world/v3' && source.contentRevision !== LEGACY_V3_CONTENT_REVISION) return null
+  if (version === 'wizard-world/v4' && source.contentRevision !== WORLD_CONTENT_REVISION) return null
   if (!commonSaveArrays.every((key) => Array.isArray(source[key])) || !record(source.player) || !record(source.rng)) return null
   if (!record(source.player.position) || !Array.isArray(source.player.inventory) || !record(source.player.equipment)
     || !Array.isArray(source.player.tradeSlots) || !Array.isArray(source.player.discoveredRingIds)) return null
   if (version !== 'wizard-world/v1' && !routeMapArrays.every((key) => Array.isArray(source[key]))) return null
-  return { source, seed: source.seed, profile: profile as GenerationProfile }
+  let generated: WizardWorldState
+  try { generated = createGeneratedWorld(source.seed, profile) } catch { return null }
+  if (version === 'wizard-world/v4'
+    ? !validCurrentContent(source, generated) : !validLegacyContent(source, version, generated)) return null
+  return { source, seed: source.seed, profile: profile as GenerationProfile, generated }
 }
 
 export function isRestorableWizardSave(serialized: string, profile: GenerationProfile): boolean {
@@ -55,14 +189,17 @@ export function serializeWizardWorld(state: WizardWorldState): string {
 export function restoreWizardWorld(serialized: string): WizardWorldState {
   const parsed = parseRestorableSave(serialized)
   if (!parsed) throw new Error('Invalid or unsupported Wizard Realms save')
-  const { source, seed, profile } = parsed
-  const base = createGeneratedWorld(seed, profile)
+  const { source } = parsed
+  const base = parsed.generated
   const state: WizardWorldState = JSON.parse(JSON.stringify(base)) as WizardWorldState
   state.tick = integer(source.tick, base.tick)
   state.eventSequence = integer(source.eventSequence, base.eventSequence)
   state.builtRouteIds = validIds<RouteId>(source.builtRouteIds, base.routes.map((route) => route.id))
   state.unlockedRecipeIds = validIds<RecipeId>(source.unlockedRecipeIds, base.recipes.map((recipe) => recipe.id), ['greenway_ladder'])
   state.discoveredTileIds = validIds(source.discoveredTileIds, base.tiles.map((tile) => tile.id), base.discoveredTileIds)
+  state.studiedInscriptionIds = validIds<InscriptionId>(source.studiedInscriptionIds, inscriptionIds)
+  state.revealedDigSiteIds = validIds<DigSiteId>(source.revealedDigSiteIds, digSiteIds)
+  state.excavatedDigSiteIds = validIds<DigSiteId>(source.excavatedDigSiteIds, digSiteIds)
 
   if (record(source.rng)) {
     state.rng.generation = integer(source.rng.generation, base.rng.generation, 1, 0xffffffff)
@@ -76,12 +213,17 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
   })
 
   const rawResources = Array.isArray(source.resources) ? source.resources : []
+  const newLandmarks = [...base.inscriptions, ...base.digSites].map((entry) => entry.position)
   if (rawResources.length > 0) state.resources = base.resources.map((fallback) => {
     const saved = rawResources.find((candidate) => record(candidate) && candidate.id === fallback.id)
     const value = record(saved) ? saved : {}
     const maxHealth = integer(value.maxHealth, fallback.maxHealth, 1, 1_000)
     const health = integer(value.health, fallback.health, 0, maxHealth)
-    return { ...fallback, position: vec3(value.position, fallback.position), maxHealth, health, depleted: typeof value.depleted === 'boolean' ? value.depleted || health === 0 : health === 0 }
+    const savedPosition = vec3(value.position, fallback.position)
+    const position = source.schemaVersion !== 'wizard-world/v4'
+      && newLandmarks.some((anchor) => Math.hypot(savedPosition.x - anchor.x, savedPosition.z - anchor.z) < 1.5)
+      ? { ...fallback.position } : savedPosition
+    return { ...fallback, position, maxHealth, health, depleted: typeof value.depleted === 'boolean' ? value.depleted || health === 0 : health === 0 }
   })
 
   const rawRings = Array.isArray(source.fairyRings) ? source.fairyRings : []
@@ -94,11 +236,11 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
   if (rawStores.length === 2) state.stores = base.stores.map((fallback, storeIndex) => {
     const value = record(rawStores[storeIndex]) ? rawStores[storeIndex] : {}
     const rawListings = Array.isArray(value.listings) ? value.listings : []
-    const listings = rawListings.length === fallback.listings.length
-      ? fallback.listings.map((listing, listingIndex) => {
-        const rawListing = record(rawListings[listingIndex]) ? rawListings[listingIndex] : {}
+    const listings = fallback.listings.map((listing) => {
+        const savedListing = rawListings.find((candidate) => record(candidate) && candidate.id === listing.id)
+        const rawListing = record(savedListing) ? savedListing : {}
         return { ...listing, price: integer(rawListing.price, listing.price), stock: integer(rawListing.stock, listing.stock) }
-      }) : fallback.listings
+      })
     return { ...fallback, position: vec3(value.position, fallback.position), listings }
   }) as WizardWorldState['stores']
 
@@ -111,6 +253,9 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
     state.player.coins = integer(player.coins, base.player.coins)
     state.player.xp = integer(player.xp, base.player.xp)
     state.player.level = 1 + Math.floor(state.player.xp / 100)
+    const rawSkillXp = record(player.skillXp) ? player.skillXp : {}
+    skillIds.forEach((id) => { state.player.skillXp[id] = integer(rawSkillXp[id], 0) })
+    state.player.learnedSpellIds = validIds<SpellId>(player.learnedSpellIds, spellIds)
     state.player.backpackCapacity = integer(player.backpackCapacity, base.player.backpackCapacity, 1, 1_000)
     if (Array.isArray(player.inventory)) state.player.inventory = player.inventory.flatMap((entry) => {
       if (!record(entry) || !itemId(entry.itemId)) return []

@@ -13,6 +13,17 @@ import App, {
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 const withAxeEquipped = (state: WizardWorldState) => { state.player.equipment.mainHand = 'woodcutters_axe'; return state }
 const withLogs = (state: WizardWorldState, quantity: number) => { state.player.inventory.push({ itemId: 'logs', quantity }); return state }
+const legacyStores = (state: WizardWorldState) => state.stores.map((store) => ({
+  ...store, listings: store.listings.filter((listing) => listing.id !== 'spade'),
+}))
+const legacyV1Resources = (state: WizardWorldState) => state.resources.filter((resource) => !resource.id.startsWith('greenway-journey-tree-'))
+const withFirstRegionCompleted = (state: WizardWorldState) => {
+  state.player.learnedSpellIds = ['wayfinder_glow']
+  state.player.skillXp.spellcraft = 40
+  state.revealedDigSiteIds = ['ridge_cache']
+  state.excavatedDigSiteIds = ['practice_mound', 'ridge_cache']
+  return state
+}
 
 describe('Wizard view adapter', () => {
   it('projects all world surfaces without mutating authoritative state', () => {
@@ -25,6 +36,12 @@ describe('Wizard view adapter', () => {
     expect(projection.resources).toHaveLength(state.resources.length)
     expect(projection.stores).toHaveLength(2)
     expect(projection.fairyRings).toHaveLength(2)
+    expect(projection.inscriptions).toHaveLength(1)
+    expect(projection.digSites).toHaveLength(2)
+    expect(projection.digSites.find((site) => site.id === 'practice_mound')).toMatchObject({ revealed: true, excavated: false })
+    expect(projection.digSites.find((site) => site.id === 'ridge_cache')).toMatchObject({ revealed: false, excavated: false })
+    expect(projection.learnedSpellIds).toEqual([])
+    expect(projection.skillXp).toEqual(state.player.skillXp)
     expect(projection.routes).toHaveLength(2)
     expect(projection.map.tiles).toHaveLength(state.tiles.length)
     expect(projection.map.tiles.some((tile) => !tile.discovered && tile.terrain === null && tile.biome === null)).toBe(true)
@@ -190,13 +207,16 @@ describe('Wizard view adapter', () => {
     expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'discover_fairy_ring', ringId: greenwayRing.id })
   })
 
-  it('maps jump, store, equipment, trade, and ring controls to exact domain intents', () => {
+  it('maps jump, store, equipment, magic, excavation, trade, and ring controls to exact domain intents', () => {
     const state = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(state)
     expect(intentForView(state, { type: 'jump' })).toEqual({ type: 'jump' })
     expect(intentForView(state, { type: 'store.select-listing', storeId: 'store-greenway', listingId: 'hat' })).toEqual({ type: 'buy_store_listing', storeId: 'store-greenway', listingId: 'hat' })
     expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'mainHand' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
     expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-wooden_shield', slot: 'offHand' })).toEqual({ type: 'equip_item', itemId: 'wooden_shield', slot: 'offHand' })
+    expect(intentForView(state, { type: 'inscription.study', inscriptionId: 'greenway_waystone' })).toEqual({ type: 'study_inscription', inscriptionId: 'greenway_waystone' })
+    expect(intentForView(state, { type: 'spell.cast', spellId: 'wayfinder_glow' })).toEqual({ type: 'cast_spell', spellId: 'wayfinder_glow' })
+    expect(intentForView(state, { type: 'dig-site.excavate', digSiteId: 'practice_mound' })).toEqual({ type: 'dig_site', digSiteId: 'practice_mound' })
     expect(intentForView(state, { type: 'trade.create-listing', stackId: 'inventory-logs', slot: 2, quantity: 1, unitPrice: 5 })).toEqual({ type: 'create_trade_listing', itemId: 'logs', slotIndex: 2, quantity: 1, unitPrice: 5 })
     expect(intentForView(state, { type: 'trade.cancel-listing', slot: 2 })).toEqual({ type: 'cancel_trade_listing', slotIndex: 2 })
     expect(intentForView(state, { type: 'fairy-ring.teleport', ringId: 'ring-greenway', destinationRingId: 'ring-highland' })).toEqual({ type: 'teleport_fairy_ring', sourceRingId: 'ring-greenway', targetRingId: 'ring-highland' })
@@ -294,14 +314,14 @@ describe('Wizard view adapter', () => {
   it('derives the guided objective from authoritative world state without mutating it', () => {
     const fresh = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(fresh)
-    expect(objectiveFor(fresh)).toBe('Equip the woodcutter axe from your backpack.')
+    expect(objectiveFor(fresh)).toBe('Find the Greenway waystone and study Wayfinder Glow.')
     expect(JSON.stringify(fresh)).toBe(before)
 
-    const unowned = copy(fresh)
+    const unowned = withFirstRegionCompleted(copy(fresh))
     unowned.player.inventory = []
     expect(objectiveFor(unowned)).toBe('Buy a woodcutter axe at Greenway Outfitters.')
 
-    const state = withAxeEquipped(copy(fresh))
+    const state = withAxeEquipped(withFirstRegionCompleted(copy(fresh)))
     expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (0/4), then build the Greenway ladder north.')
     withLogs(state, 2)
     expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (2/4), then build the Greenway ladder north.')
@@ -324,8 +344,32 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.')
   })
 
+  it('guides study, spell practice, tool-gated excavation, and a return sale', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    expect(objectiveFor(state)).toContain('cast Wayfinder Glow')
+    state.player.skillXp.spellcraft = 40
+    expect(objectiveFor(state)).toContain('Buy a field spade')
+    state.revealedDigSiteIds.push('ridge_cache')
+    expect(objectiveFor(state)).toContain('Buy a field spade')
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    expect(objectiveFor(state)).toContain('Equip the field spade')
+    state.player.equipment.mainHand = 'field_spade'
+    expect(objectiveFor(state)).toContain('practice mound')
+    state.excavatedDigSiteIds.push('practice_mound')
+    expect(objectiveFor(state)).toContain('woodcutter axe')
+    state.builtRouteIds.push('greenway_ladder')
+    expect(objectiveFor(state)).toContain('ridge cache')
+    state.excavatedDigSiteIds.push('ridge_cache')
+    state.player.inventory.push({ itemId: 'ancient_relic', quantity: 1 })
+    expect(objectiveFor(state)).toContain('sell the ancient relic')
+    state.player.inventory = state.player.inventory.filter((stack) => stack.itemId !== 'ancient_relic')
+    expect(objectiveFor(state)).toContain('Highland bridge')
+  })
+
   it('keeps the objective complete after traveling home and back to Highland', () => {
-    const state = copy(createWizardWorld('greenway-alpha'))
+    const state = withFirstRegionCompleted(copy(createWizardWorld('greenway-alpha')))
+    state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
     state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
     const greenway = state.fairyRings.find((ring) => ring.id === 'ring-greenway')!.position
     const highland = state.fairyRings.find((ring) => ring.id === 'ring-highland')!.position
@@ -337,7 +381,7 @@ describe('Wizard view adapter', () => {
 
   it('only announces linked travel once both fairy rings are discovered', () => {
     const linked = 'Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.'
-    const state = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
+    const state = withAxeEquipped(withFirstRegionCompleted(copy(createWizardWorld('greenway-alpha'))))
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
 
     state.player.discoveredRingIds = []
@@ -352,7 +396,7 @@ describe('Wizard view adapter', () => {
     state.player.discoveredRingIds = ['ring-highland', 'ring-greenway']
     expect(objectiveFor(state)).toBe(linked)
 
-    const earlyGreenway = withAxeEquipped(copy(createWizardWorld('greenway-alpha')))
+    const earlyGreenway = withAxeEquipped(withFirstRegionCompleted(copy(createWizardWorld('greenway-alpha'))))
     earlyGreenway.player.discoveredRingIds = ['ring-greenway']
     expect(objectiveFor(earlyGreenway)).toBe('Gather logs from Greenway oaks (0/4), then build the Greenway ladder north.')
   })
@@ -426,7 +470,7 @@ describe('Wizard view adapter', () => {
   it('loads and persists expanded progress without reading or changing classic saves', () => {
     const classic = createWizardWorld('classic-progress')
     classic.tick = 8
-    const classicSave = JSON.stringify({ ...classic, schemaVersion: 'wizard-world/v2', contentRevision: undefined })
+    const classicSave = JSON.stringify({ ...classic, stores: legacyStores(classic), schemaVersion: 'wizard-world/v2', contentRevision: undefined })
     const saves = new Map([['wizard-realms:world:v2', classicSave], ['wizard-realms:world:v1', 'legacy-progress']])
     const readKeys: string[] = []
     const storage = {
@@ -434,22 +478,22 @@ describe('Wizard view adapter', () => {
       setItem: (key: string, value: string) => { saves.set(key, value) },
     }
     const expanded = loadWorld(storage, 'greenway-expanded-v1')
-    expect(readKeys).toEqual(['wizard-realms:world:expanded:v2', 'wizard-realms:world:expanded:v1'])
+    expect(readKeys).toEqual(['wizard-realms:world:expanded:v3', 'wizard-realms:world:expanded:v2', 'wizard-realms:world:expanded:v1'])
     expect(expanded.generationProfile).toBe('greenway-expanded-v1')
     expect(expanded.tiles).toHaveLength(256)
     expanded.tick = 12
     expect(persistWorld(storage, expanded, 'greenway-expanded-v1')).toBe(true)
-    expect(saves.get('wizard-realms:world:expanded:v2')).toBe(serializeWizardWorld(expanded))
+    expect(saves.get('wizard-realms:world:expanded:v3')).toBe(serializeWizardWorld(expanded))
     expect(persistWorld(storage, expanded)).toBe(false)
     expect(saves.get('wizard-realms:world:v2')).toBe(classicSave)
     expect(saves.get('wizard-realms:world:v1')).toBe('legacy-progress')
     expect(loadWorld(storage, 'greenway-expanded-v1')).toEqual(expanded)
-    expect(loadWorld(storage)).toEqual(classic)
+    expect(loadWorld(storage)).toMatchObject({ seed: classic.seed, tick: 8, generationProfile: 'greenway-classic-v1' })
     classic.tick = 9
     expect(persistWorld(storage, classic)).toBe(true)
-    expect(saves.get('wizard-realms:world:v3')).toBe(serializeWizardWorld(classic))
+    expect(saves.get('wizard-realms:world:v4')).toBe(serializeWizardWorld(classic))
     expect(saves.get('wizard-realms:world:v2')).toBe(classicSave)
-    expect(saves.get('wizard-realms:world:expanded:v2')).toBe(serializeWizardWorld(expanded))
+    expect(saves.get('wizard-realms:world:expanded:v3')).toBe(serializeWizardWorld(expanded))
   })
 
   it('restarts only the expanded preview and reloads its new seed', () => {
@@ -463,7 +507,7 @@ describe('Wizard view adapter', () => {
     }
     resetSavedWorld(storage, 'expanded-first', createWizardWorld, 'greenway-expanded-v1')
     const restarted = resetSavedWorld(storage, 'expanded-second', createWizardWorld, 'greenway-expanded-v1')
-    expect(operations).toEqual(['set:wizard-realms:world:expanded:v2', 'set:wizard-realms:world:expanded:v2'])
+    expect(operations).toEqual(['set:wizard-realms:world:expanded:v3', 'set:wizard-realms:world:expanded:v3'])
     expect(restarted).toEqual(createWizardWorld('expanded-second', 'greenway-expanded-v1'))
     expect(loadWorld(storage, 'greenway-expanded-v1')).toEqual(restarted)
     expect(saves.get('wizard-realms:world:v2')).toBe(classicSave)
@@ -477,17 +521,18 @@ describe('Wizard view adapter', () => {
     prior.player.inventory.push({ itemId: 'logs', quantity: 4 })
     prior.resources[0].health = 0
     prior.resources[0].depleted = true
-    const oldBytes = JSON.stringify({ ...prior, schemaVersion: 'wizard-world/v2', contentRevision: undefined })
+    const oldBytes = JSON.stringify({ ...prior, stores: legacyStores(prior), schemaVersion: 'wizard-world/v2', contentRevision: undefined })
     const saves = new Map([['wizard-realms:world:expanded:v1', oldBytes]])
     const storage = {
       getItem: (key: string) => saves.get(key) ?? null,
       setItem: (key: string, value: string) => { saves.set(key, value) },
     }
     const migrated = loadWorld(storage, 'greenway-expanded-v1')
-    expect(migrated).toEqual(prior)
+    expect(migrated).toMatchObject({ seed: prior.seed, tick: 19, generationProfile: 'greenway-expanded-v1', player: { coins: 73, inventory: prior.player.inventory } })
+    expect(migrated.resources.find((resource) => resource.id === prior.resources[0].id)).toMatchObject({ health: 0, depleted: true })
     expect(persistWorld(storage, migrated, 'greenway-expanded-v1')).toBe(true)
     expect(saves.get('wizard-realms:world:expanded:v1')).toBe(oldBytes)
-    expect(saves.get('wizard-realms:world:expanded:v2')).toBe(serializeWizardWorld(migrated))
+    expect(saves.get('wizard-realms:world:expanded:v3')).toBe(serializeWizardWorld(migrated))
     expect(loadWorld(storage, 'greenway-expanded-v1')).toEqual(migrated)
   })
 
@@ -502,17 +547,17 @@ describe('Wizard view adapter', () => {
     expect(freshInMemory.seed).toBe('greenway-alpha')
     expect(persistWorld(storage, freshInMemory)).toBe(false)
     expect(saves.get('wizard-realms:world:v2')).toBe(damaged)
-    expect(saves.has('wizard-realms:world:v3')).toBe(false)
+    expect(saves.has('wizard-realms:world:v4')).toBe(false)
   })
 
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('preserves incompatible %s save bytes through repeated autosave batches', (profile) => {
-    const key = profile === 'greenway-classic-v1' ? 'wizard-realms:world:v3' : 'wizard-realms:world:expanded:v2'
+    const key = profile === 'greenway-classic-v1' ? 'wizard-realms:world:v4' : 'wizard-realms:world:expanded:v3'
     const otherProfile = profile === 'greenway-classic-v1' ? 'greenway-expanded-v1' : 'greenway-classic-v1'
     const incompatibleSaves = [
       'not-json',
       'null',
       JSON.stringify({ schemaVersion: 'wizard-world/v4', seed: 'future', generationProfile: profile }),
-      JSON.stringify({ ...createWizardWorld('future-revision', profile), contentRevision: 'greenway-region-v2' }),
+      JSON.stringify({ ...createWizardWorld('future-revision', profile), contentRevision: 'greenway-region-v99' }),
       serializeWizardWorld(createWizardWorld('wrong-profile', otherProfile)),
       JSON.stringify({ schemaVersion: 'wizard-world/v2', seed: 'unknown-profile', generationProfile: 'unknown' }),
       JSON.stringify({ schemaVersion: 'wizard-world/v1', seed: 'v1-wrong-profile', generationProfile: otherProfile }),
@@ -541,7 +586,22 @@ describe('Wizard view adapter', () => {
     }
   })
 
-  it('preserves an invalid active legacy save without creating a classic v3 save', () => {
+  it('revalidates an externally changed save after a locally verified autosave', () => {
+    const key = 'wizard-realms:world:v4'
+    const saves = new Map<string, string>()
+    const storage = {
+      getItem: (itemKey: string) => saves.get(itemKey) ?? null,
+      setItem: (itemKey: string, value: string) => { saves.set(itemKey, value) },
+    }
+    const local = createWizardWorld('local-cache')
+    expect(persistWorld(storage, local)).toBe(true)
+    const external = '{"schemaVersion":"wizard-world/v5","seed":"future"}'
+    saves.set(key, external)
+    expect(persistWorld(storage, local)).toBe(false)
+    expect(saves.get(key)).toBe(external)
+  })
+
+  it('preserves an invalid active legacy save without creating a classic v4 save', () => {
     const legacy = '{"schemaVersion":"wizard-world/v4","seed":"future"}'
     const saves = new Map([['wizard-realms:world:v1', legacy]])
     const storage = {
@@ -559,18 +619,19 @@ describe('Wizard view adapter', () => {
     }
     expect(world.tick).toBe(2)
     expect(saves.get('wizard-realms:world:v1')).toBe(legacy)
-    expect(saves.has('wizard-realms:world:v3')).toBe(false)
+    expect(saves.has('wizard-realms:world:v4')).toBe(false)
   })
 
   it('persists valid current and legacy classic saves after their next batch', () => {
     const original = createWizardWorld('known-progress')
-    const oldV2 = JSON.stringify({ ...original, schemaVersion: 'wizard-world/v2', generationProfile: undefined, contentRevision: undefined })
+    const oldV2 = JSON.stringify({ ...original, stores: legacyStores(original), schemaVersion: 'wizard-world/v2', generationProfile: undefined, contentRevision: undefined })
     const legacyV1 = JSON.stringify({
       schemaVersion: 'wizard-world/v1', seed: original.seed, tick: original.tick, fixedStepMs: original.fixedStepMs,
-      rng: original.rng, tiles: original.tiles, resources: original.resources, stores: original.stores,
+      rng: original.rng, tiles: original.tiles, resources: legacyV1Resources(original), stores: legacyStores(original),
       fairyRings: original.fairyRings, player: original.player, eventSequence: original.eventSequence,
     })
-    for (const [key, saved] of [['wizard-realms:world:v3', serializeWizardWorld(original)], ['wizard-realms:world:v2', oldV2], ['wizard-realms:world:v1', legacyV1]] as const) {
+    const oldV3 = JSON.stringify({ ...original, stores: legacyStores(original), schemaVersion: 'wizard-world/v3', contentRevision: 'greenway-region-v1' })
+    for (const [key, saved] of [['wizard-realms:world:v4', serializeWizardWorld(original)], ['wizard-realms:world:v3', oldV3], ['wizard-realms:world:v2', oldV2], ['wizard-realms:world:v1', legacyV1]] as const) {
       const saves = new Map<string, string>([[key, saved]])
       const storage = {
         getItem: (itemKey: string) => saves.get(itemKey) ?? null,
@@ -581,13 +642,13 @@ describe('Wizard view adapter', () => {
       expect(world.generationProfile).toBe('greenway-classic-v1')
       const next = stepBatch(world, [], [0, 0], 50).state
       expect(persistWorld(storage, next)).toBe(true)
-      expect(saves.get('wizard-realms:world:v3')).toBe(serializeWizardWorld(next))
-      if (key !== 'wizard-realms:world:v3') expect(saves.get(key)).toBe(saved)
+      expect(saves.get('wizard-realms:world:v4')).toBe(serializeWizardWorld(next))
+      if (key !== 'wizard-realms:world:v4') expect(saves.get(key)).toBe(saved)
     }
   })
 
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('replaces a blocked %s save only through explicit reset', (profile) => {
-    const key = profile === 'greenway-classic-v1' ? 'wizard-realms:world:v3' : 'wizard-realms:world:expanded:v2'
+    const key = profile === 'greenway-classic-v1' ? 'wizard-realms:world:v4' : 'wizard-realms:world:expanded:v3'
     const original = '{"schemaVersion":"wizard-world/v3","seed":"future"}'
     const saves = new Map([[key, original], ['wizard-realms:world:v1', 'legacy']])
     const operations: string[] = []
@@ -607,8 +668,8 @@ describe('Wizard view adapter', () => {
   })
 
   it.each([
-    ['greenway-classic-v1', '', 'wizard-realms:world:v3'],
-    ['greenway-expanded-v1', '?devRegion=expanded', 'wizard-realms:world:expanded:v2'],
+    ['greenway-classic-v1', '', 'wizard-realms:world:v4'],
+    ['greenway-expanded-v1', '?devRegion=expanded', 'wizard-realms:world:expanded:v3'],
   ] as const)('renders the %s save warning only for an incompatible active save', (profile, search, key) => {
     const saves = new Map<string, string>([[key, '{"schemaVersion":"wizard-world/v3","seed":"future"}']])
     vi.stubGlobal('window', { location: { search }, localStorage: { getItem: (itemKey: string) => saves.get(itemKey) ?? null }, ResizeObserver: class {} })
@@ -621,7 +682,7 @@ describe('Wizard view adapter', () => {
     }
   })
 
-  it('writes a fresh seeded world under v3 while retaining the legacy backup', () => {
+  it('writes a fresh seeded world under v4 while retaining the legacy backup', () => {
     const saves = new Map([['wizard-realms:world:v2', 'previous'], ['wizard-realms:world:v1', 'legacy']])
     const operations: string[] = []
     const storage = {
@@ -629,8 +690,8 @@ describe('Wizard view adapter', () => {
       removeItem: (key: string) => { operations.push(`remove:${key}`); saves.delete(key) },
     }
     const fresh = resetSavedWorld(storage)
-    expect(operations).toEqual(['set:wizard-realms:world:v3'])
-    expect(saves.get('wizard-realms:world:v3')).toBe(serializeWizardWorld(fresh))
+    expect(operations).toEqual(['set:wizard-realms:world:v4'])
+    expect(saves.get('wizard-realms:world:v4')).toBe(serializeWizardWorld(fresh))
     expect(saves.get('wizard-realms:world:v2')).toBe('previous')
     expect(saves.get('wizard-realms:world:v1')).toBe('legacy')
     expect(fresh.seed).toBe('greenway-alpha')
@@ -673,11 +734,11 @@ describe('Wizard view adapter', () => {
     saved.player.inventory.push({ itemId: 'logs', quantity: 3 })
     saved.builtRouteIds.push('greenway_ladder')
     const serialized = serializeWizardWorld(saved)
-    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v3' ? serialized : null })).toEqual(saved)
+    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v4' ? serialized : null })).toEqual(saved)
 
-    const legacy = JSON.stringify({ ...saved, schemaVersion: 'wizard-world/v1' })
+    const legacy = JSON.stringify({ ...saved, resources: legacyV1Resources(saved), stores: legacyStores(saved), schemaVersion: 'wizard-world/v1' })
     expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v1' ? legacy : null })).toMatchObject({
-      schemaVersion: 'wizard-world/v3', seed: 'greenway-beta', tick: 7, builtRouteIds: ['greenway_ladder'],
+      schemaVersion: 'wizard-world/v4', seed: 'greenway-beta', tick: 7, builtRouteIds: ['greenway_ladder'],
       player: { coins: 83, inventory: saved.player.inventory },
     })
   })
@@ -718,6 +779,21 @@ describe('Wizard view adapter', () => {
     expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Find another ring', actionable: false })
   })
 
+  it('offers a separate reachable shop action even when a tree is closer', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const store = state.stores[0]
+    const nearbyTree = state.resources.find((resource) => resource.kind === 'tree')!
+    nearbyTree.position = { ...store.position, x: store.position.x - 0.4 }
+    state.player.position = { ...store.position, x: store.position.x - 0.3 }
+    const projection = toViewProjection(state, [])
+    expect(projection.nearbyInteraction).toMatchObject({ kind: 'resource', targetId: nearbyTree.id })
+    expect(projection.nearbyStoreId).toBe(store.id)
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection, onIntent: vi.fn() }))
+    expect(markup).toContain(`aria-label="Open ${store.name}"`)
+    expect(intentForView(state, { type: 'store.open', storeId: store.id })).toBeNull()
+  })
+
   it('projects regional material offers and routes a committed sale back into saved progress', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     state.player.position = { ...state.stores[0].position }
@@ -739,7 +815,7 @@ describe('Wizard view adapter', () => {
     expect(result.rejections).toEqual([])
     expect(result.state.player.coins).toBe(state.player.coins + 6)
     expect(result.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
-    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v3' ? serializeWizardWorld(result.state) : null })).toEqual(result.state)
+    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v4' ? serializeWizardWorld(result.state) : null })).toEqual(result.state)
   })
 
   it('maps unequip through authority and projects the cleared visual slot after reload', () => {
@@ -753,7 +829,7 @@ describe('Wizard view adapter', () => {
     expect(result.rejections).toEqual([])
     expect(toViewProjection(result.state, []).equipment.mainHand).toBeNull()
     expect(result.state.player.inventory).toEqual(state.player.inventory)
-    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v3' ? serializeWizardWorld(result.state) : null }).player.equipment.mainHand).toBeNull()
+    expect(loadWorld({ getItem: (key) => key === 'wizard-realms:world:v4' ? serializeWizardWorld(result.state) : null }).player.equipment.mainHand).toBeNull()
   })
 
   it('forgets an open store on departure so returning does not reopen it', () => {

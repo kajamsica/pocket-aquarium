@@ -5,7 +5,7 @@ import type {
 
 const SIZE = 7
 const TILE_METERS = 4
-export const WORLD_CONTENT_REVISION = 'greenway-region-v1' as const
+export const WORLD_CONTENT_REVISION = 'greenway-region-v2' as const
 export const STORE_HALF_WIDTH = 3.5 / 2 + 0.55
 export const STORE_HALF_DEPTH = 2.5 / 2 + 0.55
 const RESOURCE_STORE_MARGIN = 0.2
@@ -92,6 +92,8 @@ function makePlayer(tiles: readonly WorldTile[]): PlayerState {
     backpackCapacity: 20, inventory: [{ itemId: 'woodcutters_axe', quantity: 1 }],
     equipment: { head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null },
     tradeSlots: [empty(0), empty(1), empty(2), empty(3)], discoveredRingIds: [],
+    skillXp: { woodcutting: 0, construction: 0, wayfinding: 0, spellcraft: 0, excavation: 0 },
+    learnedSpellIds: [],
   }
 }
 
@@ -100,12 +102,19 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
   const tiles = makeTiles(normalizedSeed, generationProfile)
   const coreTiles = tiles.filter((tile) => tile.gridX >= 0 && tile.gridX < SIZE && tile.gridZ >= 0 && tile.gridZ < SIZE)
   const stores: [StoreState, StoreState] = [
-    { id: 'store-greenway', name: 'Greenway Outfitters', position: { x: -5, y: terrainHeightAt(tiles, -5, -1), z: -1 }, listings: [{ id: 'hat', itemId: 'apprentice_hat', price: 20, stock: 3 }, { id: 'axe', itemId: 'woodcutters_axe', price: 35, stock: 2 }] },
+    { id: 'store-greenway', name: 'Greenway Outfitters', position: { x: -5, y: terrainHeightAt(tiles, -5, -1), z: -1 }, listings: [{ id: 'hat', itemId: 'apprentice_hat', price: 20, stock: 3 }, { id: 'axe', itemId: 'woodcutters_axe', price: 35, stock: 2 }, { id: 'spade', itemId: 'field_spade', price: 18, stock: 3 }] },
     { id: 'store-highland', name: 'Highland Arcanum', position: { x: 8, y: terrainHeightAt(tiles, 8, -6), z: -6 }, listings: [{ id: 'wand', itemId: 'oak_wand', price: 45, stock: 2 }, { id: 'shield', itemId: 'wooden_shield', price: 40, stock: 2 }] },
   ]
   const fairyRings: FairyRing[] = [
     { id: 'ring-greenway', name: 'Greenway Ring', kind: 'mushroom', position: { x: 2, y: terrainHeightAt(tiles, 2, -2), z: -2 } },
     { id: 'ring-highland', name: 'Highland Ring', kind: 'mushroom', position: { x: 8, y: terrainHeightAt(tiles, 8, -10), z: -10 } },
+  ]
+  const inscriptions: WizardWorldState['inscriptions'] = [
+    { id: 'greenway_waystone', name: 'Greenway waystone', position: { x: 3, y: terrainHeightAt(tiles, 3, 3), z: 3 }, spellId: 'wayfinder_glow' },
+  ]
+  const digSites: WizardWorldState['digSites'] = [
+    { id: 'practice_mound', name: 'Practice mound', position: { x: 7, y: terrainHeightAt(tiles, 7, 3), z: 3 }, visibleFromStart: true, minimumExcavationLevel: 1, reward: { itemId: 'stone', quantity: 2 }, xpReward: 30 },
+    { id: 'ridge_cache', name: 'Ridge cache', position: { x: -6, y: terrainHeightAt(tiles, -6, -9), z: -9 }, visibleFromStart: false, minimumExcavationLevel: 2, reward: { itemId: 'ancient_relic', quantity: 1 }, xpReward: 40 },
   ]
   const route = (profile: Omit<RouteProfile, 'from' | 'to'>, from: [number, number], to: [number, number]): RouteProfile => ({
     ...profile,
@@ -117,7 +126,8 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
     route({ id: 'highland_bridge', name: 'Highland bridge', fromAreaId: 'northern_ridge', toAreaId: 'eastern_highland' }, [4, -8], [6, -8]),
   ]
   const player = makePlayer(tiles)
-  const landmarks = [player.position, ...stores.map((store) => store.position), ...fairyRings.map((ring) => ring.position), ...routes.flatMap((entry) => [entry.from, entry.to])]
+  const landmarks = [player.position, ...stores.map((store) => store.position), ...fairyRings.map((ring) => ring.position),
+    ...inscriptions.map((inscription) => inscription.position), ...digSites.map((site) => site.position), ...routes.flatMap((entry) => [entry.from, entry.to])]
   const resources: WizardWorldState['resources'] = []
   const resourcePosition = (tile: WorldTile, preferredX: number, preferredZ: number) => {
     const alternatives = [[1.75, 0], [-1.75, 0], [0, 1.75], [0, -1.75], [1.75, 1.75], [-1.75, 1.75], [1.75, -1.75], [-1.75, -1.75]]
@@ -166,9 +176,9 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
   const discoveredTileIds = coreTiles.filter((tile) => areaAt(areas, tile.center.x, tile.center.z).id === 'greenway').map((tile) => tile.id).sort()
   const generation = hashSeed(`${normalizedSeed}:generation`)
   return {
-    schemaVersion: 'wizard-world/v3', contentRevision: WORLD_CONTENT_REVISION, seed: normalizedSeed, generationProfile, tick: 0, fixedStepMs: 50,
+    schemaVersion: 'wizard-world/v4', contentRevision: WORLD_CONTENT_REVISION, seed: normalizedSeed, generationProfile, tick: 0, fixedStepMs: 50,
     rng: { generation, simulation: hashSeed(`${normalizedSeed}:simulation`) }, tiles, resources, stores,
-    fairyRings, areas, routes, recipes, builtRouteIds: [], unlockedRecipeIds: ['greenway_ladder'],
-    discoveredTileIds, player, eventSequence: 0,
+    fairyRings, inscriptions, digSites, areas, routes, recipes, builtRouteIds: [], unlockedRecipeIds: ['greenway_ladder'],
+    discoveredTileIds, studiedInscriptionIds: [], revealedDigSiteIds: [], excavatedDigSiteIds: [], player, eventSequence: 0,
   }
 }

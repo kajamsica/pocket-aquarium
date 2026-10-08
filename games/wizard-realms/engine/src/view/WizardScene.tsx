@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import type { WizardFairyRing, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
+import type { WizardDigSite, WizardFairyRing, WizardInscription, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -218,7 +218,7 @@ type AvatarEquipment = WizardViewProjection['equipment']
 /** Pure mapping from authoritative equipment to the gear the avatar shows. Unknown or empty slots render nothing. */
 export function avatarGearFor(equipment: AvatarEquipment) {
   const id = (slot: keyof AvatarEquipment) => equipment[slot]?.itemId ?? null
-  const mainHand = id('mainHand') === 'woodcutters_axe' ? 'axe' : id('mainHand') === 'oak_wand' ? 'wand' : null
+  const mainHand = id('mainHand') === 'woodcutters_axe' ? 'axe' : id('mainHand') === 'field_spade' ? 'spade' : id('mainHand') === 'oak_wand' ? 'wand' : null
   const offHand = id('offHand') === 'wooden_shield' ? 'shield' : id('offHand') === 'oak_wand' ? 'wand' : null
   return {
     hat: id('head') === 'apprentice_hat',
@@ -246,6 +246,13 @@ function Axe() {
     <mesh position={[0, 0.2, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.03, 0.04, 1.1, 6]} /></mesh>
     <mesh geometry={UNIT_BOX} material={AXE_HEAD_MATERIAL} position={[0.13, 0.66, 0]} scale={[0.3, 0.2, 0.06]} castShadow />
     <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.66, 0.03]} scale={[0.07, 0.1, 0.08]} />
+  </group>
+}
+
+function Spade() {
+  return <group position={[0.2, -0.38, 0.02]} rotation={[0.08, 0, 0.08]}>
+    <mesh position={[0, 0.24, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.04, 1.1, 6]} /></mesh>
+    <mesh geometry={UNIT_BOX} material={AXE_HEAD_MATERIAL} position={[0, -0.47, 0]} scale={[0.28, 0.42, 0.07]} castShadow />
   </group>
 }
 
@@ -307,6 +314,7 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
         <group ref={rightArm} position={[0.3, 1.4, 0]}>
           <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, -0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh>
           {gear.mainHand === 'axe' && <Axe />}
+          {gear.mainHand === 'spade' && <Spade />}
           {gear.mainHand === 'wand' && <Wand side={1} light />}
         </group>
       </group>
@@ -474,6 +482,37 @@ function FairyRing({ ring }: { ring: WizardFairyRing }) {
   )
 }
 
+function Waystone({ inscription }: { inscription: WizardInscription }) {
+  return <group name={`Waystone: ${inscription.name}`} position={inscription.position as [number, number, number]}>
+    <mesh geometry={ROCK_GEOMETRY} position={[0, 1.05, 0]} rotation={[0.08, 0.3, -0.09]} scale={[0.55, 1.05, 0.42]} castShadow>
+      <meshStandardMaterial color="#796e91" roughness={0.83} flatShading />
+    </mesh>
+    <mesh geometry={CRYSTAL_GEOMETRY} position={[0, 1.35, 0.4]} scale={[0.2, 0.38, 0.08]}>
+      <meshStandardMaterial color="#bd9cff" emissive="#9b6fff" emissiveIntensity={inscription.studied ? 1.2 : 2.2} roughness={0.3} />
+    </mesh>
+    <mesh geometry={ROCK_GEOMETRY} position={[0, 0.1, 0]} scale={[0.9, 0.25, 0.8]} receiveShadow><meshStandardMaterial color="#5d566e" roughness={0.95} flatShading /></mesh>
+  </group>
+}
+
+export function digSiteAppearance(site: WizardDigSite): 'hidden' | 'mound' | 'dug' {
+  return site.excavated ? 'dug' : site.revealed ? 'mound' : 'hidden'
+}
+
+function DigSite({ site }: { site: WizardDigSite }) {
+  const appearance = digSiteAppearance(site)
+  if (appearance === 'hidden') return null
+  return <group name={`Dig site: ${site.name} (${appearance})`} position={site.position as [number, number, number]}>
+    {appearance === 'dug' ? <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, 0]} receiveShadow><circleGeometry args={[0.7, 16]} /><meshStandardMaterial color="#352c23" roughness={1} /></mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}><torusGeometry args={[0.83, 0.15, 6, 16]} /><meshStandardMaterial color="#84684a" roughness={1} flatShading /></mesh>
+      {[-1, 1].map((side) => <mesh key={side} geometry={ROCK_GEOMETRY} position={[side * 0.78, 0.14, 0.2]} scale={[0.32, 0.18, 0.3]} castShadow><meshStandardMaterial color="#8c7151" roughness={1} flatShading /></mesh>)}
+    </> : <>
+      <mesh position={[0, 0.1, 0]} scale={[1, 0.28, 0.75]} castShadow receiveShadow><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color="#8b7558" roughness={1} flatShading /></mesh>
+      <mesh geometry={CRYSTAL_GEOMETRY} position={[0, 0.5, 0]} scale={[0.16, 0.28, 0.16]}><meshStandardMaterial color="#d9bd7a" emissive="#a27c38" emissiveIntensity={0.5} roughness={0.55} /></mesh>
+    </>}
+  </group>
+}
+
 function ConstructionRoute({ route }: { route: WizardRoute }) {
   const from = new THREE.Vector3(...route.from)
   const to = new THREE.Vector3(...route.to)
@@ -559,6 +598,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
+      {projection.inscriptions.map((inscription) => <Waystone key={inscription.id} inscription={inscription} />)}
+      {projection.digSites.map((site) => <DigSite key={site.id} site={site} />)}
       {projection.routes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
       <WizardAvatar pose={pose} equipment={projection.equipment} />
     </Canvas>

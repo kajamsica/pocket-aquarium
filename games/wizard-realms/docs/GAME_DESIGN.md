@@ -260,7 +260,7 @@ Controller and touch support are intentions only until real-device journeys pass
 
 ### MVP vertical slice
 
-This is an early systems milestone, not the full-game completion condition. The current browser build implements a subset of this planned scope, as described in the [README](../README.md). The milestone includes:
+This is an early systems milestone, not the full-game completion condition. The current v4 Greenway build lets the player study a waystone to learn Wayfinder Glow, reveal nearby terrain and a hidden cache, gain woodcutting, construction, wayfinding, spellcraft, and excavation XP, excavate spade- and skill-gated sites, and return to sell a relic at a shop. A first live UI journey through this flow passed. Its construction routes still have fixed endpoints, and the 16 by 16 profile is only a roughly 64 m preview. The planned milestone also includes:
 
 - one deterministic seed and one validated woodland region with a neighboring subregion;
 - third-person movement, pivot, jump, camera orbit, collision, interaction focus, and pause;
@@ -278,7 +278,7 @@ MVP excludes multiplayer, persistent remote realms, player combat, deep questing
 
 ### First expanded-region milestone
 
-The next playable milestone must provide one distinctive region large enough for an expedition beyond the current route demonstration. A player can discover and map its locations, use an exploration spell to reveal or interact with something in the world, see equipped gear change the character, gather materials and build a ladder or bridge at a valid player-selected site, and excavate a dig site only with the required tool and skill. The excavation and constructed route persist across save and reload. The player can return to a settlement and sell or list the expedition's finds. This complete outward-and-return journey is the milestone's acceptance proof, not the full-game finish.
+The next playable milestone must extend this foundation into one distinctive region large enough for an expedition beyond the current route demonstration. A player can discover and map its locations, use an exploration spell to reveal or interact with something in the world, see equipped gear change the character, gather materials and build a ladder or bridge at a valid player-selected site, and excavate a dig site only with the required tool and skill. The excavation and constructed route persist across save and reload. The player can return to a settlement and sell or list the expedition's finds. This complete outward-and-return journey is the milestone's acceptance proof, not the full-game finish.
 
 ### Full single-player game
 

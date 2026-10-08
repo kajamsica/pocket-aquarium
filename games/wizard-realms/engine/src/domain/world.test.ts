@@ -15,6 +15,8 @@ function expectResourceClearance(state: WizardWorldState) {
     { id: 'spawn', position: state.player.position },
     ...state.stores.map(({ id, position }) => ({ id, position })),
     ...state.fairyRings.map(({ id, position }) => ({ id, position })),
+    ...state.inscriptions.map(({ id, position }) => ({ id, position })),
+    ...state.digSites.map(({ id, position }) => ({ id, position })),
     ...state.routes.flatMap((route) => [
       { id: `${route.id}:from`, position: route.from }, { id: `${route.id}:to`, position: route.to },
     ]),
@@ -74,7 +76,7 @@ describe('Wizard world domain', () => {
         state = harvest.state
       }
     }
-    expect(state.player.inventory.find((stack) => stack.itemId === 'logs')?.quantity).toBeGreaterThanOrEqual(10)
+    expect(state.player.inventory.find((stack) => stack.itemId === 'logs')?.quantity).toBeGreaterThanOrEqual(16)
   })
 
   it('harvests an in-range tree and rejects invalid harvest without mutation', () => {
@@ -86,8 +88,10 @@ describe('Wizard world domain', () => {
     expect(firstHit.events[0]?.type).toBe('resource_damaged')
     const harvested = advanceWizardWorld(firstHit.state, [{ type: 'harvest', resourceId: tree.id }])
     expect(harvested.events[0]?.type).toBe('resource_harvested')
-    expect(harvested.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 3 })
+    expect(harvested.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 4 })
     expect(harvested.state.player.xp).toBe(20)
+    expect(harvested.state.player.skillXp.woodcutting).toBe(20)
+    expect(harvested.events.map((entry) => entry.type)).toEqual(['resource_harvested', 'skill_xp_gained'])
 
     const invalid = createWizardWorld('greenway-alpha')
     const before = serializeWizardWorld(invalid)
@@ -198,6 +202,8 @@ describe('Wizard world domain', () => {
     { storeId: 'store-highland', itemId: 'marsh_herb', unitPrice: 5 },
     { storeId: 'store-highland', itemId: 'stone', unitPrice: 3 },
     { storeId: 'store-highland', itemId: 'iron_ore', unitPrice: 7 },
+    { storeId: 'store-greenway', itemId: 'ancient_relic', unitPrice: 25 },
+    { storeId: 'store-highland', itemId: 'ancient_relic', unitPrice: 50 },
   ] as const)('sells $itemId to $storeId for $unitPrice coins each', ({ storeId, itemId, unitPrice }) => {
     const state = createWizardWorld('regional-sale')
     const store = state.stores.find((candidate) => candidate.id === storeId)!
@@ -294,11 +300,183 @@ describe('Wizard world domain', () => {
     expect(advanceWizardWorld(state, [intent])).toEqual(first)
     expect(serializeWizardWorld(state)).toBe(before)
     const restored = restoreWizardWorld(serializeWizardWorld(first.state))
-    expect(restored.schemaVersion).toBe('wizard-world/v3')
+    expect(restored.schemaVersion).toBe('wizard-world/v4')
     expect(restored.player.inventory).toEqual(first.state.player.inventory)
     expect(restored.player.coins).toBe(first.state.player.coins)
     const second = { ...intent, quantity: 3 }
     expect(advanceWizardWorld(restored, [second])).toEqual(advanceWizardWorld(first.state, [second]))
+  })
+
+  it('learns wayfinder glow from the waystone and cannot farm a no-reveal cast', () => {
+    const state = createWizardWorld('first-region-magic')
+    const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
+    expect(waystone.position).toMatchObject({ x: 3, z: 3 })
+    expect(state.player.learnedSpellIds).toEqual([])
+    expect(advanceWizardWorld(state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }]).rejections[0]?.code).toBe('unlearned_spell')
+    expect(advanceWizardWorld(state, [{ type: 'study_inscription', inscriptionId: waystone.id }]).rejections[0]?.code).toBe('too_far')
+
+    state.player.position = { ...waystone.position }
+    const learned = advanceWizardWorld(state, [{ type: 'study_inscription', inscriptionId: waystone.id }])
+    expect(learned.rejections).toEqual([])
+    expect(learned.events).toEqual([{ type: 'inscription_studied', inscriptionId: waystone.id, spellId: 'wayfinder_glow', sequence: 1, tick: 1 }])
+    expect(learned.state.studiedInscriptionIds).toEqual([waystone.id])
+    expect(learned.state.player.learnedSpellIds).toEqual(['wayfinder_glow'])
+    expect(learned.state.player.skillXp.spellcraft).toBe(0)
+    expect(advanceWizardWorld(learned.state, [{ type: 'study_inscription', inscriptionId: waystone.id }]).rejections[0]?.code).toBe('already_studied')
+
+    const cast = advanceWizardWorld(learned.state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+    expect(cast.events).toEqual([{ type: 'spell_cast', spellId: 'wayfinder_glow', revealedTileIds: [], revealedDigSiteIds: [], sequence: 2, tick: 2 }])
+    expect(cast.state.player.skillXp).toEqual(learned.state.player.skillXp)
+    const repeated = advanceWizardWorld(cast.state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+    expect(repeated.events.map((entry) => entry.type)).toEqual(['spell_cast'])
+    expect(repeated.state.player.skillXp).toEqual(cast.state.player.skillXp)
+  })
+
+  it('reveals ridge content from the Greenway north edge once, then replays it after restore', () => {
+    const state = createWizardWorld('first-region-magic')
+    state.player.learnedSpellIds.push('wayfinder_glow')
+    state.player.position = { x: -6, y: terrainHeightAt(state.tiles, -6, -4), z: -4 }
+    const before = serializeWizardWorld(state)
+    const cast = advanceWizardWorld(state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+    const spellEvent = cast.events[0] as Extract<WizardEvent, { type: 'spell_cast' }>
+    expect(cast.rejections).toEqual([])
+    expect(spellEvent.revealedDigSiteIds).toEqual(['ridge_cache'])
+    expect(spellEvent.revealedTileIds.length).toBeGreaterThan(0)
+    expect(spellEvent.revealedTileIds.every((id) => !state.discoveredTileIds.includes(id))).toBe(true)
+    expect(spellEvent.revealedTileIds.every((id) => {
+      const tile = state.tiles.find((candidate) => candidate.id === id)!
+      return Math.hypot(tile.center.x + 6, tile.center.z + 4) <= 8
+    })).toBe(true)
+    expect(cast.state.revealedDigSiteIds).toContain('ridge_cache')
+    expect(cast.events.filter((entry) => entry.type === 'tile_discovered')).toHaveLength(spellEvent.revealedTileIds.length)
+    const xp = (spellEvent.revealedTileIds.length + spellEvent.revealedDigSiteIds.length) * 10
+    expect(cast.state.player.skillXp).toMatchObject({ spellcraft: xp, wayfinding: xp })
+    expect(cast.events.filter((entry) => entry.type === 'skill_xp_gained')).toMatchObject([
+      { skillId: 'spellcraft', xp }, { skillId: 'wayfinding', xp },
+    ])
+    expect(serializeWizardWorld(state)).toBe(before)
+
+    const again = advanceWizardWorld(cast.state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+    expect(again.events.map((entry) => entry.type)).toEqual(['spell_cast'])
+    expect(again.state.player.skillXp).toEqual(cast.state.player.skillXp)
+    const restored = restoreWizardWorld(serializeWizardWorld(cast.state))
+    expect(restored.revealedDigSiteIds).toEqual(cast.state.revealedDigSiteIds)
+    expect(restored.player.skillXp).toEqual(cast.state.player.skillXp)
+    expect(advanceWizardWorld(restored, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])).toEqual(again)
+  })
+
+  it('excavates practice then ridge, funds the ladder with one tree, and sells the relic after returning', () => {
+    let state = createWizardWorld('first-region-journey')
+    const waystone = state.inscriptions[0]
+    const practice = state.digSites.find((site) => site.id === 'practice_mound')!
+    const ridge = state.digSites.find((site) => site.id === 'ridge_cache')!
+    const store = state.stores[0]
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    const tree = state.resources.find((resource) => resource.id === 'greenway-journey-tree-0')!
+
+    state.player.position = { ...waystone.position }
+    state = advanceWizardWorld(state, [{ type: 'study_inscription', inscriptionId: waystone.id }]).state
+    state.player.position = { ...store.position }
+    const bought = advanceWizardWorld(state, [{ type: 'buy_store_listing', storeId: store.id, listingId: 'spade' }])
+    expect(bought.rejections).toEqual([])
+    state = advanceWizardWorld(bought.state, [{ type: 'equip_item', itemId: 'field_spade', slot: 'mainHand' }]).state
+    state.player.position = { ...practice.position }
+    const dugPractice = advanceWizardWorld(state, [{ type: 'dig_site', digSiteId: practice.id }])
+    expect(dugPractice.rejections).toEqual([])
+    expect(dugPractice.events.map((entry) => entry.type)).toEqual(['dig_site_excavated', 'skill_xp_gained'])
+    expect(dugPractice.state.player.skillXp.excavation).toBe(30)
+    expect(dugPractice.state.player.inventory).toContainEqual({ itemId: 'stone', quantity: 2 })
+    state = dugPractice.state
+
+    state.player.position = { ...tree.position }
+    state = advanceWizardWorld(state, [{ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' }]).state
+    state = advanceWizardWorld(state, [{ type: 'harvest', resourceId: tree.id }]).state
+    const harvested = advanceWizardWorld(state, [{ type: 'harvest', resourceId: tree.id }])
+    expect(harvested.rejections).toEqual([])
+    expect(harvested.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 4 })
+    expect(harvested.state.player.skillXp.woodcutting).toBe(20)
+    state = harvested.state
+    state.player.position = { ...ladder.from }
+    const built = advanceWizardWorld(state, [{ type: 'build_route', routeId: ladder.id }])
+    expect(built.rejections).toEqual([])
+    expect(built.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
+    expect(built.state.player.skillXp.construction).toBe(60)
+    const crossed = advanceWizardWorld(built.state, [{ type: 'traverse_route', routeId: ladder.id }])
+    expect(crossed.state.player.position).toEqual(ladder.to)
+    const revealed = advanceWizardWorld(crossed.state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+    expect(revealed.state.revealedDigSiteIds).toContain(ridge.id)
+    state = advanceWizardWorld(revealed.state, [
+      { type: 'move', delta: { x: -4, y: 0, z: 0 } },
+      { type: 'move', delta: { x: -2, y: 0, z: -1 } },
+    ]).state
+    state = advanceWizardWorld(state, [{ type: 'equip_item', itemId: 'field_spade', slot: 'mainHand' }]).state
+    const dugRidge = advanceWizardWorld(state, [{ type: 'dig_site', digSiteId: ridge.id }])
+    expect(dugRidge.rejections).toEqual([])
+    expect(dugRidge.state.player.skillXp.excavation).toBe(70)
+    expect(dugRidge.state.player.inventory).toContainEqual({ itemId: 'ancient_relic', quantity: 1 })
+    expect(dugRidge.state.excavatedDigSiteIds).toEqual([practice.id, ridge.id])
+
+    state = advanceWizardWorld(dugRidge.state, [
+      { type: 'move', delta: { x: 4, y: 0, z: 0 } },
+      { type: 'move', delta: { x: 2, y: 0, z: 1 } },
+    ]).state
+    state = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }]).state
+    state = advanceWizardWorld(state, [
+      { type: 'move', delta: { x: -4, y: 0, z: 0 } },
+      { type: 'move', delta: { x: 0, y: 0, z: 1 } },
+    ]).state
+    const sold = advanceWizardWorld(state, [{ type: 'sell_to_store', storeId: store.id, itemId: 'ancient_relic', quantity: 1 }])
+    expect(sold.rejections).toEqual([])
+    expect(sold.events[0]).toMatchObject({ type: 'store_item_sold', itemId: 'ancient_relic', unitPrice: 25, totalPrice: 25 })
+    expect(sold.state.player.coins).toBe(127)
+    expect(sold.state.player.inventory.some((stack) => stack.itemId === 'ancient_relic')).toBe(false)
+    const restored = restoreWizardWorld(serializeWizardWorld(sold.state))
+    expect(restored.player.skillXp).toEqual(sold.state.player.skillXp)
+    expect(restored.player.learnedSpellIds).toEqual(['wayfinder_glow'])
+    expect(restored.excavatedDigSiteIds).toEqual([practice.id, ridge.id])
+    expect(restored.builtRouteIds).toContain(ladder.id)
+    expect(advanceWizardWorld(restored, [])).toEqual(advanceWizardWorld(sold.state, []))
+  })
+
+  it('rejects hidden, distant, unequipped, locked, full-pack, incompatible, and completed digs atomically', () => {
+    const state = createWizardWorld('first-region-rejections')
+    const practice = state.digSites.find((site) => site.id === 'practice_mound')!
+    const ridge = state.digSites.find((site) => site.id === 'ridge_cache')!
+    state.player.position = { ...practice.position }
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    state.player.equipment.mainHand = 'field_spade'
+    const reject = (source: WizardWorldState, digSiteId: typeof practice.id, code: string) => {
+      const before = serializeWizardWorld(source)
+      const result = advanceWizardWorld(source, [{ type: 'dig_site', digSiteId }])
+      expect(result.rejections[0]?.code).toBe(code)
+      expect(result.events).toEqual([])
+      expect(result.state.player).toEqual(source.player)
+      expect(result.state.excavatedDigSiteIds).toEqual(source.excavatedDigSiteIds)
+      expect(serializeWizardWorld(source)).toBe(before)
+    }
+    reject(state, ridge.id, 'site_hidden')
+    const far = copy(state)
+    far.player.position = { x: 0, y: terrainHeightAt(far.tiles, 0, 0), z: 0 }
+    reject(far, practice.id, 'too_far')
+    const unequipped = copy(state)
+    unequipped.player.equipment.mainHand = null
+    reject(unequipped, practice.id, 'requires_spade')
+    const unowned = copy(state)
+    unowned.player.inventory = unowned.player.inventory.filter((stack) => stack.itemId !== 'field_spade')
+    reject(unowned, practice.id, 'requires_spade')
+    const locked = copy(state)
+    locked.revealedDigSiteIds.push(ridge.id)
+    locked.player.position = { ...ridge.position }
+    reject(locked, ridge.id, 'skill_locked')
+    const full = copy(state)
+    full.player.inventory.push({ itemId: 'logs', quantity: 18 })
+    reject(full, practice.id, 'capacity')
+    const wet = copy(state)
+    wet.tiles.find((tile) => tile.id === 'tile-5-4')!.terrain = 'wetland'
+    reject(wet, practice.id, 'incompatible_ground')
+    const completed = copy(state)
+    completed.excavatedDigSiteIds.push(practice.id)
+    reject(completed, practice.id, 'already_excavated')
   })
 
   it('stops at a store wall and preserves legal diagonal sliding without rejections', () => {
@@ -482,7 +660,8 @@ describe('Wizard world domain', () => {
     expect(builtLadder.state.player.level).toBe(2)
     expect(builtLadder.state.builtRouteIds).toEqual(['greenway_ladder'])
     expect(builtLadder.state.unlockedRecipeIds).toEqual(['greenway_ladder', 'highland_bridge'])
-    expect(builtLadder.events.map((entry) => entry.type)).toEqual(['route_built', 'recipe_unlocked'])
+    expect(builtLadder.events.map((entry) => entry.type)).toEqual(['route_built', 'skill_xp_gained', 'recipe_unlocked'])
+    expect(builtLadder.state.player.skillXp.construction).toBe(60)
 
     const crossedLadder = advanceWizardWorld(builtLadder.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
     expect(crossedLadder.state.player.position).toEqual(ladder.to)
@@ -671,6 +850,7 @@ describe('Wizard world domain', () => {
     const legacy = JSON.parse(serializeWizardWorld(source)) as unknown as Record<string, unknown>
     legacy.schemaVersion = 'wizard-world/v1'
     legacy.resources = source.resources.filter((resource) => !resource.id.startsWith('greenway-journey-tree-'))
+    legacy.stores = source.stores.map((store) => ({ ...store, listings: store.listings.filter((listing) => listing.id !== 'spade') }))
     delete legacy.contentRevision
     delete legacy.generationProfile
     delete legacy.areas
@@ -682,8 +862,8 @@ describe('Wizard world domain', () => {
     delete (legacy.player as Record<string, unknown>).verticalVelocity
     expect(isRestorableWizardSave(JSON.stringify(legacy), 'greenway-classic-v1')).toBe(true)
     const migrated = restoreWizardWorld(JSON.stringify(legacy))
-    expect(migrated.schemaVersion).toBe('wizard-world/v3')
-    expect(migrated.contentRevision).toBe('greenway-region-v1')
+    expect(migrated.schemaVersion).toBe('wizard-world/v4')
+    expect(migrated.contentRevision).toBe('greenway-region-v2')
     expect(migrated.seed).toBe(source.seed)
     expect(migrated.generationProfile).toBe('greenway-classic-v1')
     expect(migrated.tick).toBe(11)

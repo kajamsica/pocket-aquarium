@@ -23,7 +23,7 @@ The first authority runs locally. Later authorities may run on servers. The boun
 
 ### Local authority today
 
-The current local foundation owns its 50 ms clock, tick ordering, seeded randomness, player movement and jump state, resource nodes, two shops, interactions, inventory, coins, XP, equipment, discoveries, fairy-ring travel, four trade slots, saves, events, and projections. The browser defaults to the original seven-by-seven terrain; domain generation also supports an opt-in 16 by 16 profile that preserves the original core. Neither profile is a finished region or game. Weather, creatures, regional chunks, remote services, request IDs, revision pins, authority epochs, state digests, and a durable event log are not yet implemented.
+The current v4 local foundation owns its 50 ms clock, tick ordering, seeded randomness, player movement and jump state, resource nodes, two shops with direct sales, interactions, inventory, coins, five skill XP tracks, equipment, waystone study, Wayfinder Glow discovery, gated dig sites, fairy-ring travel, four trade slots, saves, events, and projections. The browser defaults to the original seven-by-seven terrain; domain generation also supports an opt-in 16 by 16 profile that preserves the original core. Neither profile is a finished region or game. Flexible player-selected construction, weather, creatures, regional chunks, remote services, request IDs, authority epochs, state digests, and a durable event log are not yet implemented.
 
 Weather, creatures, chunk streaming, and every networked authority named later in this document are future milestones. Their descriptions are requirements for those milestones, not claims about the current package.
 
@@ -55,9 +55,9 @@ Render cadence never changes causal steps.
 
 ## Intents, events, and projections
 
-Representative intents include move, interact, gather, use tool, buy, sell, create or cancel listing, equip, select fairy-ring destination, and recover field pack.
+Representative intents include move, gather, build or traverse a fixed route, buy, sell, create or cancel a listing, equip, study the waystone, cast Wayfinder Glow, excavate a dig site, and select a discovered fairy-ring destination. Field-pack recovery is a future intent.
 
-Representative committed events include player moved, resource harvested, tool durability changed, item transferred, coins changed, XP granted, listing created or settled, location discovered, fairy-ring travel committed, player died, and recovery pack created.
+Current committed events include movement, resource harvest, fixed-route construction and traversal, tile and fairy-ring discovery, waystone study, spell casting, excavation, skill XP, equipment changes, store purchases and sales, trade-listing creation and cancellation, and fairy-ring travel. Tool durability, listing settlement, death, and recovery packs remain future events.
 
 Today, every rejection has a typed reason and every projection carries the local tick. Projection objects are detached from authoritative state. World revision, content revision, generator version, authority epoch, and digest fields are future protocol requirements.
 
@@ -106,7 +106,7 @@ State records what an instance is doing now, such as tree progress, vendor stock
 
 ## Current save and future migration schema
 
-The current `wizard-world/v3` save pins `greenway-region-v1` content and contains the local world state, seed, generation profile, tick, simulation RNG, event sequence, built routes, unlocked route recipes, and discovered map tiles. Valid v1/v2 saves migrate into a new v3 storage key while their original bytes remain untouched; profile-less legacy saves restore as the original seven-by-seven world. Unknown schemas, profiles, and content revisions fail closed before autosave. Structural validation precedes restore, but nested values are still sanitized, not fully audited. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
+The current `wizard-world/v4` save pins `greenway-region-v2` content and contains the local world state, seed, generation profile, tick, simulation RNG, event sequence, built routes, discovered tiles, learned spells, skill XP, waystone study, and dig-site reveal and excavation state. Valid v1/v2/v3 saves restore into v4 state and are written to a new v4 storage key on save while source bytes remain untouched; profile-less v1/v2 saves restore as the original seven-by-seven world. Unknown schemas, profiles, and content revisions fail closed before autosave. Structural validation precedes restore, but nested values are still sanitized, not fully audited. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
 
 ```text
 schemaVersion, saveSequence, worldId, worldSeed

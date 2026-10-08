@@ -1,5 +1,5 @@
 import type {
-  AreaId, EquipmentSlot, GenerationProfile, IntentRejection, ItemId, PlayerState, ResourceKind, Vec3, WizardAdvanceResult,
+  AreaId, EquipmentSlot, GenerationProfile, IntentRejection, ItemId, PlayerState, ResourceKind, SkillId, Vec3, WizardAdvanceResult,
   WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
 import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
@@ -7,15 +7,15 @@ import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terra
 const INTERACT_DISTANCE = 3
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
 const storeSellPrices: Record<string, Partial<Record<ItemId, number>>> = {
-  'store-greenway': { logs: 2, marsh_herb: 3, stone: 1, iron_ore: 4 },
-  'store-highland': { logs: 1, marsh_herb: 5, stone: 3, iron_ore: 7 },
+  'store-greenway': { logs: 2, marsh_herb: 3, stone: 1, iron_ore: 4, ancient_relic: 25 },
+  'store-highland': { logs: 1, marsh_herb: 5, stone: 3, iron_ore: 7, ancient_relic: 50 },
 }
 export function storeSellUnitPrice(storeId: string, itemId: ItemId): number | null {
   const price = storeSellPrices[storeId]?.[itemId]
   return typeof price === 'number' ? price : null
 }
 const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
-  woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
+  woodcutters_axe: ['mainHand'], field_spade: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
 }
 const equipmentSlots: readonly EquipmentSlot[] = ['head', 'chest', 'legs', 'feet', 'mainHand', 'offHand']
@@ -118,6 +118,11 @@ function event(state: WizardWorldState, tick: number, body: WizardEventBody): Wi
   return { ...body, sequence: state.eventSequence, tick } as WizardEvent
 }
 
+function gainSkillXp(state: WizardWorldState, tick: number, skillId: SkillId, xp: number): WizardEvent {
+  state.player.skillXp[skillId] += xp
+  return event(state, tick, { type: 'skill_xp_gained', skillId, xp })
+}
+
 function discoverTile(state: WizardWorldState, position: Vec3, areaId: AreaId, tick: number): WizardEvent | undefined {
   const tile = tileAt(state, position, areaId)
   if (!tile || state.discoveredTileIds.includes(tile.id)) return undefined
@@ -214,7 +219,10 @@ function applyIntent(
     state.builtRouteIds.sort()
     state.player.xp += recipe.xpReward
     state.player.level = levelForXp(state.player.xp)
-    return { state, events: [event(state, tick, { type: 'route_built', routeId: route.id, logCost: recipe.logCost, xp: recipe.xpReward })] }
+    return { state, events: [
+      event(state, tick, { type: 'route_built', routeId: route.id, logCost: recipe.logCost, xp: recipe.xpReward }),
+      gainSkillXp(state, tick, 'construction', recipe.xpReward),
+    ] }
   }
 
   if (intent.type === 'traverse_route') {
@@ -241,7 +249,7 @@ function applyIntent(
     if (resource.depleted) return fail('depleted', 'Resource is depleted.')
     if (distance(current.player.position, resource.position) > INTERACT_DISTANCE) return fail('too_far', 'Resource is out of reach.')
     if (current.player.equipment.mainHand !== 'woodcutters_axe' || resource.kind !== 'tree') return fail('requires_axe', 'A tree requires an equipped woodcutter axe.')
-    const yieldQuantity = 3
+    const yieldQuantity = 4
     if (resource.health <= 1 && inventoryCount(current.player) + reservedCount(current.player) + yieldQuantity > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the harvested logs.')
     const state = cloneState(current)
     const target = state.resources.find((candidate) => candidate.id === intent.resourceId)!
@@ -252,7 +260,10 @@ function applyIntent(
     addItem(state.player, itemForResource[target.kind], yieldQuantity)
     state.player.xp += 20
     state.player.level = levelForXp(state.player.xp)
-    return { state, events: [event(state, tick, { type: 'resource_harvested', resourceId: target.id, itemId: 'logs', quantity: yieldQuantity, xp: 20 })] }
+    return { state, events: [
+      event(state, tick, { type: 'resource_harvested', resourceId: target.id, itemId: 'logs', quantity: yieldQuantity, xp: 20 }),
+      gainSkillXp(state, tick, 'woodcutting', 20),
+    ] }
   }
 
   if (intent.type === 'discover_fairy_ring') {
@@ -343,13 +354,76 @@ function applyIntent(
     return { state, events: [event(state, tick, { type: 'trade_listing_created', slotIndex: intent.slotIndex, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice })] }
   }
 
-  if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3) return fail('invalid_value', 'Trade slot must be between zero and three.')
-  const slot = current.player.tradeSlots[intent.slotIndex]
-  if (slot.itemId === null) return fail('trade_slot_unavailable', 'Trade slot is already empty.')
-  const state = cloneState(current)
-  state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: null, quantity: 0, unitPrice: 0 }
-  if (!addItem(state.player, slot.itemId, slot.quantity)) return fail('capacity', 'Backpack cannot accept the escrowed item.')
-  return { state, events: [event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity })] }
+  if (intent.type === 'cancel_trade_listing') {
+    if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3) return fail('invalid_value', 'Trade slot must be between zero and three.')
+    const slot = current.player.tradeSlots[intent.slotIndex]
+    if (slot.itemId === null) return fail('trade_slot_unavailable', 'Trade slot is already empty.')
+    const state = cloneState(current)
+    state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: null, quantity: 0, unitPrice: 0 }
+    if (!addItem(state.player, slot.itemId, slot.quantity)) return fail('capacity', 'Backpack cannot accept the escrowed item.')
+    return { state, events: [event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity })] }
+  }
+
+  if (intent.type === 'study_inscription') {
+    const inscription = current.inscriptions.find((candidate) => candidate.id === intent.inscriptionId)
+    if (!inscription) return fail('not_found', 'Inscription does not exist.')
+    if (current.studiedInscriptionIds.includes(inscription.id)) return fail('already_studied', 'Inscription was already studied.')
+    if (distance(current.player.position, inscription.position) > INTERACT_DISTANCE) return fail('too_far', 'Inscription is out of reach.')
+    const state = cloneState(current)
+    state.studiedInscriptionIds.push(inscription.id)
+    state.studiedInscriptionIds.sort()
+    if (!state.player.learnedSpellIds.includes(inscription.spellId)) state.player.learnedSpellIds.push(inscription.spellId)
+    state.player.learnedSpellIds.sort()
+    return { state, events: [event(state, tick, { type: 'inscription_studied', inscriptionId: inscription.id, spellId: inscription.spellId })] }
+  }
+
+  if (intent.type === 'cast_spell') {
+    if (!current.player.learnedSpellIds.includes(intent.spellId)) return fail('unlearned_spell', 'Study the waystone before casting this spell.')
+    const revealedTileIds = current.tiles.filter((tile) =>
+      !current.discoveredTileIds.includes(tile.id)
+      && Math.hypot(tile.center.x - current.player.position.x, tile.center.z - current.player.position.z) <= 8,
+    ).map((tile) => tile.id).sort()
+    const revealedDigSiteIds = current.digSites.filter((site) =>
+      !site.visibleFromStart && !current.revealedDigSiteIds.includes(site.id)
+      && Math.hypot(site.position.x - current.player.position.x, site.position.z - current.player.position.z) <= 8,
+    ).map((site) => site.id).sort()
+    const state = cloneState(current)
+    state.discoveredTileIds.push(...revealedTileIds)
+    state.discoveredTileIds.sort()
+    state.revealedDigSiteIds.push(...revealedDigSiteIds)
+    state.revealedDigSiteIds.sort()
+    const events = [event(state, tick, { type: 'spell_cast', spellId: intent.spellId, revealedTileIds, revealedDigSiteIds })]
+    for (const tileId of revealedTileIds) events.push(event(state, tick, { type: 'tile_discovered', tileId }))
+    const newlyRevealed = revealedTileIds.length + revealedDigSiteIds.length
+    if (newlyRevealed > 0) {
+      events.push(gainSkillXp(state, tick, 'spellcraft', newlyRevealed * 10))
+      events.push(gainSkillXp(state, tick, 'wayfinding', newlyRevealed * 10))
+    }
+    return { state, events }
+  }
+
+  if (intent.type === 'dig_site') {
+    const site = current.digSites.find((candidate) => candidate.id === intent.digSiteId)
+    if (!site) return fail('not_found', 'Dig site does not exist.')
+    if (current.excavatedDigSiteIds.includes(site.id)) return fail('already_excavated', 'This site has already been excavated.')
+    if (!site.visibleFromStart && !current.revealedDigSiteIds.includes(site.id)) return fail('site_hidden', 'Reveal this dig site before excavating it.')
+    if (distance(current.player.position, site.position) > INTERACT_DISTANCE) return fail('too_far', 'Dig site is out of reach.')
+    if (current.player.equipment.mainHand !== 'field_spade' || owns(current.player, 'field_spade') < 1) return fail('requires_spade', 'Equip an owned field spade to excavate.')
+    if (1 + Math.floor(current.player.skillXp.excavation / 30) < site.minimumExcavationLevel) return fail('skill_locked', 'Excavation skill is too low for this site.')
+    const groundTile = tileAt(current, site.position, areaAt(current.areas, site.position.x, site.position.z).id)
+    if (!groundTile || groundTile.terrain === 'wetland') return fail('incompatible_ground', 'This ground cannot be excavated.')
+    if (inventoryCount(current.player) + reservedCount(current.player) + site.reward.quantity > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the excavation reward.')
+    const state = cloneState(current)
+    addItem(state.player, site.reward.itemId, site.reward.quantity)
+    state.excavatedDigSiteIds.push(site.id)
+    state.excavatedDigSiteIds.sort()
+    return { state, events: [
+      event(state, tick, { type: 'dig_site_excavated', digSiteId: site.id, itemId: site.reward.itemId, quantity: site.reward.quantity, xp: site.xpReward }),
+      gainSkillXp(state, tick, 'excavation', site.xpReward),
+    ] }
+  }
+
+  return fail('invalid_value', 'Unknown intent.')
 }
 
 export function createWizardWorld(seed: string, profile?: GenerationProfile): WizardWorldState { return createGeneratedWorld(seed, profile) }
@@ -400,8 +474,13 @@ export function createWizardProjection(state: WizardWorldState): WizardProjectio
     nearbyFairyRings: nearby(state.fairyRings).map((ring) => ({ ...ring, discovered: state.player.discoveredRingIds.includes(ring.id) })),
     nearbyStores: nearby(state.stores),
     nearbyRoutes: state.routes.filter((route) => routeEndpointDistance(state.player.position, route) <= 6),
+    inscriptions: state.inscriptions,
+    digSites: state.digSites,
     builtRouteIds: state.builtRouteIds,
     unlockedRecipeIds: state.unlockedRecipeIds,
     discoveredTileIds: state.discoveredTileIds,
+    studiedInscriptionIds: state.studiedInscriptionIds,
+    revealedDigSiteIds: state.revealedDigSiteIds,
+    excavatedDigSiteIds: state.excavatedDigSiteIds,
   })) as WizardProjection
 }

@@ -49,3 +49,16 @@ describe('Wizard fairy ring HUD', () => {
     expect(markup.match(/>Travel<\/span>/g)).toHaveLength(1)
   })
 })
+
+describe('Wizard field action range', () => {
+  it('matches the authoritative three-dimensional range on sloped ground', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const mound = state.digSites.find((site) => site.id === 'practice_mound')!
+    state.player.position = { ...mound.position, y: mound.position.y + 3.1 }
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    state.player.equipment.mainHand = 'field_spade'
+    expect(renderHud(toViewProjection(state, []))).not.toContain('aria-label="Excavate Practice mound"')
+    state.player.position.y = mound.position.y + 2.9
+    expect(renderHud(toViewProjection(state, []))).toContain('aria-label="Excavate Practice mound"')
+  })
+})

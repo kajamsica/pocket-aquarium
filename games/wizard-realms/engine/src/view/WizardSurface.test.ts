@@ -38,6 +38,7 @@ const gridProjection = (size: number, gridX: number, gridZ: number) => ({
 const sellProjection = {
   ...projection, seed: 'sell-test', tick: 0, player: { position: [0, 0, 0], yaw: 0, pitch: 0 },
   terrain: [], resources: [], fairyRings: [], coins: 10, experience: { xp: 0, nextLevelXp: 100, level: 1 },
+  inscriptions: [], digSites: [], skillXp: { woodcutting: 0, construction: 0, wayfinding: 0, spellcraft: 0, excavation: 0 }, learnedSpellIds: [],
   backpack: { capacity: 20, stacks: [] },
   equipment: { head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null },
   tradeListings: [null, null, null, null], nearbyInteraction: null, recentEvents: [],
@@ -174,7 +175,8 @@ describe('store selling controls', () => {
     expect(markup).toContain('>Sell materials</h3>')
     expect(markup).toContain('Greenway logs ×3 · 4g each')
     expect(markup).toContain('Sell all ×3 · 12g')
-    expect(markup.match(/min-height:44px/g)).toHaveLength(2)
+    const sellButtons = findElements(WizardHud({ projection: sellProjection, onIntent: () => {} }), (element) => element.type === 'button' && String(element.props['aria-label']).startsWith('Sell '))
+    expect(sellButtons.map((button) => (button.props.style as { minHeight: number }).minHeight)).toEqual([44, 44])
 
     const noOffers = { ...sellProjection, stores: [{ ...sellProjection.stores[0], sellOffers: [] }] }
     const empty = renderToStaticMarkup(createElement(WizardHud, { projection: noOffers, onIntent: () => {} }))
@@ -244,5 +246,63 @@ describe('equipment controls', () => {
       { type: 'equipment.unequip', slot: 'head' },
       { type: 'equipment.equip', stackId: 'axe-stack', slot: 'mainHand' },
     ])
+  })
+})
+
+describe('first-region magic and excavation controls', () => {
+  const waystone = { id: 'greenway_waystone' as const, name: 'Greenway waystone', position: [3, 0, 3] as const, spellId: 'wayfinder_glow' as const, studied: false }
+  const mound = { id: 'practice_mound' as const, name: 'Practice mound', position: [7, 0, 7] as const, revealed: true, excavated: false, minimumExcavationLevel: 1 }
+  const cache = { id: 'ridge_cache' as const, name: 'Ridge cache', position: [7, 0, 7] as const, revealed: false, excavated: false, minimumExcavationLevel: 2 }
+  const nearbyTree = { kind: 'resource' as const, targetId: 'oak', label: 'Greenway oak', action: 'Chop', actionable: true }
+  const atWaystone = { ...sellProjection, openStoreId: null, player: { position: [3, 0, 3] as const, yaw: 0, pitch: 0 }, inscriptions: [waystone], digSites: [mound, cache], nearbyInteraction: nearbyTree } as WizardViewProjection
+
+  it('offers Study beside another interaction while unknown magic cannot cast', () => {
+    const emitted: unknown[] = []
+    const buttons = findElements(WizardHud({ projection: atWaystone, onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
+    const study = buttons.find((button) => button.props['aria-label'] === 'Study Greenway waystone')
+    const cast = buttons.filter((button) => button.props['aria-label'] === 'Cast Wayfinder Glow')
+    expect(study).toBeDefined()
+    expect(cast).toHaveLength(2)
+    expect(cast.every((button) => button.props.disabled === true)).toBe(true)
+    expect(buttons.some((button) => button.props.className === 'wr-prompt')).toBe(true)
+    ;(study?.props.onClick as () => void)()
+    expect(emitted).toEqual([{ type: 'inscription.study', inscriptionId: 'greenway_waystone' }])
+  })
+
+  it('exposes learned Cast on touch and dig when the spade is equipped, without leaking the hidden cache', () => {
+    const emitted: unknown[] = []
+    const ready = {
+      ...atWaystone,
+      player: { position: [7, 0, 7] as const, yaw: 0, pitch: 0 },
+      inscriptions: [{ ...waystone, studied: true }],
+      learnedSpellIds: ['wayfinder_glow'],
+      equipment: { ...atWaystone.equipment, mainHand: { id: 'spade-stack', itemId: 'field_spade', name: 'Field spade', quantity: 1 } },
+      skillXp: { ...atWaystone.skillXp, excavation: 30, spellcraft: 10, wayfinding: 10 },
+    } as WizardViewProjection
+    const hud = WizardHud({ projection: ready, onIntent: (intent) => emitted.push(intent) })
+    const buttons = findElements(hud, (element) => element.type === 'button')
+    const cast = buttons.find((button) => button.props.className === 'wr-touch-action' && button.props['aria-label'] === 'Cast Wayfinder Glow')
+    const dig = buttons.find((button) => button.props['aria-label'] === 'Excavate Practice mound')
+    expect(cast?.props.disabled).toBe(false)
+    expect(dig?.props.disabled).toBe(false)
+    expect(buttons.some((button) => button.props['aria-label'] === 'Excavate Ridge cache')).toBe(false)
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: ready, onIntent: () => {} }))
+    expect(markup).toContain('Wayfinder Glow: Learned')
+    expect(markup).toContain('Excavation Lv2')
+    expect(markup).toContain('Spellcraft: Lv1 (10 XP)')
+    ;(cast?.props.onClick as () => void)()
+    ;(dig?.props.onClick as () => void)()
+    expect(emitted).toEqual([
+      { type: 'spell.cast', spellId: 'wayfinder_glow' },
+      { type: 'dig-site.excavate', digSiteId: 'practice_mound' },
+    ])
+  })
+
+  it('keeps a revealed mound visible but explains why digging is unavailable without a spade', () => {
+    const withoutSpade = { ...atWaystone, player: { position: [7, 0, 7] as const, yaw: 0, pitch: 0 }, digSites: [mound] } as WizardViewProjection
+    const buttons = findElements(WizardHud({ projection: withoutSpade, onIntent: () => {} }), (element) => element.type === 'button')
+    expect(buttons.find((button) => button.props['aria-label'] === 'Excavate Practice mound')?.props.disabled).toBe(true)
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: withoutSpade, onIntent: () => {} }))
+    expect(markup).toContain('Equip a field spade')
   })
 })

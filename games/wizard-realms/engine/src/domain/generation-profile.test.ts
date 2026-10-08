@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 import { isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
+import type { WizardWorldState } from './types'
 import { advanceWizardWorld } from './world'
+
+function asLegacySave(state: WizardWorldState, version: 'wizard-world/v1' | 'wizard-world/v2' | 'wizard-world/v3') {
+  const save = JSON.parse(serializeWizardWorld(state)) as Record<string, unknown>
+  const player = save.player as Record<string, unknown>
+  const stores = save.stores as Array<{ listings: Array<{ id: string }> }>
+  save.schemaVersion = version
+  save.contentRevision = version === 'wizard-world/v3' ? 'greenway-region-v1' : undefined
+  stores[0].listings = stores[0].listings.filter((listing) => listing.id !== 'spade')
+  for (const field of ['inscriptions', 'digSites', 'studiedInscriptionIds', 'revealedDigSiteIds', 'excavatedDigSiteIds']) delete save[field]
+  delete player.skillXp
+  delete player.learnedSpellIds
+  if (version === 'wizard-world/v1') {
+    for (const field of ['generationProfile', 'areas', 'routes', 'recipes', 'builtRouteIds', 'unlockedRecipeIds', 'discoveredTileIds']) delete save[field]
+    delete player.verticalVelocity
+  }
+  return save
+}
 
 describe('wizard generation profiles', () => {
   it('restores an old v2 save without a profile as the exact classic world', () => {
@@ -24,22 +42,76 @@ describe('wizard generation profiles', () => {
     classic.stores[0].position = { x: -2, y: terrainHeightAt(classic.tiles, -2, 2), z: 2 }
     classic.stores[0].listings[0].stock = 1
     classic.stores[0].listings[0].price = 25
-    const oldSave = JSON.parse(serializeWizardWorld(classic)) as Record<string, unknown>
-    oldSave.schemaVersion = 'wizard-world/v2'
-    delete oldSave.contentRevision
+    classic.stores[0].listings[1].stock = 0
+    const oldSave = asLegacySave(classic, 'wizard-world/v2')
     delete oldSave.generationProfile
 
     expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-classic-v1')).toBe(true)
     expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-expanded-v1')).toBe(false)
     const restored = restoreWizardWorld(JSON.stringify(oldSave))
     expect(restored).toEqual(classic)
-    expect(restored.schemaVersion).toBe('wizard-world/v3')
-    expect(restored.contentRevision).toBe('greenway-region-v1')
+    expect(restored.schemaVersion).toBe('wizard-world/v4')
+    expect(restored.contentRevision).toBe('greenway-region-v2')
     expect(restored.tiles).toHaveLength(49)
     expect(restored.generationProfile).toBe('greenway-classic-v1')
     expect(restored.stores[0].position).toEqual(classic.stores[0].position)
+    expect(restored.stores[0].listings.map((listing) => [listing.id, listing.stock])).toEqual([['hat', 1], ['axe', 0], ['spade', 3]])
     expect(restoreWizardWorld(serializeWizardWorld(restored))).toEqual(restored)
     expect(() => restoreWizardWorld(JSON.stringify({ ...oldSave, generationProfile: 'unknown' }))).toThrow('Invalid or unsupported')
+  })
+
+  it('migrates an authentic v1 shape without route or area fields and keeps the new systems untouched', () => {
+    const classic = createGeneratedWorld('authentic-v1')
+    classic.tick = 8
+    classic.rng.simulation = 6789
+    classic.player.coins = 37
+    classic.player.inventory.push({ itemId: 'logs', quantity: 2 })
+    classic.resources[0].health = 0
+    classic.resources[0].depleted = true
+    classic.stores[0].listings[0].stock = 1
+    const oldSave = asLegacySave(classic, 'wizard-world/v1')
+    oldSave.resources = (oldSave.resources as Array<{ id: string }>).filter((resource) => !resource.id.startsWith('greenway-journey-tree-'))
+    expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-classic-v1')).toBe(true)
+    expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-expanded-v1')).toBe(false)
+    expect(restoreWizardWorld(JSON.stringify(oldSave))).toEqual(classic)
+    expect(isRestorableWizardSave(JSON.stringify({ ...oldSave, stores: [] }), 'greenway-classic-v1')).toBe(false)
+  })
+
+  it('clears a legacy tree from a new dig site without losing its depletion or rewriting the source', () => {
+    const world = createGeneratedWorld('old-tree-position')
+    const oldSave = asLegacySave(world, 'wizard-world/v3')
+    const resource = (oldSave.resources as Array<{ position: { x: number; y: number; z: number }; health: number; depleted: boolean }>)[0]
+    resource.position = { ...world.digSites[0].position }
+    resource.health = 0
+    resource.depleted = true
+    const bytes = JSON.stringify(oldSave)
+    const restored = restoreWizardWorld(bytes)
+    expect(restored.resources[0].health).toBe(0)
+    expect(restored.resources[0].depleted).toBe(true)
+    expect(Math.hypot(restored.resources[0].position.x - world.digSites[0].position.x,
+      restored.resources[0].position.z - world.digSites[0].position.z)).toBeGreaterThanOrEqual(1.5)
+    expect(JSON.stringify(oldSave)).toBe(bytes)
+  })
+
+  it('keeps new landmarks clear of the original v1 shop and ring anchors', () => {
+    const oldSave = asLegacySave(createGeneratedWorld('original-v1-anchors'), 'wizard-world/v1')
+    oldSave.resources = (oldSave.resources as Array<{ id: string }>).filter((resource) => !resource.id.startsWith('greenway-journey-tree-'))
+    const stores = oldSave.stores as Array<{ position: { x: number; y: number; z: number } }>
+    const rings = oldSave.fairyRings as Array<{ position: { x: number; y: number; z: number } }>
+    stores[0].position = { x: -2, y: 0, z: 2 }
+    stores[1].position = { x: 8, y: 0, z: 8 }
+    rings[1].position = { x: 8, y: 0, z: 8 }
+    const restored = restoreWizardWorld(JSON.stringify(oldSave))
+    for (const landmark of [...restored.inscriptions, ...restored.digSites]) {
+      for (const store of restored.stores) {
+        expect(Math.abs(landmark.position.x - store.position.x) > STORE_HALF_WIDTH
+          || Math.abs(landmark.position.z - store.position.z) > STORE_HALF_DEPTH).toBe(true)
+      }
+      for (const ring of restored.fairyRings) {
+        expect(Math.hypot(landmark.position.x - ring.position.x,
+          landmark.position.z - ring.position.z)).toBeGreaterThanOrEqual(1.5)
+      }
+    }
   })
 
   it('migrates expanded v2 progress without changing the generated region or player', () => {
@@ -55,26 +127,34 @@ describe('wizard generation profiles', () => {
     expanded.stores[1].listings[0].stock = 1
     expanded.builtRouteIds = ['greenway_ladder']
     expanded.discoveredTileIds = [...new Set([...expanded.discoveredTileIds, expanded.tiles[0].id])].sort()
-    const oldSave = JSON.parse(serializeWizardWorld(expanded)) as Record<string, unknown>
-    oldSave.schemaVersion = 'wizard-world/v2'
-    delete oldSave.contentRevision
+    const oldSave = asLegacySave(expanded, 'wizard-world/v2')
 
     expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-expanded-v1')).toBe(true)
     expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-classic-v1')).toBe(false)
     expect(restoreWizardWorld(JSON.stringify(oldSave))).toEqual(expanded)
   })
 
-  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('requires an exact v3 revision and structural save fields for %s', (profile) => {
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('requires an exact v4 revision and structural save fields for %s', (profile) => {
     const current = createGeneratedWorld('guarded-save', profile)
+    current.tick = 6
+    current.player.coins = 92
+    current.resources[0].health = 0
+    current.resources[0].depleted = true
+    current.stores[0].listings[0].stock = 1
     const serialized = serializeWizardWorld(current)
     const raw = JSON.parse(serialized) as Record<string, unknown>
     const otherProfile = profile === 'greenway-classic-v1' ? 'greenway-expanded-v1' : 'greenway-classic-v1'
     expect(isRestorableWizardSave(serialized, profile)).toBe(true)
     expect(isRestorableWizardSave(serialized, otherProfile)).toBe(false)
     const missing = (field: string) => { const copy = { ...raw }; delete copy[field]; return JSON.stringify(copy) }
+    const altered = (change: (copy: Record<string, unknown>) => void) => {
+      const copy = JSON.parse(serialized) as Record<string, unknown>
+      change(copy)
+      return JSON.stringify(copy)
+    }
     const invalid = [
       'not-json', 'null', '[]',
-      JSON.stringify({ ...raw, schemaVersion: 'wizard-world/v4' }),
+      JSON.stringify({ ...raw, schemaVersion: 'wizard-world/v5' }),
       JSON.stringify({ ...raw, contentRevision: 'unknown' }),
       JSON.stringify({ ...raw, generationProfile: 'unknown' }),
       JSON.stringify({ ...raw, seed: '' }),
@@ -82,17 +162,123 @@ describe('wizard generation profiles', () => {
       missing('contentRevision'), missing('generationProfile'), missing('tiles'), missing('resources'),
       missing('stores'), missing('fairyRings'), missing('areas'), missing('rng'),
       missing('routes'), missing('recipes'), missing('builtRouteIds'), missing('unlockedRecipeIds'), missing('discoveredTileIds'),
+      missing('inscriptions'), missing('digSites'), missing('studiedInscriptionIds'), missing('revealedDigSiteIds'), missing('excavatedDigSiteIds'),
+      JSON.stringify({ ...raw, player: { ...(raw.player as object), skillXp: undefined } }),
+      JSON.stringify({ ...raw, player: { ...(raw.player as object), learnedSpellIds: undefined } }),
+      altered((copy) => { (copy.stores as Array<{ listings: unknown[] }>)[0].listings.pop() }),
+      altered((copy) => { (copy.tiles as Array<{ id: string }>)[0].id = 'unknown-tile' }),
+      altered((copy) => { (copy.digSites as Array<{ id: string }>)[1].id = 'practice_mound' }),
+      altered((copy) => { ((copy.player as Record<string, unknown>).skillXp as Record<string, unknown>).excavation = -1 }),
+      altered((copy) => { (copy.inscriptions as Array<{ position: { x: number } }>)[0].position.x = -2 }),
     ]
     for (const save of invalid) {
       expect(isRestorableWizardSave(save, profile), save).toBe(false)
       expect(() => restoreWizardWorld(save), save).toThrow('Invalid or unsupported')
     }
 
-    const v2: Record<string, unknown> = { ...raw, schemaVersion: 'wizard-world/v2', contentRevision: undefined }
+    const v2 = asLegacySave(current, 'wizard-world/v2')
     expect(isRestorableWizardSave(JSON.stringify(v2), profile)).toBe(true)
     const missingRoute = { ...v2 }
     delete missingRoute.builtRouteIds
     expect(isRestorableWizardSave(JSON.stringify(missingRoute), profile)).toBe(false)
+    expect(isRestorableWizardSave(JSON.stringify({ ...v2, rng: {} }), profile)).toBe(false)
+
+    const v3 = asLegacySave(current, 'wizard-world/v3')
+    expect(isRestorableWizardSave(JSON.stringify(v3), profile)).toBe(true)
+    expect(restoreWizardWorld(JSON.stringify(v3))).toEqual(current)
+    expect(isRestorableWizardSave(JSON.stringify({ ...v3, contentRevision: 'greenway-region-v2' }), profile)).toBe(false)
+    expect(isRestorableWizardSave(JSON.stringify({ ...v3, contentRevision: undefined }), profile)).toBe(false)
+    expect(isRestorableWizardSave(JSON.stringify({ ...v3, stores: [] }), profile)).toBe(false)
+  })
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('round-trips v4 discovery progress for %s', (profile) => {
+    const current = createGeneratedWorld('excavated-progress', profile)
+    current.tick = 89
+    current.eventSequence = 41
+    current.player.skillXp = { woodcutting: 20, construction: 60, wayfinding: 90, spellcraft: 50, excavation: 70 }
+    current.player.learnedSpellIds = ['wayfinder_glow']
+    current.studiedInscriptionIds = ['greenway_waystone']
+    current.revealedDigSiteIds = ['ridge_cache']
+    current.excavatedDigSiteIds = ['practice_mound', 'ridge_cache']
+    current.player.inventory.push({ itemId: 'field_spade', quantity: 1 }, { itemId: 'ancient_relic', quantity: 1 })
+    current.player.equipment.mainHand = 'field_spade'
+    current.stores[0].listings[2].stock = 2
+    expect(restoreWizardWorld(serializeWizardWorld(current))).toEqual(current)
+  })
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('preserves invalid v4 pack bytes without autosave for %s', (profile) => {
+    const current = createGeneratedWorld('pack-capacity-guard', profile)
+    current.player.inventory = [{ itemId: 'woodcutters_axe', quantity: 1 }, { itemId: 'logs', quantity: 17 }]
+    current.player.tradeSlots[0] = { slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 7 }
+    const validBytes = serializeWizardWorld(current)
+    expect(restoreWizardWorld(validBytes)).toEqual(current)
+    const altered = (change: (player: WizardWorldState['player']) => void) => {
+      const copy = JSON.parse(validBytes) as WizardWorldState
+      change(copy.player)
+      return JSON.stringify(copy)
+    }
+    const malformed = [
+      altered((player) => { player.backpackCapacity = 0 }),
+      altered((player) => { player.backpackCapacity = 1_001 }),
+      altered((player) => { player.inventory[1].quantity = 18 }),
+      altered((player) => { player.tradeSlots[0].quantity = 3 }),
+      altered((player) => { player.tradeSlots[1].quantity = 1 }),
+    ]
+    for (const originalBytes of malformed) {
+      let storedBytes = originalBytes
+      let writeCount = 0
+      for (let tick = 0; tick < 5; tick += 1) {
+        if (isRestorableWizardSave(storedBytes, profile)) {
+          storedBytes = serializeWizardWorld(restoreWizardWorld(storedBytes))
+          writeCount += 1
+        }
+      }
+      expect(isRestorableWizardSave(originalBytes, profile), originalBytes).toBe(false)
+      expect(() => restoreWizardWorld(originalBytes), originalBytes).toThrow('Invalid or unsupported')
+      expect(writeCount, originalBytes).toBe(0)
+      expect(storedBytes, originalBytes).toBe(originalBytes)
+    }
+  })
+
+  it.each([
+    ['wizard-world/v1', 'greenway-classic-v1'],
+    ['wizard-world/v2', 'greenway-classic-v1'],
+    ['wizard-world/v2', 'greenway-expanded-v1'],
+    ['wizard-world/v3', 'greenway-classic-v1'],
+    ['wizard-world/v3', 'greenway-expanded-v1'],
+  ] as const)('rejects incomplete %s %s payloads before guarded autosave', (version, profile) => {
+    const current = createGeneratedWorld(`incomplete-${version}-${profile}`, profile)
+    current.resources[0].health = 0
+    current.resources[0].depleted = true
+    current.stores[0].listings[0].stock = 1
+    const source = asLegacySave(current, version)
+    if (version === 'wizard-world/v1') source.resources = (source.resources as Array<{ id: string }>)
+      .filter((resource) => !resource.id.startsWith('greenway-journey-tree-'))
+    const validBytes = JSON.stringify(source)
+    expect(isRestorableWizardSave(validBytes, profile)).toBe(true)
+
+    for (const tamper of ['missing-resource', 'duplicate-resource', 'missing-listing', 'duplicate-listing'] as const) {
+      const payload = JSON.parse(validBytes) as Record<string, unknown>
+      const resources = payload.resources as Array<{ id: string }>
+      const listings = (payload.stores as Array<{ listings: Array<{ id: string }> }>)[0].listings
+      if (tamper === 'missing-resource') resources.splice(0, 1)
+      if (tamper === 'duplicate-resource') resources[0] = { ...resources[1] }
+      if (tamper === 'missing-listing') listings.splice(0, 1)
+      if (tamper === 'duplicate-listing') listings[0] = { ...listings[1] }
+      const originalBytes = JSON.stringify(payload)
+      let storedBytes = originalBytes
+      let writeCount = 0
+      for (let tick = 0; tick < 5; tick += 1) {
+        if (isRestorableWizardSave(storedBytes, profile)) {
+          storedBytes = serializeWizardWorld(restoreWizardWorld(storedBytes))
+          writeCount += 1
+        }
+      }
+      expect(isRestorableWizardSave(originalBytes, profile), tamper).toBe(false)
+      expect(() => restoreWizardWorld(originalBytes), tamper).toThrow('Invalid or unsupported')
+      expect(writeCount, tamper).toBe(0)
+      expect(storedBytes, tamper).toBe(originalBytes)
+    }
   })
 
   it('keeps the fresh Greenway shop visible beside the rear spawn sightline across 100 seeds', () => {
@@ -128,6 +314,30 @@ describe('wizard generation profiles', () => {
       }
     }
   }, 30_000)
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('generates fixed v4 discovery content for %s', (profile) => {
+    const world = createGeneratedWorld('discovery-content', profile)
+    expect(world.schemaVersion).toBe('wizard-world/v4')
+    expect(world.contentRevision).toBe('greenway-region-v2')
+    expect(world.inscriptions.map((inscription) => [inscription.id, inscription.position.x, inscription.position.z, inscription.spellId]))
+      .toEqual([['greenway_waystone', 3, 3, 'wayfinder_glow']])
+    expect(world.digSites.map((site) => [site.id, site.position.x, site.position.z, site.visibleFromStart,
+      site.minimumExcavationLevel, site.reward, site.xpReward])).toEqual([
+      ['practice_mound', 7, 3, true, 1, { itemId: 'stone', quantity: 2 }, 30],
+      ['ridge_cache', -6, -9, false, 2, { itemId: 'ancient_relic', quantity: 1 }, 40],
+    ])
+    expect(world.stores[0].listings.find((listing) => listing.id === 'spade')).toEqual({
+      id: 'spade', itemId: 'field_spade', price: 18, stock: 3,
+    })
+    expect(world.player.skillXp).toEqual({ woodcutting: 0, construction: 0, wayfinding: 0, spellcraft: 0, excavation: 0 })
+    expect(world.player.learnedSpellIds).toEqual([])
+    expect(world.studiedInscriptionIds).toEqual([])
+    expect(world.revealedDigSiteIds).toEqual([])
+    expect(world.excavatedDigSiteIds).toEqual([])
+    const oldShop = { x: -2, z: 2 }
+    expect(Math.abs(world.inscriptions[0].position.x - oldShop.x) > STORE_HALF_WIDTH
+      || Math.abs(world.inscriptions[0].position.z - oldShop.z) > STORE_HALF_DEPTH).toBe(true)
+  })
 
   it('builds and restores 100 deterministic 16 by 16 sparse regions without moving the core', () => {
     for (let index = 0; index < 100; index += 1) {
@@ -165,7 +375,8 @@ describe('wizard generation profiles', () => {
       }
 
       const landmarks = [expanded.player.position, ...expanded.stores.map((store) => store.position),
-        ...expanded.fairyRings.map((ring) => ring.position), ...expanded.routes.flatMap((route) => [route.from, route.to])]
+        ...expanded.fairyRings.map((ring) => ring.position), ...expanded.inscriptions.map((inscription) => inscription.position),
+        ...expanded.digSites.map((site) => site.position), ...expanded.routes.flatMap((route) => [route.from, route.to])]
       for (const resource of expanded.resources) {
         for (const anchor of landmarks) {
           expect(Math.hypot(resource.position.x - anchor.x, resource.position.z - anchor.z), `${seed}: ${resource.id}`).toBeGreaterThanOrEqual(1.5)

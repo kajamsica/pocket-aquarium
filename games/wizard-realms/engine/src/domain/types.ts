@@ -6,8 +6,12 @@ export type ResourceKind = 'tree' | 'herb' | 'stone' | 'ore'
 export type ItemId =
   | 'woodcutters_axe' | 'logs' | 'marsh_herb' | 'stone' | 'iron_ore'
   | 'apprentice_hat' | 'traveler_tunic' | 'trail_leggings' | 'leather_boots'
-  | 'oak_wand' | 'wooden_shield'
+  | 'oak_wand' | 'wooden_shield' | 'field_spade' | 'ancient_relic'
 export type EquipmentSlot = 'head' | 'chest' | 'legs' | 'feet' | 'mainHand' | 'offHand'
+export type SkillId = 'woodcutting' | 'construction' | 'wayfinding' | 'spellcraft' | 'excavation'
+export type SpellId = 'wayfinder_glow'
+export type InscriptionId = 'greenway_waystone'
+export type DigSiteId = 'practice_mound' | 'ridge_cache'
 
 export interface WorldTile {
   id: string
@@ -35,6 +39,16 @@ export interface FairyRing { id: string; name: string; kind: 'mushroom'; positio
 export interface StoreListing { id: string; itemId: ItemId; price: number; stock: number }
 export interface StoreState { id: string; name: string; position: Vec3; listings: StoreListing[] }
 export interface InventoryStack { itemId: ItemId; quantity: number }
+export interface InscriptionProfile { id: InscriptionId; name: string; position: Vec3; spellId: SpellId }
+export interface DigSiteProfile {
+  id: DigSiteId
+  name: string
+  position: Vec3
+  visibleFromStart: boolean
+  minimumExcavationLevel: number
+  reward: InventoryStack
+  xpReward: number
+}
 export interface TradeSlot {
   slotIndex: 0 | 1 | 2 | 3
   itemId: ItemId | null
@@ -87,11 +101,13 @@ export interface PlayerState {
   equipment: Record<EquipmentSlot, ItemId | null>
   tradeSlots: [TradeSlot, TradeSlot, TradeSlot, TradeSlot]
   discoveredRingIds: string[]
+  skillXp: Record<SkillId, number>
+  learnedSpellIds: SpellId[]
 }
 
 export interface WizardWorldState {
-  schemaVersion: 'wizard-world/v3'
-  contentRevision: 'greenway-region-v1'
+  schemaVersion: 'wizard-world/v4'
+  contentRevision: 'greenway-region-v2'
   seed: string
   generationProfile: GenerationProfile
   tick: number
@@ -101,12 +117,17 @@ export interface WizardWorldState {
   resources: ResourceNode[]
   stores: [StoreState, StoreState]
   fairyRings: FairyRing[]
+  inscriptions: InscriptionProfile[]
+  digSites: DigSiteProfile[]
   areas: AreaProfile[]
   routes: RouteProfile[]
   recipes: RecipeProfile[]
   builtRouteIds: RouteId[]
   unlockedRecipeIds: RecipeId[]
   discoveredTileIds: string[]
+  studiedInscriptionIds: InscriptionId[]
+  revealedDigSiteIds: DigSiteId[]
+  excavatedDigSiteIds: DigSiteId[]
   player: PlayerState
   eventSequence: number
 }
@@ -126,6 +147,9 @@ export type WizardIntent =
   | { type: 'unequip_item'; slot: EquipmentSlot }
   | { type: 'create_trade_listing'; slotIndex: number; itemId: ItemId; quantity: number; unitPrice: number }
   | { type: 'cancel_trade_listing'; slotIndex: number }
+  | { type: 'study_inscription'; inscriptionId: InscriptionId }
+  | { type: 'cast_spell'; spellId: SpellId }
+  | { type: 'dig_site'; digSiteId: DigSiteId }
 
 type EventBase = { sequence: number; tick: number }
 export type WizardEvent = EventBase & (
@@ -146,6 +170,10 @@ export type WizardEvent = EventBase & (
   | { type: 'item_unequipped'; itemId: ItemId; slot: EquipmentSlot }
   | { type: 'trade_listing_created'; slotIndex: number; itemId: ItemId; quantity: number; unitPrice: number }
   | { type: 'trade_listing_cancelled'; slotIndex: number; itemId: ItemId; quantity: number }
+  | { type: 'inscription_studied'; inscriptionId: InscriptionId; spellId: SpellId }
+  | { type: 'spell_cast'; spellId: SpellId; revealedTileIds: string[]; revealedDigSiteIds: DigSiteId[] }
+  | { type: 'dig_site_excavated'; digSiteId: DigSiteId; itemId: ItemId; quantity: number; xp: number }
+  | { type: 'skill_xp_gained'; skillId: SkillId; xp: number }
 )
 
 export interface IntentRejection {
@@ -153,7 +181,9 @@ export interface IntentRejection {
   intentType: WizardIntent['type']
   code: 'invalid_value' | 'not_found' | 'too_far' | 'requires_axe' | 'depleted' | 'capacity' |
     'insufficient_coins' | 'out_of_stock' | 'not_owned' | 'wrong_slot' | 'undiscovered' |
-    'trade_slot_unavailable' | 'locked_area' | 'recipe_locked' | 'already_built'
+    'trade_slot_unavailable' | 'locked_area' | 'recipe_locked' | 'already_built' |
+    'unlearned_spell' | 'requires_spade' | 'site_hidden' | 'already_excavated' |
+    'skill_locked' | 'incompatible_ground' | 'already_studied'
   message: string
 }
 
@@ -169,9 +199,14 @@ export type WizardProjection = DeepReadonly<{
   nearbyFairyRings: Array<FairyRing & { discovered: boolean }>
   nearbyStores: StoreState[]
   nearbyRoutes: RouteProfile[]
+  inscriptions: InscriptionProfile[]
+  digSites: DigSiteProfile[]
   builtRouteIds: RouteId[]
   unlockedRecipeIds: RecipeId[]
   discoveredTileIds: string[]
+  studiedInscriptionIds: InscriptionId[]
+  revealedDigSiteIds: DigSiteId[]
+  excavatedDigSiteIds: DigSiteId[]
 }>
 
 export interface WizardAdvanceResult {

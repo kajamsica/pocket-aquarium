@@ -1,3 +1,5 @@
+import type { DigSiteId, InscriptionId, SkillId, SpellId } from '../domain/types'
+
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
 
@@ -59,6 +61,23 @@ export interface WizardFairyRing {
   destinations: readonly WizardFairyRingDestination[]
 }
 
+export interface WizardInscription {
+  id: InscriptionId
+  name: string
+  position: Vec3
+  spellId: SpellId
+  studied: boolean
+}
+
+export interface WizardDigSite {
+  id: DigSiteId
+  name: string
+  position: Vec3
+  revealed: boolean
+  excavated: boolean
+  minimumExcavationLevel: number
+}
+
 export interface WizardTradeListing {
   id: string
   itemName: string
@@ -109,6 +128,10 @@ export interface WizardViewProjection {
   terrain: readonly WizardTerrainCell[]
   resources: readonly WizardResourceNode[]
   fairyRings: readonly WizardFairyRing[]
+  inscriptions: readonly WizardInscription[]
+  digSites: readonly WizardDigSite[]
+  skillXp: Readonly<Record<SkillId, number>>
+  learnedSpellIds: readonly SpellId[]
   routes: readonly WizardRoute[]
   map: {
     tiles: readonly WizardMapTile[]
@@ -116,6 +139,7 @@ export interface WizardViewProjection {
   }
   stores: readonly WizardStore[]
   openStoreId: string | null
+  nearbyStoreId: string | null
   backpack: {
     capacity: number
     stacks: readonly WizardItemStack[]
@@ -139,13 +163,18 @@ export interface WizardViewProjection {
 
 export type WizardViewIntent =
   | { type: 'movement'; vector: Vec2 }
+  | { type: 'movement.tap'; vector: Vec2 }
   | { type: 'jump' }
   | { type: 'interact' }
   | { type: 'store.close' }
+  | { type: 'store.open'; storeId: string }
   | { type: 'store.select-listing'; storeId: string; listingId: string }
   | { type: 'store.sell-item'; storeId: string; itemId: string; quantity: number }
   | { type: 'equipment.equip'; stackId: string; slot: EquipmentSlot }
   | { type: 'equipment.unequip'; slot: EquipmentSlot }
+  | { type: 'inscription.study'; inscriptionId: InscriptionId }
+  | { type: 'spell.cast'; spellId: SpellId }
+  | { type: 'dig-site.excavate'; digSiteId: DigSiteId }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }
   | { type: 'trade.cancel-listing'; slot: number }
   | { type: 'fairy-ring.teleport'; ringId: string; destinationRingId: string }

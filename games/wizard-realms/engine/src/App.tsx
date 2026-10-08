@@ -22,11 +22,13 @@ import { isRestorableWizardSave } from './domain/persistence'
 import { storeSellUnitPrice } from './domain/world'
 
 const WORLD_SEED = 'greenway-alpha'
-const SAVE_KEY = 'wizard-realms:world:v3'
-const PREVIOUS_SAVE_KEY = 'wizard-realms:world:v2'
-const LEGACY_SAVE_KEY = 'wizard-realms:world:v1'
-const EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v2'
-const PREVIOUS_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v1'
+const SAVE_KEY = 'wizard-realms:world:v4'
+const PREVIOUS_SAVE_KEY = 'wizard-realms:world:v3'
+const LEGACY_SAVE_KEY = 'wizard-realms:world:v2'
+const OLDEST_SAVE_KEY = 'wizard-realms:world:v1'
+const EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v3'
+const PREVIOUS_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v2'
+const LEGACY_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v1'
 const CLASSIC_PROFILE = 'greenway-classic-v1'
 const EXPANDED_PROFILE = 'greenway-expanded-v1'
 const FIXED_STEP_MS = 50
@@ -59,16 +61,24 @@ const ITEM_NAMES: Record<ItemId, string> = {
   stone: 'Stone', iron_ore: 'Iron ore', apprentice_hat: 'Apprentice hat',
   traveler_tunic: 'Traveler tunic', trail_leggings: 'Trail leggings',
   leather_boots: 'Leather boots', oak_wand: 'Oak wand', wooden_shield: 'Wooden shield',
+  field_spade: 'Field spade', ancient_relic: 'Ancient relic',
 }
 const EQUIPPABLE: Partial<Record<ItemId, readonly EquipmentSlot[]>> = {
   woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'],
-  wooden_shield: ['offHand'],
+  wooden_shield: ['offHand'], field_spade: ['mainHand'],
 }
 const TERRAIN_COLORS = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', snow: '#d4e3df' } as const
 
 type RecentMessage = { id: number; text: string }
 type WorldProfile = WizardWorldState['generationProfile']
+const verifiedSaveBytes = new WeakMap<object, Map<WorldProfile, string>>()
+
+function rememberVerifiedSave(storage: object, profile: WorldProfile, saved: string) {
+  let byProfile = verifiedSaveBytes.get(storage)
+  if (!byProfile) { byProfile = new Map(); verifiedSaveBytes.set(storage, byProfile) }
+  byProfile.set(profile, saved)
+}
 
 export function worldProfileForSearch(search: string): WorldProfile {
   return new URLSearchParams(search).get('devRegion') === 'expanded' ? EXPANDED_PROFILE : CLASSIC_PROFILE
@@ -80,13 +90,16 @@ function isLoadableSave(saved: string, profile: WorldProfile): boolean {
 
 function activeSave(storage: Pick<Storage, 'getItem'>, profile: WorldProfile): string | null {
   return profile === EXPANDED_PROFILE
-    ? storage.getItem(EXPANDED_SAVE_KEY) ?? storage.getItem(PREVIOUS_EXPANDED_SAVE_KEY)
-    : storage.getItem(SAVE_KEY) ?? storage.getItem(PREVIOUS_SAVE_KEY) ?? storage.getItem(LEGACY_SAVE_KEY)
+    ? storage.getItem(EXPANDED_SAVE_KEY) ?? storage.getItem(PREVIOUS_EXPANDED_SAVE_KEY) ?? storage.getItem(LEGACY_EXPANDED_SAVE_KEY)
+    : storage.getItem(SAVE_KEY) ?? storage.getItem(PREVIOUS_SAVE_KEY) ?? storage.getItem(LEGACY_SAVE_KEY) ?? storage.getItem(OLDEST_SAVE_KEY)
 }
 
 function hasIncompatibleSave(storage: Pick<Storage, 'getItem'>, profile: WorldProfile): boolean {
   const saved = activeSave(storage, profile)
-  return saved !== null && !isLoadableSave(saved, profile)
+  if (saved === null || verifiedSaveBytes.get(storage)?.get(profile) === saved) return false
+  if (!isLoadableSave(saved, profile)) return true
+  rememberVerifiedSave(storage, profile, saved)
+  return false
 }
 
 export function loadWorld(storage: Pick<Storage, 'getItem'> = window.localStorage, profile: WorldProfile = CLASSIC_PROFILE): WizardWorldState {
@@ -97,13 +110,17 @@ export function loadWorld(storage: Pick<Storage, 'getItem'> = window.localStorag
 export function persistWorld(storage: Pick<Storage, 'getItem' | 'setItem'>, state: WizardWorldState, profile: WorldProfile = CLASSIC_PROFILE): boolean {
   const key = profile === EXPANDED_PROFILE ? EXPANDED_SAVE_KEY : SAVE_KEY
   if (state.generationProfile !== profile || hasIncompatibleSave(storage, profile)) return false
-  storage.setItem(key, serializeWizardWorld(state))
+  const serialized = serializeWizardWorld(state)
+  storage.setItem(key, serialized)
+  rememberVerifiedSave(storage, profile, serialized)
   return true
 }
 
 export function resetSavedWorld(storage: Pick<Storage, 'setItem' | 'removeItem'>, seed = WORLD_SEED, createWorld: typeof createWizardWorld = createWizardWorld, profile: WorldProfile = CLASSIC_PROFILE): WizardWorldState {
   const fresh = createWorld(seed, profile)
-  storage.setItem(profile === EXPANDED_PROFILE ? EXPANDED_SAVE_KEY : SAVE_KEY, serializeWizardWorld(fresh))
+  const serialized = serializeWizardWorld(fresh)
+  storage.setItem(profile === EXPANDED_PROFILE ? EXPANDED_SAVE_KEY : SAVE_KEY, serialized)
+  rememberVerifiedSave(storage, profile, serialized)
   return fresh
 }
 
@@ -113,10 +130,31 @@ const distance = (a: { x: number; y: number; z: number }, b: { x: number; y: num
 const owned = (state: WizardWorldState, itemId: ItemId) =>
   state.player.inventory.filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
 const axeEquipped = (state: WizardWorldState) => state.player.equipment.mainHand === 'woodcutters_axe'
+const reachableStore = (state: WizardWorldState) => state.stores
+  .filter((store) => distance(state.player.position, store.position) <= INTERACTION_RANGE)
+  .sort((left, right) => distance(state.player.position, left.position) - distance(state.player.position, right.position))[0] ?? null
 
 export function objectiveFor(state: WizardWorldState): string {
   const logs = owned(state, 'logs')
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
+  if (!state.player.learnedSpellIds.includes('wayfinder_glow')) return 'Find the Greenway waystone and study Wayfinder Glow.'
+  if (state.player.skillXp.spellcraft === 0) return 'Walk to the northern fog and cast Wayfinder Glow to reveal hidden ground.'
+  if (!state.excavatedDigSiteIds.includes('practice_mound')) {
+    if (!owned(state, 'field_spade')) return 'Buy a field spade from Greenway Outfitters.'
+    if (state.player.equipment.mainHand !== 'field_spade') return 'Equip the field spade from your backpack.'
+    return 'Excavate the Greenway practice mound to train excavation.'
+  }
+  if (!state.builtRouteIds.includes('greenway_ladder')) {
+    if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
+      ? 'Equip the woodcutter axe to gather ladder materials.'
+      : 'Buy a woodcutter axe at Greenway Outfitters.'
+    return logs >= 4 ? 'Build the Greenway ladder north (4 logs).' : `${gather(4)}, then build the Greenway ladder north.`
+  }
+  if (!state.revealedDigSiteIds.includes('ridge_cache')) return 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
+  if (!state.excavatedDigSiteIds.includes('ridge_cache')) return state.player.equipment.mainHand === 'field_spade'
+    ? 'Cross the ladder and excavate the revealed ridge cache.'
+    : 'Re-equip the field spade, then excavate the ridge cache north of the ladder.'
+  if (owned(state, 'ancient_relic') > 0) return 'Return to a settlement and sell the ancient relic.'
   const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
   const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
   if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
@@ -166,6 +204,12 @@ function eventText(event: WizardEvent): string {
     case 'store_item_sold': return `Sold ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for ${event.totalPrice}g.`
     case 'item_equipped': return `Equipped ${ITEM_NAMES[event.itemId]}.`
     case 'item_unequipped': return `Unequipped ${ITEM_NAMES[event.itemId]}.`
+    case 'inscription_studied': return 'The Greenway waystone teaches you Wayfinder Glow.'
+    case 'spell_cast': return event.revealedTileIds.length + event.revealedDigSiteIds.length > 0
+      ? `Wayfinder Glow reveals ${event.revealedTileIds.length} map tiles and ${event.revealedDigSiteIds.length} buried sites.`
+      : 'The glow finds no new paths here. Try casting closer to the fog.'
+    case 'dig_site_excavated': return `Excavated ${event.quantity} ${itemAmountName(event.itemId, event.quantity)}.`
+    case 'skill_xp_gained': return `Gained ${event.xp} ${event.skillId} XP.`
     case 'trade_listing_created': return `Listed ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for trade.`
     case 'trade_listing_cancelled': return `Returned ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} to your backpack.`
     case 'player_jumped': return 'You spring over the trail.'
@@ -235,6 +279,20 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       discovered: discoveredRingIds.has(ring.id),
       destinations: state.fairyRings.filter((target) => target.id !== ring.id).map((target) => ({ ringId: target.id, label: target.name, discovered: discoveredRingIds.has(target.id) })),
     })),
+    inscriptions: state.inscriptions.map((inscription) => ({
+      id: inscription.id, name: inscription.name,
+      position: [inscription.position.x, inscription.position.y, inscription.position.z],
+      spellId: inscription.spellId, studied: state.studiedInscriptionIds.includes(inscription.id),
+    })),
+    digSites: state.digSites.map((site) => ({
+      id: site.id, name: site.name,
+      position: [site.position.x, site.position.y, site.position.z],
+      revealed: site.visibleFromStart || state.revealedDigSiteIds.includes(site.id),
+      excavated: state.excavatedDigSiteIds.includes(site.id),
+      minimumExcavationLevel: site.minimumExcavationLevel,
+    })),
+    skillXp: { ...domain.player.skillXp },
+    learnedSpellIds: [...domain.player.learnedSpellIds],
     routes: state.routes.map((route) => {
       const recipe = state.recipes.find((candidate) => candidate.routeId === route.id)!
       return { id: route.id, label: route.name, from: [route.from.x, route.from.y, route.from.z], to: [route.to.x, route.to.y, route.to.z], built: state.builtRouteIds.includes(route.id), unlocked: state.unlockedRecipeIds.includes(recipe.id), logCost: recipe.logCost }
@@ -256,6 +314,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     },
     stores: state.stores.map((store) => ({ id: store.id, name: store.name, position: [store.position.x, store.position.y, store.position.z], listings: store.listings.map((listing) => ({ id: listing.id, name: ITEM_NAMES[listing.itemId], price: listing.price, stock: listing.stock })), sellOffers: saleOffers(store.id) })),
     openStoreId: activeStoreId,
+    nearbyStoreId: reachableStore(state)?.id ?? null,
     backpack: { capacity: domain.player.backpackCapacity, stacks: inventory },
     coins: domain.player.coins,
     experience: { xp: domain.player.xp, nextLevelXp: domain.player.level * 100, level: domain.player.level },
@@ -279,9 +338,9 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   }
 }
 
-export function intentForView(state: WizardWorldState, intent: Exclude<WizardViewIntent, { type: 'movement' }>, openStoreId: string | null = null): WizardIntent | null {
+export function intentForView(state: WizardWorldState, intent: Exclude<WizardViewIntent, { type: 'movement' | 'movement.tap' }>, openStoreId: string | null = null): WizardIntent | null {
   if (intent.type === 'jump') return { type: 'jump' }
-  if (intent.type === 'store.close') return null
+  if (intent.type === 'store.close' || intent.type === 'store.open') return null
   if (intent.type === 'interact') {
     if (retainOpenStoreId(state, openStoreId)) return null
     const interaction = closestInteraction(state)
@@ -299,6 +358,9 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
   if (intent.type === 'store.sell-item') return { type: 'sell_to_store', storeId: intent.storeId, itemId: intent.itemId as ItemId, quantity: intent.quantity }
   if (intent.type === 'equipment.equip') return { type: 'equip_item', itemId: intent.stackId.replace('inventory-', '') as ItemId, slot: intent.slot }
   if (intent.type === 'equipment.unequip') return { type: 'unequip_item', slot: intent.slot }
+  if (intent.type === 'inscription.study') return { type: 'study_inscription', inscriptionId: intent.inscriptionId }
+  if (intent.type === 'spell.cast') return { type: 'cast_spell', spellId: intent.spellId }
+  if (intent.type === 'dig-site.excavate') return { type: 'dig_site', digSiteId: intent.digSiteId }
   if (intent.type === 'trade.create-listing') return { type: 'create_trade_listing', slotIndex: intent.slot, itemId: intent.stackId.replace('inventory-', '') as ItemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
   if (intent.type === 'trade.cancel-listing') return { type: 'cancel_trade_listing', slotIndex: intent.slot }
   return { type: 'teleport_fairy_ring', sourceRingId: intent.ringId, targetRingId: intent.destinationRingId }
@@ -394,7 +456,11 @@ export default function App() {
       commit: (state, texts) => {
         setWorld(state)
         setOpenStoreId((current) => retainOpenStoreId(state, current))
-        if (texts.length) setMessages((current) => [...current, ...texts.map((text) => ({ id: messageId.current++, text }))].slice(-5))
+        if (texts.length) setMessages((current) => {
+          const next = [...current]
+          for (const text of texts) if (next.at(-1)?.text !== text) next.push({ id: messageId.current++, text })
+          return next.slice(-5)
+        })
       },
     }
     const onVisibilityChange = () => {
@@ -420,8 +486,16 @@ export default function App() {
       movementRef.current = intent.vector
       return
     }
+    if (intent.type === 'movement.tap') {
+      queuedRef.current.push(...controlIntents(worldRef.current, intent.vector))
+      return
+    }
     if (intent.type === 'store.close') {
       setOpenStoreId(null)
+      return
+    }
+    if (intent.type === 'store.open') {
+      if (reachableStore(worldRef.current)?.id === intent.storeId) setOpenStoreId(intent.storeId)
       return
     }
     if (intent.type === 'interact' && !retainOpenStoreId(worldRef.current, openStoreId)) {

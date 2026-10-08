@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import type { WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, storeSafeCameraPosition } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, digSiteAppearance, storeSafeCameraPosition } from './WizardScene'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
@@ -17,6 +17,7 @@ describe('avatar gear projection', () => {
   it('maps each equipped slot to its visible gear', () => {
     expect(avatarGearFor(equipment({ mainHand: stack('woodcutters_axe'), offHand: stack('wooden_shield'), head: stack('apprentice_hat') })))
       .toMatchObject({ hat: true, mainHand: 'axe', offHand: 'shield', offHandLight: false })
+    expect(avatarGearFor(equipment({ mainHand: stack('field_spade') }))).toMatchObject({ mainHand: 'spade' })
     expect(avatarGearFor(equipment({ chest: stack('traveler_tunic'), legs: stack('trail_leggings'), feet: stack('leather_boots') })))
       .toMatchObject({ tunic: true, leggings: true, boots: true })
   })
@@ -24,6 +25,16 @@ describe('avatar gear projection', () => {
   it('lights an off-hand wand only when the main hand does not already carry one', () => {
     expect(avatarGearFor(equipment({ offHand: stack('oak_wand') }))).toMatchObject({ mainHand: null, offHand: 'wand', offHandLight: true })
     expect(avatarGearFor(equipment({ mainHand: stack('oak_wand'), offHand: stack('oak_wand') }))).toMatchObject({ mainHand: 'wand', offHand: 'wand', offHandLight: false })
+  })
+})
+
+describe('dig-site view state', () => {
+  const ridge = { id: 'ridge_cache' as const, name: 'Buried ridge cache', position: [-6, 0, -9] as const, revealed: false, excavated: false, minimumExcavationLevel: 2 }
+
+  it('keeps an unrevealed cache hidden, then shows its mound and persistent dug ground', () => {
+    expect(digSiteAppearance(ridge)).toBe('hidden')
+    expect(digSiteAppearance({ ...ridge, revealed: true })).toBe('mound')
+    expect(digSiteAppearance({ ...ridge, revealed: true, excavated: true })).toBe('dug')
   })
 })
 
