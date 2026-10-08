@@ -422,6 +422,23 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Cross the ladder north, then find the revealed ridge cache (✦ on the map).')
   })
 
+  it('sends players who skipped the practice mound to Outfitters before excavating the revealed ridge cache', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    state.builtRouteIds = ['greenway_ladder']
+    state.revealedDigSiteIds = ['ridge_cache']
+    expect(state.excavatedDigSiteIds).not.toContain('practice_mound')
+    expect(state.player.inventory.some((stack) => stack.itemId === 'field_spade')).toBe(false)
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 5m west and 1m north. Buy a field spade.')
+
+    state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
+    expect(objectiveFor(state)).toBe('Cross the Greenway ladder south. Greenway Outfitters: 5m west and 7m south. Buy a field spade.')
+
+    state.builtRouteIds.push('highland_bridge')
+    state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway ladder south. Greenway Outfitters: 11m west and 7m south. Buy a field spade.')
+  })
+
   it('updates waystone bearings from the real inscription and calls for Study in reach', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
@@ -543,6 +560,7 @@ describe('Wizard view adapter', () => {
     state.excavatedDigSiteIds = ['practice_mound']
     state.builtRouteIds = ['greenway_ladder']
     state.revealedDigSiteIds = ['ridge_cache']
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
     state.player.equipment.mainHand = 'field_spade'
     state.player.position = { ...state.player.position, x: 0, z: -8 }
     state.discoveredTileIds = state.tiles.map((tile) => tile.id)

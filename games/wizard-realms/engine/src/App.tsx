@@ -221,6 +221,13 @@ export function objectiveFor(state: WizardWorldState): string {
   if (!state.excavatedDigSiteIds.includes('ridge_cache')) {
     const cache = state.digSites.find((site) => site.id === 'ridge_cache')!
     const target = `Ridge cache: ${bearingTo(cache.position)} (✦ on the map).`
+    if (!owned(state, 'field_spade')) {
+      const areaId = areaAt(state.areas, state.player.position.x, state.player.position.z).id
+      const returnRoute = areaId === 'eastern_highland'
+        ? 'Cross the Highland bridge west, then the Greenway ladder south. '
+        : areaId === 'northern_ridge' ? 'Cross the Greenway ladder south. ' : ''
+      return `${returnRoute}${outfitters('Buy a field spade')}`
+    }
     if (state.player.equipment.mainHand !== 'field_spade') return `Re-equip the field spade, then find it. ${target}`
     if (areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway') {
       return 'Cross the ladder north, then find the revealed ridge cache (✦ on the map).'
