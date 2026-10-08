@@ -184,6 +184,7 @@ export type WizardEvent = EventBase & (
   | { type: 'dig_site_excavated'; digSiteId: DigSiteId; itemId: ItemId; quantity: number; xp: number }
   | { type: 'skill_xp_gained'; skillId: SkillId; xp: number }
 )
+export type TradeListingSoldEvent = Extract<WizardEvent, { type: 'trade_listing_sold' }>
 
 export interface IntentRejection {
   intentIndex: number

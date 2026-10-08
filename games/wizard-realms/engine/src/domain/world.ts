@@ -1,6 +1,6 @@
 import type {
   AreaId, EquipmentSlot, GenerationProfile, IntentRejection, ItemId, PlayerState, ResourceKind, SkillId, Vec3, WizardAdvanceResult,
-  WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
+  TradeListingSoldEvent, WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
 import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 import { canonicalRouteSites, routeBuildOptions } from './routeSites'
@@ -19,6 +19,42 @@ export function storeSellUnitPrice(storeId: string, itemId: ItemId): number | nu
 // Patient buyers pay at most 150% of the best instant store bid; items without a bid have no demand.
 const tradeDemandCeiling = (itemId: ItemId) => Math.floor(Math.max(0,
   ...Object.values(storeSellPrices).map((prices) => prices[itemId] ?? 0)) * 3 / 2)
+const hasTradeDemand = (itemId: string): itemId is ItemId => Object.values(storeSellPrices)
+  .some((prices) => Object.prototype.hasOwnProperty.call(prices, itemId))
+
+type TradeSettlementSlot = { readonly slotIndex: 0 | 1 | 2 | 3; readonly itemId: string | null; readonly quantity: number; readonly unitPrice: number }
+type TradeSettlementPlayer = { readonly coins: number; readonly tradeSlots: readonly TradeSettlementSlot[] }
+
+/** Pure market step shared by v5 Greenway and the widened v6 campaign player. */
+export function settleTradeListings<P extends TradeSettlementPlayer>(
+  player: P, tick: number, eventSequence: number,
+): { player: P; events: TradeListingSoldEvent[]; eventSequence: number } {
+  const events: TradeListingSoldEvent[] = []
+  if (!Number.isSafeInteger(tick) || tick < 0 || tick % TRADE_SETTLEMENT_TICKS !== 0
+    || player.tradeSlots.length !== 4 || !Number.isSafeInteger(eventSequence) || eventSequence < 0) {
+    return { player, events, eventSequence }
+  }
+  let coins = player.coins
+  let sequence = eventSequence
+  let slots: TradeSettlementSlot[] | null = null
+  for (const [index, slot] of player.tradeSlots.entries()) {
+    if (slot.slotIndex !== index || !slot.itemId || !hasTradeDemand(slot.itemId)
+      || !Number.isSafeInteger(slot.quantity) || slot.quantity < 1
+      || !Number.isSafeInteger(slot.unitPrice) || slot.unitPrice < 1
+      || slot.unitPrice > tradeDemandCeiling(slot.itemId)) continue
+    const totalPrice = slot.quantity * slot.unitPrice
+    if (!Number.isSafeInteger(totalPrice) || !Number.isSafeInteger(coins + totalPrice)
+      || !Number.isSafeInteger(sequence + 1)) continue
+    coins += totalPrice
+    sequence += 1
+    if (!slots) slots = [...player.tradeSlots]
+    slots[index] = { ...slot, itemId: null, quantity: 0, unitPrice: 0 }
+    events.push({ type: 'trade_listing_sold', slotIndex: index, itemId: slot.itemId,
+      quantity: slot.quantity, unitPrice: slot.unitPrice, totalPrice, sequence, tick })
+  }
+  return slots ? { player: { ...player, coins, tradeSlots: slots } as P, events, eventSequence: sequence }
+    : { player, events, eventSequence }
+}
 const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
   woodcutters_axe: ['mainHand'], field_spade: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
@@ -471,20 +507,10 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
     next.unlockedRecipeIds.sort()
     events.push(event(next, tick, { type: 'recipe_unlocked', recipeId: recipe.id }))
   }
-  if (Number.isSafeInteger(tick) && tick % TRADE_SETTLEMENT_TICKS === 0) {
-    for (const slot of next.player.tradeSlots) {
-      if (!slot.itemId || !Number.isSafeInteger(slot.quantity) || slot.quantity < 1
-        || !Number.isSafeInteger(slot.unitPrice) || slot.unitPrice < 1
-        || slot.unitPrice > tradeDemandCeiling(slot.itemId)) continue
-      const totalPrice = slot.quantity * slot.unitPrice
-      if (!Number.isSafeInteger(totalPrice) || !Number.isSafeInteger(next.player.coins + totalPrice)
-        || !Number.isSafeInteger(next.eventSequence + 1)) continue
-      next.player.coins += totalPrice
-      next.player.tradeSlots[slot.slotIndex] = { slotIndex: slot.slotIndex, itemId: null, quantity: 0, unitPrice: 0 }
-      events.push(event(next, tick, { type: 'trade_listing_sold', slotIndex: slot.slotIndex,
-        itemId: slot.itemId, quantity: slot.quantity, unitPrice: slot.unitPrice, totalPrice }))
-    }
-  }
+  const settlement = settleTradeListings(next.player, tick, next.eventSequence)
+  next.player = settlement.player
+  next.eventSequence = settlement.eventSequence
+  events.push(...settlement.events)
   const ground = terrainHeightAt(next.tiles, next.player.position.x, next.player.position.z)
   if (next.player.position.y > ground || next.player.verticalVelocity > 0) {
     next.player.position.y += next.player.verticalVelocity * next.fixedStepMs / 1_000

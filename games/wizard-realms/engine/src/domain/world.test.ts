@@ -4,9 +4,10 @@ import {
   type EquipmentSlot, type WizardEvent, type WizardIntent, type WizardWorldState,
 } from './index'
 import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
+import type { MireglassV6Player } from './mireglassExpedition'
 import { isRestorableWizardSave } from './persistence'
 import { canonicalRouteSites, routeBuildOptions } from './routeSites'
-import { storeSellUnitPrice } from './world'
+import { settleTradeListings, storeSellUnitPrice } from './world'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 const clearanceSeeds = ['expedition-19078', 'expedition-870', 'expedition-8407', 'expedition-11820', 'expedition-4', 'expedition-1']
@@ -644,6 +645,41 @@ describe('Wizard world domain', () => {
     const nextCycle = advanceWizardWorld({ ...settled.state, tick: 1199 }, [])
     expect(nextCycle.events).toEqual([])
     expect(nextCycle.state.player.tradeSlots).toEqual(settled.state.player.tradeSlots)
+  })
+
+  it('settles a Greenway material for a widened Mireglass player without selling foreign items or dropping extra fields', () => {
+    const base = createWizardWorld('market-widened')
+    const player: MireglassV6Player & { journeyNote: string } = {
+      ...base.player,
+      inventory: [...base.player.inventory, { itemId: 'mireglass_reach/item/waders', quantity: 1 }],
+      equipment: { ...base.player.equipment, feet: 'mireglass_reach/item/waders' },
+      tradeSlots: [
+        { slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3 },
+        { slotIndex: 1, itemId: 'mireglass_reach/item/seal', quantity: 1, unitPrice: 1 },
+        base.player.tradeSlots[2], base.player.tradeSlots[3],
+      ],
+      journeyNote: 'keep this campaign fact',
+    }
+    const before = structuredClone(player)
+    const early = settleTradeListings(player, 599, 12)
+    expect(early.player).toBe(player)
+    expect(early.events).toEqual([])
+    expect(early.eventSequence).toBe(12)
+
+    const settled = settleTradeListings(player, 600, 12)
+    expect(settled.events).toEqual([
+      { type: 'trade_listing_sold', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3, totalPrice: 3, sequence: 13, tick: 600 },
+    ])
+    expect(settled.player.coins).toBe(player.coins + 3)
+    expect(settled.player.tradeSlots[0].itemId).toBeNull()
+    expect(settled.player.tradeSlots[1]).toEqual(before.tradeSlots[1])
+    expect(settled.player.inventory).toEqual(before.inventory)
+    expect(settled.player.equipment).toEqual(before.equipment)
+    expect(settled.player.journeyNote).toBe(before.journeyNote)
+    expect(player).toEqual(before)
+    const pending = settleTradeListings(settled.player, 1200, settled.eventSequence)
+    expect(pending.player).toBe(settled.player)
+    expect(pending.events).toEqual([])
   })
 
   it('rejects unsafe trade prices and never pays when settlement would overflow coins', () => {
