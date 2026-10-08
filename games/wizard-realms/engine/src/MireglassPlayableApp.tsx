@@ -242,8 +242,9 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
     return { label: player.equipment.mainHand === 'woodcutters_axe'
       ? 'Chop a tree for stump-digging practice' : 'Equip the axe and chop a tree for stump-digging practice', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
   }
-  if (owned(state, 'logs') < 8 && expedition.builtRoutes.bridge === null) return { label: player.equipment.mainHand === 'woodcutters_axe'
-    ? 'Chop timber for the fen bridge' : 'Equip the axe and chop timber for the fen bridge', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
+  const logs = owned(state, 'logs')
+  if (logs < 8 && expedition.builtRoutes.bridge === null) return { label: `${player.equipment.mainHand === 'woodcutters_axe'
+    ? 'Chop timber for the fen bridge' : 'Equip the axe and chop timber for the fen bridge'} (${logs}/8 logs)`, position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
   if (expedition.builtRoutes.bridge === null) return { label: 'Build the eight-log fen bridge', position: closest(routes.filter((site) => site.kind === 'bridge').map((site) => site.from)) }
   const bridge = routes.find((site) => site.id === expedition.builtRoutes.bridge)!
   const ladder = routes.find((site) => site.id === expedition.builtRoutes.ladder)
@@ -264,7 +265,7 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
     return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
   }
   if (player.position.z < bridge.to.z) return { label: 'Cross the built fen bridge', position: bridge.from }
-  if (expedition.builtRoutes.ladder === null && owned(state, 'logs') < 4) return { label: 'Gather four more logs for the slate ladder', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'after_bridge').map((tree) => tree.tile.center)) ?? anchors.slateBerm.tile.center }
+  if (expedition.builtRoutes.ladder === null && logs < 4) return { label: `Gather timber for the slate ladder (${logs}/4 logs)`, position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'after_bridge').map((tree) => tree.tile.center)) ?? anchors.slateBerm.tile.center }
   if (expedition.builtRoutes.ladder === null) return { label: 'Build the four-log slate ladder', position: closest(routes.filter((site) => site.kind === 'ladder').map((site) => site.from)) }
   if (ladder && player.position.z < ladder.to.z) return { label: 'Climb the built slate ladder', position: ladder.from }
   if (!expedition.cacheRevealed) {

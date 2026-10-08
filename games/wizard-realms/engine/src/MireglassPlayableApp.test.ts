@@ -110,10 +110,21 @@ describe('Mireglass playable dev adapter', () => {
         skillXp: { ...initial.player.skillXp, excavation: 30 } },
       expedition: { ...initial.expedition, fringeMarkerStudied: true },
     }
-    expect(mireglassNextObjective(ready).label).toBe('Chop timber for the fen bridge')
+    expect(mireglassNextObjective(ready).label).toBe('Chop timber for the fen bridge (0/8 logs)')
     expect(mireglassNextObjective({ ...ready,
       player: { ...ready.player, equipment: { ...ready.player.equipment, mainHand: null } } }).label)
-      .toBe('Equip the axe and chop timber for the fen bridge')
+      .toBe('Equip the axe and chop timber for the fen bridge (0/8 logs)')
+    const afterFirstChop = { ...ready,
+      player: { ...ready.player, inventory: [...ready.player.inventory,
+        { itemId: 'logs' as const, quantity: 4 }] },
+      expedition: { ...ready.expedition, depletedResourceIds: [tree.id] },
+    }
+    const nextStand = mireglassNextObjective(afterFirstChop)
+    expect(nextStand.label).toBe('Chop timber for the fen bridge (4/8 logs)')
+    expect(nextStand.position).not.toEqual(tree.tile.center)
+    expect(mireglassResources(seed).some((candidate) => candidate.phase === 'before_bridge'
+      && candidate.id !== tree.id && candidate.tile.center.x === nextStand.position.x
+      && candidate.tile.center.z === nextStand.position.z)).toBe(true)
     const stump = { ...ready,
       player: { ...ready.player, skillXp: { ...ready.player.skillXp, excavation: 0 } },
       expedition: { ...ready.expedition, depletedResourceIds: [tree.id] },
