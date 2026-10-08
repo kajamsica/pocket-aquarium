@@ -26,6 +26,22 @@ The existing optional terrain interface remains `createCachePitOverlay(seed, fac
 
 `PublicWorldV10State` extends the exact v9 state with `readonly terrainRevision: 'mireglass-cache-pit-v1'`. The immutable v10 source receipt contains both `sourceV9Head: PublicV9Head` and `sourceV9Lineage: PublicV9SourceReceipt`. V10 accesses the validated encoded v9 head through a narrow `inspectPublicV9UnderLock(storage, v8, v9)` export. The caller already holds the shared lock; calling the public v9 inspector there would try to acquire it twice. Portable rescue JSON must encode typed discovery masks explicitly, rather than relying on default `Uint8Array` JSON serialization.
 
+```ts
+type PublicWorldV10State = PublicWorldV9State & {
+  readonly terrainRevision: 'mireglass-cache-pit-v1'
+}
+type PublicV10SourceReceipt = {
+  readonly sourceV9Head: PublicV9Head
+  readonly sourceV9Lineage: PublicV9SourceReceipt
+}
+type PublicV9UnderLockInspection =
+  | Exclude<PublicV9Inspection, { status: 'valid' }>
+  | { status: 'valid'; start: PublicV9Start;
+      bootstrap: PublicV6BootstrapRoot | null; head: PublicV9Head }
+function inspectPublicV9UnderLock(storage: Pick<Storage, 'getItem'>,
+  v8: V8Store, v9: V9Store): Promise<PublicV9Operation<PublicV9UnderLockInspection>>
+```
+
 V10 must adapt camp placement before calling the exact-key v9 validator. A v10 state with the additional terrain marker cannot be passed directly to `applyFieldCampAction`; validate a v9-shaped witness and the real effective-ground pose, then apply the unchanged camp rule and restore the v10 marker. Preserve the camp list and source lineage throughout.
 
 ## Lane contracts and ownership
