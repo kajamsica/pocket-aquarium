@@ -39,7 +39,7 @@ const STYLES = `
 @media(max-height:599px){.wr-map-backdrop{position:fixed}}
 @media(max-width:719px) and (max-height:400px){.wr-surface .wr-context.wr-build-preview{left:50%;top:54px;bottom:auto;transform:translateX(-50%);box-sizing:border-box;width:min(280px,72vw);max-height:145px;overflow-y:auto;z-index:8}}
 @media(min-width:720px) and (min-height:591px){.wr-backpack{box-sizing:border-box;max-height:calc(100% - 230px);overflow-y:auto}.wr-map-toggle{top:auto;bottom:16px}.wr-events{left:186px}}
-@media(min-width:901px) and (max-height:590px){.wr-map-toggle{left:316px;top:64px;display:flex;justify-content:center;width:auto;min-width:44px;min-height:44px;padding:0 10px}.wr-map-toggle small,.wr-map-compact{display:none}}
+@media(min-width:901px) and (max-height:590px){.wr-surface{min-height:100%}.wr-map-toggle{left:316px;top:64px;display:flex;justify-content:center;width:auto;min-width:44px;min-height:44px;padding:0 10px}.wr-map-toggle small,.wr-map-compact{display:none}}
 `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false }: WizardSurfaceProps) {

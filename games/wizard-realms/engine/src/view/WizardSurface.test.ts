@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls } from './WizardSurface'
+import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
 import { RouteKey, WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
@@ -116,6 +116,15 @@ describe('third-person control grammar', () => {
     expect(releaseHeldControls(held)).toEqual([0, 0])
     expect(held.size).toBe(0)
     expect(movementVector(held)).toEqual([0, 0])
+  })
+})
+
+describe('short desktop layout', () => {
+  it('anchors the build panel to the viewport above the objective bar', () => {
+    const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: { ...sellProjection, openStoreId: null, selectedBuildSiteId: 'bridge-west' }, onIntent: () => {} }))
+    expect(markup).toContain('class="wr-panel wr-context wr-build-preview"')
+    expect(markup).toContain('.wr-surface{position:relative;width:100%;height:100%;min-height:600px')
+    expect(markup).toContain('@media(min-width:901px) and (max-height:590px){.wr-surface{min-height:100%}')
   })
 })
 
