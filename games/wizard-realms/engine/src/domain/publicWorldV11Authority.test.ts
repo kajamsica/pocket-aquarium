@@ -8,9 +8,11 @@ import { actPublicV11Highland, actPublicV11Mireglass,
   advancePublicWorldV11Frame, applyFieldCampV11Action } from './publicWorldV11Authority'
 import { advancePublicWorldV10Frame } from './publicWorldRuntime'
 import { createFreshPublicWorld } from './publicWorldState'
+import { parsePublicV10World, serializePublicV10World } from './publicWorldV10Snapshot'
 import { withFreshPublicV7Herbs } from './publicWorldV7'
 import { withFreshPublicV9Camps } from './publicWorldV9State'
 import { withPublicV10TerrainRevision } from './publicWorldV10State'
+import { parsePublicV11World, serializePublicV11World } from './publicWorldV11Snapshot'
 import { isValidPublicWorldV11State, withPublicV11Highland } from './publicWorldV11State'
 import type { PublicWorldV11State } from './publicWorldV11State'
 import { worldTileAtGrid } from './worldChunks'
@@ -130,29 +132,48 @@ describe('public v11 Highland authority', () => {
     }
   })
 
-  it.each(['greenway-alpha', 'wizard-realms'])('permits the east seam for %s but leaves v10 west-only', (worldSeed) => {
+  it.each([
+    ['greenway-alpha', 'east', 12, 0, 4, 0],
+    ['wizard-realms', 'east', 12, 0, 4, 0],
+    ['greenway-alpha', 'south', 8, 12, 0, 4],
+    ['wizard-realms', 'south', 8, 12, 0, 4],
+  ] as const)('crosses for %s through the dry %s seam in v10 and v11 with save and return',
+    (worldSeed, _edge, x, z, dx, dz) => {
     const seedFresh = withPublicV11Highland(withPublicV10TerrainRevision(withFreshPublicV9Camps(
       withFreshPublicV7Herbs(createFreshPublicWorld(worldSeed, 'greenway-classic-v1')))))
-    const edge = worldTileAtGrid(worldSeed, 3, 0)
-    const eastern = { ...seedFresh, player: { ...seedFresh.player,
-      position: { x: 12, y: terrainHeightAt(seedFresh.greenway.tiles, 12, 0), z: 0 } },
+    const edge = worldTileAtGrid(worldSeed, x / 4, z / 4)
+    const start = { ...seedFresh, player: { ...seedFresh.player,
+      position: { x, y: terrainHeightAt(seedFresh.greenway.tiles, x, z), z } },
       discoveredTileIds: [...new Set([...seedFresh.discoveredTileIds, edge.id])].sort() }
-    const step = [{ type: 'move' as const, delta: { x: 4, z: 0 } }]
-    expect(isValidPublicWorldV11State(eastern, null)).toBe(true)
-    const crossed = advancePublicWorldV11Frame(eastern, step)
+    const step = [{ type: 'move' as const, delta: { x: dx, z: dz } }]
+    const reverse = [{ type: 'move' as const, delta: { x: -dx, z: -dz } }]
+    expect(isValidPublicWorldV11State(start, null)).toBe(true)
+    const crossed = advancePublicWorldV11Frame(start, step)
     expect(crossed.rejections).toEqual([])
     expect(crossed.state.movementOwner).toBe('streamed')
-    expect(crossed.state.player.position.x).toBe(16)
-    expect(crossed.state.tick).toBe(eastern.tick + 1)
-    const back = advancePublicWorldV11Frame(crossed.state,
-      [{ type: 'move', delta: { x: -4, z: 0 } }])
+    expect(crossed.state.player.position).toMatchObject({ x: x + dx, z: z + dz })
+    expect(crossed.state.discoveredTileIds).toContain(worldTileAtGrid(worldSeed,
+      (x + dx) / 4, (z + dz) / 4).id)
+    expect(parsePublicV11World(serializePublicV11World(crossed.state, null, 1))?.state).toEqual(crossed.state)
+    const back = advancePublicWorldV11Frame(crossed.state, reverse)
     expect(back.rejections).toEqual([])
     expect(back.state.movementOwner).toBe('greenway')
-    expect(back.state.player.position.x).toBe(12)
+    expect(back.state.player.position).toMatchObject({ x, z })
     expect(back.state.tick).toBe(crossed.state.tick + 1)
     expect(isValidPublicWorldV11State(back.state, null)).toBe(true)
-    const { highland: _h, highlandContentRevision: _r, ...v10 } = eastern
-    expect(advancePublicWorldV10Frame(v10, step).rejections).toMatchObject([{ code: 'off_connector' }])
+    expect(parsePublicV11World(serializePublicV11World(back.state, null, 2))?.state).toEqual(back.state)
+    const { highland: _h, highlandContentRevision: _r, ...v10 } = start
+    const older = advancePublicWorldV10Frame(v10, step)
+    expect(older.rejections).toEqual([])
+    expect(older.state.movementOwner).toBe('streamed')
+    expect(older.state.player.position).toMatchObject({ x: x + dx, z: z + dz })
+    expect(parsePublicV10World(serializePublicV10World(older.state, null, 1))?.state).toEqual(older.state)
+    const olderReturn = advancePublicWorldV10Frame(older.state, reverse)
+    expect(olderReturn.rejections).toEqual([])
+    expect(olderReturn.state.movementOwner).toBe('greenway')
+    expect(olderReturn.state.player.position).toMatchObject({ x, z })
+    expect(parsePublicV10World(serializePublicV10World(olderReturn.state, null, 2))?.state)
+      .toEqual(olderReturn.state)
   })
 
   it('crosses the expanded 34-to-36 seam and returns without changing ownership twice', () => {
@@ -175,7 +196,7 @@ describe('public v11 Highland authority', () => {
     expect(inbound.state.tick).toBe(start.tick + 2)
   })
 
-  it('preserves the existing west crossing and rejects off-connector east attempts atomically', () => {
+  it('preserves the west crossing and permits a dry east crossing away from its marker', () => {
     const westTile = worldTileAtGrid(seed, -3, 0)
     const westStart: PublicWorldV11State = { ...fresh,
       player: { ...fresh.player, position: { x: -12,
@@ -189,17 +210,117 @@ describe('public v11 Highland authority', () => {
     expect(newer.state.movementOwner).toBe(old.state.movementOwner)
     expect(newer.state.player.position).toEqual(old.state.player.position)
     expect(newer.events).toEqual(old.events)
+    const westReturn = [{ type: 'move' as const, delta: { x: 4, z: 0 } }]
+    const oldBack = advancePublicWorldV10Frame(old.state, westReturn)
+    const newerBack = advancePublicWorldV11Frame(newer.state, westReturn)
+    expect(oldBack.rejections).toEqual([])
+    expect(newerBack.rejections).toEqual([])
+    expect(oldBack.state.movementOwner).toBe('greenway')
+    expect(newerBack.state.movementOwner).toBe('greenway')
+    expect(newerBack.state.player.position).toEqual(oldBack.state.player.position)
 
     const eastTile = worldTileAtGrid(seed, 3, 1)
     const offRoute: PublicWorldV11State = { ...fresh,
       player: { ...fresh.player, position: { x: 12,
         y: terrainHeightAt(fresh.greenway.tiles, 12, 4), z: 4 } },
       discoveredTileIds: [...new Set([...fresh.discoveredTileIds, eastTile.id])].sort() }
-    const blocked = advancePublicWorldV11Frame(offRoute,
+    const crossed = advancePublicWorldV11Frame(offRoute,
       [{ type: 'move', delta: { x: 4, z: 0 } }])
-    expect(blocked.rejections).toMatchObject([{ code: 'off_connector' }])
-    expect(blocked.state).toBe(offRoute)
+    expect(crossed.rejections).toEqual([])
+    expect(crossed.state.movementOwner).toBe('streamed')
+    expect(crossed.state.player.position).toMatchObject({ x: 16, z: 4 })
+    const returned = advancePublicWorldV11Frame(crossed.state,
+      [{ type: 'move', delta: { x: -4, z: 0 } }])
+    expect(returned.rejections).toEqual([])
+    expect(returned.state.movementOwner).toBe('greenway')
+    expect(returned.state.player.position).toMatchObject({ x: 12, z: 4 })
+  })
+
+  it('returns through the northern perimeter after building and traversing the authored ladder', () => {
+    const siteId = 'greenway_ladder:x:0'
+    const source = fresh.greenway.routes.find((route) => route.id === 'greenway_ladder')!.from
+    const sourceTile = worldTileAtGrid(seed, 0, -1)
+    const ready: PublicWorldV11State = { ...fresh,
+      player: { ...fresh.player, position: { ...source },
+        inventory: [...fresh.player.inventory, { itemId: 'logs', quantity: 4 }] },
+      discoveredTileIds: [...new Set([...fresh.discoveredTileIds, sourceTile.id])].sort() }
+    const built = advancePublicWorldV11Frame(ready,
+      [{ type: 'build_route', routeId: 'greenway_ladder', siteId }])
+    expect(built.rejections).toEqual([])
+    expect(built.events[0]).toMatchObject({ type: 'route_built', routeId: 'greenway_ladder', siteId })
+    const traversed = advancePublicWorldV11Frame(built.state,
+      [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+    expect(traversed.rejections).toEqual([])
+    expect(traversed.state.player.position).toMatchObject({ x: 0, z: -8 })
+    const atEdge = advancePublicWorldV11Frame(traversed.state,
+      [{ type: 'move', delta: { x: 0, z: -4 } }])
+    expect(atEdge.rejections).toEqual([])
+    const out = advancePublicWorldV11Frame(atEdge.state,
+      [{ type: 'move', delta: { x: 0, z: -4 } }])
+    expect(out.rejections).toEqual([])
+    expect(out.state.movementOwner).toBe('streamed')
+    const back = advancePublicWorldV11Frame(out.state,
+      [{ type: 'move', delta: { x: 0, z: 4 } }])
+    expect(back.rejections).toEqual([])
+    expect(back.state.movementOwner).toBe('greenway')
+    expect(back.state.player.position).toMatchObject({ x: 0, z: -12 })
+    expect(back.state.greenway.builtRouteIds).toContain('greenway_ladder')
+    expect(isValidPublicWorldV11State(back.state, null)).toBe(true)
+
+    const { highland: _progress, highlandContentRevision: _revision, ...v10Ready } = ready
+    const olderBuilt = advancePublicWorldV10Frame(v10Ready,
+      [{ type: 'build_route', routeId: 'greenway_ladder', siteId }])
+    expect(olderBuilt.rejections).toEqual([])
+    const olderTraversed = advancePublicWorldV10Frame(olderBuilt.state,
+      [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+    expect(olderTraversed.rejections).toEqual([])
+    const olderEdge = advancePublicWorldV10Frame(olderTraversed.state,
+      [{ type: 'move', delta: { x: 0, z: -4 } }])
+    expect(olderEdge.rejections).toEqual([])
+    const olderOut = advancePublicWorldV10Frame(olderEdge.state,
+      [{ type: 'move', delta: { x: 0, z: -4 } }])
+    expect(olderOut.rejections).toEqual([])
+    expect(olderOut.state.movementOwner).toBe('streamed')
+    const olderBack = advancePublicWorldV10Frame(olderOut.state,
+      [{ type: 'move', delta: { x: 0, z: 4 } }])
+    expect(olderBack.rejections).toEqual([])
+    expect(olderBack.state.movementOwner).toBe('greenway')
+    expect(olderBack.state.player.position).toMatchObject({ x: 0, z: -12 })
+    expect(olderBack.state.greenway.builtRouteIds).toContain('greenway_ladder')
+  })
+
+  it('rejects a wetland perimeter move atomically in v10 and v11', () => {
+    const sourceTile = worldTileAtGrid(seed, 0, 3)
+    expect(worldTileAtGrid(seed, 0, 4).terrain).toBe('wetland')
+    const start: PublicWorldV11State = { ...fresh,
+      player: { ...fresh.player, position: { x: 0,
+        y: terrainHeightAt(fresh.greenway.tiles, 0, 12), z: 12 } },
+      discoveredTileIds: [...new Set([...fresh.discoveredTileIds, sourceTile.id])].sort() }
+    const intents = [{ type: 'look' as const, yawDelta: 0.1, pitchDelta: 0 },
+      { type: 'move' as const, delta: { x: 0, z: 4 } }]
+    const blocked = advancePublicWorldV11Frame(start, intents)
+    expect(blocked.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
+    expect(blocked.state).toBe(start)
     expect(blocked.events).toEqual([])
+    const { highland: _progress, highlandContentRevision: _revision, ...v10 } = start
+    const older = advancePublicWorldV10Frame(v10, intents)
+    expect(older.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
+    expect(older.state).toBe(v10)
+    expect(older.events).toEqual([])
+  })
+
+  it('keeps a world-boundary step atomic in v10 and v11', () => {
+    const edge = atMireglass(worldTileAtGrid(seed, -256, 0).center)
+    const step = [{ type: 'move' as const, delta: { x: -4, z: 0 } }]
+    const blocked = advancePublicWorldV11Frame(edge, step)
+    expect(blocked.rejections).toMatchObject([{ code: 'out_of_bounds' }])
+    expect(blocked.state).toBe(edge)
+    expect(blocked.events).toEqual([])
+    const { highland: _progress, highlandContentRevision: _revision, ...v10 } = edge
+    const older = advancePublicWorldV10Frame(v10, step)
+    expect(older.rejections).toMatchObject([{ code: 'out_of_bounds' }])
+    expect(older.state).toBe(v10)
+    expect(older.events).toEqual([])
   })
 
   it('blocks Highland rock only in v11 while allowing gallery travel and v10 movement', () => {

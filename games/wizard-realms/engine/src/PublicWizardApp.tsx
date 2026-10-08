@@ -732,28 +732,23 @@ export function publicHerbGuidancePriority(state: PublicWorldState, expeditionCo
 }
 
 export function publicAreaTitle(state: PublicWorldState): string {
-  if ('highlandContentRevision' in state && state.movementOwner === 'streamed') {
+  if (state.movementOwner === 'streamed') {
     const region = classifyStreamedRegion(state.seed, state.player.position)
-    return region === 'highland_quarry' ? 'Highland Quarry'
-      : region === 'mireglass_reach' ? 'Mireglass Reach' : 'Open Wilderness'
+    return region === 'mireglass_reach' ? 'Mireglass Reach'
+      : region === 'highland_quarry' && 'highlandContentRevision' in state ? 'Highland Quarry'
+        : 'Open Wilderness'
   }
-  return state.movementOwner === 'streamed' ? 'Mireglass Reach'
-    : areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).name
+  return areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).name
 }
 
 export function publicRegionTransitionText(before: PublicWorldState, after: PublicWorldState): string | null {
-  if ('highlandContentRevision' in after) {
-    const beforeArea = publicAreaTitle(before), afterArea = publicAreaTitle(after)
-    if (beforeArea === afterArea) return null
-    return after.movementOwner === 'greenway' ? 'Returned to Greenway.'
-      : afterArea === 'Highland Quarry' ? 'Entered Highland Quarry. Follow the rocky trail to the Quarry Crown.'
+  if (before.movementOwner === 'greenway' && after.movementOwner === 'greenway') return null
+  const beforeArea = publicAreaTitle(before), afterArea = publicAreaTitle(after)
+  if (beforeArea === afterArea) return null
+  return after.movementOwner === 'greenway' ? 'Returned to Greenway.'
+    : afterArea === 'Highland Quarry' ? 'Entered Highland Quarry. Follow the rocky trail to the Quarry Crown.'
       : afterArea === 'Mireglass Reach' ? 'Entered Mireglass Reach. Follow the dry frontier trail to its marker.'
-      : 'Entered open wilderness.'
-  }
-  if (before.movementOwner === after.movementOwner) return null
-  return after.movementOwner === 'streamed'
-    ? 'Entered Mireglass Reach. Follow the dry frontier trail to its marker.'
-    : 'Returned to Greenway.'
+        : 'Entered Open Wilderness.'
 }
 
 export type PublicV8PlayableSession = {
@@ -1287,7 +1282,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     v10Session ? { cachePitDug: world.mireglass.cacheExcavated } : undefined) : null,
     [world, messages, selectedSiteId, openStoreId, selectedCampTileId, v9Session, v10Session, v11Session, blocked])
   const region = world?.movementOwner === 'streamed'
-    && (!v11Session || classifyStreamedRegion(world.seed, world.player.position) === 'mireglass_reach')
+    && classifyStreamedRegion(world.seed, world.player.position) === 'mireglass_reach'
     ? mireglassForPublicView(world) : null
   const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
@@ -1312,7 +1307,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     const v6Upgrade = entry?.v6.status === 'valid-playable' || entry?.v6.status === 'valid-bootstrap'
       ? entry.v6 : null
     return <main className="wr-public-menu"><style>{STYLES}</style><section className="wr-public-card">
-      <h1>Wizard Realms</h1><p>One public world connects Greenway and Mireglass Reach. Choose how to begin.</p>
+      <h1>Wizard Realms</h1><p>One public world begins in Greenway and opens into wilderness roughly 2 km across. Choose how to begin.</p>
       <p role="status" className={blocked ? 'wr-public-warning' : ''}>{notice}</p>
       {entry?.artifacts.status === 'available' && entry.artifacts.backup.status === 'available' &&
         <p>Verified v7 backup bytes exist. They will not be restored automatically.</p>}
@@ -1371,13 +1366,15 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const herbPriority = !!herbDetour || !!carryingGreenway
     || (!!region && publicHerbGuidancePriority(world, !!objective?.complete))
   const nextGuidance = herbPriority && herbRouteHint
-    ? herbRouteHint : objective?.label ?? (v11Session && projection.map.guidance)
+    ? herbRouteHint : objective?.label ?? (world.movementOwner === 'streamed' ? projection.map.guidance : undefined)
       ?? objectiveFor(greenwayForPublicView(world))
   const woodTip = publicBeginnerWoodTip(world)
   const activeWoodTip = woodTip && !dismissedWoodTips.has(woodTip.id) ? woodTip : null
-  const playProjection = herbPriority && herbRouteHint
+  const playProjection = world.movementOwner === 'streamed' || herbPriority && herbRouteHint
     ? { ...projection, map: { ...projection.map,
-      guidance: publicHerbMapGuidance(projection.map.guidance, true, herbRouteHint) } }
+      ...(world.movementOwner === 'streamed' ? { title: publicAreaTitle(world) } : {}),
+      ...(herbPriority && herbRouteHint
+        ? { guidance: publicHerbMapGuidance(projection.map.guidance, true, herbRouteHint) } : {}) } }
     : projection
   return <main className="wr-public" data-owner={world.movementOwner}><style>{STYLES}</style>
     <WizardSurface projection={playProjection} onIntent={onIntent} />
@@ -1399,8 +1396,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         {playProjection.fieldCamp?.guidance && <p><b>Camp:</b> {playProjection.fieldCamp.guidance}</p>}
         {herbRouteHint && !herbPriority && <p><b>Bell Alder route:</b> {herbRouteHint}</p>}
         {world.movementOwner === 'greenway' && world.player.learnedSpellIds.includes('wayfinder_glow') &&
-          <p><b>Frontier trails:</b> Travel west at z = 0 to Mireglass Reach{v11Session
-            ? ', or east at z = 0 toward Highland Quarry' : ''}. Greenway training remains available.</p>}
+          <p><b>Frontier:</b> Cross Greenway's dry edges to explore Open Wilderness. The marked west trail at z = 0 leads to Mireglass Reach{v11Session
+            ? ', and the eastern path at z = 0 points toward Highland Quarry' : ''}. These trails are guides, not the only exits.</p>}
         {region && <div className="wr-public-actions">{choices.map((choice) => <button key={choice.id} disabled={blocked}
           onClick={() => actMireglass(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>}
         <button disabled={blocked || saveNotices.current.manualPending}

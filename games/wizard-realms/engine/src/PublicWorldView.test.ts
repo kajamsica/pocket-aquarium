@@ -145,7 +145,7 @@ describe('public v6 read-only view adapter', () => {
         skillXp: { ...fresh.player.skillXp, spellcraft: 10 },
         discoveredRingIds: ['ring-greenway', 'ring-highland'] } }
     expect(publicWorldViewProjection(completed, [], null).map.guidance)
-      .toBe('West to Mireglass: follow the marked dry gap near z≈0, about 12 m from here.')
+      .toBe('West to Mireglass: follow the marked dry gap near z≈0, about 12 m from here. Other dry Greenway edges also lead into Open Wilderness.')
   })
 
   it('projects only saved discoveries into a bounded world overview and preserves fog on reload', () => {

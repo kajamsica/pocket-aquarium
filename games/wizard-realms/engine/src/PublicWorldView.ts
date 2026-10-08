@@ -4,6 +4,7 @@ import { createActiveWorldTerrain, type ActiveWorldTerrain } from './domain/acti
 import type { TerrainFacts } from './domain/mireglassCachePitOverlay'
 import { resolveFieldCampSite } from './domain/fieldCamp'
 import { areaAt, terrainHeightAt } from './domain/generation'
+import { classifyStreamedRegion } from './domain/highlandContent'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import type { MireglassWorldRuntime, MireglassWorldState } from './domain/mireglassWorld'
@@ -97,10 +98,10 @@ export function publicWorldOverview(state: PublicWorldState, camps: readonly Wiz
     const [x, z] = key.split(':').map(Number)
     return { x, z }
   })]
-  const minX = Math.max(WORLD_CHUNK_MIN, Math.min(...positions.map(({ x }) => x)) - 1)
-  const maxX = Math.min(WORLD_CHUNK_MAX, Math.max(...positions.map(({ x }) => x)) + 1)
-  const minZ = Math.max(WORLD_CHUNK_MIN, Math.min(...positions.map(({ z }) => z)) - 1)
-  const maxZ = Math.min(WORLD_CHUNK_MAX, Math.max(...positions.map(({ z }) => z)) + 1)
+  const minX = Math.max(WORLD_CHUNK_MIN, Math.min(...positions.map(({ x }) => x)) - 4)
+  const maxX = Math.min(WORLD_CHUNK_MAX, Math.max(...positions.map(({ x }) => x)) + 4)
+  const minZ = Math.max(WORLD_CHUNK_MIN, Math.min(...positions.map(({ z }) => z)) - 4)
+  const maxZ = Math.min(WORLD_CHUNK_MAX, Math.max(...positions.map(({ z }) => z)) + 4)
   const cells: WizardWorldOverview['cells'][number][] = []
   for (let z = minZ; z <= maxZ; z += 1) for (let x = minX; x <= maxX; x += 1) {
     const key = chunkKey(x, z)
@@ -137,7 +138,7 @@ function greenwayView(state: PublicWorldState, messages: readonly string[],
       legend: '▲ you · ⇦ west trail to Mireglass · W waystone · ✦ revealed cache · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored',
       guidance: objective.startsWith('Quest complete:')
         ? `West to Mireglass: follow the marked dry gap near z≈0, about ${Math.round(Math.hypot(
-          state.player.position.x - westernTile.center.x, state.player.position.z))} m from here.`
+          state.player.position.x - westernTile.center.x, state.player.position.z))} m from here. Other dry Greenway edges also lead into Open Wilderness.`
         : `Next: ${objective}`,
     } : {}),
   }
@@ -212,9 +213,15 @@ export function publicWorldViewProjection(state: PublicWorldState, messages: rea
   const projection = state.movementOwner === 'greenway'
     ? greenwayView(state, messages, selectedSiteId, openStoreId)
     : mireglassView(state, messages, selectedSiteId, terrainFacts)
+  const streamedRegion = state.movementOwner === 'streamed'
+    ? classifyStreamedRegion(state.seed, state.player.position) : null
+  const openWilderness = streamedRegion === 'wilderness'
+    || (streamedRegion === 'highland_quarry' && !('highlandContentRevision' in state))
   let overview: WizardWorldOverview | undefined
   const campTileIds = new Set(fieldCamp?.camps.map((camp) => camp.tileId))
   return { ...projection, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,
+    ...(openWilderness ? { title: 'Open Wilderness',
+      guidance: 'Explore dry ground to chart Open Wilderness. The map shows only visited terrain.' } : {}),
     ...(fieldCamp ? { tiles: projection.map.tiles.map((tile) => ({ ...tile,
       hasCamp: tile.discovered && campTileIds.has(tile.id),
       ...(fieldCamp.selectionEnabled && state.movementOwner === 'streamed' && tile.discovered

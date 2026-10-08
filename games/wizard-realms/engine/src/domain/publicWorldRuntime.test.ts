@@ -5,12 +5,18 @@ import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import { serializeWizardWorld } from './persistence'
 import { PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, inspectLegacyImportSource,
   parsePublicV6PlayableRoot, serializePublicV6World } from './publicWorldV6'
-import { advancePublicWorld, advancePublicWorldFrame } from './publicWorldRuntime'
+import { advancePublicWorld, advancePublicWorldFrame, advancePublicWorldV10Frame } from './publicWorldRuntime'
+import { advancePublicWorldV11Frame } from './publicWorldV11Authority'
 import type { PublicWorldIntent } from './publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
 import type { PublicWorldState } from './publicWorldState'
+import { withFreshPublicV7Herbs } from './publicWorldV7'
+import { withFreshPublicV9Camps } from './publicWorldV9State'
+import { withPublicV10TerrainRevision } from './publicWorldV10State'
+import { withPublicV11Highland } from './publicWorldV11State'
 import * as streamedWorld from './streamedWorld'
 import type { GenerationProfile } from './types'
+import { worldTileAtGrid, WORLD_GRID_MIN } from './worldChunks'
 
 const seed = 'greenway-alpha'
 const classic = 'greenway-classic-v1'
@@ -150,22 +156,35 @@ describe('public v6 authority handoff', () => {
     expect(outbound.state.movementOwner).toBe('streamed')
   })
 
-  it('identifies the actual western trail when a player leaves at the wrong latitude', () => {
-    const offTrail = atEdge(classic, -12, 4)
-    const move = { type: 'move' as const, delta: { x: -4, z: 0 } }
-    const result = advancePublicWorldFrame(offTrail, [move])
-    expect(result.state).toBe(offTrail)
-    expect(result.rejections[0]).toMatchObject({ code: 'off_connector',
-      message: 'Leave Greenway through the dry western trail, aligned with z = 0.' })
-  })
-
-  it('does not call a northern boundary a western exit', () => {
-    const north = atEdge(classic, 0, -12)
-    const result = advancePublicWorldFrame(north, [{ type: 'move', delta: { x: 0, z: -4 } }])
-    expect(result.state).toBe(north)
-    expect(result.rejections[0]).toMatchObject({ code: 'off_connector',
-      message: 'The Greenway path ends here. Mireglass lies on the western trail at z = 0.' })
-  })
+  it.each([
+    ['west away from trail', -12, 4, -4, 0, true],
+    ['east away from trail', 12, 4, 4, 0, true],
+    ['north', 0, -12, 0, -4, false],
+    ['south', 8, 12, 0, 4, true],
+  ] as const)('crosses a dry %s edge and discovers its destination',
+    (_edge, x, z, dx, dz, canReturn) => {
+      const start = atEdge(classic, x, z)
+      const out = advancePublicWorldFrame(start, [{ type: 'move', delta: { x: dx, z: dz } }])
+      expect(out.rejections).toEqual([])
+      expect(out.state.movementOwner).toBe('streamed')
+      expect(out.state.player.position).toMatchObject({ x: x + dx, z: z + dz })
+      expect(out.state.tick).toBe(start.tick + 1)
+      const tile = worldTileAtGrid(seed, (x + dx) / 4, (z + dz) / 4)
+      expect(out.state.discoveredTileIds).toContain(tile.id)
+      expect(out.events.map(({ type }) => type)).toContain('tile_discovered')
+      const back = advancePublicWorldFrame(out.state,
+        [{ type: 'move', delta: { x: -dx, z: -dz } }])
+      if (canReturn) {
+        expect(back.rejections).toEqual([])
+        expect(back.state.movementOwner).toBe('greenway')
+        expect(back.state.player.position).toMatchObject({ x, z })
+        expect(back.state.tick).toBe(start.tick + 2)
+      } else {
+        expect(back.rejections).toMatchObject([{ code: 'locked_area' }])
+        expect(back.state).toBe(out.state)
+        expect(back.events).toEqual([])
+      }
+    })
 
   it('settles an escrowed Greenway listing during a Mireglass expedition without a second player', () => {
     const edge = atEdge(classic, -12)
@@ -305,7 +324,7 @@ describe('public v6 authority handoff', () => {
     expect(invalidMove.events).toEqual([])
     const edge = atEdge(classic, -12, 4)
     const blocked = advancePublicWorldFrame(edge, turnAndWalk(Math.PI / 2, 'D', 4))
-    expect(blocked.rejections).toMatchObject([{ code: 'off_connector', intentIndex: 1 }])
+    expect(blocked.rejections).toMatchObject([{ code: 'fen_channel', intentIndex: 1 }])
     expect(blocked.state).toBe(edge)
     expect(blocked.events).toEqual([])
 
@@ -410,13 +429,7 @@ describe('public v6 authority handoff', () => {
     expect(out.state.tick).toBe(39)
   })
 
-  it('rejects off-connector exits and invalid streamed destinations atomically', () => {
-    const offConnector = atEdge(classic, -12, 4)
-    const rejected = advancePublicWorld(offConnector, { type: 'move', delta: { x: -4, z: 0 } })
-    expect(rejected.rejections).toMatchObject([{ code: 'off_connector' }])
-    expect(rejected.state).toBe(offConnector)
-    expect(rejected.events).toEqual([])
-
+  it('rejects invalid streamed destinations and world-edge steps atomically', () => {
     const edge = atEdge(expanded, -30)
     const badYaw: PublicWorldState = { ...edge, player: { ...edge.player, yaw: 1_000_001 } }
     const invalid = advancePublicWorld(badYaw, { type: 'move', delta: { x: -2, z: 0 } })
@@ -427,19 +440,100 @@ describe('public v6 authority handoff', () => {
     expect(badYaw.eventSequence).toBe(edge.eventSequence)
     expect(badYaw.rng).toEqual(edge.rng)
 
-    const out = advancePublicWorld(atEdge(classic, -12), { type: 'move', delta: { x: -4, z: 0 } })
-    expect(out.rejections).toEqual([])
-    const offReturn: PublicWorldState = { ...out.state, player: { ...out.state.player,
-      position: { ...out.state.player.position, z: 4 } } }
-    const rejectedReturn = advancePublicWorld(offReturn, { type: 'move', delta: { x: 4, z: 0 } })
-    expect(rejectedReturn.rejections).toMatchObject([{ code: 'off_connector',
-      message: 'The dry Greenway opening is north of you. Follow the marked trail, then head east.' }])
-    expect(rejectedReturn.state).toBe(offReturn)
-    const invalidReturn: PublicWorldState = { ...out.state, discoveredTileIds: [] }
-    const rejectedValidation = advancePublicWorld(invalidReturn, { type: 'move', delta: { x: 4, z: 0 } })
-    expect(rejectedValidation.rejections).toMatchObject([{ code: 'terrain_missing' }])
-    expect(rejectedValidation.state).toBe(invalidReturn)
-    expect(rejectedValidation.events).toEqual([])
+    const snapshot = streamedWorld.createStreamedWorld(seed, { x: WORLD_GRID_MIN * 4, z: 0 }).state
+    const fresh = createFreshPublicWorld(seed, classic)
+    const atWorldEdge: PublicWorldState = { ...fresh, movementOwner: 'streamed',
+      player: { ...fresh.player, position: { ...snapshot.player.position } },
+      discoveredTileIds: [...new Set([...fresh.discoveredTileIds, ...snapshot.discoveredTileIds])].sort() }
+    const before = JSON.stringify(atWorldEdge)
+    const outOfWorld = advancePublicWorldFrame(atWorldEdge,
+      [{ type: 'move', delta: { x: -4, z: 0 } }])
+    expect(outOfWorld.rejections).toMatchObject([{ code: 'out_of_bounds' }])
+    expect(outOfWorld.state).toBe(atWorldEdge)
+    expect(outOfWorld.events).toEqual([])
+    expect(JSON.stringify(atWorldEdge)).toBe(before)
+  })
+
+  it('keeps a wetland south crossing atomic while a nearby dry south exit stays open', () => {
+    const wetEdge = atEdge(classic, 0, 12)
+    expect(worldTileAtGrid(seed, 0, 4).terrain).toBe('wetland')
+    const before = JSON.stringify(wetEdge)
+    const blocked = advancePublicWorldFrame(wetEdge,
+      [{ type: 'look', yawDelta: 0.1, pitchDelta: 0 },
+        { type: 'move', delta: { x: 0, z: 4 } }])
+    expect(blocked.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
+    expect(blocked.state).toBe(wetEdge)
+    expect(blocked.events).toEqual([])
+    expect(JSON.stringify(wetEdge)).toBe(before)
+    const dry = advancePublicWorld(atEdge(classic, 8, 12), { type: 'move', delta: { x: 0, z: 4 } })
+    expect(dry.rejections).toEqual([])
+    expect(dry.state.movementOwner).toBe('streamed')
+  })
+
+  it('does not let an expanded Greenway wetland source escape into dry streamed ground', () => {
+    const wetSeed = 'wizard-realms'
+    const fresh = createFreshPublicWorld(wetSeed, expanded)
+    const source = fresh.greenway.tiles.find(({ center }) => center.x === -28 && center.z === 8)!
+    const destination = worldTileAtGrid(wetSeed, -8, 2)
+    expect(source.terrain).toBe('wetland')
+    expect(destination.terrain).toBe('loam')
+    const edge: PublicWorldState = { ...fresh, player: { ...fresh.player,
+      position: { x: -30, y: terrainHeightAt(fresh.greenway.tiles, -30, 8), z: 8 } } }
+    const before = JSON.stringify(edge)
+    const blocked = advancePublicWorldFrame(edge, [
+      { type: 'look', yawDelta: 0.1, pitchDelta: 0 },
+      { type: 'move', delta: { x: -2, z: 0 } },
+    ])
+    expect(blocked.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
+    expect(blocked.state).toBe(edge)
+    expect(blocked.events).toEqual([])
+    expect(JSON.stringify(edge)).toBe(before)
+  })
+
+  it('rejects a diagonal seam step that crosses wetland between dry endpoints atomically', () => {
+    const diagonalSeed = 'wizard-realms'
+    const base = withPublicV10TerrainRevision(withFreshPublicV9Camps(
+      withFreshPublicV7Herbs(createFreshPublicWorld(diagonalSeed, classic))))
+    const start = { ...base, player: { ...base.player,
+      position: { x: -12, y: terrainHeightAt(base.greenway.tiles, -12, 4.5), z: 4.5 } } }
+    expect(worldTileAtGrid(diagonalSeed, -3, 1).terrain).not.toBe('wetland')
+    expect(worldTileAtGrid(diagonalSeed, -4, 1).terrain).toBe('wetland')
+    expect(worldTileAtGrid(diagonalSeed, -4, 0).terrain).not.toBe('wetland')
+    const before = JSON.stringify(start)
+    const blocked = advancePublicWorldV10Frame(start, [
+      { type: 'look', yawDelta: 0.1, pitchDelta: 0 },
+      { type: 'move', delta: { x: -2.82, z: -2.82 } },
+    ])
+    expect(blocked.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
+    expect(blocked.state).toBe(start)
+    expect(blocked.events).toEqual([])
+    expect(JSON.stringify(start)).toBe(before)
+  })
+
+  it('rejects an expanded seam with dry legacy and exterior tiles but wet streamed interior', () => {
+    const mismatchSeed = 'frontier-scan-1'
+    const base = withPublicV10TerrainRevision(withFreshPublicV9Camps(
+      withFreshPublicV7Herbs(createFreshPublicWorld(mismatchSeed, expanded))))
+    const legacy = base.greenway.tiles.find(({ center }) => center.x === -28 && center.z === 4)!
+    expect(legacy.terrain).toBe('loam')
+    expect(worldTileAtGrid(mismatchSeed, -8, 1).terrain).toBe('wetland')
+    expect(worldTileAtGrid(mismatchSeed, -9, 1).terrain).toBe('loam')
+    const v10 = { ...base, player: { ...base.player,
+      position: { x: -30, y: terrainHeightAt(base.greenway.tiles, -30, 4), z: 4 } } }
+    const v11 = withPublicV11Highland(v10)
+    const intents = [{ type: 'look' as const, yawDelta: 0.1, pitchDelta: 0 },
+      { type: 'move' as const, delta: { x: -4, z: 0 } }]
+    const v10Before = JSON.stringify(v10)
+    const v11Before = JSON.stringify(v11)
+    for (const [state, blocked, before] of [
+      [v10, advancePublicWorldV10Frame(v10, intents), v10Before],
+      [v11, advancePublicWorldV11Frame(v11, intents), v11Before],
+    ] as const) {
+      expect(blocked.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
+      expect(blocked.state).toBe(state)
+      expect(blocked.events).toEqual([])
+      expect(JSON.stringify(state)).toBe(before)
+    }
   })
 
   it('advances streamed travel once per step and replays the same state deterministically', () => {

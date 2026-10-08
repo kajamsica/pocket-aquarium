@@ -821,16 +821,16 @@ describe('public v6 app boundary', () => {
     let walking: PublicWorldState = { ...carrying,
       discoveredTileIds: [...new Set([...carrying.discoveredTileIds, nearTile.id])].sort() }
     const blocked = advancePublicWorldFrame(walking, [{ type: 'move', delta: { x: 0, z: 1 } }])
-    expect(blocked.rejections).toMatchObject([{ code: 'off_connector',
-      message: expect.stringMatching(/Backtrack N, then W outside x = -12.*S to z = 0 and E/) }])
+    expect(blocked.rejections).toMatchObject([{ code: 'locked_area',
+      message: 'Use a completed route to cross into another area.' }])
     expect(blocked.state).toBe(walking)
     const atNorth = atStep(-7.8, -16)
     const northTile = worldTileAtGrid(seed, Math.ceil(-7.8 / WORLD_CELL_METERS - 0.5), -4)
     const blockedAtNorth = advancePublicWorldFrame({ ...atNorth,
       discoveredTileIds: [...new Set([...atNorth.discoveredTileIds, northTile.id])].sort() },
     [{ type: 'move', delta: { x: 0, z: 4 } }])
-    expect(blockedAtNorth.rejections).toMatchObject([{ code: 'off_connector',
-      message: expect.stringMatching(/Head W outside x = -12, then S to z = 0 and E/) }])
+    expect(blockedAtNorth.rejections).toMatchObject([{ code: 'locked_area',
+      message: 'Use a completed route to cross into another area.' }])
     for (const goal of [{ x: -7.8, z: -16 }, waypoint, { x: -16, z: 0 }, { x: -12, z: 0 }]) {
       for (let step = 0; step < 12 && Math.hypot(goal.x - walking.player.position.x,
         goal.z - walking.player.position.z) > 0.001; step += 1) {
