@@ -22,8 +22,18 @@ export type MireglassResource = { id: string; tile: WorldTile; kind: 'tree'; log
 export const MIREGLASS_RING_ID = 'ring-mireglass' as const
 
 const RING_ENVELOPE = { minX: -316, maxX: -276, minZ: 260, maxZ: 300 } as const
-const RING_CACHE_LIMIT = 8
+const CACHE_LIMIT = 8
+const anchorCache = new Map<string, Record<MireglassAnchorId, MireglassAnchor>>()
+const resourceCache = new Map<string, MireglassResource[]>()
 const ringCache = new Map<string, { id: typeof MIREGLASS_RING_ID; tile: WorldTile }>()
+
+const copyTile = (tile: WorldTile): WorldTile => ({ ...tile, center: { ...tile.center } })
+const copyAnchors = (anchors: Record<MireglassAnchorId, MireglassAnchor>) => Object.fromEntries(
+  Object.entries(anchors).map(([key, anchor]) => [key, { ...anchor, tile: copyTile(anchor.tile) }]),
+) as Record<MireglassAnchorId, MireglassAnchor>
+const copyResources = (resources: MireglassResource[]) => resources.map((resource) => ({
+  ...resource, tile: copyTile(resource.tile),
+}))
 
 const TREE_POCKETS = [
   { envelope: { minX: -144, maxX: -104, minZ: 112, maxZ: 152 }, count: 1, phase: 'before_bridge' },
@@ -48,18 +58,25 @@ const ranked = (seed: string, id: string, tiles: WorldTile[]) => tiles.sort((a, 
 /** Places authored anchors without depending on chunk load order or mutable simulation RNG. */
 export function mireglassAnchors(seed: string): Record<MireglassAnchorId, MireglassAnchor> {
   const normalizedSeed = seed || 'wizard-realms'
+  const cached = anchorCache.get(normalizedSeed)
+  if (cached) return copyAnchors(cached)
   const entries = Object.entries(ANCHORS).map(([key, spec]) => {
     const tiles = ranked(normalizedSeed, spec.id, envelopeTiles(normalizedSeed, spec.envelope)
       .filter((tile) => spec.terrainRequired === null || tile.terrain === spec.terrainRequired))
     if (tiles.length === 0) throw new Error(`No eligible tile for ${spec.id} in ${MIREGLASS_CONTENT_REVISION}`)
     return [key, { id: spec.id, tile: tiles[0] }] as const
   })
-  return Object.fromEntries(entries) as Record<MireglassAnchorId, MireglassAnchor>
+  const anchors = Object.fromEntries(entries) as Record<MireglassAnchorId, MireglassAnchor>
+  anchorCache.set(normalizedSeed, anchors)
+  if (anchorCache.size > CACHE_LIMIT) anchorCache.delete(anchorCache.keys().next().value!)
+  return copyAnchors(anchors)
 }
 
 /** Six reserved timber nodes yield 24 logs, with three reachable before the first crossing. */
 export function mireglassResources(seed: string): MireglassResource[] {
   const normalizedSeed = seed || 'wizard-realms'
+  const cached = resourceCache.get(normalizedSeed)
+  if (cached) return copyResources(cached)
   const anchors = Object.values(mireglassAnchors(normalizedSeed)).map(({ tile }) => tile.center)
   const resources: MireglassResource[] = []
   for (const [pocketIndex, pocket] of TREE_POCKETS.entries()) {
@@ -78,7 +95,9 @@ export function mireglassResources(seed: string): MireglassResource[] {
       throw new Error(`Insufficient safe timber in pocket ${pocketIndex} for ${MIREGLASS_CONTENT_REVISION}`)
     }
   }
-  return resources
+  resourceCache.set(normalizedSeed, resources)
+  if (resourceCache.size > CACHE_LIMIT) resourceCache.delete(resourceCache.keys().next().value!)
+  return copyResources(resources)
 }
 
 /** A dry outpost-adjacent ring, stable across chunk load order and clear of authored content. */
@@ -101,6 +120,6 @@ export function mireglassFairyRing(seed: string): { id: typeof MIREGLASS_RING_ID
   const ring = Object.freeze({ id: MIREGLASS_RING_ID,
     tile: Object.freeze({ ...tile, center: Object.freeze({ ...tile.center }) }) })
   ringCache.set(normalizedSeed, ring)
-  if (ringCache.size > RING_CACHE_LIMIT) ringCache.delete(ringCache.keys().next().value!)
+  if (ringCache.size > CACHE_LIMIT) ringCache.delete(ringCache.keys().next().value!)
   return ring
 }

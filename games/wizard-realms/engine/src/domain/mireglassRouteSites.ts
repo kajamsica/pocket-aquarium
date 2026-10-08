@@ -18,6 +18,8 @@ export type MireglassRouteSite = Readonly<{
 const CELL = WORLD_CELL_METERS
 const MAX_WALKABLE_STEP = 0.9
 const CLEARANCE = CELL
+const CACHE_LIMIT = 8
+const siteCache = new Map<string, readonly MireglassRouteSite[]>()
 const tileAt = (seed: string, x: number, z: number) => worldTileAtGrid(seed, x / CELL, z / CELL)
 const walkableStep = (a: WorldTile, b: WorldTile) => Math.abs(a.center.y - b.center.y) <= MAX_WALKABLE_STEP
 
@@ -51,6 +53,8 @@ function site(kind: MireglassRouteSite['kind'], x: number, seamZ: number, from: 
 /** Canonical route choices for the active Mireglass revision, independent of chunk activation and caller mutation. */
 export function mireglassRouteSites(seed: string): readonly MireglassRouteSite[] {
   const normalizedSeed = seed || 'wizard-realms'
+  const cached = siteCache.get(normalizedSeed)
+  if (cached) return cached
   const occupied = [
     ...Object.values(mireglassAnchors(normalizedSeed)).map(({ tile }) => tile.center),
     ...mireglassResources(normalizedSeed).map(({ tile }) => tile.center),
@@ -92,5 +96,8 @@ export function mireglassRouteSites(seed: string): readonly MireglassRouteSite[]
     || sites.filter(({ kind }) => kind === 'ladder').length < 2) {
     throw new Error(`Insufficient Mireglass route sites for ${normalizedSeed} in ${MIREGLASS_CONTENT_REVISION}`)
   }
-  return Object.freeze(sites)
+  const frozenSites = Object.freeze(sites)
+  siteCache.set(normalizedSeed, frozenSites)
+  if (siteCache.size > CACHE_LIMIT) siteCache.delete(siteCache.keys().next().value!)
+  return frozenSites
 }

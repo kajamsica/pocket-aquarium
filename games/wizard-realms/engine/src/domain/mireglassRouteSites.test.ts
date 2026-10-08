@@ -89,4 +89,20 @@ describe('Mireglass Reach canonical route sites', () => {
     }
     expect(mireglassRouteSites('')).toEqual(mireglassRouteSites('wizard-realms'))
   }, 30_000)
+
+  it('reuses frozen route sites for the same normalized seed', () => {
+    const sites = mireglassRouteSites('route-cache-hit')
+    expect(mireglassRouteSites('route-cache-hit')).toBe(sites)
+    expect(mireglassRouteSites('')).toBe(mireglassRouteSites('wizard-realms'))
+  })
+
+  it('recomputes equal route sites after the ninth seed evicts the first', () => {
+    const seed = 'route-cache-eviction'
+    const sites = mireglassRouteSites(seed)
+    for (let index = 0; index < 8; index += 1) mireglassRouteSites(`route-cache-other-${index}`)
+    const recomputed = mireglassRouteSites(seed)
+    expect(recomputed).toEqual(sites)
+    expect(recomputed).not.toBe(sites)
+    expect(mireglassRouteSites(seed)).toBe(recomputed)
+  })
 })

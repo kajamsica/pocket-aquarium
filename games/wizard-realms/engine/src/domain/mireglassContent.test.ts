@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { legacyTileAtGrid } from './generation'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE, MIREGLASS_RING_ID,
   mireglassAnchors, mireglassFairyRing, mireglassResources } from './mireglassContent'
@@ -7,6 +7,7 @@ import { MIREGLASS_ENVELOPES, MIREGLASS_FEN_BACK, MIREGLASS_PLATEAU,
   mireglassBermFaceRowAt, mireglassFenDepthAt, mireglassFenRowAt, mireglassPlateauAt,
   mireglassPlateauCliffBetween } from './mireglassTerrain'
 import { worldTileAtGrid } from './worldChunks'
+import * as worldChunks from './worldChunks'
 
 describe('Mireglass Reach authored anchor placement', () => {
   it('pins the new core and places unique, stable anchors outside legacy Greenway', () => {
@@ -68,6 +69,76 @@ describe('Mireglass Reach authored anchor placement', () => {
           expect(Math.hypot(resource.tile.center.x - anchor.tile.center.x, resource.tile.center.z - anchor.tile.center.z)).toBeGreaterThanOrEqual(4)
         }
       }
+    }
+  })
+
+  it('keeps cached anchors and timber detached from caller mutations', () => {
+    const seed = 'mireglass-cache-mutation'
+    const anchors = mireglassAnchors(seed)
+    const resources = mireglassResources(seed)
+    const expectedAnchors = structuredClone(anchors)
+    const expectedResources = structuredClone(resources)
+    const expectedRing = mireglassFairyRing(seed)
+    const expectedSites = mireglassRouteSites(seed)
+    const otherSeed = mireglassAnchors('mireglass-cache-other-seed')
+
+    const nextAnchors = mireglassAnchors(seed)
+    const nextResources = mireglassResources(seed)
+    expect(nextAnchors).toEqual(expectedAnchors)
+    expect(nextResources).toEqual(expectedResources)
+    expect(nextAnchors).not.toBe(anchors)
+    expect(nextAnchors.fringeMarker.tile).not.toBe(anchors.fringeMarker.tile)
+    expect(nextAnchors.fringeMarker.tile.center).not.toBe(anchors.fringeMarker.tile.center)
+    expect(nextResources).not.toBe(resources)
+    expect(nextResources[0].tile.center).not.toBe(resources[0].tile.center)
+
+    anchors.fringeMarker.id = 'changed'
+    anchors.fringeMarker.tile.id = 'changed'
+    anchors.fringeMarker.tile.center.x = -99
+    resources[0].id = 'changed'
+    resources[0].tile.id = 'changed'
+    resources[0].tile.center.z = -99
+    resources.pop()
+    nextAnchors.salvager.tile.center.y = -99
+    nextResources[0].tile.center.y = -99
+    expect(mireglassAnchors(seed)).toEqual(expectedAnchors)
+    expect(mireglassResources(seed)).toEqual(expectedResources)
+    expect(mireglassAnchors('mireglass-cache-other-seed')).toEqual(otherSeed)
+    expect(mireglassFairyRing(seed)).toEqual(expectedRing)
+    expect(mireglassRouteSites(seed)).toEqual(expectedSites)
+  })
+
+  it('skips terrain generation on repeat calls and recomputes after ninth-seed eviction', () => {
+    const seed = 'mireglass-cache-eviction'
+    const terrain = vi.spyOn(worldChunks, 'worldTileAtGrid')
+    try {
+      const anchors = mireglassAnchors(seed)
+      const resources = mireglassResources(seed)
+      expect(terrain).toHaveBeenCalled()
+      terrain.mockClear()
+      expect(mireglassAnchors(seed)).toEqual(anchors)
+      expect(mireglassResources(seed)).toEqual(resources)
+      expect(terrain).not.toHaveBeenCalled()
+
+      for (let index = 0; index < 7; index += 1) {
+        mireglassAnchors(`mireglass-cache-next-${index}`)
+        mireglassResources(`mireglass-cache-next-${index}`)
+      }
+      terrain.mockClear()
+      mireglassAnchors(seed)
+      mireglassResources(seed)
+      expect(terrain).not.toHaveBeenCalled()
+
+      mireglassAnchors('mireglass-cache-next-7')
+      mireglassResources('mireglass-cache-next-7')
+      terrain.mockClear()
+      expect(mireglassAnchors(seed)).toEqual(anchors)
+      expect(terrain).toHaveBeenCalled()
+      terrain.mockClear()
+      expect(mireglassResources(seed)).toEqual(resources)
+      expect(terrain).toHaveBeenCalled()
+    } finally {
+      terrain.mockRestore()
     }
   })
 
