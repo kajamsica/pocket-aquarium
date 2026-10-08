@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
 import type { WizardLandmark, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
 import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
@@ -210,6 +210,43 @@ describe('construction scene visibility', () => {
     expect(ladder.midpoint[1] + 0.14 + ladder.length * Math.sin(-ladder.pitch) / 2)
       .toBeCloseTo(ladderSite.to.y + 0.14)
     expect(mireglassConstructionGeometry({ ...viewOf(ladderSite, 'greenway_ladder') })).toBeNull()
+  })
+})
+
+describe('field camp scene visibility', () => {
+  const terrain = Array.from({ length: 32 * 32 }, (_, index) => ({
+    id: `legacy-offset-${index}`, position: [(index % 32 - 16) * 4, 2, (Math.floor(index / 32) - 16) * 4] as const,
+    size: [4, 4] as const, height: 2, climate: 'marsh',
+  }))
+  const visible = visibleTerrainCells(terrain, [0, 2, 0])
+  const camp = { tileId: 'canonical-camp', position: [0, 2, 0] as const }
+  const preview = { tileId: 'candidate', position: [4, 2, 0] as const, rejection: null }
+  const view = { camps: [camp], preview, selectionEnabled: true }
+
+  it('leaves absent camp projections empty and uses the canonical resolved ground position', () => {
+    expect(fieldCampVisuals(undefined, visible)).toEqual([])
+    expect(fieldCampVisuals(view, visible)).toEqual([
+      { ...camp, status: 'built' }, { tileId: preview.tileId, position: preview.position, status: 'ready' },
+    ])
+    expect(fieldCampVisuals({ ...view, selectionEnabled: false }, visible)).toHaveLength(2)
+  })
+
+  it('bounds committed camps to one and never draws a duplicate or unresolved preview', () => {
+    expect(fieldCampVisuals({ ...view, camps: [camp, { ...camp, tileId: 'extra' }] }, visible)).toHaveLength(2)
+    expect(fieldCampVisuals({ ...view, preview: { ...preview, tileId: camp.tileId } }, visible)).toHaveLength(1)
+    expect(fieldCampVisuals({ ...view, preview: { ...preview, position: camp.position } }, visible)).toHaveLength(1)
+    expect(fieldCampVisuals({ ...view, preview: { ...preview, position: null } }, visible)).toHaveLength(1)
+    expect(fieldCampVisuals({ ...view, preview: null }, visible)).toEqual([{ ...camp, status: 'built' }])
+  })
+
+  it('clips full footprints to the current visible cells and shows resolved rejections distinctly', () => {
+    expect(fieldCampVisuals(view, [])).toEqual([])
+    expect(fieldCampVisuals({ ...view, camps: [{ ...camp, position: [60, 2, 0] }] }, visible))
+      .toEqual([{ tileId: preview.tileId, position: preview.position, status: 'ready' }])
+    expect(fieldCampVisuals({ ...view, camps: [], preview: { ...preview, position: [33.5, 2, 0] } }, visible)).toEqual([])
+    expect(fieldCampVisuals({ ...view, camps: [], preview: { ...preview, position: [NaN, 2, 0] } }, visible)).toEqual([])
+    expect(fieldCampVisuals({ ...view, preview: { ...preview,
+      rejection: { code: 'not_owned', message: 'A camp needs 4 logs and 1 stone.' } } }, visible)[1].status).toBe('blocked')
   })
 })
 

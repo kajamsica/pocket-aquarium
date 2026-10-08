@@ -5,7 +5,8 @@ import { createFreshPublicWorld } from './publicWorldState'
 import { PUBLIC_V7_LOCK_NAME, PUBLIC_V7_ROOT_KEY, PUBLIC_V7_SCHEMA,
   serializePublicV7World, withFreshPublicV7Herbs } from './publicWorldV7'
 import type { PublicV7LockProvider } from './publicWorldV7Flow'
-import { commitPublicV8Snapshot, inspectPublicV8, migratePublicV7ToV8, resumePublicV8 } from './publicWorldV8Flow'
+import { commitPublicV8Snapshot, inspectPublicV8, inspectPublicV8UnderLock, migratePublicV7ToV8, resumePublicV8 } from './publicWorldV8Flow'
+import { encodePublicV8Head } from './publicWorldV8Snapshot'
 
 function fixture(factory = new FakeFactory()) {
   const state = withFreshPublicV7Herbs(createFreshPublicWorld('greenway-alpha', 'greenway-classic-v1'))
@@ -41,6 +42,28 @@ async function putRaw(factory: IDBFactory, key: string, value: unknown) {
 }
 
 describe('public v8 migration flow', () => {
+  it('exposes the fully validated source under the caller lock without changing its public inspection', async () => {
+    const { state, bytes, storage, names, locks, db, factory } = fixture()
+    await migratePublicV7ToV8(storage, locks, db, bytes)
+    const changed = { ...state, player: { ...state.player, coins: 17 } }
+    await commitPublicV8Snapshot(storage, locks, db, changed, 0)
+    const before = await db.read()
+    names.length = 0
+    expect(await locks.request(PUBLIC_V7_LOCK_NAME, { mode: 'exclusive' },
+      () => inspectPublicV8UnderLock(storage, db))).toEqual({ ok: true, value: { status: 'valid',
+      start: { state: changed, saveRevision: 1, sourceV7Bytes: bytes }, bootstrap: null,
+      head: encodePublicV8Head(changed, null, 1), previous: encodePublicV8Head(state, null, 0) } })
+    expect(names).toEqual([PUBLIC_V7_LOCK_NAME])
+    expect(await inspectPublicV8(storage, locks, db)).toEqual({ ok: true, value: { status: 'valid',
+      start: { state: changed, saveRevision: 1, sourceV7Bytes: bytes } } })
+    expect(await db.read()).toEqual(before)
+    expect(storage.writes).toEqual([])
+    await putRaw(factory, 'previous', { saveRevision: 7, value: {} })
+    expect(await locks.request(PUBLIC_V7_LOCK_NAME, { mode: 'exclusive' },
+      () => inspectPublicV8UnderLock(storage, db))).toEqual({ ok: true,
+      value: { status: 'blocked', reason: 'invalid-v8-previous' } })
+  })
+
   it('imports the exact v7 bytes once under the shared lock and resumes the same state', async () => {
     const { state, bytes, storage, names, locks, db } = fixture()
     expect(await inspectPublicV8(storage, locks, db)).toEqual({ ok: true, value: { status: 'missing' } })

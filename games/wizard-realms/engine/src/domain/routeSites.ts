@@ -104,7 +104,16 @@ export function routeBuildOptions(state: WizardWorldState): readonly RouteBuildO
     const obstruction = obstructedReason(state, site, route.fromAreaId, route.toAreaId)
     if (obstruction) return option('obstructed', obstruction)
     if (areaAt(state.areas, state.player.position.x, state.player.position.z).id !== route.fromAreaId
-      || distance(state.player.position, site.from) > BUILD_DISTANCE) return option('too_far', 'Approach this site from the route source area.')
+      || distance(state.player.position, site.from) > BUILD_DISTANCE) {
+      const east = site.from.x - state.player.position.x
+      const south = site.from.z - state.player.position.z
+      const bearing = [
+        Math.abs(east) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(east)))}m ${east > 0 ? 'east' : 'west'}` : '',
+        Math.abs(south) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(south)))}m ${south > 0 ? 'south' : 'north'}` : '',
+      ].filter(Boolean).join(' and ')
+      const sourceArea = state.areas.find((area) => area.id === route.fromAreaId)!
+      return option('too_far', `Source foot: ${bearing || 'at this spot'}. Approach from ${sourceArea.name}.`)
+    }
     if (logsOwned(state) < recipe.logCost) return option('needs_logs', `Requires ${recipe.logCost} logs.`)
     return option('ready', 'Ready to build.')
   })

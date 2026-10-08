@@ -30,7 +30,8 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const inReach = (position: readonly [number, number, number]) => Math.hypot(position[0] - projection.player.position[0], position[1] - projection.player.position[1], position[2] - projection.player.position[2]) <= 3
   const nearbyInscriptions = projection.inscriptions.filter((inscription) => !inscription.studied && inReach(inscription.position))
   const nearbyDigSites = projection.digSites.filter((site) => site.revealed && !site.excavated && inReach(site.position))
-  const selectedBuildSite = projection.buildSites.find((site) => site.id === projection.selectedBuildSiteId && site.discovered && site.status !== 'built')
+  const campPreview = projection.fieldCamp?.preview
+  const selectedBuildSite = !campPreview && projection.buildSites.find((site) => site.id === projection.selectedBuildSiteId && site.discovered && site.status !== 'built')
   const xpPercent = Math.min(100, projection.experience.nextLevelXp > 0
     ? projection.experience.xp / projection.experience.nextLevelXp * 100
     : 100)
@@ -56,6 +57,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 
       <aside id="wizard-backpack" className="wr-panel wr-backpack">
         <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
+        {projection.fieldCamp && !campPreview && <section aria-label="Field camp" className="wr-caption">
+          <b>Field camp: 4 logs + 1 stone</b>
+          <p>{projection.fieldCamp.camps.length ? 'Field camp built. One camp per world.' : projection.fieldCamp.selectionEnabled ? 'Open Map and choose discovered ground to preview a camp.' : 'Explore Mireglass to choose a camp site.'}</p>
+        </section>}
         {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} aria-label={`Open ${availableStore.name}`} onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>Open {availableStore.name}</button>}
         <section aria-label="Magic and skills" style={{ display: 'grid', gap: 5, marginBottom: 8 }}>
           <small className="wr-caption">Wayfinder Glow: {learnedGlow ? 'Learned' : 'Unknown'} · Excavation Lv{excavationLevel}</small>
@@ -125,7 +130,17 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </div>
       </aside>}
 
-      {nearbyStore && !selectedBuildSite && <aside className="wr-panel wr-context" data-store-panel="true">
+      {campPreview && <aside className="wr-panel wr-context wr-build-preview" aria-label="Field camp preview" data-field-camp-panel="true">
+        <header>Field camp<small>{campPreview.tileId}</small></header>
+        <p className="wr-caption">4 logs + 1 stone · 30 construction XP</p>
+        <p className="wr-caption" role="status">{campPreview.rejection?.message ?? (campPreview.position && projection.fieldCamp?.selectionEnabled ? 'Ready to build' : 'Camp placement is unavailable here.')}</p>
+        <div className="wr-build-actions">
+          <button type="button" disabled={!projection.fieldCamp?.selectionEnabled || !campPreview.position || !!campPreview.rejection} onClick={() => onIntent({ type: 'field-camp.confirm', tileId: campPreview.tileId })}>Build</button>
+          <button type="button" onClick={() => onIntent({ type: 'field-camp.select', tileId: null })}>Cancel</button>
+        </div>
+      </aside>}
+
+      {nearbyStore && !selectedBuildSite && !campPreview && <aside className="wr-panel wr-context" data-store-panel="true">
         <header>{nearbyStore.name}</header>
         <button type="button" onClick={() => onIntent({ type: 'store.close' })}>Close</button>
         {nearbyStore.listings.map((listing) => <button key={listing.id} onClick={() => onIntent({ type: 'store.select-listing', storeId: nearbyStore.id, listingId: listing.id })}><b>{listing.name}</b><span>{listing.price}g{listing.stock === undefined ? '' : ` · ${listing.stock} left`}</span></button>)}
@@ -142,7 +157,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </section>
       </aside>}
 
-      {nearbyRing?.discovered && !selectedBuildSite && <aside className="wr-panel wr-context">
+      {nearbyRing?.discovered && !selectedBuildSite && !campPreview && <aside className="wr-panel wr-context">
         <header data-ring-panel="true">{nearbyRing.label}</header>
         <p className="wr-caption">{discoveredDestinations.length ? 'Discovered fairy paths' : 'Discover another fairy ring to unlock travel.'}</p>
         {discoveredDestinations.map((destination) => <button key={destination.ringId} onClick={() => onIntent({ type: 'fairy-ring.teleport', ringId: nearbyRing.id, destinationRingId: destination.ringId })}><b>{destination.label}</b><span>Travel</span></button>)}

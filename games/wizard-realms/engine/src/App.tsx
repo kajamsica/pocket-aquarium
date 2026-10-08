@@ -180,33 +180,32 @@ const reachableStore = (state: WizardWorldState) => state.stores
 export function objectiveFor(state: WizardWorldState): string {
   const logs = owned(state, 'logs')
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
+  const bearingTo = (target: { x: number; z: number }) => {
+    const east = target.x - state.player.position.x
+    const south = target.z - state.player.position.z
+    return [
+      Math.abs(east) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(east)))}m ${east > 0 ? 'east' : 'west'}` : '',
+      Math.abs(south) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(south)))}m ${south > 0 ? 'south' : 'north'}` : '',
+    ].filter(Boolean).join(' and ') || 'at this spot'
+  }
   const outfitters = (action: string) => {
     const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
     if (distance(state.player.position, store.position) <= INTERACTION_RANGE) return `${action} at ${store.name}.`
-    const east = store.position.x - state.player.position.x
-    const south = store.position.z - state.player.position.z
-    const bearing = [
-      Math.abs(east) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(east)))}m ${east > 0 ? 'east' : 'west'}` : '',
-      Math.abs(south) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(south)))}m ${south > 0 ? 'south' : 'north'}` : '',
-    ].filter(Boolean).join(' and ')
-    return `${store.name}: ${bearing || 'at this spot'}. ${action}.`
+    return `${store.name}: ${bearingTo(store.position)}. ${action}.`
   }
   if (!state.player.learnedSpellIds.includes('wayfinder_glow')) {
     const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
     if (distance(state.player.position, waystone.position) <= INTERACTION_RANGE) return 'Study the Greenway waystone to learn Wayfinder Glow.'
-    const east = waystone.position.x - state.player.position.x
-    const south = waystone.position.z - state.player.position.z
-    const bearing = [
-      Math.abs(east) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(east)))}m ${east > 0 ? 'east' : 'west'}` : '',
-      Math.abs(south) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(south)))}m ${south > 0 ? 'south' : 'north'}` : '',
-    ].filter(Boolean).join(' and ')
-    return `Greenway waystone: ${bearing || 'at this spot'}. Study it to learn Wayfinder Glow.`
+    return `Greenway waystone: ${bearingTo(waystone.position)}. Study it to learn Wayfinder Glow.`
   }
   if (state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
   if (!state.excavatedDigSiteIds.includes('practice_mound')) {
     if (!owned(state, 'field_spade')) return outfitters('Buy a field spade')
     if (state.player.equipment.mainHand !== 'field_spade') return 'Equip the field spade from your backpack.'
-    return 'Excavate the Greenway practice mound to train excavation.'
+    const mound = state.digSites.find((site) => site.id === 'practice_mound')!
+    return distance(state.player.position, mound.position) <= INTERACTION_RANGE
+      ? 'Excavate the Greenway practice mound to train excavation.'
+      : `Greenway practice mound: ${bearingTo(mound.position)}. Excavate it to train excavation.`
   }
   if (!state.builtRouteIds.includes('greenway_ladder')) {
     if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
@@ -496,7 +495,9 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
   if (intent.type === 'dig-site.excavate') return { type: 'dig_site', digSiteId: intent.digSiteId }
   if (intent.type === 'trade.create-listing') return { type: 'create_trade_listing', slotIndex: intent.slot, itemId: intent.stackId.replace('inventory-', '') as ItemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
   if (intent.type === 'trade.cancel-listing') return { type: 'cancel_trade_listing', slotIndex: intent.slot }
-  return { type: 'teleport_fairy_ring', sourceRingId: intent.ringId, targetRingId: intent.destinationRingId }
+  if (intent.type === 'fairy-ring.teleport') return { type: 'teleport_fairy_ring',
+    sourceRingId: intent.ringId, targetRingId: intent.destinationRingId }
+  return null
 }
 
 export function movementIntent(state: WizardWorldState, vector: readonly [number, number]): WizardIntent | null {

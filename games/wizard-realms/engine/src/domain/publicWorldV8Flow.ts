@@ -3,6 +3,7 @@ import type { PublicWorldV7State } from './publicWorldV7'
 import type { PublicV7LockProvider } from './publicWorldV7Flow'
 import { inspectV7SourceForV8 } from './publicWorldV8Source'
 import { decodePublicV8Head, encodePublicV8Head } from './publicWorldV8Snapshot'
+import type { PublicV8Head } from './publicWorldV8Snapshot'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { createAtomicV8Store } from './atomicV8Database'
 import type { AtomicV8Record } from './atomicV8Database'
@@ -15,11 +16,12 @@ export type PublicV8Inspection =
   | { status: 'blocked'; reason: string }
 
 type V8Store = ReturnType<typeof createAtomicV8Store>
-type Checked = Exclude<PublicV8Inspection, { status: 'valid' }> |
-  { status: 'valid'; start: PublicV8Start; bootstrap: PublicV6BootstrapRoot | null }
+export type PublicV8UnderLockInspection = Exclude<PublicV8Inspection, { status: 'valid' }> |
+  { status: 'valid'; start: PublicV8Start; bootstrap: PublicV6BootstrapRoot | null;
+    head: PublicV8Head; previous: PublicV8Head | null }
 const failed = (reason: string): PublicV8Operation<never> => ({ ok: false, reason })
 const succeeded = <T,>(value: T): PublicV8Operation<T> => ({ ok: true, value })
-const blocked = (reason: string): PublicV8Operation<Checked> => succeeded({ status: 'blocked', reason })
+const blocked = (reason: string): PublicV8Operation<PublicV8UnderLockInspection> => succeeded({ status: 'blocked', reason })
 
 async function withLock<T>(locks: PublicV7LockProvider | undefined,
   operation: () => Promise<PublicV8Operation<T>>): Promise<PublicV8Operation<T>> {
@@ -35,9 +37,10 @@ function decodeRecord(record: AtomicV8Record | null) {
   return decoded && decoded.saveRevision === record.saveRevision ? decoded : null
 }
 
-/** Caller holds the shared Web Lock across this read and any following CAS. */
-async function inspectUnlocked(storage: Pick<Storage, 'getItem'>,
-  db: V8Store): Promise<PublicV8Operation<Checked>> {
+/** Caller must hold PUBLIC_V7_LOCK_NAME across this fully validated source read and any following CAS.
+ * This helper never acquires a nested lock or changes v7/v8 storage. */
+export async function inspectPublicV8UnderLock(storage: Pick<Storage, 'getItem'>,
+  db: V8Store): Promise<PublicV8Operation<PublicV8UnderLockInspection>> {
   const read = await db.read()
   if (read.status !== 'ok') return failed('storage-error')
   if (read.head === null && read.previous === null && read.lineage === null) return succeeded({ status: 'missing' })
@@ -64,13 +67,14 @@ async function inspectUnlocked(storage: Pick<Storage, 'getItem'>,
   }
   return succeeded({ status: 'valid',
     start: { state: head.state, saveRevision: head.saveRevision, sourceV7Bytes: read.lineage.sourceV7Bytes },
-    bootstrap: head.bootstrap })
+    bootstrap: head.bootstrap, head: read.head!.value as PublicV8Head,
+    previous: read.previous === null ? null : read.previous.value as PublicV8Head })
 }
 
 export function inspectPublicV8(storage: Pick<Storage, 'getItem'>,
   locks: PublicV7LockProvider | undefined, db: V8Store): Promise<PublicV8Operation<PublicV8Inspection>> {
   return withLock(locks, async () => {
-    const checked = await inspectUnlocked(storage, db)
+    const checked = await inspectPublicV8UnderLock(storage, db)
     if (!checked.ok) return checked
     return succeeded(checked.value.status === 'valid'
       ? { status: 'valid' as const, start: checked.value.start } : checked.value)
@@ -97,7 +101,7 @@ export function resumePublicV8(storage: Pick<Storage, 'getItem'>,
   locks: PublicV7LockProvider | undefined, db: V8Store,
   expectedRevision: number): Promise<PublicV8Operation<PublicV8Start>> {
   return withLock(locks, async () => {
-    const checked = await inspectUnlocked(storage, db)
+    const checked = await inspectPublicV8UnderLock(storage, db)
     if (!checked.ok) return checked
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v8-missing' : checked.value.reason)
@@ -110,7 +114,7 @@ export function commitPublicV8Snapshot(storage: Pick<Storage, 'getItem'>,
   locks: PublicV7LockProvider | undefined, db: V8Store,
   state: PublicWorldV7State, expectedRevision: number): Promise<PublicV8Operation<PublicV8Start>> {
   return withLock(locks, async () => {
-    const checked = await inspectUnlocked(storage, db)
+    const checked = await inspectPublicV8UnderLock(storage, db)
     if (!checked.ok) return checked
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v8-missing' : checked.value.reason)

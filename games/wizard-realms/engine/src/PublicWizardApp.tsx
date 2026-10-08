@@ -8,6 +8,7 @@ import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { areaAt } from './domain/generation'
+import { applyFieldCampAction, resolveFieldCampSite } from './domain/fieldCamp'
 import type { MireglassWorldState } from './domain/mireglassWorld'
 import { routeBuildOptions } from './domain/routeSites'
 import { actPublicMireglass, type PublicMireglassAction } from './domain/publicWorldActions'
@@ -30,8 +31,12 @@ import type { PublicV7RecoverySnapshot } from './domain/publicWorldV7Recovery'
 import type { PublicV7RootConflictChoice } from './domain/publicWorldV7RootConflict'
 import type { PublicV7FreshForkChoice } from './domain/publicWorldV7FreshFork'
 import type { PublicV8Operation, PublicV8Start } from './domain/publicWorldV8Flow'
+import type { PublicV9Operation, PublicV9Start } from './domain/publicWorldV9Flow'
+import { serializePublicV9Rescue, type PublicV9SourceReceipt } from './domain/publicWorldV9Snapshot'
+import type { PublicWorldV9State } from './domain/publicWorldV9State'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
 import { WizardSurface, type WizardViewIntent } from './view'
+import type { WizardFieldCampView } from './view/contracts'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
 
 const SEED = 'greenway-alpha'
@@ -204,10 +209,11 @@ const STYLES = `
 .wr-public-menu{display:grid;place-items:center;padding:20px;box-sizing:border-box}.wr-public-card{box-sizing:border-box;width:min(560px,100%);max-height:90vh;overflow:auto;padding:24px;border:1px solid #c9ad6680;border-radius:18px;background:#101a17f4;box-shadow:0 20px 60px #0008}.wr-public-card h1{margin:0 0 8px;color:#f5d889;font:700 30px Georgia,serif}.wr-public-card p{color:#c5d0c3}.wr-public-card button,.wr-public-panel button{min-height:44px;padding:7px 12px;border:1px solid #d5b86f77;border-radius:8px;background:#324b3d;color:#fff0c7;font:inherit;cursor:pointer}.wr-public-card button{display:block;width:100%;margin:8px 0;text-align:left}.wr-public-card button:disabled,.wr-public-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-public-warning{padding:9px;border:1px solid #e3a27788;border-radius:8px;background:#4b2824e8;color:#ffe0d4!important}
 .wr-public-panel{position:absolute;z-index:8;right:12px;top:12px;box-sizing:border-box;width:min(315px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:12px;border:1px solid #c9ad6680;border-radius:12px;background:#101a17ed;box-shadow:0 10px 32px #0008}.wr-public-panel h1{margin:0;color:#f5d889;font:700 19px Georgia,serif}.wr-public-panel p{margin:6px 0}.wr-public-panel small{color:#b8c9bb}.wr-public-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.wr-public-actions button{text-align:left}.wr-public-actions small{display:block}.wr-public-panel[data-collapsed=true]{width:auto}.wr-public-panel[data-collapsed=true] .wr-public-body{display:none}.wr-public[data-owner=streamed] .wr-gear,.wr-public[data-owner=streamed] .wr-trade{display:none}
 .wr-public-next{position:absolute;z-index:7;top:58px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(410px,calc(100vw - 260px));margin:0;padding:7px 10px;border:1px solid #d5b86f77;border-radius:10px;background:#101a17dc;color:#fff0c7;font:600 13px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 6px 20px #0006}.wr-public-next[hidden]{display:none}.wr-public-next strong{color:#f5d889}.wr-public-next small{display:block;margin-top:3px;color:#c5d0c3;font-size:11px;font-weight:400}
-@media(min-width:1050px){.wr-public[data-owner=greenway] .wr-public-panel{right:330px;top:64px}}
+@media(min-width:1050px){.wr-public[data-owner=greenway] .wr-public-panel{right:16px;top:160px;max-height:calc(100vh - 340px)}}
 @media(max-width:900px){.wr-public-next{top:56px;width:min(360px,calc(100vw - 150px));font-size:12px}}
-@media(max-width:719px){.wr-public-panel{top:120px;bottom:auto;max-height:calc(100vh - 132px)}.wr-public-next{top:62px;left:12px;transform:none;width:calc(100vw - 24px);max-height:51px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:left}}
-@media(max-width:719px){.wr-public:has([data-store-panel]) .wr-public-panel,.wr-public:has([data-store-panel]) .wr-public-next{display:none}}
+@media(max-width:719px){.wr-public-panel{top:154px;bottom:auto;max-height:calc(100vh - 346px)}.wr-public-panel[data-collapsed=true]{padding:4px}.wr-public-next{top:62px;left:12px;transform:none;width:calc(100vw - 24px);max-height:84px;overflow:auto;text-align:left;pointer-events:auto}.wr-public .wr-backpack-toggle,.wr-public .wr-map-toggle{top:154px}.wr-public .wr-prompt{top:210px}.wr-public .wr-events{top:286px}.wr-public .wr-surface[data-backpack-open=true] .wr-backpack{top:204px;max-height:calc(100% - 220px)}}
+@media(max-width:719px){.wr-public:has([data-store-panel]) .wr-public-next{display:none}}
+.wr-public:has([data-store-panel],.wr-build-preview) .wr-public-panel{display:none}
 @media(max-width:719px) and (max-height:400px){.wr-public:has([data-ring-panel]) .wr-public-panel,.wr-public:has([data-ring-panel]) .wr-public-next{display:none}}
 `
 
@@ -245,6 +251,38 @@ const herbLedger = (state: PublicWorldState): readonly HerbHarvestEntry[] | null
 function requirePublicV7State(state: PublicWorldState): PublicWorldV7State {
   if (!herbLedger(state)) throw new RangeError('The public v7 herb history was lost.')
   return state as PublicWorldV7State
+}
+export function requirePublicV9State(state: PublicWorldState, previous?: PublicWorldState): PublicWorldV9State {
+  const next = requirePublicV7State(state)
+  if (!('fieldCampTileIds' in next) || !Array.isArray(next.fieldCampTileIds)) {
+    throw new RangeError('The public v9 camp history was lost.')
+  }
+  const camps = next.fieldCampTileIds
+  const priorCamps = (previous as Partial<PublicWorldV9State> | undefined)?.fieldCampTileIds
+  if (previous && (!priorCamps || priorCamps.length !== camps.length
+    || priorCamps.some((id, index) => id !== camps[index]))) {
+    throw new RangeError('A world transition changed the public v9 camp history.')
+  }
+  return next as PublicWorldV9State
+}
+
+export function publicFieldCampView(state: PublicWorldV9State, selectedTileId: string | null,
+  source: PublicV9SourceReceipt, blocked: boolean): WizardFieldCampView {
+  const selectionEnabled = !blocked && state.movementOwner === 'streamed' && state.fieldCampTileIds.length === 0
+  const tileId = selectionEnabled ? selectedTileId : null
+  const previewPosition = tileId === null ? null : resolveFieldCampSite(state.seed, tileId)?.tile.center
+  return { selectionEnabled, camps: state.fieldCampTileIds.flatMap((id) => {
+    const site = resolveFieldCampSite(state.seed, id)
+    return site ? [{ tileId: id, position: [site.tile.center.x, site.tile.center.y, site.tile.center.z] as const }] : []
+  }), preview: tileId === null ? null : { tileId,
+    position: previewPosition ? [previewPosition.x, previewPosition.y, previewPosition.z] : null,
+    rejection: applyFieldCampAction(state, tileId, source.sourceV8Head.bootstrap).rejection ?? null } }
+}
+
+export function unsavedPublicV9Bytes(state: PublicWorldV9State, source: PublicV9SourceReceipt,
+  savedRevision: number): string | null {
+  try { return serializePublicV9Rescue(state, source.sourceV8Head.bootstrap, savedRevision + 1, source) }
+  catch { return null }
 }
 
 export function publicV7RecoveryChoices(snapshot: PublicV7RecoverySnapshot,
@@ -352,15 +390,23 @@ export type PublicV8PlayableSession = {
   start: PublicV8Start
   commit: (state: PublicWorldV7State, expectedRevision: number) => Promise<PublicV8Operation<PublicV8Start>>
 }
+export type PublicV9PlayableSession = {
+  start: PublicV9Start
+  commit: (state: PublicWorldV9State, expectedRevision: number, sourceReceipt: PublicV9SourceReceipt) => Promise<PublicV9Operation<PublicV9Start>>
+}
+type PublicPlayableSessionProps =
+  | { v8Session?: PublicV8PlayableSession; v9Session?: never }
+  | { v8Session?: never; v9Session: PublicV9PlayableSession }
 
-export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSession }) {
+export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionProps) {
+  const session = v9Session ?? v8Session
   const [entry, setEntry] = useState<PublicWorldV7EntryInspection | null>(null)
-  const [world, setWorld] = useState<PublicWorldV7State | null>(v8Session?.start.state ?? null)
-  const [busy, setBusy] = useState(!v8Session)
+  const [world, setWorld] = useState<PublicWorldV7State | null>(session?.start.state ?? null)
+  const [busy, setBusy] = useState(!session)
   const [blocked, setBlocked] = useState(false)
   const [blockedReason, setBlockedReason] = useState<string | null>(null)
-  const [notice, setNotice] = useState(v8Session
-    ? `Public v8 save #${v8Session.start.saveRevision} loaded. Greenway and Mireglass share one player.`
+  const [notice, setNotice] = useState(session
+    ? `Public ${v9Session ? 'v9' : 'v8'} save #${session.start.saveRevision} loaded. Greenway and Mireglass share one player.`
     : 'Checking this device for a Wizard Realms save…')
   const [confirmFresh, setConfirmFresh] = useState<GenerationProfile | null>(null)
   const [selectedRecovery, setSelectedRecovery] = useState<PublicRecoverySource | null>(null)
@@ -370,11 +416,14 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
   const [messages, setMessages] = useState<string[]>(['Welcome to Wizard Realms.'])
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
+  const [selectedCampTileId, setSelectedCampTileId] = useState<string | null>(null)
+  const selectedCampRef = useRef<string | null>(null)
   const [collapsed, setCollapsed] = useState(true)
-  const worldRef = useRef<PublicWorldV7State | null>(v8Session?.start.state ?? null)
+  const worldRef = useRef<PublicWorldV7State | null>(session?.start.state ?? null)
   const expectedBytes = useRef<string | null>(null)
-  const expectedRevision = useRef(v8Session?.start.saveRevision ?? 0)
+  const expectedRevision = useRef(session?.start.saveRevision ?? 0)
   const sourceV7Bytes = useRef(v8Session?.start.sourceV7Bytes ?? null)
+  const sourceReceipt = useRef(v9Session?.start.sourceReceipt ?? null)
   const blockedRef = useRef(false)
   const blockedReasonRef = useRef<string | null>(null)
   const saveQueue = useRef<Promise<void>>(Promise.resolve())
@@ -396,13 +445,15 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
     lastSaveMs.current = performance.now()
     saveQueue.current = saveQueue.current.then(async () => {
       if (blockedRef.current) return
-      if (v8Session) {
-        const result = await v8Session.commit(snapshot, expectedRevision.current)
+      if (v9Session || v8Session) {
+        const result = v9Session
+          ? await v9Session.commit(requirePublicV9State(snapshot), expectedRevision.current, sourceReceipt.current!)
+          : await v8Session!.commit(snapshot, expectedRevision.current)
         if (!result.ok) { setWorld(worldRef.current); stop(result.reason); return }
         expectedRevision.current = result.value.saveRevision
         lastSaveMs.current = performance.now()
         if (worldRef.current === snapshot) travelDirty.current = false
-        setNotice(`Public v8 save #${result.value.saveRevision} completed on this device. The v7 source remains untouched.`)
+        setNotice(`Public ${v9Session ? 'v9' : 'v8'} save #${result.value.saveRevision} completed on this device. Older sources remain untouched.`)
         return
       }
       const currentStorage = storage()
@@ -414,8 +465,8 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
       if (worldRef.current === snapshot) travelDirty.current = false
       const saved = parsePublicV7PlayableRoot(result.value.bytes)
       setNotice(`Public v7 save #${saved?.saveRevision ?? '?'} completed on this device. Older saves remain untouched.`)
-    }).catch(() => { if (v8Session) setWorld(worldRef.current); stop('storage-error') })
-  }, [stop, v8Session])
+    }).catch(() => { if (v9Session || v8Session) setWorld(worldRef.current); stop('storage-error') })
+  }, [stop, v8Session, v9Session])
   const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
     setWorld(start.state); setBusy(false); setBlocked(false); setBlockedReason(null)
@@ -424,7 +475,7 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
     lastSaveMs.current = performance.now()
   }
   useEffect(() => {
-    if (v8Session) return
+    if (v8Session || v9Session) return
     let cancelled = false
     const currentStorage = storage()
     if (!currentStorage) { stop('storage-error'); setBusy(false); return }
@@ -442,7 +493,7 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
         : 'A public v7 world is available. Resume it explicitly to play.')
     }).catch(() => { if (!cancelled) { stop('storage-error'); setBusy(false) } })
     return () => { cancelled = true }
-  }, [stop, v8Session])
+  }, [stop, v8Session, v9Session])
 
   const choose = async (operation: Promise<PublicV7Operation<PublicV7Start>>) => {
     setBusy(true)
@@ -566,24 +617,28 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
     await saveQueue.current
     blockedRef.current = false; blockedReasonRef.current = null
     setBlocked(false); setBlockedReason(null)
-    setNotice(v8Session ? 'Retrying the unchanged v8 revision…' : 'Retrying the unchanged v7 save root…')
+    setNotice(`Retrying the unchanged ${v9Session ? 'v9 revision' : v8Session ? 'v8 revision' : 'v7 save root'}…`)
     save(worldRef.current)
     await saveQueue.current
     setBusy(false)
   }
   const exportUnsaved = () => {
     const current = worldRef.current
-    const bytes = current && unsavedPublicV7Bytes(current,
-      v8Session ? sourceV7Bytes.current : expectedBytes.current)
+    const bytes = current && (v9Session
+      ? unsavedPublicV9Bytes(requirePublicV9State(current), sourceReceipt.current!, expectedRevision.current)
+      : unsavedPublicV7Bytes(current, v8Session ? sourceV7Bytes.current : expectedBytes.current))
     if (!bytes) { setNotice('Unsaved progress could not be validated for export. Keep this tab open and do not clear site data.'); return }
     let url: string | null = null
     let link: HTMLAnchorElement | null = null
     try {
       url = URL.createObjectURL(new Blob([bytes], { type: 'application/json' }))
       link = document.createElement('a')
-      link.href = url; link.download = `wizard-realms-unsaved-v7-${Date.now()}.json`
+      const version = v9Session ? 'v9' : 'v7'
+      link.href = url; link.download = `wizard-realms-unsaved-${version}-${Date.now()}.json`
       document.body.append(link); link.click()
-      setNotice('Unsaved progress downloaded as a valid v7 snapshot. Keep the file before reloading; it has not replaced the current save.')
+      setNotice(v9Session
+        ? 'V9 camp state and source receipt downloaded for recovery. This preview cannot import this file. Keep the file and this site data; the download has not replaced your save.'
+        : `Unsaved progress downloaded as a valid ${version} snapshot. Keep the file before reloading; it has not replaced the current save.`)
     } catch { setNotice('Download failed. Keep this tab open and do not clear site data.') }
     finally {
       link?.remove()
@@ -610,7 +665,7 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
       try {
         const previous = worldRef.current
         const result = advancePublicControls(previous, frames, samples)
-        const next = requirePublicV7State(result.state)
+        const next = v9Session ? requirePublicV9State(result.state, previous) : requirePublicV7State(result.state)
         worldRef.current = next
         if (result.events.length || result.rejections.length || now - lastReadoutMs.current >= 1_000) {
           setWorld(next); lastReadoutMs.current = now
@@ -619,6 +674,7 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
           ? retainOpenStoreId(greenwayForPublicView(result.state), openStoreRef.current) : null
         openStoreRef.current = nextStore; setOpenStoreId(nextStore)
         const transition = publicRegionTransitionText(previous, next)
+        if (transition) { selectedCampRef.current = null; setSelectedCampTileId(null); setSelectedSiteId(null) }
         const texts = [...publicFrameMessages(result), ...(transition ? [transition] : [])]
         if (texts.length) setMessages((current) => appendMessages(current, texts))
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
@@ -635,22 +691,40 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('blur', flush)
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('blur', flush) }
-  }, [world !== null, save, stop])
+  }, [world !== null, save, stop, v9Session])
 
   const actMireglass = useCallback((action: PublicMireglassAction) => {
     const current = worldRef.current
     if (!current || current.movementOwner !== 'streamed' || blockedRef.current) return
     const result = actPublicMireglass(current, action)
     if (result.rejection) { report(result.rejection.message); return }
-    const next = requirePublicV7State(result.state)
+    const next = v9Session ? requirePublicV9State(result.state, current) : requirePublicV7State(result.state)
     worldRef.current = next; setWorld(next)
     report(result.event.type === 'herb_foraged'
       ? 'Gathered a marsh herb. It will regrow after the next game-time cycle.'
       : mireglassEventText(result.event)); save(next)
-  }, [report, save])
+  }, [report, save, v9Session])
   const onIntent = useCallback((intent: WizardViewIntent) => {
     const current = worldRef.current
     if (!current || blockedRef.current) return
+    if (intent.type === 'field-camp.select' || intent.type === 'field-camp.confirm') {
+      if (!v9Session) return
+      if (intent.type === 'field-camp.select' && intent.tileId === null) {
+        selectedCampRef.current = null; setSelectedCampTileId(null); return
+      }
+      const campWorld = requirePublicV9State(current)
+      if (campWorld.movementOwner !== 'streamed' || campWorld.fieldCampTileIds.length) return
+      if (intent.type === 'field-camp.select') {
+        selectedCampRef.current = intent.tileId; setSelectedCampTileId(intent.tileId); setSelectedSiteId(null); setWorld(current)
+      } else if (selectedCampRef.current === intent.tileId) {
+        const result = applyFieldCampAction(campWorld, intent.tileId, sourceReceipt.current!.sourceV8Head.bootstrap)
+        if (result.rejection) { setWorld(current); report(result.rejection.message); return }
+        worldRef.current = result.state; setWorld(result.state)
+        selectedCampRef.current = null; setSelectedCampTileId(null)
+        report('Field camp built. Spent 4 logs and 1 stone; gained 30 construction XP.'); save(result.state)
+      }
+      return
+    }
     if (intent.type === 'movement') { recordTimedMovement(input.current, intent.atMs ?? performance.now(), intent.vector); return }
     if (intent.type === 'movement.tap') {
       if (intent.source !== 'keyboard') pending.current.push(streamedControlIntents(current.player.yaw, intent.vector))
@@ -663,6 +737,7 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
       return
     }
     if (intent.type === 'build-site.select') {
+      selectedCampRef.current = null; setSelectedCampTileId(null)
       if (current.movementOwner !== 'greenway' || intent.siteId === null) setSelectedSiteId(intent.siteId)
       else {
         const site = routeBuildOptions(greenwayForPublicView(current)).find((candidate) => candidate.id === intent.siteId)
@@ -706,10 +781,11 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
     else if (intent.type === 'store.sell-item' && (intent.itemId === 'logs' || intent.itemId === 'mireglass_reach/item/seal'))
       actMireglass({ type: 'sell_item', itemId: intent.itemId, quantity: intent.quantity })
     else report('That frontier action is unavailable here.')
-  }, [actMireglass, report, selectedSiteId])
+  }, [actMireglass, report, save, selectedSiteId, v9Session])
 
-  const projection = useMemo(() => world ? publicWorldViewProjection(world, messages, selectedSiteId, openStoreId) : null,
-    [world, messages, selectedSiteId, openStoreId])
+  const projection = useMemo(() => world ? publicWorldViewProjection(world, messages, selectedSiteId, openStoreId,
+    v9Session ? publicFieldCampView(requirePublicV9State(world), selectedCampTileId, sourceReceipt.current!, blocked) : undefined) : null,
+    [world, messages, selectedSiteId, openStoreId, selectedCampTileId, v9Session, blocked])
   const region = world?.movementOwner === 'streamed' ? mireglassForPublicView(world) : null
   const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
@@ -797,7 +873,7 @@ export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSes
     : projection
   return <main className="wr-public" data-owner={world.movementOwner}><style>{STYLES}</style>
     <WizardSurface projection={playProjection} onIntent={onIntent} />
-    <p className="wr-public-next" hidden={!collapsed}><strong>Next:</strong> {nextGuidance}
+    <p className="wr-public-next" hidden={!collapsed} tabIndex={collapsed ? 0 : -1}><strong>Next:</strong> {nextGuidance}
       {world.tick < 1_000 && <small>W/S move · A/D turn · E interact · M map</small>}</p>
     <aside className="wr-public-panel" data-collapsed={collapsed} aria-label="Public world controls">
       <button onClick={() => setCollapsed((value) => !value)}>{collapsed ? 'World / Save' : 'Collapse controls'}</button>

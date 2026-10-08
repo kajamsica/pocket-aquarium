@@ -31,6 +31,44 @@ function provision(state: WizardWorldState, routeId: RouteId): WizardWorldState 
 }
 
 describe('canonical construction sites', () => {
+  it('guides the observed ladder preview toward its source foot as the player moves', () => {
+    const state = provision(createGeneratedWorld('greenway-alpha'), 'greenway_ladder')
+    const site = canonicalRouteSites(state).find((candidate) => candidate.id === 'greenway_ladder:x:0')!
+    const preview = () => routeBuildOptions(state).find((option) => option.id === site.id)!
+    state.player.position = { ...site.from, x: 9.1 }
+    const before = JSON.stringify(state)
+    expect(preview()).toMatchObject({ status: 'too_far', reason: 'Source foot: 9m west. Approach from Greenway.' })
+    expect(JSON.stringify(state)).toBe(before)
+    state.player.position = { ...site.from, x: -5.6, z: 1.6 }
+    expect(preview()).toMatchObject({ status: 'too_far', reason: 'Source foot: 6m east and 6m north. Approach from Greenway.' })
+    state.player.position = { ...site.from, x: 3.01 }
+    expect(preview().status).toBe('too_far')
+    state.player.position = { ...site.from, x: 3 }
+    expect(preview()).toMatchObject({ status: 'ready', reason: 'Ready to build.' })
+    state.player.inventory = []
+    expect(preview()).toMatchObject({ status: 'needs_logs', reason: 'Requires 4 logs.' })
+  })
+
+  it('points bridge previews to the source bank and preserves source-area authority', () => {
+    const state = provision(createGeneratedWorld('greenway-alpha'), 'highland_bridge')
+    const site = canonicalRouteSites(state).find((candidate) => candidate.id === 'highland_bridge:z:-8')!
+    const preview = () => routeBuildOptions(state).find((option) => option.id === site.id)!
+    state.player.position = { ...site.from, x: 0, z: -12 }
+    expect(preview()).toMatchObject({ status: 'too_far', reason: 'Source foot: 4m east and 4m south. Approach from Northern Ridge.' })
+    state.player.position = { ...site.to }
+    expect(preview()).toMatchObject({ status: 'too_far', reason: 'Source foot: 2m west. Approach from Northern Ridge.' })
+    state.player.position = { ...site.from }
+    expect(preview()).toMatchObject({ status: 'ready', reason: 'Ready to build.' })
+    state.resources[0].position = { ...site.from }
+    expect(preview()).toMatchObject({ status: 'obstructed', reason: 'Clear the resource from this site.' })
+    state.resources[0].depleted = true
+    state.routes.find((route) => route.id === site.routeId)!.siteId = site.id
+    state.builtRouteIds.push(site.routeId)
+    expect(preview()).toMatchObject({ status: 'built', reason: 'This route is complete here.' })
+    state.routes.find((route) => route.id === site.routeId)!.siteId = 'highland_bridge:z:-10'
+    expect(preview()).toMatchObject({ status: 'locked', reason: 'This route is complete at another site.' })
+  })
+
   it('explains which prerequisite unlocks the Highland bridge', () => {
     const state = createGeneratedWorld('greenway-alpha')
     const bridgeId = 'highland_bridge:z:-8'

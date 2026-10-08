@@ -169,13 +169,13 @@ describe('Wizard view adapter', () => {
     expect(projection.routes.find((route) => route.id === 'greenway_ladder'))
       .toMatchObject({ unlocked: true, built: false, logCost: 4 })
     expect(projection.buildSites.find((site) => site.id === 'greenway_ladder:x:0'))
-      .toMatchObject({ discovered: true, status: 'too_far', reason: 'Approach this site from the route source area.' })
+      .toMatchObject({ discovered: true, status: 'too_far', reason: 'Source foot: 4m north. Approach from Greenway.' })
     const markup = renderToStaticMarkup(createElement(WizardMap, {
       projection, open: true, onToggle: () => {}, onIntent: () => {},
       buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>(),
     }))
     expect(markup).toContain('Preview Greenway ladder, site center')
-    expect(markup).toContain('Approach this site from the route source area.')
+    expect(markup).toContain('Source foot: 4m north. Approach from Greenway.')
   })
 
   it('keeps the player marker above a store and the expanded atlas north-up', () => {
@@ -264,6 +264,8 @@ describe('Wizard view adapter', () => {
     expect(intentForView(state, { type: 'jump' })).toEqual({ type: 'jump' })
     expect(intentForView(state, { type: 'build-site.select', siteId: 'greenway_ladder:x:0' })).toBeNull()
     expect(intentForView(state, { type: 'build-site.confirm', siteId: 'forged' })).toBeNull()
+    expect(intentForView(state, { type: 'field-camp.select', tileId: 'tile--73-103' })).toBeNull()
+    expect(intentForView(state, { type: 'field-camp.confirm', tileId: 'tile--73-103' })).toBeNull()
     expect(intentForView(state, { type: 'store.select-listing', storeId: 'store-greenway', listingId: 'hat' })).toEqual({ type: 'buy_store_listing', storeId: 'store-greenway', listingId: 'hat' })
     expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'mainHand' })).toEqual({ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
     expect(intentForView(state, { type: 'equipment.equip', stackId: 'inventory-wooden_shield', slot: 'offHand' })).toEqual({ type: 'equip_item', itemId: 'wooden_shield', slot: 'offHand' })
@@ -485,6 +487,24 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Greenway Outfitters: 5m west. Sell the ancient relic for 25g.')
     state.player.position = { ...store.position, z: -8 }
     expect(objectiveFor(state)).toBe('Cross the Greenway ladder south. Greenway Outfitters: 7m south. Sell the ancient relic for 25g.')
+  })
+
+  it('points to the authoritative practice mound after the spade is equipped', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const mound = state.digSites.find((site) => site.id === 'practice_mound')!
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    state.player.skillXp.spellcraft = 40
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    state.player.equipment.mainHand = 'field_spade'
+    state.player.position = { x: -2.7, y: mound.position.y, z: 0.8 }
+    const before = JSON.stringify(state)
+    expect(objectiveFor(state)).toBe('Greenway practice mound: 10m east and 2m south. Excavate it to train excavation.')
+    expect(JSON.stringify(state)).toBe(before)
+    state.player.position = { ...mound.position, x: mound.position.x - 5, z: mound.position.z + 4 }
+    expect(objectiveFor(state)).toBe('Greenway practice mound: 5m east and 4m north. Excavate it to train excavation.')
+    mound.position = { ...mound.position, x: -3, z: -2 }
+    state.player.position = { ...mound.position, x: mound.position.x - 2 }
+    expect(objectiveFor(state)).toBe('Excavate the Greenway practice mound to train excavation.')
   })
 
   it('explains how to cross a built ladder before the ridge cache is revealed', () => {

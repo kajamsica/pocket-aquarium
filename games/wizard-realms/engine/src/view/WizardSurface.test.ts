@@ -3,7 +3,7 @@ import { createElement, createRef, isValidElement, type ReactElement, type React
 import { renderToStaticMarkup } from 'react-dom/server'
 import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, keyboardEventTime, keyboardMovementIntents, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
-import { RouteKey, WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
+import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
 
 const projection = {
@@ -148,10 +148,14 @@ describe('third-person control grammar', () => {
     expect(mapHeadingRotation(0)).toBe(0)
   })
 
-  it('traps Tab and Shift+Tab on the map dialog close control', () => {
-    expect(mapDialogTabTarget(true, 'Tab', false)).toBe('close')
-    expect(mapDialogTabTarget(true, 'Tab', true)).toBe('close')
-    expect(mapDialogTabTarget(false, 'Tab', false)).toBeNull()
+  it('cycles Tab and Shift+Tab through the dialog controls and wraps at either end', () => {
+    expect(mapDialogTabTarget(true, 'Tab', false, 0, 4)).toBe(1)
+    expect(mapDialogTabTarget(true, 'Tab', false, 3, 4)).toBe(0)
+    expect(mapDialogTabTarget(true, 'Tab', true, 2, 4)).toBe(1)
+    expect(mapDialogTabTarget(true, 'Tab', true, 0, 4)).toBe(3)
+    expect(mapDialogTabTarget(true, 'Tab', true, -1, 4)).toBe(3)
+    expect(mapDialogTabTarget(false, 'Tab', false, 0, 4)).toBeNull()
+    expect(mapDialogTabTarget(true, 'Enter', false, 0, 4)).toBeNull()
   })
 
   it.each(['window blur', 'document visibility loss'])('releases W/S/A/D after %s', () => {
@@ -199,6 +203,106 @@ describe('short desktop layout', () => {
 })
 
 describe('wizard atlas markup', () => {
+  const campProjection = { ...gridProjection(3, 1, 1), fieldCamp: { camps: [], preview: null, selectionEnabled: true } } as WizardViewProjection
+
+  it('makes only discovered expanded v9 cells native selection buttons with one Tab stop', () => {
+    const current = { ...campProjection, map: { ...campProjection.map, tiles: campProjection.map.tiles.map((tile) => tile.id === 'tile-2-1' ? { ...tile, discovered: false } : tile) } }
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup.match(/data-camp-tile=/g)).toHaveLength(8)
+    expect(markup.match(/tabindex="0"/g)).toHaveLength(1)
+    expect(markup).toContain('type="button" tabindex="0" data-camp-tile="tile-1-1"')
+    expect(markup).not.toContain('data-camp-tile="tile-2-1"')
+    expect(markup).toContain('Enter or Space previews one')
+    for (const props of [{ ...mapProps(false), projection: current }, { ...mapProps(true), projection: { ...current, fieldCamp: undefined } },
+      { ...mapProps(true), projection: { ...current, fieldCamp: { ...current.fieldCamp!, selectionEnabled: false } } }]) {
+      expect(renderToStaticMarkup(createElement(WizardMap, props))).not.toContain('data-camp-tile=')
+    }
+  })
+
+  it('moves roving focus by north-up row or column, skipping fog and stopping at map edges', () => {
+    const tiles = campProjection.map.tiles.map((tile) => tile.id === 'tile-1-0' ? { ...tile, discovered: false } : tile)
+    expect(mapCellForArrow(tiles, 'tile-0-0', 'ArrowRight')).toBe('tile-2-0')
+    expect(mapCellForArrow(tiles, 'tile-1-1', 'ArrowDown')).toBe('tile-1-2')
+    expect(mapCellForArrow(tiles, 'tile-1-1', 'ArrowUp')).toBe('tile-1-1')
+    expect(mapCellForArrow(tiles, 'tile-0-0', 'ArrowLeft')).toBe('tile-0-0')
+    expect(mapCellForArrow(tiles, 'tile-2-2', 'ArrowUp')).toBe('tile-2-1')
+    expect(mapCellForArrow(tiles, 'tile-1-1', 'Enter')).toBeNull()
+  })
+
+  it('selects a cell through its native button click and returns to the camp preview', () => {
+    const onToggle = vi.fn(), onIntent = vi.fn()
+    const map = WizardMap({ ...mapProps(true, onToggle, onIntent), projection: campProjection })
+    const grid = findElements(map, (element) => typeof element.type === 'function' && element.props.projection === campProjection)[0]
+    const gridWindow = (grid.type as (props: Props) => ReactElement<Props>)(grid.props)
+    const renderedGrid = findElements(gridWindow, (element) => element.props.className === 'wr-map-grid')[0]
+    const tile = findElements(renderedGrid, (element) => typeof element.type === 'function' && (element.props.tile as { id: string })?.id === 'tile-1-1')[0]
+    const button = (tile.type as (props: Props) => ReactElement<Props>)(tile.props)
+    expect(button.type).toBe('button')
+    expect(button.props.onKeyDown).toBeUndefined() // Enter and Space keep native button activation.
+    ;(button.props.onClick as () => void)()
+    expect(onIntent).toHaveBeenCalledWith({ type: 'field-camp.select', tileId: 'tile-1-1' })
+    expect(onToggle).toHaveBeenCalledOnce()
+    const focused = { tabIndex: -1, focus: vi.fn(), dataset: { campTile: 'tile-2-1' } }
+    const previous = { tabIndex: 0, focus: vi.fn(), dataset: { campTile: 'tile-1-1' } }
+    const currentTarget = { querySelectorAll: () => [previous, focused] }
+    ;(renderedGrid.props.onKeyDown as (event: unknown) => void)({ key: 'ArrowRight', preventDefault: vi.fn(), currentTarget, target: { closest: () => previous } })
+    expect(focused.focus).toHaveBeenCalledOnce()
+    ;(renderedGrid.props.onFocus as (event: unknown) => void)({ currentTarget, target: focused })
+    expect([previous.tabIndex, focused.tabIndex]).toEqual([-1, 0])
+  })
+
+  it('keeps 44px camp targets in a bounded scroll window and centers the initial player or selected cell', () => {
+    const current = { ...gridProjection(33, 16, 16), fieldCamp: campProjection.fieldCamp }
+    const map = WizardMap({ ...mapProps(true), projection: current })
+    const grid = findElements(map, (element) => typeof element.type === 'function' && element.props.projection === current)[0]
+    const gridWindow = (grid.type as (props: Props) => ReactElement<Props>)(grid.props)
+    const markup = renderToStaticMarkup(gridWindow)
+    expect(markup).toContain('grid-template-columns:repeat(33, 44px);grid-auto-rows:44px;width:1516px')
+    expect(markup).toContain('tabindex="0" data-camp-tile="tile-16-16"')
+    const node = { clientWidth: 362, clientHeight: 260, scrollLeft: 0, scrollTop: 0,
+      querySelector: () => ({ offsetLeft: 16 * 46, offsetTop: 16 * 46, offsetWidth: 44, offsetHeight: 44 }) }
+    ;(gridWindow.props.ref as (node: unknown) => void)(node)
+    expect([node.scrollLeft, node.scrollTop]).toEqual([577, 628])
+    const selected = { ...current, fieldCamp: { ...current.fieldCamp!, preview: { tileId: 'tile-20-20', position: [0, 0, 0] as const, rejection: null } } }
+    expect(renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: selected }))).toContain('tabindex="0" data-camp-tile="tile-20-20"')
+    expect(renderToStaticMarkup(createElement(WizardSurface, { projection: sellProjection, onIntent: vi.fn() }))).toContain('max-height:min(52vh,480px);overflow:auto;overscroll-behavior:contain')
+  })
+
+  it('cycles visible controls without entering hidden overview content and closes on Escape', () => {
+    const onToggle = vi.fn()
+    const dialog = findElements(WizardMap(mapProps(true, onToggle)), (element) => element.props.role === 'dialog')[0]
+    const close = { tabIndex: 0, hasAttribute: () => false, getClientRects: () => [1], focus: vi.fn() }
+    const route = { ...close, focus: vi.fn() }
+    const hidden = { ...close, getClientRects: () => [], focus: vi.fn() }
+    const untabbable = { ...close, tabIndex: -1, focus: vi.fn() }
+    const event = { key: 'Tab', shiftKey: false, preventDefault: vi.fn(), stopPropagation: vi.fn(), currentTarget: { querySelectorAll: () => [close, hidden, untabbable, route] } }
+    vi.stubGlobal('document', { activeElement: close })
+    try {
+      const keydown = dialog.props.onKeyDown as (event: unknown) => void
+      keydown(event)
+      expect(route.focus).toHaveBeenCalledOnce()
+      keydown({ ...event, shiftKey: true })
+      expect(route.focus).toHaveBeenCalledTimes(2)
+      expect(hidden.focus).not.toHaveBeenCalled()
+      expect(untabbable.focus).not.toHaveBeenCalled()
+      keydown({ ...event, key: 'Escape' })
+      expect(onToggle).toHaveBeenCalledOnce()
+      expect(event.stopPropagation).toHaveBeenCalledOnce()
+    } finally { vi.unstubAllGlobals() }
+  })
+
+  it('shows field camp markers only on discovered local cells and in the overview', () => {
+    const current = { ...campProjection, map: { ...campProjection.map,
+      tiles: campProjection.map.tiles.map((tile) => ({ ...tile, hasCamp: true, discovered: tile.id === 'tile-1-1' })),
+      overview: () => ({ player: { gridX: 1, gridZ: 1, yaw: 0 }, cells: [{ id: 'camp-chunk', gridX: 0, gridZ: 0, terrain: 'loam' as const, biome: 'meadow', discoveredCells: 1, markers: ['Field camp'] }] }),
+    } }
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup).toContain('tile-1-1: meadow, player location, field camp')
+    expect(markup).not.toContain('unexplored, field camp')
+    expect(markup).toContain('Field camp"><i')
+    expect(markup).toContain('<b>C</b>')
+  })
+
   it('offers a native local/world map toggle only when the public overview exists', () => {
     const loadOverview = vi.fn(() => ({ player: { gridX: 0, gridZ: 0, yaw: 0 }, cells: [
       { id: 'chunk-0-0', gridX: 0, gridZ: 0, discoveredCells: 2, terrain: 'loam' as const, biome: 'temperate_forest', markers: ['Greenway Outfitters'] },
@@ -535,5 +639,55 @@ describe('selected construction site controls', () => {
     expect(renderToStaticMarkup(createElement(WizardHud, { projection: blocked, onIntent: () => {} }))).toContain('Move closer to the scaffold')
     const hidden = { ...ready, selectedBuildSiteId: 'bridge-fog' } as WizardViewProjection
     expect(findElements(WizardHud({ projection: hidden, onIntent: () => {} }), (element) => element.props.className === 'wr-panel wr-context wr-build-preview')).toHaveLength(0)
+  })
+})
+
+describe('field camp construction controls', () => {
+  const ready = { ...sellProjection, openStoreId: null,
+    fieldCamp: { camps: [], selectionEnabled: true, preview: { tileId: 'camp-tile', position: [0, 0, 0], rejection: null } },
+  } as WizardViewProjection
+
+  it('shows the fixed recipe, authoritative readiness, and exact Build and Cancel intents', () => {
+    const onIntent = vi.fn()
+    const card = findElements(WizardHud({ projection: ready, onIntent }), (element) => element.props['aria-label'] === 'Field camp preview')[0]
+    const buttons = findElements(card, (element) => element.type === 'button')
+    expect(renderToStaticMarkup(card)).toContain('4 logs + 1 stone · 30 construction XP')
+    expect(renderToStaticMarkup(card)).toContain('Ready to build')
+    expect(buttons[0].props.disabled).toBe(false)
+    ;(buttons[0].props.onClick as () => void)()
+    ;(buttons[1].props.onClick as () => void)()
+    expect(onIntent.mock.calls.map(([intent]) => intent)).toEqual([{ type: 'field-camp.confirm', tileId: 'camp-tile' }, { type: 'field-camp.select', tileId: null }])
+  })
+
+  it('gives the 390x500 camp preview a scrolling card below the top controls and beside touch actions', () => {
+    const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: ready, onIntent: vi.fn() }))
+    expect(markup).toContain('aria-label="Field camp preview" data-field-camp-panel="true"')
+    expect(markup).toContain('left:8px;top:208px;bottom:auto;transform:none;box-sizing:border-box;width:min(280px,calc(100% - 108px));max-height:calc(100% - 350px);overflow-y:auto;overscroll-behavior:contain')
+    expect(markup).toContain('.wr-build-preview .wr-build-actions button{min-height:44px;justify-content:center}')
+    expect(markup).toContain('.wr-surface:has([data-field-camp-panel]) .wr-events{display:none}')
+    expect(markup).toContain('>Build</button>')
+    expect(markup).toContain('>Cancel</button>')
+  })
+
+  it('disables unresolved, rejected, or unavailable previews and shows the rejection without overlapping route or shop cards', () => {
+    const fieldCamp = ready.fieldCamp!
+    for (const camp of [
+      { ...fieldCamp, preview: { ...fieldCamp.preview!, position: null } },
+      { ...fieldCamp, selectionEnabled: false },
+      { ...fieldCamp, preview: { ...fieldCamp.preview!, rejection: { code: 'too_far' as const, message: 'The camp site is out of reach.' } } },
+    ]) {
+      const hud = WizardHud({ projection: { ...sellProjection, selectedBuildSiteId: 'bridge-west', fieldCamp: camp }, onIntent: vi.fn() })
+      const cards = findElements(hud, (element) => element.props.className === 'wr-panel wr-context wr-build-preview')
+      expect(cards).toHaveLength(1)
+      expect(findElements(cards[0], (element) => element.type === 'button')[0].props.disabled).toBe(true)
+      expect(renderToStaticMarkup(hud)).not.toContain('data-store-panel')
+      if (camp.preview?.rejection) expect(renderToStaticMarkup(cards[0])).toContain(camp.preview.rejection.message)
+    }
+  })
+
+  it('shows a built status after placement and keeps older HUDs free of camp controls', () => {
+    const current = { ...ready, fieldCamp: { camps: [{ tileId: 'camp-tile', position: [0, 0, 0] as const }], preview: null, selectionEnabled: false } }
+    expect(renderToStaticMarkup(createElement(WizardHud, { projection: current, onIntent: vi.fn() }))).toContain('Field camp built. One camp per world.')
+    expect(renderToStaticMarkup(createElement(WizardHud, { projection: sellProjection, onIntent: vi.fn() }))).not.toContain('Field camp')
   })
 })

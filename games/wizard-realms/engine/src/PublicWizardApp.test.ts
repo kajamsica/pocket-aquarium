@@ -1,21 +1,27 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type { WizardViewIntent } from './view'
 import { intentForView } from './App'
 import { mireglassActionChoices } from './MireglassPlayableApp'
 import { createGeneratedWorld } from './domain/generation'
-import { mireglassAnchors } from './domain/mireglassContent'
+import { mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
+import { applyFieldCampAction } from './domain/fieldCamp'
+import { worldTileAtGrid } from './domain/worldChunks'
+import { encodePublicV8Head } from './domain/publicWorldV8Snapshot'
+import { parsePublicV9Rescue } from './domain/publicWorldV9Snapshot'
+import { withFreshPublicV9Camps } from './domain/publicWorldV9State'
 import { actPublicMireglass } from './domain/publicWorldActions'
 import { advancePublicWorldFrame, type PublicWorldAdvanceResult } from './domain/publicWorldRuntime'
 import { createFreshPublicWorld } from './domain/publicWorldState'
 import {
   PUBLIC_V7_BACKUP_KEY, PUBLIC_V7_ROOT_KEY, PUBLIC_V7_STAGE_KEY,
-  commitPublicV7World, migratePublicV6ToV7, serializePublicV7World, withFreshPublicV7Herbs,
+  commitPublicV7World, createPublicV7StateFromV6Root, migratePublicV6ToV7, serializePublicV7World, withFreshPublicV7Herbs,
 } from './domain/publicWorldV7'
 import { readPublicV7RecoverySnapshot } from './domain/publicWorldV7Recovery'
 import { PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_STAGE_KEY,
-  commitPublicV6World, loadPublicV6Root, parsePublicV6PlayableRoot,
+  commitLegacyImportToPublicV6, inspectLegacyImportSource, commitPublicV6World, loadPublicV6Root, parsePublicV6PlayableRoot,
   readPublicV6RecoverySnapshot, serializePublicV6World } from './domain/publicWorldV6'
 import { serializeWizardWorld } from './domain/persistence'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
@@ -28,11 +34,20 @@ import {
   publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority,
   publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
+  publicFieldCampView, requirePublicV9State, unsavedPublicV9Bytes,
   PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
 
 const seed = 'greenway-alpha'
 const legacyKey = 'wizard-realms:world:v5'
+let dispatch: (intent: WizardViewIntent) => void
+vi.mock('./view', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./view')>()
+  return { ...actual, WizardSurface: (props: Parameters<typeof actual.WizardSurface>[0]) => {
+    dispatch = props.onIntent
+    return createElement(actual.WizardSurface, props)
+  } }
+})
 function memoryStorage() {
   const values = new Map<string, string>()
   const writes: string[] = []
@@ -63,6 +78,117 @@ describe('public v8 play session seam', () => {
     const v7 = renderToStaticMarkup(createElement(PublicWizardApp))
     expect(v7).toContain('Checking this device for a Wizard Realms save')
     expect(v7).toContain('Choose how to begin.')
+    const needsSpade = { ...state, player: { ...state.player, learnedSpellIds: ['wayfinder_glow' as const],
+      skillXp: { ...state.player.skillXp, spellcraft: 1 }, position: { ...state.player.position, x: -11, z: 8 } } }
+    const bearing = renderToStaticMarkup(createElement(PublicWizardApp, {
+      v8Session: { ...session, start: { ...session.start, state: needsSpade } },
+    }))
+    expect(bearing).toMatch(/class="wr-public-next"[^>]*><strong>Next:<\/strong> Greenway Outfitters: [^.]+\. Buy a field spade\./)
+    expect(bearing).not.toContain('line-clamp')
+  })
+})
+
+describe('public v9 play session', () => {
+  function fixture() {
+    const storage = memoryStorage()
+    storage.values.set(legacyKey, serializeWizardWorld(createGeneratedWorld(seed)))
+    const legacy = inspectLegacyImportSource(storage, 'greenway-classic-v1')
+    if (legacy.status !== 'available') throw new Error(legacy.status)
+    const imported = commitLegacyImportToPublicV6(storage, legacy)
+    if (imported.status !== 'committed') throw new Error(imported.status)
+    const base = createPublicV7StateFromV6Root(imported.root)
+    const tile = worldTileAtGrid(seed, -76, 100)
+    const state = { ...withFreshPublicV9Camps(base), movementOwner: 'streamed' as const,
+      player: { ...base.player, position: { ...tile.center }, inventory: [...base.player.inventory,
+        { itemId: 'logs' as const, quantity: 4 }, { itemId: 'stone' as const, quantity: 1 }] },
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, tile.id])].sort() }
+    const receipt = { sourceV8Head: encodePublicV8Head(base, imported.root, 3),
+      sourceV7Bytes: serializePublicV7World({ schemaVersion: 'wizard-world/v7', state: base,
+        saveRevision: 2, bootstrap: imported.root, migrationSourceV6Bytes: JSON.stringify(imported.root) }) }
+    return { state, receipt, tile, position: [tile.center.x, tile.center.y, tile.center.z], bootstrap: imported.root }
+  }
+
+  it('previews canonical sites without spending and gates selection to an unblocked v9 frontier', () => {
+    const f = fixture(), before = JSON.stringify(f.state)
+    expect(publicFieldCampView(f.state, f.tile.id, f.receipt, false))
+      .toEqual({ camps: [], selectionEnabled: true, preview: { tileId: f.tile.id, position: f.position, rejection: null } })
+    expect(publicFieldCampView(f.state, null, f.receipt, false).preview).toBeNull()
+    expect(JSON.stringify(f.state)).toBe(before)
+    expect(publicFieldCampView(f.state, 'tile-0-0', f.receipt, false).preview?.rejection?.code).toBe('invalid_site')
+    expect(publicFieldCampView(f.state, f.tile.id, f.receipt, true)).toMatchObject({ selectionEnabled: false, preview: null })
+    expect(publicFieldCampView({ ...f.state, movementOwner: 'greenway' }, f.tile.id, f.receipt, false).selectionEnabled).toBe(false)
+  })
+
+  it('keeps camp IDs through controls and frontier actions, then exports the actual bootstrap and next v9 revision', () => {
+    const f = fixture()
+    const placed = applyFieldCampAction(f.state, f.tile.id, f.bootstrap)
+    expect(placed.rejection).toBeUndefined()
+    const moved = advancePublicControls(placed.state, [[{ type: 'move', delta: { x: 0.1, z: 0 } }]], [])
+    expect(moved.rejections).toEqual([])
+    expect(moved.events.some((event) => event.type === 'player_moved')).toBe(true)
+    const equipped = actPublicMireglass(moved.state, { type: 'equip_item', itemId: 'woodcutters_axe' })
+    expect(equipped.rejection).toBeUndefined()
+    const next = requirePublicV9State(equipped.state, placed.state)
+    expect(next.fieldCampTileIds).toEqual([f.tile.id])
+    const bytes = unsavedPublicV9Bytes(next, f.receipt, 7)
+    const rescue = parsePublicV9Rescue(bytes!)
+    expect(rescue?.schemaVersion).toBe('wizard-world/v9-rescue')
+    expect(rescue?.sourceReceipt).toEqual(f.receipt)
+    expect(rescue?.snapshot).toMatchObject({ schemaVersion: 'wizard-world/v9', saveRevision: 8, bootstrap: f.bootstrap,
+      state: { fieldCampTileIds: [f.tile.id] } })
+    expect(publicFieldCampView(next, f.tile.id, f.receipt, false)).toEqual({
+      selectionEnabled: false, preview: null, camps: [{ tileId: f.tile.id, position: f.position }] })
+    expect(() => requirePublicV9State({ ...next, fieldCampTileIds: [] } as typeof next, next)).toThrow('camp history')
+    const ring = mireglassFairyRing(seed)
+    const atRing = { ...next, player: { ...next.player, position: ring.tile.center,
+      discoveredRingIds: [ring.id, 'ring-greenway'].sort() },
+      discoveredTileIds: [...new Set([...next.discoveredTileIds, ring.tile.id])].sort() }
+    const home = advancePublicControls(atRing, [[{ type: 'teleport_fairy_ring',
+      sourceRingId: ring.id, targetRingId: 'ring-greenway' }]], [])
+    expect(home.rejections).toEqual([])
+    expect(home.state.movementOwner).toBe('greenway')
+    const returned = advancePublicControls(home.state, [[{ type: 'teleport_fairy_ring',
+      sourceRingId: 'ring-greenway', targetRingId: ring.id }]], [])
+    expect(returned.rejections).toEqual([])
+    expect(returned.state.movementOwner).toBe('streamed')
+    expect(requirePublicV9State(returned.state, next).fieldCampTileIds).toEqual([f.tile.id])
+    expect(unsavedPublicV9Bytes(next, f.receipt, Number.MAX_SAFE_INTEGER)).toBeNull()
+    const html = renderToStaticMarkup(createElement(PublicWizardApp, { v9Session: {
+      start: { state: next, saveRevision: 7, sourceReceipt: f.receipt },
+      commit: async () => ({ ok: false as const, reason: 'source-changed' }),
+    } }))
+    expect(html).toContain('Public v9 save #7 loaded')
+    expect(html).not.toContain('line-clamp')
+    expect(html).toContain('overflow:auto;text-align:left;pointer-events:auto')
+    expect(html).toContain('.wr-public:has([data-store-panel],.wr-build-preview) .wr-public-panel{display:none}')
+    expect(html).toContain('tabindex="0"')
+  })
+
+  it('cancels without a save, clears camp selection for routes, and confirms once against the live world', async () => {
+    const f = fixture()
+    const commit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    renderToStaticMarkup(createElement(PublicWizardApp, { v9Session: {
+      start: { state: f.state, saveRevision: 7, sourceReceipt: f.receipt }, commit,
+    } }))
+    const before = JSON.stringify(f.state)
+    dispatch({ type: 'field-camp.select', tileId: f.tile.id })
+    dispatch({ type: 'field-camp.select', tileId: null })
+    dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
+    dispatch({ type: 'field-camp.select', tileId: f.tile.id })
+    dispatch({ type: 'build-site.select', siteId: null })
+    dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
+    await Promise.resolve()
+    expect(commit).not.toHaveBeenCalled()
+    expect(JSON.stringify(f.state)).toBe(before)
+    dispatch({ type: 'field-camp.select', tileId: f.tile.id })
+    dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
+    dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
+    await Promise.resolve()
+    expect(commit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ fieldCampTileIds: [f.tile.id],
+      player: expect.objectContaining({ xp: f.state.player.xp + 30 }) }), 7, f.receipt)
+    await Promise.resolve()
+    dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
+    expect(commit).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -1,4 +1,5 @@
 import type { DigSiteId, InscriptionId, SkillId, SpellId, TerrainId } from '../domain/types'
+import type { FieldCampActionResult } from '../domain/fieldCamp'
 
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
@@ -128,6 +129,23 @@ export interface WizardBuildSite {
   discovered: boolean
 }
 
+export interface WizardFieldCamp {
+  tileId: string
+  position: Vec3
+}
+
+export interface WizardFieldCampPreview {
+  tileId: string
+  position: Vec3 | null
+  rejection: NonNullable<FieldCampActionResult['rejection']> | null
+}
+
+export interface WizardFieldCampView {
+  camps: readonly WizardFieldCamp[]
+  preview: WizardFieldCampPreview | null
+  selectionEnabled: boolean
+}
+
 export interface WizardMapTile {
   id: string
   gridX: number
@@ -147,6 +165,7 @@ export interface WizardMapTile {
   hasRouteSite: boolean
   hasBuiltRoute: boolean
   hasCache?: boolean
+  hasCamp?: boolean
 }
 
 /** One 64 m chunk, with color sampled only from terrain the player has discovered. */
@@ -185,6 +204,7 @@ export interface WizardViewProjection {
   routes: readonly WizardRoute[]
   buildSites: readonly WizardBuildSite[]
   selectedBuildSiteId: string | null
+  fieldCamp?: WizardFieldCampView
   map: {
     tiles: readonly WizardMapTile[]
     player: { gridX: number; gridZ: number; yaw: number }
@@ -241,6 +261,8 @@ export type WizardViewIntent =
   | { type: 'dig-site.excavate'; digSiteId: DigSiteId }
   | { type: 'build-site.select'; siteId: string | null }
   | { type: 'build-site.confirm'; siteId: string }
+  | { type: 'field-camp.select'; tileId: string | null }
+  | { type: 'field-camp.confirm'; tileId: string }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }
   | { type: 'trade.cancel-listing'; slot: number }
   | { type: 'fairy-ring.teleport'; ringId: string; destinationRingId: string }

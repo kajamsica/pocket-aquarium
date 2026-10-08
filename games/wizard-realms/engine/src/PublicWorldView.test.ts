@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { terrainHeightAt } from './domain/generation'
+import { resolveFieldCampSite } from './domain/fieldCamp'
 import { MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { advancePublicWorld } from './domain/publicWorldRuntime'
@@ -8,10 +9,54 @@ import { createStreamedWorld } from './domain/streamedWorld'
 import { PUBLIC_V7_SCHEMA, parsePublicV7PlayableRoot, serializePublicV7World, withFreshPublicV7Herbs } from './domain/publicWorldV7'
 import { WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from './domain/worldChunks'
 import { publicWorldOverview, publicWorldViewProjection } from './PublicWorldView'
+import type { WizardFieldCampView } from './view/contracts'
 
 const seed = 'greenway-alpha'
 
 describe('public v6 read-only view adapter', () => {
+  it('omits the optional camp contract and markers for older callers', () => {
+    const state = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const view = publicWorldViewProjection(state, [], null)
+    expect(view).not.toHaveProperty('fieldCamp')
+    expect(view.map.tiles.every((tile) => !Object.hasOwn(tile, 'hasCamp'))).toBe(true)
+    expect(publicWorldOverview(state).cells.flatMap((cell) => cell.markers)).not.toContain('Field camp')
+  })
+
+  it('maps a camp by canonical tile ID and keeps its lazy overview consistent across travel', () => {
+    const site = resolveFieldCampSite(seed, worldTileAtGrid(seed, -76, 100).id)!
+    const { x, y, z } = site.tile.center
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const streamed = createStreamedWorld(seed, site.tile.center)
+    const state: PublicWorldState = { ...fresh, movementOwner: 'streamed',
+      player: { ...fresh.player, position: streamed.state.player.position },
+      discoveredTileIds: [site.tileId] }
+    const fieldCamp: WizardFieldCampView = { camps: [{ tileId: site.tileId, position: [x, y, z] }],
+      preview: { tileId: worldTileAtGrid(seed, -70, 100).id, position: null,
+        rejection: { code: 'too_far', message: 'The camp site is out of reach.' } }, selectionEnabled: true }
+    const before = JSON.stringify(state)
+    const view = publicWorldViewProjection(state, [], null, null, fieldCamp)
+    expect(view.fieldCamp).toBe(fieldCamp)
+    expect(view.map.tiles.filter((tile) => tile.hasCamp).map((tile) => tile.id)).toEqual([site.tileId])
+    expect(view.map.tiles.find((tile) => tile.hasCamp)).toMatchObject({
+      gridX: site.gridX + 3, gridZ: site.gridZ + 3, discovered: true })
+    expect(view.map.tiles.filter((tile) => !tile.discovered).every((tile) =>
+      !tile.hasCamp && tile.terrain === null)).toBe(true)
+    const overview = view.map.overview!()
+    expect(view.map.overview!()).toBe(overview)
+    expect(overview).toEqual(publicWorldOverview(state, fieldCamp.camps))
+    expect(overview.cells.filter((cell) => cell.markers.includes('Field camp')))
+      .toEqual([expect.objectContaining({ gridX: Math.floor(site.gridX / 16),
+        gridZ: Math.floor(site.gridZ / 16), discoveredCells: 1, terrain: site.tile.terrain })])
+    expect(JSON.stringify(state)).toBe(before)
+    const returned = publicWorldViewProjection({ ...state, movementOwner: 'greenway',
+      player: fresh.player }, [], null, null, fieldCamp)
+    expect(returned.map.tiles.some((tile) => tile.hasCamp)).toBe(false)
+    expect(returned.map.overview!().cells.flatMap((cell) => cell.markers)).toContain('Field camp')
+    const fogged = publicWorldViewProjection({ ...state, discoveredTileIds: [] }, [], null, null, fieldCamp)
+    expect(fogged.map.tiles.some((tile) => tile.hasCamp)).toBe(false)
+    expect(fogged.map.overview!().cells.flatMap((cell) => cell.markers)).not.toContain('Field camp')
+  })
+
   it.each([
     ['greenway-classic-v1', -12],
     ['greenway-expanded-v1', -28],

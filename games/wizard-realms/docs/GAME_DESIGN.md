@@ -28,6 +28,12 @@ These are proof gates, not substitutes for the full-game completion contract. Ea
 3. **Living progression:** Add original creatures, encounters, quests or mysteries, tool and armor progression, regional commerce and bounded trade listings, captured or raised ground mounts, and late flying mounts. Travel tiers must each retain a purpose. Long-session saves, migrations, and performance must hold across the connected world.
 4. **Campaign and release proof:** A new player can reach and complete a deliberate endgame pursuit without developer intervention. Independent playtests verify first-session learning, sustained midgame decisions, endgame payoff, accessible controls, visual readability, save/recovery, and target-hardware performance. Only then is the single-player game complete; online systems are a separate product decision.
 
+### Current implementation status
+
+The public game currently proves a Greenway first-session path and a connected Mireglass expedition, with authored travel, gathering, route choices, a spell, equipment, and local trade. A separate experimental v9 entry adds one player-chosen Mireglass field camp without rewriting older saves. Independent playtesting has reached the Greenway ridge cache and relic return, but the complete Mireglass-to-trade journey and v9 camp placement still need real-UI acceptance. This is progress within gate 1, not a full-game release.
+
+The roughly 2 km world, multiple practiced spell paths, terrain-wide construction and digging, boats, creatures and quests, mounts, late flight, a sustained economy, endgame, and release proof remain open work. Each completed slice must leave the older save lineage intact or provide an explicit, tested migration.
+
 The design inherits the authority, behavior, asset, tooling, and validation methods in the [Simulation-Rich Game Development Playbook](../../../docs/game-development/README.md). In particular:
 
 - [Foundation and Architecture](../../../docs/game-development/FOUNDATION_AND_ARCHITECTURE.md) defines one authority, fixed causal time, typed intents and events, projections, content profiles, and explicit promotion.

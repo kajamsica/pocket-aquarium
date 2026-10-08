@@ -9,7 +9,7 @@ import type { PublicWorldState } from './domain/publicWorldState'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS, WORLD_CHUNK_MAX, WORLD_CHUNK_MIN,
   WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from './domain/worldChunks'
 import type { PlayerState, WizardWorldState } from './domain/types'
-import type { WizardItemStack, WizardViewProjection, WizardWorldOverview } from './view/contracts'
+import type { WizardFieldCamp, WizardFieldCampView, WizardItemStack, WizardViewProjection, WizardWorldOverview } from './view/contracts'
 
 const V6_ITEM_NAMES: Readonly<Record<string, string>> = {
   'mireglass_reach/item/seal': 'Mireglass seal',
@@ -25,7 +25,7 @@ function namedV6Stack(stack: WizardItemStack | null): WizardItemStack | null {
 }
 
 /** Projection from saved discovery IDs only; undiscovered chunks never sample terrain. */
-export function publicWorldOverview(state: PublicWorldState): WizardWorldOverview {
+export function publicWorldOverview(state: PublicWorldState, camps: readonly WizardFieldCamp[] = []): WizardWorldOverview {
   const discovered = new Set(state.discoveredTileIds)
   const chunks = new Map<string, { x: number; z: number; count: number; sampleX: number; sampleZ: number }>()
   const markers = new Map<string, string[]>()
@@ -59,6 +59,9 @@ export function publicWorldOverview(state: PublicWorldState): WizardWorldOvervie
     markers.set(key, [...(markers.get(key) ?? []), label])
   }
 
+  for (const camp of camps) {
+    mark({ x: camp.position[0], z: camp.position[2] }, 'Field camp', discovered.has(camp.tileId))
+  }
   for (const store of state.greenway.stores) mark(store.position, store.name)
   for (const ring of state.greenway.fairyRings) {
     mark(ring.position, ring.name, state.player.discoveredRingIds.includes(ring.id) && knownTile(ring.position))
@@ -190,11 +193,15 @@ function mireglassView(state: PublicWorldState, messages: readonly string[],
 
 /** One public player and facts projected through the existing region-specific view adapters. */
 export function publicWorldViewProjection(state: PublicWorldState, messages: readonly string[],
-  selectedSiteId: string | null, openStoreId: string | null = null): WizardViewProjection {
+  selectedSiteId: string | null, openStoreId: string | null = null,
+  fieldCamp?: WizardFieldCampView): WizardViewProjection {
   const projection = state.movementOwner === 'greenway'
     ? greenwayView(state, messages, selectedSiteId, openStoreId)
     : mireglassView(state, messages, selectedSiteId)
   let overview: WizardWorldOverview | undefined
-  return { ...projection, map: { ...projection.map,
-    overview: () => overview ??= publicWorldOverview(state) } }
+  const campTileIds = new Set(fieldCamp?.camps.map((camp) => camp.tileId))
+  return { ...projection, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,
+    ...(fieldCamp ? { tiles: projection.map.tiles.map((tile) => ({ ...tile,
+      hasCamp: tile.discovered && campTileIds.has(tile.id) })) } : {}),
+    overview: () => overview ??= publicWorldOverview(state, fieldCamp?.camps) } }
 }

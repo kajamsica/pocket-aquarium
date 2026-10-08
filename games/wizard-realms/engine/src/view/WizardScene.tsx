@@ -67,6 +67,9 @@ const ALDER_LEAF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#628661', r
 const ALDER_BELL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a98552', metalness: 0.35, roughness: 0.55 })
 const CACHE_PEAT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#665442', roughness: 1, flatShading: true })
 const CACHE_PIT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2e302a', roughness: 1 })
+const CAMP_CANVAS_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a88d5b', roughness: 0.95 })
+const CAMP_PREVIEW_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9bdcc9', emissive: '#409c85', emissiveIntensity: 0.35, transparent: true, opacity: 0.55, depthWrite: false })
+const CAMP_BLOCKED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#e8ac83', emissive: '#a64a30', emissiveIntensity: 0.35, transparent: true, opacity: 0.55, depthWrite: false })
 const ALDER_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.18, 0.34, 3.4, 7)
 const CACHE_PIT_GEOMETRY = new THREE.CircleGeometry(0.72, 12)
 const WADER_SHAFT_GEOMETRY = new THREE.CylinderGeometry(0.13, 0.15, 0.5, 6)
@@ -741,6 +744,39 @@ export function constructionVisuals(routes: readonly WizardRoute[], sites: reado
   return [...routes.filter((route) => route.built), ...(preview ? [{ id: preview.id, from: preview.from, to: preview.to, built: false }] : [])]
 }
 
+/** Canonical positions come from camp authority; tile IDs never determine scene coordinates. */
+export function fieldCampVisuals(fieldCamp: WizardViewProjection['fieldCamp'], terrain: readonly WizardTerrainCell[]) {
+  const fitsVisibleTerrain = (position: readonly [number, number, number]) => position.every(Number.isFinite)
+    && terrain.some((cell) => Math.abs(position[0] - cell.position[0]) + 1.1 <= cell.size[0] / 2
+      && Math.abs(position[2] - cell.position[2]) + 1.05 <= cell.size[1] / 2)
+  const committed = fieldCamp?.camps[0]
+  const preview = fieldCamp?.preview
+  const position = preview?.position
+  return [
+    ...(committed && fitsVisibleTerrain(committed.position) ? [{ ...committed, status: 'built' as const }] : []),
+    ...(preview && position && fitsVisibleTerrain(position)
+      && !fieldCamp?.camps.some((camp) => camp.tileId === preview.tileId
+        || camp.position.every((coordinate, index) => coordinate === position[index]))
+      ? [{ tileId: preview.tileId, position, status: preview.rejection ? 'blocked' as const : 'ready' as const }] : []),
+  ]
+}
+
+function FieldCamp({ camp }: { camp: ReturnType<typeof fieldCampVisuals>[number] }) {
+  const built = camp.status === 'built'
+  const canvas = built ? CAMP_CANVAS_MATERIAL : camp.status === 'ready' ? CAMP_PREVIEW_MATERIAL : CAMP_BLOCKED_MATERIAL
+  return <group name={`Field camp: ${camp.tileId} (${camp.status})`} position={camp.position as [number, number, number]}>
+    <mesh geometry={UNIT_BOX} material={built ? DARK_WOOD_MATERIAL : canvas}
+      position={[0, 0.06, 0]} scale={[2.2, 0.12, 2.1]} receiveShadow />
+    {[-1, 1].map((side) => <mesh key={side} geometry={UNIT_BOX} material={canvas}
+      position={[side * 0.5, 0.8, 0]} rotation={[0, 0, side * Math.PI / 4]}
+      scale={[0.1, 1.42, 2]} castShadow={built} />)}
+    {[-0.85, 0.85].map((z) => <mesh key={z} geometry={UNIT_BOX} material={built ? WOOD_MATERIAL : canvas}
+      position={[0, 0.72, z]} scale={[0.1, 1.44, 0.1]} castShadow={built} />)}
+    <mesh geometry={ROCK_GEOMETRY} material={built ? MIREGLASS_STONE_MATERIAL : canvas}
+      position={[0.8, 0.19, 0.68]} scale={[0.2, 0.18, 0.2]} castShadow={built} />
+  </group>
+}
+
 /** Mireglass IDs identify authored structure kinds; legacy v5 routes retain their existing view. */
 export function mireglassConstructionGeometry(route: Pick<WizardRoute, 'id' | 'from' | 'to'>) {
   const bridgeId = 'mireglass_reach/route/fen_bridge'
@@ -825,6 +861,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   const worldSupport = useRef<THREE.Group>(null)
   const sunTarget = useMemo(() => new THREE.Object3D(), [])
   const visibleRoutes = constructionVisuals(projection.routes, projection.buildSites, projection.selectedBuildSiteId)
+  const visibleTerrain = visibleTerrainCells(projection.terrain, projection.player.position)
+  const visibleCamps = fieldCampVisuals(projection.fieldCamp, visibleTerrain)
   return (
     <Canvas
       shadows={{ type: THREE.PCFShadowMap }}
@@ -872,7 +910,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       </group>
       <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport} />
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
-      {visibleTerrainCells(projection.terrain, projection.player.position).map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
+      {visibleTerrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
@@ -880,6 +918,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.digSites.map((site) => <DigSite key={site.id} site={site} />)}
       {projection.landmarks?.map((landmark) => <Landmark key={landmark.id} landmark={landmark} />)}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
+      {visibleCamps.map((camp) => <FieldCamp key={`${camp.status}:${camp.tileId}`} camp={camp} />)}
       <WizardAvatar pose={pose} equipment={projection.equipment} />
     </Canvas>
   )
