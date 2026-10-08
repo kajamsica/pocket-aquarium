@@ -180,6 +180,17 @@ const reachableStore = (state: WizardWorldState) => state.stores
 export function objectiveFor(state: WizardWorldState): string {
   const logs = owned(state, 'logs')
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
+  const outfitters = (action: string) => {
+    const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
+    if (distance(state.player.position, store.position) <= INTERACTION_RANGE) return `${action} at ${store.name}.`
+    const east = store.position.x - state.player.position.x
+    const south = store.position.z - state.player.position.z
+    const bearing = [
+      Math.abs(east) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(east)))}m ${east > 0 ? 'east' : 'west'}` : '',
+      Math.abs(south) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(south)))}m ${south > 0 ? 'south' : 'north'}` : '',
+    ].filter(Boolean).join(' and ')
+    return `${store.name}: ${bearing || 'at this spot'}. ${action}.`
+  }
   if (!state.player.learnedSpellIds.includes('wayfinder_glow')) {
     const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
     if (distance(state.player.position, waystone.position) <= INTERACTION_RANGE) return 'Study the Greenway waystone to learn Wayfinder Glow.'
@@ -193,14 +204,14 @@ export function objectiveFor(state: WizardWorldState): string {
   }
   if (state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
   if (!state.excavatedDigSiteIds.includes('practice_mound')) {
-    if (!owned(state, 'field_spade')) return 'Buy a field spade from Greenway Outfitters.'
+    if (!owned(state, 'field_spade')) return outfitters('Buy a field spade')
     if (state.player.equipment.mainHand !== 'field_spade') return 'Equip the field spade from your backpack.'
     return 'Excavate the Greenway practice mound to train excavation.'
   }
   if (!state.builtRouteIds.includes('greenway_ladder')) {
     if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
       ? 'Equip the woodcutter axe to gather ladder materials.'
-      : 'Buy a woodcutter axe at Greenway Outfitters.'
+      : outfitters('Buy a woodcutter axe')
     return logs >= 4 ? 'Go north to a ◇ ladder site, choose it on the map, then Build (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
   }
   if (!state.revealedDigSiteIds.includes('ridge_cache')) return areaAt(state.areas,
@@ -214,8 +225,8 @@ export function objectiveFor(state: WizardWorldState): string {
     : 'Re-equip the field spade, then search northwest of the ladder for the ridge cache (✦ on the map).'
   if (owned(state, 'ancient_relic') > 0) return areaAt(state.areas,
     state.player.position.x, state.player.position.z).id === 'greenway'
-    ? 'Visit Greenway Outfitters and sell the ancient relic for 25g.'
-    : 'Cross the Greenway ladder south, then sell the ancient relic at Greenway Outfitters for 25g.'
+    ? outfitters('Sell the ancient relic for 25g')
+    : `Cross the Greenway ladder south. ${outfitters('Sell the ancient relic for 25g')}`
   const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
   const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
   if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
@@ -225,7 +236,7 @@ export function objectiveFor(state: WizardWorldState): string {
   if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'
   if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Choose a Highland bridge site on the map and build it (6 logs).' : `${gather(6)}, then choose a bridge site on the map.`
   if (axeEquipped(state)) return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
-  return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : 'Buy a woodcutter axe at Greenway Outfitters.'
+  return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : outfitters('Buy a woodcutter axe')
 }
 
 function closestInteraction(state: WizardWorldState) {

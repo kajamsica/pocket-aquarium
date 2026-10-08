@@ -377,7 +377,7 @@ describe('Wizard view adapter', () => {
 
     const unowned = withFirstRegionCompleted(copy(fresh))
     unowned.player.inventory = []
-    expect(objectiveFor(unowned)).toBe('Buy a woodcutter axe at Greenway Outfitters.')
+    expect(objectiveFor(unowned)).toBe('Greenway Outfitters: 5m west and 1m north. Buy a woodcutter axe.')
 
     const state = withAxeEquipped(withFirstRegionCompleted(copy(fresh)))
     expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (0/4), then choose a ladder site on the map.')
@@ -436,13 +436,55 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toContain('ridge cache')
     state.excavatedDigSiteIds.push('ridge_cache')
     state.player.inventory.push({ itemId: 'ancient_relic', quantity: 1 })
-    expect(objectiveFor(state)).toContain('sell the ancient relic')
+    expect(objectiveFor(state)).toContain('Sell the ancient relic')
     expect(objectiveFor(state)).toContain('Greenway Outfitters')
     state.player.position = { ...state.player.position, x: 0, z: -8 }
     expect(objectiveFor(state)).toContain('Cross the Greenway ladder south')
     state.player.position = { ...state.player.position, x: 0, z: 0 }
     state.player.inventory = state.player.inventory.filter((stack) => stack.itemId !== 'ancient_relic')
     expect(objectiveFor(state)).toContain('bridge site')
+  })
+
+  it('guides spade buyers to Outfitters by identity even when Arcanum is nearer', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    state.player.skillXp.spellcraft = 40
+    const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
+    const arcanum = state.stores.find((candidate) => candidate.id === 'store-highland')!
+    state.stores.reverse()
+    state.player.position = { ...arcanum.position }
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 13m west and 5m south. Buy a field spade.')
+    state.player.position = { ...store.position, x: -7.2, z: 8.3 }
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 2m east and 9m north. Buy a field spade.')
+
+    store.position = { x: -8, y: 0, z: 6 }
+    state.player.position = { x: -2.4, y: 0, z: 0.4 }
+    const before = JSON.stringify(state)
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 6m west and 6m south. Buy a field spade.')
+    expect(JSON.stringify(state)).toBe(before)
+    state.player.position = { x: -12, y: 0, z: 10 }
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 4m east and 4m north. Buy a field spade.')
+    state.player.position = { ...store.position, z: store.position.z + 3.01 }
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 3m north. Buy a field spade.')
+    state.player.position = { ...store.position, z: store.position.z + 3 }
+    expect(objectiveFor(state)).toBe('Buy a field spade at Greenway Outfitters.')
+  })
+
+  it('guides axe purchases and relic sales to Outfitters, including local actions', () => {
+    const state = withFirstRegionCompleted(createWizardWorld('greenway-alpha'))
+    state.player.inventory = []
+    const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
+    state.player.position = { ...store.position, x: store.position.x - 5 }
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 5m east. Buy a woodcutter axe.')
+    state.player.position = { ...store.position, z: store.position.z + 2 }
+    expect(objectiveFor(state)).toBe('Buy a woodcutter axe at Greenway Outfitters.')
+    state.builtRouteIds = ['greenway_ladder']
+    state.player.inventory.push({ itemId: 'ancient_relic', quantity: 1 })
+    expect(objectiveFor(state)).toBe('Sell the ancient relic for 25g at Greenway Outfitters.')
+    state.player.position = { ...store.position, x: store.position.x + 5 }
+    expect(objectiveFor(state)).toBe('Greenway Outfitters: 5m west. Sell the ancient relic for 25g.')
+    state.player.position = { ...store.position, z: -8 }
+    expect(objectiveFor(state)).toBe('Cross the Greenway ladder south. Greenway Outfitters: 7m south. Sell the ancient relic for 25g.')
   })
 
   it('explains how to cross a built ladder before the ridge cache is revealed', () => {
