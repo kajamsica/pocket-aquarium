@@ -67,7 +67,8 @@ function validProgressCorrelations(state: MireglassWorldState): boolean {
     && sealCount <= 1 && (expedition.cacheExcavated || sealCount === 0)
 }
 
-function validState(value: unknown, expectedSeed: string): value is MireglassWorldState {
+/** Shared content proof; a public Greenway-owned pose is checked against v5 terrain instead. */
+export function isValidMireglassWorldContent(value: unknown, expectedSeed: string): value is MireglassWorldState {
   if (typeof expectedSeed !== 'string' || !expectedSeed || !fields(value, WORLD_FIELDS)
     || value.seed !== expectedSeed || value.contentRevision !== MIREGLASS_CONTENT_REVISION
     || !Number.isSafeInteger(value.tick) || (value.tick as number) < 0
@@ -78,14 +79,19 @@ function validState(value: unknown, expectedSeed: string): value is MireglassWor
   if (state.player.position.y > 1_000
     || !sortedIds(state.expedition.depletedResourceIds) || !sortedIds(state.expedition.dugStumpIds)
     || !validProgressCorrelations(state)) return false
+  return true
+}
+
+function validState(value: unknown, expectedSeed: string): value is MireglassWorldState {
+  if (!isValidMireglassWorldContent(value, expectedSeed)) return false
   try {
     createStreamedWorldFromState({
-      seed: state.seed, tick: state.tick,
+      seed: value.seed, tick: value.tick,
       player: {
-        position: state.player.position, yaw: state.player.yaw,
-        pitch: state.player.pitch, verticalVelocity: state.player.verticalVelocity,
+        position: value.player.position, yaw: value.player.yaw,
+        pitch: value.player.pitch, verticalVelocity: value.player.verticalVelocity,
       },
-      discoveredTileIds: state.discoveredTileIds,
+      discoveredTileIds: value.discoveredTileIds,
     })
   } catch { return false }
   return true

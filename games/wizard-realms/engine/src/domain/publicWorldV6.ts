@@ -4,12 +4,17 @@ import { MIREGLASS_CONTENT_REVISION, mireglassAnchors, mireglassResources } from
 import { isValidMireglassV6Player } from './mireglassExpedition'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import { hasValidRoutePlacements, isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
+import { isValidPublicWorldState, legacyMovementEnvelope } from './publicWorldPersistence'
+import type { PublicWorldState } from './publicWorldState'
 import type { GenerationProfile, WizardWorldState } from './types'
 import { worldTileAtGrid } from './worldChunks'
 
 export const PUBLIC_V6_ROOT_KEY = 'wizard-realms:world:v6:root'
 export const PUBLIC_V6_STAGE_KEY = 'wizard-realms:world:v6:stage'
+export const PUBLIC_V6_BACKUP_KEY = 'wizard-realms:world:v6:backup'
 export const PUBLIC_V6_BOOTSTRAP_SCHEMA = 'wizard-world/v6-bootstrap'
+export const PUBLIC_V6_SCHEMA = 'wizard-world/v6'
+export { legacyMovementEnvelope } from './publicWorldPersistence'
 
 const LEGACY_KEYS: Record<GenerationProfile, readonly string[]> = {
   'greenway-classic-v1': [
@@ -38,6 +43,14 @@ export interface PublicV6BootstrapRoot {
   readonly greenwaySaveBytes: string
 }
 
+export interface PublicV6PlayableRoot {
+  readonly schemaVersion: typeof PUBLIC_V6_SCHEMA
+  readonly saveRevision: number
+  /** Exact imported source bytes remain inside this immutable lineage receipt. */
+  readonly bootstrap: PublicV6BootstrapRoot | null
+  readonly state: PublicWorldState
+}
+
 export type LegacyImportInspection =
   | { status: 'missing' | 'storage-error' }
   | { status: 'invalid'; key: string }
@@ -47,6 +60,7 @@ export type LegacyImportInspection =
 export type PublicV6RootLoad =
   | { status: 'missing' | 'invalid' | 'storage-error' }
   | { status: 'valid-bootstrap'; root: PublicV6BootstrapRoot; bytes: string }
+  | { status: 'valid-playable'; root: PublicV6PlayableRoot; bytes: string }
 
 export type PublicV6ImportResult =
   | { status: 'committed'; root: PublicV6BootstrapRoot }
@@ -60,18 +74,6 @@ const exact = (value: unknown, keys: readonly string[]): value is Record<string,
 const profileId = (value: unknown): value is GenerationProfile =>
   value === 'greenway-classic-v1' || value === 'greenway-expanded-v1'
 export type PublicWorldCompatibilityIssue = Extract<LegacyImportInspection, { status: 'incompatible' }>['reason']
-
-/** Match the v5 movement clamp. The expanded profile permits half a tile beyond its outer centers. */
-export function legacyMovementEnvelope(world: Pick<WizardWorldState, 'generationProfile' | 'tiles'>) {
-  const edge = world.generationProfile === 'greenway-expanded-v1'
-    ? Math.abs(world.tiles[1].center.x - world.tiles[0].center.x) / 2 : 0
-  return {
-    minX: Math.min(...world.tiles.map((tile) => tile.center.x)) - edge,
-    maxX: Math.max(...world.tiles.map((tile) => tile.center.x)) + edge,
-    minZ: Math.min(...world.tiles.map((tile) => tile.center.z)) - edge,
-    maxZ: Math.max(...world.tiles.map((tile) => tile.center.z)) + edge,
-  }
-}
 
 /** A v5 restore may be valid while containing mutable terrain that a streamed cell cannot represent. */
 export function publicWorldCompatibility(world: WizardWorldState): PublicWorldCompatibilityIssue | null {
@@ -149,12 +151,35 @@ export function parsePublicV6BootstrapRoot(bytes: string): PublicV6BootstrapRoot
   return value as unknown as PublicV6BootstrapRoot
 }
 
+/** Rejects forged player, region, detached Greenway, and owner-specific movement state. */
+export function parsePublicV6PlayableRoot(bytes: string): PublicV6PlayableRoot | null {
+  if (typeof bytes !== 'string' || bytes.length > 32 * 1024 * 1024) return null
+  let value: unknown
+  try { value = JSON.parse(bytes) } catch { return null }
+  if (!exact(value, ['schemaVersion', 'saveRevision', 'bootstrap', 'state'])
+    || value.schemaVersion !== PUBLIC_V6_SCHEMA
+    || !Number.isSafeInteger(value.saveRevision) || (value.saveRevision as number) < 0) return null
+  const bootstrap = value.bootstrap === null ? null
+    : parsePublicV6BootstrapRoot(JSON.stringify(value.bootstrap))
+  if (value.bootstrap !== null && !bootstrap) return null
+  if (!isValidPublicWorldState(value.state, bootstrap)) return null
+  return value as unknown as PublicV6PlayableRoot
+}
+
+export function serializePublicV6World(root: PublicV6PlayableRoot): string {
+  const bytes = JSON.stringify(root)
+  if (!parsePublicV6PlayableRoot(bytes)) throw new RangeError('Invalid public v6 world state.')
+  return bytes
+}
+
 export function loadPublicV6Root(storage: Pick<Storage, 'getItem'>): PublicV6RootLoad {
   let bytes: string | null
   try { bytes = storage.getItem(PUBLIC_V6_ROOT_KEY) } catch { return { status: 'storage-error' } }
   if (bytes === null) return { status: 'missing' }
-  const root = parsePublicV6BootstrapRoot(bytes)
-  return root ? { status: 'valid-bootstrap', root, bytes } : { status: 'invalid' }
+  const bootstrap = parsePublicV6BootstrapRoot(bytes)
+  if (bootstrap) return { status: 'valid-bootstrap', root: bootstrap, bytes }
+  const playable = parsePublicV6PlayableRoot(bytes)
+  return playable ? { status: 'valid-playable', root: playable, bytes } : { status: 'invalid' }
 }
 
 /** Writes no legacy key. A present public root, including an invalid one, is never replaced here. */
@@ -162,7 +187,7 @@ export function commitLegacyImportToPublicV6(
   storage: Pick<Storage, 'getItem' | 'setItem'>, inspected: Extract<LegacyImportInspection, { status: 'available' }>,
 ): PublicV6ImportResult {
   const before = loadPublicV6Root(storage)
-  if (before.status === 'valid-bootstrap') return { status: 'root-present' }
+  if (before.status === 'valid-bootstrap' || before.status === 'valid-playable') return { status: 'root-present' }
   if (before.status === 'invalid') return { status: 'invalid-root' }
   if (before.status === 'storage-error') return { status: 'storage-error' }
   const current = inspectLegacyImportSource(storage, inspected.source.profile)
@@ -189,7 +214,7 @@ export function commitLegacyImportToPublicV6(
   if (finalSource.status !== 'available' || finalSource.source.key !== inspected.source.key
     || finalSource.source.bytes !== inspected.source.bytes) return { status: 'source-changed' }
   const finalRoot = loadPublicV6Root(storage)
-  if (finalRoot.status === 'valid-bootstrap') return { status: 'root-present' }
+  if (finalRoot.status === 'valid-bootstrap' || finalRoot.status === 'valid-playable') return { status: 'root-present' }
   if (finalRoot.status === 'invalid') return { status: 'invalid-root' }
   if (finalRoot.status === 'storage-error') return { status: 'storage-error' }
   try {
@@ -198,4 +223,102 @@ export function commitLegacyImportToPublicV6(
   } catch { return { status: 'storage-error' } }
   return loadPublicV6Root(storage).status === 'valid-bootstrap'
     ? { status: 'committed', root } : { status: 'root-verification-failed' }
+}
+
+export type PublicV6SaveResult =
+  | { status: 'committed'; root: PublicV6PlayableRoot; bytes: string }
+  | { status: 'invalid-state' | 'invalid-expected-root' | 'invalid-root' | 'root-changed'
+    | 'legacy-present' | 'pending-stage' | 'storage-error' | 'stage-verification-failed'
+    | 'backup-verification-failed' | 'root-verification-failed' }
+
+export type PublicV6ArtifactInspection =
+  | { status: 'storage-error' }
+  | { status: 'available'; stage: { status: 'missing' | 'invalid' | 'settled' | 'pending'; bytes?: string };
+    backup: { status: 'missing' | 'invalid' | 'available'; bytes?: string } }
+
+/** Stage and backup are visible to recovery UI. Nothing is auto-restored or deleted. */
+export function inspectPublicV6Artifacts(storage: Pick<Storage, 'getItem'>): PublicV6ArtifactInspection {
+  let root: string | null
+  let stage: string | null
+  let backup: string | null
+  try {
+    root = storage.getItem(PUBLIC_V6_ROOT_KEY)
+    stage = storage.getItem(PUBLIC_V6_STAGE_KEY)
+    backup = storage.getItem(PUBLIC_V6_BACKUP_KEY)
+  } catch { return { status: 'storage-error' } }
+  const valid = (bytes: string) => !!(parsePublicV6BootstrapRoot(bytes) || parsePublicV6PlayableRoot(bytes))
+  return {
+    status: 'available',
+    stage: stage === null ? { status: 'missing' }
+      : !valid(stage) ? { status: 'invalid', bytes: stage }
+        : { status: stage === root ? 'settled' : 'pending', bytes: stage },
+    backup: backup === null ? { status: 'missing' }
+      : !valid(backup) ? { status: 'invalid', bytes: backup }
+        : { status: 'available', bytes: backup },
+  }
+}
+
+/**
+ * Lossless optimistic save. The caller must serialize its read-and-commit sequence
+ * under a Web Lock across tabs: localStorage's byte compare is not an atomic CAS.
+ */
+export function commitPublicV6World(
+  storage: Pick<Storage, 'getItem' | 'setItem'>,
+  state: PublicWorldState,
+  expectedRootBytes: string | null,
+  options: { confirmedFreshStartWithLegacy?: boolean } = {},
+): PublicV6SaveResult {
+  const expectedBootstrap = expectedRootBytes === null ? null : parsePublicV6BootstrapRoot(expectedRootBytes)
+  const expectedPlayable = expectedRootBytes === null || expectedBootstrap ? null
+    : parsePublicV6PlayableRoot(expectedRootBytes)
+  if (expectedRootBytes !== null && !expectedBootstrap && !expectedPlayable) {
+    return { status: 'invalid-expected-root' }
+  }
+  const bootstrap = expectedBootstrap ?? expectedPlayable?.bootstrap ?? null
+  const revision = expectedPlayable ? expectedPlayable.saveRevision + 1 : 0
+  if (!Number.isSafeInteger(revision)) return { status: 'invalid-state' }
+  const root: PublicV6PlayableRoot = { schemaVersion: PUBLIC_V6_SCHEMA, saveRevision: revision, bootstrap, state }
+  let bytes: string
+  try { bytes = serializePublicV6World(root) } catch { return { status: 'invalid-state' } }
+
+  const current = loadPublicV6Root(storage)
+  if (current.status === 'invalid') return { status: 'invalid-root' }
+  if (current.status === 'storage-error') return { status: 'storage-error' }
+  if (('bytes' in current ? current.bytes : null) !== expectedRootBytes) return { status: 'root-changed' }
+  if (expectedRootBytes === null && !options.confirmedFreshStartWithLegacy) {
+    try {
+      for (const key of [...LEGACY_KEYS['greenway-classic-v1'], ...LEGACY_KEYS['greenway-expanded-v1']]) {
+        if (storage.getItem(key) !== null) return { status: 'legacy-present' }
+      }
+    } catch { return { status: 'storage-error' } }
+  }
+  let oldStage: string | null
+  try { oldStage = storage.getItem(PUBLIC_V6_STAGE_KEY) } catch { return { status: 'storage-error' } }
+  if (oldStage !== null && oldStage !== expectedRootBytes) return { status: 'pending-stage' }
+  try {
+    storage.setItem(PUBLIC_V6_STAGE_KEY, bytes)
+    if (storage.getItem(PUBLIC_V6_STAGE_KEY) !== bytes) return { status: 'stage-verification-failed' }
+  } catch { return { status: 'storage-error' } }
+  const afterStage = loadPublicV6Root(storage)
+  if (afterStage.status === 'invalid') return { status: 'invalid-root' }
+  if (afterStage.status === 'storage-error') return { status: 'storage-error' }
+  if (('bytes' in afterStage ? afterStage.bytes : null) !== expectedRootBytes) return { status: 'root-changed' }
+  if (expectedRootBytes !== null) {
+    try {
+      storage.setItem(PUBLIC_V6_BACKUP_KEY, expectedRootBytes)
+      if (storage.getItem(PUBLIC_V6_BACKUP_KEY) !== expectedRootBytes) return { status: 'backup-verification-failed' }
+    } catch { return { status: 'storage-error' } }
+  }
+  const beforePublish = loadPublicV6Root(storage)
+  if (beforePublish.status === 'invalid') return { status: 'invalid-root' }
+  if (beforePublish.status === 'storage-error') return { status: 'storage-error' }
+  if (('bytes' in beforePublish ? beforePublish.bytes : null) !== expectedRootBytes) return { status: 'root-changed' }
+  try {
+    storage.setItem(PUBLIC_V6_ROOT_KEY, bytes)
+    if (storage.getItem(PUBLIC_V6_ROOT_KEY) !== bytes) return { status: 'root-verification-failed' }
+  } catch { return { status: 'storage-error' } }
+  const published = loadPublicV6Root(storage)
+  return published.status === 'valid-playable' && published.bytes === bytes
+    ? { status: 'committed', root: published.root, bytes }
+    : { status: 'root-verification-failed' }
 }
