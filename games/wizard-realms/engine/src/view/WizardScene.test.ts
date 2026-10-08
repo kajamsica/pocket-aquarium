@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
-import type { WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, mireglassDetailFor, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
+import type { WizardLandmark, WizardViewProjection } from './contracts'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, landmarkAppearance, mireglassDetailFor, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
 import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
@@ -59,6 +59,25 @@ describe('dig-site view state', () => {
     expect(digSiteAppearance(ridge)).toBe('hidden')
     expect(digSiteAppearance({ ...ridge, revealed: true })).toBe('mound')
     expect(digSiteAppearance({ ...ridge, revealed: true, excavated: true })).toBe('dug')
+  })
+})
+
+describe('Mireglass landmark view state', () => {
+  const marker: WizardLandmark = { id: 'mireglass_reach/landmark/fringe_marker', kind: 'frontier-marker', position: [-380, 0, 320], studied: false }
+  const alder: WizardLandmark = { id: 'mireglass_reach/landmark/bell_alder', kind: 'bell-alder', position: [-370, 0, 340] }
+  const cache: WizardLandmark = { id: 'mireglass_reach/dig/seal_cache', kind: 'seal-cache', position: [-410, 0, 480], revealed: false, excavated: false }
+
+  it('shows the authored frontier marker and bell alder without requiring a dig-site reveal', () => {
+    expect(landmarkAppearance(marker)).toBe('frontier-marker')
+    expect(landmarkAppearance({ ...marker, studied: true })).toBe('frontier-marker')
+    expect(landmarkAppearance(alder)).toBe('bell-alder')
+  })
+
+  it('keeps the cache invisible until revealed and gives it a persistent dug appearance', () => {
+    expect(landmarkAppearance(cache)).toBe('hidden')
+    expect(landmarkAppearance({ ...cache, excavated: true })).toBe('hidden')
+    expect(landmarkAppearance({ ...cache, revealed: true })).toBe('mound')
+    expect(landmarkAppearance({ ...cache, revealed: true, excavated: true })).toBe('dug')
   })
 })
 

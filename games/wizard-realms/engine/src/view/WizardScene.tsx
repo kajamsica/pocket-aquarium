@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
-import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
+import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardLandmark, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 import { visibleTerrainCells } from './visibleTerrain'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
@@ -38,6 +38,16 @@ const MIREGLASS_WATER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#417b8
 const MIREGLASS_REED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#849568', roughness: 0.95 })
 const MIREGLASS_PEAT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#433c34', roughness: 1 })
 const MIREGLASS_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a4aaa0', roughness: 0.94 })
+const MARKER_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b9aa89', roughness: 0.95, flatShading: true })
+const MARKER_RUNE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bde4d0', emissive: '#4d9b82', emissiveIntensity: 0.9, roughness: 0.5 })
+const MARKER_DORMANT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#787d69', roughness: 0.9 })
+const ALDER_BARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#45382d', roughness: 1, flatShading: true })
+const ALDER_LEAF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#628661', roughness: 0.9, flatShading: true })
+const ALDER_BELL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a98552', metalness: 0.35, roughness: 0.55 })
+const CACHE_PEAT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#665442', roughness: 1, flatShading: true })
+const CACHE_PIT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2e302a', roughness: 1 })
+const ALDER_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.18, 0.34, 3.4, 7)
+const CACHE_PIT_GEOMETRY = new THREE.CircleGeometry(0.72, 12)
 const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, x: 0, z: 0, rotation: 0 } as const
 
 /** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
@@ -545,7 +555,7 @@ function Waystone({ inscription }: { inscription: WizardInscription }) {
   </group>
 }
 
-export function digSiteAppearance(site: WizardDigSite): 'hidden' | 'mound' | 'dug' {
+export function digSiteAppearance(site: Pick<WizardDigSite, 'revealed' | 'excavated'>): 'hidden' | 'mound' | 'dug' {
   return site.excavated ? 'dug' : site.revealed ? 'mound' : 'hidden'
 }
 
@@ -560,6 +570,48 @@ function DigSite({ site }: { site: WizardDigSite }) {
     </> : <>
       <mesh position={[0, 0.1, 0]} scale={[1, 0.28, 0.75]} castShadow receiveShadow><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color="#8b7558" roughness={1} flatShading /></mesh>
       <mesh geometry={CRYSTAL_GEOMETRY} position={[0, 0.5, 0]} scale={[0.16, 0.28, 0.16]}><meshStandardMaterial color="#d9bd7a" emissive="#a27c38" emissiveIntensity={0.5} roughness={0.55} /></mesh>
+    </>}
+  </group>
+}
+
+/** Display selection only. The campaign owns revelation, excavation, and interaction reach. */
+export function landmarkAppearance(landmark: WizardLandmark): 'frontier-marker' | 'bell-alder' | 'hidden' | 'mound' | 'dug' {
+  if (landmark.kind !== 'seal-cache') return landmark.kind
+  if (!landmark.revealed) return 'hidden'
+  return digSiteAppearance(landmark)
+}
+
+function Landmark({ landmark }: { landmark: WizardLandmark }) {
+  const appearance = landmarkAppearance(landmark)
+  if (appearance === 'hidden') return null
+  const position = landmark.position as [number, number, number]
+  if (landmark.kind === 'frontier-marker') return <group name="Mireglass frontier marker" position={position}>
+    <mesh geometry={ROCK_GEOMETRY} material={MARKER_STONE_MATERIAL} position={[0, 0.12, 0]} scale={[0.95, 0.22, 0.7]} castShadow receiveShadow />
+    <mesh geometry={ROCK_GEOMETRY} material={MARKER_STONE_MATERIAL} position={[-0.34, 0.84, 0]} rotation={[0, 0.16, -0.12]} scale={[0.32, 0.84, 0.29]} castShadow />
+    <mesh geometry={ROCK_GEOMETRY} material={MARKER_STONE_MATERIAL} position={[0.28, 1.02, -0.08]} rotation={[0, -0.18, 0.11]} scale={[0.35, 1.01, 0.3]} castShadow />
+    <mesh geometry={UNIT_BOX} material={landmark.studied ? MARKER_DORMANT_MATERIAL : MARKER_RUNE_MATERIAL} position={[0.28, 1.23, 0.27]} rotation={[0, -0.18, 0.11]} scale={[0.09, 0.55, 0.05]} />
+    <mesh geometry={CRYSTAL_GEOMETRY} material={MARKER_STONE_MATERIAL} position={[0.02, 1.85, -0.02]} rotation={[0, 0.4, 0.4]} scale={[0.24, 0.36, 0.21]} castShadow />
+  </group>
+  if (landmark.kind === 'bell-alder') return <group name="Mireglass bell alder" position={position}>
+    <mesh geometry={ROCK_GEOMETRY} material={CACHE_PEAT_MATERIAL} position={[0, 0.08, 0]} scale={[0.8, 0.18, 0.65]} receiveShadow />
+    <mesh geometry={ALDER_TRUNK_GEOMETRY} material={ALDER_BARK_MATERIAL} position={[0.43, 1.72, 0]} rotation={[0, 0, -0.26]} castShadow />
+    <mesh geometry={UNIT_BOX} material={ALDER_BARK_MATERIAL} position={[-0.38, 2.66, 0]} rotation={[0, 0, 0.33]} scale={[1.8, 0.18, 0.18]} castShadow />
+    <mesh geometry={UNIT_BOX} material={ALDER_BARK_MATERIAL} position={[1.19, 2.81, -0.12]} rotation={[0, 0, -0.44]} scale={[1.45, 0.16, 0.16]} castShadow />
+    <mesh geometry={LEAF_GEOMETRY} material={ALDER_LEAF_MATERIAL} position={[-1.15, 3.1, 0]} scale={[0.92, 0.46, 0.72]} castShadow />
+    <mesh geometry={LEAF_GEOMETRY} material={ALDER_LEAF_MATERIAL} position={[0.35, 3.51, -0.16]} scale={[1.25, 0.62, 0.78]} castShadow />
+    <mesh geometry={LEAF_GEOMETRY} material={ALDER_LEAF_MATERIAL} position={[1.54, 3.25, -0.16]} scale={[0.86, 0.48, 0.62]} castShadow />
+    <mesh geometry={UNIT_BOX} material={ALDER_BARK_MATERIAL} position={[-1.09, 2.26, 0]} scale={[0.035, 0.78, 0.035]} />
+    <mesh geometry={CRYSTAL_GEOMETRY} material={ALDER_BELL_MATERIAL} position={[-1.09, 1.79, 0]} scale={[0.2, 0.25, 0.2]} />
+  </group>
+  return <group name={`Mireglass seal cache (${appearance})`} position={position}>
+    {appearance === 'mound' ? <>
+      <mesh geometry={ROCK_GEOMETRY} material={CACHE_PEAT_MATERIAL} position={[0, 0.14, 0]} rotation={[0, 0.36, 0]} scale={[0.85, 0.26, 0.63]} castShadow receiveShadow />
+      <mesh geometry={ROCK_GEOMETRY} material={MIREGLASS_STONE_MATERIAL} position={[-0.41, 0.27, 0.14]} scale={[0.24, 0.12, 0.2]} castShadow />
+      <mesh geometry={CRYSTAL_GEOMETRY} material={MARKER_DORMANT_MATERIAL} position={[0.19, 0.32, 0.03]} scale={[0.12, 0.09, 0.12]} />
+    </> : <>
+      <mesh geometry={CACHE_PIT_GEOMETRY} material={CACHE_PIT_MATERIAL} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, 0]} receiveShadow />
+      {[-1, 0, 1].map((side) => <mesh key={side} geometry={ROCK_GEOMETRY} material={CACHE_PEAT_MATERIAL}
+        position={[side * 0.62, 0.13, side === 0 ? -0.67 : 0.23]} rotation={[0, side * 0.4, 0]} scale={[0.31, 0.16, 0.26]} castShadow />)}
     </>}
   </group>
 }
@@ -663,6 +715,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {projection.inscriptions.map((inscription) => <Waystone key={inscription.id} inscription={inscription} />)}
       {projection.digSites.map((site) => <DigSite key={site.id} site={site} />)}
+      {projection.landmarks?.map((landmark) => <Landmark key={landmark.id} landmark={landmark} />)}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
       <WizardAvatar pose={pose} equipment={projection.equipment} />
     </Canvas>

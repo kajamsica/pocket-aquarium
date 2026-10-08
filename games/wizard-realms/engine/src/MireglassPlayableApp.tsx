@@ -8,7 +8,7 @@ import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorl
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
-import type { EquipmentSlot, WizardItemStack } from './view/contracts'
+import type { EquipmentSlot, WizardItemStack, WizardLandmark } from './view/contracts'
 
 const SEED = 'greenway-alpha'
 const STEP_MS = 50
@@ -180,6 +180,23 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   }
   const store = anchors.salvager
   const storeTile = runtime.tileAtWorld(store.tile.center.x, store.tile.center.z)
+  const visibleAnchor = (tileId: string) => activeIds.has(tileId) && discovered.has(tileId)
+  const positionOf = (center: { x: number; y: number; z: number }) =>
+    [center.x, center.y, center.z] as const
+  const landmarks: WizardLandmark[] = []
+  if (visibleAnchor(anchors.fringeMarker.tile.id)) landmarks.push({
+    id: 'mireglass_reach/landmark/fringe_marker', kind: 'frontier-marker',
+    position: positionOf(anchors.fringeMarker.tile.center), studied: state.expedition.fringeMarkerStudied,
+  })
+  if (visibleAnchor(anchors.bellAlder.tile.id)) landmarks.push({
+    id: 'mireglass_reach/landmark/bell_alder', kind: 'bell-alder',
+    position: positionOf(anchors.bellAlder.tile.center),
+  })
+  if (visibleAnchor(anchors.sealCache.tile.id)) landmarks.push({
+    id: 'mireglass_reach/dig/seal_cache', kind: 'seal-cache',
+    position: positionOf(anchors.sealCache.tile.center),
+    revealed: state.expedition.cacheRevealed, excavated: state.expedition.cacheExcavated,
+  })
   const resourceTileIds = new Set(trees.filter((tree) => !state.expedition.depletedResourceIds.includes(tree.id)).map((tree) => tree.tile.id))
   const siteTileIds = new Set(builtSites.filter((site) => site.discovered && site.status !== 'built' && site.status !== 'obstructed').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
   const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
@@ -206,6 +223,7 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
         built: state.expedition.builtRoutes[kind] !== null, unlocked: true, logCost: site.logCost }
     }),
     buildSites: builtSites,
+    landmarks,
     selectedBuildSiteId: selectedSiteId,
     stores: activeIds.has(store.tile.id) ? [{ id: store.id, name: 'Mireglass salvager',
       position: [store.tile.center.x, store.tile.center.y, store.tile.center.z],

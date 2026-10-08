@@ -80,6 +80,12 @@ export interface WizardDigSite {
   minimumExcavationLevel: number
 }
 
+/** Authored Mireglass scenery only. Presence and progression come from the campaign projection. */
+export type WizardLandmark =
+  | { id: 'mireglass_reach/landmark/fringe_marker'; kind: 'frontier-marker'; position: Vec3; studied: boolean }
+  | { id: 'mireglass_reach/landmark/bell_alder'; kind: 'bell-alder'; position: Vec3 }
+  | { id: 'mireglass_reach/dig/seal_cache'; kind: 'seal-cache'; position: Vec3; revealed: boolean; excavated: boolean }
+
 export interface WizardTradeListing {
   id: string
   itemName: string
@@ -144,6 +150,8 @@ export interface WizardViewProjection {
   fairyRings: readonly WizardFairyRing[]
   inscriptions: readonly WizardInscription[]
   digSites: readonly WizardDigSite[]
+  /** Optional so legacy Greenway projections keep their scene unchanged. */
+  landmarks?: readonly WizardLandmark[]
   skillXp: Readonly<Record<SkillId, number>>
   learnedSpellIds: readonly SpellId[]
   routes: readonly WizardRoute[]

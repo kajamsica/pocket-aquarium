@@ -73,6 +73,36 @@ describe('Mireglass playable dev adapter', () => {
     expect(after.skillXp.construction).toBeGreaterThan(before.skillXp.construction)
   })
 
+  it('projects only discovered Mireglass landmarks and follows the real reveal and excavation state', () => {
+    const anchors = mireglassAnchors(seed)
+    const markerWorld = createMireglassWorld(seed, undefined, anchors.fringeMarker.tile.center)
+    const marker = mireglassViewProjection(markerWorld, markerWorld.state, [], null)
+    expect(marker.landmarks).toContainEqual({
+      id: anchors.fringeMarker.id, kind: 'frontier-marker',
+      position: [anchors.fringeMarker.tile.center.x, anchors.fringeMarker.tile.center.y, anchors.fringeMarker.tile.center.z],
+      studied: false,
+    })
+    expect(marker.landmarks?.some((landmark) => landmark.kind === 'seal-cache')).toBe(false)
+    expect(markerWorld.act({ type: 'study_fringe_marker' }).event?.type).toBe('fringe_marker_studied')
+    expect(mireglassViewProjection(markerWorld, markerWorld.state, [], null).landmarks)
+      .toContainEqual(expect.objectContaining({ kind: 'frontier-marker', studied: true }))
+
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...anchors.sealCache.tile.center }
+    source.learnedSpellIds = ['wayfinder_glow']
+    source.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    source.equipment.mainHand = 'field_spade'
+    source.skillXp.excavation = 30
+    const cacheWorld = createMireglassWorld(seed, source)
+    const cache = () => mireglassViewProjection(cacheWorld, cacheWorld.state, [], null).landmarks
+      ?.find((landmark) => landmark.kind === 'seal-cache')
+    expect(cache()).toMatchObject({ revealed: false, excavated: false })
+    expect(cacheWorld.act({ type: 'cast_wayfinder_glow' }).event?.type).toBe('cache_revealed')
+    expect(cache()).toMatchObject({ revealed: true, excavated: false })
+    expect(cacheWorld.act({ type: 'excavate_cache' }).event?.type).toBe('cache_excavated')
+    expect(cache()).toMatchObject({ revealed: true, excavated: true })
+  })
+
   it('renders useful compass bearings from world coordinates', () => {
     const origin = { x: 0, z: 0 }
     expect(bearingText(origin, { x: 0, z: -8 })).toBe('N')
