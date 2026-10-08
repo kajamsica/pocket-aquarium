@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import type { WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, storeSafeCameraPosition } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
@@ -59,6 +59,22 @@ describe('construction scene visibility', () => {
   it('does not draw a duplicate ghost after its route has been built', () => {
     const built = [{ ...routes[0], built: true }, routes[1]]
     expect(constructionVisuals(built, sites, 'ladder-east').map((route) => route.id)).toEqual(['ladder', 'bridge'])
+  })
+})
+
+describe('tree camera obstruction', () => {
+  const camera = new THREE.Vector3(0, 1.7, 6)
+  const avatar = new THREE.Vector3(0, 0, 0)
+
+  it('fades a near-camera trunk even when its high canopy misses the center sightline', () => {
+    expect(treeTrunkBlocksView(camera, avatar, [1.2, 0, 5.4], 1, 0.25)).toBe(true)
+    expect(treeTrunkBlocksView(camera, avatar, [0.3, 0, 6], 1, 0.25)).toBe(true)
+  })
+
+  it('keeps distant, behind-camera, and high-clearance tree silhouettes opaque', () => {
+    expect(treeTrunkBlocksView(camera, avatar, [3, 0, 5.4], 1, 0.25)).toBe(false)
+    expect(treeTrunkBlocksView(camera, avatar, [0, 0, 8], 1, 0.25)).toBe(false)
+    expect(treeTrunkBlocksView(new THREE.Vector3(0, 6, 6), new THREE.Vector3(0, 6, 0), [0, 0, 5], 1, 0.25)).toBe(false)
   })
 })
 

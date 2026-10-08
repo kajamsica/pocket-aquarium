@@ -23,7 +23,7 @@ The first authority runs locally. Later authorities may run on servers. The boun
 
 ### Local authority today
 
-The current v4 local foundation owns its 50 ms clock, tick ordering, seeded randomness, player movement and jump state, resource nodes, two shops with direct sales, interactions, inventory, coins, five skill XP tracks, equipment, waystone study, Wayfinder Glow discovery, gated dig sites, fairy-ring travel, four trade slots, saves, events, and projections. The browser defaults to the original seven-by-seven terrain; domain generation also supports an opt-in 16 by 16 profile that preserves the original core. Neither profile is a finished region or game. Flexible player-selected construction, weather, creatures, regional chunks, remote services, request IDs, authority epochs, state digests, and a durable event log are not yet implemented.
+The current v5 local foundation owns its 50 ms clock, tick ordering, seeded randomness, player movement and jump state, resource nodes, two shops with direct sales, interactions, inventory, coins, five skill XP tracks, equipment, waystone study, Wayfinder Glow discovery, gated dig sites, fairy-ring travel, four trade slots, player-selected Greenway ladder sites, saves, events, and projections. The browser defaults to the original seven-by-seven terrain; domain generation also supports an opt-in 16 by 16 profile that preserves the original core. Neither profile is a finished region or game. General terrain-driven construction, weather, creatures, regional chunks, remote services, request IDs, authority epochs, state digests, and a durable event log are not yet implemented.
 
 Weather, creatures, chunk streaming, and every networked authority named later in this document are future milestones. Their descriptions are requirements for those milestones, not claims about the current package.
 
@@ -55,9 +55,9 @@ Render cadence never changes causal steps.
 
 ## Intents, events, and projections
 
-Representative intents include move, gather, build or traverse a fixed route, buy, sell, create or cancel a listing, equip, study the waystone, cast Wayfinder Glow, excavate a dig site, and select a discovered fairy-ring destination. Field-pack recovery is a future intent.
+Representative intents include move, gather, select a valid construction site and build or traverse its route, buy, sell, create or cancel a listing, equip, study the waystone, cast Wayfinder Glow, excavate a dig site, and select a discovered fairy-ring destination. Field-pack recovery is a future intent.
 
-Current committed events include movement, resource harvest, fixed-route construction and traversal, tile and fairy-ring discovery, waystone study, spell casting, excavation, skill XP, equipment changes, store purchases and sales, trade-listing creation and cancellation, and fairy-ring travel. Tool durability, listing settlement, death, and recovery packs remain future events.
+Current committed events include movement, resource harvest, chosen-site route construction and traversal, tile and fairy-ring discovery, waystone study, spell casting, excavation, skill XP, equipment changes, store purchases and sales, trade-listing creation and cancellation, and fairy-ring travel. Tool durability, listing settlement, death, and recovery packs remain future events.
 
 Today, every rejection has a typed reason and every projection carries the local tick. Projection objects are detached from authoritative state. World revision, content revision, generator version, authority epoch, and digest fields are future protocol requirements.
 
@@ -65,7 +65,7 @@ Today, every rejection has a typed reason and every projection carries the local
 
 ### Coordinates
 
-The local world uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. The default profile has seven by seven 4 m tiles; the opt-in 16 by 16 profile is a roughly 64 m preview around the preserved core, without streaming. The full single-player game targets a connected, streamed world roughly 2 km across. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
+The local world uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. The default profile has seven by seven 4 m tiles; the opt-in 16 by 16 profile is a roughly 64 m preview around the preserved core, without streaming. The full single-player game targets a connected, streamed world roughly 2 km across. The first bounded implementation step is specified in [Streamed World Foundation](STREAMED_WORLD_FOUNDATION_CONTRACT.md). A later playable chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
 
 ```text
 chunkX = floor(worldX / 64)

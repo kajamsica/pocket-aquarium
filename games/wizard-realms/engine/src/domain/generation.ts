@@ -28,7 +28,7 @@ function unit(seed: string): number {
   return (value >>> 0) / 4294967296
 }
 
-function classify(elevation: number, temperature: number, moisture: number): [BiomeId, TerrainId] {
+export function classify(elevation: number, temperature: number, moisture: number): [BiomeId, TerrainId] {
   if (temperature < 0.32) return ['alpine', 'snow']
   if (moisture > 0.65 && elevation < 0.52) return ['marsh', 'wetland']
   if (elevation > 0.58 && moisture < 0.45) return ['dry_highland', 'rocky']
@@ -39,19 +39,23 @@ const resourceByBiome: Record<BiomeId, ResourceKind> = {
   temperate_forest: 'tree', marsh: 'herb', dry_highland: 'stone', alpine: 'ore',
 }
 
+export function legacyTileAtGrid(seed: string, gridX: number, gridZ: number): WorldTile {
+  const nx = (gridX - 3) / 3
+  const nz = (gridZ - 3) / 3
+  const key = `${seed}:tile:${gridX}:${gridZ}`
+  const elevation = clamp01(0.36 + Math.max(nx, 0) * 0.34 + Math.max(-nz, 0) * 0.26 + (unit(`${key}:e`) - 0.5) * 0.12)
+  const temperature = clamp01(0.82 - elevation * 0.55 - Math.max(-nz, 0) * 0.28 + (unit(`${key}:t`) - 0.5) * 0.08)
+  const moisture = clamp01(0.56 - Math.max(nx, 0) * 0.42 + Math.max(nz, 0) * 0.22 + (unit(`${key}:m`) - 0.5) * 0.18)
+  const [biome, terrain] = classify(elevation, temperature, moisture)
+  return { id: `tile-${gridX}-${gridZ}`, gridX, gridZ, center: { x: (gridX - 3) * TILE_METERS, y: elevation * 3, z: (gridZ - 3) * TILE_METERS }, elevation, temperature, moisture, terrain, biome }
+}
+
 function makeTiles(seed: string, profile: GenerationProfile): WorldTile[] {
   const tiles: WorldTile[] = []
   const minGrid = profile === 'greenway-expanded-v1' ? -4 : 0
   const maxGrid = profile === 'greenway-expanded-v1' ? 11 : SIZE - 1
   for (let gridZ = minGrid; gridZ <= maxGrid; gridZ += 1) for (let gridX = minGrid; gridX <= maxGrid; gridX += 1) {
-    const nx = (gridX - 3) / 3
-    const nz = (gridZ - 3) / 3
-    const key = `${seed}:tile:${gridX}:${gridZ}`
-    const elevation = clamp01(0.36 + Math.max(nx, 0) * 0.34 + Math.max(-nz, 0) * 0.26 + (unit(`${key}:e`) - 0.5) * 0.12)
-    const temperature = clamp01(0.82 - elevation * 0.55 - Math.max(-nz, 0) * 0.28 + (unit(`${key}:t`) - 0.5) * 0.08)
-    const moisture = clamp01(0.56 - Math.max(nx, 0) * 0.42 + Math.max(nz, 0) * 0.22 + (unit(`${key}:m`) - 0.5) * 0.18)
-    const [biome, terrain] = classify(elevation, temperature, moisture)
-    tiles.push({ id: `tile-${gridX}-${gridZ}`, gridX, gridZ, center: { x: (gridX - 3) * TILE_METERS, y: elevation * 3, z: (gridZ - 3) * TILE_METERS }, elevation, temperature, moisture, terrain, biome })
+    tiles.push(legacyTileAtGrid(seed, gridX, gridZ))
   }
   return tiles
 }

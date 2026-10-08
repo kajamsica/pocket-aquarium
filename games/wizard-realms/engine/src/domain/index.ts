@@ -25,3 +25,5 @@ export type {
 } from './types'
 export { createWizardWorld, advanceWizardWorld, createWizardProjection } from './world'
 export { serializeWizardWorld, restoreWizardWorld } from './persistence'
+export { worldTileAtGrid, worldChunk, activeChunkCoordinates } from './worldChunks'
+export type { WorldChunk, ChunkCoordinate } from './worldChunks'

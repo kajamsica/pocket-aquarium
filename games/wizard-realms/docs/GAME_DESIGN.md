@@ -114,7 +114,7 @@ Later single-player milestones add bounded camps and regional projects after the
 
 Construction checks land permissions, support, overlap, resource ownership, biome restrictions, and a safe rollback path. Free-form building, shared claims, and large settlements remain outside MVP.
 
-The current vertical slice proves only two fixed, profiled regional projects. The known Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Each project has stable endpoints, a deterministic recipe, atomic resource use, and authoritative two-way traversal. These fixed projects are not the terminal construction model or a general placement system.
+The current vertical slice proves two profiled regional projects with selectable, validated sites. The Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Chosen endpoints persist and traverse authoritatively in both directions. This is not yet terrain-wide free placement, camps, boats, or a general building system.
 
 ### Shops
 
@@ -260,7 +260,7 @@ Controller and touch support are intentions only until real-device journeys pass
 
 ### MVP vertical slice
 
-This is an early systems milestone, not the full-game completion condition. The current v5 Greenway build lets the player study a waystone to learn Wayfinder Glow, reveal nearby terrain and a hidden cache, gain woodcutting, construction, wayfinding, spellcraft, and excavation XP, excavate spade- and skill-gated sites, choose a valid ladder or bridge placement, and return to sell a relic at a shop. The expedition flow has passed a live UI journey; site selection is undergoing its own acceptance check. The 16 by 16 profile is still only a roughly 64 m preview. The planned milestone also includes:
+This is an early systems milestone, not the full-game completion condition. The current v5 Greenway build lets the player study a waystone to learn Wayfinder Glow, reveal nearby terrain and a hidden cache, gain woodcutting, construction, wayfinding, spellcraft, and excavation XP, excavate spade- and skill-gated sites, choose a valid ladder or bridge placement, and return to sell a relic at a shop. The expedition and nondefault site-selection flows have passed live UI journeys. The 16 by 16 profile is still only a roughly 64 m preview. The planned milestone also includes:
 
 - one deterministic seed and one validated woodland region with a neighboring subregion;
 - third-person movement, pivot, jump, camera orbit, collision, interaction focus, and pause;
@@ -311,5 +311,5 @@ The design remains aligned only if:
 - fairy rings connect only previously discovered locations;
 - procedural generation is versioned and validated;
 - the expanded region proves an expedition, persistent player-shaped access, a gated dig site, and return to trade;
-- the product finish is a full single-player RPG across distinct regions, not the MVP slice or its fixed routes;
+- the product finish is a full single-player RPG across distinct regions, not the MVP slice or its two profiled construction routes;
 - later network scale does not require replacing client presentation or redefining world rules.

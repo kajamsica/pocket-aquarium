@@ -2,6 +2,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
+import { visibleTerrainCells } from './visibleTerrain'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -44,15 +45,13 @@ const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
 
 const TREE_CANOPY = [[-0.5, 3.0, 0.15, 1.1, '#3a7c43'], [0.42, 3.3, -0.25, 1.0, '#4c9a4e'], [0.05, 3.95, 0.05, 0.9, '#64b35a']] as const
 
-// Camera-line tree occlusion. A tree whose canopy bounding sphere intersects the camera→avatar segment fades out;
-// enter/exit margins give hysteresis and the fade is damped so edges never flicker. Scalar math only, no allocation.
-// The same damped value drives the trunk/root flare, clamped to a higher floor so the tree's structure stays legible.
+// Camera-line tree occlusion. Nearby trunks and canopies fade with hysteresis so the avatar stays visible.
+// Scalar math only, no per-frame geometry or material allocation.
 const CANOPY_CENTRE_Y_M = 3.4
 const CANOPY_RADIUS_M = 1.75
 const OCCLUDE_ENTER_MARGIN_M = 0.25
 const OCCLUDE_EXIT_MARGIN_M = 0.8
 const OCCLUDED_OPACITY = 0.12
-const TRUNK_OCCLUDED_OPACITY = 0.3
 const AVATAR_FOCUS_HEIGHT_M = 1.5
 const FADE_OUT_PER_S = 12
 const FADE_IN_PER_S = 5
@@ -71,6 +70,23 @@ function damping(ratePerSecond: number, delta: number) {
 
 function shortestArc(from: number, to: number) {
   return Math.atan2(Math.sin(to - from), Math.cos(to - from))
+}
+
+/** A trunk may fill the near camera even when its canopy misses the avatar sightline. */
+export function treeTrunkBlocksView(
+  camera: THREE.Vector3, avatar: THREE.Vector3, trunk: readonly [number, number, number], scale: number, margin: number,
+): boolean {
+  const dx = avatar.x - camera.x
+  const dz = avatar.z - camera.z
+  const horizontalLength2 = dx * dx + dz * dz
+  const projected = horizontalLength2 > 1e-8 ? ((trunk[0] - camera.x) * dx + (trunk[2] - camera.z) * dz) / horizontalLength2 : 0
+  if (projected < -0.08 || projected > 1.08) return false
+  const t = Math.min(1, Math.max(0, projected))
+  const rayY = camera.y + (avatar.y + AVATAR_FOCUS_HEIGHT_M - camera.y) * t
+  if (rayY < trunk[1] - 0.3 * scale - margin || rayY > trunk[1] + 3.55 * scale + margin) return false
+  const segmentDistance = Math.hypot(camera.x + dx * t - trunk[0], camera.z + dz * t - trunk[2])
+  const cameraDistance = Math.hypot(camera.x - trunk[0], camera.z - trunk[2])
+  return segmentDistance < 0.62 * scale + margin || cameraDistance < 1.35 * scale + margin
 }
 
 // These bounds enclose the rendered shop body and pitched roof. They affect only the presentation camera.
@@ -368,22 +384,24 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
     const t = length2 > 0 ? Math.min(1, Math.max(0, ((x - ax) * dx + (centreY - ay) * dy + (z - az) * dz) / length2)) : 0
     const distance = Math.hypot(ax + dx * t - x, ay + dy * t - centreY, az + dz * t - z)
     const radius = CANOPY_RADIUS_M * scale
-    if (occluded.current ? distance > radius + OCCLUDE_EXIT_MARGIN_M : distance < radius + OCCLUDE_ENTER_MARGIN_M) occluded.current = !occluded.current
+    const margin = occluded.current ? OCCLUDE_EXIT_MARGIN_M : OCCLUDE_ENTER_MARGIN_M
+    occluded.current = distance < radius + margin || treeTrunkBlocksView(camera.position, pose.position, node.position, scale, margin)
     const target = occluded.current ? Math.min(baseOpacity, OCCLUDED_OPACITY) : baseOpacity
     treeOpacity.current += (target - treeOpacity.current) * damping(occluded.current ? FADE_OUT_PER_S : FADE_IN_PER_S, delta)
-    const trunkOpacity = Math.max(treeOpacity.current, Math.min(baseOpacity, TRUNK_OCCLUDED_OPACITY))
     for (let index = 0; index < canopy.current.children.length; index += 1) {
       ((canopy.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = treeOpacity.current
     }
     for (let index = 0; index < trunk.current.children.length; index += 1) {
-      ((trunk.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = trunkOpacity
+      const material = (trunk.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial
+      material.opacity = treeOpacity.current
+      material.depthWrite = !occluded.current
     }
   })
   // Shadow depth ignores opacity, so a faded (depleted) node stops casting rather than leaving a solid silhouette.
   const castShadow = node.available
   return (
     <group position={[x, y, z]} rotation={[0, yaw, 0]} scale={scale}>
-      {/* Tree materials stay flagged transparent (opacity 1, depth write on) so the shader honours per-frame opacity without recompiles. */}
+      {/* Materials stay transparent; nearby trunk depth write is disabled only while faded so it cannot mask the wizard. */}
       <group ref={trunk}>
         <mesh geometry={ROCK_GEOMETRY} position={[0, 0.1, 0]} scale={[0.62, 0.28, 0.62]} castShadow={castShadow}><meshStandardMaterial color="#4e3322" roughness={0.95} flatShading transparent opacity={baseOpacity} /></mesh>
         <mesh position={[0, 1.7, 0]} castShadow={castShadow}>
@@ -600,7 +618,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
         <planeGeometry args={[320, 320]} />
         <meshStandardMaterial color={BEDROCK_COLOR} roughness={1} />
       </mesh>
-      {projection.terrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
+      {visibleTerrainCells(projection.terrain, projection.player.position).map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
