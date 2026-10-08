@@ -6,6 +6,19 @@ Wizard Realms is a working title and a design target. This document defines what
 
 The first product is a full third-person, single-player wizard RPG, not a 15-minute vertical slice. Completion means a sustained adventure across distinct regions, with discovery, practical magic, visible equipment, meaningful progression, expeditions, return and trade, and an endgame worth pursuing. The simulation and content boundaries may leave a credible path to cooperative play and persistent realms, but multiplayer and MMO delivery are not part of the current product goal.
 
+### Full-game completion contract
+
+The first expanded Mireglass journey is a playable milestone, not the finish condition. Call the single-player game complete only when a new player can progress through a sustained campaign and an endgame pursuit on a connected world of roughly 2 km scale, with all of the following proven in the shipped build:
+
+- Distinct, navigable regions with discovery, readable maps, regional resources, settlements, and reasons to revisit them. Walking, built routes, fairy rings, boats, raised or captured ground mounts, and late-game flying mounts must each have a useful role and a tested progression path.
+- Several learnable and practiced spells with uses in travel, exploration, making, and encounters. Skills must advance from committed actions and unlock meaningful options. Clothing, armor, tools, and magical equipment must visibly change the character.
+- Material-driven placement of ladders, bridges, camps, and boats with preview, terrain validation, authoritative commit, and persistence. Digging must require an appropriate tool and skill, alter suitable terrain, and survive save and reload.
+- Regional shops, inventory and equipment decisions, useful trade listings, and a bounded single-player market with prices that make gathering, making, return trips, and upgrades worthwhile.
+- Original creatures, encounters, quests or mysteries, and a deliberate late-game challenge or stewardship goal that give the player more than a checklist of mechanics.
+- A complete first-session tutorial by play, accessible controls and feedback, reliable recovery, acceptable performance on target hardware, and independent end-to-end proof of progression, travel, economy, save and resume, and endgame completion.
+
+Online trade, shared persistence, PvP, and MMO scale are separate later releases. Passing the first 15-minute loop, or publishing a technical preview, does not satisfy this contract.
+
 The design inherits the authority, behavior, asset, tooling, and validation methods in the [Simulation-Rich Game Development Playbook](../../../docs/game-development/README.md). In particular:
 
 - [Foundation and Architecture](../../../docs/game-development/FOUNDATION_AND_ARCHITECTURE.md) defines one authority, fixed causal time, typed intents and events, projections, content profiles, and explicit promotion.
