@@ -34,6 +34,11 @@ const ROBE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4f3176', roughne
 const ROBE_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2d1f45', roughness: 0.82 })
 const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
 const AXE_HEAD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ba4ad', roughness: 0.42, metalness: 0.6 })
+const MIREGLASS_WATER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#417b83', roughness: 0.28, metalness: 0.12 })
+const MIREGLASS_REED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#849568', roughness: 0.95 })
+const MIREGLASS_PEAT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#433c34', roughness: 1 })
+const MIREGLASS_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a4aaa0', roughness: 0.94 })
+const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, x: 0, z: 0, rotation: 0 } as const
 
 /** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
 const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
@@ -175,6 +180,22 @@ function hashUnit(id: string, salt: number) {
   hash = Math.imul(hash, 2246822507)
   hash ^= hash >>> 13
   return (hash >>> 0) / 4294967296
+}
+
+/** Stable, sparse ground detail. It is scenery only and has no interaction target. */
+export function mireglassDetailFor(cell: WizardTerrainCell) {
+  const terrain = cell.mireglassTerrain
+  if (!terrain) return NO_MIREGLASS_DETAIL
+  const roll = hashUnit(cell.id, 7)
+  return {
+    water: terrain === 'wetland' && roll < 0.72,
+    reeds: terrain === 'wetland' && roll >= 0.22 && roll < 0.58,
+    peat: terrain === 'loam' && roll < 0.38,
+    stone: terrain === 'rocky' && roll < 0.6,
+    x: (hashUnit(cell.id, 8) - 0.5) * 1.3,
+    z: (hashUnit(cell.id, 9) - 0.5) * 1.3,
+    rotation: hashUnit(cell.id, 10) * Math.PI,
+  }
 }
 
 function PresentationPoseDriver({ player, pose, worldSupport }: {
@@ -343,6 +364,7 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
 
 function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
   const surface = TERRAIN_SURFACE[cell.climate] ?? TERRAIN_SURFACE.temperate_forest
+  const detail = useMemo(() => mireglassDetailFor(cell), [cell.id, cell.mireglassTerrain])
   const { top, side, cap } = useMemo(() => {
     const jitter = hashUnit(cell.id, 1) - 0.5
     // Higher cells catch more sun, so lift them a touch; per-cell jitter breaks the uniform grid read.
@@ -364,6 +386,14 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
       <mesh geometry={UNIT_BOX} position={[0, y - cap - (cell.height - cap) / 2, 0]} scale={[width, cell.height - cap, depth]} receiveShadow>
         <meshStandardMaterial color={side} roughness={0.97} />
       </mesh>
+      {detail.water && <mesh geometry={UNIT_BOX} material={MIREGLASS_WATER_MATERIAL} position={[detail.x, y + 0.012, detail.z]} rotation={[0, detail.rotation, 0]} scale={[2.2, 0.024, 1.35]} />}
+      {detail.reeds && <group position={[detail.x + 0.9, y, detail.z - 0.7]} rotation={[0, detail.rotation, 0]}>
+        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[-0.12, 0.24, 0]} rotation={[0, 0, -0.12]} scale={[0.045, 0.48, 0.045]} />
+        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.09, 0.31, 0.09]} rotation={[0, 0, 0.16]} scale={[0.04, 0.62, 0.04]} />
+        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.02, 0.18, -0.1]} scale={[0.04, 0.36, 0.04]} />
+      </group>}
+      {detail.peat && <mesh geometry={UNIT_BOX} material={MIREGLASS_PEAT_MATERIAL} position={[detail.x, y + 0.01, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.8, 0.02, 1.25]} />}
+      {detail.stone && <mesh geometry={ROCK_GEOMETRY} material={MIREGLASS_STONE_MATERIAL} position={[detail.x, y + 0.1, detail.z]} rotation={[0, detail.rotation, 0]} scale={[0.55, 0.16, 0.42]} />}
     </group>
   )
 }

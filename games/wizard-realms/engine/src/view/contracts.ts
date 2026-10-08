@@ -1,4 +1,4 @@
-import type { DigSiteId, InscriptionId, SkillId, SpellId } from '../domain/types'
+import type { DigSiteId, InscriptionId, SkillId, SpellId, TerrainId } from '../domain/types'
 
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
@@ -22,6 +22,8 @@ export interface WizardTerrainCell {
   height: number
   climate: string
   color?: string
+  /** Visual-only surface tag in the authored Mireglass core and adjacent wetland rim. */
+  mireglassTerrain?: TerrainId
 }
 
 export interface WizardResourceNode {

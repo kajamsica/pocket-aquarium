@@ -1,11 +1,35 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import type { WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, mireglassDetailFor, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
+import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
+
+describe('Mireglass terrain detail', () => {
+  it('is stable, sparse, non-interactive scenery within the 17 by 17 visible window', () => {
+    const terrains = ['wetland', 'loam', 'rocky'] as const
+    const cells = Array.from({ length: 32 * 32 }, (_, index) => {
+      const x = index % 32 - 16
+      const z = Math.floor(index / 32) - 16
+      return { id: `tile-${x}-${z}`, position: [x * 4, 0, z * 4] as const, size: [4, 4] as const,
+        height: 2, climate: 'marsh', mireglassTerrain: terrains[index % terrains.length] }
+    })
+    const visible = visibleTerrainCells(cells, [0, 0, 0])
+    expect(visible).toHaveLength(289)
+    const details = visible.map(mireglassDetailFor)
+    for (const kind of ['water', 'reeds', 'peat', 'stone'] as const) {
+      const count = details.filter((detail) => detail[kind]).length
+      expect(count).toBeGreaterThan(0)
+      expect(count).toBeLessThan(visible.length)
+    }
+    expect(mireglassDetailFor(visible[0])).toEqual(mireglassDetailFor({ ...visible[0] }))
+    expect(mireglassDetailFor({ ...visible[0], mireglassTerrain: undefined }))
+      .toMatchObject({ water: false, reeds: false, peat: false, stone: false })
+  })
+})
 
 describe('avatar gear projection', () => {
   it('shows no hat, staff, axe, or shield on the bare starting wizard', () => {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   createStreamedWorld,
   MIREGLASS_CORE,
+  mireglassRouteSites,
   type ReadonlyWorldTile,
   type StreamedWorldIntent,
   type StreamedWorldRejection,
@@ -24,6 +25,7 @@ const PREVIEW_MAP_RADIUS_CELLS = 8
 /** Only glyphs this preview can actually show; the Greenway legend is the component fallback. */
 export const PREVIEW_MAP_LEGEND = '▲ you · ? unexplored'
 const TERRAIN_COLORS = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', snow: '#d4e3df' } as const
+const MIREGLASS_COLORS = { loam: '#6c7651', wetland: '#385b57', rocky: '#777d78', snow: '#d4e3df' } as const
 /** Development-only direct spawn inside the Mireglass core, near the pinned outpost pad. */
 export const MIREGLASS_DEV_SPAWN = { x: -288, z: 288 } as const
 const EMPTY_SKILLS = { woodcutting: 0, construction: 0, wayfinding: 0, spellcraft: 0, excavation: 0 } as const
@@ -54,7 +56,15 @@ export function streamedMapTitle(position: { x: number; z: number }): string {
 }
 
 export function streamedStartForSearch(search: string, development = import.meta.env.DEV): { x: number; z: number } | undefined {
-  return development && new URLSearchParams(search).get('spawn') === 'mireglass' ? MIREGLASS_DEV_SPAWN : undefined
+  if (!development) return undefined
+  const spawn = new URLSearchParams(search).get('spawn')
+  if (spawn === 'mireglass') return MIREGLASS_DEV_SPAWN
+  if (spawn !== 'fen' && spawn !== 'berm') return undefined
+  const kind = spawn === 'fen' ? 'bridge' : 'ladder'
+  const site = mireglassRouteSites(WORLD_SEED).find((candidate) => candidate.kind === kind)
+  if (!site) throw new Error(`Missing canonical ${kind} site for preview spawn.`)
+  // The canonical route validation checks this dry approach one cell before the crossing.
+  return { x: site.from.x, z: site.from.z - TILE_METERS }
 }
 
 export function streamedControlIntents(yaw: number, vector: readonly [number, number]): StreamedWorldIntent[] {
@@ -68,15 +78,32 @@ export function streamedControlIntents(yaw: number, vector: readonly [number, nu
   return intents
 }
 
+/** Mark the authored core plus one adjacent wetland cell at its edge. */
+export function mireglassVisualTerrainAt(position: { x: number; z: number }, terrain: ReadonlyWorldTile['terrain']) {
+  const { x, z } = position
+  const inCore = x >= MIREGLASS_CORE.minX && x < MIREGLASS_CORE.maxX
+    && z >= MIREGLASS_CORE.minZ && z < MIREGLASS_CORE.maxZ
+  const onWetlandRim = terrain === 'wetland'
+    && x >= MIREGLASS_CORE.minX - TILE_METERS && x <= MIREGLASS_CORE.maxX
+    && z >= MIREGLASS_CORE.minZ - TILE_METERS && z <= MIREGLASS_CORE.maxZ
+  return inCore || onWetlandRim ? terrain : undefined
+}
+
 // The active window is a frozen array that only changes on chunk crossing, so its cells are mapped once per window.
 const terrainCellCache = new WeakMap<readonly ReadonlyWorldTile[], WizardTerrainCell[]>()
 function terrainCellsFor(tiles: readonly ReadonlyWorldTile[]): WizardTerrainCell[] {
   let cells = terrainCellCache.get(tiles)
   if (!cells) {
-    cells = tiles.map((tile) => ({
-      id: tile.id, position: [tile.center.x, tile.center.y, tile.center.z], size: [TILE_METERS, TILE_METERS],
-      height: 0.7 + tile.elevation * 3, climate: tile.biome, color: TERRAIN_COLORS[tile.terrain],
-    }))
+    cells = tiles.map((tile) => {
+      const { x, z } = tile.center
+      const mireglassTerrain = mireglassVisualTerrainAt(tile.center, tile.terrain)
+      return {
+        id: tile.id, position: [x, tile.center.y, z], size: [TILE_METERS, TILE_METERS],
+        height: 0.7 + tile.elevation * 3, climate: tile.biome,
+        color: mireglassTerrain ? MIREGLASS_COLORS[mireglassTerrain] : TERRAIN_COLORS[tile.terrain],
+        ...(mireglassTerrain ? { mireglassTerrain } : {}),
+      }
+    })
     terrainCellCache.set(tiles, cells)
   }
   return cells
