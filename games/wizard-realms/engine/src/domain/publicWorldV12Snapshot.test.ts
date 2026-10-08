@@ -121,6 +121,11 @@ describe('public v12 snapshot and pinned v11 anchor', () => {
     // Trailing JSON whitespace preserves the document's meaning, so rejection
     // here proves the alpha size gate rather than a syntax or origin failure.
     expect(parsePublicV12Rescue(bytes + ' '.repeat(limit - bytes.length + 1))).toBeNull()
+    const oversizedSource = { ...source, sourceV11Receipt: { ...source.sourceV11Receipt,
+      sourceV10Lineage: { ...source.sourceV11Receipt.sourceV10Lineage,
+        sourceV9Lineage: { ...source.sourceV11Receipt.sourceV10Lineage.sourceV9Lineage,
+          sourceV7Bytes: ' '.repeat(limit) } } } }
+    expect(() => serializePublicV12Rescue(v12, null, 0, oversizedSource)).toThrow('exceeds 8 MiB')
   })
 
   it('rejects a rescue that erases Highland progress pinned in a later v11 source', () => {

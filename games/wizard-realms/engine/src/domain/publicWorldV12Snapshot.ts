@@ -17,6 +17,15 @@ export const PUBLIC_V12_RESCUE_SCHEMA = 'wizard-world/v12-rescue'
 // JSON parsing or re-stringifying its nested snapshot and source receipt.
 const MAX_PUBLIC_V12_RESCUE_BYTES = 8 * 1024 * 1024
 
+/** Necessary early bound, so an oversized old source is never parsed for a rescue. */
+export function publicV12RescueSourceFitsCap(value: unknown): boolean {
+  try {
+    const source = value as PublicV12SourceReceipt | null
+    const bytes = source?.sourceV11Receipt?.sourceV10Lineage?.sourceV9Lineage?.sourceV7Bytes
+    return typeof bytes === 'string' && bytes.length < MAX_PUBLIC_V12_RESCUE_BYTES
+  } catch { return false }
+}
+
 export type PublicV12Head = Omit<PublicV11Head, 'schemaVersion' | 'state'> & {
   readonly schemaVersion: typeof PUBLIC_V12_SCHEMA
   readonly state: PublicV11Head['state'] & {
@@ -182,6 +191,7 @@ function validRescueOrigin(snapshot: PublicV12PortableSnapshot,
 export function serializePublicV12Rescue(state: PublicWorldV12State,
   bootstrap: PublicV6BootstrapRoot | null, saveRevision: number,
   sourceReceipt: PublicV12SourceReceipt): string {
+  if (!publicV12RescueSourceFitsCap(sourceReceipt)) throw new RangeError('Public v12 rescue source exceeds 8 MiB.')
   if (!isValidPublicV12SourceReceipt(sourceReceipt)) throw new RangeError('Invalid public v12 rescue source.')
   const snapshot = parsePublicV12World(serializePublicV12World(state, bootstrap, saveRevision))!
   const bytes = JSON.stringify({ schemaVersion: PUBLIC_V12_RESCUE_SCHEMA, snapshot,
