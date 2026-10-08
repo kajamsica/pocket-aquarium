@@ -215,8 +215,8 @@ function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
   try {
     const runtime = currentStreamed?.state === state
       ? currentStreamed.runtime : createStreamedWorldFromState(streamedSnapshot(state))
-    const result = fromStreamed(state, intents, runtime.advance(streamedIntents))
-    currentStreamed = result.rejections.length ? null : { state: result.state, runtime }
+    const result = fromStreamed(state, intents, runtime.advance(streamedIntents, { atomicOnRejection: true }))
+    currentStreamed = { state: result.state, runtime }
     return result
   } catch (error) {
     currentStreamed = null

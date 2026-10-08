@@ -48,7 +48,7 @@ export interface StreamedWorldAdvanceResult {
 
 export interface StreamedWorldRuntime {
   readonly state: StreamedWorldState
-  advance(intents: readonly StreamedWorldIntent[]): StreamedWorldAdvanceResult
+  advance(intents: readonly StreamedWorldIntent[], options?: { atomicOnRejection?: boolean }): StreamedWorldAdvanceResult
   tileAtWorld(x: number, z: number): ReadonlyWorldTile | null
   activeTiles(): readonly ReadonlyWorldTile[]
   activeChunkCoordinates(): readonly Readonly<ChunkCoordinate>[]
@@ -133,7 +133,7 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
   const discovered = new Set(state.discoveredTileIds)
   return {
     get state() { return state },
-    advance(intents) {
+    advance(intents, options) {
       const tick = state.tick + 1
       if (!Number.isSafeInteger(tick)) throw new RangeError('Streamed-world tick overflow.')
       const player = { ...state.player, position: { ...state.player.position } }
@@ -210,6 +210,11 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
         player.verticalVelocity = JUMP_SPEED
         events.push({ type: 'player_jumped', tick })
       })
+
+      if (options?.atomicOnRejection && rejections.length) {
+        terrain.activate(state.player.position)
+        return { state, events: [], rejections }
+      }
 
       const ground = terrain.tileAtWorld(player.position.x, player.position.z)
       if (!ground) throw new Error('Active terrain missing under player.')

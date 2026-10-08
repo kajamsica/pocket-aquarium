@@ -230,10 +230,51 @@ describe('separate streamed-world authority', () => {
     const rejected = runtime.advance([move(to.x - from.x, to.z - from.z)])
     expect(rejected.rejections).toEqual([{ intentIndex: 0, intentType: 'move', code }])
     expect(rejected.events).toEqual([])
+    expect(rejected.state.tick).toBe(jumped.state.tick + 1)
     expect(rejected.state.player.position.x).toBe(from.x)
     expect(rejected.state.player.position.z).toBe(from.z)
     expect(rejected.state.player.position.y).toBeGreaterThan(jumped.state.player.position.y)
     expect(rejected.state.discoveredTileIds).toEqual(jumped.state.discoveredTileIds)
+  })
+
+  it('rolls back an atomic look and blocked move without advancing gravity', () => {
+    const { from, to } = barriers[0]
+    const runtime = createStreamedWorld(mireglassSeed, from)
+    runtime.advance([{ type: 'jump' }])
+    const before = runtime.state
+    const window = runtime.activeChunkCoordinates()
+    const rejected = runtime.advance([
+      { type: 'look', yawDelta: 0.2, pitchDelta: 0.1 },
+      move(to.x - from.x, to.z - from.z),
+    ], { atomicOnRejection: true })
+    expect(rejected.rejections).toEqual([{ intentIndex: 1, intentType: 'move', code: 'fen_channel' }])
+    expect(rejected.state).toBe(before)
+    expect(runtime.state).toBe(before)
+    expect(rejected.events).toEqual([])
+    expect(runtime.activeChunkCoordinates()).toEqual(window)
+  })
+
+  it('restores the prior window and pending discovery after an atomic rejection', () => {
+    const runtime = createStreamedWorld('chunk-crossing')
+    for (let x = 4; x <= 60; x += 4) runtime.advance([move(4)])
+    const before = runtime.state
+    const window = runtime.activeChunkCoordinates()
+    const targetId = worldTileAtGrid('chunk-crossing', 16, 0).id
+    expect(before.discoveredTileIds).not.toContain(targetId)
+    const rejected = runtime.advance([
+      move(4), { type: 'look', yawDelta: Infinity, pitchDelta: 0 },
+    ], { atomicOnRejection: true })
+    expect(rejected.rejections).toEqual([{ intentIndex: 1, intentType: 'look', code: 'invalid_value' }])
+    expect(rejected.state).toBe(before)
+    expect(rejected.events).toEqual([])
+    expect(runtime.activeChunkCoordinates()).toEqual(window)
+    expect(runtime.tileAtWorld(-64, 0)).not.toBeNull()
+
+    const retry = runtime.advance([move(4)], { atomicOnRejection: true })
+    expect(retry.rejections).toEqual([])
+    expect(retry.state.tick).toBe(before.tick + 1)
+    expect(retry.events).toContainEqual({ type: 'tile_discovered', tick: before.tick + 1, tileId: targetId })
+    expect(retry.state.discoveredTileIds).toContain(targetId)
   })
 
   it('keeps the current chunk window when a rejected move crosses a chunk boundary', () => {

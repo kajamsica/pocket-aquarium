@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
@@ -9,6 +9,7 @@ import { advancePublicWorld, advancePublicWorldFrame } from './publicWorldRuntim
 import type { PublicWorldIntent } from './publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
 import type { PublicWorldState } from './publicWorldState'
+import * as streamedWorld from './streamedWorld'
 import type { GenerationProfile } from './types'
 
 const seed = 'greenway-alpha'
@@ -197,6 +198,42 @@ describe('public v6 authority handoff', () => {
     const next = advancePublicWorldFrame(result.state, [{ type: 'look', yawDelta: 0.02, pitchDelta: 0 }])
     expect(next.rejections).toEqual([])
     expect(next.state.tick).toBe(result.state.tick + 1)
+  })
+
+  it('keeps a blocked streamed look+move frame atomic and reuses its terrain on retry', () => {
+    const snapshot = streamedWorld.createStreamedWorld('mireglass-authority', { x: -452, z: 400 }).state
+    const base = createFreshPublicWorld('mireglass-authority', classic)
+    const atChannel: PublicWorldState = { ...base, movementOwner: 'streamed',
+      tick: snapshot.tick, discoveredTileIds: snapshot.discoveredTileIds,
+      player: { ...base.player, position: { ...snapshot.player.position },
+        yaw: snapshot.player.yaw, pitch: snapshot.player.pitch,
+        verticalVelocity: snapshot.player.verticalVelocity } }
+    const construct = vi.spyOn(streamedWorld, 'createStreamedWorldFromState')
+    try {
+      const beforeBytes = JSON.stringify(atChannel)
+      const intents: PublicWorldIntent[] = [
+        { type: 'look', yawDelta: 0.2, pitchDelta: 0.1 },
+        { type: 'move', delta: { x: 4, z: 0 } },
+      ]
+      const blocked = advancePublicWorldFrame(atChannel, intents)
+      expect(blocked.rejections).toMatchObject([{ intentIndex: 1, intentType: 'move', code: 'fen_channel' }])
+      expect(blocked.state).toBe(atChannel)
+      expect(blocked.events).toEqual([])
+      expect(JSON.stringify(atChannel)).toBe(beforeBytes)
+      expect(construct).toHaveBeenCalledTimes(1)
+
+      const blockedAgain = advancePublicWorldFrame(atChannel, intents)
+      expect(blockedAgain).toEqual(blocked)
+      expect(construct).toHaveBeenCalledTimes(1)
+
+      const retry = advancePublicWorldFrame(atChannel, [{ type: 'move', delta: { x: -4, z: 0 } }])
+      expect(retry.rejections).toEqual([])
+      expect(retry.state.tick).toBe(atChannel.tick + 1)
+      expect(retry.state.player.position.x).toBe(-456)
+      expect(construct).toHaveBeenCalledTimes(1)
+    } finally {
+      construct.mockRestore()
+    }
   })
 
   it.each([
