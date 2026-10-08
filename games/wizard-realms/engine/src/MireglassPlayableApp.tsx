@@ -167,8 +167,11 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
     const selectedId = expedition.builtRoutes[site.kind]
     if (selectedId === null) add(`build:${site.id}`, `Build ${routeName(site.kind)}`, `${site.logCost} logs`, site.from, { type: 'build_route', siteId: site.id })
     else if (selectedId === site.id) {
-      add(`cross:${site.id}:from`, `Cross ${routeName(site.kind)}`, 'To far bank', site.from, { type: 'traverse_route', siteId: site.id, from: 'from' })
-      add(`cross:${site.id}:to`, `Return by ${routeName(site.kind)}`, 'To near bank', site.to, { type: 'traverse_route', siteId: site.id, from: 'to' })
+      // Short ladders can put both endpoints within reach. Offer the action from
+      // the closer bank, rather than suggesting a return before the first crossing.
+      if (distance(player.position, site.from) <= distance(player.position, site.to))
+        add(`cross:${site.id}:from`, `Cross ${routeName(site.kind)}`, 'To far bank', site.from, { type: 'traverse_route', siteId: site.id, from: 'from' })
+      else add(`cross:${site.id}:to`, `Return by ${routeName(site.kind)}`, 'To near bank', site.to, { type: 'traverse_route', siteId: site.id, from: 'to' })
     }
   }
   if (player.learnedSpellIds.includes('wayfinder_glow') && (
@@ -517,6 +520,7 @@ export function MireglassPlayableApp() {
         if (result.rejections[0] || result.events.some((event) => event.type === 'player_moved')) {
           setMovementBarrierStatus((current) => mireglassBarrierAfterResult(current, result))
           setStatusSource(result.rejections[0] ? 'movement' : 'action')
+          if (result.events.some((event) => event.type === 'player_moved')) setError(false)
         }
       }
       queued.current = []

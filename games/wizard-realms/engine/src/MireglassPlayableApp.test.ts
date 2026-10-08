@@ -100,6 +100,23 @@ describe('Mireglass playable dev adapter', () => {
     expect(world.act({ type: 'dig_tree_stump', resourceId: tree.id }).rejection?.code).toBe('requires_spade')
   })
 
+  it('offers the slate ladder crossing from the current bank, not an early return', () => {
+    const site = mireglassRouteSites(seed).find((candidate) => candidate.kind === 'ladder')!
+    const source = createGeneratedWorld(seed).player
+    source.position = { x: (site.from.x + site.to.x) / 2, y: site.from.y,
+      z: (site.from.z + site.to.z) / 2 }
+    const world = createMireglassWorld(seed, source)
+    const state = { ...world.state, expedition: { ...world.state.expedition,
+      builtRoutes: { ...world.state.expedition.builtRoutes, ladder: site.id } } }
+    const nearChoices = mireglassActionChoices(state).map((choice) => choice.id)
+    expect(nearChoices).toContain(`cross:${site.id}:from`)
+    expect(nearChoices).not.toContain(`cross:${site.id}:to`)
+    const climbed = { ...state, player: { ...state.player, position: { ...site.to } } }
+    const farChoices = mireglassActionChoices(climbed).map((choice) => choice.id)
+    expect(farChoices).toContain(`cross:${site.id}:to`)
+    expect(farChoices).not.toContain(`cross:${site.id}:from`)
+  })
+
   it('keeps E on world interactions instead of repeatedly swapping equipment or buying stock', () => {
     const tree = mireglassResources(seed)[0]
     const source = createGeneratedWorld(seed).player
