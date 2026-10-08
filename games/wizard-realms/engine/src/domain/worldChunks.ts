@@ -1,4 +1,5 @@
 import { classify, hashSeed, legacyTileAtGrid } from './generation'
+import { mireglassTerrainAt } from './mireglassTerrain'
 import type { WorldTile } from './types'
 
 export const WORLD_CELL_METERS = 4
@@ -57,9 +58,12 @@ export function worldTileAtGrid(seed: string, gx: number, gz: number): WorldTile
   if (outside === 0) return legacy
   const blend = smoothstep(0, 8, outside)
   const outer = outerClimate(normalizedSeed, gx, gz)
-  const elevation = clamp01(legacy.elevation * (1 - blend) + outer.elevation * blend)
-  const temperature = clamp01(legacy.temperature * (1 - blend) + outer.temperature * blend)
-  const moisture = clamp01(legacy.moisture * (1 - blend) + outer.moisture * blend)
+  const climate = mireglassTerrainAt(gx * WORLD_CELL_METERS, gz * WORLD_CELL_METERS, {
+    elevation: clamp01(legacy.elevation * (1 - blend) + outer.elevation * blend),
+    temperature: clamp01(legacy.temperature * (1 - blend) + outer.temperature * blend),
+    moisture: clamp01(legacy.moisture * (1 - blend) + outer.moisture * blend),
+  })
+  const { elevation, temperature, moisture } = climate
   const [biome, terrain] = classify(elevation, temperature, moisture)
   return { ...legacy, elevation, temperature, moisture, biome, terrain,
     center: { ...legacy.center, y: elevation * 3 } }
