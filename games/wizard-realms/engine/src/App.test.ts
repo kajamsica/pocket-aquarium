@@ -439,6 +439,22 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway ladder south. Greenway Outfitters: 11m west and 7m south. Buy a field spade.')
   })
 
+  it('guides an unequipped spade owner across routes to the revealed ridge cache', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    state.builtRouteIds = ['greenway_ladder']
+    state.revealedDigSiteIds = ['ridge_cache']
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    expect(objectiveFor(state)).toBe('Re-equip the field spade, then cross the Greenway ladder north and find it. Ridge cache: 6m west and 9m north (✦ on the map).')
+
+    state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
+    expect(objectiveFor(state)).toBe('Re-equip the field spade, then find it. Ridge cache: 6m west and 1m north (✦ on the map).')
+
+    state.builtRouteIds.push('highland_bridge')
+    state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
+    expect(objectiveFor(state)).toBe('Re-equip the field spade, then cross the Highland bridge west and find it. Ridge cache: 12m west and 1m north (✦ on the map).')
+  })
+
   it('updates waystone bearings from the real inscription and calls for Study in reach', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
