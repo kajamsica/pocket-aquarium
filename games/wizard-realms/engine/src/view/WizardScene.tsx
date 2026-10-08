@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardLandmark, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 import { visibleTerrainCells } from './visibleTerrain'
 import { LandscapeDressing } from './LandscapeDressingLayer'
+import { MireglassWaterLayer } from './MireglassWaterLayer'
+import { MireglassCliffLayer } from './MireglassCliffLayer'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -1051,6 +1053,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport} />
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
       {visibleTerrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
+      <MireglassWaterLayer seed={projection.seed} cells={visibleTerrain} />
+      <MireglassCliffLayer seed={projection.seed} cells={visibleTerrain} />
       <LandscapeDressing cells={visibleTerrain} clearings={landscapeClearings} />
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
