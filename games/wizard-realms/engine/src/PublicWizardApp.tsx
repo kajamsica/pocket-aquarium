@@ -437,6 +437,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   const pending = useRef<PublicWorldIntent[][]>([])
   const openStoreRef = useRef<string | null>(null)
   const travelDirty = useRef(false)
+  const travelVersion = useRef(0)
   const lastSaveMs = useRef(performance.now())
   const lastReadoutMs = useRef(performance.now())
 
@@ -447,6 +448,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   }, [])
   const save = useCallback((snapshot: PublicWorldV7State) => {
     if (blockedRef.current) return
+    const savedTravelVersion = travelVersion.current
     lastSaveMs.current = performance.now()
     saveQueue.current = saveQueue.current.then(async () => {
       if (blockedRef.current) return
@@ -457,8 +459,8 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
         if (!result.ok) { setWorld(worldRef.current); stop(result.reason); return }
         expectedRevision.current = result.value.saveRevision
         lastSaveMs.current = performance.now()
-        if (worldRef.current === snapshot) travelDirty.current = false
-        setNotice(`Public ${v9Session ? 'v9' : 'v8'} save #${result.value.saveRevision} completed on this device. Older sources remain untouched.`)
+        if (travelVersion.current === savedTravelVersion) travelDirty.current = false
+        setNotice(`Public ${v9Session ? 'v9' : 'v8'} save #${result.value.saveRevision} completed at tick ${result.value.state.tick} on this device. Older sources remain untouched.`)
         return
       }
       const currentStorage = storage()
@@ -467,13 +469,14 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
       if (!result.ok) { stop(result.reason); return }
       expectedBytes.current = result.value.bytes
       lastSaveMs.current = performance.now()
-      if (worldRef.current === snapshot) travelDirty.current = false
+      if (travelVersion.current === savedTravelVersion) travelDirty.current = false
       const saved = parsePublicV7PlayableRoot(result.value.bytes)
       setNotice(`Public v7 save #${saved?.saveRevision ?? '?'} completed on this device. Older saves remain untouched.`)
     }).catch(() => { if (v9Session || v8Session) setWorld(worldRef.current); stop('storage-error') })
   }, [stop, v8Session, v9Session])
   const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
+    travelDirty.current = false; travelVersion.current = 0
     setWorld(start.state); setBusy(false); setBlocked(false); setBlockedReason(null)
     blockedRef.current = false; blockedReasonRef.current = null
     setNotice('Public v7 progress is saved. Greenway and Mireglass share one player.')
@@ -684,7 +687,9 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
         if (texts.length) setMessages((current) => appendMessages(current, texts,
           result.rejections.length > 0 && result.events.length === 0 && !transition))
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
-          || event.type === 'tile_discovered' || event.type === 'player_jumped')) travelDirty.current = true
+          || event.type === 'tile_discovered' || event.type === 'player_jumped')) {
+          travelDirty.current = true; travelVersion.current += 1
+        }
         if ((frames.length && result.events.length) || (travelDirty.current
           && (forceSave || now - lastSaveMs.current >= TRAVEL_SAVE_MS))) save(next)
       } catch { stop('world-frame-error') }
