@@ -195,6 +195,32 @@ export function greenwayForPublicView(state: PublicWorldState): WizardWorldState
     tick: state.tick, rng: state.rng, eventSequence: state.eventSequence,
     player: state.player as PlayerState, discoveredTileIds: [...state.discoveredTileIds] }
 }
+export function publicBeginnerWoodTip(state: PublicWorldState): { id: 'intro' | 'uses' | 'full'; title: string; body: string } | null {
+  if (state.movementOwner !== 'greenway'
+    || areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).id !== 'greenway'
+    || state.greenway.builtRouteIds.includes('greenway_ladder')
+    || state.player.skillXp.woodcutting >= 120) return null
+  const logs = state.player.inventory.reduce((sum, stack) => sum + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
+  const carried = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
+  const reserved = state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+  const listedLogs = state.player.tradeSlots.some((slot) => slot.itemId === 'logs' && slot.quantity > 0)
+  const freeSlots = state.player.backpackCapacity - carried - reserved
+  if (freeSlots < 4 && (logs > 0 || listedLogs)) return {
+    id: 'full', title: freeSlots === 0 ? 'Backpack full' : 'Make room for logs',
+    body: logs > 0
+      ? 'An oak yields 4 logs, so free 4 backpack slots before its second Chop. Find S and use Sell all at Greenway Outfitters (2g per log), or build the ladder with 4 logs at a discovered ◇ site once unlocked. Listings still reserve space.'
+      : 'An oak yields 4 logs and needs 4 free slots. Listed logs still reserve capacity. A sale frees those slots; canceling returns logs to your backpack and does not make room by itself.',
+  }
+  if (logs >= 4) return {
+    id: 'uses', title: 'Use your logs',
+    body: 'Keep 4 logs for the first Greenway ladder at a discovered ◇ map site once unlocked. Greenway Outfitters buys spare logs instantly for 2g each. Or list them on the trade board; listed logs still reserve backpack space.',
+  }
+  if (state.player.skillXp.woodcutting === 0 && logs === 0) return {
+    id: 'intro', title: 'Getting started',
+    body: 'Follow Next for the quest, starting with the waystone. Your woodcutter axe is in your backpack. Equip it, find an oak’s “Chop” prompt, then use E/Interact twice for 4 logs when 4 backpack slots are free.',
+  }
+  return null
+}
 export function mireglassForPublicView(state: PublicWorldState): MireglassWorldState {
   return { seed: state.seed, contentRevision: MIREGLASS_CONTENT_REVISION, tick: state.tick,
     player: state.player, discoveredTileIds: state.discoveredTileIds, expedition: state.mireglass }
@@ -242,7 +268,7 @@ const STYLES = `
 .wr-public,.wr-public-menu{position:fixed;inset:0;background:#14221f;color:#f5f1df;font:14px/1.4 system-ui}.wr-public .wr-surface{min-height:0}
 .wr-public-menu{display:grid;place-items:center;padding:20px;box-sizing:border-box}.wr-public-card{box-sizing:border-box;width:min(560px,100%);max-height:90vh;overflow:auto;padding:24px;border:1px solid #c9ad6680;border-radius:18px;background:#101a17f4;box-shadow:0 20px 60px #0008}.wr-public-card h1{margin:0 0 8px;color:#f5d889;font:700 30px Georgia,serif}.wr-public-card p{color:#c5d0c3}.wr-public-card button,.wr-public-panel button{min-height:44px;padding:7px 12px;border:1px solid #d5b86f77;border-radius:8px;background:#324b3d;color:#fff0c7;font:inherit;cursor:pointer}.wr-public-card button{display:block;width:100%;margin:8px 0;text-align:left}.wr-public-card button:disabled,.wr-public-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-public-warning{padding:9px;border:1px solid #e3a27788;border-radius:8px;background:#4b2824e8;color:#ffe0d4!important}
 .wr-public-panel{position:absolute;z-index:8;right:12px;top:12px;box-sizing:border-box;width:min(315px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:12px;border:1px solid #c9ad6680;border-radius:12px;background:#101a17ed;box-shadow:0 10px 32px #0008}.wr-public-panel h1{margin:0;color:#f5d889;font:700 19px Georgia,serif}.wr-public-panel p{margin:6px 0}.wr-public-panel small{color:#b8c9bb}.wr-public-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.wr-public-actions button{text-align:left}.wr-public-actions small{display:block}.wr-public-panel[data-collapsed=true]{width:auto}.wr-public-panel[data-collapsed=true] .wr-public-body{display:none}.wr-public[data-owner=streamed] .wr-gear,.wr-public[data-owner=streamed] .wr-trade{display:none}
-.wr-public-next{position:absolute;z-index:7;top:58px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(410px,calc(100vw - 260px));margin:0;padding:7px 10px;border:1px solid #d5b86f77;border-radius:10px;background:#101a17dc;color:#fff0c7;font:600 13px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 6px 20px #0006}.wr-public-next[hidden]{display:none}.wr-public-next strong{color:#f5d889}.wr-public-next small{display:block;margin-top:3px;color:#c5d0c3;font-size:11px;font-weight:400}
+.wr-public-next{position:absolute;z-index:7;top:58px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(410px,calc(100vw - 260px));margin:0;padding:7px 10px;border:1px solid #d5b86f77;border-radius:10px;background:#101a17dc;color:#fff0c7;font:600 13px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 6px 20px #0006}.wr-public-next[hidden]{display:none}.wr-public-next strong{color:#f5d889}.wr-public-next small{display:block;margin-top:3px;color:#c5d0c3;font-size:11px;font-weight:400}.wr-public-next[data-tip=true]{pointer-events:auto;text-align:left;padding-right:38px}.wr-public-next button{position:absolute;top:4px;right:4px;width:28px;height:28px;padding:0;border:1px solid #d5b86f77;border-radius:6px;background:#324b3d;color:#fff0c7;cursor:pointer}.wr-public-next button:focus-visible{outline:2px solid #ffe395;outline-offset:2px}
 @media(min-width:840px){.wr-public[data-owner=greenway] .wr-public-panel{right:318px;top:160px;width:min(315px,calc(100vw - 636px));max-height:max(180px,calc(100vh - 400px))}}
 @media(min-width:720px) and (max-width:839px){.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=false]{inset:8px;width:auto;max-height:none;background:#101a17}.wr-public[data-owner=greenway]:has(.wr-public-panel[data-collapsed=false]) .wr-hud{visibility:hidden}}
 @media(min-width:720px) and (max-width:839px){.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=true]{left:50%;right:auto;top:124px;transform:translateX(-50%);width:104px;padding:4px}.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=true] button{width:100%;padding:5px 2px;font-size:12px}}
@@ -251,6 +277,7 @@ const STYLES = `
 @media(max-width:719px){.wr-public:has([data-store-panel]) .wr-public-next{display:none}}
 .wr-public:has([data-store-panel],.wr-build-preview) .wr-public-panel{display:none}
 @media(max-width:719px) and (max-height:400px){.wr-public:has([data-ring-panel]) .wr-public-panel,.wr-public:has([data-ring-panel]) .wr-public-next{display:none}}
+@media(max-width:719px) and (min-height:640px){.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-public-next{max-height:200px}.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-public-panel[data-collapsed=true],.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-backpack-toggle,.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-map-toggle{top:270px}.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-prompt{top:326px}.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-events{top:402px}.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-surface[data-backpack-open=true] .wr-backpack{top:320px;max-height:calc(100% - 336px)}}
 `
 
 const locks = () => typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: PublicLockProvider }).locks : undefined
@@ -798,6 +825,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const [selectedCampTileId, setSelectedCampTileId] = useState<string | null>(null)
   const selectedCampRef = useRef<string | null>(null)
   const [collapsed, setCollapsed] = useState(true)
+  const [dismissedWoodTips, setDismissedWoodTips] = useState<Set<string>>(() => new Set())
   const worldRef = useRef<PublicWorldV7State | null>(session?.start.state ?? null)
   const expectedBytes = useRef<string | null>(null)
   const expectedRevision = useRef(session?.start.saveRevision ?? 0)
@@ -1345,15 +1373,22 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const nextGuidance = herbPriority && herbRouteHint
     ? herbRouteHint : objective?.label ?? (v11Session && projection.map.guidance)
       ?? objectiveFor(greenwayForPublicView(world))
+  const woodTip = publicBeginnerWoodTip(world)
+  const activeWoodTip = woodTip && !dismissedWoodTips.has(woodTip.id) ? woodTip : null
   const playProjection = herbPriority && herbRouteHint
     ? { ...projection, map: { ...projection.map,
       guidance: publicHerbMapGuidance(projection.map.guidance, true, herbRouteHint) } }
     : projection
   return <main className="wr-public" data-owner={world.movementOwner}><style>{STYLES}</style>
     <WizardSurface projection={playProjection} onIntent={onIntent} />
-    <p className="wr-public-next" hidden={!collapsed} tabIndex={collapsed ? 0 : -1}><strong>Next:</strong> {nextGuidance}
+    <p className="wr-public-next" data-tip={!!activeWoodTip} hidden={!collapsed} tabIndex={collapsed ? 0 : -1}>
+      <strong>Next:</strong> {nextGuidance}
+      {activeWoodTip && <small><b>{activeWoodTip.title}:</b> {activeWoodTip.body}<button type="button"
+        aria-label={`Dismiss ${activeWoodTip.title} tip`}
+        onClick={() => setDismissedWoodTips((current) => new Set(current).add(activeWoodTip.id))}>×</button></small>}
       {playProjection.fieldCamp?.guidance && <small><b>Camp:</b> {playProjection.fieldCamp.guidance}</small>}
-      {world.tick < 1_000 && <small>W/S move · A/D turn · E interact · M map</small>}</p>
+      {world.tick < 1_000 && <small>W/S move · A/D turn · E interact · M map</small>}
+    </p>
     <aside className="wr-public-panel" data-collapsed={collapsed} aria-label="Public world controls">
       <button onClick={() => setCollapsed((value) => !value)}>{collapsed ? 'World / Save' : 'Collapse controls'}</button>
       <div className="wr-public-body"><h1>{publicAreaTitle(world)}</h1>

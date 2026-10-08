@@ -314,7 +314,7 @@ export function retainOpenStoreId(state: WizardWorldState, openStoreId: string |
 function itemStack(itemId: ItemId, quantity: number) {
   return {
     id: `inventory-${itemId}`, itemId, name: ITEM_NAMES[itemId], quantity,
-    equippableSlots: EQUIPPABLE[itemId], suggestedTradePrice: itemId === 'logs' ? 4 : 12,
+    equippableSlots: EQUIPPABLE[itemId], suggestedTradePrice: itemId === 'logs' ? 3 : 12,
   }
 }
 

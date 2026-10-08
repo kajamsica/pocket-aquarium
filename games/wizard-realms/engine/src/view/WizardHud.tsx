@@ -23,6 +23,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
     : undefined
   const discoveredDestinations = nearbyRing?.destinations.filter((destination) => destination.discovered) ?? []
   const usedCapacity = projection.backpack.stacks.reduce((total, stack) => total + stack.quantity, 0)
+    + projection.tradeListings.reduce((total, listing) => total + (listing?.quantity ?? 0), 0)
   const firstTradeSlot = projection.tradeListings.findIndex((listing) => listing === null)
   const learnedGlow = projection.learnedSpellIds.includes('wayfinder_glow')
   const excavationLevel = 1 + Math.floor(projection.skillXp.excavation / 30)

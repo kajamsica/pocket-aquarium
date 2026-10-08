@@ -41,7 +41,7 @@ import { WizardMap } from './view/WizardMap'
 import {
   PUBLIC_V6_LOCK_NAME, advancePublicControls, appendMessages, commitPublicSnapshot, greenwayForPublicView,
   importPublicWorld, inspectPublicEntry, mireglassForPublicView, publicFreshForkChoiceCopy,
-  publicPendingV7StageGuidance, publicRecoveryChoices,
+  publicBeginnerWoodTip, publicPendingV7StageGuidance, publicRecoveryChoices,
   publicV7RecoveryChoices, recoverPublicWorld, resumePublicWorld, startFreshPublicWorld,
   unsavedPublicWorldBytes, publicWorldEventText,
   publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority, reconcileMovementMessages,
@@ -109,6 +109,69 @@ describe('public manual save feedback', () => {
   })
 })
 
+describe('public beginner wood tips', () => {
+  const fresh = () => createFreshPublicWorld(seed, 'greenway-classic-v1')
+  const carrying = (state: PublicWorldState, quantity: number): PublicWorldState => ({
+    ...state, player: { ...state.player, inventory: [...state.player.inventory, { itemId: 'logs', quantity }] },
+  })
+  const listing = (state: PublicWorldState, quantity: number): PublicWorldState => ({
+    ...state, player: { ...state.player, tradeSlots: [
+      { slotIndex: 0, itemId: 'logs', quantity, unitPrice: 3 },
+      state.player.tradeSlots[1], state.player.tradeSlots[2], state.player.tradeSlots[3],
+    ] },
+  })
+
+  it('starts with the waystone and explains the axe, oak prompt, and four-slot harvest', () => {
+    const tip = publicBeginnerWoodTip(fresh())
+    expect(tip?.id).toBe('intro')
+    expect(tip?.body).toContain('Follow Next for the quest, starting with the waystone')
+    expect(tip?.body).toContain('Your woodcutter axe is in your backpack')
+    expect(tip?.body).toContain('“Chop”')
+    expect(tip?.body).toContain('E/Interact twice for 4 logs when 4 backpack slots are free')
+  })
+
+  it('explains ladder, instant sale, and listing choices with four carried logs', () => {
+    const tip = publicBeginnerWoodTip(carrying(fresh(), 4))
+    expect(tip?.id).toBe('uses')
+    expect(tip?.body).toContain('first Greenway ladder at a discovered ◇ map site once unlocked')
+    expect(tip?.body).toContain('Greenway Outfitters buys spare logs instantly for 2g each')
+    expect(tip?.body).toContain('trade board')
+    expect(tip?.body).toContain('listed logs still reserve backpack space')
+  })
+
+  it('warns before a four-log harvest when carried or reserved items leave fewer than four slots', () => {
+    expect(publicBeginnerWoodTip(carrying(fresh(), 15))?.id).toBe('uses') // exactly four slots remain
+    const near = publicBeginnerWoodTip(carrying(fresh(), 16))
+    expect(near).toMatchObject({ id: 'full', title: 'Make room for logs' })
+    expect(near?.body).toContain('free 4 backpack slots before its second Chop')
+    expect(near?.body).toContain('Sell all at Greenway Outfitters (2g per log)')
+    expect(near?.body).toContain('Listings still reserve space')
+    expect(publicBeginnerWoodTip(carrying(fresh(), 19))).toMatchObject({ id: 'full', title: 'Backpack full' })
+    expect(publicBeginnerWoodTip(listing(carrying(fresh(), 4), 12))?.id).toBe('full')
+    const reservedOnly = publicBeginnerWoodTip(listing(fresh(), 16))
+    expect(reservedOnly?.id).toBe('full')
+    expect(reservedOnly?.body).toContain('A sale frees those slots')
+    expect(reservedOnly?.body).toContain('canceling returns logs to your backpack and does not make room')
+  })
+
+  it('suppresses the tip outside beginner Greenway and avoids an unconditional Chop when space is tight', () => {
+    const base = fresh()
+    const logs = carrying(base, 4)
+    expect(publicBeginnerWoodTip({ ...logs, movementOwner: 'streamed' })).toBeNull()
+    expect(publicBeginnerWoodTip({ ...logs, player: { ...logs.player,
+      position: { ...logs.player.position, z: -8 } } })).toBeNull()
+    expect(publicBeginnerWoodTip({ ...logs, greenway: { ...logs.greenway,
+      builtRouteIds: ['greenway_ladder'] } })).toBeNull()
+    expect(publicBeginnerWoodTip({ ...logs, player: { ...logs.player,
+      skillXp: { ...logs.player.skillXp, woodcutting: 120 } } })).toBeNull()
+    expect(publicBeginnerWoodTip({ ...base, player: { ...base.player,
+      inventory: [...base.player.inventory, { itemId: 'stone', quantity: 16 }] } })?.body)
+      .toContain('when 4 backpack slots are free')
+    expect(publicBeginnerWoodTip({ ...carrying(base, 2), player: { ...carrying(base, 2).player,
+      skillXp: { ...base.player.skillXp, woodcutting: 20 } } })).toBeNull()
+  })
+})
+
 describe('public v8 play session seam', () => {
   it('queues a newer idle trade settlement but not a duplicate blur of the same version', () => {
     const base = createFreshPublicWorld(seed, 'greenway-classic-v1')
@@ -143,7 +206,14 @@ describe('public v8 play session seam', () => {
     expect(v8).toContain('.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=false]{inset:8px;width:auto;max-height:none')
     expect(v8).toContain('.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=true]{left:50%;right:auto;top:124px;transform:translateX(-50%);width:104px')
     expect(v8).toContain('.wr-public-panel[data-collapsed=false]{inset:8px;width:auto;max-height:none')
+    expect(v8).toContain('.wr-public:has(.wr-public-next[data-tip=true]:not([hidden])) .wr-public-next{max-height:200px}')
     expect(v8).not.toContain('Choose how to begin.')
+    const card = v8.match(/<p class="wr-public-next"[^>]*>([\s\S]*?)<\/p>/)?.[1]
+    expect(card).toContain('<strong>Next:</strong>')
+    expect(card).toContain('<b>Getting started:</b>')
+    expect(card!.indexOf('<strong>Next:</strong>')).toBeLessThan(card!.indexOf('<b>Getting started:</b>'))
+    expect(card).toContain('aria-label="Dismiss Getting started tip"')
+    expect(v8).toContain('<b>Next:</b>') // expanded World / Save guidance remains available
     const v7 = renderToStaticMarkup(createElement(PublicWizardApp))
     expect(v7).toContain('Checking this device for a Wizard Realms save')
     expect(v7).toContain('Choose how to begin.')

@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { createWizardWorld } from '../domain'
+import { advanceWizardWorld, createWizardWorld } from '../domain'
 import { toViewProjection } from '../App'
 import { WizardHud } from './WizardHud'
 
@@ -60,5 +60,23 @@ describe('Wizard field action range', () => {
     expect(renderHud(toViewProjection(state, []))).not.toContain('aria-label="Excavate Practice mound"')
     state.player.position.y = mound.position.y + 2.9
     expect(renderHud(toViewProjection(state, []))).toContain('aria-label="Excavate Practice mound"')
+  })
+})
+
+describe('Wizard backpack capacity', () => {
+  it('keeps listed items reserved when showing used capacity', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.inventory.push({ itemId: 'logs', quantity: 19 })
+    const fullReadout = '<header><span>Backpack</span><small>20/20</small></header>'
+    expect(renderHud(toViewProjection(state, []))).toContain(fullReadout)
+
+    const listed = advanceWizardWorld(state, [
+      { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 7 },
+      { type: 'create_trade_listing', slotIndex: 3, itemId: 'logs', quantity: 3, unitPrice: 7 },
+    ])
+    expect(listed.rejections).toEqual([])
+    expect(listed.state.player.inventory.find((stack) => stack.itemId === 'logs')?.quantity).toBe(14)
+    expect(listed.state.player.tradeSlots.map((slot) => slot.quantity)).toEqual([2, 0, 0, 3])
+    expect(renderHud(toViewProjection(listed.state, []))).toContain(fullReadout)
   })
 })

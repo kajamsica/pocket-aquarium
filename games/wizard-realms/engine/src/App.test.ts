@@ -39,6 +39,21 @@ describe('Wizard view adapter', () => {
       quantity: 1, unitPrice: 25, totalPrice: 25, sequence: 5, tick: 601 }))
       .toBe('Sold 1 Ancient relic for 25g.')
   })
+  it('suggests a log listing price that settles while preserving other item defaults', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.tick = 598
+    state.player.inventory.push({ itemId: 'logs', quantity: 2 }, { itemId: 'marsh_herb', quantity: 1 })
+    const stacks = toViewProjection(state, []).backpack.stacks
+    const logs = stacks.find((stack) => stack.itemId === 'logs')!
+    expect(logs.suggestedTradePrice).toBe(3)
+    expect(stacks.find((stack) => stack.itemId === 'woodcutters_axe')?.suggestedTradePrice).toBe(12)
+    expect(stacks.find((stack) => stack.itemId === 'marsh_herb')?.suggestedTradePrice).toBe(12)
+    const listed = advanceWizardWorld(state, [{ type: 'create_trade_listing', slotIndex: 0,
+      itemId: 'logs', quantity: 2, unitPrice: logs.suggestedTradePrice! }])
+    expect(listed.rejections).toEqual([])
+    const settled = advanceWizardWorld(listed.state, [])
+    expect(settled.events).toMatchObject([{ type: 'trade_listing_sold', itemId: 'logs', unitPrice: 3, totalPrice: 6 }])
+  })
   it('projects all world surfaces without mutating authoritative state', () => {
     const state = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(state)
