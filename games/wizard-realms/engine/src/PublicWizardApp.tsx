@@ -630,6 +630,30 @@ type PublicPlayableSessionProps =
   | { v8Session?: never; v9Session?: never; v10Session: PublicV10PlayableSession; v11Session?: never }
   | { v8Session?: never; v9Session?: never; v10Session?: never; v11Session: PublicV11PlayableSession }
 
+export function createPublicSaveNoticeTracker() {
+  let manualTick: number | null = null
+  return {
+    queueManual(tick: number): string | null {
+      if (manualTick !== null) return null
+      manualTick = tick
+      return `Manual save queued at tick ${tick}. Saving on this device…`
+    },
+    completed(manual: boolean, version: string, revision: number, tick: number,
+      queuedDuringManual = false): string | null {
+      if (!manual && (manualTick !== null || queuedDuringManual)) return null
+      if (manual) {
+        manualTick = null
+        return `Manual ${version} save #${revision} completed at tick ${tick} on this device.`
+      }
+      return version === 'v7'
+        ? `Public v7 save #${revision} completed on this device. Older saves remain untouched.`
+        : `Public ${version} save #${revision} completed at tick ${tick} on this device. Older sources remain untouched.`
+    },
+    failed() { manualTick = null },
+    get manualPending() { return manualTick !== null },
+  }
+}
+
 export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }: PublicPlayableSessionProps) {
   const session = v11Session ?? v10Session ?? v9Session ?? v8Session
   const sessionVersion = v11Session ? 'v11' : v10Session ? 'v10' : v9Session ? 'v9' : 'v8'
@@ -662,6 +686,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const blockedRef = useRef(false)
   const blockedReasonRef = useRef<string | null>(null)
   const saveQueue = useRef<Promise<void>>(Promise.resolve())
+  const saveNotices = useRef(createPublicSaveNoticeTracker())
   const input = useRef(createTimedMovementSampler(performance.now()))
   const clock = useRef(createFixedInputClock(input.current.cursorMs))
   const pending = useRef<PublicWorldIntent[][]>([])
@@ -674,11 +699,18 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
 
   const report = useCallback((text: string) => setMessages((current) => appendMessages(current, [text])), [])
   const stop = useCallback((reason: string) => {
+    saveNotices.current.failed()
     blockedRef.current = true; blockedReasonRef.current = reason
     setBlocked(true); setBlockedReason(reason); setNotice(errorText(reason))
   }, [])
-  const save = useCallback((snapshot: PublicWorldV7State) => {
+  const save = useCallback((snapshot: PublicWorldV7State, manual = false) => {
     if (blockedRef.current) return
+    const queuedDuringManual = !manual && saveNotices.current.manualPending
+    if (manual) {
+      const queuedNotice = saveNotices.current.queueManual(snapshot.tick)
+      if (queuedNotice === null) return
+      setNotice(queuedNotice)
+    }
     const savedTravelVersion = travelVersion.current
     lastQueuedTravelVersion.current = savedTravelVersion
     lastSaveMs.current = performance.now()
@@ -696,7 +728,9 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         expectedRevision.current = result.value.saveRevision
         lastSaveMs.current = performance.now()
         if (travelVersion.current === savedTravelVersion) travelDirty.current = false
-        setNotice(`Public ${sessionVersion} save #${result.value.saveRevision} completed at tick ${result.value.state.tick} on this device. Older sources remain untouched.`)
+        const completedNotice = saveNotices.current.completed(manual, sessionVersion,
+          result.value.saveRevision, result.value.state.tick, queuedDuringManual)
+        if (completedNotice && !blockedRef.current) setNotice(completedNotice)
         return
       }
       const currentStorage = storage()
@@ -707,7 +741,10 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
       lastSaveMs.current = performance.now()
       if (travelVersion.current === savedTravelVersion) travelDirty.current = false
       const saved = parsePublicV7PlayableRoot(result.value.bytes)
-      setNotice(`Public v7 save #${saved?.saveRevision ?? '?'} completed on this device. Older saves remain untouched.`)
+      if (!saved) { stop('storage-error'); return }
+      const completedNotice = saveNotices.current.completed(manual, 'v7', saved.saveRevision,
+        saved.state.tick, queuedDuringManual)
+      if (completedNotice && !blockedRef.current) setNotice(completedNotice)
     }).catch(() => { if (v11Session || v10Session || v9Session || v8Session) setWorld(worldRef.current); stop('storage-error') })
   }, [stop, v8Session, v9Session, v10Session, v11Session, sessionVersion])
   const activate = (start: PublicV7Start) => {
@@ -1200,7 +1237,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
             ? ', or east at z = 0 toward Highland Quarry' : ''}. Greenway training remains available.</p>}
         {region && <div className="wr-public-actions">{choices.map((choice) => <button key={choice.id} disabled={blocked}
           onClick={() => actMireglass(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>}
-        <button disabled={blocked} onClick={() => { if (worldRef.current) save(worldRef.current) }}>Save now</button>
+        <button disabled={blocked || saveNotices.current.manualPending}
+          onClick={() => { if (worldRef.current) save(worldRef.current, true) }}>Save now</button>
         {blocked && transientSaveFailure(blockedReason) && <button disabled={busy} onClick={() => void retrySave()}>Retry Save</button>}
         {blocked && <><p className="wr-public-warning">Reload discards progress made since the last successful save. Download a snapshot first.</p>
           <button disabled={busy} onClick={exportUnsaved}>Download unsaved progress</button>

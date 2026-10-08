@@ -49,6 +49,7 @@ import {
   publicFieldCampView, requirePublicV9State, requirePublicV10State, requirePublicV11State,
   unsavedPublicV9Bytes, unsavedPublicV10Bytes, unsavedPublicV11Bytes,
   publicSaveableVersion, publicTravelFlushNeeded,
+  createPublicSaveNoticeTracker,
   PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
 
@@ -77,6 +78,35 @@ function webLocks() {
   } }
   return { provider, names }
 }
+
+describe('public manual save feedback', () => {
+  it('shows the requested tick immediately, keeps older autosaves from hiding it, and confirms the committed revision', () => {
+    const notices = createPublicSaveNoticeTracker()
+    expect(notices.queueManual(842)).toBe('Manual save queued at tick 842. Saving on this device…')
+    expect(notices.manualPending).toBe(true)
+    expect(notices.queueManual(842)).toBeNull()
+    expect(notices.completed(false, 'v11', 18, 840)).toBeNull()
+    expect(notices.manualPending).toBe(true)
+    expect(notices.completed(true, 'v11', 19, 842))
+      .toBe('Manual v11 save #19 completed at tick 842 on this device.')
+    expect(notices.manualPending).toBe(false)
+    expect(notices.completed(false, 'v11', 20, 843, true)).toBeNull()
+    expect(notices.completed(false, 'v11', 21, 844))
+      .toBe('Public v11 save #21 completed at tick 844 on this device. Older sources remain untouched.')
+  })
+
+  it('clears manual pending on failure and preserves automatic save notices without a manual request', () => {
+    const notices = createPublicSaveNoticeTracker()
+    expect(notices.completed(false, 'v7', 4, 100))
+      .toBe('Public v7 save #4 completed on this device. Older saves remain untouched.')
+    expect(notices.queueManual(101)).toContain('tick 101')
+    notices.failed()
+    expect(notices.manualPending).toBe(false)
+    expect(notices.queueManual(102)).toContain('tick 102')
+    expect(notices.completed(true, 'v7', 5, 102))
+      .toBe('Manual v7 save #5 completed at tick 102 on this device.')
+  })
+})
 
 describe('public v8 play session seam', () => {
   it('queues a newer idle trade settlement but not a duplicate blur of the same version', () => {
