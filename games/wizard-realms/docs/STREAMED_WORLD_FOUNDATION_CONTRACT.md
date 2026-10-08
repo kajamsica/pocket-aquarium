@@ -1,6 +1,6 @@
 # Streamed world foundation contract
 
-This is the next technical increment after player-selected construction. It is a prerequisite for the larger, distinctive first region and the roughly 2 km full game, not a claim that either is playable yet. The north star and completion gate remain in [Game Design](GAME_DESIGN.md).
+This is the bounded terrain foundation after player-selected construction. Deterministic cells and chunks, a nine-chunk active cache, and a 17 by 17 scene terrain cap now exist. They are prerequisites for the larger, distinctive first region and the roughly 2 km full game, not a claim that either is playable yet. The north star and completion gate remain in [Game Design](GAME_DESIGN.md).
 
 ## Coordinates and content identity
 
@@ -11,16 +11,16 @@ This is the next technical increment after player-selected construction. It is a
 
 ## Bounded activation and presentation
 
-- Request chunks by coordinate and keep no more than the current chunk plus its eight neighbors active for the first playable integration. Movement to a not-yet-validated chunk is paused rather than treating a missing tile as empty ground. Content activation order cannot change terrain or resource identity.
+- Request chunks by coordinate and keep no more than the current chunk plus its eight neighbors active for the first playable integration. The terrain cache now returns `null` for missing cells and rejects out-of-world activation without changing its window. Future movement authority must pause at a not-yet-validated chunk rather than treating a missing tile as empty ground. Content activation order cannot change terrain or resource identity.
 - The 3D view must not create one mesh per cell for all 262,144 world cells. Its first culling gate renders at most a 17 by 17 terrain window around the player; resources and landmarks follow their own visibility ranges. The map must use a bounded local window or aggregated overview rather than 262,144 DOM tiles.
 - Chunk generation and view filtering are pure functions with bounded memory. No render loop, fixed-step simulation tick, or local save performs whole-world generation or serialization.
 
 ## Integration order
 
-1. Prove the pure cell, chunk, active-window, and visible-terrain functions without changing the playable profile or v5 save. Retain exact Greenway generation through the same tile function used by existing profiles.
+1. Prove the pure cell, chunk, active-window, and visible-terrain functions without changing the playable profile or v5 save. Retain exact Greenway generation through the same tile function used by existing profiles. This foundation is implemented, with pre-refactor Greenway tile-array hashes pinned in tests.
 2. Replace whole-array terrain lookup with coordinate-indexed lookup for the active window. `terrainHeightAt` currently scans every tile, `advanceWizardWorld` clones the whole state on every tick, and the app saves full JSON every tick; none can be run against a generated 512 by 512 tile array.
 3. Move resource and landmark activation to deterministic per-chunk content profiles, then store only changed resources and placed objects as sparse deltas. Validate cross-chunk collisions and reachability before the player can enter a chunk.
-4. Add bounded map windows and an aggregated atlas. Discovery uses stable global IDs. The player can cross chunk boundaries without a terrain pop, a false empty-ground step, or loss of discovery. Replace `areaAt`'s out-of-bounds Greenway fallback with explicit region ownership.
+4. Add bounded map windows and an aggregated atlas. Discovery uses stable global IDs. The player can cross chunk boundaries without a terrain pop, a false empty-ground step, or loss of discovery. Replace `areaAt`'s out-of-bounds Greenway fallback with explicit region ownership. The scene's current 320 m ground plane and origin-centered shadow coverage also need a player-relative or chunk-local presentation policy before travel reaches distant coordinates.
 5. Introduce the versioned v6 save and migration with complete legacy-state round trips. Only then expose a larger development profile with an authored outward-and-return regional journey. Expand further after that journey passes from the real UI.
 
 This sequence keeps the simulation authoritative. A rendering-only extension, a static 2 km tile array, or a new profile without sparse saves does not satisfy the world-scale gate.
@@ -36,4 +36,4 @@ This sequence keeps the simulation authoritative. A rendering-only extension, a 
 
 ## Proof for this increment
 
-Across a seed corpus, prove legacy-cell exactness, negative and edge coordinates, chunk-order independence, deterministic regeneration, cross-chunk height continuity, region diversity, 3 by 3 active-window bounds, and a 17 by 17 presentation cap. Preserve the 205-test v5 suite and production build. The pure foundation is not the full game, not a new save format, and not a new public preview.
+Across a seed corpus, prove legacy-cell exactness, negative and edge coordinates, chunk-order independence, deterministic regeneration, cross-chunk height continuity, region diversity, 3 by 3 active-window bounds, and a 17 by 17 presentation cap. The integrated suite now passes 234 tests and the production build passes. The terrain foundation is not the full game, not a new save format, and not a new public preview.

@@ -1,6 +1,6 @@
 # First region systems contract
 
-This is an implementation contract for the next Greenway expedition increment, not the full-game finish. The full single-player acceptance gate remains in [Game Design](GAME_DESIGN.md).
+This records the completed v4 Greenway expedition increment, not the current save contract or the full-game finish. The playable build now uses `wizard-world/v5` and `greenway-region-v3`, with separate classic `wizard-realms:world:v5` and expanded `wizard-realms:world:expanded:v4` keys. V1-v4 remain migration inputs. For current scope and the next world-scale step, use [Game Design](GAME_DESIGN.md) and [Streamed World Foundation](STREAMED_WORLD_FOUNDATION_CONTRACT.md).
 
 ## Authoritative state and compatibility
 

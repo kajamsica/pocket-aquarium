@@ -27,3 +27,5 @@ export { createWizardWorld, advanceWizardWorld, createWizardProjection } from '.
 export { serializeWizardWorld, restoreWizardWorld } from './persistence'
 export { worldTileAtGrid, worldChunk, activeChunkCoordinates } from './worldChunks'
 export type { WorldChunk, ChunkCoordinate } from './worldChunks'
+export { createActiveWorldTerrain } from './activeWorldTerrain'
+export type { ActiveWorldTerrain, ReadonlyWorldTile } from './activeWorldTerrain'
