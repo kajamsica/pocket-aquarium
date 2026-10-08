@@ -220,7 +220,9 @@ describe('wizard atlas markup', () => {
   })
 
   it('marks suitable discovered camp cells without implying the player can build from afar', () => {
-    const current = { ...campProjection, map: { ...campProjection.map, tiles: campProjection.map.tiles.map((tile) => ({
+    const guidance = 'Inner basin approach is roughly SW of here, about 210 m away.'
+    const current = { ...campProjection, fieldCamp: { ...campProjection.fieldCamp!, guidance },
+      map: { ...campProjection.map, tiles: campProjection.map.tiles.map((tile) => ({
       ...tile, campSuitable: tile.id === 'tile-2-1' || tile.id === 'tile-1-1',
       discovered: tile.id !== 'tile-1-0',
     })) } }
@@ -230,7 +232,8 @@ describe('wizard atlas markup', () => {
     expect(markup).toContain('>⌂</b>')
     expect(markup).toContain('>⌂</small>')
     expect(markup).not.toContain('tile-1-0: unexplored, suitable field camp ground')
-    expect(markup).toContain('longer trek into the inner Mireglass basin')
+    expect(markup).toContain('role="note" aria-label="Camp guidance"')
+    expect(markup).toContain(guidance)
     expect(markup).toContain('Move within 3 m of a site to build')
     const older = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: { ...current, fieldCamp: undefined } }))
     expect(older).not.toContain('suitable field camp ground')

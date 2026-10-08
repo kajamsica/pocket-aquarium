@@ -3,7 +3,7 @@ import { eventText as greenwayEventText, intentForView, objectiveFor, retainOpen
 import { bearingText, mireglassActionChoices, mireglassEventText, mireglassNearestInteractChoice, mireglassNextObjective } from './MireglassPlayableApp'
 import { publicWorldViewProjection } from './PublicWorldView'
 import { streamedControlIntents } from './StreamedPreviewApp'
-import { MIREGLASS_CONTENT_REVISION } from './domain/mireglassContent'
+import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE } from './domain/mireglassContent'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
@@ -280,7 +280,14 @@ export function publicFieldCampView(state: PublicWorldV9State, selectedTileId: s
   const selectionEnabled = !blocked && state.movementOwner === 'streamed' && state.fieldCampTileIds.length === 0
   const tileId = selectionEnabled ? selectedTileId : null
   const previewPosition = tileId === null ? null : resolveFieldCampSite(state.seed, tileId)?.tile.center
-  return { selectionEnabled, camps: state.fieldCampTileIds.flatMap((id) => {
+  const position = state.player.position
+  // Aim at a broad basin entry area, never a generated or selectable camp tile.
+  const approach = { x: Math.max(MIREGLASS_CORE.maxX - 32, Math.min(position.x, MIREGLASS_CORE.maxX)),
+    z: Math.max(MIREGLASS_CORE.minZ, Math.min(position.z, MIREGLASS_CORE.minZ + 32)) }
+  const meters = Math.round(Math.hypot(approach.x - position.x, approach.z - position.z) / 10) * 10
+  const guidance = blocked || state.fieldCampTileIds.length ? null
+    : `Inner basin approach is ${meters < 10 ? 'here' : `roughly ${bearingText(position, approach)} of here, about ${meters} m direct`}. A camp can be built on suitable loam before the fen bridge. It costs 4 logs + 1 stone; the bridge costs 8 logs, so reserve 4 additional logs beyond the bridge supply if building both. ⌂ appears on discovered suitable ground.`
+  return { selectionEnabled, guidance, camps: state.fieldCampTileIds.flatMap((id) => {
     const site = resolveFieldCampSite(state.seed, id)
     return site ? [{ tileId: id, position: [site.tile.center.x, site.tile.center.y, site.tile.center.z] as const }] : []
   }), preview: tileId === null ? null : { tileId,
@@ -892,6 +899,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
   return <main className="wr-public" data-owner={world.movementOwner}><style>{STYLES}</style>
     <WizardSurface projection={playProjection} onIntent={onIntent} />
     <p className="wr-public-next" hidden={!collapsed} tabIndex={collapsed ? 0 : -1}><strong>Next:</strong> {nextGuidance}
+      {playProjection.fieldCamp?.guidance && <small><b>Camp:</b> {playProjection.fieldCamp.guidance}</small>}
       {world.tick < 1_000 && <small>W/S move · A/D turn · E interact · M map</small>}</p>
     <aside className="wr-public-panel" data-collapsed={collapsed} aria-label="Public world controls">
       <button onClick={() => setCollapsed((value) => !value)}>{collapsed ? 'World / Save' : 'Collapse controls'}</button>
@@ -900,6 +908,7 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
         <p><small>x {world.player.position.x.toFixed(1)}, z {world.player.position.z.toFixed(1)} · {world.player.coins} coins · tick {world.tick}</small></p>
         <p>{messages.at(-1)}</p>
         <p><b>Next:</b> {nextGuidance}</p>
+        {playProjection.fieldCamp?.guidance && <p><b>Camp:</b> {playProjection.fieldCamp.guidance}</p>}
         {herbRouteHint && !herbPriority && <p><b>Bell Alder route:</b> {herbRouteHint}</p>}
         {!region && world.player.learnedSpellIds.includes('wayfinder_glow') &&
           <p><b>Frontier trail:</b> Travel due west to the dry opening at z = 0 to enter Mireglass Reach. Greenway training remains available.</p>}

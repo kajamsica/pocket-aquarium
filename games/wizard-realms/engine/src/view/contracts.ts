@@ -144,6 +144,8 @@ export interface WizardFieldCampView {
   camps: readonly WizardFieldCamp[]
   preview: WizardFieldCampPreview | null
   selectionEnabled: boolean
+  /** Secondary route hint for an unbuilt v9 camp; absent from older projections. */
+  guidance?: string | null
 }
 
 export interface WizardMapTile {

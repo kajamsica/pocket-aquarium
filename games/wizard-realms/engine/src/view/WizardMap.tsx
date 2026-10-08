@@ -140,7 +140,8 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
 }) {
   const localMap = <>
     {projection.map.guidance && <p className="wr-map-guidance" role="note" aria-label="Map guidance">{projection.map.guidance}</p>}
-    {projection.fieldCamp?.selectionEnabled && <p className="wr-map-guidance">The camp area is a longer trek into the inner Mireglass basin. Follow the marked trail toward the outpost, then find flat 3×3 loam ground. ⌂ marks suitable discovered ground; if none appears here, keep exploring. Move within 3 m of a site to build. Scroll the map or use arrow keys to choose a cell; Enter or Space previews one. Recipe: 4 logs + 1 stone.</p>}
+    {projection.fieldCamp?.guidance && <p className="wr-map-guidance" role="note" aria-label="Camp guidance">{projection.fieldCamp.guidance}</p>}
+    {projection.fieldCamp?.selectionEnabled && <p className="wr-map-guidance">Find flat 3×3 loam ground. Move within 3 m of a site to build. Scroll the map or use arrow keys to choose a cell; Enter or Space previews one.</p>}
     <MapGrid projection={projection} onSelect={(tileId) => { onIntent({ type: 'field-camp.select', tileId }); onToggle() }} />
     <RouteKey routes={projection.routes} buildSites={projection.buildSites} selectedBuildSiteId={projection.selectedBuildSiteId} onSelect={(siteId) => { onIntent({ type: 'build-site.select', siteId }); onToggle() }} />
     <p>{projection.map.legend ?? '▲ you · W waystone · ✦ revealed cache · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}{projection.fieldCamp?.selectionEnabled && ' · ⌂ suitable camp ground'}{projection.fieldCamp && ' · C field camp'}</p>

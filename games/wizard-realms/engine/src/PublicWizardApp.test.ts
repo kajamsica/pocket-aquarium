@@ -1,9 +1,10 @@
-import { createElement } from 'react'
+import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type { WizardViewIntent } from './view'
 import { intentForView } from './App'
-import { mireglassActionChoices } from './MireglassPlayableApp'
+import { mireglassActionChoices, mireglassNextObjective } from './MireglassPlayableApp'
+import { publicWorldViewProjection } from './PublicWorldView'
 import { createGeneratedWorld } from './domain/generation'
 import { mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
@@ -25,6 +26,7 @@ import { PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_S
   readPublicV6RecoverySnapshot, serializePublicV6World } from './domain/publicWorldV6'
 import { serializeWizardWorld } from './domain/persistence'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
+import { WizardMap } from './view/WizardMap'
 import {
   PUBLIC_V6_LOCK_NAME, advancePublicControls, appendMessages, commitPublicSnapshot, greenwayForPublicView,
   importPublicWorld, inspectPublicEntry, mireglassForPublicView, publicFreshForkChoiceCopy,
@@ -132,12 +134,56 @@ describe('public v9 play session', () => {
   it('previews canonical sites without spending and gates selection to an unblocked v9 frontier', () => {
     const f = fixture(), before = JSON.stringify(f.state)
     expect(publicFieldCampView(f.state, f.tile.id, f.receipt, false))
-      .toEqual({ camps: [], selectionEnabled: true, preview: { tileId: f.tile.id, position: f.position, rejection: null } })
+      .toMatchObject({ camps: [], selectionEnabled: true, preview: { tileId: f.tile.id, position: f.position, rejection: null } })
     expect(publicFieldCampView(f.state, null, f.receipt, false).preview).toBeNull()
     expect(JSON.stringify(f.state)).toBe(before)
     expect(publicFieldCampView(f.state, 'tile-0-0', f.receipt, false).preview?.rejection?.code).toBe('invalid_site')
     expect(publicFieldCampView(f.state, f.tile.id, f.receipt, true)).toMatchObject({ selectionEnabled: false, preview: null })
     expect(publicFieldCampView({ ...f.state, movementOwner: 'greenway' }, f.tile.id, f.receipt, false).selectionEnabled).toBe(false)
+  })
+
+  it('guides an unbuilt camp from Greenway through the marker to the basin approach', () => {
+    const f = fixture()
+    const at = (x: number, z: number, movementOwner: 'greenway' | 'streamed' = 'streamed') => ({
+      ...f.state, movementOwner, player: { ...f.state.player,
+        position: { ...f.state.player.position, x, z } },
+    })
+    const home = publicFieldCampView(at(0, 0, 'greenway'), null, f.receipt, false)
+    const marker = publicFieldCampView(at(-107, 105), null, f.receipt, false)
+    const approach = publicFieldCampView(at(-264, 272), null, f.receipt, false)
+    expect(home.selectionEnabled).toBe(false)
+    expect(home.guidance).toContain('SW of here, about 360 m direct')
+    expect(marker.guidance).toContain('SW of here, about 210 m direct')
+    expect(approach.guidance).toContain('approach is here')
+    for (const view of [home, marker, approach]) {
+      expect(view.guidance).toContain('before the fen bridge')
+      expect(view.guidance).toContain('4 logs + 1 stone')
+      expect(view.guidance).toContain('bridge costs 8 logs')
+      expect(view.guidance).toContain('reserve 4 additional logs')
+      expect(view.guidance).toContain('⌂ appears on discovered suitable ground')
+      expect(view.guidance).not.toMatch(/tile-\d/)
+    }
+    expect(publicFieldCampView(at(-107, 105), null, f.receipt, true).guidance).toBeNull()
+    expect(publicFieldCampView({ ...f.state, fieldCampTileIds: [f.tile.id] }, null, f.receipt, false).guidance).toBeNull()
+  })
+
+  it('uses the same secondary camp guidance in the collapsed HUD, controls and expanded map', () => {
+    const f = fixture()
+    const state = { ...f.state, player: { ...f.state.player,
+      position: { ...f.state.player.position, x: -107, z: 105 } } }
+    const camp = publicFieldCampView(state, null, f.receipt, false)
+    const guidance = camp.guidance!
+    const html = renderToStaticMarkup(createElement(PublicWizardApp, { v9Session: {
+      start: { state, saveRevision: 7, sourceReceipt: f.receipt },
+      commit: async () => ({ ok: false as const, reason: 'source-changed' }),
+    } }))
+    expect(html.split(guidance)).toHaveLength(3)
+    expect(html).toContain(`<strong>Next:</strong> ${mireglassNextObjective(mireglassForPublicView(state)).label}`)
+    const projection = publicWorldViewProjection(state, [], null, null, camp)
+    const map = renderToStaticMarkup(createElement(WizardMap, { projection, open: true,
+      onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+      closeRef: createRef<HTMLButtonElement>() }))
+    expect(map).toContain(guidance)
   })
 
   it('keeps camp IDs through controls and frontier actions, then exports the actual bootstrap and next v9 revision', () => {
@@ -158,7 +204,7 @@ describe('public v9 play session', () => {
     expect(rescue?.snapshot).toMatchObject({ schemaVersion: 'wizard-world/v9', saveRevision: 8, bootstrap: f.bootstrap,
       state: { fieldCampTileIds: [f.tile.id] } })
     expect(publicFieldCampView(next, f.tile.id, f.receipt, false)).toEqual({
-      selectionEnabled: false, preview: null, camps: [{ tileId: f.tile.id, position: f.position }] })
+      selectionEnabled: false, guidance: null, preview: null, camps: [{ tileId: f.tile.id, position: f.position }] })
     expect(() => requirePublicV9State({ ...next, fieldCampTileIds: [] } as typeof next, next)).toThrow('camp history')
     const ring = mireglassFairyRing(seed)
     const atRing = { ...next, player: { ...next.player, position: ring.tile.center,
