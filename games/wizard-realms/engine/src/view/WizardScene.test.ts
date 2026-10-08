@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
+import { mireglassRouteSites } from '../domain/mireglassRouteSites'
 import type { WizardLandmark, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, landmarkAppearance, mireglassDetailFor, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
 import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
@@ -146,6 +147,30 @@ describe('construction scene visibility', () => {
   it('does not draw a duplicate ghost after its route has been built', () => {
     const built = [{ ...routes[0], built: true }, routes[1]]
     expect(constructionVisuals(built, sites, 'ladder-east').map((route) => route.id)).toEqual(['ladder', 'bridge'])
+  })
+
+  it('fits a joined fen deck and steep slate ladder to canonical Mireglass route endpoints', () => {
+    const choices = mireglassRouteSites('greenway-alpha')
+    const bridgeSite = choices.find((site) => site.kind === 'bridge')!
+    const ladderSite = choices.find((site) => site.kind === 'ladder')!
+    const viewOf = (site: typeof bridgeSite, id: string) => ({ id,
+      from: [site.from.x, site.from.y, site.from.z] as const,
+      to: [site.to.x, site.to.y, site.to.z] as const })
+    const bridge = mireglassConstructionGeometry(viewOf(bridgeSite, bridgeSite.routeId))!
+    const ladder = mireglassConstructionGeometry(viewOf(ladderSite, ladderSite.id))!
+    expect(bridge.kind).toBe('bridge')
+    expect(bridge.run).toBe(8)
+    expect(bridge.run + 0.7).toBeGreaterThan(bridgeSite.spanMeters)
+    expect(bridge.run / bridge.count + 0.04).toBeGreaterThan(bridge.run / bridge.count)
+    expect(ladder.kind).toBe('ladder')
+    expect(ladder.rise).toBeCloseTo(1.56)
+    expect(ladder.run).toBeLessThan(1)
+    expect(ladder.pitch).toBeLessThan(-1)
+    expect(ladder.midpoint[1] + 0.14 - ladder.length * Math.sin(-ladder.pitch) / 2)
+      .toBeCloseTo(ladderSite.from.y + 0.14)
+    expect(ladder.midpoint[1] + 0.14 + ladder.length * Math.sin(-ladder.pitch) / 2)
+      .toBeCloseTo(ladderSite.to.y + 0.14)
+    expect(mireglassConstructionGeometry({ ...viewOf(ladderSite, 'greenway_ladder') })).toBeNull()
   })
 })
 

@@ -677,7 +677,50 @@ export function constructionVisuals(routes: readonly WizardRoute[], sites: reado
   return [...routes.filter((route) => route.built), ...(preview ? [{ id: preview.id, from: preview.from, to: preview.to, built: false }] : [])]
 }
 
+/** Mireglass IDs identify authored structure kinds; legacy v5 routes retain their existing view. */
+export function mireglassConstructionGeometry(route: Pick<WizardRoute, 'id' | 'from' | 'to'>) {
+  const bridgeId = 'mireglass_reach/route/fen_bridge'
+  const ladderId = 'mireglass_reach/route/slate_ladder'
+  const kind = route.id === bridgeId || route.id.startsWith(`${bridgeId}/`) ? 'bridge'
+    : route.id === ladderId || route.id.startsWith(`${ladderId}/`) ? 'ladder' : null
+  if (!kind) return null
+  const dx = route.to[0] - route.from[0]
+  const dz = route.to[2] - route.from[2]
+  const horizontalSpan = Math.hypot(dx, dz)
+  if (horizontalSpan < 0.01) return null
+  const rise = route.to[1] - route.from[1]
+  // The ladder leans against the seam between tile centres, rather than lying across the whole 4 m tile span.
+  const run = kind === 'bridge' ? horizontalSpan : Math.min(0.65, horizontalSpan * 0.2)
+  const length = Math.hypot(run, rise)
+  const count = kind === 'bridge' ? Math.ceil(horizontalSpan / 0.65) : Math.max(4, Math.ceil(length / 0.32))
+  return { kind, midpoint: [(route.from[0] + route.to[0]) / 2, (route.from[1] + route.to[1]) / 2,
+    (route.from[2] + route.to[2]) / 2] as const,
+    yaw: Math.atan2(dx, dz), pitch: -Math.atan2(rise, run), run, rise, length, count } as const
+}
+
 function ConstructionRoute({ route }: { route: Pick<WizardRoute, 'id' | 'from' | 'to' | 'built'> }) {
+  const mireglass = mireglassConstructionGeometry(route)
+  if (mireglass) {
+    const material = route.built ? WOOD_MATERIAL : GOLD_MATERIAL
+    const [x, y, z] = mireglass.midpoint
+    if (mireglass.kind === 'bridge') return <group name="Mireglass fen bridge" position={[x, y + 0.16, z]} rotation={[mireglass.pitch, mireglass.yaw, 0]}>
+      {/* One continuous deck and two longitudinal beams carry joined planks across both banks. */}
+      <mesh geometry={UNIT_BOX} material={material} scale={[1.58, 0.14, mireglass.run + 0.7]} castShadow={route.built} receiveShadow />
+      {[-0.57, 0.57].map((side) => <mesh key={side} geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL}
+        position={[side, -0.13, 0]} scale={[0.15, 0.15, mireglass.run + 0.55]} castShadow={route.built} />)}
+      {Array.from({ length: mireglass.count }, (_, index) => <mesh key={index} geometry={UNIT_BOX}
+        material={route.built && index % 2 ? DARK_WOOD_MATERIAL : material}
+        position={[0, 0.105, -mireglass.run / 2 + (index + 0.5) * mireglass.run / mireglass.count]}
+        scale={[1.68, 0.06, mireglass.run / mireglass.count + 0.04]} castShadow={route.built} receiveShadow />)}
+    </group>
+    return <group name="Mireglass slate ladder" position={[x, y + 0.14, z]} rotation={[mireglass.pitch, mireglass.yaw, 0]}>
+      {[-0.47, 0.47].map((side) => <mesh key={side} geometry={UNIT_BOX} material={material}
+        position={[side, 0, 0]} scale={[0.11, 0.11, mireglass.length + 0.22]} castShadow={route.built} />)}
+      {Array.from({ length: mireglass.count }, (_, index) => <mesh key={index} geometry={UNIT_BOX} material={material}
+        position={[0, 0.04, -mireglass.length / 2 + (index + 0.5) * mireglass.length / mireglass.count]}
+        scale={[1.05, 0.09, 0.14]} castShadow={route.built} />)}
+    </group>
+  }
   const from = new THREE.Vector3(...route.from)
   const to = new THREE.Vector3(...route.to)
   const midpoint = from.clone().lerp(to, 0.5)
