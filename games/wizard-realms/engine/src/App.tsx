@@ -198,8 +198,9 @@ export function objectiveFor(state: WizardWorldState): string {
     if (distance(state.player.position, waystone.position) <= INTERACTION_RANGE) return 'Study the Greenway waystone to learn Wayfinder Glow.'
     return `Greenway waystone: ${bearingTo(waystone.position)}. Study it to learn Wayfinder Glow.`
   }
-  if (state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
-  if (!state.excavatedDigSiteIds.includes('practice_mound')) {
+  const ladderBuilt = state.builtRouteIds.includes('greenway_ladder')
+  if (!ladderBuilt && state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
+  if (!ladderBuilt && !state.excavatedDigSiteIds.includes('practice_mound')) {
     if (!owned(state, 'field_spade')) return outfitters('Buy a field spade')
     if (state.player.equipment.mainHand !== 'field_spade') return 'Equip the field spade from your backpack.'
     const mound = state.digSites.find((site) => site.id === 'practice_mound')!
@@ -207,7 +208,7 @@ export function objectiveFor(state: WizardWorldState): string {
       ? 'Excavate the Greenway practice mound to train excavation.'
       : `Greenway practice mound: ${bearingTo(mound.position)}. Excavate it to train excavation.`
   }
-  if (!state.builtRouteIds.includes('greenway_ladder')) {
+  if (!ladderBuilt) {
     if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
       ? 'Equip the woodcutter axe to gather ladder materials.'
       : outfitters('Buy a woodcutter axe')

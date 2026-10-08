@@ -404,6 +404,24 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.')
   })
 
+  it('skips optional fog and mound lessons after the Greenway ladder is built', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    state.studiedInscriptionIds = ['greenway_waystone']
+    expect(objectiveFor(state)).toBe("Head north to the fog at Greenway's edge, then cast Wayfinder Glow.")
+
+    state.builtRouteIds.push('greenway_ladder')
+    const before = JSON.stringify(state)
+    expect(objectiveFor(state)).toBe('Stand at the foot of the completed ladder and press E to cross north, then cast Wayfinder Glow to reveal the ridge cache.')
+    expect(JSON.stringify(state)).toBe(before)
+
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    state.revealedDigSiteIds.push('ridge_cache')
+    expect(objectiveFor(state)).toContain('Re-equip the field spade')
+    state.player.equipment.mainHand = 'field_spade'
+    expect(objectiveFor(state)).toBe('Cross the ladder north, then find the revealed ridge cache (✦ on the map).')
+  })
+
   it('updates waystone bearings from the real inscription and calls for Study in reach', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
