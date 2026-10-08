@@ -29,3 +29,5 @@ export { worldTileAtGrid, worldChunk, activeChunkCoordinates } from './worldChun
 export type { WorldChunk, ChunkCoordinate } from './worldChunks'
 export { createActiveWorldTerrain } from './activeWorldTerrain'
 export type { ActiveWorldTerrain, ReadonlyWorldTile } from './activeWorldTerrain'
+export { createStreamedWorld } from './streamedWorld'
+export type { StreamedWorldState, StreamedWorldIntent, StreamedWorldEvent, StreamedWorldRejection, StreamedWorldAdvanceResult, StreamedWorldRuntime } from './streamedWorld'
