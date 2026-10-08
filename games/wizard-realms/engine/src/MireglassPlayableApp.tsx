@@ -1,0 +1,358 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
+import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
+import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES } from './domain/mireglassExpedition'
+import { mireglassRouteSites } from './domain/mireglassRouteSites'
+import { createMireglassWorld, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
+import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
+import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
+import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
+import type { EquipmentSlot, WizardItemStack } from './view/contracts'
+
+const SEED = 'greenway-alpha'
+const STEP_MS = 50
+const REACH = 3
+const ITEM_NAMES: Readonly<Record<MireglassItemId, string>> = {
+  woodcutters_axe: 'Woodcutter axe', logs: 'Logs', marsh_herb: 'Marsh herb', stone: 'Stone',
+  iron_ore: 'Iron ore', apprentice_hat: 'Apprentice hat', traveler_tunic: 'Traveler tunic',
+  trail_leggings: 'Trail leggings', leather_boots: 'Leather boots', oak_wand: 'Oak wand',
+  wooden_shield: 'Wooden shield', field_spade: 'Field spade', ancient_relic: 'Ancient relic',
+  'mireglass_reach/item/seal': 'Mireglass seal', 'mireglass_reach/item/waders': 'Fen waders',
+}
+const EQUIPPABLE: Partial<Record<MireglassItemId, readonly EquipmentSlot[]>> = {
+  woodcutters_axe: ['mainHand'], field_spade: ['mainHand'], 'mireglass_reach/item/waders': ['feet'],
+  apprentice_hat: ['head'], traveler_tunic: ['chest'], trail_leggings: ['legs'],
+  leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
+}
+const REJECTION_TEXT: Readonly<Record<StreamedWorldRejection['code'], string>> = {
+  out_of_bounds: 'The world boundary is here.', terrain_missing: 'Terrain is not active here.',
+  airborne: 'You are already airborne.', invalid_value: 'Movement was rejected.',
+  fen_channel: 'The fen channel needs a built bridge.', slate_cliff: 'The slate rise needs a built ladder.',
+}
+
+const STYLES = `
+.wr-mireglass{position:fixed;inset:0;background:#14221f}
+.wr-mireglass .wr-surface{min-height:0}
+.wr-mireglass .wr-topbar,.wr-mireglass .wr-backpack,.wr-mireglass .wr-backpack-toggle,.wr-mireglass .wr-gear,.wr-mireglass .wr-trade,.wr-mireglass .wr-context,.wr-mireglass .wr-prompt,.wr-mireglass .wr-events,.wr-mireglass .wr-focus-note,.wr-mireglass .wr-diagnostics{display:none}
+.wr-mireglass-panel{position:absolute;z-index:6;right:14px;top:14px;box-sizing:border-box;width:min(348px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;padding:14px;border:1px solid #d0bb8588;border-radius:14px;background:#101b18f2;color:#f6f0db;box-shadow:0 12px 38px #0009;font:13px/1.36 system-ui}
+.wr-mireglass-panel h1{margin:0;color:#f3d589;font:700 21px Georgia,serif}.wr-mireglass-panel h2{margin:13px 0 5px;color:#e8c981;font:700 13px system-ui;text-transform:uppercase;letter-spacing:.08em}.wr-mireglass-panel p{margin:5px 0}.wr-mireglass-panel small{color:#afc3b8}.wr-mireglass-panel .warning{color:#ffd4aa}.wr-mireglass-panel .readout{font:11px/1.5 monospace;color:#b9d4c4}.wr-mireglass-panel .status{margin:8px 0;padding:7px;border-radius:7px;background:#273a31;color:#fff0cb}.wr-mireglass-panel .status[data-error=true]{background:#542f2d;color:#ffe0d4}
+.wr-mireglass-panel button{box-sizing:border-box;min-height:42px;border:1px solid #c7aa6477;border-radius:7px;background:#344d3f;color:#fff0c7;cursor:pointer}.wr-mireglass-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-mireglass-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wr-mireglass-actions button{padding:7px;text-align:left}.wr-mireglass-actions button small{display:block;font-size:11px}.wr-mireglass-stages{display:grid;gap:3px;padding-left:18px;margin:6px 0}.wr-mireglass-stages li.done{color:#9cd3a4}.wr-mireglass-stages li.pending{color:#ead8aa}.wr-mireglass-top{display:flex;align-items:start;justify-content:space-between;gap:8px}.wr-mireglass-top button{min-width:44px}.wr-mireglass-panel[data-collapsed=true]{width:auto;max-width:min(320px,calc(100vw - 28px))}.wr-mireglass-panel[data-collapsed=true] .wr-mireglass-content{display:none}
+@media(max-width:719px){.wr-mireglass-panel{top:auto;bottom:calc(144px + env(safe-area-inset-bottom,0px));max-height:43vh}.wr-mireglass-panel[data-collapsed=true]{bottom:calc(144px + env(safe-area-inset-bottom,0px))}.wr-mireglass .wr-map-toggle{top:8px;right:8px}}
+@media(min-width:720px) and (max-height:590px){.wr-mireglass-panel{left:8px;right:auto;top:8px;max-height:calc(100vh - 16px);width:min(292px,31vw)}.wr-mireglass .wr-map-toggle{left:auto;right:8px;top:8px}}
+`
+
+const distance = (a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }) =>
+  Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
+const owned = (state: MireglassWorldState, itemId: MireglassItemId) => state.player.inventory
+  .filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
+const stackFor = (itemId: MireglassItemId, quantity: number): WizardItemStack => ({
+  id: `inventory-${itemId}`, itemId, name: ITEM_NAMES[itemId], quantity, equippableSlots: EQUIPPABLE[itemId],
+})
+const routeName = (kind: 'bridge' | 'ladder') => kind === 'bridge' ? 'Fen bridge' : 'Slate ladder'
+const pointText = (point: { x: number; z: number }) => `x ${point.x.toFixed(0)}, z ${point.z.toFixed(0)}`
+export function bearingText(from: { x: number; z: number }, to: { x: number; z: number }): string {
+  const dx = to.x - from.x
+  const dz = to.z - from.z
+  if (Math.hypot(dx, dz) < 1) return 'here'
+  const compass = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
+  return compass[(Math.round(Math.atan2(dx, -dz) / (Math.PI / 4)) + 8) % 8]
+}
+
+export interface MireglassActionChoice {
+  id: string
+  label: string
+  detail: string
+  action: MireglassExpeditionAction
+  distanceMeters: number
+}
+
+/** The tray shows in-reach actions only. The reducer still checks every prerequisite and distance. */
+export function mireglassActionChoices(state: MireglassWorldState): MireglassActionChoice[] {
+  const { seed, player, expedition } = state
+  const choices: MireglassActionChoice[] = []
+  const add = (id: string, label: string, detail: string, target: { x: number; y: number; z: number }, action: MireglassExpeditionAction, reach = REACH) => {
+    const meters = distance(player.position, target)
+    if (meters <= reach) choices.push({ id, label, detail, action, distanceMeters: meters })
+  }
+  const anchors = mireglassAnchors(seed)
+  if (!expedition.fringeMarkerStudied) add('study', 'Study frontier marker', 'Learn Wayfinder Glow', anchors.fringeMarker.tile.center, { type: 'study_fringe_marker' })
+  for (const tree of mireglassResources(seed)) {
+    if (!expedition.depletedResourceIds.includes(tree.id)) add(`chop:${tree.id}`, 'Chop reserved timber', '+4 logs, requires axe', tree.tile.center, { type: 'chop_tree', resourceId: tree.id })
+    else if (!expedition.dugStumpIds.includes(tree.id)) add(`stump:${tree.id}`, 'Dig tree stump', '+30 excavation XP and 1 stone, requires spade', tree.tile.center, { type: 'dig_tree_stump', resourceId: tree.id })
+  }
+  for (const site of mireglassRouteSites(seed)) {
+    const selectedId = expedition.builtRoutes[site.kind]
+    if (selectedId === null) add(`build:${site.id}`, `Build ${routeName(site.kind)}`, `${site.logCost} logs`, site.from, { type: 'build_route', siteId: site.id })
+    else if (selectedId === site.id) {
+      add(`cross:${site.id}:from`, `Cross ${routeName(site.kind)}`, 'To far bank', site.from, { type: 'traverse_route', siteId: site.id, from: 'from' })
+      add(`cross:${site.id}:to`, `Return by ${routeName(site.kind)}`, 'To near bank', site.to, { type: 'traverse_route', siteId: site.id, from: 'to' })
+    }
+  }
+  if (!expedition.cacheRevealed) add('cast', 'Cast Wayfinder Glow', 'Reveal the seal cache', anchors.sealCache.tile.center, { type: 'cast_wayfinder_glow' }, 8)
+  if (expedition.cacheRevealed && !expedition.cacheExcavated) add('excavate', 'Excavate seal cache', 'Requires spade and excavation Lv2', anchors.sealCache.tile.center, { type: 'excavate_cache' })
+  add('buy-spade', 'Buy field spade', `${MIREGLASS_OUTPOST_CATALOG.field_spade.price} coins · ${expedition.shopStock.field_spade} left`, anchors.salvager.tile.center, { type: 'buy_item', itemId: 'field_spade' })
+  add('buy-waders', 'Buy fen waders', `${MIREGLASS_OUTPOST_CATALOG['mireglass_reach/item/waders'].price} coins · ${expedition.shopStock['mireglass_reach/item/waders']} left`, anchors.salvager.tile.center, { type: 'buy_item', itemId: 'mireglass_reach/item/waders' })
+  if (owned(state, 'logs')) add('sell-logs', 'Sell one log', `${MIREGLASS_OUTPOST_SELL_PRICES.logs} coins`, anchors.salvager.tile.center, { type: 'sell_item', itemId: 'logs', quantity: 1 })
+  if (owned(state, 'mireglass_reach/item/seal')) add('sell-seal', 'Sell Mireglass seal', `${MIREGLASS_OUTPOST_SELL_PRICES['mireglass_reach/item/seal']} coins`, anchors.salvager.tile.center, { type: 'sell_item', itemId: 'mireglass_reach/item/seal', quantity: 1 })
+  for (const itemId of ['woodcutters_axe', 'field_spade', 'mireglass_reach/item/waders'] as const) {
+    const slot = itemId === 'mireglass_reach/item/waders' ? 'feet' : 'mainHand'
+    if (owned(state, itemId) && player.equipment[slot] !== itemId) choices.push({
+      id: `equip:${itemId}`, label: `Equip ${ITEM_NAMES[itemId]}`, detail: `${slot === 'feet' ? 'Feet' : 'Main hand'} slot`,
+      action: { type: 'equip_item', itemId }, distanceMeters: 0,
+    })
+  }
+  return choices.sort((a, b) => a.distanceMeters - b.distanceMeters || a.label.localeCompare(b.label))
+}
+
+export function mireglassNextObjective(state: MireglassWorldState): { label: string; position: { x: number; z: number } } {
+  const { seed, player, expedition } = state
+  const anchors = mireglassAnchors(seed)
+  const trees = mireglassResources(seed)
+  const routes = mireglassRouteSites(seed)
+  const closest = <T extends { x: number; y: number; z: number }>(positions: readonly T[]) => [...positions].sort((a, b) => distance(player.position, a) - distance(player.position, b))[0]
+  if (!expedition.fringeMarkerStudied) return { label: 'Study the frontier marker to learn Wayfinder Glow', position: anchors.fringeMarker.tile.center }
+  if (owned(state, 'field_spade') < 1) return { label: 'Visit the salvager to buy a field spade', position: anchors.salvager.tile.center }
+  if (player.skillXp.excavation < 30) {
+    const stump = closest(trees.filter((tree) => expedition.depletedResourceIds.includes(tree.id)
+      && !expedition.dugStumpIds.includes(tree.id)).map((tree) => tree.tile.center))
+    if (stump) return { label: 'Equip the spade and dig a chopped stump to train excavation', position: stump }
+    return { label: 'Equip the axe and chop a tree for stump-digging practice', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
+  }
+  if (owned(state, 'logs') < 8 && expedition.builtRoutes.bridge === null) return { label: 'Equip the axe and chop timber for the fen bridge', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
+  if (expedition.builtRoutes.bridge === null) return { label: 'Build the eight-log fen bridge', position: closest(routes.filter((site) => site.kind === 'bridge').map((site) => site.from)) }
+  const bridge = routes.find((site) => site.id === expedition.builtRoutes.bridge)!
+  const ladder = routes.find((site) => site.id === expedition.builtRoutes.ladder)
+  if (expedition.cacheExcavated) {
+    if (ladder && player.position.z >= ladder.to.z) return { label: 'Descend the built slate ladder', position: ladder.to }
+    if (player.position.z >= bridge.to.z) return { label: 'Return across the built fen bridge', position: bridge.to }
+    return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
+  }
+  if (player.position.z < bridge.to.z) return { label: 'Cross the built fen bridge', position: bridge.from }
+  if (expedition.builtRoutes.ladder === null && owned(state, 'logs') < 4) return { label: 'Gather four more logs for the slate ladder', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'after_bridge').map((tree) => tree.tile.center)) ?? anchors.slateBerm.tile.center }
+  if (expedition.builtRoutes.ladder === null) return { label: 'Build the four-log slate ladder', position: closest(routes.filter((site) => site.kind === 'ladder').map((site) => site.from)) }
+  if (ladder && player.position.z < ladder.to.z) return { label: 'Climb the built slate ladder', position: ladder.from }
+  if (!expedition.cacheRevealed) return { label: 'Reach the cache and cast Wayfinder Glow', position: anchors.sealCache.tile.center }
+  if (!expedition.cacheExcavated) return { label: player.equipment.mainHand === 'field_spade'
+    ? 'Excavate the revealed seal cache' : 'Equip the field spade and excavate the seal cache', position: anchors.sealCache.tile.center }
+  return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
+}
+
+/** Read-only scene adapter. Movement and actions always run through createMireglassWorld. */
+export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: MireglassWorldState, messages: readonly string[], selectedSiteId: string | null): WizardViewProjection {
+  // streamedProjection reads only activeTiles/tileAtWorld; the campaign runtime owns those same read methods.
+  const streamedView = streamedProjection(runtime as unknown as StreamedWorldRuntime, {
+    seed: state.seed, tick: state.tick, discoveredTileIds: state.discoveredTileIds,
+    player: { position: state.player.position, yaw: state.player.yaw, pitch: state.player.pitch,
+      verticalVelocity: state.player.verticalVelocity },
+  } satisfies StreamedWorldState, messages)
+  const activeIds = new Set(runtime.activeTiles().map((tile) => tile.id))
+  const discovered = new Set(state.discoveredTileIds)
+  const anchors = mireglassAnchors(state.seed)
+  const trees = mireglassResources(state.seed)
+  const sites = mireglassRouteSites(state.seed)
+  const routeFor = (kind: 'bridge' | 'ladder') => sites.find((site) => site.id === state.expedition.builtRoutes[kind])
+    ?? sites.find((site) => site.kind === kind)!
+  const builtSites = sites.filter((site) => activeIds.has(runtime.tileAtWorld(site.from.x, site.from.z)?.id ?? '')).map((site) => ({
+    id: site.id, routeId: site.routeId, label: `${routeName(site.kind)} at ${pointText(site.from)}`,
+    from: [site.from.x, site.from.y, site.from.z] as const, to: [site.to.x, site.to.y, site.to.z] as const,
+    logCost: site.logCost, discovered: discovered.has(runtime.tileAtWorld(site.from.x, site.from.z)?.id ?? ''),
+    status: state.expedition.builtRoutes[site.kind] === site.id ? 'built' as const
+      : state.expedition.builtRoutes[site.kind] !== null ? 'obstructed' as const
+      : owned(state, 'logs') < site.logCost ? 'needs_logs' as const
+      : distance(state.player.position, site.from) > REACH ? 'too_far' as const : 'ready' as const,
+    reason: state.expedition.builtRoutes[site.kind] === site.id ? 'Built here'
+      : state.expedition.builtRoutes[site.kind] !== null ? 'Another site was built'
+      : owned(state, 'logs') < site.logCost ? `Need ${site.logCost} logs`
+      : distance(state.player.position, site.from) > REACH ? 'Move within three meters of the approach' : 'Ready to build',
+  }))
+  const inventory = state.player.inventory.map((stack) => stackFor(stack.itemId, stack.quantity))
+  const equipped = (slot: EquipmentSlot) => state.player.equipment[slot]
+    ? stackFor(state.player.equipment[slot]!, 1) : null
+  const tradeListing = (slotIndex: 0 | 1 | 2 | 3) => {
+    const slot = state.player.tradeSlots[slotIndex]
+    return slot.itemId ? { id: `trade-${slotIndex}`, itemName: ITEM_NAMES[slot.itemId],
+      quantity: slot.quantity, unitPrice: slot.unitPrice } : null
+  }
+  const store = anchors.salvager
+  const storeTile = runtime.tileAtWorld(store.tile.center.x, store.tile.center.z)
+  const resourceTileIds = new Set(trees.filter((tree) => !state.expedition.depletedResourceIds.includes(tree.id)).map((tree) => tree.tile.id))
+  const siteTileIds = new Set(builtSites.filter((site) => site.discovered && site.status !== 'built' && site.status !== 'obstructed').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
+  const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
+  return {
+    ...streamedView,
+    map: { ...streamedView.map, title: 'Mireglass expedition (unsaved dev session)',
+      legend: '▲ you · ◇ route site · ✓ built route · S outpost · • timber · ? undiscovered',
+      tiles: streamedView.map.tiles.map((tile) => ({ ...tile,
+        hasResource: tile.discovered && resourceTileIds.has(tile.id),
+        hasStore: tile.discovered && tile.id === storeTile?.id,
+        hasRouteSite: tile.discovered && siteTileIds.has(tile.id),
+        hasBuiltRoute: tile.discovered && builtTileIds.has(tile.id),
+      })) },
+    resources: trees.filter((tree) => activeIds.has(tree.tile.id)).map((tree) => ({
+      id: tree.id, kind: 'tree' as const, label: 'Mireglass timber',
+      position: [tree.tile.center.x, tree.tile.center.y, tree.tile.center.z] as const,
+      available: !state.expedition.depletedResourceIds.includes(tree.id),
+    })),
+    routes: (['bridge', 'ladder'] as const).map((kind) => {
+      const site = routeFor(kind)
+      return { id: site.routeId, label: routeName(kind),
+        from: [site.from.x, site.from.y, site.from.z] as const,
+        to: [site.to.x, site.to.y, site.to.z] as const,
+        built: state.expedition.builtRoutes[kind] !== null, unlocked: true, logCost: site.logCost }
+    }),
+    buildSites: builtSites,
+    selectedBuildSiteId: selectedSiteId,
+    stores: activeIds.has(store.tile.id) ? [{ id: store.id, name: 'Mireglass salvager',
+      position: [store.tile.center.x, store.tile.center.y, store.tile.center.z],
+      listings: [{ id: 'field_spade', name: ITEM_NAMES.field_spade, price: MIREGLASS_OUTPOST_CATALOG.field_spade.price,
+        stock: state.expedition.shopStock.field_spade },
+      { id: 'mireglass_reach/item/waders', name: ITEM_NAMES['mireglass_reach/item/waders'],
+        price: MIREGLASS_OUTPOST_CATALOG['mireglass_reach/item/waders'].price,
+        stock: state.expedition.shopStock['mireglass_reach/item/waders'] }], sellOffers: [] }] : [],
+    nearbyStoreId: distance(state.player.position, store.tile.center) <= REACH ? store.id : null,
+    openStoreId: null,
+    backpack: { capacity: state.player.backpackCapacity, stacks: inventory },
+    coins: state.player.coins,
+    experience: { xp: state.player.xp % 100, nextLevelXp: 100, level: state.player.level },
+    equipment: { head: equipped('head'), chest: equipped('chest'), legs: equipped('legs'), feet: equipped('feet'),
+      mainHand: equipped('mainHand'), offHand: equipped('offHand') },
+    skillXp: { ...state.player.skillXp }, learnedSpellIds: [...state.player.learnedSpellIds],
+    tradeListings: [tradeListing(0), tradeListing(1), tradeListing(2), tradeListing(3)],
+    nearbyInteraction: null,
+    recentEvents: messages,
+  }
+}
+
+function eventText(event: MireglassExpeditionEvent): string {
+  switch (event.type) {
+    case 'tree_chopped': return 'Chopped timber: +4 logs and woodcutting XP.'
+    case 'tree_stump_dug': return 'Dug a stump: +1 stone and 30 excavation XP.'
+    case 'fringe_marker_studied': return event.learned
+      ? 'Studied the marker and learned Wayfinder Glow.' : 'Studied the marker; Wayfinder Glow was already known.'
+    case 'route_built': return `Built ${routeName(event.kind)} for ${event.logCost} logs.`
+    case 'route_traversed': return `Crossed the ${event.routeId.includes('fen') ? 'fen bridge' : 'slate ladder'}.`
+    case 'cache_revealed': return 'Wayfinder Glow revealed the seal cache.'
+    case 'cache_excavated': return 'Excavated the Mireglass seal.'
+    case 'item_bought': return `Bought ${ITEM_NAMES[event.itemId]} for ${event.price} coins.`
+    case 'item_sold': return `Sold ${event.quantity} ${ITEM_NAMES[event.itemId]} for ${event.totalPrice} coins.`
+    case 'item_equipped': return `Equipped ${ITEM_NAMES[event.itemId]}.`
+  }
+}
+
+/** Fresh skill and inventory state, but a frontier dev spawn avoids a several-minute walk from Greenway. */
+export function createMireglassDevWorld(seed = SEED): MireglassWorldRuntime {
+  const frontier = mireglassAnchors(seed).fringeMarker.tile.center
+  return createMireglassWorld(seed, undefined, { x: frontier.x, z: frontier.z })
+}
+
+export function MireglassPlayableApp() {
+  const [runtime] = useState(() => createMireglassDevWorld())
+  const [state, setState] = useState(runtime.state)
+  const [messages, setMessages] = useState<string[]>(['Fresh frontier start. Study the marker, then equip your axe. This dev session is unsaved.'])
+  const [error, setError] = useState(false)
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState(false)
+  const movement = useRef<readonly [number, number]>([0, 0])
+  const queued = useRef<StreamedWorldIntent[]>([])
+  const clock = useRef<{ last: number | null; accrued: number }>({ last: null, accrued: 0 })
+
+  const report = useCallback((text: string, rejected = false) => {
+    setError(rejected)
+    setMessages((current) => [...current.slice(-2), text])
+  }, [])
+  const act = useCallback((action: MireglassExpeditionAction) => {
+    const result = runtime.act(action)
+    setState(result.state)
+    report(result.rejection ? result.rejection.message : eventText(result.event), !!result.rejection)
+  }, [runtime, report])
+
+  useEffect(() => {
+    const reset = () => { movement.current = [0, 0]; clock.current = { last: null, accrued: 0 } }
+    const timer = window.setInterval(() => {
+      if (document.hidden) return
+      const now = performance.now()
+      const tickClock = clock.current
+      tickClock.accrued += tickClock.last === null ? 0 : Math.max(0, now - tickClock.last)
+      tickClock.last = now
+      const steps = Math.min(12, Math.floor(tickClock.accrued / STEP_MS))
+      tickClock.accrued = steps === 12 ? 0 : tickClock.accrued - steps * STEP_MS
+      if (!steps) return
+      let rejection: string | undefined
+      for (let index = 0; index < steps; index += 1) {
+        const intents = [...(index === 0 ? queued.current : []), ...streamedControlIntents(runtime.state.player.yaw, movement.current)]
+        const result = runtime.advance(intents)
+        if (result.rejections[0]) rejection = REJECTION_TEXT[result.rejections[0].code]
+      }
+      queued.current = []
+      setState(runtime.state)
+      if (rejection) report(rejection, true)
+    }, STEP_MS)
+    document.addEventListener('visibilitychange', reset)
+    window.addEventListener('blur', reset)
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', reset); window.removeEventListener('blur', reset) }
+  }, [runtime, report])
+
+  const choices = useMemo(() => mireglassActionChoices(state), [state])
+  const onIntent = useCallback((intent: WizardViewIntent) => {
+    if (intent.type === 'movement') movement.current = intent.vector
+    else if (intent.type === 'movement.tap') queued.current.push(...streamedControlIntents(runtime.state.player.yaw, intent.vector))
+    else if (intent.type === 'jump') queued.current.push({ type: 'jump' })
+    else if (intent.type === 'interact') {
+      const nearest = mireglassActionChoices(runtime.state)[0]
+      if (nearest) act(nearest.action)
+      else report('Move closer to a marker, tree, route, cache, or outpost.', true)
+    } else if (intent.type === 'build-site.select') {
+      setSelectedSiteId(intent.siteId)
+      if (intent.siteId) report('Route site selected. Follow its coordinates, then build within three meters.')
+    }
+    else if (intent.type === 'build-site.confirm') act({ type: 'build_route', siteId: intent.siteId })
+    else if (intent.type === 'spell.cast') act({ type: 'cast_wayfinder_glow' })
+    else if (intent.type === 'store.select-listing' && (intent.listingId === 'field_spade' || intent.listingId === 'mireglass_reach/item/waders')) act({ type: 'buy_item', itemId: intent.listingId })
+    else if (intent.type === 'store.sell-item' && (intent.itemId === 'logs' || intent.itemId === 'mireglass_reach/item/seal')) act({ type: 'sell_item', itemId: intent.itemId, quantity: intent.quantity })
+    else if (intent.type === 'equipment.equip') {
+      const itemId = intent.stackId.replace(/^inventory-/, '')
+      if (itemId === 'woodcutters_axe' || itemId === 'field_spade' || itemId === 'mireglass_reach/item/waders') act({ type: 'equip_item', itemId })
+      else report('That equipment action is not part of this dev journey.', true)
+    } else report('This action is not implemented in the Mireglass dev journey.', true)
+  }, [runtime, act, report])
+  const projection = useMemo(() => mireglassViewProjection(runtime, state, messages, selectedSiteId), [runtime, state, messages, selectedSiteId])
+  const objective = useMemo(() => mireglassNextObjective(state), [state])
+  const progress = state.expedition
+  const player = state.player
+  const selectedSite = selectedSiteId ? mireglassRouteSites(state.seed).find((site) => site.id === selectedSiteId) : undefined
+  const nearMeters = distance(player.position, { ...objective.position, y: runtime.tileAtWorld(objective.position.x, objective.position.z)?.center.y ?? player.position.y })
+  const sealSold = progress.cacheExcavated && owned(state, 'mireglass_reach/item/seal') === 0
+
+  return <main className="wr-mireglass">
+    <WizardSurface projection={projection} onIntent={onIntent} />
+    <style>{STYLES}</style>
+    <aside className="wr-mireglass-panel" data-collapsed={collapsed} aria-label="Mireglass expedition controls">
+      <div className="wr-mireglass-top"><h1>Mireglass Reach</h1><button type="button" aria-label={collapsed ? 'Expand expedition controls' : 'Collapse expedition controls'} onClick={() => setCollapsed((value) => !value)}>{collapsed ? 'Open' : '−'}</button></div>
+      <div className="wr-mireglass-content">
+        <p className="warning">Unsaved dev journey. Frontier spawn is a travel shortcut only, with ordinary starter skills and items. Reloading starts fresh; v5 saves are untouched.</p>
+        <p><b>Next:</b> {sealSold ? 'Expedition returned and seal traded.' : objective.label}</p>
+        {!sealSold && <p className="readout">Target {bearingText(player.position, objective.position)} · {pointText(objective.position)} · {nearMeters.toFixed(0)}m away</p>}
+        {selectedSite && <p className="readout">Selected {routeName(selectedSite.kind)} site: {bearingText(player.position, selectedSite.from)} · {pointText(selectedSite.from)} · {distance(player.position, selectedSite.from).toFixed(0)}m away</p>}
+        <p className="readout">You: x {player.position.x.toFixed(1)}, y {player.position.y.toFixed(1)}, z {player.position.z.toFixed(1)} · {player.coins} coins · {state.discoveredTileIds.length} tiles</p>
+        <p className="readout">Pack {player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)}/{player.backpackCapacity}: {player.inventory.map((stack) => `${ITEM_NAMES[stack.itemId]} ×${stack.quantity}`).join(', ') || 'empty'}</p>
+        <p className="readout">Hand: {player.equipment.mainHand ? ITEM_NAMES[player.equipment.mainHand] : 'empty'} · Feet: {player.equipment.feet ? ITEM_NAMES[player.equipment.feet] : 'empty'} · Glow: {player.learnedSpellIds.includes('wayfinder_glow') ? 'learned' : 'unknown'} · Excavation Lv{1 + Math.floor(player.skillXp.excavation / 30)}</p>
+        <p className="readout">W/S move · A/D turn · Space jump · E nearest action · M map</p>
+        <div className="status" data-error={error} role="status">{messages.at(-1)}</div>
+        <h2>Available here</h2>
+        <div className="wr-mireglass-actions">{choices.map((choice) => <button type="button" key={choice.id} onClick={() => act(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>
+        {!choices.length && <p><small>Walk toward the next target. The map shows discovered routes and resources.</small></p>}
+        <h2>Expedition path</h2>
+        <ol className="wr-mireglass-stages">
+          <li className={progress.fringeMarkerStudied ? 'done' : 'pending'}>Study the frontier marker</li>
+          <li className={owned(state, 'field_spade') ? 'done' : 'pending'}>Buy a field spade</li>
+          <li className={player.skillXp.excavation >= 30 ? 'done' : 'pending'}>Dig a chopped stump to train excavation</li>
+          <li className={progress.builtRoutes.bridge ? 'done' : 'pending'}>Gather logs and build the fen bridge</li>
+          <li className={progress.builtRoutes.ladder ? 'done' : 'pending'}>Cross and build the slate ladder</li>
+          <li className={progress.cacheRevealed ? 'done' : 'pending'}>Cast Glow at the cache</li>
+          <li className={progress.cacheExcavated ? 'done' : 'pending'}>Excavate the seal</li>
+          <li className={sealSold ? 'done' : 'pending'}>Return to the salvager and trade</li>
+        </ol>
+      </div>
+    </aside>
+  </main>
+}
