@@ -5,12 +5,14 @@ import { createGeneratedWorld } from './domain/generation'
 import { mireglassAnchors } from './domain/mireglassContent'
 import { actPublicMireglass } from './domain/publicWorldActions'
 import { createFreshPublicWorld } from './domain/publicWorldState'
-import { PUBLIC_V6_ROOT_KEY, loadPublicV6Root } from './domain/publicWorldV6'
+import { PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_STAGE_KEY,
+  loadPublicV6Root, readPublicV6RecoverySnapshot, serializePublicV6World } from './domain/publicWorldV6'
 import { serializeWizardWorld } from './domain/persistence'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
 import {
   PUBLIC_V6_LOCK_NAME, advancePublicControls, commitPublicSnapshot, greenwayForPublicView,
-  importPublicWorld, inspectPublicEntry, mireglassForPublicView, resumePublicWorld, startFreshPublicWorld,
+  importPublicWorld, inspectPublicEntry, mireglassForPublicView, publicRecoveryChoices,
+  recoverPublicWorld, resumePublicWorld, startFreshPublicWorld,
   type PublicLockProvider,
 } from './PublicWizardApp'
 
@@ -162,5 +164,101 @@ describe('public v6 app boundary', () => {
     expect(resumed).toEqual({ ok: false, reason: 'pending-stage' })
     expect(storage.getItem(PUBLIC_V6_ROOT_KEY)).toBe(started.value.bytes)
     expect(storage.getItem('wizard-realms:world:v6:stage')).toBe('unfinished-other-save')
+  })
+
+  it('offers validated pending stage and committed root as explicit choices, then archives before promoting stage', async () => {
+    const storage = memoryStorage()
+    const { provider, names } = webLocks()
+    const started = await startFreshPublicWorld(storage, provider, 'greenway-classic-v1', false)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    const root = loadPublicV6Root(storage)
+    expect(root.status).toBe('valid-playable')
+    if (root.status !== 'valid-playable') return
+    const moved = advancePublicControls(root.root.state, [], [[0, 1]])
+    const stagedBytes = serializePublicV6World({ schemaVersion: PUBLIC_V6_SCHEMA,
+      saveRevision: root.root.saveRevision + 1, bootstrap: root.root.bootstrap, state: moved.state })
+    storage.values.set(PUBLIC_V6_STAGE_KEY, stagedBytes)
+    const entry = await inspectPublicEntry(storage, provider)
+    expect(entry.ok).toBe(true)
+    if (!entry.ok || entry.value.recovery.status !== 'available') return
+    expect(publicRecoveryChoices(entry.value.recovery.snapshot).map((choice) => choice.source))
+      .toEqual(expect.arrayContaining(['root', 'stage']))
+    const recovered = await recoverPublicWorld(storage, provider, 'stage', entry.value.recovery.snapshot)
+    expect(recovered.ok).toBe(true)
+    if (!recovered.ok) return
+    expect(storage.getItem(PUBLIC_V6_ROOT_KEY)).toBe(stagedBytes)
+    expect(storage.getItem(PUBLIC_V6_STAGE_KEY)).toBe(stagedBytes)
+    expect(JSON.parse(storage.getItem(recovered.value.archiveKey)!)).toMatchObject({
+      selectedSource: 'stage', rootBytes: started.value.bytes, stageBytes: stagedBytes,
+    })
+    expect(names.every((name) => name === PUBLIC_V6_LOCK_NAME)).toBe(true)
+    const reread = await inspectPublicEntry(storage, provider)
+    expect(reread.ok && reread.value.root.status).toBe('valid-playable')
+    expect(reread.ok && reread.value.artifacts.status === 'available'
+      && reread.value.artifacts.stage.status).toBe('settled')
+  })
+
+  it('recovers invalid root from a verified backup without discarding the invalid bytes', async () => {
+    const storage = memoryStorage()
+    const { provider } = webLocks()
+    const started = await startFreshPublicWorld(storage, provider, 'greenway-classic-v1', false)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    storage.values.set(PUBLIC_V6_BACKUP_KEY, started.value.bytes)
+    storage.values.set(PUBLIC_V6_ROOT_KEY, '{corrupt root')
+    const entry = await inspectPublicEntry(storage, provider)
+    expect(entry.ok).toBe(true)
+    if (!entry.ok || entry.value.recovery.status !== 'available') return
+    expect(entry.value.root.status).toBe('invalid')
+    expect(publicRecoveryChoices(entry.value.recovery.snapshot).map((choice) => choice.source))
+      .toEqual(['stage', 'backup'])
+    const recovered = await recoverPublicWorld(storage, provider, 'backup', entry.value.recovery.snapshot)
+    expect(recovered.ok).toBe(true)
+    if (!recovered.ok) return
+    expect(storage.getItem(PUBLIC_V6_ROOT_KEY)).toBe(started.value.bytes)
+    expect(storage.getItem(PUBLIC_V6_STAGE_KEY)).toBe(started.value.bytes)
+    expect(JSON.parse(storage.getItem(recovered.value.archiveKey)!)).toMatchObject({
+      selectedSource: 'backup', rootBytes: '{corrupt root', backupBytes: started.value.bytes,
+    })
+    expect(storage.writes).not.toContain(legacyKey)
+  })
+
+  it('refuses a stale displayed choice without archive or save writes', async () => {
+    const storage = memoryStorage()
+    const { provider } = webLocks()
+    const started = await startFreshPublicWorld(storage, provider, 'greenway-classic-v1', false)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    const inspected = readPublicV6RecoverySnapshot(storage)
+    expect(inspected.status).toBe('available')
+    if (inspected.status !== 'available') return
+    storage.values.set(PUBLIC_V6_STAGE_KEY, '{changed in another tab')
+    const before = [...storage.writes]
+    const refused = await recoverPublicWorld(storage, provider, 'root', inspected.snapshot)
+    expect(refused).toEqual({ ok: false, reason: 'snapshot-changed' })
+    expect(storage.writes).toEqual(before)
+    expect(storage.getItem(PUBLIC_V6_STAGE_KEY)).toBe('{changed in another tab')
+    expect([...storage.values.keys()].some((key) => key.includes(':archive:'))).toBe(false)
+  })
+
+  it('does not mutate bytes for an invalid candidate, missing lock, or storage failure', async () => {
+    const storage = memoryStorage()
+    const { provider } = webLocks()
+    const started = await startFreshPublicWorld(storage, provider, 'greenway-classic-v1', false)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    const inspected = readPublicV6RecoverySnapshot(storage)
+    expect(inspected.status).toBe('available')
+    if (inspected.status !== 'available') return
+    const before = [...storage.writes]
+    expect(await recoverPublicWorld(storage, provider, 'backup', inspected.snapshot))
+      .toEqual({ ok: false, reason: 'invalid-source' })
+    expect(await recoverPublicWorld(storage, undefined, 'root', inspected.snapshot))
+      .toEqual({ ok: false, reason: 'lock-unavailable' })
+    expect(await recoverPublicWorld({ getItem: storage.getItem, setItem: () => { throw Error('quota') } },
+      provider, 'root', inspected.snapshot)).toEqual({ ok: false, reason: 'storage-error' })
+    expect(storage.writes).toEqual(before)
+    expect(storage.getItem(PUBLIC_V6_ROOT_KEY)).toBe(started.value.bytes)
   })
 })

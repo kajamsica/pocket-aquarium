@@ -12,8 +12,9 @@ import { advancePublicWorldFrame, type PublicWorldAdvanceResult, type PublicWorl
 import { createFreshPublicWorld, createPublicWorldFromBootstrap, type PublicWorldState } from './domain/publicWorldState'
 import {
   PUBLIC_V6_ROOT_KEY, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
-  inspectPublicV6Artifacts, loadPublicV6Root,
-  type LegacyImportInspection, type PublicV6ArtifactInspection, type PublicV6RootLoad,
+  inspectPublicV6Artifacts, loadPublicV6Root, parsePublicV6BootstrapRoot, parsePublicV6PlayableRoot,
+  readPublicV6RecoverySnapshot, recoverPublicV6Root,
+  type LegacyImportInspection, type PublicV6ArtifactInspection, type PublicV6RecoverySnapshot, type PublicV6RootLoad,
 } from './domain/publicWorldV6'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
 import { WizardSurface, type WizardViewIntent } from './view'
@@ -44,6 +45,17 @@ export interface PublicEntryInspection {
   classic: LegacyImportInspection
   expanded: LegacyImportInspection
   artifacts: PublicV6ArtifactInspection
+  recovery: ReturnType<typeof readPublicV6RecoverySnapshot>
+}
+function publicEntryBlockReason(entry: PublicEntryInspection): string | null {
+  const { root, classic, expanded, artifacts, recovery } = entry
+  if (root.status === 'storage-error' || artifacts.status === 'storage-error'
+    || recovery.status === 'storage-error' || classic.status === 'storage-error'
+    || expanded.status === 'storage-error') return 'unreadable storage'
+  if (root.status === 'invalid') return 'invalid root'
+  if (artifacts.stage.status === 'pending' || artifacts.stage.status === 'invalid') return 'pending or invalid stage'
+  if (artifacts.backup.status === 'invalid') return 'invalid backup'
+  return null
 }
 export function inspectPublicEntry(storage: Pick<Storage, 'getItem'>,
   locks: PublicLockProvider | undefined): Promise<PublicOperation<PublicEntryInspection>> {
@@ -52,7 +64,31 @@ export function inspectPublicEntry(storage: Pick<Storage, 'getItem'>,
     return succeeded({ root,
       classic: root.status === 'missing' ? inspectLegacyImportSource(storage, 'greenway-classic-v1') : { status: 'missing' },
       expanded: root.status === 'missing' ? inspectLegacyImportSource(storage, 'greenway-expanded-v1') : { status: 'missing' },
-      artifacts: inspectPublicV6Artifacts(storage) })
+      artifacts: inspectPublicV6Artifacts(storage), recovery: readPublicV6RecoverySnapshot(storage) })
+  })
+}
+
+export type PublicRecoverySource = 'root' | 'stage' | 'backup'
+const RECOVERY_SOURCES: readonly { source: PublicRecoverySource; label: string; detail: string }[] = [
+  { source: 'root', label: 'Keep committed root', detail: 'Retain the current validated root and settle its stage.' },
+  { source: 'stage', label: 'Use validated stage', detail: 'Promote the staged progress that did not finish publishing.' },
+  { source: 'backup', label: 'Restore verified backup', detail: 'Return to the prior validated save.' },
+]
+export function publicRecoveryChoices(snapshot: PublicV6RecoverySnapshot) {
+  return RECOVERY_SOURCES.filter(({ source }) => {
+    const bytes = source === 'root' ? snapshot.rootBytes : source === 'stage' ? snapshot.stageBytes : snapshot.backupBytes
+    return bytes !== null && !!(parsePublicV6BootstrapRoot(bytes) ?? parsePublicV6PlayableRoot(bytes))
+  })
+}
+export function recoverPublicWorld(storage: Pick<Storage, 'getItem' | 'setItem'>,
+  locks: PublicLockProvider | undefined, source: PublicRecoverySource,
+  expected: PublicV6RecoverySnapshot): Promise<PublicOperation<{ archiveKey: string }>> {
+  return withPublicLock(locks, () => {
+    // Read and the complete verified archive/publish operation share the same cross-tab lock.
+    const current = readPublicV6RecoverySnapshot(storage)
+    if (current.status === 'storage-error') return failed('storage-error')
+    const result = recoverPublicV6Root(storage, source, expected)
+    return result.status === 'recovered' ? succeeded({ archiveKey: result.archiveKey }) : failed(result.status)
   })
 }
 
@@ -143,6 +179,8 @@ const STYLES = `
 .wr-public,.wr-public-menu{position:fixed;inset:0;background:#14221f;color:#f5f1df;font:14px/1.4 system-ui}.wr-public .wr-surface{min-height:0}
 .wr-public-menu{display:grid;place-items:center;padding:20px;box-sizing:border-box}.wr-public-card{box-sizing:border-box;width:min(560px,100%);max-height:90vh;overflow:auto;padding:24px;border:1px solid #c9ad6680;border-radius:18px;background:#101a17f4;box-shadow:0 20px 60px #0008}.wr-public-card h1{margin:0 0 8px;color:#f5d889;font:700 30px Georgia,serif}.wr-public-card p{color:#c5d0c3}.wr-public-card button,.wr-public-panel button{min-height:44px;padding:7px 12px;border:1px solid #d5b86f77;border-radius:8px;background:#324b3d;color:#fff0c7;font:inherit;cursor:pointer}.wr-public-card button{display:block;width:100%;margin:8px 0;text-align:left}.wr-public-card button:disabled,.wr-public-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-public-warning{padding:9px;border:1px solid #e3a27788;border-radius:8px;background:#4b2824e8;color:#ffe0d4!important}
 .wr-public-panel{position:absolute;z-index:8;right:12px;top:12px;box-sizing:border-box;width:min(315px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:12px;border:1px solid #c9ad6680;border-radius:12px;background:#101a17ed;box-shadow:0 10px 32px #0008}.wr-public-panel h1{margin:0;color:#f5d889;font:700 19px Georgia,serif}.wr-public-panel p{margin:6px 0}.wr-public-panel small{color:#b8c9bb}.wr-public-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.wr-public-actions button{text-align:left}.wr-public-actions small{display:block}.wr-public-panel[data-collapsed=true]{width:auto}.wr-public-panel[data-collapsed=true] .wr-public-body{display:none}.wr-public[data-owner=streamed] .wr-gear,.wr-public[data-owner=streamed] .wr-trade{display:none}
+@media(min-width:1050px){.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=true]{right:330px;top:64px}}
+@media(min-width:1200px){.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=true]{top:14px}}
 @media(max-width:719px){.wr-public-panel{top:auto;bottom:calc(144px + env(safe-area-inset-bottom,0px));max-height:42vh}.wr-public-panel[data-collapsed=true]{bottom:calc(144px + env(safe-area-inset-bottom,0px))}}
 `
 
@@ -162,6 +200,7 @@ export function PublicWizardApp() {
   const [blockedReason, setBlockedReason] = useState<string | null>(null)
   const [notice, setNotice] = useState('Checking this device for a public v6 save…')
   const [confirmFresh, setConfirmFresh] = useState<GenerationProfile | null>(null)
+  const [selectedRecovery, setSelectedRecovery] = useState<PublicRecoverySource | null>(null)
   const [messages, setMessages] = useState<string[]>(['Welcome to Wizard Realms.'])
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
@@ -214,14 +253,9 @@ export function PublicWizardApp() {
       if (cancelled) return
       if (!result.ok) { stop(result.reason); setBusy(false); return }
       setEntry(result.value); setBusy(false)
-      const { root, classic, expanded, artifacts } = result.value
-      if (root.status === 'invalid' || root.status === 'storage-error'
-        || artifacts.status === 'storage-error'
-        || artifacts.stage.status === 'pending' || artifacts.stage.status === 'invalid'
-        || artifacts.backup.status === 'invalid'
-        || classic.status === 'storage-error' || expanded.status === 'storage-error') {
-        stop('existing invalid root, pending stage, or unreadable storage'); return
-      }
+      const { root } = result.value
+      const reason = publicEntryBlockReason(result.value)
+      if (reason) { stop(reason); return }
       setNotice(root.status === 'missing' ? 'Choose a new Greenway world or explicitly import a legacy save.'
         : 'A public v6 world is available. Resume it explicitly to play.')
     }).catch(() => { if (!cancelled) { stop('storage-error'); setBusy(false) } })
@@ -241,6 +275,33 @@ export function PublicWizardApp() {
     const legacyPresent = entry.classic.status !== 'missing' || entry.expanded.status !== 'missing'
     if (legacyPresent && confirmFresh !== profile) { setConfirmFresh(profile); return }
     void choose(startFreshPublicWorld(currentStorage, locks(), profile, legacyPresent))
+  }
+  const recover = async (source: PublicRecoverySource) => {
+    const currentStorage = storage()
+    const snapshot = entry?.recovery.status === 'available' ? entry.recovery.snapshot : null
+    if (!currentStorage || !snapshot) { stop('storage-error'); return }
+    setBusy(true)
+    const result = await recoverPublicWorld(currentStorage, locks(), source, snapshot)
+    if (!result.ok) {
+      setBusy(false); setSelectedRecovery(null)
+      setNotice(result.reason === 'snapshot-changed'
+        ? 'Recovery choice is stale because the saved bytes changed. Nothing was overwritten. Reload to inspect the current candidates.'
+        : `Recovery blocked (${result.reason}). Existing bytes were preserved; reload to inspect the current candidates.`)
+      return
+    }
+    const reread = await inspectPublicEntry(currentStorage, locks())
+    setBusy(false); setSelectedRecovery(null)
+    if (!reread.ok) { stop(reread.reason); return }
+    setEntry(reread.value)
+    const reason = publicEntryBlockReason(reread.value)
+    if (reason) {
+      stop(reason)
+      setNotice(`Recovery archived prior bytes at ${result.value.archiveKey}, but ${reason} still needs a verified choice.`)
+      return
+    }
+    setBlocked(false); setBlockedReason(null)
+    blockedRef.current = false; blockedReasonRef.current = null
+    setNotice(`Recovery archived the previous bytes at ${result.value.archiveKey}. Choose Resume to continue.`)
   }
   const retrySave = async () => {
     if (!transientSaveFailure(blockedReasonRef.current) || !worldRef.current) return
@@ -367,6 +428,8 @@ export function PublicWizardApp() {
   if (!world || !projection) {
     const root = entry?.root
     const legacyPresent = entry && (entry.classic.status !== 'missing' || entry.expanded.status !== 'missing')
+    const recoveryChoices = entry?.recovery.status === 'available'
+      ? publicRecoveryChoices(entry.recovery.snapshot) : []
     return <main className="wr-public-menu"><style>{STYLES}</style><section className="wr-public-card">
       <h1>Wizard Realms</h1><p>One public world connects Greenway and Mireglass Reach. Choose how to begin.</p>
       <p role="status" className={blocked ? 'wr-public-warning' : ''}>{notice}</p>
@@ -387,7 +450,11 @@ export function PublicWizardApp() {
         {entry && (entry.classic.status === 'invalid' || entry.classic.status === 'incompatible' || entry.expanded.status === 'invalid' || entry.expanded.status === 'incompatible')
           ? <p>Some legacy saves cannot be imported. Their original bytes remain untouched.</p> : null}
       </>}
-      {blocked && <><p className="wr-public-warning">No save bytes were deleted or recovered automatically. Keep site data intact until a verified recovery path is available.</p>
+      {blocked && <><p className="wr-public-warning">No save bytes were deleted or recovered automatically. Recovery archives all current v6 bytes before publishing your chosen valid source.</p>
+        {recoveryChoices.map((choice) => <div key={choice.source}>
+          <button disabled={busy} onClick={() => setSelectedRecovery(choice.source)}>{choice.label}<small style={{ display: 'block' }}>{choice.detail}</small></button>
+          {selectedRecovery === choice.source && <button disabled={busy} onClick={() => void recover(choice.source)}>Confirm {choice.label.toLowerCase()} and archive all current v6 bytes</button>}
+        </div>)}
         <button onClick={() => window.location.reload()}>Reload to recheck storage</button></>}
     </section></main>
   }
