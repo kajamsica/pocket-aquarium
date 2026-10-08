@@ -1,12 +1,15 @@
 import { createActiveWorldTerrain } from './activeWorldTerrain'
-import type { ReadonlyWorldTile } from './activeWorldTerrain'
+import type { ActiveWorldTerrain, ReadonlyWorldTile } from './activeWorldTerrain'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import type { Vec3 } from './types'
+import { WORLD_GRID_MAX, WORLD_GRID_MIN } from './worldChunks'
 import type { ChunkCoordinate } from './worldChunks'
 
 const STEP_SECONDS = 0.05
 const GRAVITY = 9.8
 const JUMP_SPEED = 5
+const MAX_ABS_YAW = 1e6
+const MAX_ABS_VERTICAL_VELOCITY = 50
 
 export interface StreamedWorldState {
   readonly seed: string
@@ -69,16 +72,69 @@ export function createStreamedWorld(seed: string, start: { x: number; z: number 
   terrain.activate(start)
   const startTile = terrain.tileAtWorld(start.x, start.z)
   if (!startTile) throw new Error('Missing starting terrain.')
-  let state = freezeState({
+  return createRuntime(normalizedSeed, terrain, {
     seed: normalizedSeed, tick: 0,
     player: { position: { x: start.x, y: startTile.center.y, z: start.z }, yaw: 0, pitch: 0, verticalVelocity: 0 },
     discoveredTileIds: [startTile.id],
   })
+}
 
+function canonicalWorldTileId(id: unknown): boolean {
+  if (typeof id !== 'string') return false
+  const match = /^tile-(-?\d+)-(-?\d+)$/.exec(id)
+  if (!match) return false
+  const idX = Number(match[1])
+  const idZ = Number(match[2])
+  return Number.isSafeInteger(idX) && Number.isSafeInteger(idZ)
+    && id === `tile-${idX}-${idZ}`
+    && idX - 3 >= WORLD_GRID_MIN && idX - 3 <= WORLD_GRID_MAX
+    && idZ - 3 >= WORLD_GRID_MIN && idZ - 3 <= WORLD_GRID_MAX
+}
+
+/** Rebuilds active terrain and authority from a validated serialized snapshot. */
+export function createStreamedWorldFromState(snapshot: StreamedWorldState): StreamedWorldRuntime {
+  const player = snapshot?.player
+  const position = player?.position
+  const discovered = snapshot?.discoveredTileIds
+  if (typeof snapshot?.seed !== 'string' || snapshot.seed.length === 0
+    || !Number.isSafeInteger(snapshot.tick) || snapshot.tick < 0
+    || !position || !Number.isFinite(position.x) || !Number.isFinite(position.y) || !Number.isFinite(position.z)
+    || !Number.isFinite(player.yaw) || Math.abs(player.yaw) > MAX_ABS_YAW
+    || !Number.isFinite(player.pitch) || Math.abs(player.pitch) > Math.PI / 2
+    || !Number.isFinite(player.verticalVelocity) || Math.abs(player.verticalVelocity) > MAX_ABS_VERTICAL_VELOCITY
+    || !Array.isArray(discovered)) throw new RangeError('Invalid streamed-world snapshot.')
+
+  const terrain = createActiveWorldTerrain(snapshot.seed)
+  terrain.activate(position)
+  const ground = terrain.tileAtWorld(position.x, position.z)
+  if (!ground || position.y < ground.center.y) throw new RangeError('Invalid streamed-world snapshot position.')
+  let previousId = ''
+  for (const id of discovered) {
+    if (!canonicalWorldTileId(id) || (previousId && id <= previousId)) {
+      throw new RangeError('Invalid streamed-world snapshot discovery.')
+    }
+    previousId = id
+  }
+  if (!discovered.includes(ground.id)) throw new RangeError('Snapshot discovery omits the current tile.')
+
+  return createRuntime(snapshot.seed, terrain, {
+    seed: snapshot.seed,
+    tick: snapshot.tick,
+    player: {
+      position: { x: position.x, y: position.y, z: position.z },
+      yaw: player.yaw, pitch: player.pitch, verticalVelocity: player.verticalVelocity,
+    },
+    discoveredTileIds: [...discovered],
+  })
+}
+
+function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, initialState: StreamedWorldState): StreamedWorldRuntime {
+  let state = freezeState(initialState)
   return {
     get state() { return state },
     advance(intents) {
       const tick = state.tick + 1
+      if (!Number.isSafeInteger(tick)) throw new RangeError('Streamed-world tick overflow.')
       const player = { ...state.player, position: { ...state.player.position } }
       const discoveredTileIds = [...state.discoveredTileIds]
       const events: StreamedWorldEvent[] = []
@@ -123,7 +179,8 @@ export function createStreamedWorld(seed: string, start: { x: number; z: number 
         }
         if (intent.type === 'look') {
           if (!Number.isFinite(intent.yawDelta) || !Number.isFinite(intent.pitchDelta)
-            || !Number.isFinite(player.yaw + intent.yawDelta)) {
+            || !Number.isFinite(player.yaw + intent.yawDelta)
+            || Math.abs(player.yaw + intent.yawDelta) > MAX_ABS_YAW) {
             reject(index, intent, 'invalid_value')
             return
           }
@@ -146,7 +203,7 @@ export function createStreamedWorld(seed: string, start: { x: number; z: number 
       if (!ground) throw new Error('Active terrain missing under player.')
       if (player.position.y > ground.center.y || player.verticalVelocity > 0) {
         player.position.y += player.verticalVelocity * STEP_SECONDS
-        player.verticalVelocity -= GRAVITY * STEP_SECONDS
+        player.verticalVelocity = Math.max(-MAX_ABS_VERTICAL_VELOCITY, player.verticalVelocity - GRAVITY * STEP_SECONDS)
         if (player.position.y <= ground.center.y) {
           player.position.y = ground.center.y
           player.verticalVelocity = 0

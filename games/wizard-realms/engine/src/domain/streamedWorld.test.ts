@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createStreamedWorld } from './streamedWorld'
-import type { StreamedWorldIntent } from './streamedWorld'
+import { createStreamedWorldFromState } from './index'
+import type { StreamedWorldIntent, StreamedWorldState } from './streamedWorld'
 import { mireglassBermFaceRowAt, mireglassFenRowAt } from './mireglassTerrain'
 import { worldTileAtGrid } from './worldChunks'
 
@@ -55,6 +56,102 @@ describe('separate streamed-world authority', () => {
     expect(runtime.state.discoveredTileIds).toEqual([ground!.id])
     expect(runtime.activeChunkCount()).toBe(9)
     expect(runtime.tileAtWorld(0, 0)).toBeNull()
+  })
+
+  it('round-trips a serialized snapshot without mutating or retaining its input objects', () => {
+    const live = createStreamedWorld('hydrate-roundtrip')
+    live.advance([move(4), { type: 'look', yawDelta: 0.25, pitchDelta: 0.1 }, { type: 'jump' }])
+    const snapshot = JSON.parse(JSON.stringify(live.state))
+    const snapshotBytes = JSON.stringify(snapshot)
+    const restored = createStreamedWorldFromState(snapshot)
+    expect(restored.state).toEqual(live.state)
+    expect(JSON.stringify(snapshot)).toBe(snapshotBytes)
+    expect(Object.isFrozen(snapshot.player.position)).toBe(false)
+    expect(Object.isFrozen(restored.state.player.position)).toBe(true)
+    snapshot.player.position.x = 100
+    snapshot.discoveredTileIds.push('tile-4-3')
+    expect(restored.state).toEqual(live.state)
+  })
+
+  it('hydrates a caller-validated relocation with canonical discovery and a bounded destination window', () => {
+    const seed = 'hydrate-relocation'
+    const source = createStreamedWorld(seed).state
+    const destination = worldTileAtGrid(seed, -72, 72)
+    const snapshot: StreamedWorldState = {
+      ...source, tick: source.tick + 1,
+      player: { ...source.player, position: { ...destination.center }, verticalVelocity: 0 },
+      discoveredTileIds: [source.discoveredTileIds[0], destination.id].sort(),
+    }
+    const restored = createStreamedWorldFromState(snapshot)
+    expect(restored.state).toEqual(snapshot)
+    expect(restored.activeChunkCount()).toBe(9)
+    expect(restored.activeChunkCoordinates()).toContainEqual({ chunkX: -5, chunkZ: 4 })
+    expect(restored.tileAtWorld(destination.center.x, destination.center.z)).toEqual(destination)
+    expect(restored.tileAtWorld(0, 0)).toBeNull()
+  })
+
+  it('rejects malformed or tampered snapshots before restoring authority', () => {
+    const base = createStreamedWorld('hydrate-validation').state
+    const position = (patch: Partial<StreamedWorldState['player']['position']>) =>
+      ({ ...base, player: { ...base.player, position: { ...base.player.position, ...patch } } })
+    const player = (patch: Partial<StreamedWorldState['player']>) =>
+      ({ ...base, player: { ...base.player, ...patch } })
+    const invalid = [
+      { name: 'empty seed', state: { ...base, seed: '' } },
+      { name: 'non-string seed', state: { ...base, seed: 7 as unknown as string } },
+      { name: 'negative tick', state: { ...base, tick: -1 } },
+      { name: 'unsafe tick', state: { ...base, tick: Number.MAX_SAFE_INTEGER + 1 } },
+      { name: 'non-finite x', state: position({ x: NaN }) },
+      { name: 'out-of-world z', state: position({ z: 1024 }) },
+      { name: 'non-finite y', state: position({ y: Infinity }) },
+      { name: 'underground y', state: position({ y: base.player.position.y - 0.001 }) },
+      { name: 'out-of-range yaw', state: player({ yaw: 1e6 + 1 }) },
+      { name: 'out-of-range pitch', state: player({ pitch: Math.PI / 2 + 0.001 }) },
+      { name: 'out-of-range vertical velocity', state: player({ verticalVelocity: -50.01 }) },
+      { name: 'non-array discovery', state: { ...base, discoveredTileIds: null as unknown as readonly string[] } },
+      { name: 'noncanonical tile ID', state: { ...base, discoveredTileIds: ['tile-03-3', ...base.discoveredTileIds] } },
+      { name: 'out-of-world tile ID', state: { ...base, discoveredTileIds: ['tile-259-3', ...base.discoveredTileIds] } },
+      { name: 'duplicate tile ID', state: { ...base, discoveredTileIds: [base.discoveredTileIds[0], base.discoveredTileIds[0]] } },
+      { name: 'unsorted tile IDs', state: { ...base, discoveredTileIds: ['tile-4-3', base.discoveredTileIds[0]] } },
+      { name: 'missing current tile', state: { ...base, discoveredTileIds: ['tile-4-3'] } },
+    ]
+    for (const { name, state } of invalid) {
+      expect(() => createStreamedWorldFromState(state), name).toThrow(RangeError)
+    }
+    expect(createStreamedWorldFromState(player({ yaw: 1e6, pitch: -Math.PI / 2, verticalVelocity: -50 })).state.player)
+      .toMatchObject({ yaw: 1e6, pitch: -Math.PI / 2, verticalVelocity: -50 })
+  })
+
+  it('keeps restored ticks and airborne velocity within their restorable ranges', () => {
+    const base = createStreamedWorld('hydrate-limits').state
+    const falling = createStreamedWorldFromState({
+      ...base,
+      player: {
+        ...base.player,
+        position: { ...base.player.position, y: base.player.position.y + 100 },
+        verticalVelocity: -50,
+      },
+    })
+    const advanced = falling.advance([])
+    expect(advanced.state.player.verticalVelocity).toBe(-50)
+    expect(createStreamedWorldFromState(advanced.state).state).toEqual(advanced.state)
+
+    const finalTick = createStreamedWorldFromState({ ...base, tick: Number.MAX_SAFE_INTEGER })
+    expect(() => finalTick.advance([])).toThrow(RangeError)
+    expect(finalTick.state.tick).toBe(Number.MAX_SAFE_INTEGER)
+  })
+
+  it('replays movement, rejection, and gravity identically after hydration', () => {
+    const live = createStreamedWorld(mireglassSeed, barriers[0].from)
+    live.advance([{ type: 'look', yawDelta: 1, pitchDelta: 0.2 }, { type: 'jump' }])
+    const restored = createStreamedWorldFromState(JSON.parse(JSON.stringify(live.state)))
+    const script: StreamedWorldIntent[][] = [
+      [move(0, 4)], [move(4)], [{ type: 'look', yawDelta: -0.25, pitchDelta: 0 }], [], [move(-4)],
+    ]
+    for (const intents of script) {
+      expect(restored.advance(intents)).toEqual(live.advance(intents))
+      expect(restored.activeChunkCoordinates()).toEqual(live.activeChunkCoordinates())
+    }
   })
 
   it.each(barriers)('rejects $name in both directions without moving or discovering', ({ from, to, code }) => {
@@ -189,12 +286,12 @@ describe('separate streamed-world authority', () => {
     expect(rejected.state.player.position.y).toBeGreaterThan(airborne.y)
   })
 
-  it('rejects look deltas that would overflow authoritative orientation', () => {
+  it('rejects look deltas beyond the restorable yaw range', () => {
     const runtime = createStreamedWorld('look-overflow')
-    runtime.advance([{ type: 'look', yawDelta: 1e308, pitchDelta: 0 }])
-    const rejected = runtime.advance([{ type: 'look', yawDelta: 1e308, pitchDelta: 0 }])
+    expect(runtime.advance([{ type: 'look', yawDelta: 1e6, pitchDelta: 0 }]).rejections).toEqual([])
+    const rejected = runtime.advance([{ type: 'look', yawDelta: 0.001, pitchDelta: 0 }])
     expect(rejected.rejections).toEqual([{ intentIndex: 0, intentType: 'look', code: 'invalid_value' }])
-    expect(rejected.state.player.yaw).toBe(1e308)
-    expect(Number.isFinite(rejected.state.player.yaw)).toBe(true)
+    expect(rejected.state.player.yaw).toBe(1e6)
+    expect(createStreamedWorldFromState(rejected.state).state).toEqual(rejected.state)
   })
 })
