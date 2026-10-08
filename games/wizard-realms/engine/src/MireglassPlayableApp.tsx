@@ -3,6 +3,7 @@ import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
 import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES } from './domain/mireglassExpedition'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
+import { MIREGLASS_PLATEAU } from './domain/mireglassTerrain'
 import { MIREGLASS_SAVE_KEY, parseMireglassWorld, serializeMireglassWorld } from './domain/mireglassPersistence'
 import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
@@ -109,7 +110,14 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
   return choices.sort((a, b) => a.distanceMeters - b.distanceMeters || a.label.localeCompare(b.label))
 }
 
-export function mireglassNextObjective(state: MireglassWorldState): { label: string; position: { x: number; z: number } } {
+export interface MireglassObjective {
+  label: string
+  position: { x: number; z: number }
+  searchArea?: boolean
+  complete?: boolean
+}
+
+export function mireglassNextObjective(state: MireglassWorldState): MireglassObjective {
   const { seed, player, expedition } = state
   const anchors = mireglassAnchors(seed)
   const trees = mireglassResources(seed)
@@ -127,6 +135,16 @@ export function mireglassNextObjective(state: MireglassWorldState): { label: str
   if (expedition.builtRoutes.bridge === null) return { label: 'Build the eight-log fen bridge', position: closest(routes.filter((site) => site.kind === 'bridge').map((site) => site.from)) }
   const bridge = routes.find((site) => site.id === expedition.builtRoutes.bridge)!
   const ladder = routes.find((site) => site.id === expedition.builtRoutes.ladder)
+  if (expedition.cacheExcavated && owned(state, 'mireglass_reach/item/seal') === 0) {
+    if (owned(state, 'mireglass_reach/item/waders') === 0) return {
+      label: 'Buy fen waders with the seal proceeds', position: anchors.salvager.tile.center,
+    }
+    if (player.equipment.feet !== 'mireglass_reach/item/waders') return {
+      label: 'Equip your fen waders', position: player.position,
+    }
+    return { label: 'Expedition complete. Save and reload to verify your progress.',
+      position: player.position, complete: true }
+  }
   if (expedition.cacheExcavated) {
     if (ladder && player.position.z >= ladder.to.z) return { label: 'Descend the built slate ladder', position: ladder.to }
     if (player.position.z >= bridge.to.z) return { label: 'Return across the built fen bridge', position: bridge.to }
@@ -136,10 +154,21 @@ export function mireglassNextObjective(state: MireglassWorldState): { label: str
   if (expedition.builtRoutes.ladder === null && owned(state, 'logs') < 4) return { label: 'Gather four more logs for the slate ladder', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'after_bridge').map((tree) => tree.tile.center)) ?? anchors.slateBerm.tile.center }
   if (expedition.builtRoutes.ladder === null) return { label: 'Build the four-log slate ladder', position: closest(routes.filter((site) => site.kind === 'ladder').map((site) => site.from)) }
   if (ladder && player.position.z < ladder.to.z) return { label: 'Climb the built slate ladder', position: ladder.from }
-  if (!expedition.cacheRevealed) return { label: 'Reach the cache and cast Wayfinder Glow', position: anchors.sealCache.tile.center }
+  if (!expedition.cacheRevealed) return {
+    label: 'Search the upper slate shelf and cast Wayfinder Glow where the focus stirs',
+    position: { x: (MIREGLASS_PLATEAU.minX + MIREGLASS_PLATEAU.maxX) / 2,
+      z: MIREGLASS_PLATEAU.maxZ - 48 }, searchArea: true,
+  }
   if (!expedition.cacheExcavated) return { label: player.equipment.mainHand === 'field_spade'
     ? 'Excavate the revealed seal cache' : 'Equip the field spade and excavate the seal cache', position: anchors.sealCache.tile.center }
   return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
+}
+
+/** The vendor quote is shown on approach, before the player owns a seal to sell. */
+export function mireglassOutpostQuote(state: MireglassWorldState): string | null {
+  const salvager = mireglassAnchors(state.seed).salvager
+  if (distance(state.player.position, salvager.tile.center) > REACH) return null
+  return `Salvager buys Mireglass seals for ${MIREGLASS_OUTPOST_SELL_PRICES['mireglass_reach/item/seal']} coins and logs for ${MIREGLASS_OUTPOST_SELL_PRICES.logs} coins each.`
 }
 
 /** Read-only scene adapter. Movement and actions always run through createMireglassWorld. */
@@ -231,7 +260,11 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
         stock: state.expedition.shopStock.field_spade },
       { id: 'mireglass_reach/item/waders', name: ITEM_NAMES['mireglass_reach/item/waders'],
         price: MIREGLASS_OUTPOST_CATALOG['mireglass_reach/item/waders'].price,
-        stock: state.expedition.shopStock['mireglass_reach/item/waders'] }], sellOffers: [] }] : [],
+        stock: state.expedition.shopStock['mireglass_reach/item/waders'] }],
+      sellOffers: (['logs', 'mireglass_reach/item/seal'] as const)
+        .filter((itemId) => owned(state, itemId) > 0)
+        .map((itemId) => ({ itemId, name: ITEM_NAMES[itemId], quantity: owned(state, itemId),
+          unitPrice: MIREGLASS_OUTPOST_SELL_PRICES[itemId] })) }] : [],
     nearbyStoreId: distance(state.player.position, store.tile.center) <= REACH ? store.id : null,
     openStoreId: null,
     backpack: { capacity: state.player.backpackCapacity, stacks: inventory },
@@ -441,6 +474,7 @@ export function MireglassPlayableApp() {
   const selectedSite = selectedSiteId ? mireglassRouteSites(state.seed).find((site) => site.id === selectedSiteId) : undefined
   const nearMeters = distance(player.position, { ...objective.position, y: runtime.tileAtWorld(objective.position.x, objective.position.z)?.center.y ?? player.position.y })
   const sealSold = progress.cacheExcavated && owned(state, 'mireglass_reach/item/seal') === 0
+  const outpostQuote = mireglassOutpostQuote(state)
 
   return <main className="wr-mireglass">
     <WizardSurface projection={projection} onIntent={onIntent} />
@@ -454,8 +488,11 @@ export function MireglassPlayableApp() {
           <button type="button" disabled={saveMode === 'invalid'} onClick={() => persist(runtime.state, true)}>Save now</button>
           {saveMode === 'invalid' && <button type="button" onClick={replaceInvalidSave}>Replace invalid save with fresh start</button>}
         </div>
-        <p><b>Next:</b> {sealSold ? 'Expedition returned and seal traded.' : objective.label}</p>
-        {!sealSold && <p className="readout">Target {bearingText(player.position, objective.position)} · {pointText(objective.position)} · {nearMeters.toFixed(0)}m away</p>}
+        <p><b>Next:</b> {objective.label}</p>
+        {!objective.complete && <p className="readout">{objective.searchArea
+          ? 'Search area: upper slate shelf. The cache has no exact waypoint until revealed.'
+          : `Target ${bearingText(player.position, objective.position)} · ${pointText(objective.position)} · ${nearMeters.toFixed(0)}m away`}</p>}
+        {outpostQuote && <p className="readout">{outpostQuote}</p>}
         {selectedSite && <p className="readout">Selected {routeName(selectedSite.kind)} site: {bearingText(player.position, selectedSite.from)} · {pointText(selectedSite.from)} · {distance(player.position, selectedSite.from).toFixed(0)}m away</p>}
         <p className="readout">You: x {player.position.x.toFixed(1)}, y {player.position.y.toFixed(1)}, z {player.position.z.toFixed(1)} · {player.coins} coins · {state.discoveredTileIds.length} tiles</p>
         <p className="readout">Pack {player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)}/{player.backpackCapacity}: {player.inventory.map((stack) => `${ITEM_NAMES[stack.itemId]} ×${stack.quantity}`).join(', ') || 'empty'}</p>
@@ -475,6 +512,7 @@ export function MireglassPlayableApp() {
           <li className={progress.cacheRevealed ? 'done' : 'pending'}>Cast Glow at the cache</li>
           <li className={progress.cacheExcavated ? 'done' : 'pending'}>Excavate the seal</li>
           <li className={sealSold ? 'done' : 'pending'}>Return to the salvager and trade</li>
+          <li className={player.equipment.feet === 'mireglass_reach/item/waders' ? 'done' : 'pending'}>Buy and equip fen waders</li>
         </ol>
       </div>
     </aside>

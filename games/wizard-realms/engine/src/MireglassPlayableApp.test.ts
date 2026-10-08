@@ -5,7 +5,7 @@ import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { createMireglassWorld } from './domain/mireglassWorld'
 import { MIREGLASS_SAVE_KEY } from './domain/mireglassPersistence'
 import {
-  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices,
+  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassOutpostQuote,
   mireglassNextObjective, mireglassViewProjection, saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
 
@@ -111,6 +111,17 @@ describe('Mireglass playable dev adapter', () => {
     expect(bearingText(origin, { x: 0.2, z: 0.2 })).toBe('here')
   })
 
+  it('quotes the regional seal price at the outpost before the player owns a seal', () => {
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...mireglassAnchors(seed).salvager.tile.center }
+    source.inventory.push({ itemId: 'logs', quantity: 2 })
+    const world = createMireglassWorld(seed, source)
+    expect(mireglassOutpostQuote(world.state)).toContain('Mireglass seals for 80 coins')
+    expect(mireglassViewProjection(world, world.state, [], null).stores[0].sellOffers)
+      .toContainEqual({ itemId: 'logs', name: 'Logs', quantity: 2, unitPrice: 2 })
+    expect(mireglassOutpostQuote(createMireglassDevWorld(seed).state)).toBeNull()
+  })
+
   it('guides both the outward crossings and the return trip through built routes', () => {
     const bridge = mireglassRouteSites(seed).find((site) => site.kind === 'bridge')!
     const ladder = mireglassRouteSites(seed).find((site) => site.kind === 'ladder')!
@@ -126,11 +137,24 @@ describe('Mireglass playable dev adapter', () => {
     const across = { ...advanced, player: { ...advanced.player, position: { ...ladder.from } },
       expedition: { ...advanced.expedition, builtRoutes: { bridge: bridge.id, ladder: ladder.id } } }
     expect(mireglassNextObjective(across).label).toBe('Climb the built slate ladder')
-    const returning = { ...across, player: { ...across.player, position: { ...ladder.to } },
+    const searching = { ...across, player: { ...across.player, position: { ...ladder.to } } }
+    expect(mireglassNextObjective(searching)).toMatchObject({ searchArea: true })
+    expect(mireglassNextObjective(searching).position).not.toEqual(mireglassAnchors(seed).sealCache.tile.center)
+    const returning = { ...across, player: { ...across.player,
+      inventory: [...across.player.inventory, { itemId: 'mireglass_reach/item/seal' as const, quantity: 1 }],
+      position: { ...ladder.to } },
       expedition: { ...across.expedition, cacheRevealed: true, cacheExcavated: true } }
     expect(mireglassNextObjective(returning).label).toBe('Descend the built slate ladder')
     expect(mireglassNextObjective({ ...returning, player: { ...returning.player, position: { ...bridge.to } } }).label)
       .toBe('Return across the built fen bridge')
+    const sold = { ...returning, player: { ...returning.player,
+      inventory: returning.player.inventory.filter((stack) => stack.itemId !== 'mireglass_reach/item/seal'),
+      position: { ...mireglassAnchors(seed).salvager.tile.center } } }
+    expect(mireglassNextObjective(sold).label).toBe('Buy fen waders with the seal proceeds')
+    const equipped = { ...sold, player: { ...sold.player,
+      inventory: [...sold.player.inventory, { itemId: 'mireglass_reach/item/waders' as const, quantity: 1 }],
+      equipment: { ...sold.player.equipment, feet: 'mireglass_reach/item/waders' as const } } }
+    expect(mireglassNextObjective(equipped).complete).toBe(true)
   })
 
   it('saves and reloads through only the v6 key, preserving the v5 bytes', () => {
