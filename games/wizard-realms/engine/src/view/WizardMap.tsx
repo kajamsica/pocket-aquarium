@@ -14,8 +14,8 @@ function Tile({ tile, player }: { tile: WizardMapTile; player: WizardViewProject
   const occupied = tile.gridX === player.gridX && tile.gridZ === player.gridZ
   const routeSite = tile.discovered && tile.hasRouteSite
   const builtRoute = tile.discovered && tile.hasBuiltRoute
-  const marker = occupied ? '▲' : builtRoute ? '✓' : routeSite ? '◇' : tile.hasStore ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : tile.discovered ? '' : '?'
-  return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}`}>
+  const marker = occupied ? '▲' : tile.hasCache ? '✦' : builtRoute ? '✓' : routeSite ? '◇' : tile.hasStore ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : tile.discovered ? '' : '?'
+  return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${tile.hasCache ? ', revealed seal cache' : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}`}>
     <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : undefined}>{marker}</b>
   </span>
 }

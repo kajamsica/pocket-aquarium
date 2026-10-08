@@ -6,7 +6,7 @@ import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES, mireglassGlow
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { MIREGLASS_PLATEAU } from './domain/mireglassTerrain'
 import { MIREGLASS_SAVE_KEY, parseMireglassWorld, serializeMireglassWorld } from './domain/mireglassPersistence'
-import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
+import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorldActionResult, type MireglassWorldAdvanceResult, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
@@ -34,6 +34,17 @@ const REJECTION_TEXT: Readonly<Record<StreamedWorldRejection['code'], string>> =
   out_of_bounds: 'The world boundary is here.', terrain_missing: 'Terrain is not active here.',
   airborne: 'You are already airborne.', invalid_value: 'Movement was rejected.',
   fen_channel: 'The fen channel needs a built bridge.', slate_cliff: 'The slate rise needs a built ladder.',
+}
+
+export function mireglassBarrierAfterResult(
+  current: string | null, result: MireglassWorldAdvanceResult | MireglassWorldActionResult,
+): string | null {
+  if ('rejections' in result) {
+    const rejection = result.rejections[0]
+    if (rejection) return REJECTION_TEXT[rejection.code]
+    return result.events.some((event) => event.type === 'player_moved') ? null : current
+  }
+  return result.event?.type === 'route_traversed' ? null : current
 }
 
 const STYLES = `
@@ -292,7 +303,8 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
     id: 'mireglass_reach/landmark/bell_alder', kind: 'bell-alder',
     position: positionOf(anchors.bellAlder.tile.center),
   })
-  if (visibleAnchor(anchors.sealCache.tile.id)) landmarks.push({
+  if (activeIds.has(anchors.sealCache.tile.id)
+    && (discovered.has(anchors.sealCache.tile.id) || state.expedition.cacheRevealed)) landmarks.push({
     id: 'mireglass_reach/dig/seal_cache', kind: 'seal-cache',
     position: positionOf(anchors.sealCache.tile.center),
     revealed: state.expedition.cacheRevealed, excavated: state.expedition.cacheExcavated,
@@ -304,12 +316,13 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
     ...streamedView,
     terrain: approachTerrain,
     map: { ...streamedView.map, title: 'Mireglass expedition (v6)',
-      legend: '▲ you · ◇ route site · ✓ built route · S outpost · • timber · ? undiscovered',
+      legend: '▲ you · ◇ route site · ✓ built route · ✦ revealed cache · S outpost · • timber · ? undiscovered',
       tiles: streamedView.map.tiles.map((tile) => ({ ...tile,
         hasResource: tile.discovered && resourceTileIds.has(tile.id),
         hasStore: tile.discovered && tile.id === storeTile?.id,
         hasRouteSite: tile.discovered && siteTileIds.has(tile.id),
         hasBuiltRoute: tile.discovered && builtTileIds.has(tile.id),
+        hasCache: state.expedition.cacheRevealed && tile.id === anchors.sealCache.tile.id,
       })) },
     resources: trees.filter((tree) => activeIds.has(tree.tile.id)).map((tree) => ({
       id: tree.id, kind: 'tree' as const, label: 'Mireglass timber',
@@ -424,6 +437,8 @@ export function MireglassPlayableApp() {
   const [messages, setMessages] = useState<string[]>([initial.mode === 'resumed'
     ? 'Welcome back to Mireglass Reach.' : 'Frontier dev start. Study the marker, then equip your axe.'])
   const [error, setError] = useState(false)
+  const [movementBarrierStatus, setMovementBarrierStatus] = useState<string | null>(null)
+  const [statusSource, setStatusSource] = useState<'action' | 'movement'>('action')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const movement = useRef<readonly [number, number]>([0, 0])
@@ -456,11 +471,13 @@ export function MireglassPlayableApp() {
   const report = useCallback((text: string, rejected = false) => {
     setError(rejected)
     setMessages((current) => [...current.slice(-2), text])
+    setStatusSource('action')
   }, [])
   const act = useCallback((action: MireglassExpeditionAction) => {
     const result = runtime.act(action)
     setState(result.state)
     report(result.rejection ? result.rejection.message : eventText(result.event), !!result.rejection)
+    if (result.event?.type === 'route_traversed') setMovementBarrierStatus((current) => mireglassBarrierAfterResult(current, result))
     if (result.event) persist(result.state)
   }, [runtime, report, persist])
 
@@ -480,18 +497,19 @@ export function MireglassPlayableApp() {
       const steps = Math.min(12, Math.floor(tickClock.accrued / STEP_MS))
       tickClock.accrued = steps === 12 ? 0 : tickClock.accrued - steps * STEP_MS
       if (!steps) return
-      let rejection: string | undefined
       for (let index = 0; index < steps; index += 1) {
         const intents = [...(index === 0 ? queued.current : []), ...streamedControlIntents(runtime.state.player.yaw, movement.current)]
         const result = runtime.advance(intents)
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
           || event.type === 'player_jumped' || event.type === 'tile_discovered')) travelDirty.current = true
-        if (result.rejections[0]) rejection = REJECTION_TEXT[result.rejections[0].code]
+        if (result.rejections[0] || result.events.some((event) => event.type === 'player_moved')) {
+          setMovementBarrierStatus((current) => mireglassBarrierAfterResult(current, result))
+          setStatusSource(result.rejections[0] ? 'movement' : 'action')
+        }
       }
       queued.current = []
       setState(runtime.state)
       if (shouldAutosaveMireglassTravel(travelDirty.current, lastTravelSave.current, now)) persist(runtime.state)
-      if (rejection) report(rejection, true)
     }, STEP_MS)
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('blur', onBlur)
@@ -571,7 +589,7 @@ export function MireglassPlayableApp() {
         <p className="readout">Pack {player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)}/{player.backpackCapacity}: {player.inventory.map((stack) => `${ITEM_NAMES[stack.itemId]} ×${stack.quantity}`).join(', ') || 'empty'}</p>
         <p className="readout">Hand: {player.equipment.mainHand ? ITEM_NAMES[player.equipment.mainHand] : 'empty'} · Feet: {player.equipment.feet ? ITEM_NAMES[player.equipment.feet] : 'empty'} · Glow: {player.learnedSpellIds.includes('wayfinder_glow') ? 'learned' : 'unknown'} · Excavation Lv{1 + Math.floor(player.skillXp.excavation / 30)}</p>
         <p className="readout">W/S move · A/D turn · Space jump · E nearest action · M map</p>
-        <div className="status" data-error={error} role="status">{messages.at(-1)}</div>
+        <div className="status" data-error={statusSource === 'movement' && movementBarrierStatus !== null || error} role="status">{statusSource === 'movement' && movementBarrierStatus !== null ? movementBarrierStatus : messages.at(-1)}</div>
         <h2>Available here</h2>
         <div className="wr-mireglass-actions">{choices.map((choice) => <button type="button" key={choice.id} onClick={() => act(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>
         {!choices.length && <p><small>Walk toward the next target. The map shows discovered routes and resources.</small></p>}

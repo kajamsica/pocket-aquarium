@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
+import { createElement, createRef } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { createGeneratedWorld } from './domain/generation'
 import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { createMireglassWorld } from './domain/mireglassWorld'
-import { MIREGLASS_SAVE_KEY } from './domain/mireglassPersistence'
+import { MIREGLASS_SAVE_KEY, serializeMireglassWorld } from './domain/mireglassPersistence'
+import { worldTileAtGrid } from './domain/worldChunks'
+import { WizardMap } from './view/WizardMap'
 import {
-  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassOutpostQuote,
+  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassBarrierAfterResult, mireglassOutpostQuote,
   mireglassApproachTerrain, mireglassNearestInteractChoice, mireglassNextObjective, mireglassViewProjection,
   saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
@@ -147,6 +151,79 @@ describe('Mireglass playable dev adapter', () => {
     expect(cache()).toMatchObject({ revealed: true, excavated: false })
     expect(cacheWorld.act({ type: 'excavate_cache' }).event?.type).toBe('cache_excavated')
     expect(cache()).toMatchObject({ revealed: true, excavated: true })
+  })
+
+  it('shows a cache marker only after an adjacent Glow cast, without revealing it early', () => {
+    const cache = mireglassAnchors(seed).sealCache
+    const neighbor = worldTileAtGrid(seed, cache.tile.gridX - 2, cache.tile.gridZ - 3)
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...neighbor.center }
+    source.learnedSpellIds = ['wayfinder_glow']
+    const world = createMireglassWorld(seed, source)
+    const projected = () => mireglassViewProjection(world, world.state, [], null)
+    const cacheMapTile = () => projected().map.tiles.find((tile) => tile.id === cache.tile.id)
+    const mapHtml = () => renderToStaticMarkup(createElement(WizardMap, {
+      projection: projected(), open: true, onToggle: () => {}, onIntent: () => {},
+      buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>(),
+    }))
+    expect(world.state.discoveredTileIds).not.toContain(cache.tile.id)
+    expect(cacheMapTile()?.hasCache).toBe(false)
+    expect(mapHtml()).not.toContain('revealed seal cache')
+
+    expect(world.act({ type: 'cast_wayfinder_glow' }).event?.type).toBe('cache_revealed')
+    expect(world.state.discoveredTileIds).toContain(cache.tile.id)
+    expect(projected().landmarks).toContainEqual(expect.objectContaining({
+      id: cache.id, revealed: true, excavated: false,
+    }))
+    expect(cacheMapTile()).toMatchObject({ discovered: true, hasCache: true })
+    expect(mapHtml()).toContain('revealed seal cache')
+    expect(mapHtml()).toContain('<b>✦</b>')
+  })
+
+  it('projects a revealed cache from a valid older v6 save whose cache tile is still fogged', () => {
+    const cache = mireglassAnchors(seed).sealCache
+    const neighbor = worldTileAtGrid(seed, cache.tile.gridX - 2, cache.tile.gridZ - 3)
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...neighbor.center }
+    source.learnedSpellIds = ['wayfinder_glow']
+    const world = createMireglassWorld(seed, source)
+    expect(world.act({ type: 'cast_wayfinder_glow' }).event?.type).toBe('cache_revealed')
+    const olderSnapshot = { ...world.state,
+      discoveredTileIds: world.state.discoveredTileIds.filter((id) => id !== cache.tile.id) }
+    const storage = memoryStorage()
+    storage.setItem(MIREGLASS_SAVE_KEY, serializeMireglassWorld(olderSnapshot))
+    const loaded = loadMireglassDevWorld(storage, seed)
+    expect(loaded.mode).toBe('resumed')
+    expect(loaded.runtime.state.discoveredTileIds).not.toContain(cache.tile.id)
+    const projection = mireglassViewProjection(loaded.runtime, loaded.runtime.state, [], null)
+    expect(projection.landmarks).toContainEqual(expect.objectContaining({
+      id: cache.id, revealed: true, excavated: false,
+    }))
+    expect(projection.map.tiles.find((tile) => tile.id === cache.tile.id)).toMatchObject({
+      discovered: false, terrain: null, hasCache: true,
+    })
+  })
+
+  it('keeps a barrier until an actual traversal or move and reports a new held-input block', () => {
+    const bridge = mireglassRouteSites(seed).find((site) => site.kind === 'bridge')!
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...bridge.from }
+    source.inventory.push({ itemId: 'logs', quantity: bridge.logCost })
+    const world = createMireglassWorld(seed, source)
+    expect(world.act({ type: 'build_route', siteId: bridge.id }).event?.type).toBe('route_built')
+    let barrier = mireglassBarrierAfterResult(null, world.advance([{ type: 'move', delta: { x: 0, z: 4 } }]))
+    expect(barrier).toBe('The fen channel needs a built bridge.')
+    barrier = mireglassBarrierAfterResult(barrier, world.advance([]))
+    expect(barrier).toBe('The fen channel needs a built bridge.')
+    barrier = mireglassBarrierAfterResult(barrier, world.act({ type: 'equip_item', itemId: 'woodcutters_axe' }))
+    expect(barrier).toBe('The fen channel needs a built bridge.')
+
+    barrier = mireglassBarrierAfterResult(barrier, world.act({ type: 'traverse_route', siteId: bridge.id, from: 'from' }))
+    expect(barrier).toBeNull()
+    barrier = mireglassBarrierAfterResult(barrier, world.advance([{ type: 'move', delta: { x: 0, z: -4 } }]))
+    expect(barrier).toBe('The fen channel needs a built bridge.')
+    barrier = mireglassBarrierAfterResult(barrier, world.advance([{ type: 'move', delta: { x: 0, z: 4 } }]))
+    expect(barrier).toBeNull()
   })
 
   it('renders useful compass bearings from world coordinates', () => {
