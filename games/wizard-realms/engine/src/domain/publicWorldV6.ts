@@ -64,7 +64,7 @@ export type PublicV6RootLoad =
 
 export type PublicV6ImportResult =
   | { status: 'committed'; root: PublicV6BootstrapRoot }
-  | { status: 'root-present' | 'invalid-root' | 'source-changed' | 'storage-error'
+  | { status: 'root-present' | 'invalid-root' | 'pending-stage' | 'source-changed' | 'storage-error'
     | 'stage-verification-failed' | 'root-verification-failed' }
 
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -190,6 +190,8 @@ export function commitLegacyImportToPublicV6(
   if (before.status === 'valid-bootstrap' || before.status === 'valid-playable') return { status: 'root-present' }
   if (before.status === 'invalid') return { status: 'invalid-root' }
   if (before.status === 'storage-error') return { status: 'storage-error' }
+  try { if (storage.getItem(PUBLIC_V6_STAGE_KEY) !== null) return { status: 'pending-stage' } }
+  catch { return { status: 'storage-error' } }
   const current = inspectLegacyImportSource(storage, inspected.source.profile)
   if (current.status === 'storage-error') return { status: 'storage-error' }
   if (current.status !== 'available' || current.source.key !== inspected.source.key
@@ -206,6 +208,9 @@ export function commitLegacyImportToPublicV6(
   const bytes = JSON.stringify(root)
   if (!parsePublicV6BootstrapRoot(bytes)) return { status: 'source-changed' }
   try {
+    // The caller must hold a Web Lock around read and commit; this repeat check
+    // keeps an intervening staged snapshot from being overwritten by this import.
+    if (storage.getItem(PUBLIC_V6_STAGE_KEY) !== null) return { status: 'pending-stage' }
     storage.setItem(PUBLIC_V6_STAGE_KEY, bytes)
     if (storage.getItem(PUBLIC_V6_STAGE_KEY) !== bytes) return { status: 'stage-verification-failed' }
   } catch { return { status: 'storage-error' } }
@@ -320,5 +325,112 @@ export function commitPublicV6World(
   const published = loadPublicV6Root(storage)
   return published.status === 'valid-playable' && published.bytes === bytes
     ? { status: 'committed', root: published.root, bytes }
+    : { status: 'root-verification-failed' }
+}
+
+const PUBLIC_V6_ARCHIVE_PREFIX = 'wizard-realms:world:v6:archive:'
+const MAX_RECOVERY_ARCHIVE_CHARS = 32 * 1024 * 1024
+
+export interface PublicV6RecoverySnapshot {
+  readonly rootBytes: string | null
+  readonly stageBytes: string | null
+  readonly backupBytes: string | null
+}
+
+export type PublicV6RecoveryResult =
+  | { status: 'recovered'; root: PublicV6BootstrapRoot | PublicV6PlayableRoot;
+    bytes: string; archiveKey: string }
+  | { status: 'invalid-expected-snapshot' | 'snapshot-changed' | 'invalid-source'
+    | 'archive-key-invalid' | 'archive-key-present' | 'archive-key-unavailable'
+    | 'archive-too-large' | 'archive-verification-failed' | 'stage-verification-failed'
+    | 'root-verification-failed' | 'storage-error' }
+
+/** Reads raw bytes, including invalid roots, without choosing or modifying any candidate. */
+export function readPublicV6RecoverySnapshot(storage: Pick<Storage, 'getItem'>):
+  { status: 'available'; snapshot: PublicV6RecoverySnapshot } | { status: 'storage-error' } {
+  try {
+    return { status: 'available', snapshot: {
+      rootBytes: storage.getItem(PUBLIC_V6_ROOT_KEY),
+      stageBytes: storage.getItem(PUBLIC_V6_STAGE_KEY),
+      backupBytes: storage.getItem(PUBLIC_V6_BACKUP_KEY),
+    } }
+  } catch { return { status: 'storage-error' } }
+}
+
+function validRecoverySnapshot(value: unknown): value is PublicV6RecoverySnapshot {
+  return exact(value, ['rootBytes', 'stageBytes', 'backupBytes'])
+    && [value.rootBytes, value.stageBytes, value.backupBytes]
+      .every((bytes) => bytes === null || typeof bytes === 'string')
+}
+
+function sameRecoverySnapshot(a: PublicV6RecoverySnapshot, b: PublicV6RecoverySnapshot): boolean {
+  return a.rootBytes === b.rootBytes && a.stageBytes === b.stageBytes && a.backupBytes === b.backupBytes
+}
+
+/**
+ * Explicit recovery only. The caller must hold one Web Lock around snapshot read
+ * and this whole operation. Archive readback precedes every stage/root write.
+ * A failed partial write leaves the archive and candidate keys intact for review.
+ */
+export function recoverPublicV6Root(
+  storage: Pick<Storage, 'getItem' | 'setItem'>,
+  source: 'root' | 'stage' | 'backup',
+  expected: PublicV6RecoverySnapshot,
+  options: { archiveKey?: string } = {},
+): PublicV6RecoveryResult {
+  if (!validRecoverySnapshot(expected)) return { status: 'invalid-expected-snapshot' }
+  const before = readPublicV6RecoverySnapshot(storage)
+  if (before.status === 'storage-error') return before
+  if (!sameRecoverySnapshot(before.snapshot, expected)) return { status: 'snapshot-changed' }
+  const selected = source === 'root' ? expected.rootBytes
+    : source === 'stage' ? expected.stageBytes
+      : source === 'backup' ? expected.backupBytes : null
+  const parsed = selected === null ? null
+    : parsePublicV6BootstrapRoot(selected) ?? parsePublicV6PlayableRoot(selected)
+  if (!parsed || selected === null) return { status: 'invalid-source' }
+
+  const rawLength = (expected.rootBytes?.length ?? 0) + (expected.stageBytes?.length ?? 0)
+    + (expected.backupBytes?.length ?? 0)
+  if (rawLength > MAX_RECOVERY_ARCHIVE_CHARS) return { status: 'archive-too-large' }
+  const archive = JSON.stringify({ schemaVersion: 'wizard-world/v6-recovery-archive',
+    selectedSource: source, ...expected })
+  if (archive.length > MAX_RECOVERY_ARCHIVE_CHARS) return { status: 'archive-too-large' }
+  let archiveKey = options.archiveKey
+  if (archiveKey !== undefined && !new RegExp(`^${PUBLIC_V6_ARCHIVE_PREFIX}[0-9a-fA-F-]{36}$`).test(archiveKey)) {
+    return { status: 'archive-key-invalid' }
+  }
+  try {
+    if (archiveKey === undefined) {
+      if (typeof globalThis.crypto?.randomUUID !== 'function') return { status: 'archive-key-unavailable' }
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const candidate = `${PUBLIC_V6_ARCHIVE_PREFIX}${globalThis.crypto.randomUUID()}`
+        if (storage.getItem(candidate) === null) { archiveKey = candidate; break }
+      }
+      if (archiveKey === undefined) return { status: 'archive-key-unavailable' }
+    } else if (storage.getItem(archiveKey) !== null) return { status: 'archive-key-present' }
+    storage.setItem(archiveKey, archive)
+    if (storage.getItem(archiveKey) !== archive) return { status: 'archive-verification-failed' }
+  } catch { return { status: 'storage-error' } }
+
+  const afterArchive = readPublicV6RecoverySnapshot(storage)
+  if (afterArchive.status === 'storage-error') return afterArchive
+  if (!sameRecoverySnapshot(afterArchive.snapshot, expected)) return { status: 'snapshot-changed' }
+  try {
+    storage.setItem(PUBLIC_V6_STAGE_KEY, selected)
+    if (storage.getItem(PUBLIC_V6_STAGE_KEY) !== selected) return { status: 'stage-verification-failed' }
+    const beforePublish = readPublicV6RecoverySnapshot(storage)
+    if (beforePublish.status === 'storage-error') return beforePublish
+    if (beforePublish.snapshot.rootBytes !== expected.rootBytes
+      || beforePublish.snapshot.stageBytes !== selected
+      || beforePublish.snapshot.backupBytes !== expected.backupBytes) return { status: 'snapshot-changed' }
+    if (source !== 'root') {
+      storage.setItem(PUBLIC_V6_ROOT_KEY, selected)
+      if (storage.getItem(PUBLIC_V6_ROOT_KEY) !== selected) return { status: 'root-verification-failed' }
+    }
+  } catch { return { status: 'storage-error' } }
+  const published = loadPublicV6Root(storage)
+  return (published.status === 'valid-bootstrap' || published.status === 'valid-playable')
+    && published.bytes === selected
+    ? { status: 'recovered', root: published.root, bytes: selected, archiveKey }
     : { status: 'root-verification-failed' }
 }

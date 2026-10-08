@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isRestorableWizardSave, serializeWizardWorld, restoreWizardWorld } from './persistence'
 import {
-  PUBLIC_V6_BOOTSTRAP_SCHEMA, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_STAGE_KEY,
-  commitLegacyImportToPublicV6, inspectLegacyImportSource, loadPublicV6Root,
-  legacyMovementEnvelope, parsePublicV6BootstrapRoot,
+  PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_BOOTSTRAP_SCHEMA, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_STAGE_KEY,
+  commitLegacyImportToPublicV6, inspectLegacyImportSource, inspectPublicV6Artifacts, loadPublicV6Root,
+  legacyMovementEnvelope, parsePublicV6BootstrapRoot, readPublicV6RecoverySnapshot,
+  recoverPublicV6Root, serializePublicV6World,
 } from './publicWorldV6'
+import { createPublicWorldFromBootstrap } from './publicWorldState'
 import type { GenerationProfile } from './types'
 import { worldTileAtGrid } from './worldChunks'
 
@@ -54,6 +56,22 @@ function legacySave(version: 'wizard-world/v1' | 'wizard-world/v2' | 'wizard-wor
     delete player.verticalVelocity
   }
   return JSON.stringify(save)
+}
+
+const archiveKey = 'wizard-realms:world:v6:archive:00000000-0000-4000-8000-000000000001'
+
+function recoveryFixtures() {
+  const sourceBytes = serializeWizardWorld(createGeneratedWorld('greenway-alpha'))
+  const imported = memoryStorage([[CLASSIC_KEY, sourceBytes]])
+  const result = commitLegacyImportToPublicV6(imported, available(imported, CLASSIC))
+  expect(result.status).toBe('committed')
+  if (result.status !== 'committed') throw new Error('Expected bootstrap fixture.')
+  const bootstrapBytes = imported.values.get(PUBLIC_V6_ROOT_KEY)!
+  const playableBytes = serializePublicV6World({
+    schemaVersion: PUBLIC_V6_SCHEMA, saveRevision: 0, bootstrap: result.root,
+    state: createPublicWorldFromBootstrap(result.root),
+  })
+  return { sourceBytes, bootstrapBytes, playableBytes }
 }
 
 describe('public v6 import bootstrap', () => {
@@ -183,21 +201,60 @@ describe('public v6 import bootstrap', () => {
     const bytes = serializeWizardWorld(createGeneratedWorld('greenway-alpha'))
     const storage = memoryStorage([[CLASSIC_KEY, bytes]])
     const inspected = available(storage, CLASSIC)
+    let stageWritten = false
     const corruptStage = {
-      getItem: (key: string) => key === PUBLIC_V6_STAGE_KEY ? 'corrupt' : storage.getItem(key),
-      setItem: storage.setItem,
+      getItem: (key: string) => key === PUBLIC_V6_STAGE_KEY && stageWritten ? 'corrupt' : storage.getItem(key),
+      setItem: (key: string, value: string) => {
+        storage.setItem(key, value)
+        if (key === PUBLIC_V6_STAGE_KEY) stageWritten = true
+      },
     }
     expect(commitLegacyImportToPublicV6(corruptStage, inspected)).toEqual({ status: 'stage-verification-failed' })
     expect(storage.values.has(PUBLIC_V6_ROOT_KEY)).toBe(false)
+    const secondStorage = memoryStorage([[CLASSIC_KEY, bytes]])
+    const secondInspected = available(secondStorage, CLASSIC)
     const changedDuringStage = {
-      getItem: storage.getItem,
+      getItem: secondStorage.getItem,
       setItem: (key: string, value: string) => {
-        storage.setItem(key, value)
-        if (key === PUBLIC_V6_STAGE_KEY) storage.values.set(CLASSIC_KEY, `${bytes} `)
+        secondStorage.setItem(key, value)
+        if (key === PUBLIC_V6_STAGE_KEY) secondStorage.values.set(CLASSIC_KEY, `${bytes} `)
       },
     }
-    expect(commitLegacyImportToPublicV6(changedDuringStage, inspected)).toEqual({ status: 'source-changed' })
+    expect(commitLegacyImportToPublicV6(changedDuringStage, secondInspected)).toEqual({ status: 'source-changed' })
+    expect(secondStorage.values.has(PUBLIC_V6_ROOT_KEY)).toBe(false)
+  })
+
+  it('preserves a pending stage when the public root is missing', () => {
+    const bytes = serializeWizardWorld(createGeneratedWorld('greenway-alpha'))
+    const staged = '{"schemaVersion":"wizard-world/v6","saveRevision":8}'
+    const storage = memoryStorage([[CLASSIC_KEY, bytes], [PUBLIC_V6_STAGE_KEY, staged]])
+    const inspected = available(storage, CLASSIC)
+    expect(commitLegacyImportToPublicV6(storage, inspected)).toEqual({ status: 'pending-stage' })
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(staged)
     expect(storage.values.has(PUBLIC_V6_ROOT_KEY)).toBe(false)
+    expect(storage.writes).toEqual([])
+  })
+
+  it('rechecks the stage just before import writes when another caller staged in the meantime', () => {
+    const bytes = serializeWizardWorld(createGeneratedWorld('greenway-alpha'))
+    const staged = '{"schemaVersion":"wizard-world/v6","saveRevision":9}'
+    const storage = memoryStorage([[CLASSIC_KEY, bytes]])
+    const inspected = available(storage, CLASSIC)
+    let firstSourceRead = true
+    const interveningStage = {
+      getItem: (key: string) => {
+        if (key === CLASSIC_KEY && firstSourceRead) {
+          firstSourceRead = false
+          storage.values.set(PUBLIC_V6_STAGE_KEY, staged)
+        }
+        return storage.getItem(key)
+      },
+      setItem: storage.setItem,
+    }
+    expect(commitLegacyImportToPublicV6(interveningStage, inspected)).toEqual({ status: 'pending-stage' })
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(staged)
+    expect(storage.values.has(PUBLIC_V6_ROOT_KEY)).toBe(false)
+    expect(storage.writes).toEqual([])
   })
 
   it('reports v5 terrain that cannot be regenerated as incompatible, preserving its bytes', () => {
@@ -285,4 +342,106 @@ describe('public v6 import bootstrap', () => {
     expect(storage.values.get(CLASSIC_KEY)).toBe(bytes)
     expect(storage.writes).toEqual([])
   })
+})
+
+describe('explicit public v6 recovery', () => {
+  it('archives an invalid root and publishes a chosen valid pending stage', () => {
+    const { sourceBytes, bootstrapBytes, playableBytes } = recoveryFixtures()
+    const storage = memoryStorage([
+      [CLASSIC_KEY, sourceBytes], [PUBLIC_V6_ROOT_KEY, '{invalid root'],
+      [PUBLIC_V6_STAGE_KEY, playableBytes], [PUBLIC_V6_BACKUP_KEY, bootstrapBytes],
+    ])
+    const read = readPublicV6RecoverySnapshot(storage)
+    expect(read.status).toBe('available')
+    if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+    const result = recoverPublicV6Root(storage, 'stage', read.snapshot, { archiveKey })
+    expect(result.status).toBe('recovered')
+    expect(storage.values.get(PUBLIC_V6_ROOT_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_BACKUP_KEY)).toBe(bootstrapBytes)
+    expect(storage.values.get(CLASSIC_KEY)).toBe(sourceBytes)
+    expect(JSON.parse(storage.values.get(archiveKey)!)).toEqual({
+      schemaVersion: 'wizard-world/v6-recovery-archive', selectedSource: 'stage', ...read.snapshot,
+    })
+    expect(storage.writes).toEqual([archiveKey, PUBLIC_V6_STAGE_KEY, PUBLIC_V6_ROOT_KEY])
+    expect(inspectPublicV6Artifacts(storage)).toMatchObject({ status: 'available', stage: { status: 'settled' } })
+  })
+
+  it('archives an invalid stage and keeps the selected valid root without rewriting it', () => {
+    const { bootstrapBytes, playableBytes } = recoveryFixtures()
+    const storage = memoryStorage([
+      [PUBLIC_V6_ROOT_KEY, playableBytes], [PUBLIC_V6_STAGE_KEY, '{invalid stage'],
+      [PUBLIC_V6_BACKUP_KEY, bootstrapBytes],
+    ])
+    const read = readPublicV6RecoverySnapshot(storage)
+    if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+    expect(recoverPublicV6Root(storage, 'root', read.snapshot, { archiveKey })).toMatchObject({
+      status: 'recovered', bytes: playableBytes, archiveKey,
+    })
+    expect(storage.values.get(PUBLIC_V6_ROOT_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(playableBytes)
+    expect(storage.writes).toEqual([archiveKey, PUBLIC_V6_STAGE_KEY])
+  })
+
+  it('can choose a valid backup when the stage is invalid, after archiving all disputed bytes', () => {
+    const { bootstrapBytes, playableBytes } = recoveryFixtures()
+    const storage = memoryStorage([
+      [PUBLIC_V6_ROOT_KEY, bootstrapBytes], [PUBLIC_V6_STAGE_KEY, '{invalid stage'],
+      [PUBLIC_V6_BACKUP_KEY, playableBytes],
+    ])
+    const read = readPublicV6RecoverySnapshot(storage)
+    if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+    expect(recoverPublicV6Root(storage, 'backup', read.snapshot, { archiveKey }).status).toBe('recovered')
+    expect(storage.values.get(PUBLIC_V6_ROOT_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(playableBytes)
+    expect(JSON.parse(storage.values.get(archiveKey)!)).toMatchObject({
+      rootBytes: bootstrapBytes, stageBytes: '{invalid stage', backupBytes: playableBytes,
+    })
+  })
+
+  it('rejects invalid selected bytes, stale snapshots, and occupied archive keys without writes', () => {
+    const { bootstrapBytes, playableBytes } = recoveryFixtures()
+    const storage = memoryStorage([
+      [PUBLIC_V6_ROOT_KEY, bootstrapBytes], [PUBLIC_V6_STAGE_KEY, '{invalid stage'],
+      [PUBLIC_V6_BACKUP_KEY, playableBytes],
+    ])
+    const read = readPublicV6RecoverySnapshot(storage)
+    if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+    expect(recoverPublicV6Root(storage, 'stage', read.snapshot, { archiveKey })).toEqual({ status: 'invalid-source' })
+    storage.values.set(PUBLIC_V6_STAGE_KEY, playableBytes)
+    expect(recoverPublicV6Root(storage, 'backup', read.snapshot, { archiveKey })).toEqual({ status: 'snapshot-changed' })
+    storage.values.set(PUBLIC_V6_STAGE_KEY, '{invalid stage')
+    storage.values.set(archiveKey, 'existing archive')
+    expect(recoverPublicV6Root(storage, 'backup', read.snapshot, { archiveKey })).toEqual({ status: 'archive-key-present' })
+    expect(storage.values.get(archiveKey)).toBe('existing archive')
+    expect(storage.writes).toEqual([])
+  })
+
+  it.each([archiveKey, PUBLIC_V6_STAGE_KEY, PUBLIC_V6_ROOT_KEY])(
+    'reports a %s write failure and retains the verified archive when created', (failedKey) => {
+      const { bootstrapBytes, playableBytes } = recoveryFixtures()
+      const storage = memoryStorage([
+        [PUBLIC_V6_ROOT_KEY, bootstrapBytes], [PUBLIC_V6_STAGE_KEY, '{invalid stage'],
+        [PUBLIC_V6_BACKUP_KEY, playableBytes],
+      ])
+      const read = readPublicV6RecoverySnapshot(storage)
+      if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+      const failing = {
+        getItem: storage.getItem,
+        setItem: (key: string, bytes: string) => {
+          if (key === failedKey) throw new Error('quota')
+          storage.setItem(key, bytes)
+        },
+      }
+      expect(recoverPublicV6Root(failing, 'backup', read.snapshot, { archiveKey })).toEqual({ status: 'storage-error' })
+      expect(storage.values.get(PUBLIC_V6_ROOT_KEY)).toBe(bootstrapBytes)
+      expect(storage.values.get(archiveKey) === undefined).toBe(failedKey === archiveKey)
+      expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(
+        failedKey === PUBLIC_V6_ROOT_KEY ? playableBytes : '{invalid stage',
+      )
+      if (failedKey !== archiveKey) {
+        expect(JSON.parse(storage.values.get(archiveKey)!)).toMatchObject(read.snapshot)
+      }
+    },
+  )
 })
