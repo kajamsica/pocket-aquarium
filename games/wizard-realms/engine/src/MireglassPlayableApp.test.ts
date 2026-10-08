@@ -469,19 +469,76 @@ describe('Mireglass playable dev adapter', () => {
     const initial = createMireglassDevWorld(seed).state
     const searching = { ...initial,
       player: { ...initial.player, position: { x: cache.x + 7, y: cache.y, z: cache.z },
+        learnedSpellIds: ['wayfinder_glow' as const],
         inventory: [...initial.player.inventory, { itemId: 'field_spade' as const, quantity: 1 }],
         skillXp: { ...initial.player.skillXp, excavation: 30 } },
       expedition: { ...initial.expedition, fringeMarkerStudied: true,
         builtRoutes: { bridge: bridge.id, ladder: ladder.id } },
     }
     expect(mireglassNextObjective(searching)).toMatchObject({ searchArea: true,
-      label: 'Wayfinder focus flares here. Cast Wayfinder Glow now' })
+      label: 'Seal-cache aura flares here. Cast Wayfinder Glow now' })
     expect(mireglassNextObjective(searching).position).not.toEqual(cache)
     expect(mireglassMapGuidance(searching)).toContain('no exact waypoint until revealed')
     const farther = { ...searching, player: { ...searching.player,
       position: { ...searching.player.position, x: cache.x + 24 } } }
-    expect(mireglassNextObjective(farther).label).toContain('focus is faint')
+    expect(mireglassNextObjective(farther).label).toContain('aura is faint')
     expect(mireglassNextObjective(farther).position).toEqual(mireglassNextObjective(searching).position)
+  })
+
+  it('guides the observed shelf approach and an eight-meter sweep without revealing seeded cache positions', () => {
+    const initial = createMireglassDevWorld(seed).state
+    const sweep = Array.from({ length: 6 }, (_, row) => Array.from({ length: 5 }, (_, column) => ({
+      x: -400 - 8 * (row % 2 === 0 ? column : 4 - column), z: 456 + 8 * row,
+    }))).flat()
+    for (const [seedIndex, currentSeed] of [seed, ...Array.from({ length: 100 }, (_, index) => `mireglass-corpus-${index}`)].entries()) {
+      const routes = mireglassRouteSites(currentSeed)
+      const bridge = routes.find((site) => site.kind === 'bridge')!
+      const ladder = routes.find((site) => site.kind === 'ladder')!
+      const cache = mireglassAnchors(currentSeed).sealCache.tile.center
+      const searching = { ...initial, seed: currentSeed,
+        player: { ...initial.player, position: { x: -387.4, y: ladder.to.y, z: 447 },
+          learnedSpellIds: ['wayfinder_glow' as const],
+          inventory: [...initial.player.inventory, { itemId: 'field_spade' as const, quantity: 1 }],
+          skillXp: { ...initial.player.skillXp, excavation: 30 } },
+        expedition: { ...initial.expedition, fringeMarkerStudied: true,
+          builtRoutes: { bridge: bridge.id, ladder: ladder.id } },
+      }
+      expect(mireglassNextObjective(searching).searchArea, currentSeed).toBe(true)
+      const approachGuidance = mireglassMapGuidance(searching)
+      expect(approachGuidance, currentSeed).toContain('SW of here')
+      expect(approachGuidance, currentSeed).toContain('shelf search approach')
+      expect(approachGuidance, currentSeed).toContain('You already know Wayfinder Glow; cast it on the shelf')
+      expect(approachGuidance, currentSeed).not.toContain('Wayfinder focus')
+      expect(approachGuidance, currentSeed).not.toContain(`x ${cache.x.toFixed(0)}, z ${cache.z.toFixed(0)}`)
+
+      const approach = mireglassNextObjective(searching).position
+      const atApproach = { ...searching, player: { ...searching.player,
+        position: { ...searching.player.position, x: approach.x, z: approach.z } } }
+      const sweepGuidance = mireglassMapGuidance(atApproach)
+      const focusMeters = Math.hypot(cache.x - approach.x, cache.z - approach.z)
+      expect(sweepGuidance, currentSeed).toContain(focusMeters <= 8 ? 'aura is within reach' : '8 m steps')
+      expect(sweepGuidance, currentSeed).toContain('Wayfinder Glow')
+      expect(sweepGuidance, currentSeed).not.toContain(`x ${cache.x.toFixed(0)}, z ${cache.z.toFixed(0)}`)
+      if (focusMeters > 16) expect(sweepGuidance, currentSeed).toContain('shifting 8 m south')
+      expect(sweep[0]).toEqual(approach)
+      expect(Math.min(...sweep.map((point) => Math.hypot(point.x - cache.x, point.z - cache.z))), currentSeed)
+        .toBeLessThanOrEqual(8)
+      if (seedIndex < 9) {
+        const castPoint = [...sweep].sort((a, b) => Math.hypot(a.x - cache.x, a.z - cache.z)
+          - Math.hypot(b.x - cache.x, b.z - cache.z))[0]
+        const source = createGeneratedWorld(currentSeed).player
+        source.position = { ...worldTileAtGrid(currentSeed, castPoint.x / 4, castPoint.z / 4).center }
+        source.learnedSpellIds = ['wayfinder_glow']
+        const world = createMireglassWorld(currentSeed, source)
+        expect(world.act({ type: 'cast_wayfinder_glow' }).event?.type, currentSeed).toBe('cache_revealed')
+      }
+
+      const atCache = { ...searching, player: { ...searching.player,
+        position: { ...searching.player.position, x: cache.x + 7, z: cache.z } } }
+      const nearGuidance = mireglassMapGuidance(atCache)
+      expect(nearGuidance, currentSeed).toContain('Cast Wayfinder Glow here')
+      expect(nearGuidance, currentSeed).not.toContain(`x ${cache.x.toFixed(0)}, z ${cache.z.toFixed(0)}`)
+    }
   })
 
   it('quotes the regional seal price at the outpost before the player owns a seal', () => {

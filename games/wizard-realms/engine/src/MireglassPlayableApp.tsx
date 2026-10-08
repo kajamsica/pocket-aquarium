@@ -19,6 +19,7 @@ const SEED = 'greenway-alpha'
 const STEP_MS = 50
 const MAX_CATCH_UP_STEPS = 12
 const REACH = 3
+const GLOW_REVEAL_REACH = 8
 export const MIREGLASS_TRAVEL_AUTOSAVE_MS = 5_000
 export const shouldAutosaveMireglassTravel = (dirty: boolean, lastSavedMs: number, nowMs: number) =>
   dirty && nowMs - lastSavedMs >= MIREGLASS_TRAVEL_AUTOSAVE_MS
@@ -182,7 +183,7 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
   }
   if (player.learnedSpellIds.includes('wayfinder_glow') && (
     mireglassGlowRevealableTileIds(seed, player.position, state.discoveredTileIds).length > 0
-    || (!expedition.cacheRevealed && distance(player.position, anchors.sealCache.tile.center) <= 8)
+    || (!expedition.cacheRevealed && distance(player.position, anchors.sealCache.tile.center) <= GLOW_REVEAL_REACH)
   )) choices.push({ id: 'cast', label: 'Cast Wayfinder Glow', detail: 'Reveal nearby fog and hidden magic',
     action: { type: 'cast_wayfinder_glow' }, distanceMeters: 0 })
   if (expedition.cacheRevealed && !expedition.cacheExcavated) add('excavate', 'Excavate seal cache', 'Requires spade and excavation Lv2', anchors.sealCache.tile.center, { type: 'excavate_cache' })
@@ -297,10 +298,10 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
   if (!expedition.cacheRevealed) {
     const cache = anchors.sealCache.tile.center
     const focusDistance = Math.hypot(player.position.x - cache.x, player.position.z - cache.z)
-    const label = focusDistance <= 8 ? 'Wayfinder focus flares here. Cast Wayfinder Glow now'
-      : focusDistance <= 16 ? 'Wayfinder focus is strong. Search nearby and cast Wayfinder Glow'
-        : focusDistance <= 32 ? 'Wayfinder focus is faint. Explore the upper slate shelf'
-          : 'Search the upper slate shelf for the Wayfinder focus'
+    const label = focusDistance <= GLOW_REVEAL_REACH ? 'Seal-cache aura flares here. Cast Wayfinder Glow now'
+      : focusDistance <= 16 ? 'Seal-cache aura is strong. Search nearby and cast Wayfinder Glow'
+        : focusDistance <= 32 ? 'Seal-cache aura is faint. Search the upper slate shelf with Wayfinder Glow'
+          : 'Search the upper slate shelf for the hidden seal-cache aura'
     return { label, position: { x: (MIREGLASS_PLATEAU.minX + MIREGLASS_PLATEAU.maxX) / 2,
       z: MIREGLASS_PLATEAU.maxZ - 48 }, searchArea: true }
   }
@@ -315,10 +316,22 @@ export function mireglassMapGuidance(state: MireglassWorldState): string {
   const target = state.expedition.fringeMarkerStudied ? objective.label : 'Frontier marker'
   const meters = Math.round(Math.hypot(objective.position.x - state.player.position.x,
     objective.position.z - state.player.position.z))
-  if (objective.searchArea && state.player.position.z >= objective.position.z - 12)
-    return `Next: ${target}. Search this shelf; the cache has no exact waypoint until revealed.`
+  if (objective.searchArea) return `Next: ${target}. ${mireglassSearchGuidance(state, objective, meters)}`
   if (meters < 1) return `Next: ${target}. Here (0 m).`
   return `Next: ${target}. ${bearingText(state.player.position, objective.position)} of here, about ${meters} m direct.`
+}
+
+function mireglassSearchGuidance(state: MireglassWorldState, objective: MireglassObjective, approachMeters: number): string {
+  const cache = mireglassAnchors(state.seed).sealCache.tile.center
+  const focusMeters = Math.hypot(state.player.position.x - cache.x, state.player.position.z - cache.z)
+  const hidden = 'The cache has no exact waypoint until revealed.'
+  const glow = state.player.learnedSpellIds.includes('wayfinder_glow')
+    ? 'You already know Wayfinder Glow; cast it on the shelf as the aura strengthens.'
+    : 'Learn Wayfinder Glow, then cast it on the shelf as the aura strengthens.'
+  if (focusMeters <= GLOW_REVEAL_REACH) return `Cast Wayfinder Glow here; the seal-cache aura is within reach. ${hidden}`
+  if (focusMeters <= 16) return `Search nearby: sweep east-west in 8 m steps, then shift 8 m south. Cast Wayfinder Glow as the aura flares. ${hidden}`
+  if (approachMeters >= GLOW_REVEAL_REACH) return `${bearingText(state.player.position, objective.position)} of here, about ${approachMeters} m to the shelf search approach. ${glow} ${hidden}`
+  return `Sweep east-west rows in 8 m steps, shifting 8 m south after each row. ${glow} ${hidden}`
 }
 
 /** The vendor quote is shown on approach, before the player owns a seal to sell. */
@@ -716,7 +729,8 @@ export function MireglassPlayableApp() {
         </div>
         <p><b>Next:</b> {objective.label}</p>
         {!objective.complete && <p className="readout">{objective.searchArea
-          ? 'Search area: upper slate shelf. The cache has no exact waypoint until revealed.'
+          ? mireglassSearchGuidance(state, objective, Math.round(Math.hypot(objective.position.x - player.position.x,
+            objective.position.z - player.position.z)))
           : `Target ${bearingText(player.position, objective.position)} · ${pointText(objective.position)} · ${nearMeters.toFixed(0)}m away`}</p>}
         {outpostQuote && <p className="readout">{outpostQuote}</p>}
         {selectedSite && <p className="readout">Selected {routeName(selectedSite.kind)} site: {bearingText(player.position, selectedSite.from)} · {pointText(selectedSite.from)} · {distance(player.position, selectedSite.from).toFixed(0)}m away</p>}
