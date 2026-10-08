@@ -4,6 +4,7 @@ import { mireglassRouteSites } from './mireglassRouteSites'
 import type { MireglassRouteSite } from './mireglassRouteSites'
 import { canEquipItem } from './world'
 import type { EquipmentSlot, ItemId, PlayerState, Vec3 } from './types'
+import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from './worldChunks'
 
 export type MireglassNewItemId = 'mireglass_reach/item/seal' | 'mireglass_reach/item/waders'
 export type MireglassItemId = ItemId | MireglassNewItemId
@@ -73,7 +74,8 @@ export type MireglassExpeditionEvent =
   | { type: 'fringe_marker_studied'; markerId: string; spellId: 'wayfinder_glow'; learned: boolean }
   | { type: 'route_built'; routeId: MireglassRouteSite['routeId']; siteId: string; kind: MireglassRouteKind; logCost: 4 | 8; xp: number }
   | { type: 'route_traversed'; routeId: MireglassRouteSite['routeId']; siteId: string; from: 'from' | 'to'; position: Vec3 }
-  | { type: 'cache_revealed'; cacheId: string; spellId: 'wayfinder_glow'; xp: number }
+  | { type: 'terrain_revealed'; spellId: 'wayfinder_glow'; revealedTileIds: readonly string[]; xp: number }
+  | { type: 'cache_revealed'; cacheId: string; spellId: 'wayfinder_glow'; revealedTileIds: readonly string[]; xp: number }
   | { type: 'cache_excavated'; cacheId: string; itemId: 'mireglass_reach/item/seal'; quantity: 1; xp: number }
   | { type: 'item_bought'; itemId: MireglassShopItemId; price: number; stockRemaining: number }
   | { type: 'item_sold'; itemId: MireglassSaleItemId; quantity: number; unitPrice: number; totalPrice: number }
@@ -203,6 +205,28 @@ function gainXp(player: MireglassV6Player, amount: number, skillId: keyof Player
 const canGainXp = (player: MireglassV6Player, amount: number, ...skills: Array<keyof PlayerState['skillXp']>) =>
   Number.isSafeInteger(player.xp + amount) && skills.every((skillId) => Number.isSafeInteger(player.skillXp[skillId] + amount))
 
+/** Canonical 4 m terrain centers revealed by a cast at the authoritative player position. */
+export function mireglassGlowRevealableTileIds(
+  seed: string, position: Readonly<Vec3>, discoveredTileIds: readonly string[],
+): string[] {
+  const discovered = new Set(discoveredTileIds)
+  const revealed: string[] = []
+  const minX = Math.max(WORLD_GRID_MIN, Math.ceil((position.x - GLOW_METERS) / WORLD_CELL_METERS))
+  const maxX = Math.min(WORLD_GRID_MAX, Math.floor((position.x + GLOW_METERS) / WORLD_CELL_METERS))
+  const minZ = Math.max(WORLD_GRID_MIN, Math.ceil((position.z - GLOW_METERS) / WORLD_CELL_METERS))
+  const maxZ = Math.min(WORLD_GRID_MAX, Math.floor((position.z + GLOW_METERS) / WORLD_CELL_METERS))
+  for (let gz = minZ; gz <= maxZ; gz += 1) {
+    for (let gx = minX; gx <= maxX; gx += 1) {
+      const tile = worldTileAtGrid(seed, gx, gz)
+      if (!discovered.has(tile.id)
+        && Math.hypot(tile.center.x - position.x, tile.center.z - position.z) <= GLOW_METERS) {
+        revealed.push(tile.id)
+      }
+    }
+  }
+  return revealed.sort()
+}
+
 /** Import a validated v5 player whole, or use the v5 generator for a fresh unsaved player. */
 export function createMireglassV6Player(seed: string, v5Player?: PlayerState): MireglassV6Player {
   if (typeof seed !== 'string') throw new TypeError('Mireglass seed must be a string.')
@@ -229,6 +253,7 @@ export function createMireglassRegionProgress(seed: string): MireglassRegionProg
 /** Pure region action boundary. Reach is derived only from the authoritative v6 player position. */
 export function applyMireglassExpeditionAction(
   seed: string, player: MireglassV6Player, region: MireglassRegionProgress, action: MireglassExpeditionAction,
+  discoveredTileIds?: readonly string[],
 ): MireglassExpeditionResult {
   const actionType = action?.type ?? 'unknown'
   const reject = (code: MireglassExpeditionRejection['code'], message: string): MireglassExpeditionResult =>
@@ -312,15 +337,22 @@ export function applyMireglassExpeditionAction(
 
   if (action.type === 'cast_wayfinder_glow') {
     if (!player.learnedSpellIds.includes('wayfinder_glow')) return reject('unlearned_spell', 'Learn Wayfinder Glow before casting.')
-    if (region.cacheRevealed) return reject('already_revealed', 'The cache is already revealed.')
+    if (!Array.isArray(discoveredTileIds)) return reject('invalid_value', 'Discovery state is required for Wayfinder Glow.')
+    const revealedTileIds = mireglassGlowRevealableTileIds(seed, player.position, discoveredTileIds)
     const cache = mireglassAnchors(seed).sealCache
-    if (distance(player.position, cache.tile.center) > GLOW_METERS) return reject('too_far', 'Cast within eight meters of the cache.')
-    if (!canGainXp(player, GLOW_XP, 'spellcraft', 'wayfinding')) return reject('invalid_value', 'Experience exceeds safe limits.')
+    const revealCache = !region.cacheRevealed
+      && Math.hypot(player.position.x - cache.tile.center.x, player.position.z - cache.tile.center.z) <= GLOW_METERS
+    const xp = (revealedTileIds.length + Number(revealCache)) * GLOW_XP
+    if (xp === 0) return reject('already_revealed', 'No new terrain or cache is within Wayfinder Glow reach.')
+    if (!canGainXp(player, xp, 'spellcraft', 'wayfinding')) return reject('invalid_value', 'Experience exceeds safe limits.')
     const next = copyAt()
-    gainXp(next, GLOW_XP, 'spellcraft')
-    next.skillXp.wayfinding += GLOW_XP
-    return { player: next, region: { ...region, cacheRevealed: true },
-      event: { type: 'cache_revealed', cacheId: cache.id, spellId: 'wayfinder_glow', xp: GLOW_XP } }
+    gainXp(next, xp, 'spellcraft')
+    next.skillXp.wayfinding += xp
+    return revealCache
+      ? { player: next, region: { ...region, cacheRevealed: true },
+        event: { type: 'cache_revealed', cacheId: cache.id, spellId: 'wayfinder_glow', revealedTileIds, xp } }
+      : { player: next, region,
+        event: { type: 'terrain_revealed', spellId: 'wayfinder_glow', revealedTileIds, xp } }
   }
 
   if (action.type === 'excavate_cache') {

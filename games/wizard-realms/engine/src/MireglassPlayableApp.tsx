@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
-import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES } from './domain/mireglassExpedition'
+import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES, mireglassGlowRevealableTileIds } from './domain/mireglassExpedition'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { MIREGLASS_PLATEAU } from './domain/mireglassTerrain'
 import { MIREGLASS_SAVE_KEY, parseMireglassWorld, serializeMireglassWorld } from './domain/mireglassPersistence'
@@ -94,7 +94,11 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
       add(`cross:${site.id}:to`, `Return by ${routeName(site.kind)}`, 'To near bank', site.to, { type: 'traverse_route', siteId: site.id, from: 'to' })
     }
   }
-  if (!expedition.cacheRevealed) add('cast', 'Cast Wayfinder Glow', 'Reveal the seal cache', anchors.sealCache.tile.center, { type: 'cast_wayfinder_glow' }, 8)
+  if (player.learnedSpellIds.includes('wayfinder_glow') && (
+    mireglassGlowRevealableTileIds(seed, player.position, state.discoveredTileIds).length > 0
+    || (!expedition.cacheRevealed && distance(player.position, anchors.sealCache.tile.center) <= 8)
+  )) choices.push({ id: 'cast', label: 'Cast Wayfinder Glow', detail: 'Reveal nearby fog and hidden magic',
+    action: { type: 'cast_wayfinder_glow' }, distanceMeters: 0 })
   if (expedition.cacheRevealed && !expedition.cacheExcavated) add('excavate', 'Excavate seal cache', 'Requires spade and excavation Lv2', anchors.sealCache.tile.center, { type: 'excavate_cache' })
   add('buy-spade', 'Buy field spade', `${MIREGLASS_OUTPOST_CATALOG.field_spade.price} coins · ${expedition.shopStock.field_spade} left`, anchors.salvager.tile.center, { type: 'buy_item', itemId: 'field_spade' })
   add('buy-waders', 'Buy fen waders', `${MIREGLASS_OUTPOST_CATALOG['mireglass_reach/item/waders'].price} coins · ${expedition.shopStock['mireglass_reach/item/waders']} left`, anchors.salvager.tile.center, { type: 'buy_item', itemId: 'mireglass_reach/item/waders' })
@@ -107,7 +111,8 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
       action: { type: 'equip_item', itemId }, distanceMeters: 0,
     })
   }
-  return choices.sort((a, b) => a.distanceMeters - b.distanceMeters || a.label.localeCompare(b.label))
+  return choices.sort((a, b) => Number(a.action.type === 'cast_wayfinder_glow')
+    - Number(b.action.type === 'cast_wayfinder_glow') || a.distanceMeters - b.distanceMeters || a.label.localeCompare(b.label))
 }
 
 export interface MireglassObjective {
@@ -288,6 +293,7 @@ function eventText(event: MireglassExpeditionEvent): string {
     case 'route_built': return `Built ${routeName(event.kind)} for ${event.logCost} logs.`
     case 'route_traversed': return `Crossed the ${event.routeId.includes('fen') ? 'fen bridge' : 'slate ladder'}.`
     case 'cache_revealed': return 'Wayfinder Glow revealed the seal cache.'
+    case 'terrain_revealed': return `Wayfinder Glow revealed ${event.revealedTileIds.length} nearby map tiles.`
     case 'cache_excavated': return 'Excavated the Mireglass seal.'
     case 'item_bought': return `Bought ${ITEM_NAMES[event.itemId]} for ${event.price} coins.`
     case 'item_sold': return `Sold ${event.quantity} ${ITEM_NAMES[event.itemId]} for ${event.totalPrice} coins.`

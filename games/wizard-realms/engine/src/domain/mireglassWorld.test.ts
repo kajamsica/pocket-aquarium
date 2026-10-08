@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld } from './generation'
-import { mireglassResources } from './mireglassContent'
+import { mireglassAnchors, mireglassResources } from './mireglassContent'
+import { mireglassGlowRevealableTileIds } from './mireglassExpedition'
+import { parseMireglassWorld, serializeMireglassWorld } from './mireglassPersistence'
 import { mireglassBermFaceRowAt, mireglassFenRowAt } from './mireglassTerrain'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import type { StreamedWorldIntent } from './streamedWorld'
@@ -113,6 +115,66 @@ describe('Mireglass campaign runtime', () => {
     expect(repeated.state).toBe(rewarded)
     expect(world.state.player.xp).toBe(20)
     expect(world.activeChunkCoordinates()).toEqual(chunks)
+  })
+
+  it('reveals bell-alder fog in the streamed world and restores it from a v6 save', () => {
+    const alder = mireglassAnchors(seed).bellAlder
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...alder.tile.center }
+    source.learnedSpellIds = ['wayfinder_glow']
+    const world = createMireglassWorld(seed, source)
+    const before = world.state
+    const tileIds = mireglassGlowRevealableTileIds(seed, before.player.position, before.discoveredTileIds)
+    expect(tileIds.length).toBeGreaterThan(0)
+    const cast = world.act({ type: 'cast_wayfinder_glow' })
+    expect(cast.event).toEqual({ type: 'terrain_revealed', spellId: 'wayfinder_glow',
+      revealedTileIds: tileIds, xp: tileIds.length * 10 })
+    expect(world.state.expedition.cacheRevealed).toBe(false)
+    expect(world.state.discoveredTileIds).toEqual([...new Set([...before.discoveredTileIds, ...tileIds])].sort())
+    const east = worldTileAtGrid(seed, alder.tile.center.x / WORLD_CELL_METERS + 1,
+      alder.tile.center.z / WORLD_CELL_METERS)
+    expect(tileIds).toContain(east.id)
+    expect(world.tileAtWorld(east.center.x, east.center.z)).toEqual(east)
+    expect(world.activeTiles()).toContainEqual(east)
+    const rewarded = world.state
+    const repeated = world.act({ type: 'cast_wayfinder_glow' })
+    expect(repeated.rejection?.code).toBe('already_revealed')
+    expect(repeated.state).toBe(rewarded)
+
+    const save = serializeMireglassWorld(world.state)
+    const parsed = parseMireglassWorld(save, seed)
+    expect(parsed).not.toBeNull()
+    const resumed = createMireglassWorldFromState(parsed!)
+    expect(resumed.state).toEqual(world.state)
+    expect(resumed.tileAtWorld(east.center.x, east.center.z)).toEqual(east)
+    const restored = resumed.state
+    expect(resumed.act({ type: 'cast_wayfinder_glow' }).rejection?.code).toBe('already_revealed')
+    expect(resumed.state).toBe(restored)
+    const originalMove = world.advance([move(4)])
+    const resumedMove = resumed.advance([move(4)])
+    expect(resumedMove).toEqual(originalMove)
+    expect(resumedMove.state.player.position.x).toBe(east.center.x)
+    expect(resumedMove.events).not.toContainEqual({ type: 'tile_discovered', tick: 1, tileId: east.id })
+  })
+
+  it('reveals the hidden seal cache and nearby fog in one cast, with no repeat reward', () => {
+    const cache = mireglassAnchors(seed).sealCache
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...cache.tile.center }
+    source.learnedSpellIds = ['wayfinder_glow']
+    const world = createMireglassWorld(seed, source)
+    const before = world.state
+    const tileIds = mireglassGlowRevealableTileIds(seed, before.player.position, before.discoveredTileIds)
+    const cast = world.act({ type: 'cast_wayfinder_glow' })
+    expect(cast.event).toEqual({ type: 'cache_revealed', cacheId: cache.id,
+      spellId: 'wayfinder_glow', revealedTileIds: tileIds, xp: (tileIds.length + 1) * 10 })
+    expect(world.state.expedition.cacheRevealed).toBe(true)
+    expect(world.state.discoveredTileIds).toEqual([...new Set([...before.discoveredTileIds, ...tileIds])].sort())
+    expect(world.state.player.skillXp.spellcraft).toBe((tileIds.length + 1) * 10)
+    const rewarded = world.state
+    expect(world.act({ type: 'cast_wayfinder_glow' }).rejection?.code).toBe('already_revealed')
+    expect(world.state).toBe(rewarded)
+    expect(parseMireglassWorld(serializeMireglassWorld(world.state), seed)).not.toBeNull()
   })
 
   it('traverses the selected canonical bridge in both directions with atomic discovery and no duplicate build XP', () => {

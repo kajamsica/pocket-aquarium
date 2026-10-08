@@ -4,6 +4,7 @@ import { mireglassAnchors, mireglassResources } from './mireglassContent'
 import {
   applyMireglassExpeditionAction, createMireglassRegionProgress, createMireglassV6Player,
   isValidMireglassRegionProgress, isValidMireglassV6Player, MIREGLASS_OUTPOST_CATALOG,
+  mireglassGlowRevealableTileIds,
 } from './mireglassExpedition'
 import type {
   MireglassExpeditionAction, MireglassExpeditionResult, MireglassItemId, MireglassRegionProgress, MireglassV6Player,
@@ -11,6 +12,7 @@ import type {
 import { mireglassRouteSites } from './mireglassRouteSites'
 import { isRestorableWizardSave, serializeWizardWorld } from './persistence'
 import type { PlayerState, Vec3 } from './types'
+import { worldTileAtGrid } from './worldChunks'
 
 const seed = 'mireglass-expedition-actions'
 const anchors = mireglassAnchors(seed)
@@ -130,14 +132,39 @@ describe('Mireglass player and region action authority', () => {
       .toEqual({ player: chopped.player, region: chopped.region })
   })
 
+  it('reveals new 4 m terrain by the bell alder once and awards only discovery XP', () => {
+    const player = at(createMireglassV6Player(seed, earnedPlayer()), anchors.bellAlder.tile.center)
+    const region = createMireglassRegionProgress(seed)
+    const known = [anchors.bellAlder.tile.id]
+    const revealedTileIds = mireglassGlowRevealableTileIds(seed, player.position, known)
+    expect(revealedTileIds).toContain(worldTileAtGrid(seed,
+      player.position.x / 4 + 1, player.position.z / 4).id)
+    expect(revealedTileIds).not.toContain(worldTileAtGrid(seed,
+      player.position.x / 4 + 3, player.position.z / 4).id)
+    expect(revealedTileIds.length).toBeGreaterThan(0)
+    const cast = accepted(applyMireglassExpeditionAction(seed, player, region,
+      { type: 'cast_wayfinder_glow' }, known))
+    expect(cast.event).toEqual({ type: 'terrain_revealed', spellId: 'wayfinder_glow',
+      revealedTileIds, xp: revealedTileIds.length * 10 })
+    expect(cast.region).toBe(region)
+    expect(cast.player.xp - player.xp).toBe(revealedTileIds.length * 10)
+    expect(cast.player.skillXp.spellcraft - player.skillXp.spellcraft).toBe(revealedTileIds.length * 10)
+    expect(cast.player.skillXp.wayfinding - player.skillXp.wayfinding).toBe(revealedTileIds.length * 10)
+    const discovered = [...known, ...revealedTileIds].sort()
+    expect(mireglassGlowRevealableTileIds(seed, player.position, discovered)).toEqual([])
+    rejected(applyMireglassExpeditionAction(seed, cast.player, cast.region,
+      { type: 'cast_wayfinder_glow' }, discovered), 'already_revealed', cast.player, cast.region)
+  })
+
   it('earns both prerequisites from a fresh player and completes the outbound journey', () => {
     let player = createMireglassV6Player(seed)
     let region = createMireglassRegionProgress(seed)
+    const knownCacheTiles = mireglassGlowRevealableTileIds(seed, anchors.sealCache.tile.center, [])
     const step = (position: Vec3 | null, action: MireglassExpeditionAction) => {
       if (position) player = at(player, position) // The streamed movement authority supplies this updated player.
       const priorPlayer = player
       const priorRegion = region
-      const result = accepted(applyMireglassExpeditionAction(seed, player, region, action))
+      const result = accepted(applyMireglassExpeditionAction(seed, player, region, action, knownCacheTiles))
       expect(player).toBe(priorPlayer)
       expect(region).toBe(priorRegion)
       player = result.player
@@ -172,6 +199,8 @@ describe('Mireglass player and region action authority', () => {
     expect(step(null, { type: 'traverse_route', siteId: ladder.id, from: 'from' }).player.position).toEqual(ladder.to)
     expect(step(anchors.sealCache.tile.center, { type: 'cast_wayfinder_glow' }).event)
       .toMatchObject({ cacheId: anchors.sealCache.id, xp: 10 })
+    rejected(applyMireglassExpeditionAction(seed, player, region,
+      { type: 'cast_wayfinder_glow' }, knownCacheTiles), 'already_revealed', player, region)
     step(null, { type: 'equip_item', itemId: 'field_spade' })
     expect(step(null, { type: 'excavate_cache' }).event)
       .toMatchObject({ itemId: seal, quantity: 1, xp: 40 })
@@ -196,8 +225,6 @@ describe('Mireglass player and region action authority', () => {
     expect(region.depletedResourceIds).toHaveLength(6)
     rejected(applyMireglassExpeditionAction(seed, player, region,
       { type: 'chop_tree', resourceId: trees[0].id }), 'depleted', player, region)
-    rejected(applyMireglassExpeditionAction(seed, player, region,
-      { type: 'cast_wayfinder_glow' }), 'already_revealed', player, region)
     rejected(applyMireglassExpeditionAction(seed, player, region,
       { type: 'excavate_cache' }), 'already_excavated', player, region)
     rejected(applyMireglassExpeditionAction(seed, player, region,
@@ -274,10 +301,16 @@ describe('Mireglass player and region action authority', () => {
       { type: 'excavate_cache' }), 'site_hidden', atCache, region)
     const learned = createMireglassV6Player(seed, earnedPlayer())
     const farCache = at(learned, { ...anchors.sealCache.tile.center, x: anchors.sealCache.tile.center.x + 8.01 })
-    rejected(applyMireglassExpeditionAction(seed, farCache, region,
-      { type: 'cast_wayfinder_glow' }), 'too_far', farCache, region)
-    const revealed = accepted(applyMireglassExpeditionAction(seed, at(learned, anchors.sealCache.tile.center), region,
-      { type: 'cast_wayfinder_glow' }))
+    const farTileId = worldTileAtGrid(seed, (anchors.sealCache.tile.center.x + 8) / 4,
+      anchors.sealCache.tile.center.z / 4).id
+    const fog = accepted(applyMireglassExpeditionAction(seed, farCache, region,
+      { type: 'cast_wayfinder_glow' }, [farTileId]))
+    expect(fog.event.type).toBe('terrain_revealed')
+    if (fog.event.type !== 'terrain_revealed') throw new Error('Expected terrain discovery.')
+    expect(fog.region.cacheRevealed).toBe(false)
+    const revealed = accepted(applyMireglassExpeditionAction(seed,
+      at(fog.player, anchors.sealCache.tile.center), fog.region,
+      { type: 'cast_wayfinder_glow' }, [farTileId, ...fog.event.revealedTileIds, anchors.sealCache.tile.id]))
     rejected(applyMireglassExpeditionAction(seed, revealed.player, revealed.region,
       { type: 'excavate_cache' }), 'requires_spade', revealed.player, revealed.region)
     const withSpade = accepted(applyMireglassExpeditionAction(seed, at(revealed.player, anchors.salvager.tile.center), revealed.region,

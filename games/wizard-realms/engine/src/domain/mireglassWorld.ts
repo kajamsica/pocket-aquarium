@@ -129,14 +129,18 @@ function createRuntime(streamedStart: StreamedWorldRuntime, initialState: Miregl
       return { state, events: result.events, rejections: result.rejections }
     },
     act(action) {
-      const result = applyMireglassExpeditionAction(normalizedSeed, state.player, state.expedition, action)
+      const result = applyMireglassExpeditionAction(normalizedSeed, state.player, state.expedition, action,
+        state.discoveredTileIds)
       if (result.rejection) return { state, rejection: result.rejection }
 
-      if (result.event.type === 'route_traversed') {
+      if (result.event.type === 'route_traversed' || result.event.type === 'terrain_revealed'
+        || result.event.type === 'cache_revealed') {
         const { position } = result.player
-        const destinationId = worldTileAtGrid(normalizedSeed,
-          position.x / WORLD_CELL_METERS, position.z / WORLD_CELL_METERS).id
-        const discoveredTileIds = [...new Set([...state.discoveredTileIds, destinationId])].sort()
+        const revealedTileIds = result.event.type === 'route_traversed'
+          ? [worldTileAtGrid(normalizedSeed, position.x / WORLD_CELL_METERS,
+            position.z / WORLD_CELL_METERS).id]
+          : result.event.revealedTileIds
+        const discoveredTileIds = [...new Set([...state.discoveredTileIds, ...revealedTileIds])].sort()
         const destination = createStreamedWorldFromState({
           seed: normalizedSeed, tick: state.tick,
           player: {

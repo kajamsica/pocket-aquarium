@@ -32,6 +32,7 @@ describe('Mireglass playable dev adapter', () => {
     expect(result.event?.type).toBe('fringe_marker_studied')
     expect(world.state.player.learnedSpellIds).toContain('wayfinder_glow')
     expect(world.state.expedition.fringeMarkerStudied).toBe(true)
+    expect(mireglassActionChoices(world.state).map((choice) => choice.action.type)).toContain('cast_wayfinder_glow')
     expect(mireglassNextObjective(world.state).position).toEqual(mireglassAnchors(seed).salvager.tile.center)
   })
 
