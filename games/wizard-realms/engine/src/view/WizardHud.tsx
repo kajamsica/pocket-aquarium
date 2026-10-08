@@ -35,6 +35,14 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const xpPercent = Math.min(100, projection.experience.nextLevelXp > 0
     ? projection.experience.xp / projection.experience.nextLevelXp * 100
     : 100)
+  const windward = projection.windwardStep
+  const windwardAction = windward?.learned ? { type: 'windward.cast' as const } : { type: 'windward.study' as const }
+  const windwardActionable = windward?.learned ? windward.canCast : windward?.glyph?.canStudy === true
+  const windwardStatus = windward?.activeSeconds
+    ? `Active for ${windward.activeSeconds}s. Recast in ${windward.cooldownSeconds}s.`
+    : windward?.cooldownSeconds ? `Recast in ${windward.cooldownSeconds}s.`
+      : windward?.learned ? windward.canCast ? 'Ready on the dry Highland trail.' : 'Follow the dry Highland trail to cast.'
+        : windward?.glyph?.canStudy ? 'Study the wind-cut glyph here.' : 'Find the wind-cut glyph at Quarry Crown.'
 
   return (
     <div className="wr-hud">
@@ -72,6 +80,16 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             <small className="wr-caption" role="status">{projection.highlandExtraction.reason}</small>
           </>}
           <button type="button" style={FIELD_ACTION_STYLE} disabled={!learnedGlow} aria-label="Cast Wayfinder Glow" onClick={() => onIntent({ type: 'spell.cast', spellId: 'wayfinder_glow' })}>Cast Wayfinder Glow</button>
+          {windward && <>
+            <button type="button" style={FIELD_ACTION_STYLE} disabled={!windwardActionable}
+              aria-label={windward.learned ? 'Cast Windward Step' : 'Study Windward Step glyph'}
+              onClick={() => onIntent(windwardAction)}>{windward.learned ? 'Cast Windward Step' : 'Study Windward Step'}</button>
+            <small className="wr-caption">Windward Step: {windward.learned ? 'Learned. ' : 'Unknown. '}{windwardStatus}</small>
+          </>}
+          {windward?.stoneReturn && <small className="wr-caption" role="status">
+            {windward.stoneReturn.quantity} carried stone: {windward.stoneReturn.offers.map((offer) =>
+              `${offer.name} ${offer.unitPrice}g each (${offer.total}g total)`).join('; ')}.
+          </small>}
           {nearbyInscriptions.map((inscription) => <button key={inscription.id} type="button" style={FIELD_ACTION_STYLE} aria-label={`Study ${inscription.name}`} onClick={() => onIntent({ type: 'inscription.study', inscriptionId: inscription.id })}>Study {inscription.name}</button>)}
           {nearbyDigSites.map((site) => {
             const unmetLevel = excavationLevel < site.minimumExcavationLevel
@@ -183,6 +201,9 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           <button className="wr-touch-action" onClick={() => onIntent({ type: 'jump' })}>Jump</button>
           <button className="wr-touch-action" onClick={() => onIntent({ type: 'interact' })}>Interact</button>
           <button className="wr-touch-action" disabled={!learnedGlow} aria-label="Cast Wayfinder Glow" onClick={() => onIntent({ type: 'spell.cast', spellId: 'wayfinder_glow' })}>Cast</button>
+          {windward && <button className="wr-touch-action" disabled={!windwardActionable}
+            aria-label={windward.learned ? 'Cast Windward Step' : 'Study Windward Step glyph'}
+            onClick={() => onIntent(windwardAction)}>{windward.learned ? 'Wind' : 'Study'}</button>}
         </div>
       </div>
     </div>

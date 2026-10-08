@@ -202,6 +202,19 @@ export interface WizardWorldOverview {
   player: { gridX: number; gridZ: number; yaw: number }
 }
 
+/** V12 presentation only. The Windward Step ledger remains in the authoritative world state. */
+export interface WizardWindwardStepView {
+  learned: boolean
+  glyph: { position: Vec3; canStudy: boolean } | null
+  activeSeconds: number
+  cooldownSeconds: number
+  canCast: boolean
+  stoneReturn?: {
+    quantity: number
+    offers: readonly { storeId: string; name: string; unitPrice: number; total: number }[]
+  }
+}
+
 export interface WizardViewProjection {
   seed: string
   tick: number
@@ -227,6 +240,8 @@ export interface WizardViewProjection {
   highlandExtraction?: { nodeId: string; label: string; actionable: boolean; reason: string }
   /** V11-only ambient identity; no physical or simulation effect. */
   ambience?: 'highland-wind'
+  /** Absent from v7-v11 projections and never added to learnedSpellIds. */
+  windwardStep?: WizardWindwardStepView
   map: {
     tiles: readonly WizardMapTile[]
     player: { gridX: number; gridZ: number; yaw: number }
@@ -273,6 +288,8 @@ export type WizardViewIntent =
   | { type: 'jump' }
   | { type: 'interact' }
   | { type: 'highland.extract'; nodeId: string }
+  | { type: 'windward.study' }
+  | { type: 'windward.cast' }
   | { type: 'store.close' }
   | { type: 'store.open'; storeId: string }
   | { type: 'store.select-listing'; storeId: string; listingId: string }

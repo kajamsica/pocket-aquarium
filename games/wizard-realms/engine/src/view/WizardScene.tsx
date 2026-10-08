@@ -68,6 +68,13 @@ const HIGHLAND_CROWN_SEAM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a
 const HIGHLAND_DEPLETED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#686b66', roughness: 0.98, flatShading: true })
 const HIGHLAND_WIND_MATERIAL = new THREE.MeshBasicMaterial({ color: '#d6e1dc', transparent: true,
   opacity: 0.22, depthWrite: false })
+const WINDWARD_RUNE_MATERIAL = new THREE.MeshBasicMaterial({ color: '#a9e7df', transparent: true,
+  opacity: 0.72, depthWrite: false })
+const WINDWARD_DORMANT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#759793', roughness: 0.85 })
+const WINDWARD_RIBBON_MATERIAL = new THREE.MeshBasicMaterial({ color: '#c6fff0', transparent: true,
+  opacity: 0.4, depthWrite: false, side: THREE.DoubleSide })
+const WINDWARD_GLYPH_GEOMETRY = new THREE.RingGeometry(0.28, 0.36, 12)
+const WINDWARD_RIBBON_GEOMETRY = new THREE.TorusGeometry(0.56, 0.012, 4, 24, Math.PI * 1.2)
 const MARKER_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b9aa89', roughness: 0.95, flatShading: true })
 const MARKER_RUNE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bde4d0', emissive: '#4d9b82', emissiveIntensity: 0.9, roughness: 0.5 })
 const MARKER_DORMANT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#787d69', roughness: 0.9 })
@@ -417,7 +424,9 @@ function Shield() {
   </group>
 }
 
-function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: AvatarEquipment }) {
+function WizardAvatar({ pose, equipment, windwardActive = false }: {
+  pose: PresentationPose; equipment: AvatarEquipment; windwardActive?: boolean
+}) {
   const gear = avatarGearFor(equipment)
   const legMaterial = gear.leggings ? STAKE_MATERIAL : ROBE_TRIM_MATERIAL
   const root = useRef<THREE.Group>(null)
@@ -426,7 +435,8 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
   const rightLeg = useRef<THREE.Group>(null)
   const leftArm = useRef<THREE.Group>(null)
   const rightArm = useRef<THREE.Group>(null)
-  useFrame(() => {
+  const windRibbon = useRef<THREE.Group>(null)
+  useFrame(({ clock }) => {
     if (!root.current || !torso.current || !leftLeg.current || !rightLeg.current || !leftArm.current || !rightArm.current) return
     root.current.position.copy(pose.position)
     root.current.rotation.y = pose.yaw
@@ -438,6 +448,7 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
     leftArm.current.rotation.x = -swing * ARM_SWING_RAD
     rightArm.current.rotation.x = swing * ARM_SWING_RAD
     torso.current.position.y = BODY_BOB_M * stride * 0.5 * (1 + Math.cos(2 * pose.phase))
+    if (windRibbon.current) windRibbon.current.rotation.y = clock.elapsedTime * 1.4
   })
   return (
     <group ref={root} aria-label="Player wizard">
@@ -479,6 +490,12 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
           {gear.mainHand === 'wand' && <Wand side={1} light />}
         </group>
       </group>
+      {windwardActive && <group ref={windRibbon} name="Windward Step active wind" position={[0, 1.05, 0]}>
+        <mesh geometry={WINDWARD_RIBBON_GEOMETRY} material={WINDWARD_RIBBON_MATERIAL}
+          rotation={[Math.PI / 2, 0, 0]} position={[0, -0.3, 0]} />
+        <mesh geometry={WINDWARD_RIBBON_GEOMETRY} material={WINDWARD_RIBBON_MATERIAL}
+          rotation={[Math.PI / 2, Math.PI, 0]} position={[0, 0.25, 0]} />
+      </group>}
     </group>
   )
 }
@@ -940,6 +957,18 @@ function HighlandWind({ pose }: { pose: PresentationPose }) {
   </group>
 }
 
+/** Projection-only glyph, rendered only after the Crown tile has actually been discovered. */
+function WindwardGlyph({ position, learned }: { position: readonly [number, number, number]; learned: boolean }) {
+  return <group name={`Windward Step glyph (${learned ? 'studied' : 'unstudied'})`}
+    position={position as [number, number, number]}>
+    <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_CROWN_MATERIAL}
+      position={[0, 0.055, 0]} scale={[0.52, 0.11, 0.52]} receiveShadow />
+    <mesh geometry={WINDWARD_GLYPH_GEOMETRY}
+      material={learned ? WINDWARD_DORMANT_MATERIAL : WINDWARD_RUNE_MATERIAL}
+      position={[0, 0.13, 0]} rotation={[-Math.PI / 2, 0, 0]} />
+  </group>
+}
+
 export function WizardScene({ projection, cameraOrbit, orbiting }: {
   projection: WizardViewProjection
   cameraOrbit: readonly [number, number]
@@ -1007,10 +1036,13 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.inscriptions.map((inscription) => <Waystone key={inscription.id} inscription={inscription} />)}
       {projection.digSites.map((site) => <DigSite key={site.id} site={site} />)}
       {projection.landmarks?.map((landmark) => <Landmark key={landmark.id} landmark={landmark} />)}
+      {projection.windwardStep?.glyph && <WindwardGlyph position={projection.windwardStep.glyph.position}
+        learned={projection.windwardStep.learned} />}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
       {visibleCamps.map((camp) => <FieldCamp key={`${camp.status}:${camp.tileId}`} camp={camp} />)}
       {projection.ambience === 'highland-wind' && <HighlandWind pose={pose} />}
-      <WizardAvatar pose={pose} equipment={projection.equipment} />
+      <WizardAvatar pose={pose} equipment={projection.equipment}
+        windwardActive={(projection.windwardStep?.activeSeconds ?? 0) > 0} />
     </Canvas>
   )
 }
