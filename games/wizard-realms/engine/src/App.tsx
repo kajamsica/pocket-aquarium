@@ -199,6 +199,12 @@ export function objectiveFor(state: WizardWorldState): string {
     return `Greenway waystone: ${bearingTo(waystone.position)}. Study it to learn Wayfinder Glow.`
   }
   const ladderBuilt = state.builtRouteIds.includes('greenway_ladder')
+  const ladderNorth = () => {
+    const foot = state.routes.find((route) => route.id === 'greenway_ladder')!.from
+    return distance(state.player.position, foot) <= INTERACTION_RANGE
+      ? 'At the Greenway ladder south foot, press E to cross north'
+      : `Greenway ladder south foot: ${bearingTo(foot)}. Go there and press E to cross north`
+  }
   if (!ladderBuilt && state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
   if (!ladderBuilt && !state.excavatedDigSiteIds.includes('practice_mound')) {
     if (!owned(state, 'field_spade')) return outfitters('Buy a field spade')
@@ -216,7 +222,7 @@ export function objectiveFor(state: WizardWorldState): string {
   }
   if (!state.revealedDigSiteIds.includes('ridge_cache')) return areaAt(state.areas,
     state.player.position.x, state.player.position.z).id === 'greenway'
-    ? 'Stand at the foot of the completed ladder and press E to cross north, then cast Wayfinder Glow to reveal the ridge cache.'
+    ? `${ladderNorth()}. Then cast Wayfinder Glow to reveal the ridge cache.`
     : 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
   if (!state.excavatedDigSiteIds.includes('ridge_cache')) {
     const cache = state.digSites.find((site) => site.id === 'ridge_cache')!
@@ -229,12 +235,12 @@ export function objectiveFor(state: WizardWorldState): string {
       return `${returnRoute}${outfitters('Buy a field spade')}`
     }
     if (state.player.equipment.mainHand !== 'field_spade') {
-      const route = areaId === 'greenway' ? 'cross the Greenway ladder north and '
-        : areaId === 'eastern_highland' ? 'cross the Highland bridge west and ' : ''
+      if (areaId === 'greenway') return `Re-equip the field spade. ${ladderNorth()}. ${target}`
+      const route = areaId === 'eastern_highland' ? 'cross the Highland bridge west and ' : ''
       return `Re-equip the field spade, then ${route}find it. ${target}`
     }
     if (areaId === 'greenway') {
-      return 'Cross the ladder north, then find the revealed ridge cache (✦ on the map).'
+      return `${ladderNorth()}. Then find the revealed ridge cache (✦ on the map).`
     }
     return distance(state.player.position, cache.position) <= INTERACTION_RANGE
       ? 'Excavate the revealed ridge cache.' : `${target} Excavate it.`
@@ -257,11 +263,18 @@ export function objectiveFor(state: WizardWorldState): string {
       ? 'Press E to discover the Greenway Ring and link travel home.'
       : `Greenway Ring: ${bearingTo(ring.position)}. Go there and press E to discover it.`
   }
-  if (state.builtRouteIds.includes('highland_bridge')) return areaAt(state.areas,
-    state.player.position.x, state.player.position.z).id === 'eastern_highland'
-    ? 'Find and discover the Highland fairy ring.'
-    : 'Cross the Highland bridge east and discover the Highland fairy ring.'
-  if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Choose a Highland bridge site on the map and build it (6 logs).' : `${gather(6)}, then choose a bridge site on the map.`
+  if (state.builtRouteIds.includes('highland_bridge')) {
+    const areaId = areaAt(state.areas, state.player.position.x, state.player.position.z).id
+    return areaId === 'eastern_highland' ? 'Find and discover the Highland fairy ring.'
+      : areaId === 'greenway' ? `${ladderNorth()}. Then cross the Highland bridge east and discover the Highland fairy ring.`
+        : 'Cross the Highland bridge east and discover the Highland fairy ring.'
+  }
+  if (state.builtRouteIds.includes('greenway_ladder')) {
+    if (logs < 6) return `${gather(6)}, then choose a bridge site on the map.`
+    return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
+      ? `${ladderNorth()}. Then choose a Highland bridge site on the map and build it (6 logs).`
+      : 'Choose a Highland bridge site on the map and build it (6 logs).'
+  }
   if (axeEquipped(state)) return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
   return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : outfitters('Buy a woodcutter axe')
 }

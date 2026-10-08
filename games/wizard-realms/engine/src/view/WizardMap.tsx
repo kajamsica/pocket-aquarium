@@ -129,9 +129,11 @@ export function RouteKey({ routes, buildSites, selectedBuildSiteId, onSelect }: 
 }) {
   return <div className="wr-map-routes">{routes.map((route) => {
     const candidates = buildSites.filter((site) => site.routeId === route.id && site.discovered && site.status !== 'built')
+    const fromSide = route.id === 'greenway_ladder' ? 'South' : 'West'
+    const toSide = route.id === 'greenway_ladder' ? 'north' : 'east'
     return <section key={route.id}>
       <h3>{route.built ? '✓' : route.unlocked ? '◇' : '×'} {route.label} <small>{route.built ? 'completed' : route.unlocked ? `${route.logCost} logs` : 'locked'}</small></h3>
-      {route.built && <small>Walk to either end and press E to cross. Walking into the edge alone will not cross it.</small>}
+      {route.built && <small>{fromSide} foot (x {route.from[0]}, z {route.from[2]}) to {toSide} foot (x {route.to[0]}, z {route.to[2]}). Within 3 m of either foot, press E to cross. Walking into the edge alone will not cross it.</small>}
       {!route.built && candidates.map((site) => <button key={site.id} type="button" className="wr-map-site" aria-label={`Preview ${site.label}`} aria-pressed={selectedBuildSiteId === site.id} onClick={() => onSelect(site.id)}>
         <span>{site.label} <small>{site.logCost} logs</small></span><small>{site.reason || 'Ready to build'}</small>
       </button>)}

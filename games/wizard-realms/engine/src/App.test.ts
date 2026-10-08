@@ -161,6 +161,9 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds.push('greenway_ladder')
     expect(render()).toContain('completed route')
     expect(render()).toContain('✓ completed route')
+    expect(render()).toContain('South foot (x 0, z -4) to north foot (x 0, z -8). Within 3 m of either foot, press E to cross.')
+    state.builtRouteIds.push('highland_bridge')
+    expect(render()).toContain('West foot (x 4, z -8) to east foot (x 6, z -8). Within 3 m of either foot, press E to cross.')
   })
 
   it('shows a fresh ladder site and its distance reason even before walking north', () => {
@@ -393,10 +396,10 @@ describe('Wizard view adapter', () => {
     withLogs(state, 1)
     expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (1/6), then choose a bridge site on the map.')
     withLogs(state, 5)
-    expect(objectiveFor(state)).toBe('Choose a Highland bridge site on the map and build it (6 logs).')
+    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then choose a Highland bridge site on the map and build it (6 logs).')
 
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
-    expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
     expect(objectiveFor(state)).toBe('Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.')
@@ -412,14 +415,14 @@ describe('Wizard view adapter', () => {
 
     state.builtRouteIds.push('greenway_ladder')
     const before = JSON.stringify(state)
-    expect(objectiveFor(state)).toBe('Stand at the foot of the completed ladder and press E to cross north, then cast Wayfinder Glow to reveal the ridge cache.')
+    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cast Wayfinder Glow to reveal the ridge cache.')
     expect(JSON.stringify(state)).toBe(before)
 
     state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
     state.revealedDigSiteIds.push('ridge_cache')
     expect(objectiveFor(state)).toContain('Re-equip the field spade')
     state.player.equipment.mainHand = 'field_spade'
-    expect(objectiveFor(state)).toBe('Cross the ladder north, then find the revealed ridge cache (✦ on the map).')
+    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then find the revealed ridge cache (✦ on the map).')
   })
 
   it('sends players who skipped the practice mound to Outfitters before excavating the revealed ridge cache', () => {
@@ -445,7 +448,7 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds = ['greenway_ladder']
     state.revealedDigSiteIds = ['ridge_cache']
     state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
-    expect(objectiveFor(state)).toBe('Re-equip the field spade, then cross the Greenway ladder north and find it. Ridge cache: 6m west and 9m north (✦ on the map).')
+    expect(objectiveFor(state)).toBe('Re-equip the field spade. Greenway ladder south foot: 4m north. Go there and press E to cross north. Ridge cache: 6m west and 9m north (✦ on the map).')
 
     state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
     expect(objectiveFor(state)).toBe('Re-equip the field spade, then find it. Ridge cache: 6m west and 1m north (✦ on the map).')
@@ -569,6 +572,26 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toContain('Cast Wayfinder Glow near the northern ridge')
   })
 
+  it('guides both ridge-cache stages to the saved ladder foot and offers E within reach', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const site = routeBuildOptions(state).find((candidate) => candidate.id === 'greenway_ladder:x:-8')!
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    ladder.from = { ...site.from }
+    ladder.to = { ...site.to }
+    ladder.siteId = site.id
+    state.builtRouteIds = ['greenway_ladder']
+    state.player.learnedSpellIds = ['wayfinder_glow']
+    state.player.position = { ...state.player.position, x: 8, z: 0 }
+    expect(objectiveFor(state)).toContain('Greenway ladder south foot: 16m west and 4m north. Go there and press E to cross north.')
+
+    state.revealedDigSiteIds = ['ridge_cache']
+    state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    state.player.equipment.mainHand = 'field_spade'
+    expect(objectiveFor(state)).toContain('Greenway ladder south foot: 16m west and 4m north. Go there and press E to cross north.')
+    state.player.position = { ...site.from, x: site.from.x + 2.5 }
+    expect(objectiveFor(state)).toContain('At the Greenway ladder south foot, press E to cross north.')
+  })
+
   it('marks a revealed ridge cache and guides the crossed player to its authoritative position', () => {
     const state = createWizardWorld('greenway-alpha')
     state.player.learnedSpellIds = ['wayfinder_glow']
@@ -609,13 +632,13 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
 
     state.player.discoveredRingIds = []
-    expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
     state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
     expect(objectiveFor(state)).toBe('Find and discover the Highland fairy ring.')
     state.player.position = { x: 0, y: terrainHeightAt(state.tiles, 0, 0), z: 0 }
 
     state.player.discoveredRingIds = ['ring-greenway']
-    expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-highland']
     state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
