@@ -125,7 +125,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </div>
       </aside>}
 
-      {nearbyStore && !selectedBuildSite && <aside className="wr-panel wr-context">
+      {nearbyStore && !selectedBuildSite && <aside className="wr-panel wr-context" data-store-panel="true">
         <header>{nearbyStore.name}</header>
         <button type="button" onClick={() => onIntent({ type: 'store.close' })}>Close</button>
         {nearbyStore.listings.map((listing) => <button key={listing.id} onClick={() => onIntent({ type: 'store.select-listing', storeId: nearbyStore.id, listingId: listing.id })}><b>{listing.name}</b><span>{listing.price}g{listing.stock === undefined ? '' : ` · ${listing.stock} left`}</span></button>)}
@@ -143,7 +143,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       </aside>}
 
       {nearbyRing?.discovered && !selectedBuildSite && <aside className="wr-panel wr-context">
-        <header>{nearbyRing.label}</header>
+        <header data-ring-panel="true">{nearbyRing.label}</header>
         <p className="wr-caption">{discoveredDestinations.length ? 'Discovered fairy paths' : 'Discover another fairy ring to unlock travel.'}</p>
         {discoveredDestinations.map((destination) => <button key={destination.ringId} onClick={() => onIntent({ type: 'fairy-ring.teleport', ringId: nearbyRing.id, destinationRingId: destination.ringId })}><b>{destination.label}</b><span>Travel</span></button>)}
       </aside>}

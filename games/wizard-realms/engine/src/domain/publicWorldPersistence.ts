@@ -1,4 +1,5 @@
 import { createGeneratedWorld, terrainHeightAt } from './generation'
+import { MIREGLASS_RING_ID } from './mireglassContent'
 import { isValidMireglassWorldContent } from './mireglassPersistence'
 import { isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
@@ -54,6 +55,7 @@ function canonicalDiscovery(ids: unknown): ids is string[] {
 function greenwayWitness(state: PublicWorldState, baseline: WizardWorldState): WizardWorldState {
   const player = structuredClone(state.player)
   player.inventory = player.inventory.filter((stack) => !V6_ITEMS.has(stack.itemId))
+  player.discoveredRingIds = player.discoveredRingIds.filter((id) => id !== MIREGLASS_RING_ID)
   player.tradeSlots = player.tradeSlots.map((slot) => V6_ITEMS.has(slot.itemId ?? '')
     ? { slotIndex: slot.slotIndex, itemId: null, quantity: 0, unitPrice: 0 } : slot) as typeof player.tradeSlots
   if (player.equipment.feet === 'mireglass_reach/item/waders') player.equipment.feet = null

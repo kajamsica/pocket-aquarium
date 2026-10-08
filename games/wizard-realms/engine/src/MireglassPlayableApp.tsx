@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
-import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
+import { mireglassAnchors, mireglassFairyRing, mireglassResources, MIREGLASS_RING_ID } from './domain/mireglassContent'
+import { mireglassFullApproachTrail } from './domain/mireglassApproachTrail'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
 import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES, mireglassGlowRevealableTileIds } from './domain/mireglassExpedition'
+import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
+import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { MIREGLASS_PLATEAU } from './domain/mireglassTerrain'
 import { MIREGLASS_SAVE_KEY, parseMireglassWorld, serializeMireglassWorld } from './domain/mireglassPersistence'
@@ -109,7 +111,7 @@ function approachLayout(trail: readonly TrailPoint[]) {
   return layout
 }
 
-/** Dress only dry cells on the canonical marker-to-outpost approach; this has no authority or collision effect. */
+/** Dress dry cells on the canonical connector-to-outpost trail; this has no authority or collision effect. */
 export function mireglassApproachTerrain(
   cells: readonly WizardTerrainCell[],
   worldTiles: readonly { id: string; terrain: string }[],
@@ -158,14 +160,18 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
     if (meters <= reach) choices.push({ id, label, detail, action, distanceMeters: meters })
   }
   const anchors = mireglassAnchors(seed)
-  if (!expedition.fringeMarkerStudied) add('study', 'Study frontier marker', 'Learn Wayfinder Glow', anchors.fringeMarker.tile.center, { type: 'study_fringe_marker' })
+  if (!expedition.fringeMarkerStudied) add('study', 'Study frontier marker',
+    player.learnedSpellIds.includes('wayfinder_glow') ? 'Chart Mireglass Reach' : 'Learn Wayfinder Glow',
+    anchors.fringeMarker.tile.center, { type: 'study_fringe_marker' })
+  if (!player.discoveredRingIds.includes(MIREGLASS_RING_ID)) add('discover-ring', 'Discover Mireglass ring',
+    'Link this ring to known fairy paths', mireglassFairyRing(seed).tile.center, { type: 'discover_fairy_ring' })
   for (const tree of mireglassResources(seed)) {
     if (!expedition.depletedResourceIds.includes(tree.id)) add(`chop:${tree.id}`, 'Chop reserved timber', '+4 logs, requires axe', tree.tile.center, { type: 'chop_tree', resourceId: tree.id })
     else if (!expedition.dugStumpIds.includes(tree.id)) add(`stump:${tree.id}`, 'Dig tree stump', '+30 excavation XP and 1 stone, requires spade', tree.tile.center, { type: 'dig_tree_stump', resourceId: tree.id })
   }
   for (const site of mireglassRouteSites(seed)) {
     const selectedId = expedition.builtRoutes[site.kind]
-    if (selectedId === null) add(`build:${site.id}`, `Build ${routeName(site.kind)}`, `${site.logCost} logs`, site.from, { type: 'build_route', siteId: site.id })
+    if (selectedId === null) add(`build:${site.id}`, `Build ${routeName(site.kind)}`, `${site.logCost} logs · ${pointText(site.from)}`, site.from, { type: 'build_route', siteId: site.id })
     else if (selectedId === site.id) {
       // Short ladders can put both endpoints within reach. Offer the action from
       // the closer bank, rather than suggesting a return before the first crossing.
@@ -198,9 +204,11 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
 /** E performs a world interaction, never an unrequested purchase, gear swap, sale, or spell cast. */
 export function mireglassNearestInteractChoice(state: MireglassWorldState): MireglassActionChoice | undefined {
   const worldActions = new Set<MireglassExpeditionAction['type']>([
-    'study_fringe_marker', 'chop_tree', 'dig_tree_stump', 'build_route', 'traverse_route', 'excavate_cache',
+    'discover_fairy_ring', 'study_fringe_marker', 'chop_tree', 'dig_tree_stump', 'build_route', 'traverse_route', 'excavate_cache',
   ])
-  return mireglassActionChoices(state).find((choice) => worldActions.has(choice.action.type))
+  const choices = mireglassActionChoices(state)
+  return choices.find((choice) => choice.action.type === 'discover_fairy_ring')
+    ?? choices.find((choice) => worldActions.has(choice.action.type))
 }
 
 export interface MireglassObjective {
@@ -216,15 +224,26 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
   const trees = mireglassResources(seed)
   const routes = mireglassRouteSites(seed)
   const closest = <T extends { x: number; y: number; z: number }>(positions: readonly T[]) => [...positions].sort((a, b) => distance(player.position, a) - distance(player.position, b))[0]
-  if (!expedition.fringeMarkerStudied) return { label: 'Study the frontier marker to learn Wayfinder Glow', position: anchors.fringeMarker.tile.center }
+  if (!expedition.fringeMarkerStudied) {
+    const marker = anchors.fringeMarker.tile.center
+    return { label: distance(player.position, marker) > REACH
+      ? 'Follow the marked dry trail west, then south to the frontier marker'
+      : player.learnedSpellIds.includes('wayfinder_glow')
+        ? 'Study the frontier marker to chart Mireglass Reach'
+        : 'Study the frontier marker to learn Wayfinder Glow',
+    position: marker }
+  }
   if (owned(state, 'field_spade') < 1) return { label: 'Visit the salvager to buy a field spade', position: anchors.salvager.tile.center }
   if (player.skillXp.excavation < 30) {
     const stump = closest(trees.filter((tree) => expedition.depletedResourceIds.includes(tree.id)
       && !expedition.dugStumpIds.includes(tree.id)).map((tree) => tree.tile.center))
-    if (stump) return { label: 'Equip the spade and dig a chopped stump to train excavation', position: stump }
-    return { label: 'Equip the axe and chop a tree for stump-digging practice', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
+    if (stump) return { label: player.equipment.mainHand === 'field_spade'
+      ? 'Dig a chopped stump to train excavation' : 'Equip the spade and dig a chopped stump to train excavation', position: stump }
+    return { label: player.equipment.mainHand === 'woodcutters_axe'
+      ? 'Chop a tree for stump-digging practice' : 'Equip the axe and chop a tree for stump-digging practice', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
   }
-  if (owned(state, 'logs') < 8 && expedition.builtRoutes.bridge === null) return { label: 'Equip the axe and chop timber for the fen bridge', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
+  if (owned(state, 'logs') < 8 && expedition.builtRoutes.bridge === null) return { label: player.equipment.mainHand === 'woodcutters_axe'
+    ? 'Chop timber for the fen bridge' : 'Equip the axe and chop timber for the fen bridge', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'before_bridge').map((tree) => tree.tile.center)) ?? anchors.fenChannel.tile.center }
   if (expedition.builtRoutes.bridge === null) return { label: 'Build the eight-log fen bridge', position: closest(routes.filter((site) => site.kind === 'bridge').map((site) => site.from)) }
   const bridge = routes.find((site) => site.id === expedition.builtRoutes.bridge)!
   const ladder = routes.find((site) => site.id === expedition.builtRoutes.ladder)
@@ -239,7 +258,8 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
       position: player.position, complete: true }
   }
   if (expedition.cacheExcavated) {
-    if (ladder && player.position.z >= ladder.to.z) return { label: 'Descend the built slate ladder', position: ladder.to }
+    if (ladder && player.position.y > ladder.from.y + ladder.riseMeters / 2)
+      return { label: 'Descend the built slate ladder', position: ladder.to }
     if (player.position.z >= bridge.to.z) return { label: 'Return across the built fen bridge', position: bridge.to }
     return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
   }
@@ -247,14 +267,31 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
   if (expedition.builtRoutes.ladder === null && owned(state, 'logs') < 4) return { label: 'Gather four more logs for the slate ladder', position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'after_bridge').map((tree) => tree.tile.center)) ?? anchors.slateBerm.tile.center }
   if (expedition.builtRoutes.ladder === null) return { label: 'Build the four-log slate ladder', position: closest(routes.filter((site) => site.kind === 'ladder').map((site) => site.from)) }
   if (ladder && player.position.z < ladder.to.z) return { label: 'Climb the built slate ladder', position: ladder.from }
-  if (!expedition.cacheRevealed) return {
-    label: 'Search the upper slate shelf and cast Wayfinder Glow where the focus stirs',
-    position: { x: (MIREGLASS_PLATEAU.minX + MIREGLASS_PLATEAU.maxX) / 2,
-      z: MIREGLASS_PLATEAU.maxZ - 48 }, searchArea: true,
+  if (!expedition.cacheRevealed) {
+    const cache = anchors.sealCache.tile.center
+    const focusDistance = Math.hypot(player.position.x - cache.x, player.position.z - cache.z)
+    const label = focusDistance <= 8 ? 'Wayfinder focus flares here. Cast Wayfinder Glow now'
+      : focusDistance <= 16 ? 'Wayfinder focus is strong. Search nearby and cast Wayfinder Glow'
+        : focusDistance <= 32 ? 'Wayfinder focus is faint. Explore the upper slate shelf'
+          : 'Search the upper slate shelf for the Wayfinder focus'
+    return { label, position: { x: (MIREGLASS_PLATEAU.minX + MIREGLASS_PLATEAU.maxX) / 2,
+      z: MIREGLASS_PLATEAU.maxZ - 48 }, searchArea: true }
   }
   if (!expedition.cacheExcavated) return { label: player.equipment.mainHand === 'field_spade'
     ? 'Excavate the revealed seal cache' : 'Equip the field spade and excavate the seal cache', position: anchors.sealCache.tile.center }
   return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
+}
+
+export function mireglassMapGuidance(state: MireglassWorldState): string {
+  const objective = mireglassNextObjective(state)
+  if (objective.complete) return 'Expedition complete. Explore Mireglass Reach at your own pace.'
+  const target = state.expedition.fringeMarkerStudied ? objective.label : 'Frontier marker'
+  const meters = Math.round(Math.hypot(objective.position.x - state.player.position.x,
+    objective.position.z - state.player.position.z))
+  if (objective.searchArea && state.player.position.z >= objective.position.z - 12)
+    return `Next: ${target}. Search this shelf; the cache has no exact waypoint until revealed.`
+  if (meters < 1) return `Next: ${target}. Here (0 m).`
+  return `Next: ${target}. ${bearingText(state.player.position, objective.position)} of here, about ${meters} m direct.`
 }
 
 /** The vendor quote is shown on approach, before the player owns a seal to sell. */
@@ -275,9 +312,16 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   const activeIds = new Set(runtime.activeTiles().map((tile) => tile.id))
   const discovered = new Set(state.discoveredTileIds)
   const anchors = mireglassAnchors(state.seed)
+  const fullTrail = mireglassFullApproachTrail(state.seed)
   const approachTerrain = mireglassApproachTerrain(streamedView.terrain, runtime.activeTiles(),
-    mireglassApproachTrail(state.seed))
+    fullTrail)
+  const trailTileIds = new Set(fullTrail.map((point) => runtime.tileAtWorld(point.x, point.z)?.id))
   const trees = mireglassResources(state.seed)
+  const harvestCycles = 'herbHarvestCycles' in state.expedition
+    && Array.isArray(state.expedition.herbHarvestCycles)
+    ? state.expedition.herbHarvestCycles as readonly { patchId: string; cycle: number }[] : null
+  const herbs = harvestCycles ? mireglassHerbPatches(state.seed) : []
+  const currentHerbCycle = Math.floor(state.tick / HERB_CYCLE_TICKS)
   const sites = mireglassRouteSites(state.seed)
   const routeFor = (kind: 'bridge' | 'ladder') => sites.find((site) => site.id === state.expedition.builtRoutes[kind])
     ?? sites.find((site) => site.kind === kind)!
@@ -303,6 +347,14 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
       quantity: slot.quantity, unitPrice: slot.unitPrice } : null
   }
   const store = anchors.salvager
+  const ring = mireglassFairyRing(state.seed)
+  const ringActive = activeIds.has(ring.tile.id)
+  const ringDiscovered = state.player.discoveredRingIds.includes(MIREGLASS_RING_ID)
+  const greenwayDiscovered = state.player.discoveredRingIds.includes('ring-greenway')
+  const nearbyHerb = herbs.find((herb) => activeIds.has(herb.tile.id)
+    && discovered.has(herb.tile.id) && distance(state.player.position, herb.tile.center) <= REACH)
+  const nearbyHerbAvailable = nearbyHerb && !harvestCycles?.some((entry) =>
+    entry.patchId === nearbyHerb.id && entry.cycle >= currentHerbCycle)
   const storeTile = runtime.tileAtWorld(store.tile.center.x, store.tile.center.z)
   const visibleAnchor = (tileId: string) => activeIds.has(tileId) && discovered.has(tileId)
   const positionOf = (center: { x: number; y: number; z: number }) =>
@@ -322,26 +374,45 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
     position: positionOf(anchors.sealCache.tile.center),
     revealed: state.expedition.cacheRevealed, excavated: state.expedition.cacheExcavated,
   })
-  const resourceTileIds = new Set(trees.filter((tree) => !state.expedition.depletedResourceIds.includes(tree.id)).map((tree) => tree.tile.id))
+  const resourceTileIds = new Set([
+    ...trees.filter((tree) => !state.expedition.depletedResourceIds.includes(tree.id)).map((tree) => tree.tile.id),
+    ...herbs.map((herb) => herb.tile.id),
+  ])
   const siteTileIds = new Set(builtSites.filter((site) => site.discovered && site.status !== 'built' && site.status !== 'obstructed').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
   const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
   return {
     ...streamedView,
     terrain: approachTerrain,
-    map: { ...streamedView.map, title: 'Mireglass expedition (v6)',
-      legend: '▲ you · ◇ route site · ✓ built route · ✦ revealed cache · S outpost · • timber · ? undiscovered',
+    map: { ...streamedView.map, title: 'Mireglass Reach',
+      guidance: mireglassMapGuidance(state),
+      cacheLabel: 'revealed seal cache',
+      legend: '▲ you · · dry frontier trail · M frontier marker · ◇ route build site · ✓ completed route · ✦ revealed cache · S outpost · R fairy ring · • resource · ? unexplored',
       tiles: streamedView.map.tiles.map((tile) => ({ ...tile,
+        hasFrontierTrail: trailTileIds.has(tile.id),
+        hasFrontierMarker: tile.id === anchors.fringeMarker.tile.id,
         hasResource: tile.discovered && resourceTileIds.has(tile.id),
         hasStore: tile.discovered && tile.id === storeTile?.id,
+        hasRing: tile.discovered && tile.id === ring.tile.id,
         hasRouteSite: tile.discovered && siteTileIds.has(tile.id),
         hasBuiltRoute: tile.discovered && builtTileIds.has(tile.id),
         hasCache: state.expedition.cacheRevealed && tile.id === anchors.sealCache.tile.id,
       })) },
-    resources: trees.filter((tree) => activeIds.has(tree.tile.id)).map((tree) => ({
-      id: tree.id, kind: 'tree' as const, label: 'Mireglass timber',
-      position: [tree.tile.center.x, tree.tile.center.y, tree.tile.center.z] as const,
-      available: !state.expedition.depletedResourceIds.includes(tree.id),
-    })),
+    resources: [
+      ...trees.filter((tree) => activeIds.has(tree.tile.id)).map((tree) => ({
+        id: tree.id, kind: 'tree' as const, label: 'Mireglass timber',
+        position: [tree.tile.center.x, tree.tile.center.y, tree.tile.center.z] as const,
+        available: !state.expedition.depletedResourceIds.includes(tree.id),
+      })),
+      ...herbs.filter((herb) => activeIds.has(herb.tile.id) && discovered.has(herb.tile.id)).map((herb) => ({
+        id: herb.id, kind: 'herb' as const, label: 'Marsh herb patch',
+        position: positionOf(herb.tile.center),
+        available: !harvestCycles?.some((entry) => entry.patchId === herb.id && entry.cycle >= currentHerbCycle),
+      })),
+    ],
+    fairyRings: ringActive ? [{ id: MIREGLASS_RING_ID, label: 'Mireglass Ring',
+      position: positionOf(ring.tile.center), discovered: ringDiscovered,
+      destinations: ringDiscovered && greenwayDiscovered
+        ? [{ ringId: 'ring-greenway', label: 'Greenway Ring', discovered: true }] : [] }] : [],
     routes: (['bridge', 'ladder'] as const).map((kind) => {
       const site = routeFor(kind)
       return { id: site.routeId, label: routeName(kind),
@@ -372,17 +443,24 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
       mainHand: equipped('mainHand'), offHand: equipped('offHand') },
     skillXp: { ...state.player.skillXp }, learnedSpellIds: [...state.player.learnedSpellIds],
     tradeListings: [tradeListing(0), tradeListing(1), tradeListing(2), tradeListing(3)],
-    nearbyInteraction: null,
+    nearbyInteraction: ringActive && distance(state.player.position, ring.tile.center) <= REACH
+      ? { kind: 'fairy-ring', targetId: MIREGLASS_RING_ID, label: 'Mireglass Ring',
+        action: ringDiscovered ? greenwayDiscovered ? 'Choose destination' : 'Find another ring' : 'Discover',
+        actionable: !ringDiscovered }
+      : nearbyHerb ? { kind: 'resource', targetId: nearbyHerb.id, label: 'Marsh herb patch',
+        action: nearbyHerbAvailable ? 'Gather' : 'Regrowing', actionable: !!nearbyHerbAvailable }
+      : null,
     recentEvents: messages,
   }
 }
 
-function eventText(event: MireglassExpeditionEvent): string {
+export function mireglassEventText(event: MireglassExpeditionEvent): string {
   switch (event.type) {
     case 'tree_chopped': return 'Chopped timber: +4 logs and woodcutting XP.'
     case 'tree_stump_dug': return 'Dug a stump: +1 stone and 30 excavation XP.'
     case 'fringe_marker_studied': return event.learned
       ? 'Studied the marker and learned Wayfinder Glow.' : 'Studied the marker; Wayfinder Glow was already known.'
+    case 'fairy_ring_discovered': return 'Discovered the Mireglass fairy ring. Known fairy paths now connect here.'
     case 'route_built': return `Built ${routeName(event.kind)} for ${event.logCost} logs.`
     case 'route_traversed': return `Crossed the ${event.routeId.includes('fen') ? 'fen bridge' : 'slate ladder'}.`
     case 'cache_revealed': return 'Wayfinder Glow revealed the seal cache.'
@@ -489,7 +567,7 @@ export function MireglassPlayableApp() {
   const act = useCallback((action: MireglassExpeditionAction) => {
     const result = runtime.act(action)
     setState(result.state)
-    report(result.rejection ? result.rejection.message : eventText(result.event), !!result.rejection)
+    report(result.rejection ? result.rejection.message : mireglassEventText(result.event), !!result.rejection)
     if (result.event?.type === 'route_traversed') setMovementBarrierStatus((current) => mireglassBarrierAfterResult(current, result))
     if (result.event) persist(result.state)
   }, [runtime, report, persist])

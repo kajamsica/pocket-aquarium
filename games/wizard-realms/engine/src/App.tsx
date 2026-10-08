@@ -191,7 +191,7 @@ export function objectiveFor(state: WizardWorldState): string {
     ].filter(Boolean).join(' and ')
     return `Greenway waystone: ${bearing || 'at this spot'}. Study it to learn Wayfinder Glow.`
   }
-  if (state.player.skillXp.spellcraft === 0) return 'Walk to the northern fog and cast Wayfinder Glow to reveal hidden ground.'
+  if (state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
   if (!state.excavatedDigSiteIds.includes('practice_mound')) {
     if (!owned(state, 'field_spade')) return 'Buy a field spade from Greenway Outfitters.'
     if (state.player.equipment.mainHand !== 'field_spade') return 'Equip the field spade from your backpack.'
@@ -201,13 +201,21 @@ export function objectiveFor(state: WizardWorldState): string {
     if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
       ? 'Equip the woodcutter axe to gather ladder materials.'
       : 'Buy a woodcutter axe at Greenway Outfitters.'
-    return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
+    return logs >= 4 ? 'Go north to a ◇ ladder site, choose it on the map, then Build (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
   }
-  if (!state.revealedDigSiteIds.includes('ridge_cache')) return 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
+  if (!state.revealedDigSiteIds.includes('ridge_cache')) return areaAt(state.areas,
+    state.player.position.x, state.player.position.z).id === 'greenway'
+    ? 'Stand at the foot of the completed ladder and press E to cross north, then cast Wayfinder Glow to reveal the ridge cache.'
+    : 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
   if (!state.excavatedDigSiteIds.includes('ridge_cache')) return state.player.equipment.mainHand === 'field_spade'
-    ? 'Cross the ladder and excavate the revealed ridge cache.'
-    : 'Re-equip the field spade, then excavate the ridge cache north of the ladder.'
-  if (owned(state, 'ancient_relic') > 0) return 'Return to a settlement and sell the ancient relic.'
+    ? areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
+      ? 'Cross the ladder, then search northwest for the revealed ridge cache (✦ on the map).'
+      : 'Search northwest of the ladder for the ridge cache (✦ on the map), then excavate it.'
+    : 'Re-equip the field spade, then search northwest of the ladder for the ridge cache (✦ on the map).'
+  if (owned(state, 'ancient_relic') > 0) return areaAt(state.areas,
+    state.player.position.x, state.player.position.z).id === 'greenway'
+    ? 'Visit Greenway Outfitters and sell the ancient relic for 25g.'
+    : 'Cross the Greenway ladder south, then sell the ancient relic at Greenway Outfitters for 25g.'
   const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
   const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
   if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
@@ -222,6 +230,11 @@ export function objectiveFor(state: WizardWorldState): string {
 
 function closestInteraction(state: WizardWorldState) {
   const candidates = [
+    ...state.inscriptions.filter((inscription) => !state.studiedInscriptionIds.includes(inscription.id))
+      .map((inscription) => ({ distance: distance(state.player.position, inscription.position), kind: 'inscription' as const, target: inscription })),
+    ...state.digSites.filter((site) => (site.visibleFromStart || state.revealedDigSiteIds.includes(site.id))
+      && !state.excavatedDigSiteIds.includes(site.id))
+      .map((site) => ({ distance: distance(state.player.position, site.position), kind: 'dig-site' as const, target: site })),
     ...state.resources.filter((resource) => resource.kind === 'tree' && !resource.depleted)
       .map((resource) => ({ distance: distance(state.player.position, resource.position), kind: 'resource' as const, target: resource })),
     ...state.fairyRings.map((ring) => ({ distance: distance(state.player.position, ring.position), kind: 'fairy-ring' as const, target: ring })),
@@ -229,7 +242,12 @@ function closestInteraction(state: WizardWorldState) {
     ...state.routes.filter((route) => state.builtRouteIds.includes(route.id))
       .map((route) => ({ distance: Math.min(distance(state.player.position, route.from), distance(state.player.position, route.to)), kind: 'route' as const, target: route })),
   ].filter((candidate) => candidate.distance <= INTERACTION_RANGE)
-  return candidates.sort((left, right) => left.distance - right.distance)[0] ?? null
+  // Deliberate destinations take E before incidental oaks in the same reach.
+  const priority = (kind: typeof candidates[number]['kind']) =>
+    kind === 'inscription' || kind === 'dig-site' ? 2
+      : kind === 'route' || kind === 'store' || kind === 'fairy-ring' ? 1 : 0
+  return candidates.sort((left, right) => priority(right.kind) - priority(left.kind)
+    || left.distance - right.distance)[0] ?? null
 }
 
 export function retainOpenStoreId(state: WizardWorldState, openStoreId: string | null): string | null {
@@ -260,7 +278,7 @@ export function eventText(event: WizardEvent): string {
     case 'item_unequipped': return `Unequipped ${ITEM_NAMES[event.itemId]}.`
     case 'inscription_studied': return 'The Greenway waystone teaches you Wayfinder Glow.'
     case 'spell_cast': return event.revealedTileIds.length + event.revealedDigSiteIds.length > 0
-      ? `Wayfinder Glow reveals ${event.revealedTileIds.length} map tiles and ${event.revealedDigSiteIds.length} buried sites.`
+      ? `Wayfinder Glow reveals ${event.revealedTileIds.length} map tile${event.revealedTileIds.length === 1 ? '' : 's'} and ${event.revealedDigSiteIds.length} buried site${event.revealedDigSiteIds.length === 1 ? '' : 's'}.`
       : 'The glow finds no new paths here. Try casting closer to the fog.'
     case 'dig_site_excavated': return `Excavated ${event.quantity} ${itemAmountName(event.itemId, event.quantity)}.`
     case 'skill_xp_gained': return `Gained ${event.xp} ${event.skillId} XP.`
@@ -307,6 +325,9 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   const storeTileIds = new Set(state.stores.filter((store) => areaDiscovered(store.position)).map((store) => tileIdAt(store.position)))
   const ringTileIds = new Set(state.fairyRings.filter((ring) => areaDiscovered(ring.position)).map((ring) => tileIdAt(ring.position)))
   const waystoneTileIds = new Set(state.inscriptions.map((inscription) => tileIdAt(inscription.position)))
+  const cacheTileIds = new Set(state.digSites.filter((site) =>
+    !site.visibleFromStart && state.revealedDigSiteIds.includes(site.id)
+    && !state.excavatedDigSiteIds.includes(site.id)).map((site) => tileIdAt(site.position)))
   const routeSourceTileId = (routeId: string, position: { x: number; z: number }) => {
     const sourceAreaId = state.routes.find((route) => route.id === routeId)!.fromAreaId
     let nearestId: string | undefined
@@ -394,6 +415,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
           hasStore: discovered && storeTileIds.has(tile.id),
           hasRing: discovered && ringTileIds.has(tile.id),
           hasWaystone: discovered && waystoneTileIds.has(tile.id),
+          hasCache: discovered && cacheTileIds.has(tile.id),
           hasRouteSite: discovered && routeSiteTileIds.has(tile.id),
           hasBuiltRoute: discovered && builtRouteTileIds.has(tile.id),
         }
@@ -412,12 +434,17 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       kind: interaction.kind, targetId: interaction.target.id,
       label: interaction.kind === 'resource' ? 'Greenway oak' : interaction.target.name,
       action: interaction.kind === 'resource' ? (axeEquipped(state) ? 'Chop' : owned(state, 'woodcutters_axe') > 0 ? 'Equip axe' : 'Needs axe')
+        : interaction.kind === 'inscription' ? 'Study'
+        : interaction.kind === 'dig-site' ? state.player.equipment.mainHand === 'field_spade' ? 'Excavate'
+          : owned(state, 'field_spade') > 0 ? 'Equip spade' : 'Needs spade'
         : interaction.kind === 'store' ? activeStoreId ? 'Store open' : 'Open store'
         : interaction.kind === 'route' ? 'Cross'
         : discoveredRingIds.has(interaction.target.id)
           ? state.fairyRings.some((ring) => ring.id !== interaction.target.id && discoveredRingIds.has(ring.id)) ? 'Choose destination' : 'Find another ring'
           : 'Discover',
       actionable: interaction.kind === 'resource' && (axeEquipped(state) || owned(state, 'woodcutters_axe') > 0)
+        || interaction.kind === 'inscription'
+        || (interaction.kind === 'dig-site' && (state.player.equipment.mainHand === 'field_spade' || owned(state, 'field_spade') > 0))
         || (interaction.kind === 'store' && activeStoreId === null)
         || interaction.kind === 'route'
         || (interaction.kind === 'fairy-ring' && !discoveredRingIds.has(interaction.target.id)),
@@ -436,6 +463,11 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
   if (intent.type === 'interact') {
     if (retainOpenStoreId(state, openStoreId)) return null
     const interaction = closestInteraction(state)
+    if (interaction?.kind === 'inscription') return { type: 'study_inscription', inscriptionId: interaction.target.id }
+    if (interaction?.kind === 'dig-site') {
+      if (state.player.equipment.mainHand === 'field_spade') return { type: 'dig_site', digSiteId: interaction.target.id }
+      return owned(state, 'field_spade') > 0 ? { type: 'equip_item', itemId: 'field_spade', slot: 'mainHand' } : null
+    }
     if (interaction?.kind === 'resource') {
       if (axeEquipped(state)) return { type: 'harvest', resourceId: interaction.target.id }
       return owned(state, 'woodcutters_axe') > 0 ? { type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' } : null

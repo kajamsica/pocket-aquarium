@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { legacyTileAtGrid } from './generation'
-import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE, mireglassAnchors, mireglassResources } from './mireglassContent'
+import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE, MIREGLASS_RING_ID,
+  mireglassAnchors, mireglassFairyRing, mireglassResources } from './mireglassContent'
+import { mireglassRouteSites } from './mireglassRouteSites'
 import { MIREGLASS_ENVELOPES, MIREGLASS_FEN_BACK, MIREGLASS_PLATEAU,
   mireglassBermFaceRowAt, mireglassFenDepthAt, mireglassFenRowAt, mireglassPlateauAt,
   mireglassPlateauCliffBetween } from './mireglassTerrain'
@@ -67,6 +69,30 @@ describe('Mireglass Reach authored anchor placement', () => {
         }
       }
     }
+  })
+
+  it('places a deterministic dry fairy ring near the salvager, clear of content and crossings across 100 seeds', () => {
+    for (let index = 0; index < 100; index += 1) {
+      const seed = `mireglass-corpus-${index}`
+      const ring = mireglassFairyRing(seed)
+      expect(mireglassFairyRing(seed)).toBe(ring)
+      expect(Object.isFrozen(ring.tile.center)).toBe(true)
+      const anchors = mireglassAnchors(seed)
+      expect(ring.id).toBe(MIREGLASS_RING_ID)
+      expect(ring.tile.terrain).toBe('loam')
+      expect(ring.tile).toEqual(worldTileAtGrid(seed, ring.tile.gridX - 3, ring.tile.gridZ - 3))
+      expect(ring).toEqual(mireglassFairyRing(seed))
+      expect(Math.hypot(ring.tile.center.x - anchors.salvager.tile.center.x,
+        ring.tile.center.z - anchors.salvager.tile.center.z)).toBeLessThanOrEqual(32)
+      for (const point of [
+        ...Object.values(anchors).map(({ tile }) => tile.center),
+        ...mireglassResources(seed).map(({ tile }) => tile.center),
+        ...mireglassRouteSites(seed).flatMap(({ from, to }) => [from, to]),
+      ]) {
+        expect(Math.hypot(ring.tile.center.x - point.x, ring.tile.center.z - point.z), seed).toBeGreaterThanOrEqual(12)
+      }
+    }
+    expect(mireglassFairyRing('')).toEqual(mireglassFairyRing('wizard-realms'))
   })
 
   it('renders a closed shallow and deep fen ring with no side or back detour across 100 seeds', () => {

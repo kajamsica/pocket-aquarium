@@ -19,6 +19,11 @@ const ANCHORS = {
 export type MireglassAnchorId = keyof typeof ANCHORS
 export type MireglassAnchor = { id: string; tile: WorldTile }
 export type MireglassResource = { id: string; tile: WorldTile; kind: 'tree'; logs: 4; phase: 'before_bridge' | 'after_bridge' }
+export const MIREGLASS_RING_ID = 'ring-mireglass' as const
+
+const RING_ENVELOPE = { minX: -316, maxX: -276, minZ: 260, maxZ: 300 } as const
+const RING_CACHE_LIMIT = 8
+const ringCache = new Map<string, { id: typeof MIREGLASS_RING_ID; tile: WorldTile }>()
 
 const TREE_POCKETS = [
   { envelope: { minX: -144, maxX: -104, minZ: 112, maxZ: 152 }, count: 1, phase: 'before_bridge' },
@@ -74,4 +79,28 @@ export function mireglassResources(seed: string): MireglassResource[] {
     }
   }
   return resources
+}
+
+/** A dry outpost-adjacent ring, stable across chunk load order and clear of authored content. */
+export function mireglassFairyRing(seed: string): { id: typeof MIREGLASS_RING_ID; tile: WorldTile } {
+  const normalizedSeed = seed || 'wizard-realms'
+  const cached = ringCache.get(normalizedSeed)
+  if (cached) return cached
+  const anchors = mireglassAnchors(normalizedSeed)
+  const occupied = [
+    ...Object.values(anchors).map(({ tile }) => tile.center),
+    ...mireglassResources(normalizedSeed).map(({ tile }) => tile.center),
+  ]
+  const outpost = anchors.salvager.tile.center
+  const candidates = ranked(normalizedSeed, MIREGLASS_RING_ID, envelopeTiles(normalizedSeed, RING_ENVELOPE)
+    .filter((tile) => tile.terrain === 'loam'
+      && Math.hypot(tile.center.x - outpost.x, tile.center.z - outpost.z) <= 32
+      && occupied.every((point) => Math.hypot(tile.center.x - point.x, tile.center.z - point.z) >= 12)))
+  if (candidates.length === 0) throw new Error(`No safe fairy ring tile for ${normalizedSeed} in ${MIREGLASS_CONTENT_REVISION}`)
+  const tile = candidates[0]
+  const ring = Object.freeze({ id: MIREGLASS_RING_ID,
+    tile: Object.freeze({ ...tile, center: Object.freeze({ ...tile.center }) }) })
+  ringCache.set(normalizedSeed, ring)
+  if (ringCache.size > RING_CACHE_LIMIT) ringCache.delete(ringCache.keys().next().value!)
+  return ring
 }

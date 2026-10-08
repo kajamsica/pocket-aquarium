@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld } from './generation'
-import { mireglassApproachTrail, mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
+import { mireglassApproachTrail, mireglassFullApproachTrail, mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
 import { mireglassAnchors } from './mireglassContent'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { createStreamedWorld } from './streamedWorld'
@@ -12,6 +12,19 @@ const seeds = [
 ]
 
 describe('Mireglass dry approach trail', () => {
+  it('joins the western connector to the outpost trail at the marker exactly once', () => {
+    const seed = 'greenway-alpha'
+    const connector = mireglassGreenwayToMarkerTrail(seed)
+    const outpost = mireglassApproachTrail(seed)
+    const full = mireglassFullApproachTrail(seed)
+    expect(full).toHaveLength(connector.length + outpost.length - 1)
+    expect(full.slice(0, connector.length)).toEqual(connector)
+    expect(full.slice(connector.length)).toEqual(outpost.slice(1))
+    expect(full.filter((point) => point.x === outpost[0].x && point.z === outpost[0].z)).toHaveLength(1)
+    expect(mireglassFullApproachTrail(seed)).toBe(full)
+    expect(Object.isFrozen(full)).toBe(true)
+  })
+
   it('walks dry canonical cells from fresh Greenway through both profile edges to the marker across 100 seeds', () => {
     for (const seed of seeds.slice(0, 100)) {
       const trail = mireglassGreenwayToMarkerTrail(seed)

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { mireglassAnchors, mireglassResources } from './mireglassContent'
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
+import { mireglassHerbPatches } from './mireglassHerbPatches'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import { actPublicMireglass } from './publicWorldActions'
 import type { PublicMireglassActionResult } from './publicWorldActions'
+import { advancePublicWorldFrame } from './publicWorldRuntime'
 import { createFreshPublicWorld } from './publicWorldState'
 import type { PublicWorldState } from './publicWorldState'
+import { isValidPublicWorldV7State, withFreshPublicV7Herbs } from './publicWorldV7'
 import { createStreamedWorldFromState } from './streamedWorld'
 import type { Vec3 } from './types'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
@@ -138,5 +141,49 @@ describe('public v6 Mireglass actions', () => {
       'invalid_destination', invalid)
     expect(invalid.eventSequence).toBe(prepared.eventSequence)
     expect(invalid.player.position).toEqual(bridge.from)
+  })
+})
+
+describe('public v7 Bell Alder foraging', () => {
+  it('uses the authoritative tick, one event sequence, and the same saved player', () => {
+    const patch = mireglassHerbPatches(seed)[0]
+    const state = at(patch.tile.center, withFreshPublicV7Herbs(base))
+    const before = JSON.stringify(state)
+    const first = accepted(actPublicMireglass(state, { type: 'forage_herb', patchId: patch.id }))
+    expect(first.event).toMatchObject({ type: 'herb_foraged', patchId: patch.id,
+      quantity: 1, sequence: state.eventSequence + 1 })
+    expect(first.state.tick).toBe(state.tick)
+    expect(first.state.player.inventory).toContainEqual({ itemId: 'marsh_herb', quantity: 1 })
+    expect(first.state.greenway).toBe(state.greenway)
+    expect(JSON.stringify(state)).toBe(before)
+    expect(isValidPublicWorldV7State(first.state, null)).toBe(true)
+    rejected(actPublicMireglass(first.state, { type: 'forage_herb', patchId: patch.id }),
+      'already_harvested', first.state)
+    const regrown = accepted(actPublicMireglass({ ...first.state, tick: 6_000 },
+      { type: 'forage_herb', patchId: patch.id }))
+    expect(regrown.state.player.inventory).toContainEqual({ itemId: 'marsh_herb', quantity: 2 })
+    expect(isValidPublicWorldV7State(regrown.state, null)).toBe(true)
+  })
+
+  it('returns the gathered item to the existing Greenway single-player economy exactly once', () => {
+    const patch = mireglassHerbPatches(seed)[0]
+    const fresh = withFreshPublicV7Herbs(base)
+    const harvested = accepted(actPublicMireglass(at(patch.tile.center, fresh),
+      { type: 'forage_herb', patchId: patch.id }))
+    const store = fresh.greenway.stores.find((candidate) => candidate.id === 'store-greenway')!
+    const returned = { ...harvested.state, movementOwner: 'greenway' as const,
+      player: { ...harvested.state.player, position: { ...store.position }, verticalVelocity: 0 } }
+    const sold = advancePublicWorldFrame(returned,
+      [{ type: 'sell_to_store', storeId: store.id, itemId: 'marsh_herb', quantity: 1 }])
+    expect(sold.rejections).toEqual([])
+    expect(sold.events).toMatchObject([{ type: 'store_item_sold', itemId: 'marsh_herb',
+      quantity: 1, totalPrice: 3 }])
+    expect(sold.state.player.coins).toBe(returned.player.coins + 3)
+    expect(sold.state.player.inventory.some((stack) => stack.itemId === 'marsh_herb')).toBe(false)
+    expect(isValidPublicWorldV7State(sold.state, null)).toBe(true)
+    const replay = advancePublicWorldFrame(sold.state,
+      [{ type: 'sell_to_store', storeId: store.id, itemId: 'marsh_herb', quantity: 1 }])
+    expect(replay.rejections).toMatchObject([{ code: 'not_owned' }])
+    expect(replay.state).toBe(sold.state)
   })
 })

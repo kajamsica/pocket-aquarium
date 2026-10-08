@@ -163,15 +163,75 @@ describe('third-person control grammar', () => {
 })
 
 describe('short desktop layout', () => {
+  it('keeps the shop header and Close control within a short viewport', () => {
+    const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: sellProjection, onIntent: () => {} }))
+    expect(markup).toContain('Greenway Outfitters')
+    expect(markup).toContain('class="wr-panel wr-context" data-store-panel="true"')
+    expect(markup).toContain('>Close</button>')
+    expect(markup).toContain('.wr-context:not(.wr-build-preview){box-sizing:border-box;max-height:calc(100% - 215px);overflow-y:auto')
+    expect(markup).toContain('@media(max-width:719px){.wr-backpack{display:none}.wr-backpack-toggle{position:absolute')
+    expect(markup).toContain('.wr-map-toggle{left:106px;right:auto;top:120px}')
+    expect(markup).toContain('.wr-prompt{left:8px;top:176px;bottom:auto;transform:none')
+    expect(markup).toContain('.wr-events{top:252px;left:8px;max-height:48px;overflow:hidden')
+    expect(markup).toContain('.wr-surface .wr-context[data-store-panel]{bottom:14px;max-height:calc(100% - 78px)}')
+  })
+
+  it('identifies ring travel as a separate compact panel beside touch controls', () => {
+    const current = { ...sellProjection, openStoreId: null,
+      nearbyInteraction: { kind: 'fairy-ring', targetId: 'ring-greenway', label: 'Greenway Ring', action: 'Travel', actionable: true },
+      fairyRings: [{ id: 'ring-greenway', label: 'Greenway Ring', position: [0, 0, 0], discovered: true,
+        destinations: [{ ringId: 'ring-highland', label: 'Highland Ring', discovered: true }] }],
+    } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: current, onIntent: () => {} }))
+    expect(markup).toContain('class="wr-panel wr-context"><header data-ring-panel="true"')
+    expect(markup).toContain('Highland Ring')
+    expect(markup).toContain('.wr-surface .wr-context:has(> header[data-ring-panel]){left:8px;transform:none')
+  })
+
   it('anchors the build panel to the viewport above the objective bar', () => {
     const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: { ...sellProjection, openStoreId: null, selectedBuildSiteId: 'bridge-west' }, onIntent: () => {} }))
     expect(markup).toContain('class="wr-panel wr-context wr-build-preview"')
+    expect(markup).toContain('.wr-build-preview{bottom:210px}')
+    expect(markup).toContain('.wr-build-preview{bottom:230px}')
     expect(markup).toContain('.wr-surface{position:relative;width:100%;height:100%;min-height:600px')
     expect(markup).toContain('@media(min-width:901px) and (max-height:590px){.wr-surface{min-height:100%}')
   })
 })
 
 describe('wizard atlas markup', () => {
+  it('offers a native local/world map toggle only when the public overview exists', () => {
+    const loadOverview = vi.fn(() => ({ player: { gridX: 0, gridZ: 0, yaw: 0 }, cells: [
+      { id: 'chunk-0-0', gridX: 0, gridZ: 0, discoveredCells: 2, terrain: 'loam' as const, biome: 'temperate_forest', markers: ['Greenway Outfitters'] },
+      { id: 'chunk-1-0', gridX: 1, gridZ: 0, discoveredCells: 0, terrain: null, biome: null, markers: [] },
+    ] }))
+    const current = { ...projection, map: { ...projection.map,
+      overview: loadOverview,
+    } } as WizardViewProjection
+    const compact = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(false), projection: current }))
+    expect(loadOverview).not.toHaveBeenCalled()
+    expect(compact).not.toContain('wr-map-overview')
+    const expanded = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(loadOverview).toHaveBeenCalledTimes(1)
+    expect(expanded).toContain('<details class="wr-map-overview"><summary>World overview (toggle local map)</summary>')
+    expect(expanded).toContain('.wr-map-overview[open]~.wr-map-local{display:none}')
+    expect(expanded).toContain('chunk-0-0: 2 of 256 cells discovered, sampled temperate_forest, player location, Greenway Outfitters')
+    expect(expanded).toContain('chunk-1-0: unexplored')
+    expect(expanded).not.toContain('chunk-1-0: unexplored, sampled')
+    expect(expanded).toContain('class="wr-map-local"')
+    expect(renderToStaticMarkup(createElement(WizardMap, mapProps(true)))).not.toContain('wr-map-overview')
+  })
+
+  it('shows guidance as accessible text only in the expanded map', () => {
+    const current = { ...projection, map: { ...projection.map,
+      guidance: 'West to Mireglass: dry gap near z≈0, about 12 m.' } } as WizardViewProjection
+    const expanded = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    const compact = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(false), projection: current }))
+    expect(expanded).toContain('role="note" aria-label="Map guidance"')
+    expect(expanded).toContain('West to Mireglass: dry gap near z≈0, about 12 m.')
+    expect(compact).not.toContain('Map guidance')
+    expect(compact).not.toContain('dry gap near z≈0')
+  })
+
   it('shows a discovered waystone and keeps a store visible under the player marker without revealing fog', () => {
     const home = projection.map.tiles[0]
     const fog = projection.map.tiles[1]
@@ -192,6 +252,17 @@ describe('wizard atlas markup', () => {
       ...mapProps(true), projection: { ...current, map: { ...current.map, player: { gridX: 1, gridZ: 0, yaw: 0 } } },
     }))
     expect(standingOnWaystone).toMatch(/waystone: meadow, player location, Greenway waystone[^\"]*\"><b[^>]*>▲<\/b><small[^>]*>W<\/small>/)
+  })
+
+  it('labels the learned west trail on a fogged map tile without claiming the terrain is explored', () => {
+    const fog = projection.map.tiles[1]
+    const current = { ...projection, map: { ...projection.map, tiles: [projection.map.tiles[0],
+      { ...fog, hasWestTrail: true }] } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup).toContain('fog: unexplored, west trail to Mireglass')
+    expect(markup).toContain('data-discovered="false"')
+    expect(markup).toMatch(/fog: unexplored, west trail to Mireglass[^\"]*"><b>⇦<\/b>/)
+    expect(markup).not.toContain('fog: meadow')
   })
 
   it.each([7, 16])('scales a %i-column atlas while keeping the compact map focused on the player', (size) => {
@@ -247,6 +318,7 @@ describe('wizard atlas markup', () => {
     expect(open).toContain('West bank crossing')
     expect(open).toContain('Move closer to the scaffold')
     expect(open).toContain('completed')
+    expect(open).toContain('Walk to either end and press E to cross')
     expect(open).toContain('locked')
     expect(open).not.toContain('Fogged crossing')
     expect(open).toContain('fog: unexplored')

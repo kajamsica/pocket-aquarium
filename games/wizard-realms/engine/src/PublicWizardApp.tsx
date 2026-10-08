@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { eventText as greenwayEventText, intentForView, objectiveFor, retainOpenStoreId } from './App'
-import { mireglassActionChoices, mireglassNearestInteractChoice, mireglassNextObjective } from './MireglassPlayableApp'
+import { bearingText, mireglassActionChoices, mireglassEventText, mireglassNearestInteractChoice, mireglassNextObjective } from './MireglassPlayableApp'
 import { publicWorldViewProjection } from './PublicWorldView'
 import { streamedControlIntents } from './StreamedPreviewApp'
 import { MIREGLASS_CONTENT_REVISION } from './domain/mireglassContent'
-import type { MireglassExpeditionAction } from './domain/mireglassExpedition'
+import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
+import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
+import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
+import { areaAt } from './domain/generation'
 import type { MireglassWorldState } from './domain/mireglassWorld'
 import { routeBuildOptions } from './domain/routeSites'
-import { actPublicMireglass } from './domain/publicWorldActions'
-import { advancePublicWorldFrame, type PublicWorldAdvanceResult, type PublicWorldIntent } from './domain/publicWorldRuntime'
+import { actPublicMireglass, type PublicMireglassAction } from './domain/publicWorldActions'
+import { advancePublicWorldFrame, type PublicWorldAdvanceResult, type PublicWorldEvent, type PublicWorldIntent } from './domain/publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap, type PublicWorldState } from './domain/publicWorldState'
 import {
   PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
@@ -16,6 +19,16 @@ import {
   readPublicV6RecoverySnapshot, recoverPublicV6Root, serializePublicV6World,
   type LegacyImportInspection, type PublicV6ArtifactInspection, type PublicV6RecoverySnapshot, type PublicV6RootLoad,
 } from './domain/publicWorldV6'
+import { parsePublicV7PlayableRoot } from './domain/publicWorldV7'
+import {
+  clearArchivedStaleV7Stage, commitPublicV7Snapshot, importLegacyToPublicV7, inspectPublicV7Entry,
+  reconcilePublicV7FreshFork, reconcilePublicV7RootConflict, recoverPublicV7Snapshot,
+  resumePublicV7, startFreshPublicV7, unsavedPublicV7Bytes, upgradePublicV6,
+  type PublicV7Operation, type PublicV7Start, type PublicWorldV7EntryInspection, type PublicWorldV7State,
+} from './domain/publicWorldV7Flow'
+import type { PublicV7RecoverySnapshot } from './domain/publicWorldV7Recovery'
+import type { PublicV7RootConflictChoice } from './domain/publicWorldV7RootConflict'
+import type { PublicV7FreshForkChoice } from './domain/publicWorldV7FreshFork'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
 import { WizardSurface, type WizardViewIntent } from './view'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
@@ -189,8 +202,12 @@ const STYLES = `
 .wr-public,.wr-public-menu{position:fixed;inset:0;background:#14221f;color:#f5f1df;font:14px/1.4 system-ui}.wr-public .wr-surface{min-height:0}
 .wr-public-menu{display:grid;place-items:center;padding:20px;box-sizing:border-box}.wr-public-card{box-sizing:border-box;width:min(560px,100%);max-height:90vh;overflow:auto;padding:24px;border:1px solid #c9ad6680;border-radius:18px;background:#101a17f4;box-shadow:0 20px 60px #0008}.wr-public-card h1{margin:0 0 8px;color:#f5d889;font:700 30px Georgia,serif}.wr-public-card p{color:#c5d0c3}.wr-public-card button,.wr-public-panel button{min-height:44px;padding:7px 12px;border:1px solid #d5b86f77;border-radius:8px;background:#324b3d;color:#fff0c7;font:inherit;cursor:pointer}.wr-public-card button{display:block;width:100%;margin:8px 0;text-align:left}.wr-public-card button:disabled,.wr-public-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-public-warning{padding:9px;border:1px solid #e3a27788;border-radius:8px;background:#4b2824e8;color:#ffe0d4!important}
 .wr-public-panel{position:absolute;z-index:8;right:12px;top:12px;box-sizing:border-box;width:min(315px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:12px;border:1px solid #c9ad6680;border-radius:12px;background:#101a17ed;box-shadow:0 10px 32px #0008}.wr-public-panel h1{margin:0;color:#f5d889;font:700 19px Georgia,serif}.wr-public-panel p{margin:6px 0}.wr-public-panel small{color:#b8c9bb}.wr-public-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.wr-public-actions button{text-align:left}.wr-public-actions small{display:block}.wr-public-panel[data-collapsed=true]{width:auto}.wr-public-panel[data-collapsed=true] .wr-public-body{display:none}.wr-public[data-owner=streamed] .wr-gear,.wr-public[data-owner=streamed] .wr-trade{display:none}
+.wr-public-next{position:absolute;z-index:7;top:58px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(410px,calc(100vw - 260px));margin:0;padding:7px 10px;border:1px solid #d5b86f77;border-radius:10px;background:#101a17dc;color:#fff0c7;font:600 13px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 6px 20px #0006}.wr-public-next[hidden]{display:none}.wr-public-next strong{color:#f5d889}.wr-public-next small{display:block;margin-top:3px;color:#c5d0c3;font-size:11px;font-weight:400}
 @media(min-width:1050px){.wr-public[data-owner=greenway] .wr-public-panel{right:330px;top:64px}}
-@media(max-width:719px){.wr-public-panel{top:auto;bottom:calc(144px + env(safe-area-inset-bottom,0px));max-height:42vh}.wr-public-panel[data-collapsed=true]{bottom:calc(144px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:900px){.wr-public-next{top:56px;width:min(360px,calc(100vw - 150px));font-size:12px}}
+@media(max-width:719px){.wr-public-panel{top:120px;bottom:auto;max-height:calc(100vh - 132px)}.wr-public-next{top:62px;left:12px;transform:none;width:calc(100vw - 24px);max-height:51px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:left}}
+@media(max-width:719px){.wr-public:has([data-store-panel]) .wr-public-panel,.wr-public:has([data-store-panel]) .wr-public-next{display:none}}
+@media(max-width:719px) and (max-height:400px){.wr-public:has([data-ring-panel]) .wr-public-panel,.wr-public:has([data-ring-panel]) .wr-public-next{display:none}}
 `
 
 const locks = () => typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: PublicLockProvider }).locks : undefined
@@ -199,22 +216,154 @@ const transientSaveFailure = (reason: string | null) => reason === 'storage-erro
 const errorText = (reason: string) => `Save blocked (${reason}). Existing bytes were preserved. ${transientSaveFailure(reason)
   ? 'Retry Save to keep your in-memory progress.' : 'Do not clear site data. Recovery requires a verified save operation.'}`
 const eventText = (type: string) => type.replaceAll('_', ' ')
+export function publicWorldEventText(event: PublicWorldEvent): string {
+  const itemId = 'itemId' in event && typeof event.itemId === 'string' ? event.itemId : null
+  const regionalName = itemId === 'mireglass_reach/item/seal' ? 'Mireglass seal'
+    : itemId === 'mireglass_reach/item/waders' ? 'Fen waders' : null
+  if (regionalName) {
+    if (event.type === 'item_unequipped') return `Unequipped ${regionalName}.`
+    if (event.type === 'trade_listing_created') return `Listed ${event.quantity} ${regionalName} for trade.`
+    if (event.type === 'trade_listing_cancelled') return `Returned ${event.quantity} ${regionalName} to your backpack.`
+    if (event.type === 'trade_listing_sold') return `A market buyer paid ${event.totalPrice}g for ${event.quantity} ${regionalName}.`
+  }
+  return greenwayEventText(event as Parameters<typeof greenwayEventText>[0]) || eventText(event.type)
+}
+export function publicFrameMessages(result: PublicWorldAdvanceResult): string[] {
+  const cast = result.events.find((event) => event.type === 'spell_cast')
+  const otherEvents = result.events.filter((event) => event.type !== 'player_moved'
+    && event.type !== 'player_looked' && event !== cast
+    && !(cast && event.type === 'tile_discovered'))
+  return [...otherEvents.map(publicWorldEventText), ...result.rejections.map((rejection) => rejection.message),
+    ...(cast ? [publicWorldEventText(cast)] : [])].filter(Boolean)
+}
 const appendMessages = (current: readonly string[], additions: readonly string[]) => [...current, ...additions].slice(-4)
+const herbLedger = (state: PublicWorldState): readonly HerbHarvestEntry[] | null => {
+  const cycles = (state.mireglass as Partial<MireglassHerbRegionProgress>).herbHarvestCycles
+  return Array.isArray(cycles) ? cycles : null
+}
+function requirePublicV7State(state: PublicWorldState): PublicWorldV7State {
+  if (!herbLedger(state)) throw new RangeError('The public v7 herb history was lost.')
+  return state as PublicWorldV7State
+}
+
+export function publicV7RecoveryChoices(snapshot: PublicV7RecoverySnapshot,
+  storage: Pick<Storage, 'getItem'>) {
+  const v6 = loadPublicV6Root(storage)
+  if (v6.status === 'storage-error') return []
+  return RECOVERY_SOURCES.filter(({ source }) => {
+    const bytes = source === 'root' ? snapshot.rootBytes : source === 'stage' ? snapshot.stageBytes : snapshot.backupBytes
+    const root = bytes === null ? null : parsePublicV7PlayableRoot(bytes)
+    return root !== null && (root.migrationSourceV6Bytes === null
+      ? v6.status === 'missing' : 'bytes' in v6 && v6.bytes === root.migrationSourceV6Bytes)
+  })
+}
+
+const FRESH_FORK_CHOICE_COPY: Record<PublicV7FreshForkChoice,
+  { label: string; confirmation: string; result: string }> = {
+    'continue-v7': {
+      label: 'Keep my current fresh v7 journey and archive the later v6 save',
+      confirmation: 'Confirm current fresh v7 journey and preserve both originals in an archive',
+      result: 'The current fresh v7 journey remains active.',
+    },
+    'use-v7-stage': {
+      label: 'Keep the pending newer fresh v7 save and archive the later v6 save',
+      confirmation: 'Confirm pending newer fresh v7 save and preserve both originals in an archive',
+      result: 'The pending newer fresh v7 save is active.',
+    },
+    'use-v6': {
+      label: 'Use the later v6 save and archive my fresh v7 journey',
+      confirmation: 'Confirm later v6 save and preserve both originals in an archive',
+      result: 'The later v6 save was upgraded to v7.',
+    },
+  }
+export function publicFreshForkChoiceCopy(choice: PublicV7FreshForkChoice) {
+  return FRESH_FORK_CHOICE_COPY[choice]
+}
+
+export function publicPendingV7StageGuidance(freshForkEligible: boolean, otherChoiceAvailable: boolean): string | null {
+  if (freshForkEligible) {
+    return 'A fresh v7 start was interrupted before its root finished saving, and a later v6 save now exists. Choose explicitly which progress to keep. Both branches will be archived before publishing your choice; the v6 save stays unchanged.'
+  }
+  if (!otherChoiceAvailable) {
+    return 'No safe recovery choice is available for these saved bytes. Keep this site data and all saves. Reload only rechecks storage; it cannot repair the conflict on its own.'
+  }
+  return null
+}
+
+export function publicHerbChoices(state: PublicWorldState) {
+  const harvested = herbLedger(state)
+  if (state.movementOwner !== 'streamed' || !harvested) return []
+  const cycle = Math.floor(state.tick / HERB_CYCLE_TICKS)
+  return mireglassHerbPatches(state.seed).flatMap((patch) => {
+    const meters = Math.hypot(state.player.position.x - patch.tile.center.x,
+      state.player.position.y - patch.tile.center.y, state.player.position.z - patch.tile.center.z)
+    const last = harvested.find((entry) => entry.patchId === patch.id)
+    if (meters > 3 || (last && last.cycle >= cycle)) return []
+    return [{ id: `forage:${patch.id}`, label: 'Gather marsh herb',
+      detail: 'Regrows after five game-time minutes; Greenway buys herbs for 3g',
+      action: { type: 'forage_herb' as const, patchId: patch.id }, distanceMeters: meters }]
+  })
+}
+
+export function publicHerbRouteHint(state: PublicWorldState): string | null {
+  const harvested = herbLedger(state)
+  if (!harvested) return null
+  const held = state.player.inventory.find((stack) => stack.itemId === 'marsh_herb')?.quantity ?? 0
+  if (held) return `Take ${held} marsh herb${held === 1 ? '' : 's'} back to Greenway Outfitters to sell for 3g each.`
+  if (state.movementOwner === 'greenway') return 'Bell Alder in Mireglass has renewable marsh herbs that Greenway Outfitters buys.'
+  const patches = mireglassHerbPatches(state.seed)
+  const cycle = Math.floor(state.tick / HERB_CYCLE_TICKS)
+  const available = patches.filter((patch) => !harvested.some((entry) =>
+    entry.patchId === patch.id && entry.cycle >= cycle))
+  if (!available.length) return 'Bell Alder herbs are regrowing. Explore or trade, then return next cycle.'
+  const nearest = [...available].sort((a, b) =>
+    Math.hypot(a.tile.center.x - state.player.position.x, a.tile.center.z - state.player.position.z)
+      - Math.hypot(b.tile.center.x - state.player.position.x, b.tile.center.z - state.player.position.z))[0]
+  const meters = Math.round(Math.hypot(nearest.tile.center.x - state.player.position.x,
+    nearest.tile.center.z - state.player.position.z))
+  if (meters < 3) return 'Gather the dry Bell Alder marsh herb here, then bring it to Greenway.'
+  return `Find a dry Bell Alder herb patch ${bearingText(state.player.position, nearest.tile.center)} of here, about ${meters} m direct, then bring it to Greenway.`
+}
+
+export function publicHerbMapGuidance(current: string | undefined, expeditionComplete: boolean,
+  herbRouteHint: string | null): string | undefined {
+  return expeditionComplete && herbRouteHint ? `Next: ${herbRouteHint}` : current
+}
+
+export function publicHerbGuidancePriority(state: PublicWorldState, expeditionComplete: boolean): boolean {
+  return expeditionComplete || state.player.inventory.some((stack) =>
+    stack.itemId === 'marsh_herb' && stack.quantity > 0)
+}
+
+export function publicAreaTitle(state: PublicWorldState): string {
+  return state.movementOwner === 'streamed' ? 'Mireglass Reach'
+    : areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).name
+}
+
+export function publicRegionTransitionText(before: PublicWorldState, after: PublicWorldState): string | null {
+  if (before.movementOwner === after.movementOwner) return null
+  return after.movementOwner === 'streamed'
+    ? 'Entered Mireglass Reach. Follow the dry frontier trail to its marker.'
+    : 'Returned to Greenway.'
+}
 
 export function PublicWizardApp() {
-  const [entry, setEntry] = useState<PublicEntryInspection | null>(null)
-  const [world, setWorld] = useState<PublicWorldState | null>(null)
+  const [entry, setEntry] = useState<PublicWorldV7EntryInspection | null>(null)
+  const [world, setWorld] = useState<PublicWorldV7State | null>(null)
   const [busy, setBusy] = useState(true)
   const [blocked, setBlocked] = useState(false)
   const [blockedReason, setBlockedReason] = useState<string | null>(null)
-  const [notice, setNotice] = useState('Checking this device for a public v6 save…')
+  const [notice, setNotice] = useState('Checking this device for a Wizard Realms save…')
   const [confirmFresh, setConfirmFresh] = useState<GenerationProfile | null>(null)
   const [selectedRecovery, setSelectedRecovery] = useState<PublicRecoverySource | null>(null)
+  const [confirmStaleStage, setConfirmStaleStage] = useState(false)
+  const [confirmRootChoice, setConfirmRootChoice] = useState<PublicV7RootConflictChoice | null>(null)
+  const [confirmFreshForkChoice, setConfirmFreshForkChoice] = useState<PublicV7FreshForkChoice | null>(null)
   const [messages, setMessages] = useState<string[]>(['Welcome to Wizard Realms.'])
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(true)
-  const worldRef = useRef<PublicWorldState | null>(null)
+  const worldRef = useRef<PublicWorldV7State | null>(null)
   const expectedBytes = useRef<string | null>(null)
   const blockedRef = useRef(false)
   const blockedReasonRef = useRef<string | null>(null)
@@ -232,50 +381,65 @@ export function PublicWizardApp() {
     blockedRef.current = true; blockedReasonRef.current = reason
     setBlocked(true); setBlockedReason(reason); setNotice(errorText(reason))
   }, [])
-  const save = useCallback((snapshot: PublicWorldState) => {
+  const save = useCallback((snapshot: PublicWorldV7State) => {
     if (blockedRef.current) return
     lastSaveMs.current = performance.now()
     saveQueue.current = saveQueue.current.then(async () => {
       if (blockedRef.current) return
       const currentStorage = storage()
       if (!currentStorage) { stop('storage-error'); return }
-      const result = await commitPublicSnapshot(currentStorage, locks(), snapshot, expectedBytes.current)
+      const result = await commitPublicV7Snapshot(currentStorage, locks(), snapshot, expectedBytes.current)
       if (!result.ok) { stop(result.reason); return }
       expectedBytes.current = result.value.bytes
       lastSaveMs.current = performance.now()
       if (worldRef.current === snapshot) travelDirty.current = false
-      setNotice('Public v6 progress saved on this device. Legacy saves remain untouched.')
+      const saved = parsePublicV7PlayableRoot(result.value.bytes)
+      setNotice(`Public v7 save #${saved?.saveRevision ?? '?'} completed on this device. Older saves remain untouched.`)
     }).catch(() => stop('storage-error'))
   }, [stop])
-  const activate = (start: PublicStart) => {
+  const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
     setWorld(start.state); setBusy(false); setBlocked(false); setBlockedReason(null)
     blockedRef.current = false; blockedReasonRef.current = null
-    setNotice('Public v6 progress is saved. Greenway and Mireglass share one player.')
+    setNotice('Public v7 progress is saved. Greenway and Mireglass share one player.')
     lastSaveMs.current = performance.now()
   }
   useEffect(() => {
     let cancelled = false
     const currentStorage = storage()
     if (!currentStorage) { stop('storage-error'); setBusy(false); return }
-    void inspectPublicEntry(currentStorage, locks()).then((result) => {
+    void inspectPublicV7Entry(currentStorage, locks()).then((result) => {
       if (cancelled) return
       if (!result.ok) { stop(result.reason); setBusy(false); return }
       setEntry(result.value); setBusy(false)
       const { root } = result.value
-      const reason = publicEntryBlockReason(result.value)
+      const reason = result.value.blockedReason
       if (reason) { stop(reason); return }
-      setNotice(root.status === 'missing' ? 'Choose a new Greenway world or explicitly import a legacy save.'
-        : 'A public v6 world is available. Resume it explicitly to play.')
+      setNotice(root.status === 'missing'
+        ? result.value.v6.status === 'valid-playable' || result.value.v6.status === 'valid-bootstrap'
+          ? 'A v6 world is available. Choose Upgrade to keep its progress and add the renewable frontier.'
+          : 'Choose a new Greenway world or explicitly import a legacy save.'
+        : 'A public v7 world is available. Resume it explicitly to play.')
     }).catch(() => { if (!cancelled) { stop('storage-error'); setBusy(false) } })
     return () => { cancelled = true }
   }, [stop])
 
-  const choose = async (operation: Promise<PublicOperation<PublicStart>>) => {
+  const choose = async (operation: Promise<PublicV7Operation<PublicV7Start>>) => {
     setBusy(true)
     const result = await operation
     if (result.ok) activate(result.value)
-    else { setBusy(false); setNotice(errorText(result.reason)) }
+    else {
+      const currentStorage = storage()
+      const reread = currentStorage ? await inspectPublicV7Entry(currentStorage, locks()) : null
+      setBusy(false)
+      if (reread?.ok) {
+        setEntry(reread.value)
+        const reason = reread.value.blockedReason
+        blockedRef.current = reason !== null; blockedReasonRef.current = reason
+        setBlocked(reason !== null); setBlockedReason(reason)
+        setNotice(`${errorText(result.reason)}${reason ? ` Current save status: ${reason}.` : ''}`)
+      } else stop(reread && !reread.ok ? reread.reason : 'storage-error')
+    }
   }
   const chooseFresh = (profile: GenerationProfile) => {
     if (!entry) return
@@ -283,26 +447,33 @@ export function PublicWizardApp() {
     if (!currentStorage) { stop('storage-error'); return }
     const legacyPresent = entry.classic.status !== 'missing' || entry.expanded.status !== 'missing'
     if (legacyPresent && confirmFresh !== profile) { setConfirmFresh(profile); return }
-    void choose(startFreshPublicWorld(currentStorage, locks(), profile, legacyPresent))
+    void choose(startFreshPublicV7(currentStorage, locks(), profile, legacyPresent))
   }
   const recover = async (source: PublicRecoverySource) => {
     const currentStorage = storage()
-    const snapshot = entry?.recovery.status === 'available' ? entry.recovery.snapshot : null
+    const v7Recovery = entry?.v6.status === 'skipped'
+    const snapshot = v7Recovery
+      ? entry?.recovery.status === 'available' ? entry.recovery.snapshot : null
+      : entry?.v6Recovery.status === 'available' ? entry.v6Recovery.snapshot : null
     if (!currentStorage || !snapshot) { stop('storage-error'); return }
     setBusy(true)
-    const result = await recoverPublicWorld(currentStorage, locks(), source, snapshot)
+    const result = v7Recovery
+      ? await recoverPublicV7Snapshot(currentStorage, locks(), source, snapshot as PublicV7RecoverySnapshot)
+      : await recoverPublicWorld(currentStorage, locks(), source, snapshot as PublicV6RecoverySnapshot)
     if (!result.ok) {
       setBusy(false); setSelectedRecovery(null)
       setNotice(result.reason === 'snapshot-changed'
         ? 'Recovery choice is stale because the saved bytes changed. Nothing was overwritten. Reload to inspect the current candidates.'
+        : result.reason === 'source-changed'
+          ? 'The v6 source no longer matches this recovery choice. Nothing was overwritten. Reload to inspect the current candidates.'
         : `Recovery did not finish (${result.reason}). The previous bytes may have been archived, and recovery may have staged changes. Reload to inspect the current candidates before choosing again.`)
       return
     }
-    const reread = await inspectPublicEntry(currentStorage, locks())
+    const reread = await inspectPublicV7Entry(currentStorage, locks())
     setBusy(false); setSelectedRecovery(null)
     if (!reread.ok) { stop(reread.reason); return }
     setEntry(reread.value)
-    const reason = publicEntryBlockReason(reread.value)
+    const reason = reread.value.blockedReason
     if (reason) {
       stop(reason)
       setNotice(`Recovery archived prior bytes at ${result.value.archiveKey}, but ${reason} still needs a verified choice.`)
@@ -312,28 +483,85 @@ export function PublicWizardApp() {
     blockedRef.current = false; blockedReasonRef.current = null
     setNotice(`Recovery archived the previous bytes at ${result.value.archiveKey}. Choose Resume to continue.`)
   }
+  const clearStaleStage = async () => {
+    const currentStorage = storage()
+    const candidate = entry?.stageConflict
+    if (!currentStorage || candidate?.status !== 'eligible') { stop('storage-error'); return }
+    setBusy(true)
+    const result = await clearArchivedStaleV7Stage(currentStorage, locks(), candidate.snapshot)
+    const reread = await inspectPublicV7Entry(currentStorage, locks())
+    setBusy(false); setConfirmStaleStage(false)
+    if (!reread.ok) { stop(reread.reason); return }
+    setEntry(reread.value)
+    const reason = reread.value.blockedReason
+    blockedRef.current = reason !== null; blockedReasonRef.current = reason
+    setBlocked(reason !== null); setBlockedReason(reason)
+    setNotice(result.ok
+      ? `Current v6 progress is intact. Stale v7 stage and backup bytes were archived at ${result.value.archiveKey}. Choose Upgrade to continue.`
+      : `Conflict repair did not finish (${result.reason}). No save bytes were discarded without a verified archive. ${reason ? `Current status: ${reason}.` : 'Choose a validated path below.'}`)
+  }
+  const resolveRootConflict = async (choice: PublicV7RootConflictChoice) => {
+    const currentStorage = storage()
+    const candidate = entry?.rootConflict
+    if (!currentStorage || candidate?.status !== 'eligible' || !candidate.choices.includes(choice)) {
+      stop('storage-error'); return
+    }
+    setBusy(true)
+    const result = await reconcilePublicV7RootConflict(currentStorage, locks(), choice, candidate.snapshot)
+    const reread = await inspectPublicV7Entry(currentStorage, locks())
+    setBusy(false); setConfirmRootChoice(null)
+    if (!reread.ok) { stop(reread.reason); return }
+    setEntry(reread.value)
+    const reason = reread.value.blockedReason
+    blockedRef.current = reason !== null; blockedReasonRef.current = reason
+    setBlocked(reason !== null); setBlockedReason(reason)
+    setNotice(result.ok
+      ? `Both save branches were archived at ${result.value.archiveKey}. ${choice === 'continue-v7'
+        ? 'The current v7 journey remains active.' : choice === 'use-v7-stage'
+          ? 'The pending newer v7 save is active.' : 'The newer v6 journey was upgraded to v7.'} Choose Resume to play. Close older v6 tabs before continuing.`
+      : `Save choice did not finish (${result.reason}). No branch was discarded without a verified archive. ${reason ? `Current status: ${reason}.` : 'Choose a validated path below.'}`)
+  }
+  const resolveFreshFork = async (choice: PublicV7FreshForkChoice) => {
+    const currentStorage = storage()
+    const candidate = entry?.freshFork
+    if (!currentStorage || candidate?.status !== 'eligible' || !candidate.choices.includes(choice)) {
+      stop('storage-error'); return
+    }
+    setBusy(true)
+    const result = await reconcilePublicV7FreshFork(currentStorage, locks(), choice, candidate.snapshot)
+    const reread = await inspectPublicV7Entry(currentStorage, locks())
+    setBusy(false); setConfirmFreshForkChoice(null)
+    if (!reread.ok) { stop(reread.reason); return }
+    setEntry(reread.value)
+    const reason = reread.value.blockedReason
+    blockedRef.current = reason !== null; blockedReasonRef.current = reason
+    setBlocked(reason !== null); setBlockedReason(reason)
+    setNotice(result.ok
+      ? `Both independent saves were archived at ${result.value.archiveKey}. ${publicFreshForkChoiceCopy(choice).result} Choose Resume to play. Close older v6 tabs; they can recreate this conflict.`
+      : `Save choice did not finish (${result.reason}). No branch was discarded without a verified archive. ${reason ? `Current status: ${reason}.` : 'Choose a validated path below.'}`)
+  }
   const retrySave = async () => {
     if (!transientSaveFailure(blockedReasonRef.current) || !worldRef.current) return
     setBusy(true)
     await saveQueue.current
     blockedRef.current = false; blockedReasonRef.current = null
-    setBlocked(false); setBlockedReason(null); setNotice('Retrying the unchanged v6 save root…')
+    setBlocked(false); setBlockedReason(null); setNotice('Retrying the unchanged v7 save root…')
     save(worldRef.current)
     await saveQueue.current
     setBusy(false)
   }
   const exportUnsaved = () => {
     const current = worldRef.current
-    const bytes = current && unsavedPublicWorldBytes(current, expectedBytes.current)
+    const bytes = current && unsavedPublicV7Bytes(current, expectedBytes.current)
     if (!bytes) { setNotice('Unsaved progress could not be validated for export. Keep this tab open and do not clear site data.'); return }
     let url: string | null = null
     let link: HTMLAnchorElement | null = null
     try {
       url = URL.createObjectURL(new Blob([bytes], { type: 'application/json' }))
       link = document.createElement('a')
-      link.href = url; link.download = `wizard-realms-unsaved-v6-${Date.now()}.json`
+      link.href = url; link.download = `wizard-realms-unsaved-v7-${Date.now()}.json`
       document.body.append(link); link.click()
-      setNotice('Unsaved progress downloaded as a valid v6 snapshot. Keep the file before reloading; it has not replaced the current save.')
+      setNotice('Unsaved progress downloaded as a valid v7 snapshot. Keep the file before reloading; it has not replaced the current save.')
     } catch { setNotice('Download failed. Keep this tab open and do not clear site data.') }
     finally {
       link?.remove()
@@ -358,22 +586,23 @@ export function PublicWizardApp() {
         return
       }
       try {
-        const result = advancePublicControls(worldRef.current, frames, samples)
-        worldRef.current = result.state
+        const previous = worldRef.current
+        const result = advancePublicControls(previous, frames, samples)
+        const next = requirePublicV7State(result.state)
+        worldRef.current = next
         if (result.events.length || result.rejections.length || now - lastReadoutMs.current >= 1_000) {
-          setWorld(result.state); lastReadoutMs.current = now
+          setWorld(next); lastReadoutMs.current = now
         }
         const nextStore = result.state.movementOwner === 'greenway'
           ? retainOpenStoreId(greenwayForPublicView(result.state), openStoreRef.current) : null
         openStoreRef.current = nextStore; setOpenStoreId(nextStore)
-        const texts = [...result.events.filter((event) => event.type !== 'player_moved' && event.type !== 'player_looked')
-          .map((event) => event.type === 'trade_listing_sold' ? greenwayEventText(event) : eventText(event.type)),
-          ...result.rejections.map((rejection) => rejection.message)]
+        const transition = publicRegionTransitionText(previous, next)
+        const texts = [...publicFrameMessages(result), ...(transition ? [transition] : [])]
         if (texts.length) setMessages((current) => appendMessages(current, texts))
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
           || event.type === 'tile_discovered' || event.type === 'player_jumped')) travelDirty.current = true
         if ((frames.length && result.events.length) || (travelDirty.current
-          && (forceSave || now - lastSaveMs.current >= TRAVEL_SAVE_MS))) save(result.state)
+          && (forceSave || now - lastSaveMs.current >= TRAVEL_SAVE_MS))) save(next)
       } catch { stop('world-frame-error') }
     }
     const flush = () => { apply(performance.now(), true); resetInput() }
@@ -386,13 +615,16 @@ export function PublicWizardApp() {
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('blur', flush) }
   }, [world !== null, save, stop])
 
-  const actMireglass = useCallback((action: MireglassExpeditionAction) => {
+  const actMireglass = useCallback((action: PublicMireglassAction) => {
     const current = worldRef.current
     if (!current || current.movementOwner !== 'streamed' || blockedRef.current) return
     const result = actPublicMireglass(current, action)
     if (result.rejection) { report(result.rejection.message); return }
-    worldRef.current = result.state; setWorld(result.state)
-    report(eventText(result.event.type)); save(result.state)
+    const next = requirePublicV7State(result.state)
+    worldRef.current = next; setWorld(next)
+    report(result.event.type === 'herb_foraged'
+      ? 'Gathered a marsh herb. It will regrow after the next game-time cycle.'
+      : mireglassEventText(result.event)); save(next)
   }, [report, save])
   const onIntent = useCallback((intent: WizardViewIntent) => {
     const current = worldRef.current
@@ -403,6 +635,11 @@ export function PublicWizardApp() {
       return
     }
     if (intent.type === 'jump') { pending.current.push([{ type: 'jump' }]); return }
+    if (intent.type === 'fairy-ring.teleport') {
+      pending.current.push([{ type: 'teleport_fairy_ring', sourceRingId: intent.ringId,
+        targetRingId: intent.destinationRingId }])
+      return
+    }
     if (intent.type === 'build-site.select') {
       if (current.movementOwner !== 'greenway' || intent.siteId === null) setSelectedSiteId(intent.siteId)
       else {
@@ -432,7 +669,7 @@ export function PublicWizardApp() {
     }
     const region = mireglassForPublicView(current)
     if (intent.type === 'interact') {
-      const choice = mireglassNearestInteractChoice(region)
+      const choice = mireglassNearestInteractChoice(region) ?? publicHerbChoices(current)[0]
       if (choice) actMireglass(choice.action); else report('No nearby frontier interaction.')
     } else if (intent.type === 'build-site.confirm') actMireglass({ type: 'build_route', siteId: intent.siteId })
     else if (intent.type === 'spell.cast' && intent.spellId === 'wayfinder_glow') actMireglass({ type: 'cast_wayfinder_glow' })
@@ -452,26 +689,44 @@ export function PublicWizardApp() {
   const projection = useMemo(() => world ? publicWorldViewProjection(world, messages, selectedSiteId, openStoreId) : null,
     [world, messages, selectedSiteId, openStoreId])
   const region = world?.movementOwner === 'streamed' ? mireglassForPublicView(world) : null
-  const choices = region ? mireglassActionChoices(region) : []
+  const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
+  const herbRouteHint = world ? publicHerbRouteHint(world) : null
   if (!world || !projection) {
     const root = entry?.root
     const legacyPresent = entry && (entry.classic.status !== 'missing' || entry.expanded.status !== 'missing')
-    const recoveryChoices = entry?.recovery.status === 'available'
-      ? publicRecoveryChoices(entry.recovery.snapshot) : []
+    const v7Recovery = entry?.v6.status === 'skipped'
+    const stageConflict = entry?.stageConflict.status === 'eligible'
+    const rootConflict = entry?.rootConflict.status === 'eligible' ? entry.rootConflict : null
+    const freshFork = entry?.freshFork.status === 'eligible' ? entry.freshFork : null
+    const recoveryStorage = v7Recovery ? storage() : null
+    const recoveryChoices = blockedReason === 'source-changed' || stageConflict ? [] : v7Recovery
+      ? entry?.recovery.status === 'available' && recoveryStorage
+        ? publicV7RecoveryChoices(entry.recovery.snapshot, recoveryStorage) : []
+      : entry?.v6Recovery.status === 'available' ? publicRecoveryChoices(entry.v6Recovery.snapshot) : []
+    const pendingStageGuidance = blockedReason === 'pending-v7-stage'
+      ? publicPendingV7StageGuidance(!!freshFork, stageConflict || recoveryChoices.length > 0) : null
+    const saveVersion = v7Recovery ? 'v7' : 'v6'
+    const v6Upgrade = entry?.v6.status === 'valid-playable' || entry?.v6.status === 'valid-bootstrap'
+      ? entry.v6 : null
     return <main className="wr-public-menu"><style>{STYLES}</style><section className="wr-public-card">
       <h1>Wizard Realms</h1><p>One public world connects Greenway and Mireglass Reach. Choose how to begin.</p>
       <p role="status" className={blocked ? 'wr-public-warning' : ''}>{notice}</p>
       {entry?.artifacts.status === 'available' && entry.artifacts.backup.status === 'available' &&
+        <p>Verified v7 backup bytes exist. They will not be restored automatically.</p>}
+      {entry?.v6Artifacts.status === 'available' && entry.v6Artifacts.backup.status === 'available' &&
         <p>Verified v6 backup bytes exist. They will not be restored automatically.</p>}
       {root?.status === 'valid-playable' && !blocked && <button disabled={busy} onClick={() => { const currentStorage = storage();
-        if (currentStorage) void choose(resumePublicWorld(currentStorage, locks(), root.bytes)); else stop('storage-error') }}>Resume existing v6 world</button>}
-      {root?.status === 'valid-bootstrap' && !blocked && <button disabled={busy} onClick={() => { const currentStorage = storage();
-        if (currentStorage) void choose(resumePublicWorld(currentStorage, locks(), root.bytes)); else stop('storage-error') }}>Finish explicit legacy import and play</button>}
-      {root?.status === 'missing' && !blocked && <>
+        if (currentStorage) void choose(resumePublicV7(currentStorage, locks(), root.bytes)); else stop('storage-error') }}>Resume existing v7 world</button>}
+      {root?.status === 'missing' && !blocked && v6Upgrade &&
+        <button disabled={busy} onClick={() => { const currentStorage = storage();
+          if (currentStorage) void choose(upgradePublicV6(currentStorage, locks(), v6Upgrade.bytes)); else stop('storage-error') }}>
+          Upgrade and resume existing v6 world; preserve its original save
+        </button>}
+      {root?.status === 'missing' && entry?.v6.status === 'missing' && !blocked && <>
         {([entry?.classic, entry?.expanded] as const).map((source) => source?.status === 'available'
           ? <button key={source.source.profile} disabled={busy} onClick={() => { const currentStorage = storage();
-            if (currentStorage) void choose(importPublicWorld(currentStorage, locks(), source)); else stop('storage-error') }}>Import {source.source.profile === 'greenway-classic-v1' ? 'classic' : 'expanded'} Greenway from {source.source.key}</button> : null)}
+            if (currentStorage) void choose(importLegacyToPublicV7(currentStorage, locks(), source)); else stop('storage-error') }}>Import {source.source.profile === 'greenway-classic-v1' ? 'classic' : 'expanded'} Greenway from {source.source.key}</button> : null)}
         {([['greenway-classic-v1', 'classic'], ['greenway-expanded-v1', 'expanded']] as const).map(([profile, label]) =>
           <button key={profile} disabled={busy} onClick={() => chooseFresh(profile)}>{confirmFresh === profile
             ? `Confirm new ${label} world; preserve legacy bytes` : `Start new ${label} Greenway world`}</button>)}
@@ -479,23 +734,59 @@ export function PublicWizardApp() {
         {entry && (entry.classic.status === 'invalid' || entry.classic.status === 'incompatible' || entry.expanded.status === 'invalid' || entry.expanded.status === 'incompatible')
           ? <p>Some legacy saves cannot be imported. Their original bytes remain untouched.</p> : null}
       </>}
-      {blocked && <><p className="wr-public-warning">No save bytes were deleted or recovered automatically. Recovery archives all current v6 bytes before publishing your chosen valid source.</p>
+      {blocked && <><p className="wr-public-warning">{pendingStageGuidance
+        ?? `No save bytes were deleted or recovered automatically. Recovery archives all current ${saveVersion} bytes before publishing your chosen valid source.`}</p>
+        {blockedReason === 'source-changed' && <p>The older v6 save changed after v7 began. Close older v6 tabs. Both save branches remain intact until you make an explicit choice.</p>}
+        {rootConflict?.choices.map((choice) => <div key={choice}>
+          <button disabled={busy} onClick={() => setConfirmRootChoice(choice)}>{choice === 'continue-v7'
+            ? 'Keep my current v7 journey and archive both branches' : choice === 'use-v7-stage'
+              ? 'Keep the pending newer v7 save and archive both branches'
+              : 'Use the newer v6 journey and archive both branches'}</button>
+          {confirmRootChoice === choice && <button disabled={busy} onClick={() => void resolveRootConflict(choice)}>
+            Confirm {choice === 'continue-v7' ? 'current v7' : choice === 'use-v7-stage'
+              ? 'pending newer v7 save' : 'newer v6'} choice and preserve the other branch in an archive
+          </button>}
+        </div>)}
+        {freshFork?.choices.map((choice) => <div key={choice}>
+          <button disabled={busy} onClick={() => setConfirmFreshForkChoice(choice)}>
+            {publicFreshForkChoiceCopy(choice).label}
+          </button>
+          {confirmFreshForkChoice === choice && <button disabled={busy} onClick={() => void resolveFreshFork(choice)}>
+            {publicFreshForkChoiceCopy(choice).confirmation}
+          </button>}
+        </div>)}
+        {blockedReason === 'source-changed' && !rootConflict && !freshFork &&
+          <p>No safe automatic choice is available for these save histories. Keep this site data and both tabs; neither branch has been overwritten.</p>}
+        {stageConflict && <><button disabled={busy} onClick={() => setConfirmStaleStage(true)}>Keep the current v6 save; archive stale v7 stage and backup</button>
+          {confirmStaleStage && <button disabled={busy} onClick={() => void clearStaleStage()}>Confirm archive, then return to the v6 Upgrade choice</button>}</>}
         {recoveryChoices.map((choice) => <div key={choice.source}>
           <button disabled={busy} onClick={() => setSelectedRecovery(choice.source)}>{choice.label}<small style={{ display: 'block' }}>{choice.detail}</small></button>
-          {selectedRecovery === choice.source && <button disabled={busy} onClick={() => void recover(choice.source)}>Confirm {choice.label.toLowerCase()} and archive all current v6 bytes</button>}
+          {selectedRecovery === choice.source && <button disabled={busy} onClick={() => void recover(choice.source)}>Confirm {choice.label.toLowerCase()} and archive all current {saveVersion} bytes</button>}
         </div>)}
         <button onClick={() => window.location.reload()}>Reload to recheck storage</button></>}
     </section></main>
   }
+  const herbPriority = publicHerbGuidancePriority(world, !!objective?.complete)
+  const nextGuidance = herbPriority && herbRouteHint
+    ? herbRouteHint : objective?.label ?? objectiveFor(greenwayForPublicView(world))
+  const playProjection = herbPriority && herbRouteHint
+    ? { ...projection, map: { ...projection.map,
+      guidance: publicHerbMapGuidance(projection.map.guidance, true, herbRouteHint) } }
+    : projection
   return <main className="wr-public" data-owner={world.movementOwner}><style>{STYLES}</style>
-    <WizardSurface projection={projection} onIntent={onIntent} />
+    <WizardSurface projection={playProjection} onIntent={onIntent} />
+    <p className="wr-public-next" hidden={!collapsed}><strong>Next:</strong> {nextGuidance}
+      {world.tick < 1_000 && <small>W/S move · A/D turn · E interact · M map</small>}</p>
     <aside className="wr-public-panel" data-collapsed={collapsed} aria-label="Public world controls">
       <button onClick={() => setCollapsed((value) => !value)}>{collapsed ? 'World / Save' : 'Collapse controls'}</button>
-      <div className="wr-public-body"><h1>{region ? 'Mireglass Reach' : 'Greenway'}</h1>
+      <div className="wr-public-body"><h1>{publicAreaTitle(world)}</h1>
         <p role="status" className={blocked ? 'wr-public-warning' : ''}>{notice}</p>
         <p><small>x {world.player.position.x.toFixed(1)}, z {world.player.position.z.toFixed(1)} · {world.player.coins} coins · tick {world.tick}</small></p>
         <p>{messages.at(-1)}</p>
-        <p><b>Next:</b> {objective?.label ?? objectiveFor(greenwayForPublicView(world))}</p>
+        <p><b>Next:</b> {nextGuidance}</p>
+        {herbRouteHint && !herbPriority && <p><b>Bell Alder route:</b> {herbRouteHint}</p>}
+        {!region && world.player.learnedSpellIds.includes('wayfinder_glow') &&
+          <p><b>Frontier trail:</b> Travel due west to the dry opening at z = 0 to enter Mireglass Reach. Greenway training remains available.</p>}
         {region && <div className="wr-public-actions">{choices.map((choice) => <button key={choice.id} disabled={blocked}
           onClick={() => actMireglass(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>}
         <button disabled={blocked} onClick={() => { if (worldRef.current) save(worldRef.current) }}>Save now</button>

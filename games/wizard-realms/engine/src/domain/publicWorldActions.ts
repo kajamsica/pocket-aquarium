@@ -1,21 +1,28 @@
 import { applyMireglassExpeditionAction } from './mireglassExpedition'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassExpeditionRejection } from './mireglassExpedition'
+import { applyMireglassHerbForage } from './mireglassHerbForaging'
+import type { MireglassHerbForageResult, MireglassHerbRegionProgress } from './mireglassHerbForaging'
 import type { PublicWorldState } from './publicWorldState'
 import { createStreamedWorldFromState } from './streamedWorld'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
-type PublicActionRejection = MireglassExpeditionRejection | {
-  actionType: MireglassExpeditionAction['type'] | 'unknown'
-  code: 'unavailable_here' | 'invalid_destination'
+type PublicActionRejection = {
+  actionType: PublicMireglassAction['type'] | 'unknown'
+  code: MireglassExpeditionRejection['code']
+    | NonNullable<MireglassHerbForageResult['rejection']>['code'] | 'unavailable_here' | 'invalid_destination'
   message: string
 }
 
+export type PublicMireglassAction = MireglassExpeditionAction | { type: 'forage_herb'; patchId: string }
+export type PublicMireglassEvent = MireglassExpeditionEvent
+  | NonNullable<MireglassHerbForageResult['event']>
+
 export type PublicMireglassActionResult =
-  | { state: PublicWorldState; event: MireglassExpeditionEvent & { sequence: number }; rejection?: never }
+  | { state: PublicWorldState; event: PublicMireglassEvent & { sequence: number }; rejection?: never }
   | { state: PublicWorldState; rejection: PublicActionRejection; event?: never }
 
 /** Public actions do not advance a movement tick or RNG. A success consumes exactly one event sequence. */
-export function actPublicMireglass(state: PublicWorldState, action: MireglassExpeditionAction): PublicMireglassActionResult {
+export function actPublicMireglass(state: PublicWorldState, action: PublicMireglassAction): PublicMireglassActionResult {
   const reject = (code: PublicActionRejection['code'], message: string): PublicMireglassActionResult => ({
     state, rejection: { actionType: action?.type ?? 'unknown', code, message },
   })
@@ -26,6 +33,17 @@ export function actPublicMireglass(state: PublicWorldState, action: MireglassExp
     || !Number.isSafeInteger(state.eventSequence + 1)
     || !Number.isSafeInteger(state.tick) || state.tick < 0) {
     return reject('invalid_value', 'The public world clock or event sequence is invalid.')
+  }
+  if (action.type === 'forage_herb') {
+    if (!Array.isArray((state.mireglass as Partial<MireglassHerbRegionProgress>).herbHarvestCycles)) {
+      return reject('invalid_progress', 'This world needs the v7 herb save before foraging.')
+    }
+    const result = applyMireglassHerbForage(state.seed, state.player,
+      state.mireglass as MireglassHerbRegionProgress, state.tick, action.patchId)
+    if (result.rejection) return { state, rejection: { actionType: action.type, ...result.rejection } }
+    return { state: { ...state, player: result.player, mireglass: result.region,
+      eventSequence: state.eventSequence + 1 },
+    event: { ...result.event, sequence: state.eventSequence + 1 } }
   }
   const result = applyMireglassExpeditionAction(state.seed, state.player, state.mireglass, action,
     state.discoveredTileIds)

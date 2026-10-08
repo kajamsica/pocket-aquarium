@@ -1,4 +1,6 @@
+import { terrainHeightAt } from './generation'
 import { mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
+import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import type { MireglassItemId } from './mireglassExpedition'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { legacyMovementEnvelope } from './publicWorldV6'
@@ -103,6 +105,12 @@ function connectorCrossing(state: PublicWorldState, from: { x: number; z: number
     && [edgeX, edgeX - 4].includes(cellAt(to.x) * 4)
 }
 
+function returnTrailHint(z: number): string {
+  if (cellAt(z) > 0) return 'The dry Greenway opening is north of you. Follow the marked trail, then head east.'
+  if (cellAt(z) < 0) return 'The dry Greenway opening is south of you. Follow the marked trail, then head east.'
+  return 'Return to Greenway through the dry eastern trail, aligned with z = 0.'
+}
+
 function streamedSnapshot(state: PublicWorldState) {
   return {
     seed: state.seed, tick: state.tick,
@@ -144,6 +152,57 @@ function settleStreamedMarket(result: PublicWorldAdvanceResult): PublicWorldAdva
     events: [...result.events, ...sale.events] }
 }
 
+/** One player changes region ownership only after both rings were discovered on foot. */
+function crossRegionFairyRing(state: PublicWorldState,
+  intent: Extract<PublicWorldIntent, { type: 'teleport_fairy_ring' }>): PublicWorldAdvanceResult {
+  const outbound = state.movementOwner === 'greenway'
+  const greenwayRing = state.greenway.fairyRings.find((ring) => ring.id === 'ring-greenway')
+  const mireglassRing = mireglassFairyRing(state.seed)
+  if (!greenwayRing) return reject(state, intent, 'not_found', 'The Greenway fairy ring is missing.')
+  const source = outbound ? greenwayRing : { id: mireglassRing.id, position: mireglassRing.tile.center }
+  const target = outbound ? { id: mireglassRing.id, position: mireglassRing.tile.center } : greenwayRing
+  if (intent.sourceRingId !== source.id || intent.targetRingId !== target.id) {
+    return reject(state, intent, 'not_found', 'These fairy rings do not form the Greenway to Mireglass path.')
+  }
+  if (!state.player.discoveredRingIds.includes(source.id)
+    || !state.player.discoveredRingIds.includes(target.id)) {
+    return reject(state, intent, 'undiscovered', 'Discover both fairy rings on foot before traveling.')
+  }
+  if (Math.hypot(state.player.position.x - source.position.x,
+    state.player.position.y - source.position.y,
+    state.player.position.z - source.position.z) > 3) {
+    return reject(state, intent, 'too_far', 'Stand inside the source fairy ring to travel.')
+  }
+  if (outbound && !state.discoveredTileIds.includes(mireglassRing.tile.id)) {
+    return reject(state, intent, 'undiscovered', 'Reach the Mireglass outpost before using its fairy ring.')
+  }
+  const position = outbound ? { ...mireglassRing.tile.center }
+    : { ...greenwayRing.position,
+      y: terrainHeightAt(state.greenway.tiles, greenwayRing.position.x, greenwayRing.position.z) }
+  let streamed: StreamedWorldRuntime | null = null
+  if (outbound) {
+    try {
+      streamed = createStreamedWorldFromState({ seed: state.seed, tick: state.tick + 1,
+        player: { position, yaw: state.player.yaw, pitch: state.player.pitch, verticalVelocity: 0 },
+        discoveredTileIds: state.discoveredTileIds })
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error
+      return reject(state, intent, 'terrain_missing', 'The Mireglass fairy ring cannot receive travelers safely.')
+    }
+  }
+  const tick = state.tick + 1
+  const teleport: PublicWorldEvent = { type: 'fairy_ring_teleported', tick,
+    sequence: state.eventSequence + 1, sourceRingId: source.id, targetRingId: target.id, position }
+  const player = { ...state.player, position, verticalVelocity: 0 }
+  const sale = settleTradeListings(player, tick, teleport.sequence)
+  const next: PublicWorldState = { ...state,
+    movementOwner: outbound ? 'streamed' : 'greenway', tick,
+    rng: { ...state.rng, simulation: simulationRngStep(state.rng.simulation) },
+    eventSequence: sale.eventSequence, player: sale.player }
+  currentStreamed = streamed ? { state: next, runtime: streamed } : null
+  return { state: next, events: [teleport, ...sale.events], rejections: [] }
+}
+
 function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldIntent[]): PublicWorldAdvanceResult {
   const unavailableIndex = intents.findIndex((intent) =>
     intent.type !== 'move' && intent.type !== 'look' && intent.type !== 'jump')
@@ -170,8 +229,13 @@ function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
 function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldIntent, { type: 'move' }>,
   to: { x: number; z: number }): PublicWorldAdvanceResult {
   const from = state.player.position
-  if (!connectorCrossing(state, from, to)) return reject(state, intent, 'off_connector',
-    'Leave Greenway through the dry southwest connector.')
+  if (!connectorCrossing(state, from, to)) {
+    const boundary = legacyMovementEnvelope({ generationProfile: state.generationProfile,
+      tiles: state.greenway.tiles })
+    return reject(state, intent, 'off_connector', to.x < boundary.minX
+      ? 'Leave Greenway through the dry western trail, aligned with z = 0.'
+      : 'The Greenway path ends here. Mireglass lies on the western trail at z = 0.')
+  }
   const barrier = mireglassMoveBarrier(state.seed, from, to)
   if (barrier) return reject(state, intent, barrier, `The ${barrier} blocks the connector.`)
   try {
@@ -254,6 +318,11 @@ export function advancePublicWorldFrame(
     if (!intents[0]) throw new RangeError('The public world clock is exhausted.')
     return reject(state, intents[0], 'invalid_value', 'The public world clock is exhausted.')
   }
+  if (intents.length === 1 && intents[0].type === 'teleport_fairy_ring'
+    && (intents[0].sourceRingId === MIREGLASS_RING_ID
+      || intents[0].targetRingId === MIREGLASS_RING_ID)) {
+    return crossRegionFairyRing(state, intents[0])
+  }
   const moveIndex = intents.findIndex((intent) => intent.type === 'move')
   const move = intents[moveIndex]
   if (move?.type === 'move') {
@@ -273,7 +342,7 @@ export function advancePublicWorldFrame(
     }
     if (arrivingGreenway) {
       if (!connectorCrossing(state, from, to)) return reject(state, move, 'off_connector',
-        'Return to Greenway through the dry southwest connector.', moveIndex)
+        returnTrailHint(from.z), moveIndex)
       const barrier = mireglassMoveBarrier(state.seed, from, to)
       if (barrier) return reject(state, move, barrier, `The ${barrier} blocks the connector.`, moveIndex)
       try {

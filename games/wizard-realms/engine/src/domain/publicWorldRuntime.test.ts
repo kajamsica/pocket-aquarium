@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
+import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import { serializeWizardWorld } from './persistence'
-import { commitLegacyImportToPublicV6, inspectLegacyImportSource } from './publicWorldV6'
+import { PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, inspectLegacyImportSource,
+  parsePublicV6PlayableRoot, serializePublicV6World } from './publicWorldV6'
 import { advancePublicWorld, advancePublicWorldFrame } from './publicWorldRuntime'
 import type { PublicWorldIntent } from './publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
@@ -74,6 +76,66 @@ function expectOneFrame(before: PublicWorldState, after: ReturnType<typeof advan
 }
 
 describe('public v6 authority handoff', () => {
+  it('links discovered Greenway and Mireglass rings in both directions with one saved player', () => {
+    const fresh = createFreshPublicWorld(seed, classic)
+    const greenwayRing = fresh.greenway.fairyRings.find((ring) => ring.id === 'ring-greenway')!
+    const mireglassRing = mireglassFairyRing(seed)
+    const atGreenway: PublicWorldState = { ...fresh,
+      player: { ...fresh.player, position: { ...greenwayRing.position },
+        discoveredRingIds: ['ring-greenway'] } }
+    const toMireglass = { type: 'teleport_fairy_ring' as const,
+      sourceRingId: 'ring-greenway', targetRingId: MIREGLASS_RING_ID }
+    const denied = advancePublicWorldFrame(atGreenway, [toMireglass])
+    expect(denied.state).toBe(atGreenway)
+    expect(denied.events).toEqual([])
+    expect(denied.rejections[0]?.code).toBe('undiscovered')
+
+    // Test-only positioning: domain discovery tests prove that the ring ID is earned in reach.
+    const ready: PublicWorldState = { ...atGreenway,
+      discoveredTileIds: [...new Set([...atGreenway.discoveredTileIds, mireglassRing.tile.id])].sort(),
+      player: { ...atGreenway.player,
+        discoveredRingIds: ['ring-greenway', MIREGLASS_RING_ID] } }
+    const outbound = advancePublicWorldFrame(ready, [toMireglass])
+    expect(outbound.rejections).toEqual([])
+    expect(outbound.state.movementOwner).toBe('streamed')
+    expect(outbound.state.player.position).toEqual(mireglassRing.tile.center)
+    expect(outbound.state.player.discoveredRingIds).toEqual(ready.player.discoveredRingIds)
+    expect(outbound.events).toEqual([{ type: 'fairy_ring_teleported',
+      sourceRingId: 'ring-greenway', targetRingId: MIREGLASS_RING_ID,
+      position: mireglassRing.tile.center, sequence: ready.eventSequence + 1, tick: ready.tick + 1 }])
+    expect(advancePublicWorldFrame(ready, [toMireglass])).toEqual(outbound)
+    expect(parsePublicV6PlayableRoot(serializePublicV6World({ schemaVersion: PUBLIC_V6_SCHEMA,
+      saveRevision: 1, bootstrap: null, state: outbound.state }))?.state).toEqual(outbound.state)
+
+    const home = advancePublicWorldFrame(outbound.state, [{ type: 'teleport_fairy_ring',
+      sourceRingId: MIREGLASS_RING_ID, targetRingId: 'ring-greenway' }])
+    expect(home.rejections).toEqual([])
+    expect(home.state.movementOwner).toBe('greenway')
+    expect(home.state.player.position).toEqual(greenwayRing.position)
+    expect(home.state.tick).toBe(outbound.state.tick + 1)
+    expect(home.events).toHaveLength(1)
+    expect(home.state.eventSequence).toBe(outbound.state.eventSequence + 1)
+    expect(parsePublicV6PlayableRoot(serializePublicV6World({ schemaVersion: PUBLIC_V6_SCHEMA,
+      saveRevision: 2, bootstrap: null, state: home.state }))?.state).toEqual(home.state)
+  })
+
+  it('identifies the actual western trail when a player leaves at the wrong latitude', () => {
+    const offTrail = atEdge(classic, -12, 4)
+    const move = { type: 'move' as const, delta: { x: -4, z: 0 } }
+    const result = advancePublicWorldFrame(offTrail, [move])
+    expect(result.state).toBe(offTrail)
+    expect(result.rejections[0]).toMatchObject({ code: 'off_connector',
+      message: 'Leave Greenway through the dry western trail, aligned with z = 0.' })
+  })
+
+  it('does not call a northern boundary a western exit', () => {
+    const north = atEdge(classic, 0, -12)
+    const result = advancePublicWorldFrame(north, [{ type: 'move', delta: { x: 0, z: -4 } }])
+    expect(result.state).toBe(north)
+    expect(result.rejections[0]).toMatchObject({ code: 'off_connector',
+      message: 'The Greenway path ends here. Mireglass lies on the western trail at z = 0.' })
+  })
+
   it('settles an escrowed Greenway listing during a Mireglass expedition without a second player', () => {
     const edge = atEdge(classic, -12)
     const ready: PublicWorldState = { ...edge, tick: 596,
@@ -303,7 +365,8 @@ describe('public v6 authority handoff', () => {
     const offReturn: PublicWorldState = { ...out.state, player: { ...out.state.player,
       position: { ...out.state.player.position, z: 4 } } }
     const rejectedReturn = advancePublicWorld(offReturn, { type: 'move', delta: { x: 4, z: 0 } })
-    expect(rejectedReturn.rejections).toMatchObject([{ code: 'off_connector' }])
+    expect(rejectedReturn.rejections).toMatchObject([{ code: 'off_connector',
+      message: 'The dry Greenway opening is north of you. Follow the marked trail, then head east.' }])
     expect(rejectedReturn.state).toBe(offReturn)
     const invalidReturn: PublicWorldState = { ...out.state, discoveredTileIds: [] }
     const rejectedValidation = advancePublicWorld(invalidReturn, { type: 'move', delta: { x: 4, z: 0 } })

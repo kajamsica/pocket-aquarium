@@ -9,6 +9,7 @@ const CACHE_LIMIT = 8
 const DIRECTIONS = [[-1, 0], [0, 1], [1, 0], [0, -1]] as const
 const trailCache = new Map<string, readonly Readonly<Vec3>[]>()
 const greenwayTrailCache = new Map<string, readonly Readonly<Vec3>[]>()
+const fullTrailCache = new Map<string, readonly Readonly<Vec3>[]>()
 
 /** A dry, reversible 4 m connector from the Greenway origin to the fringe marker. */
 export function mireglassGreenwayToMarkerTrail(seed: string): readonly Readonly<Vec3>[] {
@@ -133,5 +134,22 @@ export function mireglassApproachTrail(seed: string): readonly Readonly<Vec3>[] 
   const trail = Object.freeze(reversed.reverse().map((center) => Object.freeze(center)))
   trailCache.set(normalizedSeed, trail)
   if (trailCache.size > CACHE_LIMIT) trailCache.delete(trailCache.keys().next().value!)
+  return trail
+}
+
+/** One cached, readable path from the Greenway crossing through the marker to the outpost. */
+export function mireglassFullApproachTrail(seed: string): readonly Readonly<Vec3>[] {
+  const normalizedSeed = seed || 'wizard-realms'
+  const cached = fullTrailCache.get(normalizedSeed)
+  if (cached) return cached
+  const connector = mireglassGreenwayToMarkerTrail(normalizedSeed)
+  const outpost = mireglassApproachTrail(normalizedSeed)
+  const marker = connector.at(-1)
+  if (!marker || marker.x !== outpost[0]?.x || marker.z !== outpost[0]?.z) {
+    throw new Error(`Mireglass trail does not join at the frontier marker for ${normalizedSeed}`)
+  }
+  const trail = Object.freeze([...connector, ...outpost.slice(1)])
+  fullTrailCache.set(normalizedSeed, trail)
+  if (fullTrailCache.size > CACHE_LIMIT) fullTrailCache.delete(fullTrailCache.keys().next().value!)
   return trail
 }

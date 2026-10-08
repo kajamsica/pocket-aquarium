@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld } from './generation'
-import { mireglassAnchors, mireglassResources } from './mireglassContent'
+import { MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing, mireglassResources } from './mireglassContent'
 import {
   applyMireglassExpeditionAction, createMireglassRegionProgress, createMireglassV6Player,
   isValidMireglassRegionProgress, isValidMireglassV6Player, MIREGLASS_OUTPOST_CATALOG,
@@ -74,6 +74,27 @@ describe('Mireglass player and region action authority', () => {
       { type: 'chop_tree', resourceId: trees[0].id }), 'requires_axe', nearTree, region)
     expect(() => createMireglassV6Player(seed,
       { ...source, skillXp: { ...source.skillXp, excavation: -1 } })).toThrow(RangeError)
+  })
+
+  it('discovers the outpost fairy ring only at authoritative 3m reach and never rediscovers it', () => {
+    const player = createMireglassV6Player(seed)
+    const region = createMireglassRegionProgress(seed)
+    const ring = mireglassFairyRing(seed)
+    const tooFar = at(player, { ...ring.tile.center, x: ring.tile.center.x + 3.01 })
+    rejected(applyMireglassExpeditionAction(seed, tooFar, region,
+      { type: 'discover_fairy_ring' }), 'too_far', tooFar, region)
+    const inReach = at(player, { ...ring.tile.center, x: ring.tile.center.x + 3 })
+    const before = JSON.stringify(inReach)
+    const discovered = accepted(applyMireglassExpeditionAction(seed, inReach, region,
+      { type: 'discover_fairy_ring' }))
+    expect(discovered.event).toEqual({ type: 'fairy_ring_discovered', ringId: MIREGLASS_RING_ID })
+    expect(discovered.player.discoveredRingIds).toEqual([MIREGLASS_RING_ID])
+    expect(discovered.player).not.toBe(inReach)
+    expect(discovered.region).toBe(region)
+    expect(JSON.stringify(inReach)).toBe(before)
+    expect(isValidMireglassV6Player(discovered.player)).toBe(true)
+    rejected(applyMireglassExpeditionAction(seed, discovered.player, region,
+      { type: 'discover_fairy_ring' }), 'already_discovered', discovered.player, region)
   })
 
   it('deep-copies every validated v5 player fact and leaves the imported source bytes unchanged', () => {
@@ -412,6 +433,9 @@ describe('Mireglass player and region action authority', () => {
     expect(isValidMireglassV6Player({ ...player, equipment: { ...player.equipment,
       head: 'mireglass_reach/item/waders' } })).toBe(false)
     expect(isValidMireglassV6Player({ ...player, learnedSpellIds: ['wayfinder_glow', 'wayfinder_glow'] })).toBe(false)
+    expect(isValidMireglassV6Player({ ...player, discoveredRingIds: [MIREGLASS_RING_ID] })).toBe(true)
+    expect(isValidMireglassV6Player({ ...player, discoveredRingIds: [MIREGLASS_RING_ID, MIREGLASS_RING_ID] })).toBe(false)
+    expect(isValidMireglassV6Player({ ...player, discoveredRingIds: ['forged-ring'] })).toBe(false)
     expect(isValidMireglassV6Player({ ...player, inventory: [{ itemId: 'forged-item', quantity: 1 }] })).toBe(false)
   })
 })

@@ -84,8 +84,9 @@ export interface WizardDigSite {
   minimumExcavationLevel: number
 }
 
-/** Authored Mireglass scenery only. Presence and progression come from the campaign projection. */
+/** Projection-only regional scenery. Presence and progression come from campaign state. */
 export type WizardLandmark =
+  | { id: 'greenway/landmark/west_trail_gate'; kind: 'west-trail-gate'; position: Vec3 }
   | { id: 'mireglass_reach/landmark/fringe_marker'; kind: 'frontier-marker'; position: Vec3; studied: boolean }
   | { id: 'mireglass_reach/landmark/bell_alder'; kind: 'bell-alder'; position: Vec3 }
   | { id: 'mireglass_reach/dig/seal_cache'; kind: 'seal-cache'; position: Vec3; revealed: boolean; excavated: boolean }
@@ -98,7 +99,7 @@ export interface WizardTradeListing {
 }
 
 export interface WizardInteractionPrompt {
-  kind: 'resource' | 'store' | 'fairy-ring' | 'route' | 'other'
+  kind: 'resource' | 'store' | 'fairy-ring' | 'route' | 'inscription' | 'dig-site' | 'other'
   targetId: string
   label: string
   action: string
@@ -138,9 +139,30 @@ export interface WizardMapTile {
   hasStore: boolean
   hasRing: boolean
   hasWaystone?: boolean
+  /** A learned destination marker, which may sit on a still-unexplored tile. */
+  hasWestTrail?: boolean
+  /** A known route/target does not reveal the surrounding terrain. */
+  hasFrontierTrail?: boolean
+  hasFrontierMarker?: boolean
   hasRouteSite: boolean
   hasBuiltRoute: boolean
   hasCache?: boolean
+}
+
+/** One 64 m chunk, with color sampled only from terrain the player has discovered. */
+export interface WizardOverviewCell {
+  id: string
+  gridX: number
+  gridZ: number
+  discoveredCells: number
+  terrain: TerrainId | null
+  biome: string | null
+  markers: readonly string[]
+}
+
+export interface WizardWorldOverview {
+  cells: readonly WizardOverviewCell[]
+  player: { gridX: number; gridZ: number; yaw: number }
 }
 
 export interface WizardViewProjection {
@@ -170,6 +192,12 @@ export interface WizardViewProjection {
     title?: string
     /** Atlas glyph legend; omitted means the full Greenway legend. */
     legend?: string
+    /** Read-only directions shown in the expanded atlas without revealing terrain. */
+    guidance?: string
+    /** Accessible name for a revealed region-specific cache. */
+    cacheLabel?: string
+    /** Lazy read-only journey overview; absent from legacy and developer previews. */
+    overview?: () => WizardWorldOverview
   }
   stores: readonly WizardStore[]
   openStoreId: string | null

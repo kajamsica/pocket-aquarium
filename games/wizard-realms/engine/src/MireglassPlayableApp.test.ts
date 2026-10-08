@@ -3,7 +3,8 @@ import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createGeneratedWorld } from './domain/generation'
 import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
-import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
+import { MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing, mireglassResources } from './domain/mireglassContent'
+import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { createMireglassWorld } from './domain/mireglassWorld'
 import type { StreamedWorldIntent } from './domain/streamedWorld'
@@ -13,8 +14,9 @@ import { WizardMap } from './view/WizardMap'
 import { keyboardMovementIntents } from './view/WizardSurface'
 import { createFixedInputClock, createTimedMovementSampler, sampleFixedInputBatch } from './view/timedInput'
 import {
-  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassBarrierAfterResult, mireglassOutpostQuote,
-  mireglassApproachTerrain, mireglassNearestInteractChoice, mireglassNextObjective, mireglassViewProjection,
+  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassBarrierAfterResult, mireglassEventText, mireglassOutpostQuote,
+  mireglassApproachTerrain, mireglassMapGuidance, mireglassNearestInteractChoice,
+  mireglassNextObjective, mireglassViewProjection,
   recordMireglassViewMovement, saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
 
@@ -88,6 +90,61 @@ describe('Mireglass playable dev adapter', () => {
     expect(mireglassNextObjective(world.state).position).toEqual(mireglassAnchors(seed).salvager.tile.center)
   })
 
+  it('does not claim the frontier marker teaches a spell already learned in Greenway', () => {
+    const world = createMireglassDevWorld(seed)
+    const alreadyLearned = { ...world.state,
+      player: { ...world.state.player, learnedSpellIds: ['wayfinder_glow' as const] } }
+    expect(mireglassNextObjective(alreadyLearned).label)
+      .toBe('Study the frontier marker to chart Mireglass Reach')
+    expect(mireglassActionChoices(alreadyLearned).find((choice) => choice.id === 'study')?.detail)
+      .toBe('Chart Mireglass Reach')
+  })
+
+  it('does not ask the player to equip a tool that is already equipped', () => {
+    const initial = createMireglassDevWorld(seed).state
+    const tree = mireglassResources(seed)[0]
+    const ready = { ...initial,
+      player: { ...initial.player,
+        inventory: [...initial.player.inventory, { itemId: 'field_spade' as const, quantity: 1 }],
+        equipment: { ...initial.player.equipment, mainHand: 'woodcutters_axe' as const },
+        skillXp: { ...initial.player.skillXp, excavation: 30 } },
+      expedition: { ...initial.expedition, fringeMarkerStudied: true },
+    }
+    expect(mireglassNextObjective(ready).label).toBe('Chop timber for the fen bridge')
+    expect(mireglassNextObjective({ ...ready,
+      player: { ...ready.player, equipment: { ...ready.player.equipment, mainHand: null } } }).label)
+      .toBe('Equip the axe and chop timber for the fen bridge')
+    const stump = { ...ready,
+      player: { ...ready.player, skillXp: { ...ready.player.skillXp, excavation: 0 } },
+      expedition: { ...ready.expedition, depletedResourceIds: [tree.id] },
+    }
+    expect(mireglassNextObjective(stump).label).toBe('Equip the spade and dig a chopped stump to train excavation')
+    expect(mireglassNextObjective({ ...stump,
+      player: { ...stump.player, equipment: { ...stump.player.equipment, mainHand: 'field_spade' as const } } }).label)
+      .toBe('Dig a chopped stump to train excavation')
+  })
+
+  it('discovers the outpost fairy ring through the nearby tray or E and then exposes known travel', () => {
+    const ring = mireglassFairyRing(seed)
+    const world = createMireglassWorld(seed, undefined, ring.tile.center)
+    const before = mireglassViewProjection(world, world.state, [], null)
+    expect(before.fairyRings).toEqual([expect.objectContaining({
+      id: MIREGLASS_RING_ID, discovered: false,
+    })])
+    expect(before.nearbyInteraction).toMatchObject({ action: 'Discover', actionable: true })
+    expect(mireglassActionChoices(world.state)).toContainEqual(expect.objectContaining({
+      id: 'discover-ring', action: { type: 'discover_fairy_ring' },
+    }))
+    expect(mireglassNearestInteractChoice(world.state)?.action).toEqual({ type: 'discover_fairy_ring' })
+    const result = world.act(mireglassNearestInteractChoice(world.state)!.action)
+    expect(result.event).toEqual({ type: 'fairy_ring_discovered', ringId: MIREGLASS_RING_ID })
+    expect(mireglassEventText(result.event!)).toContain('Discovered the Mireglass fairy ring')
+    expect(mireglassActionChoices(world.state).some((choice) => choice.id === 'discover-ring')).toBe(false)
+    const after = mireglassViewProjection(world, world.state, [], null)
+    expect(after.fairyRings[0]).toMatchObject({ id: MIREGLASS_RING_ID, discovered: true, destinations: [] })
+    expect(after.nearbyInteraction).toMatchObject({ action: 'Find another ring', actionable: false })
+  })
+
   it('shows only in-reach stump actions and leaves authoritative prerequisites to the reducer', () => {
     const tree = mireglassResources(seed)[0]
     const world = createMireglassWorld(seed, undefined, tree.tile.center)
@@ -115,6 +172,26 @@ describe('Mireglass playable dev adapter', () => {
     const farChoices = mireglassActionChoices(climbed).map((choice) => choice.id)
     expect(farChoices).toContain(`cross:${site.id}:to`)
     expect(farChoices).not.toContain(`cross:${site.id}:from`)
+  })
+
+  it('distinguishes nearby bridge choices by their approach coordinates', () => {
+    const bridges = mireglassRouteSites(seed).filter((site) => site.kind === 'bridge')
+    const pair = bridges.flatMap((left) => bridges.filter((right) => right.id !== left.id
+      && Math.hypot(left.from.x - right.from.x, left.from.z - right.from.z) <= 5)
+      .map((right) => [left, right] as const))[0]
+    expect(pair).toBeDefined()
+    const [left, right] = pair!
+    const position = { x: (left.from.x + right.from.x) / 2,
+      y: left.from.y, z: (left.from.z + right.from.z) / 2 }
+    const world = createMireglassWorld(seed, undefined, position)
+    const choices = mireglassActionChoices(world.state).filter((choice) => choice.action.type === 'build_route'
+      && (choice.action.siteId === left.id || choice.action.siteId === right.id))
+    expect(choices).toHaveLength(2)
+    expect(new Set(choices.map((choice) => choice.detail)).size).toBe(2)
+    expect(choices.map((choice) => choice.detail)).toEqual(expect.arrayContaining([
+      expect.stringContaining(`x ${left.from.x.toFixed(0)}, z ${left.from.z.toFixed(0)}`),
+      expect.stringContaining(`x ${right.from.x.toFixed(0)}, z ${right.from.z.toFixed(0)}`),
+    ]))
   })
 
   it('keeps E on world interactions instead of repeatedly swapping equipment or buying stock', () => {
@@ -146,7 +223,7 @@ describe('Mireglass playable dev adapter', () => {
     expect(before.coins).toBe(source.coins)
     expect(before.skillXp).toEqual(source.skillXp)
     expect(before.learnedSpellIds).toEqual([])
-    expect(before.map.title).toContain('(v6)')
+    expect(before.map.title).toBe('Mireglass Reach')
     expect(before.map.tiles).toHaveLength(17 * 17)
     expect(before.map.tiles.filter((tile) => tile.discovered).length).toBe(1)
 
@@ -157,6 +234,50 @@ describe('Mireglass playable dev adapter', () => {
     expect(after.buildSites.filter((candidate) => candidate.status === 'built').map((candidate) => candidate.id)).toEqual([site.id])
     expect(after.backpack.stacks.find((stack) => stack.itemId === 'logs')).toBeUndefined()
     expect(after.skillXp.construction).toBeGreaterThan(before.skillXp.construction)
+  })
+
+  it('projects discovered v7 herb patches, fades a harvested cycle, and regrows them at tick 6000', () => {
+    const patch = mireglassHerbPatches(seed)[0]
+    const world = createMireglassWorld(seed, undefined, patch.tile.center)
+    const tile = (state: typeof world.state) => mireglassViewProjection(world, state, [], null)
+      .map.tiles.find((candidate) => candidate.id === patch.tile.id)
+    expect(world.state.discoveredTileIds).toContain(patch.tile.id)
+    expect(mireglassViewProjection(world, world.state, [], null).resources.some((node) => node.kind === 'herb')).toBe(false)
+    expect(tile(world.state)?.hasResource).toBe(false)
+
+    const fresh = { ...world.state, expedition: { ...world.state.expedition, herbHarvestCycles: [] } }
+    const ready = mireglassViewProjection(world, fresh, [], null)
+    expect(ready.map.title).toBe('Mireglass Reach')
+    expect(ready.resources).toContainEqual({
+      id: patch.id, kind: 'herb', label: 'Marsh herb patch',
+      position: [patch.tile.center.x, patch.tile.center.y, patch.tile.center.z], available: true,
+    })
+    expect(ready.map.tiles.find((candidate) => candidate.id === patch.tile.id)).toMatchObject({
+      discovered: true, hasResource: true,
+    })
+    expect(ready.nearbyInteraction).toMatchObject({
+      kind: 'resource', targetId: patch.id, action: 'Gather', actionable: true,
+    })
+
+    const harvested = { ...fresh, tick: 5_999, expedition: { ...fresh.expedition,
+      herbHarvestCycles: [{ patchId: patch.id, cycle: 0 }] } }
+    const depleted = mireglassViewProjection(world, harvested, [], null)
+    expect(depleted.resources.find((node) => node.id === patch.id)?.available).toBe(false)
+    expect(depleted.nearbyInteraction).toMatchObject({
+      targetId: patch.id, action: 'Regrowing', actionable: false,
+    })
+    expect(depleted.map.tiles.find((candidate) => candidate.id === patch.tile.id)?.hasResource).toBe(true)
+    expect(mireglassViewProjection(world, { ...harvested, tick: 6_000 }, [], null)
+      .resources.find((node) => node.id === patch.id)?.available).toBe(true)
+
+    const fogged = { ...harvested, discoveredTileIds: world.state.discoveredTileIds.filter((id) => id !== patch.tile.id) }
+    const hidden = mireglassViewProjection(world, fogged, [], null)
+    expect(hidden.resources.some((node) => node.id === patch.id)).toBe(false)
+    expect(hidden.nearbyInteraction).toBeNull()
+    expect(hidden.map.tiles.find((candidate) => candidate.id === patch.tile.id)).toMatchObject({
+      discovered: false, terrain: null, hasResource: false,
+    })
+    expect(fogged.discoveredTileIds).not.toContain(patch.tile.id)
   })
 
   it('projects only discovered Mireglass landmarks and follows the real reveal and excavation state', () => {
@@ -271,6 +392,52 @@ describe('Mireglass playable dev adapter', () => {
     expect(bearingText(origin, { x: 0.2, z: 0.2 })).toBe('here')
   })
 
+  it('projects a direct marker bearing and next objective without revealing fog', () => {
+    const marker = mireglassAnchors(seed).fringeMarker.tile.center
+    const approaching = createMireglassWorld(seed, undefined, { x: marker.x, z: marker.z - 8 })
+    const originalDiscovery = [...approaching.state.discoveredTileIds]
+    const view = mireglassViewProjection(approaching, approaching.state, [], null)
+    expect(view.map.title).toBe('Mireglass Reach')
+    expect(view.map.guidance).toBe('Next: Frontier marker. S of here, about 8 m direct.')
+    expect(mireglassMapGuidance(approaching.state)).toBe(view.map.guidance)
+    expect(approaching.state.discoveredTileIds).toEqual(originalDiscovery)
+    expect(view.map.tiles.some((tile) => !tile.discovered && tile.terrain === null)).toBe(true)
+    expect(view.map.legend).toContain('? unexplored')
+    expect(view.map.legend).toContain('◇ route build site')
+
+    const atMarker = createMireglassDevWorld(seed)
+    expect(mireglassViewProjection(atMarker, atMarker.state, [], null).map.guidance)
+      .toBe('Next: Frontier marker. Here (0 m).')
+    expect(atMarker.act({ type: 'study_fringe_marker' }).event?.type).toBe('fringe_marker_studied')
+    const next = mireglassNextObjective(atMarker.state)
+    const meters = Math.round(Math.hypot(next.position.x - atMarker.state.player.position.x,
+      next.position.z - atMarker.state.player.position.z))
+    expect(mireglassViewProjection(atMarker, atMarker.state, [], null).map.guidance)
+      .toBe(`Next: ${next.label}. ${bearingText(atMarker.state.player.position, next.position)} of here, about ${meters} m direct.`)
+  })
+
+  it('gives a qualitative focus signal on the slate shelf without exposing the hidden cache waypoint', () => {
+    const bridge = mireglassRouteSites(seed).find((site) => site.kind === 'bridge')!
+    const ladder = mireglassRouteSites(seed).find((site) => site.kind === 'ladder')!
+    const cache = mireglassAnchors(seed).sealCache.tile.center
+    const initial = createMireglassDevWorld(seed).state
+    const searching = { ...initial,
+      player: { ...initial.player, position: { x: cache.x + 7, y: cache.y, z: cache.z },
+        inventory: [...initial.player.inventory, { itemId: 'field_spade' as const, quantity: 1 }],
+        skillXp: { ...initial.player.skillXp, excavation: 30 } },
+      expedition: { ...initial.expedition, fringeMarkerStudied: true,
+        builtRoutes: { bridge: bridge.id, ladder: ladder.id } },
+    }
+    expect(mireglassNextObjective(searching)).toMatchObject({ searchArea: true,
+      label: 'Wayfinder focus flares here. Cast Wayfinder Glow now' })
+    expect(mireglassNextObjective(searching).position).not.toEqual(cache)
+    expect(mireglassMapGuidance(searching)).toContain('no exact waypoint until revealed')
+    const farther = { ...searching, player: { ...searching.player,
+      position: { ...searching.player.position, x: cache.x + 24 } } }
+    expect(mireglassNextObjective(farther).label).toContain('focus is faint')
+    expect(mireglassNextObjective(farther).position).toEqual(mireglassNextObjective(searching).position)
+  })
+
   it('quotes the regional seal price at the outpost before the player owns a seal', () => {
     const source = createGeneratedWorld(seed).player
     source.position = { ...mireglassAnchors(seed).salvager.tile.center }
@@ -305,6 +472,9 @@ describe('Mireglass playable dev adapter', () => {
       position: { ...ladder.to } },
       expedition: { ...across.expedition, cacheRevealed: true, cacheExcavated: true } }
     expect(mireglassNextObjective(returning).label).toBe('Descend the built slate ladder')
+    expect(mireglassNextObjective({ ...returning, player: { ...returning.player,
+      position: { ...ladder.to, z: ladder.to.z - 0.4 } } }).label)
+      .toBe('Descend the built slate ladder')
     expect(mireglassNextObjective({ ...returning, player: { ...returning.player, position: { ...bridge.to } } }).label)
       .toBe('Return across the built fen bridge')
     const sold = { ...returning, player: { ...returning.player,

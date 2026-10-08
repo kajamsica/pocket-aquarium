@@ -19,6 +19,15 @@ The first expanded Mireglass journey is a playable milestone, not the finish con
 
 Online trade, shared persistence, PvP, and MMO scale are separate later releases. Passing the first 15-minute loop, or publishing a technical preview, does not satisfy this contract.
 
+### Delivery gates toward the full game
+
+These are proof gates, not substitutes for the full-game completion contract. Each gate must be playable in the same authoritative public world and must preserve earlier saves or provide an explicit, tested migration.
+
+1. **Expanded-region proof:** A fresh player completes Greenway and the distinctive Mireglass expedition in the real UI, learning a spell, visibly changing gear, choosing and building both crossings, digging the seal cache, gathering a renewable herb, returning to trade, and resuming the same world after reload. Deterministic reachability and source-safe save recovery pass alongside the playthrough.
+2. **Connected-world breadth:** Extend the traversable world toward the roughly 2 km target with multiple visually and mechanically distinct regions, legible exploration and map discovery, regional resources and settlements, several practiced spells and skill paths, equipment choices, camps, boats, and terrain-valid construction and digging. Revisit and return journeys must be useful, not just possible.
+3. **Living progression:** Add original creatures, encounters, quests or mysteries, tool and armor progression, regional commerce and bounded trade listings, captured or raised ground mounts, and late flying mounts. Travel tiers must each retain a purpose. Long-session saves, migrations, and performance must hold across the connected world.
+4. **Campaign and release proof:** A new player can reach and complete a deliberate endgame pursuit without developer intervention. Independent playtests verify first-session learning, sustained midgame decisions, endgame payoff, accessible controls, visual readability, save/recovery, and target-hardware performance. Only then is the single-player game complete; online systems are a separate product decision.
+
 The design inherits the authority, behavior, asset, tooling, and validation methods in the [Simulation-Rich Game Development Playbook](../../../docs/game-development/README.md). In particular:
 
 - [Foundation and Architecture](../../../docs/game-development/FOUNDATION_AND_ARCHITECTURE.md) defines one authority, fixed causal time, typed intents and events, projections, content profiles, and explicit promotion.
@@ -293,7 +302,7 @@ MVP excludes multiplayer, persistent remote realms, player combat, deep questing
 
 The next playable milestone must extend this foundation into one distinctive region large enough for an expedition beyond the current route demonstration. A player can discover and map its locations, use an exploration spell to reveal or interact with something in the world, see equipped gear change the character, gather materials and build a ladder or bridge at a valid player-selected site, and excavate a dig site only with the required tool and skill. The excavation and constructed route persist across save and reload. The player can return to a settlement and sell or list the expedition's finds. This complete outward-and-return journey is the milestone's acceptance proof, not the full-game finish.
 
-[Mireglass Reach](FIRST_EXPANDED_REGION_CONTENT.md) is the first authored content pack for that milestone. Its southwest wetland journey is designed content, not a claim that the region is implemented.
+[Mireglass Reach](FIRST_EXPANDED_REGION_CONTENT.md) is the first authored content pack for that milestone. Its southwest wetland systems are partly implemented in the local public world, but the complete fresh-player outward-and-return UI proof is still pending.
 
 ### Full single-player game
 

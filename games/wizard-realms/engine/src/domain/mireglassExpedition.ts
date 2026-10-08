@@ -1,5 +1,5 @@
 import { createGeneratedWorld } from './generation'
-import { mireglassAnchors, mireglassResources, MIREGLASS_CONTENT_REVISION } from './mireglassContent'
+import { mireglassAnchors, mireglassFairyRing, mireglassResources, MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID } from './mireglassContent'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import type { MireglassRouteSite } from './mireglassRouteSites'
 import { canEquipItem } from './world'
@@ -60,6 +60,7 @@ export type MireglassExpeditionAction =
   | { type: 'chop_tree'; resourceId: string }
   | { type: 'dig_tree_stump'; resourceId: string }
   | { type: 'study_fringe_marker' }
+  | { type: 'discover_fairy_ring' }
   | { type: 'build_route'; siteId: string }
   | { type: 'traverse_route'; siteId: string; from: 'from' | 'to' }
   | { type: 'cast_wayfinder_glow' }
@@ -72,6 +73,7 @@ export type MireglassExpeditionEvent =
   | { type: 'tree_chopped'; resourceId: string; itemId: 'logs'; quantity: 4; xp: number }
   | { type: 'tree_stump_dug'; resourceId: string; itemId: 'stone'; quantity: 1; xp: 30 }
   | { type: 'fringe_marker_studied'; markerId: string; spellId: 'wayfinder_glow'; learned: boolean }
+  | { type: 'fairy_ring_discovered'; ringId: typeof MIREGLASS_RING_ID }
   | { type: 'route_built'; routeId: MireglassRouteSite['routeId']; siteId: string; kind: MireglassRouteKind; logCost: 4 | 8; xp: number }
   | { type: 'route_traversed'; routeId: MireglassRouteSite['routeId']; siteId: string; from: 'from' | 'to'; position: Vec3 }
   | { type: 'terrain_revealed'; spellId: 'wayfinder_glow'; revealedTileIds: readonly string[]; xp: number }
@@ -87,7 +89,7 @@ export interface MireglassExpeditionRejection {
     | 'requires_axe' | 'depleted' | 'capacity' | 'not_owned' | 'already_built' | 'not_built'
     | 'unlearned_spell' | 'already_revealed' | 'site_hidden' | 'already_excavated'
     | 'requires_spade' | 'skill_locked' | 'insufficient_coins' | 'out_of_stock' | 'already_equipped'
-    | 'already_studied' | 'already_dug' | 'not_depleted'
+    | 'already_studied' | 'already_dug' | 'not_depleted' | 'already_discovered'
   readonly message: string
 }
 
@@ -132,7 +134,7 @@ export function isValidMireglassV6Player(value: unknown): value is MireglassV6Pl
     || !value.learnedSpellIds.every((id) => id === 'wayfinder_glow')
     || new Set(value.learnedSpellIds).size !== value.learnedSpellIds.length
     || !Array.isArray(value.discoveredRingIds)
-    || !value.discoveredRingIds.every((id) => id === 'ring-greenway' || id === 'ring-highland')
+    || !value.discoveredRingIds.every((id) => id === 'ring-greenway' || id === 'ring-highland' || id === MIREGLASS_RING_ID)
     || new Set(value.discoveredRingIds).size !== value.discoveredRingIds.length) return false
   const player = value as unknown as MireglassV6Player
   if (!hasCapacity(player, 0)) return false
@@ -292,6 +294,14 @@ export function applyMireglassExpeditionAction(
     if (learned) next.learnedSpellIds.push('wayfinder_glow')
     return { player: next, region: { ...region, fringeMarkerStudied: true },
       event: { type: 'fringe_marker_studied', markerId: marker.id, spellId: 'wayfinder_glow', learned } }
+  }
+
+  if (action.type === 'discover_fairy_ring') {
+    if (player.discoveredRingIds.includes(MIREGLASS_RING_ID)) return reject('already_discovered', 'Mireglass ring is already discovered.')
+    if (distance(player.position, mireglassFairyRing(seed).tile.center) > REACH_METERS) return reject('too_far', 'Mireglass ring is out of reach.')
+    const next = copyAt()
+    next.discoveredRingIds.push(MIREGLASS_RING_ID)
+    return { player: next, region, event: { type: 'fairy_ring_discovered', ringId: MIREGLASS_RING_ID } }
   }
 
   if (action.type === 'dig_tree_stump') {

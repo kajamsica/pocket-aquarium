@@ -2,12 +2,27 @@ import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
 import type { WizardLandmark, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, treeTrunkBlocksView } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
 import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
+
+describe('terrain presentation', () => {
+  it('uses smooth world-position tint across adjacent cells without depending on cell ID', () => {
+    const cell = { id: 'tile-0-0', position: [0, 0, 0] as const, size: [4, 4] as const,
+      height: 2, climate: 'temperate_forest', color: '#56824b' }
+    const at = (x: number, z: number) => terrainAppearanceFor({ ...cell, position: [x, 0, z] })
+    const distance = (a: THREE.Color, b: THREE.Color) => Math.hypot(a.r - b.r, a.g - b.g, a.b - b.b)
+    const origin = at(0, 0)
+    expect(terrainAppearanceFor({ ...cell, id: 'different-id' }).top.getHex())
+      .toBe(origin.top.getHex())
+    expect(distance(origin.top, at(4, 0).top)).toBeLessThan(distance(origin.top, at(24, 20).top))
+    expect(distance(origin.top, at(4, 0).top)).toBeLessThan(0.025)
+    expect(origin.side.getHex()).not.toBe(origin.top.getHex())
+  })
+})
 
 describe('Mireglass terrain detail', () => {
   it('is stable, sparse, non-interactive scenery within the 17 by 17 visible window', () => {
@@ -65,6 +80,28 @@ describe('Mireglass terrain detail', () => {
     expect(end[1]).toBeCloseTo(start[1])
     expect(Math.hypot(first.brushX - first.trailX, first.brushZ - first.trailZ)).toBeCloseTo(1.18)
   })
+
+  it('places sparse waymark stakes off the dry trail from the first west crossing', () => {
+    const cell = (gridX: number) => ({ id: `tile-${gridX + 3}-3`,
+      position: [gridX * 4, 0, 0] as const, size: [4, 4] as const, height: 2,
+      climate: 'temperate_forest', mireglassApproach: true,
+      mireglassTrailSegment: { from: [gridX * 4 + 2, 0] as const, to: [gridX * 4 - 2, 0] as const } })
+    const crossing = mireglassDetailFor(cell(-4))
+    expect(crossing.trailStake).toBe(true)
+    expect(crossing).toEqual(mireglassDetailFor({ ...cell(-4) }))
+    const approach = Array.from({ length: 64 }, (_, index) => mireglassDetailFor(cell(-4 - index)))
+    expect(approach.slice(0, 8).filter((detail) => detail.trailStake).length).toBeGreaterThanOrEqual(2)
+    const stakes = approach.filter((detail) => detail.trailStake)
+    expect(stakes.length).toBeGreaterThan(4)
+    expect(stakes.length).toBeLessThan(16)
+    for (const stake of stakes) {
+      expect(Math.hypot(stake.stakeX - stake.trailX, stake.stakeZ - stake.trailZ)).toBeCloseTo(1.48)
+      expect(Math.hypot(stake.stakeX - stake.brushX, stake.stakeZ - stake.brushZ)).toBeCloseTo(2.66)
+    }
+    expect(mireglassDetailFor({ ...cell(-4), mireglassTrailSegment: undefined }).trailStake).toBe(false)
+    expect(mireglassDetailFor({ ...cell(-4), mireglassTrailSegment: {
+      from: [-18, -2] as const, to: [-14, 2] as const } }).trailStake).toBe(false)
+  })
 })
 
 describe('avatar gear projection', () => {
@@ -109,11 +146,13 @@ describe('dig-site view state', () => {
 
 describe('Mireglass landmark view state', () => {
   const marker: WizardLandmark = { id: 'mireglass_reach/landmark/fringe_marker', kind: 'frontier-marker', position: [-380, 0, 320], studied: false }
+  const trailGate: WizardLandmark = { id: 'greenway/landmark/west_trail_gate', kind: 'west-trail-gate', position: [-10.5, 1, 0] }
   const alder: WizardLandmark = { id: 'mireglass_reach/landmark/bell_alder', kind: 'bell-alder', position: [-370, 0, 340] }
   const cache: WizardLandmark = { id: 'mireglass_reach/dig/seal_cache', kind: 'seal-cache', position: [-410, 0, 480], revealed: false, excavated: false }
 
   it('shows the authored frontier marker and bell alder without requiring a dig-site reveal', () => {
     expect(landmarkAppearance(marker)).toBe('frontier-marker')
+    expect(landmarkAppearance(trailGate)).toBe('west-trail-gate')
     expect(landmarkAppearance({ ...marker, studied: true })).toBe('frontier-marker')
     expect(landmarkAppearance(alder)).toBe('bell-alder')
   })
@@ -208,23 +247,37 @@ describe('shop-aware follow camera', () => {
     expect(storeSafeCameraPosition(target, desired, [storeAt(-12)], null, 0.016).toArray()).toEqual(desired.toArray())
   })
 
-  it('keeps a usable camera inside a legacy shop save until the player walks out', () => {
+  it('hides an overlapping shop structure and keeps the full follow distance inside it', () => {
     const stores = [storeAt(-2)]
     const inside = new THREE.Vector3(-2, 1.35, 2)
     const desiredBehind = inside.clone().add(new THREE.Vector3(0, 2.97, 6.14))
     const camera = storeSafeCameraPosition(inside, desiredBehind, stores, null, 0.016)
-    expect(camera.toArray().every(Number.isFinite)).toBe(true)
-    expect(camera.distanceTo(inside)).toBeGreaterThan(0.5)
-    expect(camera.distanceTo(inside)).toBeLessThan(3)
-    // Before the safety offset, this pose left the eye within 9 cm of a wooden frame post.
-    const distanceToBodyFace = Math.min(1.6 - Math.abs(camera.x - stores[0].position[0]),
-      1.1 - Math.abs(camera.z - stores[0].position[2]))
-    expect(distanceToBodyFace).toBeGreaterThan(0.4)
+    expect(storeStructureOccludesTarget(inside, stores[0])).toBe(true)
+    expect(camera.toArray()).toEqual(desiredBehind.toArray())
     expect(storeSafeCameraPosition(inside, camera, stores, null, 0.016).distanceTo(camera)).toBeLessThan(1e-6)
 
     const nearWall = new THREE.Vector3(-0.4, 1.35, 2)
     const outward = nearWall.clone().add(new THREE.Vector3(6, 2.97, 0))
-    expect(storeSafeCameraPosition(nearWall, outward, stores, null, 0.016).distanceTo(nearWall)).toBeGreaterThan(0.5)
+    expect(storeStructureOccludesTarget(nearWall, stores[0])).toBe(true)
+    expect(storeSafeCameraPosition(nearWall, outward, stores, null, 0.016).toArray()).toEqual(outward.toArray())
+    expect(storeStructureOccludesTarget(new THREE.Vector3(0.5, 1.35, 2), stores[0])).toBe(false)
+    expect(storeStructureOccludesTarget(new THREE.Vector3(-2, 5, 2), stores[0])).toBe(false)
+  })
+
+  it('hides a shop crossed by the compact camera just outside the Outfitters footprint', () => {
+    const shop = { ...storeAt(-5), position: [-5, 0, -1] as const }
+    const player = new THREE.Vector3(-2.6, 0, -1.9)
+    const compact = cameraFramingFor(682, 350)
+    const pitch = 0.28 * compact.pitchScale
+    const target = player.clone().add(new THREE.Vector3(0, compact.focusHeight, 0))
+    const desired = target.clone().add(new THREE.Vector3(
+      -Math.cos(pitch) * compact.distance, compact.eyeRise + Math.sin(pitch) * compact.distance, 0))
+    const clearEast = target.clone().add(new THREE.Vector3(compact.distance, compact.eyeRise, 0))
+    expect(storeStructureOccludesTarget(target, shop)).toBe(false)
+    expect(storeStructureOccludesView(target, desired, shop)).toBe(true)
+    expect(storeStructureOccludesView(player, desired, shop)).toBe(true)
+    expect(storeSafeCameraPosition(target, desired, [shop], null, 0.016).toArray()).toEqual(desired.toArray())
+    expect(storeStructureOccludesView(target, clearEast, shop)).toBe(false)
   })
 
   it('eases through nearby poses with finite coordinates and clear sightlines', () => {

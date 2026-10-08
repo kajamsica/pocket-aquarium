@@ -27,6 +27,19 @@ const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1)
 const LEAF_GEOMETRY = new THREE.IcosahedronGeometry(1, 1)
 const ROCK_GEOMETRY = new THREE.DodecahedronGeometry(1, 0)
 const CRYSTAL_GEOMETRY = new THREE.OctahedronGeometry(1, 0)
+const ROBE_GEOMETRY = new THREE.ConeGeometry(0.52, 1.65, 7)
+const WADER_ROBE_GEOMETRY = new THREE.ConeGeometry(0.52, 1.35, 7)
+const AXE_BLADE_GEOMETRY = new THREE.ExtrudeGeometry(new THREE.Shape([
+  new THREE.Vector2(-0.06, -0.12), new THREE.Vector2(0.16, -0.16),
+  new THREE.Vector2(0.5, -0.3), new THREE.Vector2(0.43, 0),
+  new THREE.Vector2(0.5, 0.3), new THREE.Vector2(0.16, 0.16),
+  new THREE.Vector2(-0.06, 0.12),
+]), { depth: 0.09, bevelEnabled: true, bevelSegments: 1, bevelSize: 0.015, bevelThickness: 0.015 })
+const SPADE_BLADE_GEOMETRY = new THREE.ExtrudeGeometry(new THREE.Shape([
+  new THREE.Vector2(-0.25, 0.24), new THREE.Vector2(0.25, 0.24),
+  new THREE.Vector2(0.24, -0.12), new THREE.Vector2(0, -0.42),
+  new THREE.Vector2(-0.24, -0.12),
+]), { depth: 0.06, bevelEnabled: true, bevelSegments: 1, bevelSize: 0.012, bevelThickness: 0.012 })
 const WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6e4a30', roughness: 0.92 })
 const DARK_WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4a3222', roughness: 0.9 })
 const STAKE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9a8a70', roughness: 0.9 })
@@ -48,6 +61,7 @@ const APPROACH_GROUND_COLOR = new THREE.Color('#687a59')
 const MARKER_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b9aa89', roughness: 0.95, flatShading: true })
 const MARKER_RUNE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bde4d0', emissive: '#4d9b82', emissiveIntensity: 0.9, roughness: 0.5 })
 const MARKER_DORMANT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#787d69', roughness: 0.9 })
+const TRAIL_RUNE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bdecc4', emissive: '#58b981', emissiveIntensity: 1.4, roughness: 0.5 })
 const ALDER_BARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#45382d', roughness: 1, flatShading: true })
 const ALDER_LEAF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#628661', roughness: 0.9, flatShading: true })
 const ALDER_BELL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a98552', metalness: 0.35, roughness: 0.55 })
@@ -57,8 +71,8 @@ const ALDER_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.18, 0.34, 3.4, 7)
 const CACHE_PIT_GEOMETRY = new THREE.CircleGeometry(0.72, 12)
 const WADER_SHAFT_GEOMETRY = new THREE.CylinderGeometry(0.13, 0.15, 0.5, 6)
 const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, brush: false, pebbles: false,
-  soil: false, trail: false, trailYaw: 0, trailLength: 0, trailX: 0, trailZ: 0,
-  brushX: 0, brushZ: 0, x: 0, z: 0, rotation: 0 } as const
+  soil: false, trail: false, trailStake: false, trailYaw: 0, trailLength: 0, trailX: 0, trailZ: 0,
+  brushX: 0, brushZ: 0, stakeX: 0, stakeZ: 0, x: 0, z: 0, rotation: 0 } as const
 
 /** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
 const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
@@ -115,6 +129,12 @@ export function treeTrunkBlocksView(
 }
 
 // These bounds enclose the rendered shop body and pitched roof. They affect only the presentation camera.
+export function storeStructureOccludesTarget(target: THREE.Vector3, store: WizardStore): boolean {
+  const [x, y, z] = store.position
+  return Math.abs(target.x - x) < 2.1 && Math.abs(target.z - z) < 1.6
+    && target.y > y - 0.6 && target.y < y + 3.5
+}
+
 function segmentBoxHit(from: THREE.Vector3, to: THREE.Vector3, centre: THREE.Vector3, half: THREE.Vector3): number | null {
   let enter = 0
   let exit = 1
@@ -140,13 +160,28 @@ function segmentBoxHit(from: THREE.Vector3, to: THREE.Vector3, centre: THREE.Vec
   return fromInside ? (toInside ? null : exit) : enter
 }
 
+function storeCameraHit(from: THREE.Vector3, to: THREE.Vector3, store: WizardStore): number | null {
+  const [x, y, z] = store.position
+  const body = segmentBoxHit(from, to, new THREE.Vector3(x, y + 1.2, z), new THREE.Vector3(1.7, 1.2, 1.2))
+  const roof = segmentBoxHit(from, to, new THREE.Vector3(x, y + 2.95, z), new THREE.Vector3(2.4, 0.8, 2.4))
+  return body === null ? roof : roof === null ? body : Math.min(body, roof)
+}
+
+/** A nearby shop may fill the compact view even when the player stands just beyond its wall. */
+export function storeStructureOccludesView(target: THREE.Vector3, camera: THREE.Vector3, store: WizardStore): boolean {
+  if (storeStructureOccludesTarget(target, store)) return true
+  const [x, y, z] = store.position
+  return Math.abs(target.x - x) < 2.6 && Math.abs(target.z - z) < 1.9
+    && target.y > y - 0.6 && target.y < y + 3.5
+    && storeCameraHit(target, camera, store) !== null
+}
+
 function firstStoreCameraHit(from: THREE.Vector3, to: THREE.Vector3, stores: readonly WizardStore[]): number | null {
   let firstHit: number | null = null
   for (const store of stores) {
-    const [x, y, z] = store.position
-    const body = segmentBoxHit(from, to, new THREE.Vector3(x, y + 1.2, z), new THREE.Vector3(1.7, 1.2, 1.2))
-    const roof = segmentBoxHit(from, to, new THREE.Vector3(x, y + 2.95, z), new THREE.Vector3(2.4, 0.8, 2.4))
-    for (const hit of [body, roof]) if (hit !== null) firstHit = firstHit === null ? hit : Math.min(firstHit, hit)
+    if (storeStructureOccludesView(from, to, store)) continue
+    const hit = storeCameraHit(from, to, store)
+    if (hit !== null) firstHit = firstHit === null ? hit : Math.min(firstHit, hit)
   }
   return firstHit
 }
@@ -217,6 +252,7 @@ export function mireglassDetailFor(cell: WizardTerrainCell) {
   const trailX = trail ? (segment.from[0] + segment.to[0]) / 2 - cell.position[0] : 0
   const trailZ = trail ? (segment.from[1] + segment.to[1]) / 2 - cell.position[2] : 0
   const side = hashUnit(cell.id, 16) < 0.5 ? -1 : 1
+  const straightTrail = trail && (Math.abs(dx) < 0.01 || Math.abs(dz) < 0.01)
   const approachX = (hashUnit(cell.id, 14) - 0.5) * 2.6
   const approachZ = (hashUnit(cell.id, 15) - 0.5) * 2.6
   return {
@@ -227,9 +263,12 @@ export function mireglassDetailFor(cell: WizardTerrainCell) {
     brush: !!cell.mireglassApproach && hashUnit(cell.id, 11) < 0.62,
     pebbles: !!cell.mireglassApproach && hashUnit(cell.id, 12) < 0.52,
     soil: !!cell.mireglassApproach && hashUnit(cell.id, 13) < 0.42,
+    trailStake: straightTrail && hashUnit(cell.id, 24) < 0.16,
     trail, trailYaw, trailLength, trailX, trailZ,
     brushX: trail ? trailX + side * Math.cos(trailYaw) * 1.18 : approachX,
     brushZ: trail ? trailZ - side * Math.sin(trailYaw) * 1.18 : approachZ,
+    stakeX: trail ? trailX - side * Math.cos(trailYaw) * 1.48 : 0,
+    stakeZ: trail ? trailZ + side * Math.sin(trailYaw) * 1.48 : 0,
     x: (hashUnit(cell.id, 8) - 0.5) * 1.3,
     z: (hashUnit(cell.id, 9) - 0.5) * 1.3,
     rotation: hashUnit(cell.id, 10) * Math.PI,
@@ -322,17 +361,20 @@ function Wand({ side, light }: { side: 1 | -1; light: boolean }) {
 }
 
 function Axe() {
-  return <group position={[0.2, -0.5, 0]} rotation={[0.1, 0, 0.1]}>
-    <mesh position={[0, 0.2, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.03, 0.04, 1.1, 6]} /></mesh>
-    <mesh geometry={UNIT_BOX} material={AXE_HEAD_MATERIAL} position={[0.13, 0.66, 0]} scale={[0.3, 0.2, 0.06]} castShadow />
-    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.66, 0.03]} scale={[0.07, 0.1, 0.08]} />
+  return <group position={[0.24, -0.5, 0.04]} rotation={[0.1, 0, 0.1]}>
+    <mesh position={[0, 0.12, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.055, 1.35, 6]} /></mesh>
+    <mesh geometry={AXE_BLADE_GEOMETRY} material={AXE_HEAD_MATERIAL} position={[0, 0.65, -0.045]} castShadow />
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.65, 0.02]} scale={[0.09, 0.24, 0.13]} />
   </group>
 }
 
 function Spade() {
-  return <group position={[0.2, -0.38, 0.02]} rotation={[0.08, 0, 0.08]}>
-    <mesh position={[0, 0.24, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.04, 1.1, 6]} /></mesh>
-    <mesh geometry={UNIT_BOX} material={AXE_HEAD_MATERIAL} position={[0, -0.47, 0]} scale={[0.28, 0.42, 0.07]} castShadow />
+  return <group position={[0.24, -0.44, 0.04]} rotation={[0.08, 0, 0.08]}>
+    <mesh position={[0, 0.08, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.05, 1.18, 6]} /></mesh>
+    <mesh geometry={SPADE_BLADE_GEOMETRY} material={AXE_HEAD_MATERIAL} position={[0, -0.5, -0.03]} castShadow />
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[-0.15, 0.75, 0]} scale={[0.06, 0.3, 0.08]} />
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0.15, 0.75, 0]} scale={[0.06, 0.3, 0.08]} />
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.89, 0]} scale={[0.36, 0.07, 0.08]} />
   </group>
 }
 
@@ -373,15 +415,16 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
           {gear.boots && <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, -0.54, 0.05]} scale={[0.22, 0.14, 0.34]} castShadow />}
           {gear.waders && <>
             <mesh geometry={WADER_SHAFT_GEOMETRY} material={WADER_MATERIAL} position={[0, -0.3, 0]} castShadow />
-            <mesh geometry={UNIT_BOX} material={WADER_CUFF_MATERIAL} position={[0, -0.07, 0]} scale={[0.28, 0.06, 0.28]} castShadow />
-            <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, -0.52, 0.12]} scale={[0.27, 0.17, 0.45]} castShadow />
+            <mesh geometry={UNIT_BOX} material={WADER_CUFF_MATERIAL} position={[0, -0.3, 0]} scale={[0.32, 0.09, 0.32]} castShadow />
+            <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, -0.52, 0.22]} scale={[0.32, 0.18, 0.6]} castShadow />
           </>}
         </group>
       ))}
       <group ref={torso}>
-        <mesh position={[0, 0.92, 0]} material={ROBE_MATERIAL} castShadow><coneGeometry args={[0.52, 1.65, 7]} /></mesh>
+        <mesh geometry={gear.waders ? WADER_ROBE_GEOMETRY : ROBE_GEOMETRY}
+          position={[0, gear.waders ? 1.07 : 0.92, 0]} material={ROBE_MATERIAL} castShadow />
         {gear.waders && <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, 0.75, 0.43]} scale={[0.42, 0.66, 0.1]} castShadow />}
-        <mesh position={[0, 0.16, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.5, 0.54, 0.14, 7]} /></mesh>
+        <mesh position={[0, gear.waders ? 0.46 : 0.16, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.5, 0.54, 0.14, 7]} /></mesh>
         <mesh position={[0, 1.2, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.2, 0.23, 0.08, 7]} /></mesh>
         {gear.tunic && <mesh position={[0, 1.36, 0]} material={WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.24, 0.36, 0.5, 7]} /></mesh>}
         <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 12, 10]} /><meshStandardMaterial color="#d6a27a" roughness={0.78} /></mesh>
@@ -408,31 +451,32 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
   )
 }
 
-function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
+/** Slow world-space colour drift keeps adjacent caps visually continuous without changing tile geometry. */
+export function terrainAppearanceFor(cell: WizardTerrainCell) {
   const surface = TERRAIN_SURFACE[cell.climate] ?? TERRAIN_SURFACE.temperate_forest
+  const [x, , z] = cell.position
+  const tint = 0.5 * Math.sin(x * 0.055 + z * 0.037) * Math.cos(z * 0.071 - x * 0.029)
+  const lift = (cell.height - 2) * 0.02
+  const top = new THREE.Color(cell.color ?? '#56824b')
+  if (cell.mireglassApproach) top.lerp(APPROACH_GROUND_COLOR, 0.42)
+  top.offsetHSL(tint * (cell.mireglassApproach ? 0.008 : 0.02),
+    tint * (cell.mireglassApproach ? 0.02 : 0.05),
+    tint * (cell.mireglassApproach ? 0.018 : 0.04) + lift)
+  return { top, side: new THREE.Color(surface.side).lerp(top, 0.18), cap: 0.08, roughness: surface.roughness }
+}
+
+function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
   const detail = useMemo(() => mireglassDetailFor(cell), [cell.id, cell.mireglassTerrain,
     cell.mireglassApproach, cell.mireglassTrailSegment])
-  const { top, side, cap } = useMemo(() => {
-    const jitter = hashUnit(cell.id, 1) - 0.5
-    // Higher cells catch more sun, so lift them a touch; per-cell jitter breaks the uniform grid read.
-    const lift = (cell.height - 2) * 0.02
-    const top = new THREE.Color(cell.color ?? '#56824b')
-    if (cell.mireglassApproach) top.lerp(APPROACH_GROUND_COLOR, 0.42)
-    return {
-      top: top.offsetHSL(jitter * (cell.mireglassApproach ? 0.01 : 0.03),
-        (hashUnit(cell.id, 2) - 0.5) * (cell.mireglassApproach ? 0.03 : 0.08),
-        jitter * (cell.mireglassApproach ? 0.015 : 0.05) + lift),
-      side: new THREE.Color(surface.side).offsetHSL(0, 0, jitter * 0.04),
-      cap: 0.1 + hashUnit(cell.id, 3) * 0.1,
-    }
-  }, [cell.id, cell.color, cell.height, cell.mireglassApproach, surface.side])
+  const { top, side, cap, roughness } = useMemo(() => terrainAppearanceFor(cell),
+    [cell.position[0], cell.position[2], cell.color, cell.climate, cell.height, cell.mireglassApproach])
   const [x, y, z] = cell.position
   const [width, depth] = cell.size
   return (
     <group position={[x, 0, z]}>
       {/* Terrain only receives shadows: column-on-column casting produced heavy grid seams for little depth gain. */}
       <mesh geometry={UNIT_BOX} position={[0, y - cap / 2, 0]} scale={[width, cap, depth]} receiveShadow>
-        <meshStandardMaterial color={top} roughness={surface.roughness} />
+        <meshStandardMaterial color={top} roughness={roughness} />
       </mesh>
       <mesh geometry={UNIT_BOX} position={[0, y - cap - (cell.height - cap) / 2, 0]} scale={[width, cell.height - cap, depth]} receiveShadow>
         <meshStandardMaterial color={side} roughness={0.97} />
@@ -450,6 +494,12 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
       {detail.trail && <mesh geometry={UNIT_BOX} material={APPROACH_TRAIL_MATERIAL}
         position={[detail.trailX, y + 0.021, detail.trailZ]} rotation={[0, detail.trailYaw, 0]}
         scale={[1.1, 0.024, detail.trailLength + 0.04]} receiveShadow />}
+      {detail.trailStake && <group position={[detail.stakeX, y, detail.stakeZ]} rotation={[0, detail.rotation, 0]}>
+        <mesh geometry={ROCK_GEOMETRY} material={MIREGLASS_PEAT_MATERIAL} position={[0, 0.06, 0]} scale={[0.31, 0.12, 0.28]} />
+        <mesh geometry={UNIT_BOX} material={STAKE_MATERIAL} position={[0, 0.51, 0]} rotation={[0, 0, -0.07]}
+          scale={[0.17, 1.02, 0.17]} castShadow />
+        <mesh geometry={UNIT_BOX} material={MARKER_RUNE_MATERIAL} position={[0, 0.76, 0]} scale={[0.22, 0.07, 0.22]} />
+      </group>}
       {detail.brush && <group position={[detail.brushX, y, detail.brushZ]} rotation={[0, detail.rotation, 0]}>
         <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[-0.12, 0.23, 0]} rotation={[0, 0, -0.22]} scale={[0.035, 0.46, 0.035]} />
         <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.11, 0.19, 0.08]} rotation={[0, 0, 0.24]} scale={[0.035, 0.38, 0.035]} />
@@ -558,10 +608,15 @@ function Resource({ node, pose }: { node: WizardResourceNode; pose: Presentation
   )
 }
 
-function Store({ store }: { store: WizardStore }) {
+function Store({ store, pose }: { store: WizardStore; pose: PresentationPose }) {
+  const structure = useRef<THREE.Group>(null)
+  useFrame(({ camera }) => {
+    if (structure.current) structure.current.visible = !storeStructureOccludesView(pose.position, camera.position, store)
+  })
   return (
     <group position={store.position as [number, number, number]}>
       <mesh geometry={UNIT_BOX} position={[0, 0.16, 0]} scale={[3.5, 0.32, 2.5]} castShadow receiveShadow><meshStandardMaterial color="#6d6a62" roughness={0.95} /></mesh>
+      <group ref={structure}>
       <mesh geometry={UNIT_BOX} position={[0, 1.3, 0]} scale={[3.2, 2.0, 2.2]} castShadow receiveShadow><meshStandardMaterial color="#8a5a3e" roughness={0.86} /></mesh>
       {([[-1.52, 1.03], [1.52, 1.03], [-1.52, -1.03], [1.52, -1.03]] as const).map(([x, z], index) => (
         <mesh key={index} geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[x, 1.3, z]} scale={[0.18, 2.0, 0.18]} castShadow />
@@ -572,6 +627,7 @@ function Store({ store }: { store: WizardStore }) {
       <mesh geometry={UNIT_BOX} position={[-0.9, 0.95, 1.12]} scale={[0.7, 1.25, 0.1]}><meshStandardMaterial color="#3d2a1c" roughness={0.9} /></mesh>
       {/* The lit window is purely emissive; a per-store point light was not worth its per-fragment cost. */}
       <mesh geometry={UNIT_BOX} position={[0.8, 1.15, 1.12]} scale={[0.6, 0.6, 0.1]}><meshStandardMaterial color="#ffd98a" emissive="#ffb650" emissiveIntensity={1.9} roughness={0.3} /></mesh>
+      </group>
     </group>
   )
 }
@@ -631,7 +687,7 @@ function DigSite({ site }: { site: WizardDigSite }) {
 }
 
 /** Display selection only. The campaign owns revelation, excavation, and interaction reach. */
-export function landmarkAppearance(landmark: WizardLandmark): 'frontier-marker' | 'bell-alder' | 'hidden' | 'mound' | 'dug' {
+export function landmarkAppearance(landmark: WizardLandmark): 'west-trail-gate' | 'frontier-marker' | 'bell-alder' | 'hidden' | 'mound' | 'dug' {
   if (landmark.kind !== 'seal-cache') return landmark.kind
   if (!landmark.revealed) return 'hidden'
   return digSiteAppearance(landmark)
@@ -641,6 +697,14 @@ function Landmark({ landmark }: { landmark: WizardLandmark }) {
   const appearance = landmarkAppearance(landmark)
   if (appearance === 'hidden') return null
   const position = landmark.position as [number, number, number]
+  if (landmark.kind === 'west-trail-gate') return <group name="Greenway west trail to Mireglass" position={position}>
+    {[-1.55, 1.55].map((side) => <group key={side} position={[0, 0, side]}>
+      <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 1.15, 0]} scale={[0.22, 2.3, 0.22]} castShadow />
+      <mesh geometry={CRYSTAL_GEOMETRY} material={TRAIL_RUNE_MATERIAL} position={[0, 2.42, 0]} scale={[0.16, 0.32, 0.16]} />
+    </group>)}
+    <mesh geometry={UNIT_BOX} material={WOOD_MATERIAL} position={[0, 2.2, 0]} scale={[0.22, 0.18, 3.28]} castShadow />
+    <mesh geometry={CRYSTAL_GEOMETRY} material={TRAIL_RUNE_MATERIAL} position={[0, 2.74, 0]} rotation={[0, 0, Math.PI / 2]} scale={[0.34, 0.58, 0.26]} />
+  </group>
   if (landmark.kind === 'frontier-marker') return <group name="Mireglass frontier marker" position={position}>
     <mesh geometry={ROCK_GEOMETRY} material={MARKER_STONE_MATERIAL} position={[0, 0.12, 0]} scale={[0.95, 0.22, 0.7]} castShadow receiveShadow />
     <mesh geometry={ROCK_GEOMETRY} material={MARKER_STONE_MATERIAL} position={[-0.34, 0.84, 0]} rotation={[0, 0.16, -0.12]} scale={[0.32, 0.84, 0.29]} castShadow />
@@ -810,7 +874,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
       {visibleTerrainCells(projection.terrain, projection.player.position).map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
-      {projection.stores.map((store) => <Store key={store.id} store={store} />)}
+      {projection.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {projection.inscriptions.map((inscription) => <Waystone key={inscription.id} inscription={inscription} />)}
       {projection.digSites.map((site) => <DigSite key={site.id} site={site} />)}
