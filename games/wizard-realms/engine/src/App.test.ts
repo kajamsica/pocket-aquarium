@@ -103,6 +103,8 @@ describe('Wizard view adapter', () => {
     const builtRoutes = () => toViewProjection(state, []).map.tiles.filter((tile) => tile.hasBuiltRoute).map((tile) => tile.id).sort()
     const ladderSites = toViewProjection(state, []).buildSites.filter((site) => site.routeId === 'greenway_ladder')
     expect(ladderSites.length).toBeGreaterThan(1)
+    expect(ladderSites.find((site) => site.id === 'greenway_ladder:x:-12')?.label)
+      .toBe('Greenway ladder, site 12m west of center')
     expect(routeSites().length).toBeGreaterThan(0)
     expect(builtRoutes()).toEqual([])
 
@@ -110,7 +112,7 @@ describe('Wizard view adapter', () => {
     const bridgeSites = toViewProjection(state, []).buildSites.filter((site) => site.routeId === 'highland_bridge')
     expect(bridgeSites.length).toBeGreaterThan(1)
     expect(bridgeSites.find((site) => site.id === 'highland_bridge:z:-8')?.label)
-      .toBe('Highland bridge (east crossing), site 8m north')
+      .toBe('Highland bridge, crosses east; site 8m north of center')
     state.discoveredTileIds = [state.tiles.find((tile) => tile.id === 'tile-3-2')!.id]
     expect(toViewProjection(state, []).buildSites.some((site) => !site.discovered)).toBe(true)
     expect(routeSites().every((id) => state.discoveredTileIds.includes(id))).toBe(true)

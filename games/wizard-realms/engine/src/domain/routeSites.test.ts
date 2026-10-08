@@ -31,6 +31,21 @@ function provision(state: WizardWorldState, routeId: RouteId): WizardWorldState 
 }
 
 describe('canonical construction sites', () => {
+  it('explains which prerequisite unlocks the Highland bridge', () => {
+    const state = createGeneratedWorld('greenway-alpha')
+    const bridgeId = 'highland_bridge:z:-8'
+    expect(routeBuildOptions(state).find((option) => option.id === bridgeId)).toMatchObject({
+      status: 'locked', reason: 'Build the Greenway ladder first.',
+    })
+    const withLadder = provision(state, 'highland_bridge')
+    withLadder.player.xp = 0
+    withLadder.player.level = 1
+    withLadder.unlockedRecipeIds = withLadder.unlockedRecipeIds.filter((id) => id !== 'highland_bridge')
+    expect(routeBuildOptions(withLadder).find((option) => option.id === bridgeId)).toMatchObject({
+      status: 'locked', reason: 'Reach level 2 to unlock this route.',
+    })
+  })
+
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
     'includes the legacy anchors and correct area-side endpoints in %s', (profile) => {
       const state = createGeneratedWorld('greenway-alpha', profile)

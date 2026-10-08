@@ -95,8 +95,10 @@ export function routeBuildOptions(state: WizardWorldState): readonly RouteBuildO
     const option = (status: RouteBuildOption['status'], reason: string): RouteBuildOption => ({ ...site, status, reason })
     if (route.siteId === site.id) return option('built', 'This route is complete here.')
     if (state.builtRouteIds.includes(site.routeId)) return option('locked', 'This route is complete at another site.')
-    if (!state.unlockedRecipeIds.includes(recipe.id) || state.player.level < recipe.minimumLevel
-      || (recipe.prerequisiteRouteId && !state.builtRouteIds.includes(recipe.prerequisiteRouteId))) return option('locked', 'The route recipe is locked.')
+    if (recipe.prerequisiteRouteId && !state.builtRouteIds.includes(recipe.prerequisiteRouteId))
+      return option('locked', 'Build the Greenway ladder first.')
+    if (!state.unlockedRecipeIds.includes(recipe.id) || state.player.level < recipe.minimumLevel)
+      return option('locked', `Reach level ${recipe.minimumLevel} to unlock this route.`)
     const sourceTile = nearestAreaTile(state, site.from, route.fromAreaId)
     if (!sourceTile || !state.discoveredTileIds.includes(sourceTile.id)) return option('locked', 'Discover this boundary first.')
     const obstruction = obstructedReason(state, site, route.fromAreaId, route.toAreaId)

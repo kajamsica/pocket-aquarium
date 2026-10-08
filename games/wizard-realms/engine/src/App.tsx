@@ -310,12 +310,14 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   const buildSites: WizardViewProjection['buildSites'] = buildOptions.map((site) => {
     const route = state.routes.find((candidate) => candidate.id === site.routeId)!
     const recipe = state.recipes.find((candidate) => candidate.routeId === site.routeId)!
-    const location = site.routeId === 'greenway_ladder'
-      ? `${Math.round(Math.abs(site.from.x))}m ${site.from.x < 0 ? 'west' : site.from.x > 0 ? 'east' : 'center'}`
-      : `${Math.round(Math.abs(site.from.z))}m ${site.from.z < 0 ? 'north' : site.from.z > 0 ? 'south' : 'center'}`
+    const offset = site.routeId === 'greenway_ladder' ? site.from.x : site.from.z
+    const direction = site.routeId === 'greenway_ladder'
+      ? offset < 0 ? 'west' : 'east'
+      : offset < 0 ? 'north' : 'south'
+    const location = offset === 0 ? 'center' : `${Math.round(Math.abs(offset))}m ${direction} of center`
     return {
       id: site.id, routeId: site.routeId,
-      label: site.routeId === 'highland_bridge' ? `${route.name} (east crossing), site ${location}` : `${route.name}, site ${location}`,
+      label: site.routeId === 'highland_bridge' ? `${route.name}, crosses east; site ${location}` : `${route.name}, site ${location}`,
       from: [site.from.x, site.from.y, site.from.z], to: [site.to.x, site.to.y, site.to.z],
       logCost: recipe.logCost, status: site.status, reason: site.reason,
       discovered: discoveredTileIds.has(routeSourceTileId(site.routeId, site.from) ?? ''),
