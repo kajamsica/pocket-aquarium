@@ -1,12 +1,14 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardLandmark, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 import { visibleTerrainCells } from './visibleTerrain'
 import { LandscapeDressing } from './LandscapeDressingLayer'
 import { MireglassWaterLayer } from './MireglassWaterLayer'
 import { MireglassCliffLayer } from './MireglassCliffLayer'
 import { HighlandRidgeLayer } from './HighlandRidgeLayer'
+import { createTerrainSurfaceSampler, terrainSignature, TerrainSurfaceLayer } from './TerrainSurfaceLayer'
 import { highlandRidgeCellAt, highlandRidgeMoveBarrier } from '../domain/highlandRidge'
 import { WORLD_CELL_METERS } from '../domain/worldChunks'
 
@@ -35,8 +37,36 @@ MIREGLASS_PATCH_GEOMETRY.rotateX(-Math.PI / 2)
 const LEAF_GEOMETRY = new THREE.IcosahedronGeometry(1, 1)
 const ROCK_GEOMETRY = new THREE.DodecahedronGeometry(1, 0)
 const CRYSTAL_GEOMETRY = new THREE.OctahedronGeometry(1, 0)
-const ROBE_GEOMETRY = new THREE.ConeGeometry(0.52, 1.65, 7)
-const WADER_ROBE_GEOMETRY = new THREE.ConeGeometry(0.52, 1.35, 7)
+const AVATAR_ROUND_GEOMETRY = new THREE.SphereGeometry(1, 14, 10)
+const ROBE_GEOMETRY = new THREE.LatheGeometry([
+  new THREE.Vector2(0.48, 0.2), new THREE.Vector2(0.54, 0.25), new THREE.Vector2(0.5, 0.36),
+  new THREE.Vector2(0.38, 0.68), new THREE.Vector2(0.28, 1.02), new THREE.Vector2(0.29, 1.28),
+  new THREE.Vector2(0.35, 1.48), new THREE.Vector2(0.25, 1.58),
+], 16)
+const WADER_ROBE_GEOMETRY = new THREE.LatheGeometry([
+  new THREE.Vector2(0.36, 0.57), new THREE.Vector2(0.43, 0.63), new THREE.Vector2(0.4, 0.74),
+  new THREE.Vector2(0.3, 1.02), new THREE.Vector2(0.29, 1.28), new THREE.Vector2(0.35, 1.48),
+  new THREE.Vector2(0.25, 1.58),
+], 16)
+const ROBE_HEM_GEOMETRY = new THREE.CylinderGeometry(0.51, 0.54, 0.08, 16)
+const ROBE_MANTLE_GEOMETRY = new THREE.CylinderGeometry(0.38, 0.46, 0.68, 16, 2, true, -Math.PI / 2, Math.PI)
+const ROBE_BELT_GEOMETRY = new THREE.CylinderGeometry(0.33, 0.34, 0.09, 16)
+const ROBE_FOLD_GEOMETRY = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0, 1.03, 0.27), new THREE.Vector3(0, 0.82, 0.31),
+  new THREE.Vector3(0, 0.52, 0.39), new THREE.Vector3(0, 0.29, 0.49),
+]), 10, 0.025, 4, false)
+const SATCHEL_STRAP_GEOMETRY = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-0.2, 1.54, 0.31), new THREE.Vector3(-0.1, 1.35, 0.43),
+  new THREE.Vector3(0.17, 1.13, 0.43), new THREE.Vector3(0.43, 0.93, 0.21),
+]), 10, 0.03, 4, false)
+const SLEEVE_GEOMETRY = new THREE.CylinderGeometry(0.12, 0.18, 0.68, 12)
+const LEG_GEOMETRY = new THREE.CylinderGeometry(0.1, 0.13, 0.65, 10)
+const TUNIC_GEOMETRY = new THREE.CylinderGeometry(0.29, 0.33, 0.48, 12)
+const COLLAR_GEOMETRY = new THREE.TorusGeometry(0.23, 0.026, 6, 16)
+const HAT_GEOMETRY = new THREE.LatheGeometry([
+  new THREE.Vector2(0.42, 0), new THREE.Vector2(0.38, 0.08), new THREE.Vector2(0.3, 0.28),
+  new THREE.Vector2(0.24, 0.46), new THREE.Vector2(0.13, 0.62), new THREE.Vector2(0.03, 0.7),
+], 16)
 const AXE_BLADE_GEOMETRY = new THREE.ExtrudeGeometry(new THREE.Shape([
   new THREE.Vector2(-0.06, -0.12), new THREE.Vector2(0.16, -0.16),
   new THREE.Vector2(0.5, -0.3), new THREE.Vector2(0.43, 0),
@@ -48,13 +78,23 @@ const SPADE_BLADE_GEOMETRY = new THREE.ExtrudeGeometry(new THREE.Shape([
   new THREE.Vector2(0.24, -0.12), new THREE.Vector2(0, -0.42),
   new THREE.Vector2(-0.24, -0.12),
 ]), { depth: 0.06, bevelEnabled: true, bevelSegments: 1, bevelSize: 0.012, bevelThickness: 0.012 })
+const SHIELD_GEOMETRY = new THREE.ExtrudeGeometry(new THREE.Shape([
+  new THREE.Vector2(-0.3, 0.36), new THREE.Vector2(0.3, 0.36),
+  new THREE.Vector2(0.29, -0.12), new THREE.Vector2(0, -0.43),
+  new THREE.Vector2(-0.29, -0.12),
+]), { depth: 0.07, bevelEnabled: true, bevelSegments: 1, bevelSize: 0.025, bevelThickness: 0.018 })
 const WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6e4a30', roughness: 0.92 })
 const DARK_WOOD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4a3222', roughness: 0.9 })
 const STAKE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9a8a70', roughness: 0.9 })
 const ROBE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4f3176', roughness: 0.76 })
 const ROBE_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2d1f45', roughness: 0.82 })
-const WADER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#41695f', roughness: 0.88, flatShading: true })
-const WADER_CUFF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ab6a0', roughness: 0.84, flatShading: true })
+const ROBE_FOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#75539a', roughness: 0.86 })
+const SKIN_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d6a27a', roughness: 0.82 })
+const HAIR_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4a302b', roughness: 0.9 })
+const EYE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#292032', roughness: 0.7 })
+const TUNIC_MATERIAL = new THREE.MeshStandardMaterial({ color: '#8c6e4d', roughness: 0.9 })
+const WADER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#41695f', roughness: 0.88 })
+const WADER_CUFF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ab6a0', roughness: 0.84 })
 const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
 const AXE_HEAD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ba4ad', roughness: 0.42, metalness: 0.6 })
 const MIREGLASS_WATER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#417b83', roughness: 0.28, metalness: 0.12 })
@@ -97,20 +137,71 @@ const CAMP_PREVIEW_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9bdcc9',
 const CAMP_BLOCKED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#e8ac83', emissive: '#a64a30', emissiveIntensity: 0.35, transparent: true, opacity: 0.55, depthWrite: false })
 const ALDER_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.18, 0.34, 3.4, 7)
 const CACHE_PIT_GEOMETRY = new THREE.CircleGeometry(0.72, 12)
-const WADER_SHAFT_GEOMETRY = new THREE.CylinderGeometry(0.13, 0.15, 0.5, 6)
+const WADER_SHAFT_GEOMETRY = new THREE.CylinderGeometry(0.13, 0.15, 0.5, 10)
 const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, brush: false, pebbles: false,
   soil: false, trail: false, trailStake: false, trailYaw: 0, trailLength: 0, trailX: 0, trailZ: 0,
   brushX: 0, brushZ: 0, stakeX: 0, stakeZ: 0, x: 0, z: 0, rotation: 0 } as const
 
-/** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
-const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
-  temperate_forest: { side: '#5a4330', roughness: 0.95 },
-  marsh: { side: '#40493a', roughness: 0.7 },
-  dry_highland: { side: '#6a6052', roughness: 0.92 },
-  alpine: { side: '#8a97a1', roughness: 0.58 },
+/** Side/soil colour per biome; the projection colour stays the authoritative top tone. */
+const TERRAIN_SURFACE: Record<string, { side: string }> = {
+  temperate_forest: { side: '#5a4330' },
+  marsh: { side: '#40493a' },
+  dry_highland: { side: '#6a6052' },
+  alpine: { side: '#8a97a1' },
 }
 
-const TREE_CANOPY = [[-0.5, 3.0, 0.15, 1.1, '#3a7c43'], [0.42, 3.3, -0.25, 1.0, '#4c9a4e'], [0.05, 3.95, 0.05, 0.9, '#64b35a']] as const
+const TREE_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.17, 0.39, 3.35, 10, 3)
+const TREE_ROOT_GEOMETRY = new THREE.CylinderGeometry(0.36, 0.55, 0.48, 10)
+const TREE_BRANCH_GEOMETRY = new THREE.CylinderGeometry(0.06, 0.16, 1, 8)
+const TREE_CANOPY = [
+  [-0.92, 2.98, 0.18, 0.72, 0.38, 0.59, '#3d7e49'],
+  [-1.14, 3.5, -0.12, 0.49, 0.34, 0.47, '#4a9051'],
+  [-0.62, 3.68, 0.55, 0.65, 0.35, 0.54, '#579b55'],
+  [-0.18, 2.9, -0.35, 0.72, 0.38, 0.67, '#43884d'],
+  [-0.14, 4.08, 0.07, 0.71, 0.42, 0.67, '#64a95d'],
+  [0.73, 3.09, 0.17, 0.73, 0.38, 0.61, '#3b8048'],
+  [1.11, 3.51, -0.22, 0.49, 0.32, 0.47, '#4e9755'],
+  [0.62, 3.89, -0.34, 0.64, 0.36, 0.55, '#62a65e'],
+  [0.3, 3.57, -0.65, 0.62, 0.35, 0.54, '#559951'],
+  [-0.49, 3.45, -0.7, 0.52, 0.33, 0.44, '#498d4e'],
+  [-1.44, 3.08, 0.2, 0.25, 0.25, 0.31, '#559854'],
+  [-1.38, 3.72, -0.08, 0.22, 0.21, 0.3, '#66a85c'],
+  [-0.82, 4.22, 0.27, 0.29, 0.25, 0.26, '#6cad63'],
+  [0.07, 4.49, -0.04, 0.32, 0.24, 0.3, '#70af65'],
+  [1.4, 3.24, 0.08, 0.3, 0.24, 0.3, '#4e9354'],
+  [1.43, 3.64, -0.15, 0.23, 0.23, 0.28, '#5ca35a'],
+  [0.75, 4.26, -0.34, 0.27, 0.22, 0.28, '#71ae63'],
+  [-0.42, 2.56, 0.33, 0.27, 0.26, 0.25, '#4d8d4f'],
+] as const
+// Irregular, flattened boughs and small edge tufts merge into one vertex-tinted crown draw call.
+const TREE_CROWN_GEOMETRY = (() => {
+  const base = new THREE.SphereGeometry(1, 10, 8)
+  const lobes = TREE_CANOPY.map(([x, y, z, sx, sy, sz, tint], lobeIndex) => {
+    const lobe = base.clone()
+    const positions = lobe.attributes.position as THREE.BufferAttribute
+    const colors = new Float32Array(positions.count * 3)
+    const color = new THREE.Color(tint)
+    for (let index = 0; index < positions.count; index += 1) {
+      const px = positions.getX(index), py = positions.getY(index), pz = positions.getZ(index)
+      const ripple = 1 + 0.12 * Math.sin(8 * px + 5 * pz + lobeIndex) * Math.sin(6 * py - 3 * pz)
+        + 0.06 * Math.cos(7 * pz - 4 * px + lobeIndex * 2)
+      positions.setXYZ(index, px * ripple, py * ripple, pz * ripple)
+      const shade = 0.8 + 0.16 * (py + 1) / 2 + 0.06 * Math.sin(5 * px + 4 * pz + lobeIndex)
+      colors[index * 3] = color.r * shade
+      colors[index * 3 + 1] = color.g * shade
+      colors[index * 3 + 2] = color.b * shade
+    }
+    lobe.computeVertexNormals()
+    lobe.scale(sx, sy, sz)
+    lobe.translate(x, y, z)
+    lobe.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    return lobe
+  })
+  const crown = mergeGeometries(lobes)!
+  lobes.forEach((lobe) => lobe.dispose())
+  base.dispose()
+  return crown
+})()
 
 // Camera-line tree occlusion. Nearby trunks and canopies fade with hysteresis so the avatar stays visible.
 // Scalar math only, no per-frame geometry or material allocation.
@@ -357,12 +448,14 @@ export function highlandDetailFor(cell: WizardTerrainCell) {
   }
 }
 
-function PresentationPoseDriver({ player, pose, worldSupport }: {
+function PresentationPoseDriver({ player, pose, worldSupport, presentationTargetYAt }: {
   player: WizardViewProjection['player']; pose: PresentationPose; worldSupport: RefObject<THREE.Group | null>
+  presentationTargetYAt: (x: number, z: number, authoritativeY: number) => number
 }) {
   const target = useMemo(() => new THREE.Vector3(), [])
   useFrame((_, delta) => {
-    target.set(player.position[0], player.position[1], player.position[2])
+    target.set(player.position[0], presentationTargetYAt(player.position[0], player.position[2],
+      player.position[1]), player.position[2])
     if (Math.hypot(target.x - pose.position.x, target.z - pose.position.z) > TELEPORT_SNAP_DISTANCE_M) {
       pose.position.copy(target)
       pose.yaw = player.yaw
@@ -465,8 +558,8 @@ function Spade() {
 
 function Shield() {
   return <group position={[-0.22, -0.38, 0.02]}>
-    <mesh geometry={UNIT_BOX} material={WOOD_MATERIAL} scale={[0.56, 0.72, 0.08]} castShadow />
-    <mesh position={[0, 0, 0.07]} rotation={[Math.PI / 2, 0, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.09, 0.09, 0.04, 8]} /></mesh>
+    <mesh geometry={SHIELD_GEOMETRY} material={WOOD_MATERIAL} castShadow />
+    <mesh geometry={AVATAR_ROUND_GEOMETRY} material={GOLD_MATERIAL} position={[0, 0, 0.12]} scale={[0.11, 0.11, 0.035]} />
   </group>
 }
 
@@ -500,37 +593,84 @@ function WizardAvatar({ pose, equipment, windwardActive = false }: {
     <group ref={root} aria-label="Player wizard">
       {[leftLeg, rightLeg].map((leg, index) => (
         <group key={index} ref={leg} position={[index === 0 ? -0.16 : 0.16, 0.6, 0]}>
-          <mesh position={[0, -0.3, 0]} material={legMaterial} castShadow><cylinderGeometry args={[0.09, 0.11, 0.6, 6]} /></mesh>
-          {gear.boots && <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, -0.54, 0.05]} scale={[0.22, 0.14, 0.34]} castShadow />}
+          <mesh geometry={LEG_GEOMETRY} position={[0, -0.31, 0]} material={legMaterial} castShadow />
+          {gear.boots && <mesh geometry={AVATAR_ROUND_GEOMETRY} material={DARK_WOOD_MATERIAL}
+            position={[0, -0.54, -0.1]} scale={[0.17, 0.13, 0.28]} castShadow />}
           {gear.waders && <>
             <mesh geometry={WADER_SHAFT_GEOMETRY} material={WADER_MATERIAL} position={[0, -0.3, 0]} castShadow />
-            <mesh geometry={UNIT_BOX} material={WADER_CUFF_MATERIAL} position={[0, -0.3, 0]} scale={[0.32, 0.09, 0.32]} castShadow />
-            <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, -0.52, 0.22]} scale={[0.32, 0.18, 0.6]} castShadow />
+            <mesh geometry={AVATAR_ROUND_GEOMETRY} material={WADER_CUFF_MATERIAL}
+              position={[0, -0.06, 0]} scale={[0.16, 0.055, 0.16]} castShadow />
+            <mesh geometry={AVATAR_ROUND_GEOMETRY} material={WADER_MATERIAL}
+              position={[0, -0.52, -0.12]} scale={[0.18, 0.15, 0.34]} castShadow />
           </>}
         </group>
       ))}
       <group ref={torso}>
         <mesh geometry={gear.waders ? WADER_ROBE_GEOMETRY : ROBE_GEOMETRY}
-          position={[0, gear.waders ? 1.07 : 0.92, 0]} material={ROBE_MATERIAL} castShadow />
-        {gear.waders && <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, 0.75, 0.43]} scale={[0.42, 0.66, 0.1]} castShadow />}
-        <mesh position={[0, gear.waders ? 0.46 : 0.16, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.5, 0.54, 0.14, 7]} /></mesh>
-        <mesh position={[0, 1.2, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.2, 0.23, 0.08, 7]} /></mesh>
-        {gear.tunic && <mesh position={[0, 1.36, 0]} material={WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.24, 0.36, 0.5, 7]} /></mesh>}
-        <mesh position={[0, 1.78, 0]} castShadow><sphereGeometry args={[0.34, 12, 10]} /><meshStandardMaterial color="#d6a27a" roughness={0.78} /></mesh>
-        <mesh position={[0, 1.5, -0.2]} rotation={[Math.PI + 0.3, 0, 0]} castShadow><coneGeometry args={[0.19, 0.55, 7]} /><meshStandardMaterial color="#ece6dc" roughness={0.92} /></mesh>
-        {gear.hat && <>
-          <mesh position={[0, 2.18, 0]} castShadow><coneGeometry args={[0.48, 1.05, 8]} /><meshStandardMaterial color="#34234f" roughness={0.72} flatShading /></mesh>
-          <mesh position={[0, 2.06, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.31, 0.33, 0.1, 8]} /></mesh>
-          <mesh position={[0, 1.98, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.56, 0.56, 0.08, 10]} /></mesh>
+          material={ROBE_MATERIAL} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_MATERIAL}
+          position={[0, 1.46, 0]} scale={[0.36, 0.18, 0.27]} castShadow />
+        <mesh geometry={ROBE_MANTLE_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0, 1.32, 0]} castShadow />
+        <mesh geometry={SATCHEL_STRAP_GEOMETRY} material={TUNIC_MATERIAL} castShadow />
+        <mesh geometry={ROBE_BELT_GEOMETRY} material={DARK_WOOD_MATERIAL} position={[0, 1.03, 0]} castShadow />
+        <mesh geometry={UNIT_BOX} material={GOLD_MATERIAL} position={[0, 1.03, -0.36]}
+          scale={[0.14, 0.12, 0.045]} />
+        {!gear.waders && <>
+          {[-0.18, 0.18].map((side) => <mesh key={side} geometry={ROBE_FOLD_GEOMETRY}
+            material={ROBE_FOLD_MATERIAL} position={[side, 0, 0]} castShadow />)}
+          <mesh geometry={ROBE_FOLD_GEOMETRY} material={GOLD_MATERIAL} rotation={[0, Math.PI, 0]} />
         </>}
-        <mesh position={[0, 1.78, -0.31]} castShadow><coneGeometry args={[0.08, 0.2, 6]} /><meshStandardMaterial color="#bd805d" /></mesh>
-        <group ref={leftArm} position={[-0.3, 1.4, 0]}>
-          <mesh position={[-0.08, -0.3, 0]} rotation={[0, 0, 0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh>
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={TUNIC_MATERIAL}
+          position={[0.45, 0.83, 0.18]} scale={[0.17, 0.2, 0.11]} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={DARK_WOOD_MATERIAL}
+          position={[0.45, 0.97, 0.23]} scale={[0.16, 0.075, 0.12]} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={GOLD_MATERIAL}
+          position={[0.45, 0.94, 0.35]} scale={[0.035, 0.035, 0.02]} />
+        {gear.waders && <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, 0.75, 0.43]} scale={[0.42, 0.66, 0.1]} castShadow />}
+        <mesh geometry={ROBE_HEM_GEOMETRY} material={ROBE_TRIM_MATERIAL}
+          position={[0, gear.waders ? 0.62 : 0.24, 0]} scale={gear.waders ? [0.8, 1, 0.8] : [1, 1, 1]} castShadow />
+        {gear.tunic && <mesh geometry={TUNIC_GEOMETRY} material={TUNIC_MATERIAL} position={[0, 1.28, 0]} castShadow />}
+        <mesh geometry={COLLAR_GEOMETRY} material={GOLD_MATERIAL} position={[0, 1.63, 0]} rotation={[Math.PI / 2, 0, 0]} />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL}
+          position={[0, 1.88, 0]} scale={[0.28, 0.32, 0.27]} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
+          position={[0, 2.11, 0.03]} scale={[0.29, 0.15, 0.27]} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
+          position={[0, 1.91, 0.2]} scale={[0.24, 0.18, 0.1]} castShadow />
+        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
+          position={[side * 0.25, 1.9, -0.02]} scale={[0.065, 0.16, 0.09]} castShadow />)}
+        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
+          position={[side * 0.13, 2.08, -0.19]} scale={[0.15, 0.08, 0.095]} castShadow />)}
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL}
+          position={[0, 1.83, -0.28]} scale={[0.055, 0.085, 0.065]} />
+        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY} material={EYE_MATERIAL}
+          position={[side * 0.1, 1.94, -0.255]} scale={[0.03, 0.04, 0.018]} />)}
+        <mesh geometry={UNIT_BOX} material={EYE_MATERIAL} position={[0, 1.75, -0.255]}
+          scale={[0.09, 0.018, 0.018]} />
+        {gear.hat && <>
+          <mesh geometry={HAT_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0, 2.07, 0]} castShadow />
+          <mesh position={[0, 2.17, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.38, 0.39, 0.055, 16]} /></mesh>
+          <mesh position={[0, 2.07, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.53, 0.53, 0.055, 16]} /></mesh>
+        </>}
+        <group ref={leftArm} position={[-0.34, 1.47, 0]}>
+          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_MATERIAL} position={[-0.02, -0.08, 0]}
+            scale={[0.18, 0.18, 0.18]} castShadow />
+          <mesh geometry={SLEEVE_GEOMETRY} position={[-0.07, -0.3, 0]} rotation={[0, 0, 0.2]} material={ROBE_MATERIAL} castShadow />
+          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[-0.13, -0.59, 0]}
+            scale={[0.17, 0.065, 0.15]} castShadow />
+          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL} position={[-0.13, -0.66, 0]}
+            scale={[0.1, 0.12, 0.1]} castShadow />
           {gear.offHand === 'shield' && <Shield />}
           {gear.offHand === 'wand' && <Wand side={-1} light={gear.offHandLight} />}
         </group>
-        <group ref={rightArm} position={[0.3, 1.4, 0]}>
-          <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, -0.25]} material={ROBE_MATERIAL} castShadow><cylinderGeometry args={[0.07, 0.085, 0.62, 6]} /></mesh>
+        <group ref={rightArm} position={[0.34, 1.47, 0]}>
+          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_MATERIAL} position={[0.02, -0.08, 0]}
+            scale={[0.18, 0.18, 0.18]} castShadow />
+          <mesh geometry={SLEEVE_GEOMETRY} position={[0.07, -0.3, 0]} rotation={[0, 0, -0.2]} material={ROBE_MATERIAL} castShadow />
+          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0.13, -0.59, 0]}
+            scale={[0.17, 0.065, 0.15]} castShadow />
+          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL} position={[0.13, -0.66, 0]}
+            scale={[0.1, 0.12, 0.1]} castShadow />
           {gear.mainHand === 'axe' && <Axe />}
           {gear.mainHand === 'spade' && <Spade />}
           {gear.mainHand === 'wand' && <Wand side={1} light />}
@@ -559,7 +699,7 @@ export function terrainAppearanceFor(cell: WizardTerrainCell) {
   top.offsetHSL(tint * (cell.mireglassApproach ? 0.008 : 0.02),
     tint * (cell.mireglassApproach ? 0.02 : 0.05),
     tint * (cell.mireglassApproach ? 0.018 : 0.04) + lift)
-  return { top, side: new THREE.Color(surface.side).lerp(top, 0.18), cap: 0.08, roughness: surface.roughness }
+  return { top, side: new THREE.Color(surface.side).lerp(top, 0.18) }
 }
 
 function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
@@ -567,20 +707,9 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
     cell.mireglassApproach, cell.mireglassTrailSegment])
   const highland = useMemo(() => highlandDetailFor(cell), [cell.id, cell.highlandSurface,
     cell.highlandTrailSegment])
-  const { top, side, cap, roughness } = useMemo(() => terrainAppearanceFor(cell),
-    [cell.position[0], cell.position[2], cell.color, cell.climate, cell.height,
-      cell.mireglassApproach, cell.highlandSurface])
   const [x, y, z] = cell.position
-  const [width, depth] = cell.size
   return (
     <group position={[x, 0, z]}>
-      {/* Terrain only receives shadows: column-on-column casting produced heavy grid seams for little depth gain. */}
-      <mesh geometry={UNIT_BOX} position={[0, y - cap / 2, 0]} scale={[width, cap, depth]} receiveShadow>
-        <meshStandardMaterial color={top} roughness={roughness} />
-      </mesh>
-      <mesh geometry={UNIT_BOX} position={[0, y - cap - (cell.height - cap) / 2, 0]} scale={[width, cell.height - cap, depth]} receiveShadow>
-        <meshStandardMaterial color={side} roughness={0.97} />
-      </mesh>
       {highland.trail && <mesh geometry={UNIT_BOX} material={HIGHLAND_TRAIL_MATERIAL}
         position={[highland.trailX, y + 0.023, highland.trailZ]} rotation={[0, highland.yaw, 0]}
         scale={[1.16, 0.025, highland.length + 0.06]} receiveShadow />}
@@ -626,13 +755,18 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
 }
 
 function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNode; pose: PresentationPose; yaw: number; scale: number; baseOpacity: number }) {
-  const trunk = useRef<THREE.Group>(null)
-  const canopy = useRef<THREE.Group>(null)
+  const [barkMaterial] = useState(() => new THREE.MeshStandardMaterial({ color: '#5c3b27', roughness: 0.95,
+    transparent: true, opacity: baseOpacity }))
+  const [crownMaterial] = useState(() => new THREE.MeshStandardMaterial({ color: '#ffffff', vertexColors: true,
+    roughness: 0.88, transparent: true, opacity: baseOpacity, depthWrite: true }))
+  useEffect(() => () => {
+    barkMaterial.dispose()
+    crownMaterial.dispose()
+  }, [barkMaterial, crownMaterial])
   const occluded = useRef(false)
   const treeOpacity = useRef(baseOpacity)
   const [x, y, z] = node.position
   useFrame(({ camera }, delta) => {
-    if (!canopy.current || !trunk.current) return
     const centreY = y + CANOPY_CENTRE_Y_M * scale
     const ax = camera.position.x
     const ay = camera.position.y
@@ -648,34 +782,23 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
     occluded.current = distance < radius + margin || treeTrunkBlocksView(camera.position, pose.position, node.position, scale, margin)
     const target = occluded.current ? Math.min(baseOpacity, OCCLUDED_OPACITY) : baseOpacity
     treeOpacity.current += (target - treeOpacity.current) * damping(occluded.current ? FADE_OUT_PER_S : FADE_IN_PER_S, delta)
-    for (let index = 0; index < canopy.current.children.length; index += 1) {
-      ((canopy.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = treeOpacity.current
-    }
-    for (let index = 0; index < trunk.current.children.length; index += 1) {
-      const material = (trunk.current.children[index] as THREE.Mesh).material as THREE.MeshStandardMaterial
-      material.opacity = treeOpacity.current
-      material.depthWrite = !occluded.current
-    }
+    barkMaterial.opacity = crownMaterial.opacity = treeOpacity.current
+    barkMaterial.depthWrite = !occluded.current
   })
   // Shadow depth ignores opacity, so a faded (depleted) node stops casting rather than leaving a solid silhouette.
   const castShadow = node.available
   return (
     <group position={[x, y, z]} rotation={[0, yaw, 0]} scale={scale}>
-      {/* Materials stay transparent; nearby trunk depth write is disabled only while faded so it cannot mask the wizard. */}
-      <group ref={trunk}>
-        <mesh geometry={ROCK_GEOMETRY} position={[0, 0.1, 0]} scale={[0.62, 0.28, 0.62]} castShadow={castShadow}><meshStandardMaterial color="#4e3322" roughness={0.95} flatShading transparent opacity={baseOpacity} /></mesh>
-        <mesh position={[0, 1.7, 0]} castShadow={castShadow}>
-          <cylinderGeometry args={[0.24, 0.42, 3.4, 7]} />
-          <meshStandardMaterial color="#5c3b27" roughness={0.95} transparent opacity={baseOpacity} />
-        </mesh>
-      </group>
-      <group ref={canopy}>
-        {TREE_CANOPY.map(([lx, ly, lz, radius, color], index) => (
-          <mesh key={index} geometry={LEAF_GEOMETRY} position={[lx, ly, lz]} scale={radius} castShadow={castShadow}>
-            <meshStandardMaterial color={color} roughness={0.88} flatShading transparent opacity={baseOpacity} />
-          </mesh>
-        ))}
-      </group>
+      {/* Crown depth writing prevents its overlapping transparent lobes from stacking over the wizard. */}
+      <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow={castShadow} />
+      <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow={castShadow} />
+      <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[-0.46, 2.75, 0.08]}
+        rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow={castShadow} />
+      <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0.46, 2.9, -0.12]}
+        rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow={castShadow} />
+      <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
+        rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow={castShadow} />
+      <mesh geometry={TREE_CROWN_GEOMETRY} material={crownMaterial} castShadow={castShadow} />
     </group>
   )
 }
@@ -1022,8 +1145,16 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   cameraOrbit: readonly [number, number]
   orbiting: boolean
 }) {
+  const terrainRevision = terrainSignature(projection.terrain)
+  // A classic projection may recreate equal cells at 20 Hz; reuse the presentation lookup by content.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const terrainSampler = useMemo(() => createTerrainSurfaceSampler(projection.seed, projection.terrain,
+    terrainAppearanceFor), [projection.seed, terrainRevision])
   const [pose] = useState<PresentationPose>(() => ({
-    position: new THREE.Vector3(...projection.player.position), yaw: projection.player.yaw, speed: 0, phase: 0,
+    position: new THREE.Vector3(projection.player.position[0],
+      terrainSampler.presentationTargetYAt(projection.player.position[0], projection.player.position[2],
+        projection.player.position[1]),
+      projection.player.position[2]), yaw: projection.player.yaw, speed: 0, phase: 0,
   }))
   const worldSupport = useRef<THREE.Group>(null)
   const sunTarget = useMemo(() => new THREE.Object3D(), [])
@@ -1091,9 +1222,12 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
           <meshStandardMaterial color={BEDROCK_COLOR} roughness={1} />
         </mesh>
       </group>
-      <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport} />
+      <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport}
+        presentationTargetYAt={terrainSampler.presentationTargetYAt} />
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores}
         highlandRidgeActive={projection.highlandRidgeActive === true} />
+      <TerrainSurfaceLayer seed={projection.seed} cells={visibleTerrain}
+        allCells={projection.terrain} appearanceFor={terrainAppearanceFor} />
       {visibleTerrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
       <MireglassWaterLayer seed={projection.seed} cells={visibleTerrain} />
       <MireglassCliffLayer seed={projection.seed} cells={visibleTerrain} />

@@ -5,15 +5,44 @@ import { landscapeDressingFor, type LandscapeDetail, type LandscapeDetailKind } 
 import type { Vec2, WizardTerrainCell } from './contracts'
 
 // One draw call per silhouette, even when the streamed terrain window holds hundreds of details.
-const GROUND_GEOMETRY = new THREE.CircleGeometry(1, 7)
+function shade(geometry: THREE.BufferGeometry, base: number, top = base) {
+  const positions = geometry.getAttribute('position')
+  const colors = new Float32Array(positions.count * 3)
+  for (let index = 0; index < positions.count; index += 1) {
+    const tone = base + (top - base) * Math.max(0, Math.min(1, positions.getY(index)))
+    colors.fill(tone, index * 3, index * 3 + 3)
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  return geometry
+}
+const GROUND_GEOMETRY = new THREE.CircleGeometry(1, 12)
 GROUND_GEOMETRY.rotateX(-Math.PI / 2)
+const groundPositions = GROUND_GEOMETRY.getAttribute('position') as THREE.BufferAttribute
+const groundColors = new Float32Array(groundPositions.count * 3)
+for (let index = 0; index < groundPositions.count; index += 1) {
+  const angle = Math.atan2(groundPositions.getZ(index), groundPositions.getX(index))
+  const radius = index === 0 ? 0 : 0.91 + 0.05 * Math.sin(3 * angle + 0.6) + 0.03 * Math.cos(7 * angle)
+  groundPositions.setX(index, groundPositions.getX(index) * radius)
+  groundPositions.setZ(index, groundPositions.getZ(index) * radius)
+  groundColors.fill(index === 0 ? 0.78 : 1.04 + 0.04 * Math.sin(4 * angle), index * 3, index * 3 + 3)
+}
+GROUND_GEOMETRY.setAttribute('color', new THREE.BufferAttribute(groundColors, 3))
+GROUND_GEOMETRY.computeVertexNormals()
 function bladeCluster(radius: number, height: number) {
-  const blades = ([[-0.23, 0, 0.78, -0.18], [0.15, 0.1, 1, 0.16], [0.08, -0.18, 0.65, -0.09]] as const)
-    .map(([x, z, length, lean]) => {
-      const geometry = new THREE.ConeGeometry(radius, height * length, 3)
-      geometry.rotateZ(lean)
-      geometry.translate(x, height * length / 2, z)
-      return geometry
+  const blades = ([[-0.23, 0, 0.78, -0.18, 0], [0.15, 0.1, 1, 0.16, 1.1], [0.08, -0.18, 0.65, -0.09, 2.2]] as const)
+    .map(([x, z, length, lean, yaw]) => {
+      const bladeHeight = height * length
+      const geometry = new THREE.PlaneGeometry(radius * 2, bladeHeight, 1, 3)
+      const positions = geometry.getAttribute('position') as THREE.BufferAttribute
+      for (let index = 0; index < positions.count; index += 1) {
+        const progress = positions.getY(index) / bladeHeight + 0.5
+        positions.setXYZ(index, positions.getX(index) * (1 - 0.8 * progress) + lean * radius / 0.16 * progress ** 2,
+          positions.getY(index) + bladeHeight / 2, 0.07 * progress ** 2)
+      }
+      geometry.rotateY(yaw)
+      geometry.translate(x, 0, z)
+      geometry.computeVertexNormals()
+      return shade(geometry, 0.72, 1.12)
     })
   const cluster = mergeGeometries(blades)
   blades.forEach((blade) => blade.dispose())
@@ -21,15 +50,34 @@ function bladeCluster(radius: number, height: number) {
   return cluster
 }
 const GRASS_GEOMETRY = bladeCluster(0.16, 1)
-const FLOWER_GEOMETRY = new THREE.IcosahedronGeometry(0.16, 0)
-FLOWER_GEOMETRY.translate(0, 0.55, 0)
-const SHRUB_LOBES = ([[-0.27, 0.5, 0.02, 0.58], [0.28, 0.62, -0.12, 0.7], [0.01, 0.81, 0.21, 0.55]] as const)
-  .map(([x, y, z, radius]) => new THREE.IcosahedronGeometry(radius, 0).translate(x, y, z))
+const FLOWER_PARTS = [
+  shade(new THREE.CylinderGeometry(0.012, 0.02, 0.5, 4).translate(0, 0.25, 0), 0.62, 0.82),
+  ...[0.94, 1.06, 0.98, 1.1, 1.02].map((tone, index) => {
+    const angle = index * Math.PI * 2 / 5
+    return shade(new THREE.CircleGeometry(0.06, 6).rotateX(-Math.PI / 2).scale(0.9, 1, 1.05).rotateY(angle)
+      .translate(Math.cos(angle) * 0.08, 0.55, Math.sin(angle) * 0.08), tone)
+  }),
+  shade(new THREE.SphereGeometry(0.035, 5, 2).translate(0, 0.57, 0), 0.74),
+]
+const FLOWER_GEOMETRY = mergeGeometries(FLOWER_PARTS)
+FLOWER_PARTS.forEach((part) => part.dispose())
+if (!FLOWER_GEOMETRY) throw new Error('Landscape flower geometry could not be merged.')
+const SHRUB_LOBES = ([[-0.27, 0.5, 0.02, 0.58, 0.88], [0.28, 0.62, -0.12, 0.7, 1], [0.01, 0.81, 0.21, 0.55, 1.12]] as const)
+  .map(([x, y, z, radius, tone]) => shade(new THREE.SphereGeometry(radius, 6, 3)
+    .scale(0.92, 0.72, 0.86).translate(x, y, z), tone * 0.8, tone * 1.08))
 const SHRUB_GEOMETRY = mergeGeometries(SHRUB_LOBES)
 SHRUB_LOBES.forEach((lobe) => lobe.dispose())
 if (!SHRUB_GEOMETRY) throw new Error('Landscape shrub geometry could not be merged.')
-const STONE_GEOMETRY = new THREE.DodecahedronGeometry(0.7, 0)
-STONE_GEOMETRY.translate(0, 0.28, 0)
+const STONE_GEOMETRY = new THREE.SphereGeometry(0.7, 8, 3)
+const stonePositions = STONE_GEOMETRY.getAttribute('position') as THREE.BufferAttribute
+for (let index = 0; index < stonePositions.count; index += 1) {
+  const x = stonePositions.getX(index)
+  const z = stonePositions.getZ(index)
+  const radius = 0.91 + 0.07 * Math.sin(x * 11 + z * 7) * Math.cos(z * 9 - x * 4)
+  stonePositions.setXYZ(index, x * radius, 0.32 + stonePositions.getY(index) * 0.76, z * radius)
+}
+STONE_GEOMETRY.computeVertexNormals()
+shade(STONE_GEOMETRY, 0.76, 1.12)
 const REED_GEOMETRY = bladeCluster(0.075, 1.5)
 const SNAG_PARTS = [
   new THREE.CylinderGeometry(0.09, 0.28, 3.4, 5).rotateZ(0.08).translate(0, 1.7, 0),
@@ -47,6 +95,7 @@ const ALDER_CROWN_GEOMETRY = mergeGeometries(ALDER_CROWNS)
 ALDER_CROWNS.forEach((crown) => crown.dispose())
 if (!ALDER_CROWN_GEOMETRY) throw new Error('Landscape alder crown geometry could not be merged.')
 const MATERIAL = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.94, flatShading: true, side: THREE.DoubleSide })
+const DRESSING_MATERIAL = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.94, vertexColors: true, side: THREE.DoubleSide })
 const ALDER_BARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#62513d', roughness: 1, flatShading: true })
 const KINDS = ['ground', 'grass', 'flower', 'shrub', 'stone', 'reed', 'snag'] as const satisfies readonly LandscapeDetailKind[]
 const GEOMETRY: Record<LandscapeDetailKind, THREE.BufferGeometry> = {
@@ -80,7 +129,7 @@ function LandscapeInstances({ kind, details }: { kind: LandscapeDetailKind; deta
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
   }, [instances, kind])
   if (instances.length === 0) return null
-  return <instancedMesh ref={meshRef} args={[GEOMETRY[kind], MATERIAL, instances.length]}
+  return <instancedMesh ref={meshRef} args={[GEOMETRY[kind], kind === 'snag' ? MATERIAL : DRESSING_MATERIAL, instances.length]}
     name={`Landscape ${kind}`} frustumCulled={false}
     castShadow={kind === 'shrub' || kind === 'stone' || kind === 'snag'} receiveShadow={kind === 'ground'} />
 }
