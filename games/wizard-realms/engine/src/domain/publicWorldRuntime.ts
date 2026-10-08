@@ -9,7 +9,7 @@ import type { IntentRejection, PlayerState, WizardEvent, WizardIntent, WizardWor
 import { advanceWizardWorld } from './world'
 import { worldTileAtGrid } from './worldChunks'
 
-/** One intent is one fixed step. A crossing never advances both authorities. */
+/** A fixed step may combine a look and move, but never advances both authorities. */
 export type PublicWorldIntent =
   | { type: 'move'; delta: { x: number; y?: number; z: number } }
   | Exclude<WizardIntent, { type: 'move' }>
@@ -21,7 +21,8 @@ export type PublicWorldEvent =
 export interface PublicWorldRejection {
   intentIndex: number
   intentType: PublicWorldIntent['type']
-  code: IntentRejection['code'] | StreamedWorldRejection['code'] | 'off_connector' | 'unavailable_here'
+  code: IntentRejection['code'] | StreamedWorldRejection['code'] | 'off_connector'
+    | 'unavailable_here' | 'invalid_frame'
   message: string
 }
 export interface PublicWorldAdvanceResult {
@@ -44,8 +45,8 @@ const simulationRngStep = (value: number) => {
 // state rebuilds its own authority instead of reusing a runtime that already advanced.
 let currentStreamed: { state: PublicWorldState; runtime: StreamedWorldRuntime } | null = null
 const reject = (state: PublicWorldState, intent: PublicWorldIntent,
-  code: PublicWorldRejection['code'], message: string): PublicWorldAdvanceResult => ({
-  state, events: [], rejections: [{ intentIndex: 0, intentType: intent.type, code, message }],
+  code: PublicWorldRejection['code'], message: string, intentIndex = 0): PublicWorldAdvanceResult => ({
+  state, events: [], rejections: [{ intentIndex, intentType: intent.type, code, message }],
 })
 
 function greenwayWorld(state: PublicWorldState): WizardWorldState {
@@ -66,20 +67,23 @@ function fromGreenway(state: PublicWorldState, world: WizardWorldState): PublicW
     player, discoveredTileIds, greenway }
 }
 
-function stepGreenway(state: PublicWorldState, intent: PublicWorldIntent,
+function stepGreenway(state: PublicWorldState, intents: readonly PublicWorldIntent[],
   requireExactMove = false): PublicWorldAdvanceResult {
-  const v5Intent: WizardIntent = intent.type === 'move'
+  const v5Intents: WizardIntent[] = intents.map((intent) => intent.type === 'move'
     ? { type: 'move', delta: { x: intent.delta.x, y: 0, z: intent.delta.z } }
-    : intent
-  const result = advanceWizardWorld(greenwayWorld(state), [v5Intent])
+    : intent)
+  const result = advanceWizardWorld(greenwayWorld(state), v5Intents)
   if (result.rejections.length) return { state, events: [], rejections: result.rejections }
   if (!Number.isSafeInteger(result.state.eventSequence)) {
-    return reject(state, intent, 'invalid_value', 'The public event sequence is exhausted.')
+    if (!intents[0]) throw new RangeError('The public event sequence is exhausted.')
+    return reject(state, intents[0], 'invalid_value', 'The public event sequence is exhausted.')
   }
-  if (requireExactMove && intent.type === 'move'
-    && (result.state.player.position.x !== state.player.position.x + intent.delta.x
-      || result.state.player.position.z !== state.player.position.z + intent.delta.z)) {
-    return reject(state, intent, 'off_connector', 'The Greenway return is obstructed.')
+  const moveIndex = intents.findIndex((intent) => intent.type === 'move')
+  const move = intents[moveIndex]
+  if (requireExactMove && move?.type === 'move'
+    && (result.state.player.position.x !== state.player.position.x + move.delta.x
+      || result.state.player.position.z !== state.player.position.z + move.delta.z)) {
+    return reject(state, move, 'off_connector', 'The Greenway return is obstructed.', moveIndex)
   }
   return { state: fromGreenway(state, result.state), events: result.events, rejections: [] }
 }
@@ -110,12 +114,12 @@ function streamedSnapshot(state: PublicWorldState) {
   }
 }
 
-function fromStreamed(state: PublicWorldState, intent: PublicWorldIntent,
+function fromStreamed(state: PublicWorldState, intents: readonly PublicWorldIntent[],
   result: ReturnType<ReturnType<typeof createStreamedWorldFromState>['advance']>): PublicWorldAdvanceResult {
   if (result.rejections.length) {
     const rejection = result.rejections[0]
-    return reject(state, intent,
-      rejection.code, `Streamed movement was rejected: ${rejection.code}.`)
+    return reject(state, intents[rejection.intentIndex], rejection.code,
+      `Streamed movement was rejected: ${rejection.code}.`, rejection.intentIndex)
   }
   let eventSequence = state.eventSequence
   const events: PublicWorldEvent[] = result.events.map((event) => ({ ...event, sequence: ++eventSequence }))
@@ -130,22 +134,26 @@ function fromStreamed(state: PublicWorldState, intent: PublicWorldIntent,
   }
 }
 
-function stepStreamed(state: PublicWorldState, intent: PublicWorldIntent): PublicWorldAdvanceResult {
-  if (intent.type !== 'move' && intent.type !== 'look' && intent.type !== 'jump') {
-    return reject(state, intent, 'unavailable_here', 'Greenway actions are unavailable beyond the connector.')
+function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldIntent[]): PublicWorldAdvanceResult {
+  const unavailableIndex = intents.findIndex((intent) =>
+    intent.type !== 'move' && intent.type !== 'look' && intent.type !== 'jump')
+  if (unavailableIndex >= 0) {
+    return reject(state, intents[unavailableIndex], 'unavailable_here',
+      'Greenway actions are unavailable beyond the connector.', unavailableIndex)
   }
-  const streamedIntent: StreamedWorldIntent = intent.type === 'move'
-    ? { type: 'move', delta: { x: intent.delta.x, z: intent.delta.z } } : intent
+  const streamedIntents: StreamedWorldIntent[] = intents.map((intent) => intent.type === 'move'
+    ? { type: 'move', delta: { x: intent.delta.x, z: intent.delta.z } } : intent as StreamedWorldIntent)
   try {
     const runtime = currentStreamed?.state === state
       ? currentStreamed.runtime : createStreamedWorldFromState(streamedSnapshot(state))
-    const result = fromStreamed(state, intent, runtime.advance([streamedIntent]))
+    const result = fromStreamed(state, intents, runtime.advance(streamedIntents))
     currentStreamed = result.rejections.length ? null : { state: result.state, runtime }
     return result
   } catch (error) {
     currentStreamed = null
     if (!(error instanceof RangeError)) throw error
-    return reject(state, intent, 'terrain_missing', 'Streamed terrain could not resume at this position.')
+    if (!intents[0]) throw error
+    return reject(state, intents[0], 'terrain_missing', 'Streamed terrain could not resume at this position.')
   }
 }
 
@@ -190,19 +198,59 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
   }
 }
 
-/**
- * Pure public authority transition. Rejections are atomic, including tick, RNG and
- * event sequence. The caller supplies one intent per 50 ms fixed step.
- */
-export function advancePublicWorld(state: PublicWorldState, intent: PublicWorldIntent): PublicWorldAdvanceResult {
-  if (!Number.isSafeInteger(state.tick + 1) || !Number.isSafeInteger(state.eventSequence + 4)) {
-    return reject(state, intent, 'invalid_value', 'The public world clock is exhausted.')
+function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWorldIntent[],
+  move: Extract<PublicWorldIntent, { type: 'move' }>, to: { x: number; z: number }): PublicWorldAdvanceResult {
+  const look = intents.length === 2 ? intents[0] as Extract<PublicWorldIntent, { type: 'look' }> : null
+  const yaw = state.player.yaw + (look?.yawDelta ?? 0)
+  const pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2,
+    state.player.pitch + (look?.pitchDelta ?? 0)))
+  if (look && (![look.yawDelta, look.pitchDelta, yaw].every(Number.isFinite)
+    || Math.abs(yaw) > 1e6)) {
+    return reject(state, look, 'invalid_value', 'The turn cannot be applied at this crossing.')
   }
-  if (intent.type === 'move') {
-    const { x, z, y = 0 } = intent.delta
+  const afterLook: PublicWorldState = look
+    ? { ...state, player: { ...state.player, yaw, pitch } } : state
+  const crossed = crossOutbound(afterLook, move, to)
+  if (crossed.rejections.length) return {
+    state, events: [], rejections: crossed.rejections.map((rejection) => ({
+      ...rejection, intentIndex: look ? 1 : 0,
+    })),
+  }
+  if (!look) return crossed
+  const events: PublicWorldEvent[] = [
+    { type: 'player_looked', tick: crossed.state.tick,
+      sequence: state.eventSequence + 1, yaw, pitch },
+    ...crossed.events.map((event) => ({ ...event, sequence: event.sequence + 1 })),
+  ]
+  const next = { ...crossed.state, eventSequence: crossed.state.eventSequence + 1 }
+  if (currentStreamed?.state === crossed.state) currentStreamed = { state: next, runtime: currentStreamed.runtime }
+  return { state: next, events, rejections: [] }
+}
+
+/**
+ * One bounded 50 ms frame. The only composite is look then move, matching the
+ * control sampler's heading calculation. A rejected frame changes no state.
+ */
+export function advancePublicWorldFrame(
+  state: PublicWorldState, intents: readonly PublicWorldIntent[],
+): PublicWorldAdvanceResult {
+  if (intents.length > 2 || (intents.length === 2
+    && (intents[0].type !== 'look' || intents[1].type !== 'move'))) {
+    return reject(state, intents[Math.min(1, intents.length - 1)], 'invalid_frame',
+      'A fixed step accepts at most one look followed by one move.', Math.min(1, intents.length - 1))
+  }
+  if (!Number.isSafeInteger(state.tick + 1) || !Number.isSafeInteger(state.eventSequence + 4)) {
+    if (!intents[0]) throw new RangeError('The public world clock is exhausted.')
+    return reject(state, intents[0], 'invalid_value', 'The public world clock is exhausted.')
+  }
+  const moveIndex = intents.findIndex((intent) => intent.type === 'move')
+  const move = intents[moveIndex]
+  if (move?.type === 'move') {
+    const { x, z, y = 0 } = move.delta
     if (![x, y, z].every(Number.isFinite) || y !== 0 || Math.hypot(x, z) > 4
       || !Number.isFinite(state.player.position.x + x) || !Number.isFinite(state.player.position.z + z)) {
-      return reject(state, intent, 'invalid_value', 'Movement must be finite, horizontal and at most four meters.')
+      return reject(state, move, 'invalid_value',
+        'Movement must be finite, horizontal and at most four meters.', moveIndex)
     }
     const from = state.player.position
     const to = { x: from.x + x, z: from.z + z }
@@ -210,22 +258,28 @@ export function advancePublicWorld(state: PublicWorldState, intent: PublicWorldI
       tiles: state.greenway.tiles })
     const arrivingGreenway = within(to.x, to.z, envelope)
     if (state.movementOwner === 'greenway') {
-      return arrivingGreenway ? stepGreenway(state, intent) : crossOutbound(state, intent, to)
+      return arrivingGreenway ? stepGreenway(state, intents) : crossOutboundFrame(state, intents, move, to)
     }
     if (arrivingGreenway) {
-      if (!connectorCrossing(state, from, to)) return reject(state, intent, 'off_connector',
-        'Return to Greenway through the dry southwest connector.')
+      if (!connectorCrossing(state, from, to)) return reject(state, move, 'off_connector',
+        'Return to Greenway through the dry southwest connector.', moveIndex)
       const barrier = mireglassMoveBarrier(state.seed, from, to)
-      if (barrier) return reject(state, intent, barrier, `The ${barrier} blocks the connector.`)
+      if (barrier) return reject(state, move, barrier, `The ${barrier} blocks the connector.`, moveIndex)
       try {
         if (currentStreamed?.state !== state) createStreamedWorldFromState(streamedSnapshot(state))
       } catch (error) {
         if (!(error instanceof RangeError)) throw error
-        return reject(state, intent, 'terrain_missing', 'Streamed terrain cannot resume for the return.')
+        return reject(state, move, 'terrain_missing',
+          'Streamed terrain cannot resume for the return.', moveIndex)
       }
       currentStreamed = null
-      return stepGreenway(state, intent, true)
+      return stepGreenway(state, intents, true)
     }
   }
-  return state.movementOwner === 'greenway' ? stepGreenway(state, intent) : stepStreamed(state, intent)
+  return state.movementOwner === 'greenway' ? stepGreenway(state, intents) : stepStreamed(state, intents)
+}
+
+/** Compatibility entrypoint for one-intent callers. */
+export function advancePublicWorld(state: PublicWorldState, intent: PublicWorldIntent): PublicWorldAdvanceResult {
+  return advancePublicWorldFrame(state, [intent])
 }

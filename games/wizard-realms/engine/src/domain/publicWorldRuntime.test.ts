@@ -3,7 +3,8 @@ import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
 import { serializeWizardWorld } from './persistence'
 import { commitLegacyImportToPublicV6, inspectLegacyImportSource } from './publicWorldV6'
-import { advancePublicWorld } from './publicWorldRuntime'
+import { advancePublicWorld, advancePublicWorldFrame } from './publicWorldRuntime'
+import type { PublicWorldIntent } from './publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
 import type { PublicWorldState } from './publicWorldState'
 import type { GenerationProfile } from './types'
@@ -11,6 +12,7 @@ import type { GenerationProfile } from './types'
 const seed = 'greenway-alpha'
 const classic = 'greenway-classic-v1'
 const expanded = 'greenway-expanded-v1'
+const walkMeters = 0.16
 const nextSimulationRng = (value: number) => {
   let next = value | 0
   next ^= next << 13
@@ -51,7 +53,120 @@ function importedExpandedEdge(): PublicWorldState {
   return createPublicWorldFromBootstrap(committed.root)
 }
 
+function turnAndWalk(yaw: number, key: 'A' | 'D', meters: number): PublicWorldIntent[] {
+  const yawDelta = key === 'A' ? 0.13 : -0.13
+  const facing = yaw + yawDelta
+  return [
+    { type: 'look', yawDelta, pitchDelta: 0 },
+    { type: 'move', delta: { x: -Math.sin(facing) * meters, z: -Math.cos(facing) * meters } },
+  ]
+}
+
+function expectOneFrame(before: PublicWorldState, after: ReturnType<typeof advancePublicWorldFrame>) {
+  expect(after.rejections).toEqual([])
+  expect(after.state.tick).toBe(before.tick + 1)
+  expect(after.state.rng.simulation).toBe(nextSimulationRng(before.rng.simulation))
+  expect(after.state.eventSequence).toBe(before.eventSequence + after.events.length)
+  expect(after.events.map(({ sequence }) => sequence))
+    .toEqual(after.events.map((_, index) => before.eventSequence + index + 1))
+  expect(after.events.every(({ tick }) => tick === before.tick + 1)).toBe(true)
+  expect(after.events.slice(0, 2).map(({ type }) => type)).toEqual(['player_looked', 'player_moved'])
+}
+
 describe('public v6 authority handoff', () => {
+  it.each(['A', 'D'] as const)('applies W+%s as one Greenway look-then-move frame', (key) => {
+    const start = createFreshPublicWorld(seed, classic)
+    const intents = turnAndWalk(start.player.yaw, key, walkMeters)
+    const result = advancePublicWorldFrame(start, intents)
+    expectOneFrame(start, result)
+    expect(result.state.movementOwner).toBe('greenway')
+    expect(result.state.player.yaw).toBeCloseTo(key === 'A' ? 0.13 : -0.13)
+    const move = intents[1]
+    if (move.type !== 'move') throw new Error('Expected movement intent.')
+    expect(result.state.player.position.x).toBeCloseTo(start.player.position.x + move.delta.x)
+    expect(result.state.player.position.z).toBeCloseTo(start.player.position.z + move.delta.z)
+    expect(Math.sign(result.state.player.position.x)).toBe(key === 'A' ? -1 : 1)
+  })
+
+  it.each(['A', 'D'] as const)('applies W+%s as one streamed frame and preserves replay', (key) => {
+    const westFacing = { ...atEdge(classic, -12), player: { ...atEdge(classic, -12).player,
+      yaw: Math.PI / 2 } }
+    const out = advancePublicWorld(westFacing, { type: 'move', delta: { x: -4, z: 0 } })
+    expect(out.rejections).toEqual([])
+    const intents = turnAndWalk(out.state.player.yaw, key, walkMeters)
+    const result = advancePublicWorldFrame(out.state, intents)
+    const replay = advancePublicWorldFrame(out.state, intents)
+    expect(result).toEqual(replay)
+    expectOneFrame(out.state, result)
+    expect(result.state.movementOwner).toBe('streamed')
+    const move = intents[1]
+    if (move.type !== 'move') throw new Error('Expected movement intent.')
+    expect(result.state.player.position.x).toBeCloseTo(out.state.player.position.x + move.delta.x)
+    expect(result.state.player.position.z).toBeCloseTo(out.state.player.position.z + move.delta.z)
+    expect(Math.sign(result.state.player.position.z)).toBe(key === 'A' ? 1 : -1)
+    const next = advancePublicWorldFrame(result.state, [{ type: 'look', yawDelta: 0.02, pitchDelta: 0 }])
+    expect(next.rejections).toEqual([])
+    expect(next.state.tick).toBe(result.state.tick + 1)
+  })
+
+  it.each([
+    [classic, -12], [expanded, -30],
+  ] as const)('applies W+A and W+D at the %s seam with one owner and one tick', (profile, edgeX) => {
+    for (const key of ['A', 'D'] as const) {
+      const edge = atEdge(profile, edgeX)
+      const westFacing: PublicWorldState = { ...edge, player: { ...edge.player, yaw: Math.PI / 2 } }
+      const outwardIntents = turnAndWalk(westFacing.player.yaw, key, walkMeters)
+      const outbound = advancePublicWorldFrame(westFacing, outwardIntents)
+      expectOneFrame(westFacing, outbound)
+      expect(outbound.state.movementOwner).toBe('streamed')
+      expect(outbound.state.player.position.x).toBeLessThan(edgeX)
+      expect(Math.sign(outbound.state.player.position.z)).toBe(key === 'A' ? 1 : -1)
+
+      const eastFacing: PublicWorldState = { ...outbound.state,
+        player: { ...outbound.state.player, yaw: -Math.PI / 2 } }
+      const returnIntents = turnAndWalk(eastFacing.player.yaw, key, walkMeters)
+      const inbound = advancePublicWorldFrame(eastFacing, returnIntents)
+      expectOneFrame(eastFacing, inbound)
+      expect(inbound.state.movementOwner).toBe('greenway')
+      expect(inbound.state.player.position.x).toBeCloseTo(edgeX)
+      expect(inbound.state.player.position.z).toBeCloseTo(0)
+      expect(outbound.state.tick).toBe(westFacing.tick + 1)
+      expect(inbound.state.tick).toBe(westFacing.tick + 2)
+    }
+  })
+
+  it('rejects a wrong or invalid frame atomically, including an otherwise valid look', () => {
+    const start = createFreshPublicWorld(seed, classic)
+    const frame = turnAndWalk(start.player.yaw, 'A', 1.5)
+    const reversed = advancePublicWorldFrame(start, [frame[1], frame[0]])
+    expect(reversed.rejections).toMatchObject([{ code: 'invalid_frame' }])
+    expect(reversed.state).toBe(start)
+    const invalidMove = advancePublicWorldFrame(start, [frame[0],
+      { type: 'move', delta: { x: Infinity, z: 0 } }])
+    expect(invalidMove.rejections).toMatchObject([{ code: 'invalid_value', intentIndex: 1 }])
+    expect(invalidMove.state).toBe(start)
+    expect(invalidMove.events).toEqual([])
+    const edge = atEdge(classic, -12, 4)
+    const blocked = advancePublicWorldFrame(edge, turnAndWalk(Math.PI / 2, 'D', 4))
+    expect(blocked.rejections).toMatchObject([{ code: 'off_connector', intentIndex: 1 }])
+    expect(blocked.state).toBe(edge)
+    expect(blocked.events).toEqual([])
+
+    const out = advancePublicWorld(atEdge(classic, -12), { type: 'move', delta: { x: -4, z: 0 } })
+    expect(out.rejections).toEqual([])
+    const badStreamFrame = advancePublicWorldFrame(out.state, [
+      { type: 'look', yawDelta: 1_000_001, pitchDelta: 0 },
+      { type: 'move', delta: { x: -walkMeters, z: 0 } },
+    ])
+    expect(badStreamFrame.rejections).toMatchObject([{ code: 'invalid_value', intentIndex: 0 }])
+    expect(badStreamFrame.state).toBe(out.state)
+    expect(badStreamFrame.events).toEqual([])
+    const goodFrame = turnAndWalk(out.state.player.yaw, 'A', walkMeters)
+    const retried = advancePublicWorldFrame(out.state, goodFrame)
+    expect(retried.rejections).toEqual([])
+    expect(advancePublicWorldFrame(out.state, goodFrame)).toEqual(retried)
+  })
+
   it('runs a Greenway v5 action with complete detached facts and one authoritative player', () => {
     const original = createFreshPublicWorld(seed, classic)
     const result = advancePublicWorld(original, { type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
