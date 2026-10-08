@@ -2,7 +2,7 @@ import { createElement, createRef, isValidElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { advanceWizardWorld, createWizardWorld, serializeWizardWorld, type WizardWorldState } from './domain'
-import { createGeneratedWorld } from './domain/generation'
+import { areaAt, createGeneratedWorld, terrainHeightAt } from './domain/generation'
 import { routeBuildOptions } from './domain/routeSites'
 import { EQUIPMENT_SLOTS, WizardHud } from './view/WizardHud'
 import { WizardMap } from './view/WizardMap'
@@ -558,6 +558,9 @@ describe('Wizard view adapter', () => {
 
     state.player.discoveredRingIds = []
     expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
+    state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
+    expect(objectiveFor(state)).toBe('Find and discover the Highland fairy ring.')
+    state.player.position = { x: 0, y: terrainHeightAt(state.tiles, 0, 0), z: 0 }
 
     state.player.discoveredRingIds = ['ring-greenway']
     expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
@@ -1143,6 +1146,25 @@ describe('Wizard view adapter', () => {
     oak.position = { ...state.player.position, x: state.player.position.x + 0.1 }
     expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', action: 'Cross', actionable: true })
     expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'traverse_route', routeId: 'greenway_ladder' })
+  })
+
+  it('offers a built ladder only from the reachable foot in the player area', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.resources.forEach((resource) => { resource.depleted = true })
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    ladder.siteId = 'greenway_ladder:x:0'
+    state.builtRouteIds.push(ladder.id)
+    state.player.position = { x: 0.2, y: terrainHeightAt(state.tiles, 0.2, -4.05), z: -4.05 }
+    expect(areaAt(state.areas, state.player.position.x, state.player.position.z).id).toBe('northern_ridge')
+    expect(advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }]).rejections[0]?.code).toBe('too_far')
+    expect(toViewProjection(state, []).nearbyInteraction?.kind).not.toBe('route')
+    expect(intentForView(state, { type: 'interact' })).not.toEqual({ type: 'traverse_route', routeId: ladder.id })
+
+    state.player.position = { ...ladder.to }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', action: 'Cross' })
+    const intent = intentForView(state, { type: 'interact' })
+    expect(intent).toEqual({ type: 'traverse_route', routeId: ladder.id })
+    expect(advanceWizardWorld(state, [intent!]).state.player.position).toEqual(ladder.from)
   })
 
   it('commits and reloads a non-default ladder chosen in the atlas', () => {

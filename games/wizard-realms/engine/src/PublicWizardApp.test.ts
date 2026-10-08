@@ -26,7 +26,7 @@ import { PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_S
 import { serializeWizardWorld } from './domain/persistence'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
 import {
-  PUBLIC_V6_LOCK_NAME, advancePublicControls, commitPublicSnapshot, greenwayForPublicView,
+  PUBLIC_V6_LOCK_NAME, advancePublicControls, appendMessages, commitPublicSnapshot, greenwayForPublicView,
   importPublicWorld, inspectPublicEntry, mireglassForPublicView, publicFreshForkChoiceCopy,
   publicPendingV7StageGuidance, publicRecoveryChoices,
   publicV7RecoveryChoices, recoverPublicWorld, resumePublicWorld, startFreshPublicWorld,
@@ -210,6 +210,23 @@ describe('public v6 app boundary', () => {
       ], rejections: [] }
     expect(publicFrameMessages(result).at(-1)).toContain('Wayfinder Glow reveals 2 map tiles and 1 buried site')
     expect(publicFrameMessages(result)).not.toContain('The map reveals a new tile.')
+  })
+  it('keeps projection messages stable across repeated blocked frames while preserving new feedback', () => {
+    const state = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const blocked: PublicWorldAdvanceResult = { state, events: [], rejections: [{ intentIndex: 0,
+      intentType: 'move', code: 'fen_channel', message: 'Streamed movement was rejected: fen_channel.' }] }
+    const first = appendMessages(['Welcome'], publicFrameMessages(blocked), true)
+    expect(first.at(-1)).toBe('Streamed movement was rejected: fen_channel.')
+    let repeated = first
+    for (let frame = 0; frame < 20; frame += 1) repeated = appendMessages(repeated, publicFrameMessages(blocked), true)
+    expect(repeated).toBe(first)
+
+    const changed = appendMessages(first, publicFrameMessages({ ...blocked, rejections: [{ ...blocked.rejections[0],
+      code: 'slate_cliff', message: 'Streamed movement was rejected: slate_cliff.' }] }), true)
+    expect(changed).not.toBe(first)
+    expect(changed.at(-1)).toBe('Streamed movement was rejected: slate_cliff.')
+    const action = appendMessages(changed, ['Chopped timber: +4 logs and woodcutting XP.'])
+    expect(appendMessages(action, ['Chopped timber: +4 logs and woodcutting XP.'])).not.toBe(action)
   })
   it('names the actual Greenway area after crossing a route', () => {
     const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')

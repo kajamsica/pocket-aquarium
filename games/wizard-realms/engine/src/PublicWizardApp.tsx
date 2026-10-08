@@ -243,7 +243,12 @@ export function publicFrameMessages(result: PublicWorldAdvanceResult): string[] 
   return [...otherEvents.map(publicWorldEventText), ...result.rejections.map((rejection) => rejection.message),
     ...(cast ? [publicWorldEventText(cast)] : [])].filter(Boolean)
 }
-const appendMessages = (current: readonly string[], additions: readonly string[]) => [...current, ...additions].slice(-4)
+export const appendMessages = (current: string[], additions: readonly string[], dedupeConsecutive = false): string[] => {
+  const next = dedupeConsecutive
+    ? additions.filter((text, index) => text !== (index === 0 ? current.at(-1) : additions[index - 1]))
+    : additions
+  return next.length ? [...current, ...next].slice(-4) : current
+}
 const herbLedger = (state: PublicWorldState): readonly HerbHarvestEntry[] | null => {
   const cycles = (state.mireglass as Partial<MireglassHerbRegionProgress>).herbHarvestCycles
   return Array.isArray(cycles) ? cycles : null
@@ -676,7 +681,8 @@ export function PublicWizardApp({ v8Session, v9Session }: PublicPlayableSessionP
         const transition = publicRegionTransitionText(previous, next)
         if (transition) { selectedCampRef.current = null; setSelectedCampTileId(null); setSelectedSiteId(null) }
         const texts = [...publicFrameMessages(result), ...(transition ? [transition] : [])]
-        if (texts.length) setMessages((current) => appendMessages(current, texts))
+        if (texts.length) setMessages((current) => appendMessages(current, texts,
+          result.rejections.length > 0 && result.events.length === 0 && !transition))
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
           || event.type === 'tile_discovered' || event.type === 'player_jumped')) travelDirty.current = true
         if ((frames.length && result.events.length) || (travelDirty.current

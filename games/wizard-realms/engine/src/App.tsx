@@ -237,13 +237,17 @@ export function objectiveFor(state: WizardWorldState): string {
     ? 'Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.'
     : 'Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.'
   if (highlandRing) return 'Return to the Greenway and discover its fairy ring near the start to link travel home.'
-  if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'
+  if (state.builtRouteIds.includes('highland_bridge')) return areaAt(state.areas,
+    state.player.position.x, state.player.position.z).id === 'eastern_highland'
+    ? 'Find and discover the Highland fairy ring.'
+    : 'Cross the Highland bridge east and discover the Highland fairy ring.'
   if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Choose a Highland bridge site on the map and build it (6 logs).' : `${gather(6)}, then choose a bridge site on the map.`
   if (axeEquipped(state)) return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
   return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : outfitters('Buy a woodcutter axe')
 }
 
 function closestInteraction(state: WizardWorldState) {
+  const playerAreaId = areaAt(state.areas, state.player.position.x, state.player.position.z).id
   const candidates = [
     ...state.inscriptions.filter((inscription) => !state.studiedInscriptionIds.includes(inscription.id))
       .map((inscription) => ({ distance: distance(state.player.position, inscription.position), kind: 'inscription' as const, target: inscription })),
@@ -255,7 +259,10 @@ function closestInteraction(state: WizardWorldState) {
     ...state.fairyRings.map((ring) => ({ distance: distance(state.player.position, ring.position), kind: 'fairy-ring' as const, target: ring })),
     ...state.stores.map((store) => ({ distance: distance(state.player.position, store.position), kind: 'store' as const, target: store })),
     ...state.routes.filter((route) => state.builtRouteIds.includes(route.id))
-      .map((route) => ({ distance: Math.min(distance(state.player.position, route.from), distance(state.player.position, route.to)), kind: 'route' as const, target: route })),
+      .flatMap((route) => {
+        const source = playerAreaId === route.fromAreaId ? route.from : playerAreaId === route.toAreaId ? route.to : null
+        return source ? [{ distance: distance(state.player.position, source), kind: 'route' as const, target: route }] : []
+      }),
   ].filter((candidate) => candidate.distance <= INTERACTION_RANGE)
   // Deliberate destinations take E before incidental oaks in the same reach.
   const priority = (kind: typeof candidates[number]['kind']) =>
