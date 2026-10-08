@@ -172,6 +172,28 @@ describe('short desktop layout', () => {
 })
 
 describe('wizard atlas markup', () => {
+  it('shows a discovered waystone and keeps a store visible under the player marker without revealing fog', () => {
+    const home = projection.map.tiles[0]
+    const fog = projection.map.tiles[1]
+    const current = { ...projection, map: { ...projection.map, tiles: [
+      { ...home, hasRouteSite: false },
+      { ...home, id: 'waystone', gridX: 1, hasStore: false, hasWaystone: true },
+      { ...fog, id: 'hidden-waystone', gridX: 2, hasWaystone: true },
+    ] } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup).toContain('home: meadow, player location, store')
+    expect(markup).toMatch(/home: meadow, player location, store[^\"]*\"><b[^>]*>▲<\/b><small[^>]*>S<\/small>/)
+    expect(markup).toContain('waystone: meadow, Greenway waystone')
+    expect(markup).toMatch(/waystone: meadow, Greenway waystone[^\"]*\"><b>W<\/b>/)
+    expect(markup).toContain('hidden-waystone: unexplored')
+    expect(markup).not.toContain('hidden-waystone: unexplored, Greenway waystone')
+    expect(markup).toContain('W waystone')
+    const standingOnWaystone = renderToStaticMarkup(createElement(WizardMap, {
+      ...mapProps(true), projection: { ...current, map: { ...current.map, player: { gridX: 1, gridZ: 0, yaw: 0 } } },
+    }))
+    expect(standingOnWaystone).toMatch(/waystone: meadow, player location, Greenway waystone[^\"]*\"><b[^>]*>▲<\/b><small[^>]*>W<\/small>/)
+  })
+
   it.each([7, 16])('scales a %i-column atlas while keeping the compact map focused on the player', (size) => {
     const player = size === 16 ? { gridX: 14, gridZ: 12 } : { gridX: 3, gridZ: 3 }
     const current = gridProjection(size, player.gridX, player.gridZ)

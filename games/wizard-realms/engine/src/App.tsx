@@ -180,7 +180,17 @@ const reachableStore = (state: WizardWorldState) => state.stores
 export function objectiveFor(state: WizardWorldState): string {
   const logs = owned(state, 'logs')
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
-  if (!state.player.learnedSpellIds.includes('wayfinder_glow')) return 'Find the Greenway waystone and study Wayfinder Glow.'
+  if (!state.player.learnedSpellIds.includes('wayfinder_glow')) {
+    const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
+    if (distance(state.player.position, waystone.position) <= INTERACTION_RANGE) return 'Study the Greenway waystone to learn Wayfinder Glow.'
+    const east = waystone.position.x - state.player.position.x
+    const south = waystone.position.z - state.player.position.z
+    const bearing = [
+      Math.abs(east) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(east)))}m ${east > 0 ? 'east' : 'west'}` : '',
+      Math.abs(south) >= 0.5 ? `${Math.max(1, Math.round(Math.abs(south)))}m ${south > 0 ? 'south' : 'north'}` : '',
+    ].filter(Boolean).join(' and ')
+    return `Greenway waystone: ${bearing || 'at this spot'}. Study it to learn Wayfinder Glow.`
+  }
   if (state.player.skillXp.spellcraft === 0) return 'Walk to the northern fog and cast Wayfinder Glow to reveal hidden ground.'
   if (!state.excavatedDigSiteIds.includes('practice_mound')) {
     if (!owned(state, 'field_spade')) return 'Buy a field spade from Greenway Outfitters.'
@@ -295,6 +305,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   const areaDiscovered = (position: { x: number; z: number }) => discoveredAreaIds.has(areaAt(state.areas, position.x, position.z).id)
   const storeTileIds = new Set(state.stores.filter((store) => areaDiscovered(store.position)).map((store) => tileIdAt(store.position)))
   const ringTileIds = new Set(state.fairyRings.filter((ring) => areaDiscovered(ring.position)).map((ring) => tileIdAt(ring.position)))
+  const waystoneTileIds = new Set(state.inscriptions.map((inscription) => tileIdAt(inscription.position)))
   const routeSourceTileId = (routeId: string, position: { x: number; z: number }) => {
     const sourceAreaId = state.routes.find((route) => route.id === routeId)!.fromAreaId
     let nearestId: string | undefined
@@ -381,6 +392,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
           hasResource: discovered && activeResourceTileIds.has(tile.id),
           hasStore: discovered && storeTileIds.has(tile.id),
           hasRing: discovered && ringTileIds.has(tile.id),
+          hasWaystone: discovered && waystoneTileIds.has(tile.id),
           hasRouteSite: discovered && routeSiteTileIds.has(tile.id),
           hasBuiltRoute: discovered && builtRouteTileIds.has(tile.id),
         }

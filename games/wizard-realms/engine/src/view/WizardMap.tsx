@@ -14,9 +14,12 @@ function Tile({ tile, player }: { tile: WizardMapTile; player: WizardViewProject
   const occupied = tile.gridX === player.gridX && tile.gridZ === player.gridZ
   const routeSite = tile.discovered && tile.hasRouteSite
   const builtRoute = tile.discovered && tile.hasBuiltRoute
-  const marker = occupied ? '▲' : tile.hasCache ? '✦' : builtRoute ? '✓' : routeSite ? '◇' : tile.hasStore ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : tile.discovered ? '' : '?'
-  return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${tile.hasCache ? ', revealed seal cache' : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}`}>
-    <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : undefined}>{marker}</b>
+  const waystone = tile.discovered && tile.hasWaystone
+  const store = tile.discovered && tile.hasStore
+  const landmark = tile.discovered ? tile.hasCache ? '✦' : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : store ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : '' : '?'
+  return <span className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? ', revealed seal cache' : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}`}>
+    <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : undefined}>{occupied ? '▲' : landmark}</b>
+    {occupied && (store || waystone) && <small aria-hidden="true" style={{ position: 'absolute', right: 0, bottom: 0, fontSize: 8, lineHeight: 1 }}>{store ? 'S' : 'W'}</small>}
   </span>
 }
 
@@ -70,7 +73,7 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
       <header><div><small>NORTH-UP EXPLORATION MAP</small><h2 id="wizard-world-map-title">{projection.map.title ?? 'Greenway atlas'}</h2></div><button ref={closeRef} onClick={onToggle} aria-label="Close map">×</button></header>
       <MapGrid projection={projection} />
       <RouteKey routes={projection.routes} buildSites={projection.buildSites} selectedBuildSiteId={projection.selectedBuildSiteId} onSelect={(siteId) => { onIntent({ type: 'build-site.select', siteId }); onToggle() }} />
-      <p>{projection.map.legend ?? '▲ you · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}</p>
+      <p>{projection.map.legend ?? '▲ you · W waystone · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}</p>
     </section></div>}
   </>
 }

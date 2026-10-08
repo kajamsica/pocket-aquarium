@@ -137,6 +137,7 @@ export interface WizardMapTile {
   hasResource: boolean
   hasStore: boolean
   hasRing: boolean
+  hasWaystone?: boolean
   hasRouteSite: boolean
   hasBuiltRoute: boolean
   hasCache?: boolean

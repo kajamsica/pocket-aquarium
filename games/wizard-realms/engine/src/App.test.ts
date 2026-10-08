@@ -49,6 +49,7 @@ describe('Wizard view adapter', () => {
     expect(projection.skillXp).toEqual(state.player.skillXp)
     expect(projection.routes).toHaveLength(2)
     expect(projection.map.tiles).toHaveLength(state.tiles.length)
+    expect(projection.map.tiles.find((tile) => tile.id === 'tile-4-4')?.hasWaystone).toBe(true)
     expect(projection.map.tiles.some((tile) => !tile.discovered && tile.terrain === null && tile.biome === null)).toBe(true)
     expect(projection.recentEvents).toEqual(['Visible event'])
     expect(projection.equipment.mainHand).toBeNull()
@@ -63,13 +64,15 @@ describe('Wizard view adapter', () => {
     expect(tiles).toHaveLength(profile === 'greenway-classic-v1' ? 49 : 256)
     expect(tiles.filter((tile) => tile.hasStore).map((tile) => tile.id)).toEqual(['tile-5-2', 'tile-2-3'])
     expect(tiles.filter((tile) => tile.hasRing).map((tile) => tile.id)).toEqual(['tile-5-1', 'tile-4-3'])
+    expect(tiles.filter((tile) => tile.hasWaystone).map((tile) => tile.id)).toEqual(['tile-4-4'])
     expect(tiles.filter((tile) => tile.hasResource).length).toBeGreaterThan(0)
 
     state.discoveredTileIds = ['tile-2-3']
     const fogged = toViewProjection(state, []).map.tiles
     expect(fogged.filter((tile) => tile.hasStore).map((tile) => tile.id)).toEqual(['tile-2-3'])
     expect(fogged.some((tile) => tile.hasRing)).toBe(false)
-    expect(fogged.filter((tile) => !tile.discovered).every((tile) => tile.terrain === null && tile.biome === null && !tile.hasResource && !tile.hasStore && !tile.hasRing && !tile.hasRouteSite && !tile.hasBuiltRoute)).toBe(true)
+    expect(fogged.some((tile) => tile.hasWaystone)).toBe(false)
+    expect(fogged.filter((tile) => !tile.discovered).every((tile) => tile.terrain === null && tile.biome === null && !tile.hasResource && !tile.hasStore && !tile.hasRing && !tile.hasWaystone && !tile.hasRouteSite && !tile.hasBuiltRoute)).toBe(true)
   })
 
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('hides Highland landmarks until entry in the %s atlas', (profile) => {
@@ -164,7 +167,7 @@ describe('Wizard view adapter', () => {
     }))
     expect(markup).toContain('aria-label="North-up world map, negative Z is north"')
     expect(markup.indexOf('tile--4--4:')).toBeLessThan(markup.indexOf('tile-11-11:'))
-    expect(markup).toMatch(/aria-label="tile-2-3:[^"]*player location"[^>]*><b[^>]*>▲<\/b>/)
+    expect(markup).toMatch(/aria-label="tile-2-3:[^"]*player location, store"[^>]*><b[^>]*>▲<\/b><small[^>]*>S<\/small>/)
   })
 
   it('maps W/S to facing-relative movement and A/D to pivot without strafing', () => {
@@ -341,7 +344,7 @@ describe('Wizard view adapter', () => {
   it('derives the guided objective from authoritative world state without mutating it', () => {
     const fresh = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(fresh)
-    expect(objectiveFor(fresh)).toBe('Find the Greenway waystone and study Wayfinder Glow.')
+    expect(objectiveFor(fresh)).toBe('Greenway waystone: 3m east and 3m south. Study it to learn Wayfinder Glow.')
     expect(JSON.stringify(fresh)).toBe(before)
 
     const unowned = withFirstRegionCompleted(copy(fresh))
@@ -369,6 +372,22 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.')
     state.player.position = { ...state.fairyRings.find((ring) => ring.id === 'ring-highland')!.position }
     expect(objectiveFor(state)).toBe('Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.')
+  })
+
+  it('updates waystone bearings from the real inscription and calls for Study in reach', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const waystone = state.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')!
+    state.player.position = { ...waystone.position, x: waystone.position.x + 5 }
+    expect(objectiveFor(state)).toContain('5m west')
+    state.player.position = { ...waystone.position, z: waystone.position.z + 5 }
+    expect(objectiveFor(state)).toContain('5m north')
+    state.player.position = { ...waystone.position, x: waystone.position.x - 2 }
+    expect(objectiveFor(state)).toBe('Study the Greenway waystone to learn Wayfinder Glow.')
+    waystone.position = { ...waystone.position, x: -6, z: -4 }
+    state.player.position = { ...state.player.position, x: 0, z: 0 }
+    expect(objectiveFor(state)).toContain('6m west and 4m north')
+    state.player.learnedSpellIds.push('wayfinder_glow')
+    expect(objectiveFor(state)).toContain('cast Wayfinder Glow')
   })
 
   it('guides study, spell practice, tool-gated excavation, and a return sale', () => {
