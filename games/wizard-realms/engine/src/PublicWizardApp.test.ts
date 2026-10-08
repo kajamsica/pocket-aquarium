@@ -44,7 +44,7 @@ import {
   publicPendingV7StageGuidance, publicRecoveryChoices,
   publicV7RecoveryChoices, recoverPublicWorld, resumePublicWorld, startFreshPublicWorld,
   unsavedPublicWorldBytes, publicWorldEventText,
-  publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority,
+  publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority, reconcileMovementMessages,
   publicDryHerbLeg, publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
   publicFieldCampView, requirePublicV9State, requirePublicV10State, requirePublicV11State,
@@ -492,6 +492,32 @@ describe('public v6 app boundary', () => {
       .toBe('The slate cliff cannot be walked up. Use “Cross Slate ladder” (or “Return by Slate ladder” from above) when in reach.')
     const action = appendMessages(changed, ['Chopped timber: +4 logs and woodcutting XP.'])
     expect(appendMessages(action, ['Chopped timber: +4 logs and woodcutting XP.'])).not.toBe(action)
+  })
+  it('keeps one movement warning through mixed frames, replaces changed obstruction, and clears on movement', () => {
+    const state = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const blocked: PublicWorldAdvanceResult = { state, events: [], rejections: [{ intentIndex: 0,
+      intentType: 'move', code: 'fen_channel', message: 'Streamed movement was rejected: fen_channel.' }] }
+    const warning = publicFrameMessages(blocked)[0]
+    const mixed: PublicWorldAdvanceResult = { ...blocked,
+      events: [{ type: 'tile_discovered', tileId: 'tile-a', tick: 1, sequence: 1 }],
+      rejections: [...blocked.rejections, ...blocked.rejections] }
+    const texts = publicFrameMessages(mixed)
+    const first = reconcileMovementMessages(['Welcome'], texts, null, [warning, warning], false)
+    const repeated = reconcileMovementMessages(first, texts, warning, [warning, warning], false)
+    expect(repeated).toEqual(['Welcome', texts[0], warning, texts[0]])
+
+    const cliff: PublicWorldAdvanceResult = { ...blocked, rejections: [{ ...blocked.rejections[0],
+      code: 'slate_cliff', message: 'Streamed movement was rejected: slate_cliff.' }] }
+    const cliffWarning = publicFrameMessages(cliff)[0]
+    const changed = reconcileMovementMessages(repeated, publicFrameMessages(cliff), warning, [cliffWarning], false)
+    expect(changed).not.toContain(warning)
+    expect(changed.at(-1)).toBe(cliffWarning)
+
+    const moved: PublicWorldAdvanceResult = { state, rejections: [], events: [{ type: 'player_moved', tick: 1,
+      sequence: 1, position: state.player.position }] }
+    const cleared = reconcileMovementMessages(changed, publicFrameMessages(moved), cliffWarning, [], true)
+    expect(cleared).not.toContain(cliffWarning)
+    expect(cleared.filter((text) => text === texts[0])).toHaveLength(2)
   })
   it('names the actual Greenway area after crossing a route', () => {
     const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')

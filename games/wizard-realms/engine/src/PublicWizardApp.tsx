@@ -300,6 +300,21 @@ export const appendMessages = (current: string[], additions: readonly string[], 
     : additions
   return next.length ? [...current, ...next].slice(-4) : current
 }
+export function reconcileMovementMessages(current: string[], additions: readonly string[], previousWarning: string | null,
+  movementWarnings: readonly string[], moved: boolean, dedupeConsecutive = false): string[] {
+  const warning = movementWarnings.at(-1) ?? null
+  const retained = previousWarning && (warning || moved)
+    ? current.filter((text, index) => text !== previousWarning
+      || (warning === previousWarning && index === current.lastIndexOf(previousWarning))) : current
+  let showWarning = !!warning && !retained.includes(warning)
+  const next = additions.filter((text) => {
+    if (!movementWarnings.includes(text)) return true
+    if (text !== warning || !showWarning) return false
+    showWarning = false
+    return true
+  })
+  return appendMessages(retained, next, dedupeConsecutive)
+}
 const herbLedger = (state: PublicWorldState): readonly HerbHarvestEntry[] | null => {
   const cycles = (state.mireglass as Partial<MireglassHerbRegionProgress>).herbHarvestCycles
   return Array.isArray(cycles) ? cycles : null
@@ -777,6 +792,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const [confirmRootChoice, setConfirmRootChoice] = useState<PublicV7RootConflictChoice | null>(null)
   const [confirmFreshForkChoice, setConfirmFreshForkChoice] = useState<PublicV7FreshForkChoice | null>(null)
   const [messages, setMessages] = useState<string[]>(['Welcome to Wizard Realms.'])
+  const activeMoveWarning = useRef<string | null>(null)
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [selectedCampTileId, setSelectedCampTileId] = useState<string | null>(null)
@@ -1075,8 +1091,15 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         openStoreRef.current = nextStore; setOpenStoreId(nextStore)
         const transition = publicRegionTransitionText(previous, next)
         if (transition) { selectedCampRef.current = null; setSelectedCampTileId(null); setSelectedSiteId(null) }
+        const movementWarnings = result.rejections.filter((rejection) => rejection.intentType === 'move')
+          .map((rejection) => publicRejectionText(next, rejection))
+        const warning = movementWarnings.at(-1) ?? null
+        const moved = result.events.some((event) => event.type === 'player_moved')
+        const previousWarning = activeMoveWarning.current
+        if (warning || moved) activeMoveWarning.current = warning
         const texts = [...publicFrameMessages(result), ...(transition ? [transition] : [])]
-        if (texts.length) setMessages((current) => appendMessages(current, texts,
+        if (texts.length || (moved && previousWarning)) setMessages((current) => reconcileMovementMessages(current, texts,
+          previousWarning, movementWarnings, moved,
           result.rejections.length > 0 && result.events.length === 0 && !transition))
         // Idle world events can change durable state too, notably a trade listing settling.
         if (result.events.length) travelDirty.current = true
