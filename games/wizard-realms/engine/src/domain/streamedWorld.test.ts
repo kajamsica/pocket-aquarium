@@ -1,9 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { createStreamedWorld } from './streamedWorld'
 import type { StreamedWorldIntent } from './streamedWorld'
+import { mireglassBermFaceRowAt, mireglassFenRowAt } from './mireglassTerrain'
 import { worldTileAtGrid } from './worldChunks'
 
 const move = (x: number, z = 0): StreamedWorldIntent => ({ type: 'move', delta: { x, z } })
+const mireglassSeed = 'mireglass-authority'
+const fenRow = mireglassFenRowAt(mireglassSeed, -352)
+const bermRow = mireglassBermFaceRowAt(mireglassSeed, -400)
+const barriers = [
+  { name: 'fen front', from: { x: -352, z: fenRow - 4 }, to: { x: -352, z: fenRow }, code: 'fen_channel' },
+  { name: 'fen west side', from: { x: -452, z: 400 }, to: { x: -448, z: 400 }, code: 'fen_channel' },
+  { name: 'fen east side', from: { x: -252, z: 400 }, to: { x: -256, z: 400 }, code: 'fen_channel' },
+  { name: 'fen back', from: { x: -352, z: 520 }, to: { x: -352, z: 516 }, code: 'fen_channel' },
+  { name: 'fen diagonal', from: { x: -353, z: fenRow - 3 }, to: { x: -351, z: fenRow - 1 }, code: 'fen_channel' },
+  { name: 'slate south', from: { x: -400, z: bermRow - 4 }, to: { x: -400, z: bermRow }, code: 'slate_cliff' },
+  { name: 'slate west', from: { x: -444, z: 460 }, to: { x: -440, z: 460 }, code: 'slate_cliff' },
+  { name: 'slate east', from: { x: -356, z: 460 }, to: { x: -360, z: 460 }, code: 'slate_cliff' },
+  { name: 'slate diagonal', from: { x: -401, z: bermRow - 3 }, to: { x: -399, z: bermRow - 1 }, code: 'slate_cliff' },
+] as const
 
 describe('separate streamed-world authority', () => {
   it('starts at safe Greenway ground and discovers each entered global tile only once', () => {
@@ -40,6 +55,52 @@ describe('separate streamed-world authority', () => {
     expect(runtime.state.discoveredTileIds).toEqual([ground!.id])
     expect(runtime.activeChunkCount()).toBe(9)
     expect(runtime.tileAtWorld(0, 0)).toBeNull()
+  })
+
+  it.each(barriers)('rejects $name in both directions without moving or discovering', ({ from, to, code }) => {
+    for (const [origin, target] of [[from, to], [to, from]]) {
+      const runtime = createStreamedWorld(mireglassSeed, origin)
+      const before = runtime.state
+      const window = runtime.activeChunkCoordinates()
+      const rejected = runtime.advance([move(target.x - origin.x, target.z - origin.z)])
+      expect(rejected.rejections).toEqual([{ intentIndex: 0, intentType: 'move', code }])
+      expect(rejected.events).toEqual([])
+      expect(rejected.state.player.position).toEqual(before.player.position)
+      expect(rejected.state.discoveredTileIds).toEqual(before.discoveredTileIds)
+      expect(runtime.activeChunkCoordinates()).toEqual(window)
+    }
+  })
+
+  it.each([barriers[0], barriers[5]])('does not bypass $name while jumping, and gravity continues', ({ from, to, code }) => {
+    const runtime = createStreamedWorld(mireglassSeed, from)
+    const jumped = runtime.advance([{ type: 'jump' }])
+    const rejected = runtime.advance([move(to.x - from.x, to.z - from.z)])
+    expect(rejected.rejections).toEqual([{ intentIndex: 0, intentType: 'move', code }])
+    expect(rejected.events).toEqual([])
+    expect(rejected.state.player.position.x).toBe(from.x)
+    expect(rejected.state.player.position.z).toBe(from.z)
+    expect(rejected.state.player.position.y).toBeGreaterThan(jumped.state.player.position.y)
+    expect(rejected.state.discoveredTileIds).toEqual(jumped.state.discoveredTileIds)
+  })
+
+  it('keeps the current chunk window when a rejected move crosses a chunk boundary', () => {
+    const runtime = createStreamedWorld(mireglassSeed, { x: -452, z: 400 })
+    const window = runtime.activeChunkCoordinates()
+    expect(window).not.toContainEqual({ chunkX: -6, chunkZ: 6 })
+    expect(runtime.advance([move(4)]).rejections[0]?.code).toBe('fen_channel')
+    expect(runtime.activeChunkCoordinates()).toEqual(window)
+    expect(runtime.tileAtWorld(-384, 400)).toBeNull()
+  })
+
+  it('allows ordinary wetland outside the authored channel', () => {
+    const runtime = createStreamedWorld('mireglass-seed', { x: -372, z: 336 })
+    const wetland = runtime.tileAtWorld(-368, 336)!
+    expect(wetland.terrain).toBe('wetland')
+    const advanced = runtime.advance([move(4)])
+    expect(advanced.rejections).toEqual([])
+    expect(advanced.state.player.position.x).toBe(-368)
+    expect(advanced.state.discoveredTileIds).toContain(wetland.id)
+    expect(advanced.events).toContainEqual({ type: 'tile_discovered', tick: 1, tileId: wetland.id })
   })
 
   it.each([

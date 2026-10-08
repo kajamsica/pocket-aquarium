@@ -1,5 +1,6 @@
 import { createActiveWorldTerrain } from './activeWorldTerrain'
 import type { ReadonlyWorldTile } from './activeWorldTerrain'
+import { mireglassMoveBarrier } from './mireglassMovementGate'
 import type { Vec3 } from './types'
 import type { ChunkCoordinate } from './worldChunks'
 
@@ -33,7 +34,7 @@ export type StreamedWorldEvent =
 export interface StreamedWorldRejection {
   intentIndex: number
   intentType: StreamedWorldIntent['type']
-  code: 'invalid_value' | 'out_of_bounds' | 'terrain_missing' | 'airborne'
+  code: 'invalid_value' | 'out_of_bounds' | 'terrain_missing' | 'airborne' | 'fen_channel' | 'slate_cliff'
 }
 
 export interface StreamedWorldAdvanceResult {
@@ -94,6 +95,11 @@ export function createStreamedWorld(seed: string, start: { x: number; z: number 
           }
           const x = player.position.x + dx
           const z = player.position.z + dz
+          const barrier = mireglassMoveBarrier(normalizedSeed, player.position, { x, z })
+          if (barrier) {
+            reject(index, intent, barrier)
+            return
+          }
           try { terrain.activate({ x, z }) } catch (error) {
             if (!(error instanceof RangeError)) throw error
             reject(index, intent, 'out_of_bounds')

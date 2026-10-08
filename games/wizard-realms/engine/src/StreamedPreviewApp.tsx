@@ -35,6 +35,8 @@ const REJECTION_TEXT: Readonly<Record<StreamedWorldRejection['code'], string>> =
   terrain_missing: 'No active terrain there yet.',
   airborne: 'You are already in the air.',
   invalid_value: 'That movement was rejected.',
+  fen_channel: 'The fen channel needs a built bridge.',
+  slate_cliff: 'The slate rise needs a built ladder.',
 }
 
 const PREVIEW_STYLES = `
