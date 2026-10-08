@@ -114,6 +114,8 @@ async function inspectUnderLock(storage: Pick<Storage, 'getItem'>, v8: V8Store, 
     start: { state: head!.state, saveRevision: head!.saveRevision, sourceReceipt } })
 }
 
+export { inspectUnderLock as inspectPublicV11UnderLock }
+
 export function inspectPublicV11(storage: Pick<Storage, 'getItem'>, locks: PublicV7LockProvider | undefined,
   v8: V8Store, v9: V9Store, v10: V10Store, v11: V11Store): Promise<PublicV11Operation<PublicV11Inspection>> {
   return withLock(locks, async () => {
