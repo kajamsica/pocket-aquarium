@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { intentForView, objectiveFor, retainOpenStoreId } from './App'
+import { eventText as greenwayEventText, intentForView, objectiveFor, retainOpenStoreId } from './App'
 import { mireglassActionChoices, mireglassNearestInteractChoice, mireglassNextObjective } from './MireglassPlayableApp'
 import { publicWorldViewProjection } from './PublicWorldView'
 import { streamedControlIntents } from './StreamedPreviewApp'
@@ -368,7 +368,8 @@ export function PublicWizardApp() {
           ? retainOpenStoreId(greenwayForPublicView(result.state), openStoreRef.current) : null
         openStoreRef.current = nextStore; setOpenStoreId(nextStore)
         const texts = [...result.events.filter((event) => event.type !== 'player_moved' && event.type !== 'player_looked')
-          .map((event) => eventText(event.type)), ...result.rejections.map((rejection) => rejection.message)]
+          .map((event) => event.type === 'trade_listing_sold' ? greenwayEventText(event) : eventText(event.type)),
+          ...result.rejections.map((rejection) => rejection.message)]
         if (texts.length) setMessages((current) => appendMessages(current, texts))
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
           || event.type === 'tile_discovered' || event.type === 'player_jumped')) travelDirty.current = true

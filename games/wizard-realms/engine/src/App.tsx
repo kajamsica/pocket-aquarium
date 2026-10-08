@@ -248,7 +248,7 @@ function itemAmountName(itemId: ItemId, quantity: number) {
   return itemId === 'logs' && quantity === 1 ? 'Greenway log' : ITEM_NAMES[itemId]
 }
 
-function eventText(event: WizardEvent): string {
+export function eventText(event: WizardEvent): string {
   switch (event.type) {
     case 'resource_damaged': return 'The tree shudders under your axe.'
     case 'resource_harvested': return `Gathered ${event.quantity} ${itemAmountName(event.itemId, event.quantity)}.`
@@ -266,6 +266,7 @@ function eventText(event: WizardEvent): string {
     case 'skill_xp_gained': return `Gained ${event.xp} ${event.skillId} XP.`
     case 'trade_listing_created': return `Listed ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} for trade.`
     case 'trade_listing_cancelled': return `Returned ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} to your backpack.`
+    case 'trade_listing_sold': return `A market buyer paid ${event.totalPrice}g for ${event.quantity} ${itemAmountName(event.itemId, event.quantity)}.`
     case 'player_jumped': return 'You spring over the trail.'
     case 'route_built': return `Built ${event.routeId === 'greenway_ladder' ? 'the Greenway ladder' : 'the Highland bridge'} for ${event.logCost} logs.`
     case 'route_used': return 'You cross the completed route.'

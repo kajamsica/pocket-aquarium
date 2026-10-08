@@ -7,7 +7,7 @@ import { routeBuildOptions } from './domain/routeSites'
 import { EQUIPMENT_SLOTS, WizardHud } from './view/WizardHud'
 import { WizardMap } from './view/WizardMap'
 import App, {
-  IDLE_CLOCK, MAX_CATCH_UP_STEPS, OBJECTIVE_STYLES, PIVOT_RADIANS_PER_TICK, accumulateElapsed, controlIntents, intentForView,
+  IDLE_CLOCK, MAX_CATCH_UP_STEPS, OBJECTIVE_STYLES, PIVOT_RADIANS_PER_TICK, accumulateElapsed, controlIntents, eventText, intentForView,
   loadWorld, movementIntent, objectiveFor, persistWorld, recoverablePriorSaveKey, recoverPriorSavedWorld, resetSavedWorld, retainOpenStoreId, runBatch, stepBatch, toViewProjection, worldProfileForSearch, type BatchSink,
 } from './App'
 
@@ -31,6 +31,11 @@ const withFirstRegionCompleted = (state: WizardWorldState) => {
 }
 
 describe('Wizard view adapter', () => {
+  it('announces completed market sales with the actual proceeds', () => {
+    expect(eventText({ type: 'trade_listing_sold', slotIndex: 0, itemId: 'logs', quantity: 2,
+      unitPrice: 3, totalPrice: 6, sequence: 4, tick: 600 }))
+      .toBe('A market buyer paid 6g for 2 Greenway logs.')
+  })
   it('projects all world surfaces without mutating authoritative state', () => {
     const state = createWizardWorld('greenway-alpha')
     const before = JSON.stringify(state)
