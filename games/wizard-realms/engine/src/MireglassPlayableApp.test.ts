@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld } from './domain/generation'
+import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { createMireglassWorld } from './domain/mireglassWorld'
 import { MIREGLASS_SAVE_KEY } from './domain/mireglassPersistence'
 import {
   bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassOutpostQuote,
-  mireglassNearestInteractChoice, mireglassNextObjective, mireglassViewProjection,
+  mireglassApproachTerrain, mireglassNearestInteractChoice, mireglassNextObjective, mireglassViewProjection,
   saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
 
@@ -19,6 +20,32 @@ function memoryStorage() {
 }
 
 describe('Mireglass playable dev adapter', () => {
+  it('dresses only dry approach cells with joining path segments', () => {
+    const positions = [[0, 0], [4, 0], [4, 4], [12, 0], [8, 8], [60, 60]] as const
+    const cells = positions.map(([x, z], index) => ({ id: `cell-${index}`,
+      position: [x, 0, z] as const, size: [4, 4] as const, height: 2, climate: 'temperate_forest' }))
+    const tiles = cells.map((cell, index) => ({ id: cell.id, terrain: index === 4 ? 'wetland' : 'loam' }))
+    const trail = [{ x: 0, z: 0 }, { x: 4, z: 0 }, { x: 4, z: 4 }]
+    const dressed = mireglassApproachTerrain(cells, tiles, trail)
+    expect(dressed[0]).toMatchObject({ mireglassApproach: true,
+      mireglassTrailSegment: { from: [0, 0], to: [2, 0] } })
+    expect(dressed[1]).toMatchObject({ mireglassApproach: true,
+      mireglassTrailSegment: { from: [2, 0], to: [4, 2] } })
+    expect(dressed[2]).toMatchObject({ mireglassApproach: true })
+    expect(dressed[2].mireglassTrailSegment?.from).toEqual(dressed[1].mireglassTrailSegment?.to)
+    expect(dressed[3]).not.toHaveProperty('mireglassTrailSegment')
+    expect(dressed[4]).toBe(cells[4])
+    expect(dressed[5]).toBe(cells[5])
+    expect(mireglassApproachTerrain(cells, tiles, trail)).toBe(dressed)
+  })
+
+  it('uses the validated dry trail between its actual world anchors', () => {
+    const trail = mireglassApproachTrail(seed)
+    const anchors = mireglassAnchors(seed)
+    expect(trail[0]).toEqual(anchors.fringeMarker.tile.center)
+    expect(trail.at(-1)).toEqual(anchors.salvager.tile.center)
+  })
+
   it('starts at the frontier with ordinary items, no learned spell, and no automatic progress', () => {
     const world = createMireglassDevWorld(seed)
     const marker = mireglassAnchors(seed).fringeMarker.tile.center
@@ -95,6 +122,7 @@ describe('Mireglass playable dev adapter', () => {
     const anchors = mireglassAnchors(seed)
     const markerWorld = createMireglassWorld(seed, undefined, anchors.fringeMarker.tile.center)
     const marker = mireglassViewProjection(markerWorld, markerWorld.state, [], null)
+    expect(marker.terrain.some((cell) => cell.mireglassTrailSegment)).toBe(true)
     expect(marker.landmarks).toContainEqual({
       id: anchors.fringeMarker.id, kind: 'frontier-marker',
       position: [anchors.fringeMarker.tile.center.x, anchors.fringeMarker.tile.center.y, anchors.fringeMarker.tile.center.z],

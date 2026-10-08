@@ -29,6 +29,41 @@ describe('Mireglass terrain detail', () => {
     expect(mireglassDetailFor({ ...visible[0], mireglassTerrain: undefined }))
       .toMatchObject({ water: false, reeds: false, peat: false, stone: false })
   })
+
+  it('keeps legacy cells bare and gives tagged approach cells deterministic sparse ground detail', () => {
+    const base = { id: 'approach-0-0', position: [0, 0, 0] as const, size: [4, 4] as const,
+      height: 2, climate: 'temperate_forest' }
+    expect(mireglassDetailFor(base)).toMatchObject({ brush: false, pebbles: false, trail: false })
+    const approach = Array.from({ length: 576 }, (_, index) => mireglassDetailFor({ ...base,
+      id: `approach-${index % 24}-${Math.floor(index / 24)}`, mireglassApproach: true }))
+    expect(approach.filter((detail) => detail.brush).length).toBeGreaterThan(576 * 0.52)
+    expect(approach.filter((detail) => detail.brush).length).toBeLessThan(576 * 0.72)
+    expect(approach.filter((detail) => detail.pebbles).length).toBeGreaterThan(576 * 0.42)
+    expect(approach.filter((detail) => detail.pebbles).length).toBeLessThan(576 * 0.62)
+    expect(approach.filter((detail) => detail.soil).length).toBeGreaterThan(576 * 0.32)
+    expect(approach.filter((detail) => detail.soil).length).toBeLessThan(576 * 0.52)
+    expect(approach.every((detail) => !detail.trail)).toBe(true)
+    expect(mireglassDetailFor({ ...base, mireglassApproach: true }))
+      .toEqual(mireglassDetailFor({ ...base, mireglassApproach: true }))
+  })
+
+  it('joins clipped cell segments into one narrow diagonal and places scrub beside it', () => {
+    const base = { id: 'diagonal-trail', size: [4, 4] as const, height: 2,
+      climate: 'temperate_forest', mireglassApproach: true }
+    const first = mireglassDetailFor({ ...base, position: [98, 0, 198] as const,
+      mireglassTrailSegment: { from: [96, 196] as const, to: [100, 200] as const } })
+    const second = mireglassDetailFor({ ...base, id: 'next-trail', position: [102, 0, 202] as const,
+      mireglassTrailSegment: { from: [100, 200] as const, to: [104, 204] as const } })
+    expect(first).toMatchObject({ trail: true, trailYaw: Math.PI / 4, trailLength: Math.sqrt(32), trailX: 0, trailZ: 0 })
+    expect(second).toMatchObject({ trail: true, trailYaw: Math.PI / 4, trailLength: Math.sqrt(32), trailX: 0, trailZ: 0 })
+    const end = [98 + first.trailX + Math.sin(first.trailYaw) * first.trailLength / 2,
+      198 + first.trailZ + Math.cos(first.trailYaw) * first.trailLength / 2]
+    const start = [102 + second.trailX - Math.sin(second.trailYaw) * second.trailLength / 2,
+      202 + second.trailZ - Math.cos(second.trailYaw) * second.trailLength / 2]
+    expect(end[0]).toBeCloseTo(start[0])
+    expect(end[1]).toBeCloseTo(start[1])
+    expect(Math.hypot(first.brushX - first.trailX, first.brushZ - first.trailZ)).toBeCloseTo(1.18)
+  })
 })
 
 describe('avatar gear projection', () => {
@@ -156,6 +191,10 @@ describe('shop-aware follow camera', () => {
     expect(camera.toArray().every(Number.isFinite)).toBe(true)
     expect(camera.distanceTo(inside)).toBeGreaterThan(0.5)
     expect(camera.distanceTo(inside)).toBeLessThan(3)
+    // Before the safety offset, this pose left the eye within 9 cm of a wooden frame post.
+    const distanceToBodyFace = Math.min(1.6 - Math.abs(camera.x - stores[0].position[0]),
+      1.1 - Math.abs(camera.z - stores[0].position[2]))
+    expect(distanceToBodyFace).toBeGreaterThan(0.4)
     expect(storeSafeCameraPosition(inside, camera, stores, null, 0.016).distanceTo(camera)).toBeLessThan(1e-6)
 
     const nearWall = new THREE.Vector3(-0.4, 1.35, 2)

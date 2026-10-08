@@ -24,6 +24,10 @@ export interface WizardTerrainCell {
   color?: string
   /** Visual-only surface tag in the authored Mireglass core and adjacent wetland rim. */
   mireglassTerrain?: TerrainId
+  /** Display-only dry approach dressing; never changes tile collision or movement. */
+  mireglassApproach?: boolean
+  /** Display-only world [x,z] centerline clipped to this cell; adjacent endpoints meet. */
+  mireglassTrailSegment?: { from: Vec2; to: Vec2 }
 }
 
 export interface WizardResourceNode {

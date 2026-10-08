@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
+import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
 import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES, mireglassGlowRevealableTileIds } from './domain/mireglassExpedition'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
@@ -9,7 +10,7 @@ import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorl
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
-import type { EquipmentSlot, WizardItemStack, WizardLandmark } from './view/contracts'
+import type { EquipmentSlot, WizardItemStack, WizardLandmark, WizardTerrainCell } from './view/contracts'
 
 const SEED = 'greenway-alpha'
 const STEP_MS = 50
@@ -56,6 +57,61 @@ const stackFor = (itemId: MireglassItemId, quantity: number): WizardItemStack =>
 })
 const routeName = (kind: 'bridge' | 'ladder') => kind === 'bridge' ? 'Fen bridge' : 'Slate ladder'
 const pointText = (point: { x: number; z: number }) => `x ${point.x.toFixed(0)}, z ${point.z.toFixed(0)}`
+type TrailPoint = { x: number; z: number }
+type TrailSegment = { from: readonly [number, number]; to: readonly [number, number] }
+const approachTerrainCache = new WeakMap<readonly WizardTerrainCell[], {
+  trail: readonly TrailPoint[]; dressed: readonly WizardTerrainCell[]
+}>()
+const approachLayoutCache = new WeakMap<readonly TrailPoint[], {
+  near: ReadonlySet<string>; segments: ReadonlyMap<string, TrailSegment>
+}>()
+const cellKey = (x: number, z: number) => `${x}:${z}`
+const midpoint = (left: TrailPoint, right: TrailPoint): readonly [number, number] =>
+  [(left.x + right.x) / 2, (left.z + right.z) / 2]
+
+function approachLayout(trail: readonly TrailPoint[]) {
+  const cached = approachLayoutCache.get(trail)
+  if (cached) return cached
+  const near = new Set<string>()
+  const segments = new Map<string, TrailSegment>()
+  for (let index = 0; index < trail.length; index += 1) {
+    const center = trail[index]
+    const from = index === 0 ? [center.x, center.z] as const : midpoint(trail[index - 1], center)
+    const to = index === trail.length - 1 ? [center.x, center.z] as const : midpoint(center, trail[index + 1])
+    segments.set(cellKey(center.x, center.z), { from, to })
+    for (let dx = -4; dx <= 4; dx += 1) for (let dz = -4; dz <= 4; dz += 1) {
+      if (dx * dx + dz * dz <= 20) near.add(cellKey(center.x + dx * 4, center.z + dz * 4))
+    }
+  }
+  const layout = { near, segments }
+  approachLayoutCache.set(trail, layout)
+  return layout
+}
+
+/** Dress only dry cells on the canonical marker-to-outpost approach; this has no authority or collision effect. */
+export function mireglassApproachTerrain(
+  cells: readonly WizardTerrainCell[],
+  worldTiles: readonly { id: string; terrain: string }[],
+  trail: readonly TrailPoint[],
+): readonly WizardTerrainCell[] {
+  const cached = approachTerrainCache.get(cells)
+  if (cached?.trail === trail) return cached.dressed
+  const layout = approachLayout(trail)
+  const dryIds = new Set(worldTiles.filter((tile) => tile.terrain !== 'wetland').map((tile) => tile.id))
+  const dressed = cells.map((cell) => {
+    if (!dryIds.has(cell.id)) return cell
+    const x = cell.position[0]
+    const z = cell.position[2]
+    const key = cellKey(x, z)
+    if (!layout.near.has(key)) return cell
+    const trailSegment = layout.segments.get(key)
+    return { ...cell, mireglassApproach: true,
+      ...(trailSegment ? { mireglassTrailSegment: trailSegment } : {}) }
+  })
+  approachTerrainCache.set(cells, { trail, dressed })
+  return dressed
+}
+
 export function bearingText(from: { x: number; z: number }, to: { x: number; z: number }): string {
   const dx = to.x - from.x
   const dz = to.z - from.z
@@ -195,6 +251,8 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   const activeIds = new Set(runtime.activeTiles().map((tile) => tile.id))
   const discovered = new Set(state.discoveredTileIds)
   const anchors = mireglassAnchors(state.seed)
+  const approachTerrain = mireglassApproachTerrain(streamedView.terrain, runtime.activeTiles(),
+    mireglassApproachTrail(state.seed))
   const trees = mireglassResources(state.seed)
   const sites = mireglassRouteSites(state.seed)
   const routeFor = (kind: 'bridge' | 'ladder') => sites.find((site) => site.id === state.expedition.builtRoutes[kind])
@@ -244,6 +302,7 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
   return {
     ...streamedView,
+    terrain: approachTerrain,
     map: { ...streamedView.map, title: 'Mireglass expedition (v6)',
       legend: '▲ you · ◇ route site · ✓ built route · S outpost · • timber · ? undiscovered',
       tiles: streamedView.map.tiles.map((tile) => ({ ...tile,

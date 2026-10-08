@@ -40,6 +40,11 @@ const MIREGLASS_WATER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#417b8
 const MIREGLASS_REED_MATERIAL = new THREE.MeshStandardMaterial({ color: '#849568', roughness: 0.95 })
 const MIREGLASS_PEAT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#433c34', roughness: 1 })
 const MIREGLASS_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a4aaa0', roughness: 0.94 })
+const APPROACH_BRUSH_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6a8253', roughness: 1, flatShading: true })
+const APPROACH_PEBBLE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a89e82', roughness: 0.98, flatShading: true })
+const APPROACH_TRAIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#aa9672', roughness: 1, flatShading: true })
+const APPROACH_SOIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6c7255', roughness: 1, flatShading: true })
+const APPROACH_GROUND_COLOR = new THREE.Color('#687a59')
 const MARKER_STONE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b9aa89', roughness: 0.95, flatShading: true })
 const MARKER_RUNE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bde4d0', emissive: '#4d9b82', emissiveIntensity: 0.9, roughness: 0.5 })
 const MARKER_DORMANT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#787d69', roughness: 0.9 })
@@ -51,7 +56,9 @@ const CACHE_PIT_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2e302a', ro
 const ALDER_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.18, 0.34, 3.4, 7)
 const CACHE_PIT_GEOMETRY = new THREE.CircleGeometry(0.72, 12)
 const WADER_SHAFT_GEOMETRY = new THREE.CylinderGeometry(0.13, 0.15, 0.5, 6)
-const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, x: 0, z: 0, rotation: 0 } as const
+const NO_MIREGLASS_DETAIL = { water: false, reeds: false, peat: false, stone: false, brush: false, pebbles: false,
+  soil: false, trail: false, trailYaw: 0, trailLength: 0, trailX: 0, trailZ: 0,
+  brushX: 0, brushZ: 0, x: 0, z: 0, rotation: 0 } as const
 
 /** Side/soil colour and surface roughness per biome; the projection colour stays the authoritative top tone. */
 const TERRAIN_SURFACE: Record<string, { side: string; roughness: number }> = {
@@ -171,7 +178,8 @@ export function storeSafeCameraPosition(
   const hit = firstStoreCameraHit(target, next, stores)
   if (hit === null) return next
   const distance = target.distanceTo(next)
-  return target.clone().lerp(next, Math.max(0, hit - 0.12 / Math.max(distance, 0.12)))
+  // The frame and near plane still fill part of the view when the eye is only 12 cm from the shop bound.
+  return target.clone().lerp(next, Math.max(0, hit - 0.45 / Math.max(distance, 0.45)))
 }
 
 const DESKTOP_CAMERA = { focusHeight: 1.35, eyeRise: 1.2, distance: 6.4, pitchScale: 1 } as const
@@ -198,13 +206,30 @@ function hashUnit(id: string, salt: number) {
 /** Stable, sparse ground detail. It is scenery only and has no interaction target. */
 export function mireglassDetailFor(cell: WizardTerrainCell) {
   const terrain = cell.mireglassTerrain
-  if (!terrain) return NO_MIREGLASS_DETAIL
+  if (!terrain && !cell.mireglassApproach && !cell.mireglassTrailSegment) return NO_MIREGLASS_DETAIL
   const roll = hashUnit(cell.id, 7)
+  const segment = cell.mireglassTrailSegment
+  const dx = segment ? segment.to[0] - segment.from[0] : 0
+  const dz = segment ? segment.to[1] - segment.from[1] : 0
+  const trailLength = Math.hypot(dx, dz)
+  const trail = !!segment && Number.isFinite(trailLength) && trailLength > 0.01
+  const trailYaw = trail ? Math.atan2(dx, dz) : 0
+  const trailX = trail ? (segment.from[0] + segment.to[0]) / 2 - cell.position[0] : 0
+  const trailZ = trail ? (segment.from[1] + segment.to[1]) / 2 - cell.position[2] : 0
+  const side = hashUnit(cell.id, 16) < 0.5 ? -1 : 1
+  const approachX = (hashUnit(cell.id, 14) - 0.5) * 2.6
+  const approachZ = (hashUnit(cell.id, 15) - 0.5) * 2.6
   return {
     water: terrain === 'wetland' && roll < 0.72,
     reeds: terrain === 'wetland' && roll >= 0.22 && roll < 0.58,
     peat: terrain === 'loam' && roll < 0.38,
     stone: terrain === 'rocky' && roll < 0.6,
+    brush: !!cell.mireglassApproach && hashUnit(cell.id, 11) < 0.62,
+    pebbles: !!cell.mireglassApproach && hashUnit(cell.id, 12) < 0.52,
+    soil: !!cell.mireglassApproach && hashUnit(cell.id, 13) < 0.42,
+    trail, trailYaw, trailLength, trailX, trailZ,
+    brushX: trail ? trailX + side * Math.cos(trailYaw) * 1.18 : approachX,
+    brushZ: trail ? trailZ - side * Math.sin(trailYaw) * 1.18 : approachZ,
     x: (hashUnit(cell.id, 8) - 0.5) * 1.3,
     z: (hashUnit(cell.id, 9) - 0.5) * 1.3,
     rotation: hashUnit(cell.id, 10) * Math.PI,
@@ -385,17 +410,22 @@ function WizardAvatar({ pose, equipment }: { pose: PresentationPose; equipment: 
 
 function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
   const surface = TERRAIN_SURFACE[cell.climate] ?? TERRAIN_SURFACE.temperate_forest
-  const detail = useMemo(() => mireglassDetailFor(cell), [cell.id, cell.mireglassTerrain])
+  const detail = useMemo(() => mireglassDetailFor(cell), [cell.id, cell.mireglassTerrain,
+    cell.mireglassApproach, cell.mireglassTrailSegment])
   const { top, side, cap } = useMemo(() => {
     const jitter = hashUnit(cell.id, 1) - 0.5
     // Higher cells catch more sun, so lift them a touch; per-cell jitter breaks the uniform grid read.
     const lift = (cell.height - 2) * 0.02
+    const top = new THREE.Color(cell.color ?? '#56824b')
+    if (cell.mireglassApproach) top.lerp(APPROACH_GROUND_COLOR, 0.42)
     return {
-      top: new THREE.Color(cell.color ?? '#56824b').offsetHSL(jitter * 0.03, (hashUnit(cell.id, 2) - 0.5) * 0.08, jitter * 0.05 + lift),
+      top: top.offsetHSL(jitter * (cell.mireglassApproach ? 0.01 : 0.03),
+        (hashUnit(cell.id, 2) - 0.5) * (cell.mireglassApproach ? 0.03 : 0.08),
+        jitter * (cell.mireglassApproach ? 0.015 : 0.05) + lift),
       side: new THREE.Color(surface.side).offsetHSL(0, 0, jitter * 0.04),
       cap: 0.1 + hashUnit(cell.id, 3) * 0.1,
     }
-  }, [cell.id, cell.color, cell.height, surface.side])
+  }, [cell.id, cell.color, cell.height, cell.mireglassApproach, surface.side])
   const [x, y, z] = cell.position
   const [width, depth] = cell.size
   return (
@@ -415,6 +445,21 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
       </group>}
       {detail.peat && <mesh geometry={UNIT_BOX} material={MIREGLASS_PEAT_MATERIAL} position={[detail.x, y + 0.01, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.8, 0.02, 1.25]} />}
       {detail.stone && <mesh geometry={ROCK_GEOMETRY} material={MIREGLASS_STONE_MATERIAL} position={[detail.x, y + 0.1, detail.z]} rotation={[0, detail.rotation, 0]} scale={[0.55, 0.16, 0.42]} />}
+      {detail.soil && <mesh geometry={ROCK_GEOMETRY} material={APPROACH_SOIL_MATERIAL}
+        position={[detail.x, y + 0.012, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.05, 0.025, 0.8]} />}
+      {detail.trail && <mesh geometry={UNIT_BOX} material={APPROACH_TRAIL_MATERIAL}
+        position={[detail.trailX, y + 0.021, detail.trailZ]} rotation={[0, detail.trailYaw, 0]}
+        scale={[1.1, 0.024, detail.trailLength + 0.04]} receiveShadow />}
+      {detail.brush && <group position={[detail.brushX, y, detail.brushZ]} rotation={[0, detail.rotation, 0]}>
+        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[-0.12, 0.23, 0]} rotation={[0, 0, -0.22]} scale={[0.035, 0.46, 0.035]} />
+        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.11, 0.19, 0.08]} rotation={[0, 0, 0.24]} scale={[0.035, 0.38, 0.035]} />
+        <mesh geometry={LEAF_GEOMETRY} material={APPROACH_BRUSH_MATERIAL} position={[-0.19, 0.39, 0]} scale={[0.23, 0.12, 0.2]} />
+        <mesh geometry={LEAF_GEOMETRY} material={APPROACH_BRUSH_MATERIAL} position={[0.18, 0.31, 0.08]} scale={[0.21, 0.11, 0.18]} />
+      </group>}
+      {detail.pebbles && <group position={[detail.x + 0.68, y, detail.z - 0.52]} rotation={[0, detail.rotation, 0]}>
+        <mesh geometry={ROCK_GEOMETRY} material={APPROACH_PEBBLE_MATERIAL} position={[-0.16, 0.055, 0]} scale={[0.27, 0.09, 0.2]} />
+        <mesh geometry={ROCK_GEOMETRY} material={APPROACH_PEBBLE_MATERIAL} position={[0.17, 0.04, 0.08]} scale={[0.18, 0.07, 0.16]} />
+      </group>}
     </group>
   )
 }
