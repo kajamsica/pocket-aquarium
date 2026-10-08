@@ -150,6 +150,10 @@ export interface WizardViewProjection {
   map: {
     tiles: readonly WizardMapTile[]
     player: { gridX: number; gridZ: number; yaw: number }
+    /** Atlas heading; omitted means the Greenway atlas. */
+    title?: string
+    /** Atlas glyph legend; omitted means the full Greenway legend. */
+    legend?: string
   }
   stores: readonly WizardStore[]
   openStoreId: string | null

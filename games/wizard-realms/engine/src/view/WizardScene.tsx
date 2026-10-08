@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 import { visibleTerrainCells } from './visibleTerrain'
@@ -177,7 +177,9 @@ function hashUnit(id: string, salt: number) {
   return (hash >>> 0) / 4294967296
 }
 
-function PresentationPoseDriver({ player, pose }: { player: WizardViewProjection['player']; pose: PresentationPose }) {
+function PresentationPoseDriver({ player, pose, worldSupport }: {
+  player: WizardViewProjection['player']; pose: PresentationPose; worldSupport: RefObject<THREE.Group | null>
+}) {
   const target = useMemo(() => new THREE.Vector3(), [])
   useFrame((_, delta) => {
     target.set(player.position[0], player.position[1], player.position[2])
@@ -185,15 +187,16 @@ function PresentationPoseDriver({ player, pose }: { player: WizardViewProjection
       pose.position.copy(target)
       pose.yaw = player.yaw
       pose.speed = 0
-      return
+    } else {
+      const previousX = pose.position.x
+      const previousZ = pose.position.z
+      pose.position.lerp(target, damping(POSITION_DAMPING_PER_S, delta))
+      pose.yaw += shortestArc(pose.yaw, player.yaw) * damping(YAW_DAMPING_PER_S, delta)
+      const realizedSpeed = delta > 0 ? Math.hypot(pose.position.x - previousX, pose.position.z - previousZ) / delta : 0
+      pose.speed += (realizedSpeed - pose.speed) * damping(SPEED_DAMPING_PER_S, delta)
+      pose.phase = (pose.phase + pose.speed / STRIDE_LENGTH_M * Math.PI * 2 * delta) % (Math.PI * 2)
     }
-    const previousX = pose.position.x
-    const previousZ = pose.position.z
-    pose.position.lerp(target, damping(POSITION_DAMPING_PER_S, delta))
-    pose.yaw += shortestArc(pose.yaw, player.yaw) * damping(YAW_DAMPING_PER_S, delta)
-    const realizedSpeed = delta > 0 ? Math.hypot(pose.position.x - previousX, pose.position.z - previousZ) / delta : 0
-    pose.speed += (realizedSpeed - pose.speed) * damping(SPEED_DAMPING_PER_S, delta)
-    pose.phase = (pose.phase + pose.speed / STRIDE_LENGTH_M * Math.PI * 2 * delta) % (Math.PI * 2)
+    worldSupport.current?.position.set(pose.position.x, 0, pose.position.z)
   }, -1)
   return null
 }
@@ -574,6 +577,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   const [pose] = useState<PresentationPose>(() => ({
     position: new THREE.Vector3(...projection.player.position), yaw: projection.player.yaw, speed: 0, phase: 0,
   }))
+  const worldSupport = useRef<THREE.Group>(null)
+  const sunTarget = useMemo(() => new THREE.Object3D(), [])
   const visibleRoutes = constructionVisuals(projection.routes, projection.buildSites, projection.selectedBuildSiteId)
   return (
     <Canvas
@@ -594,30 +599,34 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {/* Light hierarchy: warm sun key with shadows, sky/ground hemisphere fill, cool rim from the shaded side. */}
       <hemisphereLight args={['#cde4ff', '#4f6a33', 0.85]} />
       <ambientLight intensity={0.22} color="#dfe8ff" />
-      <directionalLight
-        position={[18, 30, 12]}
-        intensity={2.9}
-        color="#ffe6b8"
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-radius={2.5}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.04}
-        shadow-camera-near={4}
-        shadow-camera-far={90}
-        shadow-camera-left={-26}
-        shadow-camera-right={26}
-        shadow-camera-top={26}
-        shadow-camera-bottom={-26}
-      />
-      <directionalLight position={[-16, 10, -20]} intensity={0.7} color="#9ec1ff" />
-      <PresentationPoseDriver player={projection.player} pose={pose} />
+      <group ref={worldSupport} position={[pose.position.x, 0, pose.position.z]}>
+        <primitive object={sunTarget} />
+        <directionalLight
+          position={[18, 30, 12]}
+          target={sunTarget}
+          intensity={2.9}
+          color="#ffe6b8"
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+          shadow-radius={2.5}
+          shadow-bias={-0.0004}
+          shadow-normalBias={0.04}
+          shadow-camera-near={4}
+          shadow-camera-far={90}
+          shadow-camera-left={-26}
+          shadow-camera-right={26}
+          shadow-camera-top={26}
+          shadow-camera-bottom={-26}
+        />
+        <directionalLight position={[-16, 10, -20]} target={sunTarget} intensity={0.7} color="#9ec1ff" />
+        {/* Bedrock meadow under the tile columns so the world reads as raised land rather than islands over void. */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.72, 0]} receiveShadow>
+          <planeGeometry args={[320, 320]} />
+          <meshStandardMaterial color={BEDROCK_COLOR} roughness={1} />
+        </mesh>
+      </group>
+      <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport} />
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
-      {/* Bedrock meadow under the tile columns so the world reads as raised land rather than islands over void. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.72, 0]} receiveShadow>
-        <planeGeometry args={[320, 320]} />
-        <meshStandardMaterial color={BEDROCK_COLOR} roughness={1} />
-      </mesh>
       {visibleTerrainCells(projection.terrain, projection.player.position).map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} />)}

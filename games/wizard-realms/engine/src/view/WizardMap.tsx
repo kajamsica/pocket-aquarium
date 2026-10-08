@@ -67,10 +67,10 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
       {!open && <span className="wr-map-compact" aria-hidden="true"><MapGrid projection={projection} compact /></span>}
     </button>
     {open && <div className="wr-map-backdrop"><section id="wizard-world-map" className="wr-map-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-world-map-title">
-      <header><div><small>NORTH-UP EXPLORATION MAP</small><h2 id="wizard-world-map-title">Greenway atlas</h2></div><button ref={closeRef} onClick={onToggle} aria-label="Close map">×</button></header>
+      <header><div><small>NORTH-UP EXPLORATION MAP</small><h2 id="wizard-world-map-title">{projection.map.title ?? 'Greenway atlas'}</h2></div><button ref={closeRef} onClick={onToggle} aria-label="Close map">×</button></header>
       <MapGrid projection={projection} />
       <RouteKey routes={projection.routes} buildSites={projection.buildSites} selectedBuildSiteId={projection.selectedBuildSiteId} onSelect={(siteId) => { onIntent({ type: 'build-site.select', siteId }); onToggle() }} />
-      <p>▲ you · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored</p>
+      <p>{projection.map.legend ?? '▲ you · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}</p>
     </section></div>}
   </>
 }

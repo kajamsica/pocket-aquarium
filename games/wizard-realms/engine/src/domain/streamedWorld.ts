@@ -58,17 +58,20 @@ function freezeState(state: StreamedWorldState): StreamedWorldState {
   return Object.freeze(state)
 }
 
-/** Separate streamed authority. Its terrain cache never enters the serializable state. */
-export function createStreamedWorld(seed: string): StreamedWorldRuntime {
+/**
+ * Separate streamed authority. Its terrain cache never enters the serializable state.
+ * An optional start is validated through active terrain; a non-finite or out-of-world start throws a RangeError.
+ */
+export function createStreamedWorld(seed: string, start: { x: number; z: number } = { x: 0, z: 0 }): StreamedWorldRuntime {
   const normalizedSeed = seed || 'wizard-realms'
   const terrain = createActiveWorldTerrain(normalizedSeed)
-  terrain.activate({ x: 0, z: 0 })
-  const start = terrain.tileAtWorld(0, 0)
-  if (!start) throw new Error('Missing starting terrain.')
+  terrain.activate(start)
+  const startTile = terrain.tileAtWorld(start.x, start.z)
+  if (!startTile) throw new Error('Missing starting terrain.')
   let state = freezeState({
     seed: normalizedSeed, tick: 0,
-    player: { position: { x: 0, y: start.center.y, z: 0 }, yaw: 0, pitch: 0, verticalVelocity: 0 },
-    discoveredTileIds: [start.id],
+    player: { position: { x: start.x, y: startTile.center.y, z: start.z }, yaw: 0, pitch: 0, verticalVelocity: 0 },
+    discoveredTileIds: [startTile.id],
   })
 
   return {

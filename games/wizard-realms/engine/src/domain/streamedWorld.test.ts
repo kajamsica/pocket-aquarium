@@ -26,6 +26,31 @@ describe('separate streamed-world authority', () => {
     expect(JSON.stringify(runtime)).not.toMatch(/cache|chunks|terrain/i)
   })
 
+  it('accepts a distant Mireglass start without changing the one-argument default', () => {
+    const seed = 'mireglass-start'
+    const defaultStart = createStreamedWorld(seed)
+    expect(defaultStart.state.player.position.x).toBe(0)
+    expect(defaultStart.state.player.position.z).toBe(0)
+
+    const start = { x: -288, z: 288 }
+    const runtime = createStreamedWorld(seed, start)
+    const ground = runtime.tileAtWorld(start.x, start.z)
+    expect(ground).toEqual(worldTileAtGrid(seed, -72, 72))
+    expect(runtime.state.player.position).toEqual({ ...start, y: ground!.center.y })
+    expect(runtime.state.discoveredTileIds).toEqual([ground!.id])
+    expect(runtime.activeChunkCount()).toBe(9)
+    expect(runtime.tileAtWorld(0, 0)).toBeNull()
+  })
+
+  it.each([
+    { x: Number.NaN, z: 0 },
+    { x: 0, z: Infinity },
+    { x: 1024, z: 0 },
+    { x: -1028, z: 0 },
+  ])('rejects an invalid start at $x, $z', (start) => {
+    expect(() => createStreamedWorld('invalid-start', start)).toThrow(RangeError)
+  })
+
   it('replays move, look, jump, and rejection ticks deterministically without mutating prior state', () => {
     const left = createStreamedWorld('replay')
     const right = createStreamedWorld('replay')
