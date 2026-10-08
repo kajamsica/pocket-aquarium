@@ -6,6 +6,7 @@ import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terra
 import { canonicalRouteSites, routeBuildOptions } from './routeSites'
 
 const INTERACT_DISTANCE = 3
+const TRADE_SETTLEMENT_TICKS = 600 // A buyer checks the four escrow slots every 30 seconds.
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
 const storeSellPrices: Record<string, Partial<Record<ItemId, number>>> = {
   'store-greenway': { logs: 2, marsh_herb: 3, stone: 1, iron_ore: 4, ancient_relic: 25 },
@@ -15,6 +16,9 @@ export function storeSellUnitPrice(storeId: string, itemId: ItemId): number | nu
   const price = storeSellPrices[storeId]?.[itemId]
   return typeof price === 'number' ? price : null
 }
+// Patient buyers pay at most 150% of the best instant store bid; items without a bid have no demand.
+const tradeDemandCeiling = (itemId: ItemId) => Math.floor(Math.max(0,
+  ...Object.values(storeSellPrices).map((prices) => prices[itemId] ?? 0)) * 3 / 2)
 const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
   woodcutters_axe: ['mainHand'], field_spade: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
@@ -361,7 +365,10 @@ function applyIntent(
   }
 
   if (intent.type === 'create_trade_listing') {
-    if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3 || !Number.isInteger(intent.quantity) || intent.quantity < 1 || !finite(intent.unitPrice) || intent.unitPrice < 1) return fail('invalid_value', 'Trade slot, quantity, and price must be valid.')
+    if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3
+      || !Number.isSafeInteger(intent.quantity) || intent.quantity < 1
+      || !Number.isSafeInteger(intent.unitPrice) || intent.unitPrice < 1
+      || !Number.isSafeInteger(intent.quantity * intent.unitPrice)) return fail('invalid_value', 'Trade slot, quantity, and price must be valid safe integers.')
     const slot = current.player.tradeSlots[intent.slotIndex]
     if (slot.itemId !== null) return fail('trade_slot_unavailable', 'Trade slot is occupied.')
     if (owns(current.player, intent.itemId) < intent.quantity) return fail('not_owned', 'Not enough items to reserve.')
@@ -463,6 +470,20 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
     next.unlockedRecipeIds.push(recipe.id)
     next.unlockedRecipeIds.sort()
     events.push(event(next, tick, { type: 'recipe_unlocked', recipeId: recipe.id }))
+  }
+  if (Number.isSafeInteger(tick) && tick % TRADE_SETTLEMENT_TICKS === 0) {
+    for (const slot of next.player.tradeSlots) {
+      if (!slot.itemId || !Number.isSafeInteger(slot.quantity) || slot.quantity < 1
+        || !Number.isSafeInteger(slot.unitPrice) || slot.unitPrice < 1
+        || slot.unitPrice > tradeDemandCeiling(slot.itemId)) continue
+      const totalPrice = slot.quantity * slot.unitPrice
+      if (!Number.isSafeInteger(totalPrice) || !Number.isSafeInteger(next.player.coins + totalPrice)
+        || !Number.isSafeInteger(next.eventSequence + 1)) continue
+      next.player.coins += totalPrice
+      next.player.tradeSlots[slot.slotIndex] = { slotIndex: slot.slotIndex, itemId: null, quantity: 0, unitPrice: 0 }
+      events.push(event(next, tick, { type: 'trade_listing_sold', slotIndex: slot.slotIndex,
+        itemId: slot.itemId, quantity: slot.quantity, unitPrice: slot.unitPrice, totalPrice }))
+    }
   }
   const ground = terrainHeightAt(next.tiles, next.player.position.x, next.player.position.z)
   if (next.player.position.y > ground || next.player.verticalVelocity > 0) {

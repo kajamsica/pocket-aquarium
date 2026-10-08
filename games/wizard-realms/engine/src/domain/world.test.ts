@@ -608,6 +608,98 @@ describe('Wizard world domain', () => {
     expect(duplicate.state.player.equipment).toMatchObject({ mainHand: 'oak_wand', offHand: null })
   })
 
+  it('settles demanded trade listings after 600 ticks in slot and event order, leaving high asks and no-demand items escrowed', () => {
+    const state = createWizardWorld('market-cycle')
+    state.tick = 598
+    state.player.inventory.push(
+      { itemId: 'logs', quantity: 2 }, { itemId: 'iron_ore', quantity: 1 },
+      { itemId: 'stone', quantity: 1 }, { itemId: 'traveler_tunic', quantity: 1 },
+    )
+    const listed = advanceWizardWorld(state, [
+      { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 3 },
+      { type: 'create_trade_listing', slotIndex: 1, itemId: 'iron_ore', quantity: 1, unitPrice: 10 },
+      { type: 'create_trade_listing', slotIndex: 2, itemId: 'stone', quantity: 1, unitPrice: 5 },
+      { type: 'create_trade_listing', slotIndex: 3, itemId: 'traveler_tunic', quantity: 1, unitPrice: 1 },
+    ])
+    expect(listed.rejections).toEqual([])
+    expect(listed.state.tick).toBe(599)
+    expect(listed.state.player.inventory).toEqual([{ itemId: 'woodcutters_axe', quantity: 1 }])
+    expect(listed.state.player.tradeSlots.map((slot) => slot.itemId)).toEqual(['logs', 'iron_ore', 'stone', 'traveler_tunic'])
+    const unchanged = serializeWizardWorld(listed.state)
+    const settled = advanceWizardWorld(listed.state, [{ type: 'look', yawDelta: 0, pitchDelta: 0 }])
+    expect(settled.rejections).toEqual([])
+    expect(settled.events).toEqual([
+      { type: 'player_looked', yaw: 0, pitch: 0, sequence: 5, tick: 600 },
+      { type: 'trade_listing_sold', slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 3, totalPrice: 6, sequence: 6, tick: 600 },
+      { type: 'trade_listing_sold', slotIndex: 1, itemId: 'iron_ore', quantity: 1, unitPrice: 10, totalPrice: 10, sequence: 7, tick: 600 },
+    ])
+    expect(settled.state.player.coins).toBe(state.player.coins + 16)
+    expect(settled.state.player.tradeSlots.map((slot) => slot.itemId)).toEqual([null, null, 'stone', 'traveler_tunic'])
+    expect(settled.state.player.inventory).toEqual([{ itemId: 'woodcutters_axe', quantity: 1 }])
+    expect(serializeWizardWorld(listed.state)).toBe(unchanged)
+    const repeated = advanceWizardWorld(settled.state, [])
+    expect(repeated.events).toEqual([])
+    expect(repeated.state.player.coins).toBe(settled.state.player.coins)
+    expect(repeated.state.player.tradeSlots).toEqual(settled.state.player.tradeSlots)
+    const nextCycle = advanceWizardWorld({ ...settled.state, tick: 1199 }, [])
+    expect(nextCycle.events).toEqual([])
+    expect(nextCycle.state.player.tradeSlots).toEqual(settled.state.player.tradeSlots)
+  })
+
+  it('rejects unsafe trade prices and never pays when settlement would overflow coins', () => {
+    const state = createWizardWorld('market-overflow')
+    state.tick = 598
+    state.player.inventory.push({ itemId: 'logs', quantity: 2 })
+    const before = serializeWizardWorld(state)
+    for (const unitPrice of [1.5, Infinity, Number.MAX_SAFE_INTEGER + 1, Number.MAX_SAFE_INTEGER]) {
+      const rejected = advanceWizardWorld(state, [
+        { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice },
+      ])
+      expect(rejected.rejections[0]?.code).toBe('invalid_value')
+      expect(rejected.events).toEqual([])
+      expect(rejected.state.player).toEqual(state.player)
+      expect(serializeWizardWorld(state)).toBe(before)
+    }
+    const listed = advanceWizardWorld(state, [
+      { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 3 },
+    ]).state
+    listed.player.coins = Number.MAX_SAFE_INTEGER - 5
+    const saved = serializeWizardWorld(listed)
+    const overflow = advanceWizardWorld(listed, [])
+    expect(overflow.events).toEqual([])
+    expect(overflow.state.player.coins).toBe(listed.player.coins)
+    expect(overflow.state.player.tradeSlots).toEqual(listed.player.tradeSlots)
+    expect(serializeWizardWorld(listed)).toBe(saved)
+  })
+
+  it('replays a trade sale identically after restoring a pending v5 listing', () => {
+    const start = createWizardWorld('market-replay')
+    start.player.inventory.push({ itemId: 'logs', quantity: 1 })
+    const listed = advanceWizardWorld(start, [
+      { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3 },
+    ])
+    let direct = listed.state
+    for (let step = 0; step < 299; step += 1) direct = advanceWizardWorld(direct, []).state
+    expect(direct.tick).toBe(300)
+    const save = serializeWizardWorld(direct)
+    expect(isRestorableWizardSave(save, direct.generationProfile)).toBe(true)
+    let restored = restoreWizardWorld(save)
+    expect(restored).toEqual(direct)
+    let directResult = advanceWizardWorld(direct, [])
+    let restoredResult = advanceWizardWorld(restored, [])
+    for (let step = 301; step < 600; step += 1) {
+      directResult = advanceWizardWorld(directResult.state, [])
+      restoredResult = advanceWizardWorld(restoredResult.state, [])
+    }
+    expect(restoredResult).toEqual(directResult)
+    expect(directResult.state.tick).toBe(600)
+    expect(directResult.events).toEqual([
+      { type: 'trade_listing_sold', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3, totalPrice: 3, sequence: 2, tick: 600 },
+    ])
+    expect(directResult.state.player.tradeSlots[0].itemId).toBeNull()
+    expect(advanceWizardWorld(restoredResult.state, []).events).toEqual([])
+  })
+
   it('places world anchors on terrain and advances jump physics at fixed idle ticks', () => {
     const state = createWizardWorld('greenway-alpha')
     for (const positioned of [...state.resources, ...state.stores, ...state.fairyRings]) {

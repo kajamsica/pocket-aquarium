@@ -178,6 +178,7 @@ export type WizardEvent = EventBase & (
   | { type: 'item_unequipped'; itemId: ItemId; slot: EquipmentSlot }
   | { type: 'trade_listing_created'; slotIndex: number; itemId: ItemId; quantity: number; unitPrice: number }
   | { type: 'trade_listing_cancelled'; slotIndex: number; itemId: ItemId; quantity: number }
+  | { type: 'trade_listing_sold'; slotIndex: number; itemId: ItemId; quantity: number; unitPrice: number; totalPrice: number }
   | { type: 'inscription_studied'; inscriptionId: InscriptionId; spellId: SpellId }
   | { type: 'spell_cast'; spellId: SpellId; revealedTileIds: string[]; revealedDigSiteIds: DigSiteId[] }
   | { type: 'dig_site_excavated'; digSiteId: DigSiteId; itemId: ItemId; quantity: number; xp: number }
