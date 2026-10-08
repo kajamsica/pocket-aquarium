@@ -12,9 +12,12 @@ import { applyFieldCampAction } from './domain/fieldCamp'
 import { worldTileAtGrid } from './domain/worldChunks'
 import { encodePublicV8Head } from './domain/publicWorldV8Snapshot'
 import { parsePublicV9Rescue } from './domain/publicWorldV9Snapshot'
+import { encodePublicV9Head } from './domain/publicWorldV9Snapshot'
+import { parsePublicV10Rescue } from './domain/publicWorldV10Snapshot'
+import { withPublicV10TerrainRevision } from './domain/publicWorldV10State'
 import { withFreshPublicV9Camps } from './domain/publicWorldV9State'
 import { actPublicMireglass } from './domain/publicWorldActions'
-import { advancePublicWorldFrame, type PublicWorldAdvanceResult } from './domain/publicWorldRuntime'
+import { advancePublicWorldFrame, advancePublicWorldV10Frame, type PublicWorldAdvanceResult } from './domain/publicWorldRuntime'
 import { createFreshPublicWorld } from './domain/publicWorldState'
 import {
   PUBLIC_V7_BACKUP_KEY, PUBLIC_V7_ROOT_KEY, PUBLIC_V7_STAGE_KEY,
@@ -36,7 +39,8 @@ import {
   publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority,
   publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
-  publicFieldCampView, requirePublicV9State, unsavedPublicV9Bytes,
+  publicFieldCampView, requirePublicV9State, requirePublicV10State,
+  unsavedPublicV9Bytes, unsavedPublicV10Bytes,
   publicSaveableVersion, publicTravelFlushNeeded,
   PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
@@ -97,6 +101,10 @@ describe('public v8 play session seam', () => {
     expect(v8).toContain('Public v8 save #3 loaded')
     expect(v8).toContain(`loaded at tick ${state.tick}`)
     expect(v8).toContain('World / Save')
+    expect(v8).toContain('.wr-public[data-owner=greenway] .wr-public-panel{right:318px;top:160px;width:min(315px,calc(100vw - 636px))')
+    expect(v8).toContain('.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=false]{inset:8px;width:auto;max-height:none')
+    expect(v8).toContain('.wr-public[data-owner=greenway] .wr-public-panel[data-collapsed=true]{left:50%;right:auto;top:124px;transform:translateX(-50%);width:104px')
+    expect(v8).toContain('.wr-public-panel[data-collapsed=false]{inset:8px;width:auto;max-height:none')
     expect(v8).not.toContain('Choose how to begin.')
     const v7 = renderToStaticMarkup(createElement(PublicWizardApp))
     expect(v7).toContain('Checking this device for a Wizard Realms save')
@@ -258,6 +266,51 @@ describe('public v9 play session', () => {
     dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
     expect(commit).toHaveBeenCalledTimes(1)
   })
+
+  it('uses the v10 camp adapter and keeps terrain plus source receipt in the session rescue', async () => {
+    const f = fixture()
+    const state = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+      sourceV9Lineage: f.receipt }
+    const expected = advancePublicWorldV10Frame(state, [{ type: 'move', delta: { x: 0.1, z: 0 } }], f.bootstrap)
+    const controls = advancePublicControls(state, [[{ type: 'move', delta: { x: 0.1, z: 0 } }]], [], f.bootstrap)
+    expect(controls).toEqual(expected)
+    expect(requirePublicV10State(controls.state, state).terrainRevision).toBe('mireglass-cache-pit-v1')
+    expect(publicFieldCampView(state, f.tile.id, sourceReceipt, false).preview?.rejection).toBeNull()
+    const rescue = parsePublicV10Rescue(unsavedPublicV10Bytes(state, sourceReceipt, 7)!)
+    expect(rescue?.snapshot).toMatchObject({ schemaVersion: 'wizard-world/v10', saveRevision: 8,
+      state: { terrainRevision: 'mireglass-cache-pit-v1' } })
+    expect(rescue?.sourceReceipt).toEqual(sourceReceipt)
+    const commit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    const html = renderToStaticMarkup(createElement(PublicWizardApp, { v10Session: {
+      start: { state, saveRevision: 7, sourceReceipt }, commit,
+    } }))
+    expect(html).toContain('Public v10 save #7 loaded')
+    dispatch({ type: 'field-camp.select', tileId: f.tile.id })
+    dispatch({ type: 'field-camp.confirm', tileId: f.tile.id })
+    await Promise.resolve()
+    expect(commit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      terrainRevision: 'mireglass-cache-pit-v1', fieldCampTileIds: [f.tile.id],
+    }), 7, sourceReceipt)
+  })
+
+  it('routes a v10 frontier equipment action through its validated save session', async () => {
+    const f = fixture()
+    const state = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+      sourceV9Lineage: f.receipt }
+    const commit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    renderToStaticMarkup(createElement(PublicWizardApp, { v10Session: {
+      start: { state, saveRevision: 7, sourceReceipt }, commit,
+    } }))
+    dispatch({ type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'mainHand' })
+    await Promise.resolve()
+    expect(commit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      terrainRevision: 'mireglass-cache-pit-v1', player: expect.objectContaining({
+        equipment: expect.objectContaining({ mainHand: 'woodcutters_axe' }),
+      }),
+    }), 7, sourceReceipt)
+  })
 })
 
 describe('public v6 app boundary', () => {
@@ -284,15 +337,25 @@ describe('public v6 app boundary', () => {
     const blocked: PublicWorldAdvanceResult = { state, events: [], rejections: [{ intentIndex: 0,
       intentType: 'move', code: 'fen_channel', message: 'Streamed movement was rejected: fen_channel.' }] }
     const first = appendMessages(['Welcome'], publicFrameMessages(blocked), true)
-    expect(first.at(-1)).toBe('Streamed movement was rejected: fen_channel.')
+    expect(first.at(-1)).toBe('The fen channel needs a bridge. Build the Fen bridge from a marked bank (8 logs), then use its Cross action.')
     let repeated = first
     for (let frame = 0; frame < 20; frame += 1) repeated = appendMessages(repeated, publicFrameMessages(blocked), true)
     expect(repeated).toBe(first)
 
+    const bridgeBuilt = { ...state, mireglass: { ...state.mireglass, builtRoutes: {
+      ...state.mireglass.builtRoutes, bridge: 'built-fen-bridge' } } }
+    const builtText = publicFrameMessages({ ...blocked, state: bridgeBuilt })[0]
+    expect(builtText).toBe('The fen channel cannot be swum across. Use “Cross Fen bridge” (or “Return by Fen bridge” from the far bank) when in reach.')
+
     const changed = appendMessages(first, publicFrameMessages({ ...blocked, rejections: [{ ...blocked.rejections[0],
       code: 'slate_cliff', message: 'Streamed movement was rejected: slate_cliff.' }] }), true)
     expect(changed).not.toBe(first)
-    expect(changed.at(-1)).toBe('Streamed movement was rejected: slate_cliff.')
+    expect(changed.at(-1)).toBe('The slate cliff needs a ladder. Build the Slate ladder from its marked base (4 logs), then use its Cross action.')
+    const ladderBuilt = { ...bridgeBuilt, mireglass: { ...bridgeBuilt.mireglass, builtRoutes: {
+      ...bridgeBuilt.mireglass.builtRoutes, ladder: 'built-slate-ladder' } } }
+    expect(publicFrameMessages({ ...blocked, state: ladderBuilt, rejections: [{ ...blocked.rejections[0],
+      code: 'slate_cliff', message: 'Streamed movement was rejected: slate_cliff.' }] })[0])
+      .toBe('The slate cliff cannot be walked up. Use “Cross Slate ladder” (or “Return by Slate ladder” from above) when in reach.')
     const action = appendMessages(changed, ['Chopped timber: +4 logs and woodcutting XP.'])
     expect(appendMessages(action, ['Chopped timber: +4 logs and woodcutting XP.'])).not.toBe(action)
   })

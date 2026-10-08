@@ -1,6 +1,7 @@
 import { objectiveFor, toViewProjection } from './App'
 import { mireglassViewProjection } from './MireglassPlayableApp'
 import { createActiveWorldTerrain, type ActiveWorldTerrain } from './domain/activeWorldTerrain'
+import type { TerrainFacts } from './domain/mireglassCachePitOverlay'
 import { resolveFieldCampSite } from './domain/fieldCamp'
 import { areaAt, terrainHeightAt } from './domain/generation'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
@@ -170,7 +171,7 @@ function greenwayView(state: PublicWorldState, messages: readonly string[],
 }
 
 // Presentation owns one bounded tile window. The mutable campaign runtime remains the sole authority.
-let mireglassTerrainReader: { seed: string; terrain: ActiveWorldTerrain; campSites: Map<string, boolean> } | null = null
+let mireglassTerrainReader: { seed: string; cachePitDug: boolean; terrain: ActiveWorldTerrain; campSites: Map<string, boolean> } | null = null
 
 function campSiteSuitable(seed: string, tileId: string): boolean {
   const cache = mireglassTerrainReader?.seed === seed ? mireglassTerrainReader.campSites : null
@@ -184,9 +185,11 @@ function campSiteSuitable(seed: string, tileId: string): boolean {
 
 /** Only the tile-read methods are supplied to the existing Mireglass projection. */
 function mireglassView(state: PublicWorldState, messages: readonly string[],
-  selectedSiteId: string | null): WizardViewProjection {
-  if (mireglassTerrainReader?.seed !== state.seed) {
-    mireglassTerrainReader = { seed: state.seed, terrain: createActiveWorldTerrain(state.seed), campSites: new Map() }
+  selectedSiteId: string | null, terrainFacts?: TerrainFacts): WizardViewProjection {
+  const cachePitDug = terrainFacts?.cachePitDug === true
+  if (mireglassTerrainReader?.seed !== state.seed || mireglassTerrainReader.cachePitDug !== cachePitDug) {
+    mireglassTerrainReader = { seed: state.seed, cachePitDug,
+      terrain: createActiveWorldTerrain(state.seed, terrainFacts), campSites: new Map() }
   }
   const terrain = mireglassTerrainReader.terrain
   terrain.activate(state.player.position)
@@ -205,10 +208,10 @@ function mireglassView(state: PublicWorldState, messages: readonly string[],
 /** One public player and facts projected through the existing region-specific view adapters. */
 export function publicWorldViewProjection(state: PublicWorldState, messages: readonly string[],
   selectedSiteId: string | null, openStoreId: string | null = null,
-  fieldCamp?: WizardFieldCampView): WizardViewProjection {
+  fieldCamp?: WizardFieldCampView, terrainFacts?: TerrainFacts): WizardViewProjection {
   const projection = state.movementOwner === 'greenway'
     ? greenwayView(state, messages, selectedSiteId, openStoreId)
-    : mireglassView(state, messages, selectedSiteId)
+    : mireglassView(state, messages, selectedSiteId, terrainFacts)
   let overview: WizardWorldOverview | undefined
   const campTileIds = new Set(fieldCamp?.camps.map((camp) => camp.tileId))
   return { ...projection, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,

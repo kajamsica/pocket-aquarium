@@ -12,7 +12,7 @@ import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorl
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
-import type { EquipmentSlot, WizardItemStack, WizardLandmark, WizardTerrainCell } from './view/contracts'
+import type { EquipmentSlot, WizardInteractionPrompt, WizardItemStack, WizardLandmark, WizardTerrainCell } from './view/contracts'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch, type TimedMovementSampler } from './view/timedInput'
 
 const SEED = 'greenway-alpha'
@@ -211,6 +211,32 @@ export function mireglassNearestInteractChoice(state: MireglassWorldState): Mire
     ?? choices.find((choice) => worldActions.has(choice.action.type))
 }
 
+function promptForMireglassChoice(state: MireglassWorldState, choice: MireglassActionChoice | undefined): WizardInteractionPrompt | null {
+  if (!choice) return null
+  const { action } = choice
+  if (action.type === 'discover_fairy_ring') return { kind: 'fairy-ring', targetId: MIREGLASS_RING_ID,
+    label: 'Mireglass Ring', action: 'Discover', actionable: true }
+  if (action.type === 'study_fringe_marker') return { kind: 'inscription', targetId: 'mireglass_reach/landmark/fringe_marker',
+    label: 'Frontier marker', action: 'Study', actionable: true }
+  if (action.type === 'chop_tree') return { kind: 'resource', targetId: action.resourceId,
+    label: 'Mireglass timber', action: state.player.equipment.mainHand === 'woodcutters_axe' ? 'Chop' : 'Equip axe',
+    actionable: state.player.equipment.mainHand === 'woodcutters_axe' }
+  if (action.type === 'dig_tree_stump') return { kind: 'dig-site', targetId: action.resourceId,
+    label: 'Timber stump', action: state.player.equipment.mainHand === 'field_spade' ? 'Dig' : 'Equip spade',
+    actionable: state.player.equipment.mainHand === 'field_spade' }
+  if (action.type === 'build_route' || action.type === 'traverse_route') {
+    const site = mireglassRouteSites(state.seed).find(({ id }) => id === action.siteId)!
+    return { kind: 'route', targetId: site.id, label: routeName(site.kind),
+      action: action.type === 'build_route' ? owned(state, 'logs') >= site.logCost ? 'Build' : `Need ${site.logCost} logs`
+        : action.from === 'from' ? 'Cross' : 'Return',
+      actionable: action.type === 'traverse_route' || owned(state, 'logs') >= site.logCost }
+  }
+  if (action.type === 'excavate_cache') return { kind: 'dig-site', targetId: 'mireglass_reach/dig/seal_cache',
+    label: 'Seal cache', action: state.player.equipment.mainHand === 'field_spade' ? 'Excavate' : 'Equip spade',
+    actionable: state.player.equipment.mainHand === 'field_spade' && state.player.skillXp.excavation >= 30 }
+  return null
+}
+
 export interface MireglassObjective {
   label: string
   position: { x: number; z: number }
@@ -324,12 +350,14 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   const herbs = harvestCycles ? mireglassHerbPatches(state.seed) : []
   const currentHerbCycle = Math.floor(state.tick / HERB_CYCLE_TICKS)
   const sites = mireglassRouteSites(state.seed)
+  const currentTile = runtime.tileAtWorld(state.player.position.x, state.player.position.z)
   const routeFor = (kind: 'bridge' | 'ladder') => sites.find((site) => site.id === state.expedition.builtRoutes[kind])
     ?? sites.find((site) => site.kind === kind)!
   const builtSites = sites.filter((site) => activeIds.has(runtime.tileAtWorld(site.from.x, site.from.z)?.id ?? '')).map((site) => ({
     id: site.id, routeId: site.routeId, label: `${routeName(site.kind)} at ${pointText(site.from)}`,
     from: [site.from.x, site.from.y, site.from.z] as const, to: [site.to.x, site.to.y, site.to.z] as const,
-    logCost: site.logCost, discovered: discovered.has(runtime.tileAtWorld(site.from.x, site.from.z)?.id ?? ''),
+    logCost: site.logCost, discovered: discovered.has(runtime.tileAtWorld(site.from.x, site.from.z)?.id ?? '')
+      || (distance(state.player.position, site.from) <= REACH && discovered.has(currentTile?.id ?? '')),
     status: state.expedition.builtRoutes[site.kind] === site.id ? 'built' as const
       : state.expedition.builtRoutes[site.kind] !== null ? 'obstructed' as const
       : owned(state, 'logs') < site.logCost ? 'needs_logs' as const
@@ -356,7 +384,11 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
     && discovered.has(herb.tile.id) && distance(state.player.position, herb.tile.center) <= REACH)
   const nearbyHerbAvailable = nearbyHerb && !harvestCycles?.some((entry) =>
     entry.patchId === nearbyHerb.id && entry.cycle >= currentHerbCycle)
+  const nearbyChoice = mireglassNearestInteractChoice(state)
   const storeTile = runtime.tileAtWorld(store.tile.center.x, store.tile.center.z)
+  const cacheTile = runtime.tileAtWorld(anchors.sealCache.tile.center.x, anchors.sealCache.tile.center.z)
+  const cacheLowered = state.expedition.cacheExcavated && cacheTile
+    && cacheTile.center.y < anchors.sealCache.tile.center.y - 0.001
   const visibleAnchor = (tileId: string) => activeIds.has(tileId) && discovered.has(tileId)
   const positionOf = (center: { x: number; y: number; z: number }) =>
     [center.x, center.y, center.z] as const
@@ -372,15 +404,19 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   if (activeIds.has(anchors.sealCache.tile.id)
     && (discovered.has(anchors.sealCache.tile.id) || state.expedition.cacheRevealed)) landmarks.push({
     id: 'mireglass_reach/dig/seal_cache', kind: 'seal-cache',
-    position: positionOf(anchors.sealCache.tile.center),
+    position: positionOf(cacheTile?.center ?? anchors.sealCache.tile.center),
     revealed: state.expedition.cacheRevealed, excavated: state.expedition.cacheExcavated,
   })
   const resourceTileIds = new Set([
     ...trees.filter((tree) => !state.expedition.depletedResourceIds.includes(tree.id)).map((tree) => tree.tile.id),
     ...herbs.map((herb) => herb.tile.id),
   ])
-  const siteTileIds = new Set(builtSites.filter((site) => site.discovered && site.status !== 'built' && site.status !== 'obstructed').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
-  const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
+  const visibleSiteTileId = (site: (typeof builtSites)[number]) => {
+    const anchorId = runtime.tileAtWorld(site.from[0], site.from[2])?.id
+    return discovered.has(anchorId ?? '') ? anchorId : currentTile?.id
+  }
+  const siteTileIds = new Set(builtSites.filter((site) => site.discovered && site.status !== 'built' && site.status !== 'obstructed').map(visibleSiteTileId))
+  const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map(visibleSiteTileId))
   return {
     ...streamedView,
     terrain: approachTerrain,
@@ -397,6 +433,8 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
         hasRouteSite: tile.discovered && siteTileIds.has(tile.id),
         hasBuiltRoute: tile.discovered && builtTileIds.has(tile.id),
         hasCache: state.expedition.cacheRevealed && tile.id === anchors.sealCache.tile.id,
+        ...(tile.discovered && tile.id === anchors.sealCache.tile.id && cacheLowered
+          ? { elevationMeters: cacheTile.center.y } : {}),
       })) },
     resources: [
       ...trees.filter((tree) => activeIds.has(tree.tile.id)).map((tree) => ({
@@ -444,13 +482,13 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
       mainHand: equipped('mainHand'), offHand: equipped('offHand') },
     skillXp: { ...state.player.skillXp }, learnedSpellIds: [...state.player.learnedSpellIds],
     tradeListings: [tradeListing(0), tradeListing(1), tradeListing(2), tradeListing(3)],
-    nearbyInteraction: ringActive && distance(state.player.position, ring.tile.center) <= REACH
-      ? { kind: 'fairy-ring', targetId: MIREGLASS_RING_ID, label: 'Mireglass Ring',
-        action: ringDiscovered ? greenwayDiscovered ? 'Choose destination' : 'Find another ring' : 'Discover',
-        actionable: !ringDiscovered }
-      : nearbyHerb ? { kind: 'resource', targetId: nearbyHerb.id, label: 'Marsh herb patch',
+    nearbyInteraction: promptForMireglassChoice(state, nearbyChoice)
+      ?? (nearbyHerb ? { kind: 'resource', targetId: nearbyHerb.id, label: 'Marsh herb patch',
         action: nearbyHerbAvailable ? 'Gather' : 'Regrowing', actionable: !!nearbyHerbAvailable }
-      : null,
+        : ringActive && distance(state.player.position, ring.tile.center) <= REACH
+          ? { kind: 'fairy-ring', targetId: MIREGLASS_RING_ID, label: 'Mireglass Ring',
+            action: greenwayDiscovered ? 'Choose destination' : 'Find another ring', actionable: false }
+          : null),
     recentEvents: messages,
   }
 }

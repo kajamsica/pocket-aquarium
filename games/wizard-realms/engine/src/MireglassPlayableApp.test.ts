@@ -322,6 +322,41 @@ describe('Mireglass playable dev adapter', () => {
     expect(cache()).toMatchObject({ revealed: true, excavated: true })
   })
 
+  it('shows a reachable fen bridge in the map and E prompt before its anchor tile is walked on', () => {
+    const site = mireglassRouteSites(seed).find((candidate) => candidate.kind === 'bridge')!
+    const adjacent = worldTileAtGrid(seed, site.from.x / 4 + 1, site.from.z / 4)
+    const source = createGeneratedWorld(seed).player
+    source.position = { x: site.from.x + 2.1, y: adjacent.center.y, z: site.from.z }
+    source.inventory.push({ itemId: 'logs', quantity: site.logCost })
+    const world = createMireglassWorld(seed, source)
+    expect(world.state.discoveredTileIds).not.toContain(world.tileAtWorld(site.from.x, site.from.z)?.id)
+    expect(mireglassNearestInteractChoice(world.state)?.action).toEqual({ type: 'build_route', siteId: site.id })
+    const view = mireglassViewProjection(world, world.state, [], null)
+    expect(view.buildSites.find((candidate) => candidate.id === site.id)).toMatchObject({ discovered: true, status: 'ready' })
+    expect(view.map.tiles.find((tile) => tile.id === adjacent.id)).toMatchObject({ discovered: true, hasRouteSite: true })
+    expect(view.nearbyInteraction).toMatchObject({ kind: 'route', action: 'Build', actionable: true })
+    const markup = renderToStaticMarkup(createElement(WizardMap, {
+      projection: view, open: true, onToggle: () => {}, onIntent: () => {},
+      buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>(),
+    }))
+    expect(markup).toContain('aria-label="Preview Fen bridge at')
+    expect(world.act({ type: 'build_route', siteId: site.id }).event?.type).toBe('route_built')
+  })
+
+  it('shows the Chop prompt when E can reach timber from an adjacent discovered tile', () => {
+    const tree = mireglassResources(seed)[0]
+    const adjacent = worldTileAtGrid(seed, tree.tile.gridX + 1, tree.tile.gridZ)
+    const source = createGeneratedWorld(seed).player
+    source.position = { x: tree.tile.center.x + 2.1, y: adjacent.center.y, z: tree.tile.center.z }
+    source.equipment.mainHand = 'woodcutters_axe'
+    const world = createMireglassWorld(seed, source)
+    expect(world.state.discoveredTileIds).not.toContain(tree.tile.id)
+    expect(mireglassNearestInteractChoice(world.state)?.action).toEqual({ type: 'chop_tree', resourceId: tree.id })
+    expect(mireglassViewProjection(world, world.state, [], null).nearbyInteraction)
+      .toMatchObject({ kind: 'resource', targetId: tree.id, action: 'Chop', actionable: true })
+    expect(world.act({ type: 'chop_tree', resourceId: tree.id }).event?.type).toBe('tree_chopped')
+  })
+
   it('shows a cache marker only after an adjacent Glow cast, without revealing it early', () => {
     const cache = mireglassAnchors(seed).sealCache
     const neighbor = worldTileAtGrid(seed, cache.tile.gridX - 2, cache.tile.gridZ - 3)

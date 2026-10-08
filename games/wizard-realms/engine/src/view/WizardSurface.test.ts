@@ -357,6 +357,18 @@ describe('wizard atlas markup', () => {
     expect(compact).not.toContain('dry gap near z≈0')
   })
 
+  it('marks an excavated lower cell accessibly without changing older map tiles', () => {
+    const home = projection.map.tiles[0]
+    const lowered = { ...projection, map: { ...projection.map,
+      tiles: [{ ...home, hasCache: true, elevationMeters: 1.65 }] } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: lowered }))
+    expect(markup).toContain('lowered ground at 1.65 m')
+    expect(markup).toContain('▾ lowered ground')
+    expect(markup).toContain('>▾</small>')
+    const older = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection }))
+    expect(older).not.toContain('lowered ground')
+  })
+
   it('shows a discovered waystone and keeps a store visible under the player marker without revealing fog', () => {
     const home = projection.map.tiles[0]
     const fog = projection.map.tiles[1]

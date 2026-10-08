@@ -7,7 +7,7 @@ import { inspectPublicV8UnderLock } from './publicWorldV8Flow'
 import { decodePublicV8Head, encodePublicV8Head } from './publicWorldV8Snapshot'
 import { decodePublicV9Head, encodePublicV9Head, isValidPublicV9SourceReceipt,
   samePublicV9SourceReceipt } from './publicWorldV9Snapshot'
-import type { PublicV9SourceReceipt } from './publicWorldV9Snapshot'
+import type { PublicV9Head, PublicV9SourceReceipt } from './publicWorldV9Snapshot'
 import { withFreshPublicV9Camps } from './publicWorldV9State'
 import type { PublicWorldV9State } from './publicWorldV9State'
 
@@ -24,8 +24,9 @@ export type PublicV9Inspection =
 
 type V8Store = ReturnType<typeof createAtomicV8Store>
 type V9Store = ReturnType<typeof createAtomicV9Store>
-type Checked = Exclude<PublicV9Inspection, { status: 'valid' }> |
-  { status: 'valid'; start: PublicV9Start; bootstrap: PublicV6BootstrapRoot | null }
+export type PublicV9UnderLockInspection = Exclude<PublicV9Inspection, { status: 'valid' }> |
+  { status: 'valid'; start: PublicV9Start; bootstrap: PublicV6BootstrapRoot | null; head: PublicV9Head }
+type Checked = PublicV9UnderLockInspection
 const failed = (reason: string): PublicV9Operation<never> => ({ ok: false, reason })
 const succeeded = <T,>(value: T): PublicV9Operation<T> => ({ ok: true, value })
 const blocked = (reason: string): PublicV9Operation<Checked> => succeeded({ status: 'blocked', reason })
@@ -59,7 +60,7 @@ function matchesInitialState(head: NonNullable<ReturnType<typeof decodeRecord>>,
 }
 
 /** Both databases and the v7 root are read while the caller holds the one shared Web Lock. */
-async function inspectUnderLock(storage: Pick<Storage, 'getItem'>, v8: V8Store,
+export async function inspectPublicV9UnderLock(storage: Pick<Storage, 'getItem'>, v8: V8Store,
   v9: V9Store): Promise<PublicV9Operation<Checked>> {
   const read = await v9.read()
   if (read.status !== 'ok') return failed('storage-error')
@@ -91,14 +92,14 @@ async function inspectUnderLock(storage: Pick<Storage, 'getItem'>, v8: V8Store,
   if (!isValidPublicV9SourceReceipt(sourceReceipt)) return blocked('invalid-v8-lineage')
   if (missing) return succeeded({ status: 'missing', sourceReceipt })
   if (!samePublicV9SourceReceipt(read.lineage, sourceReceipt)) return blocked('source-changed')
-  return succeeded({ status: 'valid', bootstrap: head!.bootstrap,
+  return succeeded({ status: 'valid', bootstrap: head!.bootstrap, head: structuredClone(read.head!.value as PublicV9Head),
     start: { state: head!.state, saveRevision: head!.saveRevision, sourceReceipt } })
 }
 
 export function inspectPublicV9(storage: Pick<Storage, 'getItem'>,
   locks: PublicV7LockProvider | undefined, v8: V8Store, v9: V9Store): Promise<PublicV9Operation<PublicV9Inspection>> {
   return withLock(locks, async () => {
-    const checked = await inspectUnderLock(storage, v8, v9)
+    const checked = await inspectPublicV9UnderLock(storage, v8, v9)
     if (!checked.ok) return checked
     return succeeded(checked.value.status === 'valid'
       ? { status: 'valid' as const, start: checked.value.start } : checked.value)
@@ -111,7 +112,7 @@ export function migratePublicV8ToV9(storage: Pick<Storage, 'getItem'>,
   return withLock(locks, async () => {
     if (!isValidPublicV9SourceReceipt(expectedSourceReceipt)) return failed('invalid-expected-source')
     const expected = structuredClone(expectedSourceReceipt)
-    const checked = await inspectUnderLock(storage, v8, v9)
+    const checked = await inspectPublicV9UnderLock(storage, v8, v9)
     if (!checked.ok) return checked
     if (checked.value.status === 'blocked') return failed(checked.value.reason)
     if (checked.value.status === 'valid') return failed('v9-records-present')
@@ -132,7 +133,7 @@ export function resumePublicV9(storage: Pick<Storage, 'getItem'>,
   return withLock(locks, async () => {
     if (!isValidPublicV9SourceReceipt(expectedSourceReceipt)) return failed('invalid-expected-source')
     const expected = structuredClone(expectedSourceReceipt)
-    const checked = await inspectUnderLock(storage, v8, v9)
+    const checked = await inspectPublicV9UnderLock(storage, v8, v9)
     if (!checked.ok) return checked
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v9-missing' : checked.value.reason)
@@ -148,7 +149,7 @@ export function commitPublicV9Snapshot(storage: Pick<Storage, 'getItem'>,
   return withLock(locks, async () => {
     if (!isValidPublicV9SourceReceipt(expectedSourceReceipt)) return failed('invalid-expected-source')
     const expected = structuredClone(expectedSourceReceipt)
-    const checked = await inspectUnderLock(storage, v8, v9)
+    const checked = await inspectPublicV9UnderLock(storage, v8, v9)
     if (!checked.ok) return checked
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v9-missing' : checked.value.reason)

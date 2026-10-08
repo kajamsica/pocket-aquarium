@@ -155,6 +155,8 @@ export interface WizardMapTile {
   terrain: string | null
   biome: string | null
   discovered: boolean
+  /** Effective ground height for a known altered cell; omitted by seed-only worlds. */
+  elevationMeters?: number
   hasResource: boolean
   hasStore: boolean
   hasRing: boolean

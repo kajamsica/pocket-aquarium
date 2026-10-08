@@ -6,6 +6,9 @@ import { MIREGLASS_CORE } from './mireglassTerrain'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { isValidPublicWorldV9State } from './publicWorldV9State'
 import type { PublicWorldV9State } from './publicWorldV9State'
+import { isValidPublicWorldV10State, publicV10BaseGroundWitness,
+  withPublicV10TerrainRevision } from './publicWorldV10State'
+import type { PublicWorldV10State } from './publicWorldV10State'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
 export type FieldCampSite = Readonly<{
@@ -20,6 +23,9 @@ export type FieldCampActionResult =
     code: 'invalid_progress' | 'invalid_value' | 'unavailable_here' | 'invalid_site'
       | 'site_hidden' | 'too_far' | 'not_owned' | 'already_built'; message: string
   } }
+export type FieldCampV10ActionResult =
+  | { state: PublicWorldV10State; event: FieldCampPlaced & { readonly sequence: number }; rejection?: never }
+  | { state: PublicWorldV10State; event?: never; rejection: NonNullable<FieldCampActionResult['rejection']> }
 
 /** Resolves an ID to canonical terrain, never to the atlas's legacy grid offset. */
 export function resolveFieldCampSite(seed: string, tileId: string): FieldCampSite | null {
@@ -103,4 +109,19 @@ export function applyFieldCampAction(state: PublicWorldV9State, tileId: string,
   const sequence = state.eventSequence + 1
   return { state: { ...state, player, fieldCampTileIds: [tileId], eventSequence: sequence },
     event: { type: 'field_camp_placed', tileId, logsSpent: 4, stoneSpent: 1, xp: 30, sequence } }
+}
+
+/** The v9 camp rule sees a detached seed-ground witness; v10 keeps its real overlaid pose. */
+export function applyFieldCampV10Action(state: PublicWorldV10State, tileId: string,
+  bootstrap: PublicV6BootstrapRoot | null = null): FieldCampV10ActionResult {
+  const invalid = (): FieldCampV10ActionResult => ({ state, rejection: {
+    code: 'invalid_progress', message: 'The v10 camp world state is invalid.',
+  } })
+  if (!isValidPublicWorldV10State(state, bootstrap)) return invalid()
+  const result = applyFieldCampAction(publicV10BaseGroundWitness(state), tileId, bootstrap)
+  if (result.rejection) return { state, rejection: result.rejection }
+  const next = withPublicV10TerrainRevision({ ...result.state,
+    player: { ...result.state.player, position: { ...state.player.position } } })
+  if (!isValidPublicWorldV10State(next, bootstrap)) return invalid()
+  return { state: next, event: result.event }
 }

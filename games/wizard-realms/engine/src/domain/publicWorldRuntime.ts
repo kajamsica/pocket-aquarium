@@ -3,9 +3,13 @@ import { mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import type { MireglassItemId } from './mireglassExpedition'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
-import { legacyMovementEnvelope } from './publicWorldV6'
+import { legacyMovementEnvelope, parsePublicV6BootstrapRoot } from './publicWorldV6'
 import type { PublicWorldState } from './publicWorldState'
+import type { PublicV6BootstrapRoot } from './publicWorldV6'
+import { isValidPublicWorldV10State } from './publicWorldV10State'
+import type { PublicWorldV10State } from './publicWorldV10State'
 import { createStreamedWorldFromState } from './streamedWorld'
+import type { TerrainFacts } from './mireglassCachePitOverlay'
 import type { StreamedWorldEvent, StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime } from './streamedWorld'
 import type { IntentRejection, PlayerState, WizardEvent, WizardIntent, WizardWorldState } from './types'
 import { advanceWizardWorld, settleTradeListings } from './world'
@@ -32,6 +36,9 @@ export interface PublicWorldAdvanceResult {
   events: PublicWorldEvent[]
   rejections: PublicWorldRejection[]
 }
+export type PublicWorldV10AdvanceResult = Omit<PublicWorldAdvanceResult, 'state'> & {
+  state: PublicWorldV10State
+}
 
 const cellAt = (coordinate: number) => Math.ceil(coordinate / 4 - 0.5)
 const within = (x: number, z: number, envelope: ReturnType<typeof legacyMovementEnvelope>) =>
@@ -45,7 +52,62 @@ const simulationRngStep = (value: number) => {
 }
 // Only the current immutable state chain keeps active chunks. Replaying an older
 // state rebuilds its own authority instead of reusing a runtime that already advanced.
-let currentStreamed: { state: PublicWorldState; runtime: StreamedWorldRuntime } | null = null
+type TerrainMode = 'seed' | 'v10-base' | 'v10-dug'
+const terrainMode = (facts?: TerrainFacts): TerrainMode => facts
+  ? facts.cachePitDug ? 'v10-dug' : 'v10-base' : 'seed'
+let currentStreamed: { state: PublicWorldState; runtime: StreamedWorldRuntime;
+  terrainMode: TerrainMode } | null = null
+type BootstrapProof = readonly string[] | null
+const trustedV10States = new WeakMap<object, BootstrapProof>()
+const deeplyFrozenV10Objects = new WeakSet<object>()
+const BOOTSTRAP_KEYS = ['schemaVersion', 'greenwayContentRevision', 'mireglassContentRevision',
+  'seed', 'source', 'greenwaySaveBytes'] as const
+const SOURCE_KEYS = ['profile', 'key', 'bytes'] as const
+
+function dataRecord(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)
+    || ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+    || Reflect.ownKeys(value).length !== keys.length) return false
+  return keys.every((key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    return descriptor !== undefined && descriptor.enumerable && Object.hasOwn(descriptor, 'value')
+  })
+}
+
+/** Captures all mutable bootstrap leaves as immutable string values, not object identity. */
+function captureBootstrapProof(bootstrap: PublicV6BootstrapRoot | null): BootstrapProof | undefined {
+  if (bootstrap === null) return null
+  try {
+    if (!dataRecord(bootstrap, BOOTSTRAP_KEYS) || !dataRecord(bootstrap.source, SOURCE_KEYS)) return undefined
+    const values = [bootstrap.schemaVersion, bootstrap.greenwayContentRevision,
+      bootstrap.mireglassContentRevision, bootstrap.seed, bootstrap.greenwaySaveBytes,
+      bootstrap.source.profile, bootstrap.source.key, bootstrap.source.bytes]
+    return values.every((value) => typeof value === 'string') ? Object.freeze(values) : undefined
+  } catch { return undefined }
+}
+
+function sameBootstrapProof(proof: BootstrapProof, bootstrap: PublicV6BootstrapRoot | null): boolean {
+  const current = captureBootstrapProof(bootstrap)
+  return current !== undefined && (proof === null ? current === null
+    : current !== null && proof.every((value, index) => value === current[index]))
+}
+
+function deepFreezeState(value: object): void {
+  if (deeplyFrozenV10Objects.has(value)) return
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (!descriptor || !('value' in descriptor)) throw new RangeError('V10 state has an accessor.')
+    if (descriptor.value !== null && typeof descriptor.value === 'object') deepFreezeState(descriptor.value)
+  }
+  Object.freeze(value)
+  deeplyFrozenV10Objects.add(value)
+}
+
+function validV10Bootstrap(bootstrap: PublicV6BootstrapRoot | null): boolean {
+  if (bootstrap === null) return true
+  try { return parsePublicV6BootstrapRoot(JSON.stringify(bootstrap)) !== null }
+  catch { return false }
+}
 const reject = (state: PublicWorldState, intent: PublicWorldIntent,
   code: PublicWorldRejection['code'], message: string, intentIndex = 0): PublicWorldAdvanceResult => ({
   state, events: [], rejections: [{ intentIndex, intentType: intent.type, code, message }],
@@ -154,7 +216,8 @@ function settleStreamedMarket(result: PublicWorldAdvanceResult): PublicWorldAdva
 
 /** One player changes region ownership only after both rings were discovered on foot. */
 function crossRegionFairyRing(state: PublicWorldState,
-  intent: Extract<PublicWorldIntent, { type: 'teleport_fairy_ring' }>): PublicWorldAdvanceResult {
+  intent: Extract<PublicWorldIntent, { type: 'teleport_fairy_ring' }>,
+  facts?: TerrainFacts): PublicWorldAdvanceResult {
   const outbound = state.movementOwner === 'greenway'
   const greenwayRing = state.greenway.fairyRings.find((ring) => ring.id === 'ring-greenway')
   const mireglassRing = mireglassFairyRing(state.seed)
@@ -188,7 +251,7 @@ function crossRegionFairyRing(state: PublicWorldState,
     try {
       streamed = createStreamedWorldFromState({ seed: state.seed, tick: state.tick + 1,
         player: { position, yaw: state.player.yaw, pitch: state.player.pitch, verticalVelocity: 0 },
-        discoveredTileIds: state.discoveredTileIds })
+        discoveredTileIds: state.discoveredTileIds }, facts)
     } catch (error) {
       if (!(error instanceof RangeError)) throw error
       return reject(state, intent, 'terrain_missing', 'The Mireglass fairy ring cannot receive travelers safely.')
@@ -203,11 +266,12 @@ function crossRegionFairyRing(state: PublicWorldState,
     movementOwner: outbound ? 'streamed' : 'greenway', tick,
     rng: { ...state.rng, simulation: simulationRngStep(state.rng.simulation) },
     eventSequence: sale.eventSequence, player: sale.player }
-  currentStreamed = streamed ? { state: next, runtime: streamed } : null
+  currentStreamed = streamed ? { state: next, runtime: streamed, terrainMode: terrainMode(facts) } : null
   return { state: next, events: [teleport, ...sale.events], rejections: [] }
 }
 
-function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldIntent[]): PublicWorldAdvanceResult {
+function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldIntent[],
+  facts?: TerrainFacts): PublicWorldAdvanceResult {
   const unavailableIndex = intents.findIndex((intent) =>
     intent.type !== 'move' && intent.type !== 'look' && intent.type !== 'jump')
   if (unavailableIndex >= 0) {
@@ -217,10 +281,10 @@ function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
   const streamedIntents: StreamedWorldIntent[] = intents.map((intent) => intent.type === 'move'
     ? { type: 'move', delta: { x: intent.delta.x, z: intent.delta.z } } : intent as StreamedWorldIntent)
   try {
-    const runtime = currentStreamed?.state === state
-      ? currentStreamed.runtime : createStreamedWorldFromState(streamedSnapshot(state))
+    const runtime = currentStreamed?.state === state && currentStreamed.terrainMode === terrainMode(facts)
+      ? currentStreamed.runtime : createStreamedWorldFromState(streamedSnapshot(state), facts)
     const result = fromStreamed(state, intents, runtime.advance(streamedIntents, { atomicOnRejection: true }))
-    currentStreamed = { state: result.state, runtime }
+    currentStreamed = { state: result.state, runtime, terrainMode: terrainMode(facts) }
     return result
   } catch (error) {
     currentStreamed = null
@@ -231,7 +295,7 @@ function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
 }
 
 function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldIntent, { type: 'move' }>,
-  to: { x: number; z: number }): PublicWorldAdvanceResult {
+  to: { x: number; z: number }, facts?: TerrainFacts): PublicWorldAdvanceResult {
   const from = state.player.position
   if (!connectorCrossing(state, from, to)) {
     const boundary = legacyMovementEnvelope({ generationProfile: state.generationProfile,
@@ -253,7 +317,7 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
       player: { position, yaw: state.player.yaw, pitch: state.player.pitch,
         verticalVelocity: position.y === tile.center.y ? 0 : state.player.verticalVelocity },
       discoveredTileIds,
-    })
+    }, facts)
     const destination = runtime.advance([])
     const eventSequence = state.eventSequence + (state.discoveredTileIds.includes(tile.id) ? 1 : 2)
     const events: PublicWorldEvent[] = [
@@ -268,7 +332,7 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
       player: { ...state.player, position: { ...destination.state.player.position },
         verticalVelocity: destination.state.player.verticalVelocity } }
     const result = settleStreamedMarket({ state: next, events, rejections: [] })
-    currentStreamed = { state: result.state, runtime }
+    currentStreamed = { state: result.state, runtime, terrainMode: terrainMode(facts) }
     return result
   } catch (error) {
     currentStreamed = null
@@ -278,7 +342,8 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
 }
 
 function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWorldIntent[],
-  move: Extract<PublicWorldIntent, { type: 'move' }>, to: { x: number; z: number }): PublicWorldAdvanceResult {
+  move: Extract<PublicWorldIntent, { type: 'move' }>, to: { x: number; z: number },
+  facts?: TerrainFacts): PublicWorldAdvanceResult {
   const look = intents.length === 2 ? intents[0] as Extract<PublicWorldIntent, { type: 'look' }> : null
   const yaw = state.player.yaw + (look?.yawDelta ?? 0)
   const pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2,
@@ -289,7 +354,7 @@ function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWor
   }
   const afterLook: PublicWorldState = look
     ? { ...state, player: { ...state.player, yaw, pitch } } : state
-  const crossed = crossOutbound(afterLook, move, to)
+  const crossed = crossOutbound(afterLook, move, to, facts)
   if (crossed.rejections.length) return {
     state, events: [], rejections: crossed.rejections.map((rejection) => ({
       ...rejection, intentIndex: look ? 1 : 0,
@@ -302,7 +367,8 @@ function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWor
     ...crossed.events.map((event) => ({ ...event, sequence: event.sequence + 1 })),
   ]
   const next = { ...crossed.state, eventSequence: crossed.state.eventSequence + 1 }
-  if (currentStreamed?.state === crossed.state) currentStreamed = { state: next, runtime: currentStreamed.runtime }
+  if (currentStreamed?.state === crossed.state) currentStreamed = { state: next,
+    runtime: currentStreamed.runtime, terrainMode: currentStreamed.terrainMode }
   return { state: next, events, rejections: [] }
 }
 
@@ -310,8 +376,8 @@ function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWor
  * One bounded 50 ms frame. The only composite is look then move, matching the
  * control sampler's heading calculation. A rejected frame changes no state.
  */
-export function advancePublicWorldFrame(
-  state: PublicWorldState, intents: readonly PublicWorldIntent[],
+function advancePublicWorldFrameInternal(
+  state: PublicWorldState, intents: readonly PublicWorldIntent[], facts?: TerrainFacts,
 ): PublicWorldAdvanceResult {
   if (intents.length > 2 || (intents.length === 2
     && (intents[0].type !== 'look' || intents[1].type !== 'move'))) {
@@ -325,7 +391,7 @@ export function advancePublicWorldFrame(
   if (intents.length === 1 && intents[0].type === 'teleport_fairy_ring'
     && (intents[0].sourceRingId === MIREGLASS_RING_ID
       || intents[0].targetRingId === MIREGLASS_RING_ID)) {
-    return crossRegionFairyRing(state, intents[0])
+    return crossRegionFairyRing(state, intents[0], facts)
   }
   const moveIndex = intents.findIndex((intent) => intent.type === 'move')
   const move = intents[moveIndex]
@@ -342,7 +408,7 @@ export function advancePublicWorldFrame(
       tiles: state.greenway.tiles })
     const arrivingGreenway = within(to.x, to.z, envelope)
     if (state.movementOwner === 'greenway') {
-      return arrivingGreenway ? stepGreenway(state, intents) : crossOutboundFrame(state, intents, move, to)
+      return arrivingGreenway ? stepGreenway(state, intents) : crossOutboundFrame(state, intents, move, to, facts)
     }
     if (arrivingGreenway) {
       if (!connectorCrossing(state, from, to)) return reject(state, move, 'off_connector',
@@ -350,7 +416,9 @@ export function advancePublicWorldFrame(
       const barrier = mireglassMoveBarrier(state.seed, from, to)
       if (barrier) return reject(state, move, barrier, `The ${barrier} blocks the connector.`, moveIndex)
       try {
-        if (currentStreamed?.state !== state) createStreamedWorldFromState(streamedSnapshot(state))
+        if (currentStreamed?.state !== state || currentStreamed.terrainMode !== terrainMode(facts)) {
+          createStreamedWorldFromState(streamedSnapshot(state), facts)
+        }
       } catch (error) {
         if (!(error instanceof RangeError)) throw error
         return reject(state, move, 'terrain_missing',
@@ -360,7 +428,63 @@ export function advancePublicWorldFrame(
       return stepGreenway(state, intents, true)
     }
   }
-  return state.movementOwner === 'greenway' ? stepGreenway(state, intents) : stepStreamed(state, intents)
+  return state.movementOwner === 'greenway' ? stepGreenway(state, intents) : stepStreamed(state, intents, facts)
+}
+
+export function advancePublicWorldFrame(
+  state: PublicWorldState, intents: readonly PublicWorldIntent[],
+): PublicWorldAdvanceResult {
+  return advancePublicWorldFrameInternal(state, intents)
+}
+
+/** Only internally produced, deeply frozen states can skip the expensive full-state check. */
+export function advancePublicWorldV10Frame(state: PublicWorldV10State,
+  intents: readonly PublicWorldIntent[], bootstrap: PublicV6BootstrapRoot | null = null): PublicWorldV10AdvanceResult {
+  const rejectInvalid = (): PublicWorldV10AdvanceResult => {
+    if (!intents[0]) throw new RangeError('Invalid v10 world state.')
+    return reject(state, intents[0], 'invalid_value', 'Invalid v10 world state.') as PublicWorldV10AdvanceResult
+  }
+  const trusted = trustedV10States.has(state)
+  const proof = trusted ? trustedV10States.get(state)! : captureBootstrapProof(bootstrap)
+  if (proof === undefined || trusted && !sameBootstrapProof(proof, bootstrap)) return rejectInvalid()
+  let ingressState = state
+  let ingressBootstrap = bootstrap
+  if (!trusted) {
+    // The codec's exact-shape check must see the original. Cloning alone can
+    // erase hidden or symbol keys and accidentally sanitize an invalid save.
+    if (!isValidPublicWorldV10State(state, bootstrap)) return rejectInvalid()
+    try {
+      // Getters are resolved once. Validation, movement, and output all use this
+      // detached snapshot, so caller changes cannot split the checked values.
+      ingressState = structuredClone(state)
+      ingressBootstrap = bootstrap === null ? null : structuredClone(bootstrap)
+    } catch { return rejectInvalid() }
+    if (!isValidPublicWorldV10State(ingressState, ingressBootstrap)
+      || !validV10Bootstrap(ingressBootstrap)
+      || !sameBootstrapProof(proof, bootstrap)) return rejectInvalid()
+  }
+  const result = advancePublicWorldFrameInternal(ingressState, intents,
+    { cachePitDug: ingressState.mireglass.cacheExcavated })
+  if (result.rejections.length) {
+    if (trusted) return result as PublicWorldV10AdvanceResult
+    currentStreamed = null
+    return { ...result, state }
+  }
+  if (!trusted && !sameBootstrapProof(proof, bootstrap)) {
+    currentStreamed = null
+    return rejectInvalid()
+  }
+  // The first result is detached from all mutable caller-owned input subtrees.
+  const next = trusted ? result.state as PublicWorldV10State
+    : structuredClone(result.state) as PublicWorldV10State
+  if (!trusted && !isValidPublicWorldV10State(next, ingressBootstrap)) {
+    currentStreamed = null
+    return rejectInvalid()
+  }
+  deepFreezeState(next)
+  trustedV10States.set(next, proof)
+  if (currentStreamed?.state === result.state) currentStreamed = { ...currentStreamed, state: next }
+  return { ...result, state: next }
 }
 
 /** Compatibility entrypoint for one-intent callers. */

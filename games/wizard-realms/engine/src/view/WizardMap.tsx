@@ -32,6 +32,7 @@ function Tile({ tile, player, cacheLabel, onSelect, tabIndex, selected }: {
   const waystone = tile.discovered && tile.hasWaystone
   const store = tile.discovered && tile.hasStore
   const camp = tile.discovered && tile.hasCamp
+  const lowered = tile.discovered && tile.elevationMeters !== undefined
   const campSuitable = !!onSelect && tile.discovered && tile.campSuitable === true
   const westTrail = tile.hasWestTrail === true
   const frontierMarker = tile.hasFrontierMarker === true
@@ -40,9 +41,10 @@ function Tile({ tile, player, cacheLabel, onSelect, tabIndex, selected }: {
     ? camp ? 'C' : campSuitable ? '⌂' : tile.hasCache ? '✦' : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : store ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : frontierTrail ? '·' : ''
     : frontierTrail ? '·' : '?'
   const Element = onSelect ? 'button' : 'span'
-  return <Element type={onSelect ? 'button' : undefined} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${westTrail ? ', west trail to Mireglass' : ''}${frontierTrail ? ', marked frontier trail' : ''}${frontierMarker ? ', frontier marker' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
+  return <Element type={onSelect ? 'button' : undefined} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e', ...(lowered ? { boxShadow: 'inset 0 0 0 2px #d3a66f, inset 0 0 8px #101b18' } : {}) }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${westTrail ? ', west trail to Mireglass' : ''}${frontierTrail ? ', marked frontier trail' : ''}${frontierMarker ? ', frontier marker' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${lowered ? `, lowered ground at ${tile.elevationMeters!.toFixed(2)} m` : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
     <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : campSuitable ? { color: '#ffe395' } : undefined}>{occupied ? '▲' : landmark}</b>
     {occupied && (camp || campSuitable || westTrail || store || waystone) && <small aria-hidden="true" style={{ position: 'absolute', right: 0, bottom: 0, fontSize: 8, lineHeight: 1, color: campSuitable ? '#ffe395' : undefined }}>{camp ? 'C' : campSuitable ? '⌂' : westTrail ? '⇦' : store ? 'S' : 'W'}</small>}
+    {lowered && <small aria-hidden="true" style={{ position: 'absolute', left: 1, bottom: 0, fontSize: 10, lineHeight: 1, color: '#ffe395' }}>▾</small>}
   </Element>
 }
 
@@ -144,7 +146,7 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
     {projection.fieldCamp?.selectionEnabled && <p className="wr-map-guidance">Find flat 3×3 loam ground. Move within 3 m of a site to build. Scroll the map or use arrow keys to choose a cell; Enter or Space previews one.</p>}
     <MapGrid projection={projection} onSelect={(tileId) => { onIntent({ type: 'field-camp.select', tileId }); onToggle() }} />
     <RouteKey routes={projection.routes} buildSites={projection.buildSites} selectedBuildSiteId={projection.selectedBuildSiteId} onSelect={(siteId) => { onIntent({ type: 'build-site.select', siteId }); onToggle() }} />
-    <p>{projection.map.legend ?? '▲ you · W waystone · ✦ revealed cache · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}{projection.fieldCamp?.selectionEnabled && ' · ⌂ suitable camp ground'}{projection.fieldCamp && ' · C field camp'}</p>
+    <p>{projection.map.legend ?? '▲ you · W waystone · ✦ revealed cache · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}{projection.map.tiles.some((tile) => tile.discovered && tile.elevationMeters !== undefined) && ' · ▾ lowered ground'}{projection.fieldCamp?.selectionEnabled && ' · ⌂ suitable camp ground'}{projection.fieldCamp && ' · C field camp'}</p>
   </>
   const overview = open ? projection.map.overview?.() : undefined
   return <>

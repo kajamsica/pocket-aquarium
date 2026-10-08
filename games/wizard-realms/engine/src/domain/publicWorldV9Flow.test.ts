@@ -13,7 +13,8 @@ import { createPublicV7StateFromV6Root, PUBLIC_V7_LOCK_NAME, PUBLIC_V7_ROOT_KEY,
 import type { PublicV7LockProvider } from './publicWorldV7Flow'
 import { commitPublicV8Snapshot, migratePublicV7ToV8 } from './publicWorldV8Flow'
 import { encodePublicV8Head } from './publicWorldV8Snapshot'
-import { commitPublicV9Snapshot, inspectPublicV9, migratePublicV8ToV9, resumePublicV9 } from './publicWorldV9Flow'
+import { commitPublicV9Snapshot, inspectPublicV9, inspectPublicV9UnderLock,
+  migratePublicV8ToV9, resumePublicV9 } from './publicWorldV9Flow'
 import { encodePublicV9Head } from './publicWorldV9Snapshot'
 import type { PublicV9SourceReceipt } from './publicWorldV9Snapshot'
 import { withFreshPublicV9Camps } from './publicWorldV9State'
@@ -93,6 +94,24 @@ async function expectBlocked(f: Fixture, reason: string, revision = 0) {
 }
 
 describe('public v9 migration and source coherence', () => {
+  it('exposes the validated encoded head to an already locked successor without reacquiring the lock', async () => {
+    const f = await fixture()
+    await migrate(f)
+    f.names.length = 0
+    const checked = await f.locks.request(PUBLIC_V7_LOCK_NAME, { mode: 'exclusive' }, () =>
+      inspectPublicV9UnderLock(f.storage, f.v8, f.v9))
+    expect(f.names).toEqual([PUBLIC_V7_LOCK_NAME])
+    expect(checked).toEqual({ ok: true, value: { status: 'valid',
+      start: { state: f.fresh, saveRevision: 0, sourceReceipt: f.sourceReceipt },
+      bootstrap: null, head: encodePublicV9Head(f.fresh, null, 0) } })
+    if (!checked.ok || checked.value.status !== 'valid') throw new Error('missing v9 head')
+    checked.value.head.state.discoveryMask.fill(0)
+    const persisted = await f.v9.read()
+    expect(persisted.status === 'ok' && persisted.head?.value).toEqual(encodePublicV9Head(f.fresh, null, 0))
+    expect(await inspectPublicV9(f.storage, f.locks, f.v8, f.v9))
+      .toEqual({ ok: true, value: { status: 'valid', start: checked.value.start } })
+  })
+
   it('reports a missing source without authorizing a fresh v9 branch', async () => {
     const f = await fixture()
     const absent = createAtomicV8Store(new FakeFactory())

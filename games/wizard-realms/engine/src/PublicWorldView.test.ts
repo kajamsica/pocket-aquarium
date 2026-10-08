@@ -323,6 +323,41 @@ describe('public v6 read-only view adapter', () => {
     expect(view.map.tiles.filter((tile) => tile.hasCache).map((tile) => tile.id)).toEqual([mireglassAnchors(seed).sealCache.tile.id])
   })
 
+  it('refreshes the same active cache chunk for v10 digging while v9 keeps seed-only ground', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const cache = mireglassAnchors(seed).sealCache.tile
+    const streamed = createStreamedWorld(seed, cache.center)
+    const atCache: PublicWorldState = { ...fresh, movementOwner: 'streamed',
+      player: { ...fresh.player, position: streamed.state.player.position },
+      discoveredTileIds: streamed.state.discoveredTileIds,
+      mireglass: { ...fresh.mireglass, cacheRevealed: true, cacheExcavated: true } }
+    const cell = (view: ReturnType<typeof publicWorldViewProjection>) => view.terrain.find((tile) => tile.id === cache.id)
+    const marker = (view: ReturnType<typeof publicWorldViewProjection>) => view.landmarks?.find((landmark) => landmark.kind === 'seal-cache')
+    const mapTile = (view: ReturnType<typeof publicWorldViewProjection>) => view.map.tiles.find((tile) => tile.id === cache.id)
+
+    const legacy = publicWorldViewProjection(atCache, [], null)
+    expect(cell(legacy)?.position[1]).toBeCloseTo(2.4)
+    expect(marker(legacy)?.position[1]).toBeCloseTo(2.4)
+    expect(mapTile(legacy)?.elevationMeters).toBeUndefined()
+
+    const dug = publicWorldViewProjection(atCache, [], null, null, undefined, { cachePitDug: true })
+    expect(cell(dug)?.position[1]).toBe(1.65)
+    expect(marker(dug)?.position[1]).toBe(1.65)
+    expect(mapTile(dug)).toMatchObject({ discovered: true, hasCache: true, elevationMeters: 1.65 })
+    expect(dug.terrain.filter((tile) => tile.id !== cache.id)).toEqual(legacy.terrain.filter((tile) => tile.id !== cache.id))
+
+    const distant = createStreamedWorld(seed, { x: cache.center.x + 128, z: cache.center.z })
+    publicWorldViewProjection({ ...atCache,
+      player: { ...atCache.player, position: distant.state.player.position },
+      discoveredTileIds: distant.state.discoveredTileIds }, [], null, null, undefined, { cachePitDug: true })
+    const returned = publicWorldViewProjection(structuredClone(atCache), [], null, null, undefined, { cachePitDug: true })
+    expect(cell(returned)?.position[1]).toBe(1.65)
+    expect(mapTile(returned)?.elevationMeters).toBe(1.65)
+    const oldAgain = publicWorldViewProjection(atCache, [], null)
+    expect(cell(oldAgain)?.position[1]).toBeCloseTo(2.4)
+    expect(mapTile(oldAgain)?.elevationMeters).toBeUndefined()
+  })
+
   it('renders the active outpost ring, maps it only on discovered terrain, and gates the return path', () => {
     const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
     const ring = mireglassFairyRing(seed)
