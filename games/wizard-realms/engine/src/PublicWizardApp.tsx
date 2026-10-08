@@ -11,9 +11,9 @@ import { actPublicMireglass } from './domain/publicWorldActions'
 import { advancePublicWorldFrame, type PublicWorldAdvanceResult, type PublicWorldIntent } from './domain/publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap, type PublicWorldState } from './domain/publicWorldState'
 import {
-  PUBLIC_V6_ROOT_KEY, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
+  PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
   inspectPublicV6Artifacts, loadPublicV6Root, parsePublicV6BootstrapRoot, parsePublicV6PlayableRoot,
-  readPublicV6RecoverySnapshot, recoverPublicV6Root,
+  readPublicV6RecoverySnapshot, recoverPublicV6Root, serializePublicV6World,
   type LegacyImportInspection, type PublicV6ArtifactInspection, type PublicV6RecoverySnapshot, type PublicV6RootLoad,
 } from './domain/publicWorldV6'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
@@ -175,6 +175,16 @@ export function advancePublicControls(state: PublicWorldState, queued: readonly 
   return { state: next, events, rejections }
 }
 
+/** An exportable valid root for progress that could not be committed on this device. */
+export function unsavedPublicWorldBytes(state: PublicWorldState, lastCommittedBytes: string | null): string | null {
+  const prior = lastCommittedBytes === null ? null : parsePublicV6PlayableRoot(lastCommittedBytes)
+  if (!prior || !Number.isSafeInteger(prior.saveRevision + 1)) return null
+  try {
+    return serializePublicV6World({ schemaVersion: PUBLIC_V6_SCHEMA,
+      saveRevision: prior.saveRevision + 1, bootstrap: prior.bootstrap, state })
+  } catch { return null }
+}
+
 const STYLES = `
 .wr-public,.wr-public-menu{position:fixed;inset:0;background:#14221f;color:#f5f1df;font:14px/1.4 system-ui}.wr-public .wr-surface{min-height:0}
 .wr-public-menu{display:grid;place-items:center;padding:20px;box-sizing:border-box}.wr-public-card{box-sizing:border-box;width:min(560px,100%);max-height:90vh;overflow:auto;padding:24px;border:1px solid #c9ad6680;border-radius:18px;background:#101a17f4;box-shadow:0 20px 60px #0008}.wr-public-card h1{margin:0 0 8px;color:#f5d889;font:700 30px Georgia,serif}.wr-public-card p{color:#c5d0c3}.wr-public-card button,.wr-public-panel button{min-height:44px;padding:7px 12px;border:1px solid #d5b86f77;border-radius:8px;background:#324b3d;color:#fff0c7;font:inherit;cursor:pointer}.wr-public-card button{display:block;width:100%;margin:8px 0;text-align:left}.wr-public-card button:disabled,.wr-public-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-public-warning{padding:9px;border:1px solid #e3a27788;border-radius:8px;background:#4b2824e8;color:#ffe0d4!important}
@@ -286,7 +296,7 @@ export function PublicWizardApp() {
       setBusy(false); setSelectedRecovery(null)
       setNotice(result.reason === 'snapshot-changed'
         ? 'Recovery choice is stale because the saved bytes changed. Nothing was overwritten. Reload to inspect the current candidates.'
-        : `Recovery blocked (${result.reason}). Existing bytes were preserved; reload to inspect the current candidates.`)
+        : `Recovery did not finish (${result.reason}). The previous bytes may have been archived, and recovery may have staged changes. Reload to inspect the current candidates before choosing again.`)
       return
     }
     const reread = await inspectPublicEntry(currentStorage, locks())
@@ -312,6 +322,25 @@ export function PublicWizardApp() {
     save(worldRef.current)
     await saveQueue.current
     setBusy(false)
+  }
+  const exportUnsaved = () => {
+    const current = worldRef.current
+    const bytes = current && unsavedPublicWorldBytes(current, expectedBytes.current)
+    if (!bytes) { setNotice('Unsaved progress could not be validated for export. Keep this tab open and do not clear site data.'); return }
+    let url: string | null = null
+    let link: HTMLAnchorElement | null = null
+    try {
+      url = URL.createObjectURL(new Blob([bytes], { type: 'application/json' }))
+      link = document.createElement('a')
+      link.href = url; link.download = `wizard-realms-unsaved-v6-${Date.now()}.json`
+      document.body.append(link); link.click()
+      setNotice('Unsaved progress downloaded as a valid v6 snapshot. Keep the file before reloading; it has not replaced the current save.')
+    } catch { setNotice('Download failed. Keep this tab open and do not clear site data.') }
+    finally {
+      link?.remove()
+      const cleanupUrl = url
+      if (cleanupUrl) window.setTimeout(() => URL.revokeObjectURL(cleanupUrl), 60_000)
+    }
   }
 
   useEffect(() => {
@@ -471,7 +500,8 @@ export function PublicWizardApp() {
           onClick={() => actMireglass(choice.action)}>{choice.label}<small>{choice.detail}</small></button>)}</div>}
         <button disabled={blocked} onClick={() => { if (worldRef.current) save(worldRef.current) }}>Save now</button>
         {blocked && transientSaveFailure(blockedReason) && <button disabled={busy} onClick={() => void retrySave()}>Retry Save</button>}
-        {blocked && <><p className="wr-public-warning">Reload discards progress made since the last successful save.</p>
+        {blocked && <><p className="wr-public-warning">Reload discards progress made since the last successful save. Download a snapshot first.</p>
+          <button disabled={busy} onClick={exportUnsaved}>Download unsaved progress</button>
           <button onClick={() => window.location.reload()}>Reload latest saved world</button></>}
       </div>
     </aside>

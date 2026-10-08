@@ -6,13 +6,13 @@ import { mireglassAnchors } from './domain/mireglassContent'
 import { actPublicMireglass } from './domain/publicWorldActions'
 import { createFreshPublicWorld } from './domain/publicWorldState'
 import { PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_STAGE_KEY,
-  loadPublicV6Root, readPublicV6RecoverySnapshot, serializePublicV6World } from './domain/publicWorldV6'
+  loadPublicV6Root, parsePublicV6PlayableRoot, readPublicV6RecoverySnapshot, serializePublicV6World } from './domain/publicWorldV6'
 import { serializeWizardWorld } from './domain/persistence'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
 import {
   PUBLIC_V6_LOCK_NAME, advancePublicControls, commitPublicSnapshot, greenwayForPublicView,
   importPublicWorld, inspectPublicEntry, mireglassForPublicView, publicRecoveryChoices,
-  recoverPublicWorld, resumePublicWorld, startFreshPublicWorld,
+  recoverPublicWorld, resumePublicWorld, startFreshPublicWorld, unsavedPublicWorldBytes,
   type PublicLockProvider,
 } from './PublicWizardApp'
 
@@ -151,6 +151,26 @@ describe('public v6 app boundary', () => {
       current.ok ? current.value.bytes : started.value.bytes)
     expect(noLocks.ok).toBe(false)
     expect(storage.writes).not.toContain(legacyKey)
+  })
+
+  it('exports a valid standalone snapshot of unsaved progress without changing storage or state', async () => {
+    const storage = memoryStorage()
+    const { provider } = webLocks()
+    const started = await startFreshPublicWorld(storage, provider, 'greenway-classic-v1', false)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    const progressed = advancePublicControls(started.value.state, [], [[0, 1]]).state
+    const beforeState = JSON.stringify(progressed)
+    const beforeWrites = [...storage.writes]
+    const exported = unsavedPublicWorldBytes(progressed, started.value.bytes)
+    const parsed = exported ? parsePublicV6PlayableRoot(exported) : null
+    expect(parsed?.state).toEqual(progressed)
+    expect(parsed?.saveRevision).toBe(1)
+    expect(storage.writes).toEqual(beforeWrites)
+    expect(storage.getItem(PUBLIC_V6_ROOT_KEY)).toBe(started.value.bytes)
+    expect(JSON.stringify(progressed)).toBe(beforeState)
+    expect(unsavedPublicWorldBytes(progressed, null)).toBeNull()
+    expect(unsavedPublicWorldBytes(progressed, '{invalid root')).toBeNull()
   })
 
   it('preserves a pending stage and refuses to resume or import across it', async () => {
