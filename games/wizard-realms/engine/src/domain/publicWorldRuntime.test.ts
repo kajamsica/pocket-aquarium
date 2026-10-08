@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createGeneratedWorld, terrainHeightAt } from './generation'
+import { areaAt, createGeneratedWorld, terrainHeightAt } from './generation'
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import { serializeWizardWorld } from './persistence'
@@ -118,6 +118,36 @@ describe('public v6 authority handoff', () => {
     expect(home.state.eventSequence).toBe(outbound.state.eventSequence + 1)
     expect(parsePublicV6PlayableRoot(serializePublicV6World({ schemaVersion: PUBLIC_V6_SCHEMA,
       saveRevision: 2, bootstrap: null, state: home.state }))?.state).toEqual(home.state)
+  })
+
+  it('requires the Greenway Ring area before cross-region travel', () => {
+    const fresh = createFreshPublicWorld(seed, classic)
+    const ring = fresh.greenway.fairyRings.find((candidate) => candidate.id === 'ring-greenway')!
+    const mireglassRing = mireglassFairyRing(seed)
+    const intent = { type: 'teleport_fairy_ring' as const,
+      sourceRingId: ring.id, targetRingId: MIREGLASS_RING_ID }
+    const ridge: PublicWorldState = { ...fresh,
+      discoveredTileIds: [...new Set([...fresh.discoveredTileIds, mireglassRing.tile.id])].sort(),
+      player: { ...fresh.player,
+        position: { x: 3.5, y: terrainHeightAt(fresh.greenway.tiles, 3.5, -4.05), z: -4.05 },
+        discoveredRingIds: [ring.id, MIREGLASS_RING_ID] } }
+    expect(areaAt(ridge.greenway.areas, ridge.player.position.x, ridge.player.position.z).id).toBe('northern_ridge')
+    expect(Math.hypot(ridge.player.position.x - ring.position.x, ridge.player.position.y - ring.position.y,
+      ridge.player.position.z - ring.position.z)).toBeLessThan(3)
+    const before = JSON.stringify(ridge)
+    const denied = advancePublicWorldFrame(ridge, [intent])
+    expect(denied.rejections).toMatchObject([{ intentIndex: 0, intentType: 'teleport_fairy_ring', code: 'locked_area' }])
+    expect(denied.state).toBe(ridge)
+    expect(denied.events).toEqual([])
+    expect(JSON.stringify(ridge)).toBe(before)
+
+    const greenway: PublicWorldState = { ...ridge,
+      player: { ...ridge.player, position: { ...ring.position } } }
+    const outbound = advancePublicWorldFrame(greenway, [intent])
+    expect(outbound.rejections).toEqual([])
+    expect(outbound.events[0]).toMatchObject({ type: 'fairy_ring_teleported',
+      sourceRingId: ring.id, targetRingId: MIREGLASS_RING_ID })
+    expect(outbound.state.movementOwner).toBe('streamed')
   })
 
   it('identifies the actual western trail when a player leaves at the wrong latitude', () => {

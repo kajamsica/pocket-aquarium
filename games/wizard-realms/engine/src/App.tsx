@@ -236,7 +236,15 @@ export function objectiveFor(state: WizardWorldState): string {
   if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
     ? 'Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.'
     : 'Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.'
-  if (highlandRing) return 'Return to the Greenway and discover its fairy ring near the start to link travel home.'
+  if (highlandRing) {
+    const areaId = areaAt(state.areas, state.player.position.x, state.player.position.z).id
+    if (areaId === 'eastern_highland') return 'Cross the Highland bridge west, then the Greenway ladder south to return home.'
+    if (areaId === 'northern_ridge') return 'Cross the Greenway ladder south to return home.'
+    const ring = state.fairyRings.find((candidate) => candidate.id === 'ring-greenway')!
+    return distance(state.player.position, ring.position) <= INTERACTION_RANGE
+      ? 'Press E to discover the Greenway Ring and link travel home.'
+      : `Greenway Ring: ${bearingTo(ring.position)}. Go there and press E to discover it.`
+  }
   if (state.builtRouteIds.includes('highland_bridge')) return areaAt(state.areas,
     state.player.position.x, state.player.position.z).id === 'eastern_highland'
     ? 'Find and discover the Highland fairy ring.'
@@ -256,7 +264,8 @@ function closestInteraction(state: WizardWorldState) {
       .map((site) => ({ distance: distance(state.player.position, site.position), kind: 'dig-site' as const, target: site })),
     ...state.resources.filter((resource) => resource.kind === 'tree' && !resource.depleted)
       .map((resource) => ({ distance: distance(state.player.position, resource.position), kind: 'resource' as const, target: resource })),
-    ...state.fairyRings.map((ring) => ({ distance: distance(state.player.position, ring.position), kind: 'fairy-ring' as const, target: ring })),
+    ...state.fairyRings.filter((ring) => areaAt(state.areas, ring.position.x, ring.position.z).id === playerAreaId)
+      .map((ring) => ({ distance: distance(state.player.position, ring.position), kind: 'fairy-ring' as const, target: ring })),
     ...state.stores.map((store) => ({ distance: distance(state.player.position, store.position), kind: 'store' as const, target: store })),
     ...state.routes.filter((route) => state.builtRouteIds.includes(route.id))
       .flatMap((route) => {

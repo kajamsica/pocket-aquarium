@@ -566,7 +566,16 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-highland']
-    expect(objectiveFor(state)).toBe('Return to the Greenway and discover its fairy ring near the start to link travel home.')
+    state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway ladder south to return home.')
+    state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
+    expect(objectiveFor(state)).toBe('Cross the Greenway ladder south to return home.')
+    state.player.position = { x: -5, y: terrainHeightAt(state.tiles, -5, 0), z: 0 }
+    expect(objectiveFor(state)).toBe('Greenway Ring: 7m east and 2m north. Go there and press E to discover it.')
+    state.player.position = { x: 10, y: terrainHeightAt(state.tiles, 10, 10), z: 10 }
+    expect(objectiveFor(state)).toBe('Greenway Ring: 8m west and 12m north. Go there and press E to discover it.')
+    state.player.position = { ...state.fairyRings.find((ring) => ring.id === 'ring-greenway')!.position }
+    expect(objectiveFor(state)).toBe('Press E to discover the Greenway Ring and link travel home.')
 
     state.player.discoveredRingIds = ['ring-highland', 'ring-greenway']
     expect(objectiveFor(state)).toBe(linked)
@@ -1165,6 +1174,22 @@ describe('Wizard view adapter', () => {
     const intent = intentForView(state, { type: 'interact' })
     expect(intent).toEqual({ type: 'traverse_route', routeId: ladder.id })
     expect(advanceWizardWorld(state, [intent!]).state.player.position).toEqual(ladder.from)
+  })
+
+  it('does not offer the Greenway Ring across the Northern Ridge boundary', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    state.resources.forEach((resource) => { resource.depleted = true })
+    const ring = state.fairyRings.find((candidate) => candidate.id === 'ring-greenway')!
+    state.player.position = { x: 3.5, y: terrainHeightAt(state.tiles, 3.5, -4.05), z: -4.05 }
+    expect(areaAt(state.areas, state.player.position.x, state.player.position.z).id).toBe('northern_ridge')
+    expect(Math.hypot(state.player.position.x - ring.position.x, state.player.position.y - ring.position.y,
+      state.player.position.z - ring.position.z)).toBeLessThan(3)
+    expect(toViewProjection(state, []).nearbyInteraction?.targetId).not.toBe(ring.id)
+    expect(intentForView(state, { type: 'interact' })).not.toEqual({ type: 'discover_fairy_ring', ringId: ring.id })
+
+    state.player.position = { ...ring.position }
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', targetId: ring.id, action: 'Discover' })
+    expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'discover_fairy_ring', ringId: ring.id })
   })
 
   it('commits and reloads a non-default ladder chosen in the atlas', () => {

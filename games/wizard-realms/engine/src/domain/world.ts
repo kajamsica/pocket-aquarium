@@ -328,6 +328,8 @@ function applyIntent(
     const ring = current.fairyRings.find((candidate) => candidate.id === intent.ringId)
     if (!ring) return fail('not_found', 'Fairy ring does not exist.')
     if (distance(current.player.position, ring.position) > INTERACT_DISTANCE) return fail('too_far', 'Fairy ring is out of reach.')
+    if (areaAt(current.areas, current.player.position.x, current.player.position.z).id
+      !== areaAt(current.areas, ring.position.x, ring.position.z).id) return fail('locked_area', 'Cross into the fairy ring area before discovering it.')
     if (current.player.discoveredRingIds.includes(ring.id)) return fail('invalid_value', 'Fairy ring is already discovered.')
     const state = cloneState(current)
     state.player.discoveredRingIds.push(ring.id)
@@ -339,6 +341,8 @@ function applyIntent(
     const target = current.fairyRings.find((ring) => ring.id === intent.targetRingId)
     if (!source || !target) return fail('not_found', 'Fairy ring does not exist.')
     if (distance(current.player.position, source.position) > INTERACT_DISTANCE) return fail('too_far', 'Player must stand at the source fairy ring.')
+    if (areaAt(current.areas, current.player.position.x, current.player.position.z).id
+      !== areaAt(current.areas, source.position.x, source.position.z).id) return fail('locked_area', 'Cross into the source fairy ring area before traveling.')
     if (!current.player.discoveredRingIds.includes(source.id) || !current.player.discoveredRingIds.includes(target.id)) return fail('undiscovered', 'Both fairy rings must be discovered.')
     const state = cloneState(current)
     state.player.position = { ...target.position }

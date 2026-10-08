@@ -1,4 +1,4 @@
-import { terrainHeightAt } from './generation'
+import { areaAt, terrainHeightAt } from './generation'
 import { mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import type { MireglassItemId } from './mireglassExpedition'
@@ -172,6 +172,10 @@ function crossRegionFairyRing(state: PublicWorldState,
     state.player.position.y - source.position.y,
     state.player.position.z - source.position.z) > 3) {
     return reject(state, intent, 'too_far', 'Stand inside the source fairy ring to travel.')
+  }
+  if (outbound && areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).id
+    !== areaAt(state.greenway.areas, greenwayRing.position.x, greenwayRing.position.z).id) {
+    return reject(state, intent, 'locked_area', 'Cross into the Greenway Ring area before traveling.')
   }
   if (outbound && !state.discoveredTileIds.includes(mireglassRing.tile.id)) {
     return reject(state, intent, 'undiscovered', 'Reach the Mireglass outpost before using its fairy ring.')

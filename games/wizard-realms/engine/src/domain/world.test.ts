@@ -140,6 +140,43 @@ describe('Wizard world domain', () => {
     expect(teleported.state.player.position).toEqual(target.position)
   })
 
+  it('rejects ring discovery and travel across the Ridge boundary while preserving same-area use', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const greenway = state.fairyRings.find((ring) => ring.id === 'ring-greenway')!
+    const highland = state.fairyRings.find((ring) => ring.id === 'ring-highland')!
+    state.player.position = { x: 3.5, y: terrainHeightAt(state.tiles, 3.5, -4.05), z: -4.05 }
+    expect(areaAt(state.areas, state.player.position.x, state.player.position.z).id).toBe('northern_ridge')
+    expect(Math.hypot(state.player.position.x - greenway.position.x, state.player.position.y - greenway.position.y,
+      state.player.position.z - greenway.position.z)).toBeLessThan(3)
+    const before = serializeWizardWorld(state)
+    const discovery = advanceWizardWorld(state, [{ type: 'discover_fairy_ring', ringId: greenway.id }])
+    expect(discovery.rejections[0]?.code).toBe('locked_area')
+    expect(discovery.events).toEqual([])
+    expect(serializeWizardWorld(state)).toBe(before)
+
+    state.player.discoveredRingIds = [greenway.id, highland.id]
+    const travel = advanceWizardWorld(state, [{ type: 'teleport_fairy_ring', sourceRingId: greenway.id, targetRingId: highland.id }])
+    expect(travel.rejections[0]?.code).toBe('locked_area')
+    expect(travel.events).toEqual([])
+    expect(travel.state.player.position).toEqual(state.player.position)
+
+    state.player.position = { ...greenway.position }
+    state.player.discoveredRingIds = []
+    const discovered = advanceWizardWorld(state, [{ type: 'discover_fairy_ring', ringId: greenway.id }])
+    expect(discovered.rejections).toEqual([])
+    expect(discovered.events[0]?.type).toBe('fairy_ring_discovered')
+    const linked = discovered.state
+    linked.player.discoveredRingIds.push(highland.id)
+    placeRoute(linked, 'greenway_ladder')
+    placeRoute(linked, 'highland_bridge')
+    const teleported = advanceWizardWorld(linked, [{ type: 'teleport_fairy_ring', sourceRingId: greenway.id, targetRingId: highland.id }])
+    expect(teleported.rejections).toEqual([])
+    expect(teleported.state.player.position).toEqual(highland.position)
+    const returned = advanceWizardWorld(teleported.state, [{ type: 'teleport_fairy_ring', sourceRingId: highland.id, targetRingId: greenway.id }])
+    expect(returned.rejections).toEqual([])
+    expect(returned.state.player.position).toEqual(greenway.position)
+  })
+
   it('buys and equips store gear', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     const store = state.stores[0]
