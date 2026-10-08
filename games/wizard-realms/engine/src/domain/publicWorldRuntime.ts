@@ -6,7 +6,7 @@ import type { PublicWorldState } from './publicWorldState'
 import { createStreamedWorldFromState } from './streamedWorld'
 import type { StreamedWorldEvent, StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime } from './streamedWorld'
 import type { IntentRejection, PlayerState, WizardEvent, WizardIntent, WizardWorldState } from './types'
-import { advanceWizardWorld } from './world'
+import { advanceWizardWorld, settleTradeListings } from './world'
 import { worldTileAtGrid } from './worldChunks'
 
 /** A fixed step may combine a look and move, but never advances both authorities. */
@@ -123,7 +123,7 @@ function fromStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
   }
   let eventSequence = state.eventSequence
   const events: PublicWorldEvent[] = result.events.map((event) => ({ ...event, sequence: ++eventSequence }))
-  return {
+  return settleStreamedMarket({
     state: { ...state, movementOwner: 'streamed', tick: result.state.tick,
       rng: { ...state.rng, simulation: simulationRngStep(state.rng.simulation) },
       eventSequence, discoveredTileIds: result.state.discoveredTileIds,
@@ -131,7 +131,17 @@ function fromStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
         yaw: result.state.player.yaw, pitch: result.state.player.pitch,
         verticalVelocity: result.state.player.verticalVelocity } },
     events, rejections: [],
-  }
+  })
+}
+
+/** The market clock keeps running while the one campaign player explores streamed terrain. */
+function settleStreamedMarket(result: PublicWorldAdvanceResult): PublicWorldAdvanceResult {
+  if (result.rejections.length || result.state.movementOwner !== 'streamed') return result
+  const sale = settleTradeListings(result.state.player, result.state.tick, result.state.eventSequence)
+  if (!sale.events.length) return result
+  return { ...result,
+    state: { ...result.state, player: sale.player, eventSequence: sale.eventSequence },
+    events: [...result.events, ...sale.events] }
 }
 
 function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldIntent[]): PublicWorldAdvanceResult {
@@ -189,8 +199,9 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
       eventSequence, discoveredTileIds: destination.state.discoveredTileIds,
       player: { ...state.player, position: { ...destination.state.player.position },
         verticalVelocity: destination.state.player.verticalVelocity } }
-    currentStreamed = { state: next, runtime }
-    return { state: next, events, rejections: [] }
+    const result = settleStreamedMarket({ state: next, events, rejections: [] })
+    currentStreamed = { state: result.state, runtime }
+    return result
   } catch (error) {
     currentStreamed = null
     if (!(error instanceof RangeError)) throw error
@@ -239,7 +250,7 @@ export function advancePublicWorldFrame(
     return reject(state, intents[Math.min(1, intents.length - 1)], 'invalid_frame',
       'A fixed step accepts at most one look followed by one move.', Math.min(1, intents.length - 1))
   }
-  if (!Number.isSafeInteger(state.tick + 1) || !Number.isSafeInteger(state.eventSequence + 4)) {
+  if (!Number.isSafeInteger(state.tick + 1) || !Number.isSafeInteger(state.eventSequence + 8)) {
     if (!intents[0]) throw new RangeError('The public world clock is exhausted.')
     return reject(state, intents[0], 'invalid_value', 'The public world clock is exhausted.')
   }

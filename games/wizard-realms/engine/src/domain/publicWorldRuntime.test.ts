@@ -74,6 +74,34 @@ function expectOneFrame(before: PublicWorldState, after: ReturnType<typeof advan
 }
 
 describe('public v6 authority handoff', () => {
+  it('settles an escrowed Greenway listing during a Mireglass expedition without a second player', () => {
+    const edge = atEdge(classic, -12)
+    const ready: PublicWorldState = { ...edge, tick: 596,
+      player: { ...edge.player, inventory: [...edge.player.inventory, { itemId: 'logs', quantity: 1 }] } }
+    const listed = advancePublicWorldFrame(ready, [
+      { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3 },
+    ])
+    expect(listed.rejections).toEqual([])
+    expect(listed.state.player.tradeSlots[0].itemId).toBe('logs')
+    const outbound = advancePublicWorldFrame(listed.state, [{ type: 'move', delta: { x: -4, z: 0 } }])
+    expect(outbound.rejections).toEqual([])
+    expect(outbound.state.movementOwner).toBe('streamed')
+    const beforeSale = advancePublicWorldFrame(outbound.state, [])
+    expect(beforeSale.state.tick).toBe(599)
+    const settled = advancePublicWorldFrame(beforeSale.state, [])
+    const replay = advancePublicWorldFrame(beforeSale.state, [])
+    expect(settled).toEqual(replay)
+    expect(settled.state.tick).toBe(600)
+    expect(settled.state.movementOwner).toBe('streamed')
+    expect(settled.state.player.coins).toBe(ready.player.coins + 3)
+    expect(settled.state.player.tradeSlots[0].itemId).toBeNull()
+    expect(settled.events).toContainEqual({ type: 'trade_listing_sold', slotIndex: 0,
+      itemId: 'logs', quantity: 1, unitPrice: 3, totalPrice: 3,
+      tick: 600, sequence: beforeSale.state.eventSequence + 1 })
+    expect(settled.state.eventSequence).toBe(beforeSale.state.eventSequence + settled.events.length)
+    expect(advancePublicWorldFrame(settled.state, []).events.some((event) => event.type === 'trade_listing_sold')).toBe(false)
+  })
+
   it.each(['A', 'D'] as const)('applies W+%s as one Greenway look-then-move frame', (key) => {
     const start = createFreshPublicWorld(seed, classic)
     const intents = turnAndWalk(start.player.yaw, key, walkMeters)
