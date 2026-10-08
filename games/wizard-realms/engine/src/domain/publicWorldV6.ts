@@ -342,7 +342,8 @@ export type PublicV6RecoveryResult =
     bytes: string; archiveKey: string }
   | { status: 'invalid-expected-snapshot' | 'snapshot-changed' | 'invalid-source'
     | 'archive-key-invalid' | 'archive-key-present' | 'archive-key-unavailable'
-    | 'archive-too-large' | 'archive-verification-failed' | 'stage-verification-failed'
+    | 'archive-too-large' | 'archive-verification-failed' | 'backup-verification-failed'
+    | 'stage-verification-failed'
     | 'root-verification-failed' | 'storage-error' }
 
 /** Reads raw bytes, including invalid roots, without choosing or modifying any candidate. */
@@ -415,14 +416,27 @@ export function recoverPublicV6Root(
   const afterArchive = readPublicV6RecoverySnapshot(storage)
   if (afterArchive.status === 'storage-error') return afterArchive
   if (!sameRecoverySnapshot(afterArchive.snapshot, expected)) return { status: 'snapshot-changed' }
+  const repairBackup = expected.backupBytes !== null
+    && !parsePublicV6BootstrapRoot(expected.backupBytes)
+    && !parsePublicV6PlayableRoot(expected.backupBytes)
+  const settledBackupBytes = repairBackup ? selected : expected.backupBytes
   try {
+    if (repairBackup) {
+      storage.setItem(PUBLIC_V6_BACKUP_KEY, selected)
+      if (storage.getItem(PUBLIC_V6_BACKUP_KEY) !== selected) return { status: 'backup-verification-failed' }
+    }
+    const afterBackup = readPublicV6RecoverySnapshot(storage)
+    if (afterBackup.status === 'storage-error') return afterBackup
+    if (!sameRecoverySnapshot(afterBackup.snapshot, { ...expected, backupBytes: settledBackupBytes })) {
+      return { status: 'snapshot-changed' }
+    }
     storage.setItem(PUBLIC_V6_STAGE_KEY, selected)
     if (storage.getItem(PUBLIC_V6_STAGE_KEY) !== selected) return { status: 'stage-verification-failed' }
     const beforePublish = readPublicV6RecoverySnapshot(storage)
     if (beforePublish.status === 'storage-error') return beforePublish
     if (beforePublish.snapshot.rootBytes !== expected.rootBytes
       || beforePublish.snapshot.stageBytes !== selected
-      || beforePublish.snapshot.backupBytes !== expected.backupBytes) return { status: 'snapshot-changed' }
+      || beforePublish.snapshot.backupBytes !== settledBackupBytes) return { status: 'snapshot-changed' }
     if (source !== 'root') {
       storage.setItem(PUBLIC_V6_ROOT_KEY, selected)
       if (storage.getItem(PUBLIC_V6_ROOT_KEY) !== selected) return { status: 'root-verification-failed' }

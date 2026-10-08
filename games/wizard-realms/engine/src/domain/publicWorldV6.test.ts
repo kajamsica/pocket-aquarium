@@ -383,6 +383,50 @@ describe('explicit public v6 recovery', () => {
     expect(storage.writes).toEqual([archiveKey, PUBLIC_V6_STAGE_KEY])
   })
 
+  it('repairs an invalid backup only after archiving it, then settles a valid root and stage', () => {
+    const { playableBytes } = recoveryFixtures()
+    const invalidBackup = '{invalid backup'
+    const storage = memoryStorage([
+      [PUBLIC_V6_ROOT_KEY, playableBytes], [PUBLIC_V6_STAGE_KEY, playableBytes],
+      [PUBLIC_V6_BACKUP_KEY, invalidBackup],
+    ])
+    const read = readPublicV6RecoverySnapshot(storage)
+    if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+    expect(recoverPublicV6Root(storage, 'root', read.snapshot, { archiveKey }).status).toBe('recovered')
+    expect(storage.values.get(PUBLIC_V6_ROOT_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_BACKUP_KEY)).toBe(playableBytes)
+    expect(JSON.parse(storage.values.get(archiveKey)!)).toMatchObject({ backupBytes: invalidBackup })
+    expect(storage.writes).toEqual([archiveKey, PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_STAGE_KEY])
+    expect(inspectPublicV6Artifacts(storage)).toMatchObject({
+      status: 'available', stage: { status: 'settled' }, backup: { status: 'available' },
+    })
+  })
+
+  it('leaves root and stage unpublished when invalid-backup repair fails after archive', () => {
+    const { playableBytes } = recoveryFixtures()
+    const invalidBackup = '{invalid backup'
+    const storage = memoryStorage([
+      [PUBLIC_V6_ROOT_KEY, playableBytes], [PUBLIC_V6_STAGE_KEY, '{invalid stage'],
+      [PUBLIC_V6_BACKUP_KEY, invalidBackup],
+    ])
+    const read = readPublicV6RecoverySnapshot(storage)
+    if (read.status !== 'available') throw new Error('Expected recovery snapshot.')
+    const failing = {
+      getItem: storage.getItem,
+      setItem: (key: string, bytes: string) => {
+        if (key === PUBLIC_V6_BACKUP_KEY) throw new Error('quota')
+        storage.setItem(key, bytes)
+      },
+    }
+    expect(recoverPublicV6Root(failing, 'root', read.snapshot, { archiveKey })).toEqual({ status: 'storage-error' })
+    expect(storage.values.get(PUBLIC_V6_ROOT_KEY)).toBe(playableBytes)
+    expect(storage.values.get(PUBLIC_V6_STAGE_KEY)).toBe('{invalid stage')
+    expect(storage.values.get(PUBLIC_V6_BACKUP_KEY)).toBe(invalidBackup)
+    expect(JSON.parse(storage.values.get(archiveKey)!)).toMatchObject(read.snapshot)
+    expect(storage.writes).toEqual([archiveKey])
+  })
+
   it('can choose a valid backup when the stage is invalid, after archiving all disputed bytes', () => {
     const { bootstrapBytes, playableBytes } = recoveryFixtures()
     const storage = memoryStorage([
