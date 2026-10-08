@@ -29,6 +29,7 @@ import {
 import type { PublicV7RecoverySnapshot } from './domain/publicWorldV7Recovery'
 import type { PublicV7RootConflictChoice } from './domain/publicWorldV7RootConflict'
 import type { PublicV7FreshForkChoice } from './domain/publicWorldV7FreshFork'
+import type { PublicV8Operation, PublicV8Start } from './domain/publicWorldV8Flow'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
 import { WizardSurface, type WizardViewIntent } from './view'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
@@ -347,13 +348,20 @@ export function publicRegionTransitionText(before: PublicWorldState, after: Publ
     : 'Returned to Greenway.'
 }
 
-export function PublicWizardApp() {
+export type PublicV8PlayableSession = {
+  start: PublicV8Start
+  commit: (state: PublicWorldV7State, expectedRevision: number) => Promise<PublicV8Operation<PublicV8Start>>
+}
+
+export function PublicWizardApp({ v8Session }: { v8Session?: PublicV8PlayableSession }) {
   const [entry, setEntry] = useState<PublicWorldV7EntryInspection | null>(null)
-  const [world, setWorld] = useState<PublicWorldV7State | null>(null)
-  const [busy, setBusy] = useState(true)
+  const [world, setWorld] = useState<PublicWorldV7State | null>(v8Session?.start.state ?? null)
+  const [busy, setBusy] = useState(!v8Session)
   const [blocked, setBlocked] = useState(false)
   const [blockedReason, setBlockedReason] = useState<string | null>(null)
-  const [notice, setNotice] = useState('Checking this device for a Wizard Realms save…')
+  const [notice, setNotice] = useState(v8Session
+    ? `Public v8 save #${v8Session.start.saveRevision} loaded. Greenway and Mireglass share one player.`
+    : 'Checking this device for a Wizard Realms save…')
   const [confirmFresh, setConfirmFresh] = useState<GenerationProfile | null>(null)
   const [selectedRecovery, setSelectedRecovery] = useState<PublicRecoverySource | null>(null)
   const [confirmStaleStage, setConfirmStaleStage] = useState(false)
@@ -363,8 +371,10 @@ export function PublicWizardApp() {
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(true)
-  const worldRef = useRef<PublicWorldV7State | null>(null)
+  const worldRef = useRef<PublicWorldV7State | null>(v8Session?.start.state ?? null)
   const expectedBytes = useRef<string | null>(null)
+  const expectedRevision = useRef(v8Session?.start.saveRevision ?? 0)
+  const sourceV7Bytes = useRef(v8Session?.start.sourceV7Bytes ?? null)
   const blockedRef = useRef(false)
   const blockedReasonRef = useRef<string | null>(null)
   const saveQueue = useRef<Promise<void>>(Promise.resolve())
@@ -386,6 +396,15 @@ export function PublicWizardApp() {
     lastSaveMs.current = performance.now()
     saveQueue.current = saveQueue.current.then(async () => {
       if (blockedRef.current) return
+      if (v8Session) {
+        const result = await v8Session.commit(snapshot, expectedRevision.current)
+        if (!result.ok) { setWorld(worldRef.current); stop(result.reason); return }
+        expectedRevision.current = result.value.saveRevision
+        lastSaveMs.current = performance.now()
+        if (worldRef.current === snapshot) travelDirty.current = false
+        setNotice(`Public v8 save #${result.value.saveRevision} completed on this device. The v7 source remains untouched.`)
+        return
+      }
       const currentStorage = storage()
       if (!currentStorage) { stop('storage-error'); return }
       const result = await commitPublicV7Snapshot(currentStorage, locks(), snapshot, expectedBytes.current)
@@ -395,8 +414,8 @@ export function PublicWizardApp() {
       if (worldRef.current === snapshot) travelDirty.current = false
       const saved = parsePublicV7PlayableRoot(result.value.bytes)
       setNotice(`Public v7 save #${saved?.saveRevision ?? '?'} completed on this device. Older saves remain untouched.`)
-    }).catch(() => stop('storage-error'))
-  }, [stop])
+    }).catch(() => { if (v8Session) setWorld(worldRef.current); stop('storage-error') })
+  }, [stop, v8Session])
   const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
     setWorld(start.state); setBusy(false); setBlocked(false); setBlockedReason(null)
@@ -405,6 +424,7 @@ export function PublicWizardApp() {
     lastSaveMs.current = performance.now()
   }
   useEffect(() => {
+    if (v8Session) return
     let cancelled = false
     const currentStorage = storage()
     if (!currentStorage) { stop('storage-error'); setBusy(false); return }
@@ -422,7 +442,7 @@ export function PublicWizardApp() {
         : 'A public v7 world is available. Resume it explicitly to play.')
     }).catch(() => { if (!cancelled) { stop('storage-error'); setBusy(false) } })
     return () => { cancelled = true }
-  }, [stop])
+  }, [stop, v8Session])
 
   const choose = async (operation: Promise<PublicV7Operation<PublicV7Start>>) => {
     setBusy(true)
@@ -545,14 +565,16 @@ export function PublicWizardApp() {
     setBusy(true)
     await saveQueue.current
     blockedRef.current = false; blockedReasonRef.current = null
-    setBlocked(false); setBlockedReason(null); setNotice('Retrying the unchanged v7 save root…')
+    setBlocked(false); setBlockedReason(null)
+    setNotice(v8Session ? 'Retrying the unchanged v8 revision…' : 'Retrying the unchanged v7 save root…')
     save(worldRef.current)
     await saveQueue.current
     setBusy(false)
   }
   const exportUnsaved = () => {
     const current = worldRef.current
-    const bytes = current && unsavedPublicV7Bytes(current, expectedBytes.current)
+    const bytes = current && unsavedPublicV7Bytes(current,
+      v8Session ? sourceV7Bytes.current : expectedBytes.current)
     if (!bytes) { setNotice('Unsaved progress could not be validated for export. Keep this tab open and do not clear site data.'); return }
     let url: string | null = null
     let link: HTMLAnchorElement | null = null

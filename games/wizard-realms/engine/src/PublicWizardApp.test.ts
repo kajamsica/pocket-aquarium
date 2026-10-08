@@ -1,3 +1,5 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { intentForView } from './App'
 import { mireglassActionChoices } from './MireglassPlayableApp'
@@ -26,7 +28,7 @@ import {
   publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority,
   publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
-  type PublicLockProvider,
+  PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
 
 const seed = 'greenway-alpha'
@@ -46,6 +48,23 @@ function webLocks() {
   } }
   return { provider, names }
 }
+
+describe('public v8 play session seam', () => {
+  it('renders the supplied world immediately while the no-prop v7 entry stays gated', () => {
+    const state = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const source = commitPublicV7World(memoryStorage(), state, null)
+    if (source.status !== 'committed') throw new Error(source.status)
+    const session: PublicV8PlayableSession = { start: { state, saveRevision: 3, sourceV7Bytes: source.bytes },
+      commit: async () => ({ ok: true, value: { state, saveRevision: 4, sourceV7Bytes: source.bytes } }) }
+    const v8 = renderToStaticMarkup(createElement(PublicWizardApp, { v8Session: session }))
+    expect(v8).toContain('Public v8 save #3 loaded')
+    expect(v8).toContain('World / Save')
+    expect(v8).not.toContain('Choose how to begin.')
+    const v7 = renderToStaticMarkup(createElement(PublicWizardApp))
+    expect(v7).toContain('Checking this device for a Wizard Realms save')
+    expect(v7).toContain('Choose how to begin.')
+  })
+})
 
 describe('public v6 app boundary', () => {
   it('renders the public shop sale as player-facing feedback', () => {
