@@ -8,6 +8,43 @@ const MARGIN_CELLS = 16
 const CACHE_LIMIT = 8
 const DIRECTIONS = [[-1, 0], [0, 1], [1, 0], [0, -1]] as const
 const trailCache = new Map<string, readonly Readonly<Vec3>[]>()
+const greenwayTrailCache = new Map<string, readonly Readonly<Vec3>[]>()
+
+/** A dry, reversible 4 m connector from the Greenway origin to the fringe marker. */
+export function mireglassGreenwayToMarkerTrail(seed: string): readonly Readonly<Vec3>[] {
+  const normalizedSeed = seed || 'wizard-realms'
+  const cached = greenwayTrailCache.get(normalizedSeed)
+  if (cached) {
+    greenwayTrailCache.delete(normalizedSeed)
+    greenwayTrailCache.set(normalizedSeed, cached)
+    return cached
+  }
+  const marker = mireglassAnchors(normalizedSeed).fringeMarker.tile
+  const markerX = marker.center.x / CELL
+  const markerZ = marker.center.z / CELL
+  if (!Number.isSafeInteger(markerX) || !Number.isSafeInteger(markerZ)
+    || markerX >= 0 || markerZ <= 0) {
+    throw new Error(`No dry Greenway connector for ${normalizedSeed}: unsupported fringe marker`)
+  }
+  const centers: Vec3[] = []
+  const append = (x: number, z: number) => {
+    const tile = worldTileAtGrid(normalizedSeed, x, z)
+    const previous = centers.at(-1)
+    if (tile.terrain === 'wetland'
+      || (previous && (mireglassMoveBarrier(normalizedSeed, previous, tile.center) !== null
+        || mireglassMoveBarrier(normalizedSeed, tile.center, previous) !== null))) {
+      throw new Error(`No dry Greenway connector for ${normalizedSeed}: blocked at (${tile.center.x}, ${tile.center.z})`)
+    }
+    centers.push(tile.center)
+  }
+  append(0, 0)
+  for (let x = -1; x >= markerX; x -= 1) append(x, 0)
+  for (let z = 1; z <= markerZ; z += 1) append(markerX, z)
+  const trail = Object.freeze(centers.map((center) => Object.freeze(center)))
+  greenwayTrailCache.set(normalizedSeed, trail)
+  if (greenwayTrailCache.size > CACHE_LIMIT) greenwayTrailCache.delete(greenwayTrailCache.keys().next().value!)
+  return trail
+}
 
 /** A deterministic, dry, cardinal walking route through canonical Mireglass cells. */
 export function mireglassApproachTrail(seed: string): readonly Readonly<Vec3>[] {
