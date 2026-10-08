@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld } from './generation'
-import { serializeWizardWorld, restoreWizardWorld } from './persistence'
+import { isRestorableWizardSave, serializeWizardWorld, restoreWizardWorld } from './persistence'
 import {
   PUBLIC_V6_BOOTSTRAP_SCHEMA, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_STAGE_KEY,
   commitLegacyImportToPublicV6, inspectLegacyImportSource, loadPublicV6Root,
@@ -207,6 +207,29 @@ describe('public v6 import bootstrap', () => {
     const storage = memoryStorage([[CLASSIC_KEY, bytes]])
     expect(inspectLegacyImportSource(storage, CLASSIC)).toEqual({
       status: 'incompatible', key: CLASSIC_KEY, reason: 'terrain',
+    })
+    expect(storage.values.get(CLASSIC_KEY)).toBe(bytes)
+    expect(storage.writes).toEqual([])
+  })
+
+  it('rejects a v5-valid pose whose current streamed tile was never discovered', () => {
+    const world = createGeneratedWorld('greenway-alpha')
+    world.player.position = { ...world.routes[0].to }
+    const bytes = serializeWizardWorld(world)
+    expect(isRestorableWizardSave(bytes, CLASSIC)).toBe(true)
+    const storage = memoryStorage([[CLASSIC_KEY, bytes]])
+    expect(inspectLegacyImportSource(storage, CLASSIC)).toEqual({
+      status: 'incompatible', key: CLASSIC_KEY, reason: 'streamed-resume',
+    })
+    expect(storage.values.get(CLASSIC_KEY)).toBe(bytes)
+    expect(storage.writes).toEqual([])
+  })
+
+  it('rejects a seed with no required dry Mireglass approach trail before import', () => {
+    const bytes = serializeWizardWorld(createGeneratedWorld('public-seed-0'))
+    const storage = memoryStorage([[CLASSIC_KEY, bytes]])
+    expect(inspectLegacyImportSource(storage, CLASSIC)).toEqual({
+      status: 'incompatible', key: CLASSIC_KEY, reason: 'mireglass-content',
     })
     expect(storage.values.get(CLASSIC_KEY)).toBe(bytes)
     expect(storage.writes).toEqual([])

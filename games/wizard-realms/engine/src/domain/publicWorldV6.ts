@@ -1,8 +1,10 @@
 import { WORLD_CONTENT_REVISION } from './generation'
-import { MIREGLASS_CONTENT_REVISION, mireglassAnchors } from './mireglassContent'
+import { mireglassApproachTrail } from './mireglassApproachTrail'
+import { MIREGLASS_CONTENT_REVISION, mireglassAnchors, mireglassResources } from './mireglassContent'
 import { isValidMireglassV6Player } from './mireglassExpedition'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import { hasValidRoutePlacements, isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
+import { createStreamedWorldFromState } from './streamedWorld'
 import type { GenerationProfile, WizardWorldState } from './types'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
@@ -40,7 +42,7 @@ export interface PublicV6BootstrapRoot {
 export type LegacyImportInspection =
   | { status: 'missing' | 'storage-error' }
   | { status: 'invalid'; key: string }
-  | { status: 'incompatible'; key: string; reason: 'terrain' | 'position' | 'player' | 'mireglass-content' }
+  | { status: 'incompatible'; key: string; reason: 'terrain' | 'position' | 'player' | 'mireglass-content' | 'streamed-resume' }
   | { status: 'available'; source: LegacyImportSource; greenwaySaveBytes: string }
 
 export type PublicV6RootLoad =
@@ -58,10 +60,10 @@ const exact = (value: unknown, keys: readonly string[]): value is Record<string,
   record(value) && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key))
 const profileId = (value: unknown): value is GenerationProfile =>
   value === 'greenway-classic-v1' || value === 'greenway-expanded-v1'
-type CompatibilityIssue = Extract<LegacyImportInspection, { status: 'incompatible' }>['reason']
+export type PublicWorldCompatibilityIssue = Extract<LegacyImportInspection, { status: 'incompatible' }>['reason']
 
 /** A v5 restore may be valid while containing mutable terrain that a streamed cell cannot represent. */
-function compatibility(world: WizardWorldState): CompatibilityIssue | null {
+export function publicWorldCompatibility(world: WizardWorldState): PublicWorldCompatibilityIssue | null {
   if (!hasValidRoutePlacements(world) || !isValidMireglassV6Player(world.player)) return 'player'
   for (const tile of world.tiles) {
     const canonical = worldTileAtGrid(world.seed, tile.gridX - 3, tile.gridZ - 3)
@@ -77,8 +79,23 @@ function compatibility(world: WizardWorldState): CompatibilityIssue | null {
       Math.ceil(x / WORLD_CELL_METERS - 0.5), Math.ceil(z / WORLD_CELL_METERS - 0.5))
     if (y < ground.center.y) return 'position'
   } catch { return 'position' }
-  try { mireglassAnchors(world.seed); mireglassRouteSites(world.seed) }
+  try {
+    mireglassAnchors(world.seed)
+    mireglassResources(world.seed)
+    mireglassRouteSites(world.seed)
+    mireglassApproachTrail(world.seed)
+  }
   catch { return 'mireglass-content' }
+  try {
+    createStreamedWorldFromState({
+      seed: world.seed, tick: world.tick,
+      player: {
+        position: world.player.position, yaw: world.player.yaw, pitch: world.player.pitch,
+        verticalVelocity: world.player.verticalVelocity,
+      },
+      discoveredTileIds: world.discoveredTileIds,
+    })
+  } catch { return 'streamed-resume' }
   return null
 }
 
@@ -94,7 +111,7 @@ export function inspectLegacyImportSource(
     if (!isRestorableWizardSave(bytes, profile)) return { status: 'invalid', key }
     let world: WizardWorldState
     try { world = restoreWizardWorld(bytes) } catch { return { status: 'invalid', key } }
-    const issue = compatibility(world)
+    const issue = publicWorldCompatibility(world)
     if (issue) return { status: 'incompatible', key, reason: issue }
     return { status: 'available', source: { profile, key, bytes },
       greenwaySaveBytes: serializeWizardWorld(world) }
@@ -125,7 +142,7 @@ export function parsePublicV6BootstrapRoot(bytes: string): PublicV6BootstrapRoot
     const normalized = JSON.parse(value.greenwaySaveBytes) as Record<string, unknown>
     if (original.seed !== value.seed || normalized.schemaVersion !== 'wizard-world/v5'
       || serializeWizardWorld(original) !== value.greenwaySaveBytes
-      || compatibility(original) !== null) return null
+      || publicWorldCompatibility(original) !== null) return null
   } catch { return null }
   return value as unknown as PublicV6BootstrapRoot
 }
