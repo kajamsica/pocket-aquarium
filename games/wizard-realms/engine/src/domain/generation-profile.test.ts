@@ -1,19 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
-import { isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
+import { hasValidRoutePlacements, isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
+import { canonicalRouteSites } from './routeSites'
 import type { WizardWorldState } from './types'
 import { advanceWizardWorld } from './world'
 
-function asLegacySave(state: WizardWorldState, version: 'wizard-world/v1' | 'wizard-world/v2' | 'wizard-world/v3') {
+function asLegacySave(state: WizardWorldState, version: 'wizard-world/v1' | 'wizard-world/v2' | 'wizard-world/v3' | 'wizard-world/v4') {
   const save = JSON.parse(serializeWizardWorld(state)) as Record<string, unknown>
   const player = save.player as Record<string, unknown>
   const stores = save.stores as Array<{ listings: Array<{ id: string }> }>
   save.schemaVersion = version
-  save.contentRevision = version === 'wizard-world/v3' ? 'greenway-region-v1' : undefined
-  stores[0].listings = stores[0].listings.filter((listing) => listing.id !== 'spade')
-  for (const field of ['inscriptions', 'digSites', 'studiedInscriptionIds', 'revealedDigSiteIds', 'excavatedDigSiteIds']) delete save[field]
-  delete player.skillXp
-  delete player.learnedSpellIds
+  save.contentRevision = version === 'wizard-world/v4' ? 'greenway-region-v2'
+    : version === 'wizard-world/v3' ? 'greenway-region-v1' : undefined
+  if (version !== 'wizard-world/v4') {
+    stores[0].listings = stores[0].listings.filter((listing) => listing.id !== 'spade')
+    for (const field of ['inscriptions', 'digSites', 'studiedInscriptionIds', 'revealedDigSiteIds', 'excavatedDigSiteIds']) delete save[field]
+    delete player.skillXp
+    delete player.learnedSpellIds
+  }
+  if (version !== 'wizard-world/v1') {
+    for (const route of save.routes as Array<Record<string, unknown>>) delete route.siteId
+  }
   if (version === 'wizard-world/v1') {
     for (const field of ['generationProfile', 'areas', 'routes', 'recipes', 'builtRouteIds', 'unlockedRecipeIds', 'discoveredTileIds']) delete save[field]
     delete player.verticalVelocity
@@ -35,6 +42,8 @@ describe('wizard generation profiles', () => {
     classic.player.equipment.mainHand = 'woodcutters_axe'
     classic.player.discoveredRingIds = classic.fairyRings.map((ring) => ring.id)
     classic.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+    classic.routes[0].siteId = 'greenway_ladder:x:0'
+    classic.routes[1].siteId = 'highland_bridge:z:-8'
     classic.unlockedRecipeIds = ['greenway_ladder', 'highland_bridge']
     classic.resources[0].health = 0
     classic.resources[0].depleted = true
@@ -50,8 +59,8 @@ describe('wizard generation profiles', () => {
     expect(isRestorableWizardSave(JSON.stringify(oldSave), 'greenway-expanded-v1')).toBe(false)
     const restored = restoreWizardWorld(JSON.stringify(oldSave))
     expect(restored).toEqual(classic)
-    expect(restored.schemaVersion).toBe('wizard-world/v4')
-    expect(restored.contentRevision).toBe('greenway-region-v2')
+    expect(restored.schemaVersion).toBe('wizard-world/v5')
+    expect(restored.contentRevision).toBe('greenway-region-v3')
     expect(restored.tiles).toHaveLength(49)
     expect(restored.generationProfile).toBe('greenway-classic-v1')
     expect(restored.stores[0].position).toEqual(classic.stores[0].position)
@@ -126,6 +135,7 @@ describe('wizard generation profiles', () => {
     expanded.resources[0].depleted = true
     expanded.stores[1].listings[0].stock = 1
     expanded.builtRouteIds = ['greenway_ladder']
+    expanded.routes[0].siteId = 'greenway_ladder:x:0'
     expanded.discoveredTileIds = [...new Set([...expanded.discoveredTileIds, expanded.tiles[0].id])].sort()
     const oldSave = asLegacySave(expanded, 'wizard-world/v2')
 
@@ -134,7 +144,89 @@ describe('wizard generation profiles', () => {
     expect(restoreWizardWorld(JSON.stringify(oldSave))).toEqual(expanded)
   })
 
-  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('requires an exact v4 revision and structural save fields for %s', (profile) => {
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
+    'maps completed v4 routes to fixed sites without changing original %s save bytes', (profile) => {
+      const world = createGeneratedWorld('v4-built-routes', profile)
+      world.player.xp = 200
+      world.player.level = 3
+      world.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+      world.unlockedRecipeIds = ['greenway_ladder', 'highland_bridge']
+      world.routes[0].siteId = 'greenway_ladder:x:0'
+      world.routes[1].siteId = 'highland_bridge:z:-8'
+      world.resources[0].health = 0
+      world.resources[0].depleted = true
+      world.stores[0].listings[0].stock = 1
+      const bytes = JSON.stringify(asLegacySave(world, 'wizard-world/v4'))
+
+      expect(isRestorableWizardSave(bytes, profile)).toBe(true)
+      expect(restoreWizardWorld(bytes)).toEqual(world)
+      expect(JSON.stringify(asLegacySave(world, 'wizard-world/v4'))).toBe(bytes)
+    },
+  )
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
+    'round-trips chosen v5 routes and rejects malformed placement bytes for %s', (profile) => {
+      const world = createGeneratedWorld('v5-chosen-routes', profile)
+      const sites = canonicalRouteSites(world)
+      const ladder = sites.find((site) => site.id === 'greenway_ladder:x:2')!
+      const bridge = sites.find((site) => site.id === 'highland_bridge:z:-10')!
+      world.player.xp = 200
+      world.player.level = 3
+      world.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+      world.unlockedRecipeIds = ['greenway_ladder', 'highland_bridge']
+      world.routes[0] = { ...world.routes[0], siteId: ladder.id, from: { ...ladder.from }, to: { ...ladder.to } }
+      world.routes[1] = { ...world.routes[1], siteId: bridge.id, from: { ...bridge.from }, to: { ...bridge.to } }
+      expect(hasValidRoutePlacements(world)).toBe(true)
+      const bytes = serializeWizardWorld(world)
+      expect(restoreWizardWorld(bytes)).toEqual(world)
+
+      const tamper = (change: (state: WizardWorldState) => void) => {
+        const copy = JSON.parse(bytes) as WizardWorldState
+        change(copy)
+        return JSON.stringify(copy)
+      }
+      const malformed = [
+        tamper((state) => { state.routes[0].siteId = 'greenway_ladder:x:999' }),
+        tamper((state) => { state.routes[0].from.x += 0.5 }),
+        tamper((state) => { state.routes[1].to.z -= 2 }),
+        tamper((state) => { state.builtRouteIds = ['greenway_ladder'] }),
+        tamper((state) => { state.routes[1].siteId = null }),
+        tamper((state) => { state.routes[0].siteId = bridge.id }),
+        tamper((state) => { state.player.position.x = 1_001 }),
+        tamper((state) => { state.resources[0].position.z = -1_001 }),
+        tamper((state) => { state.tiles[0].center.y = 1_001 }),
+        tamper((state) => { state.areas[0].minX -= 2 }),
+        tamper((state) => { state.tiles[0].terrain = 'wetland' }),
+        tamper((state) => { state.resources[0].kind = 'herb' }),
+        tamper((state) => { state.resources[0].health = state.resources[0].maxHealth + 1 }),
+        tamper((state) => { state.resources[0].position.y += 1 }),
+        tamper((state) => { state.stores[0].position.y += 1 }),
+        tamper((state) => { state.rng.simulation = 0x1_0000_0000 }),
+        tamper((state) => { state.player.pitch = Math.PI }),
+        tamper((state) => { state.player.equipment.head = 'woodcutters_axe' }),
+        tamper((state) => { state.discoveredTileIds.pop() }),
+        tamper((state) => { state.unlockedRecipeIds = ['greenway_ladder'] }),
+      ]
+      for (const originalBytes of malformed) {
+        let storedBytes = originalBytes
+        let writeCount = 0
+        for (let tick = 0; tick < 5; tick += 1) {
+          if (isRestorableWizardSave(storedBytes, profile)) {
+            storedBytes = serializeWizardWorld(restoreWizardWorld(storedBytes))
+            writeCount += 1
+          }
+        }
+        expect(isRestorableWizardSave(originalBytes, profile), originalBytes).toBe(false)
+        expect(() => restoreWizardWorld(originalBytes), originalBytes).toThrow('Invalid or unsupported')
+        expect(writeCount, originalBytes).toBe(0)
+        expect(storedBytes, originalBytes).toBe(originalBytes)
+      }
+      world.routes[0].from.x += 0.5
+      expect(hasValidRoutePlacements(world)).toBe(false)
+    },
+  )
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('requires an exact v5 revision and structural save fields for %s', (profile) => {
     const current = createGeneratedWorld('guarded-save', profile)
     current.tick = 6
     current.player.coins = 92
@@ -154,7 +246,7 @@ describe('wizard generation profiles', () => {
     }
     const invalid = [
       'not-json', 'null', '[]',
-      JSON.stringify({ ...raw, schemaVersion: 'wizard-world/v5' }),
+      JSON.stringify({ ...raw, schemaVersion: 'wizard-world/v6' }),
       JSON.stringify({ ...raw, contentRevision: 'unknown' }),
       JSON.stringify({ ...raw, generationProfile: 'unknown' }),
       JSON.stringify({ ...raw, seed: '' }),
@@ -189,9 +281,15 @@ describe('wizard generation profiles', () => {
     expect(isRestorableWizardSave(JSON.stringify({ ...v3, contentRevision: 'greenway-region-v2' }), profile)).toBe(false)
     expect(isRestorableWizardSave(JSON.stringify({ ...v3, contentRevision: undefined }), profile)).toBe(false)
     expect(isRestorableWizardSave(JSON.stringify({ ...v3, stores: [] }), profile)).toBe(false)
+
+    const v4 = asLegacySave(current, 'wizard-world/v4')
+    expect(isRestorableWizardSave(JSON.stringify(v4), profile)).toBe(true)
+    expect(restoreWizardWorld(JSON.stringify(v4))).toEqual(current)
+    expect(isRestorableWizardSave(JSON.stringify({ ...v4, contentRevision: 'greenway-region-v3' }), profile)).toBe(false)
+    expect(isRestorableWizardSave(JSON.stringify({ ...v4, contentRevision: undefined }), profile)).toBe(false)
   })
 
-  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('round-trips v4 discovery progress for %s', (profile) => {
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('round-trips v5 discovery progress for %s', (profile) => {
     const current = createGeneratedWorld('excavated-progress', profile)
     current.tick = 89
     current.eventSequence = 41
@@ -206,7 +304,7 @@ describe('wizard generation profiles', () => {
     expect(restoreWizardWorld(serializeWizardWorld(current))).toEqual(current)
   })
 
-  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('preserves invalid v4 pack bytes without autosave for %s', (profile) => {
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('preserves invalid v5 pack bytes without autosave for %s', (profile) => {
     const current = createGeneratedWorld('pack-capacity-guard', profile)
     current.player.inventory = [{ itemId: 'woodcutters_axe', quantity: 1 }, { itemId: 'logs', quantity: 17 }]
     current.player.tradeSlots[0] = { slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 7 }
@@ -246,6 +344,8 @@ describe('wizard generation profiles', () => {
     ['wizard-world/v2', 'greenway-expanded-v1'],
     ['wizard-world/v3', 'greenway-classic-v1'],
     ['wizard-world/v3', 'greenway-expanded-v1'],
+    ['wizard-world/v4', 'greenway-classic-v1'],
+    ['wizard-world/v4', 'greenway-expanded-v1'],
   ] as const)('rejects incomplete %s %s payloads before guarded autosave', (version, profile) => {
     const current = createGeneratedWorld(`incomplete-${version}-${profile}`, profile)
     current.resources[0].health = 0
@@ -315,10 +415,11 @@ describe('wizard generation profiles', () => {
     }
   }, 30_000)
 
-  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('generates fixed v4 discovery content for %s', (profile) => {
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('generates fixed v5 discovery content for %s', (profile) => {
     const world = createGeneratedWorld('discovery-content', profile)
-    expect(world.schemaVersion).toBe('wizard-world/v4')
-    expect(world.contentRevision).toBe('greenway-region-v2')
+    expect(world.schemaVersion).toBe('wizard-world/v5')
+    expect(world.contentRevision).toBe('greenway-region-v3')
+    expect(world.routes.map((route) => route.siteId)).toEqual([null, null])
     expect(world.inscriptions.map((inscription) => [inscription.id, inscription.position.x, inscription.position.z, inscription.spellId]))
       .toEqual([['greenway_waystone', 3, 3, 'wayfinder_glow']])
     expect(world.digSites.map((site) => [site.id, site.position.x, site.position.z, site.visibleFromStart,

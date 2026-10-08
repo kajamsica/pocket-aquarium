@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import type { WizardDigSite, WizardFairyRing, WizardInscription, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
+import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardViewProjection } from './contracts'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -513,7 +513,12 @@ function DigSite({ site }: { site: WizardDigSite }) {
   </group>
 }
 
-function ConstructionRoute({ route }: { route: WizardRoute }) {
+export function constructionVisuals(routes: readonly WizardRoute[], sites: readonly WizardBuildSite[], siteId: string | null): Pick<WizardRoute, 'id' | 'from' | 'to' | 'built'>[] {
+  const preview = sites.find((site) => site.id === siteId && site.discovered && site.status !== 'built' && !routes.some((route) => route.id === site.routeId && route.built))
+  return [...routes.filter((route) => route.built), ...(preview ? [{ id: preview.id, from: preview.from, to: preview.to, built: false }] : [])]
+}
+
+function ConstructionRoute({ route }: { route: Pick<WizardRoute, 'id' | 'from' | 'to' | 'built'> }) {
   const from = new THREE.Vector3(...route.from)
   const to = new THREE.Vector3(...route.to)
   const midpoint = from.clone().lerp(to, 0.5)
@@ -523,9 +528,9 @@ function ConstructionRoute({ route }: { route: WizardRoute }) {
     <group>
       {[route.from, route.to].map((position, index) => (
         <group key={index} position={[position[0], position[1], position[2]]}>
-          <mesh position={[0, 0.5, 0]} material={route.built ? WOOD_MATERIAL : STAKE_MATERIAL} castShadow><cylinderGeometry args={[0.11, 0.17, 1.0, 6]} /></mesh>
+          <mesh position={[0, 0.5, 0]} material={route.built ? WOOD_MATERIAL : GOLD_MATERIAL} castShadow={route.built}><cylinderGeometry args={[0.11, 0.17, 1.0, 6]} /></mesh>
           <mesh geometry={CRYSTAL_GEOMETRY} position={[0, 1.1, 0]} scale={[0.1, 0.16, 0.1]}>
-            <meshStandardMaterial color="#d9b45c" emissive={route.built ? '#ffb347' : '#6b5c48'} emissiveIntensity={route.built ? 0.8 : 0.1} roughness={0.4} metalness={0.4} />
+            <meshStandardMaterial color="#d9b45c" emissive={route.built ? '#ffb347' : '#89c9ff'} emissiveIntensity={route.built ? 0.8 : 1.7} roughness={0.4} metalness={0.4} />
           </mesh>
         </group>
       ))}
@@ -535,8 +540,8 @@ function ConstructionRoute({ route }: { route: WizardRoute }) {
             <meshStandardMaterial color={index % 2 ? '#8a5f36' : '#7d552f'} roughness={0.92} />
           </mesh>
         )) : <>
-          {[-0.55, 0.55].map((x) => <mesh key={x} geometry={UNIT_BOX} material={STAKE_MATERIAL} position={[x, 0, 0]} scale={[0.08, 0.08, length]} />)}
-          <mesh geometry={UNIT_BOX} position={[0, -0.1, 0]} scale={[1.2, 0.04, length]}><meshStandardMaterial color="#d8c9a3" transparent opacity={0.22} depthWrite={false} /></mesh>
+          {[-0.55, 0.55].map((x) => <mesh key={x} geometry={UNIT_BOX} material={GOLD_MATERIAL} position={[x, 0, 0]} scale={[0.08, 0.08, length]} />)}
+          <mesh geometry={UNIT_BOX} position={[0, -0.1, 0]} scale={[1.2, 0.04, length]}><meshStandardMaterial color="#d9eaff" emissive="#7bbcff" emissiveIntensity={0.8} transparent opacity={0.5} depthWrite={false} /></mesh>
         </>}
       </group>
     </group>
@@ -551,6 +556,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
   const [pose] = useState<PresentationPose>(() => ({
     position: new THREE.Vector3(...projection.player.position), yaw: projection.player.yaw, speed: 0, phase: 0,
   }))
+  const visibleRoutes = constructionVisuals(projection.routes, projection.buildSites, projection.selectedBuildSiteId)
   return (
     <Canvas
       shadows={{ type: THREE.PCFShadowMap }}
@@ -600,7 +606,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
       {projection.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {projection.inscriptions.map((inscription) => <Waystone key={inscription.id} inscription={inscription} />)}
       {projection.digSites.map((site) => <DigSite key={site.id} site={site} />)}
-      {projection.routes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
+      {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route} />)}
       <WizardAvatar pose={pose} equipment={projection.equipment} />
     </Canvas>
   )

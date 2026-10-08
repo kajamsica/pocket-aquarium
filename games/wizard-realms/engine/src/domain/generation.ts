@@ -5,7 +5,7 @@ import type {
 
 const SIZE = 7
 const TILE_METERS = 4
-export const WORLD_CONTENT_REVISION = 'greenway-region-v2' as const
+export const WORLD_CONTENT_REVISION = 'greenway-region-v3' as const
 export const STORE_HALF_WIDTH = 3.5 / 2 + 0.55
 export const STORE_HALF_DEPTH = 2.5 / 2 + 0.55
 const RESOURCE_STORE_MARGIN = 0.2
@@ -116,8 +116,9 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
     { id: 'practice_mound', name: 'Practice mound', position: { x: 7, y: terrainHeightAt(tiles, 7, 3), z: 3 }, visibleFromStart: true, minimumExcavationLevel: 1, reward: { itemId: 'stone', quantity: 2 }, xpReward: 30 },
     { id: 'ridge_cache', name: 'Ridge cache', position: { x: -6, y: terrainHeightAt(tiles, -6, -9), z: -9 }, visibleFromStart: false, minimumExcavationLevel: 2, reward: { itemId: 'ancient_relic', quantity: 1 }, xpReward: 40 },
   ]
-  const route = (profile: Omit<RouteProfile, 'from' | 'to'>, from: [number, number], to: [number, number]): RouteProfile => ({
+  const route = (profile: Omit<RouteProfile, 'from' | 'to' | 'siteId'>, from: [number, number], to: [number, number]): RouteProfile => ({
     ...profile,
+    siteId: null,
     from: { x: from[0], y: terrainHeightAt(tiles, from[0], from[1]), z: from[1] },
     to: { x: to[0], y: terrainHeightAt(tiles, to[0], to[1]), z: to[1] },
   })
@@ -128,12 +129,27 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
   const player = makePlayer(tiles)
   const landmarks = [player.position, ...stores.map((store) => store.position), ...fairyRings.map((ring) => ring.position),
     ...inscriptions.map((inscription) => inscription.position), ...digSites.map((site) => site.position), ...routes.flatMap((entry) => [entry.from, entry.to])]
+  // Keep the fixed ladder and its neighboring sites usable in fresh worlds. Existing saves retain their resource positions.
+  const ladder = routes[0]
+  const ladderSiteXs = [ladder.from.x - 2, ladder.from.x, ladder.from.x + 2]
+  const clearOfLadders = (x: number, z: number) => ladderSiteXs.every((siteX) => {
+    const nearestZ = Math.max(Math.min(ladder.from.z, ladder.to.z), Math.min(Math.max(ladder.from.z, ladder.to.z), z))
+    return Math.hypot(x - siteX, z - nearestZ) >= 1.5
+  })
+  const generationAreas = generationProfile === 'greenway-expanded-v1' ? EXPANDED_AREA_PROFILES : AREA_PROFILES
   const resources: WizardWorldState['resources'] = []
   const resourcePosition = (tile: WorldTile, preferredX: number, preferredZ: number) => {
     const alternatives = [[1.75, 0], [-1.75, 0], [0, 1.75], [0, -1.75], [1.75, 1.75], [-1.75, 1.75], [1.75, -1.75], [-1.75, -1.75]]
-    const candidates = [{ x: preferredX, z: preferredZ }, ...alternatives.map(([dx, dz]) => ({ x: tile.center.x + dx, z: tile.center.z + dz }))]
+    const finerOffsets = [-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8]
+    const candidates = [{ x: preferredX, z: preferredZ }, ...alternatives.map(([dx, dz]) => ({ x: tile.center.x + dx, z: tile.center.z + dz })),
+      ...finerOffsets.flatMap((dx) => finerOffsets.map((dz) => ({ x: tile.center.x + dx, z: tile.center.z + dz })))]
+    const tileAreas = tile.gridX >= 0 && tile.gridX < SIZE && tile.gridZ >= 0 && tile.gridZ < SIZE
+      ? AREA_PROFILES : generationAreas
+    const sourceAreaId = areaAt(tileAreas, tile.center.x, tile.center.z).id
     const position = candidates.find(({ x, z }, index) =>
       landmarks.every((anchor) => Math.hypot(x - anchor.x, z - anchor.z) >= 1.5)
+      && clearOfLadders(x, z)
+      && areaAt(tileAreas, x, z).id === sourceAreaId
       && stores.every((store) => Math.abs(x - store.position.x) >= STORE_HALF_WIDTH + RESOURCE_STORE_MARGIN
         || Math.abs(z - store.position.z) >= STORE_HALF_DEPTH + RESOURCE_STORE_MARGIN)
       && (index === 0 || resources.every((resource) => Math.hypot(x - resource.position.x, z - resource.position.z) >= 0.75)))
@@ -171,12 +187,12 @@ export function createGeneratedWorld(seed: string, generationProfile: Generation
     }
     chosen.forEach(addResource)
   }
-  const areas = (generationProfile === 'greenway-expanded-v1' ? EXPANDED_AREA_PROFILES : AREA_PROFILES).map((area) => ({ ...area }))
+  const areas = generationAreas.map((area) => ({ ...area }))
   const recipes = RECIPE_PROFILES.map((recipe) => ({ ...recipe }))
   const discoveredTileIds = coreTiles.filter((tile) => areaAt(areas, tile.center.x, tile.center.z).id === 'greenway').map((tile) => tile.id).sort()
   const generation = hashSeed(`${normalizedSeed}:generation`)
   return {
-    schemaVersion: 'wizard-world/v4', contentRevision: WORLD_CONTENT_REVISION, seed: normalizedSeed, generationProfile, tick: 0, fixedStepMs: 50,
+    schemaVersion: 'wizard-world/v5', contentRevision: WORLD_CONTENT_REVISION, seed: normalizedSeed, generationProfile, tick: 0, fixedStepMs: 50,
     rng: { generation, simulation: hashSeed(`${normalizedSeed}:simulation`) }, tiles, resources, stores,
     fairyRings, inscriptions, digSites, areas, routes, recipes, builtRouteIds: [], unlockedRecipeIds: ['greenway_ladder'],
     discoveredTileIds, studiedInscriptionIds: [], revealedDigSiteIds: [], excavatedDigSiteIds: [], player, eventSequence: 0,

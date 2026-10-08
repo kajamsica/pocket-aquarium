@@ -103,6 +103,18 @@ export interface WizardRoute {
   logCost: number
 }
 
+export interface WizardBuildSite {
+  id: string
+  routeId: string
+  label: string
+  from: Vec3
+  to: Vec3
+  logCost: number
+  status: 'ready' | 'locked' | 'too_far' | 'needs_logs' | 'obstructed' | 'built'
+  reason: string
+  discovered: boolean
+}
+
 export interface WizardMapTile {
   id: string
   gridX: number
@@ -133,6 +145,8 @@ export interface WizardViewProjection {
   skillXp: Readonly<Record<SkillId, number>>
   learnedSpellIds: readonly SpellId[]
   routes: readonly WizardRoute[]
+  buildSites: readonly WizardBuildSite[]
+  selectedBuildSiteId: string | null
   map: {
     tiles: readonly WizardMapTile[]
     player: { gridX: number; gridZ: number; yaw: number }
@@ -175,6 +189,8 @@ export type WizardViewIntent =
   | { type: 'inscription.study'; inscriptionId: InscriptionId }
   | { type: 'spell.cast'; spellId: SpellId }
   | { type: 'dig-site.excavate'; digSiteId: DigSiteId }
+  | { type: 'build-site.select'; siteId: string | null }
+  | { type: 'build-site.confirm'; siteId: string }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }
   | { type: 'trade.cancel-listing'; slot: number }
   | { type: 'fairy-ring.teleport'; ringId: string; destinationRingId: string }

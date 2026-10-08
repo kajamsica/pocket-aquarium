@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import type { WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, digSiteAppearance, storeSafeCameraPosition } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, storeSafeCameraPosition } from './WizardScene'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
@@ -35,6 +35,30 @@ describe('dig-site view state', () => {
     expect(digSiteAppearance(ridge)).toBe('hidden')
     expect(digSiteAppearance({ ...ridge, revealed: true })).toBe('mound')
     expect(digSiteAppearance({ ...ridge, revealed: true, excavated: true })).toBe('dug')
+  })
+})
+
+describe('construction scene visibility', () => {
+  const routes = [
+    { id: 'ladder', label: 'Greenway ladder', from: [0, 0, 0] as const, to: [0, 0, -2] as const, built: false, unlocked: true, logCost: 4 },
+    { id: 'bridge', label: 'Highland bridge', from: [2, 0, 0] as const, to: [4, 0, 0] as const, built: true, unlocked: true, logCost: 6 },
+  ]
+  const sites = [
+    { id: 'ladder-west', routeId: 'ladder', label: 'West crossing', from: [-3, 0, 0] as const, to: [-3, 0, -2] as const, logCost: 4, status: 'ready' as const, reason: 'Ready', discovered: true },
+    { id: 'ladder-east', routeId: 'ladder', label: 'East crossing', from: [3, 0, 0] as const, to: [3, 0, -2] as const, logCost: 4, status: 'ready' as const, reason: 'Ready', discovered: true },
+    { id: 'ladder-fog', routeId: 'ladder', label: 'Hidden crossing', from: [5, 0, 0] as const, to: [5, 0, -2] as const, logCost: 4, status: 'ready' as const, reason: 'Ready', discovered: false },
+  ]
+
+  it('shows completed structures and only the one selected discovered preview', () => {
+    expect(constructionVisuals(routes, sites, null).map((route) => route.id)).toEqual(['bridge'])
+    expect(constructionVisuals(routes, sites, 'ladder-east').map((route) => route.id)).toEqual(['bridge', 'ladder-east'])
+    expect(constructionVisuals(routes, sites, 'ladder-west')[1]).toMatchObject({ from: [-3, 0, 0], to: [-3, 0, -2], built: false })
+    expect(constructionVisuals(routes, sites, 'ladder-fog').map((route) => route.id)).toEqual(['bridge'])
+  })
+
+  it('does not draw a duplicate ghost after its route has been built', () => {
+    const built = [{ ...routes[0], built: true }, routes[1]]
+    expect(constructionVisuals(built, sites, 'ladder-east').map((route) => route.id)).toEqual(['ladder', 'bridge'])
   })
 })
 

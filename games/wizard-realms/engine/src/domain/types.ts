@@ -59,6 +59,7 @@ export interface TradeSlot {
 export type AreaId = 'greenway' | 'northern_ridge' | 'eastern_highland'
 export type RouteId = 'greenway_ladder' | 'highland_bridge'
 export type RecipeId = RouteId
+export type RouteSiteId = string
 
 export interface AreaProfile {
   id: AreaId
@@ -76,6 +77,13 @@ export interface RouteProfile {
   toAreaId: AreaId
   from: Vec3
   to: Vec3
+  siteId: RouteSiteId | null
+}
+
+export interface RouteSite { id: RouteSiteId; routeId: RouteId; from: Vec3; to: Vec3 }
+export interface RouteBuildOption extends RouteSite {
+  status: 'ready' | 'locked' | 'too_far' | 'needs_logs' | 'obstructed' | 'built'
+  reason: string
 }
 
 export interface RecipeProfile {
@@ -106,8 +114,8 @@ export interface PlayerState {
 }
 
 export interface WizardWorldState {
-  schemaVersion: 'wizard-world/v4'
-  contentRevision: 'greenway-region-v2'
+  schemaVersion: 'wizard-world/v5'
+  contentRevision: 'greenway-region-v3'
   seed: string
   generationProfile: GenerationProfile
   tick: number
@@ -136,7 +144,7 @@ export type WizardIntent =
   | { type: 'move'; delta: Vec3 }
   | { type: 'look'; yawDelta: number; pitchDelta: number }
   | { type: 'jump' }
-  | { type: 'build_route'; routeId: RouteId }
+  | { type: 'build_route'; routeId: RouteId; siteId: RouteSiteId }
   | { type: 'traverse_route'; routeId: RouteId }
   | { type: 'harvest'; resourceId: string }
   | { type: 'discover_fairy_ring'; ringId: string }
@@ -156,7 +164,7 @@ export type WizardEvent = EventBase & (
   | { type: 'player_moved'; position: Vec3 }
   | { type: 'player_looked'; yaw: number; pitch: number }
   | { type: 'player_jumped' }
-  | { type: 'route_built'; routeId: RouteId; logCost: number; xp: number }
+  | { type: 'route_built'; routeId: RouteId; siteId: RouteSiteId; logCost: number; xp: number }
   | { type: 'route_used'; routeId: RouteId; fromAreaId: AreaId; toAreaId: AreaId; position: Vec3 }
   | { type: 'recipe_unlocked'; recipeId: RecipeId }
   | { type: 'tile_discovered'; tileId: string }
@@ -183,7 +191,7 @@ export interface IntentRejection {
     'insufficient_coins' | 'out_of_stock' | 'not_owned' | 'wrong_slot' | 'undiscovered' |
     'trade_slot_unavailable' | 'locked_area' | 'recipe_locked' | 'already_built' |
     'unlearned_spell' | 'requires_spade' | 'site_hidden' | 'already_excavated' |
-    'skill_locked' | 'incompatible_ground' | 'already_studied'
+    'skill_locked' | 'incompatible_ground' | 'already_studied' | 'site_obstructed'
   message: string
 }
 

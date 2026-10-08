@@ -3,6 +3,7 @@ import type {
   WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
 import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
+import { canonicalRouteSites, routeBuildOptions } from './routeSites'
 
 const INTERACT_DISTANCE = 3
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
@@ -209,18 +210,26 @@ function applyIntent(
     const recipe = current.recipes.find((candidate) => candidate.routeId === intent.routeId)
     if (!route || !recipe) return fail('not_found', 'Construction route does not exist.')
     if (current.builtRouteIds.includes(route.id)) return fail('already_built', 'This route is already complete.')
-    if (!current.unlockedRecipeIds.includes(recipe.id)) return fail('recipe_locked', 'This route recipe is not unlocked.')
-    if (current.player.level < recipe.minimumLevel || (recipe.prerequisiteRouteId && !current.builtRouteIds.includes(recipe.prerequisiteRouteId))) return fail('recipe_locked', 'This route requires more progression.')
-    if (routeEndpointDistance(current.player.position, route) > INTERACT_DISTANCE) return fail('too_far', 'Move to the route scaffold to build it.')
-    if (owns(current.player, 'logs') < recipe.logCost) return fail('not_owned', `This route requires ${recipe.logCost} logs.`)
+    const option = routeBuildOptions(current).find((candidate) => candidate.routeId === route.id && candidate.id === intent.siteId)
+    if (!option) return fail('not_found', 'Construction site does not exist for this route.')
+    if (option.status !== 'ready') {
+      const code = option.status === 'locked' ? (option.reason.startsWith('Discover') ? 'undiscovered' : 'recipe_locked')
+        : option.status === 'too_far' ? 'too_far' : option.status === 'needs_logs' ? 'not_owned'
+          : option.status === 'obstructed' ? 'site_obstructed' : 'already_built'
+      return fail(code, option.reason)
+    }
     const state = cloneState(current)
     removeItem(state.player, 'logs', recipe.logCost)
+    const placed = state.routes.find((candidate) => candidate.id === route.id)!
+    placed.from = { ...option.from }
+    placed.to = { ...option.to }
+    placed.siteId = option.id
     state.builtRouteIds.push(route.id)
     state.builtRouteIds.sort()
     state.player.xp += recipe.xpReward
     state.player.level = levelForXp(state.player.xp)
     return { state, events: [
-      event(state, tick, { type: 'route_built', routeId: route.id, logCost: recipe.logCost, xp: recipe.xpReward }),
+      event(state, tick, { type: 'route_built', routeId: route.id, siteId: option.id, logCost: recipe.logCost, xp: recipe.xpReward }),
       gainSkillXp(state, tick, 'construction', recipe.xpReward),
     ] }
   }
@@ -228,10 +237,19 @@ function applyIntent(
   if (intent.type === 'traverse_route') {
     const route = current.routes.find((candidate) => candidate.id === intent.routeId)
     if (!route) return fail('not_found', 'Construction route does not exist.')
-    if (!current.builtRouteIds.includes(route.id)) return fail('recipe_locked', 'Finish this route before crossing it.')
-    if (routeEndpointDistance(current.player.position, route) > INTERACT_DISTANCE) return fail('too_far', 'Move to a route endpoint to cross it.')
-    const fromStart = distance(current.player.position, route.from) <= distance(current.player.position, route.to)
-    const destination = fromStart ? route.to : route.from
+    if (!current.builtRouteIds.includes(route.id) || !route.siteId) return fail('recipe_locked', 'Finish this route before crossing it.')
+    const site = canonicalRouteSites(current).find((candidate) => candidate.routeId === route.id && candidate.id === route.siteId)
+    if (!site || ['from', 'to'].some((end) => {
+      const position = route[end as 'from' | 'to']
+      const canonical = site[end as 'from' | 'to']
+      return position.x !== canonical.x || position.y !== canonical.y || position.z !== canonical.z
+    })) return fail('invalid_value', 'Route placement is invalid.')
+    const currentAreaId = areaAt(current.areas, current.player.position.x, current.player.position.z).id
+    const fromStart = currentAreaId === route.fromAreaId
+    if (!fromStart && currentAreaId !== route.toAreaId) return fail('locked_area', 'Approach a route from one of its connected areas.')
+    const source = fromStart ? site.from : site.to
+    if (distance(current.player.position, source) > INTERACT_DISTANCE) return fail('too_far', 'Move to your side of the route to cross it.')
+    const destination = fromStart ? site.to : site.from
     const fromAreaId = fromStart ? route.fromAreaId : route.toAreaId
     const toAreaId = fromStart ? route.toAreaId : route.fromAreaId
     const state = cloneState(current)

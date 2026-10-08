@@ -30,6 +30,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const inReach = (position: readonly [number, number, number]) => Math.hypot(position[0] - projection.player.position[0], position[1] - projection.player.position[1], position[2] - projection.player.position[2]) <= 3
   const nearbyInscriptions = projection.inscriptions.filter((inscription) => !inscription.studied && inReach(inscription.position))
   const nearbyDigSites = projection.digSites.filter((site) => site.revealed && !site.excavated && inReach(site.position))
+  const selectedBuildSite = projection.buildSites.find((site) => site.id === projection.selectedBuildSiteId && site.discovered && site.status !== 'built')
   const xpPercent = Math.min(100, projection.experience.nextLevelXp > 0
     ? projection.experience.xp / projection.experience.nextLevelXp * 100
     : 100)
@@ -103,7 +104,17 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </div>
       </aside>
 
-      {nearbyStore && <aside className="wr-panel wr-context">
+      {selectedBuildSite && <aside className="wr-panel wr-context wr-build-preview" aria-label="Selected build site">
+        <header>{projection.routes.find((route) => route.id === selectedBuildSite.routeId)?.label ?? 'Build route'}</header>
+        <b>{selectedBuildSite.label}</b>
+        <p className="wr-caption" role="status">{selectedBuildSite.logCost} logs · {selectedBuildSite.reason || 'Ready to build'}</p>
+        <div className="wr-build-actions">
+          <button type="button" disabled={selectedBuildSite.status !== 'ready'} onClick={() => onIntent({ type: 'build-site.confirm', siteId: selectedBuildSite.id })}>Build</button>
+          <button type="button" onClick={() => onIntent({ type: 'build-site.select', siteId: null })}>Cancel</button>
+        </div>
+      </aside>}
+
+      {nearbyStore && !selectedBuildSite && <aside className="wr-panel wr-context">
         <header>{nearbyStore.name}</header>
         <button type="button" onClick={() => onIntent({ type: 'store.close' })}>Close</button>
         {nearbyStore.listings.map((listing) => <button key={listing.id} onClick={() => onIntent({ type: 'store.select-listing', storeId: nearbyStore.id, listingId: listing.id })}><b>{listing.name}</b><span>{listing.price}g{listing.stock === undefined ? '' : ` · ${listing.stock} left`}</span></button>)}
@@ -120,7 +131,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </section>
       </aside>}
 
-      {nearbyRing?.discovered && <aside className="wr-panel wr-context">
+      {nearbyRing?.discovered && !selectedBuildSite && <aside className="wr-panel wr-context">
         <header>{nearbyRing.label}</header>
         <p className="wr-caption">{discoveredDestinations.length ? 'Discovered fairy paths' : 'Discover another fairy ring to unlock travel.'}</p>
         {discoveredDestinations.map((destination) => <button key={destination.ringId} onClick={() => onIntent({ type: 'fairy-ring.teleport', ringId: nearbyRing.id, destinationRingId: destination.ringId })}><b>{destination.label}</b><span>Travel</span></button>)}

@@ -5,10 +5,21 @@ import {
 } from './index'
 import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 import { isRestorableWizardSave } from './persistence'
+import { canonicalRouteSites, routeBuildOptions } from './routeSites'
 import { storeSellUnitPrice } from './world'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
 const clearanceSeeds = ['expedition-19078', 'expedition-870', 'expedition-8407', 'expedition-11820', 'expedition-4', 'expedition-1']
+const legacySiteIds = { greenway_ladder: 'greenway_ladder:x:0', highland_bridge: 'highland_bridge:z:-8' } as const
+
+function placeRoute(state: WizardWorldState, routeId: keyof typeof legacySiteIds) {
+  const route = state.routes.find((candidate) => candidate.id === routeId)!
+  const site = canonicalRouteSites(state).find((candidate) => candidate.id === legacySiteIds[routeId])!
+  route.siteId = site.id
+  route.from = { ...site.from }
+  route.to = { ...site.to }
+  if (!state.builtRouteIds.includes(routeId)) state.builtRouteIds.push(routeId)
+}
 
 function expectResourceClearance(state: WizardWorldState) {
   const landmarks = [
@@ -121,7 +132,8 @@ describe('Wizard world domain', () => {
     state = copy(discoveredTarget)
     state.player.position = { ...source.position }
     expect(advanceWizardWorld(state, [{ type: 'teleport_fairy_ring', sourceRingId: source.id, targetRingId: target.id }]).rejections[0]?.code).toBe('locked_area')
-    state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+    placeRoute(state, 'greenway_ladder')
+    placeRoute(state, 'highland_bridge')
     const teleported = advanceWizardWorld(state, [{ type: 'teleport_fairy_ring', sourceRingId: source.id, targetRingId: target.id }])
     expect(teleported.events[0]?.type).toBe('fairy_ring_teleported')
     expect(teleported.state.player.position).toEqual(target.position)
@@ -225,7 +237,7 @@ describe('Wizard world domain', () => {
     const state = createWizardWorld('regional-sale')
     const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
     const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
-    state.builtRouteIds.push(ladder.id)
+    placeRoute(state, ladder.id)
     state.player.position = { ...ladder.to }
     state.player.inventory.push({ itemId: 'logs', quantity: 3 })
 
@@ -300,7 +312,7 @@ describe('Wizard world domain', () => {
     expect(advanceWizardWorld(state, [intent])).toEqual(first)
     expect(serializeWizardWorld(state)).toBe(before)
     const restored = restoreWizardWorld(serializeWizardWorld(first.state))
-    expect(restored.schemaVersion).toBe('wizard-world/v4')
+    expect(restored.schemaVersion).toBe('wizard-world/v5')
     expect(restored.player.inventory).toEqual(first.state.player.inventory)
     expect(restored.player.coins).toBe(first.state.player.coins)
     const second = { ...intent, quantity: 3 }
@@ -397,7 +409,7 @@ describe('Wizard world domain', () => {
     expect(harvested.state.player.skillXp.woodcutting).toBe(20)
     state = harvested.state
     state.player.position = { ...ladder.from }
-    const built = advanceWizardWorld(state, [{ type: 'build_route', routeId: ladder.id }])
+    const built = advanceWizardWorld(state, [{ type: 'build_route', routeId: ladder.id, siteId: legacySiteIds.greenway_ladder }])
     expect(built.rejections).toEqual([])
     expect(built.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
     expect(built.state.player.skillXp.construction).toBe(60)
@@ -617,19 +629,22 @@ describe('Wizard world domain', () => {
     expect(landed.player.verticalVelocity).toBe(0)
   })
 
-  it('repairs terrain height and invalid equipment ownership when restoring saves', () => {
+  it('rejects corrupt v5 saves while repairing terrain height and equipment in legacy v4 saves', () => {
     const source = JSON.parse(serializeWizardWorld(createWizardWorld('greenway-alpha'))) as WizardWorldState
     source.player.position.y = -100
     source.fairyRings.forEach((ring) => { ring.position.y = -100 })
     source.player.inventory.push({ itemId: 'oak_wand', quantity: 1 })
     source.player.equipment = { head: 'woodcutters_axe', chest: null, legs: null, feet: null,
       mainHand: 'oak_wand', offHand: 'oak_wand' }
-    const restored = restoreWizardWorld(JSON.stringify(source))
+    expect(() => restoreWizardWorld(JSON.stringify(source))).toThrow('Invalid or unsupported Wizard Realms save')
+    const legacy = { ...source, schemaVersion: 'wizard-world/v4', contentRevision: 'greenway-region-v2',
+      routes: source.routes.map(({ siteId: _siteId, ...route }) => route) }
+    const restored = restoreWizardWorld(JSON.stringify(legacy))
     expect(restored.player.position.y).toBe(terrainHeightAt(restored.tiles, restored.player.position.x, restored.player.position.z))
     expect(restored.fairyRings.every((ring) => ring.position.y === terrainHeightAt(restored.tiles, ring.position.x, ring.position.z))).toBe(true)
     expect(restored.player.equipment).toMatchObject({ head: null, mainHand: 'oak_wand', offHand: null })
 
-    const unowned = copy(source)
+    const unowned = JSON.parse(JSON.stringify(legacy)) as WizardWorldState
     unowned.player.inventory = []
     unowned.player.equipment.mainHand = 'woodcutters_axe'
     expect(restoreWizardWorld(JSON.stringify(unowned)).player.equipment.mainHand).toBeNull()
@@ -654,7 +669,7 @@ describe('Wizard world domain', () => {
     expect(lockedMove.rejections[0]?.code).toBe('locked_area')
     expect(lockedMove.state.player.position).toEqual(state.player.position)
 
-    const builtLadder = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder' }])
+    const builtLadder = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder', siteId: legacySiteIds.greenway_ladder }])
     expect(builtLadder.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 6 })
     expect(builtLadder.state.player.xp).toBe(100)
     expect(builtLadder.state.player.level).toBe(2)
@@ -672,13 +687,103 @@ describe('Wizard world domain', () => {
     const bridge = returnedLadder.state.routes.find((route) => route.id === 'highland_bridge')!
     state = copy(returnedLadder.state)
     state.player.position = { ...bridge.from }
-    const builtBridge = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'highland_bridge' }])
+    state.discoveredTileIds.push('tile-4-1')
+    const builtBridge = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'highland_bridge', siteId: legacySiteIds.highland_bridge }])
     expect(builtBridge.state.player.inventory.find((stack) => stack.itemId === 'logs')).toBeUndefined()
     expect(builtBridge.state.player.xp).toBe(180)
     expect(builtBridge.state.builtRouteIds).toEqual(['greenway_ladder', 'highland_bridge'])
     const crossedBridge = advanceWizardWorld(builtBridge.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }])
     expect(crossedBridge.state.player.position).toEqual(bridge.to)
     expect(advanceWizardWorld(crossedBridge.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }]).state.player.position).toEqual(bridge.from)
+  })
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
+    'builds player-selected non-anchor sites and replays both crossings after restore in %s', (profile) => {
+      let state = createWizardWorld('route-1', profile)
+      state.discoveredTileIds = state.tiles.map((tile) => tile.id).sort()
+      state.player.inventory.push({ itemId: 'logs', quantity: 10 })
+      state.player.xp = 40
+      const choose = (routeId: 'greenway_ladder' | 'highland_bridge') => canonicalRouteSites(state)
+        .filter((site) => site.routeId === routeId && site.id !== legacySiteIds[routeId])
+        .find((site) => {
+          const approached = copy(state)
+          approached.player.position = { ...site.from }
+          return routeBuildOptions(approached).find((option) => option.id === site.id)?.status === 'ready'
+        })!
+      const ladderSite = choose('greenway_ladder')
+      expect(ladderSite).toBeDefined()
+      state.player.position = { ...ladderSite.from }
+      const ladder = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder', siteId: ladderSite.id }])
+      expect(ladder.rejections).toEqual([])
+      expect(ladder.events[0]).toMatchObject({ type: 'route_built', routeId: 'greenway_ladder', siteId: ladderSite.id, logCost: 4, xp: 60 })
+      expect(ladder.state.routes[0]).toMatchObject({ siteId: ladderSite.id, from: ladderSite.from, to: ladderSite.to })
+      expect(ladder.state.player.inventory.find((stack) => stack.itemId === 'logs')?.quantity).toBe(6)
+      expect(ladder.state.player.skillXp.construction).toBe(60)
+      const north = advanceWizardWorld(ladder.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+      expect(north.state.player.position).toEqual(ladderSite.to)
+      expect(north.events[0]).toMatchObject({ type: 'route_used', fromAreaId: 'greenway', toAreaId: 'northern_ridge' })
+      const south = advanceWizardWorld(north.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
+      expect(south.state.player.position).toEqual(ladderSite.from)
+
+      state = south.state
+      const bridgeSite = choose('highland_bridge')
+      expect(bridgeSite).toBeDefined()
+      state.player.position = { ...bridgeSite.from }
+      const bridge = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'highland_bridge', siteId: bridgeSite.id }])
+      expect(bridge.rejections).toEqual([])
+      expect(bridge.events[0]).toMatchObject({ type: 'route_built', routeId: 'highland_bridge', siteId: bridgeSite.id, logCost: 6, xp: 80 })
+      expect(bridge.state.routes[1]).toMatchObject({ siteId: bridgeSite.id, from: bridgeSite.from, to: bridgeSite.to })
+      expect(bridge.state.player.inventory.some((stack) => stack.itemId === 'logs')).toBe(false)
+      expect(bridge.state.player.skillXp.construction).toBe(140)
+      const east = advanceWizardWorld(bridge.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }])
+      expect(east.state.player.position).toEqual(bridgeSite.to)
+      const restored = restoreWizardWorld(serializeWizardWorld(east.state))
+      expect(restored.routes.map((route) => route.siteId)).toEqual([ladderSite.id, bridgeSite.id])
+      expect(restored.routes.map((route) => [route.from, route.to])).toEqual([[ladderSite.from, ladderSite.to], [bridgeSite.from, bridgeSite.to]])
+      expect(restored.player.inventory).toEqual(east.state.player.inventory)
+      expect(restored.player.skillXp).toEqual(east.state.player.skillXp)
+      const west = advanceWizardWorld(restored, [{ type: 'traverse_route', routeId: 'highland_bridge' }])
+      expect(west.state.player.position).toEqual(bridgeSite.from)
+      expect(west).toEqual(advanceWizardWorld(east.state, [{ type: 'traverse_route', routeId: 'highland_bridge' }]))
+    },
+  )
+
+  it('rejects forged, wrong-side, obstructed, unaffordable, and duplicate construction atomically', () => {
+    const base = createWizardWorld('route-1')
+    const site = canonicalRouteSites(base).find((candidate) => candidate.id === legacySiteIds.greenway_ladder)!
+    base.player.position = { ...site.from }
+    base.player.inventory.push({ itemId: 'logs', quantity: 4 })
+    const assertRejected = (state: WizardWorldState, siteId: string, code: string) => {
+      const before = serializeWizardWorld(state)
+      const result = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder', siteId }])
+      expect(result.rejections[0]?.code).toBe(code)
+      expect(result.events).toEqual([])
+      expect(result.state.player).toEqual(state.player)
+      expect(result.state.routes).toEqual(state.routes)
+      expect(result.state.builtRouteIds).toEqual(state.builtRouteIds)
+      expect(result.state.discoveredTileIds).toEqual(state.discoveredTileIds)
+      expect(serializeWizardWorld(state)).toBe(before)
+    }
+    assertRejected(base, 'greenway_ladder:x:999', 'not_found')
+    assertRejected(base, legacySiteIds.highland_bridge, 'not_found')
+    const wrongSide = copy(base)
+    wrongSide.player.position = { ...site.to }
+    assertRejected(wrongSide, site.id, 'too_far')
+    const far = copy(base)
+    far.player.position = { x: 8, y: terrainHeightAt(far.tiles, 8, 8), z: 8 }
+    assertRejected(far, site.id, 'too_far')
+    const blocked = copy(base)
+    blocked.resources[0].position = { ...site.from }
+    assertRejected(blocked, site.id, 'site_obstructed')
+    const wet = copy(base)
+    wet.tiles.find((tile) => tile.id === 'tile-3-2')!.terrain = 'wetland'
+    assertRejected(wet, site.id, 'site_obstructed')
+    const poor = copy(base)
+    poor.player.inventory = poor.player.inventory.filter((stack) => stack.itemId !== 'logs')
+    assertRejected(poor, site.id, 'not_owned')
+    const built = advanceWizardWorld(base, [{ type: 'build_route', routeId: 'greenway_ladder', siteId: site.id }])
+    expect(built.rejections).toEqual([])
+    assertRejected(built.state, site.id, 'already_built')
   })
 
   it('slides along a locked area boundary while preserving the blocked component', () => {
@@ -733,7 +838,7 @@ describe('Wizard world domain', () => {
 
     state.player.position = { ...state.routes[0].from }
     state.player.inventory.push({ itemId: 'logs', quantity: 4 })
-    const built = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder' }])
+    const built = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder', siteId: legacySiteIds.greenway_ladder }])
     const crossed = advanceWizardWorld(built.state, [{ type: 'traverse_route', routeId: 'greenway_ladder' }])
     expect(crossed.rejections).toEqual([])
     expect(areaAt(crossed.state.areas, crossed.state.player.position.x, crossed.state.player.position.z).id).toBe('northern_ridge')
@@ -749,7 +854,8 @@ describe('Wizard world domain', () => {
     'discovers the Eastern Highland tile at the bridge boundary in %s', (profile) => {
       const state = createWizardWorld('greenway-alpha', profile)
       const bridge = state.routes.find((route) => route.id === 'highland_bridge')!
-      state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+      placeRoute(state, 'greenway_ladder')
+      placeRoute(state, 'highland_bridge')
       state.player.position = { ...bridge.from }
       const crossed = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: bridge.id }])
 
@@ -774,11 +880,27 @@ describe('Wizard world domain', () => {
     },
   )
 
+  it('uses the current area to return across a bridge even when the opposite endpoint is closer', () => {
+    const state = createWizardWorld('greenway-alpha')
+    placeRoute(state, 'greenway_ladder')
+    placeRoute(state, 'highland_bridge')
+    const bridge = state.routes.find((route) => route.id === 'highland_bridge')!
+    state.player.position = { x: 4.1, y: terrainHeightAt(state.tiles, 4.1, bridge.to.z), z: bridge.to.z }
+    expect(areaAt(state.areas, state.player.position.x, state.player.position.z).id).toBe('eastern_highland')
+    expect(Math.hypot(state.player.position.x - bridge.from.x, state.player.position.y - bridge.from.y)).toBeLessThan(
+      Math.hypot(state.player.position.x - bridge.to.x, state.player.position.y - bridge.to.y),
+    )
+    const crossed = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: bridge.id }])
+    expect(crossed.rejections).toEqual([])
+    expect(crossed.state.player.position).toEqual(bridge.from)
+    expect(crossed.events[0]).toMatchObject({ type: 'route_used', fromAreaId: 'eastern_highland', toAreaId: 'northern_ridge' })
+  })
+
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
     'discovers newly walked Northern Ridge tiles once and replays them after restore in %s', (profile) => {
       const state = createWizardWorld('greenway-alpha', profile)
       const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
-      state.builtRouteIds = ['greenway_ladder']
+      placeRoute(state, 'greenway_ladder')
       state.player.position = { ...ladder.from }
       const crossed = advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }])
       expect(crossed.events.map((entry) => entry.type)).toEqual(['route_used', 'tile_discovered'])
@@ -824,7 +946,7 @@ describe('Wizard world domain', () => {
     state.player.position = { ...ladder.from }
     const beforePlayer = structuredClone(state.player)
     const beforeFog = [...state.discoveredTileIds]
-    const rejected = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder' }])
+    const rejected = advanceWizardWorld(state, [{ type: 'build_route', routeId: 'greenway_ladder', siteId: legacySiteIds.greenway_ladder }])
     expect(rejected.rejections[0]?.code).toBe('not_owned')
     expect(rejected.state.player).toEqual(beforePlayer)
     expect(rejected.state.builtRouteIds).toEqual([])
@@ -862,8 +984,8 @@ describe('Wizard world domain', () => {
     delete (legacy.player as Record<string, unknown>).verticalVelocity
     expect(isRestorableWizardSave(JSON.stringify(legacy), 'greenway-classic-v1')).toBe(true)
     const migrated = restoreWizardWorld(JSON.stringify(legacy))
-    expect(migrated.schemaVersion).toBe('wizard-world/v4')
-    expect(migrated.contentRevision).toBe('greenway-region-v2')
+    expect(migrated.schemaVersion).toBe('wizard-world/v5')
+    expect(migrated.contentRevision).toBe('greenway-region-v3')
     expect(migrated.seed).toBe(source.seed)
     expect(migrated.generationProfile).toBe('greenway-classic-v1')
     expect(migrated.tick).toBe(11)
@@ -879,6 +1001,11 @@ describe('Wizard world domain', () => {
     expect(migrated.discoveredTileIds.length).toBeGreaterThan(0)
 
     const corrupt = JSON.parse(serializeWizardWorld(migrated)) as Record<string, unknown>
+    corrupt.schemaVersion = 'wizard-world/v2'
+    delete corrupt.contentRevision
+    for (const store of corrupt.stores as Array<{ listings: Array<{ id: string }> }>) {
+      store.listings = store.listings.filter((listing) => listing.id !== 'spade')
+    }
     corrupt.builtRouteIds = ['highland_bridge', 'greenway_ladder', 'greenway_ladder', 'bogus']
     corrupt.unlockedRecipeIds = ['highland_bridge', 'bogus', 'greenway_ladder']
     corrupt.discoveredTileIds = [migrated.tiles[0].id, 'bogus', migrated.tiles[0].id]
@@ -891,22 +1018,19 @@ describe('Wizard world domain', () => {
     expect(advanceWizardWorld(restored, [])).toEqual(advanceWizardWorld(restoreWizardWorld(serializeWizardWorld(restored)), []))
   })
 
-  it('quarantines a built Highland bridge restored below its minimum level', () => {
+  it('rejects a v5 save claiming a completed bridge below its minimum level', () => {
     const corrupt = copy(createWizardWorld('greenway-alpha'))
-    corrupt.builtRouteIds = ['greenway_ladder', 'highland_bridge']
+    placeRoute(corrupt, 'greenway_ladder')
+    placeRoute(corrupt, 'highland_bridge')
     corrupt.unlockedRecipeIds = ['greenway_ladder', 'highland_bridge']
     corrupt.player.xp = 0
     corrupt.player.level = 1
     const bridge = corrupt.routes.find((route) => route.id === 'highland_bridge')!
     corrupt.player.position = { ...bridge.to }
 
-    const restored = restoreWizardWorld(serializeWizardWorld(corrupt))
-    expect(restored.builtRouteIds).toEqual(['greenway_ladder'])
-    expect(restored.unlockedRecipeIds).toEqual(['greenway_ladder'])
-    const before = { ...restored.player.position }
-    const traversed = advanceWizardWorld(restored, [{ type: 'traverse_route', routeId: 'highland_bridge' }])
-    expect(traversed.rejections[0]?.code).toBe('recipe_locked')
-    expect(traversed.state.player.position).toEqual(before)
+    const serialized = serializeWizardWorld(corrupt)
+    expect(isRestorableWizardSave(serialized, 'greenway-classic-v1')).toBe(false)
+    expect(() => restoreWizardWorld(serialized)).toThrow('Invalid or unsupported')
   })
 })
 

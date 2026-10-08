@@ -18,17 +18,20 @@ import {
 } from './view'
 import type { EquipmentSlot } from './view/contracts'
 import { areaAt } from './domain/generation'
-import { isRestorableWizardSave } from './domain/persistence'
+import { hasValidRoutePlacements, isRestorableWizardSave } from './domain/persistence'
+import { routeBuildOptions } from './domain/routeSites'
 import { storeSellUnitPrice } from './domain/world'
 
 const WORLD_SEED = 'greenway-alpha'
-const SAVE_KEY = 'wizard-realms:world:v4'
-const PREVIOUS_SAVE_KEY = 'wizard-realms:world:v3'
-const LEGACY_SAVE_KEY = 'wizard-realms:world:v2'
+const SAVE_KEY = 'wizard-realms:world:v5'
+const PREVIOUS_SAVE_KEY = 'wizard-realms:world:v4'
+const LEGACY_SAVE_KEY = 'wizard-realms:world:v3'
+const OLDER_SAVE_KEY = 'wizard-realms:world:v2'
 const OLDEST_SAVE_KEY = 'wizard-realms:world:v1'
-const EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v3'
-const PREVIOUS_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v2'
-const LEGACY_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v1'
+const EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v4'
+const PREVIOUS_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v3'
+const LEGACY_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v2'
+const OLDEST_EXPANDED_SAVE_KEY = 'wizard-realms:world:expanded:v1'
 const CLASSIC_PROFILE = 'greenway-classic-v1'
 const EXPANDED_PROFILE = 'greenway-expanded-v1'
 const FIXED_STEP_MS = 50
@@ -46,6 +49,7 @@ export const OBJECTIVE_STYLES = `
 .wr-objective{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:4;display:flex;gap:10px;align-items:center;padding:5px 5px 5px 10px;border-radius:999px;background:#101a17dd;color:#d8c987;font:11px system-ui;white-space:nowrap}
 .wr-objective b{color:#f5d889;letter-spacing:.12em}
 .wr-objective button{padding:3px 9px;border:1px solid #cfb66b55;border-radius:999px;background:#374b3d;color:#f8e8b2;font:inherit;cursor:pointer}
+.wr-objective:has(.wr-recover) span{display:none}
 .wr-save-warning{position:absolute;z-index:12;top:60px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:max-content;max-width:calc(100vw - 24px);margin:0;padding:6px 10px;border:1px solid #e3a277;border-radius:8px;background:#4b2824f2;color:#fff2db;font:600 12px/1.3 system-ui;text-align:center;pointer-events:none}
 @media(max-width:719px),(min-width:720px) and (max-width:900px) and (max-height:590px){.wr-objective{left:10px;right:10px;bottom:calc(142px + env(safe-area-inset-bottom,0px));transform:none;box-sizing:border-box;max-height:80px;border-radius:12px;white-space:normal;font-size:12px;line-height:1.3}.wr-objective span{flex:1;min-width:0;max-height:70px;overflow-y:auto}.wr-objective button{flex:none;min-width:44px;min-height:44px}.wr-surface .wr-prompt,.wr-surface .wr-context{bottom:calc(230px + env(safe-area-inset-bottom,0px))}.wr-surface .wr-context{box-sizing:border-box;max-height:max(140px,calc(100vh - 340px));overflow-y:auto}}
 @media(max-width:719px) and (max-height:590px){.wr-surface:has(.wr-context) .wr-backpack,.wr-surface .wr-events{display:none}}
@@ -89,9 +93,17 @@ function isLoadableSave(saved: string, profile: WorldProfile): boolean {
 }
 
 function activeSave(storage: Pick<Storage, 'getItem'>, profile: WorldProfile): string | null {
+  for (const key of saveKeys(profile)) {
+    const saved = storage.getItem(key)
+    if (saved !== null) return saved
+  }
+  return null
+}
+
+function saveKeys(profile: WorldProfile): readonly string[] {
   return profile === EXPANDED_PROFILE
-    ? storage.getItem(EXPANDED_SAVE_KEY) ?? storage.getItem(PREVIOUS_EXPANDED_SAVE_KEY) ?? storage.getItem(LEGACY_EXPANDED_SAVE_KEY)
-    : storage.getItem(SAVE_KEY) ?? storage.getItem(PREVIOUS_SAVE_KEY) ?? storage.getItem(LEGACY_SAVE_KEY) ?? storage.getItem(OLDEST_SAVE_KEY)
+    ? [EXPANDED_SAVE_KEY, PREVIOUS_EXPANDED_SAVE_KEY, LEGACY_EXPANDED_SAVE_KEY, OLDEST_EXPANDED_SAVE_KEY]
+    : [SAVE_KEY, PREVIOUS_SAVE_KEY, LEGACY_SAVE_KEY, OLDER_SAVE_KEY, OLDEST_SAVE_KEY]
 }
 
 function hasIncompatibleSave(storage: Pick<Storage, 'getItem'>, profile: WorldProfile): boolean {
@@ -107,9 +119,39 @@ export function loadWorld(storage: Pick<Storage, 'getItem'> = window.localStorag
   return saved && isLoadableSave(saved, profile) ? restoreWizardWorld(saved) : createWizardWorld(WORLD_SEED, profile)
 }
 
+export function recoverablePriorSaveKey(storage: Pick<Storage, 'getItem'>, profile: WorldProfile = CLASSIC_PROFILE): string | null {
+  const keys = saveKeys(profile)
+  const activeIndex = keys.findIndex((key) => storage.getItem(key) !== null)
+  if (activeIndex < 0) return null
+  const active = storage.getItem(keys[activeIndex])!
+  if (isLoadableSave(active, profile)) return null
+  return keys.slice(activeIndex + 1).find((key) => {
+    const saved = storage.getItem(key)
+    return saved !== null && isLoadableSave(saved, profile)
+  }) ?? null
+}
+
+export function recoverPriorSavedWorld(storage: Pick<Storage, 'getItem' | 'setItem'>, profile: WorldProfile, backupId: string): WizardWorldState | null {
+  const priorKey = recoverablePriorSaveKey(storage, profile)
+  if (!priorKey) return null
+  const keys = saveKeys(profile)
+  const activeKey = keys.find((key) => storage.getItem(key) !== null)!
+  const activeBytes = storage.getItem(activeKey)!
+  const priorBytes = storage.getItem(priorKey)!
+  const recovered = restoreWizardWorld(priorBytes)
+  const serialized = serializeWizardWorld(recovered)
+  if (!hasValidRoutePlacements(recovered) || !isLoadableSave(serialized, profile)) return null
+  const backupKey = `${activeKey}:recovery-backup:${backupId}`
+  if (storage.getItem(backupKey) !== null) return null
+  storage.setItem(backupKey, activeBytes)
+  storage.setItem(keys[0], serialized)
+  rememberVerifiedSave(storage, profile, serialized)
+  return recovered
+}
+
 export function persistWorld(storage: Pick<Storage, 'getItem' | 'setItem'>, state: WizardWorldState, profile: WorldProfile = CLASSIC_PROFILE): boolean {
   const key = profile === EXPANDED_PROFILE ? EXPANDED_SAVE_KEY : SAVE_KEY
-  if (state.generationProfile !== profile || hasIncompatibleSave(storage, profile)) return false
+  if (state.generationProfile !== profile || !hasValidRoutePlacements(state) || hasIncompatibleSave(storage, profile)) return false
   const serialized = serializeWizardWorld(state)
   storage.setItem(key, serialized)
   rememberVerifiedSave(storage, profile, serialized)
@@ -148,7 +190,7 @@ export function objectiveFor(state: WizardWorldState): string {
     if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
       ? 'Equip the woodcutter axe to gather ladder materials.'
       : 'Buy a woodcutter axe at Greenway Outfitters.'
-    return logs >= 4 ? 'Build the Greenway ladder north (4 logs).' : `${gather(4)}, then build the Greenway ladder north.`
+    return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
   }
   if (!state.revealedDigSiteIds.includes('ridge_cache')) return 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
   if (!state.excavatedDigSiteIds.includes('ridge_cache')) return state.player.equipment.mainHand === 'field_spade'
@@ -162,8 +204,8 @@ export function objectiveFor(state: WizardWorldState): string {
     : 'Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.'
   if (highlandRing) return 'Return to the Greenway and discover its fairy ring near the start to link travel home.'
   if (state.builtRouteIds.includes('highland_bridge')) return 'Cross the Highland bridge east and discover the Highland fairy ring.'
-  if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Build the Highland bridge east along the ridge (6 logs).' : `${gather(6)}, then build the Highland bridge east along the ridge.`
-  if (axeEquipped(state)) return logs >= 4 ? 'Build the Greenway ladder north (4 logs).' : `${gather(4)}, then build the Greenway ladder north.`
+  if (state.builtRouteIds.includes('greenway_ladder')) return logs >= 6 ? 'Choose a Highland bridge site on the map and build it (6 logs).' : `${gather(6)}, then choose a bridge site on the map.`
+  if (axeEquipped(state)) return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
   return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : 'Buy a woodcutter axe at Greenway Outfitters.'
 }
 
@@ -173,7 +215,8 @@ function closestInteraction(state: WizardWorldState) {
       .map((resource) => ({ distance: distance(state.player.position, resource.position), kind: 'resource' as const, target: resource })),
     ...state.fairyRings.map((ring) => ({ distance: distance(state.player.position, ring.position), kind: 'fairy-ring' as const, target: ring })),
     ...state.stores.map((store) => ({ distance: distance(state.player.position, store.position), kind: 'store' as const, target: store })),
-    ...state.routes.map((route) => ({ distance: Math.min(distance(state.player.position, route.from), distance(state.player.position, route.to)), kind: 'route' as const, target: route })),
+    ...state.routes.filter((route) => state.builtRouteIds.includes(route.id))
+      .map((route) => ({ distance: Math.min(distance(state.player.position, route.from), distance(state.player.position, route.to)), kind: 'route' as const, target: route })),
   ].filter((candidate) => candidate.distance <= INTERACTION_RANGE)
   return candidates.sort((left, right) => left.distance - right.distance)[0] ?? null
 }
@@ -221,7 +264,7 @@ function eventText(event: WizardEvent): string {
   }
 }
 
-export function toViewProjection(state: WizardWorldState, messages: readonly RecentMessage[], openStoreId: string | null = null): WizardViewProjection {
+export function toViewProjection(state: WizardWorldState, messages: readonly RecentMessage[], openStoreId: string | null = null, selectedBuildSiteId: string | null = null): WizardViewProjection {
   const domain = createWizardProjection(state)
   const discoveredTileIds = new Set(state.discoveredTileIds)
   const discoveredRingIds = new Set(domain.player.discoveredRingIds)
@@ -251,9 +294,35 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
   const areaDiscovered = (position: { x: number; z: number }) => discoveredAreaIds.has(areaAt(state.areas, position.x, position.z).id)
   const storeTileIds = new Set(state.stores.filter((store) => areaDiscovered(store.position)).map((store) => tileIdAt(store.position)))
   const ringTileIds = new Set(state.fairyRings.filter((ring) => areaDiscovered(ring.position)).map((ring) => tileIdAt(ring.position)))
-  const unlockedRouteIds = new Set(state.recipes.filter((recipe) => state.unlockedRecipeIds.includes(recipe.id)).map((recipe) => recipe.routeId))
-  const routeSiteTileIds = new Set(state.routes.filter((route) => unlockedRouteIds.has(route.id) && !state.builtRouteIds.includes(route.id)).map((route) => tileIdAt(route.from)))
-  const builtRouteTileIds = new Set(state.routes.filter((route) => state.builtRouteIds.includes(route.id)).map((route) => tileIdAt(route.from)))
+  const routeSourceTileId = (routeId: string, position: { x: number; z: number }) => {
+    const sourceAreaId = state.routes.find((route) => route.id === routeId)!.fromAreaId
+    let nearestId: string | undefined
+    let nearestDistance = Infinity
+    for (const tile of state.tiles) {
+      if (areaAt(state.areas, tile.center.x, tile.center.z).id !== sourceAreaId) continue
+      const separation = (tile.center.x - position.x) ** 2 + (tile.center.z - position.z) ** 2
+      if (separation < nearestDistance) { nearestDistance = separation; nearestId = tile.id }
+    }
+    return nearestId
+  }
+  const buildOptions = routeBuildOptions(state)
+  const buildSites: WizardViewProjection['buildSites'] = buildOptions.map((site) => {
+    const route = state.routes.find((candidate) => candidate.id === site.routeId)!
+    const recipe = state.recipes.find((candidate) => candidate.routeId === site.routeId)!
+    const location = site.routeId === 'greenway_ladder'
+      ? `${Math.round(Math.abs(site.from.x))}m ${site.from.x < 0 ? 'west' : site.from.x > 0 ? 'east' : 'center'}`
+      : `${Math.round(Math.abs(site.from.z))}m ${site.from.z < 0 ? 'north' : site.from.z > 0 ? 'south' : 'center'}`
+    return {
+      id: site.id, routeId: site.routeId, label: `${route.name}, ${location}`,
+      from: [site.from.x, site.from.y, site.from.z], to: [site.to.x, site.to.y, site.to.z],
+      logCost: recipe.logCost, status: site.status, reason: site.reason,
+      discovered: discoveredTileIds.has(routeSourceTileId(site.routeId, site.from) ?? ''),
+    }
+  })
+  const routeSiteTileIds = new Set(buildSites.filter((site) => site.discovered && !state.builtRouteIds.some((routeId) => routeId === site.routeId))
+    .map((site) => routeSourceTileId(site.routeId, { x: site.from[0], z: site.from[2] })))
+  const builtRouteTileIds = new Set(state.routes.filter((route) => state.builtRouteIds.includes(route.id))
+    .map((route) => routeSourceTileId(route.id, route.from)))
   const activeStoreId = retainOpenStoreId(state, openStoreId)
   const interaction = activeStoreId
     ? { kind: 'store' as const, target: state.stores.find((store) => store.id === activeStoreId)! }
@@ -297,6 +366,8 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       const recipe = state.recipes.find((candidate) => candidate.routeId === route.id)!
       return { id: route.id, label: route.name, from: [route.from.x, route.from.y, route.from.z], to: [route.to.x, route.to.y, route.to.z], built: state.builtRouteIds.includes(route.id), unlocked: state.unlockedRecipeIds.includes(recipe.id), logCost: recipe.logCost }
     }),
+    buildSites,
+    selectedBuildSiteId: buildSites.some((site) => site.id === selectedBuildSiteId && site.discovered && site.status !== 'built') ? selectedBuildSiteId : null,
     map: {
       tiles: state.tiles.map((tile) => {
         const discovered = discoveredTileIds.has(tile.id)
@@ -325,13 +396,13 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
       label: interaction.kind === 'resource' ? 'Greenway oak' : interaction.target.name,
       action: interaction.kind === 'resource' ? (axeEquipped(state) ? 'Chop' : owned(state, 'woodcutters_axe') > 0 ? 'Equip axe' : 'Needs axe')
         : interaction.kind === 'store' ? activeStoreId ? 'Store open' : 'Open store'
-        : interaction.kind === 'route' ? (state.builtRouteIds.includes(interaction.target.id) ? 'Cross' : state.unlockedRecipeIds.includes(interaction.target.id) ? 'Build' : 'Locked')
+        : interaction.kind === 'route' ? 'Cross'
         : discoveredRingIds.has(interaction.target.id)
           ? state.fairyRings.some((ring) => ring.id !== interaction.target.id && discoveredRingIds.has(ring.id)) ? 'Choose destination' : 'Find another ring'
           : 'Discover',
       actionable: interaction.kind === 'resource' && (axeEquipped(state) || owned(state, 'woodcutters_axe') > 0)
         || (interaction.kind === 'store' && activeStoreId === null)
-        || interaction.kind === 'route' && (state.builtRouteIds.includes(interaction.target.id) || state.unlockedRecipeIds.includes(interaction.target.id))
+        || interaction.kind === 'route'
         || (interaction.kind === 'fairy-ring' && !discoveredRingIds.has(interaction.target.id)),
     } : null,
     recentEvents: messages.map((message) => message.text),
@@ -340,7 +411,11 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
 
 export function intentForView(state: WizardWorldState, intent: Exclude<WizardViewIntent, { type: 'movement' | 'movement.tap' }>, openStoreId: string | null = null): WizardIntent | null {
   if (intent.type === 'jump') return { type: 'jump' }
-  if (intent.type === 'store.close' || intent.type === 'store.open') return null
+  if (intent.type === 'store.close' || intent.type === 'store.open' || intent.type === 'build-site.select') return null
+  if (intent.type === 'build-site.confirm') {
+    const site = routeBuildOptions(state).find((candidate) => candidate.id === intent.siteId)
+    return site ? { type: 'build_route', routeId: site.routeId, siteId: site.id } : null
+  }
   if (intent.type === 'interact') {
     if (retainOpenStoreId(state, openStoreId)) return null
     const interaction = closestInteraction(state)
@@ -349,9 +424,7 @@ export function intentForView(state: WizardWorldState, intent: Exclude<WizardVie
       return owned(state, 'woodcutters_axe') > 0 ? { type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' } : null
     }
     if (interaction?.kind === 'fairy-ring' && !state.player.discoveredRingIds.includes(interaction.target.id)) return { type: 'discover_fairy_ring', ringId: interaction.target.id }
-    if (interaction?.kind === 'route') return state.builtRouteIds.includes(interaction.target.id)
-      ? { type: 'traverse_route', routeId: interaction.target.id }
-      : { type: 'build_route', routeId: interaction.target.id }
+    if (interaction?.kind === 'route') return { type: 'traverse_route', routeId: interaction.target.id }
     return null
   }
   if (intent.type === 'store.select-listing') return { type: 'buy_store_listing', storeId: intent.storeId, listingId: intent.listingId }
@@ -434,8 +507,11 @@ export default function App() {
   const profile = useMemo(() => worldProfileForSearch(window.location.search), [])
   const [world, setWorld] = useState(() => loadWorld(window.localStorage, profile))
   const [saveBlocked, setSaveBlocked] = useState(() => hasIncompatibleSave(window.localStorage, profile))
+  const [recoveryError, setRecoveryError] = useState(false)
+  const priorSaveKey = useMemo(() => saveBlocked ? recoverablePriorSaveKey(window.localStorage, profile) : null, [saveBlocked, profile])
   const [messages, setMessages] = useState<RecentMessage[]>([{ id: 0, text: WELCOME_MESSAGE }])
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
+  const [selectedBuildSiteId, setSelectedBuildSiteId] = useState<string | null>(null)
   // Only the fixed-step timer and Restart write this ref. Rendered state may lag a committed step.
   const worldRef = useRef(world)
   const saveBlockedRef = useRef(saveBlocked)
@@ -456,6 +532,7 @@ export default function App() {
       commit: (state, texts) => {
         setWorld(state)
         setOpenStoreId((current) => retainOpenStoreId(state, current))
+        setSelectedBuildSiteId((current) => current && state.routes.some((route) => route.siteId === current && state.builtRouteIds.includes(route.id)) ? null : current)
         if (texts.length) setMessages((current) => {
           const next = [...current]
           for (const text of texts) if (next.at(-1)?.text !== text) next.push({ id: messageId.current++, text })
@@ -498,6 +575,11 @@ export default function App() {
       if (reachableStore(worldRef.current)?.id === intent.storeId) setOpenStoreId(intent.storeId)
       return
     }
+    if (intent.type === 'build-site.select') {
+      const site = routeBuildOptions(worldRef.current).find((candidate) => candidate.id === intent.siteId)
+      if (intent.siteId === null || (site && !worldRef.current.builtRouteIds.includes(site.routeId))) setSelectedBuildSiteId(intent.siteId)
+      return
+    }
     if (intent.type === 'interact' && !retainOpenStoreId(worldRef.current, openStoreId)) {
       const interaction = closestInteraction(worldRef.current)
       if (interaction?.kind === 'store') {
@@ -518,17 +600,38 @@ export default function App() {
     clockRef.current = IDLE_CLOCK
     setWorld(fresh)
     setSaveBlocked(false)
+    setRecoveryError(false)
     setOpenStoreId(null)
+    setSelectedBuildSiteId(null)
     setMessages([{ id: messageId.current++, text: WELCOME_MESSAGE }])
   }, [profile])
-  const projection = useMemo(() => toViewProjection(world, messages, openStoreId), [world, messages, openStoreId])
+  const recover = useCallback(() => {
+    if (!window.confirm('Recover the previous valid expedition? The incompatible save will be backed up, not deleted.')) return
+    try {
+      const recovered = recoverPriorSavedWorld(window.localStorage, profile, window.crypto.randomUUID())
+      if (!recovered) { setRecoveryError(true); return }
+      worldRef.current = recovered
+      saveBlockedRef.current = false
+      queuedRef.current = []
+      movementRef.current = [0, 0]
+      clockRef.current = IDLE_CLOCK
+      setWorld(recovered)
+      setSaveBlocked(false)
+      setRecoveryError(false)
+      setOpenStoreId(null)
+      setSelectedBuildSiteId(null)
+      setMessages([{ id: messageId.current++, text: 'Previous expedition recovered. The incompatible save is backed up.' }])
+    } catch { setRecoveryError(true) }
+  }, [profile])
+  const projection = useMemo(() => toViewProjection(world, messages, openStoreId, selectedBuildSiteId), [world, messages, openStoreId, selectedBuildSiteId])
 
   return <main style={{ position: 'fixed', inset: 0, background: '#14221f' }}>
     <WizardSurface projection={projection} onIntent={onIntent} diagnostics />
     <style>{OBJECTIVE_STYLES}</style>
-    {saveBlocked && <p className="wr-save-warning" role="alert">Play is unsaved. Existing save is preserved. Use New expedition to replace it.</p>}
+    {saveBlocked && <p className="wr-save-warning" role="alert">Play is unsaved. Existing save is preserved. {priorSaveKey ? 'A previous valid expedition can be recovered.' : 'Use New expedition to replace it.'}{recoveryError ? ' Recovery failed; no save was discarded.' : ''}</p>}
     <div className="wr-objective" role="status">
       <span><b>OBJECTIVE</b> {objectiveFor(world)}</span>
+      {saveBlocked && priorSaveKey && <button type="button" className="wr-recover" aria-label="Recover previous save" onClick={recover}>Recover</button>}
       <button type="button" onClick={restart}>New expedition</button>
     </div>
   </main>

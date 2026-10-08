@@ -3,7 +3,7 @@ import { createElement, createRef, isValidElement, type ReactElement, type React
 import { renderToStaticMarkup } from 'react-dom/server'
 import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls } from './WizardSurface'
 import { WizardHud } from './WizardHud'
-import { WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
+import { RouteKey, WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
 
 const projection = {
@@ -12,17 +12,23 @@ const projection = {
     { id: 'pass', label: 'Highland pass', from: [1, 0, 1], to: [2, 0, 2], built: true, unlocked: true, logCost: 4 },
     { id: 'ford', label: 'Wetland ford', from: [2, 0, 2], to: [3, 0, 3], built: false, unlocked: false, logCost: 8 },
   ],
+  buildSites: [
+    { id: 'bridge-west', routeId: 'bridge', label: 'West bank crossing', from: [0, 0, 0], to: [1, 0, 1], logCost: 6, status: 'ready', reason: 'Ready to build', discovered: true },
+    { id: 'bridge-east', routeId: 'bridge', label: 'East bank crossing', from: [2, 0, 0], to: [3, 0, 1], logCost: 6, status: 'too_far', reason: 'Move closer to the scaffold', discovered: true },
+    { id: 'bridge-fog', routeId: 'bridge', label: 'Fogged crossing', from: [4, 0, 0], to: [5, 0, 1], logCost: 6, status: 'ready', reason: 'Ready to build', discovered: false },
+  ],
+  selectedBuildSiteId: null,
   map: {
     tiles: [
-      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false, hasRouteSite: false, hasBuiltRoute: false },
-      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: false, hasBuiltRoute: false },
+      { id: 'home', gridX: 0, gridZ: 0, terrain: 'loam', biome: 'meadow', discovered: true, hasResource: false, hasStore: true, hasRing: false, hasRouteSite: true, hasBuiltRoute: false },
+      { id: 'fog', gridX: 1, gridZ: 0, terrain: null, biome: null, discovered: false, hasResource: false, hasStore: false, hasRing: false, hasRouteSite: true, hasBuiltRoute: false },
     ],
     player: { gridX: 0, gridZ: 0, yaw: 0 },
   },
 } as unknown as WizardViewProjection
 
 type Props = Record<string, unknown>
-const mapProps = (open: boolean, onToggle = vi.fn()) => ({ projection, open, onToggle, buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>() })
+const mapProps = (open: boolean, onToggle = vi.fn(), onIntent = vi.fn()) => ({ projection, open, onToggle, onIntent, buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>() })
 const renderMap = (open: boolean) => renderToStaticMarkup(createElement(WizardMap, mapProps(open)))
 const gridProjection = (size: number, gridX: number, gridZ: number) => ({
   ...projection,
@@ -161,8 +167,27 @@ describe('wizard atlas markup', () => {
     expect(open).toContain('<section id="wizard-world-map" class="wr-map-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-world-map-title">')
     expect(open).toContain('aria-label="Close map"')
     expect(open).not.toContain('wr-map-compact')
-    expect(open.match(/<div><b>/g)).toHaveLength(projection.routes.length)
-    expect(open).toMatch(/6 logs.*completed.*locked.*\? unexplored/)
+    expect(open.match(/<h3>/g)).toHaveLength(projection.routes.length)
+    expect(open).toContain('West bank crossing')
+    expect(open).toContain('Move closer to the scaffold')
+    expect(open).toContain('completed')
+    expect(open).toContain('locked')
+    expect(open).not.toContain('Fogged crossing')
+    expect(open).toContain('fog: unexplored')
+    expect(open).not.toContain('fog: unexplored, route build site')
+  })
+
+  it('selects one discovered candidate by touch-sized atlas row and closes the map', () => {
+    const onToggle = vi.fn()
+    const onIntent = vi.fn()
+    const routeKey = findElements(WizardMap(mapProps(true, onToggle, onIntent)), (element) => element.type === RouteKey)[0]
+    const buttons = findElements(RouteKey(routeKey.props as Parameters<typeof RouteKey>[0]), (element) => element.props.className === 'wr-map-site')
+    expect(buttons.map((button) => button.props['aria-label'])).toEqual(['Preview West bank crossing', 'Preview East bank crossing'])
+    ;(buttons[1].props.onClick as () => void)()
+    expect(onIntent).toHaveBeenCalledWith({ type: 'build-site.select', siteId: 'bridge-east' })
+    expect(onToggle).toHaveBeenCalledTimes(1)
+    const selected = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: { ...projection, selectedBuildSiteId: 'bridge-east' } }))
+    expect(selected).toContain('aria-label="Preview East bank crossing" aria-pressed="true"')
   })
 })
 
@@ -304,5 +329,40 @@ describe('first-region magic and excavation controls', () => {
     expect(buttons.find((button) => button.props['aria-label'] === 'Excavate Practice mound')?.props.disabled).toBe(true)
     const markup = renderToStaticMarkup(createElement(WizardHud, { projection: withoutSpade, onIntent: () => {} }))
     expect(markup).toContain('Equip a field spade')
+  })
+})
+
+describe('selected construction site controls', () => {
+  const nearbyTree = { kind: 'resource' as const, targetId: 'oak', label: 'Greenway oak', action: 'Chop', actionable: true }
+  const ready = { ...sellProjection, openStoreId: null, selectedBuildSiteId: 'bridge-west', nearbyInteraction: nearbyTree } as WizardViewProjection
+
+  it('shows Build and Cancel independently of the nearer generic interaction', () => {
+    const emitted: unknown[] = []
+    const hud = WizardHud({ projection: ready, onIntent: (intent) => emitted.push(intent) })
+    const card = findElements(hud, (element) => element.props.className === 'wr-panel wr-context wr-build-preview')[0]
+    expect(card).toBeDefined()
+    const buttons = findElements(card, (element) => element.type === 'button')
+    expect(buttons.map((button) => button.props.children)).toEqual(['Build', 'Cancel'])
+    expect(buttons[0].props.disabled).toBe(false)
+    expect(findElements(hud, (element) => element.props.className === 'wr-prompt')).toHaveLength(1)
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: ready, onIntent: () => {} }))
+    expect(markup).toContain('West bank crossing')
+    expect(markup).toContain('6 logs · Ready to build')
+    ;(buttons[0].props.onClick as () => void)()
+    ;(buttons[1].props.onClick as () => void)()
+    expect(emitted).toEqual([
+      { type: 'build-site.confirm', siteId: 'bridge-west' },
+      { type: 'build-site.select', siteId: null },
+    ])
+  })
+
+  it('disables Build with a reason and never previews a fogged site', () => {
+    const blocked = { ...ready, selectedBuildSiteId: 'bridge-east' } as WizardViewProjection
+    const card = findElements(WizardHud({ projection: blocked, onIntent: () => {} }), (element) => element.props.className === 'wr-panel wr-context wr-build-preview')[0]
+    const build = findElements(card, (element) => element.type === 'button')[0]
+    expect(build.props.disabled).toBe(true)
+    expect(renderToStaticMarkup(createElement(WizardHud, { projection: blocked, onIntent: () => {} }))).toContain('Move closer to the scaffold')
+    const hidden = { ...ready, selectedBuildSiteId: 'bridge-fog' } as WizardViewProjection
+    expect(findElements(WizardHud({ projection: hidden, onIntent: () => {} }), (element) => element.props.className === 'wr-panel wr-context wr-build-preview')).toHaveLength(0)
   })
 })
