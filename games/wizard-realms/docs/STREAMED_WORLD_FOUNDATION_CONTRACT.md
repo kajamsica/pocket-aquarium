@@ -1,6 +1,6 @@
 # Streamed world foundation contract
 
-This is the bounded terrain foundation after player-selected construction. Deterministic cells and chunks, a nine-chunk active cache, and a 17 by 17 scene terrain cap now exist. They are prerequisites for the larger, distinctive first region and the roughly 2 km full game, not a claim that either is playable yet. The north star and completion gate remain in [Game Design](GAME_DESIGN.md).
+This is the bounded terrain foundation after player-selected construction. Deterministic cells and chunks, a nine-chunk active cache, a 17 by 17 scene terrain cap, a 33 by 33 local atlas cap, and a separate streamed movement authority now exist. Mireglass Reach also has version-pinned ground forms, anchors, and timber candidates. They are prerequisites for the larger, distinctive first region and the roughly 2 km full game, not a claim that either is playable yet. The north star and completion gate remain in [Game Design](GAME_DESIGN.md).
 
 ## Coordinates and content identity
 
@@ -18,8 +18,8 @@ This is the bounded terrain foundation after player-selected construction. Deter
 ## Integration order
 
 1. Prove the pure cell, chunk, active-window, and visible-terrain functions without changing the playable profile or v5 save. Retain exact Greenway generation through the same tile function used by existing profiles. This foundation is implemented, with pre-refactor Greenway tile-array hashes pinned in tests.
-2. Give a distinct streamed v6 authority state coordinate-indexed terrain lookup through the active window. Keep v5 `terrainHeightAt` and its deep-clone semantics untouched: v5 saves permit moved tile centers, and previous and next v5 states are independently mutable. `advanceWizardWorld` currently clones the whole v5 state on every tick, and the app saves full JSON every tick; neither path can be run against a generated 512 by 512 tile array.
-3. Move resource and landmark activation to deterministic per-chunk content profiles, then store only changed resources and placed objects as sparse deltas. Validate cross-chunk collisions and reachability before the player can enter a chunk.
+2. Give a distinct streamed authority state coordinate-indexed terrain lookup through the active window. This internal module now handles fixed-step movement, look, jump, discovery, and fail-closed chunk crossing without exposing a public profile or save. Keep v5 `terrainHeightAt` and its deep-clone semantics untouched: v5 saves permit moved tile centers, and previous and next v5 states are independently mutable. `advanceWizardWorld` currently clones the whole v5 state on every tick, and the app saves full JSON every tick; neither path can be run against a generated 512 by 512 tile array.
+3. Move resource and landmark activation to deterministic per-chunk content profiles, then store only changed resources and placed objects as sparse deltas. Mireglass now pins anchors and six timber candidates across a 100-seed corpus, but they are not yet authority-owned interactions. Validate cross-chunk collisions and reachability before the player can enter a chunk.
 4. Extend the bounded local map with an aggregated atlas. Discovery uses stable global IDs. The player can cross chunk boundaries without a terrain pop, a false empty-ground step, or loss of discovery. Replace `areaAt`'s out-of-bounds Greenway fallback with explicit region ownership. The scene's current 320 m ground plane and origin-centered shadow coverage also need a player-relative or chunk-local presentation policy before travel reaches distant coordinates.
 5. Introduce the versioned v6 save and migration with complete legacy-state round trips. Only then expose a larger development profile with an authored outward-and-return regional journey. Expand further after that journey passes from the real UI.
 
@@ -36,4 +36,4 @@ This sequence keeps the simulation authoritative. A rendering-only extension, a 
 
 ## Proof for this increment
 
-Across a seed corpus, prove legacy-cell exactness, negative and edge coordinates, chunk-order independence, deterministic regeneration, cross-chunk height continuity, region diversity, 3 by 3 active-window bounds, and a 17 by 17 presentation cap. The integrated suite now passes 234 tests and the production build passes. The terrain foundation is not the full game, not a new save format, and not a new public preview.
+Across a seed corpus, prove legacy-cell exactness, negative and edge coordinates, chunk-order independence, deterministic regeneration, cross-chunk height continuity, region diversity, 3 by 3 active-window bounds, and a 17 by 17 presentation cap. The integrated suite now passes 247 tests and the production build passes. The terrain foundation is not the full game, not a new save format, and not a new public preview.
