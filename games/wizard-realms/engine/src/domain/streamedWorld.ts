@@ -1,5 +1,6 @@
 import { createActiveWorldTerrain } from './activeWorldTerrain'
 import type { ActiveWorldTerrain, ReadonlyWorldTile } from './activeWorldTerrain'
+import { highlandRidgeMoveBarrier } from './highlandRidge'
 import type { TerrainFacts } from './mireglassCachePitOverlay'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import type { Vec3 } from './types'
@@ -38,7 +39,7 @@ export type StreamedWorldEvent =
 export interface StreamedWorldRejection {
   intentIndex: number
   intentType: StreamedWorldIntent['type']
-  code: 'invalid_value' | 'out_of_bounds' | 'terrain_missing' | 'airborne' | 'fen_channel' | 'slate_cliff'
+  code: 'invalid_value' | 'out_of_bounds' | 'terrain_missing' | 'airborne' | 'fen_channel' | 'slate_cliff' | 'ridge_rock'
 }
 
 export interface StreamedWorldAdvanceResult {
@@ -77,7 +78,7 @@ export function createStreamedWorld(seed: string, start: { x: number; z: number 
     seed: normalizedSeed, tick: 0,
     player: { position: { x: start.x, y: startTile.center.y, z: start.z }, yaw: 0, pitch: 0, verticalVelocity: 0 },
     discoveredTileIds: [startTile.id],
-  })
+  }, facts?.highlandRidge === true)
 }
 
 function canonicalWorldTileId(id: unknown): boolean {
@@ -126,10 +127,11 @@ export function createStreamedWorldFromState(snapshot: StreamedWorldState, facts
       yaw: player.yaw, pitch: player.pitch, verticalVelocity: player.verticalVelocity,
     },
     discoveredTileIds: [...discovered],
-  })
+  }, facts?.highlandRidge === true)
 }
 
-function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, initialState: StreamedWorldState): StreamedWorldRuntime {
+function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, initialState: StreamedWorldState,
+  highlandRidge: boolean): StreamedWorldRuntime {
   let state = freezeState(initialState)
   const discovered = new Set(state.discoveredTileIds)
   return {
@@ -155,6 +157,7 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
           const x = player.position.x + dx
           const z = player.position.z + dz
           const barrier = mireglassMoveBarrier(normalizedSeed, player.position, { x, z })
+            ?? (highlandRidge ? highlandRidgeMoveBarrier(player.position, { x, z }) : null)
           if (barrier) {
             reject(index, intent, barrier)
             return

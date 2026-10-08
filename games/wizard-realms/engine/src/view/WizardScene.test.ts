@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
+import { highlandRidgeCellAt } from '../domain/highlandRidge'
+import { WORLD_CELL_METERS } from '../domain/worldChunks'
 import type { WizardLandmark, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, highlandDetailFor, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, highlandDetailFor, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, ridgeSafeCameraPosition, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
 import { visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
@@ -376,5 +378,48 @@ describe('shop-aware follow camera', () => {
     const pitch = 0.28 * compact.pitchScale
     const compactDesired = compactTarget.clone().add(new THREE.Vector3(0, compact.eyeRise + Math.sin(pitch) * compact.distance, Math.cos(pitch) * compact.distance))
     expect(storeSafeCameraPosition(compactTarget, compactDesired, [storeAt(-2)], null, 0.016).toArray()).toEqual(compactDesired.toArray())
+  })
+})
+
+describe('ridge-aware follow camera', () => {
+  const cellAt = (x: number, z: number) => highlandRidgeCellAt(
+    Math.ceil(x / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS,
+    Math.ceil(z / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS)
+  const expectGallerySightline = (target: THREE.Vector3, camera: THREE.Vector3) => {
+    for (let step = 0; step <= 100; step += 1) {
+      const point = target.clone().lerp(camera, step / 100)
+      expect(cellAt(point.x, point.z)).toBe('gallery')
+    }
+    expect(camera.y).toBeLessThanOrEqual(6.8)
+  }
+
+  it('keeps north- and south-facing views beside the player inside the gallery', () => {
+    const target = new THREE.Vector3(580, 4, -466)
+    for (const direction of [-1, 1]) {
+      const desired = target.clone().add(new THREE.Vector3(0, 3.2, direction * 6.4))
+      const camera = ridgeSafeCameraPosition(target, desired)
+      expect(camera.distanceTo(target)).toBeGreaterThan(5)
+      expectGallerySightline(target, camera)
+    }
+  })
+
+  it('clears the observed near-wall view and moves smoothly along the gallery', () => {
+    const offset = new THREE.Vector3(Math.sin(-0.13) * 6.4, 3, Math.cos(-0.13) * 6.4)
+    const start = new THREE.Vector3(577.3, 3.8, -463)
+    let previous = ridgeSafeCameraPosition(start, start.clone().add(offset))
+    expectGallerySightline(start, previous)
+    for (let frame = 1; frame <= 20; frame += 1) {
+      const target = start.clone().add(new THREE.Vector3(frame * 0.02, 0, 0))
+      const next = ridgeSafeCameraPosition(target, target.clone().add(offset))
+      expect(next.distanceTo(previous)).toBeLessThan(0.1)
+      expectGallerySightline(target, next)
+      previous = next
+    }
+  })
+
+  it('leaves exterior camera positions unchanged', () => {
+    const target = new THREE.Vector3(520, 4, -466)
+    const desired = target.clone().add(new THREE.Vector3(0, 3.2, 6.4))
+    expect(ridgeSafeCameraPosition(target, desired).toArray()).toEqual(desired.toArray())
   })
 })

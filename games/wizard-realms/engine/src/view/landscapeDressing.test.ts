@@ -69,6 +69,14 @@ describe('landscape dressing layout', () => {
       .not.toEqual(landscapeDressingFor([{ ...base, highlandSurface: 'quarry' }]))
   })
 
+  it('omits generic dressing on ridge rock and gallery cells', () => {
+    const base = cell(0, 0, 'dry_highland')
+    expect(landscapeDressingFor([base]).length).toBeGreaterThan(0)
+    for (const highlandRidgeCell of ['rock', 'gallery'] as const) {
+      expect(landscapeDressingFor([{ ...base, highlandRidgeCell }])).toEqual([])
+    }
+  })
+
   it('places sparse lowland snags and more leafy alders without adding resources', () => {
     for (const surface of ['marsh', 'wetland', 'loam'] as const) {
       const cells = lowland(surface)

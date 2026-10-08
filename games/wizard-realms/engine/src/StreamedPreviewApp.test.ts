@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createStreamedWorld, mireglassRouteSites } from './domain'
 import {
-  MIREGLASS_DEV_SPAWN, PREVIEW_MAP_LEGEND, mireglassVisualTerrainAt, streamedControlIntents, streamedMapTitle, streamedProjection, streamedStartForSearch,
+  HIGHLAND_RIDGE_DEV_SPAWN, HIGHLAND_RIDGE_RECOVERY_DEV_SPAWN, MIREGLASS_DEV_SPAWN,
+  PREVIEW_MAP_LEGEND, mireglassVisualTerrainAt,
+  streamedControlIntents, streamedMapTitle, streamedPreviewRuntimeForSearch, streamedProjection,
+  streamedStartForSearch,
 } from './StreamedPreviewApp'
 import { visibleTerrainCells } from './view/visibleTerrain'
 
@@ -98,5 +101,72 @@ describe('streamed preview adapter', () => {
     }
     expect(streamedStartForSearch('?spawn=other', true)).toBeUndefined()
     expect(streamedStartForSearch('?campaign=mireglass', true)).toBeUndefined()
+  })
+
+  it('gates the ridge mouth, movement fact, and terrain tags to the development preview query', () => {
+    const query = '?devRegion=streamed&spawn=ridge'
+    expect(streamedStartForSearch(query, true)).toEqual(HIGHLAND_RIDGE_DEV_SPAWN)
+    expect(streamedStartForSearch(query, false)).toBeUndefined()
+    expect(streamedStartForSearch('?spawn=ridge', true)).toBeUndefined()
+    const { runtime, ridgeActive } = streamedPreviewRuntimeForSearch(query, true)
+    expect(ridgeActive).toBe(true)
+    expect(runtime.state.player.position).toMatchObject(HIGHLAND_RIDGE_DEV_SPAWN)
+
+    const plain = streamedProjection(runtime, runtime.state, [])
+    expect(plain.highlandRidgeActive).toBeUndefined()
+    expect(plain.terrain.every((cell) => !Object.hasOwn(cell, 'highlandRidgeCell'))).toBe(true)
+    const ridge = streamedProjection(runtime, runtime.state, [], ridgeActive)
+    const cellAt = (x: number, z: number) => ridge.terrain.find((cell) =>
+      cell.position[0] === x && cell.position[2] === z)
+    expect(ridge.highlandRidgeActive).toBe(true)
+    expect(cellAt(560, -472)?.highlandRidgeCell).toBe('rock')
+    expect(cellAt(560, -468)?.highlandRidgeCell).toBe('gallery')
+    expect(cellAt(556, -472)?.highlandRidgeCell).toBeUndefined()
+    expect(streamedProjection(runtime, runtime.state, []).terrain
+      .every((cell) => !Object.hasOwn(cell, 'highlandRidgeCell'))).toBe(true)
+
+    expect(runtime.advance([{ type: 'move', delta: { x: 4, z: 0 } }]).rejections).toEqual([])
+    expect(runtime.advance([{ type: 'move', delta: { x: 4, z: 0 } }]).rejections).toEqual([])
+    expect(runtime.advance([{ type: 'move', delta: { x: 0, z: -4 } }]).rejections)
+      .toMatchObject([{ code: 'ridge_rock' }])
+
+    for (const disabled of [streamedPreviewRuntimeForSearch(query, false),
+      streamedPreviewRuntimeForSearch('?spawn=ridge', true),
+      streamedPreviewRuntimeForSearch('?devRegion=streamed', true)]) {
+      expect(disabled.ridgeActive).toBe(false)
+      expect(disabled.runtime.state.player.position.x).toBe(0)
+      expect(streamedProjection(disabled.runtime, disabled.runtime.state, [], disabled.ridgeActive)
+        .highlandRidgeActive).toBeUndefined()
+    }
+  })
+
+  it('starts the unsaved old-save visual simulation inside rock only on the development query', () => {
+    const query = '?devRegion=streamed&spawn=ridge-recovery'
+    expect(streamedStartForSearch(query, true)).toEqual(HIGHLAND_RIDGE_RECOVERY_DEV_SPAWN)
+    expect(streamedStartForSearch(query, false)).toBeUndefined()
+    expect(streamedStartForSearch('?spawn=ridge-recovery', true)).toBeUndefined()
+    const { runtime, ridgeActive, ridgeRecovery } = streamedPreviewRuntimeForSearch(query, true)
+    expect(runtime.state.player.position).toMatchObject(HIGHLAND_RIDGE_RECOVERY_DEV_SPAWN)
+    expect(ridgeActive).toBe(true)
+    expect(ridgeRecovery).toBe(true)
+    const projection = streamedProjection(runtime, runtime.state, [], ridgeActive)
+    expect(projection.highlandRidgeActive).toBe(true)
+    expect(projection.terrain.find((cell) => cell.position[0] === 580
+      && cell.position[2] === -500)?.highlandRidgeCell).toBe('rock')
+    for (let step = 0; step < 5; step += 1) {
+      expect(runtime.advance([{ type: 'move', delta: { x: 4, z: 0 } }]).rejections).toEqual([])
+    }
+    expect(runtime.state.player.position.x).toBe(600)
+    expect(runtime.advance([{ type: 'move', delta: { x: -4, z: 0 } }]).rejections)
+      .toMatchObject([{ code: 'ridge_rock' }])
+
+    for (const disabled of [streamedPreviewRuntimeForSearch(query, false),
+      streamedPreviewRuntimeForSearch('?spawn=ridge-recovery', true)]) {
+      expect(disabled.ridgeActive).toBe(false)
+      expect(disabled.ridgeRecovery).toBe(false)
+      expect(disabled.runtime.state.player.position.x).toBe(0)
+    }
+    expect(streamedPreviewRuntimeForSearch('?devRegion=streamed&spawn=ridge', true)
+      .ridgeRecovery).toBe(false)
   })
 })

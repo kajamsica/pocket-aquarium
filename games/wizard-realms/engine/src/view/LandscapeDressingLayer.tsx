@@ -119,7 +119,8 @@ function AlderInstances({ details }: { details: readonly LandscapeDetail[] }) {
 export function LandscapeDressing({ cells, clearings }: { cells: readonly WizardTerrainCell[]; clearings: readonly Vec2[] }) {
   const signature = cells.map((cell) => [cell.id, cell.position.join(','), cell.size.join(','), cell.climate, cell.mireglassTerrain,
     cell.mireglassApproach, cell.mireglassTrailSegment?.from.join(','), cell.mireglassTrailSegment?.to.join(','),
-    cell.highlandSurface, cell.highlandTrailSegment?.from.join(','), cell.highlandTrailSegment?.to.join(',')].join(':')).join('|')
+    cell.highlandSurface, cell.highlandTrailSegment?.from.join(','), cell.highlandTrailSegment?.to.join(','),
+    cell.highlandRidgeCell].join(':')).join('|')
     + '::' + clearings.map((point) => point.join(',')).join('|')
   // Projections refresh at 20 Hz. Regenerate only when the visible terrain or a surface changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps

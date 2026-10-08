@@ -2,7 +2,10 @@ import { mireglassAnchors } from './mireglassContent'
 import type { WorldTile } from './types'
 
 /** Only new-world callers supply these facts; omission retains seed-only terrain. */
-export interface TerrainFacts { readonly cachePitDug: boolean }
+export interface TerrainFacts {
+  readonly cachePitDug: boolean
+  readonly highlandRidge?: true
+}
 
 /** Copies the canonical cache cell without changing generated chunks or Mireglass content. */
 export function createCachePitOverlay(seed: string, facts?: TerrainFacts): (tiles: WorldTile[]) => WorldTile[] {

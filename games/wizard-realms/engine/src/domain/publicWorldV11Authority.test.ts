@@ -202,6 +202,41 @@ describe('public v11 Highland authority', () => {
     expect(blocked.events).toEqual([])
   })
 
+  it('blocks Highland rock only in v11 while allowing gallery travel and v10 movement', () => {
+    const gallery = worldTileAtGrid(seed, 145, -117)
+    const start = atMireglass(gallery.center)
+    const intoRock = [{ type: 'move' as const, delta: { x: 0, z: -4 } }]
+    expect(isValidPublicWorldV11State(start, null)).toBe(true)
+    const blocked = advancePublicWorldV11Frame(start, intoRock)
+    expect(blocked.rejections).toMatchObject([{ code: 'ridge_rock' }])
+    expect(blocked.state).toBe(start)
+    expect(blocked.events).toEqual([])
+
+    const alongGallery = advancePublicWorldV11Frame(start,
+      [{ type: 'move', delta: { x: 4, z: 0 } }])
+    expect(alongGallery.rejections).toEqual([])
+    expect(alongGallery.state.player.position).toMatchObject({ x: 584, z: -468 })
+
+    const { highland: _progress, highlandContentRevision: _revision, ...v10 } = start
+    const older = advancePublicWorldV10Frame(v10, intoRock)
+    expect(older.rejections).toEqual([])
+    expect(older.state.player.position).toMatchObject({ x: 580, z: -472 })
+  })
+
+  it('lets a v11 save already inside new rock escape and blocks re-entry', () => {
+    const rock = worldTileAtGrid(seed, 145, -118)
+    const saved = atMireglass(rock.center)
+    expect(isValidPublicWorldV11State(saved, null)).toBe(true)
+    const escaped = advancePublicWorldV11Frame(saved,
+      [{ type: 'move', delta: { x: 0, z: 4 } }])
+    expect(escaped.rejections).toEqual([])
+    expect(escaped.state.player.position).toMatchObject({ x: 580, z: -468 })
+    const reentered = advancePublicWorldV11Frame(escaped.state,
+      [{ type: 'move', delta: { x: 0, z: -4 } }])
+    expect(reentered.rejections).toMatchObject([{ code: 'ridge_rock' }])
+    expect(reentered.state).toBe(escaped.state)
+  })
+
   it.each(['greenway-alpha', 'wizard-realms'])('walks the pinned route both ways for %s', (worldSeed) => {
     const seeded = withPublicV11Highland(withPublicV10TerrainRevision(withFreshPublicV9Camps(
       withFreshPublicV7Herbs(createFreshPublicWorld(worldSeed, 'greenway-classic-v1')))))

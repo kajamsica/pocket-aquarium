@@ -32,6 +32,8 @@ export interface WizardTerrainCell {
   /** V11 display-only stone palette or dry route. Never changes collision or terrain authority. */
   highlandSurface?: 'trail' | 'quarry'
   highlandTrailSegment?: { from: Vec2; to: Vec2 }
+  /** V14 display-only ridge footprint; scenery never changes movement authority. */
+  highlandRidgeCell?: 'rock' | 'gallery'
 }
 
 export interface WizardResourceNode {
@@ -240,6 +242,8 @@ export interface WizardViewProjection {
   highlandExtraction?: { nodeId: string; label: string; actionable: boolean; reason: string }
   /** V11-only ambient identity; no physical or simulation effect. */
   ambience?: 'highland-wind'
+  /** V14-only ridge scenery, omitted from earlier public world projections. */
+  highlandRidgeActive?: true
   /** Absent from v7-v11 projections and never added to learnedSpellIds. */
   windwardStep?: WizardWindwardStepView
   map: {

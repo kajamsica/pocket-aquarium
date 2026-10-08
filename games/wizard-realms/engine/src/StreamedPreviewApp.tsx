@@ -9,6 +9,7 @@ import {
   type StreamedWorldRuntime,
   type StreamedWorldState,
 } from './domain'
+import { highlandRidgeCellAt } from './domain/highlandRidge'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
 import type { WizardTerrainCell } from './view/contracts'
 import { visibleMapTiles } from './view/visibleMap'
@@ -28,6 +29,10 @@ const TERRAIN_COLORS = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', 
 const MIREGLASS_COLORS = { loam: '#6c7651', wetland: '#385b57', rocky: '#777d78', snow: '#d4e3df' } as const
 /** Development-only direct spawn inside the Mireglass core, near the pinned outpost pad. */
 export const MIREGLASS_DEV_SPAWN = { x: -288, z: 288 } as const
+/** Development-only west gallery mouth, outside the ridge rock. */
+export const HIGHLAND_RIDGE_DEV_SPAWN = { x: 552, z: -466 } as const
+/** Development-only old-save visual simulation, inside newly raised ridge rock. */
+export const HIGHLAND_RIDGE_RECOVERY_DEV_SPAWN = { x: 580, z: -500 } as const
 const EMPTY_SKILLS = { woodcutting: 0, construction: 0, wayfinding: 0, spellcraft: 0, excavation: 0 } as const
 const EMPTY_EQUIPMENT = { head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null } as const
 const REJECTION_TEXT: Readonly<Record<StreamedWorldRejection['code'], string>> = {
@@ -37,6 +42,7 @@ const REJECTION_TEXT: Readonly<Record<StreamedWorldRejection['code'], string>> =
   invalid_value: 'That movement was rejected.',
   fen_channel: 'The fen channel needs a built bridge.',
   slate_cliff: 'The slate rise needs a built ladder.',
+  ridge_rock: 'The ridge rock blocks this way.',
 }
 
 const PREVIEW_STYLES = `
@@ -59,14 +65,30 @@ export function streamedMapTitle(position: { x: number; z: number }): string {
 
 export function streamedStartForSearch(search: string, development = import.meta.env.DEV): { x: number; z: number } | undefined {
   if (!development) return undefined
-  const spawn = new URLSearchParams(search).get('spawn')
+  const parameters = new URLSearchParams(search)
+  const spawn = parameters.get('spawn')
   if (spawn === 'mireglass') return MIREGLASS_DEV_SPAWN
+  if (parameters.get('devRegion') === 'streamed') {
+    if (spawn === 'ridge') return HIGHLAND_RIDGE_DEV_SPAWN
+    if (spawn === 'ridge-recovery') return HIGHLAND_RIDGE_RECOVERY_DEV_SPAWN
+  }
   if (spawn !== 'fen' && spawn !== 'berm') return undefined
   const kind = spawn === 'fen' ? 'bridge' : 'ladder'
   const site = mireglassRouteSites(WORLD_SEED).find((candidate) => candidate.kind === kind)
   if (!site) throw new Error(`Missing canonical ${kind} site for preview spawn.`)
   // The canonical route validation checks this dry approach one cell before the crossing.
   return { x: site.from.x, z: site.from.z - TILE_METERS }
+}
+
+/** Keep the ridge movement fact and scenery flag bound to the same development query. */
+export function streamedPreviewRuntimeForSearch(search: string, development = import.meta.env.DEV) {
+  const parameters = new URLSearchParams(search)
+  const spawn = parameters.get('spawn')
+  const ridgeActive = development && parameters.get('devRegion') === 'streamed'
+    && (spawn === 'ridge' || spawn === 'ridge-recovery')
+  const ridgeRecovery = ridgeActive && spawn === 'ridge-recovery'
+  return { runtime: createStreamedWorld(WORLD_SEED, streamedStartForSearch(search, development),
+    ridgeActive ? { highlandRidge: true, cachePitDug: false } : undefined), ridgeActive, ridgeRecovery }
 }
 
 export function streamedControlIntents(yaw: number, vector: readonly [number, number]): StreamedWorldIntent[] {
@@ -92,27 +114,29 @@ export function mireglassVisualTerrainAt(position: { x: number; z: number }, ter
 }
 
 // The active window is a frozen array that only changes on chunk crossing, so its cells are mapped once per window.
-const terrainCellCache = new WeakMap<readonly ReadonlyWorldTile[], WizardTerrainCell[]>()
-function terrainCellsFor(tiles: readonly ReadonlyWorldTile[]): WizardTerrainCell[] {
-  let cells = terrainCellCache.get(tiles)
-  if (!cells) {
-    cells = tiles.map((tile) => {
-      const { x, z } = tile.center
-      const mireglassTerrain = mireglassVisualTerrainAt(tile.center, tile.terrain)
-      return {
-        id: tile.id, position: [x, tile.center.y, z], size: [TILE_METERS, TILE_METERS],
-        height: 0.7 + tile.elevation * 3, climate: tile.biome,
-        color: mireglassTerrain ? MIREGLASS_COLORS[mireglassTerrain] : TERRAIN_COLORS[tile.terrain],
-        ...(mireglassTerrain ? { mireglassTerrain } : {}),
-      }
-    })
-    terrainCellCache.set(tiles, cells)
-  }
+const terrainCellCache = new WeakMap<readonly ReadonlyWorldTile[], { ridgeActive: boolean; cells: WizardTerrainCell[] }>()
+function terrainCellsFor(tiles: readonly ReadonlyWorldTile[], ridgeActive: boolean): WizardTerrainCell[] {
+  const cached = terrainCellCache.get(tiles)
+  if (cached?.ridgeActive === ridgeActive) return cached.cells
+  const cells: WizardTerrainCell[] = tiles.map((tile) => {
+    const { x, z } = tile.center
+    const mireglassTerrain = mireglassVisualTerrainAt(tile.center, tile.terrain)
+    const highlandRidgeCell = ridgeActive ? highlandRidgeCellAt(x, z) : null
+    return {
+      id: tile.id, position: [x, tile.center.y, z], size: [TILE_METERS, TILE_METERS],
+      height: 0.7 + tile.elevation * 3, climate: tile.biome,
+      color: mireglassTerrain ? MIREGLASS_COLORS[mireglassTerrain] : TERRAIN_COLORS[tile.terrain],
+      ...(mireglassTerrain ? { mireglassTerrain } : {}),
+      ...(highlandRidgeCell ? { highlandRidgeCell } : {}),
+    }
+  })
+  terrainCellCache.set(tiles, { ridgeActive, cells })
   return cells
 }
 
 /** Read-only projection of the streamed authority. Only the bounded active window is projected; nothing is fabricated. */
-export function streamedProjection(runtime: StreamedWorldRuntime, state: StreamedWorldState, messages: readonly string[]): WizardViewProjection {
+export function streamedProjection(runtime: StreamedWorldRuntime, state: StreamedWorldState,
+  messages: readonly string[], ridgeActive = false): WizardViewProjection {
   const { position, yaw, pitch } = state.player
   const tiles = runtime.activeTiles()
   const current = runtime.tileAtWorld(position.x, position.z)
@@ -122,7 +146,8 @@ export function streamedProjection(runtime: StreamedWorldRuntime, state: Streame
     seed: state.seed,
     tick: state.tick,
     player: { position: [position.x, position.y, position.z], yaw, pitch },
-    terrain: terrainCellsFor(tiles),
+    terrain: terrainCellsFor(tiles, ridgeActive),
+    ...(ridgeActive ? { highlandRidgeActive: true as const } : {}),
     resources: [], fairyRings: [], inscriptions: [], digSites: [],
     skillXp: EMPTY_SKILLS, learnedSpellIds: [],
     routes: [], buildSites: [], selectedBuildSiteId: null,
@@ -152,7 +177,8 @@ export function streamedProjection(runtime: StreamedWorldRuntime, state: Streame
 
 /** Unsaved developer traversal preview over the streamed authority. It never touches v5 state or storage. */
 export function StreamedPreviewApp() {
-  const [runtime] = useState(() => createStreamedWorld(WORLD_SEED, streamedStartForSearch(window.location.search)))
+  const [{ runtime, ridgeActive, ridgeRecovery }] = useState(() =>
+    streamedPreviewRuntimeForSearch(window.location.search))
   const [state, setState] = useState(runtime.state)
   const [messages, setMessages] = useState<string[]>([])
   const movementRef = useRef<readonly [number, number]>([0, 0])
@@ -207,7 +233,8 @@ export function StreamedPreviewApp() {
     // Every other view intent belongs to gameplay systems that this preview does not implement.
   }, [runtime])
 
-  const projection = useMemo(() => streamedProjection(runtime, state, messages), [runtime, state, messages])
+  const projection = useMemo(() => streamedProjection(runtime, state, messages, ridgeActive),
+    [runtime, state, messages, ridgeActive])
 
   return <main className="wr-streamed-preview" style={{ position: 'fixed', inset: 0, background: '#14221f' }}>
     <WizardSurface projection={projection} onIntent={onIntent} diagnostics />
@@ -216,6 +243,7 @@ export function StreamedPreviewApp() {
       <p role="status">
         <b>Unsaved streamed terrain preview</b>
         <span>Movement runs on the streamed terrain authority. Gathering, shops, routes, rewards, and saving are not in this preview; reloading starts over.</span>
+        {ridgeRecovery && <span>Old-save visual simulation: this unsaved preview starts inside new ridge rock. It is not a saved v11 resume.</span>}
       </p>
       <span className="wr-streamed-keys">W/S move · A/D pivot · Space jump · hold and drag to orbit · M map</span>
       {/* Telemetry changes 20 times a second, so it stays outside any live region. */}

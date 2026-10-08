@@ -287,6 +287,28 @@ describe('separate streamed-world authority', () => {
     }
   })
 
+  it('enables the Highland rock barrier only with explicit terrain facts, including after hydration', () => {
+    const gallery = { x: 580, z: -468 }
+    const facts = { cachePitDug: false, highlandRidge: true } as const
+    const gated = createStreamedWorld('highland-movement', gallery, facts)
+    const before = gated.state
+    const blocked = gated.advance([move(0, -4)], { atomicOnRejection: true })
+    expect(blocked.rejections).toEqual([{ intentIndex: 0, intentType: 'move', code: 'ridge_rock' }])
+    expect(blocked.state).toBe(before)
+    expect(blocked.events).toEqual([])
+
+    const throughGallery = gated.advance([move(4)])
+    expect(throughGallery.rejections).toEqual([])
+    expect(throughGallery.state.player.position).toMatchObject({ x: 584, z: -468 })
+    const resumed = createStreamedWorldFromState(throughGallery.state, facts)
+    expect(resumed.advance([move(0, -4)], { atomicOnRejection: true }).rejections)
+      .toMatchObject([{ code: 'ridge_rock' }])
+
+    const legacy = createStreamedWorld('highland-movement', gallery)
+    expect(legacy.advance([move(0, -4)]).rejections).toEqual([])
+    expect(legacy.state.player.position).toMatchObject({ x: 580, z: -472 })
+  })
+
   it.each([barriers[0], barriers[5]])('does not bypass $name while jumping, and gravity continues', ({ from, to, code }) => {
     const runtime = createStreamedWorld(mireglassSeed, from)
     const jumped = runtime.advance([{ type: 'jump' }])

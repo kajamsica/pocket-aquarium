@@ -1,5 +1,6 @@
 import { HIGHLAND_CORE, HIGHLAND_LANDMARK, classifyStreamedRegion, highlandCorridorCells,
   highlandLandmark, highlandStoneNodes } from './domain/highlandContent'
+import { highlandRidgeCellAt, highlandRidgeRecoveryTarget } from './domain/highlandRidge'
 import type { PublicWorldV11State } from './domain/publicWorldV11State'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
 import { publicWorldViewProjection } from './PublicWorldView'
@@ -40,7 +41,7 @@ const packUsed = (state: PublicWorldV11State) => state.player.inventory.reduce((
 
 const terrainCache = new WeakMap<readonly WizardTerrainCell[], { seed: string; dressed: readonly WizardTerrainCell[] }>()
 
-/** V11 scenery tracks the pinned dry path and quarry, without changing collision or tile authority. */
+/** Highland scenery tags the dry path, quarry, and ridge without changing collision or tile authority. */
 export function highlandTerrainFor(cells: readonly WizardTerrainCell[], seed: string): readonly WizardTerrainCell[] {
   const cached = terrainCache.get(cells)
   if (cached?.seed === seed) return cached.dressed
@@ -49,9 +50,11 @@ export function highlandTerrainFor(cells: readonly WizardTerrainCell[], seed: st
     const segment = trailSegments.get(key(point))
     const surface: WizardTerrainCell['highlandSurface'] = isAuthoredHighlandCell(point)
       ? 'quarry' : segment ? 'trail' : undefined
-    return surface || segment ? { ...cell,
+    const highlandRidgeCell = highlandRidgeCellAt(point.x, point.z)
+    return surface || segment || highlandRidgeCell ? { ...cell,
       ...(surface ? { highlandSurface: surface } : {}),
       ...(segment ? { highlandTrailSegment: segment } : {}),
+      ...(highlandRidgeCell ? { highlandRidgeCell } : {}),
     } : cell
   })
   terrainCache.set(cells, { seed, dressed })
@@ -88,6 +91,8 @@ function nextRoutePoint(position: Point, returning: boolean): Point {
 
 function highlandGuidance(state: PublicWorldV11State, region: 'highland_quarry' | 'wilderness'): string {
   const from = state.player.position
+  const recovery = highlandRidgeRecoveryTarget(from.x, from.z)
+  if (recovery) return `Old save inside newly raised ridge rock. Ridge scenery is temporarily hidden here. Walk ${bearing(from, recovery)} about ${Math.round(recovery.distance)} m to the nearest open cell.`
   const carryingStone = quantity(state, 'stone') > 0 && state.highland.landmarkDiscovered
   const routePoint = nextRoutePoint(from, carryingStone)
   if (carryingStone) return `Return west along the pale quarry path (${bearing(from, routePoint)}, about ${Math.round(distance2(from, routePoint))} m to the next bend). Greenway Outfitters buys stone.`
@@ -155,10 +160,11 @@ export function publicWorldV11ViewProjection(state: PublicWorldV11State, message
   selectedSiteId: string | null, openStoreId: string | null = null,
   fieldCamp?: WizardFieldCampView): WizardViewProjection {
   const base = publicWorldViewProjection(state, messages, selectedSiteId, openStoreId,
-    fieldCamp, { cachePitDug: state.mireglass.cacheExcavated })
+    fieldCamp, { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true })
   const overview = base.map.overview
   let highlandOverviewCache: WizardWorldOverview | undefined
   const withOverview = (projection: WizardViewProjection): WizardViewProjection => ({ ...projection,
+    highlandRidgeActive: true,
     map: { ...projection.map, ...(overview ? { overview: () =>
       highlandOverviewCache ??= highlandOverview(state, overview()) } : {}) } })
   if (state.movementOwner === 'greenway') {

@@ -47,6 +47,7 @@ const REJECTION_TEXT: Readonly<Record<StreamedWorldRejection['code'], string>> =
   out_of_bounds: 'The world boundary is here.', terrain_missing: 'Terrain is not active here.',
   airborne: 'You are already airborne.', invalid_value: 'Movement was rejected.',
   fen_channel: 'The fen channel needs a built bridge.', slate_cliff: 'The slate rise needs a built ladder.',
+  ridge_rock: 'The ridge rock blocks this way.',
 }
 
 export function mireglassBarrierAfterResult(

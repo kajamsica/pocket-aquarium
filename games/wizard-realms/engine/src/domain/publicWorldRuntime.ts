@@ -1,5 +1,6 @@
 import { areaAt, terrainHeightAt } from './generation'
 import { highlandCorridorCells } from './highlandContent'
+import { highlandRidgeMoveBarrier } from './highlandRidge'
 import { mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import type { MireglassItemId } from './mireglassExpedition'
@@ -54,9 +55,11 @@ const simulationRngStep = (value: number) => {
 }
 // Only the current immutable state chain keeps active chunks. Replaying an older
 // state rebuilds its own authority instead of reusing a runtime that already advanced.
-type TerrainMode = 'seed' | 'v10-base' | 'v10-dug'
-const terrainMode = (facts?: TerrainFacts): TerrainMode => facts
-  ? facts.cachePitDug ? 'v10-dug' : 'v10-base' : 'seed'
+type TerrainMode = 'seed' | 'v10-base' | 'v10-dug' | 'v11-base' | 'v11-dug'
+const terrainMode = (facts?: TerrainFacts): TerrainMode => !facts ? 'seed'
+  : facts.highlandRidge === true
+    ? facts.cachePitDug ? 'v11-dug' : 'v11-base'
+    : facts.cachePitDug ? 'v10-dug' : 'v10-base'
 let currentStreamed: { state: PublicWorldState; runtime: StreamedWorldRuntime;
   terrainMode: TerrainMode } | null = null
 type BootstrapProof = readonly string[] | null
@@ -341,6 +344,7 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
         : 'The Greenway path ends here. Mireglass lies on the western trail at z = 0.')
   }
   const barrier = mireglassMoveBarrier(state.seed, from, to)
+    ?? (facts?.highlandRidge === true ? highlandRidgeMoveBarrier(from, to) : null)
   if (barrier) return reject(state, intent, barrier, `The ${barrier} blocks the connector.`)
   try {
     const tile = worldTileAtGrid(state.seed, cellAt(to.x), cellAt(to.z))
@@ -456,6 +460,7 @@ function advancePublicWorldFrameInternal(
             ? returnHighlandHint(from.z) : returnTrailHint(from, envelope), moveIndex)
       }
       const barrier = mireglassMoveBarrier(state.seed, from, to)
+        ?? (facts?.highlandRidge === true ? highlandRidgeMoveBarrier(from, to) : null)
       if (barrier) return reject(state, move, barrier, `The ${barrier} blocks the connector.`, moveIndex)
       try {
         if (currentStreamed?.state !== state || currentStreamed.terrainMode !== terrainMode(facts)) {
@@ -535,7 +540,7 @@ export function advancePublicWorldV11BaseFrame(state: PublicWorldV11State,
   state: PublicWorldV11State
 } {
   return advancePublicWorldFrameInternal(state, intents,
-    { cachePitDug: state.mireglass.cacheExcavated }, true) as Omit<PublicWorldAdvanceResult, 'state'> & {
+    { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true }, true) as Omit<PublicWorldAdvanceResult, 'state'> & {
       state: PublicWorldV11State
     }
 }

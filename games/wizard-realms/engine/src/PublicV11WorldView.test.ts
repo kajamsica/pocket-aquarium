@@ -118,6 +118,44 @@ describe('v11 Highland read-only projection', () => {
     expect(v11.terrain).toBe(old.terrain)
   })
 
+  it('tags visible ridge rock and gallery only in the v11 projection', () => {
+    const state = at(fresh(), 552, -466)
+    const view = publicWorldV11ViewProjection(state, [], null)
+    const cellAt = (x: number, z: number) => view.terrain.find((cell) =>
+      cell.position[0] === x && cell.position[2] === z)
+    expect(view.highlandRidgeActive).toBe(true)
+    expect(cellAt(560, -472)?.highlandRidgeCell).toBe('rock')
+    expect(cellAt(560, -468)?.highlandRidgeCell).toBe('gallery')
+    expect(cellAt(560, -464)?.highlandRidgeCell).toBe('gallery')
+    expect(cellAt(556, -472)?.highlandRidgeCell).toBeUndefined()
+    expect(view.terrain.some((cell) => cell.highlandRidgeCell)).toBe(true)
+
+    const base = publicWorldViewProjection(state, [], null)
+    expect(base.highlandRidgeActive).toBeUndefined()
+    expect(base.terrain.every((cell) => !Object.hasOwn(cell, 'highlandRidgeCell'))).toBe(true)
+  })
+
+  it('guides an old saved pose inside ridge rock without moving or rewriting it', () => {
+    const state = at(fresh(), 580, -500)
+    const saved = JSON.stringify(state)
+    const view = publicWorldV11ViewProjection(state, [], null)
+    expect(view.map.guidance).toContain('Old save inside newly raised ridge rock')
+    expect(view.map.guidance).toContain('Ridge scenery is temporarily hidden')
+    expect(view.map.guidance).toContain('Walk E about 20 m to the nearest open cell')
+    expect(view.player.position).toEqual([state.player.position.x, state.player.position.y,
+      state.player.position.z])
+    expect(JSON.stringify(state)).toBe(saved)
+    const map = renderToStaticMarkup(createElement(WizardMap, { projection: view, open: true,
+      onToggle: () => {}, onIntent: () => {},
+      buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>() }))
+    expect(map).toContain('aria-label="Map guidance"')
+    expect(map).toContain('Walk E about 20 m to the nearest open cell')
+
+    const open = publicWorldV11ViewProjection(at(fresh(), 580, -468), [], null)
+    expect(open.map.guidance).not.toContain('Old save')
+    expect(open.map.guidance).not.toContain('temporarily hidden')
+  })
+
   it('caches bounded visual terrain and includes only discovered Highland markers in the overview', () => {
     const start = fresh()
     const trail = worldTileAtGrid(seed, 96 / 4, 0)

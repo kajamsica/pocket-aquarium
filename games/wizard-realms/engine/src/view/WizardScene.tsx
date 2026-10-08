@@ -6,6 +6,9 @@ import { visibleTerrainCells } from './visibleTerrain'
 import { LandscapeDressing } from './LandscapeDressingLayer'
 import { MireglassWaterLayer } from './MireglassWaterLayer'
 import { MireglassCliffLayer } from './MireglassCliffLayer'
+import { HighlandRidgeLayer } from './HighlandRidgeLayer'
+import { highlandRidgeCellAt, highlandRidgeMoveBarrier } from '../domain/highlandRidge'
+import { WORLD_CELL_METERS } from '../domain/worldChunks'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -242,6 +245,41 @@ export function storeSafeCameraPosition(
   return target.clone().lerp(next, Math.max(0, hit - 0.45 / Math.max(distance, 0.45)))
 }
 
+function ridgeCameraHit(from: THREE.Vector3, to: THREE.Vector3): number | null {
+  const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.z - from.z) / 0.25))
+  let previous = { x: from.x, z: from.z }
+  for (let index = 1; index <= steps; index += 1) {
+    const next = { x: from.x + (to.x - from.x) * index / steps,
+      z: from.z + (to.z - from.z) * index / steps }
+    if (highlandRidgeMoveBarrier(previous, next)) return (index - 1) / steps
+    previous = next
+  }
+  return null
+}
+
+/** View-only orbit around ridge rock, with the gallery eye below its 7.25 m roof. */
+export function ridgeSafeCameraPosition(target: THREE.Vector3, desired: THREE.Vector3): THREE.Vector3 {
+  const cellX = Math.ceil(target.x / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+  const cellZ = Math.ceil(target.z / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+  const eye = desired.clone()
+  if (highlandRidgeCellAt(cellX, cellZ) === 'gallery') eye.y = Math.min(eye.y, 6.8)
+  let best = eye
+  let bestHit = ridgeCameraHit(target, eye)
+  if (bestHit === null) return eye
+  const offset = eye.clone().sub(target)
+  for (const angle of [0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.4, -1.4,
+    Math.PI / 2, -Math.PI / 2, 1.75, -1.75, Math.PI]) {
+    const sin = Math.sin(angle)
+    const cos = Math.cos(angle)
+    const candidate = target.clone().add(new THREE.Vector3(
+      offset.x * cos + offset.z * sin, offset.y, offset.z * cos - offset.x * sin))
+    const hit = ridgeCameraHit(target, candidate)
+    if (hit === null) return candidate
+    if (hit > bestHit) { best = candidate; bestHit = hit }
+  }
+  return target.clone().lerp(best, Math.max(0, bestHit - 0.45 / Math.max(target.distanceTo(best), 0.45)))
+}
+
 const DESKTOP_CAMERA = { focusHeight: 1.35, eyeRise: 1.2, distance: 6.4, pitchScale: 1 } as const
 const COMPACT_CAMERA = { focusHeight: 0.45, eyeRise: 0.45, distance: 5.6, pitchScale: 0.65 } as const
 
@@ -343,11 +381,12 @@ function PresentationPoseDriver({ player, pose, worldSupport }: {
   return null
 }
 
-function CameraRig({ pose, cameraOrbit, orbiting, stores }: {
+function CameraRig({ pose, cameraOrbit, orbiting, stores, highlandRidgeActive }: {
   pose: PresentationPose
   cameraOrbit: readonly [number, number]
   orbiting: boolean
   stores: readonly WizardStore[]
+  highlandRidgeActive: boolean
 }) {
   const orbitYaw = useRef(cameraOrbit[0])
   const orbitPitch = useRef(cameraOrbit[1])
@@ -367,7 +406,9 @@ function CameraRig({ pose, cameraOrbit, orbiting, stores }: {
       target.y + framing.eyeRise + Math.sin(orbitPitch.current * framing.pitchScale) * framing.distance,
       target.z + Math.cos(heading) * horizontal,
     )
-    camera.position.copy(storeSafeCameraPosition(target, desired, stores, initialized.current ? camera.position : null, delta))
+    const ridgeDesired = highlandRidgeActive ? ridgeSafeCameraPosition(target, desired) : desired
+    const next = storeSafeCameraPosition(target, ridgeDesired, stores, initialized.current ? camera.position : null, delta)
+    camera.position.copy(highlandRidgeActive ? ridgeSafeCameraPosition(target, next) : next)
     initialized.current = true
     camera.lookAt(target)
   })
@@ -1051,10 +1092,13 @@ export function WizardScene({ projection, cameraOrbit, orbiting }: {
         </mesh>
       </group>
       <PresentationPoseDriver player={projection.player} pose={pose} worldSupport={worldSupport} />
-      <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores} />
+      <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={projection.stores}
+        highlandRidgeActive={projection.highlandRidgeActive === true} />
       {visibleTerrain.map((cell) => <TerrainCell key={cell.id} cell={cell} />)}
       <MireglassWaterLayer seed={projection.seed} cells={visibleTerrain} />
       <MireglassCliffLayer seed={projection.seed} cells={visibleTerrain} />
+      {projection.highlandRidgeActive && <HighlandRidgeLayer cells={visibleTerrain}
+        playerPosition={projection.player.position} />}
       <LandscapeDressing cells={visibleTerrain} clearings={landscapeClearings} />
       {projection.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {projection.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}

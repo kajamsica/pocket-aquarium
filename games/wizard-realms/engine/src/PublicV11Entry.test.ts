@@ -4,6 +4,8 @@ import { createAtomicV8Store } from './domain/atomicV8Database'
 import { createAtomicV9Store } from './domain/atomicV9Database'
 import { createAtomicV10Store } from './domain/atomicV10Database'
 import { createAtomicV11Store } from './domain/atomicV11Database'
+import { createActiveWorldTerrain } from './domain/activeWorldTerrain'
+import { highlandRidgeCellAtWorld, highlandRidgeRecoveryTarget } from './domain/highlandRidge'
 import { createFreshPublicWorld } from './domain/publicWorldState'
 import { PUBLIC_V7_ROOT_KEY, PUBLIC_V7_SCHEMA, serializePublicV7World, withFreshPublicV7Herbs } from './domain/publicWorldV7'
 import type { PublicV7LockProvider } from './domain/publicWorldV7Flow'
@@ -11,6 +13,7 @@ import { migratePublicV7ToV8 } from './domain/publicWorldV8Flow'
 import { migratePublicV8ToV9 } from './domain/publicWorldV9Flow'
 import { commitPublicV10Snapshot, migratePublicV9ToV10 } from './domain/publicWorldV10Flow'
 import { commitPublicV11Snapshot, migratePublicV10ToV11, resumePublicV11 } from './domain/publicWorldV11Flow'
+import { advancePublicWorldV11Frame } from './domain/publicWorldV11Authority'
 import { parsePublicV11Rescue } from './domain/publicWorldV11Snapshot'
 import { inspectPublicV9Entry } from './PublicV9Entry'
 import { inspectPublicV10Entry } from './PublicV10Entry'
@@ -74,6 +77,77 @@ describe('explicit v11 entry', () => {
       .toEqual({ status: 'blocked', reason: 'lock-unavailable' })
     expect(await inspectPublicV11Entry(f.storage, f.locks, f.v8, f.v9,
       createAtomicV10Store(new FakeFactory()), f.v11)).toEqual({ status: 'needs-v10' })
+  })
+
+  it('resumes a legacy ridge-rock pose unchanged and saves an authoritative escape to open ground', async () => {
+    const f = await fixture()
+    const entry = await inspectPublicV11Entry(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11)
+    if (entry.status !== 'upgrade') throw new Error(entry.status)
+    const migrated = await migratePublicV10ToV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11, entry.sourceReceipt)
+    if (!migrated.ok) throw new Error(migrated.reason)
+
+    const rock = { x: 580, z: -500 }
+    const terrain = createActiveWorldTerrain(migrated.value.state.seed,
+      { cachePitDug: migrated.value.state.mireglass.cacheExcavated })
+    terrain.activate(rock)
+    const ground = terrain.tileAtWorld(rock.x, rock.z)
+    if (!ground) throw new Error('Missing ridge-rock fixture ground')
+    const legacy = { ...migrated.value.state, movementOwner: 'streamed' as const,
+      player: { ...migrated.value.state.player, position: { ...rock, y: ground.center.y }, verticalVelocity: 0 },
+      discoveredTileIds: [...new Set([...migrated.value.state.discoveredTileIds, ground.id])].sort() }
+    const saved = await commitPublicV11Snapshot(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11,
+      legacy, migrated.value.saveRevision, entry.sourceReceipt)
+    if (!saved.ok) throw new Error(saved.reason)
+    expect(saved.value.saveRevision).toBe(1)
+    const savedRecords = await f.v11.read()
+    if (savedRecords.status !== 'ok' || !savedRecords.head) throw new Error('Missing legacy ridge save')
+
+    const inspected = await inspectPublicV11Entry(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11)
+    expect(inspected).toEqual({ status: 'resume', start: saved.value })
+    const resumed = await resumePublicV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11,
+      saved.value.saveRevision, entry.sourceReceipt)
+    expect(resumed).toEqual(saved)
+    if (!resumed.ok) throw new Error(resumed.reason)
+    expect(resumed.value.state).toEqual(legacy)
+    expect(resumed.value.state.player.position).toEqual({ ...rock, y: ground.center.y })
+    expect(resumed.value.state.discoveredTileIds).toContain(ground.id)
+    expect(resumed.value.state.fieldCampTileIds).toEqual(legacy.fieldCampTileIds)
+    expect(resumed.value.state.mireglass).toEqual(legacy.mireglass)
+    expect(resumed.value.state.highland).toEqual(legacy.highland)
+    expect(resumed.value.saveRevision).toBe(1)
+    expect(await f.v11.read()).toEqual(savedRecords)
+
+    const target = highlandRidgeRecoveryTarget(rock.x, rock.z)
+    expect(target).toEqual({ x: 600, z: -500, distance: 20 })
+    if (!target) throw new Error('Missing ridge recovery target')
+    let escaped = resumed.value.state
+    for (let step = 1; step <= 5; step++) {
+      const moved = advancePublicWorldV11Frame(escaped, [{ type: 'move', delta: { x: 4, z: 0 } }])
+      expect(moved.rejections).toEqual([])
+      expect(moved.events).toContainEqual(expect.objectContaining({ type: 'player_moved' }))
+      expect(moved.state.player.position.x).toBe(rock.x + step * 4)
+      expect(moved.state.player.position.z).toBe(rock.z)
+      escaped = moved.state
+    }
+    expect(escaped.player.position.x).toBe(target.x)
+    expect(escaped.player.position.z).toBe(target.z)
+    expect(highlandRidgeCellAtWorld(escaped.player.position.x, escaped.player.position.z)).toBeNull()
+    const committed = await commitPublicV11Snapshot(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11,
+      escaped, resumed.value.saveRevision, entry.sourceReceipt)
+    if (!committed.ok) throw new Error(committed.reason)
+    expect(committed.value.saveRevision).toBe(2)
+    expect(committed.value.state).toEqual(escaped)
+    expect(committed.value.sourceReceipt).toEqual(entry.sourceReceipt)
+    const movedRecords = await f.v11.read()
+    expect(movedRecords).toMatchObject({ head: { saveRevision: 2 }, previous: { saveRevision: 1 } })
+    if (movedRecords.status !== 'ok') throw new Error('Missing moved ridge save')
+    expect(movedRecords.previous).toEqual(savedRecords.head)
+    const reopened = await inspectPublicV11Entry(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11)
+    expect(reopened).toEqual({ status: 'resume', start: committed.value })
+    if (reopened.status !== 'resume') throw new Error(reopened.status)
+    expect(reopened.start.state.player.position).toEqual(escaped.player.position)
+    expect(await resumePublicV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11,
+      committed.value.saveRevision, entry.sourceReceipt)).toEqual(committed)
   })
 })
 

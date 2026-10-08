@@ -107,6 +107,7 @@ export function landscapeDressingFor(
   const trailSegments = cells.flatMap((cell) => [cell.mireglassTrailSegment, cell.highlandTrailSegment])
     .filter((segment) => segment !== undefined)
   for (const cell of cells) {
+    if (cell.highlandRidgeCell) continue
     const [x, y, z] = cell.position
     const halfX = cell.size[0] / 2 - 0.3
     const halfZ = cell.size[1] / 2 - 0.3
