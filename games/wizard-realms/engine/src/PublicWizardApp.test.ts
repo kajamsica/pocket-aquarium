@@ -9,6 +9,8 @@ import { createGeneratedWorld } from './domain/generation'
 import { mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
+import { mireglassFenRowAt } from './domain/mireglassTerrain'
+import { mireglassMoveBarrier } from './domain/mireglassMovementGate'
 import { applyFieldCampAction } from './domain/fieldCamp'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './domain/worldChunks'
 import { encodePublicV8Head } from './domain/publicWorldV8Snapshot'
@@ -17,7 +19,7 @@ import { encodePublicV9Head } from './domain/publicWorldV9Snapshot'
 import { parsePublicV10Rescue } from './domain/publicWorldV10Snapshot'
 import { encodePublicV10Head } from './domain/publicWorldV10Snapshot'
 import { withPublicV10TerrainRevision } from './domain/publicWorldV10State'
-import { highlandStoneNodes } from './domain/highlandContent'
+import { classifyStreamedRegion, highlandStoneNodes } from './domain/highlandContent'
 import { parsePublicV11Rescue } from './domain/publicWorldV11Snapshot'
 import { withPublicV11Highland } from './domain/publicWorldV11State'
 import { withFreshPublicV9Camps } from './domain/publicWorldV9State'
@@ -378,6 +380,40 @@ describe('public v9 play session', () => {
       player: expect.objectContaining({ equipment: expect.objectContaining({ mainHand: 'field_spade' }) }),
     }), 7, sourceReceipt)
   })
+
+  it('keeps the bounded fen detour visible after its outer bank enters wilderness', () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+        sourceV9Lineage: f.receipt } }
+    const tile = worldTileAtGrid(seed, -63, 94)
+    const base = withPublicV11Highland(v10)
+    const state = { ...base, player: { ...base.player, position: { ...tile.center } },
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, tile.id])].sort() }
+    expect(classifyStreamedRegion(seed, state.player.position)).toBe('wilderness')
+    const html = renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt },
+      commit: vi.fn(async () => ({ ok: false as const, reason: 'source-changed' })),
+    } }))
+    expect(html).toContain('move N outside its edge')
+    expect(html).not.toContain('Gather marsh herb')
+    let northZ = Infinity
+    for (let x = -448; x <= -256; x += WORLD_CELL_METERS) {
+      northZ = Math.min(northZ, mireglassFenRowAt(seed, x))
+    }
+    northZ -= 2 * WORLD_CELL_METERS
+    const northTile = worldTileAtGrid(seed, -63, northZ / WORLD_CELL_METERS)
+    const northState = { ...state, player: { ...state.player, position: { ...northTile.center } },
+      discoveredTileIds: [...new Set([...state.discoveredTileIds, northTile.id])].sort() }
+    expect(classifyStreamedRegion(seed, northState.player.position)).toBe('wilderness')
+    const northHtml = renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state: northState, saveRevision: 7, sourceReceipt },
+      commit: vi.fn(async () => ({ ok: false as const, reason: 'source-changed' })),
+    } }))
+    expect(northHtml).toContain('Turn W')
+    expect(northHtml).not.toContain('Gather marsh herb')
+  })
 })
 
 describe('public v6 app boundary', () => {
@@ -468,8 +504,9 @@ describe('public v6 app boundary', () => {
     const ladder = mireglassRouteSites(seed).filter((site) => site.kind === 'ladder')
       .sort((a, b) => Math.hypot(a.to.x + 372, a.to.z - 428)
         - Math.hypot(b.to.x + 372, b.to.z - 428))[0]
+    const bridge = mireglassRouteSites(seed).find((site) => site.kind === 'bridge')!
     const built = { ...fresh, movementOwner: 'streamed' as const,
-      mireglass: { ...fresh.mireglass, builtRoutes: { ...fresh.mireglass.builtRoutes, ladder: ladder.id } } }
+      mireglass: { ...fresh.mireglass, builtRoutes: { bridge: bridge.id, ladder: ladder.id } } }
     const positionAt = (x: number, z: number) => ({ x, z,
       y: worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
         Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y })
@@ -480,17 +517,28 @@ describe('public v6 app boundary', () => {
       expect(hint).toContain('Return by Slate ladder')
       expect(hint).not.toMatch(/Find a dry Bell Alder herb patch .* m direct/)
       expect(publicHerbMapGuidance('Expedition complete.', true, hint)).toBe(`Next: ${hint}`)
+      const carrying = { ...upper, player: { ...upper.player,
+        inventory: [...upper.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+      expect(publicHerbRouteHint(carrying)).toContain('built Slate ladder')
+      expect(publicHerbRouteHint(carrying)).toContain('Return by Slate ladder')
+      expect(publicHerbRouteHint(carrying)).not.toContain('Fen bridge')
     }
 
     const atTop = { ...built, player: { ...built.player, position: { ...ladder.to } } }
     expect(publicHerbRouteHint(atTop)).toContain('“Return by Slate ladder” here')
+    const carryingAtTop = { ...atTop, player: { ...atTop.player,
+      inventory: [...atTop.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    expect(publicHerbRouteHint(carryingAtTop)).toContain('“Return by Slate ladder” here')
     const descent = mireglassActionChoices(mireglassForPublicView(atTop))
       .find((choice) => choice.label === 'Return by Slate ladder')
     expect(descent?.action).toEqual({ type: 'traverse_route', siteId: ladder.id, from: 'to' })
     const descended = actPublicMireglass(atTop, descent!.action)
     expect(descended.rejection).toBeUndefined()
     expect(descended.state.player.position).toEqual(ladder.from)
-    expect(publicHerbRouteHint(descended.state)).toMatch(/^Find a dry Bell Alder herb patch /)
+    expect(publicHerbRouteHint(descended.state)).toContain('Return by Fen bridge')
+    const carryingDescended = actPublicMireglass(carryingAtTop, descent!.action)
+    expect(carryingDescended.rejection).toBeUndefined()
+    expect(publicHerbRouteHint(carryingDescended.state)).toContain('Return by Fen bridge')
 
     const patch = mireglassHerbPatches(seed)[0]
     const atPatch = { ...descended.state,
@@ -499,6 +547,167 @@ describe('public v6 app boundary', () => {
     expect(publicHerbRouteHint(atPatch)).toBe('Gather the dry Bell Alder marsh herb here, then bring it to Greenway.')
     expect(publicHerbRouteHint({ ...atTop, mireglass: fresh.mireglass })).toMatch(/ m direct, then bring it to Greenway\.$/)
     expect(publicHerbRouteHint(createFreshPublicWorld(seed, 'greenway-classic-v1'))).toBeNull()
+  })
+
+  it('routes Bell Alder trips through the built Fen bridge from either bank', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const bridge = mireglassRouteSites(seed).filter((site) => site.kind === 'bridge')
+      .sort((a, b) => Math.abs(a.to.x + 344) - Math.abs(b.to.x + 344))[0]
+    const built = { ...fresh, movementOwner: 'streamed' as const,
+      mireglass: { ...fresh.mireglass, builtRoutes: { ...fresh.mireglass.builtRoutes, bridge: bridge.id } } }
+    const positionAt = (x: number, z: number) => ({ x, z,
+      y: worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
+        Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y })
+    for (const [x, z] of [[-345.5, 366.1], [-338.1, 368.3]]) {
+      const south = { ...built, player: { ...built.player, position: positionAt(x, z) } }
+      const hint = publicHerbRouteHint(south)
+      expect(hint).toMatch(/built Fen bridge|“Return by Fen bridge” here/)
+      expect(hint).toContain('Return by Fen bridge')
+      expect(hint).not.toMatch(/Find a dry Bell Alder herb patch .* m direct/)
+      expect(publicHerbMapGuidance('Expedition complete.', true, hint)).toBe(`Next: ${hint}`)
+      const carrying = { ...south, player: { ...south.player,
+        inventory: [...south.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+      expect(publicHerbRouteHint(carrying)).toContain('Return by Fen bridge')
+    }
+
+    const atSouthEnd = { ...built, player: { ...built.player, position: { ...bridge.to } } }
+    expect(publicHerbRouteHint(atSouthEnd)).toContain('“Return by Fen bridge” here')
+    const crossing = mireglassActionChoices(mireglassForPublicView(atSouthEnd))
+      .find((choice) => choice.label === 'Return by Fen bridge')
+    expect(crossing?.action).toEqual({ type: 'traverse_route', siteId: bridge.id, from: 'to' })
+    const crossed = actPublicMireglass(atSouthEnd, crossing!.action)
+    expect(crossed.rejection).toBeUndefined()
+    expect(crossed.state.player.position).toEqual(bridge.from)
+    expect(mireglassActionChoices(mireglassForPublicView(crossed.state))
+      .find((choice) => choice.label === 'Cross Fen bridge')?.action)
+      .toEqual({ type: 'traverse_route', siteId: bridge.id, from: 'from' })
+    expect(publicHerbRouteHint(crossed.state)).toMatch(/^Find a dry Bell Alder herb patch /)
+
+    const patch = mireglassHerbPatches(seed)[0]
+    const atPatch = { ...crossed.state,
+      player: { ...crossed.state.player, position: { ...patch.tile.center } } }
+    expect(publicHerbChoices(atPatch)[0]?.action).toEqual({ type: 'forage_herb', patchId: patch.id })
+    const carryingNorth = { ...atPatch, player: { ...atPatch.player,
+      inventory: [...atPatch.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    expect(publicHerbRouteHint(carryingNorth)).toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+    const carryingSouth = { ...atSouthEnd, player: { ...atSouthEnd.player,
+      inventory: [...atSouthEnd.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    expect(publicHerbRouteHint(carryingSouth)).toContain('“Return by Fen bridge” here')
+    const returned = actPublicMireglass(carryingSouth,
+      { type: 'traverse_route', siteId: bridge.id, from: 'to' })
+    expect(returned.rejection).toBeUndefined()
+    expect(returned.state.player.position).toEqual(bridge.from)
+    expect(publicHerbRouteHint(returned.state)).toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+
+    expect(publicHerbRouteHint({ ...atSouthEnd, mireglass: fresh.mireglass }))
+      .toMatch(/ m direct, then bring it to Greenway\.$/)
+    expect(publicHerbRouteHint({ ...carryingNorth, movementOwner: 'greenway' }))
+      .toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+  })
+
+  it('keeps the indicated south-bank approach dry for every built bridge site', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const bridges = mireglassRouteSites(seed).filter((site) => site.kind === 'bridge')
+    const patch = mireglassHerbPatches(seed)[0]
+    const walkIsDry = (from: { x: number; z: number }, to: { x: number; z: number }) => {
+      const steps = Math.ceil(Math.hypot(to.x - from.x, to.z - from.z))
+      for (let step = 0; step < steps; step += 1) {
+        const a = { x: from.x + (to.x - from.x) * step / steps,
+          z: from.z + (to.z - from.z) * step / steps }
+        const b = { x: from.x + (to.x - from.x) * (step + 1) / steps,
+          z: from.z + (to.z - from.z) * (step + 1) / steps }
+        expect(mireglassMoveBarrier(seed, a, b)).toBeNull()
+      }
+    }
+    const positionAt = (x: number, z: number) => ({ x, z,
+      y: worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
+        Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y })
+    for (const [x, z] of [[-345.5, 366.1], [-338.1, 368.3]]) for (const bridge of bridges) {
+      const state = { ...fresh, movementOwner: 'streamed' as const,
+        mireglass: { ...fresh.mireglass, builtRoutes: { ...fresh.mireglass.builtRoutes, bridge: bridge.id } },
+        player: { ...fresh.player, position: positionAt(x, z) } }
+      const startX = Math.ceil(x / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+      let safeZ = -Infinity
+      for (let gridX = Math.min(startX, bridge.to.x) - WORLD_CELL_METERS;
+        gridX <= Math.max(startX, bridge.to.x); gridX += WORLD_CELL_METERS) {
+        safeZ = Math.max(safeZ, mireglassFenRowAt(seed, gridX))
+      }
+      safeZ += 2 * WORLD_CELL_METERS
+      walkIsDry({ x, z }, { x, z: safeZ })
+      walkIsDry({ x, z: safeZ }, { x: bridge.to.x, z: safeZ })
+      walkIsDry({ x: bridge.to.x, z: safeZ }, bridge.to)
+      let northZ = Infinity
+      for (let gridX = Math.min(bridge.from.x, patch.tile.center.x) - WORLD_CELL_METERS;
+        gridX <= Math.max(bridge.from.x, patch.tile.center.x); gridX += WORLD_CELL_METERS) {
+        northZ = Math.min(northZ, mireglassFenRowAt(seed, gridX))
+      }
+      northZ -= 2 * WORLD_CELL_METERS
+      walkIsDry(bridge.from, { x: bridge.from.x, z: northZ })
+      walkIsDry({ x: bridge.from.x, z: northZ }, { x: patch.tile.center.x, z: northZ })
+      walkIsDry({ x: patch.tile.center.x, z: northZ }, patch.tile.center)
+      const first = publicHerbRouteHint(state)
+      expect(first, bridge.id).toContain('Return by Fen bridge')
+      if (Math.hypot(x - bridge.to.x, z - bridge.to.z) > 3) {
+        expect(first, bridge.id).toMatch(/Move S .*dry route along the south bank/)
+        const corridor = { ...state, player: { ...state.player, position: positionAt(x, safeZ) } }
+        expect(publicHerbRouteHint(corridor), bridge.id).toMatch(/Follow the dry south bank [EW]/)
+      }
+      for (const offset of [-0.9, 0, 0.9]) {
+        walkIsDry({ x: bridge.to.x + offset, z: safeZ }, bridge.to)
+        const aligned = { ...state, player: { ...state.player,
+          position: positionAt(bridge.to.x + offset, safeZ) } }
+        expect(publicHerbRouteHint(aligned), bridge.id).toContain('Approach the built Fen bridge N')
+      }
+    }
+  })
+
+  it('guides a player behind the deep back channel around its dry outer edge', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const bridge = mireglassRouteSites(seed).find((site) => site.kind === 'bridge')!
+    const positionAt = (x: number, z: number) => ({ x, z,
+      y: worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
+        Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y })
+    const behind = { ...fresh, movementOwner: 'streamed' as const,
+      mireglass: { ...fresh.mireglass, builtRoutes: { ...fresh.mireglass.builtRoutes, bridge: bridge.id } },
+      player: { ...fresh.player, position: positionAt(-344, 520) } }
+    expect(mireglassMoveBarrier(seed, { x: -344, z: 520 }, { x: -344, z: 516 }))
+      .toBe('fen_channel')
+    expect(publicHerbRouteHint(behind)).toContain('deep back channel')
+    expect(publicHerbRouteHint(behind)).toContain('Move E')
+    const carrying = { ...behind, player: { ...behind.player,
+      inventory: [...behind.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    expect(publicHerbRouteHint(carrying)).toContain('deep back channel')
+
+    const east = { ...behind, player: { ...behind.player, position: positionAt(-252, 520) } }
+    expect(publicHerbRouteHint(east)).toContain('move N')
+    let northZ = Infinity
+    for (let x = -448; x <= -256; x += WORLD_CELL_METERS) {
+      northZ = Math.min(northZ, mireglassFenRowAt(seed, x))
+    }
+    northZ -= 2 * WORLD_CELL_METERS
+    const north = { ...east, player: { ...east.player, position: positionAt(-252, northZ) } }
+    expect(publicHerbRouteHint(north)).toContain('Turn W')
+    const inside = { ...north, player: { ...north.player, position: positionAt(-256, northZ) } }
+    expect(publicHerbRouteHint(inside)).toMatch(/^Find a dry Bell Alder herb patch /)
+    const far = { ...behind, player: { ...behind.player, position: positionAt(700, 500) } }
+    expect(publicHerbRouteHint(far)).toMatch(/^Find a dry Bell Alder herb patch /)
+    expect(publicHerbRouteHint({ ...carrying, player: { ...carrying.player, position: far.player.position } }))
+      .toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+
+    const patch = mireglassHerbPatches(seed)[0]
+    const path = [{ x: -344, z: 520 }, { x: -252, z: 520 },
+      { x: -252, z: northZ }, patch.tile.center]
+    for (let leg = 0; leg < path.length - 1; leg += 1) {
+      const from = path[leg], to = path[leg + 1]
+      const steps = Math.ceil(Math.hypot(to.x - from.x, to.z - from.z))
+      for (let step = 0; step < steps; step += 1) {
+        const a = { x: from.x + (to.x - from.x) * step / steps,
+          z: from.z + (to.z - from.z) * step / steps }
+        const b = { x: from.x + (to.x - from.x) * (step + 1) / steps,
+          z: from.z + (to.z - from.z) * (step + 1) / steps }
+        expect(mireglassMoveBarrier(seed, a, b)).toBeNull()
+      }
+    }
   })
 
   it('keeps the map aligned with the herb route after the seal expedition is complete', () => {

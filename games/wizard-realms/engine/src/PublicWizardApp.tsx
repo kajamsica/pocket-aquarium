@@ -8,8 +8,8 @@ import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE } from './domain/mireglassCo
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
-import { mireglassRouteSites } from './domain/mireglassRouteSites'
-import { mireglassPlateauAt } from './domain/mireglassTerrain'
+import { mireglassRouteSites, type MireglassRouteSite } from './domain/mireglassRouteSites'
+import { MIREGLASS_FEN_BACK, mireglassFenRowAt, mireglassPlateauAt } from './domain/mireglassTerrain'
 import { areaAt } from './domain/generation'
 import { applyFieldCampAction, applyFieldCampV10Action, resolveFieldCampSite } from './domain/fieldCamp'
 import { classifyStreamedRegion } from './domain/highlandContent'
@@ -452,10 +452,101 @@ export function publicHerbChoices(state: PublicWorldState) {
   })
 }
 
+const publicCellAt = (coordinate: number) =>
+  Math.ceil(coordinate / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+
+function publicFenBankAt(seed: string, position: { x: number; z: number }): 'north' | 'south' | null {
+  const x = publicCellAt(position.x), z = publicCellAt(position.z)
+  if (x < MIREGLASS_CORE.minX || x > MIREGLASS_CORE.maxX
+    || z < MIREGLASS_CORE.minZ || z > MIREGLASS_CORE.maxZ) return null
+  const row = mireglassFenRowAt(seed, x), joinedRow = mireglassFenRowAt(seed, x - WORLD_CELL_METERS)
+  return z < Math.min(row, joinedRow) ? 'north'
+    : z > Math.max(row, joinedRow) ? 'south' : null
+}
+
+function publicFenBridgeHint(state: PublicWorldState, bridge: MireglassRouteSite,
+  bank: 'north' | 'south', destination: 'Bell Alder' | 'Greenway Outfitters'): string {
+  const endpoint = bank === 'south' ? bridge.to : bridge.from
+  const action = bank === 'south' ? 'Return by Fen bridge' : 'Cross Fen bridge'
+  const player = state.player.position
+  if (Math.hypot(player.x - endpoint.x, player.y - endpoint.y, player.z - endpoint.z) <= 3) {
+    return `Use “${action}” here to cross the fen toward ${destination}.`
+  }
+  if (Math.abs(player.x - endpoint.x) <= 1) {
+    return `Approach the built Fen bridge ${bank === 'south' ? 'N' : 'S'} along the dry ${bank} bank. Use “${action}” when in reach to cross toward ${destination}.`
+  }
+  const minX = Math.min(publicCellAt(player.x), endpoint.x) - WORLD_CELL_METERS
+  const maxX = Math.max(publicCellAt(player.x), endpoint.x)
+  let safeZ = bank === 'south' ? -Infinity : Infinity
+  for (let x = minX; x <= maxX; x += WORLD_CELL_METERS) {
+    const row = mireglassFenRowAt(state.seed, x)
+    safeZ = bank === 'south' ? Math.max(safeZ, row) : Math.min(safeZ, row)
+  }
+  safeZ += bank === 'south' ? 2 * WORLD_CELL_METERS : -2 * WORLD_CELL_METERS
+  if (Math.abs(player.z - safeZ) > 1) {
+    return `Move ${safeZ > player.z ? 'S' : 'N'} about ${Math.round(Math.abs(safeZ - player.z))} m to a dry route along the ${bank} bank, then follow it toward the built Fen bridge. Use “${action}” to cross toward ${destination}.`
+  }
+  return `Follow the dry ${bank} bank ${endpoint.x > player.x ? 'E' : 'W'} toward the built Fen bridge, keeping the water to your ${bank === 'south' ? 'N' : 'S'}. Use “${action}” there to cross toward ${destination}.`
+}
+
+function publicSlateLadderHint(state: PublicWorldState, ladder: MireglassRouteSite,
+  destination: 'Bell Alder' | 'Greenway Outfitters'): string {
+  const toLadder = Math.hypot(state.player.position.x - ladder.to.x,
+    state.player.position.y - ladder.to.y, state.player.position.z - ladder.to.z)
+  const afterDescent = destination === 'Bell Alder'
+    ? 'then follow the herb patch route.' : 'then continue to Greenway Outfitters.'
+  return toLadder <= 3
+    ? `Use “Return by Slate ladder” here to descend toward ${destination}, ${afterDescent}`
+    : `Head ${bearingText(state.player.position, ladder.to)} to the built Slate ladder, about ${Math.round(toLadder)} m to its top. Use “Return by Slate ladder” there to descend toward ${destination}, ${afterDescent}`
+}
+
+function publicBackChannelHint(state: PublicWorldState,
+  destination: 'Bell Alder' | 'Greenway Outfitters'): string | null {
+  if (state.movementOwner !== 'streamed') return null
+  const x = publicCellAt(state.player.position.x), z = publicCellAt(state.player.position.z)
+  const west = MIREGLASS_CORE.minX - WORLD_CELL_METERS
+  const east = MIREGLASS_CORE.maxX + WORLD_CELL_METERS
+  const nearBackRange = z <= MIREGLASS_CORE.maxZ + 4 * WORLD_CELL_METERS
+  const behindChannel = x >= MIREGLASS_CORE.minX && x <= MIREGLASS_CORE.maxX
+    && z > MIREGLASS_FEN_BACK + 2 * WORLD_CELL_METERS && nearBackRange
+  const outsideEdge = nearBackRange && ((x <= west && x >= west - 2 * WORLD_CELL_METERS)
+    || (x >= east && x <= east + 2 * WORLD_CELL_METERS))
+  if (!behindChannel && !outsideEdge) return null
+  let northZ = Infinity
+  for (let cellX = MIREGLASS_CORE.minX; cellX <= MIREGLASS_CORE.maxX; cellX += WORLD_CELL_METERS) {
+    northZ = Math.min(northZ, mireglassFenRowAt(state.seed, cellX))
+  }
+  northZ -= 2 * WORLD_CELL_METERS
+  if (behindChannel) {
+    const edge = Math.abs(state.player.position.x - west) < Math.abs(state.player.position.x - east)
+      ? 'western' : 'eastern'
+    return `The deep back channel blocks the direct route to ${destination}. Move ${edge === 'eastern' ? 'E' : 'W'} along its dry back bank past the ${edge} edge of the fen, then move N outside the water before continuing toward ${destination}.`
+  }
+  if (z > northZ) {
+    return `Keep the fen to your ${x >= east ? 'W' : 'E'} and move N outside its edge until north of the water, then continue toward ${destination}.`
+  }
+  if (z >= northZ - 2 * WORLD_CELL_METERS) {
+    const turn = destination === 'Greenway Outfitters' || x <= west ? 'E' : 'W'
+    return `Turn ${turn} across dry ground toward ${destination}; the back channel is behind you.`
+  }
+  return null
+}
+
 export function publicHerbRouteHint(state: PublicWorldState): string | null {
   const harvested = herbLedger(state)
   if (!harvested) return null
   const held = state.player.inventory.find((stack) => stack.itemId === 'marsh_herb')?.quantity ?? 0
+  const routes = state.movementOwner === 'streamed' ? mireglassRouteSites(state.seed) : []
+  const bridge = routes.find((site) => site.id === state.mireglass.builtRoutes.bridge)
+  const ladder = routes.find((site) => site.id === state.mireglass.builtRoutes.ladder)
+  const onPlateau = ladder && mireglassPlateauAt(state.seed,
+    publicCellAt(state.player.position.x), publicCellAt(state.player.position.z))
+  if (held && ladder && onPlateau) return publicSlateLadderHint(state, ladder, 'Greenway Outfitters')
+  const backChannelHint = publicBackChannelHint(state, held ? 'Greenway Outfitters' : 'Bell Alder')
+  if (held && backChannelHint) return backChannelHint
+  if (held && bridge && publicFenBankAt(state.seed, state.player.position) === 'south') {
+    return publicFenBridgeHint(state, bridge, 'south', 'Greenway Outfitters')
+  }
   if (held) return `Take ${held} marsh herb${held === 1 ? '' : 's'} back to Greenway Outfitters to sell for 3g each.`
   if (state.movementOwner === 'greenway') return 'Bell Alder in Mireglass has renewable marsh herbs that Greenway Outfitters buys.'
   const patches = mireglassHerbPatches(state.seed)
@@ -469,16 +560,15 @@ export function publicHerbRouteHint(state: PublicWorldState): string | null {
   const meters = Math.round(Math.hypot(nearest.tile.center.x - state.player.position.x,
     nearest.tile.center.z - state.player.position.z))
   if (meters < 3) return 'Gather the dry Bell Alder marsh herb here, then bring it to Greenway.'
-  const ladder = mireglassRouteSites(state.seed).find((site) => site.id === state.mireglass.builtRoutes.ladder)
-  const cellX = Math.ceil(state.player.position.x / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
-  const cellZ = Math.ceil(state.player.position.z / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
-  if (ladder && mireglassPlateauAt(state.seed, cellX, cellZ)
+  if (ladder && onPlateau
     && !mireglassPlateauAt(state.seed, nearest.tile.center.x, nearest.tile.center.z)) {
-    const toLadder = Math.hypot(state.player.position.x - ladder.to.x,
-      state.player.position.y - ladder.to.y, state.player.position.z - ladder.to.z)
-    return toLadder <= 3
-      ? 'Use “Return by Slate ladder” here to descend toward Bell Alder, then follow the herb patch route.'
-      : `Head ${bearingText(state.player.position, ladder.to)} to the built Slate ladder, about ${Math.round(toLadder)} m to its top. Use “Return by Slate ladder” there to descend toward Bell Alder, then follow the herb patch route.`
+    return publicSlateLadderHint(state, ladder, 'Bell Alder')
+  }
+  if (backChannelHint) return backChannelHint
+  const playerBank = publicFenBankAt(state.seed, state.player.position)
+  const patchBank = publicFenBankAt(state.seed, nearest.tile.center)
+  if (bridge && playerBank && patchBank && playerBank !== patchBank) {
+    return publicFenBridgeHint(state, bridge, playerBank, 'Bell Alder')
   }
   return `Find a dry Bell Alder herb patch ${bearingText(state.player.position, nearest.tile.center)} of here, about ${meters} m direct, then bring it to Greenway.`
 }
@@ -1007,7 +1097,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     ? mireglassForPublicView(world) : null
   const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
-  const herbRouteHint = region && world ? publicHerbRouteHint(world) : null
+  const herbDetour = world && !region ? publicBackChannelHint(world, 'Bell Alder') : null
+  const herbRouteHint = world && (region || herbDetour) ? publicHerbRouteHint(world) : null
   if (!world || !projection) {
     const root = entry?.root
     const legacyPresent = entry && (entry.classic.status !== 'missing' || entry.expanded.status !== 'missing')
@@ -1082,7 +1173,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         <button onClick={() => window.location.reload()}>Reload to recheck storage</button></>}
     </section></main>
   }
-  const herbPriority = !!region && publicHerbGuidancePriority(world, !!objective?.complete)
+  const herbPriority = !!herbDetour || (!!region && publicHerbGuidancePriority(world, !!objective?.complete))
   const nextGuidance = herbPriority && herbRouteHint
     ? herbRouteHint : objective?.label ?? (v11Session && projection.map.guidance)
       ?? objectiveFor(greenwayForPublicView(world))
