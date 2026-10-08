@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE, mireglassAnchors } from './mireglassContent'
+import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE, mireglassAnchors, mireglassResources } from './mireglassContent'
 import { MIREGLASS_ENVELOPES } from './mireglassTerrain'
 import { worldTileAtGrid } from './worldChunks'
 
@@ -41,6 +41,27 @@ describe('Mireglass Reach authored anchor placement', () => {
       expect(anchors.salvager.tile.terrain).toBe('loam')
       expect(anchors.slateBerm.tile.terrain).toBe('rocky')
       expect(anchors.sealCache.tile.terrain).toBe('loam')
+    }
+  })
+
+  it('reserves enough uniquely placed timber on both sides of the first crossing', () => {
+    for (let index = 0; index < 100; index += 1) {
+      const seed = `mireglass-corpus-${index}`
+      const anchors = mireglassAnchors(seed)
+      const resources = mireglassResources(seed)
+      expect(resources).toHaveLength(6)
+      expect(resources.filter((resource) => resource.phase === 'before_bridge')).toHaveLength(3)
+      expect(resources.filter((resource) => resource.phase === 'after_bridge')).toHaveLength(3)
+      expect(resources.reduce((logs, resource) => logs + resource.logs, 0)).toBe(24)
+      expect(new Set(resources.map((resource) => resource.id)).size).toBe(6)
+      expect(resources).toEqual(mireglassResources(seed))
+      for (const resource of resources) {
+        expect(resource.id).toBe(`mireglass_reach/resource/${resource.tile.gridX - 3}/${resource.tile.gridZ - 3}/0`)
+        expect(resource.tile).toEqual(worldTileAtGrid(seed, resource.tile.gridX - 3, resource.tile.gridZ - 3))
+        for (const anchor of Object.values(anchors)) {
+          expect(Math.hypot(resource.tile.center.x - anchor.tile.center.x, resource.tile.center.z - anchor.tile.center.z)).toBeGreaterThanOrEqual(4)
+        }
+      }
     }
   })
 
