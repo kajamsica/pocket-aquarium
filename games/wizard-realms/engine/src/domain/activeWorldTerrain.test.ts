@@ -115,8 +115,7 @@ describe('active streamed terrain', () => {
     },
   )
 
-  it('retains the effective pit through chunk eviction and either activation order', () => {
-    const seed = 'pit-chunk-reload'
+  it.each(['pit-chunk-reload', 'pit-seed-two', 'pit-seed-three'])('retains the pit after chunk eviction for %s', (seed) => {
     const cache = mireglassAnchors(seed).sealCache.tile
     const position = cache.center
     const facts = { cachePitDug: true }

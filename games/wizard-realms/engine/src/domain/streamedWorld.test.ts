@@ -4,6 +4,7 @@ import { createStreamedWorldFromState } from './index'
 import type { StreamedWorldIntent, StreamedWorldState } from './streamedWorld'
 import { mireglassBermFaceRowAt, mireglassFenRowAt } from './mireglassTerrain'
 import { mireglassAnchors } from './mireglassContent'
+import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { worldTileAtGrid } from './worldChunks'
 
 const move = (x: number, z = 0): StreamedWorldIntent => ({ type: 'move', delta: { x, z } })
@@ -143,6 +144,38 @@ describe('separate streamed-world authority', () => {
     expect(resumed.tileAtWorld(cache.center.x, cache.center.z)!.center.y).toBe(1.65)
     expect(() => createStreamedWorldFromState(groundedSnapshot)).toThrow('Invalid streamed-world snapshot position.')
   })
+
+  it.each(['pit-runtime-entry-one', 'pit-runtime-entry-two', 'pit-runtime-entry-three'])(
+    'walks into the lowered cache and back onto unchanged neighboring ground for %s', (seed) => {
+      const cache = mireglassAnchors(seed).sealCache.tile
+      const neighbor = [
+        [cache.gridX - 2, cache.gridZ - 3], [cache.gridX - 4, cache.gridZ - 3],
+        [cache.gridX - 3, cache.gridZ - 2], [cache.gridX - 3, cache.gridZ - 4],
+      ].map(([gx, gz]) => worldTileAtGrid(seed, gx, gz))
+        .find((tile) => tile.center.y >= 1.65
+          && mireglassMoveBarrier(seed, tile.center, cache.center) === null)
+      expect(neighbor).toBeDefined()
+      if (!neighbor) return
+
+      const runtime = createStreamedWorld(seed, neighbor.center, { cachePitDug: true })
+      expect(runtime.tileAtWorld(neighbor.center.x, neighbor.center.z)).toEqual(neighbor)
+      const entered = runtime.advance([move(cache.center.x - neighbor.center.x, cache.center.z - neighbor.center.z)])
+      expect(entered.rejections).toEqual([])
+      expect(entered.state.player.position).toMatchObject({ x: cache.center.x, z: cache.center.z })
+      expect(runtime.tileAtWorld(cache.center.x, cache.center.z)).toMatchObject({
+        id: cache.id, elevation: 0.55, center: { y: 1.65 },
+      })
+      for (let frame = 0; frame < 60 && runtime.state.player.position.y > 1.65; frame += 1) runtime.advance([])
+      expect(runtime.state.player.position.y).toBe(1.65)
+
+      const resumed = createStreamedWorldFromState(JSON.parse(JSON.stringify(runtime.state)), { cachePitDug: true })
+      expect(resumed.tileAtWorld(cache.center.x, cache.center.z)!.center.y).toBe(1.65)
+      const exited = resumed.advance([move(neighbor.center.x - cache.center.x, neighbor.center.z - cache.center.z)])
+      expect(exited.rejections).toEqual([])
+      expect(exited.state.player.position).toEqual({ ...neighbor.center })
+      expect(resumed.tileAtWorld(neighbor.center.x, neighbor.center.z)).toEqual(neighbor)
+    },
+  )
 
   it('round-trips a serialized snapshot without mutating or retaining its input objects', () => {
     const live = createStreamedWorld('hydrate-roundtrip')
