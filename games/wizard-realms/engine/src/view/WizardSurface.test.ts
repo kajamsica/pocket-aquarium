@@ -219,6 +219,24 @@ describe('wizard atlas markup', () => {
     }
   })
 
+  it('marks suitable discovered camp cells without implying the player can build from afar', () => {
+    const current = { ...campProjection, map: { ...campProjection.map, tiles: campProjection.map.tiles.map((tile) => ({
+      ...tile, campSuitable: tile.id === 'tile-2-1' || tile.id === 'tile-1-1',
+      discovered: tile.id !== 'tile-1-0',
+    })) } }
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup).toContain('tile-2-1: meadow, suitable field camp ground')
+    expect(markup).toContain('tile-1-1: meadow, player location, suitable field camp ground')
+    expect(markup).toContain('>⌂</b>')
+    expect(markup).toContain('>⌂</small>')
+    expect(markup).not.toContain('tile-1-0: unexplored, suitable field camp ground')
+    expect(markup).toContain('longer trek into the inner Mireglass basin')
+    expect(markup).toContain('Move within 3 m of a site to build')
+    const older = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: { ...current, fieldCamp: undefined } }))
+    expect(older).not.toContain('suitable field camp ground')
+    expect(older).not.toContain('⌂')
+  })
+
   it('moves roving focus by north-up row or column, skipping fog and stopping at map edges', () => {
     const tiles = campProjection.map.tiles.map((tile) => tile.id === 'tile-1-0' ? { ...tile, discovered: false } : tile)
     expect(mapCellForArrow(tiles, 'tile-0-0', 'ArrowRight')).toBe('tile-2-0')

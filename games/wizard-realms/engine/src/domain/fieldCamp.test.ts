@@ -74,6 +74,23 @@ describe('canonical field camp authority', () => {
     })
   })
 
+  it('keeps the Mireglass approach boundary honest while allowing nearby core camps', () => {
+    const firstCore = worldTileAtGrid(seed, -65, 68)
+    const nearTrail = worldTileAtGrid(seed, -66, 68)
+    const alongTrail = worldTileAtGrid(seed, -66, 69)
+    expect(resolveFieldCampSite(seed, firstCore.id)).toBeNull()
+    expect(resolveFieldCampSite(seed, nearTrail.id)).not.toBeNull()
+    expect(resolveFieldCampSite(seed, alongTrail.id)).not.toBeNull()
+    const source = at()
+    const discovered = [...new Set([...source.discoveredTileIds, firstCore.id, nearTrail.id])].sort()
+    const atBoundary = { ...source, discoveredTileIds: discovered,
+      player: { ...source.player, position: firstCore.center } }
+    rejected(atBoundary, firstCore.id, 'invalid_site')
+    rejected(atBoundary, nearTrail.id, 'too_far')
+    const onSite = { ...atBoundary, player: { ...atBoundary.player, position: nearTrail.center } }
+    expect(placed(applyFieldCampAction(onSite, nearTrail.id)).fieldCampTileIds).toEqual([nearTrail.id])
+  })
+
   it('spends exactly 4 logs and 1 stone across stacks and grants 30 construction XP once', () => {
     const state = at()
     const before = JSON.stringify(state)
@@ -110,6 +127,8 @@ describe('canonical field camp authority', () => {
       expect(resolveFieldCampSite(seed, id)).toBeNull()
       rejected(at(), id, 'invalid_site')
     }
+    expect(applyFieldCampAction(at(), 'tile-0-0').rejection?.message)
+      .toContain('inner Mireglass')
   })
 
   it('rejects undiscovered, distant, airborne and Greenway-owned placement without mutation', () => {

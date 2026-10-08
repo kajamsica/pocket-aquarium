@@ -1,6 +1,7 @@
 import { objectiveFor, toViewProjection } from './App'
 import { mireglassViewProjection } from './MireglassPlayableApp'
 import { createActiveWorldTerrain, type ActiveWorldTerrain } from './domain/activeWorldTerrain'
+import { resolveFieldCampSite } from './domain/fieldCamp'
 import { areaAt, terrainHeightAt } from './domain/generation'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
@@ -169,13 +170,23 @@ function greenwayView(state: PublicWorldState, messages: readonly string[],
 }
 
 // Presentation owns one bounded tile window. The mutable campaign runtime remains the sole authority.
-let mireglassTerrainReader: { seed: string; terrain: ActiveWorldTerrain } | null = null
+let mireglassTerrainReader: { seed: string; terrain: ActiveWorldTerrain; campSites: Map<string, boolean> } | null = null
+
+function campSiteSuitable(seed: string, tileId: string): boolean {
+  const cache = mireglassTerrainReader?.seed === seed ? mireglassTerrainReader.campSites : null
+  if (!cache) return false
+  const cached = cache.get(tileId)
+  if (cached !== undefined) return cached
+  const suitable = resolveFieldCampSite(seed, tileId) !== null
+  cache.set(tileId, suitable)
+  return suitable
+}
 
 /** Only the tile-read methods are supplied to the existing Mireglass projection. */
 function mireglassView(state: PublicWorldState, messages: readonly string[],
   selectedSiteId: string | null): WizardViewProjection {
   if (mireglassTerrainReader?.seed !== state.seed) {
-    mireglassTerrainReader = { seed: state.seed, terrain: createActiveWorldTerrain(state.seed) }
+    mireglassTerrainReader = { seed: state.seed, terrain: createActiveWorldTerrain(state.seed), campSites: new Map() }
   }
   const terrain = mireglassTerrainReader.terrain
   terrain.activate(state.player.position)
@@ -202,6 +213,8 @@ export function publicWorldViewProjection(state: PublicWorldState, messages: rea
   const campTileIds = new Set(fieldCamp?.camps.map((camp) => camp.tileId))
   return { ...projection, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,
     ...(fieldCamp ? { tiles: projection.map.tiles.map((tile) => ({ ...tile,
-      hasCamp: tile.discovered && campTileIds.has(tile.id) })) } : {}),
+      hasCamp: tile.discovered && campTileIds.has(tile.id),
+      ...(fieldCamp.selectionEnabled && state.movementOwner === 'streamed' && tile.discovered
+        ? { campSuitable: campSiteSuitable(state.seed, tile.id) } : {}) })) } : {}),
     overview: () => overview ??= publicWorldOverview(state, fieldCamp?.camps) } }
 }

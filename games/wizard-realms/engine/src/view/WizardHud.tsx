@@ -59,7 +59,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
         {projection.fieldCamp && !campPreview && <section aria-label="Field camp" className="wr-caption">
           <b>Field camp: 4 logs + 1 stone</b>
-          <p>{projection.fieldCamp.camps.length ? 'Field camp built. One camp per world.' : projection.fieldCamp.selectionEnabled ? 'Open Map and choose discovered ground to preview a camp.' : 'Explore Mireglass to choose a camp site.'}</p>
+          <p>{projection.fieldCamp.camps.length ? 'Field camp built. One camp per world.' : projection.fieldCamp.selectionEnabled ? 'Follow the frontier trail into inner Mireglass. Map marks suitable discovered camp ground.' : 'Explore Mireglass to choose a camp site.'}</p>
         </section>}
         {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} aria-label={`Open ${availableStore.name}`} onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>Open {availableStore.name}</button>}
         <section aria-label="Magic and skills" style={{ display: 'grid', gap: 5, marginBottom: 8 }}>

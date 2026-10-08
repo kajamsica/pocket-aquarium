@@ -32,16 +32,17 @@ function Tile({ tile, player, cacheLabel, onSelect, tabIndex, selected }: {
   const waystone = tile.discovered && tile.hasWaystone
   const store = tile.discovered && tile.hasStore
   const camp = tile.discovered && tile.hasCamp
+  const campSuitable = !!onSelect && tile.discovered && tile.campSuitable === true
   const westTrail = tile.hasWestTrail === true
   const frontierMarker = tile.hasFrontierMarker === true
   const frontierTrail = tile.hasFrontierTrail === true
   const landmark = westTrail ? '⇦' : frontierMarker ? 'M' : tile.discovered
-    ? camp ? 'C' : tile.hasCache ? '✦' : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : store ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : frontierTrail ? '·' : ''
+    ? camp ? 'C' : campSuitable ? '⌂' : tile.hasCache ? '✦' : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : store ? 'S' : tile.hasRing ? 'R' : tile.hasResource ? '•' : frontierTrail ? '·' : ''
     : frontierTrail ? '·' : '?'
   const Element = onSelect ? 'button' : 'span'
-  return <Element type={onSelect ? 'button' : undefined} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${westTrail ? ', west trail to Mireglass' : ''}${frontierTrail ? ', marked frontier trail' : ''}${frontierMarker ? ', frontier marker' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}${camp ? ', field camp' : ''}`}>
-    <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : undefined}>{occupied ? '▲' : landmark}</b>
-    {occupied && (camp || westTrail || store || waystone) && <small aria-hidden="true" style={{ position: 'absolute', right: 0, bottom: 0, fontSize: 8, lineHeight: 1 }}>{camp ? 'C' : westTrail ? '⇦' : store ? 'S' : 'W'}</small>}
+  return <Element type={onSelect ? 'button' : undefined} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e' }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${westTrail ? ', west trail to Mireglass' : ''}${frontierTrail ? ', marked frontier trail' : ''}${frontierMarker ? ', frontier marker' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${routeSite ? ', route build site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
+    <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)` } : campSuitable ? { color: '#ffe395' } : undefined}>{occupied ? '▲' : landmark}</b>
+    {occupied && (camp || campSuitable || westTrail || store || waystone) && <small aria-hidden="true" style={{ position: 'absolute', right: 0, bottom: 0, fontSize: 8, lineHeight: 1, color: campSuitable ? '#ffe395' : undefined }}>{camp ? 'C' : campSuitable ? '⌂' : westTrail ? '⇦' : store ? 'S' : 'W'}</small>}
   </Element>
 }
 
@@ -139,10 +140,10 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
 }) {
   const localMap = <>
     {projection.map.guidance && <p className="wr-map-guidance" role="note" aria-label="Map guidance">{projection.map.guidance}</p>}
-    {projection.fieldCamp?.selectionEnabled && <p className="wr-map-guidance">Scroll the map to choose discovered ground for a field camp. Arrow keys move between cells; Enter or Space previews one. Recipe: 4 logs + 1 stone.</p>}
+    {projection.fieldCamp?.selectionEnabled && <p className="wr-map-guidance">The camp area is a longer trek into the inner Mireglass basin. Follow the marked trail toward the outpost, then find flat 3×3 loam ground. ⌂ marks suitable discovered ground; if none appears here, keep exploring. Move within 3 m of a site to build. Scroll the map or use arrow keys to choose a cell; Enter or Space previews one. Recipe: 4 logs + 1 stone.</p>}
     <MapGrid projection={projection} onSelect={(tileId) => { onIntent({ type: 'field-camp.select', tileId }); onToggle() }} />
     <RouteKey routes={projection.routes} buildSites={projection.buildSites} selectedBuildSiteId={projection.selectedBuildSiteId} onSelect={(siteId) => { onIntent({ type: 'build-site.select', siteId }); onToggle() }} />
-    <p>{projection.map.legend ?? '▲ you · W waystone · ✦ revealed cache · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}{projection.fieldCamp && ' · C field camp'}</p>
+    <p>{projection.map.legend ?? '▲ you · W waystone · ✦ revealed cache · ◇ route build site · ✓ completed route · S store · R fairy ring · • resource · ? unexplored'}{projection.fieldCamp?.selectionEnabled && ' · ⌂ suitable camp ground'}{projection.fieldCamp && ' · C field camp'}</p>
   </>
   const overview = open ? projection.map.overview?.() : undefined
   return <>

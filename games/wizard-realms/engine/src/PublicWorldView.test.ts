@@ -37,6 +37,7 @@ describe('public v6 read-only view adapter', () => {
     const view = publicWorldViewProjection(state, [], null, null, fieldCamp)
     expect(view.fieldCamp).toBe(fieldCamp)
     expect(view.map.tiles.filter((tile) => tile.hasCamp).map((tile) => tile.id)).toEqual([site.tileId])
+    expect(view.map.tiles.find((tile) => tile.id === site.tileId)?.campSuitable).toBe(true)
     expect(view.map.tiles.find((tile) => tile.hasCamp)).toMatchObject({
       gridX: site.gridX + 3, gridZ: site.gridZ + 3, discovered: true })
     expect(view.map.tiles.filter((tile) => !tile.discovered).every((tile) =>
@@ -51,10 +52,26 @@ describe('public v6 read-only view adapter', () => {
     const returned = publicWorldViewProjection({ ...state, movementOwner: 'greenway',
       player: fresh.player }, [], null, null, fieldCamp)
     expect(returned.map.tiles.some((tile) => tile.hasCamp)).toBe(false)
+    expect(returned.map.tiles.every((tile) => !Object.hasOwn(tile, 'campSuitable'))).toBe(true)
     expect(returned.map.overview!().cells.flatMap((cell) => cell.markers)).toContain('Field camp')
     const fogged = publicWorldViewProjection({ ...state, discoveredTileIds: [] }, [], null, null, fieldCamp)
     expect(fogged.map.tiles.some((tile) => tile.hasCamp)).toBe(false)
+    expect(fogged.map.tiles.every((tile) => !Object.hasOwn(tile, 'campSuitable'))).toBe(true)
     expect(fogged.map.overview!().cells.flatMap((cell) => cell.markers)).not.toContain('Field camp')
+  })
+
+  it('does not mark an occupied outpost cell as suitable camp ground', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const outpost = mireglassAnchors(seed).salvager.tile
+    const streamed = createStreamedWorld(seed, outpost.center)
+    const state: PublicWorldState = { ...fresh, movementOwner: 'streamed',
+      player: { ...fresh.player, position: streamed.state.player.position }, discoveredTileIds: [outpost.id] }
+    const fieldCamp: WizardFieldCampView = { camps: [], preview: null, selectionEnabled: true }
+    const view = publicWorldViewProjection(state, [], null, null, fieldCamp)
+    expect(resolveFieldCampSite(seed, outpost.id)).toBeNull()
+    expect(view.map.tiles.find((tile) => tile.id === outpost.id)?.campSuitable).toBe(false)
+    expect(view.map.tiles.filter((tile) => !tile.discovered).every((tile) =>
+      !Object.hasOwn(tile, 'campSuitable'))).toBe(true)
   })
 
   it.each([

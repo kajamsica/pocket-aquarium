@@ -166,6 +166,8 @@ export interface WizardMapTile {
   hasBuiltRoute: boolean
   hasCache?: boolean
   hasCamp?: boolean
+  /** Transient canonical footprint suitability, shown only for discovered v9 camp choices. */
+  campSuitable?: boolean
 }
 
 /** One 64 m chunk, with color sampled only from terrain the player has discovered. */

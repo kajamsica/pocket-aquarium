@@ -74,7 +74,7 @@ export function applyFieldCampAction(state: PublicWorldV9State, tileId: string,
   if (!Number.isSafeInteger(state.eventSequence + 1)) return reject('invalid_value', 'The event sequence is exhausted.')
   if (state.fieldCampTileIds.length) return reject('already_built', 'This world already has a field camp.')
   const site = resolveFieldCampSite(state.seed, tileId)
-  if (!site) return reject('invalid_site', 'Choose stable, unoccupied dry ground in Mireglass.')
+  if (!site) return reject('invalid_site', 'Camp needs a flat, clear 3×3 loam patch in inner Mireglass. Follow the frontier trail toward the salvager; the map marks suitable discovered cells.')
   if (!state.discoveredTileIds.includes(tileId)) return reject('site_hidden', 'Discover this camp site first.')
   const { position } = state.player
   if (Math.hypot(position.x - site.tile.center.x, position.y - site.tile.center.y,
