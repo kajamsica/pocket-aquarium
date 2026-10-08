@@ -280,6 +280,8 @@ MVP excludes multiplayer, persistent remote realms, player combat, deep questing
 
 The next playable milestone must extend this foundation into one distinctive region large enough for an expedition beyond the current route demonstration. A player can discover and map its locations, use an exploration spell to reveal or interact with something in the world, see equipped gear change the character, gather materials and build a ladder or bridge at a valid player-selected site, and excavate a dig site only with the required tool and skill. The excavation and constructed route persist across save and reload. The player can return to a settlement and sell or list the expedition's finds. This complete outward-and-return journey is the milestone's acceptance proof, not the full-game finish.
 
+[Mireglass Reach](FIRST_EXPANDED_REGION_CONTENT.md) is the first authored content pack for that milestone. Its southwest wetland journey is designed content, not a claim that the region is implemented.
+
 ### Full single-player game
 
 After the expanded region, completion requires:
