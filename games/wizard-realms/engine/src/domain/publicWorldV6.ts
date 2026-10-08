@@ -1,12 +1,11 @@
-import { WORLD_CONTENT_REVISION } from './generation'
-import { mireglassApproachTrail } from './mireglassApproachTrail'
+import { terrainHeightAt, WORLD_CONTENT_REVISION } from './generation'
+import { mireglassApproachTrail, mireglassGreenwayToMarkerTrail } from './mireglassApproachTrail'
 import { MIREGLASS_CONTENT_REVISION, mireglassAnchors, mireglassResources } from './mireglassContent'
 import { isValidMireglassV6Player } from './mireglassExpedition'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import { hasValidRoutePlacements, isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
-import { createStreamedWorldFromState } from './streamedWorld'
 import type { GenerationProfile, WizardWorldState } from './types'
-import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
+import { worldTileAtGrid } from './worldChunks'
 
 export const PUBLIC_V6_ROOT_KEY = 'wizard-realms:world:v6:root'
 export const PUBLIC_V6_STAGE_KEY = 'wizard-realms:world:v6:stage'
@@ -62,6 +61,18 @@ const profileId = (value: unknown): value is GenerationProfile =>
   value === 'greenway-classic-v1' || value === 'greenway-expanded-v1'
 export type PublicWorldCompatibilityIssue = Extract<LegacyImportInspection, { status: 'incompatible' }>['reason']
 
+/** Match the v5 movement clamp. The expanded profile permits half a tile beyond its outer centers. */
+export function legacyMovementEnvelope(world: Pick<WizardWorldState, 'generationProfile' | 'tiles'>) {
+  const edge = world.generationProfile === 'greenway-expanded-v1'
+    ? Math.abs(world.tiles[1].center.x - world.tiles[0].center.x) / 2 : 0
+  return {
+    minX: Math.min(...world.tiles.map((tile) => tile.center.x)) - edge,
+    maxX: Math.max(...world.tiles.map((tile) => tile.center.x)) + edge,
+    minZ: Math.min(...world.tiles.map((tile) => tile.center.z)) - edge,
+    maxZ: Math.max(...world.tiles.map((tile) => tile.center.z)) + edge,
+  }
+}
+
 /** A v5 restore may be valid while containing mutable terrain that a streamed cell cannot represent. */
 export function publicWorldCompatibility(world: WizardWorldState): PublicWorldCompatibilityIssue | null {
   if (!hasValidRoutePlacements(world) || !isValidMireglassV6Player(world.player)) return 'player'
@@ -73,29 +84,20 @@ export function publicWorldCompatibility(world: WizardWorldState): PublicWorldCo
       || tile.moisture !== canonical.moisture || tile.terrain !== canonical.terrain
       || tile.biome !== canonical.biome) return 'terrain'
   }
-  try {
-    const { x, y, z } = world.player.position
-    const ground = worldTileAtGrid(world.seed,
-      Math.ceil(x / WORLD_CELL_METERS - 0.5), Math.ceil(z / WORLD_CELL_METERS - 0.5))
-    if (y < ground.center.y) return 'position'
-  } catch { return 'position' }
+  const { x, y, z } = world.player.position
+  const bounds = legacyMovementEnvelope(world)
+  // The imported pose is Greenway-owned. Streamed half-cell terrain can differ at the
+  // edge and must not replace the saved height or require a second discovered tile.
+  if (x < bounds.minX || x > bounds.maxX || z < bounds.minZ || z > bounds.maxZ
+    || y < terrainHeightAt(world.tiles, x, z)) return 'position'
   try {
     mireglassAnchors(world.seed)
     mireglassResources(world.seed)
     mireglassRouteSites(world.seed)
     mireglassApproachTrail(world.seed)
+    mireglassGreenwayToMarkerTrail(world.seed)
   }
   catch { return 'mireglass-content' }
-  try {
-    createStreamedWorldFromState({
-      seed: world.seed, tick: world.tick,
-      player: {
-        position: world.player.position, yaw: world.player.yaw, pitch: world.player.pitch,
-        verticalVelocity: world.player.verticalVelocity,
-      },
-      discoveredTileIds: world.discoveredTileIds,
-    })
-  } catch { return 'streamed-resume' }
   return null
 }
 

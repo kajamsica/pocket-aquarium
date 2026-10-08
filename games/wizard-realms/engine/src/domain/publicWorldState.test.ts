@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
-import { commitLegacyImportToPublicV6, inspectLegacyImportSource } from './publicWorldV6'
+import { commitLegacyImportToPublicV6, inspectLegacyImportSource, legacyMovementEnvelope } from './publicWorldV6'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
 import type { PublicWorldState } from './publicWorldState'
@@ -104,6 +104,7 @@ describe('public v6 domain construction', () => {
     const writesBefore = [...writes]
     const state = createPublicWorldFromBootstrap(root)
     expect(state.player.position).toEqual(original.player.position)
+    expect(state.movementOwner).toBe('greenway')
     expect(state.generationProfile).toBe(profile)
     expect(state.greenway.schemaVersion).toBe('wizard-world/v5')
     expect(state.greenway.contentRevision).toBe('greenway-region-v3')
@@ -136,11 +137,12 @@ describe('public v6 domain construction', () => {
     expect(reassemble(state)).toEqual(createGeneratedWorld(seed, profile))
     expect(state.player.position.x).toBe(0)
     expect(state.player.position.z).toBe(0)
+    expect(state.movementOwner).toBe('greenway')
     expect(state.mireglass.depletedResourceIds).toEqual([])
     expect(state.mireglass.cacheRevealed).toBe(false)
   })
 
-  it('rejects mismatched seed, revision and a legacy position that streamed discovery cannot resume', () => {
+  it('rejects mismatched seed, revision and a legacy position outside its movement envelope', () => {
     const good = bootstrap(classic, serializeWizardWorld(createGeneratedWorld(seed))).root
     expect(() => createPublicWorldFromBootstrap({ ...good, seed: 'other' })).toThrow(RangeError)
     expect(() => createPublicWorldFromBootstrap({ ...good, mireglassContentRevision: 'future' } as unknown as PublicV6BootstrapRoot)).toThrow(RangeError)
@@ -148,9 +150,10 @@ describe('public v6 domain construction', () => {
     expect(() => createFreshPublicWorld(seed, 'unknown' as GenerationProfile)).toThrow(RangeError)
     expect(() => createFreshPublicWorld('public-seed-0', classic)).toThrow('mireglass-content')
 
-    const undiscovered = createGeneratedWorld(seed)
-    undiscovered.player.position = { ...undiscovered.routes[0].to }
-    const invalidResumeBytes = serializeWizardWorld(undiscovered)
+    const outside = createGeneratedWorld(seed)
+    outside.player.position.x = legacyMovementEnvelope(outside).minX - 0.000001
+    outside.player.position.y = terrainHeightAt(outside.tiles, outside.player.position.x, outside.player.position.z)
+    const invalidResumeBytes = serializeWizardWorld(outside)
     expect(isRestorableWizardSave(invalidResumeBytes, classic)).toBe(true)
     const inconsistent = { ...good, source: { ...good.source, bytes: invalidResumeBytes },
       greenwaySaveBytes: invalidResumeBytes }

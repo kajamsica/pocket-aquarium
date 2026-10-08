@@ -13,6 +13,8 @@ type GreenwayFacts = Omit<WizardWorldState,
 export interface PublicWorldState {
   readonly seed: string
   readonly generationProfile: GenerationProfile
+  /** Authoritative movement domain. Imports and fresh starts remain on v5 Greenway terrain. */
+  readonly movementOwner: 'greenway' | 'streamed'
   readonly tick: number
   readonly rng: WizardWorldState['rng']
   readonly eventSequence: number
@@ -25,7 +27,7 @@ export interface PublicWorldState {
 function fromGreenway(world: WizardWorldState): PublicWorldState {
   const { seed, generationProfile, tick, rng, eventSequence, player, discoveredTileIds, ...greenway } = world
   return {
-    seed, generationProfile, tick, rng, eventSequence,
+    seed, generationProfile, movementOwner: 'greenway', tick, rng, eventSequence,
     player, discoveredTileIds, greenway,
     mireglass: createMireglassRegionProgress(seed),
   }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { createGeneratedWorld } from './generation'
+import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isRestorableWizardSave, serializeWizardWorld, restoreWizardWorld } from './persistence'
 import {
   PUBLIC_V6_BOOTSTRAP_SCHEMA, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_STAGE_KEY,
   commitLegacyImportToPublicV6, inspectLegacyImportSource, loadPublicV6Root,
-  parsePublicV6BootstrapRoot,
+  legacyMovementEnvelope, parsePublicV6BootstrapRoot,
 } from './publicWorldV6'
 import type { GenerationProfile } from './types'
 import { worldTileAtGrid } from './worldChunks'
@@ -212,18 +212,69 @@ describe('public v6 import bootstrap', () => {
     expect(storage.writes).toEqual([])
   })
 
-  it('rejects a v5-valid pose whose current streamed tile was never discovered', () => {
+  it('keeps a v5-owned pose even when its streamed half-cell was never discovered', () => {
     const world = createGeneratedWorld('greenway-alpha')
     world.player.position = { ...world.routes[0].to }
     const bytes = serializeWizardWorld(world)
     expect(isRestorableWizardSave(bytes, CLASSIC)).toBe(true)
     const storage = memoryStorage([[CLASSIC_KEY, bytes]])
-    expect(inspectLegacyImportSource(storage, CLASSIC)).toEqual({
-      status: 'incompatible', key: CLASSIC_KEY, reason: 'streamed-resume',
-    })
+    const imported = available(storage, CLASSIC)
+    expect(restoreWizardWorld(imported.greenwaySaveBytes).player.position).toEqual(world.player.position)
     expect(storage.values.get(CLASSIC_KEY)).toBe(bytes)
     expect(storage.writes).toEqual([])
   })
+
+  it.each([[CLASSIC, CLASSIC_KEY], [EXPANDED, EXPANDED_KEY]] as const)(
+    'preserves %s boundary poses instead of applying streamed half-cell terrain', (profile, key) => {
+    const world = createGeneratedWorld('greenway-alpha', profile)
+    const bounds = legacyMovementEnvelope(world)
+    const poses = [
+      { x: bounds.minX, z: 0 }, { x: 0, z: bounds.minZ },
+      { x: bounds.minX, z: bounds.minZ },
+      { x: bounds.maxX, z: 0 }, { x: 0, z: bounds.maxZ },
+    ]
+    for (const pose of poses) {
+      world.player.position = { ...pose, y: terrainHeightAt(world.tiles, pose.x, pose.z) }
+      const bytes = serializeWizardWorld(world)
+      expect(isRestorableWizardSave(bytes, profile)).toBe(true)
+      const imported = available(memoryStorage([[key, bytes]]), profile)
+      expect(imported.source.bytes).toBe(bytes)
+      expect(restoreWizardWorld(imported.greenwaySaveBytes).player.position).toEqual(world.player.position)
+    }
+  })
+
+  it.each([[CLASSIC, CLASSIC_KEY], [EXPANDED, EXPANDED_KEY]] as const)(
+    'does not silently import a restorable %s save already outside its movement envelope', (profile, key) => {
+    const world = createGeneratedWorld('greenway-alpha', profile)
+    const bounds = legacyMovementEnvelope(world)
+    const outside = [
+      { x: bounds.minX - 0.000001, z: 0 }, { x: 0, z: bounds.minZ - 0.000001 },
+      { x: bounds.maxX + 0.000001, z: 0 }, { x: 0, z: bounds.maxZ + 0.000001 },
+    ]
+    for (const pose of outside) {
+      world.player.position = { ...pose, y: terrainHeightAt(world.tiles, pose.x, pose.z) }
+      const bytes = serializeWizardWorld(world)
+      expect(isRestorableWizardSave(bytes, profile)).toBe(true)
+      const storage = memoryStorage([[key, bytes]])
+      expect(inspectLegacyImportSource(storage, profile)).toEqual({ status: 'incompatible', key, reason: 'position' })
+      expect(storage.values.get(key)).toBe(bytes)
+      expect(storage.writes).toEqual([])
+    }
+  })
+
+  it('accepts the expanded Greenway west edge at x=-30 across the 100-seed corpus', () => {
+    for (let index = 0; index < 100; index += 1) {
+      const world = createGeneratedWorld(`mireglass-corpus-${index}`, EXPANDED)
+      const { minX } = legacyMovementEnvelope(world)
+      expect(minX).toBe(-30)
+      world.player.position = { x: minX, y: terrainHeightAt(world.tiles, minX, 0), z: 0 }
+      const sourceBytes = serializeWizardWorld(world)
+      const inspected = available(memoryStorage([[EXPANDED_KEY, sourceBytes]]), EXPANDED)
+      expect(inspected.source.bytes, world.seed).toBe(sourceBytes)
+      expect(restoreWizardWorld(inspected.greenwaySaveBytes).player.position, world.seed)
+        .toEqual(world.player.position)
+    }
+  }, 120_000)
 
   it('rejects a seed with no required dry Mireglass approach trail before import', () => {
     const bytes = serializeWizardWorld(createGeneratedWorld('public-seed-0'))
