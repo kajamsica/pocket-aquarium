@@ -6,7 +6,8 @@ import { createMireglassWorld } from './domain/mireglassWorld'
 import { MIREGLASS_SAVE_KEY } from './domain/mireglassPersistence'
 import {
   bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassOutpostQuote,
-  mireglassNextObjective, mireglassViewProjection, saveMireglassDevWorld, shouldAutosaveMireglassTravel,
+  mireglassNearestInteractChoice, mireglassNextObjective, mireglassViewProjection,
+  saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
 
 const seed = 'greenway-alpha'
@@ -46,6 +47,22 @@ describe('Mireglass playable dev adapter', () => {
     expect(world.act({ type: 'chop_tree', resourceId: tree.id }).event?.type).toBe('tree_chopped')
     expect(mireglassActionChoices(world.state).map((choice) => choice.action.type)).toContain('dig_tree_stump')
     expect(world.act({ type: 'dig_tree_stump', resourceId: tree.id }).rejection?.code).toBe('requires_spade')
+  })
+
+  it('keeps E on world interactions instead of repeatedly swapping equipment or buying stock', () => {
+    const tree = mireglassResources(seed)[0]
+    const source = createGeneratedWorld(seed).player
+    source.position = { ...tree.tile.center }
+    source.inventory.push({ itemId: 'field_spade', quantity: 1 })
+    source.equipment.mainHand = 'field_spade'
+    const world = createMireglassWorld(seed, source)
+    expect(mireglassNearestInteractChoice(world.state)?.action).toEqual({ type: 'chop_tree', resourceId: tree.id })
+    expect(world.act({ type: 'equip_item', itemId: 'woodcutters_axe' }).event?.type).toBe('item_equipped')
+    expect(world.act(mireglassNearestInteractChoice(world.state)!.action).event?.type).toBe('tree_chopped')
+    expect(mireglassNearestInteractChoice(world.state)?.action).toEqual({ type: 'dig_tree_stump', resourceId: tree.id })
+    const atMarker = createMireglassDevWorld(seed)
+    expect(atMarker.act({ type: 'study_fringe_marker' }).event?.type).toBe('fringe_marker_studied')
+    expect(mireglassNearestInteractChoice(atMarker.state)).toBeUndefined()
   })
 
   it('projects real player gear, inventory, discovery, and only the chosen built route', () => {

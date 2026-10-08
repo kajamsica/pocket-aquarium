@@ -115,6 +115,14 @@ export function mireglassActionChoices(state: MireglassWorldState): MireglassAct
     - Number(b.action.type === 'cast_wayfinder_glow') || a.distanceMeters - b.distanceMeters || a.label.localeCompare(b.label))
 }
 
+/** E performs a world interaction, never an unrequested purchase, gear swap, sale, or spell cast. */
+export function mireglassNearestInteractChoice(state: MireglassWorldState): MireglassActionChoice | undefined {
+  const worldActions = new Set<MireglassExpeditionAction['type']>([
+    'study_fringe_marker', 'chop_tree', 'dig_tree_stump', 'build_route', 'traverse_route', 'excavate_cache',
+  ])
+  return mireglassActionChoices(state).find((choice) => worldActions.has(choice.action.type))
+}
+
 export interface MireglassObjective {
   label: string
   position: { x: number; z: number }
@@ -437,9 +445,9 @@ export function MireglassPlayableApp() {
     else if (intent.type === 'movement.tap') queued.current.push(...streamedControlIntents(runtime.state.player.yaw, intent.vector))
     else if (intent.type === 'jump') queued.current.push({ type: 'jump' })
     else if (intent.type === 'interact') {
-      const nearest = mireglassActionChoices(runtime.state)[0]
+      const nearest = mireglassNearestInteractChoice(runtime.state)
       if (nearest) act(nearest.action)
-      else report('Move closer to a marker, tree, route, cache, or outpost.', true)
+      else report('No nearby world interaction. Use an explicit tray button for gear, spells, or trade.', true)
     } else if (intent.type === 'build-site.select') {
       setSelectedSiteId(intent.siteId)
       if (intent.siteId) report('Route site selected. Follow its coordinates, then build within three meters.')
