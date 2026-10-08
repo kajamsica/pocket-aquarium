@@ -185,7 +185,15 @@ function highlandConnectorCrossing(state: PublicWorldState, from: { x: number; z
     && [seamCenter - 4, seamCenter].includes(cellAt(to.x) * 4)
 }
 
-function returnTrailHint(z: number): string {
+function returnTrailHint(from: { x: number; z: number },
+  envelope: ReturnType<typeof legacyMovementEnvelope>): string {
+  if (from.x > envelope.minX && from.x <= envelope.minX + 8
+    && from.z <= envelope.minZ && from.z >= envelope.minZ - 4) {
+    return from.z > envelope.minZ - 3
+      ? `This northern ledge is not the Greenway opening. Backtrack N, then W outside x = ${envelope.minX}; follow dry ground S to z = 0 and E through the marked opening.`
+      : `This northern ledge is not the Greenway opening. Head W outside x = ${envelope.minX}, then S to z = 0 and E through the marked opening.`
+  }
+  const z = from.z
   if (cellAt(z) > 0) return 'The dry Greenway opening is north of you. Follow the marked trail, then head east.'
   if (cellAt(z) < 0) return 'The dry Greenway opening is south of you. Follow the marked trail, then head east.'
   return 'Return to Greenway through the dry eastern trail, aligned with z = 0.'
@@ -445,7 +453,7 @@ function advancePublicWorldFrameInternal(
         && !(allowHighlandEast && highlandConnectorCrossing(state, from, to))) {
         return reject(state, move, 'off_connector',
           allowHighlandEast && from.x > envelope.maxX
-            ? returnHighlandHint(from.z) : returnTrailHint(from.z), moveIndex)
+            ? returnHighlandHint(from.z) : returnTrailHint(from, envelope), moveIndex)
       }
       const barrier = mireglassMoveBarrier(state.seed, from, to)
       if (barrier) return reject(state, move, barrier, `The ${barrier} blocks the connector.`, moveIndex)

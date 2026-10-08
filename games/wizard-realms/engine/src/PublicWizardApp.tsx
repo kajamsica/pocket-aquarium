@@ -595,6 +595,28 @@ export function publicHerbRouteHint(state: PublicWorldState): string | null {
     if (state.movementOwner === 'greenway') return buyerMeters <= 3
       ? `Open Greenway Outfitters here, then ${sale}.`
       : `Greenway Outfitters ${bearingText(player, buyer.position)}, about ${Math.round(buyerMeters)} m total. Open the store and ${sale}.`
+    const bounds = legacyMovementEnvelope({ generationProfile: state.generationProfile,
+      tiles: state.greenway.tiles })
+    const outerX = bounds.minX - WORLD_CELL_METERS
+    const outerZ = bounds.minZ - WORLD_CELL_METERS
+    if (player.x > bounds.minX && player.x <= bounds.minX + 8
+      && player.z >= outerZ - 4 && player.z <= bounds.minZ) {
+      const north = { x: player.x, z: outerZ }, west = { x: outerX, z: outerZ }
+      if (player.z > outerZ + 1 && publicDryHerbLeg(state.seed, player, north)
+        && publicDryHerbLeg(state.seed, north, west)
+        && publicDryHerbLeg(state.seed, west, { x: outerX, z: 0 })) {
+        return `Backtrack N about ${Math.round(player.z - outerZ)} m beyond the Greenway ledge, then W to the outside trail at x ≈ ${outerX}, S to z = 0, and E through the marked opening to Greenway Outfitters; ${sale}.`
+      }
+      if (publicDryHerbLeg(state.seed, player, { x: outerX, z: player.z })
+        && publicDryHerbLeg(state.seed, { x: outerX, z: player.z }, { x: outerX, z: 0 })) {
+        return `Head W to the outside trail at x ≈ ${outerX}, then S to z = 0 and E through the marked opening to Greenway Outfitters; ${sale}.`
+      }
+    }
+    if (player.x >= outerX - 2 && player.x <= bounds.minX
+      && player.z < -3 && player.z >= outerZ - 4
+      && publicDryHerbLeg(state.seed, player, { x: player.x, z: 0 })) {
+      return `Follow dry ground S about ${Math.round(-player.z)} m to z = 0, then E through the marked opening to Greenway Outfitters; ${sale}.`
+    }
     if (player.x >= MIREGLASS_CORE.minX - 8 && player.x <= 0
       && player.z >= -8 && player.z <= MIREGLASS_CORE.maxZ + 8) {
       const connector = mireglassGreenwayToMarkerTrail(state.seed)

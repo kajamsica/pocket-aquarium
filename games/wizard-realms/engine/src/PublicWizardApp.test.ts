@@ -26,7 +26,7 @@ import { withPublicV11Highland } from './domain/publicWorldV11State'
 import { withFreshPublicV9Camps } from './domain/publicWorldV9State'
 import { actPublicMireglass } from './domain/publicWorldActions'
 import { advancePublicWorldFrame, advancePublicWorldV10Frame, type PublicWorldAdvanceResult } from './domain/publicWorldRuntime'
-import { createFreshPublicWorld } from './domain/publicWorldState'
+import { createFreshPublicWorld, type PublicWorldState } from './domain/publicWorldState'
 import {
   PUBLIC_V7_BACKUP_KEY, PUBLIC_V7_ROOT_KEY, PUBLIC_V7_STAGE_KEY,
   commitPublicV7World, createPublicV7StateFromV6Root, migratePublicV6ToV7, serializePublicV7World, withFreshPublicV7Herbs,
@@ -702,6 +702,52 @@ describe('public v6 app boundary', () => {
     expect(html).toContain(`<b>Next:</b> ${hint}`)
     const atBuyer = { ...carried, player: { ...carried.player, position: { ...store.position } } }
     expect(publicHerbRouteHint(atBuyer)).toBe('Open Greenway Outfitters here, then sell 1 marsh herb for 3g.')
+  })
+
+  it('guides a carried herb back from the north ledge through the western opening', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const player = { x: -7.8, z: -12.01 }
+    const nearTile = worldTileAtGrid(seed, Math.ceil(player.x / WORLD_CELL_METERS - 0.5),
+      Math.ceil(player.z / WORLD_CELL_METERS - 0.5))
+    const carrying = { ...fresh, movementOwner: 'streamed' as const,
+      player: { ...fresh.player, position: { ...player, y: nearTile.center.y },
+        inventory: [...fresh.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    const waypoint = { x: -16, z: -16 }
+    expect(publicDryHerbLeg(seed, player, { x: player.x, z: waypoint.z })).toBe(true)
+    expect(publicDryHerbLeg(seed, { x: player.x, z: waypoint.z }, waypoint)).toBe(true)
+    expect(publicDryHerbLeg(seed, waypoint, { x: -16, z: 0 })).toBe(true)
+    expect(publicHerbRouteHint(carrying)).toMatch(/Backtrack N .* W .* S .* z = 0.* E .* Greenway Outfitters/)
+    const atStep = (x: number, z: number) => ({ ...carrying,
+      player: { ...carrying.player, position: { x, y: worldTileAtGrid(seed,
+        Math.ceil(x / WORLD_CELL_METERS - 0.5), Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y, z } } })
+    expect(publicHerbRouteHint(atStep(-7.8, -16))).toMatch(/Head W .* S to z = 0 and E .* Greenway Outfitters/)
+    expect(publicHerbRouteHint(atStep(-16, -16))).toMatch(/Follow dry ground S .* z = 0, then E .* Greenway Outfitters/)
+    let walking: PublicWorldState = { ...carrying,
+      discoveredTileIds: [...new Set([...carrying.discoveredTileIds, nearTile.id])].sort() }
+    const blocked = advancePublicWorldFrame(walking, [{ type: 'move', delta: { x: 0, z: 1 } }])
+    expect(blocked.rejections).toMatchObject([{ code: 'off_connector',
+      message: expect.stringMatching(/Backtrack N, then W outside x = -12.*S to z = 0 and E/) }])
+    expect(blocked.state).toBe(walking)
+    const atNorth = atStep(-7.8, -16)
+    const northTile = worldTileAtGrid(seed, Math.ceil(-7.8 / WORLD_CELL_METERS - 0.5), -4)
+    const blockedAtNorth = advancePublicWorldFrame({ ...atNorth,
+      discoveredTileIds: [...new Set([...atNorth.discoveredTileIds, northTile.id])].sort() },
+    [{ type: 'move', delta: { x: 0, z: 4 } }])
+    expect(blockedAtNorth.rejections).toMatchObject([{ code: 'off_connector',
+      message: expect.stringMatching(/Head W outside x = -12, then S to z = 0 and E/) }])
+    for (const goal of [{ x: -7.8, z: -16 }, waypoint, { x: -16, z: 0 }, { x: -12, z: 0 }]) {
+      for (let step = 0; step < 12 && Math.hypot(goal.x - walking.player.position.x,
+        goal.z - walking.player.position.z) > 0.001; step += 1) {
+        const dx = goal.x - walking.player.position.x, dz = goal.z - walking.player.position.z
+        const scale = Math.min(1, 3.9 / Math.hypot(dx, dz))
+        const result = advancePublicWorldFrame(walking,
+          [{ type: 'move', delta: { x: dx * scale, z: dz * scale } }])
+        expect(result.rejections, `toward ${goal.x},${goal.z}`).toEqual([])
+        walking = result.state
+      }
+    }
+    expect(walking.movementOwner).toBe('greenway')
+    expect(walking.player.inventory.some((stack) => stack.itemId === 'marsh_herb' && stack.quantity === 1)).toBe(true)
   })
 
   it('rejects a diagonal dry-ground cue that clips an ordinary wetland corner', () => {
