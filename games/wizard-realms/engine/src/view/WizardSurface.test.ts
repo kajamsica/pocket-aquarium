@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
+import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, keyboardMovementIntents, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
 import { RouteKey, WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
@@ -68,6 +68,32 @@ describe('third-person control grammar', () => {
     expect(movementVector(new Set(['KeyA']))).toEqual([-1, 0])
     expect(movementVector(new Set(['KeyD']))).toEqual([1, 0])
     expect(movementVector(new Set(['KeyW', 'KeyD']))).toEqual([1, 1])
+  })
+
+  it('guarantees one bounded pivot intent for a short A/D tap without turning on release', () => {
+    const held = new Set<string>()
+    expect(keyboardMovementIntents(held, 'KeyA', true)).toEqual([
+      { type: 'movement.tap', vector: [-1, 0] },
+      { type: 'movement', vector: [-1, 0] },
+    ])
+    expect(keyboardMovementIntents(held, 'KeyA', false)).toEqual([{ type: 'movement', vector: [0, 0] }])
+    expect(keyboardMovementIntents(held, 'KeyD', true)).toEqual([
+      { type: 'movement.tap', vector: [1, 0] },
+      { type: 'movement', vector: [1, 0] },
+    ])
+    expect(keyboardMovementIntents(held, 'KeyD', false)).toEqual([{ type: 'movement', vector: [0, 0] }])
+    expect(held.size).toBe(0)
+  })
+
+  it('does not issue extra taps while held, duplicate keydown, or keyup-only movement', () => {
+    const held = new Set<string>()
+    expect(keyboardMovementIntents(held, 'KeyD', true)).toHaveLength(2)
+    expect(keyboardMovementIntents(held, 'KeyD', true)).toEqual([])
+    expect(keyboardMovementIntents(held, 'KeyW', true)).toEqual([{ type: 'movement', vector: [1, 1] }])
+    expect(keyboardMovementIntents(held, 'KeyD', false)).toEqual([{ type: 'movement', vector: [0, 1] }])
+    expect(keyboardMovementIntents(held, 'KeyD', false)).toEqual([])
+    expect(keyboardMovementIntents(held, 'KeyW', false)).toEqual([{ type: 'movement', vector: [0, 0] }])
+    expect(keyboardMovementIntents(held, 'KeyW', true)).toEqual([{ type: 'movement', vector: [0, 1] }])
   })
 
   it('changes camera orbit only from drag deltas and clamps pitch', () => {

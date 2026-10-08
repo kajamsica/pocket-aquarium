@@ -19,6 +19,20 @@ export function movementVector(keys: ReadonlySet<string>): readonly [number, num
   return [x, y]
 }
 
+/** A newly pressed pivot gets one fixed-step turn even when released between simulation ticks. */
+export function keyboardMovementIntents(keys: Set<string>, code: string, pressed: boolean): WizardViewIntent[] {
+  if (!MOVEMENT_KEYS.has(code)) return []
+  if (pressed) {
+    if (keys.has(code)) return []
+    keys.add(code)
+    const tap: WizardViewIntent[] = code === 'KeyA' || code === 'KeyD'
+      ? [{ type: 'movement.tap', vector: [code === 'KeyA' ? -1 : 1, 0] }] : []
+    return [...tap, { type: 'movement', vector: movementVector(keys) }]
+  }
+  if (!keys.delete(code)) return []
+  return [{ type: 'movement', vector: movementVector(keys) }]
+}
+
 export function releaseHeldControls(keys: Set<string>): readonly [0, 0] {
   keys.clear()
   return [0, 0]
@@ -100,13 +114,11 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
       }
       if (MOVEMENT_KEYS.has(event.code)) {
         event.preventDefault()
-        pressedKeys.current.add(event.code)
-        onIntent({ type: 'movement', vector: movementVector(pressedKeys.current) })
+        for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, true)) onIntent(intent)
       }
     }
     const onKeyUp = (event: KeyboardEvent) => {
-      if (!MOVEMENT_KEYS.has(event.code) || !pressedKeys.current.delete(event.code)) return
-      onIntent({ type: 'movement', vector: movementVector(pressedKeys.current) })
+      for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, false)) onIntent(intent)
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup', onKeyUp)
