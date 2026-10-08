@@ -11,13 +11,23 @@ import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime,
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
 import type { EquipmentSlot, WizardItemStack, WizardLandmark, WizardTerrainCell } from './view/contracts'
+import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch, type TimedMovementSampler } from './view/timedInput'
 
 const SEED = 'greenway-alpha'
 const STEP_MS = 50
+const MAX_CATCH_UP_STEPS = 12
 const REACH = 3
 export const MIREGLASS_TRAVEL_AUTOSAVE_MS = 5_000
 export const shouldAutosaveMireglassTravel = (dirty: boolean, lastSavedMs: number, nowMs: number) =>
   dirty && nowMs - lastSavedMs >= MIREGLASS_TRAVEL_AUTOSAVE_MS
+export function recordMireglassViewMovement(
+  sampler: TimedMovementSampler, queued: StreamedWorldIntent[],
+  intent: Extract<WizardViewIntent, { type: 'movement' | 'movement.tap' }>, yaw: number, nowMs: number,
+): void {
+  if (intent.type === 'movement') recordTimedMovement(sampler, intent.atMs ?? nowMs, intent.vector)
+  // The keyboard tap is already represented by the timestamped interval; touch taps still queue once.
+  else if (intent.source !== 'keyboard') queued.push(...streamedControlIntents(yaw, intent.vector))
+}
 const ITEM_NAMES: Readonly<Record<MireglassItemId, string>> = {
   woodcutters_axe: 'Woodcutter axe', logs: 'Logs', marsh_herb: 'Marsh herb', stone: 'Stone',
   iron_ore: 'Iron ore', apprentice_hat: 'Apprentice hat', traveler_tunic: 'Traveler tunic',
@@ -441,9 +451,9 @@ export function MireglassPlayableApp() {
   const [statusSource, setStatusSource] = useState<'action' | 'movement'>('action')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
-  const movement = useRef<readonly [number, number]>([0, 0])
+  const inputTimeline = useRef(createTimedMovementSampler(performance.now()))
   const queued = useRef<StreamedWorldIntent[]>([])
-  const clock = useRef<{ last: number | null; accrued: number }>({ last: null, accrued: 0 })
+  const clock = useRef(createFixedInputClock(inputTimeline.current.cursorMs))
   const invalidSave = useRef(initial.mode === 'invalid')
   const autosavePaused = useRef(initial.mode === 'invalid' || initial.mode === 'storage-error')
   const travelDirty = useRef(false)
@@ -482,7 +492,13 @@ export function MireglassPlayableApp() {
   }, [runtime, report, persist])
 
   useEffect(() => {
-    const reset = () => { movement.current = [0, 0]; queued.current = []; clock.current = { last: null, accrued: 0 } }
+    const reset = () => {
+      const now = performance.now()
+      inputTimeline.current = createTimedMovementSampler(now)
+      queued.current = []
+      clock.current = createFixedInputClock(now)
+    }
+    reset()
     const onVisibility = () => {
       if (document.hidden) persist(runtime.state)
       reset()
@@ -491,14 +507,10 @@ export function MireglassPlayableApp() {
     const timer = window.setInterval(() => {
       if (document.hidden) return
       const now = performance.now()
-      const tickClock = clock.current
-      tickClock.accrued += tickClock.last === null ? 0 : Math.max(0, now - tickClock.last)
-      tickClock.last = now
-      const steps = Math.min(12, Math.floor(tickClock.accrued / STEP_MS))
-      tickClock.accrued = steps === 12 ? 0 : tickClock.accrued - steps * STEP_MS
-      if (!steps) return
-      for (let index = 0; index < steps; index += 1) {
-        const intents = [...(index === 0 ? queued.current : []), ...streamedControlIntents(runtime.state.player.yaw, movement.current)]
+      const samples = sampleFixedInputBatch(inputTimeline.current, clock.current, now, STEP_MS, MAX_CATCH_UP_STEPS)
+      if (!samples.length) return
+      for (const [index, sampled] of samples.entries()) {
+        const intents = [...(index === 0 ? queued.current : []), ...streamedControlIntents(runtime.state.player.yaw, sampled)]
         const result = runtime.advance(intents)
         if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
           || event.type === 'player_jumped' || event.type === 'tile_discovered')) travelDirty.current = true
@@ -518,8 +530,8 @@ export function MireglassPlayableApp() {
 
   const choices = useMemo(() => mireglassActionChoices(state), [state])
   const onIntent = useCallback((intent: WizardViewIntent) => {
-    if (intent.type === 'movement') movement.current = intent.vector
-    else if (intent.type === 'movement.tap') queued.current.push(...streamedControlIntents(runtime.state.player.yaw, intent.vector))
+    if (intent.type === 'movement' || intent.type === 'movement.tap')
+      recordMireglassViewMovement(inputTimeline.current, queued.current, intent, runtime.state.player.yaw, performance.now())
     else if (intent.type === 'jump') queued.current.push({ type: 'jump' })
     else if (intent.type === 'interact') {
       const nearest = mireglassNearestInteractChoice(runtime.state)
@@ -553,7 +565,9 @@ export function MireglassPlayableApp() {
     autosavePaused.current = false
     travelDirty.current = false
     lastTravelSave.current = performance.now()
-    movement.current = [0, 0]
+    const now = performance.now()
+    inputTimeline.current = createTimedMovementSampler(now)
+    clock.current = createFixedInputClock(now)
     queued.current = []
     setRuntime(fresh)
     setState(fresh.state)

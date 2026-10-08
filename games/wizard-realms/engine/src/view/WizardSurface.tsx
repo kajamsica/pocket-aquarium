@@ -12,6 +12,8 @@ export interface WizardSurfaceProps {
 
 const MOVEMENT_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
 export const CENTERED_CAMERA_ORBIT = [0, 0.28] as const
+export const keyboardEventTime = (eventTimeMs: number, nowMs: number) =>
+  Number.isFinite(eventTimeMs) && Math.abs(eventTimeMs - nowMs) <= 60_000 ? eventTimeMs : nowMs
 
 export function movementVector(keys: ReadonlySet<string>): readonly [number, number] {
   const x = Number(keys.has('KeyD')) - Number(keys.has('KeyA'))
@@ -20,17 +22,18 @@ export function movementVector(keys: ReadonlySet<string>): readonly [number, num
 }
 
 /** A newly pressed pivot gets one fixed-step turn even when released between simulation ticks. */
-export function keyboardMovementIntents(keys: Set<string>, code: string, pressed: boolean): WizardViewIntent[] {
+export function keyboardMovementIntents(keys: Set<string>, code: string, pressed: boolean, atMs?: number): WizardViewIntent[] {
   if (!MOVEMENT_KEYS.has(code)) return []
+  const timestamp = atMs === undefined ? {} : { atMs }
   if (pressed) {
     if (keys.has(code)) return []
     keys.add(code)
     const tap: WizardViewIntent[] = code === 'KeyA' || code === 'KeyD'
-      ? [{ type: 'movement.tap', vector: [code === 'KeyA' ? -1 : 1, 0] }] : []
-    return [...tap, { type: 'movement', vector: movementVector(keys) }]
+      ? [{ type: 'movement.tap', vector: [code === 'KeyA' ? -1 : 1, 0], source: 'keyboard', ...timestamp }] : []
+    return [...tap, { type: 'movement', vector: movementVector(keys), ...timestamp }]
   }
   if (!keys.delete(code)) return []
-  return [{ type: 'movement', vector: movementVector(keys) }]
+  return [{ type: 'movement', vector: movementVector(keys), ...timestamp }]
 }
 
 export function releaseHeldControls(keys: Set<string>): readonly [0, 0] {
@@ -114,11 +117,13 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
       }
       if (MOVEMENT_KEYS.has(event.code)) {
         event.preventDefault()
-        for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, true)) onIntent(intent)
+        for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, true,
+          keyboardEventTime(event.timeStamp, performance.now()))) onIntent(intent)
       }
     }
     const onKeyUp = (event: KeyboardEvent) => {
-      for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, false)) onIntent(intent)
+      for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, false,
+        keyboardEventTime(event.timeStamp, performance.now()))) onIntent(intent)
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup', onKeyUp)

@@ -195,8 +195,10 @@ export interface WizardViewProjection {
 }
 
 export type WizardViewIntent =
-  | { type: 'movement'; vector: Vec2 }
-  | { type: 'movement.tap'; vector: Vec2 }
+  // Optional timestamps allow a newer consumer to integrate press durations between fixed ticks.
+  // v5 and the streamed preview continue reading vector only.
+  | { type: 'movement'; vector: Vec2; atMs?: number }
+  | { type: 'movement.tap'; vector: Vec2; atMs?: number; source?: 'keyboard' }
   | { type: 'jump' }
   | { type: 'interact' }
   | { type: 'store.close' }

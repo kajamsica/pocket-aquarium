@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, keyboardMovementIntents, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
+import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, keyboardEventTime, keyboardMovementIntents, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
 import { RouteKey, WizardMap, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
@@ -73,16 +73,33 @@ describe('third-person control grammar', () => {
   it('guarantees one bounded pivot intent for a short A/D tap without turning on release', () => {
     const held = new Set<string>()
     expect(keyboardMovementIntents(held, 'KeyA', true)).toEqual([
-      { type: 'movement.tap', vector: [-1, 0] },
+      { type: 'movement.tap', vector: [-1, 0], source: 'keyboard' },
       { type: 'movement', vector: [-1, 0] },
     ])
     expect(keyboardMovementIntents(held, 'KeyA', false)).toEqual([{ type: 'movement', vector: [0, 0] }])
     expect(keyboardMovementIntents(held, 'KeyD', true)).toEqual([
-      { type: 'movement.tap', vector: [1, 0] },
+      { type: 'movement.tap', vector: [1, 0], source: 'keyboard' },
       { type: 'movement', vector: [1, 0] },
     ])
     expect(keyboardMovementIntents(held, 'KeyD', false)).toEqual([{ type: 'movement', vector: [0, 0] }])
     expect(held.size).toBe(0)
+  })
+
+  it('attaches the same event time to pivot and held-vector changes', () => {
+    const held = new Set<string>()
+    expect(keyboardMovementIntents(held, 'KeyA', true, 120)).toEqual([
+      { type: 'movement.tap', vector: [-1, 0], source: 'keyboard', atMs: 120 },
+      { type: 'movement', vector: [-1, 0], atMs: 120 },
+    ])
+    expect(keyboardMovementIntents(held, 'KeyA', false, 145)).toEqual([
+      { type: 'movement', vector: [0, 0], atMs: 145 },
+    ])
+  })
+
+  it('uses the native event clock when compatible and falls back from epoch timestamps', () => {
+    expect(keyboardEventTime(120, 125)).toBe(120)
+    expect(keyboardEventTime(1_700_000_000_000, 125)).toBe(125)
+    expect(keyboardEventTime(Number.NaN, 125)).toBe(125)
   })
 
   it('does not issue extra taps while held, duplicate keydown, or keyup-only movement', () => {

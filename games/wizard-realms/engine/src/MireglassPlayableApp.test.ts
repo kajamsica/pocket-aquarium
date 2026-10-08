@@ -6,13 +6,16 @@ import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { createMireglassWorld } from './domain/mireglassWorld'
+import type { StreamedWorldIntent } from './domain/streamedWorld'
 import { MIREGLASS_SAVE_KEY, serializeMireglassWorld } from './domain/mireglassPersistence'
 import { worldTileAtGrid } from './domain/worldChunks'
 import { WizardMap } from './view/WizardMap'
+import { keyboardMovementIntents } from './view/WizardSurface'
+import { createFixedInputClock, createTimedMovementSampler, sampleFixedInputBatch } from './view/timedInput'
 import {
   bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices, mireglassBarrierAfterResult, mireglassOutpostQuote,
   mireglassApproachTerrain, mireglassNearestInteractChoice, mireglassNextObjective, mireglassViewProjection,
-  saveMireglassDevWorld, shouldAutosaveMireglassTravel,
+  recordMireglassViewMovement, saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
 
 const seed = 'greenway-alpha'
@@ -24,6 +27,23 @@ function memoryStorage() {
 }
 
 describe('Mireglass playable dev adapter', () => {
+  it('integrates timestamped keyboard taps once while preserving touch tap intents', () => {
+    const keys = new Set<string>()
+    const sampler = createTimedMovementSampler(0)
+    const clock = createFixedInputClock(0)
+    const queued: StreamedWorldIntent[] = []
+    for (const intent of keyboardMovementIntents(keys, 'KeyA', true, 10)) {
+      if (intent.type === 'movement' || intent.type === 'movement.tap') recordMireglassViewMovement(sampler, queued, intent, 0, 10)
+    }
+    for (const intent of keyboardMovementIntents(keys, 'KeyA', false, 110)) {
+      if (intent.type === 'movement' || intent.type === 'movement.tap') recordMireglassViewMovement(sampler, queued, intent, 0, 110)
+    }
+    expect(queued).toEqual([])
+    const samples = sampleFixedInputBatch(sampler, clock, 150, 50, 12)
+    expect(samples.reduce((turn, vector) => turn + vector[0] * 0.13, 0)).toBeCloseTo(-0.26)
+    recordMireglassViewMovement(sampler, queued, { type: 'movement.tap', vector: [1, 0] }, 0, 150)
+    expect(queued).toEqual([{ type: 'look', yawDelta: -0.13, pitchDelta: 0 }])
+  })
   it('dresses only dry approach cells with joining path segments', () => {
     const positions = [[0, 0], [4, 0], [4, 4], [12, 0], [8, 8], [60, 60]] as const
     const cells = positions.map(([x, z], index) => ({ id: `cell-${index}`,
