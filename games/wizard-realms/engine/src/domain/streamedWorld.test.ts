@@ -3,6 +3,7 @@ import { createStreamedWorld } from './streamedWorld'
 import { createStreamedWorldFromState } from './index'
 import type { StreamedWorldIntent, StreamedWorldState } from './streamedWorld'
 import { mireglassBermFaceRowAt, mireglassFenRowAt } from './mireglassTerrain'
+import { mireglassAnchors } from './mireglassContent'
 import { worldTileAtGrid } from './worldChunks'
 
 const move = (x: number, z = 0): StreamedWorldIntent => ({ type: 'move', delta: { x, z } })
@@ -112,6 +113,35 @@ describe('separate streamed-world authority', () => {
     expect(runtime.state.discoveredTileIds).toEqual([ground!.id])
     expect(runtime.activeChunkCount()).toBe(9)
     expect(runtime.tileAtWorld(0, 0)).toBeNull()
+  })
+
+  it('uses the effective pit for start, snapshot validation, gravity landing, and reload', () => {
+    const seed = 'pit-runtime-landing'
+    const cache = mireglassAnchors(seed).sealCache.tile
+    const facts = { cachePitDug: true }
+    const original = createStreamedWorld(seed, cache.center)
+    const oldStateBytes = JSON.stringify(original.state)
+    const dugStart = createStreamedWorld(seed, cache.center, facts)
+    expect(dugStart.state.player.position.y).toBe(1.65)
+    expect(dugStart.tileAtWorld(cache.center.x, cache.center.z)!.center.y).toBe(1.65)
+    const explicitFalse = createStreamedWorld(seed, cache.center, { cachePitDug: false })
+    expect(JSON.stringify(explicitFalse.state)).toBe(oldStateBytes)
+    expect(JSON.stringify(explicitFalse.advance([]))).toBe(JSON.stringify(createStreamedWorld(seed, cache.center).advance([])))
+    expect(createStreamedWorldFromState(original.state).state).toEqual(original.state)
+
+    const landing = createStreamedWorldFromState(original.state, facts)
+    expect(landing.state.player.position.y).toBe(cache.center.y)
+    for (let frame = 0; frame < 60 && landing.state.player.position.y > 1.65; frame += 1) landing.advance([])
+    expect(landing.state.player.position.y).toBe(1.65)
+    expect(landing.state.player.verticalVelocity).toBe(0)
+    expect(landing.advance([{ type: 'jump' }]).rejections).toEqual([])
+    expect(JSON.stringify(original.state)).toBe(oldStateBytes)
+
+    const groundedSnapshot = { ...dugStart.state }
+    const resumed = createStreamedWorldFromState(groundedSnapshot, facts)
+    expect(resumed.state).toEqual(dugStart.state)
+    expect(resumed.tileAtWorld(cache.center.x, cache.center.z)!.center.y).toBe(1.65)
+    expect(() => createStreamedWorldFromState(groundedSnapshot)).toThrow('Invalid streamed-world snapshot position.')
   })
 
   it('round-trips a serialized snapshot without mutating or retaining its input objects', () => {

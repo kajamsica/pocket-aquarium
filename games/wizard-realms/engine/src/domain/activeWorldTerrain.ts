@@ -1,4 +1,6 @@
 import type { WorldTile } from './types'
+import { createCachePitOverlay } from './mireglassCachePitOverlay'
+import type { TerrainFacts } from './mireglassCachePitOverlay'
 import {
   activeChunkCoordinates as chunkWindow, WORLD_CELL_METERS, WORLD_CHUNK_CELLS,
   WORLD_GRID_MAX, WORLD_GRID_MIN, worldChunk,
@@ -21,7 +23,8 @@ const gridAtWorld = (coordinate: number) => Math.ceil(coordinate / WORLD_CELL_ME
 const validGrid = (grid: number) => Number.isSafeInteger(grid) && grid >= WORLD_GRID_MIN && grid <= WORLD_GRID_MAX
 
 /** Keeps only the validated 3 by 3 chunk window; missing terrain is never treated as empty ground. */
-export function createActiveWorldTerrain(seed: string): ActiveWorldTerrain {
+export function createActiveWorldTerrain(seed: string, facts?: TerrainFacts): ActiveWorldTerrain {
+  const overlayCachePit = createCachePitOverlay(seed, facts)
   let chunks = new Map<string, readonly ReadonlyWorldTile[]>()
   let coordinates: readonly Readonly<ChunkCoordinate>[] = Object.freeze([])
   let visibleTiles: readonly ReadonlyWorldTile[] = Object.freeze([])
@@ -49,7 +52,7 @@ export function createActiveWorldTerrain(seed: string): ActiveWorldTerrain {
         const key = keyFor(chunkX, chunkZ)
         let tiles = chunks.get(key)
         if (!tiles) {
-          const generated = worldChunk(seed, chunkX, chunkZ).tiles
+          const generated = overlayCachePit(worldChunk(seed, chunkX, chunkZ).tiles)
           for (const tile of generated) {
             Object.freeze(tile.center)
             Object.freeze(tile)

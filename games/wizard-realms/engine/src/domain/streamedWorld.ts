@@ -1,5 +1,6 @@
 import { createActiveWorldTerrain } from './activeWorldTerrain'
 import type { ActiveWorldTerrain, ReadonlyWorldTile } from './activeWorldTerrain'
+import type { TerrainFacts } from './mireglassCachePitOverlay'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import type { Vec3 } from './types'
 import { WORLD_GRID_MAX, WORLD_GRID_MIN } from './worldChunks'
@@ -66,9 +67,9 @@ function freezeState(state: StreamedWorldState): StreamedWorldState {
  * Separate streamed authority. Its terrain cache never enters the serializable state.
  * An optional start is validated through active terrain; a non-finite or out-of-world start throws a RangeError.
  */
-export function createStreamedWorld(seed: string, start: { x: number; z: number } = { x: 0, z: 0 }): StreamedWorldRuntime {
+export function createStreamedWorld(seed: string, start: { x: number; z: number } = { x: 0, z: 0 }, facts?: TerrainFacts): StreamedWorldRuntime {
   const normalizedSeed = seed || 'wizard-realms'
-  const terrain = createActiveWorldTerrain(normalizedSeed)
+  const terrain = createActiveWorldTerrain(normalizedSeed, facts)
   terrain.activate(start)
   const startTile = terrain.tileAtWorld(start.x, start.z)
   if (!startTile) throw new Error('Missing starting terrain.')
@@ -92,7 +93,7 @@ function canonicalWorldTileId(id: unknown): boolean {
 }
 
 /** Rebuilds active terrain and authority from a validated serialized snapshot. */
-export function createStreamedWorldFromState(snapshot: StreamedWorldState): StreamedWorldRuntime {
+export function createStreamedWorldFromState(snapshot: StreamedWorldState, facts?: TerrainFacts): StreamedWorldRuntime {
   const player = snapshot?.player
   const position = player?.position
   const discovered = snapshot?.discoveredTileIds
@@ -104,7 +105,7 @@ export function createStreamedWorldFromState(snapshot: StreamedWorldState): Stre
     || !Number.isFinite(player.verticalVelocity) || Math.abs(player.verticalVelocity) > MAX_ABS_VERTICAL_VELOCITY
     || !Array.isArray(discovered)) throw new RangeError('Invalid streamed-world snapshot.')
 
-  const terrain = createActiveWorldTerrain(snapshot.seed)
+  const terrain = createActiveWorldTerrain(snapshot.seed, facts)
   terrain.activate(position)
   const ground = terrain.tileAtWorld(position.x, position.z)
   if (!ground || position.y < ground.center.y) throw new RangeError('Invalid streamed-world snapshot position.')

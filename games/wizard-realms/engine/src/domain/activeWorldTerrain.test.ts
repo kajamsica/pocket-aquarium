@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createActiveWorldTerrain } from './activeWorldTerrain'
-import { worldTileAtGrid } from './worldChunks'
+import { mireglassAnchors } from './mireglassContent'
+import { createCachePitOverlay } from './mireglassCachePitOverlay'
+import { WORLD_CHUNK_CELLS, worldChunk, worldTileAtGrid } from './worldChunks'
 
 describe('active streamed terrain', () => {
   it('keeps missing terrain null, then exposes an immutable, row-major 3 by 3 window', () => {
@@ -89,5 +91,61 @@ describe('active streamed terrain', () => {
       expect(terrain.activeChunkCount).toBeLessThanOrEqual(9)
       expect(terrain.activeTiles()).toHaveLength(terrain.activeChunkCount * 256)
     }
+  })
+
+  it.each(['mireglass-seed', 'pit-seed-two', 'pit-seed-three'])(
+    'overlays only the canonical cache cell for %s without mutating generated terrain', (seed) => {
+      const cache = mireglassAnchors(seed).sealCache.tile
+      const chunkX = Math.floor((cache.gridX - 3) / WORLD_CHUNK_CELLS)
+      const chunkZ = Math.floor((cache.gridZ - 3) / WORLD_CHUNK_CELLS)
+      const base = worldChunk(seed, chunkX, chunkZ).tiles
+      const baseBytes = JSON.stringify(base)
+      const overlaid = createCachePitOverlay(seed, { cachePitDug: true })(base)
+      expect(overlaid).not.toBe(base)
+      expect(overlaid.filter((tile, index) => tile !== base[index]).map((tile) => tile.id)).toEqual([cache.id])
+      const edited = overlaid.find((tile) => tile.id === cache.id)!
+      expect(edited).toEqual({ ...cache, elevation: 0.55, center: { ...cache.center, y: 1.65 } })
+      expect(edited.center).not.toBe(base.find((tile) => tile.id === cache.id)!.center)
+      expect(JSON.stringify(base)).toBe(baseBytes)
+      expect(createCachePitOverlay(seed)(base)).toBe(base)
+      expect(createCachePitOverlay(seed, { cachePitDug: false })(base)).toBe(base)
+      const remote = worldChunk(seed, 0, 0).tiles
+      expect(createCachePitOverlay(seed, { cachePitDug: true })(remote)).toBe(remote)
+      expect(worldTileAtGrid(seed, cache.gridX - 3, cache.gridZ - 3)).toEqual(cache)
+    },
+  )
+
+  it('retains the effective pit through chunk eviction and either activation order', () => {
+    const seed = 'pit-chunk-reload'
+    const cache = mireglassAnchors(seed).sealCache.tile
+    const position = cache.center
+    const facts = { cachePitDug: true }
+    const direct = createActiveWorldTerrain(seed, facts)
+    direct.activate(position)
+    const first = direct.tileAtWorld(position.x, position.z)!
+    expect(first).toMatchObject({ id: cache.id, terrain: cache.terrain, elevation: 0.55, center: { y: 1.65 } })
+    expect(direct.activeTiles().filter((tile) => tile.id === cache.id)).toEqual([first])
+    expect(Object.isFrozen(first)).toBe(true)
+    expect(Object.isFrozen(first.center)).toBe(true)
+    expect(Reflect.set(first, 'elevation', 0)).toBe(false)
+    expect(Reflect.set(first.center, 'y', 0)).toBe(false)
+
+    direct.activate({ x: 0, z: 0 })
+    expect(direct.tileAtWorld(position.x, position.z)).toBeNull()
+    direct.activate(position)
+    expect(direct.tileAtWorld(position.x, position.z)).toEqual(first)
+    expect(direct.tileAtWorld(position.x, position.z)).not.toBe(first)
+
+    const remoteFirst = createActiveWorldTerrain(seed, facts)
+    remoteFirst.activate({ x: 0, z: 0 })
+    remoteFirst.activate(position)
+    expect(remoteFirst.activeTiles()).toEqual(direct.activeTiles())
+    const legacy = createActiveWorldTerrain(seed)
+    legacy.activate(position)
+    expect(legacy.tileAtWorld(position.x, position.z)).toEqual(cache)
+    expect(legacy.tileAtWorld(position.x, position.z)!.elevation).toBe(0.80)
+    const explicitFalse = createActiveWorldTerrain(seed, { cachePitDug: false })
+    explicitFalse.activate(position)
+    expect(JSON.stringify(explicitFalse.activeTiles())).toBe(JSON.stringify(legacy.activeTiles()))
   })
 })
