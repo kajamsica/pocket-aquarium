@@ -5,9 +5,11 @@ import { publicWorldViewProjection } from './PublicWorldView'
 import { publicWorldV11ViewProjection } from './PublicV11WorldView'
 import { streamedControlIntents } from './StreamedPreviewApp'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE } from './domain/mireglassContent'
+import { mireglassApproachTrail, mireglassGreenwayToMarkerTrail } from './domain/mireglassApproachTrail'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
+import { mireglassMoveBarrier } from './domain/mireglassMovementGate'
 import { mireglassRouteSites, type MireglassRouteSite } from './domain/mireglassRouteSites'
 import { MIREGLASS_FEN_BACK, mireglassFenRowAt, mireglassPlateauAt } from './domain/mireglassTerrain'
 import { areaAt } from './domain/generation'
@@ -24,7 +26,7 @@ import { createFreshPublicWorld, createPublicWorldFromBootstrap, type PublicWorl
 import {
   PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
   inspectPublicV6Artifacts, loadPublicV6Root, parsePublicV6BootstrapRoot, parsePublicV6PlayableRoot,
-  readPublicV6RecoverySnapshot, recoverPublicV6Root, serializePublicV6World,
+  legacyMovementEnvelope, readPublicV6RecoverySnapshot, recoverPublicV6Root, serializePublicV6World,
   type LegacyImportInspection, type PublicV6ArtifactInspection, type PublicV6RecoverySnapshot, type PublicV6RootLoad,
 } from './domain/publicWorldV6'
 import { parsePublicV7PlayableRoot } from './domain/publicWorldV7'
@@ -49,7 +51,7 @@ import { serializePublicV11Rescue, type PublicV11SourceReceipt } from './domain/
 import type { PublicWorldV11State } from './domain/publicWorldV11State'
 import type { PublicV6BootstrapRoot } from './domain/publicWorldV6'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
-import { WORLD_CELL_METERS } from './domain/worldChunks'
+import { WORLD_CELL_METERS, worldTileAtGrid } from './domain/worldChunks'
 import { WizardSurface, type WizardViewIntent } from './view'
 import type { WizardFieldCampView } from './view/contracts'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
@@ -454,6 +456,43 @@ export function publicHerbChoices(state: PublicWorldState) {
 
 const publicCellAt = (coordinate: number) =>
   Math.ceil(coordinate / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS
+const publicGridAt = (coordinate: number) =>
+  Math.ceil(coordinate / WORLD_CELL_METERS - 0.5)
+
+/** Check every crossed terrain cell, not just 4 m sample endpoints, before promising a dry leg. */
+export function publicDryHerbLeg(seed: string, from: { x: number; z: number },
+  to: { x: number; z: number }): boolean {
+  const dx = to.x - from.x, dz = to.z - from.z
+  const distance = Math.hypot(dx, dz)
+  if (![from.x, from.z, to.x, to.z, distance].every(Number.isFinite)) return false
+  const steps = Math.max(1, Math.ceil(distance / (WORLD_CELL_METERS - 1e-6)))
+  for (let index = 0; index < steps; index += 1) {
+    const start = { x: from.x + dx * index / steps, z: from.z + dz * index / steps }
+    const end = { x: from.x + dx * (index + 1) / steps, z: from.z + dz * (index + 1) / steps }
+    if (mireglassMoveBarrier(seed, start, end) !== null) return false
+  }
+  let gx = publicGridAt(from.x), gz = publicGridAt(from.z)
+  const endGX = publicGridAt(to.x), endGZ = publicGridAt(to.z)
+  const stepX = Math.sign(dx), stepZ = Math.sign(dz)
+  const deltaX = stepX ? WORLD_CELL_METERS / Math.abs(dx) : Infinity
+  const deltaZ = stepZ ? WORLD_CELL_METERS / Math.abs(dz) : Infinity
+  let nextX = stepX ? Math.max(0, ((gx + stepX / 2) * WORLD_CELL_METERS - from.x) / dx) : Infinity
+  let nextZ = stepZ ? Math.max(0, ((gz + stepZ / 2) * WORLD_CELL_METERS - from.z) / dz) : Infinity
+  const dry = (x: number, z: number) => worldTileAtGrid(seed, x, z).terrain !== 'wetland'
+  const limit = Math.abs(endGX - gx) + Math.abs(endGZ - gz) + 2
+  for (let visited = 0; visited < limit; visited += 1) {
+    if (!dry(gx, gz)) return false
+    if (gx === endGX && gz === endGZ) return true
+    if (nextX < nextZ - 1e-12) { gx += stepX; nextX += deltaX }
+    else if (nextZ < nextX - 1e-12) { gz += stepZ; nextZ += deltaZ }
+    else {
+      // A diagonal corner is not a zero-width dry passage between wet cells.
+      if (!dry(gx + stepX, gz) || !dry(gx, gz + stepZ)) return false
+      gx += stepX; gz += stepZ; nextX += deltaX; nextZ += deltaZ
+    }
+  }
+  return false
+}
 
 function publicFenBankAt(seed: string, position: { x: number; z: number }): 'north' | 'south' | null {
   const x = publicCellAt(position.x), z = publicCellAt(position.z)
@@ -547,7 +586,52 @@ export function publicHerbRouteHint(state: PublicWorldState): string | null {
   if (held && bridge && publicFenBankAt(state.seed, state.player.position) === 'south') {
     return publicFenBridgeHint(state, bridge, 'south', 'Greenway Outfitters')
   }
-  if (held) return `Take ${held} marsh herb${held === 1 ? '' : 's'} back to Greenway Outfitters to sell for 3g each.`
+  if (held) {
+    const buyer = state.greenway.stores.find((store) => store.id === 'store-greenway')!
+    const player = state.player.position
+    const sale = `sell ${held} marsh herb${held === 1 ? '' : 's'} for ${held * 3}g`
+    const buyerMeters = Math.hypot(buyer.position.x - player.x,
+      buyer.position.y - player.y, buyer.position.z - player.z)
+    if (state.movementOwner === 'greenway') return buyerMeters <= 3
+      ? `Open Greenway Outfitters here, then ${sale}.`
+      : `Greenway Outfitters ${bearingText(player, buyer.position)}, about ${Math.round(buyerMeters)} m total. Open the store and ${sale}.`
+    if (player.x >= MIREGLASS_CORE.minX - 8 && player.x <= 0
+      && player.z >= -8 && player.z <= MIREGLASS_CORE.maxZ + 8) {
+      const connector = mireglassGreenwayToMarkerTrail(state.seed)
+      const marker = connector.at(-1)!
+      const turn = connector.find((point) => point.x === marker.x && point.z === 0)!
+      const edgeX = legacyMovementEnvelope({ generationProfile: state.generationProfile,
+        tiles: state.greenway.tiles }).minX
+      const opening = connector.find((point) => point.x === Math.ceil(edgeX / WORLD_CELL_METERS) * WORLD_CELL_METERS
+        && point.z === 0)
+      if (!opening) return `Take ${held} marsh herb${held === 1 ? '' : 's'} back to Greenway Outfitters to sell for 3g each.`
+      const alongEast = Math.abs(player.z) <= 3 && player.x >= marker.x - 3
+      const alongNorth = Math.abs(player.x - marker.x) <= 3 && player.z <= marker.z + 3
+      const next = alongEast ? opening : alongNorth ? turn : marker
+      const legMeters = Math.hypot(next.x - player.x, next.z - player.z)
+      if (publicDryHerbLeg(state.seed, player, next)) {
+        const afterLeg = next === marker ? marker.z + opening.x - marker.x
+          : next === turn ? opening.x - turn.x : 0
+        const total = Math.round(legMeters + afterLeg
+          + Math.hypot(buyer.position.x - opening.x, buyer.position.z - opening.z))
+        const destination = next === marker ? 'the Mireglass fringe marker'
+          : next === turn ? 'the Greenway opening turn' : 'the Greenway opening'
+        return `Head ${bearingText(player, next)} about ${Math.round(legMeters)} m to ${destination} along dry ground. About ${total} m total to Greenway Outfitters by the marked connector; open the store and ${sale}.`
+      }
+      const approach = mireglassApproachTrail(state.seed)
+      const outpost = approach.at(-1)!
+      if (player.x < outpost.x && player.z > outpost.z
+        && publicDryHerbLeg(state.seed, player, outpost)) {
+        const toOutpost = Math.hypot(outpost.x - player.x, outpost.z - player.z)
+        const toBuyer = Math.hypot(buyer.position.x - opening.x,
+          buyer.position.z - opening.z)
+        const total = Math.round(toOutpost + (approach.length - 1) * WORLD_CELL_METERS
+          + marker.z + opening.x - marker.x + toBuyer)
+        return `Head ${bearingText(player, outpost)} about ${Math.round(toOutpost)} m to the Mireglass salvager trail, then follow its dry marked route back to the fringe marker. About ${total} m total to Greenway Outfitters; open the store and ${sale}.`
+      }
+    }
+    return `Take ${held} marsh herb${held === 1 ? '' : 's'} back to Greenway Outfitters to sell for 3g each.`
+  }
   if (state.movementOwner === 'greenway') return 'Bell Alder in Mireglass has renewable marsh herbs that Greenway Outfitters buys.'
   const patches = mireglassHerbPatches(state.seed)
   const cycle = Math.floor(state.tick / HERB_CYCLE_TICKS)
@@ -1135,7 +1219,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
   const herbDetour = world && !region ? publicBackChannelHint(world, 'Bell Alder') : null
-  const herbRouteHint = world && (region || herbDetour) ? publicHerbRouteHint(world) : null
+  const carryingGreenway = world?.movementOwner === 'greenway' && publicHerbGuidancePriority(world, false)
+  const herbRouteHint = world && (region || herbDetour || carryingGreenway) ? publicHerbRouteHint(world) : null
   if (!world || !projection) {
     const root = entry?.root
     const legacyPresent = entry && (entry.classic.status !== 'missing' || entry.expanded.status !== 'missing')
@@ -1210,7 +1295,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         <button onClick={() => window.location.reload()}>Reload to recheck storage</button></>}
     </section></main>
   }
-  const herbPriority = !!herbDetour || (!!region && publicHerbGuidancePriority(world, !!objective?.complete))
+  const herbPriority = !!herbDetour || !!carryingGreenway
+    || (!!region && publicHerbGuidancePriority(world, !!objective?.complete))
   const nextGuidance = herbPriority && herbRouteHint
     ? herbRouteHint : objective?.label ?? (v11Session && projection.map.guidance)
       ?? objectiveFor(greenwayForPublicView(world))

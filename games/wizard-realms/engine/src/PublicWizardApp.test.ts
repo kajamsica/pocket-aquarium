@@ -7,6 +7,7 @@ import { mireglassActionChoices, mireglassNextObjective } from './MireglassPlaya
 import { publicWorldViewProjection } from './PublicWorldView'
 import { createGeneratedWorld } from './domain/generation'
 import { mireglassAnchors, mireglassFairyRing } from './domain/mireglassContent'
+import { mireglassGreenwayToMarkerTrail } from './domain/mireglassApproachTrail'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { mireglassFenRowAt } from './domain/mireglassTerrain'
@@ -44,7 +45,7 @@ import {
   publicV7RecoveryChoices, recoverPublicWorld, resumePublicWorld, startFreshPublicWorld,
   unsavedPublicWorldBytes, publicWorldEventText,
   publicAreaTitle, publicFrameMessages, publicHerbChoices, publicHerbGuidancePriority,
-  publicHerbMapGuidance, publicHerbRouteHint,
+  publicDryHerbLeg, publicHerbMapGuidance, publicHerbRouteHint,
   publicRegionTransitionText,
   publicFieldCampView, requirePublicV9State, requirePublicV10State, requirePublicV11State,
   unsavedPublicV9Bytes, unsavedPublicV10Bytes, unsavedPublicV11Bytes,
@@ -619,7 +620,7 @@ describe('public v6 app boundary', () => {
     expect(publicHerbChoices(atPatch)[0]?.action).toEqual({ type: 'forage_herb', patchId: patch.id })
     const carryingNorth = { ...atPatch, player: { ...atPatch.player,
       inventory: [...atPatch.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
-    expect(publicHerbRouteHint(carryingNorth)).toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+    expect(publicHerbRouteHint(carryingNorth)).toMatch(/Head [A-Z]+ about \d+ m to the Mireglass salvager trail.*About \d+ m total to Greenway Outfitters/)
     const carryingSouth = { ...atSouthEnd, player: { ...atSouthEnd.player,
       inventory: [...atSouthEnd.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
     expect(publicHerbRouteHint(carryingSouth)).toContain('“Return by Fen bridge” here')
@@ -627,12 +628,102 @@ describe('public v6 app boundary', () => {
       { type: 'traverse_route', siteId: bridge.id, from: 'to' })
     expect(returned.rejection).toBeUndefined()
     expect(returned.state.player.position).toEqual(bridge.from)
-    expect(publicHerbRouteHint(returned.state)).toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+    expect(publicHerbRouteHint(returned.state)).toMatch(/Head [A-Z]+ about \d+ m to the Mireglass fringe marker.*About \d+ m total to Greenway Outfitters/)
 
     expect(publicHerbRouteHint({ ...atSouthEnd, mireglass: fresh.mireglass }))
       .toMatch(/ m direct, then bring it to Greenway\.$/)
     expect(publicHerbRouteHint({ ...carryingNorth, movementOwner: 'greenway' }))
-      .toBe('Take 1 marsh herb back to Greenway Outfitters to sell for 3g each.')
+      .toMatch(/Greenway Outfitters .*about \d+ m.*sell 1 marsh herb/)
+  })
+
+  it('gives carried herbs a dry, measured return leg from the observed Bell Alder positions', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const marker = mireglassGreenwayToMarkerTrail(seed).at(-1)!
+    const positionAt = (x: number, z: number) => ({ x, z,
+      y: worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
+        Math.ceil(z / WORLD_CELL_METERS - 0.5)).center.y })
+    const carried = { ...fresh, movementOwner: 'streamed' as const,
+      player: { ...fresh.player,
+        inventory: [...fresh.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    const source = commitPublicV7World(memoryStorage(), fresh, null)
+    if (source.status !== 'committed') throw new Error(source.status)
+    const hints: { x: number; z: number; hint: string }[] = []
+    for (const [x, z] of [[-340.9, 346.2], [-192.1, 196.9]]) {
+      const at = { ...carried, player: { ...carried.player, position: positionAt(x, z) } }
+      const steps = Math.ceil(Math.hypot(marker.x - x, marker.z - z))
+      for (let step = 0; step < steps; step += 1) {
+        const from = { x: x + (marker.x - x) * step / steps,
+          z: z + (marker.z - z) * step / steps }
+        const to = { x: x + (marker.x - x) * (step + 1) / steps,
+          z: z + (marker.z - z) * (step + 1) / steps }
+        expect(mireglassMoveBarrier(seed, from, to), `${x},${z} step ${step}`).toBeNull()
+        expect(worldTileAtGrid(seed, Math.ceil(to.x / WORLD_CELL_METERS - 0.5),
+          Math.ceil(to.z / WORLD_CELL_METERS - 0.5)).terrain, `${x},${z} step ${step}`)
+          .not.toBe('wetland')
+      }
+      const hint = publicHerbRouteHint(at) ?? ''
+      const html = renderToStaticMarkup(createElement(PublicWizardApp, { v8Session: {
+        start: { state: at, saveRevision: 3, sourceV7Bytes: source.bytes },
+        commit: async () => ({ ok: true as const, value: { state: at, saveRevision: 4, sourceV7Bytes: source.bytes } }),
+      } }))
+      expect(html).toContain(`<strong>Next:</strong> ${hint}`)
+      hints.push({ x, z, hint })
+    }
+    for (const { x, z, hint } of hints) {
+      expect(hint, `${x},${z}`).toMatch(/Head NE about \d+ m to the Mireglass fringe marker/)
+      expect(hint, `${x},${z}`).toMatch(/About \d+ m total to Greenway Outfitters/)
+      expect(hint, `${x},${z}`).toContain('sell 1 marsh herb for 3g')
+      expect(Number(hint.match(/About (\d+) m total/)?.[1]), `${x},${z} total`)
+        .toBeGreaterThan(Number(hint.match(/Head NE about (\d+) m/)?.[1]))
+    }
+    const atMarker = { ...carried, player: { ...carried.player, position: { ...marker } } }
+    expect(publicHerbRouteHint(atMarker)).toMatch(/Head N about \d+ m to the Greenway opening turn.*About \d+ m total/)
+    const corner = { ...carried, player: { ...carried.player,
+      position: positionAt(marker.x, 0) } }
+    expect(publicHerbRouteHint(corner)).toMatch(/Head E about \d+ m to the Greenway opening.*About \d+ m total/)
+  })
+
+  it('guides carried herbs across Greenway to a reachable buyer and then names the sale', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-classic-v1'))
+    const store = fresh.greenway.stores.find((candidate) => candidate.id === 'store-greenway')!
+    const carried = { ...fresh, player: { ...fresh.player,
+      inventory: [...fresh.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }],
+      position: { ...fresh.player.position, x: -12, z: 0 } } }
+    expect(publicHerbGuidancePriority(carried, false)).toBe(true)
+    expect(publicHerbRouteHint(carried)).toMatch(/Greenway Outfitters E, about \d+ m total.*sell 1 marsh herb/)
+    const source = commitPublicV7World(memoryStorage(), fresh, null)
+    if (source.status !== 'committed') throw new Error(source.status)
+    const hint = publicHerbRouteHint(carried)!
+    const html = renderToStaticMarkup(createElement(PublicWizardApp, { v8Session: {
+      start: { state: carried, saveRevision: 3, sourceV7Bytes: source.bytes },
+      commit: async () => ({ ok: true as const, value: { state: carried, saveRevision: 4, sourceV7Bytes: source.bytes } }),
+    } }))
+    expect(html).toContain(`<strong>Next:</strong> ${hint}`)
+    expect(html).toContain(`<b>Next:</b> ${hint}`)
+    const atBuyer = { ...carried, player: { ...carried.player, position: { ...store.position } } }
+    expect(publicHerbRouteHint(atBuyer)).toBe('Open Greenway Outfitters here, then sell 1 marsh herb for 3g.')
+  })
+
+  it('rejects a diagonal dry-ground cue that clips an ordinary wetland corner', () => {
+    const from = { x: -684, z: 340 }, halfway = { x: -682, z: 342 }
+    const to = { x: -680, z: 344 }
+    expect(worldTileAtGrid(seed, -171, 85).terrain).not.toBe('wetland')
+    expect(worldTileAtGrid(seed, -170, 86).terrain).not.toBe('wetland')
+    expect(worldTileAtGrid(seed, -171, 86).terrain).toBe('wetland')
+    expect(mireglassMoveBarrier(seed, from, halfway)).toBeNull()
+    expect(mireglassMoveBarrier(seed, halfway, to)).toBeNull()
+    expect(publicDryHerbLeg(seed, from, to)).toBe(false)
+  })
+
+  it('keeps the carried-herb connector cue safe for the expanded Greenway profile', () => {
+    const fresh = withFreshPublicV7Herbs(createFreshPublicWorld(seed, 'greenway-expanded-v1'))
+    const x = -192.1, z = 196.9
+    const tile = worldTileAtGrid(seed, Math.ceil(x / WORLD_CELL_METERS - 0.5),
+      Math.ceil(z / WORLD_CELL_METERS - 0.5))
+    const carrying = { ...fresh, movementOwner: 'streamed' as const,
+      player: { ...fresh.player, position: { x, y: tile.center.y, z },
+        inventory: [...fresh.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    expect(publicHerbRouteHint(carrying)).toMatch(/Head NE about \d+ m to the Mireglass fringe marker/)
   })
 
   it('keeps the indicated south-bank approach dry for every built bridge site', () => {
