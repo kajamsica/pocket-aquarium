@@ -3,7 +3,8 @@ import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
 import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES } from './domain/mireglassExpedition'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
-import { createMireglassWorld, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
+import { MIREGLASS_SAVE_KEY, parseMireglassWorld, serializeMireglassWorld } from './domain/mireglassPersistence'
+import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
 import { WizardSurface, type WizardViewIntent, type WizardViewProjection } from './view'
@@ -12,6 +13,9 @@ import type { EquipmentSlot, WizardItemStack } from './view/contracts'
 const SEED = 'greenway-alpha'
 const STEP_MS = 50
 const REACH = 3
+export const MIREGLASS_TRAVEL_AUTOSAVE_MS = 5_000
+export const shouldAutosaveMireglassTravel = (dirty: boolean, lastSavedMs: number, nowMs: number) =>
+  dirty && nowMs - lastSavedMs >= MIREGLASS_TRAVEL_AUTOSAVE_MS
 const ITEM_NAMES: Readonly<Record<MireglassItemId, string>> = {
   woodcutters_axe: 'Woodcutter axe', logs: 'Logs', marsh_herb: 'Marsh herb', stone: 'Stone',
   iron_ore: 'Iron ore', apprentice_hat: 'Apprentice hat', traveler_tunic: 'Traveler tunic',
@@ -37,6 +41,7 @@ const STYLES = `
 .wr-mireglass-panel{position:absolute;z-index:6;right:14px;top:14px;box-sizing:border-box;width:min(348px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;padding:14px;border:1px solid #d0bb8588;border-radius:14px;background:#101b18f2;color:#f6f0db;box-shadow:0 12px 38px #0009;font:13px/1.36 system-ui}
 .wr-mireglass-panel h1{margin:0;color:#f3d589;font:700 21px Georgia,serif}.wr-mireglass-panel h2{margin:13px 0 5px;color:#e8c981;font:700 13px system-ui;text-transform:uppercase;letter-spacing:.08em}.wr-mireglass-panel p{margin:5px 0}.wr-mireglass-panel small{color:#afc3b8}.wr-mireglass-panel .warning{color:#ffd4aa}.wr-mireglass-panel .readout{font:11px/1.5 monospace;color:#b9d4c4}.wr-mireglass-panel .status{margin:8px 0;padding:7px;border-radius:7px;background:#273a31;color:#fff0cb}.wr-mireglass-panel .status[data-error=true]{background:#542f2d;color:#ffe0d4}
 .wr-mireglass-panel button{box-sizing:border-box;min-height:42px;border:1px solid #c7aa6477;border-radius:7px;background:#344d3f;color:#fff0c7;cursor:pointer}.wr-mireglass-panel button:disabled{opacity:.5;cursor:not-allowed}.wr-mireglass-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wr-mireglass-actions button{padding:7px;text-align:left}.wr-mireglass-actions button small{display:block;font-size:11px}.wr-mireglass-stages{display:grid;gap:3px;padding-left:18px;margin:6px 0}.wr-mireglass-stages li.done{color:#9cd3a4}.wr-mireglass-stages li.pending{color:#ead8aa}.wr-mireglass-top{display:flex;align-items:start;justify-content:space-between;gap:8px}.wr-mireglass-top button{min-width:44px}.wr-mireglass-panel[data-collapsed=true]{width:auto;max-width:min(320px,calc(100vw - 28px))}.wr-mireglass-panel[data-collapsed=true] .wr-mireglass-content{display:none}
+.wr-mireglass-save-controls{display:flex;gap:6px;margin:8px 0}.wr-mireglass-save-controls button{padding:5px 10px}.wr-mireglass-save-note{padding:6px;border-radius:6px;background:#293b32;color:#d5e9d8}.wr-mireglass-save-note[data-error=true]{background:#542f2d;color:#ffe0d4}
 @media(max-width:719px){.wr-mireglass-panel{top:auto;bottom:calc(144px + env(safe-area-inset-bottom,0px));max-height:43vh}.wr-mireglass-panel[data-collapsed=true]{bottom:calc(144px + env(safe-area-inset-bottom,0px))}.wr-mireglass .wr-map-toggle{top:8px;right:8px}}
 @media(min-width:720px) and (max-height:590px){.wr-mireglass-panel{left:8px;right:auto;top:8px;max-height:calc(100vh - 16px);width:min(292px,31vw)}.wr-mireglass .wr-map-toggle{left:auto;right:8px;top:8px}}
 `
@@ -180,7 +185,7 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
   const builtTileIds = new Set(builtSites.filter((site) => site.discovered && site.status === 'built').map((site) => runtime.tileAtWorld(site.from[0], site.from[2])?.id))
   return {
     ...streamedView,
-    map: { ...streamedView.map, title: 'Mireglass expedition (unsaved dev session)',
+    map: { ...streamedView.map, title: 'Mireglass expedition (v6)',
       legend: '▲ you · ◇ route site · ✓ built route · S outpost · • timber · ? undiscovered',
       tiles: streamedView.map.tiles.map((tile) => ({ ...tile,
         hasResource: tile.discovered && resourceTileIds.has(tile.id),
@@ -245,16 +250,84 @@ export function createMireglassDevWorld(seed = SEED): MireglassWorldRuntime {
   return createMireglassWorld(seed, undefined, { x: frontier.x, z: frontier.z })
 }
 
+export type MireglassLoadMode = 'fresh' | 'resumed' | 'invalid' | 'storage-error'
+export interface MireglassLoadResult {
+  runtime: MireglassWorldRuntime
+  mode: MireglassLoadMode
+  notice: string
+}
+
+/** A bad v6 save is left byte-for-byte intact and never replaced by an automatic fresh start. */
+export function loadMireglassDevWorld(storage: Pick<Storage, 'getItem'>, seed = SEED): MireglassLoadResult {
+  let raw: string | null
+  try { raw = storage.getItem(MIREGLASS_SAVE_KEY) }
+  catch { return { runtime: createMireglassDevWorld(seed), mode: 'storage-error',
+    notice: 'Browser storage could not be read. This session is in memory only; use Save to retry.' } }
+  if (raw === null) return { runtime: createMireglassDevWorld(seed), mode: 'fresh',
+    notice: 'New v6 journey. Actions save immediately; travel saves periodically.' }
+  const parsed = parseMireglassWorld(raw, seed)
+  if (parsed) {
+    try { return { runtime: createMireglassWorldFromState(parsed), mode: 'resumed',
+      notice: 'Resumed the validated v6 Mireglass save.' } }
+    catch { /* Preserve bytes and require explicit replacement, just like a parser rejection. */ }
+  }
+  return { runtime: createMireglassDevWorld(seed), mode: 'invalid',
+    notice: 'Existing v6 save is invalid or from another revision. Its bytes were preserved. This temporary session will not autosave.' }
+}
+
+export type MireglassSaveResult = { ok: true } | { ok: false; message: string }
+/** Writes only the separate v6 key. Never reads or migrates the v5 world. */
+export function saveMireglassDevWorld(storage: Pick<Storage, 'setItem'>, state: MireglassWorldState): MireglassSaveResult {
+  try {
+    const bytes = serializeMireglassWorld(state)
+    storage.setItem(MIREGLASS_SAVE_KEY, bytes)
+    return { ok: true }
+  } catch {
+    return { ok: false, message: 'Save failed. Browser storage may be unavailable or full; current progress remains in memory.' }
+  }
+}
+
 export function MireglassPlayableApp() {
-  const [runtime] = useState(() => createMireglassDevWorld())
+  const [initial] = useState<MireglassLoadResult>(() => {
+    try { return loadMireglassDevWorld(window.localStorage) }
+    catch { return { runtime: createMireglassDevWorld(), mode: 'storage-error',
+      notice: 'Browser storage is unavailable. This session is in memory only; use Save to retry.' } }
+  })
+  const [runtime, setRuntime] = useState(initial.runtime)
   const [state, setState] = useState(runtime.state)
-  const [messages, setMessages] = useState<string[]>(['Fresh frontier start. Study the marker, then equip your axe. This dev session is unsaved.'])
+  const [saveMode, setSaveMode] = useState<MireglassLoadMode>(initial.mode)
+  const [saveNotice, setSaveNotice] = useState(initial.notice)
+  const [messages, setMessages] = useState<string[]>([initial.mode === 'resumed'
+    ? 'Welcome back to Mireglass Reach.' : 'Frontier dev start. Study the marker, then equip your axe.'])
   const [error, setError] = useState(false)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const movement = useRef<readonly [number, number]>([0, 0])
   const queued = useRef<StreamedWorldIntent[]>([])
   const clock = useRef<{ last: number | null; accrued: number }>({ last: null, accrued: 0 })
+  const invalidSave = useRef(initial.mode === 'invalid')
+  const autosavePaused = useRef(initial.mode === 'invalid' || initial.mode === 'storage-error')
+  const travelDirty = useRef(false)
+  const lastTravelSave = useRef(performance.now())
+
+  const persist = useCallback((snapshot: MireglassWorldState, explicit = false) => {
+    if (invalidSave.current || (autosavePaused.current && !explicit)) return false
+    let result: MireglassSaveResult
+    try { result = saveMireglassDevWorld(window.localStorage, snapshot) }
+    catch { result = { ok: false, message: 'Save failed. Browser storage is unavailable; progress remains in memory.' } }
+    if (!result.ok) {
+      autosavePaused.current = true
+      setSaveMode('storage-error')
+      setSaveNotice(result.message)
+      return false
+    }
+    autosavePaused.current = false
+    travelDirty.current = false
+    lastTravelSave.current = performance.now()
+    setSaveMode('resumed')
+    setSaveNotice('Mireglass v6 progress saved on this device.')
+    return true
+  }, [])
 
   const report = useCallback((text: string, rejected = false) => {
     setError(rejected)
@@ -264,10 +337,16 @@ export function MireglassPlayableApp() {
     const result = runtime.act(action)
     setState(result.state)
     report(result.rejection ? result.rejection.message : eventText(result.event), !!result.rejection)
-  }, [runtime, report])
+    if (result.event) persist(result.state)
+  }, [runtime, report, persist])
 
   useEffect(() => {
-    const reset = () => { movement.current = [0, 0]; clock.current = { last: null, accrued: 0 } }
+    const reset = () => { movement.current = [0, 0]; queued.current = []; clock.current = { last: null, accrued: 0 } }
+    const onVisibility = () => {
+      if (document.hidden) persist(runtime.state)
+      reset()
+    }
+    const onBlur = () => { persist(runtime.state); reset() }
     const timer = window.setInterval(() => {
       if (document.hidden) return
       const now = performance.now()
@@ -281,16 +360,19 @@ export function MireglassPlayableApp() {
       for (let index = 0; index < steps; index += 1) {
         const intents = [...(index === 0 ? queued.current : []), ...streamedControlIntents(runtime.state.player.yaw, movement.current)]
         const result = runtime.advance(intents)
+        if (result.events.some((event) => event.type === 'player_moved' || event.type === 'player_looked'
+          || event.type === 'player_jumped' || event.type === 'tile_discovered')) travelDirty.current = true
         if (result.rejections[0]) rejection = REJECTION_TEXT[result.rejections[0].code]
       }
       queued.current = []
       setState(runtime.state)
+      if (shouldAutosaveMireglassTravel(travelDirty.current, lastTravelSave.current, now)) persist(runtime.state)
       if (rejection) report(rejection, true)
     }, STEP_MS)
-    document.addEventListener('visibilitychange', reset)
-    window.addEventListener('blur', reset)
-    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', reset); window.removeEventListener('blur', reset) }
-  }, [runtime, report])
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('blur', onBlur)
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('blur', onBlur) }
+  }, [runtime, report, persist])
 
   const choices = useMemo(() => mireglassActionChoices(state), [state])
   const onIntent = useCallback((intent: WizardViewIntent) => {
@@ -319,6 +401,25 @@ export function MireglassPlayableApp() {
   const objective = useMemo(() => mireglassNextObjective(state), [state])
   const progress = state.expedition
   const player = state.player
+  const replaceInvalidSave = () => {
+    const fresh = createMireglassDevWorld()
+    let result: MireglassSaveResult
+    try { result = saveMireglassDevWorld(window.localStorage, fresh.state) }
+    catch { result = { ok: false, message: 'Save failed. Browser storage is unavailable; the existing bytes were preserved.' } }
+    if (!result.ok) { setSaveNotice(result.message); return }
+    invalidSave.current = false
+    autosavePaused.current = false
+    travelDirty.current = false
+    lastTravelSave.current = performance.now()
+    movement.current = [0, 0]
+    queued.current = []
+    setRuntime(fresh)
+    setState(fresh.state)
+    setSelectedSiteId(null)
+    setSaveMode('resumed')
+    setSaveNotice('Started a new v6 frontier save. The previous invalid bytes were replaced by your explicit choice.')
+    report('New frontier journey started.')
+  }
   const selectedSite = selectedSiteId ? mireglassRouteSites(state.seed).find((site) => site.id === selectedSiteId) : undefined
   const nearMeters = distance(player.position, { ...objective.position, y: runtime.tileAtWorld(objective.position.x, objective.position.z)?.center.y ?? player.position.y })
   const sealSold = progress.cacheExcavated && owned(state, 'mireglass_reach/item/seal') === 0
@@ -329,7 +430,12 @@ export function MireglassPlayableApp() {
     <aside className="wr-mireglass-panel" data-collapsed={collapsed} aria-label="Mireglass expedition controls">
       <div className="wr-mireglass-top"><h1>Mireglass Reach</h1><button type="button" aria-label={collapsed ? 'Expand expedition controls' : 'Collapse expedition controls'} onClick={() => setCollapsed((value) => !value)}>{collapsed ? 'Open' : '−'}</button></div>
       <div className="wr-mireglass-content">
-        <p className="warning">Unsaved dev journey. Frontier spawn is a travel shortcut only, with ordinary starter skills and items. Reloading starts fresh; v5 saves are untouched.</p>
+        <p className="warning">Frontier dev spawn skips travel only; starter skills and items are ordinary. Mireglass uses its own v6 save; v5 saves are untouched.</p>
+        <p className="wr-mireglass-save-note" data-error={saveMode === 'invalid' || saveMode === 'storage-error'} role="status">{saveNotice}</p>
+        <div className="wr-mireglass-save-controls">
+          <button type="button" disabled={saveMode === 'invalid'} onClick={() => persist(runtime.state, true)}>Save now</button>
+          {saveMode === 'invalid' && <button type="button" onClick={replaceInvalidSave}>Replace invalid save with fresh start</button>}
+        </div>
         <p><b>Next:</b> {sealSold ? 'Expedition returned and seal traded.' : objective.label}</p>
         {!sealSold && <p className="readout">Target {bearingText(player.position, objective.position)} · {pointText(objective.position)} · {nearMeters.toFixed(0)}m away</p>}
         {selectedSite && <p className="readout">Selected {routeName(selectedSite.kind)} site: {bearingText(player.position, selectedSite.from)} · {pointText(selectedSite.from)} · {distance(player.position, selectedSite.from).toFixed(0)}m away</p>}

@@ -3,11 +3,19 @@ import { createGeneratedWorld } from './domain/generation'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { createMireglassWorld } from './domain/mireglassWorld'
+import { MIREGLASS_SAVE_KEY } from './domain/mireglassPersistence'
 import {
-  bearingText, createMireglassDevWorld, mireglassActionChoices, mireglassNextObjective, mireglassViewProjection,
+  bearingText, createMireglassDevWorld, loadMireglassDevWorld, mireglassActionChoices,
+  mireglassNextObjective, mireglassViewProjection, saveMireglassDevWorld, shouldAutosaveMireglassTravel,
 } from './MireglassPlayableApp'
 
 const seed = 'greenway-alpha'
+const V5_KEY = 'wizard-realms:world:v5'
+function memoryStorage() {
+  const values = new Map<string, string>()
+  return { getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value) }, values }
+}
 
 describe('Mireglass playable dev adapter', () => {
   it('starts at the frontier with ordinary items, no learned spell, and no automatic progress', () => {
@@ -52,7 +60,7 @@ describe('Mireglass playable dev adapter', () => {
     expect(before.coins).toBe(source.coins)
     expect(before.skillXp).toEqual(source.skillXp)
     expect(before.learnedSpellIds).toEqual([])
-    expect(before.map.title).toContain('unsaved dev')
+    expect(before.map.title).toContain('(v6)')
     expect(before.map.tiles).toHaveLength(17 * 17)
     expect(before.map.tiles.filter((tile) => tile.discovered).length).toBe(1)
 
@@ -93,5 +101,47 @@ describe('Mireglass playable dev adapter', () => {
     expect(mireglassNextObjective(returning).label).toBe('Descend the built slate ladder')
     expect(mireglassNextObjective({ ...returning, player: { ...returning.player, position: { ...bridge.to } } }).label)
       .toBe('Return across the built fen bridge')
+  })
+
+  it('saves and reloads through only the v6 key, preserving the v5 bytes', () => {
+    const storage = memoryStorage()
+    const v5Bytes = '{"v5":"unchanged"}'
+    storage.setItem(V5_KEY, v5Bytes)
+    const initial = loadMireglassDevWorld(storage, seed)
+    expect(initial.mode).toBe('fresh')
+    const world = initial.runtime
+    expect(world.act({ type: 'study_fringe_marker' }).event?.type).toBe('fringe_marker_studied')
+    const before = JSON.stringify(world.state)
+    expect(saveMireglassDevWorld(storage, world.state)).toEqual({ ok: true })
+    const v6Bytes = storage.getItem(MIREGLASS_SAVE_KEY)
+    expect(v6Bytes).toContain('wizard-mireglass/v6')
+    const resumed = loadMireglassDevWorld(storage, seed)
+    expect(resumed.mode).toBe('resumed')
+    expect(JSON.stringify(resumed.runtime.state)).toBe(before)
+    expect(storage.getItem(V5_KEY)).toBe(v5Bytes)
+    expect(storage.values.size).toBe(2)
+  })
+
+  it('preserves invalid v6 bytes until the explicit replacement path writes a fresh save', () => {
+    const storage = memoryStorage()
+    const invalidBytes = '{"schemaVersion":"old-v6","progress":"keep this"}'
+    storage.setItem(MIREGLASS_SAVE_KEY, invalidBytes)
+    const loaded = loadMireglassDevWorld(storage, seed)
+    expect(loaded.mode).toBe('invalid')
+    expect(loaded.runtime.state.expedition.fringeMarkerStudied).toBe(false)
+    expect(storage.getItem(MIREGLASS_SAVE_KEY)).toBe(invalidBytes)
+    expect(saveMireglassDevWorld(storage, createMireglassDevWorld(seed).state)).toEqual({ ok: true })
+    expect(storage.getItem(MIREGLASS_SAVE_KEY)).not.toBe(invalidBytes)
+    expect(loadMireglassDevWorld(storage, seed).mode).toBe('resumed')
+  })
+
+  it('reports storage failures and gates movement autosaves to five seconds', () => {
+    const unavailable = { getItem: (_key: string): string | null => { throw new Error('denied') } }
+    expect(loadMireglassDevWorld(unavailable, seed).mode).toBe('storage-error')
+    const full = { setItem: (_key: string, _value: string) => { throw new Error('quota') } }
+    expect(saveMireglassDevWorld(full, createMireglassDevWorld(seed).state)).toMatchObject({ ok: false })
+    expect(shouldAutosaveMireglassTravel(false, 0, 10_000)).toBe(false)
+    expect(shouldAutosaveMireglassTravel(true, 0, 4_999)).toBe(false)
+    expect(shouldAutosaveMireglassTravel(true, 0, 5_000)).toBe(true)
   })
 })
