@@ -18,6 +18,7 @@ import {
 } from './view'
 import type { EquipmentSlot } from './view/contracts'
 import { areaAt } from './domain/generation'
+import { visibleMapTiles } from './view/visibleMap'
 import { hasValidRoutePlacements, isRestorableWizardSave } from './domain/persistence'
 import { routeBuildOptions } from './domain/routeSites'
 import { storeSellUnitPrice } from './domain/world'
@@ -369,7 +370,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     buildSites,
     selectedBuildSiteId: buildSites.some((site) => site.id === selectedBuildSiteId && site.discovered && site.status !== 'built') ? selectedBuildSiteId : null,
     map: {
-      tiles: state.tiles.map((tile) => {
+      tiles: visibleMapTiles(state.tiles, currentTile.gridX, currentTile.gridZ).map((tile) => {
         const discovered = discoveredTileIds.has(tile.id)
         return {
           id: tile.id, gridX: tile.gridX, gridZ: tile.gridZ,
