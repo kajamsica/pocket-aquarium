@@ -20,13 +20,21 @@ The only edited cell is `mireglassAnchors(seed).sealCache.tile.id`. With v10 ter
 
 The action still commits its current single cache event, inventory reward, and XP exactly once. A new immutable state identity invalidates the streamed runtime cache so the lower ground takes effect immediately. The renderer and overview read the same effective tile as movement. The player may descend onto it under existing gravity; leaving the cell currently permits an upward step, which is a known movement limitation, not proof of a general digging system.
 
+## Frozen v10 interfaces
+
+The existing optional terrain interface remains `createCachePitOverlay(seed, facts?: { readonly cachePitDug: boolean })`; `createActiveWorldTerrain` and `createStreamedWorldFromState` already accept the same optional facts. Only a validated v10 state supplies `{ cachePitDug: state.mireglass.cacheExcavated }`. Older versions omit the argument, even when their cache-reward bit is true.
+
+`PublicWorldV10State` extends the exact v9 state with `readonly terrainRevision: 'mireglass-cache-pit-v1'`. The immutable v10 source receipt contains both `sourceV9Head: PublicV9Head` and `sourceV9Lineage: PublicV9SourceReceipt`. V10 accesses the validated encoded v9 head through a narrow `inspectPublicV9UnderLock(storage, v8, v9)` export. The caller already holds the shared lock; calling the public v9 inspector there would try to acquire it twice. Portable rescue JSON must encode typed discovery masks explicitly, rather than relying on default `Uint8Array` JSON serialization.
+
+V10 must adapt camp placement before calling the exact-key v9 validator. A v10 state with the additional terrain marker cannot be passed directly to `applyFieldCampAction`; validate a v9-shaped witness and the real effective-ground pose, then apply the unchanged camp rule and restore the v10 marker. Preserve the camp list and source lineage throughout.
+
 ## Lane contracts and ownership
 
 | Lane | Exclusive owners | Proof |
 | --- | --- | --- |
 | Terrain and movement | A small cache-overlay module, `activeWorldTerrain.ts`, `streamedWorld.ts`, and focused tests | Across seeds and chunk reload orders, only the cache cell changes; landing and ground collision use its effective height; omission preserves old output. |
-| V10 lineage and validation | New `publicWorldV10State.ts`, snapshot, atomic database, flow, and focused tests; a narrow under-lock inspector export from `publicWorldV9Flow.ts` if needed | Exact shape, actual-pose validation, source receipt, migration without older writes, CAS, stale source rejection, head/previous rescue, and camp-history monotonicity. |
-| Public authority | `publicWorldActions.ts`, `publicWorldRuntime.ts`, and focused tests | Rejected digs are atomic; successful dig rebuilds terrain once without duplicate reward; save/reload and region travel preserve the effective ground. |
+| V10 lineage and validation | New `publicWorldV10State.ts`, snapshot, atomic database, flow, and focused tests; a narrow under-lock inspector export from `publicWorldV9Flow.ts` | Exact shape, actual-pose validation, source receipt, migration without older writes, CAS, stale source rejection, head/previous rescue, and camp-history monotonicity. |
+| Public authority | `publicWorldActions.ts`, `publicWorldRuntime.ts`, `fieldCamp.ts` or a narrow v10 camp adapter, and focused tests | Rejected digs and camp placements are atomic; successful dig rebuilds terrain once without duplicate reward; save/reload and region travel preserve the effective ground. |
 | Entry and presentation | New `PublicV10Entry.tsx`, `PublicWizardApp.tsx`, `PublicWorldView.ts`, `MireglassPlayableApp.tsx`, `main.tsx`, and focused tests | Explicit upgrade, changed scene and map height, saved-pose resume, blocked-source copy, and unchanged v7/v8/v9 entry routes. |
 
 Freeze the v10 state type, overlay function signature, and source-receipt shape before parallel implementation. The terrain and persistence lanes can then proceed independently. The public-authority lane consumes the terrain interface; entry and presentation follow the authority and flow. No lane starts a WebGL preview, modifies browser storage, commits, pushes, or edits another lane's files. The primary agent owns integration, Bioscopics Git identity, low-RAM validation, and real UI proof.
