@@ -48,7 +48,7 @@ function site(kind: MireglassRouteSite['kind'], x: number, seamZ: number, from: 
   })
 }
 
-/** Canonical v2 route choices, independent of chunk activation and caller mutation. */
+/** Canonical route choices for the active Mireglass revision, independent of chunk activation and caller mutation. */
 export function mireglassRouteSites(seed: string): readonly MireglassRouteSite[] {
   const normalizedSeed = seed || 'wizard-realms'
   const occupied = [
