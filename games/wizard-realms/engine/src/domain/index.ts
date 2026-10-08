@@ -35,3 +35,5 @@ export { mireglassAnchors, mireglassResources, MIREGLASS_CONTENT_REVISION, MIREG
 export type { MireglassAnchor, MireglassAnchorId, MireglassResource } from './mireglassContent'
 export { mireglassChunkContent } from './mireglassChunkContent'
 export type { MireglassChunkContent } from './mireglassChunkContent'
+export { mireglassRouteSites } from './mireglassRouteSites'
+export type { MireglassRouteSite } from './mireglassRouteSites'
