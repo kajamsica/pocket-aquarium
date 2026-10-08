@@ -42,6 +42,62 @@ describe('separate streamed-world authority', () => {
     expect(JSON.stringify(runtime)).not.toMatch(/cache|chunks|terrain/i)
   })
 
+  it('reuses frozen discovery on known moves and inserts first visits in lexical order', () => {
+    const runtime = createStreamedWorld('discovery-reuse')
+    const initialIds = runtime.state.discoveredTileIds
+    const repeated = runtime.advance([move(1), move(-1)])
+    expect(repeated.events.map((event) => event.type)).toEqual(['player_moved', 'player_moved'])
+    expect(repeated.state.discoveredTileIds).toBe(initialIds)
+    expect(Object.isFrozen(initialIds)).toBe(true)
+
+    const firstVisits = runtime.advance([move(-4), move(4), move(4)])
+    expect(firstVisits.events.map((event) => event.type)).toEqual([
+      'player_moved', 'tile_discovered', 'player_moved', 'player_moved', 'tile_discovered',
+    ])
+    expect(firstVisits.events.filter((event) => event.type === 'tile_discovered')).toEqual([
+      { type: 'tile_discovered', tick: 2, tileId: 'tile-2-3' },
+      { type: 'tile_discovered', tick: 2, tileId: 'tile-4-3' },
+    ])
+    expect(firstVisits.state.discoveredTileIds).toEqual(['tile-2-3', 'tile-3-3', 'tile-4-3'])
+    expect(firstVisits.state.discoveredTileIds).not.toBe(initialIds)
+    expect(initialIds).toEqual(['tile-3-3'])
+    expect(Object.isFrozen(firstVisits.state.discoveredTileIds)).toBe(true)
+
+    const revisited = runtime.advance([move(-4), move(-4)])
+    expect(revisited.events.map((event) => event.type)).toEqual(['player_moved', 'player_moved'])
+    expect(revisited.state.discoveredTileIds).toBe(firstVisits.state.discoveredTileIds)
+    const rejected = runtime.advance([move(5)])
+    expect(rejected.events).toEqual([])
+    expect(rejected.rejections).toEqual([{ intentIndex: 0, intentType: 'move', code: 'invalid_value' }])
+    expect(rejected.state.discoveredTileIds).toBe(firstVisits.state.discoveredTileIds)
+
+    const restored = createStreamedWorldFromState(JSON.parse(JSON.stringify(rejected.state)))
+    const restoredIds = restored.state.discoveredTileIds
+    expect(restored.advance([move(4)]).state.discoveredTileIds).toBe(restoredIds)
+    const nextVisit = restored.advance([move(-4), move(-4)])
+    expect(nextVisit.events.filter((event) => event.type === 'tile_discovered')).toEqual([
+      { type: 'tile_discovered', tick: 6, tileId: 'tile-1-3' },
+    ])
+    expect(nextVisit.state.discoveredTileIds).toEqual(['tile-1-3', 'tile-2-3', 'tile-3-3', 'tile-4-3'])
+    expect(restoredIds).toEqual(['tile-2-3', 'tile-3-3', 'tile-4-3'])
+  })
+
+  it('retries discovery after a later intent throws without committing the frame', () => {
+    const runtime = createStreamedWorld('discovery-rollback')
+    const before = runtime.state
+    expect(() => runtime.advance([move(4), null as unknown as StreamedWorldIntent])).toThrow(TypeError)
+    expect(runtime.state).toBe(before)
+
+    const retry = runtime.advance([move(4), move(-4), move(4)])
+    expect(retry.events.map((event) => event.type)).toEqual([
+      'player_moved', 'tile_discovered', 'player_moved', 'player_moved',
+    ])
+    expect(retry.events.filter((event) => event.type === 'tile_discovered')).toEqual([
+      { type: 'tile_discovered', tick: 1, tileId: 'tile-4-3' },
+    ])
+    expect(retry.state.discoveredTileIds).toEqual(['tile-3-3', 'tile-4-3'])
+  })
+
   it('accepts a distant Mireglass start without changing the one-argument default', () => {
     const seed = 'mireglass-start'
     const defaultStart = createStreamedWorld(seed)

@@ -130,13 +130,15 @@ export function createStreamedWorldFromState(snapshot: StreamedWorldState): Stre
 
 function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, initialState: StreamedWorldState): StreamedWorldRuntime {
   let state = freezeState(initialState)
+  const discovered = new Set(state.discoveredTileIds)
   return {
     get state() { return state },
     advance(intents) {
       const tick = state.tick + 1
       if (!Number.isSafeInteger(tick)) throw new RangeError('Streamed-world tick overflow.')
       const player = { ...state.player, position: { ...state.player.position } }
-      const discoveredTileIds = [...state.discoveredTileIds]
+      let discoveredTileIds = state.discoveredTileIds
+      let pendingDiscovery: Set<string> | undefined
       const events: StreamedWorldEvent[] = []
       const rejections: StreamedWorldRejection[] = []
       const reject = (index: number, intent: StreamedWorldIntent, code: StreamedWorldRejection['code']) =>
@@ -170,9 +172,19 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
           player.position = { x, y: Math.max(player.position.y, tile.center.y), z }
           if (player.position.y === tile.center.y) player.verticalVelocity = 0
           events.push({ type: 'player_moved', tick, position: { ...player.position } })
-          if (!discoveredTileIds.includes(tile.id)) {
-            discoveredTileIds.push(tile.id)
-            discoveredTileIds.sort()
+          if (!discovered.has(tile.id) && !pendingDiscovery?.has(tile.id)) {
+            const nextDiscoveredTileIds = [...discoveredTileIds]
+            let low = 0
+            let high = nextDiscoveredTileIds.length
+            while (low < high) {
+              const middle = (low + high) >>> 1
+              if (nextDiscoveredTileIds[middle] < tile.id) low = middle + 1
+              else high = middle
+            }
+            nextDiscoveredTileIds.splice(low, 0, tile.id)
+            discoveredTileIds = nextDiscoveredTileIds
+            if (!pendingDiscovery) pendingDiscovery = new Set()
+            pendingDiscovery.add(tile.id)
             events.push({ type: 'tile_discovered', tick, tileId: tile.id })
           }
           return
@@ -213,6 +225,7 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
         player.verticalVelocity = 0
       }
       state = freezeState({ seed: normalizedSeed, tick, player, discoveredTileIds })
+      if (pendingDiscovery) for (const id of pendingDiscovery) discovered.add(id)
       return { state, events, rejections }
     },
     tileAtWorld: (x, z) => terrain.tileAtWorld(x, z),
