@@ -214,8 +214,8 @@ function CameraRig({ pose, cameraOrbit, orbiting, stores }: {
   const desired = useMemo(() => new THREE.Vector3(), [])
   useFrame(({ camera, size }, delta) => {
     const blend = 1 - Math.exp(-(orbiting ? 18 : 2.6) * delta)
-    orbitYaw.current += ((orbiting ? cameraOrbit[0] : 0) - orbitYaw.current) * blend
-    orbitPitch.current += ((orbiting ? cameraOrbit[1] : 0.28) - orbitPitch.current) * blend
+    orbitYaw.current += (cameraOrbit[0] - orbitYaw.current) * blend
+    orbitPitch.current += (cameraOrbit[1] - orbitPitch.current) * blend
     const heading = pose.yaw + orbitYaw.current
     const framing = cameraFramingFor(size.width, size.height)
     const horizontal = Math.cos(orbitPitch.current * framing.pitchScale) * framing.distance

@@ -107,7 +107,10 @@ describe('Wizard view adapter', () => {
     expect(builtRoutes()).toEqual([])
 
     state.unlockedRecipeIds.push('highland_bridge')
-    expect(toViewProjection(state, []).buildSites.filter((site) => site.routeId === 'highland_bridge').length).toBeGreaterThan(1)
+    const bridgeSites = toViewProjection(state, []).buildSites.filter((site) => site.routeId === 'highland_bridge')
+    expect(bridgeSites.length).toBeGreaterThan(1)
+    expect(bridgeSites.find((site) => site.id === 'highland_bridge:z:-8')?.label)
+      .toBe('Highland bridge (east crossing), site 8m north')
     state.discoveredTileIds = [state.tiles.find((tile) => tile.id === 'tile-3-2')!.id]
     expect(toViewProjection(state, []).buildSites.some((site) => !site.discovered)).toBe(true)
     expect(routeSites().every((id) => state.discoveredTileIds.includes(id))).toBe(true)
@@ -289,7 +292,7 @@ describe('Wizard view adapter', () => {
     expect(wandRow).toBeDefined()
     expect(wandRow).toContain('aria-pressed="true"')
     expect(wandRow).not.toContain('disabled=""')
-    expect(wandRow).toContain('>Unequip</button>')
+    expect(wandRow).toContain('>Unequip Off hand</button>')
     expect(wandRow).not.toContain('>Equip</button>')
   })
 

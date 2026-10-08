@@ -75,9 +75,20 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             const equippedSlot = stack.equippableSlots?.find((slot) => projection.equipment[slot]?.id === stack.id)
             const targetSlot = stack.equippableSlots?.find((slot) => projection.equipment[slot] === null) ?? stack.equippableSlots?.[0]
             const equipped = equippedSlot !== undefined
+            const unassignedCopies = stack.quantity - Object.values(projection.equipment).filter((item) => item?.id === stack.id).length
             return <div className="wr-item" key={stack.id}>
               <span className="wr-icon">{stack.icon ?? '◆'}</span><b>{stack.name}</b><small>×{stack.quantity}</small>
-              {targetSlot && <button type="button" style={{ minHeight: 44 }} aria-pressed={equipped} aria-label={equipped ? `Unequip ${stack.name}` : `Equip ${stack.name}`} onClick={() => onIntent(equippedSlot ? { type: 'equipment.unequip', slot: equippedSlot } : { type: 'equipment.equip', stackId: stack.id, slot: targetSlot })}>{equipped ? 'Unequip' : 'Equip'}</button>}
+              {stack.equippableSlots && stack.equippableSlots.length > 1
+                ? <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4, gridColumn: '2 / 3' }}>
+                  {stack.equippableSlots.map((slot) => {
+                    const wornHere = projection.equipment[slot]?.id === stack.id
+                    if (!wornHere && unassignedCopies < 1) return null
+                    const label = EQUIPMENT_SLOT_LABELS[slot]
+                    return <button key={slot} type="button" style={{ minHeight: 44 }} aria-pressed={wornHere} aria-label={`${wornHere ? 'Unequip' : 'Equip'} ${stack.name} ${wornHere ? 'from' : 'in'} ${label}`}
+                      onClick={() => onIntent(wornHere ? { type: 'equipment.unequip', slot } : { type: 'equipment.equip', stackId: stack.id, slot })}>{wornHere ? `Unequip ${label}` : `Equip ${label}`}</button>
+                  })}
+                </span>
+                : targetSlot && <button type="button" style={{ minHeight: 44 }} aria-pressed={equipped} aria-label={equipped ? `Unequip ${stack.name}` : `Equip ${stack.name}`} onClick={() => onIntent(equippedSlot ? { type: 'equipment.unequip', slot: equippedSlot } : { type: 'equipment.equip', stackId: stack.id, slot: targetSlot })}>{equipped ? 'Unequip' : 'Equip'}</button>}
               <button disabled={firstTradeSlot < 0} onClick={() => onIntent({ type: 'trade.create-listing', stackId: stack.id, slot: firstTradeSlot, quantity: 1, unitPrice: stack.suggestedTradePrice ?? 1 })}>List</button>
             </div>
           })}

@@ -45,6 +45,7 @@ const STYLES = `
 export function WizardSurface({ projection, onIntent, diagnostics = false }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const pressedKeys = useRef(new Set<string>())
+  const lastDragPoint = useRef<readonly [number, number] | null>(null)
   const [dragging, setDragging] = useState(false)
   const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
@@ -58,6 +59,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
       setBackpackOpen(false)
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
+      lastDragPoint.current = null
       setCameraOrbit(CENTERED_CAMERA_ORBIT)
       window.requestAnimationFrame(() => mapCloseRef.current?.focus())
     } else window.requestAnimationFrame(() => mapButtonRef.current?.focus())
@@ -68,6 +70,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
     const clearControls = () => {
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
+      lastDragPoint.current = null
       setCameraOrbit(CENTERED_CAMERA_ORBIT)
     }
     const onVisibilityChange = () => { if (document.visibilityState !== 'visible') clearControls() }
@@ -121,10 +124,16 @@ export function WizardSurface({ projection, onIntent, diagnostics = false }: Wiz
     <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen}>
       <style>{STYLES}</style>
       <div className="wr-scene" data-dragging={dragging}
-        onPointerDown={(event) => { rootRef.current?.focus(); event.currentTarget.setPointerCapture(event.pointerId); setDragging(true) }}
-        onPointerMove={(event) => { if (dragging) setCameraOrbit((current) => cameraOrbitFromDrag(current, [event.movementX, event.movementY])) }}
-        onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setDragging(false); setCameraOrbit(CENTERED_CAMERA_ORBIT) }}
-        onPointerCancel={() => { setDragging(false); setCameraOrbit(CENTERED_CAMERA_ORBIT) }}>
+        onPointerDown={(event) => { rootRef.current?.focus(); event.currentTarget.setPointerCapture(event.pointerId); lastDragPoint.current = [event.clientX, event.clientY]; setDragging(true) }}
+        onPointerMove={(event) => {
+          const previous = lastDragPoint.current
+          if (!previous) return
+          const next = [event.clientX, event.clientY] as const
+          lastDragPoint.current = next
+          setCameraOrbit((current) => cameraOrbitFromDrag(current, [next[0] - previous[0], next[1] - previous[1]]))
+        }}
+        onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); lastDragPoint.current = null; setDragging(false) }}
+        onPointerCancel={() => { lastDragPoint.current = null; setDragging(false) }}>
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging} />
       </div>
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />

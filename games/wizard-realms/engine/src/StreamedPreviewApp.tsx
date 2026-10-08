@@ -128,6 +128,7 @@ export function StreamedPreviewApp() {
   const [messages, setMessages] = useState<string[]>([])
   const movementRef = useRef<readonly [number, number]>([0, 0])
   const queuedRef = useRef<StreamedWorldIntent[]>([])
+  const rejectionClearTick = useRef<number | null>(null)
   const clockRef = useRef<{ lastMs: number | null; accumulatedMs: number }>({ lastMs: null, accumulatedMs: 0 })
 
   useEffect(() => {
@@ -151,11 +152,17 @@ export function StreamedPreviewApp() {
       }
       queuedRef.current = []
       setState(runtime.state)
-      if (texts.length) setMessages((current) => {
-        const next = [...current]
-        for (const text of texts) if (next.at(-1) !== text) next.push(text)
-        return next.slice(-3)
-      })
+      if (texts.length) {
+        rejectionClearTick.current = runtime.state.tick + 60
+        setMessages((current) => {
+          const next = [...current]
+          for (const text of texts) if (next.at(-1) !== text) next.push(text)
+          return next.slice(-3)
+        })
+      } else if (rejectionClearTick.current !== null && runtime.state.tick >= rejectionClearTick.current) {
+        rejectionClearTick.current = null
+        setMessages([])
+      }
     }, FIXED_STEP_MS)
     document.addEventListener('visibilitychange', resetClock)
     return () => {
@@ -183,7 +190,7 @@ export function StreamedPreviewApp() {
       </p>
       <span className="wr-streamed-keys">W/S move · A/D pivot · Space jump · hold and drag to orbit · M map</span>
       {/* Telemetry changes 20 times a second, so it stays outside any live region. */}
-      <span className="wr-streamed-telemetry">position x {state.player.position.x.toFixed(1)}, z {state.player.position.z.toFixed(1)} · active chunks {runtime.activeChunkCount()} · discovered tiles {state.discoveredTileIds.length}</span>
+      <span className="wr-streamed-telemetry">position x {state.player.position.x.toFixed(1)}, y {state.player.position.y.toFixed(1)}, z {state.player.position.z.toFixed(1)} · active chunks {runtime.activeChunkCount()} · discovered tiles {state.discoveredTileIds.length}</span>
     </div>
   </main>
 }

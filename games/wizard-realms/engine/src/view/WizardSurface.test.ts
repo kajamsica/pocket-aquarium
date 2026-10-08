@@ -76,11 +76,13 @@ describe('third-person control grammar', () => {
     expect(cameraOrbitFromDrag([0, 0.1], [0, -100])).toEqual([0, 0.08])
   })
 
-  it('starts a second drag from the recentered camera target', () => {
+  it('continues a second drag from the released camera target', () => {
     const firstDrag = cameraOrbitFromDrag(CENTERED_CAMERA_ORBIT, [50, 20])
     expect(firstDrag).not.toEqual(CENTERED_CAMERA_ORBIT)
-    expect(cameraOrbitFromDrag(CENTERED_CAMERA_ORBIT, [0, 0])).toEqual(CENTERED_CAMERA_ORBIT)
-    expect(cameraOrbitFromDrag(CENTERED_CAMERA_ORBIT, [10, 0])).toEqual([-0.04, 0.28])
+    expect(cameraOrbitFromDrag(firstDrag, [0, 0])).toEqual(firstDrag)
+    const secondDrag = cameraOrbitFromDrag(firstDrag, [10, 0])
+    expect(secondDrag[0]).toBeCloseTo(-0.24)
+    expect(secondDrag[1]).toBeCloseTo(0.34)
   })
 
   it('toggles the map from keyboard and selects a mobile full-screen sheet', () => {
@@ -271,6 +273,29 @@ describe('equipment controls', () => {
       { type: 'equipment.unequip', slot: 'head' },
       { type: 'equipment.equip', stackId: 'axe-stack', slot: 'mainHand' },
     ])
+  })
+
+  it('lets the player choose a hand for a wand instead of silently taking the empty off hand', () => {
+    const wand = { id: 'wand-stack', itemId: 'oak_wand', name: 'Oak wand', quantity: 1, equippableSlots: ['mainHand', 'offHand'] as const }
+    const spade = { id: 'spade-stack', itemId: 'field_spade', name: 'Field spade', quantity: 1 }
+    const projection = { ...gearProjection, backpack: { capacity: 20, stacks: [wand] },
+      equipment: { ...gearProjection.equipment, mainHand: spade, offHand: null } } as WizardViewProjection
+    const emitted: unknown[] = []
+    const buttons = findElements(WizardHud({ projection, onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
+    const main = buttons.find((button) => button.props['aria-label'] === 'Equip Oak wand in Main hand')
+    const off = buttons.find((button) => button.props['aria-label'] === 'Equip Oak wand in Off hand')
+    expect(main).toBeDefined()
+    expect(off).toBeDefined()
+    ;(main?.props.onClick as () => void)()
+    ;(off?.props.onClick as () => void)()
+    expect(emitted).toEqual([
+      { type: 'equipment.equip', stackId: 'wand-stack', slot: 'mainHand' },
+      { type: 'equipment.equip', stackId: 'wand-stack', slot: 'offHand' },
+    ])
+    const worn = { ...projection, equipment: { ...projection.equipment, offHand: wand } }
+    const wornMarkup = renderToStaticMarkup(createElement(WizardHud, { projection: worn, onIntent: () => {} }))
+    expect(wornMarkup).toContain('aria-label="Unequip Oak wand from Off hand"')
+    expect(wornMarkup).not.toContain('aria-label="Equip Oak wand in Main hand"')
   })
 })
 
