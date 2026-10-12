@@ -222,6 +222,44 @@ describe('V40 checked copy and Waystation save replay', () => {
     expect(replayPublicV40Witness(root.head, { ...barter, logs: 999 })).toBeNull()
   })
 
+  it('saves and reloads barter paid with stone earned by checked mining witnesses', async () => {
+    const gx = site.approach.x / WORLD_CELL_METERS
+    const gz = site.approach.z / WORLD_CELL_METERS - 1
+    const source = v39At(site.approach, 'streamed', { tiles: [
+      site.footprintTileIds[0], worldTileAtGrid(seed, gx, gz).id] })
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...baseline } = source.head
+    const prepared = { ...baseline, terrain: { ...baseline.terrain,
+      columns: [{ gx, gz, openDepth: 2, rewardDepth: 2, pitLadder: false }],
+      bag: { ...baseline.terrain.bag, soil: 2 } },
+    miningTools: { ...baseline.miningTools, basicPickOwned: true,
+      activePick: 'basic' as const },
+    state: { ...baseline.state, player: { ...baseline.state.player,
+      xp: 60, skillXp: { ...baseline.state.player.skillXp, excavation: 60 } } } }
+    const miningSource: PublicV39Root = { ...source,
+      lineage: { ...source.lineage, genesis: prepared },
+      head: { ...prepared, schemaVersion: PUBLIC_V39_SCHEMA, saveRevision: 0, witness: null } }
+    expect(decodePublicV39Root(miningSource)).toEqual(miningSource)
+    const base = createPublicV40Root(miningSource)
+    const once = successor(base, { kind: 'deep-dig', gx, gz })
+    expect(once.head.terrain.bag.stone).toBe(1)
+    const twice = successor(once, { kind: 'deep-dig', gx, gz })
+    expect(twice.head.terrain.bag.stone).toBe(2)
+    expect(decodePublicV40Root(twice)).toEqual(twice)
+    const factory = new IDBFactory(), store = createAtomicV40Store(factory)
+    await putRaw(factory, PUBLIC_V40_DATABASE_NAME, twice)
+    const paid = await commitPublicV40(locks as never, store, 2, twice.lineage, barter)
+    if (!paid.ok) throw new Error(paid.reason)
+    expect(paid.value.head.terrain.bag.stone).toBe(0)
+    expect(paid.value.head.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 8 })
+    expect(paid.value.head.timberBartered).toBe(true)
+    expect(await commitPublicV40(locks as never, store, 3, twice.lineage, barter))
+      .toEqual({ ok: false, reason: 'already_bartered' })
+    const reloaded = await createAtomicV40Store(factory).readChecked()
+    if (reloaded.status !== 'valid') throw new Error('Invalid V40 barter reload')
+    expect(samePublicV14Value(reloaded.root.head, paid.value.head)).toBe(true)
+  })
+
   it('preserves Waystation flags through inherited Ringkeeper and Signal witnesses', () => {
     const greenway = createFreshPublicV39Root(seed).head.state.greenway
     const ring = greenway.fairyRings.find(({ id }) => id === 'ring-greenway')!

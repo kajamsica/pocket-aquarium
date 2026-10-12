@@ -32,6 +32,12 @@ function atNorth(stone = 2, extraTileIds: readonly string[] = []): PublicV40Ways
         ...(stone ? [{ itemId: 'stone' as const, quantity: stone }] : [])] } } }
 }
 
+function withBagStone(progress: PublicV40WaystationProgress,
+  stone: number): PublicV40WaystationProgress {
+  return { ...progress, terrain: { ...progress.terrain,
+    bag: { ...progress.terrain.bag, stone } } }
+}
+
 function atPoint(progress: PublicV40WaystationProgress,
   point: Readonly<{ x: number; y: number; z: number }>,
   owner: 'greenway' | 'streamed' = 'streamed'): PublicV40WaystationProgress {
@@ -124,6 +130,9 @@ describe('V40 Waystation physical action', () => {
     expect(before.state.player.inventory).toContainEqual({ itemId: 'stone', quantity: 2 })
     expect(exchanged.state.player.inventory).not.toContainEqual({ itemId: 'stone', quantity: 2 })
     expect(exchanged.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 8 })
+    expect(exchanged.terrain.bag).toEqual(before.terrain.bag)
+    const reserved = withBagStone(before, 1)
+    expect(accepted(reserved, barter).terrain.bag.stone).toBe(1)
     expect(exchanged.state.player.coins).toBe(before.state.player.coins)
     expect(exchanged.state.player.xp).toBe(before.state.player.xp)
     expect(exchanged.state.eventSequence).toBe(before.state.eventSequence + 1)
@@ -139,6 +148,39 @@ describe('V40 Waystation physical action', () => {
         { itemId: 'logs' as const, quantity: 8 }] } } }
     expect(confirm(atPoint(built(directLogs), site.approach), barter))
       .toEqual({ rejection: 'already_built' })
+  })
+
+  it('spends bag-only and mixed stone once, keeping the inventory-first debit exact', () => {
+    for (const inventoryStone of [0, 1]) {
+      const before = withBagStone(atNorth(inventoryStone), 2)
+      const exchanged = accepted(before, barter)
+      expect(exchanged.timberBartered).toBe(true)
+      expect(exchanged.terrain.bag.stone).toBe(inventoryStone)
+      expect(exchanged.state.player.inventory.filter(({ itemId }) => itemId === 'stone'))
+        .toEqual([])
+      expect(exchanged.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 8 })
+      expect(exchanged.state.player.coins).toBe(before.state.player.coins)
+      expect(exchanged.state.player.xp).toBe(before.state.player.xp)
+      expect(exchanged.state.eventSequence).toBe(before.state.eventSequence + 1)
+      expect(confirm(exchanged, barter)).toEqual({ rejection: 'already_bartered' })
+    }
+  })
+
+  it('rejects insufficient combined stone and capacity measured across inventory and bag', () => {
+    for (const inventoryStone of [0, 1]) {
+      const insufficient = withBagStone(atNorth(inventoryStone), 1 - inventoryStone)
+      expect(confirm(insufficient, barter)).toEqual({ rejection: 'not_owned' })
+    }
+    const ready = withBagStone(atNorth(1), 1)
+    const carried = ready.state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
+      + ready.state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+      + Object.values(ready.terrain.bag).reduce((sum, count) => sum + count, 0)
+    const below = { ...ready, state: { ...ready.state, player: { ...ready.state.player,
+      backpackCapacity: carried + 5 } } }
+    expect(confirm(below, barter)).toEqual({ rejection: 'capacity' })
+    const boundary = { ...ready, state: { ...ready.state, player: { ...ready.state.player,
+      backpackCapacity: carried + 6 } } }
+    expect(confirm(boundary, barter).rejection).toBeUndefined()
   })
 
   it('requires the selected saved bridge and a physical far-bank exit before crossing', () => {

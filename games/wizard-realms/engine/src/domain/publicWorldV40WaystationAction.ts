@@ -103,10 +103,19 @@ export function confirmPublicV40WaystationAction(raw: PublicV40WaystationProgres
       if (distance(pose.effective.position, site.approach) > REACH) return reject('too_far')
       const stoneOwned = player.inventory.filter(({ itemId }) => itemId === 'stone')
         .reduce((sum, stack) => sum + stack.quantity, 0)
-      if (stoneOwned < 2) return reject('not_owned')
-      const used = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      if (!Number.isSafeInteger(used + 6) || used + 6 > player.backpackCapacity)
-        return reject('capacity')
+      const bagStoneSpent = Math.max(0, 2 - stoneOwned)
+      if (progress.terrain.bag.stone < bagStoneSpent) return reject('not_owned')
+      if (bagStoneSpent === 0) {
+        const used = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
+        if (!Number.isSafeInteger(used + 6) || used + 6 > player.backpackCapacity)
+          return reject('capacity')
+      } else {
+        const carried = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
+          + player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+          + Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
+        if (!Number.isSafeInteger(carried + 6)) return reject('invalid_value')
+        if (carried + 6 > player.backpackCapacity) return reject('capacity')
+      }
       let remaining = 2, logsAdded = false
       const inventory = player.inventory.flatMap((stack) => {
         if (stack.itemId === 'stone' && remaining) {
@@ -124,6 +133,9 @@ export function confirmPublicV40WaystationAction(raw: PublicV40WaystationProgres
       if (inventory.some(({ quantity }) => !Number.isSafeInteger(quantity)))
         return reject('invalid_value')
       const next: PublicV40WaystationProgress = { ...progress, timberBartered: true,
+        ...(bagStoneSpent ? { terrain: { ...progress.terrain,
+          bag: { ...progress.terrain.bag,
+            stone: progress.terrain.bag.stone - bagStoneSpent } } } : {}),
         state: { ...state, eventSequence: state.eventSequence + 1,
           player: { ...player, inventory } } }
       return decodePublicV40WaystationProgress(next) ? { progress: next } : reject('invalid_value')

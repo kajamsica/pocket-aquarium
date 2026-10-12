@@ -39,8 +39,8 @@ const rejectionHint: Readonly<Record<PublicV40WaystationRejection, string>> = {
   too_far: 'Move within 3 m of the marked place.',
   already_bartered: 'The one-time stone barter was already used.',
   already_built: 'The bridge is already built.',
-  not_owned: 'You need two stone in your backpack.',
-  capacity: 'Free at least six backpack spaces for the net timber gain.',
+  not_owned: 'Carry two stone in your backpack or terrain bag.',
+  capacity: 'Make backpack room for the barter logs after spending stone.',
   not_built: 'Build the marked bridge with B Works first.',
   already_crossed: 'The south-bank crossing was already recorded.',
   requires_crossing: 'Cross the bridge and record the far bank first.',
@@ -73,7 +73,7 @@ export function publicV40WaystationQuest(view: WizardViewProjection,
   if (facts.timberBartered) return finish('choose-materials',
     `The one-time stone barter is spent. Gather ${8 - logs} more logs, then build the marked bridge with B Works.`)
   const stones = view.backpack.stacks.reduce((total, stack) => total +
-    (stack.itemId === 'stone' ? stack.quantity : 0), 0)
+    (stack.itemId === 'stone' ? stack.quantity : 0), 0) + (view.v26TerrainBag?.stone ?? 0)
   return finish('choose-materials',
-    `Choose materials: gather ${8 - logs} more logs, or barter 2 quarried stone at the north-bank stockpile (${stones}/2 stone owned). Then build with B Works.`)
+    `Choose materials: gather ${8 - logs} more logs, or barter 2 quarried stone at the north-bank stockpile (${stones}/2 stone carried across backpack and terrain bag). Then build with B Works.`)
 }
