@@ -4,6 +4,7 @@ import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import { createPublicV23StreamTerrain } from './domain/publicWorldV14Terrain'
 import { decodePublicV14FrameWitness, PUBLIC_V14_MAX_FRAME_BATCH } from './domain/publicWorldV14Snapshot'
 import type { PublicV14Frame } from './domain/publicWorldV14Snapshot'
+import { publicV17StarterAdvanceMove } from './domain/publicWorldV17StarterMovement'
 import { samePublicV14Value } from './domain/publicWorldV14Validation'
 import { publicWorldV16TileAtGrid } from './domain/publicWorldV16GreenwaySites'
 import { exactPublicV23 } from './domain/publicWorldV23Snapshot'
@@ -11,6 +12,7 @@ import type { PublicWorldIntent, PublicWorldRejection } from './domain/publicWor
 import type { PublicV23ControllerOutcome } from './PublicV23ControllerRuntime'
 import type { PublicV36Start } from './domain/publicWorldV36Flow'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
+import { starterCliffFace } from './domain/starterCliffProfile'
 import { decodePublicV36Witness, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
 import type { PublicV42Operation, PublicV42Start } from './domain/publicWorldV42Flow'
 import { decodePublicV42Head, decodePublicV42Lineage, replayPublicV42Witness } from './domain/publicWorldV42Snapshot'
@@ -43,6 +45,30 @@ const waystationFlags = ({ timberBartered, southbankReached,
   waystationClaimed }: PublicV40WaystationProgress) => ({ timberBartered, southbankReached,
   waystationClaimed })
 const combatState = ({ ironHall, ironHallReward }: PublicV42RewardProgress) => ({ ironHall, ironHallReward })
+
+/** Explain a checked off-axis cliff rejection without changing the requested move. */
+function starterLadderRejection(value: PublicV42RewardProgress,
+  intents: readonly PublicWorldIntent[]): string | null {
+  if (value.state.movementOwner !== 'greenway') return null
+  const move = intents.find((intent) => intent.type === 'move')
+  if (!move || move.type !== 'move' || Math.abs(move.delta.z) < 0.08) return null
+  const { state } = value, route = state.greenway.routes.find((entry) =>
+    entry.id === 'greenway_ladder')
+  const face = route && starterCliffFace(state.seed, route,
+    state.generationProfile, state.greenway.builtRouteIds.includes('greenway_ladder'))
+  if (!face) return null
+  const from = state.player.position, offset = Math.abs(from.x - face.from.x)
+  if (offset <= face.width / 2 + 1e-6 || offset > 2
+    || from.z < face.to.z - 0.5 || from.z > face.from.z + 2) return null
+  const step = publicV17StarterAdvanceMove({ seed: state.seed,
+    profile: state.generationProfile, route, built: true,
+    greenwayWorks: value.greenwayWorks }, from,
+  { x: from.x + move.delta.x, z: from.z + move.delta.z }, state.player.verticalVelocity)
+  if (step.accepted || step.reason !== 'cliff_blocked' && step.reason !== 'off_ladder') return null
+  return move.delta.z < 0
+    ? 'The built starter ladder is narrow. Move to the center of its lower foot, then climb within the rungs.'
+    : 'The built starter ladder is narrow. Move to the center of its upper foot, then descend within the rungs.'
+}
 
 /** Inherited controls use a disposable V36 shell. Its lineage never reaches storage. */
 function asV36(start: PublicV42Start): PublicV36Start {
@@ -164,9 +190,12 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
       const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1', frames: [{ intents, walkRequested }] })
       if (!frame) return reject(intents, 'invalid_frame', 'Invalid replayable frame.')
       const candidate = [...pending, frame.frames[0]]
-      const next = previewPublicV42RewardFrameBatch(progress(committed),
-        { kind: 'frame-batch/v1', frames: candidate })
-      if (!next) return reject(intents, 'terrain_missing', 'This move cannot be replayed safely.')
+      const hasJump = candidate.some(({ intents }) => intents.some((intent) => intent.type === 'jump'))
+      // Ordinary frames compose one at a time; Jump needs its grounded origin.
+      const next = previewPublicV42RewardFrameBatch(hasJump ? progress(committed) : preview,
+        { kind: 'frame-batch/v1', frames: hasJump ? candidate : frame.frames })
+      if (!next) return reject(intents, 'terrain_missing', starterLadderRejection(preview, intents)
+        ?? 'This move cannot be replayed safely.')
       pending = candidate; preview = next
       return { events: [], rejections: [] }
     },
