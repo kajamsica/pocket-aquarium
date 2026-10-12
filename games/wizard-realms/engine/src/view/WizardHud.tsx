@@ -4,6 +4,8 @@ import type { TerrainWorkSite } from '../domain/terrainWorks'
 import { PUBLIC_V11_BOOTS_LISTING_ID } from '../domain/publicWorldGait'
 import { publicV36MarkerRejectionMessage } from './publicV36MarkerQuest'
 import { publicV40WaystationRejectionHint } from './publicV40WaystationQuest'
+import { publicV41IronHallQuest, publicV41IronHallRejectionHint,
+  type PublicV41IronHallActionPreview } from './publicV41IronHallQuest'
 
 export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['head', 'chest', 'mainHand', 'legs', 'feet', 'offHand']
 export const EQUIPMENT_SLOT_LABELS: Readonly<Record<EquipmentSlot, string>> = {
@@ -21,6 +23,8 @@ const WAYSTATION_NEXT = {
   build: 'Build the bridge', cross: 'Reach the south bank',
   return: 'Claim at Outfitters', complete: 'Complete',
 } as const
+const ironHallActionHint = (action: PublicV41IronHallActionPreview) => action.hint
+  ?? (action.rejection ? publicV41IronHallRejectionHint(action.rejection) : null)
 const WORK_REASONS = {
   invalid_state: 'Trial state unavailable', invalid_site: 'Invalid site', undiscovered: 'Not discovered',
   too_far: 'Move within 3 m', occupied: 'Footprint occupied', already_done: 'Already completed',
@@ -89,6 +93,15 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const signalQuest = projection.v38SignalQuest
   const ringkeeperQuest = projection.v39RingkeeperQuest
   const waystationQuest = projection.v40WaystationQuest
+  const hallQuest = publicV41IronHallQuest(projection)
+  const hall = projection.v41IronHall
+  const hallSite = projection.v41IronHallSite
+  const nearHallAlcove = hallSite?.revealed && Math.hypot(
+    projection.player.position[0] - hallSite.alcove[0],
+    projection.player.position[2] - hallSite.alcove[2]) < 9
+  const nearHallWard = hallSite?.revealed && Math.hypot(
+    projection.player.position[0] - hallSite.ward[0],
+    projection.player.position[2] - hallSite.ward[2]) < 10
   const journalQuest = signalQuest && projection.v36MarkerQuest?.complete
     ? signalQuest : earlierJournalQuest
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
@@ -323,7 +336,9 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           .wr-work-selection{margin:6px 0;padding:7px 8px;border:1px solid #d5b86f88;border-radius:7px;background:#27382e;color:#f5e5b5;font-size:12px;overflow-wrap:anywhere}
           .wr-v35-quest details{margin-top:5px;color:#c5d0c3;font-weight:400}
           .wr-v35-quest summary{min-height:30px;cursor:pointer}
-          .wr-v35-quest .wr-ringkeeper-chapter summary,.wr-v35-quest .wr-waystation-chapter summary{min-height:44px}
+          .wr-v35-quest .wr-ringkeeper-chapter summary,.wr-v35-quest .wr-waystation-chapter summary,.wr-v35-quest .wr-ironhall-chapter summary{min-height:44px}
+          .wr-ironhall-chapter summary{color:#f5d899}
+          .wr-ironhall-chapter[data-phase="windup"] summary{color:#ffc4aa}
           .wr-v35-mobile-toggle{display:none}
           @media(min-width:1200px) and (min-height:600px){.wr-v35-quest{right:248px;top:266px;max-height:136px}}
           @media(min-width:901px) and (min-height:600px){.wr-surface[data-work-mode="true"] .wr-saved-work-panel{width:310px}}
@@ -344,11 +359,19 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         {!workMode && journalQuest && <section className="wr-greenway-objective wr-v35-quest"
           data-expanded={ledgerOpen} aria-label={`Quest journal: ${journalQuest.title}`}>
           <button type="button" className="wr-v35-mobile-toggle" aria-expanded={ledgerOpen}
-            aria-label={ledgerOpen ? 'Close quest journal' : `Open quest journal: ${journalQuest.title}`}
+            aria-label={ledgerOpen ? 'Close quest journal' : hallQuest
+              ? `Open quest journal: ${hallQuest.title}, ${hallQuest.next}. ${hallQuest.status}`
+              : `Open quest journal: ${journalQuest.title}`}
             aria-controls="wr-v35-journal-content"
             onKeyDown={(event) => { if (event.code === 'Space') event.stopPropagation() }}
             onClick={() => setLedgerOpen((open) => !open)}>
-            {ledgerOpen ? 'Close quest journal ×' : ringkeeperQuest || waystationQuest ? 'Quests ▾' : 'Quest ▾'}
+            {ledgerOpen ? 'Close quest journal ×' : hallQuest && hall ? <>
+              <span>HP {hall.health} · W {hall.wardHealth}</span>
+              <small>{hall.phase === 'windup'
+                ? `Slam ${Math.max(0, hall.phaseUntilTick - projection.tick)}t ▾`
+                : hall.phase === 'recovery' ? 'Ward recovering ▾' : 'Iron Hall ▾'}</small>
+            </>
+              : ringkeeperQuest || waystationQuest ? 'Quests ▾' : 'Quest ▾'}
           </button>
           <div id="wr-v35-journal-content" className="wr-v35-quest-content">
           <strong>{journalQuest.complete ? 'Quest complete' : 'Quest'}: {journalQuest.title}</strong>
@@ -384,6 +407,36 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
                 {signalQuest.claim.hint ?? 'The checked reward is not ready yet.'}</small>}
             </>}
           </>}
+          {hallQuest && hall && <details className="wr-ironhall-chapter"
+            data-phase={hall.phase} aria-label={`Quest chapter: ${hallQuest.title}`}>
+            <summary>{hallQuest.title} · {hallQuest.next}
+              <small>{hallQuest.status}</small></summary>
+            <p>{hallQuest.objective}</p>
+            {!hall.learnedBolt && nearHallAlcove && <>
+              <button type="button" disabled={savePaused || !!hall.study.rejection}
+                onClick={() => onIntent({ type: 'v41.ironhall.study' })}>Study Arc Bolt</button>
+              {ironHallActionHint(hall.study) && <small role="status">{ironHallActionHint(hall.study)}</small>}
+            </>}
+            {hall.learnedBolt && !hall.wardDefeated && hall.phase === 'dormant' && nearHallWard && <>
+              <button type="button" disabled={savePaused || !!hall.engage.rejection}
+                onClick={() => onIntent({ type: 'v41.ironhall.engage' })}>Engage clockwork ward</button>
+              {ironHallActionHint(hall.engage) && <small role="status">{ironHallActionHint(hall.engage)}</small>}
+            </>}
+            {!hall.wardDefeated && hall.phase !== 'dormant' && nearHallWard && <>
+              <button type="button" disabled={savePaused || !!hall.bolt.rejection}
+                onClick={() => onIntent({ type: 'v41.ironhall.bolt' })}>Cast Arc Bolt</button>
+              <button type="button" disabled={savePaused || !!hall.guard.rejection}
+                onClick={() => onIntent({ type: 'v41.ironhall.guard' })}>Guard next slam</button>
+              {ironHallActionHint(hall.bolt) && <small role="status">Arc Bolt: {ironHallActionHint(hall.bolt)}</small>}
+              {ironHallActionHint(hall.guard) && <small role="status">Guard: {ironHallActionHint(hall.guard)}</small>}
+            </>}
+            {hall.health < 12 && (hall.phase === 'dormant' || hall.phase === 'defeated')
+              && nearHallAlcove && <>
+              <button type="button" disabled={savePaused || !!hall.rest.rejection}
+                onClick={() => onIntent({ type: 'v41.ironhall.rest' })}>Rest at the alcove</button>
+              {ironHallActionHint(hall.rest) && <small role="status">{ironHallActionHint(hall.rest)}</small>}
+            </>}
+          </details>}
           {waystationQuest && <details className="wr-waystation-chapter"
             aria-label={`Quest chapter: ${waystationQuest.title}`}>
             <summary>{waystationQuest.title} · {WAYSTATION_NEXT[waystationQuest.stage]}</summary>

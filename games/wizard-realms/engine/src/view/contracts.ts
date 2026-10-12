@@ -15,6 +15,7 @@ import type { PublicV36MarkerQuest } from './publicV36MarkerQuest'
 import type { PublicV38SignalQuest } from './publicV38SignalQuest'
 import type { PublicV39RingkeeperQuest } from './publicV39RingkeeperQuest'
 import type { PublicV40WaystationQuest } from './publicV40WaystationQuest'
+import type { PublicV41IronHallView } from './publicV41IronHallQuest'
 
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
@@ -361,6 +362,9 @@ export interface WizardViewProjection {
   /** V40 read-only chapter and discovery-gated marker. Neither authorizes barter, Works or rewards. */
   v40WaystationQuest?: PublicV40WaystationQuest
   v40WaystationSite?: Readonly<{ id: string; approach: Vec3; exit: Vec3; built: boolean; revealed: boolean }> | null
+  /** V41 presentation only. Checked combat and frame replay own health, damage and defeat. */
+  v41IronHall?: PublicV41IronHallView
+  v41IronHallSite?: Readonly<{ alcove: Vec3; ward: Vec3; door: Vec3; revealed: boolean }> | null
   regionalLadders?: WizardRegionalLaddersView
   /** Streamed v13 hides unsupported legacy actions while retaining their read-only state. */
   unavailableActions?: true
@@ -513,6 +517,11 @@ export type WizardViewIntent =
   | { type: 'v40.waystation.barter' }
   | { type: 'v40.waystation.cross' }
   | { type: 'v40.waystation.claim' }
+  | { type: 'v41.ironhall.study' }
+  | { type: 'v41.ironhall.engage' }
+  | { type: 'v41.ironhall.bolt' }
+  | { type: 'v41.ironhall.guard' }
+  | { type: 'v41.ironhall.rest' }
   | { type: 'v31.soil-place'; gx: number; gz: number }
   | { type: 'trial-footwear.toggle' }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }

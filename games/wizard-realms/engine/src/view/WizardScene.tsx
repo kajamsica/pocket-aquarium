@@ -172,6 +172,9 @@ const TRAVELER_TUNIC_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: t
 const WADER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#41695f', roughness: 0.88 })
 const WADER_CUFF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ab6a0', roughness: 0.84 })
 const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
+const HALL_WINDUP_MATERIAL = new THREE.MeshBasicMaterial({ color: '#ff8559', transparent: true,
+  opacity: 0.88, depthWrite: false })
+const HALL_WINDUP_RING = new THREE.TorusGeometry(2.7, 0.055, 6, 48)
 const ROUTE_GHOST_MATERIAL = new THREE.MeshBasicMaterial({ color: '#8cece3', transparent: true,
   opacity: 0.76, depthWrite: false, wireframe: true })
 const ROUTE_BLOCKED_GHOST_MATERIAL = new THREE.MeshBasicMaterial({ color: '#f18c79', transparent: true,
@@ -1785,6 +1788,53 @@ function WaystationStockpile({ approach }: { approach: readonly [number, number,
   </group>
 }
 
+function IronHallArcGlyph({ position, learned }: {
+  position: readonly [number, number, number]; learned: boolean
+}) {
+  return <group name={`Iron Hall Arc Bolt runestone (${learned ? 'studied' : 'unexplored'})`}
+    position={position as [number, number, number]}>
+    <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_CROWN_MATERIAL}
+      position={[0, 0.65, 0]} scale={[0.48, 0.82, 0.32]} castShadow />
+    <mesh geometry={CRYSTAL_GEOMETRY}
+      material={learned ? MARKER_DORMANT_MATERIAL : MARKER_RUNE_MATERIAL}
+      position={[0, 0.95, 0.29]} scale={[0.19, 0.33, 0.08]} />
+  </group>
+}
+
+/** A non-colliding prototype. The checked V41 frame replay owns its attack radius and health. */
+function IronHallWard({ position, phase, defeated }: {
+  position: readonly [number, number, number]
+  phase: 'dormant' | 'windup' | 'recovery' | 'defeated'
+  defeated: boolean
+}) {
+  const winding = phase === 'windup' && !defeated
+  return <group name={`Iron Hall clockwork ward (${phase})`}
+    position={position as [number, number, number]}>
+    {winding && <mesh name="Clockwork slam tell, 2.7 m radius" geometry={HALL_WINDUP_RING}
+      material={HALL_WINDUP_MATERIAL} rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, 0.08, 0]} />}
+    <group position={[0, defeated ? 0.34 : 0.98, 0]}
+      rotation={[0, 0, defeated ? -1.1 : 0]}>
+      <mesh geometry={UNIT_BOX} material={GOLD_MATERIAL} scale={[0.85, 1.25, 0.55]} castShadow />
+      <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL}
+        position={[0, 0, 0.3]} scale={[0.42, 0.42, 0.09]} />
+      <mesh geometry={CRYSTAL_GEOMETRY}
+        material={defeated ? MARKER_DORMANT_MATERIAL : HIGHLAND_CROWN_SEAM_MATERIAL}
+        position={[0, 0.05, 0.38]} scale={[0.22, 0.27, 0.08]} />
+      <mesh geometry={ROCK_GEOMETRY} material={GOLD_MATERIAL}
+        position={[0, 0.86, 0]} scale={[0.46, 0.45, 0.43]} castShadow />
+      {[-1, 1].map((side) => <group key={side}>
+        <mesh geometry={UNIT_BOX} material={GOLD_MATERIAL}
+          position={[side * 0.59, winding ? 0.55 : phase === 'recovery' ? -0.35 : 0.05, 0]}
+          rotation={[0, 0, side * (winding ? 0.85 : phase === 'recovery' ? -0.45 : 0.1)]}
+          scale={[0.23, 0.9, 0.26]} castShadow />
+        <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL}
+          position={[side * 0.24, -0.91, 0]} scale={[0.29, 0.58, 0.31]} castShadow />
+      </group>)}
+    </group>
+  </group>
+}
+
 /** One bounded scene partition for public discoveries and the opt-in ordinary preview. */
 export function sceneTerrainFor(projection: WizardViewProjection) {
   const visual = projection.visualWorld ?? projection
@@ -1919,6 +1969,13 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   // Region ownership controls actions and HUD state, never which established scenery exists.
   const visual = projection.visualWorld ?? projection
   const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection)
+  const hallSite = projection.v41IronHallSite
+  const hallAlcoveVisible = hallSite?.revealed && revealedTerrain.some((cell) =>
+    Math.abs(cell.position[0] - hallSite.alcove[0]) <= cell.size[0] / 2
+      && Math.abs(cell.position[2] - hallSite.alcove[2]) <= cell.size[1] / 2)
+  const hallWardVisible = hallSite?.revealed && revealedTerrain.some((cell) =>
+    Math.abs(cell.position[0] - hallSite.ward[0]) <= cell.size[0] / 2
+      && Math.abs(cell.position[2] - hallSite.ward[2]) <= cell.size[1] / 2)
   const revealedTerrainRef = useRef(revealedTerrain)
   useLayoutEffect(() => { revealedTerrainRef.current = revealedTerrain }, [revealedTerrain])
   const openPitColumnsRef = useRef(projection.v26OpenPitColumns)
@@ -2139,6 +2196,11 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
           Math.abs(cell.position[0] - projection.v40WaystationSite!.approach[0]) <= cell.size[0] / 2
             && Math.abs(cell.position[2] - projection.v40WaystationSite!.approach[2]) <= cell.size[1] / 2)
         && <WaystationStockpile approach={projection.v40WaystationSite.approach} />}
+      {hallSite && hallAlcoveVisible && projection.v41IronHall && <IronHallArcGlyph
+        position={hallSite.alcove} learned={projection.v41IronHall.learnedBolt} />}
+      {hallSite && hallWardVisible && projection.v41IronHall && <IronHallWard
+        position={hallSite.ward} phase={projection.v41IronHall.phase}
+        defeated={projection.v41IronHall.wardDefeated} />}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route}
         physicalRoutes={projection.physicalRoutes !== undefined} />)}
       {starterLadder && <StarterCliffLadder face={projection.starterCliff!.face} status={starterLadder} />}
