@@ -1094,17 +1094,24 @@ function FairyRing({ ring }: { ring: WizardFairyRing }) {
     return [Math.cos(angle) * 1.35, Math.sin(angle) * 1.35, angle, 0.8 + hashUnit(`${ring.id}:${index}`, 4) * 0.45] as const
   }), [ring.id])
   const glow = ring.discovered ? 1 : 0.4
+  const quarry = ring.id === 'ring-highland-quarry'
   return (
-    <group position={ring.position as [number, number, number]}>
-      <pointLight position={[0, 0.8, 0]} color="#b085ff" intensity={ring.discovered ? 12 : 4} distance={7} />
+    <group name={quarry ? 'Highland Quarry fairy ring' : `Fairy ring: ${ring.label}`}
+      position={ring.position as [number, number, number]}>
+      <pointLight position={[0, 0.8, 0]} color={quarry ? '#a5e9d5' : '#b085ff'}
+        intensity={ring.discovered ? 12 : 4} distance={7} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <ringGeometry args={[0.95, 1.7, 40]} />
-        <meshStandardMaterial color="#5a3f7a" emissive="#8a5cff" emissiveIntensity={0.6 * glow} roughness={0.8} transparent opacity={0.55} depthWrite={false} />
+        <meshStandardMaterial color={quarry ? '#456c62' : '#5a3f7a'}
+          emissive={quarry ? '#50c6a4' : '#8a5cff'} emissiveIntensity={0.6 * glow}
+          roughness={0.8} transparent opacity={0.55} depthWrite={false} />
       </mesh>
+      {quarry && <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_SCREE_MATERIAL}
+        position={[0, 0.08, 0]} scale={[0.46, 0.1, 0.46]} receiveShadow />}
       {mushrooms.map(([x, z, angle, size], index) => (
         <group key={index} position={[x, 0, z]} rotation={[0, -angle, 0]} scale={size}>
           <mesh position={[0, 0.22, 0]} castShadow><cylinderGeometry args={[0.06, 0.1, 0.44, 7]} /><meshStandardMaterial color="#efe7d6" roughness={0.85} /></mesh>
-          <mesh position={[0, 0.48, 0]} castShadow><coneGeometry args={[0.24, 0.22, 8]} /><meshStandardMaterial color={ring.discovered ? '#b06cea' : '#776a78'} emissive="#713ea5" emissiveIntensity={0.9 * glow} roughness={0.55} flatShading /></mesh>
+          <mesh position={[0, 0.48, 0]} castShadow><coneGeometry args={[0.24, 0.22, 8]} /><meshStandardMaterial color={quarry ? ring.discovered ? '#7ce1bd' : '#648d80' : ring.discovered ? '#b06cea' : '#776a78'} emissive={quarry ? '#378b71' : '#713ea5'} emissiveIntensity={0.9 * glow} roughness={0.55} flatShading /></mesh>
         </group>
       ))}
     </group>
@@ -2096,7 +2103,11 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       <LandscapeDressing cells={revealedTerrain} clearings={landscapeClearings} />
       {visual.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {visual.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
-      {visual.fairyRings.map((ring) => <FairyRing key={ring.id} ring={ring} />)}
+      {visual.fairyRings.filter((ring) => ring.id !== 'ring-highland-quarry'
+        || projection.v39QuarryRing && revealedTerrain.some((cell) =>
+          Math.abs(cell.position[0] - projection.v39QuarryRing!.position[0]) <= cell.size[0] / 2
+            && Math.abs(cell.position[2] - projection.v39QuarryRing!.position[2]) <= cell.size[1] / 2))
+        .map((ring) => <FairyRing key={ring.id} ring={ring} />)}
       {visual.inscriptions.map((inscription) => <Waystone key={inscription.id} inscription={inscription} />)}
       {visual.digSites.map((site) => <DigSite key={site.id} site={site} />)}
       {visual.landmarks?.map((landmark) => <Landmark key={landmark.id} landmark={landmark} />)}

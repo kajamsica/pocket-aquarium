@@ -10,6 +10,11 @@ export const EQUIPMENT_SLOT_LABELS: Readonly<Record<EquipmentSlot, string>> = {
 }
 const FIELD_ACTION_STYLE = { minHeight: 44, padding: '6px 8px', border: '1px solid #cfb66b55', borderRadius: 6, background: '#374b3d', color: '#f8e8b2', cursor: 'pointer' } as const
 const SKILL_LABELS = { woodcutting: 'Woodcutting', construction: 'Construction', wayfinding: 'Wayfinding', spellcraft: 'Spellcraft', excavation: 'Excavation' } as const
+const RINGKEEPER_NEXT = {
+  find: 'Find Quarry ring', return: 'Return to Greenway', link: 'Link the rings',
+  outbound: 'Travel to Highland', 'return-via-ring': 'Travel back to Greenway',
+  claim: 'Claim at Greenway', complete: 'Complete',
+} as const
 const WORK_REASONS = {
   invalid_state: 'Trial state unavailable', invalid_site: 'Invalid site', undiscovered: 'Not discovered',
   too_far: 'Move within 3 m', occupied: 'Footprint occupied', already_done: 'Already completed',
@@ -76,6 +81,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
     : projection.v35LedgerQuest && !projection.v35LedgerQuest.complete
       ? projection.v35LedgerQuest : markerQuest ?? projection.v35LedgerQuest
   const signalQuest = projection.v38SignalQuest
+  const ringkeeperQuest = projection.v39RingkeeperQuest
   const journalQuest = signalQuest && projection.v36MarkerQuest?.complete
     ? signalQuest : earlierJournalQuest
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
@@ -310,6 +316,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           .wr-work-selection{margin:6px 0;padding:7px 8px;border:1px solid #d5b86f88;border-radius:7px;background:#27382e;color:#f5e5b5;font-size:12px;overflow-wrap:anywhere}
           .wr-v35-quest details{margin-top:5px;color:#c5d0c3;font-weight:400}
           .wr-v35-quest summary{min-height:30px;cursor:pointer}
+          .wr-v35-quest .wr-ringkeeper-chapter summary{min-height:44px}
           .wr-v35-mobile-toggle{display:none}
           @media(min-width:1200px) and (min-height:600px){.wr-v35-quest{right:248px;top:266px;max-height:136px}}
           @media(min-width:901px) and (min-height:600px){.wr-surface[data-work-mode="true"] .wr-saved-work-panel{width:310px}}
@@ -334,7 +341,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             aria-controls="wr-v35-journal-content"
             onKeyDown={(event) => { if (event.code === 'Space') event.stopPropagation() }}
             onClick={() => setLedgerOpen((open) => !open)}>
-            {ledgerOpen ? 'Close quest journal ×' : 'Quest ▾'}
+            {ledgerOpen ? 'Close quest journal ×' : ringkeeperQuest ? 'Quests ▾' : 'Quest ▾'}
           </button>
           <div id="wr-v35-journal-content" className="wr-v35-quest-content">
           <strong>{journalQuest.complete ? 'Quest complete' : 'Quest'}: {journalQuest.title}</strong>
@@ -370,6 +377,30 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
                 {signalQuest.claim.hint ?? 'The checked reward is not ready yet.'}</small>}
             </>}
           </>}
+          {ringkeeperQuest && <details className="wr-ringkeeper-chapter"
+            aria-label={`Quest chapter: ${ringkeeperQuest.title}`}>
+            <summary>{ringkeeperQuest.title} · {RINGKEEPER_NEXT[ringkeeperQuest.stage]}</summary>
+            <p>{ringkeeperQuest.objective}</p>
+            <p>{ringkeeperQuest.reward}</p>
+            {ringkeeperQuest.stage === 'find' && projection.v39QuarryRing && <>
+              <button type="button" disabled={savePaused || !!ringkeeperQuest.discover.rejection}
+                onClick={() => onIntent({ type: 'v39.ring.discover' })}>Discover Highland Quarry ring</button>
+              {(ringkeeperQuest.discover.hint || ringkeeperQuest.discover.rejection) && <small role="status">
+                {ringkeeperQuest.discover.hint ?? 'Move beside the revealed ring on dry ground.'}</small>}
+            </>}
+            {ringkeeperQuest.stage === 'link' && <>
+              <button type="button" disabled={savePaused || !!ringkeeperQuest.link.rejection}
+                onClick={() => onIntent({ type: 'v39.ring.link' })}>Link Highland Quarry ring</button>
+              {(ringkeeperQuest.link.hint || ringkeeperQuest.link.rejection) && <small role="status">
+                {ringkeeperQuest.link.hint ?? 'Move beside the revealed Greenway ring.'}</small>}
+            </>}
+            {ringkeeperQuest.stage === 'claim' && <>
+              <button type="button" disabled={savePaused || !!ringkeeperQuest.claim.rejection}
+                onClick={() => onIntent({ type: 'v39.ring.claim' })}>Claim Ringkeeper reward</button>
+              {(ringkeeperQuest.claim.hint || ringkeeperQuest.claim.rejection) && <small role="status">
+                {ringkeeperQuest.claim.hint ?? 'Return to the revealed Greenway ring.'}</small>}
+            </>}
+          </details>}
           <details><summary>Rewards and completed chapters</summary>
             <p>{journalQuest.reward}</p>
             {projection.v35LedgerQuest?.complete && !ledgerQuestPrimary && <p>{projection.v35LedgerQuest.title}: {projection.v35LedgerQuest.objective} {projection.v35LedgerQuest.reward}</p>}
