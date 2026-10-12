@@ -42,6 +42,13 @@ import type { PublicV41EntryBindings } from './PublicV41Entry'
 import { commitPublicV41, requestPublicV41ReturnHome } from './domain/publicWorldV41Flow'
 import type { PublicV41Start } from './domain/publicWorldV41Flow'
 import type { PublicV41CombatProgress, PublicV41CombatWitness } from './domain/publicWorldV41CombatAction'
+import { createPublicV42ControllerRuntime } from './PublicV42ControllerRuntime'
+import { projectPublicV42IronHall } from './PublicV42WorldView'
+import type { PublicV42EntryBindings } from './PublicV42Entry'
+import { commitPublicV42, requestPublicV42ReturnHome } from './domain/publicWorldV42Flow'
+import type { PublicV42Start } from './domain/publicWorldV42Flow'
+import type { PublicV42RewardProgress, PublicV42RewardWitness } from './domain/publicWorldV42RewardAction'
+import { publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -160,7 +167,8 @@ type V38Runtime = ReturnType<typeof createPublicV38ControllerRuntime>
 type V39Runtime = ReturnType<typeof createPublicV39ControllerRuntime>
 type V40Runtime = ReturnType<typeof createPublicV40ControllerRuntime>
 type V41Runtime = ReturnType<typeof createPublicV41ControllerRuntime>
-type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime
+type V42Runtime = ReturnType<typeof createPublicV42ControllerRuntime>
+type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime
 type V32PlusRuntime = V32Runtime | V33PlusRuntime
 type ActiveViewSource = Readonly<{ status: () => { saveRevision: number; pendingFrames: number }
   view: () => PublicV17ActiveView }>
@@ -197,6 +205,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV39RingWitness
   | PublicV40WaystationWitness
   | PublicV41CombatWitness
+  | PublicV42RewardWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean }
@@ -893,8 +902,8 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-guide,[data-public-v23] .v23-aim{position:fixed;z-index:20;left:12px;bottom:96px;box-sizing:border-box;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v23-guide{max-width:330px;padding:10px}
 [data-public-v23] .v23-guide-west{max-width:320px}
-[data-public-version=v25] .v25-start-guide,[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v35] .v25-start-guide,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41]) .v25-start-guide{width:min(280px,calc(100vw - 112px));max-height:min(38vh,240px);overflow:auto}
-[data-public-version=v25] .v25-start-guide summary,[data-public-version=v26] .v25-start-guide summary,[data-public-version=v27] .v25-start-guide summary,[data-public-version=v28] .v25-start-guide summary,[data-public-version=v29] .v25-start-guide summary,[data-public-version=v30] .v25-start-guide summary,[data-public-version=v31] .v25-start-guide summary,[data-public-version=v32] .v25-start-guide summary,[data-public-version=v33] .v25-start-guide summary,[data-public-version=v34] .v25-start-guide summary,[data-public-version=v35] .v25-start-guide summary,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41]) .v25-start-guide summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+[data-public-version=v25] .v25-start-guide,[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v35] .v25-start-guide,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v25-start-guide{width:min(280px,calc(100vw - 112px));max-height:min(38vh,240px);overflow:auto}
+[data-public-version=v25] .v25-start-guide summary,[data-public-version=v26] .v25-start-guide summary,[data-public-version=v27] .v25-start-guide summary,[data-public-version=v28] .v25-start-guide summary,[data-public-version=v29] .v25-start-guide summary,[data-public-version=v30] .v25-start-guide summary,[data-public-version=v31] .v25-start-guide summary,[data-public-version=v32] .v25-start-guide summary,[data-public-version=v33] .v25-start-guide summary,[data-public-version=v34] .v25-start-guide summary,[data-public-version=v35] .v25-start-guide summary,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v25-start-guide summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 [data-public-v23] .v23-aim{width:324px;padding:12px}
 [data-public-v23] .v23-status{position:fixed;z-index:21;top:8px;left:12px;max-width:min(300px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
 [data-public-version=v34] .v34-branch-label,[data-public-version=v35] .v34-branch-label{position:fixed;z-index:20;top:8px;right:12px;max-width:min(250px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
@@ -904,7 +913,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-save p{margin:4px 0 0}
 [data-public-v23] .v24-actions{position:fixed;z-index:21;right:12px;bottom:96px;box-sizing:border-box;width:min(300px,calc(100vw - 24px));max-height:45vh;overflow:auto;padding:10px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v24-actions button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
-:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
+:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
 [data-public-v23] .v26-safety{position:fixed;z-index:21;left:50%;bottom:8px;transform:translateX(-50%);box-sizing:border-box;width:min(230px,calc(100vw - 24px));max-height:35vh;overflow:auto;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v26-safety:not([open]){width:140px;padding:0 6px;opacity:.85}
 [data-public-v23] .v26-safety summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -923,9 +932,11 @@ const PUBLIC_V23_PANEL_STYLES = `
   [data-public-v23] .v23-status{left:8px;max-width:min(260px,calc(100vw - 16px))}
   [data-public-v23] .v23-save{top:76px;right:8px}
   [data-public-v23] .v24-actions{right:8px;bottom:calc(156px + env(safe-area-inset-bottom,0px));max-height:30vh}
-  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
-  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
+  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
+  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
+  [data-public-version=v42] .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
+  [data-public-version=v42] .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
 body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has([data-public-version=v28]),body:has([data-public-version=v29]),body:has([data-public-version=v30]),body:has([data-public-version=v31]),body:has([data-public-version=v32]),body:has([data-public-version=v33]),body:has([data-public-version=v34]){margin:0;background:#14221f}
 [data-public-version=v26],[data-public-version=v27],[data-public-version=v28],[data-public-version=v29],[data-public-version=v30],[data-public-version=v31],[data-public-version=v32],[data-public-version=v33],[data-public-version=v34]{height:100dvh}
@@ -1056,6 +1067,8 @@ export type PublicV40ControllerProps = PublicV40EntryBindings & Readonly<{
   start: PublicV40Start; version: 'v40' }>
 export type PublicV41ControllerProps = PublicV41EntryBindings & Readonly<{
   start: PublicV41Start; version: 'v41' }>
+export type PublicV42ControllerProps = PublicV42EntryBindings & Readonly<{
+  start: PublicV42Start; version: 'v42' }>
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
@@ -1236,8 +1249,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV31ControllerProps | PublicV32ControllerProps | PublicV33ControllerProps
   | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps
   | PublicV37ControllerProps | PublicV38ControllerProps | PublicV39ControllerProps
-  | PublicV40ControllerProps | PublicV41ControllerProps) {
-  const v41 = 'version' in props && props.version === 'v41'
+  | PublicV40ControllerProps | PublicV41ControllerProps | PublicV42ControllerProps) {
+  const v42 = 'version' in props && props.version === 'v42'
+  const v41 = 'version' in props && (props.version === 'v41' || v42)
   const v40 = 'version' in props && (props.version === 'v40' || v41)
   const v39 = 'version' in props && (props.version === 'v39' || v40)
   const v38 = 'version' in props && (props.version === 'v38' || v39)
@@ -1260,7 +1274,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const physicalWorld = v26 || v27 || riverBridgeWorld
   const river = v25 || physicalWorld
   const v24 = 'version' in props
-  const saveVersion = v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
+  const saveVersion = v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
   const traceRef = useRef<ReturnType<typeof createPublicV17InputTrace> | null | undefined>(undefined)
   if (traceRef.current === undefined) traceRef.current = publicV17InputTraceEnabled(
     typeof window === 'undefined' ? '' : window.location?.hostname ?? '',
@@ -1269,9 +1283,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const trace = traceRef.current
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
-    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | null>(null)
+    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | null>(null)
   if (!runtimeRef.current) {
-    runtimeRef.current = 'version' in props && props.version === 'v41'
+    runtimeRef.current = 'version' in props && props.version === 'v42'
+      ? createPublicV42ControllerRuntime(props.start, (revision, lineage, witness) =>
+        commitPublicV42(props.locks, props.store, revision, lineage, witness),
+        (revision, lineage) => requestPublicV42ReturnHome(props.locks, props.store, revision, lineage))
+      : 'version' in props && props.version === 'v41'
       ? createPublicV41ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV41(props.locks, props.store, revision, lineage, witness),
         (revision, lineage) => requestPublicV41ReturnHome(props.locks, props.store, revision, lineage))
@@ -1518,7 +1536,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const signalView = v38 ? projectPublicV38Signal(snapshot as PublicV38SignalProgress, windwardView) : windwardView
   const ringView = v39 ? projectPublicV39Ringkeeper(snapshot as PublicV39RingProgress, signalView) : signalView
   const waystationView = v40 ? projectPublicV40Waystation(snapshot as PublicV40WaystationProgress, ringView) : ringView
-  const view = v41 ? projectPublicV41IronHall(snapshot as PublicV41CombatProgress, waystationView) : waystationView
+  const view = v42 ? projectPublicV42IronHall(snapshot as PublicV42RewardProgress, waystationView)
+    : v41 ? projectPublicV41IronHall(snapshot as PublicV41CombatProgress, waystationView) : waystationView
   trace?.record('controller.render', { viewMs: viewFinishedAt - renderStartedAt,
     projectionMs: performance.now() - viewFinishedAt,
     baseProjectionMs: baseProjectionFinishedAt - baseProjectionStartedAt,
@@ -1606,6 +1625,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const result = 'kind' in intent && intent.kind === 'return-home-request'
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
+          : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
+            || intent.kind === 'ironhall-vest-equip/v1'
+            || intent.kind === 'ironhall-vest-unequip/v1'
+            || intent.kind === 'ironhall-vest-repair/v1'
+            || intent.kind === 'ironhall-spar/v1')
+          ? await (runtime as V42Runtime).action(intent)
           : 'kind' in intent && (intent.kind === 'ironhall-study/v1'
             || intent.kind === 'ironhall-engage/v1' || intent.kind === 'ironhall-bolt/v1'
             || intent.kind === 'ironhall-guard/v1' || intent.kind === 'ironhall-rest/v1')
@@ -1657,6 +1682,16 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if ('id' in intent) setWorkMode(false)
           tell('kind' in intent && intent.kind === 'return-home-request'
             ? 'Returned home safely. A 30-minute rescue cooldown has started.'
+            : 'kind' in intent && intent.kind === 'ironhall-claim/v1'
+            ? 'Iron Hall reward saved: 60 coins, 70 character XP, 70 Combat XP, and Guard Vest.'
+            : 'kind' in intent && intent.kind === 'ironhall-vest-equip/v1'
+            ? 'Guard Vest equipped and saved.'
+            : 'kind' in intent && intent.kind === 'ironhall-vest-unequip/v1'
+            ? 'Guard Vest removed and saved.'
+            : 'kind' in intent && intent.kind === 'ironhall-vest-repair/v1'
+            ? 'Guard Vest repaired to 12 durability for 18 coins and saved.'
+            : 'kind' in intent && intent.kind === 'ironhall-spar/v1'
+            ? 'Practice ward winding up for 20 ticks. Move beyond its slam ring to dodge.'
             : 'kind' in intent && intent.kind === 'windward-study/v1'
             ? 'Windward Step learned and saved. Walk west on the dry Highland trail to practice.'
             : 'kind' in intent && intent.kind === 'windward-cast/v1'
@@ -1717,6 +1752,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
         } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
+          : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
+            || intent.kind === 'ironhall-vest-equip/v1'
+            || intent.kind === 'ironhall-vest-unequip/v1'
+            || intent.kind === 'ironhall-vest-repair/v1'
+            || intent.kind === 'ironhall-spar/v1')
+          ? publicV42IronHallRejectionHint(result.reason as Parameters<typeof publicV42IronHallRejectionHint>[0])
           : 'kind' in intent && intent.kind === 'marker-claim/v1'
           ? publicV36MarkerRejectionMessage(result.reason ?? 'unavailable_here')
           : 'kind' in intent && (intent.kind === 'ledger-survey/v1'
@@ -1946,6 +1987,18 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         : intent.type === 'v41.ironhall.engage' ? 'ironhall-engage/v1'
           : intent.type === 'v41.ironhall.bolt' ? 'ironhall-bolt/v1'
             : intent.type === 'v41.ironhall.guard' ? 'ironhall-guard/v1' : 'ironhall-rest/v1' })
+      return
+    }
+    if (v42 && (intent.type === 'v42.ironhall.claim'
+      || intent.type === 'v42.ironhall.vest-equip'
+      || intent.type === 'v42.ironhall.vest-unequip'
+      || intent.type === 'v42.ironhall.vest-repair'
+      || intent.type === 'v42.ironhall.spar')) {
+      queueChecked({ kind: intent.type === 'v42.ironhall.claim' ? 'ironhall-claim/v1'
+        : intent.type === 'v42.ironhall.vest-equip' ? 'ironhall-vest-equip/v1'
+          : intent.type === 'v42.ironhall.vest-unequip' ? 'ironhall-vest-unequip/v1'
+            : intent.type === 'v42.ironhall.vest-repair' ? 'ironhall-vest-repair/v1'
+              : 'ironhall-spar/v1' })
       return
     }
     if (intent.type === 'v26.terrain') {

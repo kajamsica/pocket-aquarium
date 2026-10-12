@@ -6,6 +6,7 @@ import { publicV36MarkerRejectionMessage } from './publicV36MarkerQuest'
 import { publicV40WaystationRejectionHint } from './publicV40WaystationQuest'
 import { publicV41IronHallQuest, publicV41IronHallRejectionHint,
   type PublicV41IronHallActionPreview } from './publicV41IronHallQuest'
+import { publicV42IronHallActionHint, publicV42IronHallQuest } from './publicV42IronHallQuest'
 
 export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['head', 'chest', 'mainHand', 'legs', 'feet', 'offHand']
 export const EQUIPMENT_SLOT_LABELS: Readonly<Record<EquipmentSlot, string>> = {
@@ -93,17 +94,24 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const signalQuest = projection.v38SignalQuest
   const ringkeeperQuest = projection.v39RingkeeperQuest
   const waystationQuest = projection.v40WaystationQuest
-  const hallQuest = publicV41IronHallQuest(projection)
+  const v42Quest = publicV42IronHallQuest(projection)
+  const hallQuest = v42Quest ?? publicV41IronHallQuest(projection)
   const hall = projection.v41IronHall
   const hallSite = projection.v41IronHallSite
+  const hallReward = projection.v42IronHall
+  const quartermaster = projection.v42QuartermasterSite
+  const nearQuartermaster = quartermaster?.revealed && Math.hypot(
+    projection.player.position[0] - quartermaster.position[0],
+    projection.player.position[2] - quartermaster.position[2]) < 9
   const nearHallAlcove = hallSite?.revealed && Math.hypot(
     projection.player.position[0] - hallSite.alcove[0],
     projection.player.position[2] - hallSite.alcove[2]) < 9
   const nearHallWard = hallSite?.revealed && Math.hypot(
     projection.player.position[0] - hallSite.ward[0],
     projection.player.position[2] - hallSite.ward[2]) < 10
-  const journalQuest = signalQuest && projection.v36MarkerQuest?.complete
-    ? signalQuest : earlierJournalQuest
+  const journalQuest = hallReward && hall?.wardDefeated && v42Quest
+    ? v42Quest : signalQuest && projection.v36MarkerQuest?.complete
+      ? signalQuest : earlierJournalQuest
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
   const markerQuestPrimary = journalQuest?.id === 'beneath-old-marker/v1'
   const signalQuestPrimary = journalQuest?.id === 'highland-signal/v1'
@@ -339,6 +347,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           .wr-v35-quest .wr-ringkeeper-chapter summary,.wr-v35-quest .wr-waystation-chapter summary,.wr-v35-quest .wr-ironhall-chapter summary{min-height:44px}
           .wr-ironhall-chapter summary{color:#f5d899}
           .wr-ironhall-chapter[data-phase="windup"] summary{color:#ffc4aa}
+          .wr-ironhall-rewards{display:grid;gap:5px;margin:8px 0 2px;padding:8px;border:1px solid #c6a96988;border-radius:7px;background:#26342ce8}
+          .wr-ironhall-rewards small{display:block;color:#e4dec7}
+          .wr-ironhall-rewards button{margin-top:2px}
+          .wr-ironhall-rewards .wr-vest-status{color:#c6e6d7}
           .wr-v35-mobile-toggle{display:none}
           @media(min-width:1200px) and (min-height:600px){.wr-v35-quest{right:248px;top:266px;max-height:136px}}
           @media(min-width:901px) and (min-height:600px){.wr-surface[data-work-mode="true"] .wr-saved-work-panel{width:310px}}
@@ -354,6 +366,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           @media(max-width:719px){.wr-v34-quest{width:min(320px,calc(100% - 204px));max-height:136px}}
           @media(max-width:719px){.wr-v35-quest{width:min(320px,calc(100% - 16px));max-height:54px;padding:3px 8px}.wr-v35-quest .wr-v35-mobile-toggle{display:block;min-height:44px;margin:0;text-align:left;padding:6px 8px}.wr-v35-quest[data-expanded="false"] .wr-v35-quest-content{display:none}.wr-hud:has(.wr-v35-quest[data-expanded="true"]){z-index:10}.wr-v35-quest[data-expanded="true"]{position:absolute;left:8px;right:8px;top:64px;width:auto;max-height:min(360px,calc(100% - 80px));margin:0;padding:8px 10px;background:#101a17f8;box-shadow:0 20px 50px #000c}.wr-v35-quest[data-expanded="true"] .wr-v35-mobile-toggle{position:sticky;top:0;z-index:1;margin-bottom:8px}}
           @media(max-width:719px){.wr-v35-quest[data-expanded="false"]{position:absolute;left:220px;right:auto;top:122px;width:min(116px,calc(100% - 228px));max-height:44px;margin:0;padding:0;border:0}}
+          @media(max-width:719px){[data-public-version=v42] .wr-v26-terrain{left:8px;right:auto}}
           @media(max-width:360px) and (max-height:600px){.wr-surface:has(.wr-greenway-objective) .wr-saved-work-panel{margin:0 auto 0 8px}[data-public-v23]:has(.wr-greenway-objective) .v23-guide{display:none}}
         `}</style>
         {!workMode && journalQuest && <section className="wr-greenway-objective wr-v35-quest"
@@ -436,6 +449,45 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
                 onClick={() => onIntent({ type: 'v41.ironhall.rest' })}>Rest at the alcove</button>
               {ironHallActionHint(hall.rest) && <small role="status">{ironHallActionHint(hall.rest)}</small>}
             </>}
+            {hallReward && <section className="wr-ironhall-rewards" aria-label="Iron Hall rewards and practice">
+              <strong>Quartermaster reward</strong>
+              <small>Claim once: 60 coins, 70 character XP, 70 Combat XP, and a Guard Vest.</small>
+              <small>Ward crest: cosmetic only, 10% on the first defeat, no pity or repeat roll. {
+                hallReward.crestOutcome === 'won' ? 'Crest found.'
+                  : hallReward.crestOutcome === 'missed' ? 'No crest this time.' : 'Outcome pending.'}</small>
+              {!hallReward.questClaimed && quartermaster?.revealed && !hallReward.claim.rejection && <button
+                type="button" disabled={savePaused}
+                onClick={() => onIntent({ type: 'v42.ironhall.claim' })}>Claim at quartermaster</button>}
+              {hallReward.questClaimed && <>
+                <small className="wr-vest-status" role="status">Guard Vest: {hallReward.vestEquipped && hallReward.vestDurability > 0
+                  ? 'worn over your clothing' : hallReward.vestDurability === 0 ? 'depleted, no protection' : 'unequipped'}
+                  {' · '}{hallReward.vestDurability}/12 durability · spar hit 4 damage without it, 2 with it.</small>
+                {hallReward.vestEquipped ? <button type="button"
+                  disabled={savePaused || !!hallReward.unequip.rejection}
+                  onClick={() => onIntent({ type: 'v42.ironhall.vest-unequip' })}>Remove Guard Vest</button>
+                  : <button type="button" disabled={savePaused || !!hallReward.equip.rejection}
+                    onClick={() => onIntent({ type: 'v42.ironhall.vest-equip' })}>Wear Guard Vest</button>}
+                {publicV42IronHallActionHint(hallReward.vestEquipped ? hallReward.unequip : hallReward.equip)
+                  && <small role="status">{publicV42IronHallActionHint(
+                    hallReward.vestEquipped ? hallReward.unequip : hallReward.equip)}</small>}
+                {hallReward.vestDurability < 12 && nearQuartermaster && <>
+                  <button type="button" disabled={savePaused || !!hallReward.repair.rejection}
+                    onClick={() => onIntent({ type: 'v42.ironhall.vest-repair' })}>Repair Guard Vest · 18 coins</button>
+                  {publicV42IronHallActionHint(hallReward.repair) && <small role="status">{
+                    publicV42IronHallActionHint(hallReward.repair)}</small>}
+                </>}
+                {hallReward.spar.active
+                  ? <small role="status">Practice slam in {Math.max(0,
+                    hallReward.spar.strikeAtTick - projection.tick)} ticks. Leave the glowing 2.7 m ring to dodge.</small>
+                  : nearHallWard && <>
+                    <button type="button" disabled={savePaused || !!hallReward.sparStart.rejection}
+                      onClick={() => onIntent({ type: 'v42.ironhall.spar' })}>Start ward spar</button>
+                    {publicV42IronHallActionHint(hallReward.sparStart) && <small role="status">{
+                      publicV42IronHallActionHint(hallReward.sparStart)}</small>}
+                  </>}
+                <small>Next lead: the lower Iron Hall challenge awaits beyond this watch.</small>
+              </>}
+            </section>}
           </details>}
           {waystationQuest && <details className="wr-waystation-chapter"
             aria-label={`Quest chapter: ${waystationQuest.title}`}>

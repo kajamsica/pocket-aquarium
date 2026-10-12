@@ -16,6 +16,7 @@ import type { PublicV38SignalQuest } from './publicV38SignalQuest'
 import type { PublicV39RingkeeperQuest } from './publicV39RingkeeperQuest'
 import type { PublicV40WaystationQuest } from './publicV40WaystationQuest'
 import type { PublicV41IronHallView } from './publicV41IronHallQuest'
+import type { PublicV42IronHallView } from './publicV42IronHallQuest'
 
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
@@ -365,6 +366,9 @@ export interface WizardViewProjection {
   /** V41 presentation only. Checked combat and frame replay own health, damage and defeat. */
   v41IronHall?: PublicV41IronHallView
   v41IronHallSite?: Readonly<{ alcove: Vec3; ward: Vec3; door: Vec3; revealed: boolean }> | null
+  /** V42 read-only quest gear and checked action previews. Reward authority stays in the V42 writer. */
+  v42IronHall?: PublicV42IronHallView
+  v42QuartermasterSite?: Readonly<{ position: Vec3; revealed: true }> | null
   regionalLadders?: WizardRegionalLaddersView
   /** Streamed v13 hides unsupported legacy actions while retaining their read-only state. */
   unavailableActions?: true
@@ -522,6 +526,11 @@ export type WizardViewIntent =
   | { type: 'v41.ironhall.bolt' }
   | { type: 'v41.ironhall.guard' }
   | { type: 'v41.ironhall.rest' }
+  | { type: 'v42.ironhall.claim' }
+  | { type: 'v42.ironhall.vest-equip' }
+  | { type: 'v42.ironhall.vest-unequip' }
+  | { type: 'v42.ironhall.vest-repair' }
+  | { type: 'v42.ironhall.spar' }
   | { type: 'v31.soil-place'; gx: number; gz: number }
   | { type: 'trial-footwear.toggle' }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }

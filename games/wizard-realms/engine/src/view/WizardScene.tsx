@@ -169,6 +169,8 @@ const EYE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#292032', roughnes
 const TUNIC_MATERIAL = new THREE.MeshStandardMaterial({ color: '#8c6e4d', roughness: 0.9 })
 const TRAVELER_TUNIC_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86,
   side: THREE.DoubleSide })
+const GUARD_VEST_MATERIAL = new THREE.MeshStandardMaterial({ color: '#526c72', roughness: 0.48, metalness: 0.55 })
+const GUARD_VEST_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#c8a15d', roughness: 0.42, metalness: 0.55 })
 const WADER_MATERIAL = new THREE.MeshStandardMaterial({ color: '#41695f', roughness: 0.88 })
 const WADER_CUFF_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9ab6a0', roughness: 0.84 })
 const GOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d4aa52', roughness: 0.38, metalness: 0.45 })
@@ -675,8 +677,9 @@ function Shield() {
   </group>
 }
 
-function WizardAvatar({ pose, equipment, activePick = null, windwardActive = false }: {
-  pose: PresentationPose; equipment: AvatarEquipment; activePick?: ActivePick; windwardActive?: boolean
+function WizardAvatar({ pose, equipment, activePick = null, windwardActive = false, guardVestVisible = false }: {
+  pose: PresentationPose; equipment: AvatarEquipment; activePick?: ActivePick
+  windwardActive?: boolean; guardVestVisible?: boolean
 }) {
   const gear = avatarGearFor(equipment, activePick)
   const legMaterial = gear.leggings ? STAKE_MATERIAL : ROBE_TRIM_MATERIAL
@@ -750,6 +753,18 @@ function WizardAvatar({ pose, equipment, activePick = null, windwardActive = fal
           <mesh geometry={UNIT_BOX} material={GOLD_MATERIAL} position={[0, 1.03, -0.54]}
             scale={[0.16, 0.12, 0.045]} />
         </>}
+        {guardVestVisible && <group name="Guard Vest chest armor over clothing">
+          {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY}
+            material={GUARD_VEST_MATERIAL} position={[0, 1.25, side * 0.54]}
+            scale={[0.38, 0.36, 0.11]} castShadow />)}
+          {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY}
+            material={GUARD_VEST_MATERIAL} position={[side * 0.34, 1.49, -0.08]}
+            scale={[0.2, 0.11, 0.32]} castShadow />)}
+          <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
+            position={[0, 1.32, -0.65]} scale={[0.1, 0.45, 0.035]} />
+          <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
+            position={[0, 1.08, -0.62]} scale={[0.58, 0.055, 0.04]} />
+        </group>}
         <mesh geometry={COLLAR_GEOMETRY} material={GOLD_MATERIAL} position={[0, 1.63, 0]} rotation={[Math.PI / 2, 0, 0]} />
         <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL}
           position={[0, 1.88, 0]} scale={[0.28, 0.32, 0.27]} castShadow />
@@ -1801,6 +1816,21 @@ function IronHallArcGlyph({ position, learned }: {
   </group>
 }
 
+function IronHallQuartermaster({ position }: { position: readonly [number, number, number] }) {
+  return <group name="Iron Hall quartermaster" position={position as [number, number, number]}>
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL}
+      position={[0, 0.55, 0.85]} scale={[1.45, 1.1, 0.38]} castShadow />
+    <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
+      position={[0, 1.13, 0.85]} scale={[1.5, 0.09, 0.4]} castShadow />
+    <mesh geometry={AVATAR_ROUND_GEOMETRY} material={GUARD_VEST_MATERIAL}
+      position={[0, 1.43, 0]} scale={[0.37, 0.64, 0.27]} castShadow />
+    <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL}
+      position={[0, 2.13, 0]} scale={[0.24, 0.27, 0.23]} castShadow />
+    <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
+      position={[0, 1.54, -0.28]} scale={[0.1, 0.42, 0.05]} />
+  </group>
+}
+
 /** A non-colliding prototype. The checked V41 frame replay owns its attack radius and health. */
 function IronHallWard({ position, phase, defeated }: {
   position: readonly [number, number, number]
@@ -1970,6 +2000,10 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   const visual = projection.visualWorld ?? projection
   const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection)
   const hallSite = projection.v41IronHallSite
+  const quartermasterSite = projection.v42QuartermasterSite
+  const quartermasterVisible = quartermasterSite?.revealed && revealedTerrain.some((cell) =>
+    Math.abs(cell.position[0] - quartermasterSite.position[0]) <= cell.size[0] / 2
+      && Math.abs(cell.position[2] - quartermasterSite.position[2]) <= cell.size[1] / 2)
   const hallAlcoveVisible = hallSite?.revealed && revealedTerrain.some((cell) =>
     Math.abs(cell.position[0] - hallSite.alcove[0]) <= cell.size[0] / 2
       && Math.abs(cell.position[2] - hallSite.alcove[2]) <= cell.size[1] / 2)
@@ -2199,8 +2233,10 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       {hallSite && hallAlcoveVisible && projection.v41IronHall && <IronHallArcGlyph
         position={hallSite.alcove} learned={projection.v41IronHall.learnedBolt} />}
       {hallSite && hallWardVisible && projection.v41IronHall && <IronHallWard
-        position={hallSite.ward} phase={projection.v41IronHall.phase}
-        defeated={projection.v41IronHall.wardDefeated} />}
+        position={hallSite.ward} phase={projection.v42IronHall?.spar.active ? 'windup' : projection.v41IronHall.phase}
+        defeated={projection.v41IronHall.wardDefeated && !projection.v42IronHall?.spar.active} />}
+      {quartermasterSite && quartermasterVisible && <IronHallQuartermaster
+        position={quartermasterSite.position} />}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route}
         physicalRoutes={projection.physicalRoutes !== undefined} />)}
       {starterLadder && <StarterCliffLadder face={projection.starterCliff!.face} status={starterLadder} />}
@@ -2215,6 +2251,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       {projection.ambience === 'highland-wind' && <HighlandWind pose={pose} />}
       <WizardAvatar pose={pose} equipment={projection.equipment}
         activePick={projection.v29Mining?.tools.activePick}
+        guardVestVisible={!!projection.v42IronHall?.vestEquipped &&
+          (projection.v42IronHall?.vestDurability ?? 0) > 0}
         windwardActive={(projection.windwardStep?.activeSeconds ?? 0) > 0} />
     </Canvas>
     {targetedTerrain && <div role="status" style={{ position: 'absolute', left: '50%', top: 84,
