@@ -2149,6 +2149,16 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         && site.discovered) ? intent.siteId : null)
       return
     }
+    if (v24 && active.movementOwner === 'streamed' && mireglass?.choices.length === 0
+      && intent.type === 'equipment.equip') {
+      const inherited = publicV17ActionForView(intent, view, active.movementOwner)
+      if (inherited?.type === 'equip_item' && (inherited.itemId === 'field_spade'
+        || inherited.itemId === 'woodcutters_axe' || inherited.itemId === 'leather_boots')) {
+        queueChecked({ kind: 'mireglass-action/v1', action: {
+          type: 'equip_item', itemId: inherited.itemId } })
+        return
+      }
+    }
     if (v24 && active.movementOwner === 'streamed') {
       const action = publicV24ActionForSharedIntent(intent, mireglass?.choices ?? [],
         view.nearbyStoreId, openStoreId, view.backpack.stacks)

@@ -13,6 +13,9 @@ export function projectPublicV40Waystation(progress: PublicV40WaystationProgress
   const approachTile = site?.footprintTileIds[0]
   const revealed = !!approachTile
     && discoveryMaskHasTileId(progress.state.discoveryMask, approachTile)
+  const player = progress.state.player.position
+  const nearApproach = !!site && revealed && progress.state.movementOwner === 'streamed'
+    && Math.hypot(player.x - site.approach.x, player.z - site.approach.z) <= 12
   const built = !!site && progress.riverBridgeIds.includes(site.id)
   const marker = site && revealed ? { id: site.id,
     approach: [site.approach.x, site.approach.y, site.approach.z] as const,
@@ -22,7 +25,9 @@ export function projectPublicV40Waystation(progress: PublicV40WaystationProgress
   const chunkMeters = WORLD_CELL_METERS * WORLD_CHUNK_CELLS
   const chunkX = site ? Math.floor(site.approach.x / chunkMeters) : 0
   const chunkZ = site ? Math.floor(site.approach.z / chunkMeters) : 0
-  const projected: WizardViewProjection = { ...carrier, v40WaystationSite: marker,
+  const projected: WizardViewProjection = { ...carrier,
+    ...(nearApproach ? { unavailableActions: undefined } : {}),
+    v40WaystationSite: marker,
     map: { ...carrier.map,
       tiles: carrier.map.tiles.map((tile) => tile.id === approachTile && tile.discovered
         ? { ...tile, hasRouteSite: tile.hasRouteSite || !built,

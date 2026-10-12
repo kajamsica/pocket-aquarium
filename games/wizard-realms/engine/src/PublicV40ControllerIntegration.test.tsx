@@ -60,7 +60,7 @@ const locks = { request: async <T,>(_name: string, _options: { mode: 'exclusive'
   body: () => T | Promise<T>) => body() }
 
 /** A checked V39 source positioned at the revealed dry north-bank stockpile. */
-function northBankSource(buildKit = false) {
+function northBankSource(buildKit = false, withSpade = false) {
   const base = createFreshPublicV36Root('wizard-realms')
   const site = waystationRiverSite('wizard-realms')!
   const target = buildKit ? site.from : site.approach
@@ -70,7 +70,12 @@ function northBankSource(buildKit = false) {
   const state = { ...base.head.state, movementOwner: 'streamed' as const,
     discoveryMask: encodeDiscoveredTileIds(ids), player: { ...base.head.state.player,
       position: { ...target, y: floor },
+      equipment: withSpade ? { ...base.head.state.player.equipment,
+        mainHand: 'woodcutters_axe' as const } : base.head.state.player.equipment,
       inventory: buildKit ? [{ itemId: 'logs' as const, quantity: 8 }]
+        : withSpade ? [{ itemId: 'stone' as const, quantity: 2 },
+          { itemId: 'woodcutters_axe' as const, quantity: 1 },
+          { itemId: 'field_spade' as const, quantity: 1 }]
         : [{ itemId: 'stone' as const, quantity: 2 }] } }
   const genesis = { ...base.lineage.genesis, state }
   const source = { lineage: { origin: 'v35-migration' as const,
@@ -82,6 +87,35 @@ function northBankSource(buildKit = false) {
 }
 
 describe('V40 controller, Waystation projection, and entry integration', () => {
+  it('routes a visible Waystation spade equip through the checked streamed action', async () => {
+    probe.actions.length = probe.outcomes.length = 0; probe.injectSelectedWork = false
+    const root = createPublicV40Root(northBankSource(false, true))
+    const factory = new IDBFactory(), store = createAtomicV40Store(factory)
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw Error('Unexpected V40 target')
+    expect(await store.commit(missing.proof, root)).toBe('committed')
+    renderToStaticMarkup(createElement(PublicV23Controller, { version: 'v40',
+      start: { head: root.head, lineage: root.lineage }, locks, store,
+      v39Store: createAtomicV39Store(factory) }))
+    const spade = probe.projection?.backpack.stacks.find((stack) => stack.itemId === 'field_spade')
+    expect(probe.projection?.v40WaystationSite).toMatchObject({ revealed: true })
+    expect(probe.projection?.equipment.mainHand?.itemId).toBe('woodcutters_axe')
+    expect(spade?.equippableSlots).toContain('mainHand')
+    probe.onIntent!({ type: 'equipment.equip', stackId: spade!.id, slot: 'feet' })
+    probe.onIntent!({ type: 'equipment.equip', stackId: 'absent', slot: 'mainHand' })
+    expect(probe.actions).toEqual([])
+    probe.onIntent!({ type: 'equipment.equip', stackId: spade!.id, slot: 'mainHand' })
+    await vi.waitFor(() => expect(probe.outcomes).toHaveLength(1))
+    expect(probe.actions).toEqual([{ kind: 'mireglass-action/v1', action: {
+      type: 'equip_item', itemId: 'field_spade' } }])
+    expect(probe.outcomes[0]).toMatchObject({ status: 'saved' })
+    expect(await store.readChecked()).toMatchObject({ status: 'valid', root: { head: {
+      saveRevision: 1, witness: { kind: 'mireglass-action/v1', action: {
+        type: 'equip_item', itemId: 'field_spade' } },
+      state: { player: { equipment: { mainHand: 'field_spade' } } },
+    } } })
+  }, 120_000)
+
   it('routes visible barter through the checked V40 store and keeps cross/claim payload-free', async () => {
     probe.actions.length = probe.outcomes.length = 0; probe.injectSelectedWork = false
     const source = northBankSource(), root = createPublicV40Root(source)
@@ -182,6 +216,18 @@ describe('V40 controller, Waystation projection, and entry integration', () => {
         cells: [discoveredCell] }) } })
     expect(mapped.map.overview!().cells).toEqual([{ ...discoveredCell,
       markers: ['Windward Waystation'] }])
+    const restricted = { ...base, unavailableActions: true as const }
+    const near = { ...revealed, state: { ...revealed.state,
+      movementOwner: 'streamed' as const, player: { ...revealed.state.player,
+        position: site.approach } } }
+    expect(projectPublicV40Waystation(near, restricted).unavailableActions).toBeUndefined()
+    expect(projectPublicV40Waystation({ ...near, state: { ...near.state,
+      discoveryMask: root.head.state.discoveryMask } }, restricted).unavailableActions).toBe(true)
+    expect(projectPublicV40Waystation({ ...near, state: { ...near.state,
+      movementOwner: 'greenway' as const } }, restricted).unavailableActions).toBe(true)
+    expect(projectPublicV40Waystation({ ...near, state: { ...near.state,
+      player: { ...near.state.player, position: { ...site.approach,
+        x: site.approach.x + 12.01 } } } }, restricted).unavailableActions).toBe(true)
   })
 
   it('keeps the cross and return actions legible beside the older quest chapters', () => {

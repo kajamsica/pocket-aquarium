@@ -480,8 +480,10 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           ? terrainTapHint ?? `Active ${activePick} pick. Tap or click clear ground within 5 m; an outline shows the target when available. The checked action reports its layer, reach, skill, tool, and capacity result. Not every cell holds ore.`
           : projection.equipment?.mainHand?.itemId !== 'field_spade'
           ? 'Equip a field spade to work the ground.'
-          : projection.controllerActionsEnabled !== true || projection.unavailableActions
+          : projection.controllerActionsEnabled !== true
             ? 'Terrain actions are unavailable while the world is saving.'
+            : projection.unavailableActions
+              ? 'Terrain actions are unavailable in this region.'
             : terrainTapHint ?? (projection.v29Mining && terrainMode === 'dig'
               ? 'Select Dig, then tap or click clear, revealed dry ground within 5 m. An outline shows the target when available. Trees and rocks can block the view; the checked action decides if this soil layer is safe and in reach.'
               : terrainMode === 'dig' ? 'Tap revealed dry ground to dig one layer.'
