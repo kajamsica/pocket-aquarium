@@ -6,6 +6,8 @@ import { ironHallSite } from './ironHallSite'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { createPublicV23Root } from './publicWorldV23Snapshot'
 import { createFreshPublicV41Root } from './publicWorldV41Snapshot'
+import { previewPublicV37FrameBatch } from './publicWorldV37Movement'
+import { replayPublicV40Witness } from './publicWorldV40Snapshot'
 import { confirmPublicV42RewardAction, decodePublicV42RewardProgress,
   decodePublicV42RewardWitness, INITIAL_IRON_HALL_REWARD,
   previewPublicV42RewardFrameBatch, replayPublicV42RewardFrameBatch,
@@ -14,6 +16,7 @@ import { confirmPublicV42RewardAction, decodePublicV42RewardProgress,
 import type { PublicV42RewardProgress, PublicV42RewardWitness } from './publicWorldV42RewardAction'
 import { replayPublicV42Witness } from './publicWorldV42Snapshot'
 import { waystationRiverSite } from './waystationRiverContent'
+import { worldTileAtGrid } from './worldChunks'
 
 const claim = { kind: 'ironhall-claim/v1' } as const
 const equip = { kind: 'ironhall-vest-equip/v1' } as const
@@ -277,6 +280,41 @@ describe('V42 Iron Hall reward authority', () => {
     expect(downed.ironHall).toMatchObject({ playerHealth: 6, knockouts: 1,
       engaged: false, phase: 'dormant' })
     expect(downed.state.player.position).toEqual(site.alcove.center)
+  })
+
+  it('previews an ordinary step-down but checks only the landed batch', () => {
+    const base = claimed(), point = { x: -31.05194, z: -6.01787 }
+    const floor = resolvePublicV23Surface(base.state, point,
+      base.regionalWorks.builtLadderIds)!.floorY
+    const lowerFloor = resolvePublicV23Surface(base.state,
+      { x: point.x, z: point.z + 0.16 }, base.regionalWorks.builtLadderIds)!.floorY
+    expect(floor).toBeCloseTo(1.60897, 4)
+    expect(lowerFloor).toBeCloseTo(1.38169, 4)
+    const before = { ...base, state: {
+      ...base.state, discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(base.state.discoveryMask),
+        worldTileAtGrid(base.state.seed, -8, -2).id,
+        worldTileAtGrid(base.state.seed, -8, -1).id])].sort()),
+      player: { ...base.state.player, position: { ...point, y: floor } } } }
+    expect(decodePublicV42RewardProgress(before)).not.toBeNull()
+    const step = { intents: [{ type: 'move' as const,
+      delta: { x: 0, z: 0.16 } }], walkRequested: true }
+    const prefix = { kind: 'frame-batch/v1' as const, frames: [step] }
+    const complete = { kind: 'frame-batch/v1' as const,
+      frames: [step, ...frames(4).frames] }
+    const provisional = previewPublicV37FrameBatch(before, prefix)!
+    expect(provisional.state.player.verticalVelocity).toBeLessThan(0)
+    expect(provisional.state.player.position.z).toBeCloseTo(point.z + 0.16)
+    expect(replayPublicV42RewardFrameBatch(before, prefix)).toBeNull()
+    expect(previewPublicV42RewardFrameBatch(before, prefix)?.state)
+      .toEqual(provisional.state)
+    const v40 = replayPublicV40Witness(before, complete)!
+    expect(v40.state.player.verticalVelocity).toBe(0)
+    const landed = replayPublicV42RewardFrameBatch(before, complete)!
+    expect(landed).not.toBeNull()
+    expect(landed.state).toEqual(v40.state)
+    expect(previewPublicV42RewardFrameBatch(before, complete)).toEqual(landed)
+    expect(landed.ironHallReward).toEqual(before.ironHallReward)
   })
 
   it('repairs only nearby for 18 coins, without debiting refused actions', () => {

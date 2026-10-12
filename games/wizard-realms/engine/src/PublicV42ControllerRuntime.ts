@@ -191,9 +191,10 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
       if (!frame) return reject(intents, 'invalid_frame', 'Invalid replayable frame.')
       const candidate = [...pending, frame.frames[0]]
       const hasJump = candidate.some(({ intents }) => intents.some((intent) => intent.type === 'jump'))
-      // Ordinary frames compose one at a time; Jump needs its grounded origin.
-      const next = previewPublicV42RewardFrameBatch(hasJump ? progress(committed) : preview,
-        { kind: 'frame-batch/v1', frames: hasJump ? candidate : frame.frames })
+      // Grounded ordinary frames compose singly. Flight needs its grounded origin.
+      const wholeBatch = hasJump || !grounded(preview)
+      const next = previewPublicV42RewardFrameBatch(wholeBatch ? progress(committed) : preview,
+        { kind: 'frame-batch/v1', frames: wholeBatch ? candidate : frame.frames })
       if (!next) return reject(intents, 'terrain_missing', starterLadderRejection(preview, intents)
         ?? 'This move cannot be replayed safely.')
       pending = candidate; preview = next

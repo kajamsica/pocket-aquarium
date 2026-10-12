@@ -243,8 +243,8 @@ function resolveSparStrike(current: PublicV42RewardProgress): PublicV42RewardPro
         verticalVelocity: 0 } } : current.state }
 }
 
-/** V41's phase clock, applied only when a V42 jump needs whole-flight movement. */
-function resolveCombatAfterJumpFrame(current: PublicV42RewardProgress):
+/** V41's phase clock, applied when V42 needs whole-flight movement. */
+function resolveCombatAfterFlightFrame(current: PublicV42RewardProgress):
   PublicV42RewardProgress | null {
   const h = current.ironHall
   if (!h.engaged || h.wardDefeated) return current
@@ -274,7 +274,7 @@ function resolveCombatAfterJumpFrame(current: PublicV42RewardProgress):
     phase: 'recovery', phaseUntilTick: current.state.tick + 15 } }
 }
 
-function jumpedFrames(before: PublicV42RewardProgress,
+function flightFrames(before: PublicV42RewardProgress,
   frames: readonly PublicV14Frame[], allowAirborne: boolean): PublicV42RewardProgress | null {
   const batch = { kind: 'frame-batch/v1' as const, frames }
   if (!before.ironHall.engaged && !before.ironHallReward.spar.active) {
@@ -312,7 +312,7 @@ function jumpedFrames(before: PublicV42RewardProgress,
     if (observe && (!moved || moved.state.tick !== tick)) return null
     if (moved) unobservedTravel = 0
     const knockouts = current.ironHall.knockouts
-    const advanced = resolveCombatAfterJumpFrame(moved
+    const advanced = resolveCombatAfterFlightFrame(moved
       ? { ...current, ...moved }
       : { ...current, state: { ...current.state, tick } })
     const next = advanced && resolveSparStrike(advanced)
@@ -339,18 +339,29 @@ function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
   let current = progressOf(before)
   if (!witness || !current) return null
   if (witness.frames.some((frame) => frame.intents.some((intent) => intent.type === 'jump')))
-    return jumpedFrames(current, witness.frames, allowAirborne)
+    return flightFrames(current, witness.frames, allowAirborne)
+  const origin = current
   for (const frame of witness.frames) {
     const moved = replayPublicV41CombatFrameBatch(current,
       { kind: 'frame-batch/v1', frames: [frame] })
-    if (!moved) return null
+    if (!moved) {
+      // A dry step-down can be valid movement whose intermediate frame is
+      // airborne. Preserve V41's grounded replay for every other rejection.
+      const provisional = previewPublicV37FrameBatch(current,
+        { kind: 'frame-batch/v1', frames: [frame] })
+      const pose = provisional && projectPublicV31Pose(provisional)
+      if (!provisional || !pose || provisional.state.player.verticalVelocity === 0
+        && Math.abs(pose.effective.position.y - pose.effective.floorY) <= 1e-6)
+        return null
+      return flightFrames(origin, witness.frames, allowAirborne)
+    }
     current = resolveSparStrike({ ...moved, ironHallReward: current.ironHallReward })
     if (!current) return null
   }
   return decodePublicV42RewardProgress(current)
 }
 
-/** Checked full-batch replay admits a completed jump while resolving strikes per frame. */
+/** Checked full-batch replay admits completed flight while resolving strikes per frame. */
 export function replayPublicV42RewardFrameBatch(before: PublicV42RewardProgress,
   rawWitness: unknown): PublicV42RewardProgress | null {
   return replayFrames(before, rawWitness, false)

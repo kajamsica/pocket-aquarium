@@ -6,6 +6,8 @@ import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { commitPublicV42 } from './domain/publicWorldV42Flow'
 import { createFreshPublicV41Root } from './domain/publicWorldV41Snapshot'
 import { createPublicV42Root, replayPublicV42Witness } from './domain/publicWorldV42Snapshot'
+import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
+import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
 import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
 import { decodePublicV42RewardProgress } from './domain/publicWorldV42RewardAction'
 import { STARTER_CLIFF_SITE_ID } from './domain/starterCliffProfile'
@@ -50,6 +52,41 @@ describe('V42 copied movement frames', () => {
     expect(runtime.status().pendingFrames).toBe(32)
     expect(replayPublicV42Witness(before, { kind: 'frame-batch/v1',
       frames: Array.from({ length: 32 }, () => frame) })).toEqual(runtime.preview())
+  })
+  it('previews the west-return dry descent until a landed batch can be checked', async () => {
+    const root = createPublicV42Root(createFreshPublicV41Root('wizard-realms'))
+    const point = { x: -31.051937972725487, z: -6.017874871957181 }
+    const floor = resolvePublicV23Surface(root.head.state, point, [])
+    const landing = resolvePublicV23Surface(root.head.state,
+      { x: point.x, z: point.z + 0.16 }, [])
+    expect(floor?.floorY).toBeCloseTo(1.6089652476925116)
+    expect(landing?.floorY).toBeCloseTo(1.3816894797750405)
+    const head = { ...root.head, state: { ...root.head.state, movementOwner: 'streamed' as const,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(root.head.state.discoveryMask),
+        floor!.tileId, landing!.tileId])].sort()),
+      player: { ...root.head.state.player, position: { ...point, y: floor!.floorY } } } }
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...before } = head
+    expect(decodePublicV42RewardProgress(before)).not.toBeNull()
+    let writes = 0
+    const runtime = createPublicV42ControllerRuntime({ ...root, head },
+      async () => { writes++; return { ok: false, reason: 'diagnostic-writer' } })
+    const move = { intents: [{ type: 'move' as const, delta: { x: 0, z: 0.16 } }],
+      walkRequested: false }
+    const idle = { intents: [], walkRequested: false }
+    expect(runtime.advanceFrame(move.intents, false).rejections).toEqual([])
+    expect(runtime.preview().state.player.verticalVelocity).toBeLessThan(0)
+    expect(await runtime.save()).toMatchObject({ status: 'deferred-airborne' })
+    expect(writes).toBe(0)
+    for (let frame = 0; frame < 4; frame++)
+      expect(runtime.advanceFrame([], false).rejections).toEqual([])
+    expect(runtime.preview().state.player.verticalVelocity).toBe(0)
+    expect(runtime.preview().state.player.position.y).toBeCloseTo(landing!.floorY)
+    const witness = { kind: 'frame-batch/v1', frames: [move, idle, idle, idle, idle] }
+    expect(replayPublicV42Witness(before, witness)).toEqual(runtime.preview())
+    expect(await runtime.save()).toMatchObject({ status: 'blocked', reason: 'diagnostic-writer' })
+    expect(writes).toBe(1)
   })
   it('explains an off-axis blocked climb without changing the requested move', () => {
     const yaw = -0.13, { start, before } = starterAt({ x: 1.2, z: -5.9 }, yaw)
