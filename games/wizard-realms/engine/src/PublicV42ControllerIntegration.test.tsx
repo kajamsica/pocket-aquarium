@@ -104,6 +104,57 @@ async function crossedHallRoot(nearHall = false) {
 }
 
 describe('V42 controller, Iron Hall view and entry integration', () => {
+  it('saves a visible Waystation spade equip through V42 and rejects invalid shared intents', async () => {
+    probe.actions.length = probe.outcomes.length = 0
+    const base = createFreshPublicV36Root('wizard-realms')
+    const site = waystationRiverSite('wizard-realms')!
+    const floor = resolvePublicV23Surface(base.head.state, site.approach, [])!.floorY
+    const ids = [...new Set([...decodeDiscoveredTileIds(base.head.state.discoveryMask),
+      ...site.footprintTileIds])].sort()
+    const state = { ...base.head.state, movementOwner: 'streamed' as const,
+      discoveryMask: encodeDiscoveredTileIds(ids), player: { ...base.head.state.player,
+        position: { ...site.approach, y: floor },
+        equipment: { ...base.head.state.player.equipment,
+          mainHand: 'woodcutters_axe' as const },
+        inventory: [{ itemId: 'woodcutters_axe' as const, quantity: 1 },
+          { itemId: 'field_spade' as const, quantity: 1 }] } }
+    const genesis = { ...base.lineage.genesis, state }
+    const source = { lineage: { origin: 'v35-migration' as const,
+      rulesProfile: 'old-marker/v1' as const, seed: 'wizard-realms',
+      sourceRevision: 0, genesis }, previous: null,
+    head: { ...genesis, markerClaimReward: null, schemaVersion: PUBLIC_V36_SCHEMA,
+      saveRevision: 0, witness: null } }
+    const root = createPublicV42Root(createPublicV41Root(createPublicV40Root(
+      createPublicV39Root(createPublicV38Root(createPublicV37Root(source))))))
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw Error('Unexpected V42 target')
+    expect(await store.commit(missing.proof, root)).toBe('committed')
+    renderToStaticMarkup(createElement(PublicV23Controller, { version: 'v42',
+      start: { head: root.head, lineage: root.lineage }, locks, store,
+      v41Store: createAtomicV41Store(factory) }))
+    const projection = probe.projection!, spade = projection.backpack.stacks.find(
+      (stack) => stack.itemId === 'field_spade')
+    expect(projection.v40WaystationSite).toMatchObject({ revealed: true })
+    expect(projection.equipment.mainHand?.itemId).toBe('woodcutters_axe')
+    const equipButton = hud(projection).match(/<button[^>]*aria-label="Equip Field spade"[^>]*>/)?.[0]
+    expect(equipButton).toBeDefined()
+    expect(equipButton).not.toContain('disabled')
+    probe.onIntent!({ type: 'equipment.equip', stackId: spade!.id, slot: 'feet' })
+    probe.onIntent!({ type: 'equipment.equip', stackId: 'absent', slot: 'mainHand' })
+    expect(probe.actions).toEqual([])
+    probe.onIntent!({ type: 'equipment.equip', stackId: spade!.id, slot: 'mainHand' })
+    await vi.waitFor(() => expect(probe.outcomes).toHaveLength(1))
+    expect(probe.actions).toEqual([{ kind: 'mireglass-action/v1', action: {
+      type: 'equip_item', itemId: 'field_spade' } }])
+    expect(probe.outcomes[0]).toMatchObject({ status: 'saved' })
+    expect(await store.readChecked()).toMatchObject({ status: 'valid', root: { head: {
+      saveRevision: 1, witness: { kind: 'mireglass-action/v1', action: {
+        type: 'equip_item', itemId: 'field_spade' } },
+      state: { player: { equipment: { mainHand: 'field_spade' } } },
+    } } })
+  }, 120_000)
+
   it('routes normal V42 and inherited intents while only checked writes can change the save', async () => {
     probe.actions.length = probe.outcomes.length = 0
     const factory = new IDBFactory(), root = createFreshPublicV42Root('wizard-realms')
