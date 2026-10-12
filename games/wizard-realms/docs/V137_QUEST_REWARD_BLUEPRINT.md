@@ -23,10 +23,10 @@ All amounts in the next table are **proposed**, additive claim rewards. Existing
 
 ### 1. Highland Signal, optional discovery
 
-- **Problem and clue:** A dark signal vane stands on the dry Quarry Crown trail. Its etched wind marks point toward a second vantage point, inviting exploration beyond the main route. The existing Crown glyph teaches Windward Step, and the spell works on the authored dry Highland trail. [Windward rules](../engine/src/domain/publicWorldV12Authority.ts#L164-L209).
+- **Problem and clue:** A dark signal vane stands on the dry Quarry Crown trail. Its etched wind marks point toward a second vantage point, inviting exploration beyond the main route. V12 has Windward Step study, cast, and trail rules, but the continuous V36 game does not yet offer working Windward actions. [V12 rules](../engine/src/domain/publicWorldV12Authority.ts#L164-L209), [continuous-world disablement](../engine/src/PublicV13WorldView.ts#L97-L100).
 - **Action, complication, return:** Learn Windward Step through the normal glyph interaction, follow the trail to the vane, cast within its legal window, and inspect the revealed bearing. A cooldown or leaving the trail delays the signal without losing progress. Return to the Crown marker to record it.
 - **Proposed reward:** The table's 30 coins and two 35 XP grants, plus a saved map bearing that points to a later region. No random drop. The bearing is the practical payoff; it must become visible soon after claim.
-- **Future prerequisite:** Add a world-visible vane, checked discovery and return witness, persistent map clue, and one-time claim. Reuse the shipped Windward Step learning and cast rules; the signal quest and its payout do not exist yet. [Roadmap optional-signal direction](QUEST_CAMPAIGN_ROADMAP.md#L23-L28).
+- **Future prerequisite:** First make Windward Step study, cast, and actual dry-trail movement effect work through normal controls in the continuous world. Then add a world-visible vane, versioned checked discovery and return witness, persistent map clue, and one-time claim. The signal quest and its payout do not exist yet. [Roadmap optional-signal direction](QUEST_CAMPAIGN_ROADMAP.md#L51-L51).
 
 ### 2. Iron Hall Watch, first combat contract
 
