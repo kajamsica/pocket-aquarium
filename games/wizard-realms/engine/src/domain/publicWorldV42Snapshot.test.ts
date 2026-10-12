@@ -8,7 +8,7 @@ import { ironHallQuartermasterSite } from './ironHallQuartermasterSite'
 import { ironHallSite } from './ironHallSite'
 import { createPublicV23Root } from './publicWorldV23Snapshot'
 import { commitPublicV42, resumePublicV42, startFreshPublicV42,
-  startPublicV42 } from './publicWorldV42Flow'
+  startPublicV42, requestPublicV42ReturnHome } from './publicWorldV42Flow'
 import { createFreshPublicV39Root, decodePublicV39Root,
   PUBLIC_V39_SCHEMA } from './publicWorldV39Snapshot'
 import type { PublicV39Root } from './publicWorldV39Snapshot'
@@ -130,6 +130,20 @@ async function putRaw(factory: IDBFactory, name: string, raw: unknown) {
 }
 
 describe('V42 checked save and reward replay', () => {
+  it('reports a reachable return-home request as not_trapped without a write', async () => {
+    const store = createAtomicV42Store(new IDBFactory())
+    const started = await startFreshPublicV42(locks as never, store, seed)
+    if (!started.ok) throw new Error(started.reason)
+    const before = await store.readChecked()
+    if (before.status !== 'valid') throw new Error('Missing fresh V42 root')
+    expect(await requestPublicV42ReturnHome(locks as never, store,
+      started.value.head.saveRevision, started.value.lineage))
+      .toEqual({ ok: false, reason: 'not_trapped' })
+    const after = await store.readChecked()
+    expect(after.status).toBe('valid')
+    if (after.status === 'valid') expect(after.root).toEqual(before.root)
+  })
+
   it('copies only checked V41, keeps its source bytes, and pins fresh genesis', async () => {
     const fresh = createFreshPublicV42Root(seed)
     expect(fresh).toMatchObject({ lineage: { origin: 'fresh', sourceRevision: null,

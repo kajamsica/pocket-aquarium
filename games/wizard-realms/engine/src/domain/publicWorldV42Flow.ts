@@ -162,7 +162,9 @@ async function commitWitnessUnderLock(store: Store, revision: number, rawLineage
       return { ok: false, reason: confirmPublicV31SoilAction(head, decoded).rejection
         ?? 'frame-rejected' }
     if (returnHome && decoded.kind === 'return-home/v1') {
-      const reason = applyPublicV26ReturnHome(head, decoded.atMs).rejection
+      const { state, greenwayWorks, regionalWorks, terrain, nextHomeAtMs } = head
+      const reason = applyPublicV26ReturnHome({ state, greenwayWorks,
+        regionalWorks, terrain, nextHomeAtMs }, decoded.atMs).rejection
       if (reason === 'not_trapped' || reason === 'cooldown') return { ok: false, reason }
     }
     return { ok: false, reason: 'frame-rejected' }
