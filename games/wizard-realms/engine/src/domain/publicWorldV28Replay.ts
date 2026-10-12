@@ -3,6 +3,7 @@ import type { PublicV14Frame } from './publicWorldV14Snapshot'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { decodePublicV23Progress } from './publicWorldV23Snapshot'
 import { visitPublicV23FramesWithEvents } from './publicWorldV23Transitions'
+import type { PublicV23StreamedMovePolicy } from './publicWorldV23Transitions'
 import type { PublicV24Progress } from './publicWorldV24Snapshot'
 import { publicV25RiverTouchesSegment } from './publicWorldV25RiverSweep'
 import { publicV26SavedLadderSpans } from './publicWorldV26Snapshot'
@@ -149,13 +150,13 @@ function bufferedFlightSegment(before: PublicV24Progress, after: PublicV24Progre
 /** A jump-led flight has one V23 session; collect its frames once instead of replaying every prefix. */
 function replayJumpFlight(before: PublicV28Progress, frames: readonly PublicV14Frame[],
   terrain: PublicV28Progress['terrain'],
-  allowAirborne: boolean): { progress: PublicV28Progress;
+  allowAirborne: boolean, streamedMove?: PublicV23StreamedMovePolicy): { progress: PublicV28Progress;
     events: readonly PublicWorldEvent[]; flight: BufferedFlight | null } | null {
   if (frames[0]?.intents[0]?.type !== 'jump') return null
   const states: PublicV24Progress[] = []
   const first = { previous: null as PublicV24Progress | null }
   const trial = visitPublicV23FramesWithEvents(oldProgress(before), frames,
-    (previous, next) => { first.previous ??= previous; states.push(next); return true }, true, movementPolicy)
+    (previous, next) => { first.previous ??= previous; states.push(next); return true }, true, movementPolicy, streamedMove)
   const old = first.previous
   if (!trial || !old || states.length !== frames.length
     || !projectPublicV28Pose(old, terrain, before.riverBridgeIds)) return null
@@ -182,12 +183,13 @@ function replayJumpFlight(before: PublicV28Progress, frames: readonly PublicV14F
 
 /** Authoritative frame events and movement replay share one checked V28 visitor. */
 function replayCheckedFrames(before: PublicV28Progress,
-  frames: readonly PublicV14Frame[], allowAirborne = false):
+  frames: readonly PublicV14Frame[], allowAirborne = false,
+  streamedMove?: PublicV23StreamedMovePolicy):
   { progress: PublicV28Progress; events: readonly PublicWorldEvent[];
     flight: BufferedFlight | null } | null {
   try {
     if (Array.isArray(before.riverBridgeIds) && before.riverBridgeIds.length === 0) {
-      const inherited = replayPublicV27FramesWithEvents(before, frames, allowAirborne)
+      const inherited = replayPublicV27FramesWithEvents(before, frames, allowAirborne, streamedMove)
       return inherited ? { progress: { ...inherited.progress, riverBridgeIds: [] },
         events: inherited.events, flight: null } : null
     }
@@ -195,7 +197,7 @@ function replayCheckedFrames(before: PublicV28Progress,
     const witness = decodePublicV14FrameWitness({ kind: 'frame-batch/v1', frames })
     if (!terrain || !witness || !Number.isSafeInteger(before.nextHomeAtMs)
       || before.nextHomeAtMs < 0) return null
-    const jumpFlight = replayJumpFlight(before, witness.frames, terrain, allowAirborne)
+    const jumpFlight = replayJumpFlight(before, witness.frames, terrain, allowAirborne, streamedMove)
     if (jumpFlight) return jumpFlight
     let current: PublicV24Progress | null = null
     let flight: BufferedFlight | null = null
@@ -212,7 +214,7 @@ function replayCheckedFrames(before: PublicV28Progress,
       const priorFlight = flight as BufferedFlight | null
       const flightFrames: PublicV14Frame[] = priorFlight ? [...priorFlight.frames, frame] : [frame]
       const trial = visitPublicV23FramesWithEvents(priorFlight?.origin ?? current ?? oldProgress(before),
-        flightFrames, captureFirstPrevious, true, movementPolicy)
+        flightFrames, captureFirstPrevious, true, movementPolicy, streamedMove)
       if (!trial) return null
       if (!current) {
         if (!first.previous || !projectPublicV28Pose(first.previous, terrain, before.riverBridgeIds)) return null
@@ -228,7 +230,7 @@ function replayCheckedFrames(before: PublicV28Progress,
       if (!priorFlight && !allowAirborne && !deckSnapped && candidate.state.player.verticalVelocity < 0
         && !decodePublicV23Progress(candidate, current.state.seed)
         && dryBaseSegment(current, trial.progress, terrain, before.riverBridgeIds))
-        dryRetry = visitPublicV23FramesWithEvents(current, [frame], () => true, false, movementPolicy)
+        dryRetry = visitPublicV23FramesWithEvents(current, [frame], () => true, false, movementPolicy, streamedMove)
       if (dryRetry) candidate = dryRetry.progress
       const airborne = candidate.state.player.verticalVelocity !== 0
       const bufferedFlight: boolean = !deckSnapped && (priorFlight !== null || airborne)
@@ -261,9 +263,10 @@ function replayCheckedFrames(before: PublicV28Progress,
 
 /** An accepted airborne preview must have an in-batch idle path to checked landing. */
 export function replayPublicV28FramesWithEvents(before: PublicV28Progress,
-  frames: readonly PublicV14Frame[], allowAirborne = false):
+  frames: readonly PublicV14Frame[], allowAirborne = false,
+  streamedMove?: PublicV23StreamedMovePolicy):
   { progress: PublicV28Progress; events: readonly PublicWorldEvent[] } | null {
-  const result = replayCheckedFrames(before, frames, allowAirborne)
+  const result = replayCheckedFrames(before, frames, allowAirborne, streamedMove)
   if (!result) return null
   const { flight, ...publicResult } = result
   if (!allowAirborne || !flight) return publicResult
@@ -273,7 +276,7 @@ export function replayPublicV28FramesWithEvents(before: PublicV28Progress,
   // The accepted flight prefix already passed every V28 segment gate. An idle
   // suffix stays at that same checked XZ support; V23 must prove its landing.
   const landed = visitPublicV23FramesWithEvents(flight.origin, [...flight.frames, ...idle],
-    () => true, false, movementPolicy)
+    () => true, false, movementPolicy, streamedMove)
   return landed && projectPublicV28Pose(landed.progress, result.progress.terrain,
     result.progress.riverBridgeIds) ? publicResult : null
 }

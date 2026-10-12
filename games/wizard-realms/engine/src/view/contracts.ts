@@ -295,9 +295,11 @@ export interface WizardWorldOverview {
   player: { gridX: number; gridZ: number; yaw: number }
 }
 
-/** V12 presentation only. The Windward Step ledger remains in the authoritative world state. */
+/** The Windward Step ledger remains in the authoritative world state. */
 export interface WizardWindwardStepView {
   learned: boolean
+  /** V37 readiness comes from checked spell witnesses and effective support. */
+  checkedActions?: boolean
   glyph: { position: Vec3; canStudy: boolean } | null
   activeSeconds: number
   cooldownSeconds: number

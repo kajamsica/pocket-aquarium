@@ -20,6 +20,13 @@ import type { StreamedWorldIntent } from './streamedWorld'
 
 const MAX_TERMINAL_DRY_DESCENT_METERS = 0.10
 
+/** Trusted version policy, never decoded from a witness. Ordinary gait is checked first. */
+export type PublicV23StreamedMovePolicy = (before: PublicV23Progress,
+  frame: PublicV14FrameWitness['frames'][number]) => Readonly<{
+    delta: Readonly<{ x: number; z: number }>
+    settle: (after: PublicV23Progress) => PublicV23Progress
+  }> | null
+
 const actionKeys = {
   equip_item: ['itemId', 'slot'], unequip_item: ['slot'], harvest: ['resourceId'],
   buy_store_listing: ['storeId', 'listingId'], sell_to_store: ['storeId', 'itemId', 'quantity'],
@@ -74,9 +81,10 @@ export function visitPublicV23Frames(before: PublicV23Progress,
 export function visitPublicV23FramesWithEvents(before: PublicV23Progress,
   frames: PublicV14FrameWitness['frames'],
   visit: (beforeFrame: PublicV23Progress, afterFrame: PublicV23Progress) => boolean,
-  allowAirborne = false, policy?: PublicV17GroundStepPolicy):
+  allowAirborne = false, policy?: PublicV17GroundStepPolicy,
+  streamedMove?: PublicV23StreamedMovePolicy):
   { progress: PublicV23Progress; events: PublicWorldEvent[] } | null {
-  const result = framesResult(before, frames, allowAirborne, visit, policy)
+  const result = framesResult(before, frames, allowAirborne, visit, policy, streamedMove)
   return result.progress ? { progress: result.progress, events: result.events } : null
 }
 
@@ -89,7 +97,7 @@ export function previewPublicV23Frames(before: PublicV23Progress,
 
 function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['frames'], allowAirborne = false,
   visit?: (beforeFrame: PublicV23Progress, afterFrame: PublicV23Progress) => boolean,
-  policy?: PublicV17GroundStepPolicy):
+  policy?: PublicV17GroundStepPolicy, streamedMove?: PublicV23StreamedMovePolicy):
   { progress: PublicV23Progress | null; events: PublicWorldEvent[];
     rejection: PublicWorldRejection | null; rejectedFrameIndex: number | null } {
   const failed = (rejection: PublicWorldRejection | null = null, rejectedFrameIndex: number | null = null) =>
@@ -125,8 +133,14 @@ function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['
       }
       if (move?.type === 'move' && Math.hypot(move.delta.x, move.delta.z)
         > publicV11Gait(old.player.equipment.feet, frame.walkRequested).metersPerStep + 1e-9) return failed()
+      const assisted: ReturnType<PublicV23StreamedMovePolicy> = move?.type === 'move'
+        ? streamedMove?.(progress, frame) ?? null : null
+      if (assisted && (!Number.isFinite(assisted.delta.x) || !Number.isFinite(assisted.delta.z)
+        || Math.hypot(assisted.delta.x, assisted.delta.z) > 0.2 + 1e-9)) return failed()
+      const intents = assisted ? frame.intents.map((intent) => intent.type === 'move'
+        ? { ...intent, delta: assisted.delta } : intent) : frame.intents
       stream ??= createPublicV23StreamTerrain(old, progress.regionalWorks.builtLadderIds)
-      const result = stream.advance(frame.intents as StreamedWorldIntent[],
+      const result = stream.advance(intents as StreamedWorldIntent[],
         { atomicOnRejection: true, nearbyDiscovery: true })
       if (result.rejections.length) {
         const rejection = result.rejections[0]
@@ -173,6 +187,11 @@ function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['
       events.push(...sale.events)
       progress = { ...progress, state: { ...old, tick, eventSequence: sale.eventSequence,
         rng: { ...old.rng, simulation: stepRng(old.rng.simulation) }, discoveryMask: mask, player: sale.player } }
+      if (assisted) {
+        const settled: PublicV23Progress = assisted.settle(progress)
+        if (settled !== progress) stream = null
+        progress = settled
+      }
       if (visit && !visit(previous, progress)) return failed()
     }
     const validated = allowAirborne ? progress : decodePublicV23Progress(progress, before.state.seed)

@@ -16,6 +16,12 @@ import { createPublicV33ControllerRuntime } from './PublicV33ControllerRuntime'
 import { createPublicV34ControllerRuntime } from './PublicV34ControllerRuntime'
 import { createPublicV35ControllerRuntime } from './PublicV35ControllerRuntime'
 import { createPublicV36ControllerRuntime } from './PublicV36ControllerRuntime'
+import { createPublicV37ControllerRuntime } from './PublicV37ControllerRuntime'
+import { projectPublicV37Windward } from './PublicV37WorldView'
+import type { PublicV37EntryBindings } from './PublicV37Entry'
+import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
+import type { PublicV37Start } from './domain/publicWorldV37Flow'
+import type { PublicV37WindwardWitness } from './domain/publicWorldV37WindwardAction'
 import type { PublicV23EntryBindings } from './PublicV23Entry'
 import type { PublicV24EntryBindings } from './PublicV24Entry'
 import type { PublicV25EntryBindings } from './PublicV25Entry'
@@ -125,7 +131,8 @@ type V33Runtime = ReturnType<typeof createPublicV33ControllerRuntime>
 type V34Runtime = ReturnType<typeof createPublicV34ControllerRuntime>
 type V35Runtime = ReturnType<typeof createPublicV35ControllerRuntime>
 type V36Runtime = ReturnType<typeof createPublicV36ControllerRuntime>
-type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime
+type V37Runtime = ReturnType<typeof createPublicV37ControllerRuntime>
+type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime
 type V32PlusRuntime = V32Runtime | V33PlusRuntime
 type ActiveViewSource = Readonly<{ status: () => { saveRevision: number; pendingFrames: number }
   view: () => PublicV17ActiveView }>
@@ -157,6 +164,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV33FairyRingWitness
   | PublicV35LedgerWitness
   | PublicV36MarkerWitness
+  | PublicV37WindwardWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean }
@@ -853,8 +861,8 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-guide,[data-public-v23] .v23-aim{position:fixed;z-index:20;left:12px;bottom:96px;box-sizing:border-box;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v23-guide{max-width:330px;padding:10px}
 [data-public-v23] .v23-guide-west{max-width:320px}
-[data-public-version=v25] .v25-start-guide,[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v35] .v25-start-guide,[data-public-version=v36] .v25-start-guide{width:min(280px,calc(100vw - 112px));max-height:min(38vh,240px);overflow:auto}
-[data-public-version=v25] .v25-start-guide summary,[data-public-version=v26] .v25-start-guide summary,[data-public-version=v27] .v25-start-guide summary,[data-public-version=v28] .v25-start-guide summary,[data-public-version=v29] .v25-start-guide summary,[data-public-version=v30] .v25-start-guide summary,[data-public-version=v31] .v25-start-guide summary,[data-public-version=v32] .v25-start-guide summary,[data-public-version=v33] .v25-start-guide summary,[data-public-version=v34] .v25-start-guide summary,[data-public-version=v35] .v25-start-guide summary,[data-public-version=v36] .v25-start-guide summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+[data-public-version=v25] .v25-start-guide,[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v35] .v25-start-guide,:is([data-public-version=v36],[data-public-version=v37]) .v25-start-guide{width:min(280px,calc(100vw - 112px));max-height:min(38vh,240px);overflow:auto}
+[data-public-version=v25] .v25-start-guide summary,[data-public-version=v26] .v25-start-guide summary,[data-public-version=v27] .v25-start-guide summary,[data-public-version=v28] .v25-start-guide summary,[data-public-version=v29] .v25-start-guide summary,[data-public-version=v30] .v25-start-guide summary,[data-public-version=v31] .v25-start-guide summary,[data-public-version=v32] .v25-start-guide summary,[data-public-version=v33] .v25-start-guide summary,[data-public-version=v34] .v25-start-guide summary,[data-public-version=v35] .v25-start-guide summary,:is([data-public-version=v36],[data-public-version=v37]) .v25-start-guide summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 [data-public-v23] .v23-aim{width:324px;padding:12px}
 [data-public-v23] .v23-status{position:fixed;z-index:21;top:8px;left:12px;max-width:min(300px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
 [data-public-version=v34] .v34-branch-label,[data-public-version=v35] .v34-branch-label{position:fixed;z-index:20;top:8px;right:12px;max-width:min(250px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
@@ -864,7 +872,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-save p{margin:4px 0 0}
 [data-public-v23] .v24-actions{position:fixed;z-index:21;right:12px;bottom:96px;box-sizing:border-box;width:min(300px,calc(100vw - 24px));max-height:45vh;overflow:auto;padding:10px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v24-actions button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
-[data-public-version=v36] .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
+:is([data-public-version=v36],[data-public-version=v37]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
 [data-public-v23] .v26-safety{position:fixed;z-index:21;left:50%;bottom:8px;transform:translateX(-50%);box-sizing:border-box;width:min(230px,calc(100vw - 24px));max-height:35vh;overflow:auto;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v26-safety:not([open]){width:140px;padding:0 6px;opacity:.85}
 [data-public-v23] .v26-safety summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -883,8 +891,8 @@ const PUBLIC_V23_PANEL_STYLES = `
   [data-public-v23] .v23-status{left:8px;max-width:min(260px,calc(100vw - 16px))}
   [data-public-v23] .v23-save{top:76px;right:8px}
   [data-public-v23] .v24-actions{right:8px;bottom:calc(156px + env(safe-area-inset-bottom,0px));max-height:30vh}
-  [data-public-version=v36] .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
-  [data-public-version=v36]:has(.wr-surface[data-work-mode="true"]) .v24-actions,[data-public-version=v36]:has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
+  :is([data-public-version=v36],[data-public-version=v37]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
+  :is([data-public-version=v36],[data-public-version=v37]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
 }
 body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has([data-public-version=v28]),body:has([data-public-version=v29]),body:has([data-public-version=v30]),body:has([data-public-version=v31]),body:has([data-public-version=v32]),body:has([data-public-version=v33]),body:has([data-public-version=v34]){margin:0;background:#14221f}
@@ -1006,6 +1014,8 @@ export type PublicV35ControllerProps = PublicV35EntryBindings & Readonly<{
   start: PublicV35Start; version: 'v35' }>
 export type PublicV36ControllerProps = PublicV36EntryBindings & Readonly<{
   start: PublicV36Start; version: 'v36' }>
+export type PublicV37ControllerProps = PublicV37EntryBindings & Readonly<{
+  start: PublicV37Start; version: 'v37' }>
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
@@ -1184,8 +1194,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV25ControllerProps | PublicV26ControllerProps | PublicV27ControllerProps
   | PublicV28ControllerProps | PublicV29ControllerProps | PublicV30ControllerProps
   | PublicV31ControllerProps | PublicV32ControllerProps | PublicV33ControllerProps
-  | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps) {
-  const v36 = 'version' in props && props.version === 'v36'
+  | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps | PublicV37ControllerProps) {
+  const v37 = 'version' in props && props.version === 'v37'
+  const v36 = 'version' in props && (props.version === 'v36' || v37)
   const v35 = 'version' in props && (props.version === 'v35' || v36)
   const v34 = 'version' in props && (props.version === 'v34' || v35)
   const v33 = 'version' in props && (props.version === 'v33' || v34)
@@ -1203,7 +1214,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const physicalWorld = v26 || v27 || riverBridgeWorld
   const river = v25 || physicalWorld
   const v24 = 'version' in props
-  const saveVersion = v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
+  const saveVersion = v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
   const traceRef = useRef<ReturnType<typeof createPublicV17InputTrace> | null | undefined>(undefined)
   if (traceRef.current === undefined) traceRef.current = publicV17InputTraceEnabled(
     typeof window === 'undefined' ? '' : window.location?.hostname ?? '',
@@ -1212,9 +1223,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const trace = traceRef.current
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
-    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | null>(null)
+    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | null>(null)
   if (!runtimeRef.current) {
-    runtimeRef.current = 'version' in props && props.version === 'v36'
+    runtimeRef.current = 'version' in props && props.version === 'v37'
+      ? createPublicV37ControllerRuntime(props.start, (revision, lineage, witness) =>
+        commitPublicV37(props.locks, props.store, revision, lineage, witness),
+        (revision, lineage) => requestPublicV37ReturnHome(props.locks, props.store, revision, lineage))
+      : 'version' in props && props.version === 'v36'
       ? createPublicV36ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV36(props.locks, props.store, revision, lineage, witness),
         (revision, lineage) => requestPublicV36ReturnHome(props.locks, props.store,
@@ -1432,11 +1447,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const markerPreview = markerProgress && markerQuest?.stage === 'salvager'
     && (ledgerView.nearbyStoreId === salvagerId || ledgerView.openStoreId === salvagerId)
     ? previewPublicV36MarkerAction(markerProgress, { kind: 'marker-claim/v1' }) : null
-  const view = markerQuest ? { ...ledgerView, v36MarkerQuest: markerQuest,
+  const markerView = markerQuest ? { ...ledgerView, v36MarkerQuest: markerQuest,
     ...(markerPreview ? { v36MarkerClaim: { rejection: markerPreview.rejection,
       hint: markerPreview.rejection
         ? publicV36MarkerRejectionMessage(markerPreview.rejection) : null } } : {}) }
     : ledgerView
+  const view = v37 ? projectPublicV37Windward(snapshot as PublicV36MarkerProgress, markerView) : markerView
   trace?.record('controller.render', { viewMs: viewFinishedAt - renderStartedAt,
     projectionMs: performance.now() - viewFinishedAt,
     baseProjectionMs: baseProjectionFinishedAt - baseProjectionStartedAt,
@@ -1524,6 +1540,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const result = 'kind' in intent && intent.kind === 'return-home-request'
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
+          : 'kind' in intent && (intent.kind === 'windward-study/v1' || intent.kind === 'windward-cast/v1')
+          ? await (runtime as V37Runtime).action(intent)
           : 'kind' in intent && intent.kind === 'marker-claim/v1'
           ? await (runtime as V36Runtime).action(intent)
           : 'kind' in intent && (intent.kind === 'ledger-survey/v1'
@@ -1560,6 +1578,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if ('id' in intent) setWorkMode(false)
           tell('kind' in intent && intent.kind === 'return-home-request'
             ? 'Returned home safely. A 30-minute rescue cooldown has started.'
+            : 'kind' in intent && intent.kind === 'windward-study/v1'
+            ? 'Windward Step learned and saved. Walk west on the dry Highland trail to practice.'
+            : 'kind' in intent && intent.kind === 'windward-cast/v1'
+            ? 'Windward Step saved. Safe westbound walking steps on the revealed dry trail gain 25%.'
             : 'kind' in intent && intent.kind === 'marker-claim/v1'
             ? 'Beneath the Old Marker reward saved. Check your journal for the exact coin and Fen Waders branch.'
             : 'kind' in intent && intent.kind === 'ledger-survey/v1'
@@ -1806,6 +1828,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     }
     if (intent.type === 'jump') { queuePulse([0, 0], true); return }
     if (intent.type === 'gait.toggle') { setWalkRequested((value) => !value); return }
+    if (v37 && (intent.type === 'windward.study' || intent.type === 'windward.cast')) {
+      queueChecked({ kind: intent.type === 'windward.study' ? 'windward-study/v1' : 'windward-cast/v1' })
+      return
+    }
     if (intent.type === 'v26.terrain') {
       if (v31 && intent.kind === 'dig' && publicV31HasRaisedSoilCell(
         (snapshot as PublicV31Progress).raisedSoilCells, intent.gx, intent.gz))

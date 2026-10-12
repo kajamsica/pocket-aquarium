@@ -154,7 +154,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
     : 100)
   const windward = projection.windwardStep
   const windwardAction = windward?.learned ? { type: 'windward.cast' as const } : { type: 'windward.study' as const }
-  const windwardActionable = !savePaused && !legacyActionsUnavailable && (windward?.learned ? windward.canCast : windward?.glyph?.canStudy === true)
+  const windwardActionable = !savePaused && (!legacyActionsUnavailable || windward?.checkedActions === true) && (windward?.learned ? windward.canCast : windward?.glyph?.canStudy === true)
   const windwardStatus = windward?.unavailableReason ?? (windward?.activeSeconds
     ? `Active for ${windward.activeSeconds}s. Recast in ${windward.cooldownSeconds}s.`
     : windward?.cooldownSeconds ? `Recast in ${windward.cooldownSeconds}s.`

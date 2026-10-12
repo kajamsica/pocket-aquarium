@@ -4,6 +4,7 @@ import { samePublicV14Value } from './publicWorldV14Validation'
 import type { PublicV14Frame } from './publicWorldV14Snapshot'
 import { decodePublicV23Progress, exactPublicV23 } from './publicWorldV23Snapshot'
 import { visitPublicV23FramesWithEvents } from './publicWorldV23Transitions'
+import type { PublicV23StreamedMovePolicy } from './publicWorldV23Transitions'
 import type { PublicV24Progress } from './publicWorldV24Snapshot'
 import { publicV25RiverPassage } from './publicWorldV25Passage'
 import { decodePublicV26Witness, publicV26SavedLadderSpans,
@@ -78,14 +79,15 @@ export function publicV27MovementSegmentAccepted(before: PublicV27Progress,
 
 /** V27 frame replay provides authoritative event effects for the controller and writer. */
 export function replayPublicV27FramesWithEvents(before: PublicV27Progress,
-  frames: readonly PublicV14Frame[], allowAirborne = false):
+  frames: readonly PublicV14Frame[], allowAirborne = false,
+  streamedMove?: PublicV23StreamedMovePolicy):
   { progress: PublicV27Progress; events: readonly PublicWorldEvent[] } | null {
   try {
     const terrain = decodePublicV26TerrainLedger(before.terrain)
     if (!terrain || !Number.isSafeInteger(before.nextHomeAtMs)
       || before.nextHomeAtMs < 0) return null
     const next = visitPublicV23FramesWithEvents(progress(before), frames, (prior, after) =>
-      acceptsSegment(prior, after, terrain), allowAirborne, movementPolicy)
+      acceptsSegment(prior, after, terrain), allowAirborne, movementPolicy, streamedMove)
     return next && projectPublicV26Pose(next.progress, terrain)
       ? { progress: { ...next.progress, terrain, nextHomeAtMs: before.nextHomeAtMs },
         events: next.events } : null

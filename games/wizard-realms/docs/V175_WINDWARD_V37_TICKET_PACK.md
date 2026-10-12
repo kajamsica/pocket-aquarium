@@ -8,12 +8,43 @@ Keep V36 and every older save readable and unchanged. V37 uses `wizard-world/v37
 
 The physical rules must remain consistent: normal input carries a gait-valid <=0.16 m walk, V37 privately derives an eligible <=0.20 m wind-assisted step, and the same result passes river, rim, pit, bridge and raised-soil support checks in both preview and saved replay. No global loosening of V23 or earlier movement. The historic V12 route partly conflicts with V32 cartography; only use its actually traversable dry/revealed suffix unless a new, pinned V37 route and practice ledger are proven. Never show an active effect that does not move the player. Preserve practiced segment XP once per eligible segment.
 
+## Lane Graph
+
+```mermaid
+flowchart LR
+  A["A: V37 save and spell authority"] --> C["C: entry, runtime and UI"]
+  B["B: V37 physical movement replay"] --> C
+  A --> D["D: independent review"]
+  B --> D
+  C --> D
+  C --> E["E: guarded browser journey"]
+  E --> D
+  D --> F["F: primary fan-in"]
+```
+
+## Topology Audit
+
+- A and B are independent at dispatch: A owns new V37 root/action/store files, while B owns a frozen replay export and narrowly optional movement plumbing. Their shared type is `PublicV36MarkerProgress`, not a mutable file.
+- C consumes both A and B, so it starts after their file/result receipts. D can inspect A/B early but cannot issue full GO until C and E return. E starts at C's first safe live V37 preview and runs in one isolated renderer; it does not wait for optional broad review.
+- This is practical parallelism rather than duplicate implementation: A proves saved authority, B proves physical replay, C binds normal controls, E proves the real product surface, and D checks integration risk.
+- The known surprise boundary is airborne preview: durable B replay must reject an unfinished airborne save, but C must preserve the inherited provisional jump-preview and landing flow. A normal jump rejection is a product blocker for C to repair and identically retry, not a reason to weaken durable replay.
+- C's narrow new pure `PublicV37WorldView.ts` and an optional `checkedActions` Windward view flag are authorized presentation seams. Old-version behavior must remain unchanged and C must test the projection.
+- Dispatch verdict: **PASS** for this bounded topology. A/B use distinct files; C follows their interface; D is read-only; E owns the single renderer. No GitHub packaging lane exists because no PR was requested.
+
+## Replan R1: assisted downhill preview and save parity
+
+Independent review found a decoder-valid V37 active-Windward state at `(462.18, -428)` where two ordinary westbound 0.16 m inputs preview grounded at x461.98 and x461.78 but the pending batch cannot save (`local-replay`, zero writes). The private 1.25x impulse crosses a shallow downhill edge before C's ordinary-flight precheck reaches it. Earlier separate jump and gentle-descent preview fixes passed their identical retries; this third mismatch is the same preview-versus-durable policy class. Stop C-only proxy repairs and share B's actual policy.
+
+New serial dependency: B2 adds and tests a V37-only `previewPublicV37FrameBatch(before: PublicV36MarkerProgress, rawWitness: unknown): PublicV36MarkerProgress | null` in `publicWorldV37Movement.ts`. It reuses the same private move policy as `replayPublicV37FrameBatch`: return strict replay when it succeeds; otherwise return the same-policy `allowAirborne` V31 observation only while the resulting effective pose remains genuinely airborne. Never return a grounded state that the strict batch cannot replay. Do not relax old-version functions or the existing durable export. B2 tests the exact assisted-downhill input and proves preview airborne/deferred until a landed, strict-replayable batch, plus jump and dry-descent regression.
+
+After B2 receipt, C2 replaces ordinary-flight/settled-prefix proxy logic in `PublicV37ControllerRuntime.ts` with one whole-pending-batch call to B2 preview from the last committed progress. `save()` remains strict and defers while airborne; normal action/copy/reload behavior remains unchanged. C2 adds the exact assisted-downhill controller regression and reruns fresh jump, terminal descent, V36 regression, typecheck and build. D2 independently repeats all three exact UI-free traces before issuing code GO/NO-GO. Browser E was environment-blocked after two isolated Chromium launches spawned two renderers near the 1 GiB guard, so no visual acceptance is inferred; do not initiate a third browser workaround in this pack without separate environment authority. Keep the 5196 preview live but label it development-only/incomplete during repair.
+
 ## Interface and custody
 
 Wave 1 has two incomparable implementation lanes in one worktree, `/private/tmp/pa-wizard-campaign-checkpoint-v36`, currently clean at `84d0df7`:
 
 - A owns **new** `engine/src/domain/publicWorldV37WindwardAction.ts`, `publicWorldV37Snapshot.ts`, `publicWorldV37Flow.ts`, `atomicV37Database.ts` and their focused tests. A may add a narrow V37 fresh-genesis fixture if needed. No edits to old-version modules, controller, entry or UI. A imports B's frozen `replayPublicV37FrameBatch` interface for frame witnesses. A exposes exact payload-free `windward-study/v1` and `windward-cast/v1` witness decoders, checked action confirmation, V37 root/lineage/head/progress/witness decoding/replay and checked successor, deliberate V36 migration, fresh genesis, CAS/lock flow and one-edge proof. Existing `state.windstep` stores learned/active/cooldown/practice facts; do not add a duplicate ledger. V37 roots replay inherited V36 witnesses exactly unless the witness is a frame batch and B's V37 function applies. Frozen B interface: `replayPublicV37FrameBatch(before: PublicV36MarkerProgress, rawWitness: unknown): PublicV36MarkerProgress | null` from `engine/src/domain/publicWorldV37Movement.ts`. A and B may coordinate type details by message, but only A may change V37 snapshot/action/flow/database files.
-- B owns **new** `engine/src/domain/publicWorldV37Movement.ts` and tests, plus the minimum optional-policy plumbing in existing V23/V27/V28/V31 movement/replay modules required to replay one V37-scoped assisted frame through all current physical gates. Default policy must preserve old-version behavior byte-for-byte. B does not edit A's new action/snapshot/flow/store files or controller/entry/UI. Implement the frozen export above. Accept only an ordinary unmodified `frame-batch/v1` witness and a learned, active, streamed, effectively grounded, dry and revealed westbound trail step. Privately derive 1.25x only when start, midpoint and end are safe and within the same legal path. Fall back to the ordinary move where ineligible; reject forged/oversized or physically invalid frames. Both local preview and durable writer will use this same replay. Tests cover dry trail 0.16→0.20 m, no boost off-trail/wet/airborne/cooldown, no bypass of V25/V26/V28/V31 gates, practice XP only once, and old V36 replay unchanged.
+- B owns **new** `engine/src/domain/publicWorldV37Movement.ts` and tests, plus the minimum optional-policy plumbing in existing V23/V27/V28/V30/V31 movement/replay modules required to replay one V37-scoped assisted frame through all current physical gates. V30 is included because V31's mandatory replay passes through its checked bridge and active-pick reconciliation; bypassing that gate is not allowed. Default policy must preserve old-version behavior byte-for-byte. B does not edit A's new action/snapshot/flow/store files or controller/entry/UI. Implement the frozen export above. Accept only an ordinary unmodified `frame-batch/v1` witness and a learned, active, streamed, effectively grounded, dry and revealed westbound trail step. Privately derive 1.25x only when start, midpoint and end are safe and within the same legal path. Fall back to the ordinary move where ineligible; reject forged/oversized or physically invalid frames. Both local preview and durable writer will use this same replay. Tests cover dry trail 0.16→0.20 m, no boost off-trail/wet/airborne/cooldown, no bypass of V25/V26/V28/V30/V31 gates, practice XP only once, and old V36 replay unchanged.
 
 Neither A nor B runs a renderer. They may use focused tests, typecheck and build with memory awareness. They do not commit. `node_modules` remains the existing engine install and is not staged. The A/B boundary is an explicit import contract, not permission to edit each other's files. A failing shared typecheck while the other lane is incomplete is not a validated failure; capture focused evidence and coordinate before fan-in.
 
