@@ -12,6 +12,7 @@ import type { PublicV29PickTier } from '../domain/publicWorldV29MiningTools'
 import type { SurveyorCrossingQuest } from './surveyorCrossingQuest'
 import type { PublicV35LedgerQuest } from './publicV35LedgerQuest'
 import type { PublicV36MarkerQuest } from './publicV36MarkerQuest'
+import type { PublicV38SignalQuest } from './publicV38SignalQuest'
 
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
@@ -349,6 +350,9 @@ export interface WizardViewProjection {
   /** V36 read-only marker chapter and local checked-action preview, never reward authority. */
   v36MarkerQuest?: PublicV36MarkerQuest
   v36MarkerClaim?: Readonly<{ rejection: string | null; hint: string | null }>
+  /** V38 journal and revealed landmark are read-only projections, never witness authority. */
+  v38SignalQuest?: PublicV38SignalQuest
+  v38SignalVane?: Readonly<{ position: Vec3; inspected: boolean }> | null
   regionalLadders?: WizardRegionalLaddersView
   /** Streamed v13 hides unsupported legacy actions while retaining their read-only state. */
   unavailableActions?: true
@@ -493,6 +497,8 @@ export type WizardViewIntent =
   | { type: 'v35.ledger.survey'; bridgeId: string }
   | { type: 'v35.ledger.deliver' }
   | { type: 'v36.marker.claim' }
+  | { type: 'v38.signal.inspect' }
+  | { type: 'v38.signal.claim' }
   | { type: 'v31.soil-place'; gx: number; gz: number }
   | { type: 'trial-footwear.toggle' }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }

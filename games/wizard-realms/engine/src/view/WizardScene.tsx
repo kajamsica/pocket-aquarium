@@ -1744,6 +1744,24 @@ function WindwardGlyph({ position, learned }: { position: readonly [number, numb
   </group>
 }
 
+/** A visible trail landmark only; the checked witness decides whether it can be inspected. */
+function HighlandSignalVane({ position, inspected }: { position: readonly [number, number, number]; inspected: boolean }) {
+  return <group name={`Highland signal vane (${inspected ? 'inspected' : 'uninspected'})`}
+    position={position as [number, number, number]}>
+    <mesh geometry={ROCK_GEOMETRY} material={HIGHLAND_SCREE_MATERIAL}
+      position={[0, 0.1, 0]} scale={[0.66, 0.18, 0.55]} receiveShadow />
+    <mesh geometry={UNIT_BOX} material={HIGHLAND_CROWN_MATERIAL}
+      position={[0, 1.12, 0]} rotation={[0, 0, 0.09]} scale={[0.13, 2.05, 0.13]} castShadow />
+    <mesh geometry={UNIT_BOX} material={HIGHLAND_CROWN_SEAM_MATERIAL}
+      position={[0.12, 1.85, 0]} rotation={[0, 0, -0.16]} scale={[1.15, 0.1, 0.12]} />
+    <mesh geometry={CRYSTAL_GEOMETRY}
+      material={inspected ? MARKER_DORMANT_MATERIAL : MARKER_RUNE_MATERIAL}
+      position={[0.75, 1.9, 0]} rotation={[0, 0, -Math.PI / 2]} scale={[0.43, 0.24, 0.2]} />
+    <mesh geometry={CRYSTAL_GEOMETRY} material={HIGHLAND_CROWN_SEAM_MATERIAL}
+      position={[0.06, 2.25, 0]} scale={[0.12, 0.2, 0.12]} />
+  </group>
+}
+
 /** One bounded scene partition for public discoveries and the opt-in ordinary preview. */
 export function sceneTerrainFor(projection: WizardViewProjection) {
   const visual = projection.visualWorld ?? projection
@@ -2084,6 +2102,11 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       {visual.landmarks?.map((landmark) => <Landmark key={landmark.id} landmark={landmark} />)}
       {projection.windwardStep?.glyph && <WindwardGlyph position={projection.windwardStep.glyph.position}
         learned={projection.windwardStep.learned} />}
+      {projection.v38SignalVane && revealedTerrain.some((cell) =>
+        Math.abs(cell.position[0] - projection.v38SignalVane!.position[0]) <= cell.size[0] / 2
+          && Math.abs(cell.position[2] - projection.v38SignalVane!.position[2]) <= cell.size[1] / 2)
+        && <HighlandSignalVane position={projection.v38SignalVane.position}
+          inspected={projection.v38SignalVane.inspected} />}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route}
         physicalRoutes={projection.physicalRoutes !== undefined} />)}
       {starterLadder && <StarterCliffLadder face={projection.starterCliff!.face} status={starterLadder} />}

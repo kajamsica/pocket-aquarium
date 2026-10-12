@@ -71,12 +71,16 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 }) {
   const [ledgerOpen, setLedgerOpen] = useState(false)
   const markerQuest = projection.v36MarkerQuest?.active ? projection.v36MarkerQuest : null
-  const journalQuest = projection.v35LedgerQuest && projection.v34Quest && !projection.v34Quest.complete
+  const earlierJournalQuest = projection.v35LedgerQuest && projection.v34Quest && !projection.v34Quest.complete
     ? projection.v34Quest
     : projection.v35LedgerQuest && !projection.v35LedgerQuest.complete
       ? projection.v35LedgerQuest : markerQuest ?? projection.v35LedgerQuest
+  const signalQuest = projection.v38SignalQuest
+  const journalQuest = signalQuest && projection.v36MarkerQuest?.complete
+    ? signalQuest : earlierJournalQuest
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
   const markerQuestPrimary = journalQuest?.id === 'beneath-old-marker/v1'
+  const signalQuestPrimary = journalQuest?.id === 'highland-signal/v1'
   const starterCliff = projection.starterCliff !== undefined
   const mining = projection.v29Mining
   const knownCliffFoot = starterCliff && (projection.buildSites.some((site) =>
@@ -352,10 +356,26 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             {(projection.v36MarkerClaim.hint || projection.v36MarkerClaim.rejection) &&
               <small role="status">{projection.v36MarkerClaim.hint ?? publicV36MarkerRejectionMessage(projection.v36MarkerClaim.rejection!)}</small>}
           </>}
+          {signalQuestPrimary && signalQuest && !signalQuest.complete && <>
+            {signalQuest.stage === 'vane' && <>
+              <button type="button" disabled={savePaused || !!signalQuest.inspect.rejection}
+                onClick={() => onIntent({ type: 'v38.signal.inspect' })}>Inspect signal vane</button>
+              {(signalQuest.inspect.hint || signalQuest.inspect.rejection) && <small role="status">
+                {signalQuest.inspect.hint ?? 'The checked inspection is not ready yet.'}</small>}
+            </>}
+            {signalQuest.stage === 'return' && <>
+              <button type="button" disabled={savePaused || !!signalQuest.claim.rejection}
+                onClick={() => onIntent({ type: 'v38.signal.claim' })}>Claim Highland Signal reward</button>
+              {(signalQuest.claim.hint || signalQuest.claim.rejection) && <small role="status">
+                {signalQuest.claim.hint ?? 'The checked reward is not ready yet.'}</small>}
+            </>}
+          </>}
           <details><summary>Rewards and completed chapters</summary>
             <p>{journalQuest.reward}</p>
             {projection.v35LedgerQuest?.complete && !ledgerQuestPrimary && <p>{projection.v35LedgerQuest.title}: {projection.v35LedgerQuest.objective} {projection.v35LedgerQuest.reward}</p>}
             {projection.v34Quest?.complete && journalQuest.id !== projection.v34Quest.id && <p>{projection.v34Quest.title}: {projection.v34Quest.objective}</p>}
+            {projection.v36MarkerQuest?.complete && !markerQuestPrimary && <p>{projection.v36MarkerQuest.title}: {projection.v36MarkerQuest.objective} {projection.v36MarkerQuest.reward}</p>}
+            {signalQuest && !signalQuestPrimary && <p>Optional: {signalQuest.title}. {signalQuest.objective} {signalQuest.reward}</p>}
           </details>
           </div>
         </section>}
