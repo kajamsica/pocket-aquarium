@@ -3,6 +3,7 @@ import type { EquipmentSlot, WizardViewIntent, WizardViewProjection } from './co
 import type { TerrainWorkSite } from '../domain/terrainWorks'
 import { PUBLIC_V11_BOOTS_LISTING_ID } from '../domain/publicWorldGait'
 import { publicV36MarkerRejectionMessage } from './publicV36MarkerQuest'
+import { publicV40WaystationRejectionHint } from './publicV40WaystationQuest'
 
 export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['head', 'chest', 'mainHand', 'legs', 'feet', 'offHand']
 export const EQUIPMENT_SLOT_LABELS: Readonly<Record<EquipmentSlot, string>> = {
@@ -14,6 +15,11 @@ const RINGKEEPER_NEXT = {
   find: 'Find Quarry ring', return: 'Return to Greenway', link: 'Link the rings',
   outbound: 'Travel to Highland', 'return-via-ring': 'Travel back to Greenway',
   claim: 'Claim at Greenway', complete: 'Complete',
+} as const
+const WAYSTATION_NEXT = {
+  find: 'Find the river crossing', 'choose-materials': 'Gather or barter timber',
+  build: 'Build the bridge', cross: 'Reach the south bank',
+  return: 'Claim at Outfitters', complete: 'Complete',
 } as const
 const WORK_REASONS = {
   invalid_state: 'Trial state unavailable', invalid_site: 'Invalid site', undiscovered: 'Not discovered',
@@ -82,6 +88,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       ? projection.v35LedgerQuest : markerQuest ?? projection.v35LedgerQuest
   const signalQuest = projection.v38SignalQuest
   const ringkeeperQuest = projection.v39RingkeeperQuest
+  const waystationQuest = projection.v40WaystationQuest
   const journalQuest = signalQuest && projection.v36MarkerQuest?.complete
     ? signalQuest : earlierJournalQuest
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
@@ -316,7 +323,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           .wr-work-selection{margin:6px 0;padding:7px 8px;border:1px solid #d5b86f88;border-radius:7px;background:#27382e;color:#f5e5b5;font-size:12px;overflow-wrap:anywhere}
           .wr-v35-quest details{margin-top:5px;color:#c5d0c3;font-weight:400}
           .wr-v35-quest summary{min-height:30px;cursor:pointer}
-          .wr-v35-quest .wr-ringkeeper-chapter summary{min-height:44px}
+          .wr-v35-quest .wr-ringkeeper-chapter summary,.wr-v35-quest .wr-waystation-chapter summary{min-height:44px}
           .wr-v35-mobile-toggle{display:none}
           @media(min-width:1200px) and (min-height:600px){.wr-v35-quest{right:248px;top:266px;max-height:136px}}
           @media(min-width:901px) and (min-height:600px){.wr-surface[data-work-mode="true"] .wr-saved-work-panel{width:310px}}
@@ -341,7 +348,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             aria-controls="wr-v35-journal-content"
             onKeyDown={(event) => { if (event.code === 'Space') event.stopPropagation() }}
             onClick={() => setLedgerOpen((open) => !open)}>
-            {ledgerOpen ? 'Close quest journal ×' : ringkeeperQuest ? 'Quests ▾' : 'Quest ▾'}
+            {ledgerOpen ? 'Close quest journal ×' : ringkeeperQuest || waystationQuest ? 'Quests ▾' : 'Quest ▾'}
           </button>
           <div id="wr-v35-journal-content" className="wr-v35-quest-content">
           <strong>{journalQuest.complete ? 'Quest complete' : 'Quest'}: {journalQuest.title}</strong>
@@ -377,6 +384,37 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
                 {signalQuest.claim.hint ?? 'The checked reward is not ready yet.'}</small>}
             </>}
           </>}
+          {waystationQuest && <details className="wr-waystation-chapter"
+            aria-label={`Quest chapter: ${waystationQuest.title}`}>
+            <summary>{waystationQuest.title} · {WAYSTATION_NEXT[waystationQuest.stage]}</summary>
+            <p>{waystationQuest.objective}</p>
+            <p>{waystationQuest.reward}</p>
+            {waystationQuest.stage === 'choose-materials' && waystationQuest.barter.rejection !== 'already_bartered'
+              && projection.v40WaystationSite &&
+              Math.hypot(projection.player.position[0] - projection.v40WaystationSite.approach[0],
+                projection.player.position[2] - projection.v40WaystationSite.approach[2]) < 8 && <>
+              <button type="button" disabled={savePaused || !!waystationQuest.barter.rejection}
+                onClick={() => onIntent({ type: 'v40.waystation.barter' })}>Barter 2 stone for 8 logs</button>
+              {(waystationQuest.barter.hint || waystationQuest.barter.rejection) && <small role="status">
+                {waystationQuest.barter.hint ?? publicV40WaystationRejectionHint(waystationQuest.barter.rejection!)}</small>}
+            </>}
+            {waystationQuest.stage === 'cross' && projection.v40WaystationSite &&
+              Math.hypot(projection.player.position[0] - projection.v40WaystationSite.exit[0],
+                projection.player.position[2] - projection.v40WaystationSite.exit[2]) < 8 && <>
+              <button type="button" disabled={savePaused || !!waystationQuest.cross.rejection}
+                onClick={() => onIntent({ type: 'v40.waystation.cross' })}>Record south-bank crossing</button>
+              {(waystationQuest.cross.hint || waystationQuest.cross.rejection) && <small role="status">
+                {waystationQuest.cross.hint ?? publicV40WaystationRejectionHint(waystationQuest.cross.rejection!)}</small>}
+            </>}
+            {waystationQuest.stage === 'return' && projection.stores.some((store) =>
+              store.id === 'store-greenway' && Math.hypot(projection.player.position[0] - store.position[0],
+                projection.player.position[2] - store.position[2]) < 8) && <>
+              <button type="button" disabled={savePaused || !!waystationQuest.claim.rejection}
+                onClick={() => onIntent({ type: 'v40.waystation.claim' })}>Claim Waystation reward</button>
+              {(waystationQuest.claim.hint || waystationQuest.claim.rejection) && <small role="status">
+                {waystationQuest.claim.hint ?? publicV40WaystationRejectionHint(waystationQuest.claim.rejection!)}</small>}
+            </>}
+          </details>}
           {ringkeeperQuest && <details className="wr-ringkeeper-chapter"
             aria-label={`Quest chapter: ${ringkeeperQuest.title}`}>
             <summary>{ringkeeperQuest.title} · {RINGKEEPER_NEXT[ringkeeperQuest.stage]}</summary>

@@ -1769,6 +1769,22 @@ function HighlandSignalVane({ position, inspected }: { position: readonly [numbe
   </group>
 }
 
+/** Salvage dressing only. The V28 bridge footprint and checked Works remain the physical route. */
+function WaystationStockpile({ approach }: { approach: readonly [number, number, number] }) {
+  return <group name="Windward Waystation broken brace and timber stockpile"
+    position={approach as [number, number, number]}>
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[-0.55, 0.56, 1.3]}
+      rotation={[0.22, -0.15, -0.34]} scale={[0.12, 1.15, 0.14]} castShadow />
+    <mesh geometry={UNIT_BOX} material={WOOD_MATERIAL} position={[0.08, 0.34, 1.44]}
+      rotation={[-0.12, 0.16, 0.37]} scale={[0.12, 0.76, 0.14]} castShadow />
+    <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[-0.12, 0.63, 1.36]}
+      rotation={[0.06, 0.22, 0.1]} scale={[1.14, 0.12, 0.12]} castShadow />
+    {[0, 1, 2].map((index) => <mesh key={index} geometry={UNIT_BOX} material={WOOD_MATERIAL}
+      position={[1.3 + index * 0.1, 0.13 + index * 0.13, -0.3 + index * 0.2]}
+      rotation={[0.03 * index, 0.15 * index, 0.02]} scale={[1.05, 0.15, 0.16]} castShadow />)}
+  </group>
+}
+
 /** One bounded scene partition for public discoveries and the opt-in ordinary preview. */
 export function sceneTerrainFor(projection: WizardViewProjection) {
   const visual = projection.visualWorld ?? projection
@@ -2118,6 +2134,11 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
           && Math.abs(cell.position[2] - projection.v38SignalVane!.position[2]) <= cell.size[1] / 2)
         && <HighlandSignalVane position={projection.v38SignalVane.position}
           inspected={projection.v38SignalVane.inspected} />}
+      {projection.v40WaystationSite?.revealed && !projection.v40WaystationSite.built
+        && revealedTerrain.some((cell) =>
+          Math.abs(cell.position[0] - projection.v40WaystationSite!.approach[0]) <= cell.size[0] / 2
+            && Math.abs(cell.position[2] - projection.v40WaystationSite!.approach[2]) <= cell.size[1] / 2)
+        && <WaystationStockpile approach={projection.v40WaystationSite.approach} />}
       {visibleRoutes.map((route) => <ConstructionRoute key={route.id} route={route}
         physicalRoutes={projection.physicalRoutes !== undefined} />)}
       {starterLadder && <StarterCliffLadder face={projection.starterCliff!.face} status={starterLadder} />}

@@ -14,6 +14,7 @@ import type { PublicV35LedgerQuest } from './publicV35LedgerQuest'
 import type { PublicV36MarkerQuest } from './publicV36MarkerQuest'
 import type { PublicV38SignalQuest } from './publicV38SignalQuest'
 import type { PublicV39RingkeeperQuest } from './publicV39RingkeeperQuest'
+import type { PublicV40WaystationQuest } from './publicV40WaystationQuest'
 
 export type Vec2 = readonly [number, number]
 export type Vec3 = readonly [number, number, number]
@@ -357,6 +358,9 @@ export interface WizardViewProjection {
   /** V39 read-only optional chapter and revealed Quarry ring, never travel authority. */
   v39RingkeeperQuest?: PublicV39RingkeeperQuest
   v39QuarryRing?: Readonly<{ position: Vec3; discovered: boolean }> | null
+  /** V40 read-only chapter and discovery-gated marker. Neither authorizes barter, Works or rewards. */
+  v40WaystationQuest?: PublicV40WaystationQuest
+  v40WaystationSite?: Readonly<{ id: string; approach: Vec3; exit: Vec3; built: boolean; revealed: boolean }> | null
   regionalLadders?: WizardRegionalLaddersView
   /** Streamed v13 hides unsupported legacy actions while retaining their read-only state. */
   unavailableActions?: true
@@ -506,6 +510,9 @@ export type WizardViewIntent =
   | { type: 'v39.ring.discover' }
   | { type: 'v39.ring.link' }
   | { type: 'v39.ring.claim' }
+  | { type: 'v40.waystation.barter' }
+  | { type: 'v40.waystation.cross' }
+  | { type: 'v40.waystation.claim' }
   | { type: 'v31.soil-place'; gx: number; gz: number }
   | { type: 'trial-footwear.toggle' }
   | { type: 'trade.create-listing'; stackId: string; slot: number; quantity: number; unitPrice: number }

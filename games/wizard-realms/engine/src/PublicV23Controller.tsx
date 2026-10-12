@@ -30,6 +30,12 @@ import type { PublicV39EntryBindings } from './PublicV39Entry'
 import { commitPublicV39, requestPublicV39ReturnHome } from './domain/publicWorldV39Flow'
 import type { PublicV39Start } from './domain/publicWorldV39Flow'
 import type { PublicV39RingWitness, PublicV39RingProgress } from './domain/publicWorldV39RingAction'
+import { createPublicV40ControllerRuntime } from './PublicV40ControllerRuntime'
+import { projectPublicV40Waystation } from './PublicV40WorldView'
+import type { PublicV40EntryBindings } from './PublicV40Entry'
+import { commitPublicV40, requestPublicV40ReturnHome } from './domain/publicWorldV40Flow'
+import type { PublicV40Start } from './domain/publicWorldV40Flow'
+import type { PublicV40WaystationProgress, PublicV40WaystationWitness } from './domain/publicWorldV40WaystationAction'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -146,7 +152,8 @@ type V36Runtime = ReturnType<typeof createPublicV36ControllerRuntime>
 type V37Runtime = ReturnType<typeof createPublicV37ControllerRuntime>
 type V38Runtime = ReturnType<typeof createPublicV38ControllerRuntime>
 type V39Runtime = ReturnType<typeof createPublicV39ControllerRuntime>
-type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime
+type V40Runtime = ReturnType<typeof createPublicV40ControllerRuntime>
+type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime
 type V32PlusRuntime = V32Runtime | V33PlusRuntime
 type ActiveViewSource = Readonly<{ status: () => { saveRevision: number; pendingFrames: number }
   view: () => PublicV17ActiveView }>
@@ -181,6 +188,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV37WindwardWitness
   | PublicV38SignalWitness
   | PublicV39RingWitness
+  | PublicV40WaystationWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean }
@@ -877,8 +885,8 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-guide,[data-public-v23] .v23-aim{position:fixed;z-index:20;left:12px;bottom:96px;box-sizing:border-box;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v23-guide{max-width:330px;padding:10px}
 [data-public-v23] .v23-guide-west{max-width:320px}
-[data-public-version=v25] .v25-start-guide,[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v35] .v25-start-guide,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39]) .v25-start-guide{width:min(280px,calc(100vw - 112px));max-height:min(38vh,240px);overflow:auto}
-[data-public-version=v25] .v25-start-guide summary,[data-public-version=v26] .v25-start-guide summary,[data-public-version=v27] .v25-start-guide summary,[data-public-version=v28] .v25-start-guide summary,[data-public-version=v29] .v25-start-guide summary,[data-public-version=v30] .v25-start-guide summary,[data-public-version=v31] .v25-start-guide summary,[data-public-version=v32] .v25-start-guide summary,[data-public-version=v33] .v25-start-guide summary,[data-public-version=v34] .v25-start-guide summary,[data-public-version=v35] .v25-start-guide summary,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39]) .v25-start-guide summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+[data-public-version=v25] .v25-start-guide,[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v35] .v25-start-guide,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40]) .v25-start-guide{width:min(280px,calc(100vw - 112px));max-height:min(38vh,240px);overflow:auto}
+[data-public-version=v25] .v25-start-guide summary,[data-public-version=v26] .v25-start-guide summary,[data-public-version=v27] .v25-start-guide summary,[data-public-version=v28] .v25-start-guide summary,[data-public-version=v29] .v25-start-guide summary,[data-public-version=v30] .v25-start-guide summary,[data-public-version=v31] .v25-start-guide summary,[data-public-version=v32] .v25-start-guide summary,[data-public-version=v33] .v25-start-guide summary,[data-public-version=v34] .v25-start-guide summary,[data-public-version=v35] .v25-start-guide summary,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40]) .v25-start-guide summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 [data-public-v23] .v23-aim{width:324px;padding:12px}
 [data-public-v23] .v23-status{position:fixed;z-index:21;top:8px;left:12px;max-width:min(300px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
 [data-public-version=v34] .v34-branch-label,[data-public-version=v35] .v34-branch-label{position:fixed;z-index:20;top:8px;right:12px;max-width:min(250px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
@@ -888,7 +896,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-save p{margin:4px 0 0}
 [data-public-v23] .v24-actions{position:fixed;z-index:21;right:12px;bottom:96px;box-sizing:border-box;width:min(300px,calc(100vw - 24px));max-height:45vh;overflow:auto;padding:10px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v24-actions button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
-:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
+:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
 [data-public-v23] .v26-safety{position:fixed;z-index:21;left:50%;bottom:8px;transform:translateX(-50%);box-sizing:border-box;width:min(230px,calc(100vw - 24px));max-height:35vh;overflow:auto;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v26-safety:not([open]){width:140px;padding:0 6px;opacity:.85}
 [data-public-v23] .v26-safety summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -907,8 +915,8 @@ const PUBLIC_V23_PANEL_STYLES = `
   [data-public-v23] .v23-status{left:8px;max-width:min(260px,calc(100vw - 16px))}
   [data-public-v23] .v23-save{top:76px;right:8px}
   [data-public-v23] .v24-actions{right:8px;bottom:calc(156px + env(safe-area-inset-bottom,0px));max-height:30vh}
-  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
-  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
+  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
+  :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
 }
 body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has([data-public-version=v28]),body:has([data-public-version=v29]),body:has([data-public-version=v30]),body:has([data-public-version=v31]),body:has([data-public-version=v32]),body:has([data-public-version=v33]),body:has([data-public-version=v34]){margin:0;background:#14221f}
@@ -1036,6 +1044,8 @@ export type PublicV38ControllerProps = PublicV38EntryBindings & Readonly<{
   start: PublicV38Start; version: 'v38' }>
 export type PublicV39ControllerProps = PublicV39EntryBindings & Readonly<{
   start: PublicV39Start; version: 'v39' }>
+export type PublicV40ControllerProps = PublicV40EntryBindings & Readonly<{
+  start: PublicV40Start; version: 'v40' }>
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
@@ -1215,8 +1225,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV28ControllerProps | PublicV29ControllerProps | PublicV30ControllerProps
   | PublicV31ControllerProps | PublicV32ControllerProps | PublicV33ControllerProps
   | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps
-  | PublicV37ControllerProps | PublicV38ControllerProps | PublicV39ControllerProps) {
-  const v39 = 'version' in props && props.version === 'v39'
+  | PublicV37ControllerProps | PublicV38ControllerProps | PublicV39ControllerProps
+  | PublicV40ControllerProps) {
+  const v40 = 'version' in props && props.version === 'v40'
+  const v39 = 'version' in props && (props.version === 'v39' || v40)
   const v38 = 'version' in props && (props.version === 'v38' || v39)
   const v37 = 'version' in props && (props.version === 'v37' || v38)
   const v36 = 'version' in props && (props.version === 'v36' || v37)
@@ -1237,7 +1249,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const physicalWorld = v26 || v27 || riverBridgeWorld
   const river = v25 || physicalWorld
   const v24 = 'version' in props
-  const saveVersion = v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
+  const saveVersion = v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
   const traceRef = useRef<ReturnType<typeof createPublicV17InputTrace> | null | undefined>(undefined)
   if (traceRef.current === undefined) traceRef.current = publicV17InputTraceEnabled(
     typeof window === 'undefined' ? '' : window.location?.hostname ?? '',
@@ -1246,9 +1258,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const trace = traceRef.current
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
-    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | null>(null)
+    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | null>(null)
   if (!runtimeRef.current) {
-    runtimeRef.current = 'version' in props && props.version === 'v39'
+    runtimeRef.current = 'version' in props && props.version === 'v40'
+      ? createPublicV40ControllerRuntime(props.start, (revision, lineage, witness) =>
+        commitPublicV40(props.locks, props.store, revision, lineage, witness),
+        (revision, lineage) => requestPublicV40ReturnHome(props.locks, props.store, revision, lineage))
+      : 'version' in props && props.version === 'v39'
       ? createPublicV39ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV39(props.locks, props.store, revision, lineage, witness),
         (revision, lineage) => requestPublicV39ReturnHome(props.locks, props.store, revision, lineage))
@@ -1485,7 +1501,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     : ledgerView
   const windwardView = v37 ? projectPublicV37Windward(snapshot as PublicV36MarkerProgress, markerView) : markerView
   const signalView = v38 ? projectPublicV38Signal(snapshot as PublicV38SignalProgress, windwardView) : windwardView
-  const view = v39 ? projectPublicV39Ringkeeper(snapshot as PublicV39RingProgress, signalView) : signalView
+  const ringView = v39 ? projectPublicV39Ringkeeper(snapshot as PublicV39RingProgress, signalView) : signalView
+  const view = v40 ? projectPublicV40Waystation(snapshot as PublicV40WaystationProgress, ringView) : ringView
   trace?.record('controller.render', { viewMs: viewFinishedAt - renderStartedAt,
     projectionMs: performance.now() - viewFinishedAt,
     baseProjectionMs: baseProjectionFinishedAt - baseProjectionStartedAt,
@@ -1573,14 +1590,17 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const result = 'kind' in intent && intent.kind === 'return-home-request'
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
+          : 'kind' in intent && (intent.kind === 'waystation-barter/v1'
+            || intent.kind === 'waystation-cross/v1' || intent.kind === 'waystation-claim/v1')
+          ? await (runtime as V40Runtime).action(intent)
           : 'kind' in intent && (intent.kind === 'ringkeeper-discover/v1'
             || intent.kind === 'ringkeeper-link/v1' || intent.kind === 'ringkeeper-travel/v1'
             || intent.kind === 'ringkeeper-claim/v1')
-          ? await (runtime as V39Runtime).action(intent)
+          ? await (runtime as V39Runtime | V40Runtime).action(intent)
           : 'kind' in intent && (intent.kind === 'signal-vantage/v1' || intent.kind === 'signal-claim/v1')
-          ? await (runtime as V38Runtime | V39Runtime).action(intent)
+          ? await (runtime as V38Runtime | V39Runtime | V40Runtime).action(intent)
           : 'kind' in intent && (intent.kind === 'windward-study/v1' || intent.kind === 'windward-cast/v1')
-          ? await (runtime as V37Runtime | V38Runtime | V39Runtime).action(intent)
+          ? await (runtime as V37Runtime | V38Runtime | V39Runtime | V40Runtime).action(intent)
           : 'kind' in intent && intent.kind === 'marker-claim/v1'
           ? await (runtime as V36Runtime).action(intent)
           : 'kind' in intent && (intent.kind === 'ledger-survey/v1'
@@ -1891,6 +1911,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       || intent.type === 'v39.ring.claim')) {
       queueChecked({ kind: intent.type === 'v39.ring.discover' ? 'ringkeeper-discover/v1'
         : intent.type === 'v39.ring.link' ? 'ringkeeper-link/v1' : 'ringkeeper-claim/v1' })
+      return
+    }
+    if (v40 && (intent.type === 'v40.waystation.barter' || intent.type === 'v40.waystation.cross'
+      || intent.type === 'v40.waystation.claim')) {
+      queueChecked({ kind: intent.type === 'v40.waystation.barter' ? 'waystation-barter/v1'
+        : intent.type === 'v40.waystation.cross' ? 'waystation-cross/v1' : 'waystation-claim/v1' })
       return
     }
     if (intent.type === 'v26.terrain') {
