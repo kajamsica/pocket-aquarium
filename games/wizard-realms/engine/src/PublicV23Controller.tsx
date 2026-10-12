@@ -88,6 +88,7 @@ import { mireglassMoveBarrier } from './domain/mireglassMovementGate'
 import { MIREGLASS_ENVELOPES, mireglassFenBankAt,
   mireglassPlateauAt } from './domain/mireglassTerrain'
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
+import { waystationRiverSite } from './domain/waystationRiverContent'
 import type { PublicWorldIntent } from './domain/publicWorldRuntime'
 import { commitPublicV23 } from './domain/publicWorldV23Flow'
 import type { PublicV23Start } from './domain/publicWorldV23Flow'
@@ -2064,6 +2065,16 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       if (active.movementOwner === 'greenway') setAimX(intent.aimX)
       else if (riverBridgeWorld && workKind === 'bridge') setAimX(intent.aimX)
       else setAimZ(publicV23ReticleAimZ(active.player.position, active.player.yaw))
+      return
+    }
+    if (intent.type === 'saved-work.aim-waystation') {
+      const site = v40 && riverBridgeWorld && active.movementOwner === 'streamed'
+        && view.v40WaystationQuest?.stage === 'build'
+        && view.v40WaystationSite?.revealed && !view.v40WaystationSite.built
+        ? waystationRiverSite(snapshot.state.seed) : null
+      if (site && site.id === view.v40WaystationSite?.id) {
+        setWorkMode(true); setWorkKind('bridge'); setAimX(site.approach.x); setAimZ(null)
+      } else tell('The Waystation bridge is not ready to plan here.')
       return
     }
     if (intent.type === 'saved-work.aim-west') {

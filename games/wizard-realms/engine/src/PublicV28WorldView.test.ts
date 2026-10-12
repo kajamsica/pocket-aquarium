@@ -75,6 +75,28 @@ describe('V28 connected-river Works view overlay', () => {
       .toBe(true)
   })
 
+  it('offers a discovered bridge even when its far-bank tile leaves the visual window', () => {
+    const progress = ready(), carrier = carrierFor(progress)
+    if (!carrier.visualWorld) throw new Error('Missing visual-world carrier')
+    const farBankId = site.footprintTileIds[site.footprintTileIds.length - 1]
+    expect(carrier.visualWorld.terrain.some((cell) => cell.id === farBankId)).toBe(true)
+    const clipped = { ...carrier, visualWorld: { ...carrier.visualWorld,
+      terrain: carrier.visualWorld.terrain.filter((cell) => cell.id !== farBankId) } }
+    const shown = publicWorldV28ViewProjection(progress, clipped, work)
+    expect(shown.savedTerrainWorks?.preview?.selected)
+      .toMatchObject({ site: { id: site.id }, rejection: null })
+    expect(shown.savedTerrainWorks?.suggestedSites?.some((choice) => choice.id === site.id))
+      .toBe(true)
+
+    const hidden = { ...progress, state: { ...progress.state,
+      discoveryMask: encodeDiscoveredTileIds(decodeDiscoveredTileIds(
+        progress.state.discoveryMask).filter((id) => id !== farBankId)) } }
+    const unshown = publicWorldV28ViewProjection(hidden, clipped, work)
+    expect(unshown.savedTerrainWorks?.preview?.selected).toBeNull()
+    expect(unshown.savedTerrainWorks?.suggestedSites?.some((choice) => choice.id === site.id))
+      .toBe(false)
+  })
+
   it('never shows a hidden or unsupported footprint as a choice, ghost, or map marker', () => {
     const progress = ready()
     const hidden = { ...progress, state: { ...progress.state,

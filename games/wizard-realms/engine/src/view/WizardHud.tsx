@@ -495,6 +495,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             <summary>{waystationQuest.title} · {WAYSTATION_NEXT[waystationQuest.stage]}</summary>
             <p>{waystationQuest.objective}</p>
             <p>{waystationQuest.reward}</p>
+            {waystationQuest.stage === 'build' && projection.v40WaystationSite?.revealed
+              && !projection.v40WaystationSite.built &&
+              <button type="button" disabled={savePaused}
+                onClick={() => onIntent({ type: 'saved-work.aim-waystation' })}>Plan Waystation bridge</button>}
             {waystationQuest.stage === 'choose-materials' && waystationQuest.barter.rejection !== 'already_bartered'
               && projection.v40WaystationSite &&
               Math.hypot(projection.player.position[0] - projection.v40WaystationSite.approach[0],

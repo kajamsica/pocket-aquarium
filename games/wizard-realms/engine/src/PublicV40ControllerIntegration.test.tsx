@@ -17,13 +17,25 @@ import { createPublicV38Root } from './domain/publicWorldV38Snapshot'
 import { createFreshPublicV39Root, createPublicV39Root } from './domain/publicWorldV39Snapshot'
 import { createFreshPublicV40Root, createPublicV40Root } from './domain/publicWorldV40Snapshot'
 import { waystationRiverSite } from './domain/waystationRiverContent'
+import { resolvePublicV28RiverBridge } from './domain/publicWorldV28RiverBridgeSites'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
 import type { WizardViewIntent, WizardViewProjection } from './view/contracts'
 import { WizardHud } from './view/WizardHud'
 
 const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null,
   onIntent: null as ((intent: WizardViewIntent) => void) | null,
-  actions: [] as unknown[], outcomes: [] as unknown[], injectSelectedWork: false }))
+  actions: [] as unknown[], outcomes: [] as unknown[], injectSelectedWork: false,
+  captureState: false, stateWrites: [] as unknown[] }))
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>()
+  return { ...actual, useState: (initial: unknown) => {
+    const [value, setValue] = actual.useState(initial)
+    return [value, (next: unknown) => {
+      if (probe.captureState) probe.stateWrites.push(next)
+      setValue(next)
+    }]
+  } }
+})
 vi.mock('./view/WizardSurface', () => ({ WizardSurface: ({ projection, onIntent }: {
   projection: WizardViewProjection; onIntent: (intent: WizardViewIntent) => void }) => {
   probe.projection = projection; probe.onIntent = onIntent; return null
@@ -60,13 +72,15 @@ const locks = { request: async <T,>(_name: string, _options: { mode: 'exclusive'
   body: () => T | Promise<T>) => body() }
 
 /** A checked V39 source positioned at the revealed dry north-bank stockpile. */
-function northBankSource(buildKit = false, withSpade = false) {
+function northBankSource(buildKit = false, withSpade = false, nearerBridge = false) {
   const base = createFreshPublicV36Root('wizard-realms')
   const site = waystationRiverSite('wizard-realms')!
-  const target = buildKit ? site.from : site.approach
+  const other = nearerBridge ? resolvePublicV28RiverBridge('wizard-realms',
+    'works6:river-bridge:19') : null
+  const target = other?.from ?? (buildKit ? site.from : site.approach)
   const floor = resolvePublicV23Surface(base.head.state, target, [])!.floorY
   const ids = [...new Set([...decodeDiscoveredTileIds(base.head.state.discoveryMask),
-    ...site.footprintTileIds])].sort()
+    ...site.footprintTileIds, ...(other?.footprintTileIds ?? [])])].sort()
   const state = { ...base.head.state, movementOwner: 'streamed' as const,
     discoveryMask: encodeDiscoveredTileIds(ids), player: { ...base.head.state.player,
       position: { ...target, y: floor },
@@ -87,6 +101,29 @@ function northBankSource(buildKit = false, withSpade = false) {
 }
 
 describe('V40 controller, Waystation projection, and entry integration', () => {
+  it('plans the canonical Waystation bridge instead of a nearer discovered crossing', () => {
+    probe.captureState = false; probe.stateWrites.length = 0
+    const root = createPublicV40Root(northBankSource(true, false, true))
+    const factory = new IDBFactory(), site = waystationRiverSite('wizard-realms')!
+    const other = resolvePublicV28RiverBridge('wizard-realms', 'works6:river-bridge:19')!
+    renderToStaticMarkup(createElement(PublicV23Controller, { version: 'v40',
+      start: { head: root.head, lineage: root.lineage }, locks,
+      store: createAtomicV40Store(factory), v39Store: createAtomicV39Store(factory) }))
+    const view = probe.projection!
+    expect(view.v40WaystationQuest?.stage).toBe('build')
+    expect(view.savedTerrainWorks?.suggestedSites?.some((choice) => choice.id === other.id)).toBe(true)
+    const distance = (point: { x: number; z: number }) => Math.hypot(
+      point.x - view.player.position[0], point.z - view.player.position[2])
+    expect(distance(other.from)).toBeLessThan(distance(site.from))
+    expect(renderToStaticMarkup(createElement(WizardHud, { projection: view,
+      onIntent: vi.fn() }))).toContain('Plan Waystation bridge')
+    probe.captureState = true
+    probe.onIntent!({ type: 'saved-work.aim-waystation' })
+    probe.captureState = false
+    expect(probe.stateWrites).toEqual([true, 'bridge', site.approach.x, null])
+    expect(probe.actions).toEqual([])
+  })
+
   it('routes a visible Waystation spade equip through the checked streamed action', async () => {
     probe.actions.length = probe.outcomes.length = 0; probe.injectSelectedWork = false
     const root = createPublicV40Root(northBankSource(false, true))

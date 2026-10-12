@@ -503,6 +503,7 @@ export type WizardViewIntent =
   | { type: 'saved-work.mode'; active: boolean }
   | { type: 'saved-work.kind'; kind: TerrainWorkSite['kind'] }
   | { type: 'saved-work.aim'; aimX: number | null }
+  | { type: 'saved-work.aim-waystation' }
   | { type: 'saved-work.aim-west'; aimZ: number }
   | { type: 'saved-work.confirm'; id: string }
   | { type: 'v26.terrain'; kind: 'dig' | 'fill'; gx: number; gz: number }

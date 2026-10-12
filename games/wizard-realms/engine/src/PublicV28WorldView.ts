@@ -83,11 +83,8 @@ export function publicWorldV28ViewProjection(progress: PublicV28Progress,
   })
   const v28TravelContinuity = { position: player.position, greenwayLadders }
 
-  const visible = new Set(carrier.visualWorld?.terrain.map((cell) => cell.id)
-    ?? carrier.terrain.map((cell) => cell.id))
   const known = (site: PublicV28RiverBridgeSite) => site.footprintTileIds.length > 0
-    && site.footprintTileIds.every((id) => visible.has(id)
-      && discoveryMaskHasTileId(state.discoveryMask, id))
+    && site.footprintTileIds.every((id) => discoveryMaskHasTileId(state.discoveryMask, id))
   const local = localPublicV28RiverBridgeSites(state.seed, position.x, position.z)
   const discovered = local.filter(known)
   const builtIds = new Set(progress.riverBridgeIds)
