@@ -590,6 +590,27 @@ describe('Mireglass playable dev adapter', () => {
     expect(mireglassNextObjective(equipped).complete).toBe(true)
   })
 
+  it('keeps the bridge objective on the correct bank when the fen meanders', () => {
+    const bridge = mireglassRouteSites(seed).find((site) => site.id === 'mireglass_reach/route/fen_bridge/-81/92')!
+    const initial = createMireglassDevWorld(seed).state
+    const farBank = { ...initial,
+      player: { ...initial.player,
+        position: { x: -346.9, y: bridge.to.y, z: 367.6 },
+        inventory: [...initial.player.inventory,
+          { itemId: 'field_spade' as const, quantity: 1 }, { itemId: 'logs' as const, quantity: 12 }],
+        skillXp: { ...initial.player.skillXp, excavation: 30 } },
+      expedition: { ...initial.expedition, fringeMarkerStudied: true,
+        builtRoutes: { bridge: bridge.id, ladder: null } },
+    }
+    expect(mireglassNextObjective(farBank).label).toBe('Build the four-log slate ladder')
+    const returning = { ...farBank,
+      player: { ...farBank.player,
+        inventory: [...farBank.player.inventory, { itemId: 'mireglass_reach/item/seal' as const, quantity: 1 }] },
+      expedition: { ...farBank.expedition, cacheRevealed: true, cacheExcavated: true },
+    }
+    expect(mireglassNextObjective(returning).label).toBe('Return across the built fen bridge')
+  })
+
   it('saves and reloads through only the v6 key, preserving the v5 bytes', () => {
     const storage = memoryStorage()
     const v5Bytes = '{"v5":"unchanged"}'

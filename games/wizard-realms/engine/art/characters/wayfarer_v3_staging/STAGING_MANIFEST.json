@@ -1,0 +1,112 @@
+{
+  "status": "artist_staging_only_not_game_asset",
+  "source": {
+    "publisher": "Blender Studio and community contributions",
+    "title": "Human Base Meshes",
+    "version": "1.4.1",
+    "license": "CC0",
+    "licenseEvidence": "https://www.blender.org/download/demo-files/#asset-bundles",
+    "download": "https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip",
+    "localBundleOutsideRepo": "/private/tmp/wizard-human-base.8z4fI1/human-base-meshes-bundle-v1.4.1/human_base_meshes_bundle.blend",
+    "localBundleSHA256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+    "localBundleBytes": 49420489,
+    "selectedCollection": "Body Male - Stylized"
+  },
+  "approvedReference": "../../concepts/wayfarer-male-concept-v4.png",
+  "stagingBlend": "wayfarer_v3_artist_staging.blend",
+  "coordinateContract": {
+    "up": "+Z",
+    "forward": "+Y",
+    "origin": "floor between feet",
+    "targetHeightMeters": 2.257,
+    "sourceAssumedForward": "-Y, supported by source eye centers at Y=-0.0843m; artist must confirm nose and facial landmarks before rigging",
+    "stageRotationDegreesZ": 180,
+    "uniformScale": 1.255310629818491,
+    "sourceBoundsMeters": {
+      "min": [
+        -0.7099827527999878,
+        -0.19439518451690674,
+        -0.003781557083129883
+      ],
+      "max": [
+        0.16929611563682556,
+        0.11402518302202225,
+        1.7941797971725464
+      ]
+    },
+    "stagedBoundsMeters": {
+      "min": [
+        -0.5518840551376343,
+        -0.1935817152261734,
+        0.0
+      ],
+      "max": [
+        0.5518840551376343,
+        0.193581685423851,
+        2.256999969482422
+      ]
+    }
+  },
+  "topology": {
+    "meshObjects": 3,
+    "verticesAtBaseLevel": 14106,
+    "facesAtBaseLevel": 14164,
+    "quadFraction": 0.991,
+    "trianglesAtBaseLevel": 28200,
+    "allMeshesHaveUV": true,
+    "perMesh": [
+      {
+        "object": "GEO-body_male_stylized",
+        "mesh": "GEO-body_male_stylized",
+        "vertices": 12502,
+        "faces": 12500,
+        "quads": 12500,
+        "quadFraction": 1.0,
+        "trianglesAtBaseLevel": 25000,
+        "uvMaps": [
+          "UVMap"
+        ],
+        "modifiers": [],
+        "shapeKeys": []
+      },
+      {
+        "object": "GEO-body_male_stylized.eye.L",
+        "mesh": "GEO-body_male_stylized.eye.L",
+        "vertices": 802,
+        "faces": 832,
+        "quads": 768,
+        "quadFraction": 0.9231,
+        "trianglesAtBaseLevel": 1600,
+        "uvMaps": [
+          "UVMap"
+        ],
+        "modifiers": [],
+        "shapeKeys": []
+      },
+      {
+        "object": "GEO-body_male_stylized.eye.R",
+        "mesh": "GEO-body_male_stylized.eye.R",
+        "vertices": 802,
+        "faces": 832,
+        "quads": 768,
+        "quadFraction": 0.9231,
+        "trianglesAtBaseLevel": 1600,
+        "uvMaps": [
+          "UVMap"
+        ],
+        "modifiers": [],
+        "shapeKeys": []
+      }
+    ]
+  },
+  "validation": {
+    "heightWithin1mm": true,
+    "floorWithin1mm": true,
+    "centerXWithin1mm": true,
+    "centerYWithin1mm": true,
+    "sourceHashMatchesExpected": true
+  },
+  "sourceWarnings": [
+    "Six invalid legacy mask_legs/mask_arms driver warnings on body and eyes; appended objects have no active modifiers. Artist should inspect drivers before rigging."
+  ]
+}

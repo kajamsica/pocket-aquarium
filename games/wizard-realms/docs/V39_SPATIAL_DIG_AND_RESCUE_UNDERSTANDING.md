@@ -1,0 +1,7 @@
+# V39 spatial dig and rescue understanding
+
+The player expects the spade to unlock an immediately legible ground-click mode. Different locations and depths should yield different resources, leave a persistent visible pit, and support repeat digging downward. Fill should restore a pit. If the player becomes genuinely trapped, Return Home should work with a 30-minute cooldown. This is not a promise that the current UI proves the full flow.
+
+Known source behavior: V29 terrain picking raycasts the frontmost revealed dry cell or opted-in pit wall; the clicked cell is checked for reach, tool, support, occupancy, depth, capacity, and geology. The deterministic geology includes soil, stone, iron ore, gold ore, diamond, and bedrock. V35 real UI reached one successful first Dig and saw “Found soil. Depth 0.4 m.” Checked tests entered a shallow pit and dug from inside. The UI has not yet demonstrated repeat dig, Fill, or trapped-state Return Home. Fill currently refills open excavation, not freeform above-grade earth placement.
+
+Unknowns needing an independent source contract audit before a targeted UI test: Is spade equip really auto-selecting Dig in the live V29 controller? Are valid and invalid cells visibly distinguished before click, or does the UI just say “tap to check”? Can the player readily see and select pit walls/floor as depth increases? What exact state makes Return Home available, and does the UI communicate the 30-minute timer? Do not change the action/schema or claim the broader Minecraft-like terrain shaping exists without evidence.

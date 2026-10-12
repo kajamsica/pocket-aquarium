@@ -1,6 +1,7 @@
 import { areaAt, terrainHeightAt } from './generation'
 import { highlandRidgeMoveBarrier } from './highlandRidge'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
+import { nearbyWorldTileIds, PUBLIC_WALK_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import type { MireglassItemId } from './mireglassExpedition'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { legacyMovementEnvelope, parsePublicV6BootstrapRoot } from './publicWorldV6'
@@ -9,6 +10,8 @@ import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { isValidPublicWorldV10State } from './publicWorldV10State'
 import type { PublicWorldV10State } from './publicWorldV10State'
 import type { PublicWorldV11State } from './publicWorldV11State'
+import { createPublicV11RouteSupport } from './publicV11RouteSupport'
+import type { PublicV11RouteSupport } from './publicV11RouteSupport'
 import { createStreamedWorldFromState } from './streamedWorld'
 import type { TerrainFacts } from './mireglassCachePitOverlay'
 import type { StreamedWorldEvent, StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime } from './streamedWorld'
@@ -123,7 +126,9 @@ function greenwayWorld(state: PublicWorldState): WizardWorldState {
     // v5 actions accept the complete v6 player at runtime and clone it before changing it.
     // The extra Mireglass item IDs must not be projected away during a return journey.
     player: state.player as PlayerState,
-    discoveredTileIds: [...state.discoveredTileIds],
+    // The legacy step treats frozen history as copy-on-write; mutable callers stay detached.
+    discoveredTileIds: Object.isFrozen(state.discoveredTileIds)
+      ? state.discoveredTileIds as string[] : [...state.discoveredTileIds],
   }
 }
 
@@ -135,7 +140,7 @@ function fromGreenway(state: PublicWorldState, world: WizardWorldState): PublicW
 }
 
 function stepGreenway(state: PublicWorldState, intents: readonly PublicWorldIntent[],
-  requireExactMove = false): PublicWorldAdvanceResult {
+  requireExactMove = false, routeSupport?: PublicV11RouteSupport): PublicWorldAdvanceResult {
   const v5Intents: WizardIntent[] = intents.map((intent) => intent.type === 'move'
     ? { type: 'move', delta: { x: intent.delta.x, y: 0, z: intent.delta.z } }
     : intent)
@@ -156,7 +161,11 @@ function stepGreenway(state: PublicWorldState, intents: readonly PublicWorldInte
           maxZ: Math.max(candidate.maxZ, from.z) } : candidate)
     }
   }
-  const result = advanceWizardWorld(world, v5Intents)
+  const result = advanceWizardWorld(world, v5Intents, routeSupport
+    ? (from, to) => {
+      const route = routeSupport.crossing(from, to)
+      return route?.kind === 'greenway_ladder' || route?.kind === 'highland_bridge'
+    } : undefined)
   if (result.rejections.length) return { state, events: [], rejections: result.rejections }
   if (!Number.isSafeInteger(result.state.eventSequence)) {
     if (!intents[0]) throw new RangeError('The public event sequence is exhausted.')
@@ -166,6 +175,21 @@ function stepGreenway(state: PublicWorldState, intents: readonly PublicWorldInte
     && (result.state.player.position.x !== state.player.position.x + move.delta.x
       || result.state.player.position.z !== state.player.position.z + move.delta.z)) {
     return reject(state, move, 'off_connector', 'The Greenway return is obstructed.', moveIndex)
+  }
+  if (result.state.player.position.x !== state.player.position.x
+    || result.state.player.position.z !== state.player.position.z) {
+    const known = new Set(result.state.discoveredTileIds)
+    const revealedIds = nearbyWorldTileIds(result.state.player.position,
+      PUBLIC_WALK_REVEAL_RADIUS_METERS).filter((id) => !known.has(id))
+    if (!Number.isSafeInteger(result.state.eventSequence + revealedIds.length)) {
+      if (!intents[0]) throw new RangeError('The public event sequence is exhausted.')
+      return reject(state, intents[0], 'invalid_value', 'The public event sequence is exhausted.')
+    }
+    if (revealedIds.length) {
+      result.state.discoveredTileIds = [...known, ...revealedIds].sort()
+      for (const tileId of revealedIds) result.events.push({ type: 'tile_discovered', tileId,
+        tick: result.state.tick, sequence: ++result.state.eventSequence })
+    }
   }
   return { state: fromGreenway(state, world.areas === originalAreas ? result.state
     : { ...result.state, areas: originalAreas.map((area) => ({ ...area })) }),
@@ -240,6 +264,10 @@ function fromStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
     const rejection = result.rejections[0]
     return reject(state, intents[rejection.intentIndex], rejection.code,
       `Streamed movement was rejected: ${rejection.code}.`, rejection.intentIndex)
+  }
+  if (!Number.isSafeInteger(state.eventSequence + result.events.length)) {
+    if (!intents[0]) throw new RangeError('The public event sequence is exhausted.')
+    return reject(state, intents[0], 'invalid_value', 'The public event sequence is exhausted.')
   }
   let eventSequence = state.eventSequence
   const events: PublicWorldEvent[] = result.events.map((event) => ({ ...event, sequence: ++eventSequence }))
@@ -333,8 +361,11 @@ function stepStreamed(state: PublicWorldState, intents: readonly PublicWorldInte
   try {
     const runtime = currentStreamed?.state === state && currentStreamed.terrainMode === terrainMode(facts)
       ? currentStreamed.runtime : createStreamedWorldFromState(streamedSnapshot(state), facts)
-    const result = fromStreamed(state, intents, runtime.advance(streamedIntents, { atomicOnRejection: true }))
-    currentStreamed = { state: result.state, runtime, terrainMode: terrainMode(facts) }
+    const runtimeState = runtime.state
+    const result = fromStreamed(state, intents, runtime.advance(streamedIntents,
+      { atomicOnRejection: true, nearbyDiscovery: true }))
+    currentStreamed = result.rejections.length && runtime.state !== runtimeState ? null
+      : { state: result.state, runtime, terrainMode: terrainMode(facts) }
     return result
   } catch (error) {
     currentStreamed = null
@@ -355,7 +386,10 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
       'The crossing does not stay on dry terrain.')
     const tile = worldTileAtGrid(state.seed, cellAt(to.x), cellAt(to.z))
     const position = { x: to.x, y: Math.max(from.y, tile.center.y), z: to.z }
-    const discoveredTileIds = [...new Set([...state.discoveredTileIds, tile.id])].sort()
+    const nearbyIds = nearbyWorldTileIds(position, PUBLIC_WALK_REVEAL_RADIUS_METERS)
+    const known = new Set(state.discoveredTileIds)
+    const revealedIds = nearbyIds.filter((id) => !known.has(id))
+    const discoveredTileIds = [...known, ...revealedIds].sort()
     const runtime = createStreamedWorldFromState({
       seed: state.seed, tick: state.tick,
       player: { position, yaw: state.player.yaw, pitch: state.player.pitch,
@@ -363,13 +397,15 @@ function crossOutbound(state: PublicWorldState, intent: Extract<PublicWorldInten
       discoveredTileIds,
     }, facts)
     const destination = runtime.advance([])
-    const eventSequence = state.eventSequence + (state.discoveredTileIds.includes(tile.id) ? 1 : 2)
+    const eventSequence = state.eventSequence + 1 + revealedIds.length
+    if (!Number.isSafeInteger(eventSequence)) return reject(state, intent, 'invalid_value',
+      'The public event sequence is exhausted.')
     const events: PublicWorldEvent[] = [
       { type: 'player_moved', tick: destination.state.tick, sequence: state.eventSequence + 1,
         position: { ...destination.state.player.position } },
+      ...revealedIds.map((tileId, index) => ({ type: 'tile_discovered' as const,
+        tick: destination.state.tick, sequence: state.eventSequence + 2 + index, tileId })),
     ]
-    if (!state.discoveredTileIds.includes(tile.id)) events.push({ type: 'tile_discovered',
-      tick: destination.state.tick, sequence: eventSequence, tileId: tile.id })
     const next: PublicWorldState = { ...state, movementOwner: 'streamed', tick: destination.state.tick,
       rng: { ...state.rng, simulation: simulationRngStep(state.rng.simulation) },
       eventSequence, discoveredTileIds: destination.state.discoveredTileIds,
@@ -405,6 +441,10 @@ function crossOutboundFrame(state: PublicWorldState, intents: readonly PublicWor
     })),
   }
   if (!look) return crossed
+  if (!Number.isSafeInteger(crossed.state.eventSequence + 1)) {
+    currentStreamed = null
+    return reject(state, look, 'invalid_value', 'The public event sequence is exhausted.')
+  }
   const events: PublicWorldEvent[] = [
     { type: 'player_looked', tick: crossed.state.tick,
       sequence: state.eventSequence + 1, yaw, pitch },
@@ -452,7 +492,7 @@ function advancePublicWorldFrameInternal(
       tiles: state.greenway.tiles })
     const arrivingGreenway = within(to.x, to.z, envelope)
     if (state.movementOwner === 'greenway') {
-      return arrivingGreenway ? stepGreenway(state, intents)
+      return arrivingGreenway ? stepGreenway(state, intents, false, facts?.routeSupport)
         : crossOutboundFrame(state, intents, move, to, facts)
     }
     if (arrivingGreenway) {
@@ -471,16 +511,58 @@ function advancePublicWorldFrameInternal(
           'Streamed terrain cannot resume for the return.', moveIndex)
       }
       currentStreamed = null
-      return stepGreenway(state, intents, true)
+      return stepGreenway(state, intents, true, facts?.routeSupport)
     }
   }
-  return state.movementOwner === 'greenway' ? stepGreenway(state, intents) : stepStreamed(state, intents, facts)
+  return state.movementOwner === 'greenway'
+    ? stepGreenway(state, intents, false, facts?.routeSupport) : stepStreamed(state, intents, facts)
 }
 
 export function advancePublicWorldFrame(
   state: PublicWorldState, intents: readonly PublicWorldIntent[],
 ): PublicWorldAdvanceResult {
   return advancePublicWorldFrameInternal(state, intents)
+}
+
+/** Unmounted v13 adapter: Greenway actions continue, but an unhooked stream cannot own movement. */
+export function advancePublicGreenwayOnlyFrame(state: PublicWorldState,
+  intents: readonly PublicWorldIntent[], routeSupport?: PublicV11RouteSupport): PublicWorldAdvanceResult {
+  // Let the existing frame validator own malformed composites before checking a destination.
+  if (intents.length > 2 || (intents.length === 2
+    && (intents[0].type !== 'look' || intents[1].type !== 'move'))) {
+    return advancePublicWorldFrameInternal(state, intents)
+  }
+  const envelope = legacyMovementEnvelope({ generationProfile: state.generationProfile,
+    tiles: state.greenway.tiles })
+  if (state.movementOwner !== 'greenway'
+    || !within(state.player.position.x, state.player.position.z, envelope)) {
+    if (!intents[0]) throw new RangeError('The Greenway-only frame requires a Greenway origin.')
+    return reject(state, intents[0], 'unavailable_here', 'Greenway-only travel requires a Greenway origin.')
+  }
+  const ringIndex = intents.findIndex((intent) => intent.type === 'teleport_fairy_ring'
+    && (intent.sourceRingId === MIREGLASS_RING_ID || intent.targetRingId === MIREGLASS_RING_ID))
+  if (ringIndex >= 0) return reject(state, intents[ringIndex], 'unavailable_here',
+    'Cross-region fairy travel is not yet available.', ringIndex)
+  const moveIndex = intents.findIndex((intent) => intent.type === 'move')
+  const move = intents[moveIndex]
+  if (move?.type === 'move') {
+    const { x, z, y = 0 } = move.delta
+    const toX = state.player.position.x + x
+    const toZ = state.player.position.z + z
+    // Invalid values still receive the existing frame validator's precise rejection.
+    if ([x, y, z, toX, toZ].every(Number.isFinite) && y === 0 && Math.hypot(x, z) <= 4
+      && !within(toX, toZ, envelope)) {
+      return reject(state, move, 'unavailable_here', 'Travel beyond Greenway is not yet available.', moveIndex)
+    }
+  }
+  return advancePublicWorldFrameInternal(state, intents,
+    { cachePitDug: state.mireglass.cacheExcavated, routeSupport })
+}
+
+/** Exact authored Greenway return step, without the legacy unhooked stream branch. */
+export function advancePublicGreenwayReturnStep(state: PublicWorldState,
+  intents: readonly PublicWorldIntent[], routeSupport: PublicV11RouteSupport): PublicWorldAdvanceResult {
+  return stepGreenway(state, intents, true, routeSupport)
 }
 
 /** Only internally produced, deeply frozen states can skip the expensive full-state check. */
@@ -539,7 +621,8 @@ export function advancePublicWorldV11BaseFrame(state: PublicWorldV11State,
   state: PublicWorldV11State
 } {
   return advancePublicWorldFrameInternal(state, intents,
-    { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true }) as Omit<PublicWorldAdvanceResult, 'state'> & {
+    { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true,
+      routeSupport: createPublicV11RouteSupport(state) }) as Omit<PublicWorldAdvanceResult, 'state'> & {
       state: PublicWorldV11State
     }
 }

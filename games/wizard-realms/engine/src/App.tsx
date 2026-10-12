@@ -20,6 +20,7 @@ import type { EquipmentSlot } from './view/contracts'
 import { areaAt } from './domain/generation'
 import { visibleMapTiles } from './view/visibleMap'
 import { hasValidRoutePlacements, isRestorableWizardSave } from './domain/persistence'
+import { discoveredTileSet } from './domain/publicWorldDiscovery'
 import { routeBuildOptions } from './domain/routeSites'
 import { storeSellUnitPrice } from './domain/world'
 
@@ -177,6 +178,9 @@ const reachableStore = (state: WizardWorldState) => state.stores
   .filter((store) => distance(state.player.position, store.position) <= INTERACTION_RANGE)
   .sort((left, right) => distance(state.player.position, left.position) - distance(state.player.position, right.position))[0] ?? null
 
+export const routeDisplayName = (routeId: string, savedName: string) =>
+  routeId === 'greenway_ladder' ? 'Greenway low steps' : savedName
+
 export function objectiveFor(state: WizardWorldState): string {
   const logs = owned(state, 'logs')
   const gather = (cost: number) => `Gather logs from Greenway oaks (${Math.min(logs, cost)}/${cost})`
@@ -202,36 +206,37 @@ export function objectiveFor(state: WizardWorldState): string {
   const ladderNorth = () => {
     const foot = state.routes.find((route) => route.id === 'greenway_ladder')!.from
     return distance(state.player.position, foot) <= INTERACTION_RANGE
-      ? 'At the Greenway ladder south foot, press E to cross north'
-      : `Greenway ladder south foot: ${bearingTo(foot)}. Go there and press E to cross north`
+      ? 'At the Greenway low steps south foot, press E to cross north'
+      : `Greenway low steps south foot: ${bearingTo(foot)}. Go there and press E to cross north`
   }
-  if (!ladderBuilt && state.player.skillXp.spellcraft === 0) return "Head north to the fog at Greenway's edge, then cast Wayfinder Glow."
+  if (!ladderBuilt && state.player.skillXp.spellcraft === 0) return "Head to Greenway's north edge near x 0, z -4, then cast Wayfinder Glow into the fog."
   if (!ladderBuilt && !state.excavatedDigSiteIds.includes('practice_mound')) {
-    if (!owned(state, 'field_spade')) return outfitters('Buy a field spade')
-    if (state.player.equipment.mainHand !== 'field_spade') return 'Equip the field spade from your backpack.'
     const mound = state.digSites.find((site) => site.id === 'practice_mound')!
+    const payoff = `${mound.reward.quantity} ${ITEM_NAMES[mound.reward.itemId].toLowerCase()} to sell for coins at Greenway Outfitters, plus ${mound.xpReward} Excavation XP toward the Lv2 ridge cache`
+    if (!owned(state, 'field_spade')) return outfitters(`Buy a field spade to dig the practice mound for ${payoff}`)
+    if (state.player.equipment.mainHand !== 'field_spade') return `Equip the field spade from your backpack to dig the practice mound for ${payoff}.`
     return distance(state.player.position, mound.position) <= INTERACTION_RANGE
-      ? 'Excavate the Greenway practice mound to train excavation.'
-      : `Greenway practice mound: ${bearingTo(mound.position)}. Excavate it to train excavation.`
+      ? `Excavate the Greenway practice mound for ${payoff}.`
+      : `Greenway practice mound: ${bearingTo(mound.position)}. Excavate it for ${payoff}.`
   }
   if (!ladderBuilt) {
     if (!axeEquipped(state)) return owned(state, 'woodcutters_axe') > 0
-      ? 'Equip the woodcutter axe to gather ladder materials.'
+      ? 'Equip the woodcutter axe to gather low-step materials.'
       : outfitters('Buy a woodcutter axe')
-    return logs >= 4 ? 'Go north to a ◇ ladder site, choose it on the map, then Build (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
+    return logs >= 4 ? 'Go north to a ◇ low-steps site, choose it on the map, then Build (4 logs).' : `${gather(4)}, then choose a low-steps site on the map.`
   }
   if (!state.revealedDigSiteIds.includes('ridge_cache')) return areaAt(state.areas,
     state.player.position.x, state.player.position.z).id === 'greenway'
-    ? `${ladderNorth()}. Then cast Wayfinder Glow to reveal the ridge cache.`
-    : 'Cast Wayfinder Glow near the northern ridge to reveal the buried cache.'
+    ? `${ladderNorth()}. Then approach x 0, z -8 on Northern Ridge and cast Wayfinder Glow to search for the buried cache.`
+    : `Ridge Glow approach (x 0, z -8): ${bearingTo({ x: 0, z: -8 })}. Cast Wayfinder Glow there to search for the buried cache.`
   if (!state.excavatedDigSiteIds.includes('ridge_cache')) {
     const cache = state.digSites.find((site) => site.id === 'ridge_cache')!
     const target = `Ridge cache: ${bearingTo(cache.position)} (✦ on the map).`
     const areaId = areaAt(state.areas, state.player.position.x, state.player.position.z).id
     if (!owned(state, 'field_spade')) {
       const returnRoute = areaId === 'eastern_highland'
-        ? 'Cross the Highland bridge west, then the Greenway ladder south. '
-        : areaId === 'northern_ridge' ? 'Cross the Greenway ladder south. ' : ''
+        ? 'Cross the Highland bridge west, then the Greenway low steps south. '
+        : areaId === 'northern_ridge' ? 'Cross the Greenway low steps south. ' : ''
       return `${returnRoute}${outfitters('Buy a field spade')}`
     }
     if (state.player.equipment.mainHand !== 'field_spade') {
@@ -248,7 +253,7 @@ export function objectiveFor(state: WizardWorldState): string {
   if (owned(state, 'ancient_relic') > 0) return areaAt(state.areas,
     state.player.position.x, state.player.position.z).id === 'greenway'
     ? outfitters('Sell the ancient relic for 25g')
-    : `Cross the Greenway ladder south. ${outfitters('Sell the ancient relic for 25g')}`
+    : `Cross the Greenway low steps south. ${outfitters('Sell the ancient relic for 25g')}`
   const greenwayRing = state.player.discoveredRingIds.includes('ring-greenway')
   const highlandRing = state.player.discoveredRingIds.includes('ring-highland')
   if (greenwayRing && highlandRing) return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
@@ -256,8 +261,8 @@ export function objectiveFor(state: WizardWorldState): string {
     : 'Quest complete: both fairy rings are linked. Use the Highland Ring to travel home.'
   if (highlandRing) {
     const areaId = areaAt(state.areas, state.player.position.x, state.player.position.z).id
-    if (areaId === 'eastern_highland') return 'Cross the Highland bridge west, then the Greenway ladder south to return home.'
-    if (areaId === 'northern_ridge') return 'Cross the Greenway ladder south to return home.'
+    if (areaId === 'eastern_highland') return 'Cross the Highland bridge west, then the Greenway low steps south to return home.'
+    if (areaId === 'northern_ridge') return 'Cross the Greenway low steps south to return home.'
     const ring = state.fairyRings.find((candidate) => candidate.id === 'ring-greenway')!
     return distance(state.player.position, ring.position) <= INTERACTION_RANGE
       ? 'Press E to discover the Greenway Ring and link travel home.'
@@ -270,12 +275,14 @@ export function objectiveFor(state: WizardWorldState): string {
         : 'Cross the Highland bridge east and discover the Highland fairy ring.'
   }
   if (state.builtRouteIds.includes('greenway_ladder')) {
-    if (logs < 6) return `${gather(6)}, then choose a bridge site on the map.`
+    const levelHint = state.player.level < 2 ? 'Reach level 2 to unlock the Highland bridge. ' : ''
+    const siteHint = ' If no ◇ bridge site appears, explore east along Northern Ridge to reveal one.'
+    if (logs < 6) return `${levelHint}${gather(6)}, then choose a bridge site on the map.${siteHint}`
     return areaAt(state.areas, state.player.position.x, state.player.position.z).id === 'greenway'
-      ? `${ladderNorth()}. Then choose a Highland bridge site on the map and build it (6 logs).`
-      : 'Choose a Highland bridge site on the map and build it (6 logs).'
+      ? `${levelHint}${ladderNorth()}. Then choose a Highland bridge site on the map and build it (6 logs).${siteHint}`
+      : `${levelHint}Choose a Highland bridge site on the map and build it (6 logs).${siteHint}`
   }
-  if (axeEquipped(state)) return logs >= 4 ? 'Choose a Greenway ladder site on the map and build it (4 logs).' : `${gather(4)}, then choose a ladder site on the map.`
+  if (axeEquipped(state)) return logs >= 4 ? 'Choose a Greenway low-steps site on the map and build it (4 logs).' : `${gather(4)}, then choose a low-steps site on the map.`
   return owned(state, 'woodcutters_axe') > 0 ? 'Equip the woodcutter axe from your backpack.' : outfitters('Buy a woodcutter axe')
 }
 
@@ -299,10 +306,13 @@ function closestInteraction(state: WizardWorldState) {
       }),
   ].filter((candidate) => candidate.distance <= INTERACTION_RANGE)
   // Deliberate destinations take E before incidental oaks in the same reach.
-  const priority = (kind: typeof candidates[number]['kind']) =>
-    kind === 'inscription' || kind === 'dig-site' ? 2
-      : kind === 'route' || kind === 'store' || kind === 'fairy-ring' ? 1 : 0
-  return candidates.sort((left, right) => priority(right.kind) - priority(left.kind)
+  const routeAvailable = candidates.some((candidate) => candidate.kind === 'route')
+  const priority = (candidate: typeof candidates[number]) =>
+    candidate.kind === 'fairy-ring' && routeAvailable
+      && state.player.discoveredRingIds.includes(candidate.target.id) ? 0
+      : candidate.kind === 'inscription' || candidate.kind === 'dig-site' ? 2
+        : candidate.kind === 'route' || candidate.kind === 'store' || candidate.kind === 'fairy-ring' ? 1 : 0
+  return candidates.sort((left, right) => priority(right) - priority(left)
     || left.distance - right.distance)[0] ?? null
 }
 
@@ -342,7 +352,7 @@ export function eventText(event: WizardEvent): string {
     case 'trade_listing_cancelled': return `Returned ${event.quantity} ${itemAmountName(event.itemId, event.quantity)} to your backpack.`
     case 'trade_listing_sold': return `A market buyer paid ${event.totalPrice}g for ${event.quantity} ${itemAmountName(event.itemId, event.quantity)}.`
     case 'player_jumped': return 'You spring over the trail.'
-    case 'route_built': return `Built ${event.routeId === 'greenway_ladder' ? 'the Greenway ladder' : 'the Highland bridge'} for ${event.logCost} logs.`
+    case 'route_built': return `Built ${event.routeId === 'greenway_ladder' ? 'the Greenway low steps' : 'the Highland bridge'} for ${event.logCost} logs.`
     case 'route_used': return 'You cross the completed route.'
     case 'recipe_unlocked': return 'A new construction recipe is ready.'
     case 'tile_discovered': return 'The map reveals a new tile.'
@@ -351,8 +361,9 @@ export function eventText(event: WizardEvent): string {
 }
 
 export function toViewProjection(state: WizardWorldState, messages: readonly RecentMessage[], openStoreId: string | null = null, selectedBuildSiteId: string | null = null): WizardViewProjection {
-  const domain = createWizardProjection(state)
-  const discoveredTileIds = new Set(state.discoveredTileIds)
+  // The domain copy is used for player details; this view reads discovery from the real state below.
+  const domain = createWizardProjection({ ...state, discoveredTileIds: [] })
+  const discoveredTileIds = discoveredTileSet(state.discoveredTileIds)
   const discoveredRingIds = new Set(domain.player.discoveredRingIds)
   const activeResourceTileIds = new Set(state.resources.filter((resource) => !resource.depleted).map((resource) => resource.tileId))
   const discoveredAreaIds = new Set<string>()
@@ -406,7 +417,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     const location = offset === 0 ? 'center' : `${Math.round(Math.abs(offset))}m ${direction} of center`
     return {
       id: site.id, routeId: site.routeId,
-      label: site.routeId === 'highland_bridge' ? `${route.name}, crosses east; site ${location}` : `${route.name}, site ${location}`,
+      label: site.routeId === 'highland_bridge' ? `${routeDisplayName(route.id, route.name)}, crosses east; site ${location}` : `${routeDisplayName(route.id, route.name)}, site ${location}`,
       from: [site.from.x, site.from.y, site.from.z], to: [site.to.x, site.to.y, site.to.z],
       logCost: recipe.logCost, status: site.status, reason: site.reason,
       discovered: discoveredTileIds.has(routeSourceTileId(site.routeId, site.from) ?? ''),
@@ -457,7 +468,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     learnedSpellIds: [...domain.player.learnedSpellIds],
     routes: state.routes.map((route) => {
       const recipe = state.recipes.find((candidate) => candidate.routeId === route.id)!
-      return { id: route.id, label: route.name, from: [route.from.x, route.from.y, route.from.z], to: [route.to.x, route.to.y, route.to.z], built: state.builtRouteIds.includes(route.id), unlocked: state.unlockedRecipeIds.includes(recipe.id), logCost: recipe.logCost }
+      return { id: route.id, label: routeDisplayName(route.id, route.name), from: [route.from.x, route.from.y, route.from.z], to: [route.to.x, route.to.y, route.to.z], built: state.builtRouteIds.includes(route.id), unlocked: state.unlockedRecipeIds.includes(recipe.id), logCost: recipe.logCost }
     }),
     buildSites,
     selectedBuildSiteId: buildSites.some((site) => site.id === selectedBuildSiteId && site.discovered && site.status !== 'built') ? selectedBuildSiteId : null,
@@ -488,7 +499,9 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     tradeListings: domain.player.tradeSlots.map((slot) => slot.itemId ? ({ id: `trade-${slot.slotIndex}`, itemName: ITEM_NAMES[slot.itemId], quantity: slot.quantity, unitPrice: slot.unitPrice }) : null) as unknown as WizardViewProjection['tradeListings'],
     nearbyInteraction: interaction ? {
       kind: interaction.kind, targetId: interaction.target.id,
-      label: interaction.kind === 'resource' ? 'Greenway oak' : interaction.target.name,
+      label: interaction.kind === 'resource' ? 'Greenway oak'
+        : interaction.kind === 'route' ? routeDisplayName(interaction.target.id, interaction.target.name)
+          : interaction.target.name,
       action: interaction.kind === 'resource' ? (axeEquipped(state) ? 'Chop' : owned(state, 'woodcutters_axe') > 0 ? 'Equip axe' : 'Needs axe')
         : interaction.kind === 'inscription' ? 'Study'
         : interaction.kind === 'dig-site' ? state.player.equipment.mainHand === 'field_spade' ? 'Excavate'

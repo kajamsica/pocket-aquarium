@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
+import { nearbyWorldTileIds, PUBLIC_START_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { commitLegacyImportToPublicV6, inspectLegacyImportSource, legacyMovementEnvelope } from './publicWorldV6'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
@@ -134,7 +135,11 @@ describe('public v6 domain construction', () => {
 
   it.each([classic, expanded] as const)('starts a fresh %s journey at Greenway with detached state', (profile) => {
     const state = createFreshPublicWorld(seed, profile)
-    expect(reassemble(state)).toEqual(createGeneratedWorld(seed, profile))
+    const legacy = createGeneratedWorld(seed, profile)
+    expect(reassemble(state)).toEqual({ ...legacy,
+      discoveredTileIds: nearbyWorldTileIds(legacy.player.position, PUBLIC_START_REVEAL_RADIUS_METERS) })
+    expect(state.discoveredTileIds).toHaveLength(29)
+    expect(legacy.discoveredTileIds).toHaveLength(35)
     expect(state.player.position.x).toBe(0)
     expect(state.player.position.z).toBe(0)
     expect(state.movementOwner).toBe('greenway')

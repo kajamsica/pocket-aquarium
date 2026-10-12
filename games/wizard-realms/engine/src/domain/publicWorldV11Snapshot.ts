@@ -1,4 +1,5 @@
 import { DISCOVERY_MASK_BYTES } from './discoveryMask'
+import { createActiveWorldTerrain } from './activeWorldTerrain'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { decodePublicV8Head } from './publicWorldV8Snapshot'
 import type { PublicV8Head } from './publicWorldV8Snapshot'
@@ -58,9 +59,19 @@ export function encodePublicV11Head(state: PublicWorldV11State,
   bootstrap: PublicV6BootstrapRoot | null, saveRevision: number): PublicV11Head {
   if (!isValidPublicWorldV11State(state, bootstrap)) throw new RangeError('Invalid public v11 world state.')
   const { highlandContentRevision, highland, ...v10 } = state
-  const previous = encodePublicV10Head(v10, bootstrap, saveRevision)
+  let witness = v10
+  if (state.movementOwner === 'streamed') {
+    const terrain = createActiveWorldTerrain(state.seed,
+      { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true })
+    terrain.activate(state.player.position)
+    const ground = terrain.tileAtWorld(state.player.position.x, state.player.position.z)
+    if (!ground) throw new RangeError('Missing v11 route ground.')
+    if (state.player.position.y < ground.center.y) witness = { ...v10,
+      player: { ...v10.player, position: { ...v10.player.position, y: ground.center.y } } }
+  }
+  const previous = encodePublicV10Head(witness, bootstrap, saveRevision)
   return { ...previous, schemaVersion: PUBLIC_V11_SCHEMA,
-    state: { ...previous.state, highlandContentRevision, highland } }
+    state: { ...previous.state, player: state.player, highlandContentRevision, highland } }
 }
 
 export function decodePublicV11Head(value: unknown): {
@@ -73,9 +84,22 @@ export function decodePublicV11Head(value: unknown): {
     const candidate = value as PublicV11Head
     const mask = candidate.state.discoveryMask
     if (!(mask instanceof Uint8Array) || mask.length !== DISCOVERY_MASK_BYTES) return null
-    const prior = decodePublicV10Head({ ...value, schemaVersion: 'wizard-world/v10', state })
+    let witnessPlayer = candidate.state.player
+    if (candidate.state.movementOwner === 'streamed') {
+      const position = candidate.state.player.position
+      const terrain = createActiveWorldTerrain(candidate.state.seed,
+        { cachePitDug: candidate.state.mireglass.cacheExcavated, highlandRidge: true })
+      terrain.activate(position)
+      const ground = terrain.tileAtWorld(position.x, position.z)
+      if (!ground) return null
+      if (position.y < ground.center.y) witnessPlayer = { ...candidate.state.player,
+        position: { ...position, y: ground.center.y } }
+    }
+    const prior = decodePublicV10Head({ ...value, schemaVersion: 'wizard-world/v10',
+      state: { ...state, player: witnessPlayer } })
     if (!prior) return null
-    const actual = { ...prior.state, highlandContentRevision, highland }
+    const actual = { ...prior.state, player: candidate.state.player,
+      highlandContentRevision, highland }
     if (!isValidPublicWorldV11State(actual, prior.bootstrap)) return null
     const expected = encodePublicV11Head(actual, prior.bootstrap, prior.saveRevision)
     return sameValue(expected, value) ? { ...prior, state: actual } : null
@@ -107,6 +131,12 @@ export function isValidPublicV11SourceReceipt(value: unknown): value is PublicV1
 
 export function samePublicV11SourceReceipt(a: unknown, b: unknown): boolean {
   return isValidPublicV11SourceReceipt(a) && isValidPublicV11SourceReceipt(b) && sameValue(a, b)
+}
+
+/** Only for receipts independently validated during the caller's shared-lock operation. */
+export function sameValidatedPublicV11SourceReceipt(a: PublicV11SourceReceipt,
+  b: PublicV11SourceReceipt): boolean {
+  return sameValue(a, b)
 }
 
 export function serializePublicV11World(state: PublicWorldV11State,

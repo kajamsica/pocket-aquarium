@@ -121,11 +121,12 @@ describe('explicit v11 entry', () => {
     expect(target).toEqual({ x: 600, z: -500, distance: 20 })
     if (!target) throw new Error('Missing ridge recovery target')
     let escaped = resumed.value.state
-    for (let step = 1; step <= 5; step++) {
-      const moved = advancePublicWorldV11Frame(escaped, [{ type: 'move', delta: { x: 4, z: 0 } }])
+    for (let step = 1; step <= 125; step++) {
+      const moved = advancePublicWorldV11Frame(escaped, [{ type: 'move', delta: {
+        x: step === 125 ? target.x - escaped.player.position.x : 0.16, z: 0 } }])
       expect(moved.rejections).toEqual([])
       expect(moved.events).toContainEqual(expect.objectContaining({ type: 'player_moved' }))
-      expect(moved.state.player.position.x).toBe(rock.x + step * 4)
+      if (step % 25 === 0) expect(moved.state.player.position.x).toBeCloseTo(rock.x + step / 25 * 4)
       expect(moved.state.player.position.z).toBe(rock.z)
       escaped = moved.state
     }

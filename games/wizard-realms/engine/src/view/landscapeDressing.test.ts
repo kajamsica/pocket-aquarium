@@ -27,28 +27,28 @@ describe('landscape dressing layout', () => {
     expect(source[0].position).toEqual([0, 1, 0])
   })
 
-  it('keeps the full 17 by 17 window dense but bounded to four small details per cell', () => {
+  it('keeps the full 17 by 17 window dense but bounded to six instanced details per cell', () => {
     const cells = grid('temperate_forest')
     const details = landscapeDressingFor(cells)
-    expect(details.length).toBeGreaterThan(650)
-    expect(details.length).toBeLessThanOrEqual(1200)
+    expect(details.length).toBeGreaterThan(1400)
+    expect(details.length).toBeLessThanOrEqual(cells.length * 6)
     for (const source of cells) {
       const local = details.filter(({ position }) =>
         Math.abs(position[0] - source.position[0]) <= 1.7
         && Math.abs(position[2] - source.position[2]) <= 1.7)
-      expect(local.length).toBeGreaterThanOrEqual(2)
-      expect(local.length).toBeLessThanOrEqual(4)
+      expect(local.length).toBeGreaterThanOrEqual(5)
+      expect(local.length).toBeLessThanOrEqual(6)
     }
     for (const detail of details) {
       expect([...detail.position, detail.yaw, detail.scale].every(Number.isFinite)).toBe(true)
       expect(detail.scale).toBeGreaterThan(0)
-      expect(detail.scale).toBeLessThanOrEqual(0.8)
+      expect(detail.scale).toBeLessThanOrEqual(1.05)
       expect(detail.color).toMatch(/^#[0-9a-f]{6}$/)
       if (detail.kind === 'ground' || detail.kind === 'shrub' || detail.kind === 'stone') {
         const source = cells.find((tile) => Math.abs(detail.position[0] - tile.position[0]) <= 1.7
           && Math.abs(detail.position[2] - tile.position[2]) <= 1.7)!
-        const radius = detail.kind === 'stone' ? 0.7 * detail.scale
-          : detail.kind === 'shrub' ? 1.05 * detail.scale : detail.scale
+        const radius = detail.kind === 'stone' ? 0.9 * detail.scale
+          : detail.kind === 'shrub' ? 1.1 * detail.scale : detail.scale
         expect(Math.abs(detail.position[0] - source.position[0]) + radius).toBeLessThanOrEqual(1.7)
         expect(Math.abs(detail.position[2] - source.position[2]) + radius).toBeLessThanOrEqual(1.7)
       }
@@ -88,7 +88,7 @@ describe('landscape dressing layout', () => {
       expect(alders.length).toBeGreaterThanOrEqual(23)
       expect(alders.length).toBeLessThanOrEqual(47)
       expect(alders.length).toBeGreaterThan(snags.length)
-      expect(details.length).toBeLessThanOrEqual(cells.length * 4)
+      expect(details.length).toBeLessThanOrEqual(cells.length * 6)
       for (const trunk of [...alders, ...snags]) {
         const source = cells.find((tile) => Math.abs(trunk.position[0] - tile.position[0]) <= 1.7
           && Math.abs(trunk.position[2] - tile.position[2]) <= 1.7)!
@@ -112,16 +112,17 @@ describe('landscape dressing layout', () => {
       : source.id === 'tile-2-0'
         ? { ...source, highlandSurface: 'trail' as const, highlandTrailSegment: highlandTrail }
         : source)
-    const details = landscapeDressingFor(cells).filter((detail) => detail.kind !== 'ground')
-    for (const kind of ['grass', 'reed', 'shrub', 'flower', 'stone', 'snag', 'alder']) {
+    const details = landscapeDressingFor(cells)
+    for (const kind of ['ground', 'grass', 'reed', 'shrub', 'flower', 'stone', 'snag', 'alder']) {
       expect(details.some((detail) => detail.kind === kind)).toBe(true)
     }
     for (const detail of details) {
-      const clearance = detail.kind === 'stone' ? 0.65 + 0.7 * detail.scale
-        : detail.kind === 'grass' ? 1.3 + 0.45 * detail.scale
+      const clearance = detail.kind === 'ground' ? 0.65 + detail.scale
+        : detail.kind === 'stone' ? 0.65 + 0.9 * detail.scale
+        : detail.kind === 'grass' ? 1.3 + 0.55 * detail.scale
           : detail.kind === 'reed' ? 1.3 + 0.38 * detail.scale
             : detail.kind === 'flower' ? 1.3 + 0.16 * detail.scale
-              : detail.kind === 'shrub' ? 1.3 + 1.05 * detail.scale : 2.25
+              : detail.kind === 'shrub' ? 1.3 + 1.1 * detail.scale : 2.25
       expect(distanceToSegment(detail, mireglassTrail.from, mireglassTrail.to)).toBeGreaterThanOrEqual(clearance)
       expect(distanceToSegment(detail, highlandTrail.from, highlandTrail.to)).toBeGreaterThanOrEqual(clearance)
     }
@@ -139,10 +140,14 @@ describe('landscape dressing layout', () => {
     expect(withClearings).not.toEqual(baseline)
     expect(landscapeDressingFor(cells, clearings)).toEqual(withClearings)
     expect(landscapeDressingFor(cells, [resourcePoint, storePoint])).toEqual(withClearings)
-    expect(withClearings.length).toBeLessThanOrEqual(cells.length * 4)
-    for (const trunk of withClearings.filter((detail) => detail.kind === 'snag' || detail.kind === 'alder')) {
-      expect(Math.hypot(trunk.position[0] - storePoint[0], trunk.position[2] - storePoint[1])).toBeGreaterThanOrEqual(2.5)
-      expect(Math.hypot(trunk.position[0] - resourcePoint[0], trunk.position[2] - resourcePoint[1])).toBeGreaterThanOrEqual(2.5)
+    expect(withClearings.length).toBeLessThanOrEqual(cells.length * 6)
+    for (const detail of withClearings) {
+      const footprint = detail.kind === 'ground' ? detail.scale : detail.kind === 'stone' ? 0.9 * detail.scale
+        : detail.kind === 'shrub' ? 1.1 * detail.scale : detail.kind === 'grass' ? 0.55 * detail.scale
+          : detail.kind === 'reed' ? 0.38 * detail.scale : detail.kind === 'flower' ? 0.16 * detail.scale : 0.45
+      const clearance = detail.kind === 'snag' || detail.kind === 'alder' ? 2.5 : 1.5 + footprint
+      expect(Math.hypot(detail.position[0] - storePoint[0], detail.position[2] - storePoint[1])).toBeGreaterThanOrEqual(clearance)
+      expect(Math.hypot(detail.position[0] - resourcePoint[0], detail.position[2] - resourcePoint[1])).toBeGreaterThanOrEqual(clearance)
     }
   })
 

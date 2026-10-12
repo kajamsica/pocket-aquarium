@@ -2,8 +2,10 @@ import { highlandCorridorCells, highlandLandmark } from './highlandContent'
 import { HIGHLAND_WINDWARD_STEP, highlandWindCastWindow, highlandWindTrailLocation,
   isHighlandWindWestboundTrailStep } from './highlandWindContent'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
-import { advancePublicWorldV11Frame } from './publicWorldV11Authority'
+import { advancePublicWorldV11Frame, foldPublicV11Landmark,
+  publicV11FrameGuard } from './publicWorldV11Authority'
 import type { PublicV11LandmarkEvent } from './publicWorldV11Authority'
+import { advancePublicWorldV11BaseFrame } from './publicWorldRuntime'
 import type { PublicWorldEvent, PublicWorldIntent, PublicWorldRejection } from './publicWorldRuntime'
 import type { PublicWorldV11State } from './publicWorldV11State'
 import { isValidPublicWorldV12State } from './publicWorldV12State'
@@ -108,12 +110,12 @@ function acceptedState(v11: PublicWorldV11State, source: PublicWorldV12State,
 /** A valid imported state is detached before any rule reads it. Frozen results use a bounded fast path. */
 function ingress(state: PublicWorldV12State, bootstrap: PublicV6BootstrapRoot | null):
   { state: PublicWorldV12State; v11: PublicWorldV11State;
-    bootstrap: PublicV6BootstrapRoot | null; proof: BootstrapProof } | null {
+    bootstrap: PublicV6BootstrapRoot | null; proof: BootstrapProof; trusted: boolean } | null {
   const proof = bootstrapProof(bootstrap)
   if (proof === undefined) return null
   const trusted = trustedFrames.get(state)
   if (trusted) return sameProof(trusted.proof, proof)
-    ? { state, v11: trusted.v11, bootstrap, proof } : null
+    ? { state, v11: trusted.v11, bootstrap, proof, trusted: true } : null
   try {
     if (!isValidPublicWorldV12State(state, bootstrap)) return null
     const copy = structuredClone(state) as PublicWorldV12State
@@ -121,7 +123,8 @@ function ingress(state: PublicWorldV12State, bootstrap: PublicV6BootstrapRoot | 
     if (!isValidPublicWorldV12State(copy, bootstrapCopy)
       || !sameProof(proof, bootstrapProof(bootstrap))
       || !sameProof(proof, bootstrapProof(bootstrapCopy))) return null
-    return { state: copy, v11: projectV11(copy), bootstrap: bootstrapCopy, proof }
+    return { state: copy, v11: projectV11(copy), bootstrap: bootstrapCopy,
+      proof, trusted: false }
   } catch { return null }
 }
 
@@ -282,17 +285,30 @@ export function advancePublicWorldV12Frame(state: PublicWorldV12State,
     && (intent.type !== 'move' || typeof intent.delta === 'object'
       && intent.delta !== null && !Array.isArray(intent.delta)))) return invalid()
   const selected = assistedIntents(input.state, frameIntents)
-  const base = advancePublicWorldV11Frame(input.v11, selected.intents, input.bootstrap)
-  if (base.rejections.length) return { state, events: [], rejections: base.rejections }
+  const fastOrdinary = input.trusted && !selected.assisted
+  const guard = fastOrdinary ? publicV11FrameGuard(input.v11, selected.intents, false) : null
+  if (guard) return { state, events: [], rejections: [guard] }
+  // Only a privately proven spell impulse can exceed the voluntary gait cap.
+  // Every ordinary move still passes through the v11 barefoot/footwear guard.
+  const ordinary = fastOrdinary
+    ? (() => {
+      const base = advancePublicWorldV11BaseFrame(input.v11, selected.intents)
+      return base.rejections.length ? base
+        : foldPublicV11Landmark(input.v11, selected.intents, base)
+    })()
+    : selected.assisted
+      ? advancePublicWorldV11BaseFrame(input.v11, selected.intents)
+      : advancePublicWorldV11Frame(input.v11, selected.intents, input.bootstrap)
+  if (ordinary.rejections.length) return { state, events: [], rejections: ordinary.rejections }
   if (!sameProof(input.proof, bootstrapProof(bootstrap))) return invalid()
 
-  let v11 = base.state
+  let v11 = ordinary.state
   let windstep = input.state.windstep
-  const events: PublicWorldV12AdvanceResult['events'] = [...base.events]
+  const events: PublicWorldV12AdvanceResult['events'] = [...ordinary.events]
   const move = sampledMove(frameIntents)
   if (selected.assisted && move && input.state.tick < windstep.activeUntilTick) {
     const before = input.state.player.position
-    const after = base.state.player.position
+    const after = ordinary.state.player.position
     const intendedX = before.x + move.move.delta.x * HIGHLAND_WINDWARD_STEP.speedMultiplier
     const intendedZ = before.z + move.move.delta.z * HIGHLAND_WINDWARD_STEP.speedMultiplier
     const origin = highlandWindTrailLocation(before)

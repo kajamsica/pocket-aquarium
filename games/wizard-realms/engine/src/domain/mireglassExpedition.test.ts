@@ -10,6 +10,8 @@ import type {
   MireglassExpeditionAction, MireglassExpeditionResult, MireglassItemId, MireglassRegionProgress, MireglassV6Player,
 } from './mireglassExpedition'
 import { mireglassRouteSites } from './mireglassRouteSites'
+import { nearbyWorldTileIds, PUBLIC_WALK_REVEAL_RADIUS_METERS,
+  PUBLIC_SPELL_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { isRestorableWizardSave, serializeWizardWorld } from './persistence'
 import type { PlayerState, Vec3 } from './types'
 import { worldTileAtGrid } from './worldChunks'
@@ -175,6 +177,74 @@ describe('Mireglass player and region action authority', () => {
     expect(mireglassGlowRevealableTileIds(seed, player.position, discovered)).toEqual([])
     rejected(applyMireglassExpeditionAction(seed, cast.player, cast.region,
       { type: 'cast_wayfinder_glow' }, discovered), 'already_revealed', cast.player, cast.region)
+  })
+
+  it.each(['greenway-alpha', 'wizard-realms'])('surveys the 16–24 m annulus without revealing a distant cache in %s', (worldSeed) => {
+    const player = createMireglassV6Player(worldSeed)
+    player.learnedSpellIds.push('wayfinder_glow')
+    player.position = { ...mireglassAnchors(worldSeed).fringeMarker.tile.center }
+    const region = createMireglassRegionProgress(worldSeed)
+    const known = nearbyWorldTileIds(player.position, PUBLIC_WALK_REVEAL_RADIUS_METERS)
+    const expected = nearbyWorldTileIds(player.position, PUBLIC_SPELL_REVEAL_RADIUS_METERS)
+      .filter((id) => !known.includes(id))
+    expect(Math.hypot(player.position.x - mireglassAnchors(worldSeed).sealCache.tile.center.x,
+      player.position.z - mireglassAnchors(worldSeed).sealCache.tile.center.z)).toBeGreaterThan(8)
+    expect(expected.length).toBeGreaterThan(0)
+    rejected(applyMireglassExpeditionAction(worldSeed, player, region,
+      { type: 'cast_wayfinder_glow' }, known), 'already_revealed', player, region)
+    const wide = accepted(applyMireglassExpeditionAction(worldSeed, player, region,
+      { type: 'cast_wayfinder_glow' }, known, true, true))
+    if (wide.event.type !== 'terrain_revealed') throw new Error('Expected terrain survey')
+    expect(wide.event).toEqual({ type: 'terrain_revealed', spellId: 'wayfinder_glow',
+      revealedTileIds: expected, xp: 10 * Math.min(expected.length, 13) })
+    expect(wide.event.xp).toBe(130)
+    expect(wide.region.cacheRevealed).toBe(false)
+    expect(wide.player.skillXp.spellcraft - player.skillXp.spellcraft).toBe(130)
+    rejected(applyMireglassExpeditionAction(worldSeed, wide.player, wide.region,
+      { type: 'cast_wayfinder_glow' }, [...known, ...expected], true, true),
+    'already_revealed', wide.player, wide.region)
+  })
+
+  it('includes the 24 m boundary, clamps world edges, and keeps cache reveal at 8 m', () => {
+    const player = createMireglassV6Player(seed)
+    player.learnedSpellIds.push('wayfinder_glow')
+    const region = createMireglassRegionProgress(seed)
+    const center = anchors.fringeMarker.tile.center
+    const known = nearbyWorldTileIds(center, PUBLIC_WALK_REVEAL_RADIUS_METERS)
+    const wide = accepted(applyMireglassExpeditionAction(seed, at(player, center), region,
+      { type: 'cast_wayfinder_glow' }, known, true, true))
+    if (wide.event.type !== 'terrain_revealed') throw new Error('Expected terrain survey')
+    expect(wide.event.revealedTileIds).toContain(worldTileAtGrid(seed,
+      center.x / 4 + 6, center.z / 4).id)
+    const edge = { x: 255 * 4, y: 0, z: 255 * 4 }
+    const edgeCast = accepted(applyMireglassExpeditionAction(seed, at(player, edge), region,
+      { type: 'cast_wayfinder_glow' }, [], true, true))
+    if (edgeCast.event.type !== 'terrain_revealed') throw new Error('Expected terrain survey')
+    expect(edgeCast.event.revealedTileIds).toContain('tile-258-258')
+    expect(edgeCast.event.revealedTileIds.every((id) => id.split('-').slice(1)
+      .every((part) => Number(part) <= 258))).toBe(true)
+    const cache = anchors.sealCache.tile.center
+    const centered = at(player, cache)
+    const centeredKnown = nearbyWorldTileIds(cache, PUBLIC_WALK_REVEAL_RADIUS_METERS)
+    const both = accepted(applyMireglassExpeditionAction(seed, centered, region,
+      { type: 'cast_wayfinder_glow' }, centeredKnown, true, true))
+    expect(both.event).toMatchObject({ type: 'cache_revealed', xp: 140 })
+    if (both.event.type !== 'cache_revealed') throw new Error('Expected cache reveal')
+    expect(both.event.revealedTileIds.length).toBeGreaterThan(13)
+    rejected(applyMireglassExpeditionAction(seed, both.player, both.region,
+      { type: 'cast_wayfinder_glow' }, [...centeredKnown, ...both.event.revealedTileIds], true, true),
+    'already_revealed', both.player, both.region)
+    const near = at(player, { ...cache, x: cache.x + 8 })
+    const nearKnown = nearbyWorldTileIds(near.position, PUBLIC_SPELL_REVEAL_RADIUS_METERS)
+    const revealed = accepted(applyMireglassExpeditionAction(seed, near, region,
+      { type: 'cast_wayfinder_glow' }, nearKnown, true, true))
+    expect(revealed.event).toMatchObject({ type: 'cache_revealed', xp: 10,
+      revealedTileIds: [] })
+    const far = at(player, { ...cache, x: cache.x + 8.001 })
+    const farKnown = nearbyWorldTileIds(far.position, PUBLIC_SPELL_REVEAL_RADIUS_METERS)
+    rejected(applyMireglassExpeditionAction(seed, far, region,
+      { type: 'cast_wayfinder_glow' }, farKnown, true, true),
+    'already_revealed', far, region)
   })
 
   it('earns both prerequisites from a fresh player and completes the outbound journey', () => {

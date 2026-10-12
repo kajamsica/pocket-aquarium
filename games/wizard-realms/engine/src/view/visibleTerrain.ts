@@ -1,9 +1,11 @@
 import type { Vec3, WizardTerrainCell } from './contracts'
 
-const MAX_RADIUS_CELLS = 8
+export const PUBLIC_VISUAL_RADIUS_CELLS = 15
+const DEFAULT_RADIUS_CELLS = 8
+const MAX_RADIUS_CELLS = PUBLIC_VISUAL_RADIUS_CELLS
 
 /** Stable row-major terrain window, bounded to 17 by 17 cells at the default radius. */
-export function visibleTerrainCells(cells: readonly WizardTerrainCell[], player: Vec3, radiusCells = MAX_RADIUS_CELLS): WizardTerrainCell[] {
+export function visibleTerrainCells(cells: readonly WizardTerrainCell[], player: Vec3, radiusCells = DEFAULT_RADIUS_CELLS): WizardTerrainCell[] {
   if (cells.length === 0) return []
   const spacingX = cells[0].size[0]
   const spacingZ = cells[0].size[1]
@@ -18,7 +20,7 @@ export function visibleTerrainCells(cells: readonly WizardTerrainCell[], player:
   const spanX = maxX - minX + 1
   const spanZ = maxZ - minZ + 1
   // Both existing Greenway profiles fit within 16 by 16. Keep their entire visible terrain at the default radius.
-  const preserveGreenway = radius === MAX_RADIUS_CELLS && spanX <= 16 && spanZ <= 16
+  const preserveGreenway = radius === DEFAULT_RADIUS_CELLS && spanX <= 16 && spanZ <= 16
   const width = preserveGreenway ? spanX : Math.min(radius * 2 + 1, spanX)
   const depth = preserveGreenway ? spanZ : Math.min(radius * 2 + 1, spanZ)
   const startX = Math.max(minX, Math.min(Math.round(player[0] / spacingX) - radius, maxX - width + 1))

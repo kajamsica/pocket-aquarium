@@ -1,5 +1,6 @@
 import { highlandLandmark } from './domain/highlandContent'
 import { highlandWindCastWindow, highlandWindTrailLocation } from './domain/highlandWindContent'
+import { discoveredTileSet } from './domain/publicWorldDiscovery'
 import type { PublicWorldV12State } from './domain/publicWorldV12State'
 import { storeSellUnitPrice } from './domain/world'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './domain/worldChunks'
@@ -17,7 +18,7 @@ const onFoot = (state: PublicWorldV12State) => state.player.verticalVelocity ===
 
 function knownStoneBuyers(state: PublicWorldV12State, quantity: number): WizardWindwardStepView['stoneReturn'] {
   if (quantity < 1) return undefined
-  const known = new Set(state.discoveredTileIds)
+  const known = discoveredTileSet(state.discoveredTileIds)
   const offers = state.greenway.stores.flatMap((store) => {
     const tile = worldTileAtGrid(state.seed,
       Math.round(store.position.x / WORLD_CELL_METERS), Math.round(store.position.z / WORLD_CELL_METERS))

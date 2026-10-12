@@ -1,4 +1,4 @@
-import { objectiveFor, toViewProjection } from './App'
+import { objectiveFor, routeDisplayName, toViewProjection } from './App'
 import { mireglassViewProjection } from './MireglassPlayableApp'
 import { createActiveWorldTerrain, type ActiveWorldTerrain } from './domain/activeWorldTerrain'
 import type { TerrainFacts } from './domain/mireglassCachePitOverlay'
@@ -9,10 +9,13 @@ import { MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID, mireglassAnchors, miregl
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import type { MireglassWorldRuntime, MireglassWorldState } from './domain/mireglassWorld'
 import type { PublicWorldState } from './domain/publicWorldState'
+import { discoveredTileSet } from './domain/publicWorldDiscovery'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS, WORLD_CHUNK_MAX, WORLD_CHUNK_MIN,
   WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from './domain/worldChunks'
 import type { PlayerState, WizardWorldState } from './domain/types'
-import type { WizardFieldCamp, WizardFieldCampView, WizardItemStack, WizardViewProjection, WizardWorldOverview } from './view/contracts'
+import type { Vec3, WizardFieldCamp, WizardFieldCampView, WizardItemStack, WizardViewProjection,
+  WizardVisualWorld, WizardWorldOverview } from './view/contracts'
+import { PUBLIC_VISUAL_RADIUS_CELLS } from './view/visibleTerrain'
 
 const V6_ITEM_NAMES: Readonly<Record<string, string>> = {
   'mireglass_reach/item/seal': 'Mireglass seal',
@@ -29,7 +32,7 @@ function namedV6Stack(stack: WizardItemStack | null): WizardItemStack | null {
 
 /** Projection from saved discovery IDs only; undiscovered chunks never sample terrain. */
 export function publicWorldOverview(state: PublicWorldState, camps: readonly WizardFieldCamp[] = []): WizardWorldOverview {
-  const discovered = new Set(state.discoveredTileIds)
+  const discovered = discoveredTileSet(state.discoveredTileIds)
   const chunks = new Map<string, { x: number; z: number; count: number; sampleX: number; sampleZ: number }>()
   const markers = new Map<string, string[]>()
   const chunkKey = (x: number, z: number) => `${x}:${z}`
@@ -70,7 +73,7 @@ export function publicWorldOverview(state: PublicWorldState, camps: readonly Wiz
     mark(ring.position, ring.name, state.player.discoveredRingIds.includes(ring.id) && knownTile(ring.position))
   }
   for (const route of state.greenway.routes) {
-    if (state.greenway.builtRouteIds.includes(route.id)) mark(route.from, `${route.name} built`)
+    if (state.greenway.builtRouteIds.includes(route.id)) mark(route.from, `${routeDisplayName(route.id, route.name)} built`)
   }
   if (state.greenway.studiedInscriptionIds.includes('greenway_waystone')) {
     const waystone = state.greenway.inscriptions.find((entry) => entry.id === 'greenway_waystone')
@@ -121,7 +124,8 @@ function greenwayView(state: PublicWorldState, messages: readonly string[],
     ...state.greenway, seed: state.seed, generationProfile: state.generationProfile,
     tick: state.tick, rng: state.rng, eventSequence: state.eventSequence,
     player: state.player as PlayerState,
-    discoveredTileIds: [...state.discoveredTileIds],
+    discoveredTileIds: Object.isFrozen(state.discoveredTileIds)
+      ? state.discoveredTileIds as string[] : [...state.discoveredTileIds],
   }
   const projection = toViewProjection(world, messages.map((text, id) => ({ id, text })),
     openStoreId, selectedSiteId)
@@ -206,20 +210,75 @@ function mireglassView(state: PublicWorldState, messages: readonly string[],
   return mireglassViewProjection(tileReader as MireglassWorldRuntime, world, messages, selectedSiteId)
 }
 
+/** Compose scenery by world cell, not the current simulation owner. The Greenway owns its legacy footprint. */
+function visualWorldFor(state: PublicWorldState, greenway: WizardViewProjection,
+  streamed: WizardViewProjection, showBuiltRoutesFromSource = false): WizardVisualWorld {
+  const discovered = discoveredTileSet(state.discoveredTileIds)
+  const gridAt = (coordinate: number) => Math.ceil(coordinate / WORLD_CELL_METERS - 0.5)
+  const centerX = gridAt(state.player.position.x)
+  const centerZ = gridAt(state.player.position.z)
+  const inWindow = (point: Vec3) => Math.abs(gridAt(point[0]) - centerX) <= PUBLIC_VISUAL_RADIUS_CELLS
+    && Math.abs(gridAt(point[2]) - centerZ) <= PUBLIC_VISUAL_RADIUS_CELLS
+  const known = (point: Vec3) => inWindow(point)
+    && discovered.has(`tile-${gridAt(point[0]) + 3}-${gridAt(point[2]) + 3}`)
+  const terrain = new Map<string, WizardVisualWorld['terrain'][number]>()
+  for (const source of [streamed.terrain, greenway.terrain]) for (const cell of source) {
+    if (!inWindow(cell.position)) continue
+    // Keep the bounded world under the fog so unknown ground forms one field,
+    // instead of isolated one-cell slabs floating above the bedrock plane.
+    terrain.set(cell.id, cell)
+  }
+  const visibleById = <T extends { id: string; position: Vec3 }>(
+    streamedItems: readonly T[], greenwayItems: readonly T[],
+  ): T[] => {
+    const items = new Map<string, T>()
+    for (const item of streamedItems) if (known(item.position)) items.set(item.id, item)
+    for (const item of greenwayItems) if (known(item.position)) items.set(item.id, item)
+    return [...items.values()]
+  }
+  const linksById = <T extends { id: string; from: Vec3; to: Vec3; built?: boolean }>(
+    streamedItems: readonly T[], greenwayItems: readonly T[], showBuiltFromSource = false,
+  ): T[] => {
+    const items = new Map<string, T>()
+    const visible = (item: T) => known(item.from)
+      && (known(item.to) || (showBuiltFromSource && item.built === true))
+    for (const item of streamedItems) if (visible(item)) items.set(item.id, item)
+    for (const item of greenwayItems) if (visible(item)) items.set(item.id, item)
+    return [...items.values()]
+  }
+  return {
+    terrain: [...terrain.values()].sort((a, b) => a.position[2] - b.position[2] || a.position[0] - b.position[0]),
+    resources: visibleById(streamed.resources, greenway.resources),
+    stores: visibleById(streamed.stores, greenway.stores),
+    fairyRings: visibleById(streamed.fairyRings, greenway.fairyRings),
+    inscriptions: visibleById(streamed.inscriptions, greenway.inscriptions),
+    digSites: visibleById(streamed.digSites, greenway.digSites),
+    landmarks: visibleById(streamed.landmarks ?? [], greenway.landmarks ?? []),
+    routes: linksById(streamed.routes, greenway.routes, showBuiltRoutesFromSource),
+    buildSites: linksById(streamed.buildSites.filter((site) => site.discovered),
+      greenway.buildSites.filter((site) => site.discovered)),
+    discoveredTileIds: state.discoveredTileIds,
+  }
+}
+
 /** One public player and facts projected through the existing region-specific view adapters. */
 export function publicWorldViewProjection(state: PublicWorldState, messages: readonly string[],
   selectedSiteId: string | null, openStoreId: string | null = null,
-  fieldCamp?: WizardFieldCampView, terrainFacts?: TerrainFacts): WizardViewProjection {
+  fieldCamp?: WizardFieldCampView, terrainFacts?: TerrainFacts,
+  showBuiltRoutesFromSource = false): WizardViewProjection {
   const projection = state.movementOwner === 'greenway'
     ? greenwayView(state, messages, selectedSiteId, openStoreId)
     : mireglassView(state, messages, selectedSiteId, terrainFacts)
+  const greenway = state.movementOwner === 'greenway' ? projection : greenwayView(state, [], null, null)
+  const streamed = state.movementOwner === 'streamed' ? projection : mireglassView(state, [], null, terrainFacts)
+  const visualWorld = visualWorldFor(state, greenway, streamed, showBuiltRoutesFromSource)
   const streamedRegion = state.movementOwner === 'streamed'
     ? classifyStreamedRegion(state.seed, state.player.position) : null
   const openWilderness = streamedRegion === 'wilderness'
     || (streamedRegion === 'highland_quarry' && !('highlandContentRevision' in state))
   let overview: WizardWorldOverview | undefined
   const campTileIds = new Set(fieldCamp?.camps.map((camp) => camp.tileId))
-  return { ...projection, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,
+  return { ...projection, visualWorld, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,
     ...(openWilderness ? { title: 'Open Wilderness',
       guidance: 'Explore dry ground to chart Open Wilderness. The map shows only visited terrain.' } : {}),
     ...(fieldCamp ? { tiles: projection.map.tiles.map((tile) => ({ ...tile,

@@ -1,6 +1,9 @@
 import { highlandLandmark, highlandStoneNodes, isHighlandAuthoredPosition } from './highlandContent'
+import { publicV11Gait } from './publicWorldGait'
+import { publicBootPurchaseCandidate } from './publicBootPurchase'
 import { applyFieldCampV10Action } from './fieldCamp'
 import type { FieldCampV10ActionResult } from './fieldCamp'
+import { applyMireglassExpeditionAction } from './mireglassExpedition'
 import { actPublicV10Mireglass } from './publicWorldActions'
 import type { PublicMireglassAction, PublicMireglassV10ActionResult } from './publicWorldActions'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
@@ -38,11 +41,31 @@ export type PublicWorldV11AdvanceResult = {
   rejections: PublicWorldRejection[]
 }
 
+/** V11 has a virtual Outfitters offer so old generated store catalogs stay byte-compatible. */
+export function buyPublicV11Boots(state: PublicWorldV11State, storeId: string,
+  bootstrap: PublicV6BootstrapRoot | null = null):
+  | { state: PublicWorldV11State; rejection: { message: string }; event?: never }
+  | { state: PublicWorldV11State; event: Extract<PublicWorldEvent, { type: 'store_item_bought' }>;
+    rejection?: never } {
+  const reject = (message: string) => ({ state, rejection: { message } })
+  if (!isValidPublicWorldV11State(state, bootstrap)) return reject('The v11 world is invalid.')
+  const purchase = publicBootPurchaseCandidate(state, storeId)
+  if ('rejection' in purchase) return reject(purchase.rejection)
+  const next: PublicWorldV11State = { ...state, eventSequence: purchase.eventSequence,
+    player: purchase.player }
+  if (!isValidPublicWorldV11State(next, bootstrap)) return reject('The purchase would leave an invalid world.')
+  return { state: next, event: purchase.event }
+}
+
 type V10MireglassSuccess = Extract<PublicMireglassV10ActionResult, { event: unknown }>
 type V10MireglassFailure = Extract<PublicMireglassV10ActionResult, { rejection: unknown }>
+export type PublicMireglassV11Action = PublicMireglassAction | { type: 'unequip_item'; slot: 'feet' }
 export type PublicMireglassV11ActionResult =
-  | { state: PublicWorldV11State; event: V10MireglassSuccess['event']; rejection?: never }
-  | { state: PublicWorldV11State; rejection: V10MireglassFailure['rejection']; event?: never }
+  | { state: PublicWorldV11State; event: V10MireglassSuccess['event']
+    | Extract<PublicWorldEvent, { type: 'item_unequipped' }>; rejection?: never }
+  | { state: PublicWorldV11State; rejection: V10MireglassFailure['rejection']
+    | { actionType: 'unequip_item'; code: 'invalid_progress' | 'unavailable_here' | 'invalid_value'; message: string };
+    event?: never }
 type V10CampSuccess = Extract<FieldCampV10ActionResult, { event: unknown }>
 type V10CampFailure = Extract<FieldCampV10ActionResult, { rejection: unknown }>
 export type FieldCampV11ActionResult =
@@ -58,13 +81,45 @@ function preserveHighland(state: PublicWorldV11State, v10: PublicWorldV10State):
 }
 
 /** Reuses v10 Mireglass rules without weakening either version's exact-key validator. */
-export function actPublicV11Mireglass(state: PublicWorldV11State, action: PublicMireglassAction,
+export function actPublicV11Mireglass(state: PublicWorldV11State, action: PublicMireglassV11Action,
   bootstrap: PublicV6BootstrapRoot | null = null): PublicMireglassV11ActionResult {
   const invalid = (): PublicMireglassV11ActionResult => ({ state, rejection: {
     actionType: action?.type ?? 'unknown', code: 'invalid_progress',
     message: 'The v11 world state is invalid.',
   } })
   if (!isValidPublicWorldV11State(state, bootstrap)) return invalid()
+  if (action?.type === 'unequip_item') {
+    const reject = (code: 'unavailable_here' | 'invalid_value', message: string): PublicMireglassV11ActionResult =>
+      ({ state, rejection: { actionType: 'unequip_item', code, message } })
+    if (state.movementOwner !== 'streamed') return reject('unavailable_here',
+      'Mireglass equipment actions are unavailable while Greenway owns movement.')
+    if (action.slot !== 'feet' || state.player.equipment.feet === null) return reject('invalid_value',
+      'No footwear is equipped in Feet.')
+    if (!Number.isSafeInteger(state.eventSequence + 1)) return reject('invalid_value',
+      'The event sequence is exhausted.')
+    const itemId = state.player.equipment.feet
+    const next: PublicWorldV11State = { ...state, eventSequence: state.eventSequence + 1,
+      player: { ...state.player, equipment: { ...state.player.equipment, feet: null } } }
+    if (!isValidPublicWorldV11State(next, bootstrap)) return invalid()
+    return { state: next, event: { type: 'item_unequipped', itemId, slot: 'feet',
+      tick: state.tick, sequence: next.eventSequence } }
+  }
+  if (action?.type === 'equip_item' && action.itemId === 'leather_boots') {
+    if (state.movementOwner !== 'streamed') return { state, rejection: {
+      actionType: 'equip_item', code: 'unavailable_here',
+      message: 'Mireglass equipment actions are unavailable while Greenway owns movement.',
+    } }
+    if (!Number.isSafeInteger(state.eventSequence + 1)) return { state, rejection: {
+      actionType: 'equip_item', code: 'invalid_value', message: 'The event sequence is exhausted.',
+    } }
+    const result = applyMireglassExpeditionAction(state.seed, state.player, state.mireglass,
+      action, state.discoveredTileIds, true)
+    if (result.rejection) return { state, rejection: result.rejection }
+    const next: PublicWorldV11State = { ...state, player: result.player,
+      eventSequence: state.eventSequence + 1 }
+    if (!isValidPublicWorldV11State(next, bootstrap)) return invalid()
+    return { state: next, event: { ...result.event, sequence: next.eventSequence } }
+  }
   const result = actPublicV10Mireglass(projectV10(state), action, bootstrap)
   if (result.rejection) return { state, rejection: result.rejection }
   const next = preserveHighland(state, result.state)
@@ -183,9 +238,50 @@ function freezeDeep(value: object): void {
   Object.freeze(value)
 }
 
+/** Shared voluntary gait and equipment policy for v11 and already-trusted v12 frames. */
+export function publicV11FrameGuard(input: PublicWorldV11State,
+  intents: readonly PublicWorldIntent[], walkRequested: boolean): PublicWorldRejection | null {
+  const gait = publicV11Gait(input.player.equipment.feet, walkRequested === true)
+  const moveIndex = intents.findIndex((intent) => intent.type === 'move')
+  const move = intents[moveIndex]
+  if (move?.type === 'move' && Math.hypot(move.delta.x, move.delta.z) > gait.metersPerStep + 1e-9) {
+    return { intentIndex: moveIndex, intentType: 'move', code: 'invalid_value',
+      message: `${gait.reason}. Maximum step is ${gait.metersPerStep} m.` }
+  }
+  const duplicateEquipIndex = intents.findIndex((intent) => intent.type === 'equip_item'
+    && intent.slot === 'feet' && intent.itemId === 'leather_boots'
+    && input.player.equipment.feet === 'leather_boots')
+  return duplicateEquipIndex >= 0 ? { intentIndex: duplicateEquipIndex, intentType: 'equip_item',
+    code: 'invalid_value', message: 'Leather boots are already equipped.' } : null
+}
+
+/** Fold a realized Highland approach after the shared base frame, preserving event order. */
+export function foldPublicV11Landmark(input: PublicWorldV11State,
+  intents: readonly PublicWorldIntent[], base: ReturnType<typeof advancePublicWorldV11BaseFrame>):
+  PublicWorldV11AdvanceResult {
+  let next = base.state
+  const events: PublicWorldV11AdvanceResult['events'] = [...base.events]
+  const moved = intents.some((intent) => intent.type === 'move'
+    && (intent.delta.x !== 0 || intent.delta.z !== 0))
+    && (next.player.position.x !== input.player.position.x
+      || next.player.position.z !== input.player.position.z)
+  if (moved && next.movementOwner === 'streamed' && !next.highland.landmarkDiscovered) {
+    const landmark = highlandLandmark(next.seed)
+    if (Math.hypot(next.player.position.x - landmark.tile.center.x,
+      next.player.position.z - landmark.tile.center.z) <= 8) {
+      next = { ...next, eventSequence: next.eventSequence + 1,
+        highland: { ...next.highland, landmarkDiscovered: true } }
+      events.push({ type: 'highland_landmark_discovered', tick: next.tick,
+        sequence: next.eventSequence, landmarkId: landmark.id })
+    }
+  }
+  return { state: next, events, rejections: [] }
+}
+
 /** V11 keeps its own frozen trust chain, so older exact-key runtime entrypoints stay untouched. */
 export function advancePublicWorldV11Frame(state: PublicWorldV11State,
-  intents: readonly PublicWorldIntent[], bootstrap: PublicV6BootstrapRoot | null = null): PublicWorldV11AdvanceResult {
+  intents: readonly PublicWorldIntent[], bootstrap: PublicV6BootstrapRoot | null = null,
+  walkRequested = false): PublicWorldV11AdvanceResult {
   const invalid = (): PublicWorldV11AdvanceResult => {
     if (!intents[0]) throw new RangeError('Invalid v11 world state.')
     return { state, events: [], rejections: [{ intentIndex: 0, intentType: intents[0].type,
@@ -205,24 +301,11 @@ export function advancePublicWorldV11Frame(state: PublicWorldV11State,
   if (!Number.isSafeInteger(input.eventSequence + 9)) return invalid()
   let frameIntents: readonly PublicWorldIntent[]
   try { frameIntents = structuredClone(intents) } catch { return invalid() }
+  const guard = publicV11FrameGuard(input, frameIntents, walkRequested)
+  if (guard) return { state, events: [], rejections: [guard] }
   const base = advancePublicWorldV11BaseFrame(input, frameIntents)
   if (base.rejections.length) return { state, events: [], rejections: base.rejections }
-  let next = base.state
-  const events: Array<PublicWorldEvent | PublicV11LandmarkEvent> = [...base.events]
-  const moved = frameIntents.some((intent) => intent.type === 'move'
-    && (intent.delta.x !== 0 || intent.delta.z !== 0))
-    && (next.player.position.x !== input.player.position.x
-      || next.player.position.z !== input.player.position.z)
-  if (moved && next.movementOwner === 'streamed' && !next.highland.landmarkDiscovered) {
-    const landmark = highlandLandmark(next.seed)
-    if (Math.hypot(next.player.position.x - landmark.tile.center.x,
-      next.player.position.z - landmark.tile.center.z) <= 8) {
-      next = { ...next, eventSequence: next.eventSequence + 1,
-        highland: { ...next.highland, landmarkDiscovered: true } }
-      events.push({ type: 'highland_landmark_discovered', tick: next.tick,
-        sequence: next.eventSequence, landmarkId: landmark.id })
-    }
-  }
+  const { state: next, events } = foldPublicV11Landmark(input, frameIntents, base)
   if ((prior === undefined && !isValidPublicWorldV11State(next, bootstrap))
     || !sameProof(proof, bootstrapProof(bootstrap))) return invalid()
   freezeDeep(next)

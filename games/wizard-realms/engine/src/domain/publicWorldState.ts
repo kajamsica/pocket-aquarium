@@ -1,4 +1,5 @@
 import { createGeneratedWorld } from './generation'
+import { nearbyWorldTileIds, PUBLIC_START_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { createMireglassRegionProgress } from './mireglassExpedition'
 import type { MireglassRegionProgress, MireglassV6Player } from './mireglassExpedition'
 import { parsePublicV6BootstrapRoot, publicWorldCompatibility } from './publicWorldV6'
@@ -52,5 +53,8 @@ export function createFreshPublicWorld(seed: string, profile: GenerationProfile)
   const world = createGeneratedWorld(seed, profile)
   const issue = publicWorldCompatibility(world)
   if (issue) throw new RangeError(`Public v6 content is incompatible: ${issue}.`)
+  // Fresh public journeys begin in a roughly 24 m clearing. The legacy v5
+  // generator retains its historical discovery baseline for old save files.
+  world.discoveredTileIds = nearbyWorldTileIds(world.player.position, PUBLIC_START_REVEAL_RADIUS_METERS)
   return fromGreenway(world)
 }

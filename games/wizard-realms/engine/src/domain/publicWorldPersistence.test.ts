@@ -7,6 +7,7 @@ import {
   inspectPublicV6Artifacts, loadPublicV6Root, parsePublicV6PlayableRoot, serializePublicV6World,
 } from './publicWorldV6'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
+import { nearbyWorldTileIds, PUBLIC_START_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { createStreamedWorld } from './streamedWorld'
 import type { PublicWorldState } from './publicWorldState'
 
@@ -40,6 +41,7 @@ describe('public v6 playable persistence', () => {
   it('round-trips a fresh world with one player and monotonically increasing revisions', () => {
     const storage = memoryStorage()
     const state = createFreshPublicWorld(seed, classic)
+    expect(state.discoveredTileIds).toEqual(nearbyWorldTileIds({ x: 0, z: 0 }, PUBLIC_START_REVEAL_RADIUS_METERS))
     const first = commitPublicV6World(storage, state, null)
     expect(first.status).toBe('committed')
     if (first.status !== 'committed') throw new Error('Expected first public save.')
@@ -58,6 +60,18 @@ describe('public v6 playable persistence', () => {
       status: 'available', stage: { status: 'settled', bytes: second.bytes },
       backup: { status: 'available', bytes: first.bytes },
     })
+  })
+
+  it.each([classic, expanded] as const)('keeps prior one-tile and charted %s public roots valid', (profile) => {
+    const fresh = createFreshPublicWorld(seed, profile)
+    const discoveryMasks = [['tile-3-3'], createGeneratedWorld(seed, profile).discoveredTileIds]
+    for (const known of discoveryMasks) {
+      const state = { ...fresh, discoveredTileIds: known }
+      const saved = commitPublicV6World(memoryStorage(), state, null)
+      expect(saved.status).toBe('committed')
+      if (saved.status !== 'committed') throw new Error('Expected an older public save.')
+      expect(parsePublicV6PlayableRoot(saved.bytes)?.state.discoveredTileIds).toEqual(known)
+    }
   })
 
   it('upgrades an expanded x=-30 import without streamed preflight or loss of source bytes', () => {

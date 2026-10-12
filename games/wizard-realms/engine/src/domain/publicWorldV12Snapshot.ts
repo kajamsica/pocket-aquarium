@@ -1,4 +1,5 @@
-import { DISCOVERY_MASK_BYTES } from './discoveryMask'
+import { decodeDiscoveredTileIds, DISCOVERY_MASK_BYTES, encodeDiscoveredTileIds } from './discoveryMask'
+import { parsePublicV6BootstrapRoot } from './publicWorldV6'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import type { PublicV8Head } from './publicWorldV8Snapshot'
 import type { PublicV9Head } from './publicWorldV9Snapshot'
@@ -56,6 +57,14 @@ const exact = (value: unknown, keys: readonly string[]): value is Record<string,
   typeof value === 'object' && value !== null && !Array.isArray(value)
   && Reflect.ownKeys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key))
 
+function validatedBootstrap(value: unknown): PublicV6BootstrapRoot | null | undefined {
+  if (value === null) return null
+  try {
+    const bytes = JSON.stringify(value)
+    return typeof bytes === 'string' ? parsePublicV6BootstrapRoot(bytes) ?? undefined : undefined
+  } catch { return undefined }
+}
+
 function sameValue(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (a instanceof Uint8Array || b instanceof Uint8Array) {
@@ -71,14 +80,26 @@ function sameValue(a: unknown, b: unknown): boolean {
     && keys.every((key) => Object.hasOwn(right, key) && sameValue(left[key], right[key]))
 }
 
-/** The head is a v11-compatible typed base plus one strict Windward overlay. */
+/** Build the old v8 through v12 field order from a fully validated state. */
+function canonicalHead(state: PublicWorldV12State, bootstrap: PublicV6BootstrapRoot | null,
+  saveRevision: number): PublicV12Head {
+  const { discoveredTileIds, fieldCampTileIds, terrainRevision,
+    highlandContentRevision, highland, windContentRevision, windstep, ...baseState } = state
+  return { schemaVersion: PUBLIC_V12_SCHEMA, saveRevision, bootstrap,
+    state: { ...baseState, discoveryMask: encodeDiscoveredTileIds(discoveredTileIds),
+      fieldCampTileIds, terrainRevision, highlandContentRevision, highland,
+      windContentRevision, windstep } }
+}
+
+/** Validate the full state and v6 bootstrap before encoding a typed head. */
 export function encodePublicV12Head(state: PublicWorldV12State,
   bootstrap: PublicV6BootstrapRoot | null, saveRevision: number): PublicV12Head {
-  if (!isValidPublicWorldV12State(state, bootstrap)) throw new RangeError('Invalid public v12 world state.')
-  const { windContentRevision, windstep, ...v11 } = state
-  const base = encodePublicV11Head(v11, bootstrap, saveRevision)
-  return { ...base, schemaVersion: PUBLIC_V12_SCHEMA,
-    state: { ...base.state, windContentRevision, windstep } }
+  const checkedBootstrap = validatedBootstrap(bootstrap)
+  if (!Number.isSafeInteger(saveRevision) || saveRevision < 0
+    || checkedBootstrap === undefined || !isValidPublicWorldV12State(state, checkedBootstrap)) {
+    throw new RangeError('Invalid public v12 world state.')
+  }
+  return canonicalHead(state, checkedBootstrap, saveRevision)
 }
 
 export function decodePublicV12Head(value: unknown): {
@@ -86,16 +107,21 @@ export function decodePublicV12Head(value: unknown): {
 } | null {
   try {
     if (!exact(value, HEAD_KEYS) || value.schemaVersion !== PUBLIC_V12_SCHEMA
+      || !Number.isSafeInteger(value.saveRevision) || (value.saveRevision as number) < 0
       || !exact(value.state, STATE_KEYS)) return null
-    const { windContentRevision, windstep, ...state } = value.state
+    const bootstrap = validatedBootstrap(value.bootstrap)
+    if (bootstrap === undefined) return null
     const mask = value.state.discoveryMask
     if (!(mask instanceof Uint8Array) || mask.length !== DISCOVERY_MASK_BYTES) return null
-    const base = decodePublicV11Head({ ...value, schemaVersion: PUBLIC_V11_SCHEMA, state })
-    if (!base) return null
-    const actual = { ...base.state, windContentRevision, windstep }
-    if (!isValidPublicWorldV12State(actual, base.bootstrap)) return null
-    const canonical = encodePublicV12Head(actual, base.bootstrap, base.saveRevision)
-    return sameValue(canonical, value) ? { ...base, state: actual } : null
+    const { discoveryMask: _mask, fieldCampTileIds, terrainRevision,
+      highlandContentRevision, highland, windContentRevision, windstep, ...baseState } = value.state
+    const state = { ...baseState, discoveredTileIds: decodeDiscoveredTileIds(mask),
+      fieldCampTileIds, terrainRevision, highlandContentRevision, highland,
+      windContentRevision, windstep }
+    if (!isValidPublicWorldV12State(state, bootstrap)) return null
+    const saveRevision = value.saveRevision as number
+    return sameValue(canonicalHead(state, bootstrap, saveRevision), value)
+      ? { state, bootstrap, saveRevision } : null
   } catch { return null }
 }
 
@@ -124,13 +150,26 @@ export function samePublicV12SourceReceipt(a: unknown, b: unknown): boolean {
   return isValidPublicV12SourceReceipt(a) && isValidPublicV12SourceReceipt(b) && sameValue(a, b)
 }
 
+/** Only for receipts independently validated during the caller's shared-lock operation. */
+export function sameValidatedPublicV12SourceReceipt(a: PublicV12SourceReceipt,
+  b: PublicV12SourceReceipt): boolean {
+  return sameValue(a, b)
+}
+
 /** Revision zero must be the exact additive upgrade of the pinned v11 head. */
 export function isPublicV12MigrationHead(head: unknown, sourceReceipt: unknown): boolean {
   if (!isValidPublicV12SourceReceipt(sourceReceipt)) return false
   const decoded = decodePublicV12Head(head)
   if (!decoded || decoded.saveRevision !== 0) return false
   const source = decodePublicV11Head(sourceReceipt.sourceV11Head)!
-  return sameValue(decoded.bootstrap, source.bootstrap)
+  return isValidatedPublicV12MigrationState(decoded, source)
+}
+
+/** Both heads must have passed their independent validators before this check. */
+export function isValidatedPublicV12MigrationState(
+  decoded: NonNullable<ReturnType<typeof decodePublicV12Head>>,
+  source: NonNullable<ReturnType<typeof decodePublicV11Head>>): boolean {
+  return decoded.saveRevision === 0 && sameValue(decoded.bootstrap, source.bootstrap)
     && sameValue(decoded.state, withPublicV12Windstep(source.state))
 }
 

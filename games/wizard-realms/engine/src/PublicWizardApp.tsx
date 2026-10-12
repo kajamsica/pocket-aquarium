@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { eventText as greenwayEventText, intentForView, objectiveFor, retainOpenStoreId } from './App'
 import { bearingText, mireglassActionChoices, mireglassEventText, mireglassNearestInteractChoice, mireglassNextObjective } from './MireglassPlayableApp'
 import { publicWorldViewProjection } from './PublicWorldView'
-import { publicWorldV11ViewProjection } from './PublicV11WorldView'
+import { publicV11PracticeDigHint, publicWorldV11ViewProjection } from './PublicV11WorldView'
+import { createPublicSaveNoticeTracker, createPublicSaveScheduler } from './publicSaveScheduler'
+export { createPublicSaveNoticeTracker, createPublicSaveScheduler } from './publicSaveScheduler'
+export type { PublicSaveRequest } from './publicSaveScheduler'
 import { streamedControlIntents } from './StreamedPreviewApp'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE } from './domain/mireglassContent'
 import { mireglassApproachTrail, mireglassGreenwayToMarkerTrail } from './domain/mireglassApproachTrail'
@@ -10,18 +13,20 @@ import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import type { HerbHarvestEntry, MireglassHerbRegionProgress } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { mireglassMoveBarrier } from './domain/mireglassMovementGate'
+import { PUBLIC_V11_BOOTS_LISTING_ID, PUBLIC_V11_BOOTS_PRICE, publicV11Gait } from './domain/publicWorldGait'
 import { mireglassRouteSites, type MireglassRouteSite } from './domain/mireglassRouteSites'
-import { MIREGLASS_FEN_BACK, mireglassFenRowAt, mireglassPlateauAt } from './domain/mireglassTerrain'
+import { MIREGLASS_FEN_BACK, mireglassFenBankAt, mireglassFenRowAt, mireglassPlateauAt } from './domain/mireglassTerrain'
 import { areaAt } from './domain/generation'
 import { applyFieldCampAction, applyFieldCampV10Action, resolveFieldCampSite } from './domain/fieldCamp'
 import { classifyStreamedRegion } from './domain/highlandContent'
 import type { MireglassWorldState } from './domain/mireglassWorld'
 import { routeBuildOptions } from './domain/routeSites'
-import { actPublicMireglass, actPublicV10Mireglass, type PublicMireglassAction } from './domain/publicWorldActions'
+import { actPublicMireglass, actPublicV10Mireglass } from './domain/publicWorldActions'
 import { advancePublicWorldFrame, advancePublicWorldV10Frame,
   type PublicWorldAdvanceResult, type PublicWorldEvent, type PublicWorldIntent } from './domain/publicWorldRuntime'
 import { actPublicV11Highland, actPublicV11Mireglass, advancePublicWorldV11Frame, applyFieldCampV11Action,
-  type PublicV11LandmarkEvent } from './domain/publicWorldV11Authority'
+  buyPublicV11Boots,
+  type PublicMireglassV11Action, type PublicV11LandmarkEvent } from './domain/publicWorldV11Authority'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap, type PublicWorldState } from './domain/publicWorldState'
 import {
   PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, commitPublicV6World, inspectLegacyImportSource,
@@ -53,13 +58,15 @@ import type { PublicV6BootstrapRoot } from './domain/publicWorldV6'
 import type { GenerationProfile, PlayerState, WizardWorldState } from './domain/types'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './domain/worldChunks'
 import { WizardSurface, type WizardViewIntent } from './view'
-import type { WizardFieldCampView } from './view/contracts'
+import type { WizardFieldCampView, WizardViewProjection } from './view/contracts'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
 
 const SEED = 'greenway-alpha'
 const STEP_MS = 50
 const MAX_CATCH_UP_STEPS = 12
 const TRAVEL_SAVE_MS = 5_000
+export const publicV11SaveGatedProjection = (projection: WizardViewProjection, blocked: boolean): WizardViewProjection =>
+  ({ ...projection, controllerActionsEnabled: !blocked })
 export const publicSaveableVersion = (version: number,
   events: readonly (PublicWorldEvent | PublicV11LandmarkEvent)[]) =>
   version + (events.length ? 1 : 0)
@@ -193,7 +200,9 @@ export function startFreshPublicWorld(storage: Pick<Storage, 'getItem' | 'setIte
 export function greenwayForPublicView(state: PublicWorldState): WizardWorldState {
   return { ...state.greenway, seed: state.seed, generationProfile: state.generationProfile,
     tick: state.tick, rng: state.rng, eventSequence: state.eventSequence,
-    player: state.player as PlayerState, discoveredTileIds: [...state.discoveredTileIds] }
+    player: state.player as PlayerState,
+    discoveredTileIds: Object.isFrozen(state.discoveredTileIds)
+      ? state.discoveredTileIds as string[] : [...state.discoveredTileIds] }
 }
 export function publicBeginnerWoodTip(state: PublicWorldState): { id: 'intro' | 'uses' | 'full'; title: string; body: string } | null {
   if (state.movementOwner !== 'greenway'
@@ -208,12 +217,12 @@ export function publicBeginnerWoodTip(state: PublicWorldState): { id: 'intro' | 
   if (freeSlots < 4 && (logs > 0 || listedLogs)) return {
     id: 'full', title: freeSlots === 0 ? 'Backpack full' : 'Make room for logs',
     body: logs > 0
-      ? 'An oak yields 4 logs, so free 4 backpack slots before its second Chop. Find S and use Sell all at Greenway Outfitters (2g per log), or build the ladder with 4 logs at a discovered ◇ site once unlocked. Listings still reserve space.'
+      ? 'An oak yields 4 logs, so free 4 backpack slots before its second Chop. Find S and use Sell all at Greenway Outfitters (2g per log), or build the Greenway low steps with 4 logs at a discovered ◇ site once unlocked. Listings still reserve space.'
       : 'An oak yields 4 logs and needs 4 free slots. Listed logs still reserve capacity. A sale frees those slots; canceling returns logs to your backpack and does not make room by itself.',
   }
   if (logs >= 4) return {
     id: 'uses', title: 'Use your logs',
-    body: 'Keep 4 logs for the first Greenway ladder at a discovered ◇ map site once unlocked. Greenway Outfitters buys spare logs instantly for 2g each. Or list them on the trade board; listed logs still reserve backpack space.',
+    body: 'Keep 4 logs for the first Greenway low steps at a discovered ◇ map site once unlocked. Greenway Outfitters buys spare logs instantly for 2g each. Or list them on the trade board; listed logs still reserve backpack space.',
   }
   if (state.player.skillXp.woodcutting === 0 && logs === 0) return {
     id: 'intro', title: 'Getting started',
@@ -232,24 +241,46 @@ export type PublicAnyAdvanceResult = {
   rejections: PublicWorldAdvanceResult['rejections']
 }
 export function advancePublicControls(state: PublicWorldState, queued: readonly (readonly PublicWorldIntent[])[],
-  samples: readonly (readonly [number, number])[], v10Bootstrap: PublicV6BootstrapRoot | null = null): PublicAnyAdvanceResult {
+  samples: readonly (readonly [number, number])[], v10Bootstrap: PublicV6BootstrapRoot | null = null,
+  walkRequested = false): PublicAnyAdvanceResult {
   let next = state
   const events: PublicAnyAdvanceResult['events'] = []
   const rejections: PublicWorldAdvanceResult['rejections'] = []
   const isV11 = 'highlandContentRevision' in state
   const isV10 = 'terrainRevision' in state
+  // Touch click taps can arrive many times between timer ticks. Keep one move
+  // for that 50 ms slice, retain every non-move action, and do not also spend
+  // the same slice's held-input sample on a second move.
+  let queuedMoveUsed = false
+  const frames = isV11 ? queued.map((frame) => {
+    if (!frame.some((intent) => intent.type === 'move')) return frame
+    if (!queuedMoveUsed) { queuedMoveUsed = true; return frame }
+    return frame.filter((intent) => intent.type !== 'move')
+  }).filter((frame) => frame.length > 0) : queued
   const advance = (intents: readonly PublicWorldIntent[]) => isV11
-    ? advancePublicWorldV11Frame(requirePublicV11State(next), intents, v10Bootstrap)
+    ? advancePublicWorldV11Frame(requirePublicV11State(next), intents, v10Bootstrap, walkRequested)
     : isV10
     ? advancePublicWorldV10Frame(requirePublicV10State(next), intents, v10Bootstrap)
     : advancePublicWorldFrame(next, intents)
-  for (const frame of queued) {
+  for (const frame of frames) {
     const result = advance(frame)
     next = result.state; events.push(...result.events); rejections.push(...result.rejections)
   }
-  for (const sample of samples) {
-    const result = advance(streamedControlIntents(next.player.yaw, sample))
-    next = result.state; events.push(...result.events); rejections.push(...result.rejections)
+  for (const [index, sample] of samples.entries()) {
+    const metersPerStep = isV11
+      ? publicV11Gait(next.player.equipment.feet, walkRequested).metersPerStep : undefined
+    const vector: readonly [number, number] = isV11 && queuedMoveUsed && index === 0
+      ? [sample[0], 0] : sample
+    const intents = streamedControlIntents(next.player.yaw, vector, metersPerStep)
+    const result = advance(intents)
+    // Keep steering when only the forward step is blocked; normal frames stay atomic.
+    const turn = intents[0]?.type === 'look' && intents[1]?.type === 'move'
+      && result.state === next && result.rejections.some((rejection) =>
+        rejection.intentIndex === 1 && rejection.intentType === 'move')
+      ? advance([intents[0]]) : null
+    next = turn?.state ?? result.state
+    events.push(...(turn?.events ?? result.events))
+    rejections.push(...result.rejections, ...(turn?.rejections ?? []))
   }
   return { state: next, events, rejections }
 }
@@ -536,15 +567,6 @@ export function publicDryHerbLeg(seed: string, from: { x: number; z: number },
   return false
 }
 
-function publicFenBankAt(seed: string, position: { x: number; z: number }): 'north' | 'south' | null {
-  const x = publicCellAt(position.x), z = publicCellAt(position.z)
-  if (x < MIREGLASS_CORE.minX || x > MIREGLASS_CORE.maxX
-    || z < MIREGLASS_CORE.minZ || z > MIREGLASS_CORE.maxZ) return null
-  const row = mireglassFenRowAt(seed, x), joinedRow = mireglassFenRowAt(seed, x - WORLD_CELL_METERS)
-  return z < Math.min(row, joinedRow) ? 'north'
-    : z > Math.max(row, joinedRow) ? 'south' : null
-}
-
 function publicFenBridgeHint(state: PublicWorldState, bridge: MireglassRouteSite,
   bank: 'north' | 'south', destination: 'Bell Alder' | 'Greenway Outfitters'): string {
   const endpoint = bank === 'south' ? bridge.to : bridge.from
@@ -625,7 +647,7 @@ export function publicHerbRouteHint(state: PublicWorldState): string | null {
   if (held && ladder && onPlateau) return publicSlateLadderHint(state, ladder, 'Greenway Outfitters')
   const backChannelHint = publicBackChannelHint(state, held ? 'Greenway Outfitters' : 'Bell Alder')
   if (held && backChannelHint) return backChannelHint
-  if (held && bridge && publicFenBankAt(state.seed, state.player.position) === 'south') {
+  if (held && bridge && mireglassFenBankAt(state.seed, state.player.position) === 'south') {
     return publicFenBridgeHint(state, bridge, 'south', 'Greenway Outfitters')
   }
   if (held) {
@@ -713,8 +735,8 @@ export function publicHerbRouteHint(state: PublicWorldState): string | null {
     return publicSlateLadderHint(state, ladder, 'Bell Alder')
   }
   if (backChannelHint) return backChannelHint
-  const playerBank = publicFenBankAt(state.seed, state.player.position)
-  const patchBank = publicFenBankAt(state.seed, nearest.tile.center)
+  const playerBank = mireglassFenBankAt(state.seed, state.player.position)
+  const patchBank = mireglassFenBankAt(state.seed, nearest.tile.center)
   if (bridge && playerBank && patchBank && playerBank !== patchBank) {
     return publicFenBridgeHint(state, bridge, playerBank, 'Bell Alder')
   }
@@ -773,30 +795,6 @@ type PublicPlayableSessionProps =
   | { v8Session?: never; v9Session?: never; v10Session: PublicV10PlayableSession; v11Session?: never }
   | { v8Session?: never; v9Session?: never; v10Session?: never; v11Session: PublicV11PlayableSession }
 
-export function createPublicSaveNoticeTracker() {
-  let manualTick: number | null = null
-  return {
-    queueManual(tick: number): string | null {
-      if (manualTick !== null) return null
-      manualTick = tick
-      return `Manual save queued at tick ${tick}. Saving on this device…`
-    },
-    completed(manual: boolean, version: string, revision: number, tick: number,
-      queuedDuringManual = false): string | null {
-      if (!manual && (manualTick !== null || queuedDuringManual)) return null
-      if (manual) {
-        manualTick = null
-        return `Manual ${version} save #${revision} completed at tick ${tick} on this device.`
-      }
-      return version === 'v7'
-        ? `Public v7 save #${revision} completed on this device. Older saves remain untouched.`
-        : `Public ${version} save #${revision} completed at tick ${tick} on this device. Older sources remain untouched.`
-    },
-    failed() { manualTick = null },
-    get manualPending() { return manualTick !== null },
-  }
-}
-
 export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }: PublicPlayableSessionProps) {
   const session = v11Session ?? v10Session ?? v9Session ?? v8Session
   const sessionVersion = v11Session ? 'v11' : v10Session ? 'v10' : v9Session ? 'v9' : 'v8'
@@ -818,6 +816,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [selectedCampTileId, setSelectedCampTileId] = useState<string | null>(null)
+  const [walkRequested, setWalkRequested] = useState(false)
+  const walkRequestedRef = useRef(false)
   const selectedCampRef = useRef<string | null>(null)
   const [collapsed, setCollapsed] = useState(true)
   const [dismissedWoodTips, setDismissedWoodTips] = useState<Set<string>>(() => new Set())
@@ -830,7 +830,7 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const sourceV11Receipt = useRef(v11Session?.start.sourceReceipt ?? null)
   const blockedRef = useRef(false)
   const blockedReasonRef = useRef<string | null>(null)
-  const saveQueue = useRef<Promise<void>>(Promise.resolve())
+  const saveScheduler = useRef<ReturnType<typeof createPublicSaveScheduler<PublicWorldV7State>> | null>(null)
   const saveNotices = useRef(createPublicSaveNoticeTracker())
   const input = useRef(createTimedMovementSampler(performance.now()))
   const clock = useRef(createFixedInputClock(input.current.cursorMs))
@@ -859,38 +859,46 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     const savedTravelVersion = travelVersion.current
     lastQueuedTravelVersion.current = savedTravelVersion
     lastSaveMs.current = performance.now()
-    saveQueue.current = saveQueue.current.then(async () => {
-      if (blockedRef.current) return
-      if (v11Session || v10Session || v9Session || v8Session) {
-        const result = v11Session
-          ? await v11Session.commit(requirePublicV11State(snapshot), expectedRevision.current, sourceV11Receipt.current!)
-          : v10Session
-          ? await v10Session.commit(requirePublicV10State(snapshot), expectedRevision.current, sourceV10Receipt.current!)
-          : v9Session
-          ? await v9Session.commit(requirePublicV9State(snapshot), expectedRevision.current, sourceReceipt.current!)
-          : await v8Session!.commit(snapshot, expectedRevision.current)
-        if (!result.ok) { setWorld(worldRef.current); stop(result.reason); return }
-        expectedRevision.current = result.value.saveRevision
+    saveScheduler.current ??= createPublicSaveScheduler(async ({ snapshot, manual, queuedDuringManual, savedTravelVersion }) => {
+      if (blockedRef.current) return false
+      try {
+        if (v11Session || v10Session || v9Session || v8Session) {
+          const result = v11Session
+            ? await v11Session.commit(requirePublicV11State(snapshot), expectedRevision.current, sourceV11Receipt.current!)
+            : v10Session
+            ? await v10Session.commit(requirePublicV10State(snapshot), expectedRevision.current, sourceV10Receipt.current!)
+            : v9Session
+            ? await v9Session.commit(requirePublicV9State(snapshot), expectedRevision.current, sourceReceipt.current!)
+            : await v8Session!.commit(snapshot, expectedRevision.current)
+          if (!result.ok) { setWorld(worldRef.current); stop(result.reason); return false }
+          expectedRevision.current = result.value.saveRevision
+          lastSaveMs.current = performance.now()
+          if (travelVersion.current === savedTravelVersion) travelDirty.current = false
+          const completedNotice = saveNotices.current.completed(manual, sessionVersion,
+            result.value.saveRevision, result.value.state.tick, queuedDuringManual)
+          if (completedNotice && !blockedRef.current) setNotice(completedNotice)
+          return true
+        }
+        const currentStorage = storage()
+        if (!currentStorage) { stop('storage-error'); return false }
+        const result = await commitPublicV7Snapshot(currentStorage, locks(), snapshot, expectedBytes.current)
+        if (!result.ok) { stop(result.reason); return false }
+        expectedBytes.current = result.value.bytes
         lastSaveMs.current = performance.now()
         if (travelVersion.current === savedTravelVersion) travelDirty.current = false
-        const completedNotice = saveNotices.current.completed(manual, sessionVersion,
-          result.value.saveRevision, result.value.state.tick, queuedDuringManual)
+        const saved = parsePublicV7PlayableRoot(result.value.bytes)
+        if (!saved) { stop('storage-error'); return false }
+        const completedNotice = saveNotices.current.completed(manual, 'v7', saved.saveRevision,
+          saved.state.tick, queuedDuringManual)
         if (completedNotice && !blockedRef.current) setNotice(completedNotice)
-        return
+        return true
+      } catch {
+        if (v11Session || v10Session || v9Session || v8Session) setWorld(worldRef.current)
+        stop('storage-error')
+        return false
       }
-      const currentStorage = storage()
-      if (!currentStorage) { stop('storage-error'); return }
-      const result = await commitPublicV7Snapshot(currentStorage, locks(), snapshot, expectedBytes.current)
-      if (!result.ok) { stop(result.reason); return }
-      expectedBytes.current = result.value.bytes
-      lastSaveMs.current = performance.now()
-      if (travelVersion.current === savedTravelVersion) travelDirty.current = false
-      const saved = parsePublicV7PlayableRoot(result.value.bytes)
-      if (!saved) { stop('storage-error'); return }
-      const completedNotice = saveNotices.current.completed(manual, 'v7', saved.saveRevision,
-        saved.state.tick, queuedDuringManual)
-      if (completedNotice && !blockedRef.current) setNotice(completedNotice)
-    }).catch(() => { if (v11Session || v10Session || v9Session || v8Session) setWorld(worldRef.current); stop('storage-error') })
+    })
+    saveScheduler.current.enqueue({ snapshot, manual, queuedDuringManual, savedTravelVersion })
   }, [stop, v8Session, v9Session, v10Session, v11Session, sessionVersion])
   const activate = (start: PublicV7Start) => {
     expectedBytes.current = start.bytes; worldRef.current = start.state
@@ -1040,12 +1048,12 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const retrySave = async () => {
     if (!transientSaveFailure(blockedReasonRef.current) || !worldRef.current) return
     setBusy(true)
-    await saveQueue.current
+    await saveScheduler.current?.whenIdle()
     blockedRef.current = false; blockedReasonRef.current = null
     setBlocked(false); setBlockedReason(null)
     setNotice(`Retrying the unchanged ${v11Session ? 'v11 revision' : v10Session ? 'v10 revision' : v9Session ? 'v9 revision' : v8Session ? 'v8 revision' : 'v7 save root'}…`)
     save(worldRef.current)
-    await saveQueue.current
+    await saveScheduler.current?.whenIdle()
     setBusy(false)
   }
   const exportUnsaved = () => {
@@ -1101,11 +1109,16 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         const previous = worldRef.current
         const result = advancePublicControls(previous, frames, samples,
           v11Session ? sourceV11Receipt.current!.sourceV10Head.bootstrap
-            : v10Session ? sourceV10Receipt.current!.sourceV9Head.bootstrap : null)
+            : v10Session ? sourceV10Receipt.current!.sourceV9Head.bootstrap : null,
+          walkRequestedRef.current)
         const next = v11Session ? requirePublicV11State(result.state, previous)
           : v10Session ? requirePublicV10State(result.state, previous)
           : v9Session ? requirePublicV9State(result.state, previous) : requirePublicV7State(result.state)
         worldRef.current = next
+        if (v11Session && result.events.some((event) =>
+          (event.type === 'item_equipped' || event.type === 'item_unequipped') && event.slot === 'feet')) {
+          walkRequestedRef.current = false; setWalkRequested(false)
+        }
         if (result.events.length || result.rejections.length || now - lastReadoutMs.current >= 1_000) {
           setWorld(next); lastReadoutMs.current = now
         }
@@ -1142,20 +1155,29 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('blur', flush) }
   }, [world !== null, save, stop, v9Session, v10Session, v11Session])
 
-  const actMireglass = useCallback((action: PublicMireglassAction) => {
+  const actMireglass = useCallback((action: PublicMireglassV11Action) => {
     const current = worldRef.current
     if (!current || current.movementOwner !== 'streamed' || blockedRef.current) return
-    const result = v11Session
+    const result = action.type === 'unequip_item'
+      ? v11Session ? actPublicV11Mireglass(requirePublicV11State(current), action,
+        sourceV11Receipt.current!.sourceV10Head.bootstrap) : null
+      : v11Session
       ? actPublicV11Mireglass(requirePublicV11State(current), action, sourceV11Receipt.current!.sourceV10Head.bootstrap)
       : v10Session
       ? actPublicV10Mireglass(requirePublicV10State(current), action, sourceV10Receipt.current!.sourceV9Head.bootstrap)
       : actPublicMireglass(current, action)
+    if (!result) return
     if (result.rejection) { report(result.rejection.message); return }
     const next = v11Session ? requirePublicV11State(result.state, current)
       : v10Session ? requirePublicV10State(result.state, current)
       : v9Session ? requirePublicV9State(result.state, current) : requirePublicV7State(result.state)
     worldRef.current = next; setWorld(next)
-    report(result.event.type === 'herb_foraged'
+    if (v11Session && (result.event.type === 'item_equipped' || result.event.type === 'item_unequipped')
+      && result.event.slot === 'feet') {
+      walkRequestedRef.current = false; setWalkRequested(false)
+    }
+    report(result.event.type === 'item_unequipped' ? publicWorldEventText(result.event)
+      : result.event.type === 'herb_foraged'
       ? 'Gathered a marsh herb. It will regrow after the next game-time cycle.'
       : mireglassEventText(result.event)); save(next)
   }, [report, save, v9Session, v10Session, v11Session])
@@ -1172,6 +1194,15 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const onIntent = useCallback((intent: WizardViewIntent) => {
     const current = worldRef.current
     if (!current || blockedRef.current) return
+    if (intent.type === 'gait.toggle') {
+      if (!v11Session) return
+      if (current.player.equipment.feet !== 'leather_boots') {
+        report(publicV11Gait(current.player.equipment.feet, false).reason); return
+      }
+      walkRequestedRef.current = !walkRequestedRef.current
+      setWalkRequested(walkRequestedRef.current)
+      return
+    }
     if (intent.type === 'field-camp.select' || intent.type === 'field-camp.confirm') {
       if (!v9Session && !v10Session && !v11Session) return
       if (intent.type === 'field-camp.select' && intent.tileId === null) {
@@ -1199,7 +1230,9 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     }
     if (intent.type === 'movement') { recordTimedMovement(input.current, intent.atMs ?? performance.now(), intent.vector); return }
     if (intent.type === 'movement.tap') {
-      if (intent.source !== 'keyboard') pending.current.push(streamedControlIntents(current.player.yaw, intent.vector))
+      if (intent.source !== 'keyboard') pending.current.push(streamedControlIntents(current.player.yaw,
+        intent.vector, v11Session
+          ? publicV11Gait(current.player.equipment.feet, walkRequestedRef.current).metersPerStep : undefined))
       return
     }
     if (intent.type === 'jump') { pending.current.push([{ type: 'jump' }]); return }
@@ -1219,6 +1252,15 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     }
     if (intent.type === 'highland.extract') { actHighland(intent.nodeId); return }
     if (current.movementOwner === 'greenway') {
+      if (v11Session && intent.type === 'store.select-listing'
+        && intent.listingId === PUBLIC_V11_BOOTS_LISTING_ID) {
+        const result = buyPublicV11Boots(requirePublicV11State(current), intent.storeId,
+          sourceV11Receipt.current!.sourceV10Head.bootstrap)
+        if (result.rejection) report(result.rejection.message)
+        else { worldRef.current = result.state; setWorld(result.state);
+          report('Bought leather boots. Equip them from the backpack to run.'); save(result.state) }
+        return
+      }
       if (intent.type === 'store.close') { openStoreRef.current = null; setOpenStoreId(null); return }
       if (intent.type === 'store.open') {
         const reachable = retainOpenStoreId(greenwayForPublicView(current), intent.storeId)
@@ -1246,8 +1288,11 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
       } else if (intent.type === 'equipment.equip') {
         const itemId = intent.stackId.replace(/^inventory-/, '')
         if (itemId === 'woodcutters_axe' || itemId === 'field_spade'
+          || v11Session && itemId === 'leather_boots'
           || itemId === 'mireglass_reach/item/waders') actMireglass({ type: 'equip_item', itemId })
         else report('That equipment is unavailable here.')
+      } else if (v11Session && intent.type === 'equipment.unequip' && intent.slot === 'feet') {
+        actMireglass({ type: 'unequip_item', slot: 'feet' })
       } else report('That action is unavailable in this region.')
       return
     }
@@ -1259,10 +1304,14 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
     else if (intent.type === 'spell.cast' && intent.spellId === 'wayfinder_glow') actMireglass({ type: 'cast_wayfinder_glow' })
     else if (intent.type === 'equipment.equip') {
       const itemId = intent.stackId.replace(/^inventory-/, '')
-      if (itemId === 'woodcutters_axe' || itemId === 'field_spade' || itemId === 'mireglass_reach/item/waders')
+      if (itemId === 'woodcutters_axe' || itemId === 'field_spade'
+        || v11Session && itemId === 'leather_boots'
+        || itemId === 'mireglass_reach/item/waders')
         actMireglass({ type: 'equip_item', itemId })
       else report('That frontier equipment is unavailable here.')
     }
+    else if (v11Session && intent.type === 'equipment.unequip' && intent.slot === 'feet')
+      actMireglass({ type: 'unequip_item', slot: 'feet' })
     else if (intent.type === 'store.select-listing' && (intent.listingId === 'field_spade' || intent.listingId === 'mireglass_reach/item/waders'))
       actMireglass({ type: 'buy_item', itemId: intent.listingId })
     else if (intent.type === 'store.sell-item' && (intent.itemId === 'logs' || intent.itemId === 'mireglass_reach/item/seal'))
@@ -1287,8 +1336,8 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
   const choices = region && world ? [...mireglassActionChoices(region), ...publicHerbChoices(world)] : []
   const objective = region ? mireglassNextObjective(region) : null
   const herbDetour = world && !region ? publicBackChannelHint(world, 'Bell Alder') : null
-  const carryingGreenway = world?.movementOwner === 'greenway' && publicHerbGuidancePriority(world, false)
-  const herbRouteHint = world && (region || herbDetour || carryingGreenway) ? publicHerbRouteHint(world) : null
+  const carryingHerb = world && publicHerbGuidancePriority(world, false)
+  const herbRouteHint = world && (region || herbDetour || carryingHerb) ? publicHerbRouteHint(world) : null
   if (!world || !projection) {
     const root = entry?.root
     const legacyPresent = entry && (entry.classic.status !== 'missing' || entry.expanded.status !== 'missing')
@@ -1363,11 +1412,12 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         <button onClick={() => window.location.reload()}>Reload to recheck storage</button></>}
     </section></main>
   }
-  const herbPriority = !!herbDetour || !!carryingGreenway
+  const herbPriority = !!herbDetour || !!carryingHerb
     || (!!region && publicHerbGuidancePriority(world, !!objective?.complete))
-  const nextGuidance = herbPriority && herbRouteHint
+  const nextGuidance = (herbPriority && herbRouteHint
     ? herbRouteHint : objective?.label ?? (world.movementOwner === 'streamed' ? projection.map.guidance : undefined)
-      ?? objectiveFor(greenwayForPublicView(world))
+      ?? objectiveFor(greenwayForPublicView(world))).replace(/^Next:\s*/, '')
+  const v11DigHint = v11Session ? publicV11PracticeDigHint(requirePublicV11State(world)) : null
   const woodTip = publicBeginnerWoodTip(world)
   const activeWoodTip = woodTip && !dismissedWoodTips.has(woodTip.id) ? woodTip : null
   const playProjection = world.movementOwner === 'streamed' || herbPriority && herbRouteHint
@@ -1376,10 +1426,32 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
       ...(herbPriority && herbRouteHint
         ? { guidance: publicHerbMapGuidance(projection.map.guidance, true, herbRouteHint) } : {}) } }
     : projection
+  const outfitters = v11Session && world.movementOwner === 'greenway'
+    ? world.greenway.stores.find((store) => store.id === 'store-greenway') : undefined
+  const outfittersTile = outfitters && world.greenway.tiles.find((tile) =>
+    Math.abs(tile.center.x - outfitters.position.x) < WORLD_CELL_METERS / 2
+    && Math.abs(tile.center.z - outfitters.position.z) < WORLD_CELL_METERS / 2)
+  const outfittersKnown = outfittersTile && playProjection.map.tiles.some((tile) =>
+    tile.id === outfittersTile.id && tile.hasStore)
+  const bootsCarried = world.player.inventory.some((stack) => stack.itemId === 'leather_boots')
+  const bootsListed = world.player.tradeSlots.some((slot) => slot.itemId === 'leather_boots')
+  const storeHeading = outfitters && bearingText(world.player.position, outfitters.position)
+  const storeRange = outfitters && Math.round(Math.hypot(
+    outfitters.position.x - world.player.position.x, outfitters.position.z - world.player.position.z))
+  const bootTip = !outfitters || world.player.equipment.feet === 'leather_boots' ? null
+    : bootsCarried ? 'Equip leather boots in Feet to run by default.'
+      : bootsListed ? 'Cancel your leather boots trade listing, then equip them in Feet to run by default.'
+        : outfittersKnown ? `Greenway Outfitters (S on map): ${storeHeading === 'here' ? 'here' : `compass ${storeHeading}, about ${storeRange} m away`}. Buy leather boots for ${PUBLIC_V11_BOOTS_PRICE}g, then equip them in Feet to run.` : null
+  const gaitProjection = v11Session
+    ? { ...publicV11SaveGatedProjection(playProjection, blocked),
+      gait: publicV11Gait(world.player.equipment.feet, walkRequested) }
+    : playProjection
   return <main className="wr-public" data-owner={world.movementOwner}><style>{STYLES}</style>
-    <WizardSurface projection={playProjection} onIntent={onIntent} />
-    <p className="wr-public-next" data-tip={!!activeWoodTip} hidden={!collapsed} tabIndex={collapsed ? 0 : -1}>
+    <WizardSurface projection={gaitProjection} onIntent={onIntent} />
+    <p className="wr-public-next" data-tip={!!activeWoodTip || !!bootTip} hidden={!collapsed} tabIndex={collapsed ? 0 : -1}>
       <strong>Next:</strong> {nextGuidance}
+      {v11DigHint && <small><b>Dig:</b> {v11DigHint}</small>}
+      {bootTip && <small><b>Run gear:</b> {bootTip}</small>}
       {activeWoodTip && <small><b>{activeWoodTip.title}:</b> {activeWoodTip.body}<button type="button"
         aria-label={`Dismiss ${activeWoodTip.title} tip`}
         onClick={() => setDismissedWoodTips((current) => new Set(current).add(activeWoodTip.id))}>×</button></small>}
@@ -1393,8 +1465,9 @@ export function PublicWizardApp({ v8Session, v9Session, v10Session, v11Session }
         <p><small>x {world.player.position.x.toFixed(1)}, z {world.player.position.z.toFixed(1)} · {world.player.coins} coins · tick {world.tick}</small></p>
         <p>{messages.at(-1)}</p>
         <p><b>Next:</b> {nextGuidance}</p>
+        {v11DigHint && <p><b>Dig:</b> {v11DigHint}</p>}
+        {bootTip && <p><b>Run gear:</b> {bootTip}</p>}
         {playProjection.fieldCamp?.guidance && <p><b>Camp:</b> {playProjection.fieldCamp.guidance}</p>}
-        {herbRouteHint && !herbPriority && <p><b>Bell Alder route:</b> {herbRouteHint}</p>}
         {world.movementOwner === 'greenway' && world.player.learnedSpellIds.includes('wayfinder_glow') &&
           <p><b>Frontier:</b> Cross Greenway's dry edges to explore Open Wilderness. The marked west trail at z = 0 leads to Mireglass Reach{v11Session
             ? ', and the eastern path at z = 0 points toward Highland Quarry' : ''}. These trails are guides, not the only exits.</p>}

@@ -1,10 +1,13 @@
 import { mireglassAnchors } from './mireglassContent'
 import type { WorldTile } from './types'
+import type { PublicV11RouteSupport } from './publicV11RouteSupport'
 
 /** Only new-world callers supply these facts; omission retains seed-only terrain. */
 export interface TerrainFacts {
   readonly cachePitDug: boolean
   readonly highlandRidge?: true
+  /** Derived v11 support. Never serialized or supplied by older worlds. */
+  readonly routeSupport?: PublicV11RouteSupport
 }
 
 /** Copies the canonical cache cell without changing generated chunks or Mireglass content. */

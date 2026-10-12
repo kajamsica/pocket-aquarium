@@ -1,0 +1,35 @@
+{
+  "animationChannels": {
+    "Idle": 51,
+    "Walk": 51,
+    "Turn": 51
+  },
+  "skins": [
+    17
+  ],
+  "socketNodes": {
+    "Socket.Head": {
+      "role": "equipment_socket"
+    },
+    "Socket.LeftHand": {
+      "role": "equipment_socket"
+    },
+    "Socket.RightHand": {
+      "role": "equipment_socket"
+    },
+    "Socket.Chest": {
+      "role": "equipment_socket"
+    },
+    "Socket.LeftFoot": {
+      "role": "equipment_socket"
+    },
+    "Socket.RightFoot": {
+      "role": "equipment_socket"
+    },
+    "Socket.Legs": {
+      "role": "equipment_socket"
+    }
+  },
+  "exportedMaterials": 24,
+  "exportedMeshes": 124
+}

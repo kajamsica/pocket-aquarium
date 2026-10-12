@@ -64,7 +64,11 @@ export const canEquipItem = (itemId: ItemId, slot: EquipmentSlot) => itemSlots[i
 
 const finite = (value: number) => Number.isFinite(value)
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
-const cloneState = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
+const cloneState = (state: WizardWorldState): WizardWorldState => {
+  const clone = JSON.parse(JSON.stringify({ ...state, discoveredTileIds: [] })) as WizardWorldState
+  clone.discoveredTileIds = Object.isFrozen(state.discoveredTileIds) ? state.discoveredTileIds : [...state.discoveredTileIds]
+  return clone
+}
 const levelForXp = (xp: number) => 1 + Math.floor(Math.max(0, xp) / 100)
 const inventoryCount = (player: PlayerState) => player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
 const reservedCount = (player: PlayerState) => player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
@@ -167,12 +171,11 @@ function gainSkillXp(state: WizardWorldState, tick: number, skillId: SkillId, xp
 function discoverTile(state: WizardWorldState, position: Vec3, areaId: AreaId, tick: number): WizardEvent | undefined {
   const tile = tileAt(state, position, areaId)
   if (!tile || state.discoveredTileIds.includes(tile.id)) return undefined
-  state.discoveredTileIds.push(tile.id)
-  state.discoveredTileIds.sort()
+  state.discoveredTileIds = [...state.discoveredTileIds, tile.id].sort()
   return event(state, tick, { type: 'tile_discovered', tileId: tile.id })
 }
 
-function stepRng(value: number): number {
+export function stepRng(value: number): number {
   let next = value | 0
   next ^= next << 13
   next ^= next >>> 17
@@ -182,6 +185,7 @@ function stepRng(value: number): number {
 
 function applyIntent(
   current: WizardWorldState, intent: WizardIntent, index: number, tick: number,
+  allowAreaCrossing?: (from: Vec3, to: Vec3) => boolean,
 ): { state: WizardWorldState; events?: WizardEvent[]; rejection?: IntentRejection } {
   const fail = (code: IntentRejection['code'], message: string) => ({ state: current, rejection: rejection(index, intent, code, message) })
 
@@ -204,7 +208,8 @@ function applyIntent(
     let z = Math.max(minZ - tileEdge, Math.min(maxZ + tileEdge, state.player.position.z + intent.delta.z))
     const currentArea = areaAt(state.areas, state.player.position.x, state.player.position.z)
     const nextArea = areaAt(state.areas, x, z)
-    if (currentArea.id !== nextArea.id) {
+    if (currentArea.id !== nextArea.id && !allowAreaCrossing?.(state.player.position,
+      { x, y: state.player.position.y, z })) {
       const startX = state.player.position.x
       const startZ = state.player.position.z
       if (x !== startX && areaAt(state.areas, x, startZ).id === currentArea.id) z = startZ
@@ -453,8 +458,7 @@ function applyIntent(
       && Math.hypot(site.position.x - current.player.position.x, site.position.z - current.player.position.z) <= 8,
     ).map((site) => site.id).sort()
     const state = cloneState(current)
-    state.discoveredTileIds.push(...revealedTileIds)
-    state.discoveredTileIds.sort()
+    if (revealedTileIds.length > 0) state.discoveredTileIds = [...state.discoveredTileIds, ...revealedTileIds].sort()
     state.revealedDigSiteIds.push(...revealedDigSiteIds)
     state.revealedDigSiteIds.sort()
     const events = [event(state, tick, { type: 'spell_cast', spellId: intent.spellId, revealedTileIds, revealedDigSiteIds })]
@@ -493,13 +497,14 @@ function applyIntent(
 
 export function createWizardWorld(seed: string, profile?: GenerationProfile): WizardWorldState { return createGeneratedWorld(seed, profile) }
 
-export function advanceWizardWorld(state: WizardWorldState, intents: readonly WizardIntent[]): WizardAdvanceResult {
+export function advanceWizardWorld(state: WizardWorldState, intents: readonly WizardIntent[],
+  allowAreaCrossing?: (from: Vec3, to: Vec3) => boolean): WizardAdvanceResult {
   let next = cloneState(state)
   const events: WizardEvent[] = []
   const rejections: IntentRejection[] = []
   const tick = state.tick + 1
   intents.forEach((intent, index) => {
-    const result = applyIntent(next, intent, index, tick)
+    const result = applyIntent(next, intent, index, tick, allowAreaCrossing)
     next = result.state
     if (result.events) events.push(...result.events)
     if (result.rejection) rejections.push(result.rejection)

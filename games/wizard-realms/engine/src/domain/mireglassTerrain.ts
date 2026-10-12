@@ -37,6 +37,18 @@ const rowAt = (seed: string, x: number, centerZ: number, name: string) => {
 export const mireglassFenRowAt = (seed: string, x: number) => rowAt(seed, x, 364, 'fen-row')
 export const mireglassBermFaceRowAt = (seed: string, x: number) => rowAt(seed, x, 432, 'berm-face-row')
 
+/** Bank classification follows both joined meander rows, not one bridge's fixed Z. */
+export function mireglassFenBankAt(seed: string, position: { x: number; z: number }): 'north' | 'south' | null {
+  if (!Number.isFinite(position.x) || !Number.isFinite(position.z)) return null
+  const x = Math.ceil(position.x / 4 - 0.5) * 4
+  const z = Math.ceil(position.z / 4 - 0.5) * 4
+  if (x < MIREGLASS_CORE.minX || x > MIREGLASS_CORE.maxX
+    || z < MIREGLASS_CORE.minZ || z > MIREGLASS_CORE.maxZ) return null
+  const row = mireglassFenRowAt(seed, x), joinedRow = mireglassFenRowAt(seed, x - 4)
+  return z < Math.min(row, joinedRow) ? 'north'
+    : z > Math.max(row, joinedRow) ? 'south' : null
+}
+
 /** The shallow meander joins deep side channels and a deep back channel on the 4 m grid. */
 export function mireglassFenDepthAt(seed: string, x: number, z: number): 'shallow' | 'deep' | null {
   if (x % 4 !== 0 || z % 4 !== 0 || x < MIREGLASS_CORE.minX || x > MIREGLASS_CORE.maxX) return null

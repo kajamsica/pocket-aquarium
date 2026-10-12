@@ -1,6 +1,11 @@
 import { HIGHLAND_CORE, HIGHLAND_LANDMARK, classifyStreamedRegion, highlandCorridorCells,
   highlandLandmark, highlandStoneNodes } from './domain/highlandContent'
 import { highlandRidgeCellAt, highlandRidgeRecoveryTarget } from './domain/highlandRidge'
+import { mireglassAnchors } from './domain/mireglassContent'
+import { mireglassRouteSites } from './domain/mireglassRouteSites'
+import { discoveredTileSet } from './domain/publicWorldDiscovery'
+import { PUBLIC_V11_BOOTS_LISTING_ID, PUBLIC_V11_BOOTS_PRICE } from './domain/publicWorldGait'
+import { publicV11RouteAtPosition } from './domain/publicV11RouteSupport'
 import type { PublicWorldV11State } from './domain/publicWorldV11State'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
 import { publicWorldViewProjection } from './PublicWorldView'
@@ -38,6 +43,19 @@ const quantity = (state: PublicWorldV11State, itemId: string) => state.player.in
   .filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
 const packUsed = (state: PublicWorldV11State) => state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
   + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+
+/** The optional Greenway lesson remains useful after routes have already been built. */
+export function publicV11PracticeDigHint(state: PublicWorldV11State): string | null {
+  if (state.movementOwner !== 'greenway' || !state.greenway.builtRouteIds.includes('greenway_ladder')
+    || state.greenway.excavatedDigSiteIds.includes('practice_mound')) return null
+  const mound = state.greenway.digSites.find((site) => site.id === 'practice_mound' && site.visibleFromStart)
+  if (!mound) return null
+  const meters = Math.round(distance2(state.player.position, mound.position))
+  const direction = meters < 1 ? 'here' : `${bearing(state.player.position, mound.position)}, about ${meters} m away`
+  const spade = quantity(state, 'field_spade') > 0 ? 'Equip your field spade'
+    : 'Buy a field spade at Greenway Outfitters and equip it'
+  return `Practice mound ${direction}. ${spade}, move within 3 m, then press E or Excavate for ${mound.reward.quantity} ${mound.reward.itemId} and ${mound.xpReward} Excavation XP.`
+}
 
 const terrainCache = new WeakMap<readonly WizardTerrainCell[], { seed: string; dressed: readonly WizardTerrainCell[] }>()
 
@@ -95,9 +113,15 @@ function highlandGuidance(state: PublicWorldV11State, region: 'highland_quarry' 
   if (recovery) return `Old save inside newly raised ridge rock. Ridge scenery is temporarily hidden here. Walk ${bearing(from, recovery)} about ${Math.round(recovery.distance)} m to the nearest open cell.`
   const carryingStone = quantity(state, 'stone') > 0 && state.highland.landmarkDiscovered
   const routePoint = nextRoutePoint(from, carryingStone)
+  if (region === 'wilderness' && from.x < 8) {
+    const marker = mireglassAnchors(state.seed).fringeMarker.tile.center
+    const direction = `${bearing(from, marker)}, about ${Math.round(distance2(from, marker))} m direct`
+    return state.mireglass.fringeMarkerStudied
+      ? `Uncharted wilderness. Return toward the known dry trail at the studied Frontier marker: ${direction}.`
+      : `Next: Frontier marker. ${direction}. Follow known dry ground; undiscovered crossings stay off the map.`
+  }
   if (carryingStone) return `Return west along the pale quarry path (${bearing(from, routePoint)}, about ${Math.round(distance2(from, routePoint))} m to the next bend). Greenway Outfitters buys stone.`
   if (region === 'wilderness') {
-    if (from.x < 8) return 'Uncharted wilderness. Return to a discovered trail or Greenway; no Mireglass objective is pinned here.'
     return `Follow the walked pale-stone path toward the highland (${bearing(from, routePoint)}, about ${Math.round(distance2(from, routePoint))} m to the next bend). Undiscovered ground stays hidden.`
   }
   const landmark = HIGHLAND_LANDMARK
@@ -108,7 +132,8 @@ function highlandGuidance(state: PublicWorldV11State, region: 'highland_quarry' 
     const nextTick = Math.min(...state.highland.stoneNodes.map(({ readyAtTick }) => readyAtTick))
     return `All stone shelves are recovering (about ${Math.ceil((nextTick - state.tick) / 20)} s). Return west to trade or wait.`
   }
-  const knownReady = ready.filter((node) => state.discoveredTileIds.includes(node.tile.id))
+  const known = discoveredTileSet(state.discoveredTileIds)
+  const knownReady = ready.filter((node) => known.has(node.tile.id))
   if (!knownReady.length) return 'Survey the exposed rock east of Quarry Crown. Stone shelves appear on the map only after you walk to them.'
   const closest = knownReady.reduce((best, candidate) => distance2(from, candidate.tile.center)
     < distance2(from, best.tile.center) ? candidate : best)
@@ -116,7 +141,7 @@ function highlandGuidance(state: PublicWorldV11State, region: 'highland_quarry' 
 }
 
 export function highlandExtractionFor(state: PublicWorldV11State) {
-  const discovered = new Set(state.discoveredTileIds)
+  const discovered = discoveredTileSet(state.discoveredTileIds)
   const node = highlandStoneNodes(state.seed)
     .filter((candidate) => distance3(state.player.position, candidate.tile.center) <= 3)
     .sort((left, right) => distance3(state.player.position, left.tile.center)
@@ -136,7 +161,7 @@ export function highlandExtractionFor(state: PublicWorldV11State) {
 }
 
 function highlandOverview(state: PublicWorldV11State, overview: WizardWorldOverview): WizardWorldOverview {
-  const known = new Set(state.discoveredTileIds)
+  const known = discoveredTileSet(state.discoveredTileIds)
   const markers = new Map<string, string[]>()
   const add = (tileId: string, x: number, z: number, label: string) => {
     if (!known.has(tileId)) return
@@ -159,14 +184,80 @@ function highlandOverview(state: PublicWorldV11State, overview: WizardWorldOverv
 export function publicWorldV11ViewProjection(state: PublicWorldV11State, messages: readonly string[],
   selectedSiteId: string | null, openStoreId: string | null = null,
   fieldCamp?: WizardFieldCampView): WizardViewProjection {
-  const base = publicWorldViewProjection(state, messages, selectedSiteId, openStoreId,
-    fieldCamp, { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true })
+  const initial = publicWorldViewProjection(state, messages, selectedSiteId, openStoreId,
+    fieldCamp, { cachePitDug: state.mireglass.cacheExcavated, highlandRidge: true }, true)
+  const ownsBoots = quantity(state, 'leather_boots') > 0
+    || state.player.tradeSlots.some((slot) => slot.itemId === 'leather_boots')
+  const base = state.movementOwner === 'greenway' && !ownsBoots
+    ? { ...initial, stores: initial.stores.map((store) => store.id === 'store-greenway'
+      ? { ...store, listings: [...store.listings,
+        { id: PUBLIC_V11_BOOTS_LISTING_ID, name: 'Leather boots', price: PUBLIC_V11_BOOTS_PRICE }] }
+      : store) } : initial
   const overview = base.map.overview
+  const activeRoute = publicV11RouteAtPosition(state, state.player.position)
+  const walkHint = activeRoute ? activeRoute.route.kind === 'slate_ladder'
+    ? 'Walk into the built Slate ladder face to climb one step at a time. E or touch Interact remains a shortcut.'
+    : activeRoute.route.kind === 'greenway_ladder'
+      ? 'Walk the low Greenway steps one step at a time. E or touch Interact remains a shortcut.'
+      : 'Center on the bridge planks and face along the deck before walking across one step at a time. E or touch Interact remains a shortcut.' : null
+  const mound = state.movementOwner === 'greenway' && !state.greenway.excavatedDigSiteIds.includes('practice_mound')
+    ? state.greenway.digSites.find((site) => site.id === 'practice_mound' && site.visibleFromStart) : null
+  const moundTile = mound && state.greenway.tiles.find((tile) =>
+    tile.center.x === Math.round(mound.position.x / WORLD_CELL_METERS) * WORLD_CELL_METERS
+    && tile.center.z === Math.round(mound.position.z / WORLD_CELL_METERS) * WORLD_CELL_METERS)
+  const moundTileId = moundTile?.id
   let highlandOverviewCache: WizardWorldOverview | undefined
-  const withOverview = (projection: WizardViewProjection): WizardViewProjection => ({ ...projection,
-    highlandRidgeActive: true,
-    map: { ...projection.map, ...(overview ? { overview: () =>
-      highlandOverviewCache ??= highlandOverview(state, overview()) } : {}) } })
+  const withOverview = (projection: WizardViewProjection): WizardViewProjection => {
+    const nearbyRoute = projection.nearbyInteraction?.kind === 'route'
+      && projection.nearbyInteraction.actionable ? projection.nearbyInteraction : null
+    const fenSite = nearbyRoute && state.mireglass.builtRoutes.bridge === nearbyRoute.targetId
+      ? mireglassRouteSites(state.seed).find((site) => site.id === nearbyRoute.targetId) : null
+    const fenFrom = fenSite && distance2(state.player.position, fenSite.from)
+      <= distance2(state.player.position, fenSite.to) ? fenSite.from : fenSite?.to
+    const fenTo = fenSite && fenFrom === fenSite.from ? fenSite.to : fenSite?.from
+    const visual = projection.visualWorld
+    const known = discoveredTileSet(state.discoveredTileIds)
+    const visible = new Set(visual?.terrain.map((cell) => cell.id))
+    const nodeStates = new Map(state.highland.stoneNodes.map((node) => [node.id, node.readyAtTick]))
+    const highlandResources = highlandStoneNodes(state.seed)
+      .filter((node) => known.has(node.tile.id) && visible.has(node.tile.id))
+      .map((node) => ({
+        id: node.id, kind: 'ore' as const, visualKind: 'highland-stone' as const,
+        label: 'Highland stone outcrop',
+        position: [node.tile.center.x, node.tile.center.y, node.tile.center.z] as const,
+        available: state.tick >= (nodeStates.get(node.id) ?? Infinity),
+      }))
+    const landmark = highlandLandmark(state.seed)
+    const highlandLandmarkView = known.has(landmark.tile.id) && visible.has(landmark.tile.id)
+      ? [{ id: HIGHLAND_LANDMARK.id, kind: 'quarry-crown' as const,
+        position: [landmark.tile.center.x, landmark.tile.center.y, landmark.tile.center.z] as const,
+        discovered: state.highland.landmarkDiscovered }] : []
+    const moundVisible = moundTileId && projection.map.tiles.some((tile) => tile.id === moundTileId && tile.discovered)
+    return { ...projection,
+      highlandRidgeActive: true,
+      physicalRoutes: { active: activeRoute },
+      ...(projection.nearbyInteraction?.kind === 'route' && projection.nearbyInteraction.actionable
+        ? { nearbyInteraction: { ...projection.nearbyInteraction,
+          label: fenFrom && fenTo
+            ? `${projection.nearbyInteraction.label} · center on the planks, face ${bearing(fenFrom, fenTo)}, then walk; E/Interact shortcut`
+            : `${projection.nearbyInteraction.label} · walk along it; E/Interact shortcut` } } : {}),
+      ...(visual ? { visualWorld: { ...visual,
+        terrain: highlandTerrainFor(visual.terrain, state.seed),
+        resources: [...visual.resources.filter((resource) => !highlandResources.some((node) => node.id === resource.id)),
+          ...highlandResources],
+        landmarks: [...visual.landmarks.filter((entry) => !highlandLandmarkView.some((node) => node.id === entry.id)),
+          ...highlandLandmarkView],
+      } } : {}),
+      map: { ...projection.map,
+        ...(moundVisible ? {
+          tiles: projection.map.tiles.map((tile) => tile.id === moundTileId ? { ...tile, hasDigSite: true } : tile),
+          legend: `${projection.map.legend ?? '▲ you · ? unexplored'} · ⌄ practice mound`,
+        } : {}),
+        ...(walkHint ? { guidance: `${walkHint} ${projection.map.guidance ?? ''}`.trim() } : {}),
+        ...(overview ? { overview: () =>
+        highlandOverviewCache ??= highlandOverview(state, overview()) } : {}) },
+    }
+  }
   if (state.movementOwner === 'greenway') {
     if (!base.map.guidance?.startsWith('West to Mireglass:')) return withOverview(base)
     const east = state.greenway.tiles.filter((tile) => tile.center.z === 0)

@@ -1,7 +1,7 @@
 import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import type { WizardViewIntent } from './view'
+import type { WizardViewIntent, WizardViewProjection } from './view'
 import { intentForView } from './App'
 import { mireglassActionChoices, mireglassNextObjective } from './MireglassPlayableApp'
 import { publicWorldViewProjection } from './PublicWorldView'
@@ -38,6 +38,7 @@ import { PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_SCHEMA, PUBLIC_V6_S
 import { serializeWizardWorld } from './domain/persistence'
 import { createFixedInputClock, createTimedMovementSampler, recordTimedMovement, sampleFixedInputBatch } from './view/timedInput'
 import { WizardMap } from './view/WizardMap'
+import { WizardHud } from './view/WizardHud'
 import {
   PUBLIC_V6_LOCK_NAME, advancePublicControls, appendMessages, commitPublicSnapshot, greenwayForPublicView,
   importPublicWorld, inspectPublicEntry, mireglassForPublicView, publicFreshForkChoiceCopy,
@@ -50,17 +51,20 @@ import {
   publicFieldCampView, requirePublicV9State, requirePublicV10State, requirePublicV11State,
   unsavedPublicV9Bytes, unsavedPublicV10Bytes, unsavedPublicV11Bytes,
   publicSaveableVersion, publicTravelFlushNeeded,
-  createPublicSaveNoticeTracker,
+  publicV11SaveGatedProjection,
+  createPublicSaveNoticeTracker, createPublicSaveScheduler,
   PublicWizardApp, type PublicLockProvider, type PublicV8PlayableSession,
 } from './PublicWizardApp'
 
 const seed = 'greenway-alpha'
 const legacyKey = 'wizard-realms:world:v5'
 let dispatch: (intent: WizardViewIntent) => void
+let renderedProjection: WizardViewProjection
 vi.mock('./view', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./view')>()
   return { ...actual, WizardSurface: (props: Parameters<typeof actual.WizardSurface>[0]) => {
     dispatch = props.onIntent
+    renderedProjection = props.projection
     return createElement(actual.WizardSurface, props)
   } }
 })
@@ -109,6 +113,84 @@ describe('public manual save feedback', () => {
   })
 })
 
+describe('public save scheduling', () => {
+  const request = (tick: number, manual = false, queuedDuringManual = false) => ({
+    snapshot: Object.freeze({ tick }), manual, queuedDuringManual, savedTravelVersion: tick,
+  })
+
+  it('keeps one active automatic write and only the latest waiting snapshot during a burst', async () => {
+    let release!: (saved: boolean) => void
+    const first = new Promise<boolean>((resolve) => { release = resolve })
+    const written: number[] = []
+    const scheduler = createPublicSaveScheduler<{ tick: number }>(async ({ snapshot }) => {
+      written.push(snapshot.tick)
+      return snapshot.tick === 1 ? first : true
+    })
+    scheduler.enqueue(request(1))
+    for (let tick = 2; tick <= 30; tick++) scheduler.enqueue(request(tick))
+    expect(written).toEqual([1])
+    release(true)
+    await scheduler.whenIdle()
+    expect(written).toEqual([1, 30])
+  })
+
+  it('supersedes pre-manual autosaves and commits the exact clicked snapshot before the latest later auto', async () => {
+    let release!: (saved: boolean) => void
+    const first = new Promise<boolean>((resolve) => { release = resolve })
+    let releaseManual!: (saved: boolean) => void
+    const manualWrite = new Promise<boolean>((resolve) => { releaseManual = resolve })
+    const written: Array<{ tick: number; manual: boolean; queuedDuringManual: boolean; version: number; snapshot: object }> = []
+    const scheduler = createPublicSaveScheduler<{ tick: number }>(async (queued) => {
+      written.push({ tick: queued.snapshot.tick, manual: queued.manual,
+        queuedDuringManual: queued.queuedDuringManual, version: queued.savedTravelVersion,
+        snapshot: queued.snapshot })
+      return queued.snapshot.tick === 1 ? first : queued.manual ? manualWrite : true
+    })
+    scheduler.enqueue(request(1))
+    scheduler.enqueue(request(2))
+    const clicked = request(10, true)
+    scheduler.enqueue(clicked)
+    scheduler.enqueue(request(99, true))
+    scheduler.enqueue(request(11, false, true))
+    scheduler.enqueue(request(12, false, true))
+    expect(written.map(({ tick }) => tick)).toEqual([1])
+    release(true)
+    await vi.waitFor(() => expect(written.map(({ tick }) => tick)).toEqual([1, 10]))
+    releaseManual(true)
+    await scheduler.whenIdle()
+    expect(written.map(({ tick }) => tick)).toEqual([1, 10, 12])
+    expect(written[1]).toMatchObject({ manual: true, queuedDuringManual: false, version: 10 })
+    expect(written[1].snapshot).toBe(clicked.snapshot)
+    expect(written[2]).toMatchObject({ manual: false, queuedDuringManual: true, version: 12 })
+  })
+
+  it.each(['failed', 'rejected'] as const)('%s active write clears waiting work and allows retry after idle', async (failure) => {
+    let finish!: (saved: boolean) => void
+    let reject!: (reason: Error) => void
+    const first = new Promise<boolean>((resolve, fail) => { finish = resolve; reject = fail })
+    const written: number[] = []
+    const scheduler = createPublicSaveScheduler<{ tick: number }>(async ({ snapshot }) => {
+      written.push(snapshot.tick)
+      return snapshot.tick === 1 ? first : true
+    })
+    scheduler.enqueue(request(1))
+    scheduler.enqueue(request(2))
+    scheduler.enqueue(request(3, true))
+    scheduler.enqueue(request(4, false, true))
+    let idle = false
+    const waiting = scheduler.whenIdle().then(() => { idle = true })
+    await Promise.resolve()
+    expect(idle).toBe(false)
+    if (failure === 'failed') finish(false)
+    else reject(new Error('delayed writer rejected'))
+    await waiting
+    expect(written).toEqual([1])
+    scheduler.enqueue(request(5))
+    await scheduler.whenIdle()
+    expect(written).toEqual([1, 5])
+  })
+})
+
 describe('public beginner wood tips', () => {
   const fresh = () => createFreshPublicWorld(seed, 'greenway-classic-v1')
   const carrying = (state: PublicWorldState, quantity: number): PublicWorldState => ({
@@ -130,10 +212,10 @@ describe('public beginner wood tips', () => {
     expect(tip?.body).toContain('E/Interact twice for 4 logs when 4 backpack slots are free')
   })
 
-  it('explains ladder, instant sale, and listing choices with four carried logs', () => {
+  it('explains low steps, instant sale, and listing choices with four carried logs', () => {
     const tip = publicBeginnerWoodTip(carrying(fresh(), 4))
     expect(tip?.id).toBe('uses')
-    expect(tip?.body).toContain('first Greenway ladder at a discovered ◇ map site once unlocked')
+    expect(tip?.body).toContain('first Greenway low steps at a discovered ◇ map site once unlocked')
     expect(tip?.body).toContain('Greenway Outfitters buys spare logs instantly for 2g each')
     expect(tip?.body).toContain('trade board')
     expect(tip?.body).toContain('listed logs still reserve backpack space')
@@ -222,7 +304,7 @@ describe('public v8 play session seam', () => {
     const bearing = renderToStaticMarkup(createElement(PublicWizardApp, {
       v8Session: { ...session, start: { ...session.start, state: needsSpade } },
     }))
-    expect(bearing).toMatch(/class="wr-public-next"[^>]*><strong>Next:<\/strong> Greenway Outfitters: [^.]+\. Buy a field spade\./)
+    expect(bearing).toMatch(/class="wr-public-next"[^>]*><strong>Next:<\/strong> Greenway Outfitters: [^.]+\. Buy a field spade to dig the practice mound for 2 stone to sell for coins at Greenway Outfitters, plus 30 Excavation XP toward the Lv2 ridge cache\./)
     expect(bearing).not.toContain('line-clamp')
   })
 })
@@ -402,6 +484,27 @@ describe('public v9 play session', () => {
     }), 7, sourceReceipt)
   })
 
+  it.each(['v10', 'v11'] as const)('lets a %s player turn at the fen wall without moving or changing its source', (version) => {
+    const f = fixture()
+    const tile = worldTileAtGrid(seed, -113, 100)
+    const base = { ...f.state, player: { ...f.state.player,
+      position: { x: -450.08, y: tile.center.y, z: 400 }, yaw: -Math.PI / 2 - 0.13 },
+    discoveredTileIds: [...new Set([...f.state.discoveredTileIds, tile.id])].sort() }
+    const v10 = withPublicV10TerrainRevision(base)
+    const state = version === 'v11' ? withPublicV11Highland(v10) : v10
+    const beforeBytes = JSON.stringify(state)
+    const result = advancePublicControls(state, [], [[-1, 1]], f.bootstrap)
+    const turnOnly = advancePublicControls(state, [], [[-1, 0]], f.bootstrap)
+    expect(result.rejections).toMatchObject([{ intentIndex: 1, intentType: 'move', code: 'fen_channel' }])
+    expect(result.state.player.position).toEqual(state.player.position)
+    expect(result.state.player.yaw).toBeCloseTo(state.player.yaw + 0.13)
+    expect(result.state.tick).toBe(state.tick + 1)
+    expect(result.events.map((event) => event.type)).toEqual(['player_looked'])
+    expect(result.state.rng.simulation).toBe(turnOnly.state.rng.simulation)
+    expect(result.state.eventSequence).toBe(turnOnly.state.eventSequence)
+    expect(JSON.stringify(state)).toBe(beforeBytes)
+  })
+
   it('routes a v10 frontier equipment action through its validated save session', async () => {
     const f = fixture()
     const state = withPublicV10TerrainRevision(f.state)
@@ -418,6 +521,89 @@ describe('public v9 play session', () => {
         equipment: expect.objectContaining({ mainHand: 'woodcutters_axe' }),
       }),
     }), 7, sourceReceipt)
+  })
+
+  it('keeps the practice-mound payoff in public v11 Next while acquiring and using a spade', () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+        sourceV9Lineage: f.receipt } }
+    const base = withPublicV11Highland(v10)
+    const store = base.greenway.stores.find((candidate) => candidate.id === 'store-greenway')!
+    const mound = base.greenway.digSites.find((site) => site.id === 'practice_mound')!
+    const unowned = { ...base, movementOwner: 'greenway' as const,
+      player: { ...base.player, position: { ...store.position },
+        learnedSpellIds: ['wayfinder_glow' as const],
+        skillXp: { ...base.player.skillXp, spellcraft: 30 },
+        equipment: { ...base.player.equipment, mainHand: null } } }
+    const render = (state: typeof base) => renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt },
+      commit: vi.fn(async () => ({ ok: false as const, reason: 'source-changed' })),
+    } }))
+    const payoff = '2 stone to sell for coins at Greenway Outfitters, plus 30 Excavation XP toward the Lv2 ridge cache'
+    const buyHtml = render(unowned)
+    expect(buyHtml).toContain(`Buy a field spade to dig the practice mound for ${payoff} at Greenway Outfitters.`)
+    expect(buyHtml).toContain('<span>Map / routes</span>')
+    const greenwayMap = renderToStaticMarkup(createElement(WizardMap, { projection: {
+      ...renderedProjection, routes: renderedProjection.routes.map((route) => route.id === 'greenway_ladder'
+        ? { ...route, built: true } : route),
+    }, open: true, onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+    closeRef: createRef<HTMLButtonElement>() }))
+    expect(greenwayMap).toContain('South foot')
+    expect(greenwayMap).toContain('to north foot')
+    expect(greenwayMap).toContain('Greenway low steps')
+    expect(greenwayMap).not.toContain('Greenway ladder')
+    const greenwaySite = renderedProjection.buildSites.find((site) => site.routeId === 'greenway_ladder')!
+    const previewMap = renderToStaticMarkup(createElement(WizardMap, { projection: {
+      ...renderedProjection, buildSites: [{ ...greenwaySite, discovered: true }],
+    }, open: true, onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+    closeRef: createRef<HTMLButtonElement>() }))
+    expect(previewMap).toContain('Preview Greenway low steps')
+    expect(previewMap).not.toContain('Preview Greenway ladder')
+    const owned = { ...unowned, player: { ...unowned.player,
+      inventory: [...unowned.player.inventory, { itemId: 'field_spade' as const, quantity: 1 }] } }
+    expect(render(owned)).toContain(`Equip the field spade from your backpack to dig the practice mound for ${payoff}.`)
+    const equipped = { ...owned, player: { ...owned.player, position: { ...mound.position },
+      equipment: { ...owned.player.equipment, mainHand: 'field_spade' as const } } }
+    expect(render(equipped)).toContain(`Excavate the Greenway practice mound for ${payoff}.`)
+    const routesBuilt = { ...equipped, greenway: { ...equipped.greenway,
+      builtRouteIds: ['greenway_ladder' as const, 'highland_bridge' as const] } }
+    const progressedHtml = render(routesBuilt)
+    expect(progressedHtml).toContain('<b>Dig:</b> Practice mound here.')
+    expect(progressedHtml).toContain('2 stone and 30 Excavation XP')
+    const dug = { ...routesBuilt, greenway: { ...routesBuilt.greenway,
+      excavatedDigSiteIds: ['practice_mound' as const] } }
+    expect(render(dug)).not.toContain('<b>Dig:</b>')
+  })
+
+  it('puts discovered route previews before the map grid and names the actual v11 route feet', () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+        sourceV9Lineage: f.receipt } }
+    const base = withPublicV11Highland(v10)
+    const bridge = mireglassRouteSites(seed).find((site) => site.kind === 'bridge')!
+    const footTile = worldTileAtGrid(seed, bridge.from.x / WORLD_CELL_METERS, bridge.from.z / WORLD_CELL_METERS)
+    const state = { ...base, player: { ...base.player, position: { ...bridge.from } },
+      mireglass: { ...base.mireglass, builtRoutes: { ...base.mireglass.builtRoutes, bridge: bridge.id } },
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, footTile.id])].sort() }
+    renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt },
+      commit: vi.fn(async () => ({ ok: false as const, reason: 'source-changed' })),
+    } }))
+    const map = renderToStaticMarkup(createElement(WizardMap, { projection: renderedProjection, open: true,
+      onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+      closeRef: createRef<HTMLButtonElement>() }))
+    expect(map).toContain('Map guidance')
+    expect(map).toContain('North foot')
+    expect(map).toContain('to south foot')
+    expect(map).toContain('Approach the foot on your side until Cross appears; press E or tap Interact as a shortcut. You can also walk across the built route.')
+    expect(map.indexOf('class="wr-map-routes"')).toBeLessThan(map.indexOf('class="wr-map-grid"'))
+    for (const site of renderedProjection.buildSites.filter((candidate) => !candidate.discovered)) {
+      expect(map).not.toContain(`aria-label="Preview ${site.label}"`)
+    }
   })
 
   it('routes v11 frames and quarry extraction through the distinct v11 save session', async () => {
@@ -482,6 +668,193 @@ describe('public v9 play session', () => {
     }), 7, sourceReceipt)
   })
 
+  it('samples v11 booted running and requested walking without changing older public pace', () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const v11 = withPublicV11Highland(v10)
+    const boots = { ...v11, player: { ...v11.player,
+      inventory: [...v11.player.inventory, { itemId: 'leather_boots' as const, quantity: 1 }],
+      equipment: { ...v11.player.equipment, feet: 'leather_boots' as const } } }
+    const traveled = (state: PublicWorldState, walkRequested = false) => {
+      const result = advancePublicControls(state, [], [[0, 1]], f.bootstrap, walkRequested)
+      expect(result.rejections).toEqual([])
+      return Math.hypot(result.state.player.position.x - state.player.position.x,
+        result.state.player.position.z - state.player.position.z)
+    }
+    expect(traveled(boots)).toBeCloseTo(0.24)
+    expect(traveled(boots, true)).toBeCloseTo(0.16)
+    expect(traveled(v11)).toBeCloseTo(0.16)
+    expect(traveled(v10)).toBeCloseTo(0.16)
+  })
+
+  it('spends at most one v11 pace step on a burst of queued touch taps in one fixed interval', () => {
+    const f = fixture()
+    const base = withPublicV11Highland(withPublicV10TerrainRevision(f.state))
+    const boots = { ...base, player: { ...base.player,
+      inventory: [...base.player.inventory, { itemId: 'leather_boots' as const, quantity: 1 }],
+      equipment: { ...base.player.equipment, feet: 'leather_boots' as const } } }
+    const tap = [{ type: 'move' as const, delta: { x: 0, z: -0.24 } }]
+    const look = [{ type: 'look' as const, yawDelta: 0.13, pitchDelta: 0 }]
+    const burst = advancePublicControls(boots,
+      [look, tap, tap, tap, look, [{ type: 'jump' }]], [[0, 1]], f.bootstrap)
+    expect(burst.rejections).toEqual([])
+    expect(Math.hypot(burst.state.player.position.x - boots.player.position.x,
+      burst.state.player.position.z - boots.player.position.z)).toBeCloseTo(0.24)
+    expect(burst.events.filter((event) => event.type === 'player_looked')).toHaveLength(2)
+    expect(burst.events.some((event) => event.type === 'player_jumped')).toBe(true)
+    const nextInterval = advancePublicControls(burst.state, [tap], [], f.bootstrap)
+    expect(nextInterval.rejections).toEqual([])
+    expect(Math.hypot(nextInterval.state.player.position.x - burst.state.player.position.x,
+      nextInterval.state.player.position.z - burst.state.player.position.z)).toBeCloseTo(0.24)
+  })
+
+  it('routes the v11-only Outfitters offer and streamed boots equip through validated saves', async () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+        sourceV9Lineage: f.receipt } }
+    const base = withPublicV11Highland(v10)
+    const store = base.greenway.stores.find((candidate) => candidate.id === 'store-greenway')!
+    const atStore = { ...base, movementOwner: 'greenway' as const,
+      player: { ...base.player, position: { ...store.position } } }
+    const purchaseCommit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state: atStore, saveRevision: 7, sourceReceipt }, commit: purchaseCommit,
+    } }))
+    expect(renderedProjection.stores.find((candidate) => candidate.id === store.id)?.listings)
+      .toContainEqual({ id: 'v11-leather-boots', name: 'Leather boots', price: 25 })
+    expect(renderedProjection.gait).toMatchObject({ pace: 'walk', canRun: false })
+    dispatch({ type: 'store.select-listing', storeId: store.id, listingId: 'v11-leather-boots' })
+    await Promise.resolve()
+    expect(purchaseCommit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      player: expect.objectContaining({ coins: atStore.player.coins - 25,
+        inventory: expect.arrayContaining([{ itemId: 'leather_boots', quantity: 1 }]) }),
+    }), 7, sourceReceipt)
+    const purchasedState = (purchaseCommit.mock.calls[0] as unknown as [typeof atStore])[0]
+    expect(parsePublicV11Rescue(unsavedPublicV11Bytes(purchasedState, sourceReceipt, 7)!)?.snapshot.state
+      .player.inventory).toContainEqual({ itemId: 'leather_boots', quantity: 1 })
+
+    const owned = { ...base, player: { ...base.player,
+      inventory: [...base.player.inventory, { itemId: 'leather_boots' as const, quantity: 1 }] } }
+    const equipCommit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state: owned, saveRevision: 7, sourceReceipt }, commit: equipCommit,
+    } }))
+    dispatch({ type: 'equipment.equip', stackId: 'inventory-leather_boots', slot: 'feet' })
+    await Promise.resolve()
+    expect(equipCommit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      player: expect.objectContaining({ equipment: expect.objectContaining({ feet: 'leather_boots' }) }),
+    }), 7, sourceReceipt)
+    const equippedState = (equipCommit.mock.calls[0] as unknown as [typeof owned])[0]
+    expect(parsePublicV11Rescue(unsavedPublicV11Bytes(equippedState, sourceReceipt, 7)!)?.snapshot.state
+      .player.equipment.feet).toBe('leather_boots')
+  })
+
+  it('routes streamed v11 Backpack boot removal through the same validated save path', async () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+        sourceV9Lineage: f.receipt } }
+    const base = withPublicV11Highland(v10)
+    const tile = mireglassAnchors(seed).fringeMarker.tile
+    const state = { ...base, movementOwner: 'streamed' as const,
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, tile.id])].sort(),
+      player: { ...base.player, position: { ...tile.center },
+        inventory: [...base.player.inventory, { itemId: 'leather_boots' as const, quantity: 1 }],
+        equipment: { ...base.player.equipment, feet: 'leather_boots' as const } } }
+    const commit = vi.fn(async () => ({ ok: false as const, reason: 'source-changed' }))
+    const bootedMarkup = renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt }, commit,
+    } }))
+    expect(renderedProjection.gait).toMatchObject({ canRun: true, pace: 'run' })
+    expect(renderedProjection.controllerActionsEnabled).toBe(true)
+    expect(bootedMarkup).toContain('Running in leather boots')
+    expect(bootedMarkup).toContain('aria-label="Walk" aria-pressed="false"')
+    const blockedProjection = publicV11SaveGatedProjection(renderedProjection, true)
+    expect(publicV11SaveGatedProjection(renderedProjection, false).controllerActionsEnabled).toBe(true)
+    expect(blockedProjection.controllerActionsEnabled).toBe(false)
+    const blockedHud = renderToStaticMarkup(createElement(WizardHud, { projection: blockedProjection,
+      onIntent: () => {} }))
+    expect(blockedHud).toContain('aria-label="Walk" aria-pressed="false" disabled=""')
+    const blockedMap = renderToStaticMarkup(createElement(WizardMap, { projection: blockedProjection, open: true,
+      onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+      closeRef: createRef<HTMLButtonElement>() }))
+    expect(blockedMap).toContain('Route actions paused for save')
+    const readyMap = renderToStaticMarkup(createElement(WizardMap, { projection: renderedProjection, open: true,
+      onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+      closeRef: createRef<HTMLButtonElement>() }))
+    expect(readyMap).not.toContain('Route actions paused for save')
+    dispatch({ type: 'gait.toggle' })
+    dispatch({ type: 'equipment.unequip', slot: 'feet' })
+    await Promise.resolve()
+    expect(commit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ player: expect.objectContaining({
+      equipment: expect.objectContaining({ feet: null }),
+      inventory: expect.arrayContaining([{ itemId: 'leather_boots', quantity: 1 }]),
+    }) }), 7, sourceReceipt)
+    const removedState = (commit.mock.calls[0] as unknown as [typeof state])[0]
+    const barefootMarkup = renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state: removedState, saveRevision: 8, sourceReceipt }, commit: vi.fn(),
+    } }))
+    expect(renderedProjection.gait).toMatchObject({ canRun: false, pace: 'walk' })
+    expect(barefootMarkup).toContain('Barefoot: walk only')
+    expect(barefootMarkup).toContain('aria-label="Walk" aria-pressed="true" disabled=""')
+  })
+
+  it('adds discovered v11 run-gear directions without replacing the waystone quest', () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceV10Receipt = { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+      sourceV9Lineage: f.receipt }
+    const sourceV11Receipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: sourceV10Receipt }
+    const start = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const greenway = { ...v10, movementOwner: 'greenway' as const,
+      discoveredTileIds: start.discoveredTileIds, player: { ...v10.player,
+        position: start.player.position, inventory: start.player.inventory } }
+    const v11 = withPublicV11Highland(greenway)
+    const renderV11 = (state: typeof v11) => renderToStaticMarkup(createElement(PublicWizardApp, {
+      v11Session: { start: { state, saveRevision: 7, sourceReceipt: sourceV11Receipt },
+        commit: vi.fn(async () => ({ ok: false as const, reason: 'source-changed' })) },
+    }))
+    const barefoot = renderV11(v11)
+    expect(barefoot).toContain('<strong>Next:</strong> Greenway waystone: 3m east and 3m south.')
+    expect(barefoot).toContain('<b>Run gear:</b> Greenway Outfitters (S on map): compass W, about 5 m away. Buy leather boots for 25g, then equip them in Feet to run.')
+    expect(barefoot.indexOf('<strong>Next:</strong>')).toBeLessThan(barefoot.indexOf('<b>Run gear:</b>'))
+    const atStore = { ...v11, player: { ...v11.player, position: { ...v11.greenway.stores[0].position } } }
+    expect(renderV11(atStore)).toContain('Greenway Outfitters (S on map): here. Buy leather boots for 25g')
+    const fogged = renderV11({ ...v11, discoveredTileIds: [] })
+    expect(fogged).not.toContain('<b>Run gear:</b>')
+    expect(fogged).not.toContain('compass W, about 5 m away')
+    expect(renderV11(withPublicV11Highland(v10))).not.toContain('<b>Run gear:</b>')
+    const owned = { ...v11, player: { ...v11.player, inventory: [...v11.player.inventory,
+      { itemId: 'leather_boots' as const, quantity: 1 }] } }
+    expect(renderV11(owned)).toContain('<b>Run gear:</b> Equip leather boots in Feet to run by default.')
+    const foggedCue = (state: typeof v11) => renderV11({ ...state, discoveredTileIds: [] })
+      .match(/<small><b>Run gear:<\/b> ([^<]+)<\/small>/)?.[1]
+    const foggedOwnedCue = foggedCue(owned)
+    expect(foggedOwnedCue).toBe('Equip leather boots in Feet to run by default.')
+    expect(foggedOwnedCue).not.toMatch(/Outfitters|S on map|compass|m away|25g|x -5|z -1/)
+    const listed = { ...v11, player: { ...v11.player, tradeSlots: [
+      { slotIndex: 0 as const, itemId: 'leather_boots' as const, quantity: 1, unitPrice: 25 },
+      v11.player.tradeSlots[1], v11.player.tradeSlots[2], v11.player.tradeSlots[3],
+    ] as typeof v11.player.tradeSlots } }
+    expect(renderV11(listed)).toContain('Cancel your leather boots trade listing, then equip them in Feet to run by default.')
+    const foggedListedCue = foggedCue(listed)
+    expect(foggedListedCue).toBe('Cancel your leather boots trade listing, then equip them in Feet to run by default.')
+    expect(foggedListedCue).not.toMatch(/Outfitters|S on map|compass|m away|25g|x -5|z -1/)
+    const worn = { ...owned, player: { ...owned.player,
+      equipment: { ...owned.player.equipment, feet: 'leather_boots' as const } } }
+    expect(renderV11(worn)).not.toContain('<b>Run gear:</b>')
+    const older = renderToStaticMarkup(createElement(PublicWizardApp, {
+      v10Session: { start: { state: greenway, saveRevision: 7, sourceReceipt: sourceV10Receipt },
+        commit: vi.fn(async () => ({ ok: false as const, reason: 'source-changed' })) },
+    }))
+    expect(older).not.toContain('<b>Run gear:</b>')
+    expect(older).toContain('<strong>Next:</strong> Greenway waystone: 3m east and 3m south.')
+  })
+
   it('keeps the bounded fen detour visible after its outer bank enters wilderness', () => {
     const f = fixture()
     const v10 = withPublicV10TerrainRevision(f.state)
@@ -514,6 +887,54 @@ describe('public v9 play session', () => {
     } }))
     expect(northHtml).toContain('Turn W')
     expect(northHtml).not.toContain('Gather marsh herb')
+  })
+
+  it('keeps a carried Bell Alder herb objective in Next and the map after entering wilderness', () => {
+    const f = fixture()
+    const v10 = withPublicV10TerrainRevision(f.state)
+    const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
+      sourceV10Lineage: { sourceV9Head: encodePublicV9Head(f.state, f.bootstrap, 7),
+        sourceV9Lineage: f.receipt } }
+    const base = withPublicV11Highland(v10)
+    const tile = worldTileAtGrid(seed, -57, 55)
+    const wilderness = { ...base, movementOwner: 'streamed' as const,
+      player: { ...base.player, position: { x: -227.4, y: tile.center.y, z: 219.2 } },
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, tile.id])].sort() }
+    const render = (state: typeof base) => renderToStaticMarkup(createElement(PublicWizardApp, { v11Session: {
+      start: { state, saveRevision: 7, sourceReceipt },
+      commit: async () => ({ ok: false as const, reason: 'source-changed' }),
+    } }))
+    expect(publicAreaTitle(wilderness)).toBe('Open Wilderness')
+    const carrying = { ...wilderness,
+      mireglass: { ...wilderness.mireglass,
+        herbHarvestCycles: [{ patchId: mireglassHerbPatches(seed)[0].id, cycle: 0 }] },
+      player: { ...wilderness.player,
+      inventory: [...wilderness.player.inventory, { itemId: 'marsh_herb' as const, quantity: 1 }] } }
+    const hint = publicHerbRouteHint(carrying)!
+    expect(hint).toContain('Greenway Outfitters')
+    expect(hint).toContain('sell 1 marsh herb for 3g')
+    const html = render(carrying)
+    expect(html).toContain(`<strong>Next:</strong> ${hint}`)
+    expect(html).toContain(`<b>Next:</b> ${hint}`)
+    expect(renderedProjection.map.guidance).toBe(`Next: ${hint}`)
+    const map = renderToStaticMarkup(createElement(WizardMap, { projection: renderedProjection, open: true,
+      onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+      closeRef: createRef<HTMLButtonElement>() }))
+    expect(map).toContain(`aria-label="Map guidance">Next: ${hint}`)
+
+    const wildernessHtml = render(wilderness)
+    expect(wildernessHtml).toContain('<strong>Next:</strong> Frontier marker.')
+    expect(wildernessHtml).toContain('<b>Next:</b> Frontier marker.')
+    expect(renderedProjection.map.guidance).toContain('Next: Frontier marker.')
+    const mireglassHtml = render(base)
+    expect(mireglassHtml).toContain(`<strong>Next:</strong> ${mireglassNextObjective(mireglassForPublicView(base)).label}`)
+    expect(renderedProjection.map.guidance).not.toContain('sell 1 marsh herb')
+    const node = highlandStoneNodes(seed)[0]
+    const highland = { ...base, player: { ...base.player, position: { ...node.tile.center } },
+      discoveredTileIds: [...new Set([...base.discoveredTileIds, node.tile.id])].sort() }
+    expect(publicAreaTitle(highland)).toBe('Highland Quarry')
+    expect(render(highland)).toContain('Quarry Crown')
+    expect(renderedProjection.map.guidance).not.toContain('sell 1 marsh herb')
   })
 })
 
@@ -1054,6 +1475,36 @@ describe('public v6 app boundary', () => {
     expect(result.state.tick).toBe(state.tick + 2)
     expect(result.events.map((event) => event.type)).toEqual(expect.arrayContaining(['item_equipped', 'player_looked', 'player_moved']))
     expect(result.state.player.position).not.toEqual(state.player.position)
+  })
+
+  it('keeps turning when a sampled forward step meets the fen wall', () => {
+    const channelSeed = 'mireglass-authority'
+    const fresh = createFreshPublicWorld(channelSeed, 'greenway-classic-v1')
+    const tile = worldTileAtGrid(channelSeed, -113, 100)
+    const state: PublicWorldState = { ...fresh, movementOwner: 'streamed',
+      player: { ...fresh.player, position: { x: -450.08, y: tile.center.y, z: 400 },
+        yaw: -Math.PI / 2 - 0.13 },
+      discoveredTileIds: [...new Set([...fresh.discoveredTileIds, tile.id])].sort() }
+    const result = advancePublicControls(state, [], Array.from({ length: 4 }, () => [-1, 1] as const))
+    expect(result.rejections).toHaveLength(4)
+    expect(result.rejections.every((rejection) => rejection.intentIndex === 1
+      && rejection.intentType === 'move' && rejection.code === 'fen_channel')).toBe(true)
+    expect(result.state.player.position).toEqual(state.player.position)
+    expect(result.state.player.yaw).toBeCloseTo(state.player.yaw + 0.52)
+    expect(result.state.tick).toBe(state.tick + 4)
+    expect(result.events.map((event) => event.type)).toEqual(Array(4).fill('player_looked'))
+  })
+
+  it('reuses frozen discovery history in Greenway read adapters without changing it', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    expect(greenwayForPublicView(fresh).discoveredTileIds).not.toBe(fresh.discoveredTileIds)
+    const discoveredTileIds = Object.freeze([...fresh.discoveredTileIds])
+    const state = { ...fresh, discoveredTileIds }
+    const before = [...discoveredTileIds]
+
+    expect(greenwayForPublicView(state).discoveredTileIds).toBe(discoveredTileIds)
+    expect(publicWorldViewProjection(state, [], null).visualWorld?.discoveredTileIds).toBe(discoveredTileIds)
+    expect(discoveredTileIds).toEqual(before)
   })
 
   it('commits a queued action even when blur arrives before the next movement sample', () => {

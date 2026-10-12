@@ -1,10 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, keyboardEventTime, keyboardMovementIntents, movementVector, releaseHeldControls, WizardSurface } from './WizardSurface'
+import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, focusGameplayAfterClick, keyboardEventTime, keyboardMovementIntents, movementVector, pointerAimTap, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
-import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder } from './WizardMap'
+import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
 import type { WizardViewProjection } from './contracts'
+import { publicV13WorkIntentStillReady } from '../PublicV13Controller'
+import { encodeDiscoveredTileIds } from '../domain/discoveryMask'
+import { createFreshPublicWorld } from '../domain/publicWorldState'
+import { withFreshPublicV7Herbs } from '../domain/publicWorldV7'
+import { withFreshPublicV9Camps } from '../domain/publicWorldV9State'
+import { withPublicV10TerrainRevision } from '../domain/publicWorldV10State'
+import { withPublicV11Highland } from '../domain/publicWorldV11State'
+import { withPublicV12Windstep } from '../domain/publicWorldV12State'
+import type { PublicV13Head } from '../domain/publicWorldV13Snapshot'
+import { emptyTerrainWorkLedger } from '../domain/terrainWorkLedger'
+import { parseTerrainWorkId, resolveTerrainWorkSite } from '../domain/terrainWorks'
+import { starterCliffCanonicalFace } from '../domain/starterCliffProfile'
 
 const projection = {
   routes: [
@@ -54,6 +66,126 @@ const sellProjection = {
     sellOffers: [{ itemId: 'logs', name: 'Greenway logs', quantity: 3, unitPrice: 4 }],
   }],
 } as WizardViewProjection
+const v29Mining = {
+  tools: { basicPickOwned: true, enchantedPickOwned: false, activePick: 'basic' as const },
+  offers: [{ tier: 'basic' as const, price: 35, owned: true, buyReason: 'Already owned.' },
+    { tier: 'enchanted' as const, price: 240, owned: false,
+      buyReason: 'Requires Excavation level 25.' }],
+  bids: { soil: 1, stone: 3, iron_ore: 8, gold_ore: 15, diamond: 60 },
+  bag: { soil: 2, stone: 1, iron_ore: 0, gold_ore: 0, diamond: 0 },
+  excavationLevel: 2, atOutfitters: true,
+} satisfies NonNullable<WizardViewProjection['v29Mining']>
+
+describe('V29-only mining controls', () => {
+  it('shows virtual pick ownership, main-hand state, mineral bids, and precise map guidance', () => {
+    const current: WizardViewProjection = { ...sellProjection, v29Mining,
+      v26ValleyRimSegments: [], v26TerrainBag: v29Mining.bag,
+      controllerActionsEnabled: true }
+    const hud = renderToStaticMarkup(createElement(WizardHud, { projection: current, onIntent: vi.fn() }))
+    expect(hud).toContain('Basic pick (active)')
+    expect(hud).toContain('Sell terrain bag')
+    expect(hud).toContain('stone ×1 · 3g each')
+    expect(hud).toContain('Requires Excavation level 25.')
+    expect(hud).not.toContain('Store sales are not available yet.')
+    const full = renderToStaticMarkup(createElement(WizardHud, { projection: {
+      ...current, backpack: { ...current.backpack, capacity: 3 } }, onIntent: vi.fn() }))
+    expect(full).toContain('Pack full.')
+    expect(full).toContain('sell terrain-bag soil, stone, or ore')
+    const map = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(map).toContain('Excavation level 2')
+    expect(map).toContain('Ore is not guaranteed')
+    expect(renderToStaticMarkup(createElement(WizardHud,
+      { projection: sellProjection, onIntent: vi.fn() }))).not.toContain('Mining picks')
+  })
+
+  it('emits only narrow V29 purchase, equip, and checked mineral-sale intents', () => {
+    const emitted: unknown[] = []
+    const current: WizardViewProjection = { ...sellProjection, coins: 100,
+      v29Mining: { ...v29Mining, tools: { ...v29Mining.tools, activePick: null },
+        offers: [{ tier: 'basic', price: 35, owned: false, buyReason: null },
+          v29Mining.offers[1]] } }
+    const controls = findElements(WizardHud({ projection: current,
+      onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
+    const click = (label: string) => {
+      const button = controls.find((element) => element.props['aria-label'] === label)
+      expect(button).toBeDefined()
+      expect(button!.props.disabled).toBe(false)
+      ;(button!.props.onClick as () => void)()
+    }
+    click('Buy basic pick for 35 gold')
+    click('Sell 1 soil')
+    expect(emitted).toEqual([
+      { type: 'v29.mining-tool', action: 'buy', tier: 'basic' },
+      { type: 'v29.sell-mineral', material: 'soil', quantity: 1 },
+    ])
+    const owned = { ...current, v29Mining: { ...v29Mining,
+      tools: { ...v29Mining.tools, activePick: null } } }
+    const equip = findElements(WizardHud({ projection: owned,
+      onIntent: (intent) => emitted.push(intent) }), (element) =>
+      element.props['aria-label'] === 'Equip basic pick')[0]
+    ;(equip.props.onClick as () => void)()
+    expect(emitted[2]).toEqual({ type: 'v29.mining-tool', action: 'equip', tier: 'basic' })
+  })
+
+  it('sends only the chosen geometric cell for a pick, not an assumed ore', () => {
+    const current: WizardViewProjection = { ...sellProjection, v29Mining,
+      v26ValleyRimSegments: [], openStoreId: null, controllerActionsEnabled: true }
+    const press = { id: 7, start: [10, 10] as const, primary: true, dragged: false }
+    const tap = () => pointerV29TerrainTapIntent(current, false, 'mine', press, 7,
+      [10, 10], () => ({ gx: 1, gz: 0 }))
+    expect(tap()).toEqual({ type: 'v29.deep-dig', gx: 1, gz: 0 })
+    expect(pointerV29TerrainTapIntent(current, false, 'mine', press, 7,
+      [10, 10], () => ({ gx: 3, gz: 4 }))).toBeNull()
+    expect(pointerV29TerrainTapIntent({ ...current, player: { ...current.player,
+      position: [0, 0, 1.01] } }, false, 'mine', press, 7,
+      [10, 10], () => ({ gx: 0, gz: -1 }))).toBeNull()
+    expect(pointerV29TerrainTapIntent(current, false, 'dig', press, 7,
+      [10, 10], () => ({ gx: 3, gz: 4 }))).toBeNull()
+    expect(pointerV29TerrainTapIntent({ ...current, v29Mining: undefined }, false,
+      'mine', press, 7, [10, 10], () => ({ gx: 3, gz: 4 }))).toBeNull()
+    expect(pointerV29TerrainTapIntent(current, true, 'mine', press, 7,
+      [10, 10], () => ({ gx: 3, gz: 4 }))).toBeNull()
+    const surface = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: current, onIntent: vi.fn() }))
+    expect(surface).toContain('Active basic pick')
+    expect(surface).toContain('geometric until the checked action')
+  })
+
+  it('tells a V29 Dig or Mine player to wait for an outline and explains an occluded no-target tap', () => {
+    const pickView: WizardViewProjection = { ...sellProjection, v29Mining,
+      v26ValleyRimSegments: [], openStoreId: null, controllerActionsEnabled: true }
+    const pickPanel = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: pickView, onIntent: vi.fn() }))
+    expect(pickPanel).toContain('Hover until a ground cell outlines, then tap.')
+    expect(V29_NO_GROUND_TARGET_HINT).toContain('No ground cell in reach targeted.')
+    expect(V29_NO_GROUND_TARGET_HINT).toContain('within 5 m')
+    expect(V29_NO_GROUND_TARGET_HINT).toContain('foreground tree or rock')
+    const press = { id: 1, start: [10, 10] as const, primary: true, dragged: false }
+    expect(pointerV29TerrainTapIntent(pickView, false, 'mine', press, 1,
+      [10, 10], () => null)).toBeNull()
+    const spadeView: WizardViewProjection = { ...pickView,
+      equipment: { ...pickView.equipment, mainHand: { id: 'spade', itemId: 'field_spade',
+        name: 'Field spade', quantity: 1 } },
+      v29Mining: { ...v29Mining, tools: { ...v29Mining.tools, activePick: null } } }
+    const spadePanel = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: spadeView, onIntent: vi.fn() }))
+    expect(spadePanel).toContain('Hover until a ground cell outlines, then tap Dig.')
+    expect(pointerV26TerrainTapIntent(spadeView, false, 'dig', press, 1,
+      [10, 10], () => null)).toBeNull()
+    const historical = renderToStaticMarkup(createElement(WizardSurface, { projection: {
+      ...spadeView, v29Mining: undefined }, onIntent: vi.fn() }))
+    expect(historical).not.toContain('Hover until a ground cell outlines')
+    const inPit = { ...pickView, v26OpenPitColumns: [{ gx: 0, gz: 0, openDepth: 1 }] }
+    expect(renderToStaticMarkup(createElement(WizardSurface,
+      { projection: inPit, onIntent: vi.fn() }))).toContain('Open pit view: step onto neighboring ground or orbit')
+    expect(renderToStaticMarkup(createElement(WizardSurface,
+      { projection: { ...inPit, player: { ...inPit.player, position: [4, 0, 0] } }, onIntent: vi.fn() })))
+      .not.toContain('Open pit view:')
+    expect(renderToStaticMarkup(createElement(WizardSurface,
+      { projection: { ...inPit, v29Mining: undefined }, onIntent: vi.fn() })))
+      .not.toContain('Open pit view:')
+  })
+})
 const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) => boolean): ReactElement<Props>[] => {
   if (Array.isArray(node)) return node.flatMap((child) => findElements(child, matches))
   if (!isValidElement<Props>(node)) return []
@@ -62,6 +194,547 @@ const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) =
 }
 
 describe('third-person control grammar', () => {
+  it('shows V31 Place soil only in V31 and submits a checked top-cell intent under spade gates', () => {
+    const ready: WizardViewProjection = { ...sellProjection, openStoreId: null,
+      controllerActionsEnabled: true, v26ValleyRimSegments: [],
+      equipment: { ...sellProjection.equipment, mainHand: { id: 'spade-1',
+        itemId: 'field_spade', name: 'Field spade', quantity: 1 } },
+      v31Soil: { raisedCells: [], soilAvailable: 2 } }
+    const press = { id: 7, start: [200, 100] as const, primary: true, dragged: false }
+    const picker = vi.fn(() => ({ gx: 1, gz: 0 }))
+    expect(pointerV31SoilPlaceTapIntent(ready, false, 'place-soil', press, 7,
+      [201, 101], picker)).toEqual({ type: 'v31.soil-place', gx: 1, gz: 0 })
+    for (const view of [{ ...ready, v31Soil: undefined },
+      { ...ready, v31Soil: { raisedCells: [], soilAvailable: 0 } },
+      { ...ready, controllerActionsEnabled: false },
+      { ...ready, equipment: sellProjection.equipment },
+      { ...ready, savedTerrainWorks: { context: 'works4-greenway' as const,
+        actionsEnabled: true, modeActive: true, builtSites: [], dugTileIds: [], preview: null } }]) {
+      expect(pointerV31SoilPlaceTapIntent(view, false, 'place-soil', press, 7,
+        [201, 101], picker)).toBeNull()
+    }
+    expect(pointerV31SoilPlaceTapIntent(ready, true, 'place-soil', press, 7,
+      [201, 101], picker)).toBeNull()
+    expect(pointerV31SoilPlaceTapIntent(ready, false, 'dig', press, 7,
+      [201, 101], picker)).toBeNull()
+    expect(pointerV31SoilPlaceTapIntent(ready, false, 'place-soil', press, 7,
+      [201, 101], () => null)).toBeNull()
+    expect(renderToStaticMarkup(createElement(WizardSurface,
+      { projection: ready, onIntent: vi.fn() }))).toContain('Place soil')
+    expect(renderToStaticMarkup(createElement(WizardSurface,
+      { projection: { ...ready, v31Soil: undefined }, onIntent: vi.fn() })))
+      .not.toContain('Place soil')
+  })
+
+  it('dispatches V26 terrain only for a spade-equipped primary tap with world actions ready', () => {
+    const ready = { ...sellProjection, openStoreId: null, controllerActionsEnabled: true,
+      v26ValleyRimSegments: [], equipment: { ...sellProjection.equipment,
+        mainHand: { id: 'spade-1', itemId: 'field_spade', name: 'Field spade', quantity: 1 } } }
+    const press = { id: 7, start: [200, 100] as const, primary: true, dragged: false }
+    const end = [202, 101] as const
+    const picker = vi.fn(() => ({ gx: 3, gz: 1 }))
+    expect(pointerV26TerrainKind(ready, false, 'dig')).toBe('dig')
+    expect(pointerV26TerrainTapIntent(ready, false, 'dig', press, 7, end, picker))
+      .toEqual({ type: 'v26.terrain', kind: 'dig', gx: 3, gz: 1 })
+    expect(pointerV26TerrainTapIntent(ready, false, 'fill', press, 7, end, picker))
+      .toEqual({ type: 'v26.terrain', kind: 'fill', gx: 3, gz: 1 })
+    picker.mockClear()
+    for (const [candidate, mapOpen, mode, pointer] of [
+      [ready, true, 'dig', press], [ready, false, null, press],
+      [{ ...ready, controllerActionsEnabled: false }, false, 'dig', press],
+      [{ ...ready, unavailableActions: true }, false, 'dig', press],
+      [{ ...ready, openStoreId: 'store-greenway' }, false, 'dig', press],
+      [{ ...ready, v26ValleyRimSegments: undefined }, false, 'dig', press],
+      [{ ...ready, equipment: sellProjection.equipment }, false, 'dig', press],
+      [{ ...ready, savedTerrainWorks: { context: 'works4-greenway', actionsEnabled: true,
+        modeActive: true, selectedKind: 'bridge', builtSites: [], dugTileIds: [], preview: null } }, false, 'dig', press],
+      [ready, false, 'dig', { ...press, dragged: true }],
+      [ready, false, 'dig', { ...press, primary: false }],
+    ] as const) {
+      expect(pointerV26TerrainTapIntent(candidate as WizardViewProjection, mapOpen, mode,
+        pointer, 7, end, picker)).toBeNull()
+    }
+    expect(pointerV26TerrainTapIntent(ready, false, 'dig', press, 7, [208, 101], picker))
+      .toBeNull()
+    expect(picker).not.toHaveBeenCalled()
+    expect(pointerV26TerrainTapIntent(ready, false, 'dig', press, 7, end, () => null)).toBeNull()
+    expect(pointerV26TerrainTapIntent(ready, false, 'dig', press, 7, end,
+      () => ({ gx: Number.NaN, gz: 1 }))).toBeNull()
+    expect(pointerV26TerrainTapIntent(ready, false, 'dig', press, 7, end,
+      () => ({ gx: Number.MAX_SAFE_INTEGER, gz: 1 }))).toBeNull()
+  })
+
+  it('defaults an initially equipped spade to Dig and keeps the V26 controls', () => {
+    const current = { ...sellProjection, openStoreId: null, controllerActionsEnabled: true,
+      v26ValleyRimSegments: [] } as WizardViewProjection
+    const missing = renderToStaticMarkup(createElement(WizardSurface, { projection: current, onIntent: vi.fn() }))
+    expect(missing).toContain('aria-label="Terrain tools"')
+    expect(missing).toContain('Equip a field spade to work the ground.')
+    expect(missing).toContain('min-height:44px')
+    const equipped = { ...current, equipment: { ...current.equipment,
+      mainHand: { id: 'spade-1', itemId: 'field_spade', name: 'Field spade', quantity: 1 } } }
+    const enabled = renderToStaticMarkup(createElement(WizardSurface, { projection: equipped, onIntent: vi.fn() }))
+    expect(enabled).toContain('Tap revealed dry ground to dig one layer.')
+    expect(enabled).toMatch(/aria-pressed="true"[^>]*>Dig<\/button>/)
+    expect(enabled).toMatch(/aria-pressed="false"[^>]*>Fill<\/button>/)
+    expect(enabled).toContain('equip spade to dig, choose Fill to refill')
+    expect(renderToStaticMarkup(createElement(WizardSurface, { projection: sellProjection, onIntent: vi.fn() })))
+      .not.toContain('aria-label="Terrain tools"')
+  })
+
+  it('selects Dig on equip and re-equip while preserving explicit Fill and Off until unequip', () => {
+    expect(terrainModeAfterSpadeChange(false, true, null)).toBe('dig')
+    expect(terrainModeAfterSpadeChange(true, true, 'fill')).toBe('fill')
+    expect(terrainModeAfterSpadeChange(true, true, null)).toBeNull()
+    expect(terrainModeAfterSpadeChange(true, false, 'fill')).toBeNull()
+    expect(terrainModeAfterSpadeChange(false, true, null)).toBe('dig')
+  })
+
+  it('gates direct pointer aim to active, healthy Greenway Bridge or Ladder and keeps orbit drags distinct', () => {
+    const saved = { context: 'works4-greenway' as const, actionsEnabled: true,
+      modeActive: true, selectedKind: 'bridge' as const, builtSites: [], dugTileIds: [], preview: null }
+    const current = { ...projection, controllerActionsEnabled: true,
+      savedTerrainWorks: saved } as WizardViewProjection
+    expect(pointerWorkAimKind(current, false)).toBe('bridge')
+    expect(pointerWorkAimKind({ ...current, savedTerrainWorks: { ...saved, selectedKind: 'ladder' } }, false)).toBe('ladder')
+    expect(pointerWorkAimKind(current, true)).toBeNull()
+    expect(pointerWorkAimKind({ ...current, controllerActionsEnabled: false }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...current, unavailableActions: true }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...current, savedTerrainWorks: { ...saved, actionsEnabled: false } }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...current, savedTerrainWorks: { ...saved, modeActive: false } }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...current, savedTerrainWorks: { ...saved, selectedKind: 'dig' } }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...current, savedTerrainWorks: { ...saved, context: 'works3-greenway' } }, false)).toBeNull()
+    const river = { ...current, savedTerrainWorks: { ...saved, context: 'v28-river' as const } }
+    expect(pointerWorkAimKind(river, false)).toBe('river-bridge')
+    expect(pointerWorkAimIntent('river-bridge', -56))
+      .toEqual({ type: 'saved-work.aim', aimX: -56 })
+    expect(pointerWorkAimKind({ ...river, savedTerrainWorks: {
+      ...river.savedTerrainWorks!, selectedKind: 'ladder' } }, false)).toBeNull()
+    expect(pointerMovedBeyondOrbitThreshold([10, 20], [16, 20])).toBe(false)
+    expect(pointerMovedBeyondOrbitThreshold([10, 20], [16.1, 20])).toBe(true)
+    const press = { id: 1, start: [10, 20] as const, primary: true, dragged: false }
+    expect(pointerAimTap(press, 1, [14, 20])).toBe(true)
+    expect(pointerAimTap(press, 1, [17, 20])).toBe(false)
+    expect(pointerAimTap({ ...press, dragged: true }, 1, [10, 20])).toBe(false)
+    expect(pointerAimTap({ ...press, primary: false }, 1, [10, 20])).toBe(false)
+    expect(pointerAimTap(press, 2, [10, 20])).toBe(false)
+    expect(pointerAimTap(null, 1, [10, 20])).toBe(false)
+  })
+
+  it('routes a primary west-face touch tap to Z only while regional Works Ladder is active', () => {
+    const saved = { actionsEnabled: true, modeActive: true, selectedKind: 'ladder' as const,
+      builtSites: [], dugTileIds: [], preview: null }
+    const regional = { ...projection, controllerActionsEnabled: true, unavailableActions: true,
+      savedTerrainWorks: saved, regionalLadders: { builtSites: [], preview: null },
+      visualWorld: { discoveredTileIds: [] } } as unknown as WizardViewProjection
+    expect(pointerWorkAimKind(regional, false)).toBe('regional-ladder')
+    expect(pointerWorkAimKind(regional, true)).toBeNull()
+    expect(pointerWorkAimKind({ ...regional, controllerActionsEnabled: false }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...regional, regionalLadders: undefined }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...regional, savedTerrainWorks: { ...saved,
+      modeActive: false } }, false)).toBeNull()
+    expect(pointerWorkAimKind({ ...regional, savedTerrainWorks: { ...saved,
+      selectedKind: 'bridge' } }, false)).toBeNull()
+    const touch = { id: 7, start: [200, 100] as const, primary: true, dragged: false }
+    expect(pointerAimTap(touch, 7, [202, 101])).toBe(true)
+    expect(pointerAimTap({ ...touch, dragged: true }, 7, [202, 101])).toBe(false)
+    expect(pointerAimTap(touch, 7, [208, 101])).toBe(false)
+    expect(pointerWorkAimIntent('regional-ladder', 430.6))
+      .toEqual({ type: 'saved-work.aim-west', aimZ: 430.6 })
+    expect(pointerWorkAimIntent('bridge', 1.5)).toEqual({ type: 'saved-work.aim', aimX: 1.5 })
+    expect(pointerWorkAimIntent('ladder', -2)).toEqual({ type: 'saved-work.aim', aimX: -2 })
+    expect(pointerWorkAimIntent('regional-ladder', null)).toBeNull()
+    expect(pointerWorkAimIntent('regional-ladder', Number.NaN)).toBeNull()
+  })
+
+  it('returns pointer button clicks to gameplay without moving keyboard, slider, map or touch focus', () => {
+    const root = { focus: vi.fn() } as unknown as HTMLElement
+    const target = (hudButton: boolean, touch = false) => ({
+      closest: (selector: string) => selector === '.wr-hud button, .wr-backpack-toggle, .wr-v26-terrain button'
+        ? hudButton ? {} : null : touch ? {} : null,
+    }) as unknown as Element
+    focusGameplayAfterClick(root, target(true), 1)
+    expect(root.focus).toHaveBeenCalledWith({ preventScroll: true })
+    root.focus = vi.fn()
+    focusGameplayAfterClick(root, target(true), 0)
+    focusGameplayAfterClick(root, target(false), 1)
+    focusGameplayAfterClick(root, target(true, true), 1)
+    expect(root.focus).not.toHaveBeenCalled()
+  })
+
+  it('keeps gameplay keys on buttons while preserving typing, range and Space activation', () => {
+    const key = (code: string, target: Partial<HTMLInputElement>) => ({ code, repeat: false,
+      target: target as EventTarget })
+    const button = { tagName: 'BUTTON', closest: () => ({}) }
+    expect(shouldHandleGameplayKey(key('KeyW', button))).toBe(true)
+    expect(shouldHandleGameplayKey(key('KeyB', button))).toBe(true)
+    expect(shouldHandleGameplayKey(key('KeyF', button))).toBe(true)
+    expect(shouldHandleGameplayKey(key('Space', button))).toBe(false)
+    expect(shouldHandleGameplayKey(key('Space', { tagName: 'DIV', closest: () => null }))).toBe(true)
+    expect(shouldHandleGameplayKey(key('KeyW', { tagName: 'INPUT', type: 'range' }))).toBe(false)
+    expect(shouldHandleGameplayKey(key('KeyB', { tagName: 'INPUT', type: 'text' }))).toBe(false)
+    expect(shouldHandleGameplayKey(key('KeyF', { tagName: 'TEXTAREA' }))).toBe(false)
+    expect(shouldHandleGameplayKey(key('KeyW', { tagName: 'DIV', isContentEditable: true }))).toBe(false)
+    expect(shouldHandleGameplayKey({ ...key('KeyW', button), repeat: true })).toBe(false)
+  })
+
+  it('rechecks an immediate turn or move before accepting the formerly aimed F intent', () => {
+    const seed = 'greenway-alpha'
+    const bridge = resolveTerrainWorkSite(seed, 'works1:bridge:-102:92:z')!
+    if (bridge.kind !== 'bridge') throw new Error('Missing bridge fixture')
+    const source = withPublicV12Windstep(withPublicV11Highland(withPublicV10TerrainRevision(
+      withFreshPublicV9Camps(withFreshPublicV7Herbs(
+        createFreshPublicWorld(seed, 'greenway-classic-v1'))))))
+    const { discoveredTileIds, ...legacy } = source
+    const midpoint = { x: (bridge.from.x + bridge.to.x) / 2,
+      z: (bridge.from.z + bridge.to.z) / 2 }
+    const yaw = Math.atan2(bridge.from.x - midpoint.x, bridge.from.z - midpoint.z)
+    const state: PublicV13Head['state'] = { ...legacy, movementOwner: 'streamed',
+      discoveryMask: encodeDiscoveredTileIds([...new Set([...discoveredTileIds,
+        ...bridge.footprintTileIds])].sort()), terrainWorks: emptyTerrainWorkLedger(),
+      player: { ...legacy.player, position: { ...bridge.from }, yaw,
+        backpackCapacity: 30, inventory: [...legacy.player.inventory,
+          { itemId: 'logs', quantity: 12 }] } }
+    const anchor = parseTerrainWorkId(bridge.id)!
+    const window = { minGX: anchor.gx - 7, maxGX: anchor.gx + 8,
+      minGZ: anchor.gz - 7, maxGZ: anchor.gz + 8 }
+    const stillReady = (current: PublicV13Head['state']) =>
+      publicV13WorkIntentStillReady(current, 'bridge', window, [bridge], bridge.id)
+    expect(stillReady(state)).toBe(true)
+    const oldF = savedWorkKeyboardIntent('KeyF', { actionsEnabled: true, modeActive: true,
+      builtSites: [], dugTileIds: [], preview: { selected: { site: bridge, angleRadians: 0,
+        distanceMeters: 2, rejection: null, reason: 'Ready', benefit: 'Costs 8 logs' },
+        nearby: [], guidance: null } })
+    expect(oldF).toEqual({ type: 'saved-work.confirm', id: bridge.id })
+    expect(publicV13WorkIntentStillReady(state, 'ladder', window, [bridge], bridge.id)).toBe(false)
+    expect(stillReady({ ...state, player: { ...state.player, yaw: yaw + Math.PI } })).toBe(false)
+    expect(stillReady({ ...state, player: { ...state.player,
+      position: { ...state.player.position, z: state.player.position.z + 5 } } })).toBe(false)
+  })
+
+  it('maps B, 1/2/3, F and Escape only through the visible Works mode', () => {
+    const bridge = resolveTerrainWorkSite('greenway-alpha', 'works1:bridge:-102:92:z')!
+    const off = { actionsEnabled: true, modeActive: false, selectedKind: 'bridge' as const,
+      builtSites: [], dugTileIds: [], preview: null }
+    expect(savedWorkKeyboardIntent('KeyB', off)).toEqual({ type: 'saved-work.mode', active: true })
+    expect(savedWorkKeyboardIntent('Digit1', off)).toBeNull()
+    expect(savedWorkKeyboardIntent('KeyF', off)).toBeNull()
+    const choice = { site: bridge, angleRadians: 0, distanceMeters: 2,
+      rejection: null, reason: 'Ready to build here.', benefit: 'Costs 8 logs.' }
+    const on = { ...off, modeActive: true,
+      preview: { selected: choice, nearby: [choice], guidance: null } }
+    expect(savedWorkKeyboardIntent('KeyB', on)).toEqual({ type: 'saved-work.mode', active: false })
+    expect(savedWorkKeyboardIntent('Digit1', on)).toEqual({ type: 'saved-work.kind', kind: 'bridge' })
+    expect(savedWorkKeyboardIntent('Digit2', on)).toEqual({ type: 'saved-work.kind', kind: 'ladder' })
+    expect(savedWorkKeyboardIntent('Digit2', { ...on, context: 'starter-greenway' })).toBeNull()
+    expect(savedWorkKeyboardIntent('Digit2', { ...on, context: 'works3-greenway' }))
+      .toEqual({ type: 'saved-work.kind', kind: 'ladder' })
+    expect(savedWorkKeyboardIntent('Digit1', { ...on, context: 'starter-greenway' }))
+      .toEqual({ type: 'saved-work.kind', kind: 'bridge' })
+    expect(savedWorkKeyboardIntent('Digit3', on)).toEqual({ type: 'saved-work.kind', kind: 'dig' })
+    expect(savedWorkKeyboardIntent('Digit3', on, true)).toBeNull()
+    expect(savedWorkKeyboardIntent('KeyF', on)).toEqual({ type: 'saved-work.confirm', id: bridge.id })
+    expect(savedWorkKeyboardIntent('KeyF', on, true)).toEqual({ type: 'saved-work.confirm', id: bridge.id })
+    const v28 = { ...on, context: 'v28-river' as const, preview: { ...on.preview,
+      selected: { ...choice, site: { ...bridge, id: 'works6:river-bridge:-14' } } } }
+    expect(savedWorkKeyboardIntent('KeyB', v28)).toEqual({ type: 'saved-work.mode', active: false })
+    expect(savedWorkKeyboardIntent('Digit1', v28)).toEqual({ type: 'saved-work.kind', kind: 'bridge' })
+    expect(savedWorkKeyboardIntent('KeyF', v28))
+      .toEqual({ type: 'saved-work.confirm', id: 'works6:river-bridge:-14' })
+    expect(savedWorkKeyboardIntent('KeyF', { ...on, selectedKind: 'dig' as const }, true)).toBeNull()
+    expect(savedWorkKeyboardIntent('Escape', on)).toEqual({ type: 'saved-work.mode', active: false })
+    expect(savedWorkKeyboardIntent('KeyF', { ...on, preview: { ...on.preview,
+      selected: { ...choice, rejection: 'not_owned' as const } } })).toBeNull()
+    expect(savedWorkKeyboardIntent('KeyF', { ...on, actionsEnabled: false })).toBeNull()
+    expect(savedWorkKeyboardIntent('KeyB', { ...on, actionsEnabled: false })).toBeNull()
+    expect(savedWorkKeyboardIntent('KeyB', { ...on, preview: null, modeActive: false,
+      actionsEnabled: false })).toBeNull()
+  })
+
+  it('offers collapsed novice work guidance in Greenway without changing the compact map', () => {
+    const current = { ...projection, savedTerrainWorks: {
+      actionsEnabled: false, builtSites: [], dugTileIds: [], preview: null,
+    } } as WizardViewProjection
+    const expanded = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(expanded).toContain('<details class="wr-map-work-guide"><summary>How to reach Mireglass and use Works</summary>')
+    expect(expanded).toContain('follow the west trail (⇦) through the dry gap')
+    expect(expanded).toContain('Bring 8 logs')
+    expect(expanded).toContain('Bring 4 logs')
+    expect(expanded).toContain('Own and equip a field spade')
+    expect(expanded).toContain('Saved building and digging become available beyond Greenway.')
+    expect(expanded).toContain('min-height:44px')
+    expect(expanded).toContain('summary:focus-visible')
+    expect(expanded).toContain('overflow-wrap:anywhere')
+    expect(renderToStaticMarkup(createElement(WizardMap, { ...mapProps(false), projection: current }))).toBe(renderMap(false))
+    expect(renderMap(true)).not.toContain('wr-map-work-guide')
+  })
+
+  it('explains all three checked v16 Greenway Works without changing v15 map guidance', () => {
+    const saved = { actionsEnabled: true, modeActive: true, selectedKind: 'ladder' as const,
+      builtSites: [], dugTileIds: [], preview: null }
+    const v16 = { ...projection, savedTerrainWorks: {
+      ...saved, context: 'works3-greenway' as const } } as WizardViewProjection
+    const html = renderToStaticMarkup(createElement(WizardMap,
+      { ...mapProps(true), projection: v16 }))
+    expect(html).toContain('How to bridge, climb, and dig in Greenway')
+    expect(html).toContain('Ladder with 2')
+    expect(html).toContain('clear off-center ladders')
+    expect(html).not.toContain('The separate starter ladder climbs the north cliff.')
+    const v15 = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true),
+      projection: { ...v16, savedTerrainWorks: {
+        ...saved, context: 'starter-greenway' } } }))
+    expect(v15).toContain('How to cross the creek and dig')
+    expect(v15).toContain('choose Bridge with 1 or Dig with 3')
+    expect(v15).not.toContain('Ladder with 2')
+  })
+
+  it('shows precise dig range and adjacent stance in the v16 HUD and map', () => {
+    const dig = resolveTerrainWorkSite('greenway-alpha', 'tile--64-76')
+    if (dig?.kind !== 'dig') throw new Error('Missing dig fixture')
+    const reason = 'Stand beside the marked dig ground, not on it; choose another patch if it overlaps saved works.'
+    const choice = { site: dig, distanceMeters: 3.75, angleRadians: 0,
+      rejection: 'occupied' as const, reason, benefit: 'One stone and 30 Excavation XP.' }
+    const current = { ...sellProjection,
+      player: { ...sellProjection.player,
+        position: [dig.center.x + 3.75, dig.center.y, dig.center.z] as const },
+      savedTerrainWorks: { context: 'works3-greenway' as const,
+        actionsEnabled: true, modeActive: true, selectedKind: 'dig' as const,
+        builtSites: [], dugTileIds: [],
+        preview: { selected: choice, nearby: [choice], guidance: null } } }
+    const hud = renderToStaticMarkup(createElement(WizardHud,
+      { projection: current, onIntent: vi.fn() }))
+    expect(hud).toContain('3.75 m on map')
+    expect(hud).toContain(reason)
+    expect(hud).toContain('within 4 m, not on it')
+    expect(hud).not.toContain('Step beside the ghost route')
+    const map = renderToStaticMarkup(createElement(WizardMap,
+      { ...mapProps(true), projection: current }))
+    expect(map).toContain('Bridge and ladder reach is 3 m')
+    expect(map).toContain('Stand beside marked dry loam within 4 m, not on it.')
+    expect(map).toContain(reason)
+  })
+
+  it('explains the v15 south creek without the streamed Mireglass work guide', () => {
+    const current = { ...projection, savedTerrainWorks: {
+      context: 'starter-greenway', actionsEnabled: true, modeActive: false,
+      builtSites: [], dugTileIds: [], preview: null,
+    } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardMap,
+      { ...mapProps(true), projection: current }))
+    expect(markup).toContain('How to cross the creek and dig')
+    expect(markup).toContain('south of the starting area')
+    expect(markup).toContain('The separate starter ladder climbs the north cliff')
+    expect(markup).not.toContain('How to reach Mireglass and use Works')
+  })
+
+  it('uses only locally discovered preview choices for streamed map work guidance', () => {
+    const bridge = resolveTerrainWorkSite('greenway-alpha', 'works1:bridge:-102:92:z')!
+    const current = { ...projection, unavailableActions: true, routes: [], buildSites: [],
+      savedTerrainWorks: { actionsEnabled: true, selectedKind: 'bridge', builtSites: [], dugTileIds: [],
+        preview: { selected: null, nearby: [{ site: bridge, angleRadians: 1, distanceMeters: 6.25,
+          rejection: 'too_far', reason: 'Move within 3 m of the source foot.',
+          benefit: 'Cross a shallow Fen channel. Costs 8 logs and earns 80 Construction XP.' }],
+        guidance: 'Explore the far bank before previewing a bridge.' } },
+    } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup).toContain('Bridge nearby (6.3 m): Cross a shallow Fen channel.')
+    expect(markup).toContain('Explore the far bank before previewing a bridge.')
+    expect(markup).toContain('Switch kind if the wrong work is selected')
+    expect(markup).toContain('Built supports and dug ground stay in your save.')
+    expect(markup).not.toContain(bridge.id)
+    expect(markup).not.toContain('Gather logs and equip a field spade before heading west.')
+    expect(markup).toContain('fog: unexplored')
+    expect(markup).not.toContain('fog: unexplored, route build site')
+  })
+
+  it('distinguishes paused streamed saves from Greenway travel requirements', () => {
+    const current = { ...projection, unavailableActions: true, savedTerrainWorks: {
+      actionsEnabled: false, builtSites: [], dugTileIds: [], preview: null,
+    } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
+    expect(markup).toContain('Saved building and digging are paused. Check the save status')
+    expect(markup).toContain('moving to another site will not enable them')
+    expect(markup).not.toContain('Explore beyond Greenway to use the Works panel')
+    expect(markup).not.toContain('Saved building and digging become available beyond Greenway')
+    expect(markup).not.toContain('before heading west')
+    expect(markup).toContain('fog: unexplored')
+    expect(markup).not.toContain('fog: unexplored, route build site')
+  })
+
+  it('keeps paused Works closed and sends exact touch mode, kind, confirm and cancel intents', () => {
+    const bridge = resolveTerrainWorkSite('greenway-alpha', 'works1:bridge:-102:92:z')
+    if (!bridge || bridge.kind !== 'bridge') throw new Error('Missing bridge fixture')
+    const choice = { site: bridge, angleRadians: 0, distanceMeters: 2, rejection: 'not_owned' as const,
+      reason: 'Gather 8 logs before building.', benefit: 'Cross a shallow Fen channel. Costs 8 logs and earns 80 Construction XP.' }
+    const current = { ...sellProjection, openStoreId: null, controllerActionsEnabled: false,
+      windwardStep: { learned: true, glyph: null, activeSeconds: 0, cooldownSeconds: 0,
+        canCast: false, unavailableReason: 'Windward Step actions are unavailable in this preview.' },
+      savedTerrainWorks: {
+      actionsEnabled: false, modeActive: false, builtSites: [], dugTileIds: [], preview: null,
+    } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: current, onIntent: vi.fn() }))
+    expect(markup).toContain('aria-label="Saved terrain works"')
+    expect(markup).toContain('Bridge: cross a Fen channel')
+    expect(markup).toContain('Ladder: climb a Slate cliff')
+    expect(markup).toContain('Dig: lower loam')
+    expect(markup).toContain('min-height:44px')
+    expect(markup).toContain('Saved Works paused. Check the save status')
+    expect(markup).not.toContain('aria-label="Confirm aimed saved work"')
+    expect(markup).not.toContain('aria-label="Choose saved work kind"')
+    expect(markup).not.toContain('Unsaved terrain-work trial')
+    expect(markup).not.toContain('Kit:')
+    expect(markup).toContain('Windward Step actions are unavailable in this preview.')
+    expect(markup).not.toContain('Follow the dry Highland trail to cast.')
+    expect(renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current })))
+      .toContain('Saved local works: 0 bridge or ladder, 0 dug cells.')
+    const pausedToggle = findElements(WizardHud({ projection: current, onIntent: vi.fn() }),
+      (element) => element.type === 'button' && element.props['aria-label'] === 'Open Works mode')
+    expect(pausedToggle).toHaveLength(1)
+    expect(pausedToggle[0].props.disabled).toBe(true)
+    const ready = { ...choice, rejection: null, reason: 'Ready to build here.' }
+    const off = { ...current, controllerActionsEnabled: true, savedTerrainWorks: { ...current.savedTerrainWorks!,
+      selectedKind: 'bridge' as const, actionsEnabled: true, modeActive: false } }
+    const emitted: unknown[] = []
+    const openButton = findElements(WizardHud({ projection: off, onIntent: (intent) => emitted.push(intent) }),
+      (element) => element.type === 'button' && element.props['aria-label'] === 'Open Works mode')[0]
+    expect(openButton.props.disabled).toBe(false)
+    ;(openButton.props.onClick as () => void)()
+    const enabled = { ...off, savedTerrainWorks: { ...off.savedTerrainWorks,
+      modeActive: true,
+      preview: { selected: ready, nearby: [ready], guidance: null } } }
+    const buttons = findElements(WizardHud({ projection: enabled, onIntent: (intent) => emitted.push(intent) }),
+      (element) => element.type === 'button')
+    ;(buttons.find((button) => button.props.children === 'ladder')!.props.onClick as () => void)()
+    ;(buttons.find((button) => button.props['aria-label'] === 'Confirm aimed saved work')!.props.onClick as () => void)()
+    ;(buttons.find((button) => button.props['aria-label'] === 'Cancel Works mode')!.props.onClick as () => void)()
+    expect(emitted).toEqual([{ type: 'saved-work.mode', active: true },
+      { type: 'saved-work.kind', kind: 'ladder' },
+      { type: 'saved-work.confirm', id: bridge.id }, { type: 'saved-work.mode', active: false }])
+    const enabledMarkup = renderToStaticMarkup(createElement(WizardHud, { projection: enabled, onIntent: vi.fn() }))
+    expect(enabledMarkup).toContain('aria-label="Choose saved work kind"')
+    expect(enabledMarkup).toContain('aria-label="Confirm aimed saved work"')
+    expect(enabledMarkup).toMatch(/class="wr-saved-work-actions">.*aria-label="Confirm aimed saved work".*aria-label="Cancel Works mode".*<\/div>/)
+    expect(enabledMarkup).not.toContain('<details>')
+    const surface = renderToStaticMarkup(createElement(WizardSurface, { projection: enabled, onIntent: vi.fn() }))
+    expect(surface).toContain('data-work-mode="true"')
+    expect(surface).toContain('.wr-saved-work-actions{position:sticky;bottom:0;z-index:1;display:grid;gap:6px;')
+    const works4 = renderToStaticMarkup(createElement(WizardHud, { projection: { ...enabled,
+      savedTerrainWorks: { ...enabled.savedTerrainWorks, context: 'works4-greenway', aimX: 0 } },
+    onIntent: vi.fn() }))
+    expect(works4).toContain('id="wizard-work-aim" type="range"')
+    expect(works4).toContain('class="wr-saved-work-actions"')
+    expect(works4).toContain('aria-label="Confirm selected saved work"')
+    const short = renderToStaticMarkup(createElement(WizardSurface, { projection: current, onIntent: vi.fn() }))
+    expect(short).toContain('@media(max-width:719px) and (max-height:400px){.wr-saved-work-panel{top:120px')
+    expect(short).toContain('.wr-saved-work-panel:has(details[open]){z-index:30;left:8px;right:8px;top:8px')
+    expect(short).toContain('.wr-surface:has(.wr-saved-work-panel details[open]) .wr-touch')
+  })
+
+  it('guides healthy Greenway players west without calling their save paused or enabling Works', () => {
+    const current = { ...sellProjection, openStoreId: null, controllerActionsEnabled: true,
+      savedTerrainWorks: { actionsEnabled: false, selectedKind: 'bridge' as const,
+        builtSites: [], dugTileIds: [], preview: null } } as WizardViewProjection
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: current, onIntent: vi.fn() }))
+    expect(markup).toContain('Works start in Mireglass. Follow the ⇦ west trail')
+    expect(markup).toContain('then choose Bridge, Ladder, or Dig at discovered ground.')
+    expect(markup).not.toContain('Saved Works paused')
+    expect(markup).not.toContain('Check the save status')
+    expect(markup).not.toContain('aria-label="Confirm aimed saved work"')
+    expect(markup).not.toContain('aria-label="Choose saved work kind"')
+    expect(markup).toContain('disabled="" aria-label="Open Works mode"')
+  })
+
+  it('shows a discovered ready Slate ladder and blocked dig without leaking hidden work sites', () => {
+    const ladder = resolveTerrainWorkSite('greenway-alpha', 'works1:ladder:-103:108:W')!
+    const dig = resolveTerrainWorkSite('greenway-alpha', 'tile--64-76')!
+    const ready = { site: ladder, angleRadians: 0, distanceMeters: 2, rejection: null,
+      reason: 'Ready to build here.', benefit: 'Climb a 1.56 m Slate cliff. Costs 4 logs and earns 60 Construction XP.' }
+    const blocked = { site: dig, angleRadians: 0, distanceMeters: 2,
+      rejection: 'requires_spade' as const, reason: 'Own and equip a field spade to dig.',
+      benefit: 'Lower loam by 0.24 m and gain 1 stone plus 30 Excavation XP. Stone and 4 logs can make a camp.' }
+    const base = { ...sellProjection, openStoreId: null, unavailableActions: true } as WizardViewProjection
+    const ladderView = { ...base, savedTerrainWorks: { actionsEnabled: true, modeActive: true,
+      selectedKind: 'ladder' as const, builtSites: [], dugTileIds: [],
+      preview: { selected: ready, nearby: [ready], guidance: null } } }
+    const ladderHud = renderToStaticMarkup(createElement(WizardHud, { projection: ladderView, onIntent: vi.fn() }))
+    expect(ladderHud).toContain('Slate ladder: Ready to build here.')
+    expect(ladderHud).toContain('Confirm Slate ladder')
+    expect(ladderHud).not.toContain(ladder.id)
+    const digView = { ...base, savedTerrainWorks: { ...ladderView.savedTerrainWorks,
+      selectedKind: 'dig' as const, preview: { selected: blocked, nearby: [blocked], guidance: null } } }
+    const digHud = renderToStaticMarkup(createElement(WizardHud, { projection: digView, onIntent: vi.fn() }))
+    expect(digHud).toContain('Own and equip a field spade to dig.')
+    expect(digHud).toContain('gain 1 stone plus 30 Excavation XP')
+    expect(digHud).toContain('disabled="" aria-label="Confirm aimed saved work"')
+    expect(digHud).not.toContain(dig.id)
+    const map = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: digView }))
+    expect(map).toContain('aria-label="Next discovered work"')
+    expect(map).toContain('Dig nearby: Own and equip a field spade to dig.')
+    expect(map).not.toContain(dig.id)
+  })
+
+  it('keeps unsupported streamed legacy controls read-only without changing older projections', () => {
+    const streamed = { ...sellProjection, unavailableActions: true as const,
+      gait: { pace: 'run' as const, canRun: true, reason: 'Boots equipped' },
+      learnedSpellIds: ['wayfinder_glow'] as WizardViewProjection['learnedSpellIds'],
+      nearbyInteraction: { kind: 'resource' as const, targetId: 'tree-1', label: 'Tree', action: 'Chop tree', actionable: true },
+      inscriptions: [{ id: 'greenway_waystone', name: 'Old stone', position: [0, 0, 0] as const,
+        spellId: 'wayfinder_glow', studied: false }],
+      digSites: [{ id: 'practice_mound', name: 'Cache', position: [0, 0, 0] as const,
+        revealed: true, excavated: false, minimumExcavationLevel: 1 }],
+      equipment: { ...sellProjection.equipment, mainHand: { id: 'spade-1', itemId: 'field_spade',
+        name: 'Field spade', quantity: 1 } },
+      backpack: { capacity: 20, stacks: [{ id: 'spade-1', itemId: 'field_spade', name: 'Field spade', quantity: 1,
+        equippableSlots: ['mainHand' as const] }] } } as WizardViewProjection
+    const controls = findElements(WizardHud({ projection: streamed, onIntent: vi.fn() }),
+      (element) => element.type === 'button')
+    expect(controls.find((button) => button.props['aria-label'] === 'Walk')?.props.disabled).toBe(false)
+    for (const label of ['Cast Wayfinder Glow', 'Unequip Field spade']) {
+      expect(controls.find((button) => button.props['aria-label'] === label)?.props.disabled).toBe(true)
+    }
+    expect(controls.find((button) => button.props.children === 'List')?.props.disabled).toBe(true)
+    expect(controls.some((button) => button.props['aria-label'] === 'Study Old stone')).toBe(false)
+    expect(controls.some((button) => button.props['aria-label'] === 'Excavate Cache')).toBe(false)
+    expect(controls.some((button) => button.props['data-actionable'] === 'true')).toBe(false)
+    expect(renderToStaticMarkup(createElement(WizardHud, { projection: streamed, onIntent: vi.fn() })))
+      .toContain('Interaction unavailable here')
+    const eligible = { ...streamed, unavailableActions: undefined } as WizardViewProjection
+    const oldControls = findElements(WizardHud({ projection: eligible, onIntent: vi.fn() }),
+      (element) => element.type === 'button')
+    expect(oldControls.find((button) => button.props['aria-label'] === 'Study Old stone')?.props.disabled).toBe(false)
+    expect(oldControls.find((button) => button.props['aria-label'] === 'Excavate Cache')?.props.disabled).toBe(false)
+    const map = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: streamed }))
+    expect(map).toContain('Legacy route and camp actions are unavailable')
+    expect(map).toContain('class="wr-map-site" disabled=""')
+    expect(renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection })))
+      .not.toContain('class="wr-map-site" disabled=""')
+  })
+
+  it('shows a 44px touch Walk toggle only for public gait and emits the same intent as R', () => {
+    const emitted: string[] = []
+    const running = { ...sellProjection, gait: { pace: 'run' as const, canRun: true,
+      reason: 'Running in leather boots' } }
+    const hud = WizardHud({ projection: running, onIntent: (intent) => emitted.push(intent.type) })
+    const walk = findElements(hud, (element) => element.props['aria-label'] === 'Walk')[0]
+    expect(walk.props['aria-pressed']).toBe(false)
+    expect(walk.props.disabled).toBe(false)
+    ;(walk.props.onClick as () => void)()
+    expect(emitted).toEqual(['gait.toggle'])
+    const markup = renderToStaticMarkup(createElement(WizardSurface, {
+      projection: running, onIntent: () => {} }))
+    expect(markup).toContain('min-height:44px;border:1px solid #f5dc87')
+    expect(markup).toContain('Running in leather boots')
+    expect(markup).toContain('>R</kbd>')
+    const barefoot = { ...sellProjection, gait: { pace: 'walk' as const, canRun: false,
+      reason: 'Barefoot: walk only' } }
+    const disabled = findElements(WizardHud({ projection: barefoot, onIntent: () => {} }),
+      (element) => element.props['aria-label'] === 'Walk')[0]
+    expect(disabled.props.disabled).toBe(true)
+    expect(disabled.props['aria-pressed']).toBe(true)
+    expect(renderToStaticMarkup(createElement(WizardHud, { projection: sellProjection,
+      onIntent: () => {} }))).not.toContain('aria-label="Walk"')
+  })
+
   it('keeps forward, backward, and pivot axes independent', () => {
     expect(movementVector(new Set(['KeyW']))).toEqual([0, 1])
     expect(movementVector(new Set(['KeyS']))).toEqual([0, -1])
@@ -167,17 +840,49 @@ describe('third-person control grammar', () => {
 })
 
 describe('short desktop layout', () => {
+  it('keeps Saved Works and Trade independently scrollable without overlapping their desktop regions', () => {
+    const current = { ...sellProjection, savedTerrainWorks: {
+      actionsEnabled: true, selectedKind: 'bridge' as const, builtSites: [], dugTileIds: [], preview: null,
+    } }
+    const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: current, onIntent: () => {} }))
+    expect(markup).toContain('class="wr-panel wr-saved-work-panel"')
+    expect(markup).toContain('class="wr-panel wr-trade"')
+    expect(markup).toContain('.wr-trade{right:16px;bottom:16px}')
+    expect(markup).toContain('.wr-trade{box-sizing:border-box;max-height:176px;overflow-y:auto;overscroll-behavior:contain}')
+    expect(markup).toContain('.wr-saved-work-panel{z-index:5;box-sizing:border-box;right:16px;top:285px;max-height:calc(100% - 493px);overflow-y:auto')
+    const tradeHeight = Number(markup.match(/\.wr-trade\{box-sizing:[^}]*max-height:(\d+)px/)?.[1])
+    const savedCap = Number(markup.match(/\.wr-saved-work-panel\{z-index:[^}]*max-height:calc\(100% - (\d+)px\)/)?.[1])
+    expect(savedCap).toBeGreaterThanOrEqual(285 + 16 + tradeHeight + 16)
+    expect(markup).toContain('.wr-saved-work-panel{top:160px;max-height:calc(100% - 312px)}')
+    expect(markup).toContain('.wr-trade{max-height:120px}')
+    expect(markup).toContain('.wr-saved-work-panel{top:128px;max-height:calc(100% - 260px)}')
+    expect(markup).toContain('.wr-trade{max-height:100px}')
+    expect(markup).toContain('.wr-saved-work-panel{top:120px;max-height:calc(100% - 136px)}')
+    expect(markup).toContain('.wr-saved-work-panel{right:8px;top:176px;')
+  })
+
   it('keeps the shop header and Close control within a short viewport', () => {
     const markup = renderToStaticMarkup(createElement(WizardSurface, { projection: sellProjection, onIntent: () => {} }))
     expect(markup).toContain('Greenway Outfitters')
     expect(markup).toContain('class="wr-panel wr-context" data-store-panel="true"')
     expect(markup).toContain('>Close</button>')
+    expect(markup).toContain('.wr-scene{position:absolute;z-index:0;inset:0;cursor:grab}')
+    expect(markup).toContain('.wr-hud{position:absolute;z-index:1;inset:0;pointer-events:none}.wr-hud button,.wr-panel{pointer-events:auto}')
     expect(markup).toContain('.wr-context:not(.wr-build-preview){box-sizing:border-box;max-height:calc(100% - 215px);overflow-y:auto')
+    expect(markup).toContain('@media(min-width:720px) and (max-height:599px){.wr-context[data-store-panel]{position:fixed;bottom:60px;max-height:calc(100dvh - 110px)}}')
     expect(markup).toContain('@media(max-width:719px){.wr-backpack{display:none}.wr-backpack-toggle{position:absolute')
     expect(markup).toContain('.wr-map-toggle{left:106px;right:auto;top:120px}')
     expect(markup).toContain('.wr-prompt{left:8px;top:176px;bottom:auto;transform:none')
     expect(markup).toContain('.wr-events{top:252px;left:8px;max-height:48px;overflow:hidden')
     expect(markup).toContain('.wr-surface .wr-context[data-store-panel]{bottom:14px;max-height:calc(100% - 78px)}')
+  })
+
+  it('moves only V29 desktop event guidance clear of the First steps guide', () => {
+    const markup = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: sellProjection, onIntent: () => {} }))
+    const styles = markup.match(/<style>([\s\S]*?)<\/style>/)?.[1]
+    expect(styles).toContain('@media(min-width:901px) and (min-height:591px){[data-public-version=v29] .wr-events{left:290px;bottom:270px;max-width:340px}}')
+    expect(styles).toContain('@media(max-width:719px){.wr-events{top:252px;left:8px;max-height:48px;overflow:hidden;pointer-events:none}.wr-events p:not(:last-child){display:none}}')
   })
 
   it('identifies ring travel as a separate compact panel beside touch controls', () => {
@@ -203,6 +908,145 @@ describe('short desktop layout', () => {
 })
 
 describe('wizard atlas markup', () => {
+  it('shows only the discovered canonical starter cliff ladder under the v14 marker', () => {
+    const cliff = { face: starterCliffCanonicalFace('greenway-alpha'), ladder: null } as const
+    const routes = [
+      { id: 'greenway_ladder', label: 'Greenway low steps', from: [0, 1, -4], to: [0, 2.56, -8],
+        built: false, unlocked: true, logCost: 4 },
+      { id: 'highland_bridge', label: 'Highland bridge', from: [4, 0, -8], to: [6, 0, -8],
+        built: false, unlocked: true, logCost: 6 },
+    ] as WizardViewProjection['routes']
+    const canonical = { id: cliff.face.siteId, routeId: 'greenway_ladder',
+      label: 'Greenway ladder, north edge', from: [0, 1, -4], to: [0, 2.56, -8],
+      logCost: 4, status: 'ready', reason: 'Ready to build', discovered: true } as const
+    const sites = [canonical, { ...canonical, id: 'greenway_ladder:x:2',
+      label: 'Phantom site at x 2', from: [2, 1, -4] as const },
+    { ...canonical, id: 'hidden-site-id', label: 'Fogged ladder', discovered: false }] as WizardViewProjection['buildSites']
+    const view = { ...projection, starterCliff: cliff, routes, buildSites: sites } as WizardViewProjection
+    const shown = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: view }))
+    expect(shown).toContain('Starter cliff ladder')
+    expect(shown).toContain('x 0, z -4')
+    expect(shown).toContain('Build with 4 logs')
+    expect(shown).toContain('W to climb or S to descend')
+    expect(shown).toContain('Preview Starter cliff ladder')
+    expect(shown).not.toContain('low steps')
+    expect(shown).not.toContain('Highland bridge')
+    expect(shown).not.toContain('Phantom site')
+    expect(shown).not.toContain('hidden-site-id')
+    const hidden = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: {
+      ...view, buildSites: sites.map((site) => ({ ...site, discovered: false })),
+    } }))
+    expect(hidden).toContain('Find the cliff foot')
+    expect(hidden).not.toContain('x 0, z -4')
+    expect(hidden).not.toContain('Preview Starter cliff ladder')
+    const paused = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: {
+      ...view, routes: [{ ...routes[0], built: true }], buildSites: [],
+      controllerActionsEnabled: false,
+    } }))
+    expect(paused).toContain('Movement is paused until the save recovers.')
+    expect(paused).not.toContain('route shortcuts are paused')
+  })
+
+  it('keeps the authored x 0 route distinct from a committed off-center v17 Works ladder', () => {
+    const site = resolveTerrainWorkSite('greenway-alpha', 'works1:ladder:-103:108:W')
+    if (site?.kind !== 'ladder') throw new Error('Missing ladder fixture')
+    const face = starterCliffCanonicalFace('greenway-alpha')
+    const ladder = { ...site,
+      from: { ...site.from, x: -5.1, z: -4 }, to: { ...site.to, x: -5.1, z: -8 },
+      supportPath: [{ x: -5.1, y: 1, z: -4 }, { x: -5.1, y: 1, z: -5.35 },
+        { x: -5.1, y: 2.56, z: -6 }, { x: -5.1, y: 2.56, z: -8 }],
+      widthMeters: 1.05 }
+    const routes = [{ id: 'greenway_ladder', label: 'Greenway ladder',
+      from: [0, 1, -4], to: [0, 2.56, -8], built: false, unlocked: true, logCost: 4 }] as WizardViewProjection['routes']
+    const current = { ...sellProjection,
+      map: { ...sellProjection.map, tiles: [
+        ...sellProjection.map.tiles,
+        ...ladder.footprintTileIds.map((id, index) => ({
+          ...sellProjection.map.tiles[0], id, gridX: index + 2, discovered: true,
+          hasStore: false, hasRouteSite: false, hasBuiltRoute: false,
+        })),
+      ] },
+      starterCliff: { face, ladder: null },
+      routes, buildSites: [{ id: face.siteId, routeId: 'greenway_ladder',
+        label: 'Starter cliff ladder', from: [0, 1, -4] as const, to: [0, 2.56, -8] as const,
+        logCost: 4, status: 'ready' as const, reason: 'Ready to build', discovered: true }],
+      savedTerrainWorks: { context: 'works4-greenway' as const, builtSites: [ladder],
+        dugTileIds: [], actionsEnabled: true, modeActive: false,
+        selectedKind: 'ladder' as const, preview: null } } as WizardViewProjection
+    const html = renderToStaticMarkup(createElement(WizardMap,
+      { ...mapProps(true), projection: current }))
+    expect(html).toContain('Starter cliff ladder (authored center route)')
+    expect(html).toContain('Preview Starter cliff ladder (authored center route)')
+    expect(html).toContain('The centered starter ladder site is x 0, z -4. Off-center Works ladder candidates are separate')
+    expect(html).toContain('Your built Works ladder follows its own preview coordinates.')
+    expect(html).toContain('Built Works north cliff ladder, separate from the authored x 0 route')
+    expect(html).toContain('lower foot x -5.1, z -4; upper foot x -5.1, z -8')
+    expect(html).toContain('Rails center on x -5.1 from z -5.35 to -6 (width 1.05 m)')
+    expect(html).toContain('Approach the lower foot from the south, align between these rails')
+    const choice = { site: ladder, distanceMeters: 1.6, angleRadians: 0,
+      rejection: 'occupied' as const, reason: 'Move clear of the footprint and other works.',
+      benefit: 'Climb the north cliff.' }
+    const ghost = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true),
+      projection: { ...current,
+        player: { ...current.player, position: [-5.1, 1, -5.6] },
+        savedTerrainWorks: { ...current.savedTerrainWorks!, builtSites: [],
+          preview: { selected: choice, nearby: [choice], guidance: null } } } }))
+    expect(ghost).toContain('You are standing in this ladder ghost. Step south to the lower foot x -5.1, z -4')
+    expect(ghost).not.toContain('Move clear of the footprint and other works.')
+  })
+
+  it('distinguishes starter low steps from the locked Highland bridge and never lists a hidden site', () => {
+    const routes = [
+      { id: 'greenway_ladder', label: 'Greenway low steps', from: [0, 0, -4], to: [0, 0.3, -8],
+        built: false, unlocked: true, logCost: 4 },
+      { id: 'highland_bridge', label: 'Highland bridge', from: [4, 0, -8], to: [6, 0, -8],
+        built: false, unlocked: false, logCost: 6 },
+    ] as WizardViewProjection['routes']
+    const sites = [
+      { id: 'known-steps', routeId: 'greenway_ladder', label: 'Greenway ladder, north edge',
+        from: [0, 0, -4], to: [0, 0.3, -8], logCost: 4, status: 'ready', reason: 'Ready to build', discovered: true },
+      { id: 'hidden-bridge', routeId: 'highland_bridge', label: 'Hidden bridge at x 6',
+        from: [4, 0, -8], to: [6, 0, -8], logCost: 6, status: 'locked', reason: 'Not discovered', discovered: false },
+    ] as WizardViewProjection['buildSites']
+    const markup = renderToStaticMarkup(createElement(RouteKey, { routes, buildSites: sites,
+      selectedBuildSiteId: null, onSelect: vi.fn() }))
+    expect(markup).toContain('First route: low steps to Northern Ridge, not a cliff ladder.')
+    expect(markup).toContain('The climbable Slate ladder is a separate work in Mireglass.')
+    expect(markup).toContain('Next route: bridge the gap east from Northern Ridge to Eastern Highland.')
+    expect(markup).toContain('Build the low steps and reach level 2 first; then bring 6 logs')
+    expect(markup).toContain('Preview Greenway low steps, north edge')
+    expect(markup).toContain('No discovered Highland bridge sites yet.')
+    expect(markup).not.toContain('hidden-bridge')
+    expect(markup).not.toContain('Hidden bridge at x 6')
+    const paused = renderToStaticMarkup(createElement(RouteKey, { routes, buildSites: sites,
+      selectedBuildSiteId: null, onSelect: vi.fn(), actionsEnabled: false }))
+    expect(paused).toContain('Route actions unavailable here')
+    expect(paused).not.toContain('Ready to build</small>')
+    const routeMap = (nextRoutes = routes, nextSites = sites) => renderToStaticMarkup(createElement(WizardMap,
+      { ...mapProps(true), projection: { ...projection, routes: nextRoutes, buildSites: nextSites } }))
+    const locked = routeMap()
+    expect(locked).toContain('aria-label="Route roadmap"')
+    expect(locked).toContain('Highland bridge east to Eastern Highland (6 logs, locked: build the low steps and reach level 2)')
+    expect(locked).not.toContain('Fen bridges in Mireglass are separate Works.')
+    const withWorks = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: {
+      ...projection, routes, buildSites: sites, controllerActionsEnabled: true,
+      savedTerrainWorks: { actionsEnabled: false, builtSites: [], dugTileIds: [], preview: null },
+    } }))
+    expect(withWorks).toContain('Fen bridges in Mireglass are separate Works.')
+    expect(locked.indexOf('aria-label="Route roadmap"')).toBeLessThan(locked.indexOf('class="wr-map-routes"'))
+    expect(locked).not.toContain('Hidden bridge at x 6')
+    const unlocked = routes.map((route) => route.id === 'highland_bridge' ? { ...route, unlocked: true } : route)
+    const known = sites.map((site) => site.id === 'hidden-bridge'
+      ? { ...site, id: 'known-bridge', label: 'Known bridge', discovered: true, status: 'ready' as const } : site)
+    expect(routeMap(unlocked, known)).toContain('Highland bridge east to Eastern Highland (6 logs, ready at a discovered site)')
+    const unavailable = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true),
+      projection: { ...projection, routes: unlocked, buildSites: known, unavailableActions: true } }))
+    expect(unavailable).toContain('Highland bridge east to Eastern Highland (6 logs, unavailable here)')
+    expect(unavailable).not.toContain('6 logs, ready at a discovered site')
+    const built = unlocked.map((route) => route.id === 'highland_bridge' ? { ...route, built: true } : route)
+    expect(routeMap(built, sites)).toContain('Highland bridge east to Eastern Highland (6 logs, built)')
+  })
+
   const campProjection = { ...gridProjection(3, 1, 1), fieldCamp: { camps: [], preview: null, selectionEnabled: true } } as WizardViewProjection
 
   it('makes only discovered expanded v9 cells native selection buttons with one Tab stop', () => {
@@ -312,7 +1156,7 @@ describe('wizard atlas markup', () => {
     } finally { vi.unstubAllGlobals() }
   })
 
-  it('shows field camp markers only on discovered local cells and in the overview', () => {
+  it('shows field camp markers only on discovered local cells and defers the overview marker', () => {
     const current = { ...campProjection, map: { ...campProjection.map,
       tiles: campProjection.map.tiles.map((tile) => ({ ...tile, hasCamp: true, discovered: tile.id === 'tile-1-1' })),
       overview: () => ({ player: { gridX: 1, gridZ: 1, yaw: 0 }, cells: [{ id: 'camp-chunk', gridX: 0, gridZ: 0, terrain: 'loam' as const, biome: 'meadow', discoveredCells: 1, markers: ['Field camp'] }] }),
@@ -320,8 +1164,8 @@ describe('wizard atlas markup', () => {
     const markup = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
     expect(markup).toContain('tile-1-1: meadow, player location, field camp')
     expect(markup).not.toContain('unexplored, field camp')
-    expect(markup).toContain('Field camp"><i')
-    expect(markup).toContain('<b>C</b>')
+    expect(markup).not.toContain('Field camp"><i')
+    expect(overviewForDetails(true, current.map.overview)?.cells[0].markers).toEqual(['Field camp'])
   })
 
   it('offers a native local/world map toggle only when the public overview exists', () => {
@@ -336,12 +1180,14 @@ describe('wizard atlas markup', () => {
     expect(loadOverview).not.toHaveBeenCalled()
     expect(compact).not.toContain('wr-map-overview')
     const expanded = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
-    expect(loadOverview).toHaveBeenCalledTimes(1)
+    expect(loadOverview).not.toHaveBeenCalled()
     expect(expanded).toContain('<details class="wr-map-overview"><summary>World overview (toggle local map)</summary>')
     expect(expanded).toContain('.wr-map-overview[open]~.wr-map-local{display:none}')
-    expect(expanded).toContain('chunk-0-0: 2 of 256 cells discovered, sampled temperate_forest, player location, Greenway Outfitters')
-    expect(expanded).toContain('chunk-1-0: unexplored')
-    expect(expanded).not.toContain('chunk-1-0: unexplored, sampled')
+    expect(expanded).not.toContain('chunk-0-0')
+    expect(overviewForDetails(false, loadOverview)).toBeNull()
+    expect(loadOverview).not.toHaveBeenCalled()
+    expect(overviewForDetails(true, loadOverview)?.cells.map((cell) => cell.id)).toEqual(['chunk-0-0', 'chunk-1-0'])
+    expect(loadOverview).toHaveBeenCalledTimes(1)
     expect(expanded).toContain('class="wr-map-local"')
     expect(renderToStaticMarkup(createElement(WizardMap, mapProps(true)))).not.toContain('wr-map-overview')
   })
@@ -461,6 +1307,20 @@ describe('wizard atlas markup', () => {
     expect(open).not.toContain('Fogged crossing')
     expect(open).toContain('fog: unexplored')
     expect(open).not.toContain('fog: unexplored, route build site')
+  })
+
+  it('keeps the map Close target stable across content changes and preserves the scrollable mobile sheet', () => {
+    const markup = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: sellProjection, onIntent: () => {} }))
+    expect(markup.indexOf('.wr-map-backdrop{position:fixed}'))
+      .toBeGreaterThan(markup.indexOf('.wr-map-backdrop{position:absolute;inset:0;z-index:10;'))
+    expect(markup).toContain('.wr-map-dialog{height:min(620px,calc(100% - 24px));scrollbar-gutter:stable}')
+    expect(markup).toContain('.wr-map-dialog header{position:sticky;top:0;z-index:1;background:#0e1715}')
+    expect(markup).toContain('@media(max-width:719px){.wr-map-dialog{height:auto}}')
+    expect(markup).toContain('.wr-map-dialog{position:relative;box-sizing:border-box;width:min(560px,88vw);max-height:calc(100% - 24px);padding:18px;overflow-y:auto')
+    expect(markup).toContain('.wr-map-dialog header button{width:44px;height:44px;')
+    expect(markup).toContain('.wr-map-dialog{position:absolute;inset:0;width:auto;max-height:none;')
+    expect(renderMap(true)).toContain('aria-label="Close map"')
   })
 
   it('selects one discovered candidate by touch-sized atlas row and closes the map', () => {

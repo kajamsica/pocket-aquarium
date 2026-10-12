@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   advanceWizardWorld, createWizardProjection, createWizardWorld, restoreWizardWorld, serializeWizardWorld,
   type EquipmentSlot, type WizardEvent, type WizardIntent, type WizardWorldState,
@@ -50,6 +50,67 @@ function expectResourceClearance(state: WizardWorldState) {
 }
 
 describe('Wizard world domain', () => {
+  it('does not serialize or copy a frozen discovery history on a no-reveal frame', () => {
+    const source = createWizardWorld('discovery-frame-sharing')
+    const history = Object.freeze(Array.from({ length: 8_193 }, (_, index) => `charted-${String(index).padStart(5, '0')}`))
+    source.discoveredTileIds = history as unknown as string[]
+    const stringify = vi.spyOn(JSON, 'stringify')
+    try {
+      const looked = advanceWizardWorld(source, [{ type: 'look', yawDelta: 0.1, pitchDelta: 0 }])
+      const clonedWorlds = stringify.mock.calls.map(([value]) => value as WizardWorldState)
+        .filter((value) => Array.isArray(value?.discoveredTileIds))
+      expect(clonedWorlds.length).toBeGreaterThan(0)
+      expect(clonedWorlds.every((value) => value.discoveredTileIds.length === 0)).toBe(true)
+      expect(looked.state.discoveredTileIds).toBe(history)
+      expect(source.discoveredTileIds).toBe(history)
+      expect(looked.events.map((entry) => entry.type)).toEqual(['player_looked'])
+      const stayed = advanceWizardWorld(looked.state, [{ type: 'move', delta: { x: 0, y: 0, z: 0 } }])
+      expect(stayed.state.discoveredTileIds).toBe(history)
+      expect(stayed.events.map((entry) => entry.type)).toEqual(['player_moved'])
+    } finally {
+      stringify.mockRestore()
+    }
+  })
+
+  it('keeps mutable legacy discovery input independent after advancement', () => {
+    const source = createWizardWorld('mutable-discovery-isolation')
+    const history = [...source.discoveredTileIds]
+    const looked = advanceWizardWorld(source, [{ type: 'look', yawDelta: 0, pitchDelta: 0 }])
+    expect(looked.state.discoveredTileIds).not.toBe(source.discoveredTileIds)
+    looked.state.discoveredTileIds.push('later-output-change')
+    expect(source.discoveredTileIds).toEqual(history)
+  })
+
+  it('copies frozen discovery only when a walk or spell reveals tiles', () => {
+    const walker = createWizardWorld('region-0', 'greenway-expanded-v1')
+    walker.player.position = { x: 12, y: terrainHeightAt(walker.tiles, 12, 0), z: 0 }
+    const walkedHistory = Object.freeze([...walker.discoveredTileIds])
+    walker.discoveredTileIds = walkedHistory as unknown as string[]
+    const walked = advanceWizardWorld(walker, [{ type: 'move', delta: { x: 4, y: 0, z: 0 } }])
+    expect(walked.state.discoveredTileIds).not.toBe(walkedHistory)
+    expect(walked.state.discoveredTileIds).toEqual([...walkedHistory, 'tile-7-3'].sort())
+    expect(walker.discoveredTileIds).toBe(walkedHistory)
+    expect(walked.events).toMatchObject([
+      { type: 'player_moved', sequence: 1, tick: 1 },
+      { type: 'tile_discovered', tileId: 'tile-7-3', sequence: 2, tick: 1 },
+    ])
+
+    const caster = createWizardWorld('first-region-magic')
+    caster.player.learnedSpellIds.push('wayfinder_glow')
+    caster.player.position = { x: -6, y: terrainHeightAt(caster.tiles, -6, -4), z: -4 }
+    const castHistory = Object.freeze([...caster.discoveredTileIds])
+    caster.discoveredTileIds = castHistory as unknown as string[]
+    const cast = advanceWizardWorld(caster, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+    const spellEvent = cast.events[0] as Extract<WizardEvent, { type: 'spell_cast' }>
+    expect(spellEvent.revealedTileIds.length).toBeGreaterThan(0)
+    expect(cast.state.discoveredTileIds).not.toBe(castHistory)
+    expect(cast.state.discoveredTileIds).toEqual([...castHistory, ...spellEvent.revealedTileIds].sort())
+    expect(caster.discoveredTileIds).toBe(castHistory)
+    expect(cast.events.filter((entry) => entry.type === 'tile_discovered')).toEqual(
+      spellEvent.revealedTileIds.map((tileId, index) => ({ type: 'tile_discovered', tileId, sequence: index + 2, tick: 1 })),
+    )
+  })
+
   it('generates identical worlds for the same seed and different worlds for another seed', () => {
     const first = createWizardWorld('greenway-alpha')
     const replay = createWizardWorld('greenway-alpha')

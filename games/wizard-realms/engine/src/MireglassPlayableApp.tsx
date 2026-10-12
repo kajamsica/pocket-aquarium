@@ -6,8 +6,9 @@ import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES, mireglassGlow
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
-import { MIREGLASS_PLATEAU } from './domain/mireglassTerrain'
+import { MIREGLASS_PLATEAU, mireglassFenBankAt } from './domain/mireglassTerrain'
 import { MIREGLASS_SAVE_KEY, parseMireglassWorld, serializeMireglassWorld } from './domain/mireglassPersistence'
+import { discoveredTileSet } from './domain/publicWorldDiscovery'
 import { createMireglassWorld, createMireglassWorldFromState, type MireglassWorldActionResult, type MireglassWorldAdvanceResult, type MireglassWorldRuntime, type MireglassWorldState } from './domain/mireglassWorld'
 import type { StreamedWorldIntent, StreamedWorldRejection, StreamedWorldRuntime, StreamedWorldState } from './domain/streamedWorld'
 import { streamedControlIntents, streamedProjection } from './StreamedPreviewApp'
@@ -276,6 +277,8 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
   if (expedition.builtRoutes.bridge === null) return { label: 'Build the eight-log fen bridge', position: closest(routes.filter((site) => site.kind === 'bridge').map((site) => site.from)) }
   const bridge = routes.find((site) => site.id === expedition.builtRoutes.bridge)!
   const ladder = routes.find((site) => site.id === expedition.builtRoutes.ladder)
+  const bank = mireglassFenBankAt(state.seed, player.position)
+  const farBank = bank === 'south' || (bank === null && player.position.z >= bridge.to.z)
   if (expedition.cacheExcavated && owned(state, 'mireglass_reach/item/seal') === 0) {
     if (owned(state, 'mireglass_reach/item/waders') === 0) return {
       label: 'Buy fen waders with the seal proceeds', position: anchors.salvager.tile.center,
@@ -289,10 +292,10 @@ export function mireglassNextObjective(state: MireglassWorldState): MireglassObj
   if (expedition.cacheExcavated) {
     if (ladder && player.position.y > ladder.from.y + ladder.riseMeters / 2)
       return { label: 'Descend the built slate ladder', position: ladder.to }
-    if (player.position.z >= bridge.to.z) return { label: 'Return across the built fen bridge', position: bridge.to }
+    if (farBank) return { label: 'Return across the built fen bridge', position: bridge.to }
     return { label: 'Return to the salvager and sell the seal', position: anchors.salvager.tile.center }
   }
-  if (player.position.z < bridge.to.z) return { label: 'Cross the built fen bridge', position: bridge.from }
+  if (!farBank) return { label: 'Cross the built fen bridge', position: bridge.from }
   if (expedition.builtRoutes.ladder === null && logs < 4) return { label: `Gather timber for the slate ladder (${logs}/4 logs)`, position: closest(trees.filter((tree) => !expedition.depletedResourceIds.includes(tree.id) && tree.phase === 'after_bridge').map((tree) => tree.tile.center)) ?? anchors.slateBerm.tile.center }
   if (expedition.builtRoutes.ladder === null) return { label: 'Build the four-log slate ladder', position: closest(routes.filter((site) => site.kind === 'ladder').map((site) => site.from)) }
   if (ladder && player.position.z < ladder.to.z) return { label: 'Climb the built slate ladder', position: ladder.from }
@@ -351,7 +354,7 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
       verticalVelocity: state.player.verticalVelocity },
   } satisfies StreamedWorldState, messages)
   const activeIds = new Set(runtime.activeTiles().map((tile) => tile.id))
-  const discovered = new Set(state.discoveredTileIds)
+  const discovered = discoveredTileSet(state.discoveredTileIds)
   const anchors = mireglassAnchors(state.seed)
   const fullTrail = mireglassFullApproachTrail(state.seed)
   const approachTerrain = mireglassApproachTerrain(streamedView.terrain, runtime.activeTiles(),

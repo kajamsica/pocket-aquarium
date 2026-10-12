@@ -1,4 +1,5 @@
 import { createGeneratedWorld } from './generation'
+import { nearbyWorldTileIds, PUBLIC_SPELL_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { mireglassAnchors, mireglassFairyRing, mireglassResources, MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID } from './mireglassContent'
 import { mireglassRouteSites } from './mireglassRouteSites'
 import type { MireglassRouteSite } from './mireglassRouteSites'
@@ -10,7 +11,7 @@ export type MireglassNewItemId = 'mireglass_reach/item/seal' | 'mireglass_reach/
 export type MireglassItemId = ItemId | MireglassNewItemId
 export type MireglassShopItemId = 'field_spade' | 'mireglass_reach/item/waders'
 export type MireglassSaleItemId = 'logs' | 'mireglass_reach/item/seal'
-export type MireglassEquippableItemId = 'woodcutters_axe' | 'field_spade' | 'mireglass_reach/item/waders'
+export type MireglassEquippableItemId = 'woodcutters_axe' | 'field_spade' | 'leather_boots' | 'mireglass_reach/item/waders'
 export type MireglassRouteKind = MireglassRouteSite['kind']
 export type MireglassTradeSlot = Omit<PlayerState['tradeSlots'][number], 'itemId'> & { itemId: MireglassItemId | null }
 /** Every v5 player fact remains present. Only the item union widens for the new region. */
@@ -256,6 +257,8 @@ export function createMireglassRegionProgress(seed: string): MireglassRegionProg
 export function applyMireglassExpeditionAction(
   seed: string, player: MireglassV6Player, region: MireglassRegionProgress, action: MireglassExpeditionAction,
   discoveredTileIds?: readonly string[],
+  allowV11LeatherBoots = false,
+  wideTerrain = false,
 ): MireglassExpeditionResult {
   const actionType = action?.type ?? 'unknown'
   const reject = (code: MireglassExpeditionRejection['code'], message: string): MireglassExpeditionResult =>
@@ -348,11 +351,16 @@ export function applyMireglassExpeditionAction(
   if (action.type === 'cast_wayfinder_glow') {
     if (!player.learnedSpellIds.includes('wayfinder_glow')) return reject('unlearned_spell', 'Learn Wayfinder Glow before casting.')
     if (!Array.isArray(discoveredTileIds)) return reject('invalid_value', 'Discovery state is required for Wayfinder Glow.')
-    const revealedTileIds = mireglassGlowRevealableTileIds(seed, player.position, discoveredTileIds)
+    const known = wideTerrain ? new Set(discoveredTileIds) : null
+    const revealedTileIds = known
+      ? nearbyWorldTileIds(player.position, PUBLIC_SPELL_REVEAL_RADIUS_METERS)
+        .filter((id) => !known.has(id))
+      : mireglassGlowRevealableTileIds(seed, player.position, discoveredTileIds)
     const cache = mireglassAnchors(seed).sealCache
     const revealCache = !region.cacheRevealed
       && Math.hypot(player.position.x - cache.tile.center.x, player.position.z - cache.tile.center.z) <= GLOW_METERS
-    const xp = (revealedTileIds.length + Number(revealCache)) * GLOW_XP
+    const xp = (wideTerrain ? Math.min(revealedTileIds.length, 13) : revealedTileIds.length)
+      * GLOW_XP + Number(revealCache) * GLOW_XP
     if (xp === 0) return reject('already_revealed', 'No new terrain or cache is within Wayfinder Glow reach.')
     if (!canGainXp(player, xp, 'spellcraft', 'wayfinding')) return reject('invalid_value', 'Experience exceeds safe limits.')
     const next = copyAt()
@@ -412,9 +420,11 @@ export function applyMireglassExpeditionAction(
 
   if (action.type === 'equip_item') {
     if (action.itemId !== 'woodcutters_axe' && action.itemId !== 'field_spade'
+      && !(allowV11LeatherBoots && action.itemId === 'leather_boots')
       && action.itemId !== 'mireglass_reach/item/waders') return reject('invalid_value', 'This item cannot be equipped.')
     if (owns(player, action.itemId) < 1) return reject('not_owned', 'Own this item before equipping it.')
-    const slot = action.itemId === 'mireglass_reach/item/waders' ? 'feet' : 'mainHand'
+    const slot = action.itemId === 'mireglass_reach/item/waders' || action.itemId === 'leather_boots'
+      ? 'feet' : 'mainHand'
     if (player.equipment[slot] === action.itemId) return reject('already_equipped', 'This item is already equipped.')
     const alreadyAssigned = EQUIPMENT_SLOTS.filter((candidate) => candidate !== slot && player.equipment[candidate] === action.itemId).length
     if (alreadyAssigned >= owns(player, action.itemId)) return reject('not_owned', 'No unassigned copy is available.')

@@ -2,7 +2,9 @@ import { createActiveWorldTerrain } from './activeWorldTerrain'
 import type { ActiveWorldTerrain, ReadonlyWorldTile } from './activeWorldTerrain'
 import { highlandRidgeMoveBarrier } from './highlandRidge'
 import type { TerrainFacts } from './mireglassCachePitOverlay'
+import type { PublicV11RouteSupport } from './publicV11RouteSupport'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
+import { nearbyWorldTileIds, PUBLIC_WALK_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import type { Vec3 } from './types'
 import { WORLD_GRID_MAX, WORLD_GRID_MIN } from './worldChunks'
 import type { ChunkCoordinate } from './worldChunks'
@@ -50,11 +52,24 @@ export interface StreamedWorldAdvanceResult {
 
 export interface StreamedWorldRuntime {
   readonly state: StreamedWorldState
-  advance(intents: readonly StreamedWorldIntent[], options?: { atomicOnRejection?: boolean }): StreamedWorldAdvanceResult
+  advance(intents: readonly StreamedWorldIntent[], options?: {
+    atomicOnRejection?: boolean
+    nearbyDiscovery?: boolean
+  }): StreamedWorldAdvanceResult
   tileAtWorld(x: number, z: number): ReadonlyWorldTile | null
   activeTiles(): readonly ReadonlyWorldTile[]
   activeChunkCoordinates(): readonly Readonly<ChunkCoordinate>[]
   activeChunkCount(): number
+}
+
+/** Explicit unsaved-trial seam. Omitted for every public and ordinary streamed runtime. */
+export interface StreamedWorldTrialHooks {
+  barrier(from: Readonly<Vec3>, to: { x: number; z: number },
+    authored: 'fen_channel' | 'slate_cliff' | null): 'fen_channel' | 'slate_cliff' | null
+  tile(base: ReadonlyWorldTile): ReadonlyWorldTile
+  activeTiles(base: readonly ReadonlyWorldTile[]): readonly ReadonlyWorldTile[]
+  groundY(position: { x: number; z: number }, tile: ReadonlyWorldTile): number
+  supportsStep?(from: Readonly<Vec3>, to: { x: number; z: number }): boolean
 }
 
 function freezeState(state: StreamedWorldState): StreamedWorldState {
@@ -67,8 +82,11 @@ function freezeState(state: StreamedWorldState): StreamedWorldState {
 /**
  * Separate streamed authority. Its terrain cache never enters the serializable state.
  * An optional start is validated through active terrain; a non-finite or out-of-world start throws a RangeError.
+ * The final opt-in reveals a bounded walking neighborhood only for unsaved previews.
  */
-export function createStreamedWorld(seed: string, start: { x: number; z: number } = { x: 0, z: 0 }, facts?: TerrainFacts): StreamedWorldRuntime {
+export function createStreamedWorld(seed: string, start: { x: number; z: number } = { x: 0, z: 0 },
+  facts?: TerrainFacts, trialHooks?: StreamedWorldTrialHooks,
+  initialNearbyDiscovery = false): StreamedWorldRuntime {
   const normalizedSeed = seed || 'wizard-realms'
   const terrain = createActiveWorldTerrain(normalizedSeed, facts)
   terrain.activate(start)
@@ -77,8 +95,9 @@ export function createStreamedWorld(seed: string, start: { x: number; z: number 
   return createRuntime(normalizedSeed, terrain, {
     seed: normalizedSeed, tick: 0,
     player: { position: { x: start.x, y: startTile.center.y, z: start.z }, yaw: 0, pitch: 0, verticalVelocity: 0 },
-    discoveredTileIds: [startTile.id],
-  }, facts?.highlandRidge === true)
+    discoveredTileIds: initialNearbyDiscovery
+      ? nearbyWorldTileIds(start, PUBLIC_WALK_REVEAL_RADIUS_METERS) : [startTile.id],
+  }, facts?.highlandRidge === true, trialHooks, facts?.routeSupport)
 }
 
 function canonicalWorldTileId(id: unknown): boolean {
@@ -94,7 +113,8 @@ function canonicalWorldTileId(id: unknown): boolean {
 }
 
 /** Rebuilds active terrain and authority from a validated serialized snapshot. */
-export function createStreamedWorldFromState(snapshot: StreamedWorldState, facts?: TerrainFacts): StreamedWorldRuntime {
+export function createStreamedWorldFromState(snapshot: StreamedWorldState, facts?: TerrainFacts,
+  trialHooks?: StreamedWorldTrialHooks): StreamedWorldRuntime {
   const player = snapshot?.player
   const position = player?.position
   const discovered = snapshot?.discoveredTileIds
@@ -109,7 +129,13 @@ export function createStreamedWorldFromState(snapshot: StreamedWorldState, facts
   const terrain = createActiveWorldTerrain(snapshot.seed, facts)
   terrain.activate(position)
   const ground = terrain.tileAtWorld(position.x, position.z)
-  if (!ground || position.y < ground.center.y) throw new RangeError('Invalid streamed-world snapshot position.')
+  const effective = ground && trialHooks ? trialHooks.tile(ground) : ground
+  const baseFloor = effective && trialHooks
+    ? trialHooks.groundY(position, effective) : effective?.center.y
+  if (!ground || baseFloor === undefined
+    || position.y < (facts?.routeSupport?.floorY(position, baseFloor) ?? baseFloor)) {
+    throw new RangeError('Invalid streamed-world snapshot position.')
+  }
   let previousId = ''
   for (const id of discovered) {
     if (!canonicalWorldTileId(id) || (previousId && id <= previousId)) {
@@ -127,13 +153,22 @@ export function createStreamedWorldFromState(snapshot: StreamedWorldState, facts
       yaw: player.yaw, pitch: player.pitch, verticalVelocity: player.verticalVelocity,
     },
     discoveredTileIds: [...discovered],
-  }, facts?.highlandRidge === true)
+  }, facts?.highlandRidge === true, trialHooks, facts?.routeSupport)
 }
 
 function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, initialState: StreamedWorldState,
-  highlandRidge: boolean): StreamedWorldRuntime {
+  highlandRidge: boolean, trialHooks?: StreamedWorldTrialHooks,
+  routeSupport?: PublicV11RouteSupport): StreamedWorldRuntime {
   let state = freezeState(initialState)
   const discovered = new Set(state.discoveredTileIds)
+  const tileAtWorld = (x: number, z: number) => {
+    const base = terrain.tileAtWorld(x, z)
+    return base && trialHooks ? trialHooks.tile(base) : base
+  }
+  const groundY = (position: { x: number; z: number }, tile: ReadonlyWorldTile) => {
+    const base = trialHooks ? trialHooks.groundY(position, tile) : tile.center.y
+    return routeSupport?.floorY(position, base) ?? base
+  }
   return {
     get state() { return state },
     advance(intents, options) {
@@ -150,13 +185,20 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
       intents.forEach((intent, index) => {
         if (intent.type === 'move') {
           const { x: dx, z: dz } = intent.delta
-          if (!Number.isFinite(dx) || !Number.isFinite(dz) || Math.hypot(dx, dz) > 4) {
+          if (!Number.isFinite(dx) || !Number.isFinite(dz)
+            || Math.hypot(dx, dz) > (trialHooks ? 0.24 + 1e-9 : 4)) {
             reject(index, intent, 'invalid_value')
             return
           }
           const x = player.position.x + dx
           const z = player.position.z + dz
-          const barrier = mireglassMoveBarrier(normalizedSeed, player.position, { x, z })
+          const authoredBarrier = mireglassMoveBarrier(normalizedSeed, player.position, { x, z })
+          const attemptedBarrier = trialHooks
+            ? trialHooks.barrier(player.position, { x, z }, authoredBarrier) : authoredBarrier
+          const mireglassBarrier = attemptedBarrier
+            && routeSupport?.clearsMireglassBarrier(player.position, { x, z }, attemptedBarrier)
+            ? null : attemptedBarrier
+          const barrier = mireglassBarrier
             ?? (highlandRidge ? highlandRidgeMoveBarrier(player.position, { x, z }) : null)
           if (barrier) {
             reject(index, intent, barrier)
@@ -167,29 +209,42 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
             reject(index, intent, 'out_of_bounds')
             return
           }
-          const tile = terrain.tileAtWorld(x, z)
+          const tile = tileAtWorld(x, z)
           if (!tile) {
             terrain.activate(player.position)
             reject(index, intent, 'terrain_missing')
             return
           }
-          player.position = { x, y: Math.max(player.position.y, tile.center.y), z }
-          if (player.position.y === tile.center.y) player.verticalVelocity = 0
+          const moved = x !== player.position.x || z !== player.position.z
+          const floorY = groundY({ x, z }, tile)
+          const priorTile = tileAtWorld(player.position.x, player.position.z)
+          const priorFloor = priorTile && groundY(player.position, priorTile)
+          const onBuiltSupport = routeSupport?.crossing(player.position, { x, z })
+          const groundedOnSupport = ((onBuiltSupport
+            && (onBuiltSupport.kind === 'fen_bridge' || onBuiltSupport.kind === 'slate_ladder'))
+            || trialHooks?.supportsStep?.(player.position, { x, z }))
+            && priorFloor !== null && priorFloor !== undefined
+            && Math.abs(player.position.y - priorFloor) <= 0.001 && player.verticalVelocity <= 0
+          player.position = { x, y: groundedOnSupport ? floorY : Math.max(player.position.y, floorY), z }
+          if (player.position.y === floorY) player.verticalVelocity = 0
           events.push({ type: 'player_moved', tick, position: { ...player.position } })
-          if (!discovered.has(tile.id) && !pendingDiscovery?.has(tile.id)) {
+          const revealedIds = options?.nearbyDiscovery && moved
+            ? nearbyWorldTileIds(player.position, PUBLIC_WALK_REVEAL_RADIUS_METERS) : [tile.id]
+          for (const tileId of revealedIds) {
+            if (discovered.has(tileId) || pendingDiscovery?.has(tileId)) continue
             const nextDiscoveredTileIds = [...discoveredTileIds]
             let low = 0
             let high = nextDiscoveredTileIds.length
             while (low < high) {
               const middle = (low + high) >>> 1
-              if (nextDiscoveredTileIds[middle] < tile.id) low = middle + 1
+              if (nextDiscoveredTileIds[middle] < tileId) low = middle + 1
               else high = middle
             }
-            nextDiscoveredTileIds.splice(low, 0, tile.id)
+            nextDiscoveredTileIds.splice(low, 0, tileId)
             discoveredTileIds = nextDiscoveredTileIds
             if (!pendingDiscovery) pendingDiscovery = new Set()
-            pendingDiscovery.add(tile.id)
-            events.push({ type: 'tile_discovered', tick, tileId: tile.id })
+            pendingDiscovery.add(tileId)
+            events.push({ type: 'tile_discovered', tick, tileId })
           }
           return
         }
@@ -205,9 +260,9 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
           events.push({ type: 'player_looked', tick, yaw: player.yaw, pitch: player.pitch })
           return
         }
-        const ground = terrain.tileAtWorld(player.position.x, player.position.z)
+        const ground = tileAtWorld(player.position.x, player.position.z)
         if (!ground) { reject(index, intent, 'terrain_missing'); return }
-        if (Math.abs(player.position.y - ground.center.y) > 0.001 || player.verticalVelocity !== 0) {
+        if (Math.abs(player.position.y - groundY(player.position, ground)) > 0.001 || player.verticalVelocity !== 0) {
           reject(index, intent, 'airborne')
           return
         }
@@ -220,25 +275,26 @@ function createRuntime(normalizedSeed: string, terrain: ActiveWorldTerrain, init
         return { state, events: [], rejections }
       }
 
-      const ground = terrain.tileAtWorld(player.position.x, player.position.z)
+      const ground = tileAtWorld(player.position.x, player.position.z)
       if (!ground) throw new Error('Active terrain missing under player.')
-      if (player.position.y > ground.center.y || player.verticalVelocity > 0) {
+      const floorY = groundY(player.position, ground)
+      if (player.position.y > floorY || player.verticalVelocity > 0) {
         player.position.y += player.verticalVelocity * STEP_SECONDS
         player.verticalVelocity = Math.max(-MAX_ABS_VERTICAL_VELOCITY, player.verticalVelocity - GRAVITY * STEP_SECONDS)
-        if (player.position.y <= ground.center.y) {
-          player.position.y = ground.center.y
+        if (player.position.y <= floorY) {
+          player.position.y = floorY
           player.verticalVelocity = 0
         }
       } else {
-        player.position.y = ground.center.y
+        player.position.y = floorY
         player.verticalVelocity = 0
       }
       state = freezeState({ seed: normalizedSeed, tick, player, discoveredTileIds })
       if (pendingDiscovery) for (const id of pendingDiscovery) discovered.add(id)
       return { state, events, rejections }
     },
-    tileAtWorld: (x, z) => terrain.tileAtWorld(x, z),
-    activeTiles: () => terrain.activeTiles(),
+    tileAtWorld,
+    activeTiles: () => trialHooks ? trialHooks.activeTiles(terrain.activeTiles()) : terrain.activeTiles(),
     activeChunkCoordinates: () => terrain.activeChunkCoordinates,
     activeChunkCount: () => terrain.activeChunkCount,
   }

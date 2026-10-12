@@ -1,5 +1,6 @@
 import { createGeneratedWorld, terrainHeightAt } from './generation'
 import { MIREGLASS_RING_ID } from './mireglassContent'
+import { PUBLIC_START_TILE_ID } from './publicWorldDiscovery'
 import { isValidMireglassWorldContent } from './mireglassPersistence'
 import { isRestorableWizardSave, restoreWizardWorld, serializeWizardWorld } from './persistence'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
@@ -70,8 +71,12 @@ function greenwayWitness(state: PublicWorldState, baseline: WizardWorldState): W
   return {
     ...state.greenway, seed: state.seed, generationProfile: state.generationProfile,
     tick: state.tick, rng: state.rng, eventSequence: state.eventSequence,
-    discoveredTileIds: state.discoveredTileIds.filter((id) =>
-      state.greenway.tiles.some((tile) => tile.id === id)),
+    // v5 saves predate public-world fog and require the whole starter Greenway.
+    // Supply that historical baseline only to the v5 content witness. The
+    // public state and its serialized discovery list remain untouched, so both
+    // old one-tile public roots and new clearing starts retain their real fog.
+    discoveredTileIds: [...new Set([...baseline.discoveredTileIds,
+      ...state.discoveredTileIds.filter((id) => state.greenway.tiles.some((tile) => tile.id === id))])].sort(),
     player: player as WizardWorldState['player'],
   }
 }
@@ -82,7 +87,9 @@ export function isValidPublicWorldState(value: unknown, bootstrap: PublicV6Boots
     || (value.generationProfile !== 'greenway-classic-v1' && value.generationProfile !== 'greenway-expanded-v1')
     || (value.movementOwner !== 'greenway' && value.movementOwner !== 'streamed')
     || !validCount(value.tick) || !validCount(value.eventSequence)
-    || !canonicalDiscovery(value.discoveredTileIds) || !record(value.greenway)) return false
+    || !canonicalDiscovery(value.discoveredTileIds)
+    || !value.discoveredTileIds.includes(PUBLIC_START_TILE_ID)
+    || !record(value.greenway)) return false
   const state = value as unknown as PublicWorldState
   const profile = state.generationProfile as GenerationProfile
   let baseline: WizardWorldState

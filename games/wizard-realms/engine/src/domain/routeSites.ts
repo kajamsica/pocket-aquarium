@@ -96,7 +96,7 @@ export function routeBuildOptions(state: WizardWorldState): readonly RouteBuildO
     if (route.siteId === site.id) return option('built', 'This route is complete here.')
     if (state.builtRouteIds.includes(site.routeId)) return option('locked', 'This route is complete at another site.')
     if (recipe.prerequisiteRouteId && !state.builtRouteIds.includes(recipe.prerequisiteRouteId))
-      return option('locked', 'Build the Greenway ladder first.')
+      return option('locked', 'Build the Greenway low steps first.')
     if (!state.unlockedRecipeIds.includes(recipe.id) || state.player.level < recipe.minimumLevel)
       return option('locked', `Reach level ${recipe.minimumLevel} to unlock this route.`)
     const sourceTile = nearestAreaTile(state, site.from, route.fromAreaId)

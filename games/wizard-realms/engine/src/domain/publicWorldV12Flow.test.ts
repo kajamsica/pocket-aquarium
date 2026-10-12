@@ -243,8 +243,8 @@ describe('public v12 save flow', () => {
     let arrivals = 0
     let release!: () => void
     const gate = new Promise<void>((resolve) => { release = resolve })
-    const racing = { ...f.v12, read: async () => {
-      const read = await f.v12.read()
+    const racing = { ...f.v12, readChecked: async () => {
+      const read = await f.v12.readChecked()
       if (++arrivals === 2) release()
       await gate
       return read
@@ -255,5 +255,36 @@ describe('public v12 save flow', () => {
         player: { ...f.v12State.player, coins } }, 0, f.v12Source)))
     expect(results.filter((result) => result.ok)).toHaveLength(1)
     expect(results.filter((result) => !result.ok)).toEqual([{ ok: false, reason: 'revision-changed' }])
+  })
+
+  it('commits the caller state as it stood before waiting for the shared lock', async () => {
+    const f = await fixture()
+    expect((await migrate(f)).ok).toBe(true)
+    let entered!: () => void
+    let release!: () => void
+    const waiting = new Promise<void>((resolve) => { entered = resolve })
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    const gated: PublicV7LockProvider = { request: async (_name, _options, callback) => {
+      entered()
+      await gate
+      return callback()
+    } }
+    const state = { ...f.v12State, player: { ...f.v12State.player, coins: 120 } }
+    const expected = { ...f.v12Source,
+      sourceV11Head: { ...f.v12Source.sourceV11Head, saveRevision: 0 } }
+    const pending = commitPublicV12Snapshot(f.storage, gated, f.v8, f.v9, f.v10,
+      f.v11, f.v12, state, 0, expected)
+    await waiting
+    state.player.coins = 121
+    expected.sourceV11Head.saveRevision = 1
+    release()
+    const result = await pending
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.state.player.coins).toBe(120)
+    expect(result.value.sourceReceipt).toEqual(f.v12Source)
+    const stored = await f.v12.read()
+    if (stored.status !== 'ok' || !stored.head) throw new Error('Missing committed v12 head')
+    expect((stored.head.value as ReturnType<typeof encodePublicV12Head>).state.player.coins).toBe(120)
   })
 })

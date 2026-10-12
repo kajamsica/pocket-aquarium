@@ -18,46 +18,46 @@ interface DressingProfile {
 }
 
 const CLIMATE: Record<string, DressingProfile> = {
-  temperate_forest: { count: [3, 4], ground: ['#5c7445', '#75664b'], accents: [
-    ['grass', '#7d9853'], ['grass', '#9cae65'], ['flower', '#e0c785'],
-    ['flower', '#b5b8d5'], ['shrub', '#526f43'], ['stone', '#aaa892'],
+  temperate_forest: { count: [5, 6], ground: ['#5f7750', '#746d50'], accents: [
+    ['grass', '#77934e'], ['grass', '#9aaa62'], ['flower', '#e0c785'],
+    ['flower', '#b5b8d5'], ['shrub', '#526f43'], ['shrub', '#66814e'], ['stone', '#aaa892'],
   ] },
-  marsh: { count: [3, 4], ground: ['#4c6551', '#625d49'], accents: [
+  marsh: { count: [4, 5], ground: ['#4c6551', '#625d49'], accents: [
     ['reed', '#8e9e68'], ['reed', '#acaa75'], ['grass', '#6f9565'],
     ['flower', '#c7bc8f'], ['shrub', '#577253'], ['stone', '#989d88'],
   ] },
-  dry_highland: { count: [2, 4], ground: ['#8c8064', '#756f57'], accents: [
+  dry_highland: { count: [4, 5], ground: ['#8c8064', '#756f57'], accents: [
     ['grass', '#9ca16d'], ['shrub', '#717853'], ['stone', '#aaa58b'],
     ['stone', '#888b80'], ['flower', '#d2bd8e'],
   ] },
-  alpine: { count: [2, 3], ground: ['#aab4a8', '#98a8a3'], accents: [
+  alpine: { count: [3, 4], ground: ['#9eafa9', '#879c9c'], accents: [
     ['grass', '#8eaa91'], ['flower', '#d4d8c6'], ['stone', '#abb7b5'],
     ['stone', '#82999c'],
   ] },
 }
 
 const MIREGLASS: Record<string, DressingProfile> = {
-  wetland: { count: [3, 4], ground: ['#375a53', '#4b5145'], accents: [
+  wetland: { count: [4, 5], ground: ['#375a53', '#4b5145'], accents: [
     ['reed', '#8f9d6c'], ['reed', '#adb17a'], ['reed', '#728e67'],
     ['grass', '#6e9a76'], ['flower', '#c8b891'], ['shrub', '#4e765b'],
   ] },
-  loam: { count: [3, 4], ground: ['#5a5344', '#607155'], accents: [
+  loam: { count: [5, 6], ground: ['#5a5344', '#607155'], accents: [
     ['grass', '#859961'], ['grass', '#a2a971'], ['shrub', '#587653'],
     ['flower', '#d2bd92'], ['stone', '#a49f86'],
   ] },
-  rocky: { count: [2, 3], ground: ['#81847a', '#6c7168'], accents: [
+  rocky: { count: [4, 5], ground: ['#81847a', '#6c7168'], accents: [
     ['stone', '#a9ada1'], ['stone', '#91988e'], ['grass', '#879974'],
   ] },
   snow: CLIMATE.alpine,
 }
 
-const APPROACH: DressingProfile = { count: [2, 3], ground: ['#77775e', '#8a8066'], accents: [
+const APPROACH: DressingProfile = { count: [4, 5], ground: ['#77775e', '#8a8066'], accents: [
   ['grass', '#8d9a67'], ['shrub', '#6d8357'], ['stone', '#a9a28a'],
 ] }
-const HIGHLAND_TRAIL: DressingProfile = { count: [2, 3], ground: ['#a89d80', '#8f8b76'], accents: [
+const HIGHLAND_TRAIL: DressingProfile = { count: [3, 4], ground: ['#a89d80', '#8f8b76'], accents: [
   ['grass', '#9fa176'], ['stone', '#a9a696'], ['stone', '#858b84'],
 ] }
-const HIGHLAND_QUARRY: DressingProfile = { count: [2, 3], ground: ['#898d82', '#777d77'], accents: [
+const HIGHLAND_QUARRY: DressingProfile = { count: [4, 5], ground: ['#898d82', '#777d77'], accents: [
   ['stone', '#b1afa0'], ['stone', '#8b928c'], ['stone', '#a1a49a'], ['grass', '#8c9a79'],
 ] }
 const SNAG_COLORS = ['#736c5d', '#8a826e', '#5e665c'] as const
@@ -112,6 +112,7 @@ export function landscapeDressingFor(
     const halfX = cell.size[0] / 2 - 0.3
     const halfZ = cell.size[1] / 2 - 0.3
     if (![x, y, z, halfX, halfZ].every(Number.isFinite) || halfX <= 0 || halfZ <= 0) continue
+    const nearbyClearings = clearings.filter(([cx, cz]) => Math.abs(cx - x) < 5 && Math.abs(cz - z) < 5)
 
     const profile = profileFor(cell)
     const roll = detailRolls(cell)
@@ -128,28 +129,27 @@ export function landscapeDressingFor(
       const color = kind === 'ground' ? profile.ground[Math.floor(roll() * profile.ground.length)]
         : kind === 'snag' ? SNAG_COLORS[Math.floor(roll() * SNAG_COLORS.length)]
           : kind === 'alder' ? ALDER_COLORS[Math.floor(roll() * ALDER_COLORS.length)] : accent[1]
-      const scale = kind === 'ground' ? 0.55 + roll() * 0.25
-        : kind === 'snag' || kind === 'alder' ? 0.65 + roll() * 0.15 : 0.28 + roll() * 0.28
+      const scale = kind === 'ground' ? 0.78 + roll() * 0.27
+        : kind === 'snag' || kind === 'alder' ? 0.65 + roll() * 0.15
+          : kind === 'stone' ? 0.5 + roll() * 0.5
+            : kind === 'shrub' ? 0.52 + roll() * 0.22 : 0.4 + roll() * 0.28
       const yaw = roll() * Math.PI * 2
       // Footprints include the rendered mesh radius and remain 0.3 m inside the tile edge.
-      const footprint = kind === 'ground' ? scale : kind === 'shrub' ? 1.05 * scale
-        : kind === 'stone' ? 0.7 * scale : kind === 'grass' ? 0.45 * scale
+      const footprint = kind === 'ground' ? scale : kind === 'shrub' ? 1.1 * scale
+        : kind === 'stone' ? 0.9 * scale : kind === 'grass' ? 0.55 * scale
           : kind === 'reed' ? 0.38 * scale : kind === 'flower' ? 0.16 * scale : 0.45
       const insetX = halfX - footprint
       const insetZ = halfZ - footprint
       if (insetX <= 0 || insetZ <= 0) continue
       // Plants leave 1.3 m beyond their rendered footprint, stones leave the route's 0.65 m half-width.
-      const clearance = kind === 'ground' ? 0.65 : kind === 'stone' ? 0.65 + footprint
+      const clearance = kind === 'ground' || kind === 'stone' ? 0.65 + footprint
         : kind === 'snag' || kind === 'alder' ? 2.3 : 1.3 + footprint
       for (let attempt = 0; attempt < 12; attempt += 1) {
         const px = x + (roll() * 2 - 1) * insetX
         const pz = z + (roll() * 2 - 1) * insetZ
-        const nearTrail = kind === 'ground'
-          ? distanceToTrail(px, pz, cell.mireglassTrailSegment) < clearance
-            || distanceToTrail(px, pz, cell.highlandTrailSegment) < clearance
-          : trailSegments.some((segment) => distanceToTrail(px, pz, segment) < clearance)
-        if (nearTrail || ((kind === 'snag' || kind === 'alder')
-          && clearings.some(([cx, cz]) => Math.hypot(px - cx, pz - cz) < 2.5))) continue
+        const nearTrail = trailSegments.some((segment) => distanceToTrail(px, pz, segment) < clearance)
+        if (nearTrail || nearbyClearings.some(([cx, cz]) => Math.hypot(px - cx, pz - cz)
+          < (kind === 'snag' || kind === 'alder' ? 2.5 : 1.5 + footprint))) continue
         details.push({ kind, position: [px, y, pz], yaw, scale, color })
         break
       }

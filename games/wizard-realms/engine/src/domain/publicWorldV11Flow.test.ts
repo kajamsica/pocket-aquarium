@@ -19,6 +19,7 @@ import { withPublicV10TerrainRevision } from './publicWorldV10State'
 import { commitPublicV11Snapshot, inspectPublicV11, migratePublicV10ToV11,
   resumePublicV11 } from './publicWorldV11Flow'
 import { decodePublicV11Head, encodePublicV11Head, parsePublicV11Rescue,
+  samePublicV11SourceReceipt, sameValidatedPublicV11SourceReceipt,
   serializePublicV11Rescue } from './publicWorldV11Snapshot'
 import { withPublicV11Highland } from './publicWorldV11State'
 
@@ -59,9 +60,10 @@ async function fixture() {
 }
 type Fixture = Awaited<ReturnType<typeof fixture>>
 const inspect = (f: Fixture) => inspectPublicV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11)
-const migrate = (f: Fixture) => migratePublicV10ToV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11, f.v11Source)
-const save = (f: Fixture, state = f.v11State, revision = 0) =>
-  commitPublicV11Snapshot(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11, state, revision, f.v11Source)
+const migrate = (f: Fixture, source = f.v11Source) =>
+  migratePublicV10ToV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11, source)
+const save = (f: Fixture, state = f.v11State, revision = 0, source = f.v11Source) =>
+  commitPublicV11Snapshot(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11, state, revision, source)
 
 async function putRaw(f: Fixture, key: string, value: unknown) {
   const request = f.factory.open('wizard-realms:world:v11', 1)
@@ -111,6 +113,25 @@ describe('public v11 migration, atomic storage and source coherence', () => {
     expect(f.names).toEqual(Array(5).fill(PUBLIC_V7_LOCK_NAME))
   })
 
+  it('accepts distinct equivalent receipts but rejects malformed expected sources at every entrypoint', async () => {
+    const f = await fixture()
+    const equivalent = structuredClone(f.v11Source)
+    const malformed = { ...equivalent, sourceV10Head: {} } as typeof equivalent
+    expect(equivalent).not.toBe(f.v11Source)
+    expect(samePublicV11SourceReceipt(equivalent, f.v11Source)).toBe(true)
+    expect(sameValidatedPublicV11SourceReceipt(equivalent, f.v11Source)).toBe(true)
+    expect(samePublicV11SourceReceipt(malformed, malformed)).toBe(false)
+    expect(await migrate(f, malformed)).toEqual({ ok: false, reason: 'invalid-expected-source' })
+    expect((await migrate(f, equivalent)).ok).toBe(true)
+    expect((await resumePublicV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11,
+      0, equivalent)).ok).toBe(true)
+    expect((await save(f, discovered(f), 0, equivalent)).ok).toBe(true)
+    expect(await resumePublicV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11,
+      1, malformed)).toEqual({ ok: false, reason: 'invalid-expected-source' })
+    expect(await save(f, discovered(f), 1, malformed))
+      .toEqual({ ok: false, reason: 'invalid-expected-source' })
+  })
+
   it('blocks an orphan branch, stale save, and any retreat in landmark or node readiness', async () => {
     const f = await fixture()
     const orphan = { ...f, v10: createAtomicV10Store(new FakeFactory()) }
@@ -154,6 +175,10 @@ describe('public v11 migration, atomic storage and source coherence', () => {
     const invalidSource = { ...f.v11Source, sourceV10Head: {} } as typeof f.v11Source
     expect(await resumePublicV11(f.storage, f.locks, f.v8, f.v9, f.v10, f.v11, 1, invalidSource))
       .toEqual({ ok: false, reason: 'invalid-expected-source' })
+    await putRaw(f, 'lineage', { ...f.v11Source, sourceV10Lineage: {} })
+    expect(await inspect(f)).toEqual({ ok: true,
+      value: { status: 'blocked', reason: 'invalid-v11-lineage' } })
+    expect(await save(f, discovered(f), 1)).toEqual({ ok: false, reason: 'invalid-v11-lineage' })
   })
 
   it('retains a validated previous head for read-only rescue after latest-head corruption', async () => {

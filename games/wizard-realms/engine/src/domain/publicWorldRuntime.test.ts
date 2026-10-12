@@ -3,9 +3,11 @@ import { areaAt, createGeneratedWorld, terrainHeightAt } from './generation'
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
 import { MIREGLASS_RING_ID, mireglassFairyRing } from './mireglassContent'
 import { serializeWizardWorld } from './persistence'
+import { nearbyWorldTileIds, PUBLIC_WALK_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { PUBLIC_V6_SCHEMA, commitLegacyImportToPublicV6, inspectLegacyImportSource,
   parsePublicV6PlayableRoot, serializePublicV6World } from './publicWorldV6'
-import { advancePublicWorld, advancePublicWorldFrame, advancePublicWorldV10Frame } from './publicWorldRuntime'
+import { advancePublicGreenwayOnlyFrame, advancePublicWorld, advancePublicWorldFrame,
+  advancePublicWorldV10Frame } from './publicWorldRuntime'
 import { advancePublicWorldV11Frame } from './publicWorldV11Authority'
 import type { PublicWorldIntent } from './publicWorldRuntime'
 import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
@@ -14,6 +16,7 @@ import { withFreshPublicV7Herbs } from './publicWorldV7'
 import { withFreshPublicV9Camps } from './publicWorldV9State'
 import { withPublicV10TerrainRevision } from './publicWorldV10State'
 import { withPublicV11Highland } from './publicWorldV11State'
+import { createPublicV11RouteSupport } from './publicV11RouteSupport'
 import * as streamedWorld from './streamedWorld'
 import type { GenerationProfile } from './types'
 import { worldTileAtGrid, WORLD_GRID_MIN } from './worldChunks'
@@ -83,6 +86,66 @@ function expectOneFrame(before: PublicWorldState, after: ReturnType<typeof advan
 }
 
 describe('public v6 authority handoff', () => {
+  it('shares frozen discovery history until a Greenway frame reveals new ground', () => {
+    const fresh = createFreshPublicWorld(seed, classic)
+    const known = Object.freeze([...fresh.discoveredTileIds])
+    const atEight: PublicWorldState = { ...fresh, discoveredTileIds: known,
+      player: { ...fresh.player,
+        position: { x: 8, y: terrainHeightAt(fresh.greenway.tiles, 8, 0), z: 0 } } }
+
+    const looked = advancePublicWorldFrame(atEight,
+      [{ type: 'look', yawDelta: 0.02, pitchDelta: 0 }])
+    expect(looked.rejections).toEqual([])
+    expect(looked.state.discoveredTileIds).toBe(known)
+    expect(atEight.discoveredTileIds).toEqual(fresh.discoveredTileIds)
+
+    const walked = advancePublicWorldFrame(atEight,
+      [{ type: 'move', delta: { x: 0.16, z: 0 } }])
+    const revealed = nearbyWorldTileIds(walked.state.player.position,
+      PUBLIC_WALK_REVEAL_RADIUS_METERS).filter((id) => !known.includes(id))
+    expect(walked.rejections).toEqual([])
+    expect(revealed.length).toBeGreaterThan(0)
+    expect(walked.state.discoveredTileIds).not.toBe(known)
+    expect(walked.state.discoveredTileIds).toEqual([...new Set([...known, ...revealed])].sort())
+    expect(walked.events.filter((event) => event.type === 'tile_discovered').map((event) => event.tileId))
+      .toEqual(revealed)
+    expect(atEight.discoveredTileIds).toEqual(fresh.discoveredTileIds)
+
+    const mutable: PublicWorldState = { ...atEight, discoveredTileIds: [...known] }
+    const mutableLook = advancePublicWorldFrame(mutable,
+      [{ type: 'look', yawDelta: 0.02, pitchDelta: 0 }])
+    expect(mutableLook.rejections).toEqual([])
+    expect(mutableLook.state.discoveredTileIds).toEqual(mutable.discoveredTileIds)
+    expect(mutableLook.state.discoveredTileIds).not.toBe(mutable.discoveredTileIds)
+  })
+
+  it('reveals nearby ground while walking without erasing the opening clearing or backtracking', () => {
+    const fresh = createFreshPublicWorld(seed, classic)
+    expect(fresh.discoveredTileIds).toHaveLength(29)
+    const atEight: PublicWorldState = { ...fresh, player: { ...fresh.player,
+      position: { x: 8, y: terrainHeightAt(fresh.greenway.tiles, 8, 0), z: 0 } } }
+    const forward = advancePublicWorldFrame(atEight,
+      [{ type: 'move', delta: { x: 0.16, z: 0 } }])
+    expect(forward.rejections).toEqual([])
+    expect(forward.state.movementOwner).toBe('greenway')
+    const expectedNew = nearbyWorldTileIds(forward.state.player.position,
+      PUBLIC_WALK_REVEAL_RADIUS_METERS).filter((id) => !fresh.discoveredTileIds.includes(id))
+    expect(expectedNew).toContain('tile-7-3')
+    expect(forward.state.discoveredTileIds).toEqual([...new Set([...fresh.discoveredTileIds, ...expectedNew])].sort())
+    expect(forward.events.filter((event) => event.type === 'tile_discovered').map((event) => event.tileId))
+      .toEqual(expectedNew)
+    const back = advancePublicWorldFrame(forward.state,
+      [{ type: 'move', delta: { x: -0.16, z: 0 } }])
+    expect(back.rejections).toEqual([])
+    const backEdge = nearbyWorldTileIds(back.state.player.position,
+      PUBLIC_WALK_REVEAL_RADIUS_METERS).filter((id) => !forward.state.discoveredTileIds.includes(id))
+    expect(backEdge).toEqual(['tile-5--1', 'tile-5-7'])
+    expect(back.state.discoveredTileIds).toEqual([...forward.state.discoveredTileIds, ...backEdge].sort())
+    expect(parsePublicV6PlayableRoot(serializePublicV6World({ schemaVersion: PUBLIC_V6_SCHEMA,
+      saveRevision: 1, bootstrap: null, state: back.state }))?.state.discoveredTileIds)
+      .toEqual(back.state.discoveredTileIds)
+  })
+
   it('links discovered Greenway and Mireglass rings in both directions with one saved player', () => {
     const fresh = createFreshPublicWorld(seed, classic)
     const greenwayRing = fresh.greenway.fairyRings.find((ring) => ring.id === 'ring-greenway')!
@@ -283,6 +346,59 @@ describe('public v6 authority handoff', () => {
     } finally {
       construct.mockRestore()
     }
+  })
+
+  it('rejects multi-cell streamed discovery overflow and safely replays the original state', () => {
+    const outbound = advancePublicWorld(atEdge(classic, -12),
+      { type: 'move', delta: { x: -4, z: 0 } })
+    expect(outbound.rejections).toEqual([])
+    const currentTileId = worldTileAtGrid(seed, -4, 0).id
+    const sparse: PublicWorldState = { ...outbound.state,
+      discoveredTileIds: [currentTileId], eventSequence: Number.MAX_SAFE_INTEGER - 8 }
+    const before = JSON.stringify(sparse)
+    const intents: PublicWorldIntent[] = [{ type: 'move', delta: { x: -4, z: 0 } }]
+    const rejected = advancePublicWorldFrame(sparse, intents)
+    expect(rejected.rejections).toMatchObject([{ code: 'invalid_value', intentIndex: 0 }])
+    expect(rejected.state).toBe(sparse)
+    expect(rejected.events).toEqual([])
+    expect(JSON.stringify(sparse)).toBe(before)
+    expect(advancePublicWorldFrame(sparse, intents)).toEqual(rejected)
+
+    const safe: PublicWorldState = { ...sparse, eventSequence: 0 }
+    const replay = advancePublicWorldFrame(safe, intents)
+    expect(replay.rejections).toEqual([])
+    expect(replay.events.length).toBeGreaterThan(8)
+    expect(replay.state.eventSequence).toBe(replay.events.length)
+    expect(replay.events.map((event) => event.sequence))
+      .toEqual(replay.events.map((_, index) => index + 1))
+  })
+
+  it('rejects a look plus outbound crossing when the look exceeds the sequence limit', () => {
+    const edge = atEdge(classic, -12)
+    const nearbyIds = nearbyWorldTileIds({ x: -16, z: 0 }, PUBLIC_WALK_REVEAL_RADIUS_METERS)
+    const sourceId = worldTileAtGrid(seed, -3, 0).id
+    const undiscovered = nearbyIds.filter((id) => id !== sourceId).slice(0, 7)
+    expect(undiscovered).toHaveLength(7)
+    const known = [...new Set([...nearbyIds.filter((id) => !undiscovered.includes(id)), sourceId])].sort()
+    const nearLimit: PublicWorldState = { ...edge, discoveredTileIds: known,
+      eventSequence: Number.MAX_SAFE_INTEGER - 8 }
+    const before = JSON.stringify(nearLimit)
+    const intents: PublicWorldIntent[] = [
+      { type: 'look', yawDelta: 0.1, pitchDelta: 0 },
+      { type: 'move', delta: { x: -4, z: 0 } },
+    ]
+    const rejected = advancePublicWorldFrame(nearLimit, intents)
+    expect(rejected.rejections).toMatchObject([{ code: 'invalid_value' }])
+    expect(rejected.state).toBe(nearLimit)
+    expect(rejected.events).toEqual([])
+    expect(JSON.stringify(nearLimit)).toBe(before)
+    expect(advancePublicWorldFrame(nearLimit, intents)).toEqual(rejected)
+
+    const safe: PublicWorldState = { ...nearLimit, eventSequence: 0 }
+    const replay = advancePublicWorldFrame(safe, intents)
+    expectOneFrame(safe, replay)
+    expect(replay.events).toHaveLength(9)
+    expect(replay.state.movementOwner).toBe('streamed')
   })
 
   it.each([
@@ -527,7 +643,8 @@ describe('public v6 authority handoff', () => {
     const v11Before = JSON.stringify(v11)
     for (const [state, blocked, before] of [
       [v10, advancePublicWorldV10Frame(v10, intents), v10Before],
-      [v11, advancePublicWorldV11Frame(v11, intents), v11Before],
+      [v11, advancePublicWorldV11Frame(v11, [intents[0],
+        { type: 'move', delta: { x: -0.16, z: 0 } }]), v11Before],
     ] as const) {
       expect(blocked.rejections).toMatchObject([{ code: 'terrain_missing', intentIndex: 1 }])
       expect(blocked.state).toBe(state)
@@ -552,5 +669,104 @@ describe('public v6 authority handoff', () => {
     expect(reverse.rejections).toEqual([])
     expect(reverse.state.player.position.x).toBe(-16)
     expect(reverse.state.tick).toBe(first.state.tick + 1)
+  })
+})
+
+describe('bounded Greenway-only frame', () => {
+  it('keeps Greenway equipment, trade, movement and its one-tick frame parity', () => {
+    const fresh = createFreshPublicWorld(seed, classic)
+    const ready: PublicWorldState = { ...fresh,
+      player: { ...fresh.player, inventory: [...fresh.player.inventory, { itemId: 'logs', quantity: 1 }] } }
+    const actions: PublicWorldIntent[][] = [
+      [{ type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' }],
+      [{ type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3 }],
+      turnAndWalk(ready.player.yaw, 'A', walkMeters),
+    ]
+    let state = ready
+    for (const intents of actions) {
+      const expected = advancePublicWorldFrame(state, intents)
+      const actual = advancePublicGreenwayOnlyFrame(state, intents)
+      expect(actual).toEqual(expected)
+      expect(actual.rejections).toEqual([])
+      expect(actual.state.tick).toBe(state.tick + 1)
+      expect(actual.state.eventSequence).toBe(state.eventSequence + actual.events.length)
+      state = actual.state
+    }
+  })
+
+  it('reuses Greenway gathering and store authority without changing their outcomes', () => {
+    const fresh = createFreshPublicWorld(seed, classic)
+    const store = fresh.greenway.stores[0]
+    const atStore: PublicWorldState = { ...fresh, player: { ...fresh.player,
+      position: { ...store.position } } }
+    const buy: PublicWorldIntent[] = [{ type: 'buy_store_listing', storeId: store.id,
+      listingId: store.listings[0].id }]
+    const bought = advancePublicGreenwayOnlyFrame(atStore, buy)
+    expect(bought).toEqual(advancePublicWorldFrame(atStore, buy))
+    expect(bought.rejections).toEqual([])
+
+    const tree = fresh.greenway.resources.find((resource) => resource.kind === 'tree')!
+    const atTree: PublicWorldState = { ...fresh, player: { ...fresh.player,
+      position: { ...tree.position }, equipment: { ...fresh.player.equipment,
+        mainHand: 'woodcutters_axe' } } }
+    const harvest: PublicWorldIntent[] = [{ type: 'harvest', resourceId: tree.id }]
+    const chopped = advancePublicGreenwayOnlyFrame(atTree, harvest)
+    expect(chopped).toEqual(advancePublicWorldFrame(atTree, harvest))
+    expect(chopped.rejections).toEqual([])
+  })
+
+  it.each([[classic, -12, -4], [expanded, -30, -2]] as const)(
+    'rejects a %s outbound look+move without entering streamed terrain', (profile, x, deltaX) => {
+      const edge = atEdge(profile, x)
+      const before = JSON.stringify(edge)
+      const construct = vi.spyOn(streamedWorld, 'createStreamedWorldFromState')
+      const intents: PublicWorldIntent[] = [
+        { type: 'look', yawDelta: 0.1, pitchDelta: 0 },
+        { type: 'move', delta: { x: deltaX, z: 0 } },
+      ]
+      for (const [frame, intentIndex] of [[intents.slice(1), 0], [intents, 1]] as const) {
+        const result = advancePublicGreenwayOnlyFrame(edge, frame)
+        expect(result.rejections).toMatchObject([
+          { code: 'unavailable_here', intentIndex, intentType: 'move' },
+        ])
+        expect(result.state).toBe(edge)
+        expect(result.events).toEqual([])
+      }
+      expect(JSON.stringify(edge)).toBe(before)
+      expect(construct).not.toHaveBeenCalled()
+      construct.mockRestore()
+    })
+
+  it('rejects cross-region fairy travel before touching the streamed cache', () => {
+    const ready = createFreshPublicWorld(seed, classic)
+    const before = JSON.stringify(ready)
+    const construct = vi.spyOn(streamedWorld, 'createStreamedWorldFromState')
+    const result = advancePublicGreenwayOnlyFrame(ready, [{ type: 'teleport_fairy_ring',
+      sourceRingId: 'ring-greenway', targetRingId: MIREGLASS_RING_ID }])
+    expect(result.rejections).toMatchObject([
+      { code: 'unavailable_here', intentIndex: 0, intentType: 'teleport_fairy_ring' },
+    ])
+    expect(result.state).toBe(ready)
+    expect(result.events).toEqual([])
+    expect(JSON.stringify(ready)).toBe(before)
+    expect(construct).not.toHaveBeenCalled()
+    construct.mockRestore()
+  })
+
+  it('passes selected Greenway route support to the unchanged movement step', () => {
+    const fresh = withPublicV11Highland(withPublicV10TerrainRevision(withFreshPublicV9Camps(
+      withFreshPublicV7Herbs(createFreshPublicWorld(seed, classic)))))
+    const start = { ...fresh,
+      greenway: { ...fresh.greenway, builtRouteIds: ['greenway_ladder' as const],
+        routes: fresh.greenway.routes.map((route) => route.id === 'greenway_ladder'
+          ? { ...route, siteId: 'greenway_ladder:x:0' } : route) },
+      player: { ...fresh.player,
+        position: { x: 0, y: terrainHeightAt(fresh.greenway.tiles, 0, -4), z: -4 } } }
+    const move: PublicWorldIntent[] = [{ type: 'move', delta: { x: 0, z: -walkMeters } }]
+    expect(advancePublicWorldFrame(start, move).rejections).toMatchObject([{ code: 'locked_area' }])
+    const crossed = advancePublicGreenwayOnlyFrame(start, move, createPublicV11RouteSupport(start))
+    expect(crossed.rejections).toEqual([])
+    expect(crossed.state.movementOwner).toBe('greenway')
+    expect(crossed.state.player.position.z).toBe(-4 - walkMeters)
   })
 })

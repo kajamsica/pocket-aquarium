@@ -8,7 +8,7 @@ import type { PublicV7LockProvider } from './publicWorldV7Flow'
 import { inspectPublicV10UnderLock } from './publicWorldV10Flow'
 import { decodePublicV10Head, encodePublicV10Head } from './publicWorldV10Snapshot'
 import { decodePublicV11Head, encodePublicV11Head, isValidPublicV11SourceReceipt,
-  samePublicV11SourceReceipt } from './publicWorldV11Snapshot'
+  sameValidatedPublicV11SourceReceipt } from './publicWorldV11Snapshot'
 import type { PublicV11SourceReceipt } from './publicWorldV11Snapshot'
 import { withPublicV11Highland } from './publicWorldV11State'
 import type { PublicWorldV11State } from './publicWorldV11State'
@@ -109,7 +109,7 @@ async function inspectUnderLock(storage: Pick<Storage, 'getItem'>, v8: V8Store, 
     sourceV10Lineage: current.value.start.sourceReceipt })
   if (!isValidPublicV11SourceReceipt(sourceReceipt)) return blocked('invalid-v10-lineage')
   if (missing) return succeeded({ status: 'missing', sourceReceipt })
-  if (!samePublicV11SourceReceipt(read.lineage, sourceReceipt)) return blocked('source-changed')
+  if (!sameValidatedPublicV11SourceReceipt(read.lineage!, sourceReceipt)) return blocked('source-changed')
   return succeeded({ status: 'valid', bootstrap: head!.bootstrap,
     start: { state: head!.state, saveRevision: head!.saveRevision, sourceReceipt } })
 }
@@ -138,7 +138,7 @@ export function migratePublicV10ToV11(storage: Pick<Storage, 'getItem'>,
     if (checked.value.status === 'valid') return failed('v11-records-present')
     const sourceReceipt = checked.value.sourceReceipt
     if (!sourceReceipt) return failed('v10-missing')
-    if (!samePublicV11SourceReceipt(expected, sourceReceipt)) return failed('source-changed')
+    if (!sameValidatedPublicV11SourceReceipt(expected, sourceReceipt)) return failed('source-changed')
     const source = decodePublicV10Head(sourceReceipt.sourceV10Head)!
     const state = withPublicV11Highland(source.state)
     const head = encodePublicV11Head(state, source.bootstrap, 0)
@@ -158,7 +158,7 @@ export function resumePublicV11(storage: Pick<Storage, 'getItem'>,
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v11-missing' : checked.value.reason)
     const { start } = checked.value
-    if (!samePublicV11SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
+    if (!sameValidatedPublicV11SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
     return start.saveRevision === expectedRevision ? succeeded(start) : failed('revision-changed')
   })
 }
@@ -175,7 +175,7 @@ export function commitPublicV11Snapshot(storage: Pick<Storage, 'getItem'>,
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v11-missing' : checked.value.reason)
     const { start, bootstrap } = checked.value
-    if (!samePublicV11SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
+    if (!sameValidatedPublicV11SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
     if (start.saveRevision !== expectedRevision) return failed('revision-changed')
     if (!preservesCampHistory(start.state, state)) return failed('invalid-v11-camp-history')
     if (!preservesDigHistory(start.state, state)) return failed('invalid-v11-dig-history')

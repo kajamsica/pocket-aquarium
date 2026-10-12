@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "wizard-realms.character-candidate/v1",
+  "status": "candidate_unaccepted",
+  "id": "wayfarer_wizard",
+  "originalAuthorship": "Procedural Blender mesh authored for this project; no third-party geometry or pixels",
+  "source": "author_wayfarer.py",
+  "editableSource": "wayfarer_wizard.blend",
+  "runtimeAsset": "wayfarer_wizard.glb",
+  "views": [
+    "preview_front.png",
+    "preview_back.png",
+    "preview_side.png",
+    "preview_three_quarter.png"
+  ],
+  "sourceAxes": {
+    "up": "+Z",
+    "forward": "+Y",
+    "origin": "floor between feet"
+  },
+  "glbAxes": {
+    "up": "+Y",
+    "forward": "-Z",
+    "origin": "floor between feet"
+  },
+  "sourceBoundsMeters": {
+    "min": [
+      -0.67,
+      -0.3347,
+      0.004
+    ],
+    "max": [
+      0.67,
+      0.4368,
+      2.2884
+    ]
+  },
+  "triangleCount": 15668,
+  "meshCount": 52,
+  "materialCount": 12,
+  "deformBones": [
+    "Root",
+    "Hips",
+    "Spine",
+    "Neck",
+    "Head",
+    "UpperArm.L",
+    "Forearm.L",
+    "Hand.L",
+    "UpperArm.R",
+    "Forearm.R",
+    "Hand.R",
+    "Thigh.L",
+    "Shin.L",
+    "Foot.L",
+    "Thigh.R",
+    "Shin.R",
+    "Foot.R"
+  ],
+  "equipmentSockets": [
+    "Socket.RightHand",
+    "Socket.LeftHand",
+    "Socket.Head",
+    "Socket.Chest",
+    "Socket.Legs",
+    "Socket.RightFoot",
+    "Socket.LeftFoot"
+  ],
+  "animationClips": [],
+  "rigNote": "Rigid weighted garment/body pieces follow an editable humanoid armature. The skirt has no cloth deformation or authored clips yet.",
+  "designNote": "Original young traveler with asymmetric chestnut hair, purple split robe, woven mantle, leather belt and satchel. No game franchise designs were copied.",
+  "referenceContext": [
+    {
+      "url": "https://worldofwarcraft.blizzard.com/en-us/news/19803327",
+      "use": "broad stylized character direction only; source page unavailable during authoring"
+    },
+    {
+      "url": "https://support.runescape.com/hc/en-gb/articles/207223015-RuneScape-graphics-settings",
+      "use": "broad range of game model detail and quality settings"
+    }
+  ],
+  "validation": "Generated asset requires separate GLB structural and visual candidate review before integration"
+}

@@ -1,15 +1,433 @@
 import { describe, expect, it } from 'vitest'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import * as THREE from 'three'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
+import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from '../domain/discoveryMask'
+import { discoveredTileIdsInActiveWindow } from '../domain/publicV13DiscoveryWindow'
+import { publicWorldV16TileAtGrid, resolvePublicV16GreenwaySite } from '../domain/publicWorldV16GreenwaySites'
+import { resolvePublicV17GreenwaySite } from '../domain/publicWorldV17GreenwaySites'
+import { resolvePublicV28RiverBridge } from '../domain/publicWorldV28RiverBridgeSites'
+import { resolvePublicV23Site } from '../domain/publicWorldV23Sites'
+import { createFreshPublicV16Head } from '../domain/publicWorldV16Snapshot'
+import { publicWorldV16ViewProjection } from '../PublicV16WorldView'
+import { displayPublicV28RiverBridge } from '../PublicV28WorldView'
+import { resolveTerrainWorkSite } from '../domain/terrainWorks'
 import { highlandRidgeCellAt } from '../domain/highlandRidge'
-import { WORLD_CELL_METERS } from '../domain/worldChunks'
-import type { WizardLandmark, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, highlandDetailFor, landmarkAppearance, mireglassConstructionGeometry, mireglassDetailFor, ridgeSafeCameraPosition, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, treeTrunkBlocksView } from './WizardScene'
-import { visibleTerrainCells } from './visibleTerrain'
+import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
+import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
+import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
+import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, v26TargetedTerrainCell, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
+import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
+
+const renderedMeshes = (node: unknown): { material?: THREE.Material }[] => {
+  if (Array.isArray(node)) return node.flatMap(renderedMeshes)
+  if (!node || typeof node !== 'object' || !('type' in node) || !('props' in node)) return []
+  const element = node as { type: unknown; props: { children?: unknown; material?: THREE.Material } }
+  return [...(element.type === 'mesh' ? [element.props] : []), ...renderedMeshes(element.props.children)]
+}
+
+const expectPreviewWireframe = (meshes: ReturnType<typeof renderedMeshes>) => {
+  expect(meshes.length).toBeGreaterThan(0)
+  for (const { material } of meshes) {
+    expect(material).toMatchObject({ wireframe: true, transparent: true, depthWrite: false })
+    expect(material?.opacity).toBeLessThan(1)
+  }
+}
+
+describe('finite world bedrock', () => {
+  it('ends at all four canonical grid faces with a fixed center and size', () => {
+    const minFace = (WORLD_GRID_MIN - 0.5) * WORLD_CELL_METERS
+    const maxFace = (WORLD_GRID_MAX + 0.5) * WORLD_CELL_METERS
+    expect(WORLD_BEDROCK_BOUNDS).toEqual({
+      west: minFace, east: maxFace, north: minFace, south: maxFace,
+      centerX: (minFace + maxFace) / 2, centerZ: (minFace + maxFace) / 2,
+      width: maxFace - minFace, depth: maxFace - minFace,
+    })
+    expect(WORLD_BEDROCK_BOUNDS.centerX - WORLD_BEDROCK_BOUNDS.width / 2).toBe(WORLD_BEDROCK_BOUNDS.west)
+    expect(WORLD_BEDROCK_BOUNDS.centerX + WORLD_BEDROCK_BOUNDS.width / 2).toBe(WORLD_BEDROCK_BOUNDS.east)
+    expect(WORLD_BEDROCK_BOUNDS.centerZ - WORLD_BEDROCK_BOUNDS.depth / 2).toBe(WORLD_BEDROCK_BOUNDS.north)
+    expect(WORLD_BEDROCK_BOUNDS.centerZ + WORLD_BEDROCK_BOUNDS.depth / 2).toBe(WORLD_BEDROCK_BOUNDS.south)
+    expect(WORLD_BEDROCK_BOUNDS.centerX).toBe(-2)
+    expect(WORLD_BEDROCK_BOUNDS.centerZ).toBe(-2)
+    expect(WORLD_BEDROCK_BOUNDS.width).toBe(2048)
+    expect(WORLD_BEDROCK_BOUNDS.depth).toBe(2048)
+  })
+})
+
+describe('V26 scene discovery gate', () => {
+  it('opts only the V29 view into saved-pit targeting for Dig, Mine, and hover', () => {
+    const historical = {} as WizardViewProjection
+    const v29 = { v29Mining: {} } as WizardViewProjection
+    expect(sceneTerrainPickKind(historical)).toBe('dig')
+    expect(sceneTerrainPickKind(historical, 'dig')).toBe('dig')
+    expect(sceneTerrainPickKind(historical, 'fill')).toBe('fill')
+    expect(sceneTerrainPickKind(v29)).toBe('v29-open-pit')
+    expect(sceneTerrainPickKind(v29, 'dig')).toBe('v29-open-pit')
+    expect(sceneTerrainPickKind(v29, 'mine')).toBe('v29-open-pit')
+    expect(sceneTerrainPickKind(v29, 'fill')).toBe('fill')
+    expect(sceneTerrainPickKind(v29, 'place-soil')).toBe('dig')
+  })
+  it('highlights only a nearby revealed dry canonical spade target, without claiming authorization', () => {
+    const ground: WizardTerrainCell = { id: 'tile-3-3', position: [0, 1, 0], size: [4, 4],
+      height: 1.8, climate: 'temperate_forest' }
+    const wet: WizardTerrainCell = { ...ground, id: 'tile-3-5', position: [0, 1, 8] }
+    const projection = { seed: 'wizard-realms', player: { position: [0, 1, 0] },
+      equipment: equipment({ mainHand: stack('field_spade') }),
+      controllerActionsEnabled: true, v26ValleyRimSegments: [] } as unknown as WizardViewProjection
+    expect(v26TargetedTerrainCell(projection, [ground], { gx: 0, gz: 0 })).toBe(ground)
+    const bank: WizardTerrainCell = { ...ground, id: 'tile-3-7', position: [0, 1, 16] }
+    expect(v26TargetedTerrainCell({ ...projection, player: { ...projection.player,
+      position: [0, 1, 16] } }, [bank], { gx: 0, gz: 4 })).toBe(bank)
+    expect(v26TargetedTerrainCell({ ...projection, player: { ...projection.player,
+      position: [0, 1, 8] } }, [wet], { gx: 0, gz: 2 })).toBeNull()
+    expect(v26TargetedTerrainCell(projection, [], { gx: 0, gz: 0 })).toBeNull()
+    expect(v26TargetedTerrainCell(projection, [{ ...ground, id: 'tile-4-3' }], { gx: 0, gz: 0 })).toBeNull()
+    expect(v26TargetedTerrainCell(projection, [wet], { gx: 0, gz: 2 })).toBeNull()
+    expect(v26TargetedTerrainCell({ ...projection, v26ValleyRimSegments: undefined }, [ground], { gx: 0, gz: 0 })).toBeNull()
+    expect(v26TargetedTerrainCell({ ...projection, controllerActionsEnabled: false }, [ground], { gx: 0, gz: 0 })).toBeNull()
+    expect(v26TargetedTerrainCell({ ...projection, equipment: equipment() }, [ground], { gx: 0, gz: 0 })).toBeNull()
+    expect(v26TargetedTerrainCell({ ...projection, equipment: equipment(),
+      v29Mining: { tools: { basicPickOwned: true, enchantedPickOwned: false, activePick: 'basic' },
+        offers: [], bids: { soil: 1, stone: 3, iron_ore: 8, gold_ore: 15, diamond: 60 },
+        bag: { soil: 0, stone: 0, iron_ore: 0, gold_ore: 0, diamond: 0 },
+        excavationLevel: 2, atOutfitters: false } }, [ground], { gx: 0, gz: 0 })).toBe(ground)
+    expect(v26TargetedTerrainCell({ ...projection, player: { ...projection.player, position: [40, 1, 0] } },
+      [ground], { gx: 0, gz: 0 })).toBeNull()
+  })
+
+  it('renders pit ladders only with the exact revealed floor and canonical cell', () => {
+    const cell: WizardTerrainCell = { id: 'tile-6-4', position: [12, 1.2, 4],
+      size: [4, 4], height: 1.9, climate: 'temperate_forest' }
+    const ladder = { cellId: cell.id, gx: 3, gz: 1, floorY: 1.2, rimY: 2 }
+    expect(visibleV26PitLadders([ladder], [cell])).toEqual([ladder])
+    expect(visibleV26PitLadders(undefined, [cell])).toEqual([])
+    expect(visibleV26PitLadders([ladder], [])).toEqual([])
+    expect(visibleV26PitLadders([ladder], [{ ...cell, position: [12, 1.6, 4] }])).toEqual([])
+    expect(visibleV26PitLadders([ladder], [{ ...cell, id: 'tile-7-4' }])).toEqual([])
+    expect(visibleV26PitLadders([{ ...ladder, rimY: ladder.floorY }], [cell])).toEqual([])
+  })
+
+  it('passes only revealed cells to the saved-aperture rim mesh', () => {
+    const cell = (x: number, z: number): WizardTerrainCell => ({
+      id: `${x}:${z}`, position: [x, 0, z], size: [4, 4], height: 0.7,
+      climate: 'rocky', color: '#7b765e' })
+    const tiles = [-4, 0, 4, 28].flatMap((x) => [cell(x, -4), cell(x, -8)])
+    const segments = publicV26ValleyRimSegments('wizard-realms', [{ x: -2, widthMeters: 1.05 }])
+    const projection = { player: { position: [0, 0, -4] },
+      visualWorld: { terrain: tiles, discoveredTileIds: ['-4:-4', '0:-4'] },
+      v26ValleyRimSegments: segments } as unknown as WizardViewProjection
+    const { revealedTerrain } = sceneTerrainFor(projection)
+    expect(revealedTerrain.map((entry) => entry.id)).toEqual(['-4:-4', '0:-4'])
+    const geometry = buildV26ValleyRimGeometry(segments, revealedTerrain)
+    const positions = geometry.getAttribute('position') as THREE.BufferAttribute
+    expect(positions.count).toBeGreaterThan(0)
+    for (let index = 0; index < positions.count; index += 1) {
+      const x = positions.getX(index)
+      expect(x > -2.524 && x < -1.476).toBe(false)
+      expect(x).toBeLessThan(6)
+    }
+    geometry.dispose()
+  })
+})
+
+describe('opt-in software graphics profile', () => {
+  it('keeps normal GPU quality unless graphics=software is exact', () => {
+    const normal = { dpr: [1, 1.5], shadows: { type: THREE.PCFShadowMap }, antialias: true }
+    expect(sceneGraphicsOptionsForSearch('')).toEqual(normal)
+    expect(sceneGraphicsOptionsForSearch('?publicWorld=v17&graphics=high')).toEqual(normal)
+    expect(sceneGraphicsOptionsForSearch('?graphics=softwareish')).toEqual(normal)
+    expect(sceneGraphicsOptionsForSearch('?publicWorld=v17&graphics=software'))
+      .toEqual({ dpr: 1, shadows: false, antialias: false })
+  })
+})
+
+describe('v20 pointer aim through the live scene camera', () => {
+  const bounds = { left: 100, top: 50, width: 200, height: 100 }
+  const cameraAt = (x: number, targetX: number, targetZ: number) => {
+    const camera = new THREE.PerspectiveCamera(68, 2, 0.08, 180)
+    camera.position.set(x, 4, 16)
+    camera.lookAt(targetX, 1, targetZ)
+    camera.updateProjectionMatrix()
+    return camera
+  }
+
+  it('aims only at the frontmost visible creek skin and follows the current camera', () => {
+    const scene = new THREE.Scene()
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(20, 4),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    water.name = 'Greenway creek water'
+    water.rotation.x = -Math.PI / 2
+    water.position.set(0, 1, 8)
+    scene.add(water)
+    scene.fog = new THREE.Fog('#5b657c', 24, 31)
+    const camera = cameraAt(0, 0, 8)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'bridge')).toBeCloseTo(0)
+    camera.position.x = 4
+    camera.lookAt(2, 1, 8)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'bridge')).toBeCloseTo(2)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'ladder')).toBeNull()
+    const foreground = new THREE.Mesh(new THREE.PlaneGeometry(20, 10),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    foreground.name = 'Foreground rock'
+    foreground.position.set(2, 1, 12)
+    scene.add(foreground)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'bridge')).toBeNull()
+    foreground.visible = false
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'bridge')).toBeCloseTo(2)
+    camera.position.set(4, 4, 50)
+    camera.lookAt(2, 1, 8)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'bridge')).toBeNull()
+  })
+
+  it('only accepts a visible north-cliff fascia hit, not other fascia or invalid canvas points', () => {
+    const scene = new THREE.Scene()
+    const fascia = new THREE.Mesh(new THREE.PlaneGeometry(60, 3),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    fascia.name = 'Terrain perimeter and cliff fascia'
+    fascia.position.set(0, 1, -6)
+    scene.add(fascia)
+    scene.fog = new THREE.Fog('#5b657c', 24, 31)
+    const camera = cameraAt(3, 2, -6)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'ladder')).toBeCloseTo(2)
+    camera.position.set(3, 4, 40)
+    camera.lookAt(2, 1, -6)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'ladder')).toBeNull()
+    camera.position.set(3, 4, 16)
+    camera.lookAt(2, 1, -6)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'bridge')).toBeNull()
+    fascia.position.z = -3
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'ladder')).toBeNull()
+    fascia.position.z = -6
+    expect(pickVisibleWorkAimX(scene, camera, { ...bounds, width: 0 }, 200, 100, 'ladder')).toBeNull()
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 99, 100, 'ladder')).toBeNull()
+    expect(pickVisibleWorkAimX(scene, camera, bounds, Number.NaN, 100, 'ladder')).toBeNull()
+    expect(pickVisibleWorkAimX(new THREE.Scene(), camera, bounds, 200, 100, 'ladder')).toBeNull()
+  })
+
+  it('aims at a revealed V26 north rim face but not hidden, back, side, or occluded stone', () => {
+    const seed = 'wizard-realms'
+    const cell = (gx: number, gz: number): WizardTerrainCell => ({
+      id: `tile-${gx + 3}-${gz + 3}`, position: [gx * 4, gz === -2 ? 2.4 : 1, gz * 4],
+      size: [4, 4], height: 1, climate: 'loam' })
+    const revealed = [cell(3, -1), cell(3, -2)]
+    const geometry = buildV26ValleyRimGeometry(publicV26ValleyRimSegments(seed, []), revealed)
+    const scene = new THREE.Scene()
+    const rim = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    rim.name = 'V26 starter valley rock rim'
+    scene.add(rim)
+    scene.fog = new THREE.Fog('#5b657c', 24, 31)
+    const camera = new THREE.PerspectiveCamera(68, 2, 0.08, 180)
+    camera.position.set(12.3, 1.7, 0)
+    camera.lookAt(12.3, 1.7, -6)
+    camera.updateProjectionMatrix()
+    const raycaster = new THREE.Raycaster()
+    const rimHit = () => {
+      scene.updateMatrixWorld(true)
+      camera.updateMatrixWorld()
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
+      return raycaster.intersectObject(rim)[0]
+    }
+    expect(rimHit()?.face?.normal.z).toBeGreaterThan(0)
+    const pick = (tiles: readonly WizardTerrainCell[] = revealed) =>
+      pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'ladder', seed, tiles)
+    expect(pick()).toBeCloseTo(12.3, 1)
+    expect(pickVisibleWorkAimX(scene, camera, bounds, 200, 100, 'ladder', seed)).toBeNull()
+    expect(pick(revealed.slice(0, 1))).toBeNull()
+    expect(pick(revealed.map((tile, index) => index === 1
+      ? { ...tile, id: 'unrelated-tile' } : tile))).toBeNull()
+    camera.position.set(12.3, 1.7, -12)
+    camera.lookAt(12.3, 1.7, -6)
+    expect(rimHit()).toBeDefined()
+    expect(pick()).toBeNull()
+    camera.position.set(12.3, 1.7, 0)
+    camera.lookAt(12.3, 1.7, -6)
+    const foreground = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 0.2),
+      new THREE.MeshBasicMaterial())
+    foreground.name = 'Unrelated foreground rock'
+    foreground.position.set(12.3, 1.7, -3)
+    scene.add(foreground)
+    expect(pick()).toBeNull()
+
+    const sideCells = [cell(-7, 0), cell(-8, 0)]
+    const sideGeometry = buildV26ValleyRimGeometry(publicV26ValleyRimSegments(seed, []), sideCells)
+    const sideRim = new THREE.Mesh(sideGeometry, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    sideRim.name = 'V26 starter valley rock rim'
+    const sideScene = new THREE.Scene()
+    sideScene.add(sideRim)
+    const sideCamera = new THREE.PerspectiveCamera(68, 2, 0.08, 180)
+    sideCamera.position.set(-24, 1.7, 2)
+    sideCamera.lookAt(-30, 1.7, 0)
+    sideCamera.updateProjectionMatrix()
+    sideScene.updateMatrixWorld(true)
+    sideCamera.updateMatrixWorld()
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), sideCamera)
+    expect(raycaster.intersectObject(sideRim)).not.toHaveLength(0)
+    expect(pickVisibleWorkAimX(sideScene, sideCamera, bounds, 200, 100,
+      'ladder', seed, sideCells)).toBeNull()
+    geometry.dispose()
+    sideGeometry.dispose()
+  })
+})
+
+describe('new-world starter cliff scenery', () => {
+  const seed = 'greenway-alpha'
+  const face = starterCliffCanonicalFace(seed)
+  const site = starterCliffCanonicalSite(seed)
+  const route = { id: 'greenway_ladder', from: [site.from.x, site.from.y, site.from.z],
+    to: [site.to.x, site.to.y, site.to.z], built: false } as const
+  const ready = { id: site.id, routeId: route.id, label: 'Starter cliff ladder',
+    from: route.from, to: route.to, logCost: 4, status: 'ready' as const,
+    reason: 'Ready to build', discovered: true }
+  const view = (ladder: 'built' | 'preview' | null, built = false) => ({ seed,
+    routes: [{ ...route, built }], buildSites: [ready], selectedBuildSiteId: site.id,
+    starterCliff: { face, ladder },
+  }) as unknown as WizardViewProjection
+
+  it('places the short rails and rungs on the same endpoints and width as authoritative support', () => {
+    const shape = starterCliffLadderGeometry(face)
+    expect(shape.run).toBeCloseTo(0.65)
+    expect(shape.rise).toBeCloseTo(1.56)
+    expect(shape.length).toBeCloseTo(Math.hypot(0.65, 1.56))
+    expect(shape.rungCount).toBeGreaterThanOrEqual(5)
+    expect(shape.railOffset + 0.055).toBeLessThan(face.width / 2)
+    expect(shape.rungWidth).toBeLessThan(face.width)
+    const rotation = new THREE.Euler(shape.pitch, shape.yaw, 0)
+    const midpoint = new THREE.Vector3(...shape.midpoint)
+    const lower = new THREE.Vector3(0, 0, shape.length / 2).applyEuler(rotation).add(midpoint)
+    const upper = new THREE.Vector3(0, 0, -shape.length / 2).applyEuler(rotation).add(midpoint)
+    for (const [drawn, support] of [[lower, face.from], [upper, face.to]] as const) {
+      expect(drawn.x).toBeCloseTo(support.x)
+      expect(drawn.y).toBeCloseTo(support.y)
+      expect(drawn.z).toBeCloseTo(support.z)
+    }
+  })
+
+  it('renders two long rails and open, bounded rungs on the center face', () => {
+    const shape = starterCliffLadderGeometry(face)
+    const markup = renderToStaticMarkup(createElement(StarterCliffLadder, { face, status: 'built' }))
+    const meshes = [...markup.matchAll(/<mesh\b[^>]*>/g)].map(([tag]) => tag)
+    const rails = meshes.filter((tag) => tag.includes('scale="0.13,0.14,'))
+    const rungs = meshes.filter((tag) => tag.includes(`scale="${shape.rungWidth},0.13,0.08"`))
+    expect(rails).toHaveLength(2)
+    expect(shape.rungCount).toBeGreaterThanOrEqual(5)
+    expect(shape.rungCount).toBeLessThanOrEqual(7)
+    expect(rungs).toHaveLength(shape.rungCount)
+    expect(meshes).toHaveLength(shape.rungCount + 4)
+    const positions = rungs.map((tag) => Number(tag.match(/position="0,0.1,([^,"]+)/)?.[1]))
+    expect(positions.every(Number.isFinite)).toBe(true)
+    expect(positions.slice(1).every((position, index) => position - positions[index] > 0.16)).toBe(true)
+    expect(shape.rise / shape.run).toBeGreaterThan(2)
+  })
+
+  it('renders the unbuilt starter cliff as a translucent guide, not a complete ladder', () => {
+    const shape = starterCliffLadderGeometry(face)
+    const preview = renderToStaticMarkup(createElement(StarterCliffLadder, { face, status: 'preview' }))
+    const built = renderToStaticMarkup(createElement(StarterCliffLadder, { face, status: 'built' }))
+    const previewMeshes = [...preview.matchAll(/<mesh\b[^>]*>/g)].map(([tag]) => tag)
+    expect(preview).toContain('Greenway starter cliff ladder (preview)')
+    expect(previewMeshes).toHaveLength(4)
+    expect(preview).not.toContain(`scale="${shape.rungWidth},0.13,0.08"`)
+    expect(built.match(new RegExp(`scale="${shape.rungWidth},0.13,0.08"`, 'g')))
+      .toHaveLength(shape.rungCount)
+    expectPreviewWireframe(renderedMeshes(StarterCliffLadder({ face, status: 'preview' })))
+  })
+
+  it('shows only a selected discovered ready preview or a committed ladder, never a legacy ramp', () => {
+    const previewRoute = { id: site.id, from: route.from, to: route.to, built: false }
+    expect(starterCliffConstructionVisuals(view('preview'), [previewRoute], [ready]))
+      .toEqual({ routes: [], ladder: 'preview' })
+    expect(starterCliffConstructionVisuals(view('preview'), [previewRoute],
+      [{ ...ready, discovered: false }]).ladder).toBeNull()
+    expect(starterCliffConstructionVisuals(view('preview'), [previewRoute],
+      [{ ...ready, status: 'too_far' }]).ladder).toBeNull()
+    expect(starterCliffConstructionVisuals({ ...view('preview'),
+      selectedBuildSiteId: null }, [previewRoute], [ready]).ladder).toBeNull()
+    expect(starterCliffConstructionVisuals({ ...view('preview'),
+      controllerActionsEnabled: false }, [previewRoute], [ready]).ladder).toBeNull()
+    expect(starterCliffConstructionVisuals(view('built', true), [{ ...route, built: true }], [ready]))
+      .toEqual({ routes: [], ladder: 'built' })
+    expect(starterCliffConstructionVisuals(view('built'), [previewRoute], [ready]).ladder).toBeNull()
+  })
+
+  it('uses the streamed visual window, not active-owner routes or hidden projection sites', () => {
+    const activeOwner = { ...view('built'), routes: [], buildSites: [] }
+    const built = { ...route, built: true }
+    expect(starterCliffConstructionVisuals(activeOwner, [built], []))
+      .toEqual({ routes: [], ladder: 'built' })
+    expect(starterCliffConstructionVisuals(view('built', true), [], [ready]).ladder).toBeNull()
+
+    const selectedButUnseen = view('preview')
+    expect(starterCliffConstructionVisuals(selectedButUnseen, [], []).ladder).toBeNull()
+    expect(starterCliffConstructionVisuals(selectedButUnseen, [
+      { id: site.id, from: route.from, to: route.to, built: false },
+    ], []).ladder).toBeNull()
+  })
+
+  it('keeps the old Greenway low-steps renderer when the v14-only field is absent', () => {
+    const old = { ...route, built: true }
+    const oldProjection = { ...view(null, true), starterCliff: undefined } as WizardViewProjection
+    const routes = [old]
+    expect(starterCliffConstructionVisuals(oldProjection, routes, []).routes).toBe(routes)
+    expect(starterCliffConstructionVisuals(oldProjection, routes, []).ladder).toBeNull()
+    expect(mireglassConstructionGeometry(old, true)).toMatchObject({ kind: 'ramp', run: 4 })
+  })
+})
+
+describe('public scenery horizon', () => {
+  it('keeps legacy fog while clearing the public mid-field', () => {
+    expect(PUBLIC_FOG_START_M).toBe(24)
+    expect(fogEndFor(true)).toBe(PUBLIC_FOG_END_M)
+    expect(fogEndFor(false)).toBe(40)
+  })
+
+  it('hides the 31 by 31 cell cutoff at wide aspect, including intermediate-angle terrain poses', () => {
+    const framing = cameraFramingFor(2100, 900)
+    const camera = new THREE.PerspectiveCamera(68, 21 / 9, 0.08, 180)
+    const edge = (PUBLIC_VISUAL_RADIUS_CELLS + 0.5) * WORLD_CELL_METERS
+    let nearestVisibleCutoff = Infinity
+    for (const heading of [
+      ...Array.from({ length: 8 }, (_, index) => index * Math.PI / 4),
+      THREE.MathUtils.degToRad(214), THREE.MathUtils.degToRad(237),
+    ]) {
+      for (const pitch of [0.08, 0.4, 0.54, 0.55, 0.72]) {
+        const horizontal = Math.cos(pitch * framing.pitchScale) * framing.distance
+        camera.position.set(Math.sin(heading) * horizontal,
+          framing.focusHeight + framing.eyeRise + Math.sin(pitch * framing.pitchScale) * framing.distance,
+          Math.cos(heading) * horizontal)
+        camera.lookAt(0, framing.focusHeight, 0)
+        camera.updateMatrixWorld()
+        for (const [playerX, playerZ] of [[0, 0], [1.99, 1.99], [-1.99, 1.99]]) {
+          for (const height of [-3, 0, 2, 2.29, 13]) {
+            for (let offset = -edge; offset <= edge; offset += 1) {
+              for (const point of [
+                new THREE.Vector3(-edge - playerX, height, offset - playerZ),
+                new THREE.Vector3(edge - playerX, height, offset - playerZ),
+                new THREE.Vector3(offset - playerX, height, -edge - playerZ),
+                new THREE.Vector3(offset - playerX, height, edge - playerZ),
+              ]) {
+                const projected = point.clone().project(camera)
+                if (Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1 || Math.abs(projected.z) > 1) continue
+                nearestVisibleCutoff = Math.min(nearestVisibleCutoff,
+                  -point.applyMatrix4(camera.matrixWorldInverse).z)
+              }
+            }
+          }
+        }
+      }
+    }
+    expect(PUBLIC_FOG_END_M).toBe(31)
+    expect(Number.isFinite(nearestVisibleCutoff)).toBe(true)
+    expect(nearestVisibleCutoff).toBeLessThan(32)
+    expect(nearestVisibleCutoff).toBeGreaterThan(PUBLIC_FOG_END_M + 0.5)
+  })
+})
 
 describe('terrain presentation', () => {
   it('uses smooth world-position tint across adjacent cells without depending on cell ID', () => {
@@ -23,6 +441,34 @@ describe('terrain presentation', () => {
     expect(distance(origin.top, at(4, 0).top)).toBeLessThan(distance(origin.top, at(24, 20).top))
     expect(distance(origin.top, at(4, 0).top)).toBeLessThan(0.025)
     expect(origin.side.getHex()).not.toBe(origin.top.getHex())
+  })
+
+  it('skips cloned cells only while every scene input stays equal', () => {
+    const cell: WizardTerrainCell = { id: 'tile-0-0', position: [0, 2, 0], size: [4, 4],
+      height: 2, climate: 'marsh', color: '#56824b', mireglassTerrain: 'wetland',
+      mireglassApproach: true, mireglassTrailSegment: { from: [-2, 0], to: [2, 0] },
+      highlandSurface: 'trail', highlandTrailSegment: { from: [0, -2], to: [0, 2] },
+      highlandRidgeCell: 'rock' }
+    expect(terrainCellVisualsEqual(cell, structuredClone(cell))).toBe(true)
+    const changed: WizardTerrainCell[] = [
+      { ...cell, id: 'tile-1-0' },
+      { ...cell, position: [4, 2, 0] },
+      { ...cell, size: [5, 4] },
+      { ...cell, height: 3 },
+      { ...cell, climate: 'snow' },
+      { ...cell, color: '#ffffff' },
+      { ...cell, mireglassTerrain: 'rocky' },
+      { ...cell, mireglassApproach: false },
+      { ...cell, mireglassTrailSegment: { from: [-1, 0], to: [2, 0] } },
+      { ...cell, mireglassTrailSegment: { from: [-2, 0], to: [1, 0] } },
+      { ...cell, mireglassTrailSegment: undefined },
+      { ...cell, highlandSurface: 'quarry' },
+      { ...cell, highlandTrailSegment: { from: [0, -1], to: [0, 2] } },
+      { ...cell, highlandTrailSegment: { from: [0, -2], to: [0, 1] } },
+      { ...cell, highlandTrailSegment: undefined },
+      { ...cell, highlandRidgeCell: 'gallery' },
+    ]
+    for (const other of changed) expect(terrainCellVisualsEqual(cell, other)).toBe(false)
   })
 })
 
@@ -106,6 +552,344 @@ describe('Mireglass terrain detail', () => {
   })
 })
 
+describe('unsaved canonical terrain-work scenery', () => {
+  const seed = 'greenway-alpha'
+  const bridge = resolveTerrainWorkSite(seed, 'works1:bridge:-102:92:z')!
+  const ladder = resolveTerrainWorkSite(seed, 'works1:ladder:-103:108:W')!
+  const dig = resolveTerrainWorkSite(seed, 'tile--64-76')!
+
+  it('marks revealed unbuilt banks, the true ladder foot and dig soil without changing trial data', () => {
+    if (bridge.kind !== 'bridge' || ladder.kind !== 'ladder' || dig.kind !== 'dig') throw new Error('Missing work fixtures')
+    const trial = { kit: { logs: 12, stone: 0, capacity: 16 as const, spadeOwned: true,
+      spadeEquipped: true, xp: 0, constructionXp: 0, excavationXp: 0 }, bootsEquipped: false,
+    candidates: [bridge, ladder, dig].map((site) => ({ site, rejection: null })),
+    selectedId: null, selectedSite: null, selectedRejection: null, builtSites: [] }
+    const terrain = [...new Set([bridge, ladder, dig].flatMap((site) => site.footprintTileIds))]
+      .map((id) => ({ id } as WizardViewProjection['terrain'][number]))
+    const before = structuredClone(trial)
+    expect(terrainWorkCandidateMarkers(trial, terrain)).toEqual([
+      { id: bridge.id, kind: 'bridge', positions: [[bridge.from.x, bridge.from.y, bridge.from.z],
+        [bridge.to.x, bridge.to.y, bridge.to.z]] },
+      { id: ladder.id, kind: 'ladder', positions: [[ladder.supportPath[1].x,
+        ladder.supportPath[1].y, ladder.supportPath[1].z]] },
+      { id: dig.id, kind: 'dig', positions: [[dig.center.x, dig.center.y, dig.center.z]] },
+    ])
+    expect(trial).toEqual(before)
+  })
+
+  it('fails closed on hidden footprints and excludes completed or previewed duplicates within five candidates', () => {
+    if (bridge.kind !== 'bridge' || ladder.kind !== 'ladder' || dig.kind !== 'dig') throw new Error('Missing work fixtures')
+    const terrain = [...new Set([bridge, ladder, dig].flatMap((site) => site.footprintTileIds))]
+      .map((id) => ({ id } as WizardViewProjection['terrain'][number]))
+    const trial = { kit: { logs: 12, stone: 0, capacity: 16 as const, spadeOwned: true,
+      spadeEquipped: true, xp: 0, constructionXp: 0, excavationXp: 0 }, bootsEquipped: false,
+    candidates: [bridge, ladder, dig].map((site) => ({ site, rejection: null })),
+    selectedId: null, selectedSite: null, selectedRejection: null, builtSites: [] }
+    expect(terrainWorkCandidateMarkers(trial, terrain.filter(({ id }) => id !== bridge.footprintTileIds[4]))
+      .map(({ id }) => id)).toEqual([ladder.id, dig.id])
+    expect(terrainWorkCandidateMarkers({ ...trial, builtSites: [bridge], selectedId: ladder.id,
+      selectedSite: ladder }, terrain).map(({ id }) => id)).toEqual([dig.id])
+    expect(terrainWorkCandidateMarkers({ ...trial, candidates: [
+      { site: dig, rejection: 'already_done' as const }, ...trial.candidates.slice(0, 1),
+    ] }, terrain).map(({ id }) => id)).toEqual([bridge.id])
+    expect(terrainWorkCandidateMarkers({ ...trial, candidates: [
+      { site: dig, rejection: 'undiscovered' as const }, { site: bridge, rejection: null },
+    ] }, terrain).map(({ id }) => id)).toEqual([bridge.id])
+    expect(terrainWorkCandidateMarkers({ ...trial, selectedId: dig.id, selectedSite: dig }, terrain)
+      .some(({ id }) => id === dig.id)).toBe(true)
+    expect(terrainWorkCandidateMarkers({ ...trial, candidates: [
+      ...Array.from({ length: 6 }, (_, index) => ({ site: { ...dig, id: `dig-${index}` }, rejection: null })),
+    ] }, terrain).map(({ id }) => id)).toEqual(['dig-0', 'dig-1', 'dig-2', 'dig-3', 'dig-4'])
+  })
+
+  it('lays bridge segments on each authoritative support edge and raises the ladder only at its face', () => {
+    if (bridge.kind !== 'bridge' || ladder.kind !== 'ladder') throw new Error('Missing work fixtures')
+    const deck = terrainWorkStructureGeometry(bridge)
+    expect(deck).toHaveLength(2)
+    expect(deck.every((segment) => segment.rotationOrder === 'XYZ')).toBe(true)
+    expect(deck[0].midpoint[1]).toBeCloseTo((bridge.supportPath[0].y + bridge.supportPath[1].y) / 2)
+    expect(deck[1].midpoint[1]).toBeCloseTo((bridge.supportPath[1].y + bridge.supportPath[2].y) / 2)
+    expect(deck[0].run).toBeCloseTo(4)
+    const face = terrainWorkStructureGeometry(ladder)
+    expect(face).toHaveLength(1)
+    expect(face[0].run).toBeCloseTo(0.65)
+    expect(face[0].rise).toBeCloseTo(1.56)
+    expect(face[0].midpoint[1]).toBeCloseTo((ladder.supportPath[1].y + ladder.supportPath[2].y) / 2)
+  })
+
+  it('shows only visible built works and a ready selected ghost, never a blocked or dug structure', () => {
+    if (bridge.kind !== 'bridge' || ladder.kind !== 'ladder') throw new Error('Missing work fixtures')
+    const cells = bridge.footprintTileIds.map((id) => ({ id, position: [0, 0, 0] as const,
+      size: [4, 4] as const, height: 2, climate: 'marsh' }))
+    const trial = { kit: { logs: 12, stone: 0, capacity: 16 as const, spadeOwned: true,
+      spadeEquipped: true, xp: 0, constructionXp: 0, excavationXp: 0 },
+    bootsEquipped: false, candidates: [], selectedId: ladder.id, selectedSite: ladder,
+    selectedRejection: null, builtSites: [bridge] }
+    expect(terrainWorkConstructionVisuals(trial, cells).map(({ site }) => site.id)).toEqual([bridge.id])
+    const ladderCells = [...cells, { ...cells[0], id: ladder.footprintTileIds[0] }]
+    expect(terrainWorkConstructionVisuals(trial, ladderCells).map(({ site, built }) => [site.id, built]))
+      .toEqual([[bridge.id, true], [ladder.id, false]])
+    expect(terrainWorkConstructionVisuals({ ...trial, selectedRejection: 'too_far' }, ladderCells))
+      .toHaveLength(1)
+    expect(mireglassConstructionGeometry({ id: 'greenway_ladder', from: [0, 0, 0], to: [0, 1.56, 4] }))
+      .toBeNull()
+  })
+})
+
+describe('saved canonical terrain-work scenery', () => {
+  it('renders selected bridge and ladder ghosts as wire guides while built works stay physical', () => {
+    const bridge = resolvePublicV17GreenwaySite('wizard-realms', 'works4:bridge:greenway-creek:0')
+    const ladder = resolvePublicV17GreenwaySite('wizard-realms', 'works4:ladder:greenway-north-cliff:11')
+    const river = resolvePublicV28RiverBridge('wizard-realms', 'works6:river-bridge:-14')
+    if (bridge?.kind !== 'bridge' || ladder?.kind !== 'ladder' || !river) {
+      throw new Error('Missing canonical route fixtures')
+    }
+    for (const site of [{ ...bridge, obstacle: 'fen_channel' as const },
+      displayPublicV28RiverBridge(river)]) {
+      const guide = renderToStaticMarkup(createElement(TerrainWorkStructure,
+        { site, built: false, source: 'Saved' }))
+      const physical = renderToStaticMarkup(createElement(TerrainWorkStructure,
+        { site, built: true, source: 'Saved' }))
+      expect(guide).toContain(`Saved bridge ${site.id} (preview)`)
+      expect([...guide.matchAll(/<mesh\b/g)]).toHaveLength(terrainWorkStructureGeometry(site).length * 4)
+      expect(guide).not.toContain(`scale="${site.widthMeters},0.14,`)
+      expect(guide).not.toContain(`scale="${site.widthMeters + 0.08},0.05,`)
+      expect(physical).toContain(`scale="${site.widthMeters},0.14,`)
+      expectPreviewWireframe(renderedMeshes(TerrainWorkStructure(
+        { site, built: false, source: 'Saved' })))
+    }
+    const ladderDisplay = { ...ladder, obstacle: 'slate_cliff' as const }
+    const ready = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: ladderDisplay, built: false, source: 'Saved' }))
+    const blocked = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: ladderDisplay, built: false, blocked: true, source: 'Saved' }))
+    const built = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: ladderDisplay, built: true, source: 'Saved' }))
+    expect(ready).toContain(`Saved ladder ${ladder.id} (preview)`)
+    expect(blocked).toContain(`Saved ladder ${ladder.id} (blocked preview)`)
+    expect([...ready.matchAll(/<mesh\b/g)]).toHaveLength(4)
+    expect(ready).not.toContain(`scale="${ladder.widthMeters - 0.26},0.1,0.08"`)
+    expect(built.match(new RegExp(`scale="${ladder.widthMeters - 0.26},0.1,0.08"`, 'g'))?.length)
+      .toBeGreaterThanOrEqual(5)
+    const readyMeshes = renderedMeshes(TerrainWorkStructure({ site: ladderDisplay, built: false,
+      source: 'Saved' }))
+    const blockedMeshes = renderedMeshes(TerrainWorkStructure({ site: ladderDisplay, built: false,
+      blocked: true, source: 'Saved' }))
+    expectPreviewWireframe(readyMeshes)
+    expectPreviewWireframe(blockedMeshes)
+    expect((readyMeshes[0].material as THREE.MeshBasicMaterial).color.getHex())
+      .not.toBe((blockedMeshes[0].material as THREE.MeshBasicMaterial).color.getHex())
+  })
+
+  it('renders saved off-center ladders as spaced rungs and keeps bridge decks distinct', () => {
+    const ladder = resolvePublicV16GreenwaySite('wizard-realms', 'works3:ladder:-3')
+    const bridge = resolvePublicV16GreenwaySite('wizard-realms', 'works3:bridge:1')
+    if (ladder?.kind !== 'ladder' || bridge?.kind !== 'bridge') throw new Error('Missing work fixtures')
+    const ladderMarkup = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: { ...ladder, obstacle: 'slate_cliff' }, built: true, source: 'Saved' }))
+    const bridgeMarkup = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: { ...bridge, obstacle: 'fen_channel' }, built: true, source: 'Saved' }))
+    const ladderMeshes = [...ladderMarkup.matchAll(/<mesh\b[^>]*>/g)].map(([tag]) => tag)
+    const rungMeshes = ladderMeshes.filter((tag) => tag.includes(`scale="${ladder.widthMeters - 0.26},0.1,0.08"`))
+    expect(ladderMeshes.filter((tag) => tag.includes('scale="0.12,0.13,'))).toHaveLength(2)
+    expect(rungMeshes.length).toBeGreaterThanOrEqual(5)
+    expect(rungMeshes.length).toBeLessThanOrEqual(7)
+    expect(ladderMeshes).toHaveLength(rungMeshes.length + 6)
+    const positions = rungMeshes.map((tag) => Number(tag.match(/position="0,0.16,([^,"]+)/)?.[1]))
+    expect(positions.every(Number.isFinite)).toBe(true)
+    expect(positions.slice(1).every((position, index) => position - positions[index] > 0.16)).toBe(true)
+    expect(bridgeMarkup).toContain(`scale="${bridge.widthMeters},0.14,`)
+    expect(bridgeMarkup).not.toContain(`scale="${ladder.widthMeters - 0.26},0.1,0.08"`)
+    expect(ladderMarkup).not.toContain(`scale="${bridge.widthMeters},0.14,`)
+  })
+
+  it('shows a steep open-rung Works4 cliff ladder beside an unchanged full-width bridge deck', () => {
+    const ladder = resolvePublicV17GreenwaySite('wizard-realms', 'works4:ladder:greenway-north-cliff:11')
+    const bridge = resolvePublicV17GreenwaySite('wizard-realms', 'works4:bridge:greenway-creek:0')
+    if (ladder?.kind !== 'ladder' || bridge?.kind !== 'bridge') throw new Error('Missing Works4 fixture')
+    const ladderVisual = { ...ladder, obstacle: 'slate_cliff' as const }
+    const bridgeVisual = { ...bridge, obstacle: 'fen_channel' as const }
+    const face = terrainWorkStructureGeometry(ladderVisual)[0]
+    expect(face.rise / face.run).toBeGreaterThan(2)
+    const ladderMarkup = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: ladderVisual, built: true, source: 'Saved' }))
+    const bridgeMarkup = renderToStaticMarkup(createElement(TerrainWorkStructure,
+      { site: bridgeVisual, built: true, source: 'Saved' }))
+    const meshes = [...ladderMarkup.matchAll(/<mesh\b[^>]*>/g)].map(([tag]) => tag)
+    const rungs = meshes.filter((tag) => tag.includes(`scale="${ladder.widthMeters - 0.26},0.1,0.08"`))
+    expect(rungs.length).toBeGreaterThanOrEqual(5)
+    expect(meshes).toHaveLength(rungs.length + 6)
+    expect(ladderMarkup).toContain(`position="${ladder.widthMeters / 2 - 0.1},0.08,0"`)
+    expect(ladderMarkup).not.toContain(`scale="${bridge.widthMeters},0.14,`)
+    expect(bridgeMarkup).toContain(`scale="${bridge.widthMeters},0.14,`)
+  })
+
+  it('places built dry-foot marks outside both creek deck ends and below the cliff ladder', () => {
+    const bridge = resolvePublicV17GreenwaySite('wizard-realms', 'works4:bridge:greenway-creek:0')
+    const ladder = resolvePublicV17GreenwaySite('wizard-realms', 'works4:ladder:greenway-north-cliff:11')
+    if (bridge?.kind !== 'bridge' || ladder?.kind !== 'ladder') throw new Error('Missing Works4 fixture')
+    const works = [
+      { site: { ...bridge, obstacle: 'fen_channel' as const }, built: true },
+      { site: { ...ladder, obstacle: 'slate_cliff' as const }, built: true },
+    ]
+    const terrain = [...new Set([...bridge.footprintTileIds, ...ladder.footprintTileIds])]
+      .map((id) => ({ id } as WizardViewProjection['terrain'][number]))
+    const bridgeOnly = bridge.footprintTileIds.find((id) => !ladder.footprintTileIds.includes(id))
+    const ladderOnly = ladder.footprintTileIds.find((id) => !bridge.footprintTileIds.includes(id))
+    if (!bridgeOnly || !ladderOnly) throw new Error('Expected distinct dry approach tiles')
+    const markers = terrainWorkApproachMarkers(works, terrain)
+    expect(markers.map(({ kind }) => kind)).toEqual(['bridge', 'bridge', 'ladder'])
+    expect(markers[0].position[0]).toBe(bridge.from.x)
+    expect(markers[0].position[2]).toBeLessThan(bridge.from.z)
+    expect(markers[1].position[2]).toBeGreaterThan(bridge.to.z)
+    const rung = ladder.supportPath[1]
+    expect(Math.abs(ladder.from.z + 0.4 - rung.z)).toBeGreaterThan(1.5)
+    expect(markers[2].position[0]).toBe(rung.x)
+    expect(markers[2].position[1]).toBeCloseTo(ladder.from.y + 0.055)
+    expect(ladder.from.z - markers[2].position[2]).toBeGreaterThan(0.15)
+    expect(ladder.from.z - markers[2].position[2]).toBeLessThan(0.3)
+    expect(markers[2].position[2]).toBeGreaterThan(rung.z)
+    const rungDistance = Math.hypot(markers[2].position[0] - rung.x,
+      markers[2].position[2] - rung.z)
+    expect(rungDistance).toBeCloseTo(1.08, 1)
+    expect(rungDistance).toBeLessThan(1.5)
+    expect(terrainWorkApproachMarkers(works, terrain.filter(({ id }) =>
+      id !== bridgeOnly)).map(({ kind }) => kind)).toEqual(['ladder'])
+    expect(terrainWorkApproachMarkers(works, terrain.filter(({ id }) =>
+      id !== ladderOnly)).map(({ kind }) => kind)).toEqual(['bridge', 'bridge'])
+    expect(terrainWorkApproachMarkers(works.map((work) => ({ ...work, built: false })), terrain))
+      .toEqual([])
+  })
+
+  it('aligns a second built Greenway ladder without moving historical or regional marks', () => {
+    const greenway = resolvePublicV17GreenwaySite('wizard-realms', 'works4:ladder:greenway-north-cliff:27')
+    const historical = resolvePublicV16GreenwaySite('wizard-realms', 'works3:ladder:-3')
+    const regional = resolvePublicV23Site('greenway-alpha', 'works5:ladder:mireglass-slate:W:-103:4306')
+    if (greenway?.kind !== 'ladder' || historical?.kind !== 'ladder' || !regional) {
+      throw new Error('Missing distinct ladder fixtures')
+    }
+    const terrain = [...new Set([greenway, historical, regional]
+      .flatMap((site) => site.footprintTileIds))]
+      .map((id) => ({ id } as WizardTerrainCell))
+    const [newFoot, oldFoot, previewFoot] = terrainWorkApproachMarkers([
+      { site: { ...greenway, obstacle: 'slate_cliff' as const }, built: true },
+      { site: { ...historical, obstacle: 'slate_cliff' as const }, built: true },
+      { site: regional, built: false },
+    ], terrain)
+    expect(newFoot.position[0]).toBe(greenway.supportPath[1].x)
+    expect(newFoot.position[1]).toBeCloseTo(greenway.from.y + 0.055)
+    expect(greenway.from.z - newFoot.position[2]).toBeGreaterThan(0.15)
+    expect(greenway.from.z - newFoot.position[2]).toBeLessThan(0.3)
+    expect(oldFoot.position).toEqual([historical.from.x,
+      historical.from.y + 0.055, historical.from.z + 0.4])
+    expect(previewFoot).toMatchObject({ regional: true, built: false,
+      position: [regional.from.x + 0.4, regional.from.y + 0.055, regional.from.z] })
+  })
+
+  it('places saved ladder rail endpoints on the support face for v16 and earlier works', () => {
+    const v16 = resolvePublicV16GreenwaySite('wizard-realms', 'works3:ladder:-3')
+    const works1 = resolveTerrainWorkSite('greenway-alpha', 'works1:ladder:-103:108:W')
+    if (v16?.kind !== 'ladder' || works1?.kind !== 'ladder') throw new Error('Missing ladder fixture')
+    const ladders = [{ ...v16, obstacle: 'slate_cliff' as const }, works1]
+    for (const site of ladders) {
+      const segment = terrainWorkStructureGeometry(site)[0]
+      expect(segment.rotationOrder).toBe('YXZ')
+      const rotation = new THREE.Euler(segment.pitch, segment.yaw, 0, segment.rotationOrder)
+      const midpoint = new THREE.Vector3(...segment.midpoint)
+      const lower = new THREE.Vector3(0, 0, -segment.length / 2).applyEuler(rotation).add(midpoint)
+      const upper = new THREE.Vector3(0, 0, segment.length / 2).applyEuler(rotation).add(midpoint)
+      for (const [drawn, support] of [[lower, site.supportPath[1]],
+        [upper, site.supportPath[2]]] as const) {
+        expect(drawn.x).toBeCloseTo(support.x)
+        expect(drawn.y).toBeCloseTo(support.y)
+        expect(drawn.z).toBeCloseTo(support.z)
+      }
+    }
+  })
+
+  it('reveals only complete footprints, shows a ready ladder ghost and a dig marker, never a blocked structure', () => {
+    const seed = 'greenway-alpha'
+    const bridge = resolveTerrainWorkSite(seed, 'works1:bridge:-102:92:z')
+    const ladder = resolveTerrainWorkSite(seed, 'works1:ladder:-103:108:W')
+    const dig = resolveTerrainWorkSite(seed, 'tile--64-76')
+    if (!bridge || bridge.kind !== 'bridge' || !ladder || ladder.kind !== 'ladder'
+      || !dig || dig.kind !== 'dig') throw new Error('Missing work fixtures')
+    const ready = { site: ladder, angleRadians: 0, distanceMeters: 2, rejection: null,
+      reason: 'Ready to build here.', benefit: 'Climb a Slate cliff.' }
+    const blocked = { site: dig, angleRadians: 1, distanceMeters: 3,
+      rejection: 'requires_spade' as const, reason: 'Own and equip a field spade to dig.', benefit: 'Gain stone.' }
+    const saved: NonNullable<WizardViewProjection['savedTerrainWorks']> = {
+      builtSites: [bridge], dugTileIds: [], preview: { selected: ready, nearby: [ready, blocked], guidance: null },
+    }
+    const terrain = [...new Set([bridge, ladder, dig].flatMap((site) => site.footprintTileIds))]
+      .map((id) => ({ id } as WizardViewProjection['terrain'][number]))
+    expect(savedTerrainWorkVisuals(saved, terrain).map(({ site, built }) => [site.id, built]))
+      .toEqual([[bridge.id, true], [ladder.id, false]])
+    expect(savedTerrainWorkMarkers(saved, terrain).map(({ id }) => id)).toEqual([dig.id])
+    const hidden = terrain.filter(({ id }) => id !== ladder.footprintTileIds[0])
+    expect(savedTerrainWorkVisuals(saved, hidden).map(({ site }) => site.id)).toEqual([bridge.id])
+    expect(savedTerrainWorkMarkers(saved, hidden).map(({ id }) => id)).toEqual([dig.id])
+    expect(savedTerrainWorkVisuals({ ...saved, preview: { selected: { ...ready, rejection: 'not_owned' },
+      nearby: [], guidance: null } }, terrain).map(({ site }) => site.id)).toEqual([bridge.id])
+    const blockedSaved = { ...saved, context: 'works4-greenway' as const,
+      preview: { selected: { ...ready, rejection: 'too_far' as const }, nearby: [], guidance: null } }
+    expect(savedTerrainWorkVisuals(blockedSaved, terrain).at(-1))
+      .toMatchObject({ site: ladder, built: false, blocked: true })
+    expect(savedTerrainWorkVisuals(blockedSaved, hidden).map(({ site }) => site.id))
+      .toEqual([bridge.id])
+  })
+
+  it('uses v16 shifted deck geometry and an open-rung ladder face from saved works', () => {
+    const seed = 'wizard-realms'
+    const bridge = resolvePublicV16GreenwaySite(seed, 'works3:bridge:1')
+    const ladder = resolvePublicV16GreenwaySite(seed, 'works3:ladder:-3')
+    const dig = resolvePublicV16GreenwaySite(seed, 'works3:dig:-2:4')
+    if (bridge?.kind !== 'bridge' || ladder?.kind !== 'ladder' || dig?.kind !== 'dig') {
+      throw new Error('Missing v16 scene sites')
+    }
+    expect(bridge.from.x).not.toBe(4)
+    const { head } = createFreshPublicV16Head(seed)
+    const discoveryMask = encodeDiscoveredTileIds([...new Set([
+      ...decodeDiscoveredTileIds(head.state.discoveryMask),
+      ...bridge.footprintTileIds, ...ladder.footprintTileIds, ...dig.footprintTileIds,
+    ])].sort())
+    const progress = { state: { ...head.state, discoveryMask,
+      player: { ...head.state.player, xp: 170, level: 2,
+        skillXp: { ...head.state.player.skillXp, construction: 140, excavation: 30 } } },
+      greenwayWorks: { builtBridgeIds: [bridge.id], builtLadderIds: [ladder.id],
+        dugTileIds: [dig.id] } }
+    const active = { movementOwner: progress.state.movementOwner,
+      tick: progress.state.tick, player: structuredClone(progress.state.player),
+      pendingBoundary: false,
+      activeKnownTileIds: discoveredTileIdsInActiveWindow(discoveryMask,
+        progress.state.player.position),
+      activeTiles: progress.state.greenway.tiles.map((tile) => publicWorldV16TileAtGrid(
+        seed, tile.gridX - 3, tile.gridZ - 3)) }
+    const view = publicWorldV16ViewProjection(progress, active, [], null)
+    const visuals = savedTerrainWorkVisuals(view.savedTerrainWorks, view.terrain)
+    expect(visuals.map(({ site }) => [site.id, site.kind])).toEqual([
+      [bridge.id, 'bridge'], [ladder.id, 'ladder']])
+    const deck = terrainWorkStructureGeometry(visuals[0].site)
+    expect(deck).toHaveLength(2)
+    expect(deck.every((segment) => segment.rotationOrder === 'XYZ')).toBe(true)
+    expect(deck.every((edge) => edge.midpoint[0] === bridge.from.x)).toBe(true)
+    expect(deck[0].midpoint[1]).toBeCloseTo((bridge.supportPath[0].y
+      + bridge.supportPath[1].y) / 2)
+    const face = terrainWorkStructureGeometry(visuals[1].site)
+    expect(face).toHaveLength(1)
+    expect(face[0].rise).toBeGreaterThan(0.55)
+    expect(face[0].run).toBeLessThan(1)
+    expect(face[0].midpoint[0]).toBe(ladder.supportPath[1].x)
+    const hidden = view.terrain.filter((cell) => cell.id !== ladder.footprintTileIds[0])
+    expect(savedTerrainWorkVisuals(view.savedTerrainWorks, hidden).map(({ site }) => site.id))
+      .toEqual([bridge.id])
+    expect(view.savedTerrainWorks?.dugTileIds).toContain(dig.footprintTileIds[0])
+    expect(view.terrain.find((cell) => cell.id === dig.footprintTileIds[0])?.position[1])
+      .toBe(dig.loweredCenter.y)
+    expect(savedTerrainWorkMarkers(view.savedTerrainWorks, view.terrain)).toEqual([])
+  })
+})
+
 describe('Highland quarry scenery', () => {
   it('uses a distinct stone surface and sparse low relief without dressing older terrain', () => {
     const cell = { id: 'tile-120--110', position: [468, 3, -452] as const,
@@ -143,6 +927,17 @@ describe('Highland quarry scenery', () => {
 })
 
 describe('avatar gear projection', () => {
+  it('shows only the V29 active pick as held gear, with distinct basic and enchanted heads', () => {
+    expect(avatarGearFor(equipment(), 'basic').mainHand).toBe('basic-pick')
+    expect(avatarGearFor(equipment(), 'enchanted').mainHand).toBe('enchanted-pick')
+    expect(avatarGearFor(equipment()).mainHand).toBeNull()
+    const basic = renderToStaticMarkup(createElement(MiningPick, { tier: 'basic' }))
+    const enchanted = renderToStaticMarkup(createElement(MiningPick, { tier: 'enchanted' }))
+    expect(basic).toContain('basic mining pick')
+    expect(enchanted).toContain('enchanted mining pick')
+    expect(basic).not.toContain('#7135bb')
+    expect(enchanted).toContain('#7135bb')
+  })
   it('shows no hat, staff, axe, or shield on the bare starting wizard', () => {
     expect(avatarGearFor(equipment())).toEqual({
       hat: false, tunic: false, leggings: false, boots: false, waders: false, mainHand: null, offHand: null, offHandLight: false,
@@ -224,6 +1019,28 @@ describe('construction scene visibility', () => {
   it('does not draw a duplicate ghost after its route has been built', () => {
     const built = [{ ...routes[0], built: true }, routes[1]]
     expect(constructionVisuals(built, sites, 'ladder-east').map((route) => route.id)).toEqual(['ladder', 'bridge'])
+  })
+
+  it('passes only a selected discovered Mireglass bridge or ladder to the legacy preview renderer', () => {
+    const choices = mireglassRouteSites('greenway-alpha')
+    for (const kind of ['bridge', 'ladder'] as const) {
+      const site = choices.find((choice) => choice.kind === kind)
+      if (!site) throw new Error(`Missing Mireglass ${kind} fixture`)
+      const from = [site.from.x, site.from.y, site.from.z] as const
+      const to = [site.to.x, site.to.y, site.to.z] as const
+      const candidate = { id: site.id, routeId: site.routeId, label: kind,
+        from, to, logCost: site.logCost, status: 'ready' as const,
+        reason: 'Ready', discovered: true }
+      const preview = constructionVisuals([], [candidate], candidate.id)
+      expect(preview).toEqual([{ id: candidate.id, from, to, built: false }])
+      expect(mireglassConstructionGeometry(preview[0])?.kind).toBe(kind)
+      expect(constructionVisuals([], [{ ...candidate, discovered: false }], candidate.id)).toEqual([])
+      expect(constructionVisuals([], [candidate], null)).toEqual([])
+      const builtRoute = { id: site.routeId, label: kind, from, to,
+        built: true, unlocked: true, logCost: site.logCost }
+      expect(constructionVisuals([builtRoute], [candidate], candidate.id))
+        .toEqual([builtRoute])
+    }
   })
 
   it('fits a joined fen deck and steep slate ladder to canonical Mireglass route endpoints', () => {

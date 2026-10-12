@@ -5,7 +5,7 @@ import {
   PUBLIC_V6_BACKUP_KEY, PUBLIC_V6_ROOT_KEY, PUBLIC_V6_STAGE_KEY, commitLegacyImportToPublicV6,
   commitPublicV6World, inspectLegacyImportSource,
 } from './publicWorldV6'
-import { createFreshPublicWorld } from './publicWorldState'
+import { createFreshPublicWorld, createPublicWorldFromBootstrap } from './publicWorldState'
 import {
   PUBLIC_V7_BACKUP_KEY, PUBLIC_V7_ROOT_KEY, PUBLIC_V7_STAGE_KEY,
   commitPublicV7World, loadPublicV7Root, migratePublicV6ToV7, serializePublicV7World,
@@ -131,7 +131,7 @@ describe('explicit migrated v7 versus newer v6 root choice', () => {
     const imported = commitLegacyImportToPublicV6(importedStorage, source)
     if (imported.status !== 'committed') throw new Error(imported.status)
     const newer = commitPublicV6World(importedStorage,
-      createFreshPublicWorld(seed, profile), importedStorage.values.get(PUBLIC_V6_ROOT_KEY)!)
+      createPublicWorldFromBootstrap(imported.root), importedStorage.values.get(PUBLIC_V6_ROOT_KEY)!)
     if (newer.status !== 'committed') throw new Error(newer.status)
     expect(inspectPublicV7RootConflictSnapshot({ ...snapshot, v6RootBytes: newer.bytes }))
       .toEqual({ status: 'incompatible-lineage' })

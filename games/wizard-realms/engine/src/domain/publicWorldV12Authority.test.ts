@@ -145,8 +145,57 @@ describe('public v12 Windward Step authority', () => {
     expect(east.state.player.position.x - point.x).toBeCloseTo(0.16, 9)
     const long = advancePublicWorldV12Frame(active,
       [{ type: 'move', delta: { x: -4, z: 0 } }])
-    expect(long.rejections).toEqual([])
-    expect(point.x - long.state.player.position.x).toBeCloseTo(4, 9)
+    expect(long.rejections).toMatchObject([{ code: 'invalid_value' }])
+    expect(long.state).toBe(active)
+    const unassistedRun = advancePublicWorldV12Frame(active,
+      [{ type: 'move', delta: { x: -0.20, z: 0 } }])
+    expect(unassistedRun.rejections).toMatchObject([{ code: 'invalid_value' }])
+    expect(unassistedRun.state).toBe(active)
+  })
+
+  it('keeps trusted ordinary boots and duplicate-equipment rules identical to untrusted ingress', () => {
+    const boots = at({ x: 100, z: 0 }, { ...fresh, player: { ...fresh.player,
+      inventory: [...fresh.player.inventory, { itemId: 'leather_boots', quantity: 1 }],
+      equipment: { ...fresh.player.equipment, feet: 'leather_boots' } } })
+    expect(isValidPublicWorldV12State(boots, null)).toBe(true)
+    const warmed = advancePublicWorldV12Frame(boots,
+      [{ type: 'look', yawDelta: 0, pitchDelta: 0 }]).state
+    const run = [{ type: 'look' as const, yawDelta: 0.1, pitchDelta: 0 },
+      { type: 'move' as const, delta: { x: 0.24, z: 0 } }]
+    const fast = advancePublicWorldV12Frame(warmed, run)
+    const untrusted = advancePublicWorldV12Frame(structuredClone(warmed), run)
+    expect(fast).toEqual(untrusted)
+    expect(fast.rejections).toEqual([])
+    expect(fast.state.player.position.x - warmed.player.position.x).toBeCloseTo(0.24)
+    const duplicate = advancePublicWorldV12Frame(warmed,
+      [{ type: 'equip_item', slot: 'feet', itemId: 'leather_boots' }])
+    expect(duplicate.rejections).toMatchObject([{ code: 'invalid_value',
+      message: 'Leather boots are already equipped.' }])
+    expect(duplicate.state).toBe(warmed)
+  })
+
+  it('matches untrusted market and landmark events on a trusted ordinary approach', () => {
+    const landmark = highlandLandmark(seed)
+    const pending = at({ x: 455.84, z: -432 }, { ...fresh, tick: 598,
+      player: { ...fresh.player, tradeSlots: [
+        { slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 3 },
+        fresh.player.tradeSlots[1], fresh.player.tradeSlots[2], fresh.player.tradeSlots[3],
+      ] } })
+    expect(isValidPublicWorldV12State(pending, null)).toBe(true)
+    const warmed = advancePublicWorldV12Frame(pending,
+      [{ type: 'look', yawDelta: 0, pitchDelta: 0 }])
+    expect(warmed.rejections).toEqual([])
+    const move = [{ type: 'move' as const, delta: { x: 0.16, z: 0 } }]
+    const untrusted = advancePublicWorldV12Frame(structuredClone(warmed.state), move)
+    const fast = advancePublicWorldV12Frame(warmed.state, move)
+    expect(fast).toEqual(untrusted)
+    expect(fast.rejections).toEqual([])
+    expect(fast.state.tick).toBe(600)
+    expect(fast.events.filter((event) => event.type === 'trade_listing_sold')).toHaveLength(1)
+    expect(fast.events.at(-1)).toMatchObject({ type: 'highland_landmark_discovered',
+      landmarkId: landmark.id, sequence: fast.state.eventSequence })
+    expect(fast.state.highland.landmarkDiscovered).toBe(true)
+    expect(isValidPublicWorldV12State(fast.state, null)).toBe(true)
   })
 
   it('does not assist connector, trail edge, expiry, airborne or off-trail movement', () => {
@@ -313,9 +362,9 @@ describe('public v12 Windward Step authority', () => {
     expect(invalidMove.events).toEqual([])
     expect(invalidMove.rejections).toMatchObject([{ code: 'invalid_value' }])
     const fenRow = mireglassFenRowAt(seed, -352)
-    const fenApproach = at({ x: -352, z: fenRow - 4 }, state)
+    const fenApproach = at({ x: -352, z: fenRow - 2.08 }, state)
     const blocked = advancePublicWorldV12Frame(fenApproach,
-      [{ type: 'move', delta: { x: 0, z: 4 } }])
+      [{ type: 'move', delta: { x: 0, z: 0.16 } }])
     expect(blocked.rejections).toMatchObject([{ code: 'fen_channel' }])
     expect(blocked.state).toBe(fenApproach)
     expect(blocked.events).toEqual([])

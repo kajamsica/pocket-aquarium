@@ -7,13 +7,25 @@ import { advancePublicWorld } from './domain/publicWorldRuntime'
 import { createFreshPublicWorld, type PublicWorldState } from './domain/publicWorldState'
 import { createStreamedWorld } from './domain/streamedWorld'
 import { PUBLIC_V7_SCHEMA, parsePublicV7PlayableRoot, serializePublicV7World, withFreshPublicV7Herbs } from './domain/publicWorldV7'
-import { WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from './domain/worldChunks'
+import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from './domain/worldChunks'
 import { publicWorldOverview, publicWorldViewProjection } from './PublicWorldView'
 import type { WizardFieldCampView } from './view/contracts'
+import { PUBLIC_VISUAL_RADIUS_CELLS } from './view/visibleTerrain'
 
 const seed = 'greenway-alpha'
+const maxVisualTerrainCells = (PUBLIC_VISUAL_RADIUS_CELLS * 2 + 1) ** 2
 
 describe('public v6 read-only view adapter', () => {
+  it('labels the saved Greenway route low steps in the overview without changing the stored name', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const state: PublicWorldState = { ...fresh,
+      greenway: { ...fresh.greenway, builtRouteIds: ['greenway_ladder'] } }
+    const rawName = state.greenway.routes.find((route) => route.id === 'greenway_ladder')!.name
+    expect(rawName).toBe('Greenway ladder')
+    expect(publicWorldOverview(state).cells.flatMap((cell) => cell.markers))
+      .toContain('Greenway low steps built')
+    expect(state.greenway.routes.find((route) => route.id === 'greenway_ladder')!.name).toBe(rawName)
+  })
   it('omits the optional camp contract and markers for older callers', () => {
     const state = createFreshPublicWorld(seed, 'greenway-classic-v1')
     const view = publicWorldViewProjection(state, [], null)
@@ -99,7 +111,7 @@ describe('public v6 read-only view adapter', () => {
       position: [exitX + 1.5, expect.any(Number), 0],
     })])
     expect(view.map.legend).toContain('⇦ west trail to Mireglass')
-    expect(view.map.guidance).toBe("Next: Head north to the fog at Greenway's edge, then cast Wayfinder Glow.")
+    expect(view.map.guidance).toBe("Next: Head to Greenway's north edge near x 0, z -4, then cast Wayfinder Glow into the fog.")
     expect(JSON.stringify(studied)).toBe(before)
   })
 
@@ -116,7 +128,7 @@ describe('public v6 read-only view adapter', () => {
           position: { x, y: terrainHeightAt(fresh.greenway.tiles, x, z), z } } }
       const projection = publicWorldViewProjection(state, [], null)
       expect(projection.map.title).toBe(title)
-      expect(projection.map.guidance).toBe("Next: Head north to the fog at Greenway's edge, then cast Wayfinder Glow.")
+      expect(projection.map.guidance).toBe("Next: Head to Greenway's north edge near x 0, z -4, then cast Wayfinder Glow into the fog.")
       expect(projection.map.tiles.find((tile) => tile.hasWestTrail)?.terrain).toEqual(
         projection.map.tiles.find((tile) => tile.hasWestTrail)?.discovered ? expect.any(String) : null)
     })
@@ -128,7 +140,7 @@ describe('public v6 read-only view adapter', () => {
       player: { ...fresh.player, learnedSpellIds: ['wayfinder_glow'],
         position: { x: -1.4, y: terrainHeightAt(fresh.greenway.tiles, -1.4, -4), z: -4 } } }
     const view = publicWorldViewProjection(state, [], null)
-    expect(view.map.guidance).toBe("Next: Head north to the fog at Greenway's edge, then cast Wayfinder Glow.")
+    expect(view.map.guidance).toBe("Next: Head to Greenway's north edge near x 0, z -4, then cast Wayfinder Glow into the fog.")
     expect(view.map.guidance).not.toContain('West to Mireglass')
   })
 
@@ -280,6 +292,77 @@ describe('public v6 read-only view adapter', () => {
     expect(view.backpack.stacks[0]?.itemId).toBe(atMarker.player.inventory[0]?.itemId)
     expect(view.equipment.feet).toMatchObject({ itemId: 'mireglass_reach/item/waders', name: 'Fen waders' })
     expect(JSON.stringify(atMarker)).toBe(before)
+  })
+
+  it('keeps Greenway terrain and its original building fixed across the streamed seam', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const edge: PublicWorldState = { ...fresh,
+      discoveredTileIds: [...fresh.discoveredTileIds,
+        ...[-1, -2, -3].map((x) => worldTileAtGrid(seed, x, 0).id)],
+      player: { ...fresh.player,
+      position: { x: -12, y: terrainHeightAt(fresh.greenway.tiles, -12, 0), z: 0 } } }
+    const crossed = advancePublicWorld(edge, { type: 'move', delta: { x: -4, z: 0 } })
+    expect(crossed.rejections).toEqual([])
+    expect(crossed.state.movementOwner).toBe('streamed')
+    const before = publicWorldViewProjection(edge, [], null)
+    const after = publicWorldViewProjection(crossed.state, [], null)
+    const returned = advancePublicWorld(crossed.state, { type: 'move', delta: { x: 4, z: 0 } })
+    expect(returned.rejections).toEqual([])
+    expect(returned.state.movementOwner).toBe('greenway')
+    const back = publicWorldViewProjection(returned.state, [], null)
+    const visual = (view: typeof before) => view.visualWorld!
+    const building = (view: typeof before) => visual(view).stores.find((store) => store.id === 'store-greenway')
+    expect(building(before)).toBeDefined()
+    expect(building(after)).toEqual(building(before))
+    expect(building(back)).toEqual(building(before))
+    expect(after.stores).toEqual([]) // The action/UI owner still changed; only the scenery persists.
+
+    const greenwayCell = before.terrain.find((cell) => cell.position[0] === -12 && cell.position[2] === 0)!
+    const visualCell = (view: typeof before, id: string) => visual(view).terrain.find((cell) => cell.id === id)
+    expect(visualCell(before, greenwayCell.id)).toEqual(greenwayCell)
+    expect(visualCell(after, greenwayCell.id)).toEqual(greenwayCell)
+    expect(visualCell(back, greenwayCell.id)).toEqual(greenwayCell)
+    const fringe = visual(before).terrain.find((cell) => cell.position[0] === -16 && cell.position[2] === 0)!
+    expect(fringe).toBeDefined()
+    expect(edge.discoveredTileIds).not.toContain(fringe.id)
+    expect(visualCell(after, fringe.id)).toEqual(fringe)
+    expect(visual(before).terrain.length).toBeLessThanOrEqual(maxVisualTerrainCells)
+    expect(visual(after).terrain.length).toBeLessThanOrEqual(maxVisualTerrainCells)
+  })
+
+  it('conceals unknown scenery behind a bounded continuous fog field', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const hidden: PublicWorldState = { ...fresh, discoveredTileIds: [worldTileAtGrid(seed, 0, 0).id] }
+    const view = publicWorldViewProjection(hidden, [], null)
+    expect(view.visualWorld?.stores).toEqual([])
+    expect(view.visualWorld?.resources.map((resource) => resource.id)).toEqual(['resource-tile-3-3'])
+    expect(view.visualWorld?.fairyRings).toEqual([])
+    const gridAt = (coordinate: number) => Math.ceil(coordinate / WORLD_CELL_METERS - 0.5)
+    const centerX = gridAt(hidden.player.position.x)
+    const centerZ = gridAt(hidden.player.position.z)
+    expect(view.visualWorld?.terrain.every((cell) =>
+      Math.abs(gridAt(cell.position[0]) - centerX) <= PUBLIC_VISUAL_RADIUS_CELLS
+      && Math.abs(gridAt(cell.position[2]) - centerZ) <= PUBLIC_VISUAL_RADIUS_CELLS)).toBe(true)
+    expect(view.visualWorld?.terrain.length).toBeLessThanOrEqual(maxVisualTerrainCells)
+    expect(view.visualWorld?.terrain.filter((cell) => !hidden.discoveredTileIds.includes(cell.id)).length)
+      .toBeGreaterThan(8)
+    expect(view.map.tiles.filter((tile) => tile.discovered).map((tile) => tile.id))
+      .toEqual([worldTileAtGrid(seed, 0, 0).id])
+  })
+
+  it('keeps a discovered Greenway building inside the eastward fog horizon', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const storeTile = worldTileAtGrid(seed, -1, 0).id
+    const position = createStreamedWorld(seed, { x: 34, z: 0 }).state.player.position
+    const state: PublicWorldState = { ...fresh, movementOwner: 'streamed',
+      player: { ...fresh.player, position },
+      discoveredTileIds: [...fresh.discoveredTileIds, storeTile,
+        worldTileAtGrid(seed, 8, 0).id] }
+    const view = publicWorldViewProjection(state, [], null)
+    expect(view.stores).toEqual([])
+    expect(view.visualWorld?.stores.find((store) => store.id === 'store-greenway'))
+      .toMatchObject({ position: [-5, expect.any(Number), -1] })
+    expect(view.visualWorld?.terrain.some((cell) => cell.id === storeTile)).toBe(true)
   })
 
   it('reuses the bounded presentation terrain until the active chunk window or seed changes', () => {

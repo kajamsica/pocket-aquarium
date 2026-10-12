@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "wizard-realms.character-validation/v1",
+  "candidate": "wayfarer_wizard",
+  "sourceSha256": "003b29f02ea7d80ab7b04b638c752803fafec6252bac27fb20d3e997a9111a15",
+  "glbSha256": "9878df5c36b3b42efe6109b21fa91df88cd2ac5f7ce7afd8aeff99696ce445b3",
+  "structuralIntegrity": {
+    "status": "passed",
+    "glbVersion": 2,
+    "glbBytes": 448384,
+    "meshes": 52,
+    "materials": 12,
+    "skins": 1,
+    "joints": 17,
+    "equipmentSockets": 7,
+    "animations": 0,
+    "checks": [
+      "GLB header and declared length",
+      "JSON and BIN chunk types and boundaries",
+      "buffer view boundaries",
+      "positive accessor counts with finite ordered bounds",
+      "JOINTS_0 and WEIGHTS_0 on every mesh primitive",
+      "all seven required named sockets",
+      "face and nose geometry export toward negative Z"
+    ]
+  },
+  "visualEvidence": {
+    "views": [
+      "preview_front.png",
+      "preview_back.png",
+      "preview_side.png",
+      "preview_three_quarter.png"
+    ],
+    "resolution": [384, 512],
+    "status": "no_go",
+    "reason": "The second preview has readable robe layering and improved hair, but the face, arms, and satchel remain visibly assembled from simple rounded forms. It still reads as a doll rather than the requested believable, expressive game character."
+  },
+  "integrationDisposition": "do_not_promote_without_art_review",
+  "knownLimitations": [
+    "No authored idle, walk, or action animation clips",
+    "Rigid weighted garment pieces and no cloth deformation",
+    "Fifty-two mesh nodes require runtime draw-call assessment before acceptance"
+  ]
+}

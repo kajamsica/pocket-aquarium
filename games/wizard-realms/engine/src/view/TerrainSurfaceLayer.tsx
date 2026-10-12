@@ -1,10 +1,17 @@
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { mireglassFenDepthAt, mireglassPlateauCliffBetween } from '../domain/mireglassTerrain'
+import { publicV25RiverCellAtGrid } from '../domain/publicWorldV25River'
+import type { PublicV26ValleyRimSegment } from '../domain/publicWorldV26ValleyRim'
+import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
 import type { WizardTerrainCell } from './contracts'
 
 type Appearance = { top: THREE.Color; side: THREE.Color }
 type Point = { x: number; y: number; z: number; color: THREE.Color }
+type V27WalkableOptions = Readonly<{ rimSegments: readonly PublicV26ValleyRimSegment[];
+  openPitColumns: readonly { gx: number; gz: number; openDepth: number }[] }>
+type RaisedSoilCell = Readonly<{ gx: number; gz: number }>
+export const DISCOVERY_FOG_COLOR = '#a7cddb'
 const BASE_Y = -0.72 // Meet the existing bedrock plane at the visible perimeter.
 const STEP_HEIGHT = 0.8
 const DIRECTIONS = [
@@ -15,7 +22,19 @@ const FAN = [2, 1, 8, 7, 6, 5, 4, 3] as const
 const key = (x: number, z: number) => `${x}:${z}`
 const TOP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 })
 const FASCIA_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97 })
+const DISCOVERY_EDGE_MATERIAL = new THREE.MeshBasicMaterial({ vertexColors: true,
+  transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 })
 const terrainSignatures = new WeakMap<readonly WizardTerrainCell[], string>()
+
+// Broad world-space pigment masses keep pale ground from washing out under the sun.
+// Shared seam points have the same base color and coordinates, so they keep the same tint.
+function groundTone(point: Point) {
+  const luminance = point.color.r * 0.2126 + point.color.g * 0.7152 + point.color.b * 0.0722
+  const pale = THREE.MathUtils.clamp((luminance - 0.35) / 0.4, 0, 1)
+  const mass = Math.sin(point.x * 0.11 + point.z * 0.041)
+    * Math.sin(point.z * 0.096 - point.x * 0.036)
+  return 1 - pale * 0.34 + mass * 0.1
+}
 
 export function terrainSignature(cells: readonly WizardTerrainCell[]) {
   const cached = terrainSignatures.get(cells)
@@ -27,7 +46,8 @@ export function terrainSignature(cells: readonly WizardTerrainCell[]) {
 }
 
 export function createTerrainSurfaceSampler(seed: string, allCells: readonly WizardTerrainCell[],
-  appearanceFor: (cell: WizardTerrainCell) => Appearance) {
+  appearanceFor: (cell: WizardTerrainCell) => Appearance, physicalPitEdges = false,
+  v27Walkable?: V27WalkableOptions, raisedSoilCells?: readonly RaisedSoilCell[]) {
   const byGrid = new Map<number, Map<number, WizardTerrainCell>>()
   for (const cell of allCells) {
     const [x, , z] = cell.position
@@ -44,12 +64,37 @@ export function createTerrainSurfaceSampler(seed: string, allCells: readonly Wiz
   }
   const neighbor = (cell: WizardTerrainCell, dx: number, dz: number) =>
     at(cell.position[0] + dx * cell.size[0], cell.position[2] + dz * cell.size[1])
+  const openPits = new Set(v27Walkable?.openPitColumns.filter((column) => column.openDepth > 0)
+    .map((column) => key(column.gx, column.gz)))
+  const raised = new Set(raisedSoilCells?.map(({ gx, gz }) => key(gx, gz)))
   const linked = (a: WizardTerrainCell, b: WizardTerrainCell | undefined) => {
     if (!b || a.size[0] !== b.size[0] || a.size[1] !== b.size[1]) return false
     const [ax, ay, az] = a.position
     const [bx, by, bz] = b.position
     if (Math.abs(ax - bx) + Math.abs(az - bz) !== (ax === bx ? a.size[1] : a.size[0])) return false
-    if (Math.abs(ay - by) >= STEP_HEIGHT || mireglassPlateauCliffBetween(seed, ax, az, bx, bz)) return false
+    if (a.size[0] === WORLD_CELL_METERS && a.size[1] === WORLD_CELL_METERS
+      && b.size[0] === WORLD_CELL_METERS && b.size[1] === WORLD_CELL_METERS
+      && raised.has(key(ax / WORLD_CELL_METERS, az / WORLD_CELL_METERS))
+        !== raised.has(key(bx / WORLD_CELL_METERS, bz / WORLD_CELL_METERS))) return false
+    const canonical = v27Walkable && a.size[0] === WORLD_CELL_METERS
+      && a.size[1] === WORLD_CELL_METERS && [ax, az, bx, bz].every((coordinate) => {
+        const grid = coordinate / WORLD_CELL_METERS
+        return Number.isInteger(grid) && grid >= WORLD_GRID_MIN && grid <= WORLD_GRID_MAX
+      })
+    const rise = Math.abs(ay - by)
+    if (canonical ? rise > STEP_HEIGHT : rise >= (physicalPitEdges ? 0.3 : STEP_HEIGHT)) return false
+    if (mireglassPlateauCliffBetween(seed, ax, az, bx, bz)) return false
+    if (canonical) {
+      if (openPits.has(key(ax / WORLD_CELL_METERS, az / WORLD_CELL_METERS))
+        || openPits.has(key(bx / WORLD_CELL_METERS, bz / WORLD_CELL_METERS))) return false
+      if (publicV25RiverCellAtGrid(seed, ax / WORLD_CELL_METERS, az / WORLD_CELL_METERS)
+        !== publicV25RiverCellAtGrid(seed, bx / WORLD_CELL_METERS, bz / WORLD_CELL_METERS)) return false
+      if (v27Walkable.rimSegments.some(({ from, to }) =>
+        from.z === to.z && ax === bx && Math.min(az, bz) < from.z && from.z < Math.max(az, bz)
+          && ax >= Math.min(from.x, to.x) && ax <= Math.max(from.x, to.x)
+        || from.x === to.x && az === bz && Math.min(ax, bx) < from.x && from.x < Math.max(ax, bx)
+          && az >= Math.min(from.z, to.z) && az <= Math.max(from.z, to.z))) return false
+    }
     return Boolean(mireglassFenDepthAt(seed, ax, az)) === Boolean(mireglassFenDepthAt(seed, bx, bz))
   }
   const average = (group: readonly WizardTerrainCell[]) => {
@@ -117,8 +162,24 @@ export function createTerrainSurfaceSampler(seed: string, allCells: readonly Wiz
 
 /** One continuous, shaded top; only cliffs, fen banks and the visible perimeter have side faces. */
 export function buildTerrainSurfaceGeometry(seed: string, cells: readonly WizardTerrainCell[],
-  allCells: readonly WizardTerrainCell[], appearanceFor: (cell: WizardTerrainCell) => Appearance) {
-  const { appearance, neighbor, linked, pointsFor } = createTerrainSurfaceSampler(seed, allCells, appearanceFor)
+  allCells: readonly WizardTerrainCell[], appearanceFor: (cell: WizardTerrainCell) => Appearance,
+  v26RimSegments?: readonly PublicV26ValleyRimSegment[],
+  v27WalkableSurface = false,
+  v27OpenPitColumns?: V27WalkableOptions['openPitColumns'],
+  raisedSoilCells?: readonly RaisedSoilCell[]) {
+  const { appearance, neighbor, linked, pointsFor } = createTerrainSurfaceSampler(seed, allCells,
+    appearanceFor, v26RimSegments !== undefined || v27WalkableSurface,
+    v27WalkableSurface && v26RimSegments?.length && v27OpenPitColumns ? { rimSegments: v26RimSegments,
+      openPitColumns: v27OpenPitColumns } : undefined, raisedSoilCells)
+  const onV26Rim = (a: Point, b: Point) => v26RimSegments?.some((segment) => {
+    const { from, to } = segment
+    return from.x === to.x && a.x === from.x && b.x === from.x
+      && Math.max(Math.min(a.z, b.z), Math.min(from.z, to.z))
+        < Math.min(Math.max(a.z, b.z), Math.max(from.z, to.z))
+      || from.z === to.z && a.z === from.z && b.z === from.z
+      && Math.max(Math.min(a.x, b.x), Math.min(from.x, to.x))
+        < Math.min(Math.max(a.x, b.x), Math.max(from.x, to.x))
+  }) ?? false
   const visible = new Set(cells.map((cell) => key(cell.position[0], cell.position[2])))
   const positions: number[] = []
   const colors: number[] = []
@@ -128,7 +189,8 @@ export function buildTerrainSurfaceGeometry(seed: string, cells: readonly Wizard
     const cellPoints = pointsFor(cell)
     for (const point of cellPoints) {
       positions.push(point.x, point.y, point.z)
-      colors.push(point.color.r, point.color.g, point.color.b)
+      const tone = groundTone(point)
+      colors.push(point.color.r * tone, point.color.g * tone, point.color.b * tone)
     }
     for (let index = 0; index < FAN.length; index += 1) {
       indices.push(start, start + FAN[index], start + FAN[(index + 1) % FAN.length])
@@ -168,11 +230,15 @@ export function buildTerrainSurfaceGeometry(seed: string, cells: readonly Wizard
     for (const [dx, dz, edge] of DIRECTIONS) {
       const next = neighbor(cell, dx, dz)
       const nextVisible = next && visible.has(key(next.position[0], next.position[2]))
+      // Discovery concealment is not a cliff. The neighbor is still part of the
+      // continuous world even when its top is temporarily hidden by fog.
+      if (next && !nextVisible) continue
       if (nextVisible && linked(cell, next)) continue
       if (nextVisible && cell.position[1] <= next.position[1]) continue
       const lower = nextVisible ? pointsFor(next) : null
       for (let index = 0; index < 2; index += 1) {
         const a = cellPoints[edge[index]], b = cellPoints[edge[index + 1]]
+        if (onV26Rim(a, b)) continue
         const lowerA = lower?.find((point) => point.x === a.x && point.z === a.z)?.y ?? BASE_Y
         const lowerB = lower?.find((point) => point.x === b.x && point.z === b.z)?.y ?? BASE_Y
         sideQuad(a, b, lowerA, lowerB, appearance(cell).side)
@@ -186,20 +252,80 @@ export function buildTerrainSurfaceGeometry(seed: string, cells: readonly Wizard
   return { top, sides }
 }
 
-export function TerrainSurfaceLayer({ seed, cells, allCells, appearanceFor }: {
+/** Feather the last metre of discovered ground into the opaque unknown-field colour. */
+export function buildDiscoveryEdgeGeometry(seed: string, cells: readonly WizardTerrainCell[],
+  allCells: readonly WizardTerrainCell[], appearanceFor: (cell: WizardTerrainCell) => Appearance,
+  raisedSoilCells?: readonly RaisedSoilCell[]) {
+  const { neighbor, pointsFor } = createTerrainSurfaceSampler(seed, allCells, appearanceFor,
+    false, undefined, raisedSoilCells)
+  const visible = new Set(cells.map((cell) => key(cell.position[0], cell.position[2])))
+  const positions: number[] = []
+  const colors: number[] = []
+  const fog = new THREE.Color(DISCOVERY_FOG_COLOR)
+  const vertex = (point: Point, alpha: number) => {
+    positions.push(point.x, point.y + 0.035, point.z)
+    colors.push(fog.r, fog.g, fog.b, alpha)
+  }
+  for (const cell of cells) {
+    const points = pointsFor(cell)
+    const center = points[0]
+    for (const [dx, dz, edge] of DIRECTIONS) {
+      const next = neighbor(cell, dx, dz)
+      if (next && visible.has(key(next.position[0], next.position[2]))) continue
+      for (let index = 0; index < 2; index += 1) {
+        const outerA = points[edge[index]], outerB = points[edge[index + 1]]
+        const inward = (outer: Point): Point => ({
+          x: outer.x + (center.x - outer.x) * 0.58,
+          y: outer.y + (center.y - outer.y) * 0.58,
+          z: outer.z + (center.z - outer.z) * 0.58,
+          color: fog,
+        })
+        const innerA = inward(outerA), innerB = inward(outerB)
+        vertex(innerA, 0); vertex(outerA, 1); vertex(innerB, 0)
+        vertex(outerA, 1); vertex(outerB, 1); vertex(innerB, 0)
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4))
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+export function TerrainSurfaceLayer({ seed, cells, allCells, appearanceFor, discoveryFog = false,
+  v26RimSegments, v27WalkableSurface = false, v26OpenPitColumns, raisedSoilCells }: {
   seed: string; cells: readonly WizardTerrainCell[]; allCells: readonly WizardTerrainCell[]
-  appearanceFor: (cell: WizardTerrainCell) => Appearance
+  appearanceFor: (cell: WizardTerrainCell) => Appearance; discoveryFog?: boolean
+  v26RimSegments?: readonly PublicV26ValleyRimSegment[]
+  v27WalkableSurface?: boolean
+  v26OpenPitColumns?: V27WalkableOptions['openPitColumns']
+  raisedSoilCells?: readonly RaisedSoilCell[]
 }) {
   const signature = `${cells.map((cell) => cell.id).join('|')}:${terrainSignature(allCells)}`
+  const rimSignature = v26RimSegments?.map((segment) => `${segment.id}:${segment.from.x},${segment.from.z}`
+    + `:${segment.to.x},${segment.to.z}`).join('|')
+  const pitSignature = v27WalkableSurface ? v26OpenPitColumns?.map((column) =>
+    `${column.gx},${column.gz},${column.openDepth}`).join('|') : undefined
+  const raisedSignature = raisedSoilCells?.map(({ gx, gz }) => `${gx},${gz}`).join('|')
   // Both the visible array and classic projection can be recreated at 20 Hz without changing terrain.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const geometry = useMemo(() => buildTerrainSurfaceGeometry(seed, cells, allCells, appearanceFor),
-    [seed, appearanceFor, signature])
+  const geometry = useMemo(() => buildTerrainSurfaceGeometry(seed, cells, allCells, appearanceFor,
+    v26RimSegments, v27WalkableSurface, v26OpenPitColumns, raisedSoilCells),
+  [seed, appearanceFor, signature, rimSignature, v27WalkableSurface, pitSignature, raisedSignature])
   useEffect(() => () => { geometry.top.dispose(); geometry.sides.dispose() }, [geometry])
+  // Both the visible array and classic projection can be recreated at 20 Hz without changing terrain.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const edgeGeometry = useMemo(() => discoveryFog
+    ? buildDiscoveryEdgeGeometry(seed, cells, allCells, appearanceFor, raisedSoilCells) : null,
+  [seed, appearanceFor, signature, discoveryFog, raisedSignature])
+  useEffect(() => () => edgeGeometry?.dispose(), [edgeGeometry])
   return <>
     <mesh geometry={geometry.top} material={TOP_MATERIAL} name="Continuous terrain surface"
       receiveShadow frustumCulled={false} dispose={null} />
     <mesh geometry={geometry.sides} material={FASCIA_MATERIAL} name="Terrain perimeter and cliff fascia"
       receiveShadow frustumCulled={false} dispose={null} />
+    {edgeGeometry && <mesh geometry={edgeGeometry} material={DISCOVERY_EDGE_MATERIAL}
+      name="Discovery fog edge" frustumCulled={false} renderOrder={2} dispose={null} />}
   </>
 }

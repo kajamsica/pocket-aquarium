@@ -12,6 +12,14 @@ import App, {
 } from './App'
 
 const copy = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
+const chartedGreenway = (seed: string) => {
+  const state = createWizardWorld(seed)
+  state.discoveredTileIds = state.tiles.filter((tile) => tile.gridX >= 0 && tile.gridX < 7
+    && tile.gridZ >= 0 && tile.gridZ < 7
+    && areaAt(state.areas, tile.center.x, tile.center.z).id === 'greenway')
+    .map((tile) => tile.id).sort()
+  return state
+}
 const withAxeEquipped = (state: WizardWorldState) => { state.player.equipment.mainHand = 'woodcutters_axe'; return state }
 const withLogs = (state: WizardWorldState, quantity: number) => { state.player.inventory.push({ itemId: 'logs', quantity }); return state }
 const legacyStores = (state: WizardWorldState) => state.stores.map((store) => ({
@@ -31,6 +39,18 @@ const withFirstRegionCompleted = (state: WizardWorldState) => {
 }
 
 describe('Wizard view adapter', () => {
+  it('presents old Greenway ladder saves as low steps without rewriting the saved route', () => {
+    const state = chartedGreenway('greenway-alpha')
+    const rawName = state.routes.find((route) => route.id === 'greenway_ladder')!.name
+    expect(rawName).toBe('Greenway ladder')
+    const projection = toViewProjection(state, [])
+    expect(projection.routes.find((route) => route.id === 'greenway_ladder')?.label).toBe('Greenway low steps')
+    expect(projection.buildSites.find((site) => site.id === 'greenway_ladder:x:0')?.label)
+      .toBe('Greenway low steps, site center')
+    expect(state.routes.find((route) => route.id === 'greenway_ladder')!.name).toBe(rawName)
+    expect(eventText({ type: 'route_built', routeId: 'greenway_ladder', siteId: 'greenway_ladder:x:0', logCost: 4, xp: 60,
+      sequence: 1, tick: 1 })).toBe('Built the Greenway low steps for 4 logs.')
+  })
   it('announces completed market sales with the actual proceeds', () => {
     expect(eventText({ type: 'trade_listing_sold', slotIndex: 0, itemId: 'logs', quantity: 2,
       unitPrice: 3, totalPrice: 6, sequence: 4, tick: 600 }))
@@ -55,7 +75,7 @@ describe('Wizard view adapter', () => {
     expect(settled.events).toMatchObject([{ type: 'trade_listing_sold', itemId: 'logs', unitPrice: 3, totalPrice: 6 }])
   })
   it('projects all world surfaces without mutating authoritative state', () => {
-    const state = createWizardWorld('greenway-alpha')
+    const state = chartedGreenway('greenway-alpha')
     const before = JSON.stringify(state)
     const projection = toViewProjection(state, [{ id: 1, text: 'Visible event' }])
     expect(JSON.stringify(state)).toBe(before)
@@ -80,6 +100,28 @@ describe('Wizard view adapter', () => {
     expect(projection.player.position).toEqual([state.player.position.x, state.player.position.y, state.player.position.z])
   })
 
+  it.each([false, true])('does not serialize full discovery history for a %s frozen array', (frozen) => {
+    const state = createWizardWorld('greenway-alpha')
+    const history = ['tile-4-4', ...Array.from({ length: 8192 }, (_, index) => `history-${index}`)]
+    state.discoveredTileIds = frozen ? Object.freeze(history) as unknown as string[] : history
+    const before = [...state.discoveredTileIds]
+    const stringify = vi.spyOn(JSON, 'stringify')
+    let projection: ReturnType<typeof toViewProjection>
+    try {
+      projection = toViewProjection(state, [])
+      const serializedDiscovery = stringify.mock.calls
+        .map(([value]) => (value as { discoveredTileIds?: unknown })?.discoveredTileIds)
+        .filter(Array.isArray)
+        .map((ids) => ids.length)
+      expect(serializedDiscovery).toEqual([0])
+    } finally {
+      stringify.mockRestore()
+    }
+    expect(state.discoveredTileIds).toEqual(before)
+    expect(projection.map.tiles.find((tile) => tile.id === 'tile-4-4')?.discovered).toBe(true)
+    expect(projection.map.tiles.find((tile) => tile.id === 'tile-0-0')?.discovered).toBe(false)
+  })
+
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('puts each landmark on one nearest tile in the %s atlas', (profile) => {
     const state = createGeneratedWorld('greenway-alpha', profile)
     state.discoveredTileIds = state.tiles.map((tile) => tile.id)
@@ -100,6 +142,10 @@ describe('Wizard view adapter', () => {
 
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('hides Highland landmarks until entry in the %s atlas', (profile) => {
     const state = createGeneratedWorld('greenway-alpha', profile)
+    state.discoveredTileIds = state.tiles.filter((tile) => tile.gridX >= 0 && tile.gridX < 7
+      && tile.gridZ >= 0 && tile.gridZ < 7
+      && areaAt(state.areas, tile.center.x, tile.center.z).id === 'greenway')
+      .map((tile) => tile.id).sort()
     const marked = (world: WizardWorldState) => {
       const tiles = toViewProjection(world, []).map.tiles
       return {
@@ -130,7 +176,7 @@ describe('Wizard view adapter', () => {
     const ladderSites = toViewProjection(state, []).buildSites.filter((site) => site.routeId === 'greenway_ladder')
     expect(ladderSites.length).toBeGreaterThan(1)
     expect(ladderSites.find((site) => site.id === 'greenway_ladder:x:-12')?.label)
-      .toBe('Greenway ladder, site 12m west of center')
+      .toBe('Greenway low steps, site 12m west of center')
     expect(routeSites().length).toBeGreaterThan(0)
     expect(builtRoutes()).toEqual([])
 
@@ -181,8 +227,8 @@ describe('Wizard view adapter', () => {
     expect(render()).toContain('West foot (x 4, z -8) to east foot (x 6, z -8). Within 3 m of either foot, press E to cross.')
   })
 
-  it('shows a fresh ladder site and its distance reason even before walking north', () => {
-    const state = withLogs(createWizardWorld('greenway-alpha'), 8)
+  it('shows a charted ladder site and its distance reason before walking north', () => {
+    const state = withLogs(chartedGreenway('greenway-alpha'), 8)
     const projection = toViewProjection(state, [])
     expect(projection.routes.find((route) => route.id === 'greenway_ladder'))
       .toMatchObject({ unlocked: true, built: false, logCost: 4 })
@@ -192,7 +238,7 @@ describe('Wizard view adapter', () => {
       projection, open: true, onToggle: () => {}, onIntent: () => {},
       buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>(),
     }))
-    expect(markup).toContain('Preview Greenway ladder, site center')
+    expect(markup).toContain('Preview Greenway low steps, site center')
     expect(markup).toContain('Source foot: 4m north. Approach from Greenway.')
   })
 
@@ -393,28 +439,28 @@ describe('Wizard view adapter', () => {
     const studied = copy(fresh)
     studied.player.learnedSpellIds = ['wayfinder_glow']
     studied.studiedInscriptionIds = ['greenway_waystone']
-    expect(objectiveFor(studied)).toBe("Head north to the fog at Greenway's edge, then cast Wayfinder Glow.")
+    expect(objectiveFor(studied)).toBe("Head to Greenway's north edge near x 0, z -4, then cast Wayfinder Glow into the fog.")
 
     const unowned = withFirstRegionCompleted(copy(fresh))
     unowned.player.inventory = []
     expect(objectiveFor(unowned)).toBe('Greenway Outfitters: 5m west and 1m north. Buy a woodcutter axe.')
 
     const state = withAxeEquipped(withFirstRegionCompleted(copy(fresh)))
-    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (0/4), then choose a ladder site on the map.')
+    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (0/4), then choose a low-steps site on the map.')
     withLogs(state, 2)
-    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (2/4), then choose a ladder site on the map.')
+    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (2/4), then choose a low-steps site on the map.')
     withLogs(state, 3)
-    expect(objectiveFor(state)).toBe('Go north to a ◇ ladder site, choose it on the map, then Build (4 logs).')
+    expect(objectiveFor(state)).toBe('Go north to a ◇ low-steps site, choose it on the map, then Build (4 logs).')
 
     state.builtRouteIds = ['greenway_ladder']
     state.player.inventory = state.player.inventory.filter((stack) => stack.itemId !== 'logs')
     withLogs(state, 1)
-    expect(objectiveFor(state)).toBe('Gather logs from Greenway oaks (1/6), then choose a bridge site on the map.')
+    expect(objectiveFor(state)).toBe('Reach level 2 to unlock the Highland bridge. Gather logs from Greenway oaks (1/6), then choose a bridge site on the map. If no ◇ bridge site appears, explore east along Northern Ridge to reveal one.')
     withLogs(state, 5)
-    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then choose a Highland bridge site on the map and build it (6 logs).')
+    expect(objectiveFor(state)).toBe('Reach level 2 to unlock the Highland bridge. Greenway low steps south foot: 4m north. Go there and press E to cross north. Then choose a Highland bridge site on the map and build it (6 logs). If no ◇ bridge site appears, explore east along Northern Ridge to reveal one.')
 
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
-    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
+    expect(objectiveFor(state)).toBe('Greenway low steps south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-greenway', 'ring-highland']
     expect(objectiveFor(state)).toBe('Quest complete: fairy rings linked. Explore, trade, or travel to Highland again.')
@@ -426,18 +472,18 @@ describe('Wizard view adapter', () => {
     const state = createWizardWorld('greenway-alpha')
     state.player.learnedSpellIds = ['wayfinder_glow']
     state.studiedInscriptionIds = ['greenway_waystone']
-    expect(objectiveFor(state)).toBe("Head north to the fog at Greenway's edge, then cast Wayfinder Glow.")
+    expect(objectiveFor(state)).toBe("Head to Greenway's north edge near x 0, z -4, then cast Wayfinder Glow into the fog.")
 
     state.builtRouteIds.push('greenway_ladder')
     const before = JSON.stringify(state)
-    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cast Wayfinder Glow to reveal the ridge cache.')
+    expect(objectiveFor(state)).toBe('Greenway low steps south foot: 4m north. Go there and press E to cross north. Then approach x 0, z -8 on Northern Ridge and cast Wayfinder Glow to search for the buried cache.')
     expect(JSON.stringify(state)).toBe(before)
 
     state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
     state.revealedDigSiteIds.push('ridge_cache')
     expect(objectiveFor(state)).toContain('Re-equip the field spade')
     state.player.equipment.mainHand = 'field_spade'
-    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then find the revealed ridge cache (✦ on the map).')
+    expect(objectiveFor(state)).toBe('Greenway low steps south foot: 4m north. Go there and press E to cross north. Then find the revealed ridge cache (✦ on the map).')
   })
 
   it('sends players who skipped the practice mound to Outfitters before excavating the revealed ridge cache', () => {
@@ -450,11 +496,11 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toBe('Greenway Outfitters: 5m west and 1m north. Buy a field spade.')
 
     state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
-    expect(objectiveFor(state)).toBe('Cross the Greenway ladder south. Greenway Outfitters: 5m west and 7m south. Buy a field spade.')
+    expect(objectiveFor(state)).toBe('Cross the Greenway low steps south. Greenway Outfitters: 5m west and 7m south. Buy a field spade.')
 
     state.builtRouteIds.push('highland_bridge')
     state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
-    expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway ladder south. Greenway Outfitters: 11m west and 7m south. Buy a field spade.')
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway low steps south. Greenway Outfitters: 11m west and 7m south. Buy a field spade.')
   })
 
   it('guides an unequipped spade owner across routes to the revealed ridge cache', () => {
@@ -463,7 +509,7 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds = ['greenway_ladder']
     state.revealedDigSiteIds = ['ridge_cache']
     state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
-    expect(objectiveFor(state)).toBe('Re-equip the field spade. Greenway ladder south foot: 4m north. Go there and press E to cross north. Ridge cache: 6m west and 9m north (✦ on the map).')
+    expect(objectiveFor(state)).toBe('Re-equip the field spade. Greenway low steps south foot: 4m north. Go there and press E to cross north. Ridge cache: 6m west and 9m north (✦ on the map).')
 
     state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
     expect(objectiveFor(state)).toBe('Re-equip the field spade, then find it. Ridge cache: 6m west and 1m north (✦ on the map).')
@@ -510,7 +556,7 @@ describe('Wizard view adapter', () => {
     expect(objectiveFor(state)).toContain('Sell the ancient relic')
     expect(objectiveFor(state)).toContain('Greenway Outfitters')
     state.player.position = { ...state.player.position, x: 0, z: -8 }
-    expect(objectiveFor(state)).toContain('Cross the Greenway ladder south')
+    expect(objectiveFor(state)).toContain('Cross the Greenway low steps south')
     state.player.position = { ...state.player.position, x: 0, z: 0 }
     state.player.inventory = state.player.inventory.filter((stack) => stack.itemId !== 'ancient_relic')
     expect(objectiveFor(state)).toContain('bridge site')
@@ -518,27 +564,28 @@ describe('Wizard view adapter', () => {
 
   it('guides spade buyers to Outfitters by identity even when Arcanum is nearer', () => {
     const state = createWizardWorld('greenway-alpha')
+    const payoff = '2 stone to sell for coins at Greenway Outfitters, plus 30 Excavation XP toward the Lv2 ridge cache'
     state.player.learnedSpellIds = ['wayfinder_glow']
     state.player.skillXp.spellcraft = 40
     const store = state.stores.find((candidate) => candidate.id === 'store-greenway')!
     const arcanum = state.stores.find((candidate) => candidate.id === 'store-highland')!
     state.stores.reverse()
     state.player.position = { ...arcanum.position }
-    expect(objectiveFor(state)).toBe('Greenway Outfitters: 13m west and 5m south. Buy a field spade.')
+    expect(objectiveFor(state)).toBe(`Greenway Outfitters: 13m west and 5m south. Buy a field spade to dig the practice mound for ${payoff}.`)
     state.player.position = { ...store.position, x: -7.2, z: 8.3 }
-    expect(objectiveFor(state)).toBe('Greenway Outfitters: 2m east and 9m north. Buy a field spade.')
+    expect(objectiveFor(state)).toBe(`Greenway Outfitters: 2m east and 9m north. Buy a field spade to dig the practice mound for ${payoff}.`)
 
     store.position = { x: -8, y: 0, z: 6 }
     state.player.position = { x: -2.4, y: 0, z: 0.4 }
     const before = JSON.stringify(state)
-    expect(objectiveFor(state)).toBe('Greenway Outfitters: 6m west and 6m south. Buy a field spade.')
+    expect(objectiveFor(state)).toBe(`Greenway Outfitters: 6m west and 6m south. Buy a field spade to dig the practice mound for ${payoff}.`)
     expect(JSON.stringify(state)).toBe(before)
     state.player.position = { x: -12, y: 0, z: 10 }
-    expect(objectiveFor(state)).toBe('Greenway Outfitters: 4m east and 4m north. Buy a field spade.')
+    expect(objectiveFor(state)).toBe(`Greenway Outfitters: 4m east and 4m north. Buy a field spade to dig the practice mound for ${payoff}.`)
     state.player.position = { ...store.position, z: store.position.z + 3.01 }
-    expect(objectiveFor(state)).toBe('Greenway Outfitters: 3m north. Buy a field spade.')
+    expect(objectiveFor(state)).toBe(`Greenway Outfitters: 3m north. Buy a field spade to dig the practice mound for ${payoff}.`)
     state.player.position = { ...store.position, z: store.position.z + 3 }
-    expect(objectiveFor(state)).toBe('Buy a field spade at Greenway Outfitters.')
+    expect(objectiveFor(state)).toBe(`Buy a field spade to dig the practice mound for ${payoff} at Greenway Outfitters.`)
   })
 
   it('guides axe purchases and relic sales to Outfitters, including local actions', () => {
@@ -555,11 +602,12 @@ describe('Wizard view adapter', () => {
     state.player.position = { ...store.position, x: store.position.x + 5 }
     expect(objectiveFor(state)).toBe('Greenway Outfitters: 5m west. Sell the ancient relic for 25g.')
     state.player.position = { ...store.position, z: -8 }
-    expect(objectiveFor(state)).toBe('Cross the Greenway ladder south. Greenway Outfitters: 7m south. Sell the ancient relic for 25g.')
+    expect(objectiveFor(state)).toBe('Cross the Greenway low steps south. Greenway Outfitters: 7m south. Sell the ancient relic for 25g.')
   })
 
   it('points to the authoritative practice mound after the spade is equipped', () => {
     const state = createWizardWorld('greenway-alpha')
+    const payoff = '2 stone to sell for coins at Greenway Outfitters, plus 30 Excavation XP toward the Lv2 ridge cache'
     const mound = state.digSites.find((site) => site.id === 'practice_mound')!
     state.player.learnedSpellIds = ['wayfinder_glow']
     state.player.skillXp.spellcraft = 40
@@ -567,13 +615,13 @@ describe('Wizard view adapter', () => {
     state.player.equipment.mainHand = 'field_spade'
     state.player.position = { x: -2.7, y: mound.position.y, z: 0.8 }
     const before = JSON.stringify(state)
-    expect(objectiveFor(state)).toBe('Greenway practice mound: 10m east and 2m south. Excavate it to train excavation.')
+    expect(objectiveFor(state)).toBe(`Greenway practice mound: 10m east and 2m south. Excavate it for ${payoff}.`)
     expect(JSON.stringify(state)).toBe(before)
     state.player.position = { ...mound.position, x: mound.position.x - 5, z: mound.position.z + 4 }
-    expect(objectiveFor(state)).toBe('Greenway practice mound: 5m east and 4m north. Excavate it to train excavation.')
+    expect(objectiveFor(state)).toBe(`Greenway practice mound: 5m east and 4m north. Excavate it for ${payoff}.`)
     mound.position = { ...mound.position, x: -3, z: -2 }
     state.player.position = { ...mound.position, x: mound.position.x - 2 }
-    expect(objectiveFor(state)).toBe('Excavate the Greenway practice mound to train excavation.')
+    expect(objectiveFor(state)).toBe(`Excavate the Greenway practice mound for ${payoff}.`)
   })
 
   it('explains how to cross a built ladder before the ridge cache is revealed', () => {
@@ -584,7 +632,44 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds = ['greenway_ladder']
     expect(objectiveFor(state)).toContain('press E to cross north')
     state.player.position = { ...state.player.position, x: 0, z: -8 }
-    expect(objectiveFor(state)).toContain('Cast Wayfinder Glow near the northern ridge')
+    expect(objectiveFor(state)).toContain('Ridge Glow approach (x 0, z -8): at this spot')
+  })
+
+  it('guides a Glow cast from a ladder foot outside the cache radius to a safe ridge approach', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const site = routeBuildOptions(state).find((candidate) => candidate.id === 'greenway_ladder:x:2')!
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    Object.assign(ladder, { from: site.from, to: site.to, siteId: site.id })
+    state.builtRouteIds.push(ladder.id)
+    state.player.learnedSpellIds.push('wayfinder_glow')
+    state.player.skillXp.spellcraft = 40
+    state.excavatedDigSiteIds.push('practice_mound')
+    state.player.position = { ...site.to }
+    expect(objectiveFor(state)).toContain('Ridge Glow approach (x 0, z -8): 2m west')
+    expect(toViewProjection(state, []).map.tiles.some((tile) => tile.hasCache)).toBe(false)
+    expect(advanceWizardWorld(state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+      .state.revealedDigSiteIds).not.toContain('ridge_cache')
+    state.player.position = { x: 0, y: terrainHeightAt(state.tiles, 0, -8), z: -8 }
+    expect(advanceWizardWorld(state, [{ type: 'cast_spell', spellId: 'wayfinder_glow' }])
+      .state.revealedDigSiteIds).toContain('ridge_cache')
+  })
+
+  it('explains the hidden bridge level and where to discover an empty route-site list', () => {
+    const state = withFirstRegionCompleted(copy(createWizardWorld('greenway-alpha')))
+    state.builtRouteIds.push('greenway_ladder')
+    state.player.inventory.push({ itemId: 'logs', quantity: 6 })
+    const projection = toViewProjection(state, [])
+    expect(projection.buildSites.filter((site) => site.routeId === 'highland_bridge' && site.discovered)).toHaveLength(0)
+    expect(objectiveFor(state)).toContain('Reach level 2 to unlock the Highland bridge.')
+    expect(objectiveFor(state)).toContain('explore east along Northern Ridge to reveal one.')
+    const map = renderToStaticMarkup(createElement(WizardMap, { projection, open: true,
+      onToggle: () => {}, onIntent: () => {}, buttonRef: createRef<HTMLButtonElement>(),
+      closeRef: createRef<HTMLButtonElement>() }))
+    expect(map).toContain('No discovered Highland bridge sites yet. Walk east along Northern Ridge')
+    expect(map).not.toContain('Preview Highland bridge')
+    state.player.level = 2
+    state.unlockedRecipeIds.push('highland_bridge')
+    expect(objectiveFor(state)).not.toContain('Reach level 2')
   })
 
   it('guides both ridge-cache stages to the saved ladder foot and offers E within reach', () => {
@@ -597,14 +682,14 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds = ['greenway_ladder']
     state.player.learnedSpellIds = ['wayfinder_glow']
     state.player.position = { ...state.player.position, x: 8, z: 0 }
-    expect(objectiveFor(state)).toContain('Greenway ladder south foot: 16m west and 4m north. Go there and press E to cross north.')
+    expect(objectiveFor(state)).toContain('Greenway low steps south foot: 16m west and 4m north. Go there and press E to cross north.')
 
     state.revealedDigSiteIds = ['ridge_cache']
     state.player.inventory.push({ itemId: 'field_spade', quantity: 1 })
     state.player.equipment.mainHand = 'field_spade'
-    expect(objectiveFor(state)).toContain('Greenway ladder south foot: 16m west and 4m north. Go there and press E to cross north.')
+    expect(objectiveFor(state)).toContain('Greenway low steps south foot: 16m west and 4m north. Go there and press E to cross north.')
     state.player.position = { ...site.from, x: site.from.x + 2.5 }
-    expect(objectiveFor(state)).toContain('At the Greenway ladder south foot, press E to cross north.')
+    expect(objectiveFor(state)).toContain('At the Greenway low steps south foot, press E to cross north.')
   })
 
   it('marks a revealed ridge cache and guides the crossed player to its authoritative position', () => {
@@ -647,19 +732,19 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds = ['greenway_ladder', 'highland_bridge']
 
     state.player.discoveredRingIds = []
-    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
+    expect(objectiveFor(state)).toBe('Greenway low steps south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
     state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
     expect(objectiveFor(state)).toBe('Find and discover the Highland fairy ring.')
     state.player.position = { x: 0, y: terrainHeightAt(state.tiles, 0, 0), z: 0 }
 
     state.player.discoveredRingIds = ['ring-greenway']
-    expect(objectiveFor(state)).toBe('Greenway ladder south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
+    expect(objectiveFor(state)).toBe('Greenway low steps south foot: 4m north. Go there and press E to cross north. Then cross the Highland bridge east and discover the Highland fairy ring.')
 
     state.player.discoveredRingIds = ['ring-highland']
     state.player.position = { ...state.routes.find((route) => route.id === 'highland_bridge')!.to }
-    expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway ladder south to return home.')
+    expect(objectiveFor(state)).toBe('Cross the Highland bridge west, then the Greenway low steps south to return home.')
     state.player.position = { ...state.routes.find((route) => route.id === 'greenway_ladder')!.to }
-    expect(objectiveFor(state)).toBe('Cross the Greenway ladder south to return home.')
+    expect(objectiveFor(state)).toBe('Cross the Greenway low steps south to return home.')
     state.player.position = { x: -5, y: terrainHeightAt(state.tiles, -5, 0), z: 0 }
     expect(objectiveFor(state)).toBe('Greenway Ring: 7m east and 2m north. Go there and press E to discover it.')
     state.player.position = { x: 10, y: terrainHeightAt(state.tiles, 10, 10), z: 10 }
@@ -672,7 +757,7 @@ describe('Wizard view adapter', () => {
 
     const earlyGreenway = withAxeEquipped(withFirstRegionCompleted(copy(createWizardWorld('greenway-alpha'))))
     earlyGreenway.player.discoveredRingIds = ['ring-greenway']
-    expect(objectiveFor(earlyGreenway)).toBe('Gather logs from Greenway oaks (0/4), then choose a ladder site on the map.')
+    expect(objectiveFor(earlyGreenway)).toBe('Gather logs from Greenway oaks (0/4), then choose a low-steps site on the map.')
   })
 
   it('reflows the objective pill above the mobile touch controls instead of a nowrap overlay', () => {
@@ -1095,6 +1180,10 @@ describe('Wizard view adapter', () => {
     ringState.player.position = { ...ringState.fairyRings[0].position }
     expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Choose destination', actionable: false })
     expect(intentForView(ringState, { type: 'interact' })).toBeNull()
+    const oak = ringState.resources.find((resource) => resource.kind === 'tree')!
+    oak.depleted = false
+    oak.position = { ...ringState.player.position }
+    expect(toViewProjection(ringState, []).nearbyInteraction?.kind).toBe('fairy-ring')
     ringState.player.discoveredRingIds = [ringState.fairyRings[0].id]
     expect(toViewProjection(ringState, []).nearbyInteraction).toMatchObject({ kind: 'fairy-ring', action: 'Find another ring', actionable: false })
   })
@@ -1230,7 +1319,7 @@ describe('Wizard view adapter', () => {
   })
 
   it('selects construction independently of nearest interaction and only crosses a built route', () => {
-    const state = copy(createWizardWorld('greenway-alpha'))
+    const state = copy(chartedGreenway('greenway-alpha'))
     state.resources.forEach((resource) => { resource.depleted = true })
     const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
     state.player.position = { ...ladder.from }
@@ -1247,6 +1336,45 @@ describe('Wizard view adapter', () => {
     expect(intentForView(state, { type: 'interact' })).toEqual({ type: 'traverse_route', routeId: 'greenway_ladder' })
   })
 
+  it('lets E cross the built ladder from the guided south foot beside a discovered ring', () => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    ladder.siteId = 'greenway_ladder:x:0'
+    state.builtRouteIds.push(ladder.id)
+    state.player.learnedSpellIds.push('wayfinder_glow')
+    state.player.discoveredRingIds.push('ring-greenway')
+    state.player.position = { x: 2.3, y: terrainHeightAt(state.tiles, 2.3, -3), z: -3 }
+    expect(Math.hypot(state.player.position.x - ladder.from.x,
+      state.player.position.y - ladder.from.y, state.player.position.z - ladder.from.z)).toBeLessThan(3)
+    expect(objectiveFor(state)).toContain('At the Greenway low steps south foot, press E to cross north')
+    expect(toViewProjection(state, []).nearbyInteraction).toMatchObject({ kind: 'route', label: 'Greenway low steps', action: 'Cross' })
+    const intent = intentForView(state, { type: 'interact' })
+    expect(intent).toEqual({ type: 'traverse_route', routeId: ladder.id })
+    const crossed = advanceWizardWorld(state, [intent!])
+    expect(crossed.rejections).toEqual([])
+    expect(crossed.state.player.position).toEqual(ladder.to)
+  })
+
+  it.each([
+    { x: 2.7, z: -2.7, lift: 0 },
+    { x: 2.3, z: -3, lift: 1.7 },
+  ])('keeps Cross and E unavailable outside the 3D reach at ($x, $z) with lift $lift', ({ x, z, lift }) => {
+    const state = copy(createWizardWorld('greenway-alpha'))
+    const ladder = state.routes.find((route) => route.id === 'greenway_ladder')!
+    ladder.siteId = 'greenway_ladder:x:0'
+    state.builtRouteIds.push(ladder.id)
+    state.player.discoveredRingIds.push('ring-greenway')
+    state.player.position = { x, y: terrainHeightAt(state.tiles, x, z) + lift, z }
+    expect(areaAt(state.areas, x, z).id).toBe('greenway')
+    expect(Math.hypot(x - ladder.from.x, z - ladder.from.z)).toBeLessThan(3)
+    expect(Math.hypot(x - ladder.from.x, state.player.position.y - ladder.from.y,
+      z - ladder.from.z)).toBeGreaterThan(3)
+    expect(toViewProjection(state, []).nearbyInteraction?.kind).not.toBe('route')
+    expect(intentForView(state, { type: 'interact' })).toBeNull()
+    expect(advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }])
+      .rejections[0]?.code).toBe('too_far')
+  })
+
   it('offers a built ladder only from the reachable foot in the player area', () => {
     const state = copy(createWizardWorld('greenway-alpha'))
     state.resources.forEach((resource) => { resource.depleted = true })
@@ -1255,6 +1383,8 @@ describe('Wizard view adapter', () => {
     state.builtRouteIds.push(ladder.id)
     state.player.position = { x: 0.2, y: terrainHeightAt(state.tiles, 0.2, -4.05), z: -4.05 }
     expect(areaAt(state.areas, state.player.position.x, state.player.position.z).id).toBe('northern_ridge')
+    expect(Math.hypot(state.player.position.x - ladder.from.x,
+      state.player.position.z - ladder.from.z)).toBeLessThan(3)
     expect(advanceWizardWorld(state, [{ type: 'traverse_route', routeId: ladder.id }]).rejections[0]?.code).toBe('too_far')
     expect(toViewProjection(state, []).nearbyInteraction?.kind).not.toBe('route')
     expect(intentForView(state, { type: 'interact' })).not.toEqual({ type: 'traverse_route', routeId: ladder.id })

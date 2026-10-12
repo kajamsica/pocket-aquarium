@@ -73,7 +73,7 @@ describe('canonical construction sites', () => {
     const state = createGeneratedWorld('greenway-alpha')
     const bridgeId = 'highland_bridge:z:-8'
     expect(routeBuildOptions(state).find((option) => option.id === bridgeId)).toMatchObject({
-      status: 'locked', reason: 'Build the Greenway ladder first.',
+      status: 'locked', reason: 'Build the Greenway low steps first.',
     })
     const withLadder = provision(state, 'highland_bridge')
     withLadder.player.xp = 0

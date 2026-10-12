@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { activeChunkCoordinates, WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from '../domain/worldChunks'
 import type { WizardTerrainCell } from './contracts'
-import { visibleTerrainCells } from './visibleTerrain'
+import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
 const cell = (x: number, z: number): WizardTerrainCell => ({
   id: `tile-${x}-${z}`, position: [x * 4, 0, z * 4], size: [4, 4], height: 1, climate: 'temperate_forest',
@@ -12,6 +13,28 @@ const grid = (minX: number, maxX: number, minZ = minX, maxZ = maxX) =>
   })
 
 describe('bounded terrain presentation', () => {
+  it('uses a 31 by 31 public scenery window', () => {
+    expect(PUBLIC_VISUAL_RADIUS_CELLS).toBe(15)
+    expect(visibleTerrainCells(grid(-24, 23), [0, 0, 0], PUBLIC_VISUAL_RADIUS_CELLS)).toHaveLength(961)
+  })
+
+  it('finds the full public window in the existing three by three chunk cache at seams', () => {
+    for (const [x, z] of [[0, 0], [15, 15], [16, -1], [-1, 16]]) {
+      const cached = activeChunkCoordinates({ x: x * WORLD_CELL_METERS, z: z * WORLD_CELL_METERS })
+        .flatMap(({ chunkX, chunkZ }) => grid(chunkX * WORLD_CHUNK_CELLS,
+          (chunkX + 1) * WORLD_CHUNK_CELLS - 1, chunkZ * WORLD_CHUNK_CELLS,
+          (chunkZ + 1) * WORLD_CHUNK_CELLS - 1))
+      expect(cached).toHaveLength(9 * WORLD_CHUNK_CELLS ** 2)
+      const visible = visibleTerrainCells(cached, [x * WORLD_CELL_METERS, 0, z * WORLD_CELL_METERS],
+        PUBLIC_VISUAL_RADIUS_CELLS)
+      expect(visible).toHaveLength((PUBLIC_VISUAL_RADIUS_CELLS * 2 + 1) ** 2)
+      expect(visible[0].position).toEqual([(x - PUBLIC_VISUAL_RADIUS_CELLS) * WORLD_CELL_METERS,
+        0, (z - PUBLIC_VISUAL_RADIUS_CELLS) * WORLD_CELL_METERS])
+      expect(visible.at(-1)?.position).toEqual([(x + PUBLIC_VISUAL_RADIUS_CELLS) * WORLD_CELL_METERS,
+        0, (z + PUBLIC_VISUAL_RADIUS_CELLS) * WORLD_CELL_METERS])
+    }
+  })
+
   it('preserves every classic and expanded Greenway cell even when the player stands at an edge', () => {
     for (const size of [7, 16]) {
       const cells = grid(-3, size - 4)

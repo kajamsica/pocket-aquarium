@@ -2,9 +2,34 @@ import { describe, expect, it } from 'vitest'
 import { createActiveWorldTerrain } from './activeWorldTerrain'
 import { mireglassAnchors } from './mireglassContent'
 import { createCachePitOverlay } from './mireglassCachePitOverlay'
-import { WORLD_CHUNK_CELLS, worldChunk, worldTileAtGrid } from './worldChunks'
+import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS, worldChunk, worldTileAtGrid } from './worldChunks'
 
 describe('active streamed terrain', () => {
+  it.each(['greenway-alpha', 'wizard-realms', 'chunk-edge-probe'])(
+    'keeps a one-chunk surface window equal to the full window at tile and world edges for %s', (seed) => {
+      for (const point of [{ x: 63.99, z: 63.99 }, { x: 64, z: -64.001 },
+        { x: -64.001, z: 62.01 }, { x: -1026 + 1e-7, z: 1022 }]) {
+        const full = createActiveWorldTerrain(seed)
+        full.activate(point)
+        const nearest = { x: Math.ceil(point.x / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS,
+          z: Math.ceil(point.z / WORLD_CELL_METERS - 0.5) * WORLD_CELL_METERS }
+        const surface = createActiveWorldTerrain(seed)
+        surface.activate(nearest, 0)
+        expect(surface.activeChunkCount).toBe(1)
+        expect(surface.activeTiles()).toHaveLength(WORLD_CHUNK_CELLS ** 2)
+        expect(surface.tileAtWorld(point.x, point.z)).toEqual(full.tileAtWorld(point.x, point.z))
+      }
+    })
+
+  it('switches one-chunk surface reads back to the unchanged full movement window', () => {
+    const terrain = createActiveWorldTerrain('radius-switch')
+    terrain.activate({ x: 0, z: 0 }, 0)
+    expect(terrain.activeChunkCount).toBe(1)
+    terrain.activate({ x: 0, z: 0 })
+    expect(terrain.activeChunkCount).toBe(9)
+    expect(terrain.activeTiles()).toHaveLength(9 * WORLD_CHUNK_CELLS ** 2)
+  })
+
   it('keeps missing terrain null, then exposes an immutable, row-major 3 by 3 window', () => {
     const terrain = createActiveWorldTerrain('active-center')
     expect(terrain.activeChunkCount).toBe(0)
@@ -48,7 +73,7 @@ describe('active streamed terrain', () => {
     expect(terrain.tileAtGrid(0.5, 0)).toBeNull()
   })
 
-  it('reuses overlapping chunks, evicts old ones, and regenerates identical cells on revisit', () => {
+  it('reuses overlapping chunks and restores cached cells on revisit', () => {
     const terrain = createActiveWorldTerrain('revisit-window')
     const originalWindow = terrain.activate({ x: 0, z: 0 })
     const originalTiles = terrain.activeTiles()
@@ -64,7 +89,7 @@ describe('active streamed terrain', () => {
     expect(terrain.tileAtGrid(32, 0)).toEqual(worldTileAtGrid('revisit-window', 32, 0))
     terrain.activate({ x: 0, z: 0 })
     expect(terrain.tileAtGrid(-16, 0)).toEqual(evicted)
-    expect(terrain.tileAtGrid(-16, 0)).not.toBe(evicted)
+    expect(terrain.tileAtGrid(-16, 0)).toBe(evicted)
   })
 
   it('stays bounded at world edges and rejects out-of-world activation without changing the cache', () => {
@@ -146,5 +171,78 @@ describe('active streamed terrain', () => {
     const explicitFalse = createActiveWorldTerrain(seed, { cachePitDug: false })
     explicitFalse.activate(position)
     expect(JSON.stringify(explicitFalse.activeTiles())).toBe(JSON.stringify(legacy.activeTiles()))
+  })
+
+  it.each(['base-cache-one', 'base-cache-two', 'base-cache-three'])(
+    'reuses immutable base chunks with deterministic parity across the world for %s', (seed) => {
+      for (const [chunkX, chunkZ] of [[-16, -16], [0, 0], [15, 15]]) {
+        const position = { x: chunkX * 64, z: chunkZ * 64 }
+        const first = createActiveWorldTerrain(seed)
+        first.activate(position)
+        const second = createActiveWorldTerrain(seed)
+        second.activate(position)
+        const expected = worldChunk(seed, chunkX, chunkZ).tiles
+        for (let localZ = 0; localZ < WORLD_CHUNK_CELLS; localZ += 1) {
+          for (let localX = 0; localX < WORLD_CHUNK_CELLS; localX += 1) {
+            const gx = chunkX * WORLD_CHUNK_CELLS + localX
+            const gz = chunkZ * WORLD_CHUNK_CELLS + localZ
+            expect(first.tileAtGrid(gx, gz)).toEqual(expected[localZ * WORLD_CHUNK_CELLS + localX])
+            expect(second.tileAtGrid(gx, gz)).toBe(first.tileAtGrid(gx, gz))
+          }
+        }
+      }
+    },
+  )
+
+  it('keeps mutable public chunks and pit overlays out of the cached base', () => {
+    const seed = 'base-cache-pit-isolation'
+    const cache = mireglassAnchors(seed).sealCache.tile
+    const position = cache.center
+    const plain = createActiveWorldTerrain(seed, { cachePitDug: false })
+    plain.activate(position)
+    const baseTile = plain.tileAtWorld(position.x, position.z)!
+    const dug = createActiveWorldTerrain(seed, { cachePitDug: true })
+    dug.activate(position)
+    const dugTile = dug.tileAtWorld(position.x, position.z)!
+    expect(dugTile).toEqual({ ...baseTile, elevation: 0.55, center: { ...baseTile.center, y: 1.65 } })
+    expect(dugTile).not.toBe(baseTile)
+    expect(Object.isFrozen(dugTile)).toBe(true)
+    expect(Object.isFrozen(dugTile.center)).toBe(true)
+
+    const publicChunk = worldChunk(seed, Math.floor(position.x / (WORLD_CHUNK_CELLS * WORLD_CELL_METERS)),
+      Math.floor(position.z / (WORLD_CHUNK_CELLS * WORLD_CELL_METERS)))
+    const publicTile = publicChunk.tiles.find((tile) => tile.id === baseTile.id)!
+    expect(publicTile).not.toBe(baseTile)
+    publicTile.elevation = -1
+    publicTile.center.y = -1
+    expect(Reflect.set(baseTile, 'elevation', -1)).toBe(false)
+    expect(Reflect.set(baseTile.center, 'y', -1)).toBe(false)
+    const plainAgain = createActiveWorldTerrain(seed, { cachePitDug: false })
+    plainAgain.activate(position)
+    expect(plainAgain.tileAtWorld(position.x, position.z)).toBe(baseTile)
+    expect(plainAgain.tileAtWorld(position.x, position.z)).toEqual(cache)
+  })
+
+  it('keeps two full windows of base chunks and evicts the least recently used chunk', () => {
+    const position = { x: 0, z: 0 }
+    const seeds = ['base-lru-one', 'base-lru-two']
+    const samples = seeds.map((seed) => {
+      const terrain = createActiveWorldTerrain(seed)
+      terrain.activate(position)
+      return terrain.tileAtGrid(-16, 0)
+    })
+    const warm = createActiveWorldTerrain(seeds[0])
+    warm.activate(position)
+    expect(warm.tileAtGrid(-16, 0)).toBe(samples[0])
+
+    const overflow = createActiveWorldTerrain('base-lru-overflow')
+    overflow.activate({ x: -1024, z: -1024 })
+    const recentlyUsed = createActiveWorldTerrain(seeds[0])
+    recentlyUsed.activate(position)
+    expect(recentlyUsed.tileAtGrid(-16, 0)).toBe(samples[0])
+    const evicted = createActiveWorldTerrain(seeds[1])
+    evicted.activate(position)
+    expect(evicted.tileAtGrid(-16, 0)).toEqual(samples[1])
+    expect(evicted.tileAtGrid(-16, 0)).not.toBe(samples[1])
   })
 })

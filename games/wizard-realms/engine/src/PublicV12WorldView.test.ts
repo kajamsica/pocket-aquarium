@@ -1,6 +1,7 @@
 import { createElement, isValidElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { areaAt } from './domain/generation'
 import { highlandLandmark } from './domain/highlandContent'
 import { createFreshPublicWorld } from './domain/publicWorldState'
 import { actPublicV12Windstep } from './domain/publicWorldV12Authority'
@@ -26,7 +27,11 @@ const at = (state: PublicWorldV12State, x: number, z: number): PublicWorldV12Sta
 const atCrown = (learned = false): PublicWorldV12State => {
   const start = fresh()
   const crown = highlandLandmark(seed)
-  return at({ ...start, discoveredTileIds: [...start.discoveredTileIds, crown.tile.id],
+  const chartedGreenway = start.greenway.tiles.filter((tile) => tile.gridX >= 0 && tile.gridX < 7
+    && tile.gridZ >= 0 && tile.gridZ < 7
+    && areaAt(start.greenway.areas, tile.center.x, tile.center.z).id === 'greenway')
+    .map((tile) => tile.id)
+  return at({ ...start, discoveredTileIds: [...new Set([...chartedGreenway, crown.tile.id])].sort(),
     highland: { ...start.highland, landmarkDiscovered: true },
     windstep: { ...start.windstep, learned } }, crown.tile.center.x, crown.tile.center.z)
 }

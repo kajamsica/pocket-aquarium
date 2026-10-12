@@ -2,14 +2,14 @@ import type { createAtomicV8Store } from './atomicV8Database'
 import type { createAtomicV9Store } from './atomicV9Database'
 import type { createAtomicV10Store } from './atomicV10Database'
 import type { createAtomicV11Store } from './atomicV11Database'
-import type { AtomicV12Record, createAtomicV12Store } from './atomicV12Database'
+import type { createAtomicV12Store } from './atomicV12Database'
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
 import { PUBLIC_V7_LOCK_NAME } from './publicWorldV7'
 import type { PublicV7LockProvider } from './publicWorldV7Flow'
 import { inspectPublicV11UnderLock } from './publicWorldV11Flow'
 import { decodePublicV11Head, encodePublicV11Head } from './publicWorldV11Snapshot'
-import { decodePublicV12Head, encodePublicV12Head, isPublicV12MigrationHead,
-  isValidPublicV12SourceReceipt, samePublicV12SourceReceipt } from './publicWorldV12Snapshot'
+import { encodePublicV12Head, isValidatedPublicV12MigrationState,
+  isValidPublicV12SourceReceipt, sameValidatedPublicV12SourceReceipt } from './publicWorldV12Snapshot'
 import type { PublicV12SourceReceipt } from './publicWorldV12Snapshot'
 import { withPublicV12Windstep } from './publicWorldV12State'
 import type { PublicWorldV12State } from './publicWorldV12State'
@@ -32,6 +32,7 @@ type V11Store = ReturnType<typeof createAtomicV11Store>
 type V12Store = ReturnType<typeof createAtomicV12Store>
 type Checked = Exclude<PublicV12Inspection, { status: 'valid' }> |
   { status: 'valid'; start: PublicV12Start; bootstrap: PublicV6BootstrapRoot | null }
+const inspectionProofs = new WeakMap<Checked, object>()
 const failed = (reason: string): PublicV12Operation<never> => ({ ok: false, reason })
 const succeeded = <T,>(value: T): PublicV12Operation<T> => ({ ok: true, value })
 const blocked = (reason: string): PublicV12Operation<Checked> => succeeded({ status: 'blocked', reason })
@@ -65,34 +66,27 @@ async function withLock<T>(locks: PublicV7LockProvider | undefined,
   catch { return failed('storage-error') }
 }
 
-function decodeRecord(record: AtomicV12Record | null) {
-  if (!record || typeof record !== 'object' || Array.isArray(record) || Reflect.ownKeys(record).length !== 2
-    || !Object.hasOwn(record, 'saveRevision') || !Object.hasOwn(record, 'value')) return null
-  const decoded = decodePublicV12Head(record.value)
-  return decoded && decoded.saveRevision === record.saveRevision ? decoded : null
-}
-
 /** The caller holds the shared v7 Web Lock; never request it a second time. */
 export async function inspectPublicV12UnderLock(storage: Pick<Storage, 'getItem'>,
   v8: V8Store, v9: V9Store, v10: V10Store, v11: V11Store,
   v12: V12Store): Promise<PublicV12Operation<Checked>> {
-  const read = await v12.read()
+  const read = await v12.readChecked()
   if (read.status !== 'ok') return failed('storage-error')
   const missing = read.head === null && read.previous === null && read.lineage === null
-  const head = decodeRecord(read.head)
-  const previous = decodeRecord(read.previous)
+  const head = read.decodedHead
+  const previous = read.decodedPrevious
   if (!missing) {
     if (!head) return blocked('invalid-v12-head')
-    if (!isValidPublicV12SourceReceipt(read.lineage)) return blocked('invalid-v12-lineage')
+    if (!read.lineageValid) return blocked('invalid-v12-lineage')
     if (head.saveRevision === 0 ? read.previous !== null
       : !previous || previous.saveRevision !== head.saveRevision - 1) return blocked('invalid-v12-previous')
-    const source = decodePublicV11Head(read.lineage.sourceV11Head)!
+    const source = decodePublicV11Head(read.lineage!.sourceV11Head)!
     const sourceState = withPublicV12Windstep(source.state)
     if (identity(head.state, head.bootstrap) !== identity(sourceState, source.bootstrap)
-      || head.saveRevision === 0 && !isPublicV12MigrationHead(read.head!.value, read.lineage)
+      || head.saveRevision === 0 && !isValidatedPublicV12MigrationState(head, source)
       || !preservesHistory(sourceState, head.state)) return blocked('invalid-v12-lineage')
     if (previous && (identity(previous.state, previous.bootstrap) !== identity(head.state, head.bootstrap)
-      || previous.saveRevision === 0 && !isPublicV12MigrationHead(read.previous!.value, read.lineage)
+      || previous.saveRevision === 0 && !isValidatedPublicV12MigrationState(previous, source)
       || !preservesHistory(sourceState, previous.state))) return blocked('invalid-v12-previous')
     if (previous && !preservesCampHistory(previous.state, head.state)) return blocked('invalid-v12-camp-history')
     if (previous && !preservesDigHistory(previous.state, head.state)) return blocked('invalid-v12-dig-history')
@@ -110,10 +104,18 @@ export async function inspectPublicV12UnderLock(storage: Pick<Storage, 'getItem'
     current.value.bootstrap, current.value.start.saveRevision),
     sourceV11Receipt: current.value.start.sourceReceipt })
   if (!isValidPublicV12SourceReceipt(sourceReceipt)) return blocked('invalid-v11-lineage')
-  if (missing) return succeeded({ status: 'missing', sourceReceipt })
-  if (!samePublicV12SourceReceipt(read.lineage, sourceReceipt)) return blocked('source-changed')
-  return succeeded({ status: 'valid', bootstrap: head!.bootstrap,
-    start: { state: head!.state, saveRevision: head!.saveRevision, sourceReceipt } })
+  if (missing) {
+    if (!read.proof) return failed('storage-error')
+    const checked: Checked = { status: 'missing', sourceReceipt }
+    inspectionProofs.set(checked, read.proof)
+    return succeeded(checked)
+  }
+  if (!sameValidatedPublicV12SourceReceipt(read.lineage!, sourceReceipt)) return blocked('source-changed')
+  if (!read.proof) return failed('storage-error')
+  const checked: Checked = { status: 'valid', bootstrap: head!.bootstrap,
+    start: { state: head!.state, saveRevision: head!.saveRevision, sourceReceipt } }
+  inspectionProofs.set(checked, read.proof)
+  return succeeded(checked)
 }
 
 export function inspectPublicV12(storage: Pick<Storage, 'getItem'>,
@@ -140,11 +142,13 @@ export function migratePublicV11ToV12(storage: Pick<Storage, 'getItem'>,
     if (checked.value.status === 'valid') return failed('v12-records-present')
     const sourceReceipt = checked.value.sourceReceipt
     if (!sourceReceipt) return failed('v11-missing')
-    if (!samePublicV12SourceReceipt(expected, sourceReceipt)) return failed('source-changed')
+    if (!sameValidatedPublicV12SourceReceipt(expected, sourceReceipt)) return failed('source-changed')
     const source = decodePublicV11Head(sourceReceipt.sourceV11Head)!
     const state = withPublicV12Windstep(source.state)
     const head = encodePublicV12Head(state, source.bootstrap, 0)
-    const result = await v12.commit(null, null, { saveRevision: 0, value: head }, sourceReceipt)
+    const proof = inspectionProofs.get(checked.value)
+    if (!proof) return failed('storage-error')
+    const result = await v12.commit(null, null, { saveRevision: 0, value: head }, sourceReceipt, proof)
     return result === 'committed' ? succeeded({ state, saveRevision: 0, sourceReceipt }) : failed(result)
   })
 }
@@ -161,7 +165,7 @@ export function resumePublicV12(storage: Pick<Storage, 'getItem'>,
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v12-missing' : checked.value.reason)
     const { start } = checked.value
-    if (!samePublicV12SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
+    if (!sameValidatedPublicV12SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
     return start.saveRevision === expectedRevision ? succeeded(start) : failed('revision-changed')
   })
 }
@@ -170,32 +174,38 @@ export function commitPublicV12Snapshot(storage: Pick<Storage, 'getItem'>,
   locks: PublicV7LockProvider | undefined, v8: V8Store, v9: V9Store, v10: V10Store,
   v11: V11Store, v12: V12Store, state: PublicWorldV12State, expectedRevision: number,
   expectedSourceReceipt: PublicV12SourceReceipt): Promise<PublicV12Operation<PublicV12Start>> {
+  // Detach caller-owned inputs before the lock request can wait.
+  let nextState: PublicWorldV12State | undefined
+  let expected: PublicV12SourceReceipt | undefined
+  try { nextState = structuredClone(state) } catch { /* invalid-state below */ }
+  try { expected = structuredClone(expectedSourceReceipt) } catch { /* invalid-expected-source below */ }
   return withLock(locks, async () => {
-    if (!isValidPublicV12SourceReceipt(expectedSourceReceipt)) return failed('invalid-expected-source')
-    const expected = structuredClone(expectedSourceReceipt)
+    if (!isValidPublicV12SourceReceipt(expected)) return failed('invalid-expected-source')
+    if (!nextState) return failed('invalid-state')
     const checked = await inspectPublicV12UnderLock(storage, v8, v9, v10, v11, v12)
     if (!checked.ok) return checked
     if (checked.value.status !== 'valid') return failed(checked.value.status === 'missing'
       ? 'v12-missing' : checked.value.reason)
     const { start, bootstrap } = checked.value
-    if (!samePublicV12SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
+    if (!sameValidatedPublicV12SourceReceipt(expected, start.sourceReceipt)) return failed('lineage-changed')
     if (start.saveRevision !== expectedRevision) return failed('revision-changed')
-    if (!preservesCampHistory(start.state, state)) return failed('invalid-v12-camp-history')
-    if (!preservesDigHistory(start.state, state)) return failed('invalid-v12-dig-history')
-    if (!preservesHighlandHistory(start.state, state)) return failed('invalid-v12-highland-history')
-    if (!preservesWindHistory(start.state, state)) return failed('invalid-v12-wind-history')
-    if (start.state.tick > state.tick || start.state.eventSequence > state.eventSequence) {
+    if (!preservesCampHistory(start.state, nextState)) return failed('invalid-v12-camp-history')
+    if (!preservesDigHistory(start.state, nextState)) return failed('invalid-v12-dig-history')
+    if (!preservesHighlandHistory(start.state, nextState)) return failed('invalid-v12-highland-history')
+    if (!preservesWindHistory(start.state, nextState)) return failed('invalid-v12-wind-history')
+    if (start.state.tick > nextState.tick || start.state.eventSequence > nextState.eventSequence) {
       return failed('invalid-v12-clock-history')
     }
     const nextRevision = expectedRevision + 1
     let head: ReturnType<typeof encodePublicV12Head>
     try {
-      if (identity(state, bootstrap) !== identity(start.state, bootstrap)) return failed('invalid-state')
-      head = structuredClone(encodePublicV12Head(state, bootstrap, nextRevision))
+      if (identity(nextState, bootstrap) !== identity(start.state, bootstrap)) return failed('invalid-state')
+      head = structuredClone(encodePublicV12Head(nextState, bootstrap, nextRevision))
     } catch { return failed('invalid-state') }
-    const nextState = decodePublicV12Head(head)!.state
+    const proof = inspectionProofs.get(checked.value)
+    if (!proof) return failed('storage-error')
     const result = await v12.commit(expectedRevision, start.sourceReceipt,
-      { saveRevision: nextRevision, value: head })
+      { saveRevision: nextRevision, value: head }, undefined, proof)
     return result === 'committed'
       ? succeeded({ state: nextState, saveRevision: nextRevision, sourceReceipt: start.sourceReceipt })
       : failed(result)
