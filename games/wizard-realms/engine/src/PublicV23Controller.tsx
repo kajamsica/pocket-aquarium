@@ -2024,7 +2024,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       queuePulse(intent.vector, false); return
     }
     if (intent.type === 'jump') { devRoute.current = null; queuePulse([0, 0], true); return }
-    if (intent.type === 'gait.toggle') { setWalkRequested((value) => !value); return }
+    if (intent.type === 'gait.toggle') {
+      if (view.gait?.canRun) setWalkRequested((value) => !value)
+      return
+    }
     if (v37 && (intent.type === 'windward.study' || intent.type === 'windward.cast')) {
       queueChecked({ kind: intent.type === 'windward.study' ? 'windward-study/v1' : 'windward-cast/v1' })
       return

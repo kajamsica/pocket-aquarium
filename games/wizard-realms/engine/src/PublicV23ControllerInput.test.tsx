@@ -16,6 +16,7 @@ import { createAtomicV29Store } from './domain/atomicV29Database'
 import { createAtomicV30Store } from './domain/atomicV30Database'
 import { createAtomicV31Store } from './domain/atomicV31Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
+import { publicV11Gait } from './domain/publicWorldGait'
 import { createPublicV23Root, decodePublicV23Progress } from './domain/publicWorldV23Snapshot'
 import { createPublicV24Root } from './domain/publicWorldV24Snapshot'
 import { createPublicV25Root } from './domain/publicWorldV25Snapshot'
@@ -35,7 +36,7 @@ const workId = 'works4:bridge:greenway-creek:0'
 const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   now: 0,
   stateCursor: 0, states: [] as unknown[], streamed: false, known: false, airborne: false,
-  westPose: false,
+  westPose: false, bootsEquipped: false,
   suggested: false,
   poseOnJump: false, poseOnMove: false,
   refs: [] as { current: unknown }[], tick: null as (() => void) | null,
@@ -104,7 +105,9 @@ vi.mock('./PublicV23WorldView', async (importOriginal) => {
           preview: { selected: choice, nearby: [choice], guidance: null } } } as
           ReturnType<typeof actual.publicWorldV23ViewProjection>
       }
-      return { ...view, savedTerrainWorks: { ...view.savedTerrainWorks!, modeActive: true,
+      return { ...view, ...(probe.bootsEquipped
+        ? { gait: publicV11Gait('leather_boots', args[5]) } : {}),
+        savedTerrainWorks: { ...view.savedTerrainWorks!, modeActive: true,
         actionsEnabled: true, preview: { selected: { site: { id: workId },
           rejection: null } }, ...(probe.suggested ? { suggestedSites: [
             { id: 'creek', kind: 'bridge', from: { x: 1.1 } },
@@ -337,7 +340,7 @@ const visibilityChange = () => vi.mocked(document.addEventListener).mock.calls
 const savePanel = (html: string) => html.match(/<div class="v23-save">([\s\S]*?)<\/div>/)?.[1] ?? ''
 async function settle() { for (let i = 0; i < 8; i++) await Promise.resolve() }
 afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = probe.airborne = false
-  probe.westPose = false
+  probe.westPose = false; probe.bootsEquipped = false
   probe.now = 0
   probe.suggested = false
   probe.poseOnJump = probe.poseOnMove = false
@@ -356,6 +359,19 @@ afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = p
   vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('V23 controller input admission', () => {
+  it('ignores barefoot pace toggles so newly equipped boots begin at the default run pace', () => {
+    mount()
+    expect(probe.projection?.gait).toMatchObject({ canRun: false, pace: 'walk' })
+    probe.onIntent!({ type: 'gait.toggle' })
+    expect(probe.states[2]).toBe(false)
+    probe.bootsEquipped = true
+    rerender()
+    expect(probe.projection?.gait).toMatchObject({ canRun: true, pace: 'run' })
+    probe.onIntent!({ type: 'gait.toggle' })
+    rerender()
+    expect(probe.projection?.gait).toMatchObject({ canRun: true, pace: 'walk' })
+  })
+
   it('explains exact creek and cliff rejections once during a held input, then clears after travel', () => {
     probe.idleNeeded = false
     probe.frameRejections = [
