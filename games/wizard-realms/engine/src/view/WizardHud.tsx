@@ -87,7 +87,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 }) {
   const [ledgerOpen, setLedgerOpen] = useState(false)
   const markerQuest = projection.v36MarkerQuest?.active ? projection.v36MarkerQuest : null
-  const earlierJournalQuest = projection.v35LedgerQuest && projection.v34Quest && !projection.v34Quest.complete
+  const earlierJournalQuest = projection.v34Quest && !projection.v34Quest.complete
     ? projection.v34Quest
     : projection.v35LedgerQuest && !projection.v35LedgerQuest.complete
       ? projection.v35LedgerQuest : markerQuest ?? projection.v35LedgerQuest
@@ -109,9 +109,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const nearHallWard = hallSite?.revealed && Math.hypot(
     projection.player.position[0] - hallSite.ward[0],
     projection.player.position[2] - hallSite.ward[2]) < 10
-  const journalQuest = hallReward && hall?.wardDefeated && v42Quest
-    ? v42Quest : signalQuest && projection.v36MarkerQuest?.complete
-      ? signalQuest : earlierJournalQuest
+  const journalQuest = earlierJournalQuest && !earlierJournalQuest.complete
+    ? earlierJournalQuest : hallReward && hall?.wardDefeated && v42Quest
+      ? v42Quest : signalQuest && projection.v36MarkerQuest?.complete
+        ? signalQuest : earlierJournalQuest
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
   const markerQuestPrimary = journalQuest?.id === 'beneath-old-marker/v1'
   const signalQuestPrimary = journalQuest?.id === 'highland-signal/v1'

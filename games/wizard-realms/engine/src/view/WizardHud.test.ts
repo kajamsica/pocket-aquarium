@@ -1146,3 +1146,47 @@ describe('V36 marker quest journal', () => {
     expect(blocked).toContain('disabled=""')
   })
 })
+
+describe('V42 Iron Hall journal precedence', () => {
+  it('keeps unfinished starter claims primary after ward defeat while Hall stays inspectable', () => {
+    const base = projectionAtGreenwayRing([])
+    const ready = { rejection: null, hint: null }
+    const surveyor = { id: 'surveyor-first-find/v1' as const,
+      title: "The Surveyor's First Find" as const, stage: 'complete' as const,
+      objective: 'The first find is complete.', reward: 'Basic pick.', complete: true }
+    const ledger = { id: 'outfitters-ledger/v1' as const,
+      title: "Outfitters' Ledger" as const, stage: 'first-find' as const,
+      objective: 'Deliver stone.', reward: 'Traveler Tunic.', complete: false }
+    const marker = { id: 'beneath-old-marker/v1' as const,
+      title: 'Beneath the Old Marker' as const, stage: 'salvager' as const,
+      objective: 'Claim at the salvager.', reward: 'Fen Waders.', active: true, complete: false }
+    const view: WizardViewProjection = { ...base, v34Quest: surveyor,
+      v35LedgerQuest: ledger, v35LedgerDeliver: ready, v36MarkerQuest: marker,
+      v36MarkerClaim: ready,
+      v41IronHall: { health: 12, wardHealth: 0, phase: 'defeated', phaseUntilTick: 0,
+        learnedBolt: true, wardDefeated: true, study: ready, engage: ready,
+        bolt: ready, guard: ready, rest: ready },
+      v42IronHall: { crestOutcome: 'won', questClaimed: false, vestOwned: false,
+        vestEquipped: false, vestDurability: 0,
+        spar: { active: false, strikeAtTick: 0, nextReadyTick: 0, strikesResolved: 0 },
+        claim: ready, equip: ready, unequip: ready, repair: ready, sparStart: ready },
+      v42QuartermasterSite: { position: base.player.position, revealed: true } }
+
+    const ledgerHtml = renderHud(view)
+    expect(ledgerHtml).toContain('aria-label="Quest journal: Outfitters&#x27; Ledger"')
+    expect(ledgerHtml).toContain('Deliver stone to Outfitters</button>')
+    expect(ledgerHtml).toContain('aria-label="Quest chapter: Iron Hall Watch"')
+    expect(ledgerHtml).toContain('Claim at quartermaster</button>')
+
+    const markerView: WizardViewProjection = { ...view,
+      v35LedgerQuest: { ...ledger, stage: 'complete', complete: true } }
+    const markerHtml = renderHud(markerView)
+    expect(markerHtml).toContain('aria-label="Quest journal: Beneath the Old Marker"')
+    expect(markerHtml).toContain('Claim Old Marker reward</button>')
+    expect(markerHtml).toContain('aria-label="Quest chapter: Iron Hall Watch"')
+
+    const completeHtml = renderHud({ ...markerView,
+      v36MarkerQuest: { ...marker, stage: 'complete', complete: true } })
+    expect(completeHtml).toContain('aria-label="Quest journal: Iron Hall Watch"')
+  })
+})
