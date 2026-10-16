@@ -1,6 +1,6 @@
 /** The V43 promotion fence must preserve the checked V42 root and reject old writers. */
-import { IDBFactory } from 'fake-indexeddb'
-import { describe, expect, it } from 'vitest'
+import { IDBFactory, IDBObjectStore } from 'fake-indexeddb'
+import { describe, expect, it, vi } from 'vitest'
 // Initialize the established V41 ancestry before V42's cross-version module graph.
 import './atomicV41Database'
 import { createAtomicV42Store } from './atomicV42Database'
@@ -41,6 +41,71 @@ async function record(factory: IDBFactory, key: string, next?: unknown): Promise
 }
 
 describe('atomic V42 successor fence', () => {
+  it('co-creates a checked fresh root and pending fence before old V42 can write', async () => {
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    const oldTab = createAtomicV42Store(factory)
+    const stale = await oldTab.readChecked()
+    if (stale.status !== 'missing') throw new Error('Expected empty V42 store')
+    expect(await store.bootstrapFreshSuccessor(seed)).toBe('committed')
+    const promotion = await store.readForPromotion()
+    if (promotion.status !== 'valid') throw new Error('Expected checked bootstrap')
+    expect(promotion.root).toEqual(createFreshPublicV42Root(seed))
+    expect(promotion.marker).toEqual({ schemaVersion: 'v43-successor/v1',
+      phase: 'pending', sourceRevision: 0,
+      sourceFingerprint: promotion.sourceFingerprint })
+    expect((await oldTab.readChecked()).status).toBe('blocked')
+    expect(await oldTab.commit(stale.proof, createFreshPublicV42Root(seed)))
+      .toBe('revision-changed')
+    expect(await store.bootstrapFreshSuccessor(seed)).toBe('revision-changed')
+    expect((await store.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'pending' } })
+  }, 30000)
+
+  it('requires zero V42 records and preserves existing or malformed records', async () => {
+    for (const [key, raw] of [
+      ['root', createFreshPublicV42Root(seed)],
+      ['root', { malformed: true }],
+      ['unexpected', { unrelated: true }],
+    ] as const) {
+      const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+      await record(factory, key, raw)
+      expect(await store.bootstrapFreshSuccessor(seed)).toBe('revision-changed')
+      expect(await record(factory, key)).toEqual(raw)
+      expect(await record(factory, 'v43-successor')).toBeUndefined()
+    }
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    const results = await Promise.all([
+      store.bootstrapFreshSuccessor(seed), store.bootstrapFreshSuccessor(seed)])
+    expect(results.sort()).toEqual(['committed', 'revision-changed'])
+  }, 30000)
+
+  it('rejects unsupported developer seeds without creating either record', async () => {
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    expect(await store.bootstrapFreshSuccessor('wizard-realms-dev')).toBe('invalid-seed')
+    expect(await store.readForPromotion()).toEqual({ status: 'missing' })
+    expect(await record(factory, 'root')).toBeUndefined()
+    expect(await record(factory, 'v43-successor')).toBeUndefined()
+  }, 30000)
+
+  it('rolls back both records when the pending-marker write transaction aborts', async () => {
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    const original = IDBObjectStore.prototype.put
+    const spy = vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(
+      function(this: IDBObjectStore, ...args) {
+        const request = original.apply(this, args)
+        if (this.transaction.db.name === PUBLIC_V42_DATABASE_NAME
+          && args[1] === 'v43-successor')
+          request.addEventListener('success', () => this.transaction.abort())
+        return request
+      })
+    try { expect(await store.bootstrapFreshSuccessor(seed)).toBe('storage-error') }
+    finally { spy.mockRestore() }
+    expect(await store.readForPromotion()).toEqual({ status: 'missing' })
+    expect(await record(factory, 'root')).toBeUndefined()
+    expect(await record(factory, 'v43-successor')).toBeUndefined()
+    expect(await store.bootstrapFreshSuccessor(seed)).toBe('committed')
+  }, 30000)
+
   it('reserves and finalizes idempotently while old readers and writers fail closed', async () => {
     const factory = new IDBFactory(), oldTab = createAtomicV42Store(factory)
     const store = createAtomicV42Store(factory), root = createFreshPublicV42Root(seed)

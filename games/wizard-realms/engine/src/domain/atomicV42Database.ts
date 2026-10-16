@@ -1,5 +1,5 @@
 import { PUBLIC_V42_DATABASE_NAME, decodePublicV42CheckedSuccessor,
-  decodePublicV42Root } from './publicWorldV42Snapshot'
+  decodePublicV42Root, createFreshPublicV42Root } from './publicWorldV42Snapshot'
 import type { PublicV42Root } from './publicWorldV42Snapshot'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
 
@@ -64,6 +64,49 @@ export function createAtomicV42Store(factory: IDBFactory,
     })
   }
   return {
+    /** Atomically create a checked fresh source and its V43 fence. No unfenced
+     * V42 root is ever exposed, including after an interrupted fresh start. */
+    async bootstrapFreshSuccessor(seed: string): Promise<
+      'committed' | 'invalid-seed' | 'revision-changed' | 'storage-error'> {
+      let root: PublicV42Root
+      try {
+        const checked = decodePublicV42Root(createFreshPublicV42Root(seed))
+        if (!checked) return 'invalid-seed'
+        root = checked
+      } catch { return 'invalid-seed' }
+      let marker: V42SuccessorMarker
+      try {
+        marker = { schemaVersion: SUCCESSOR_SCHEMA, phase: 'pending',
+          sourceRevision: root.head.saveRevision,
+          sourceFingerprint: await sourceFingerprint(root) }
+      } catch { return 'storage-error' }
+      let db: IDBDatabase | undefined
+      try {
+        db = await open()
+        return await new Promise((resolve) => {
+          let tx: IDBTransaction
+          try { tx = db!.transaction('records', 'readwrite', { durability: 'strict' }) }
+          catch (error) {
+            if (!(error instanceof TypeError) && !(error instanceof DOMException
+              && error.name === 'NotSupportedError')) throw error
+            tx = db!.transaction('records', 'readwrite')
+          }
+          const records = tx.objectStore('records'), keys = records.getAllKeys()
+          let result: 'committed' | 'revision-changed' | 'storage-error' = 'storage-error'
+          tx.oncomplete = () => resolve(result)
+          tx.onabort = () => resolve('storage-error')
+          keys.onsuccess = () => {
+            if (keys.result.length !== 0) { result = 'revision-changed'; return }
+            try {
+              records.put(root, 'root')
+              records.put(marker, SUCCESSOR_KEY)
+              result = 'committed'
+            } catch { tx.abort() }
+          }
+        })
+      } catch { return 'storage-error' }
+      finally { db?.close() }
+    },
     async readForPromotion(): Promise<AtomicV42PromotionRead> {
       let db: IDBDatabase | undefined
       try {
