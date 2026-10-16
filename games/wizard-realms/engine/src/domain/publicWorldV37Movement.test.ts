@@ -51,6 +51,20 @@ function at(x = 464, z = -431, seed = 'wizard-realms'): PublicV36MarkerProgress 
       skillXp: { ...state.player.skillXp, spellcraft: 100 } } } }
 }
 
+function claimed(): PublicV36MarkerProgress {
+  const before = at(465, -431), bridge = resolvePublicV28RiverBridge(seed,
+    'works6:river-bridge:-14')!, player = before.state.player
+  return { ...before, riverBridgeIds: [bridge.id], claimedBridgeheadId: bridge.id,
+    ledgerSurveyBridgeId: bridge.id, ledgerClaimReward: 'coins', markerClaimReward: 'coins',
+    state: { ...before.state, eventSequence: before.state.eventSequence + 4,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(before.state.discoveryMask), ...bridge.footprintTileIds])].sort()),
+      player: { ...player, xp: 290, level: 3, coins: player.coins + 315,
+        skillXp: { ...player.skillXp, construction: 80, wayfinding: 60, spellcraft: 150 },
+        inventory: [...player.inventory, { itemId: 'traveler_tunic', quantity: 1 },
+          { itemId: 'mireglass_reach/item/waders', quantity: 1 }] } } }
+}
+
 describe('V37 checked Windward movement', () => {
   it('observes the exact assisted downhill batch until the same policy can save its landing', () => {
     const before = at(462.18, -428), west = frame(-0.16, 0)
@@ -208,6 +222,33 @@ describe('V37 checked Windward movement', () => {
       expect(preview(before, bad)).toBeNull()
     }
     expect(before).toEqual(saved)
+  })
+
+  it('keeps later-version overlays out of checked movement and rejects forged marker facts', () => {
+    const before = at(), input = batch(frame())
+    const withOverlay = { ...before, laterVersionOverlay: { active: true } }
+    expect(replay(withOverlay, input))
+      .toEqual(replay(before, input))
+    expect(replay({ ...before, regionalWorks: { builtLadderIds: ['forged'] } }, input))
+      .toBeNull()
+    expect(replay({ ...before, markerClaimReward: 'coins' }, input)).toBeNull()
+    expect(preview({ ...before, markerClaimReward: 'coins' }, input)).toBeNull()
+  })
+
+  it('rejects a forged surveyed bridge ID in otherwise claimed progress', () => {
+    const before = claimed(), input = batch(frame())
+    expect(replay(before, input)).not.toBeNull()
+    expect(replay({ ...before, ledgerSurveyBridgeId: 'forged' }, input)).toBeNull()
+    expect(preview({ ...before, ledgerSurveyBridgeId: 'forged' }, input)).toBeNull()
+  })
+
+  it('keeps ordinary movement replay after ledger and marker claims', () => {
+    const before = claimed(), input = batch(frame())
+    const moved = replay(before, input)
+    expect(moved).not.toBeNull()
+    expect(moved).toEqual(replayPublicV36Witness(before, input))
+    expect(moved).toMatchObject({ ledgerSurveyBridgeId: before.ledgerSurveyBridgeId,
+      ledgerClaimReward: before.ledgerClaimReward, markerClaimReward: before.markerClaimReward })
   })
 
   it('keeps river, rim, pit and raised-soil gates when the spell is active', () => {

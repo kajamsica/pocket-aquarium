@@ -131,14 +131,9 @@ function progressOf(raw: PublicV42RewardProgress): PublicV42RewardProgress | nul
     PUBLIC_V42_PROGRESS_KEYS.map((key) => [key, raw[key]])))
 }
 
-/** Pure action for the V42 checked writer to replay against its locked head. */
-export function confirmPublicV42RewardAction(raw: PublicV42RewardProgress,
-  rawWitness: unknown): PublicV42RewardResult {
+function confirmDecodedRewardAction(progress: PublicV42RewardProgress,
+  witness: PublicV42RewardWitness): PublicV42RewardResult {
   const reject = (rejection: PublicV42RewardRejection): PublicV42RewardResult => ({ rejection })
-  const witness = decodePublicV42RewardWitness(rawWitness)
-  if (!witness) return reject('invalid_value')
-  const progress = progressOf(raw)
-  if (!progress) return reject('invalid_progress')
   try {
     const { state, ironHall: hall, ironHallReward: reward } = progress
     const { player } = state, kind = witness.kind
@@ -211,9 +206,29 @@ export function confirmPublicV42RewardAction(raw: PublicV42RewardProgress,
   } catch { return reject('invalid_progress') }
 }
 
+/** Pure action for the V42 checked writer to replay against its locked head. */
+export function confirmPublicV42RewardAction(raw: PublicV42RewardProgress,
+  rawWitness: unknown): PublicV42RewardResult {
+  const witness = decodePublicV42RewardWitness(rawWitness)
+  if (!witness) return { rejection: 'invalid_value' }
+  const progress = progressOf(raw)
+  return progress ? confirmDecodedRewardAction(progress, witness)
+    : { rejection: 'invalid_progress' }
+}
+
 export function previewPublicV42RewardAction(progress: PublicV42RewardProgress,
   witness: unknown): Readonly<{ rejection: PublicV42RewardRejection | null }> {
   return { rejection: confirmPublicV42RewardAction(progress, witness).rejection ?? null }
+}
+
+/** Read-only view batch: validate once, then preserve every checked action's rejection. */
+export function previewPublicV42RewardActions(progress: PublicV42RewardProgress,
+  kinds: readonly PublicV42RewardWitness['kind'][]): readonly Readonly<{
+    rejection: PublicV42RewardRejection | null }>[] {
+  const witnesses = kinds.map((kind) => decodePublicV42RewardWitness({ kind }))
+  const decoded = progressOf(progress)
+  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
+    ? confirmDecodedRewardAction(decoded, witness).rejection ?? null : 'invalid_progress' }))
 }
 
 function resolveSparStrike(current: PublicV42RewardProgress): PublicV42RewardProgress | null {

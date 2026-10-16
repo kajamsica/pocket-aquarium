@@ -11,14 +11,17 @@ import { publicV26ValleyRimPassage } from './publicWorldV26ValleyRim'
 import { replayPublicV31FramesWithEvents } from './publicWorldV31Movement'
 import { projectPublicV31Pose, publicV31EffectiveStepAccepted } from './publicWorldV31Support'
 import type { PublicV36MarkerProgress } from './publicWorldV36MarkerAction'
-import { replayPublicV36Witness } from './publicWorldV36Snapshot'
+import { decodePublicV37WindwardProgress,
+  PUBLIC_V37_PROGRESS_KEYS } from './publicWorldV37WindwardAction'
 
 /** Shared private policy for durable replay and provisional whole-batch observation. */
 function replayFrames(before: PublicV36MarkerProgress,
   rawWitness: unknown, allowAirborne: boolean): PublicV36MarkerProgress | null {
   try {
     const witness = decodePublicV14FrameWitness(rawWitness)
-    const checked = witness && replayPublicV36Witness(before, { kind: 'checkpoint' })
+    // V37's checked progress decoder covers the inherited state; newer callers carry overlays.
+    const checked = witness && decodePublicV37WindwardProgress(Object.fromEntries(
+      PUBLIC_V37_PROGRESS_KEYS.map((key) => [key, before[key]])))
     if (!witness || !checked) return null
     const policy: PublicV23StreamedMovePolicy = (current, frame) => {
       const progress = { ...checked, ...current }, { state } = progress

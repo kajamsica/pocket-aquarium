@@ -21,7 +21,9 @@ import { createPublicV39Root } from './domain/publicWorldV39Snapshot'
 import { commitPublicV40 } from './domain/publicWorldV40Flow'
 import { createPublicV40Root } from './domain/publicWorldV40Snapshot'
 import { createFreshPublicV41Root, createPublicV41Root } from './domain/publicWorldV41Snapshot'
-import { resolveIronHallCrestOutcome } from './domain/publicWorldV42RewardAction'
+import { previewPublicV41CombatAction, previewPublicV41CombatActions } from './domain/publicWorldV41CombatAction'
+import { previewPublicV42RewardAction, previewPublicV42RewardActions,
+  resolveIronHallCrestOutcome } from './domain/publicWorldV42RewardAction'
 import type { PublicV42RewardProgress } from './domain/publicWorldV42RewardAction'
 import { createFreshPublicV42Root, createPublicV42Root } from './domain/publicWorldV42Snapshot'
 import { waystationRiverSite } from './domain/waystationRiverContent'
@@ -104,6 +106,21 @@ async function crossedHallRoot(nearHall = false) {
 }
 
 describe('V42 controller, Iron Hall view and entry integration', () => {
+  it('keeps witness-first invalid_value for forged batched kinds even with invalid progress', () => {
+    const valid = progressOf(createFreshPublicV42Root('wizard-realms'))
+    const invalid = { ...valid, state: { ...valid.state, tick: -1 } }
+    const combatKinds = ['forged/v1', 'ironhall-study/v1'] as unknown as Parameters<
+      typeof previewPublicV41CombatActions>[1]
+    const rewardKinds = ['forged/v1', 'ironhall-claim/v1'] as unknown as Parameters<
+      typeof previewPublicV42RewardActions>[1]
+    for (const progress of [valid, invalid]) {
+      expect(previewPublicV41CombatActions(progress, combatKinds)).toEqual(
+        combatKinds.map((kind) => previewPublicV41CombatAction(progress, { kind })))
+      expect(previewPublicV42RewardActions(progress, rewardKinds)).toEqual(
+        rewardKinds.map((kind) => previewPublicV42RewardAction(progress, { kind })))
+    }
+  })
+
   it('saves a visible Waystation spade equip through V42 and rejects invalid shared intents', async () => {
     probe.actions.length = probe.outcomes.length = 0
     const base = createFreshPublicV36Root('wizard-realms')
@@ -228,6 +245,24 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
       store: createAtomicV42Store(factory), v41Store: createAtomicV41Store(factory) }))
     const carrier = probe.projection!, quartermaster = ironHallQuartermasterSite(root.head)!
     const hall = ironHallSite(root.head)!
+    const assertPreviewParity = (progress: PublicV42RewardProgress,
+      view: WizardViewProjection) => {
+      for (const [field, kind] of [
+        ['study', 'ironhall-study/v1'], ['engage', 'ironhall-engage/v1'],
+        ['bolt', 'ironhall-bolt/v1'], ['guard', 'ironhall-guard/v1'],
+        ['rest', 'ironhall-rest/v1'],
+      ] as const) expect(view.v41IronHall?.[field].rejection).toBe(
+        previewPublicV41CombatAction(progress, { kind }).rejection)
+      for (const [field, kind] of [
+        ['claim', 'ironhall-claim/v1'], ['equip', 'ironhall-vest-equip/v1'],
+        ['unequip', 'ironhall-vest-unequip/v1'], ['repair', 'ironhall-vest-repair/v1'],
+        ['sparStart', 'ironhall-spar/v1'],
+      ] as const) expect(view.v42IronHall?.[field].rejection).toBe(
+        previewPublicV42RewardAction(progress, { kind }).rejection)
+    }
+    assertPreviewParity(progressOf(root), projectPublicV42IronHall(progressOf(root), carrier))
+    const invalidProgress = { ...progressOf(root), state: { ...root.head.state, tick: -1 } }
+    assertPreviewParity(invalidProgress, projectPublicV42IronHall(invalidProgress, carrier))
     const hidden = projectPublicV42IronHall({ ...progressOf(root), state: {
       ...root.head.state, discoveryMask: encodeDiscoveredTileIds([]) } }, carrier)
     expect(hidden.v42QuartermasterSite).toBeNull()
@@ -248,6 +283,7 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
       position: [quartermaster.center.x, quartermaster.center.y,
         quartermaster.center.z] as const } }
     const claim = projectPublicV42IronHall(ready, atQuartermaster)
+    assertPreviewParity(ready, claim)
     expect(claim.v42QuartermasterSite).toMatchObject({ revealed: true,
       position: [quartermaster.center.x, quartermaster.center.y, quartermaster.center.z] })
     expect(claim.v42IronHall?.claim.rejection).toBeNull()
@@ -268,6 +304,7 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
       state: { ...ready.state, player: { ...ready.state.player, coins: 60, xp: 70 } },
       ironHall: { ...ready.ironHall, combatXp: 70 } }
     const vest = projectPublicV42IronHall(claimed, atQuartermaster)
+    assertPreviewParity(claimed, vest)
     expect(vest.v42IronHall).toMatchObject({ vestEquipped: true, vestDurability: 11 })
     expect(vest.v42IronHall?.repair.rejection).toBeNull()
     expect(hud(vest)).toContain('11/12 durability')
@@ -292,10 +329,12 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
     const spar = projectPublicV42IronHall(atWard, wardCarrier)
     expect(spar.v42IronHall?.sparStart.rejection).toBeNull()
     expect(hud(spar)).toContain('Start ward spar')
-    const active = projectPublicV42IronHall({ ...atWard,
+    const activeProgress = { ...atWard,
       ironHallReward: { ...atWard.ironHallReward, spar: { active: true,
         strikeAtTick: atWard.state.tick + 20, nextReadyTick: 0,
-        strikesResolved: 0 } } }, wardCarrier)
+        strikesResolved: 0 } } }
+    const active = projectPublicV42IronHall(activeProgress, wardCarrier)
+    assertPreviewParity(activeProgress, active)
     expect(hud(active)).toContain('Practice slam in 20 ticks')
     expect(hud(active)).not.toContain('Start ward spar')
   })

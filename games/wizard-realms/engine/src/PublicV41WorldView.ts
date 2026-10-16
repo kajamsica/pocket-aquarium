@@ -1,7 +1,7 @@
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
 import { ironHallSite } from './domain/ironHallSite'
-import { previewPublicV41CombatAction } from './domain/publicWorldV41CombatAction'
-import type { PublicV41CombatProgress, PublicV41CombatWitness } from './domain/publicWorldV41CombatAction'
+import { previewPublicV41CombatActions } from './domain/publicWorldV41CombatAction'
+import type { PublicV41CombatProgress, PublicV41CombatRejection } from './domain/publicWorldV41CombatAction'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
 import { publicV41IronHallRejectionHint } from './view/publicV41IronHallQuest'
 import type { WizardViewProjection } from './view/contracts'
@@ -17,8 +17,11 @@ export function projectPublicV41IronHall(progress: PublicV41CombatProgress,
     door: [site.door.center.x, site.door.center.y, site.door.center.z] as const,
     revealed: true,
   } : null
-  const preview = (kind: PublicV41CombatWitness['kind']) => {
-    const rejection = previewPublicV41CombatAction(progress, { kind }).rejection
+  const [study, engage, bolt, guard, rest] = previewPublicV41CombatActions(progress, [
+    'ironhall-study/v1', 'ironhall-engage/v1', 'ironhall-bolt/v1',
+    'ironhall-guard/v1', 'ironhall-rest/v1',
+  ])
+  const preview = (rejection: PublicV41CombatRejection | null) => {
     return { rejection, hint: rejection ? publicV41IronHallRejectionHint(rejection) : null }
   }
   const hall = progress.ironHall
@@ -31,9 +34,9 @@ export function projectPublicV41IronHall(progress: PublicV41CombatProgress,
     v41IronHall: { health: hall.playerHealth, wardHealth: hall.wardHealth,
       phase: hall.phase, phaseUntilTick: hall.phaseUntilTick,
       learnedBolt: hall.learnedBolt, wardDefeated: hall.wardDefeated,
-      study: preview('ironhall-study/v1'), engage: preview('ironhall-engage/v1'),
-      bolt: preview('ironhall-bolt/v1'), guard: preview('ironhall-guard/v1'),
-      rest: preview('ironhall-rest/v1') },
+      study: preview(study.rejection), engage: preview(engage.rejection),
+      bolt: preview(bolt.rejection), guard: preview(guard.rejection),
+      rest: preview(rest.rejection) },
     ...(revealed && overview ? { map: { ...carrier.map, overview: () => {
       const shown = overview()
       return { ...shown, cells: shown.cells.map((cell) => cell.gridX === chunkX

@@ -1,7 +1,7 @@
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
 import { ironHallQuartermasterSite } from './domain/ironHallQuartermasterSite'
-import { previewPublicV42RewardAction } from './domain/publicWorldV42RewardAction'
-import type { PublicV42RewardProgress, PublicV42RewardWitness } from './domain/publicWorldV42RewardAction'
+import { previewPublicV42RewardActions } from './domain/publicWorldV42RewardAction'
+import type { PublicV42RewardProgress, PublicV42RewardRejection } from './domain/publicWorldV42RewardAction'
 import { projectPublicV41IronHall } from './PublicV41WorldView'
 import { publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
 import type { WizardViewProjection } from './view/contracts'
@@ -12,8 +12,11 @@ export function projectPublicV42IronHall(progress: PublicV42RewardProgress,
   const inherited = projectPublicV41IronHall(progress, carrier)
   const site = ironHallQuartermasterSite(progress)
   const revealed = !!site && discoveryMaskHasTileId(progress.state.discoveryMask, site.id)
-  const preview = (kind: PublicV42RewardWitness['kind']) => {
-    const rejection = previewPublicV42RewardAction(progress, { kind }).rejection
+  const [claim, equip, unequip, repair, sparStart] = previewPublicV42RewardActions(progress, [
+    'ironhall-claim/v1', 'ironhall-vest-equip/v1', 'ironhall-vest-unequip/v1',
+    'ironhall-vest-repair/v1', 'ironhall-spar/v1',
+  ])
+  const preview = (rejection: PublicV42RewardRejection | null) => {
     return { rejection, hint: rejection ? publicV42IronHallRejectionHint(rejection) : null }
   }
   const reward = progress.ironHallReward
@@ -28,11 +31,9 @@ export function projectPublicV42IronHall(progress: PublicV42RewardProgress,
       vestEquipped: reward.vestEquipped,
       vestDurability: reward.vestDurability,
       spar: reward.spar,
-      claim: preview('ironhall-claim/v1'),
-      equip: preview('ironhall-vest-equip/v1'),
-      unequip: preview('ironhall-vest-unequip/v1'),
-      repair: preview('ironhall-vest-repair/v1'),
-      sparStart: preview('ironhall-spar/v1'),
+      claim: preview(claim.rejection), equip: preview(equip.rejection),
+      unequip: preview(unequip.rejection), repair: preview(repair.rejection),
+      sparStart: preview(sparStart.rejection),
     },
   }
 }

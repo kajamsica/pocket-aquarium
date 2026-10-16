@@ -87,14 +87,9 @@ function progressOf(raw: PublicV41CombatProgress): PublicV41CombatProgress | nul
   catch { return null }
 }
 
-/** Pure checked action; the V41 CAS writer replays this against its locked head. */
-export function confirmPublicV41CombatAction(raw: PublicV41CombatProgress,
-  rawWitness: unknown): PublicV41CombatResult {
+function confirmDecodedCombatAction(progress: PublicV41CombatProgress,
+  witness: PublicV41CombatWitness): PublicV41CombatResult {
   const reject = (rejection: PublicV41CombatRejection): PublicV41CombatResult => ({ rejection })
-  const witness = decodePublicV41CombatWitness(rawWitness)
-  if (!witness) return reject('invalid_value')
-  const progress = progressOf(raw)
-  if (!progress) return reject('invalid_progress')
   try {
     const { state, ironHall: h } = progress, { player } = state
     const bridge = waystationRiverSite(state.seed), site = ironHallSite(progress)
@@ -162,9 +157,29 @@ export function confirmPublicV41CombatAction(raw: PublicV41CombatProgress,
   } catch { return reject('invalid_progress') }
 }
 
+/** Pure checked action; the V41 CAS writer replays this against its locked head. */
+export function confirmPublicV41CombatAction(raw: PublicV41CombatProgress,
+  rawWitness: unknown): PublicV41CombatResult {
+  const witness = decodePublicV41CombatWitness(rawWitness)
+  if (!witness) return { rejection: 'invalid_value' }
+  const progress = progressOf(raw)
+  return progress ? confirmDecodedCombatAction(progress, witness)
+    : { rejection: 'invalid_progress' }
+}
+
 export function previewPublicV41CombatAction(progress: PublicV41CombatProgress,
   witness: unknown): Readonly<{ rejection: PublicV41CombatRejection | null }> {
   return { rejection: confirmPublicV41CombatAction(progress, witness).rejection ?? null }
+}
+
+/** Read-only view batch: validate once, then preserve every checked action's rejection. */
+export function previewPublicV41CombatActions(progress: PublicV41CombatProgress,
+  kinds: readonly PublicV41CombatWitness['kind'][]): readonly Readonly<{
+    rejection: PublicV41CombatRejection | null }>[] {
+  const witnesses = kinds.map((kind) => decodePublicV41CombatWitness({ kind }))
+  const decoded = progressOf(progress)
+  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
+    ? confirmDecodedCombatAction(decoded, witness).rejection ?? null : 'invalid_progress' }))
 }
 
 /** Reuse the V40 movement authority one frame at a time before resolving each strike. */
