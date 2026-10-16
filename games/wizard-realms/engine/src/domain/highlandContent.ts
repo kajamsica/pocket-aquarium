@@ -1,4 +1,5 @@
 import { hashSeed } from './generation'
+import { HIGHLAND_LANDMARK, highlandCorridorCells } from './highlandRoute'
 import { mireglassFullApproachTrail } from './mireglassApproachTrail'
 import { MIREGLASS_CORE, MIREGLASS_ENVELOPES, MIREGLASS_FEN_BACK } from './mireglassTerrain'
 import type { WorldTile } from './types'
@@ -6,34 +7,13 @@ import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
 export const HIGHLAND_CONTENT_REVISION = 'highland-quarry-v1' as const
 export const HIGHLAND_CORE = Object.freeze({ minX: 448, maxX: 544, minZ: -512, maxZ: -424 })
-export const HIGHLAND_LANDMARK = Object.freeze({ id: 'highland_quarry/landmark/quarry_crown', x: 464, z: -432 })
+export { HIGHLAND_LANDMARK, highlandCorridorCells }
 
 type Point = Readonly<{ x: number; z: number }>
 export type HighlandStoneNode = Readonly<{ id: string; tile: WorldTile }>
 export type StreamedRegion = 'highland_quarry' | 'mireglass_reach' | 'wilderness'
 
-const WAYPOINTS: readonly Point[] = [
-  { x: 12, z: 0 }, { x: 96, z: 0 }, { x: 192, z: -96 }, { x: 320, z: -224 },
-  { x: 448, z: -384 }, { x: 464, z: -432 }, { x: 520, z: -480 },
-]
-
-/** Pinned 4 m cardinal route. At each step, reduce the larger remaining axis; x wins a tie. */
-const corridor = (() => {
-  const points: Point[] = [{ ...WAYPOINTS[0] }]
-  for (const target of WAYPOINTS.slice(1)) {
-    let current = points.at(-1)!
-    while (current.x !== target.x || current.z !== target.z) {
-      const dx = target.x - current.x
-      const dz = target.z - current.z
-      current = Math.abs(dx) >= Math.abs(dz)
-        ? { x: current.x + Math.sign(dx) * WORLD_CELL_METERS, z: current.z }
-        : { x: current.x, z: current.z + Math.sign(dz) * WORLD_CELL_METERS }
-      points.push(current)
-    }
-  }
-  return Object.freeze(points.map((point) => Object.freeze(point)))
-})()
-
+const corridor = highlandCorridorCells()
 const lateCorridor = corridor.slice(corridor.findIndex(({ x, z }) => x === 384 && z === -320))
 const nodeCache = new Map<string, readonly HighlandStoneNode[]>()
 const CACHE_LIMIT = 8
@@ -45,8 +25,6 @@ const inside = (point: Point, bounds: { minX: number; maxX: number; minZ: number
   point.x >= bounds.minX && point.x <= bounds.maxX && point.z >= bounds.minZ && point.z <= bounds.maxZ
 const near = (point: Point, path: readonly Point[], radius: number) =>
   path.some((cell) => Math.hypot(point.x - cell.x, point.z - cell.z) <= radius)
-
-export function highlandCorridorCells(): readonly Point[] { return corridor }
 
 export function highlandLandmark(seed: string): Readonly<{ id: typeof HIGHLAND_LANDMARK.id; tile: WorldTile }> {
   const tile = worldTileAtGrid(normalized(seed), HIGHLAND_LANDMARK.x / WORLD_CELL_METERS,

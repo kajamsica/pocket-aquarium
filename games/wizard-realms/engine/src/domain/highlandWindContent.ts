@@ -1,4 +1,4 @@
-import { HIGHLAND_LANDMARK, highlandCorridorCells } from './highlandContent'
+import { HIGHLAND_LANDMARK, highlandCorridorCells } from './highlandRoute'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
