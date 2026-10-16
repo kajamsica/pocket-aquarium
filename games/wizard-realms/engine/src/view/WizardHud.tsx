@@ -151,8 +151,9 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const discoveredDestinations = nearbyRing?.destinations.filter((destination) => destination.discovered) ?? []
   const excavatedMaterials = Object.entries(projection.v26TerrainBag ?? {})
     .filter(([, quantity]) => quantity > 0)
-  const usedCapacity = projection.backpack.stacks.reduce((total, stack) => total + stack.quantity, 0)
+  const carriedCapacityUsed = projection.backpack.stacks.reduce((total, stack) => total + stack.quantity, 0)
     + projection.tradeListings.reduce((total, listing) => total + (listing?.quantity ?? 0), 0)
+  const usedCapacity = carriedCapacityUsed
     + excavatedMaterials.reduce((total, [, quantity]) => total + quantity, 0)
   const firstTradeSlot = projection.tradeListings.findIndex((listing) => listing === null)
   const learnedGlow = projection.learnedSpellIds.includes('wayfinder_glow')
@@ -274,14 +275,26 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
     total + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
   const greenwayBridgeBuilt = savedWorks?.builtSites.some((site) => site.kind === 'bridge')
   const greenwayLadderBuilt = savedWorks?.builtSites.some((site) => site.kind === 'ladder')
+  const firstCreekBridgePending = v27Terrain && !!mining && works4Greenway
+    && !greenwayBridgeBuilt && !greenwayLadderBuilt
+  const harvestFreeSlots = Math.max(0, projection.backpack.capacity - carriedCapacityUsed)
+  const firstCreekHarvestBlocked = firstCreekBridgePending && greenwayLogs < 8 && harvestFreeSlots < 4
+  const fullOfBridgeLogs = firstCreekBridgePending && usedCapacity >= projection.backpack.capacity
+    && greenwayLogs >= 8
   const v25NorthLadder = publicV25NorthLadderGuidance(projection)
   const greenwayLadderNext = greenwayBridgeBuilt && !!savedWorks?.dugTileIds.length
     && starterStoneQuantity === 0 && projection.equipment.feet?.itemId === 'leather_boots'
     && !greenwayLadderBuilt
   const greenwayObjective = savePaused ? 'Save paused: check the save status before using Works.'
-    : v27Terrain ? mining && !greenwayLadderBuilt && !greenwayBridgeBuilt
-      ? `${projection.equipment.mainHand?.itemId === 'woodcutters_axe' ? 'Axe ready' : 'Equip Woodcutter axe from Backpack'}: Interact with a nearby oak for logs. First build an 8-log South creek bridge at a marked Ready site and cross to the dry far bank. Then build a 4-log north ladder to the west route and carry 8 more logs for the connected-river bridge.`
-      : projection.map.guidance ?? 'Explore to reveal a Ready route site.'
+    : firstCreekBridgePending
+      ? greenwayLogs >= 8
+        ? 'Follow the map south to a marked Ready creek crossing. Open Works (B), choose Bridge (1), aim, then confirm (F).'
+        : firstCreekHarvestBlocked
+          ? `An oak yields 4 logs, but only ${harvestFreeSlots} pack slots are free. ${greenwayLogs >= 4 ? 'If you find a marked Ready ladder, spend 4 logs there. ' : ''}Check Outfitters for a sale of carried stone or terrain materials; it does not buy logs.`
+        : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
+          ? 'Open Backpack and equip your Woodcutter axe.'
+          : `Chop a Greenway oak twice (E) for 4 logs. ${greenwayLogs}/8 logs for the South creek bridge.`
+    : v27Terrain ? projection.map.guidance ?? 'Explore to reveal a Ready route site.'
     : mining ? !starterHasSpade
       ? 'Buy a field spade at Greenway Outfitters for soil, then buy a basic pick for deeper layers.'
       : !mining.tools.basicPickOwned
@@ -308,6 +321,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           ? 'Equip your leather boots to run by default.'
           : !greenwayLadderBuilt ? 'North cliff Ladder to upper ledge: gather 4 logs; B, 2, aim at a discovered clear face, F.'
             : 'Explore Greenway for more discovered works.'
+  const firstCreekStep = savePaused ? 'Save paused' : greenwayLogs >= 8
+    ? 'Build bridge' : firstCreekHarvestBlocked ? 'Make room'
+      : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
+        ? 'Equip axe' : `Logs ${greenwayLogs}/8`
 
   return (
     <div className="wr-hud">
@@ -374,13 +391,15 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         {!workMode && journalQuest && <section className="wr-greenway-objective wr-v35-quest"
           data-expanded={ledgerOpen} aria-label={`Quest journal: ${journalQuest.title}`}>
           <button type="button" className="wr-v35-mobile-toggle" aria-expanded={ledgerOpen}
-            aria-label={ledgerOpen ? 'Close quest journal' : hallQuest
-              ? `Open quest journal: ${hallQuest.title}, ${hallQuest.next}. ${hallQuest.status}`
+            aria-label={ledgerOpen ? 'Close quest journal' : firstCreekBridgePending
+              ? `Open quest journal: ${greenwayObjective}`
+              : hallQuest ? `Open quest journal: ${hallQuest.title}, ${hallQuest.next}. ${hallQuest.status}`
               : `Open quest journal: ${journalQuest.title}`}
             aria-controls="wr-v35-journal-content"
             onKeyDown={(event) => { if (event.code === 'Space') event.stopPropagation() }}
             onClick={() => setLedgerOpen((open) => !open)}>
-            {ledgerOpen ? 'Close quest journal ×' : hallQuest && hall ? <>
+            {ledgerOpen ? 'Close quest journal ×' : firstCreekBridgePending ? `${firstCreekStep} ▾`
+              : hallQuest && hall ? <>
               <span>HP {hall.health} · W {hall.wardHealth}</span>
               <small>{hall.phase === 'windup'
                 ? `Slam ${Math.max(0, hall.phaseUntilTick - projection.tick)}t ▾`
@@ -390,7 +409,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           </button>
           <div id="wr-v35-journal-content" className="wr-v35-quest-content">
           <strong>{journalQuest.complete ? 'Quest complete' : 'Quest'}: {journalQuest.title}</strong>
-          <small>{journalQuest.objective}</small>
+          <small>{firstCreekBridgePending ? greenwayObjective : journalQuest.objective}</small>
+          {firstCreekBridgePending && fullOfBridgeLogs && <small>
+            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters does not buy logs.
+          </small>}
           {ledgerQuestPrimary && projection.v35LedgerSurvey && <>
             <button type="button" disabled={savePaused || !!projection.v35LedgerSurvey.rejection}
               onClick={() => onIntent({ type: 'v35.ledger.survey',
@@ -568,7 +590,9 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         </details>}
         {!workMode && !journalQuest && !projection.v34Quest && <div className="wr-greenway-objective" role="note" aria-label="Greenway field objective">
           <strong>Field objective:</strong> {greenwayObjective}
-          <small>{mining
+          {firstCreekBridgePending && fullOfBridgeLogs ? <small>
+            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters does not buy logs.
+          </small> : firstCreekBridgePending ? null : <small>{mining
             ? 'Optional digging: Outfitters sells a spade for soil and picks for deeper layers. Sell terrain-bag materials to free pack space. River and cliff routes still require marked Ready Works.'
             : v27Terrain
             ? 'Check Works for marked Ready crossings; not every river bank is buildable. Equip a spade to select Dig, then tap revealed dry ground in reach.'
@@ -584,7 +608,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             {' '}{projection.gait?.canRun ? `Boots: ${projection.gait.pace} now; R or Walk/Run toggles pace.`
               : projection.equipment.feet?.itemId === 'leather_boots'
                 ? 'Boots equipped; run is default, R or Walk/Run toggles pace.'
-                : 'Barefoot walks; boots run by default, R toggles walk.'}</small>
+                : 'Barefoot walks; boots run by default, R toggles walk.'}</small>}
         </div>}
       </>}
 
@@ -844,7 +868,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
 
       <aside id="wizard-backpack" className="wr-panel wr-backpack">
         <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
-        {mining && usedCapacity >= projection.backpack.capacity && <p className="wr-caption" role="note">
+        {mining && usedCapacity >= projection.backpack.capacity && !firstCreekHarvestBlocked && !fullOfBridgeLogs && <p className="wr-caption" role="note">
           Pack full. Use carried logs only at a marked Ready bridge or ladder. At Greenway Outfitters, sell terrain-bag soil, stone, or ore to free space. If you have soil, Fill can refill an open pit in reach.
         </p>}
         {!mining && v27Terrain && works4Greenway && usedCapacity >= projection.backpack.capacity && <p className="wr-caption" role="note">

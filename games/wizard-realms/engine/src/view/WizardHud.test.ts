@@ -164,7 +164,7 @@ describe('starter cliff HUD capability gate', () => {
       .not.toContain('Pack full. A Ready ladder costs 4 logs')
   })
 
-  it('starts V29 with an axe and Surveyor route, then follows saved route guidance', () => {
+  it('advances one checked first-run cue from axe to logs to bridge, then follows saved route guidance', () => {
     const state = createWizardWorld('greenway-alpha')
     const base = toViewProjection(state, [])
     const saved = { context: 'works4-greenway' as const, builtSites: [], dugTileIds: [],
@@ -178,15 +178,53 @@ describe('starter cliff HUD capability gate', () => {
         excavationLevel: 1, atOutfitters: false } }
     const objective = (view: WizardViewProjection) => renderHud(view)
     const opening = objective(fresh)
-    expect(opening).toContain('Equip Woodcutter axe from Backpack')
-    expect(opening).toContain('Interact with a nearby oak for logs')
-    expect(opening).toContain('First build an 8-log South creek bridge at a marked Ready site')
-    expect(opening).toContain('cross to the dry far bank')
-    expect(opening).toContain('Then build a 4-log north ladder to the west route')
-    expect(opening).toContain('carry 8 more logs for the connected-river bridge')
-    expect(opening).toContain('Optional digging: Outfitters sells a spade for soil')
-    expect(opening).toContain('Barefoot walks; boots run by default')
+    const cue = (view: WizardViewProjection) => objective(view)
+      .match(/aria-label="Greenway field objective"[^>]*>(.*?)<\/div>/)?.[1] ?? ''
+    expect(cue(fresh)).toContain('Field objective:</strong> Open Backpack and equip your Woodcutter axe.')
+    expect(cue(fresh)).not.toContain('South creek bridge')
+    expect(cue(fresh)).not.toContain('connected-river bridge')
     expect(opening).not.toContain('Field objective:</strong> Buy a field spade')
+
+    const axe = { ...fresh, equipment: { ...fresh.equipment, mainHand: {
+      id: 'axe-test', itemId: 'woodcutters_axe', name: 'Woodcutter axe', quantity: 1 } } }
+    expect(cue(axe)).toContain('Chop a Greenway oak twice (E) for 4 logs. 0/8 logs')
+    const logs = (quantity: number): WizardViewProjection => ({ ...axe,
+      backpack: { ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity }] } })
+    expect(cue(logs(4))).toContain('4/8 logs for the South creek bridge')
+    expect(cue(logs(8))).toContain('Follow the map south to a marked Ready creek crossing')
+    expect(cue(logs(8))).toContain('Open Works (B), choose Bridge (1), aim, then confirm (F).')
+    expect(cue(logs(8))).not.toContain('Chop a Greenway oak')
+    const bridgeReadyWithoutAxe = { ...logs(8), equipment: fresh.equipment }
+    expect(cue(bridgeReadyWithoutAxe)).toContain('Follow the map south to a marked Ready creek crossing')
+    expect(cue(bridgeReadyWithoutAxe)).not.toContain('equip your Woodcutter axe')
+    const blockedPack = (stone: number): WizardViewProjection => ({ ...logs(7), backpack: {
+      capacity: 20, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity: 7 },
+        { id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: stone }] } })
+    expect(cue(blockedPack(11))).toContain('An oak yields 4 logs, but only 2 pack slots are free.')
+    expect(cue(blockedPack(13))).toContain('An oak yields 4 logs, but only 0 pack slots are free.')
+    expect(cue(blockedPack(11))).toContain('If you find a marked Ready ladder, spend 4 logs there.')
+    expect(cue(blockedPack(11))).toContain('Check Outfitters for a sale of carried stone or terrain materials')
+    expect(cue(blockedPack(11))).not.toContain('Chop a Greenway oak')
+    expect(objective(blockedPack(13))).not.toContain('Pack full. Use carried logs only')
+    const full = { ...logs(axe.backpack.capacity), backpack: {
+      ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs',
+        quantity: axe.backpack.capacity }] } }
+    const fullHtml = objective(full)
+    expect(fullHtml).toContain('Pack full of logs? Spend 8 at a marked Ready creek bridge.')
+    expect(fullHtml).toContain('Greenway Outfitters does not buy logs.')
+    expect(fullHtml).not.toContain('sell terrain-bag soil, stone, or ore to free space')
+    const quest = { id: 'surveyor-first-find/v1' as const, title: "The Surveyor's First Find" as const,
+      stage: 'gather' as const, objective: 'Old multi-step opening objective.',
+      reward: 'One-time checked find.', complete: false }
+    const journal = objective({ ...logs(4), v34Quest: quest,
+      v41IronHall: { health: 12, wardHealth: 9, phase: 'dormant', phaseUntilTick: 0,
+        wardDefeated: false, learnedBolt: false } as NonNullable<WizardViewProjection['v41IronHall']> })
+    expect(journal).toContain('Logs 4/8 ▾')
+    expect(journal).toContain('Chop a Greenway oak twice (E) for 4 logs. 4/8 logs')
+    expect(journal).not.toContain('Old multi-step opening objective.')
+    expect(objective({ ...bridgeReadyWithoutAxe, v34Quest: quest })).toContain('Build bridge ▾')
+    expect(objective({ ...blockedPack(11), v34Quest: quest })).toContain('Make room ▾')
+    expect(objective({ ...full, v34Quest: quest })).toContain('Greenway Outfitters does not buy logs.')
 
     const ladder = resolveTerrainWorkSite(state.seed, 'works1:ladder:-103:108:W')!
     const bridge = publicWorldV15StarterSites(state.seed)[0]
@@ -201,7 +239,8 @@ describe('starter cliff HUD capability gate', () => {
     const bridgeStage = objective({ ...fresh, savedTerrainWorks: { ...saved, builtSites: [displayedBridge] },
       map: { ...fresh.map, guidance: bridgeGuidance } })
     expect(bridgeStage).toContain(`Field objective:</strong> ${bridgeGuidance}`)
-    expect(bridgeStage).not.toContain('Choose a 4-log north ladder')
+    expect(bridgeStage).not.toContain('Open Backpack and equip your Woodcutter axe.')
+    expect(bridgeStage).not.toContain('Pack full of logs?')
 
     const historical = objective({ ...fresh, v29Mining: undefined,
       map: { ...fresh.map, guidance: 'V27 route guidance.' } })
