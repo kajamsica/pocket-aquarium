@@ -319,6 +319,11 @@ function damping(ratePerSecond: number, delta: number) {
   return 1 - Math.exp(-ratePerSecond * delta)
 }
 
+/** Camera-only orbit smoothing. Release should finish a drag promptly without a one-frame snap. */
+export function cameraOrbitDamping(orbiting: boolean, delta: number) {
+  return damping(orbiting ? 18 : 14, delta)
+}
+
 function shortestArc(from: number, to: number) {
   return Math.atan2(Math.sin(to - from), Math.cos(to - from))
 }
@@ -580,7 +585,7 @@ function CameraRig({ pose, cameraOrbit, orbiting, stores, highlandRidgeActive }:
   const target = useMemo(() => new THREE.Vector3(), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
   useFrame(({ camera, size }, delta) => {
-    const blend = 1 - Math.exp(-(orbiting ? 18 : 2.6) * delta)
+    const blend = cameraOrbitDamping(orbiting, delta)
     orbitYaw.current += (cameraOrbit.current[0] - orbitYaw.current) * blend
     orbitPitch.current += (cameraOrbit.current[1] - orbitPitch.current) * blend
     const heading = pose.yaw + orbitYaw.current
