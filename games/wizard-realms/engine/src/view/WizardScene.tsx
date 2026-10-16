@@ -11,6 +11,7 @@ import { LandscapeDressing } from './LandscapeDressingLayer'
 import { GreenwayCreekWaterLayer, MireglassWaterLayer } from './MireglassWaterLayer'
 import { MireglassCliffLayer } from './MireglassCliffLayer'
 import { HighlandRidgeLayer } from './HighlandRidgeLayer'
+import { RendererInfoProbe, rendererInfoProbeEnabled } from './RendererInfoProbe'
 import { createTerrainSurfaceSampler, DISCOVERY_FOG_COLOR, terrainSignature, TerrainSurfaceLayer } from './TerrainSurfaceLayer'
 import { V26ValleyRimLayer } from './V26ValleyRimLayer'
 import { pickV26TerrainColumn, type V26PickedTerrainColumn, type V26TerrainPickKind } from './V26TerrainPicker'
@@ -2107,6 +2108,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
 }) {
   const graphics = sceneGraphicsOptionsForSearch(typeof window === 'undefined' ? '' : window.location.search)
+  const rendererProbe = rendererInfoProbeEnabled(typeof window === 'undefined' ? '' : window.location.search,
+    import.meta.env.DEV)
   // Region ownership controls actions and HUD state, never which established scenery exists.
   const visual = projection.visualWorld ?? projection
   const v42 = !!projection.v42IronHall
@@ -2263,6 +2266,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         }
       }}
     >
+      {rendererProbe && <RendererInfoProbe />}
       <color attach="background" args={[SKY_COLOR]} />
       <fog attach="fog" args={[FOG_COLOR, projection.visualWorld ? PUBLIC_FOG_START_M : 16, fogEndFor(Boolean(projection.visualWorld))]} />
       {/* Light hierarchy: warm sun key with shadows, sky/ground hemisphere fill, cool rim from the shaded side. */}
