@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { publicV14MovementIntents } from './PublicV14Controller'
 import { PublicV23Controller } from './PublicV23Controller'
+import type { PublicV17InputTrace } from './PublicV17InputScheduler'
 import { createPublicV42ControllerRuntime } from './PublicV42ControllerRuntime'
 import { PublicV41EntryView } from './PublicV41Entry'
 import { choosePublicV42Entry, inspectPublicV42Entry, PublicV42EntryView } from './PublicV42Entry'
@@ -35,11 +36,14 @@ import { WizardHud } from './view/WizardHud'
 
 const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null,
   onIntent: null as ((intent: WizardViewIntent) => void) | null,
+  trace: null as PublicV17InputTrace | null,
   advance: null as null | ((count: number) => Promise<unknown>),
   actions: [] as unknown[], outcomes: [] as unknown[] }))
-vi.mock('./view/WizardSurface', () => ({ WizardSurface: ({ projection, onIntent }: {
-  projection: WizardViewProjection; onIntent: (intent: WizardViewIntent) => void }) => {
-  probe.projection = projection; probe.onIntent = onIntent; return null
+vi.mock('./view/WizardSurface', () => ({ WizardSurface: ({ projection, onIntent, inputTrace }: {
+  projection: WizardViewProjection; onIntent: (intent: WizardViewIntent) => void;
+  inputTrace?: PublicV17InputTrace | null }) => {
+  probe.projection = projection; probe.onIntent = onIntent; probe.trace = inputTrace ?? null
+  return null
 } }))
 vi.mock('./PublicV42ControllerRuntime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./PublicV42ControllerRuntime')>()
@@ -109,6 +113,26 @@ async function crossedHallRoot(nearHall = false) {
 }
 
 describe('V42 controller, Iron Hall view and entry integration', () => {
+  it('splits opt-in V42 projection timing across V26-V36 and V37-V42', () => {
+    const root = createFreshPublicV42Root('wizard-realms'), factory = new IDBFactory()
+    vi.stubGlobal('window', { location: { hostname: 'localhost', search: '?inputTrace=1' } })
+    try {
+      renderToStaticMarkup(createElement(PublicV23Controller, { version: 'v42',
+        start: { head: root.head, lineage: root.lineage }, locks,
+        store: createAtomicV42Store(factory), v41Store: createAtomicV41Store(factory) }))
+      const records = (JSON.parse(probe.trace!.json()) as { records: { event: string;
+        data: Record<string, unknown> }[] }).records
+      const render = records.find((record) => record.event === 'controller.render')!.data
+      for (const key of ['v26ToV36ProjectionMs', 'v37ToV42ProjectionMs']) {
+        expect(typeof render[key]).toBe('number')
+        expect(Number.isFinite(render[key])).toBe(true)
+        expect(render[key]).toBeGreaterThanOrEqual(0)
+      }
+      expect(render.projectionMs).toBeGreaterThanOrEqual(
+        (render.v26ToV36ProjectionMs as number) + (render.v37ToV42ProjectionMs as number))
+    } finally { vi.unstubAllGlobals() }
+  })
+
   it('keeps witness-first invalid_value for forged batched kinds even with invalid progress', () => {
     const valid = progressOf(createFreshPublicV42Root('wizard-realms'))
     const invalid = { ...valid, state: { ...valid.state, tick: -1 } }

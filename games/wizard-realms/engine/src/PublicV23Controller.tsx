@@ -1537,16 +1537,21 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       hint: markerPreview.rejection
         ? publicV36MarkerRejectionMessage(markerPreview.rejection) : null } } : {}) }
     : ledgerView
+  const v26ToV36ProjectionFinishedAt = trace && physicalWorld
+    ? performance.now() : mireglassProjectionFinishedAt
   const windwardView = v37 ? projectPublicV37Windward(snapshot as PublicV36MarkerProgress, markerView) : markerView
   const signalView = v38 ? projectPublicV38Signal(snapshot as PublicV38SignalProgress, windwardView) : windwardView
   const ringView = v39 ? projectPublicV39Ringkeeper(snapshot as PublicV39RingProgress, signalView) : signalView
   const waystationView = v40 ? projectPublicV40Waystation(snapshot as PublicV40WaystationProgress, ringView) : ringView
   const view = v42 ? projectPublicV42IronHall(snapshot as PublicV42RewardProgress, waystationView)
     : v41 ? projectPublicV41IronHall(snapshot as PublicV41CombatProgress, waystationView) : waystationView
+  const projectionFinishedAt = trace ? performance.now() : 0
   trace?.record('controller.render', { viewMs: viewFinishedAt - renderStartedAt,
-    projectionMs: performance.now() - viewFinishedAt,
+    projectionMs: projectionFinishedAt - viewFinishedAt,
     baseProjectionMs: baseProjectionFinishedAt - baseProjectionStartedAt,
     mireglassProjectionMs: mireglassProjectionFinishedAt - baseProjectionFinishedAt,
+    v26ToV36ProjectionMs: v26ToV36ProjectionFinishedAt - mireglassProjectionFinishedAt,
+    v37ToV42ProjectionMs: v37 ? projectionFinishedAt - v26ToV36ProjectionFinishedAt : 0,
     gate: status.gate })
 
   function sampleTimedUntil(atMs: number) {
