@@ -8,6 +8,9 @@ import { confirmPublicV43FamiliarAction,
   decodePublicV43FamiliarWitness,
   PUBLIC_V43_PROGRESS_KEYS } from './publicWorldV43FamiliarAction'
 import type { PublicV43FamiliarProgress } from './publicWorldV43FamiliarAction'
+import { confirmPublicV43MountTraining,
+  createPublicV43MountTraining } from './publicWorldV43MountTraining'
+import type { PublicV43MountTrainingProgress } from './publicWorldV43MountTraining'
 import { createPublicV43Root,
   decodePublicV43Lineage, decodePublicV43Witness,
   replayPublicV43Witness } from './publicWorldV43Snapshot'
@@ -183,6 +186,17 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore, revisio
     return { ok: false, reason: 'invalid-witness' }
   const replayed = replayPublicV43Witness(head, decoded)
   if (!replayed) {
+    if (decoded.kind === 'sedgehorn-care/v1') {
+      const familiar = Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
+        [key, head[key]])) as PublicV43FamiliarProgress
+      const training = Object.hasOwn(head, 'mountTraining')
+        ? { ...familiar, mountTraining: head.mountTraining } as
+          PublicV43MountTrainingProgress
+        : createPublicV43MountTraining(familiar)
+      return { ok: false, reason: training
+        ? confirmPublicV43MountTraining(training, decoded).rejection ?? 'action-rejected'
+        : 'invalid_progress' }
+    }
     if (decodePublicV43FamiliarWitness(decoded))
       return { ok: false, reason: confirmPublicV43FamiliarAction(
         Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>

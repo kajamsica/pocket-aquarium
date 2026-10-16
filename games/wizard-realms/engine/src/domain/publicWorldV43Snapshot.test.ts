@@ -6,6 +6,7 @@ import { createAtomicV42Store } from './atomicV42Database'
 import { createAtomicV43Store } from './atomicV43Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
 import { confirmPublicV43FamiliarAction } from './publicWorldV43FamiliarAction'
+import { projectPublicV43MountTraining } from './publicWorldV43MountTraining'
 import { commitPublicV43, inspectPublicV43, resumePublicV43,
   startFreshPublicV43, startPublicV43 } from './publicWorldV43Flow'
 import { createFreshPublicV42Root, decodePublicV42Root,
@@ -62,7 +63,7 @@ async function getRaw(factory: IDBFactory, name: string): Promise<unknown> {
 }
 
 /** A checked V42 migration fixture parked at the revealed wetland clues. */
-function eligibleV42(): PublicV42Root {
+function eligibleV42(herbQuantity = 1): PublicV42Root {
   const fresh = createFreshPublicV42Root(seed)
   const site = resolveSedgehornFamiliarSite(fresh.head)!
   const bridge = waystationRiverSite(seed)!
@@ -90,7 +91,7 @@ function eligibleV42(): PublicV42Root {
       player: { ...fresh.head.state.player,
         position: { ...site.tracks.center }, verticalVelocity: 0,
         inventory: [...fresh.head.state.player.inventory,
-          { itemId: 'marsh_herb' as const, quantity: 1 },
+          { itemId: 'marsh_herb' as const, quantity: herbQuantity },
           { itemId: 'logs' as const, quantity: 2 }] } } }
   const root: PublicV42Root = { lineage: { origin: 'v41-migration',
     rulesProfile: 'iron-hall-rewards/v1', seed, sourceRevision: 4, genesis },
@@ -517,8 +518,9 @@ describe('V43 familiar checked save', () => {
     expect(decodePublicV43Root(forged)).not.toBeNull()
   })
 
-  it('replays escort to the keeper, saves the claim once, and rejects a second payout', async () => {
-    let root = createPublicV43Root(eligibleV42())
+  it('saves a claim and three spaced care witnesses across reloads', async () => {
+    const source = eligibleV42(4)
+    let root = createPublicV43Root(source)
     root = next43(root, { kind: 'familiar-tracks/v1' })
     const site = resolveSedgehornFamiliarSite(root.head)!
     for (let index = 0; index < 210; index += 1) {
@@ -591,7 +593,7 @@ describe('V43 familiar checked save', () => {
     expect(decodePublicV43Root(root)).not.toBeNull()
     const factory = new IDBFactory(), store = createAtomicV43Store(factory)
     const oldStore = createAtomicV42Store(factory)
-    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, source)
     expect(await startPublicV43(locks as never, store, oldStore, 0))
       .toMatchObject({ ok: true })
     await putRaw(factory, PUBLIC_V43_DATABASE_NAME, returnedRoot)
@@ -615,7 +617,101 @@ describe('V43 familiar checked save', () => {
       expect(after.root.head.state.player.coins).toBe(root.head.state.player.coins)
       expect(after.root.head.saveRevision).toBe(root.head.saveRevision)
     }
-  }, 120000)
+    if (after.status !== 'valid') throw new Error('Missing claimed root')
+    expect(Object.hasOwn(after.root.head, 'mountTraining')).toBe(false)
+    let careRoot = after.root
+    for (let index = 0; index < 210; index += 1) {
+      const player = careRoot.head.state.player.position
+      const dx = site.careStation.center.x - player.x
+      const dz = site.careStation.center.z - player.z
+      const distance = Math.hypot(dx, dz)
+      if (distance < 2) break
+      const scale = Math.min(0.16, distance) / distance
+      careRoot = next43(careRoot, { kind: 'frame-batch/v1', frames: [{
+        intents: [{ type: 'move', delta: { x: dx * scale, z: dz * scale } }],
+        walkRequested: true }] })
+    }
+    expect(Math.hypot(careRoot.head.state.player.position.x - site.careStation.center.x,
+      careRoot.head.state.player.position.z - site.careStation.center.z)).toBeLessThan(2)
+    await putRaw(factory, PUBLIC_V43_DATABASE_NAME, careRoot)
+    expect((await store.readChecked()).status).toBe('valid')
+
+    let head = careRoot.head
+    const save = async (witness: PublicV43Witness) => {
+      const result = await commitPublicV43(locks as never, store, oldStore,
+        head.saveRevision, careRoot.lineage, witness)
+      expect(result, `rejected ${witness.kind}`).toMatchObject({ ok: true })
+      if (!result.ok) throw new Error(result.reason)
+      head = result.value.head
+      return head
+    }
+    const waitTicks = async (ticks: number) => {
+      while (ticks > 0) {
+        const count = Math.min(ticks, 128)
+        await save({ kind: 'frame-batch/v1',
+          frames: Array.from({ length: count }, () => idle.frames[0]) })
+        ticks -= count
+      }
+    }
+    const care = { kind: 'sedgehorn-care/v1' } as const
+    const startingXp = head.state.player.xp
+    const firstCare = await save(care)
+    expect(firstCare.mountTraining?.careWitnesses).toEqual([{ ...care,
+      tick: careRoot.head.state.tick,
+      eventSequence: careRoot.head.state.eventSequence + 1 }])
+    expect(projectPublicV43MountTraining(firstCare)).toMatchObject({ careCount: 1,
+      careXp: 5, mature: false })
+    expect(await commitPublicV43(locks as never, store, oldStore,
+      firstCare.saveRevision - 1, careRoot.lineage, care))
+      .toEqual({ ok: false, reason: 'revision-changed' })
+    const firstRead = await store.readChecked()
+    expect(firstRead).toMatchObject({ status: 'valid',
+      root: { head: { mountTraining: firstCare.mountTraining } } })
+    await waitTicks(599)
+    const beforeTooSoon = JSON.stringify(await getRaw(factory, PUBLIC_V43_DATABASE_NAME))
+    expect(await commitPublicV43(locks as never, store, oldStore,
+      head.saveRevision, careRoot.lineage, care))
+      .toEqual({ ok: false, reason: 'too_soon' })
+    expect(JSON.stringify(await getRaw(factory, PUBLIC_V43_DATABASE_NAME)))
+      .toBe(beforeTooSoon)
+    const held = await store.readChecked()
+    if (held.status !== 'valid') throw new Error('Missing held care root')
+    const { mountTraining: _removed, ...withoutMount } = held.root.head
+    expect(decodePublicV43Root({ ...held.root, head: withoutMount })).toBeNull()
+    await waitTicks(1)
+    const secondCare = await save(care)
+    expect(projectPublicV43MountTraining(secondCare)).toMatchObject({ careCount: 2,
+      careXp: 10, mature: false })
+    await waitTicks(600)
+    const thirdCare = await save(care)
+    expect(thirdCare.mountTraining?.careWitnesses.map(({ tick }) => tick))
+      .toEqual([firstCare.state.tick, firstCare.state.tick + 600,
+        firstCare.state.tick + 1200])
+    expect(projectPublicV43MountTraining(thirdCare)).toEqual({ careCount: 3,
+      careXp: 15, lastCareTick: firstCare.state.tick + 1200, mature: true })
+    expect(thirdCare.state.player.xp).toBe(startingXp)
+    expect(thirdCare.familiar.creatureCareXp).toBe(40)
+    expect(thirdCare.state.player.inventory.filter(({ itemId }) =>
+      itemId === 'marsh_herb')).toEqual([])
+    const reloaded = await store.readChecked()
+    if (reloaded.status !== 'valid') throw new Error('Missing mature care root')
+    expect(reloaded.root.head).toEqual(thirdCare)
+    expect(await resumePublicV43(locks as never, store, oldStore,
+      thirdCare.saveRevision, careRoot.lineage)).toMatchObject({ ok: true,
+        value: { head: { mountTraining: thirdCare.mountTraining } } })
+    expect(await commitPublicV43(locks as never, store, oldStore,
+      thirdCare.saveRevision, careRoot.lineage, care))
+      .toEqual({ ok: false, reason: 'already_mature' })
+    const forgedCounter = { ...reloaded.root, head: { ...thirdCare,
+      mountTraining: { ...thirdCare.mountTraining, careCount: 3 } } }
+    expect(decodePublicV43Root(forgedCounter)).toBeNull()
+    const forgedPast = { ...reloaded.root, head: { ...thirdCare,
+      mountTraining: { careWitnesses: thirdCare.mountTraining!.careWitnesses
+        .map((event, index) => index === 0 ? { ...event, tick: event.tick + 1 }
+          : event) } } }
+    expect(decodePublicV43Root(forgedPast)).toBeNull()
+    expect(await store.commit(reloaded.proof, forgedPast as PublicV43Root)).toBe('invalid')
+  }, 300000)
 
   it('rejects malformed progress, blocked target and failed migration without V42 writes', async () => {
     const source = eligibleV42(), bytes = JSON.stringify(source)

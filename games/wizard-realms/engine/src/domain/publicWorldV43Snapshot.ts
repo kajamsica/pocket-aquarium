@@ -15,6 +15,12 @@ import { confirmPublicV43FamiliarAction, createPublicV43FamiliarProgress,
 import type { PublicV43FamiliarProgress,
   PublicV43FamiliarWitness } from './publicWorldV43FamiliarAction'
 import { advancePublicV43FamiliarFollower } from './publicWorldV43FamiliarFollower'
+import { confirmPublicV43MountTraining, createPublicV43MountTraining,
+  decodePublicV43MountTrainingProgress,
+  decodePublicV43MountTrainingWitness } from './publicWorldV43MountTraining'
+import type { PublicV43MountTraining,
+  PublicV43MountTrainingProgress,
+  PublicV43MountTrainingWitness } from './publicWorldV43MountTraining'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
 
 export const PUBLIC_V43_SCHEMA = 'wizard-world/v43' as const
@@ -25,20 +31,39 @@ function parentOf(raw: PublicV43FamiliarProgress): PublicV42RewardProgress {
   return Object.fromEntries(PUBLIC_V42_PROGRESS_KEYS.map((key) => [key, raw[key]])) as
     PublicV42RewardProgress
 }
-function progressOf(raw: PublicV43FamiliarProgress): PublicV43FamiliarProgress {
-  return Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) => [key, raw[key]])) as
-    PublicV43FamiliarProgress
+function parentV43Of(raw: PublicV43Progress): PublicV43FamiliarProgress {
+  return Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
+    [key, raw[key]])) as PublicV43FamiliarProgress
+}
+function progressOf(raw: PublicV43Progress): PublicV43Progress {
+  const familiar = parentV43Of(raw)
+  return Object.hasOwn(raw, 'mountTraining')
+    ? { ...familiar, mountTraining: raw.mountTraining } : familiar
+}
+function decodeProgress(raw: unknown): PublicV43Progress | null {
+  return decodePublicV43FamiliarProgress(raw)
+    ?? decodePublicV43MountTrainingProgress(raw)
+}
+function preserveMount(before: PublicV43Progress,
+  after: PublicV43FamiliarProgress | null): PublicV43Progress | null {
+  if (!after) return null
+  return decodeProgress(Object.hasOwn(before, 'mountTraining')
+    ? { ...after, mountTraining: before.mountTraining } : after)
 }
 const canonicalFreshGenesis = createPublicV43FamiliarProgress(
   createFreshPublicV42Root(FRESH_SEED).head)
 if (!canonicalFreshGenesis) throw new Error('Missing canonical V43 familiar site')
 
 export type PublicV43Witness = PublicV42Witness | PublicV43FamiliarWitness
+  | PublicV43MountTrainingWitness
+export type PublicV43Progress = PublicV43FamiliarProgress & Readonly<{
+  mountTraining?: PublicV43MountTraining
+}>
 export type PublicV43Lineage = Readonly<{ rulesProfile: 'sedgehorn-familiar/v1';
   seed: string; genesis: PublicV43FamiliarProgress }> & (
     Readonly<{ origin: 'v42-migration'; sourceRevision: number }>
     | Readonly<{ origin: 'fresh'; sourceRevision: null }>)
-export type PublicV43Head = PublicV43FamiliarProgress & Readonly<{
+export type PublicV43Head = PublicV43Progress & Readonly<{
   schemaVersion: typeof PUBLIC_V43_SCHEMA; saveRevision: number;
   witness: PublicV43Witness | null }>
 export type PublicV43Root = Readonly<{ lineage: PublicV43Lineage;
@@ -46,6 +71,7 @@ export type PublicV43Root = Readonly<{ lineage: PublicV43Lineage;
 
 const headKeys = ['schemaVersion', 'saveRevision', ...PUBLIC_V43_PROGRESS_KEYS,
   'witness'] as const
+const mountHeadKeys = [...headKeys, 'mountTraining'] as const
 const genesisHead = (lineage: PublicV43Lineage): PublicV43Head => ({
   ...structuredClone(lineage.genesis), schemaVersion: PUBLIC_V43_SCHEMA,
   saveRevision: 0, witness: null })
@@ -94,7 +120,8 @@ export function decodePublicV43Lineage(raw: unknown): PublicV43Lineage | null {
 }
 
 export function decodePublicV43Witness(raw: unknown): PublicV43Witness | null {
-  return decodePublicV43FamiliarWitness(raw) ?? decodePublicV42Witness(raw)
+  return decodePublicV43MountTrainingWitness(raw)
+    ?? decodePublicV43FamiliarWitness(raw) ?? decodePublicV42Witness(raw)
 }
 
 function replayFrames(before: PublicV43FamiliarProgress,
@@ -125,18 +152,29 @@ function replayFrames(before: PublicV43FamiliarProgress,
   return decodePublicV43FamiliarProgress(next)
 }
 
-/** Intent-only replay. V42 checks all inherited actions; V43 owns only familiar state. */
-export function replayPublicV43Witness(beforeRaw: PublicV43FamiliarProgress,
-  raw: unknown): PublicV43FamiliarProgress | null {
+/** Intent-only replay. A care edge creates or extends the optional training overlay. */
+export function replayPublicV43Witness(beforeRaw: PublicV43Progress,
+  raw: unknown): PublicV43Progress | null {
   const witness = decodePublicV43Witness(raw)
-  const before = decodePublicV43FamiliarProgress(progressOf(beforeRaw))
+  const before = decodeProgress(progressOf(beforeRaw))
   if (!witness || !before) return null
+  if (witness.kind === 'sedgehorn-care/v1') {
+    const training = Object.hasOwn(before, 'mountTraining')
+      ? before as PublicV43MountTrainingProgress
+      : createPublicV43MountTraining(before)
+    return training ? confirmPublicV43MountTraining(training, witness).progress ?? null
+      : null
+  }
+  const familiar = decodePublicV43FamiliarProgress(parentV43Of(before))
+  if (!familiar) return null
   if (decodePublicV43FamiliarWitness(witness))
-    return confirmPublicV43FamiliarAction(before, witness).progress ?? null
-  if (witness.kind === 'frame-batch/v1') return replayFrames(before, witness)
-  const parent = replayPublicV42Witness(parentOf(before), witness)
-  const next = parent && { ...parent, familiar: before.familiar }
-  return next ? decodePublicV43FamiliarProgress(next) : null
+    return preserveMount(before,
+      confirmPublicV43FamiliarAction(familiar, witness).progress ?? null)
+  if (witness.kind === 'frame-batch/v1')
+    return preserveMount(before, replayFrames(familiar, witness))
+  const parent = replayPublicV42Witness(parentOf(familiar), witness)
+  const next = parent && { ...parent, familiar: familiar.familiar }
+  return preserveMount(before, next ? decodePublicV43FamiliarProgress(next) : null)
 }
 
 const phaseOrder = ['search', 'tracks', 'fed', 'route-ready',
@@ -193,11 +231,11 @@ function monotonic(a: PublicV43FamiliarProgress, b: PublicV43FamiliarProgress): 
 
 function decodeHead(raw: unknown, lineage: PublicV43Lineage): PublicV43Head | null {
   try {
-    if (!exactPublicV23(raw, headKeys) || raw.schemaVersion !== PUBLIC_V43_SCHEMA
+    if (!(exactPublicV23(raw, headKeys) || exactPublicV23(raw, mountHeadKeys))
+      || raw.schemaVersion !== PUBLIC_V43_SCHEMA
       || !Number.isSafeInteger(raw.saveRevision) || (raw.saveRevision as number) < 0)
       return null
-    const progress = decodePublicV43FamiliarProgress(Object.fromEntries(
-      PUBLIC_V43_PROGRESS_KEYS.map((key) => [key, raw[key]])))
+    const progress = decodeProgress(progressOf(raw as PublicV43Progress))
     if (!progress || progress.state.seed !== lineage.seed) return null
     if (raw.saveRevision === 0) return samePublicV14Value(raw, genesisHead(lineage))
       ? structuredClone(raw) as PublicV43Head : null
