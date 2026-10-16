@@ -27,7 +27,8 @@ describe('V35 read-only ledger journal', () => {
     const surveyed = { ...claimed, ledgerSurveyBridgeId: bridge }
     const sample = publicV35LedgerQuest(view, surveyed)
     expect(sample.stage).toBe('sample')
-    expect(sample.objective).toContain('tap the exposed deeper layer for stone')
+    expect(sample.objective).toContain('tap the same ground cell twice to remove its two soil layers')
+    expect(sample.objective).toContain('select Mine, and tap the exposed stone layer')
     expect(publicV35LedgerQuest(view, { ...surveyed,
       terrain: { bag: { stone: 1 } } }).stage).toBe('return')
   })
