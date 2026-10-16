@@ -13,6 +13,7 @@ import { createPublicV43Root,
   replayPublicV43Witness } from './publicWorldV43Snapshot'
 import type { PublicV43Head, PublicV43Root,
   PublicV43Witness } from './publicWorldV43Snapshot'
+import { createFreshPublicV42Root } from './publicWorldV42Snapshot'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
 
 type Store = ReturnType<typeof createAtomicV43Store>
@@ -118,9 +119,32 @@ export function startPublicV43(locks: PublicV7LockProvider | undefined,
 }
 
 export function startFreshPublicV43(locks: PublicV7LockProvider | undefined,
-  _store: Store, _seed: string): Promise<PublicV43Operation<PublicV43Start>> {
-  // An absent V42 root has no promotion proof to fence a later V42 fresh start.
-  return lock(locks, async () => ({ ok: false, reason: 'fresh-start-unfenced' }))
+  store: Store, source: SourceStore, seed: string):
+  Promise<PublicV43Operation<PublicV43Start>> {
+  return lock(locks, async () => {
+    const old = await source.readForPromotion()
+    if (old.status === 'blocked') return { ok: false, reason: old.reason }
+    if (old.status === 'valid' && !old.marker)
+      return { ok: false, reason: 'migration-required' }
+    let canonical
+    try { canonical = createFreshPublicV42Root(seed) }
+    catch { return { ok: false, reason: 'invalid-seed' } }
+    if (old.status === 'valid') {
+      if (old.marker?.phase === 'conflict'
+        || !samePublicV14Value(old.root, canonical))
+        return { ok: false, reason: 'source-conflict' }
+    } else {
+      const target = await store.readChecked()
+      if (target.status !== 'missing') return { ok: false,
+        reason: target.status === 'blocked' ? target.reason : 'target-conflict' }
+      const bootstrapped = await source.bootstrapFreshSuccessor(seed)
+      if (bootstrapped !== 'committed') return { ok: false, reason: bootstrapped }
+    }
+    const read = await succession(store, source, true, 0)
+    return read.status === 'valid'
+      ? { ok: true, value: { head: read.root.head, lineage: read.root.lineage } }
+      : { ok: false, reason: read.status === 'blocked' ? read.reason : 'target-missing' }
+  })
 }
 
 export function resumePublicV43(locks: PublicV7LockProvider | undefined,

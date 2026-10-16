@@ -151,6 +151,93 @@ describe('V43 familiar checked save', () => {
       .toThrow('Invalid checked V42 source root')
   })
 
+  it('bootstraps a fenced fresh V42 source and resumes the V43 handoff', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    expect(await startFreshPublicV43(undefined, store, oldStore, seed))
+      .toEqual({ ok: false, reason: 'lock-unavailable' })
+    expect(await oldStore.readForPromotion()).toEqual({ status: 'missing' })
+    const started = await startFreshPublicV43(locks as never, store, oldStore, seed)
+    expect(started).toMatchObject({ ok: true, value: {
+      head: { saveRevision: 0 }, lineage: { origin: 'v42-migration',
+        sourceRevision: 0 } } })
+    const promoted = await oldStore.readForPromotion()
+    expect(promoted).toMatchObject({ status: 'valid',
+      root: createFreshPublicV42Root(seed), marker: { phase: 'finalized',
+        sourceRevision: 0 } })
+    expect((await oldStore.readChecked()).status).toBe('blocked')
+    expect(await startFreshPublicV43(locks as never, store, oldStore, seed))
+      .toEqual(started)
+    expect(await inspectPublicV43(locks as never, store, oldStore))
+      .toMatchObject({ ok: true, value: { status: 'valid' } })
+    expect(await resumePublicV43(locks as never, store, oldStore, 0,
+      started.ok ? started.value.lineage : null)).toEqual(started)
+  })
+
+  it('requires explicit migration for an unfenced V42 save', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory), root = createFreshPublicV42Root(seed)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, root)
+    expect(await startFreshPublicV43(locks as never, store, oldStore, seed))
+      .toEqual({ ok: false, reason: 'migration-required' })
+    expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+      root, marker: null })
+    expect((await store.readChecked()).status).toBe('missing')
+    expect(await startPublicV43(locks as never, store, oldStore, 0))
+      .toMatchObject({ ok: true })
+  })
+
+  it('recovers a pending canonical fresh marker and rejects divergent targets', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    expect(await oldStore.bootstrapFreshSuccessor(seed)).toBe('committed')
+    expect(await startFreshPublicV43(locks as never, store, oldStore, seed))
+      .toMatchObject({ ok: true, value: { head: { saveRevision: 0 } } })
+    expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'finalized' } })
+
+    const otherFactory = new IDBFactory()
+    const otherOld = createAtomicV42Store(otherFactory)
+    const otherTarget = createAtomicV43Store(otherFactory)
+    expect(await otherOld.bootstrapFreshSuccessor(seed)).toBe('committed')
+    const originalRoot = await getRaw(otherFactory, PUBLIC_V42_DATABASE_NAME)
+    await putRaw(otherFactory, PUBLIC_V43_DATABASE_NAME,
+      createFreshPublicV43Root(seed))
+    expect(await startFreshPublicV43(locks as never, otherTarget, otherOld, seed))
+      .toEqual({ ok: false, reason: 'target-conflict' })
+    expect(await getRaw(otherFactory, PUBLIC_V42_DATABASE_NAME)).toEqual(originalRoot)
+    expect((await otherOld.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'conflict' } })
+  })
+
+  it('keeps V42 absent when fresh input or an existing target is unsafe', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    expect(await startFreshPublicV43(locks as never, store, oldStore, 'other'))
+      .toEqual({ ok: false, reason: 'invalid-seed' })
+    await putRaw(factory, PUBLIC_V43_DATABASE_NAME, createFreshPublicV43Root(seed))
+    expect(await startFreshPublicV43(locks as never, store, oldStore, seed))
+      .toEqual({ ok: false, reason: 'target-conflict' })
+    expect(await oldStore.readForPromotion()).toEqual({ status: 'missing' })
+  })
+
+  it('rejects a marked V42 migration source as a fresh start', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory), root = eligibleV42()
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, root)
+    const read = await oldStore.readForPromotion()
+    if (read.status !== 'valid') throw new Error('Expected checked V42 source')
+    expect(await oldStore.transitionSuccessor(read.proof, 'pending')).toBe('committed')
+    const sourceBytes = JSON.stringify(await getRaw(factory, PUBLIC_V42_DATABASE_NAME))
+    expect(await startFreshPublicV43(locks as never, store, oldStore, seed))
+      .toEqual({ ok: false, reason: 'source-conflict' })
+    expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'pending' } })
+    expect(JSON.stringify(await getRaw(factory, PUBLIC_V42_DATABASE_NAME)))
+      .toBe(sourceBytes)
+    expect((await store.readChecked()).status).toBe('missing')
+  })
+
   it('replays one familiar action, a grounded frame, and exact save/resume', async () => {
     const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
     const store = createAtomicV43Store(factory), source = eligibleV42()
@@ -555,8 +642,5 @@ describe('V43 familiar checked save', () => {
       createAtomicV42Store(badFactory), 0))
       .toEqual({ ok: false, reason: 'invalid-v42-root' })
     expect((await untouched.readChecked()).status).toBe('missing')
-    expect(await startFreshPublicV43(locks as never,
-      createAtomicV43Store(new IDBFactory()), seed))
-      .toEqual({ ok: false, reason: 'fresh-start-unfenced' })
   })
 })
