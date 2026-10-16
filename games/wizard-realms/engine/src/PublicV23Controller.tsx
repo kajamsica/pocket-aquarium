@@ -49,6 +49,10 @@ import { commitPublicV42, requestPublicV42ReturnHome } from './domain/publicWorl
 import type { PublicV42Start } from './domain/publicWorldV42Flow'
 import type { PublicV42RewardProgress, PublicV42RewardWitness } from './domain/publicWorldV42RewardAction'
 import { publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
+import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
+import type { PublicV43EntryBindings } from './PublicV43Entry'
+import { commitPublicV43, requestPublicV43ReturnHome } from './domain/publicWorldV43Flow'
+import type { PublicV43Start } from './domain/publicWorldV43Flow'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -170,7 +174,8 @@ type V39Runtime = ReturnType<typeof createPublicV39ControllerRuntime>
 type V40Runtime = ReturnType<typeof createPublicV40ControllerRuntime>
 type V41Runtime = ReturnType<typeof createPublicV41ControllerRuntime>
 type V42Runtime = ReturnType<typeof createPublicV42ControllerRuntime>
-type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime
+type V43Runtime = ReturnType<typeof createPublicV43ControllerRuntime>
+type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime
 type V32PlusRuntime = V32Runtime | V33PlusRuntime
 type ActiveViewSource = Readonly<{ status: () => { saveRevision: number; pendingFrames: number }
   view: () => PublicV17ActiveView }>
@@ -1072,6 +1077,8 @@ export type PublicV41ControllerProps = PublicV41EntryBindings & Readonly<{
   start: PublicV41Start; version: 'v41' }>
 export type PublicV42ControllerProps = PublicV42EntryBindings & Readonly<{
   start: PublicV42Start; version: 'v42' }>
+export type PublicV43ControllerProps = PublicV43EntryBindings & Readonly<{
+  start: PublicV43Start; version: 'v43' }>
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
@@ -1252,8 +1259,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV31ControllerProps | PublicV32ControllerProps | PublicV33ControllerProps
   | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps
   | PublicV37ControllerProps | PublicV38ControllerProps | PublicV39ControllerProps
-  | PublicV40ControllerProps | PublicV41ControllerProps | PublicV42ControllerProps) {
-  const v42 = 'version' in props && props.version === 'v42'
+  | PublicV40ControllerProps | PublicV41ControllerProps | PublicV42ControllerProps
+  | PublicV43ControllerProps) {
+  const v43 = 'version' in props && props.version === 'v43'
+  const v42 = 'version' in props && (props.version === 'v42' || v43)
   const v41 = 'version' in props && (props.version === 'v41' || v42)
   const v40 = 'version' in props && (props.version === 'v40' || v41)
   const v39 = 'version' in props && (props.version === 'v39' || v40)
@@ -1277,7 +1286,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const physicalWorld = v26 || v27 || riverBridgeWorld
   const river = v25 || physicalWorld
   const v24 = 'version' in props
-  const saveVersion = v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
+  const saveVersion = v43 ? '43' : v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
   const traceRef = useRef<ReturnType<typeof createPublicV17InputTrace> | null | undefined>(undefined)
   if (traceRef.current === undefined) traceRef.current = publicV17InputTraceEnabled(
     typeof window === 'undefined' ? '' : window.location?.hostname ?? '',
@@ -1286,9 +1295,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const trace = traceRef.current
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
-    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | null>(null)
+    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | null>(null)
   if (!runtimeRef.current) {
-    runtimeRef.current = 'version' in props && props.version === 'v42'
+    runtimeRef.current = 'version' in props && props.version === 'v43'
+      ? createPublicV43ControllerRuntime(props.start, (revision, lineage, witness) =>
+        commitPublicV43(props.locks, props.store, props.v42Store, revision, lineage, witness),
+        (revision, lineage) => requestPublicV43ReturnHome(props.locks, props.store,
+          props.v42Store, revision, lineage))
+      : 'version' in props && props.version === 'v42'
       ? createPublicV42ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV42(props.locks, props.store, revision, lineage, witness),
         (revision, lineage) => requestPublicV42ReturnHome(props.locks, props.store, revision, lineage))
@@ -1577,7 +1591,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     trace?.record('controller.sample', { phase: busy.current ? 'write' : 'open',
       outcome: 'timed', vector: timed.vector, due, accepted, merged,
       dropped: due - accepted - merged, queued: inputQueue.current.length })
-    if (accepted || merged) repaintQueued()
+    // The open-world consumer repaints after advancing. Sampling on keyup must
+    // not project the whole world before the queued step gets its timer turn.
+    if ((accepted || merged) && (busy.current || runtime.status().gate !== 'open'))
+      repaintQueued()
   }
 
   const save = (): Promise<void> => {
@@ -1845,6 +1862,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       const tickAtMs = performance.now()
       const elapsedMs = Math.max(0, tickAtMs - lastTickAtMs)
       lastTickAtMs = tickAtMs
+      if (trace && (inputQueue.current.length || timedHeld.current || held.current.some(Boolean)))
+        trace.record('controller.tick', { elapsedMs, queued: inputQueue.current.length,
+          head: inputQueue.current[0]?.kind ?? 'none', headIsEdge: inputQueue.current[0] === edgePulse.current,
+          held: held.current, timedHeld: timedHeld.current !== null,
+          busy: busy.current, running: running.current, gate: runtime.status().gate })
       if (obstacleCueUntil.current && performance.now() >= obstacleCueUntil.current) {
         obstacleCueUntil.current = 0; setObstacleCue(null)
       }
@@ -1894,7 +1916,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const neutral = runtime.status().pendingFrames >= MOVE_RESERVE_AT
           && before.player.verticalVelocity !== 0
         if (!neutral && timedHeld.current
-          && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current)) return
+          && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current)) {
+          trace?.record('controller.tick.parked', { reason: 'awaiting-sampled-edge',
+            queued: inputQueue.current.length })
+          return
+        }
         const request = !neutral && inputQueue.current[0]?.kind === 'pulse'
           ? inputQueue.current.shift() as Extract<InputToken, { kind: 'pulse' }> : null
         if (request === edgePulse.current) edgePulse.current = null

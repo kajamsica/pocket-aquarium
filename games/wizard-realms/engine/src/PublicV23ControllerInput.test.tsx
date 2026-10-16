@@ -771,6 +771,47 @@ describe('V23 controller input admission', () => {
     expect(probe.frames).toHaveLength(0)
   })
 
+  it('coalesces sampled held-key feedback into the consuming open-gate frame', () => {
+    mount(true)
+    probe.now = 1
+    probe.onIntent!({ type: 'movement', vector: [0, 1], atMs: 1 })
+    const redraws = probe.states[0]
+    probe.now = 180
+    probe.onIntent!({ type: 'movement', vector: [0, 0], atMs: 180 })
+    expect(probe.states[0]).toBe(redraws)
+    expect(probe.trace!.json()).toContain('controller.sample')
+    probe.now = 200; probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(2)
+    expect(probe.states[0]).toBe((redraws as number) + 1)
+    expect(probe.trace!.json()).toContain('controller.tick')
+    probe.now = 250; probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(3)
+  })
+
+  it('keeps sampled held-key queue feedback visible while checkpointing', () => {
+    probe.gate = 'checkpointing'; mount()
+    probe.now = 1
+    probe.onIntent!({ type: 'movement', vector: [0, 1], atMs: 1 })
+    const redraws = probe.states[0]
+    probe.now = 180
+    probe.onIntent!({ type: 'movement', vector: [0, 0], atMs: 180 })
+    expect(probe.states[0]).toBe((redraws as number) + 1)
+    expect(probe.frames).toHaveLength(0)
+  })
+
+  it('traces a held edge parked before its first 50 ms sample', () => {
+    mount(true)
+    probe.now = 1
+    probe.onIntent!({ type: 'movement', vector: [0, 1], atMs: 1 })
+    probe.now = 40; probe.tick!()
+    expect(probe.frames).toHaveLength(0)
+    const events = JSON.parse(probe.trace!.json()).records.map((record: { event: string }) => record.event)
+    expect(events).toContain('controller.tick')
+    expect(events).toContain('controller.tick.parked')
+  })
+
   it('drains at most four aged taps as distinct frames after a delayed timer callback', () => {
     mount()
     for (const atMs of [10, 70, 130, 190, 250]) {
