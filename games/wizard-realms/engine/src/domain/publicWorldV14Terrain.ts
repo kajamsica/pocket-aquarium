@@ -142,6 +142,25 @@ export function resolvePublicV23Surface(state: PublicV14State, position: Point,
   } catch { return null }
 }
 
+/** Disposable per-batch reader. Recreate after any terrain, work, or route progress change. */
+export function createPublicV23SurfaceSampler(state: PublicV14State,
+  builtLadderIds: readonly string[]): (position: Point) => PublicV14Surface | null {
+  try {
+    // Own the inputs so later progress or ledger mutations cannot change this batch's floors.
+    const snapshot = structuredClone(state)
+    const ids = [...builtLadderIds]
+    const adapter = projection(snapshot, regionalLadders(snapshot.seed, ids))
+    const terrain = createActiveWorldTerrain(snapshot.seed, adapter.facts)
+    return (position) => {
+      try {
+        terrain.activate(surfaceTileCenter(position), 0)
+        const tile = terrain.tileAtWorld(position.x, position.z)
+        return tile ? adapter.surface(tile, position) : null
+      } catch { return null }
+    }
+  } catch { return () => null }
+}
+
 export function createPublicV23StreamTerrain(state: PublicV14State,
   builtLadderIds: readonly string[]): StreamedWorldRuntime {
   const adapter = projection(state, regionalLadders(state.seed, builtLadderIds))
