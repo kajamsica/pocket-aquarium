@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -192,6 +192,18 @@ describe('opt-in software graphics profile', () => {
     expect(sceneGraphicsOptionsForSearch('?graphics=softwareish')).toEqual(normal)
     expect(sceneGraphicsOptionsForSearch('?publicWorld=v17&graphics=software'))
       .toEqual({ dpr: 1, shadows: false, antialias: false })
+  })
+})
+
+describe('opt-in landscape dressing A/B probe', () => {
+  it('hides cosmetic dressing only with both exact flags in development', () => {
+    expect(landscapeDressingEnabledForSearch('', true)).toBe(true)
+    expect(landscapeDressingEnabledForSearch('?dev=1', true)).toBe(true)
+    expect(landscapeDressingEnabledForSearch('?landscapeDressing=off', true)).toBe(true)
+    expect(landscapeDressingEnabledForSearch('?dev=0&landscapeDressing=off', true)).toBe(true)
+    expect(landscapeDressingEnabledForSearch('?dev=1&landscapeDressing=offish', true)).toBe(true)
+    expect(landscapeDressingEnabledForSearch('?dev=1&landscapeDressing=off', false)).toBe(true)
+    expect(landscapeDressingEnabledForSearch('?dev=1&landscapeDressing=off', true)).toBe(false)
   })
 })
 

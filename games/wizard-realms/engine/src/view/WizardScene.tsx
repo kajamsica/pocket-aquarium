@@ -48,6 +48,10 @@ export function sceneGraphicsOptionsForSearch(search: string) {
   const dpr: number | [number, number] = software ? 1 : [1, 1.5]
   return { dpr, shadows: software ? false : { type: THREE.PCFShadowMap }, antialias: !software }
 }
+export function landscapeDressingEnabledForSearch(search: string, development: boolean): boolean {
+  const query = new URLSearchParams(search)
+  return !development || query.get('dev') !== '1' || query.get('landscapeDressing') !== 'off'
+}
 const BEDROCK_COLOR = '#4a6a3e'
 const BEDROCK_MIN_FACE_M = (WORLD_GRID_MIN - 0.5) * WORLD_CELL_METERS
 const BEDROCK_MAX_FACE_M = (WORLD_GRID_MAX + 0.5) * WORLD_CELL_METERS
@@ -2107,9 +2111,10 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
 }) {
-  const graphics = sceneGraphicsOptionsForSearch(typeof window === 'undefined' ? '' : window.location.search)
-  const rendererProbe = rendererInfoProbeEnabled(typeof window === 'undefined' ? '' : window.location.search,
-    import.meta.env.DEV)
+  const search = typeof window === 'undefined' ? '' : window.location.search
+  const graphics = sceneGraphicsOptionsForSearch(search)
+  const rendererProbe = rendererInfoProbeEnabled(search, import.meta.env.DEV)
+  const landscapeDressingEnabled = landscapeDressingEnabledForSearch(search, import.meta.env.DEV)
   // Region ownership controls actions and HUD state, never which established scenery exists.
   const visual = projection.visualWorld ?? projection
   const v42 = !!projection.v42IronHall
@@ -2329,7 +2334,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       <MireglassCliffLayer seed={projection.seed} cells={revealedTerrain} />
       {projection.highlandRidgeActive && <HighlandRidgeLayer cells={revealedTerrain}
         playerPosition={projection.player.position} />}
-      <LandscapeDressing cells={revealedTerrain} clearings={landscapeClearings} />
+      {landscapeDressingEnabled && <LandscapeDressing cells={revealedTerrain} clearings={landscapeClearings} />}
       {visual.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {visual.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
       {visual.fairyRings.filter((ring) => ring.id !== 'ring-highland-quarry'
