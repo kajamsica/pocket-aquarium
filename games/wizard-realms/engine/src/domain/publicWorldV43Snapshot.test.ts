@@ -1,5 +1,7 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
+// Initialize V41 ancestry before the cross-version V43 module graph.
+import './atomicV41Database'
 import { createAtomicV42Store } from './atomicV42Database'
 import { createAtomicV43Store } from './atomicV43Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
@@ -17,6 +19,7 @@ import { createFreshPublicV43Root, createPublicV43Root,
   PUBLIC_V43_SCHEMA } from './publicWorldV43Snapshot'
 import type { PublicV43Root, PublicV43Witness } from './publicWorldV43Snapshot'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
+import { sameStrictBoundedRaw } from './strictBoundedRaw'
 import { waystationRiverSite } from './waystationRiverContent'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
@@ -91,7 +94,7 @@ function eligibleV42(): PublicV42Root {
           { itemId: 'logs' as const, quantity: 2 }] } } }
   const root: PublicV42Root = { lineage: { origin: 'v41-migration',
     rulesProfile: 'iron-hall-rewards/v1', seed, sourceRevision: 4, genesis },
-    previous: null, head: { ...genesis, schemaVersion: PUBLIC_V42_SCHEMA,
+    previous: null, head: { ...structuredClone(genesis), schemaVersion: PUBLIC_V42_SCHEMA,
       saveRevision: 0, witness: null } }
   expect(decodePublicV42Root(root)).not.toBeNull()
   return root
@@ -107,7 +110,7 @@ function earnedV42History(): PublicV42Root {
     waystationClaimed: true,
     ironHall: { ...base.lineage.genesis.ironHall, combatXp: 7 } }
   const source: PublicV42Root = { lineage: { ...base.lineage, genesis },
-    previous: null, head: { ...genesis, schemaVersion: PUBLIC_V42_SCHEMA,
+    previous: null, head: { ...structuredClone(genesis), schemaVersion: PUBLIC_V42_SCHEMA,
       saveRevision: 0, witness: null } }
   expect(decodePublicV42Root(source)).not.toBeNull()
   return source
@@ -153,38 +156,180 @@ describe('V43 familiar checked save', () => {
     const store = createAtomicV43Store(factory), source = eligibleV42()
     const sourceBytes = JSON.stringify(source)
     await putRaw(factory, PUBLIC_V42_DATABASE_NAME, source)
-    expect(await inspectPublicV43(locks as never, store))
+    expect(sameStrictBoundedRaw(source, await getRaw(factory, PUBLIC_V42_DATABASE_NAME),
+      3 << 20), `source bytes ${sourceBytes.length}`).toBe(true)
+    expect(await inspectPublicV43(locks as never, store, oldStore))
       .toEqual({ ok: true, value: { status: 'migration-available' } })
     expect(await startPublicV43(locks as never, store, oldStore, 1))
       .toEqual({ ok: false, reason: 'source-revision-changed' })
     const start = await startPublicV43(locks as never, store, oldStore, 0)
     if (!start.ok) throw new Error(start.reason)
     expect(start.value.head.familiar.phase).toBe('search')
-    expect(await commitPublicV43(locks as never, store,
+    expect(await commitPublicV43(locks as never, store, oldStore,
       start.value.head.saveRevision, start.value.lineage,
       { kind: 'familiar-tracks/v1' })).toMatchObject({ ok: true,
         value: { head: { saveRevision: 1, familiar: { phase: 'tracks' } } } })
     const afterTracks = await store.readChecked()
     if (afterTracks.status !== 'valid') throw new Error('Missing V43 root')
-    expect(await commitPublicV43(locks as never, store,
+    expect(await commitPublicV43(locks as never, store, oldStore,
       afterTracks.root.head.saveRevision, afterTracks.root.lineage, idle))
       .toMatchObject({ ok: true, value: { head: { saveRevision: 2 } } })
     const saved = await store.readChecked()
     if (saved.status !== 'valid') throw new Error('Missing saved V43 root')
     expect(saved.root.head.state.tick).toBe(source.head.state.tick + 1)
     expect(saved.root.head.familiar.phase).toBe('tracks')
-    expect(await resumePublicV43(locks as never, store,
+    expect(await resumePublicV43(locks as never, store, oldStore,
       saved.root.head.saveRevision, saved.root.lineage)).toMatchObject({ ok: true,
         value: { head: { saveRevision: 2 } } })
     expect(JSON.stringify(await getRaw(factory, PUBLIC_V42_DATABASE_NAME))).toBe(sourceBytes)
-    expect(await commitPublicV43(locks as never, store,
+    expect(await commitPublicV43(locks as never, store, oldStore,
       1, saved.root.lineage, { kind: 'familiar-tracks/v1' }))
       .toEqual({ ok: false, reason: 'revision-changed' })
-    expect(await commitPublicV43(locks as never, store,
+    expect(await commitPublicV43(locks as never, store, oldStore,
       2, saved.root.lineage, { kind: 'familiar-tracks/v1' }))
       .toEqual({ ok: false, reason: 'wrong_stage' })
     expect((await store.readChecked())).toMatchObject({ status: 'valid',
       root: { head: { saveRevision: 2 } } })
+  })
+
+  it('recovers pending handoffs without reopening the V42 writer', async () => {
+    const factory = new IDBFactory(), source = eligibleV42()
+    const oldStore = createAtomicV42Store(factory), store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, source)
+    const bytes = JSON.stringify(await getRaw(factory, PUBLIC_V42_DATABASE_NAME))
+    const before = await oldStore.readForPromotion()
+    if (before.status !== 'valid') throw new Error('Expected checked source')
+    expect(await oldStore.transitionSuccessor(before.proof, 'pending')).toBe('committed')
+    expect((await oldStore.readChecked()).status).toBe('blocked')
+    expect(await inspectPublicV43(locks as never, store, oldStore))
+      .toEqual({ ok: true, value: { status: 'migration-available' } })
+    expect(await startPublicV43(locks as never, store, oldStore, 0))
+      .toMatchObject({ ok: true, value: { head: { saveRevision: 0 } } })
+    expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'finalized', sourceRevision: 0,
+        sourceFingerprint: before.sourceFingerprint } })
+    expect(JSON.stringify(await getRaw(factory, PUBLIC_V42_DATABASE_NAME))).toBe(bytes)
+
+    const secondFactory = new IDBFactory(), secondSource = eligibleV42()
+    const secondOld = createAtomicV42Store(secondFactory)
+    const secondTarget = createAtomicV43Store(secondFactory)
+    await putRaw(secondFactory, PUBLIC_V42_DATABASE_NAME, secondSource)
+    const pending = await secondOld.readForPromotion()
+    if (pending.status !== 'valid') throw new Error('Expected second checked source')
+    expect(await secondOld.transitionSuccessor(pending.proof, 'pending')).toBe('committed')
+    await putRaw(secondFactory, PUBLIC_V43_DATABASE_NAME,
+      createPublicV43Root(secondSource))
+    expect(await inspectPublicV43(locks as never, secondTarget, secondOld))
+      .toMatchObject({ ok: true, value: { status: 'valid' } })
+    expect((await secondOld.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'finalized' } })
+  })
+
+  it('blocks ambiguous unfenced legacy targets without freezing V42', async () => {
+    const factory = new IDBFactory(), source = eligibleV42()
+    const oldStore = createAtomicV42Store(factory), store = createAtomicV43Store(factory)
+    const otherSource: PublicV42Root = { ...source, lineage: {
+      ...source.lineage, origin: 'v41-migration', sourceRevision: 5 } }
+    expect(decodePublicV42Root(otherSource)).not.toBeNull()
+    expect(createPublicV43Root(otherSource).lineage)
+      .toEqual(createPublicV43Root(source).lineage)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, source)
+    const legacy = createPublicV43Root(otherSource)
+    await putRaw(factory, PUBLIC_V43_DATABASE_NAME, legacy)
+    const legacyBytes = JSON.stringify(await getRaw(factory, PUBLIC_V43_DATABASE_NAME))
+    expect(await inspectPublicV43(locks as never, store, oldStore))
+      .toEqual({ ok: true, value: { status: 'blocked',
+        reason: 'ambiguous-legacy-target' } })
+    expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: null })
+    expect((await oldStore.readChecked()).status).toBe('valid')
+    expect(JSON.stringify(await getRaw(factory, PUBLIC_V43_DATABASE_NAME)))
+      .toBe(legacyBytes)
+
+    const conflictFactory = new IDBFactory(), conflictSource = eligibleV42()
+    const conflictOld = createAtomicV42Store(conflictFactory)
+    const conflictTarget = createAtomicV43Store(conflictFactory)
+    await putRaw(conflictFactory, PUBLIC_V42_DATABASE_NAME, conflictSource)
+    const validOther = createFreshPublicV43Root(seed)
+    await putRaw(conflictFactory, PUBLIC_V43_DATABASE_NAME, validOther)
+    const targetBytes = JSON.stringify(await getRaw(conflictFactory, PUBLIC_V43_DATABASE_NAME))
+    expect(await inspectPublicV43(locks as never, conflictTarget, conflictOld))
+      .toEqual({ ok: true, value: { status: 'blocked',
+        reason: 'ambiguous-legacy-target' } })
+    expect((await conflictOld.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: null })
+    expect(JSON.stringify(await getRaw(conflictFactory, PUBLIC_V43_DATABASE_NAME)))
+      .toBe(targetBytes)
+  })
+
+  it('blocks a finalized handoff whose checked target disappeared', async () => {
+    const factory = new IDBFactory(), source = eligibleV42()
+    const oldStore = createAtomicV42Store(factory), store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, source)
+    expect(await startPublicV43(locks as never, store, oldStore, 0))
+      .toMatchObject({ ok: true })
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = factory.open(PUBLIC_V43_DATABASE_NAME, 1)
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('records', 'readwrite')
+      tx.objectStore('records').delete('root')
+      tx.oncomplete = () => resolve()
+      tx.onabort = () => reject(tx.error)
+    })
+    db.close()
+    expect(await inspectPublicV43(locks as never, store, oldStore))
+      .toEqual({ ok: true, value: { status: 'blocked', reason: 'target-conflict' } })
+    expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'conflict' } })
+    expect((await store.readChecked()).status).toBe('missing')
+  })
+
+  it('does not fence an unfenced V42 source on a transient V43 read failure', async () => {
+    const factory = new IDBFactory(), root = eligibleV42()
+    const oldStore = createAtomicV42Store(factory), store = createAtomicV43Store(factory)
+    const transient = { ...store, readChecked: async () =>
+      ({ status: 'blocked' as const, reason: 'storage-error' }) }
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, root)
+    expect(await inspectPublicV43(locks as never, transient, oldStore))
+      .toEqual({ ok: true, value: { status: 'blocked', reason: 'storage-error' } })
+    expect(await startPublicV43(locks as never, transient, oldStore, 0))
+      .toEqual({ ok: false, reason: 'storage-error' })
+    const promotion = await oldStore.readForPromotion()
+    expect(promotion.status === 'valid' && promotion.marker).toBeNull()
+    const checked = await oldStore.readChecked()
+    if (checked.status !== 'valid') throw new Error('V42 writer unexpectedly fenced')
+    const progress = replayPublicV42Witness(checked.root.head, idle)
+    if (!progress) throw new Error('Expected valid V42 idle frame')
+    expect(await oldStore.commit(checked.proof, { lineage: checked.root.lineage,
+      previous: checked.root.head, head: { ...progress, schemaVersion: PUBLIC_V42_SCHEMA,
+        saveRevision: checked.root.head.saveRevision + 1, witness: idle } }))
+      .toBe('committed')
+  })
+
+  it('keeps pending and finalized markers unchanged on transient V43 read failures', async () => {
+    for (const phase of ['pending', 'finalized'] as const) {
+      const factory = new IDBFactory(), root = eligibleV42()
+      const oldStore = createAtomicV42Store(factory), store = createAtomicV43Store(factory)
+      const transient = { ...store, readChecked: async () =>
+        ({ status: 'blocked' as const, reason: 'storage-error' }) }
+      await putRaw(factory, PUBLIC_V42_DATABASE_NAME, root)
+      if (phase === 'finalized') {
+        expect(await startPublicV43(locks as never, store, oldStore, 0))
+          .toMatchObject({ ok: true })
+      } else {
+        const read = await oldStore.readForPromotion()
+        if (read.status !== 'valid') throw new Error('Expected checked V42 source')
+        expect(await oldStore.transitionSuccessor(read.proof, 'pending'))
+          .toBe('committed')
+      }
+      expect(await inspectPublicV43(locks as never, transient, oldStore))
+        .toEqual({ ok: true, value: { status: 'blocked', reason: 'storage-error' } })
+      expect((await oldStore.readForPromotion())).toMatchObject({ status: 'valid',
+        marker: { phase } })
+    }
   })
 
   it('rejects forged state, position, reward and payloads at replay and CAS', async () => {
@@ -358,8 +503,12 @@ describe('V43 familiar checked save', () => {
     expect(root.head.state.player.xp - beforeClaim.state.player.xp).toBe(40)
     expect(decodePublicV43Root(root)).not.toBeNull()
     const factory = new IDBFactory(), store = createAtomicV43Store(factory)
+    const oldStore = createAtomicV42Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    expect(await startPublicV43(locks as never, store, oldStore, 0))
+      .toMatchObject({ ok: true })
     await putRaw(factory, PUBLIC_V43_DATABASE_NAME, returnedRoot)
-    expect(await commitPublicV43(locks as never, store,
+    expect(await commitPublicV43(locks as never, store, oldStore,
       returnedRoot.head.saveRevision, returnedRoot.lineage,
       { kind: 'familiar-claim/v1' })).toMatchObject({ ok: true,
         value: { head: { saveRevision: root.head.saveRevision,
@@ -367,10 +516,10 @@ describe('V43 familiar checked save', () => {
     const saved = await store.readChecked()
     expect(saved.status).toBe('valid')
     if (saved.status !== 'valid') return
-    expect(await resumePublicV43(locks as never, store,
+    expect(await resumePublicV43(locks as never, store, oldStore,
       root.head.saveRevision, root.lineage)).toMatchObject({ ok: true,
         value: { head: { familiar: { phase: 'claimed' } } } })
-    expect(await commitPublicV43(locks as never, store,
+    expect(await commitPublicV43(locks as never, store, oldStore,
       root.head.saveRevision, root.lineage, { kind: 'familiar-claim/v1' }))
       .toEqual({ ok: false, reason: 'already_claimed' })
     const after = await store.readChecked()
@@ -394,7 +543,6 @@ describe('V43 familiar checked save', () => {
     expect(JSON.stringify(source)).toBe(bytes)
     const oldRead = await oldStore.readChecked()
     expect(oldRead.status).toBe('valid')
-    if (oldRead.status === 'valid') expect(oldRead.root).toEqual(decodePublicV42Root(source))
     expect(JSON.stringify(await getRaw(factory, PUBLIC_V42_DATABASE_NAME))).toBe(bytes)
     const missing = createAtomicV42Store(new IDBFactory())
     expect(await startPublicV43(locks as never,
@@ -408,7 +556,7 @@ describe('V43 familiar checked save', () => {
       .toEqual({ ok: false, reason: 'invalid-v42-root' })
     expect((await untouched.readChecked()).status).toBe('missing')
     expect(await startFreshPublicV43(locks as never,
-      createAtomicV43Store(new IDBFactory()), seed)).toMatchObject({ ok: true,
-        value: { head: { saveRevision: 0 } } })
+      createAtomicV43Store(new IDBFactory()), seed))
+      .toEqual({ ok: false, reason: 'fresh-start-unfenced' })
   })
 })
