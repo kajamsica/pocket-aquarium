@@ -8,7 +8,8 @@ import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { createFreshPublicV40Root } from './publicWorldV40Snapshot'
 import { confirmPublicV40WaystationAction as confirm,
   decodePublicV40WaystationProgress, decodePublicV40WaystationWitness as decode,
-  previewPublicV40WaystationAction as preview } from './publicWorldV40WaystationAction'
+  previewPublicV40WaystationAction as preview,
+  previewPublicV40WaystationActions as previewBatch } from './publicWorldV40WaystationAction'
 import type { PublicV40WaystationProgress, PublicV40WaystationWitness } from './publicWorldV40WaystationAction'
 import { createStreamedWorld } from './streamedWorld'
 import { waystationRiverSite } from './waystationRiverContent'
@@ -66,6 +67,34 @@ function atStore(progress: PublicV40WaystationProgress): PublicV40WaystationProg
 }
 
 describe('V40 Waystation physical action', () => {
+  it('keeps batched advisory rejections identical across every Waystation stage', () => {
+    const north = atNorth()
+    const bartered = accepted(north, barter)
+    const repaired = built(bartered)
+    const farBank = accepted(atPoint(repaired, site.exit), cross)
+    const returned = atStore(farBank)
+    const claimed = accepted(returned, claim)
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...fresh } = createFreshPublicV40Root(seed).head
+    const invalid = { ...north, state: { ...north.state, tick: -1 } }
+    const kinds = [barter.kind, cross.kind, claim.kind] as const
+    for (const progress of [fresh, north, bartered, repaired, farBank,
+      returned, claimed, invalid]) {
+      expect(previewBatch(progress, kinds)).toEqual(kinds.map((kind) =>
+        preview(progress, { kind })))
+    }
+    const forgedKinds = ['waystation-forged/v1', claim.kind] as unknown as typeof kinds
+    for (const progress of [north, invalid]) {
+      expect(previewBatch(progress, forgedKinds)).toEqual(forgedKinds.map((kind) =>
+        preview(progress, { kind })))
+      expect(previewBatch(progress, forgedKinds)[0].rejection).toBe('invalid_value')
+    }
+    const unreadable = new Proxy(north, { get: () => { throw Error('read progress') } })
+    expect(previewBatch(unreadable, [forgedKinds[0]])).toEqual([
+      { rejection: 'invalid_value' },
+    ])
+  })
+
   it('selects dry supported V28 crossings with reachable north approaches for both seeds', () => {
     for (const testSeed of [seed, 'greenway-alpha']) {
       const selected = waystationRiverSite(testSeed)!

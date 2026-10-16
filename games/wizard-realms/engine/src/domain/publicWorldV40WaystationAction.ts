@@ -64,18 +64,16 @@ export function decodePublicV40WaystationWitness(raw: unknown): PublicV40Waystat
 const distance = (a: Vec3, b: Vec3) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
 
-/** Pure checked transition. The V40 writer replays it against its locked head. */
-export function confirmPublicV40WaystationAction(raw: PublicV40WaystationProgress,
-  rawWitness: unknown): PublicV40WaystationResult {
+function progressOf(raw: PublicV40WaystationProgress): PublicV40WaystationProgress | null {
+  try { return decodePublicV40WaystationProgress(Object.fromEntries(
+    PUBLIC_V40_PROGRESS_KEYS.map((key) => [key, raw[key]]))) }
+  catch { return null }
+}
+
+function confirmDecodedWaystationAction(progress: PublicV40WaystationProgress,
+  witness: PublicV40WaystationWitness): PublicV40WaystationResult {
   const reject = (rejection: PublicV40WaystationRejection): PublicV40WaystationResult =>
     ({ rejection })
-  const witness = decodePublicV40WaystationWitness(rawWitness)
-  if (!witness) return reject('invalid_value')
-  let progress: PublicV40WaystationProgress | null
-  try { progress = decodePublicV40WaystationProgress(Object.fromEntries(
-    PUBLIC_V40_PROGRESS_KEYS.map((key) => [key, raw[key]]))) }
-  catch { return reject('invalid_progress') }
-  if (!progress) return reject('invalid_progress')
   try {
     const { state } = progress, { player } = state
     const site = waystationRiverSite(state.seed)
@@ -168,8 +166,28 @@ export function confirmPublicV40WaystationAction(raw: PublicV40WaystationProgres
   } catch { return reject('invalid_progress') }
 }
 
+/** Pure checked transition. The V40 writer replays it against its locked head. */
+export function confirmPublicV40WaystationAction(raw: PublicV40WaystationProgress,
+  rawWitness: unknown): PublicV40WaystationResult {
+  const witness = decodePublicV40WaystationWitness(rawWitness)
+  if (!witness) return { rejection: 'invalid_value' }
+  const progress = progressOf(raw)
+  return progress ? confirmDecodedWaystationAction(progress, witness)
+    : { rejection: 'invalid_progress' }
+}
+
 /** Advisory only. The locked writer confirms again against its own head. */
 export function previewPublicV40WaystationAction(progress: PublicV40WaystationProgress,
   witness: unknown): Readonly<{ rejection: PublicV40WaystationRejection | null }> {
   return { rejection: confirmPublicV40WaystationAction(progress, witness).rejection ?? null }
+}
+
+/** Read-only view batch: validate once, then preserve each independent checked rejection. */
+export function previewPublicV40WaystationActions(progress: PublicV40WaystationProgress,
+  kinds: readonly PublicV40WaystationWitness['kind'][]): readonly Readonly<{
+    rejection: PublicV40WaystationRejection | null }>[] {
+  const witnesses = kinds.map((kind) => decodePublicV40WaystationWitness({ kind }))
+  const decoded = witnesses.some(Boolean) ? progressOf(progress) : null
+  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
+    ? confirmDecodedWaystationAction(decoded, witness).rejection ?? null : 'invalid_progress' }))
 }

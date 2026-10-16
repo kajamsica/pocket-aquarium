@@ -1,5 +1,5 @@
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
-import { previewPublicV40WaystationAction } from './domain/publicWorldV40WaystationAction'
+import { previewPublicV40WaystationActions } from './domain/publicWorldV40WaystationAction'
 import type { PublicV40WaystationProgress } from './domain/publicWorldV40WaystationAction'
 import { waystationRiverSite } from './domain/waystationRiverContent'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
@@ -40,16 +40,18 @@ export function projectPublicV40Waystation(progress: PublicV40WaystationProgress
       } } : {}),
     },
   }
-  const preview = (kind: 'waystation-barter/v1' | 'waystation-cross/v1' | 'waystation-claim/v1') => {
-    const rejection = previewPublicV40WaystationAction(progress, { kind }).rejection
+  const [barter, cross, claim] = previewPublicV40WaystationActions(progress, [
+    'waystation-barter/v1', 'waystation-cross/v1', 'waystation-claim/v1',
+  ])
+  const preview = (rejection: typeof barter.rejection) => {
     return { rejection, hint: rejection ? publicV40WaystationRejectionHint(rejection) : null }
   }
   return { ...projected, v40WaystationQuest: publicV40WaystationQuest(projected, {
     timberBartered: progress.timberBartered,
     southbankReached: progress.southbankReached,
     waystationClaimed: progress.waystationClaimed,
-    barter: preview('waystation-barter/v1'),
-    cross: preview('waystation-cross/v1'),
-    claim: preview('waystation-claim/v1'),
+    barter: preview(barter.rejection),
+    cross: preview(cross.rejection),
+    claim: preview(claim.rejection),
   }) }
 }

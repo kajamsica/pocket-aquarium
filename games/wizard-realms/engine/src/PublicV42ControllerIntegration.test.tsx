@@ -2,7 +2,9 @@ import { IDBFactory } from 'fake-indexeddb'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { publicV14MovementIntents } from './PublicV14Controller'
 import { PublicV23Controller } from './PublicV23Controller'
+import { createPublicV42ControllerRuntime } from './PublicV42ControllerRuntime'
 import { PublicV41EntryView } from './PublicV41Entry'
 import { choosePublicV42Entry, inspectPublicV42Entry, PublicV42EntryView } from './PublicV42Entry'
 import type { PublicV42EntryBindings } from './PublicV42Entry'
@@ -21,6 +23,7 @@ import { createPublicV39Root } from './domain/publicWorldV39Snapshot'
 import { commitPublicV40 } from './domain/publicWorldV40Flow'
 import { createPublicV40Root } from './domain/publicWorldV40Snapshot'
 import { createFreshPublicV41Root, createPublicV41Root } from './domain/publicWorldV41Snapshot'
+import { commitPublicV42, resumePublicV42 } from './domain/publicWorldV42Flow'
 import { previewPublicV41CombatAction, previewPublicV41CombatActions } from './domain/publicWorldV41CombatAction'
 import { previewPublicV42RewardAction, previewPublicV42RewardActions,
   resolveIronHallCrestOutcome } from './domain/publicWorldV42RewardAction'
@@ -338,6 +341,38 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
     expect(hud(active)).toContain('Practice slam in 20 ticks')
     expect(hud(active)).not.toContain('Start ward spar')
   })
+
+  it('saves and resumes sustained turn plus forward movement without replay rejection', async () => {
+    const factory = new IDBFactory(), root = createFreshPublicV42Root('wizard-realms')
+    const store = createAtomicV42Store(factory), missing = await store.readChecked()
+    if (missing.status !== 'missing') throw Error('Unexpected V42 target')
+    expect(await store.commit(missing.proof, root)).toBe('committed')
+    const runtime = createPublicV42ControllerRuntime({ head: root.head, lineage: root.lineage },
+      (revision, lineage, witness) => commitPublicV42(locks, store, revision, lineage, witness))
+    const submitted: { intents: ReturnType<typeof publicV14MovementIntents>;
+      walkRequested: boolean }[] = []
+    for (let index = 0; index < 12; index++) {
+      const yaw = runtime.preview().state.player.yaw
+      const intents = publicV14MovementIntents(yaw, [1, 1], 0.16)
+      expect(intents.map((intent) => intent.type)).toEqual(['look', 'move'])
+      expect(runtime.advanceFrame(intents, true).rejections).toEqual([])
+      submitted.push({ intents, walkRequested: true })
+    }
+    const player = runtime.preview().state.player
+    expect(player.yaw).not.toBe(root.head.state.player.yaw)
+    expect(player.position).not.toEqual(root.head.state.player.position)
+    expect(runtime.status().pendingFrames).toBe(12)
+    expect(await runtime.save()).toMatchObject({ status: 'saved' })
+    const reopened = createAtomicV42Store(factory)
+    const resumed = await resumePublicV42(locks, reopened, 1, root.lineage)
+    expect(resumed.ok).toBe(true)
+    if (!resumed.ok) throw Error(resumed.reason)
+    expect(resumed.value.head.witness).toEqual({ kind: 'frame-batch/v1', frames: submitted })
+    const replayed = createPublicV42ControllerRuntime(resumed.value,
+      (revision, lineage, witness) => commitPublicV42(locks, reopened, revision, lineage, witness))
+    expect(replayed.preview().state.player).toMatchObject({ yaw: player.yaw,
+      position: player.position })
+  }, 120_000)
 
   it('offers checked V41 copy, independent fresh start, resume and older preview links', async () => {
     const factory = new IDBFactory(), source = createFreshPublicV41Root('wizard-realms')
