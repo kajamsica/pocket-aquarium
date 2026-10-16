@@ -280,7 +280,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
     && !greenwayLadderBuilt
   const greenwayObjective = savePaused ? 'Save paused: check the save status before using Works.'
     : v27Terrain ? mining && !greenwayLadderBuilt && !greenwayBridgeBuilt
-      ? `${projection.equipment.mainHand?.itemId === 'woodcutters_axe' ? 'Axe ready' : 'Equip Woodcutter axe from Backpack'}: Interact with a nearby oak for logs. Choose a 4-log north ladder to the west route or an 8-log South creek bridge at a marked Ready site. Beyond the ladder, carry 8 more logs for the connected-river bridge.`
+      ? `${projection.equipment.mainHand?.itemId === 'woodcutters_axe' ? 'Axe ready' : 'Equip Woodcutter axe from Backpack'}: Interact with a nearby oak for logs. First build an 8-log South creek bridge at a marked Ready site and cross to the dry far bank. Then build a 4-log north ladder to the west route and carry 8 more logs for the connected-river bridge.`
       : projection.map.guidance ?? 'Explore to reveal a Ready route site.'
     : mining ? !starterHasSpade
       ? 'Buy a field spade at Greenway Outfitters for soil, then buy a basic pick for deeper layers.'

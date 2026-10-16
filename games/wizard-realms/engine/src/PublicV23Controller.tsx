@@ -500,7 +500,7 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     ? `Pack full: ${context.riverBridgeBuilt
       ? 'make room before exploring beyond your saved connected-river bridge'
       : !ladder && logs >= 4
-        ? 'use 4 logs at a Ready north cliff ladder, then gather 8 more for the connected-river bridge'
+        ? 'use or gather toward 8 logs for a Ready South creek bridge before the north ladder'
       : ladder && logs >= 8 ? 'use 8 logs at a Ready connected-river crossing'
       : ladder && logs >= 4 ? 'make room to gather toward an 8-log connected-river bridge'
       : stone > 0
@@ -511,9 +511,9 @@ export function publicV27StarterGuide(view: WizardViewProjection,
         ? 'Sell excavated terrain-bag materials at Greenway Outfitters.'
         : 'Excavated terrain-bag materials cannot be sold yet.'}${ladder ? ` ${ladderRoute} ${riverRoute}` : ''}`
     : ladder ? `Ladder built: ${ladderRoute} ${riverRoute}`
-        : creekBridge ? 'Starter creek bridge built: use its saved deck. Build the north cliff ladder for 4 logs, then carry 8 additional logs for the connected-river bridge.'
-          : logs >= 4 ? 'Build the north cliff ladder for 4 logs, then carry 8 additional logs for the separate connected-river bridge before heading west.'
-            : `Chop accessible Greenway oaks for a 4-log north cliff ladder, then gather 8 additional logs for the connected-river bridge. ${logs ? `${logs} carried.` : ''}`
+        : creekBridge ? 'Starter creek bridge built: cross its saved deck to the dry far bank. Then build the north cliff ladder for 4 logs and carry 8 more for the connected-river bridge.'
+          : logs >= 8 ? 'Build a marked Ready South creek bridge with 8 logs and cross its saved deck to the dry far bank. The 4-log north ladder opens the later west route.'
+            : `Chop accessible Greenway oaks for an 8-log South creek bridge (${logs}/8). Build at a marked Ready site and cross to the dry far bank. The 4-log north ladder opens the later west route.`
   const boots = view.equipment.feet?.itemId === 'leather_boots'
     ? 'Boots equipped: run by default; Walk/R changes pace.'
     : view.backpack.stacks.some((stack) => stack.itemId === 'leather_boots')
@@ -888,9 +888,9 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     : full ? 'Pack full: make room to gather' : ladder
       ? upperShelf ? logs >= 8 ? 'Upper shelf: head west with bridge logs'
           : 'Upper shelf: gather 8 bridge logs' : 'Ladder ready: find a river crossing'
-      : creekBridge ? 'Bridge ready: find a cliff route' : logs >= 4
-        ? 'Logs ready: 4-log ladder, then 8 more for bridge'
-        : 'First steps: chop for 4-log ladder, then 8-log bridge'),
+      : creekBridge ? 'Bridge ready: cross to the far bank' : logs >= 8
+        ? '8 logs ready: build South creek bridge'
+        : 'First steps: 8-log South creek bridge'),
     action: salvagerGuide ?? excavationGuide?.action ?? timberGuide?.action ?? fenGuide?.action
       ?? fenDeckGuide?.action
       ?? slateClimbGuide?.action
@@ -2314,8 +2314,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </> : v27Guide ? <>
         <summary>{v27Guide.summary}</summary>
         <p>{v27Guide.action}</p>
-        {active.movementOwner === 'greenway' && <p>Route costs are separate: 4 logs for the north ladder,
-          then 8 more for a connected-river bridge. Open Works and aim at a discovered Ready site.
+        {active.movementOwner === 'greenway' && <p>Route costs are separate: first 8 logs for the South creek bridge,
+          then 4 for the north ladder and 8 more for a connected-river bridge. Open Works and aim at a discovered Ready site.
           Not every river bank supports a bridge; follow the bank to check marked sites.</p>}
         <p>{v27Guide.boots} {v27Guide.spade}</p>
       </> : ladderBuilt && bridgeBuilt ? <>

@@ -496,6 +496,25 @@ describe('V27 starter route coaching', () => {
     expect(both.action).not.toContain('connected-river bridge is built')
   })
 
+  it('teaches the Surveyor creek bridge before the Ledger ladder and separate river bridge', () => {
+    const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
+    const empty = { builtLadderIds: [], builtBridgeIds: [], dugTileIds: [] }
+    const before = publicV27StarterGuide(base, empty)
+    expect(before.summary).toBe('First steps: 8-log South creek bridge')
+    expect(before.action).toContain('an 8-log South creek bridge (0/8)')
+    expect(before.action).toContain('The 4-log north ladder opens the later west route')
+    const withLogs = { ...base, backpack: { ...base.backpack,
+      stacks: [...base.backpack.stacks, { ...base.backpack.stacks[0]!, id: 'logs-test',
+        itemId: 'logs' as const, quantity: 8 }] } }
+    const ready = publicV27StarterGuide(withLogs, empty)
+    expect(ready.summary).toBe('8 logs ready: build South creek bridge')
+    expect(ready.action).toContain('cross its saved deck to the dry far bank')
+    const crossed = publicV27StarterGuide(base, { ...empty, builtBridgeIds: [bridge] })
+    expect(crossed.summary).toBe('Bridge ready: cross to the far bank')
+    expect(crossed.action).toContain('Then build the north cliff ladder for 4 logs')
+    expect(crossed.action).toContain('8 more for the connected-river bridge')
+  })
+
   it('sends a short-log streamed owner back to Greenway without a cliff-side cue', () => {
     const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
     const view = { ...base, player: { ...base.player,
@@ -2132,13 +2151,14 @@ describe('V27 starter route coaching', () => {
 
   it('gates concise route, store and dig guidance to V27 and follows built routes', () => {
     const start = guide('v27', false, false)
-    expect(start).toContain('First steps: chop for 4-log ladder, then 8-log bridge')
-    expect(start).toContain('4 logs for the north ladder, then 8 more for a connected-river bridge')
+    expect(start).toContain('First steps: 8-log South creek bridge')
+    expect(start).toContain('first 8 logs for the South creek bridge')
+    expect(start).toContain('then 4 for the north ladder and 8 more for a connected-river bridge')
     expect(start).toContain('Not every river bank supports a bridge')
     expect(start).toContain('Buy boots at Greenway Outfitters to run')
     expect(start).toContain('spade for click-to-dig')
     expect(guide('v27', true, false)).toContain('Ladder ready: find a river crossing')
-    expect(guide('v27', false, true)).toContain('Bridge ready: find a cliff route')
+    expect(guide('v27', false, true)).toContain('Bridge ready: cross to the far bank')
     expect(guide('v27', true, true)).toContain('Ladder ready: find a river crossing')
     expect(guide('v27', true, true)).not.toContain('connected-river bridge saved')
     expect(guide('v26', false, false)).not.toContain('Not every river bank supports a bridge')
@@ -2151,12 +2171,12 @@ describe('V27 starter route coaching', () => {
       stacks: [{ ...axe, id: 'logs-test', itemId: 'logs', quantity }] } })
     const emptyWorks = { builtBridgeIds: [], builtLadderIds: [], dugTileIds: [] }
     expect(publicV27StarterGuide(withLogs(4), emptyWorks).action)
-      .toContain('Build the north cliff ladder for 4 logs, then carry 8 additional logs')
+      .toContain('8-log South creek bridge (4/8)')
     expect(publicV27StarterGuide(withLogs(8), emptyWorks).action)
-      .toContain('Build the north cliff ladder for 4 logs, then carry 8 additional logs')
+      .toContain('Build a marked Ready South creek bridge with 8 logs')
     const full = publicV27StarterGuide(withLogs(base.backpack.capacity), emptyWorks)
     expect(full.summary).toContain('Pack full')
-    expect(full.action).toContain('use 4 logs at a Ready north cliff ladder, then gather 8 more')
+    expect(full.action).toContain('use or gather toward 8 logs for a Ready South creek bridge before the north ladder')
     expect(full.action).toContain('Excavated terrain-bag materials cannot be sold yet')
     expect(full.action).not.toContain('sell terrain-bag')
     const soilBag = publicV27StarterGuide({ ...base,

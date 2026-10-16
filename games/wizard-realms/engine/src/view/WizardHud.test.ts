@@ -164,7 +164,7 @@ describe('starter cliff HUD capability gate', () => {
       .not.toContain('Pack full. A Ready ladder costs 4 logs')
   })
 
-  it('starts V29 with an axe and route choice, then follows saved route guidance', () => {
+  it('starts V29 with an axe and Surveyor route, then follows saved route guidance', () => {
     const state = createWizardWorld('greenway-alpha')
     const base = toViewProjection(state, [])
     const saved = { context: 'works4-greenway' as const, builtSites: [], dugTileIds: [],
@@ -176,18 +176,14 @@ describe('starter cliff HUD capability gate', () => {
         offers: [], bids: { soil: 1, stone: 3, iron_ore: 8, gold_ore: 15, diamond: 60 },
         bag: { soil: 0, stone: 0, iron_ore: 0, gold_ore: 0, diamond: 0 },
         excavationLevel: 1, atOutfitters: false } }
-    const objective = (view: WizardViewProjection) => {
-      const panel = findElements(WizardHud({ projection: view, onIntent: () => {} }),
-        (element) => element.props['aria-label'] === 'Greenway field objective')[0]
-      expect(panel).toBeDefined()
-      return renderToStaticMarkup(panel)
-    }
+    const objective = (view: WizardViewProjection) => renderHud(view)
     const opening = objective(fresh)
     expect(opening).toContain('Equip Woodcutter axe from Backpack')
     expect(opening).toContain('Interact with a nearby oak for logs')
-    expect(opening).toContain('4-log north ladder to the west route')
-    expect(opening).toContain('8-log South creek bridge at a marked Ready site')
-    expect(opening).toContain('Beyond the ladder, carry 8 more logs for the connected-river bridge')
+    expect(opening).toContain('First build an 8-log South creek bridge at a marked Ready site')
+    expect(opening).toContain('cross to the dry far bank')
+    expect(opening).toContain('Then build a 4-log north ladder to the west route')
+    expect(opening).toContain('carry 8 more logs for the connected-river bridge')
     expect(opening).toContain('Optional digging: Outfitters sells a spade for soil')
     expect(opening).toContain('Barefoot walks; boots run by default')
     expect(opening).not.toContain('Field objective:</strong> Buy a field spade')
