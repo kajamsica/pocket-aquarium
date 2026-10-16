@@ -1,11 +1,56 @@
 import { describe, expect, it } from 'vitest'
-import { advancePublicV17GreenwayFrame } from './publicWorldV17GreenwayFrame'
+import { advancePublicV17GreenwayAction, advancePublicV17GreenwayFrame } from './publicWorldV17GreenwayFrame'
 import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { createFreshPublicV17Head } from './publicWorldV17Snapshot'
 import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
+import { decodePublicV17Progress } from './publicWorldV17Validation'
 import type { PublicV17Progress } from './publicWorldV17Validation'
 
 describe('v17 built bridge movement feedback', () => {
+  it('equips the owned axe while standing on a built bridge without moving the player', () => {
+    const seed = 'wizard-realms'
+    const { head } = createFreshPublicV17Head(seed)
+    const site = resolvePublicV17GreenwaySite(seed, 'works4:bridge:greenway-creek:-14')
+    if (!site || site.kind !== 'bridge') throw new Error('Missing built bridge')
+    const greenwayWorks = { ...head.greenwayWorks, builtBridgeIds: [site.id] }
+    const point = site.gapCenter
+    const support = publicV17StarterSupportAt({ seed, profile: head.state.generationProfile,
+      route: head.state.greenway.routes[0] ?? null, built: false, greenwayWorks }, point)
+    if (support?.kind !== 'bridge') throw new Error('Missing built bridge support')
+    const progress = decodePublicV17Progress({ state: { ...head.state,
+      player: { ...head.state.player, xp: head.state.player.xp + 80,
+        skillXp: { ...head.state.player.skillXp, construction: 80 },
+        position: { ...point, y: support.floorY } } }, greenwayWorks }, seed)
+    if (!progress) throw new Error('Missing checked bridge progress')
+    const result = advancePublicV17GreenwayAction(progress,
+      { type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
+    expect(result.rejections).toEqual([])
+    expect(result.events).toMatchObject([{ type: 'item_equipped', itemId: 'woodcutters_axe' }])
+    expect(result.progress.state.player.equipment.mainHand).toBe('woodcutters_axe')
+    expect(result.progress.state.player.position).toEqual(progress.state.player.position)
+    expect(result.progress.state.tick).toBe(progress.state.tick + 1)
+    expect(result.progress.greenwayWorks).toEqual(progress.greenwayWorks)
+    expect(decodePublicV17Progress(result.progress, seed)).not.toBeNull()
+    const geared = decodePublicV17Progress({ ...result.progress, state: {
+      ...result.progress.state, player: { ...result.progress.state.player,
+        inventory: [...result.progress.state.player.inventory,
+          { itemId: 'field_spade', quantity: 1 }, { itemId: 'leather_boots', quantity: 1 }],
+        equipment: { ...result.progress.state.player.equipment, feet: 'leather_boots' } } } }, seed)
+    if (!geared) throw new Error('Missing checked bridge gear progress')
+    const switched = advancePublicV17GreenwayAction(geared,
+      { type: 'equip_item', itemId: 'field_spade', slot: 'mainHand' })
+    expect(switched.rejections).toEqual([])
+    expect(switched.progress.state.player.equipment.mainHand).toBe('field_spade')
+    expect(switched.progress.state.player.position).toEqual(geared.state.player.position)
+    const unbooted = advancePublicV17GreenwayAction(switched.progress,
+      { type: 'unequip_item', slot: 'feet' })
+    expect(unbooted.rejections).toEqual([])
+    expect(unbooted.events).toMatchObject([{ type: 'item_unequipped', itemId: 'leather_boots' }])
+    expect(unbooted.progress.state.player.equipment.feet).toBeNull()
+    expect(unbooted.progress.state.player.position).toEqual(geared.state.player.position)
+    expect(decodePublicV17Progress(unbooted.progress, seed)).not.toBeNull()
+  })
+
   it('explains the actual bridge lane on an off-rail wet entry, while a centered crossing succeeds', () => {
     const seed = 'wizard-realms'
     const site = resolvePublicV17GreenwaySite(seed, 'works4:bridge:greenway-creek:-14')

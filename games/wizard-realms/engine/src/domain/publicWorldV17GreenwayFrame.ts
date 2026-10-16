@@ -175,7 +175,7 @@ export function advancePublicV17GreenwayFrame(progress: PublicV17Progress,
   events: [...events, ...sale.events], rejections: [] }
 }
 
-/** Core actions retain v14 rules only at poses valid on both support surfaces. */
+/** Core actions retain v14 rules; portable equipment also works on v17 bridge support. */
 export function advancePublicV17GreenwayAction(before: PublicV17Progress,
   intent: PublicWorldIntent): PublicV17GreenwayFrameResult {
   const rejectAction = (code: PublicWorldRejection['code']) => ({ progress: before,
@@ -184,13 +184,15 @@ export function advancePublicV17GreenwayAction(before: PublicV17Progress,
   const valid = decodePublicV17Progress(before, before?.state?.seed)
   if (!valid || valid.state.movementOwner !== 'greenway') return rejectAction('unavailable_here')
   const magic = intent?.type === 'study_inscription' || intent?.type === 'cast_spell'
+  const portable = intent?.type === 'equip_item' || intent?.type === 'unequip_item'
+  const projected = magic || portable
   const state = valid.state
-  const oldSupport = magic ? starterCliffSupportAt({ seed: state.seed,
+  const oldSupport = projected ? starterCliffSupportAt({ seed: state.seed,
     profile: state.generationProfile,
     route: state.greenway.routes.find((entry) => entry.id === 'greenway_ladder') ?? null,
     built: state.greenway.builtRouteIds.includes('greenway_ladder') },
   state.player.position) : null
-  const core = magic ? { ...state, player: { ...state.player,
+  const core = projected ? { ...state, player: { ...state.player,
     position: oldSupport
       ? { ...state.player.position, y: oldSupport.floorY }
       : createFreshPublicV14State(state.seed).player.position,
@@ -203,7 +205,7 @@ export function advancePublicV17GreenwayAction(before: PublicV17Progress,
   try {
     const result = advancePublicV14GreenwayAction(core, intent, magic, state.player.position)
     if (result.rejections.length) return { progress: before, events: [], rejections: result.rejections }
-    const nextState = magic ? { ...result.state, player: { ...result.state.player,
+    const nextState = projected ? { ...result.state, player: { ...result.state.player,
       position: { ...state.player.position } } } : result.state
     const next = decodePublicV17Progress({ state: nextState,
       greenwayWorks: valid.greenwayWorks }, valid.state.seed)
