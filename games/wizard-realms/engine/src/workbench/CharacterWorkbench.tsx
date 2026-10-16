@@ -23,6 +23,21 @@ const REFERENCE_PANELS: Partial<Record<CameraView, number>> = {
   side: 2,
   back: 3,
 }
+const FIXED_COMPARISON_CENTER: THREE.Vector3Tuple = [0, 1.13, 0]
+const FIXED_COMPARISON_SIZE: THREE.Vector3Tuple = [1.3, 2.5, 1.3]
+const RULER_POSITIONS: Readonly<Partial<Record<CameraView, THREE.Vector3Tuple>>> = {
+  front: [0.9, 0, 0],
+  side: [0, 0, 0.9],
+  back: [-0.9, 0, 0],
+  'three-quarter': [0.7, 0, 0.7],
+}
+const VIEW_COMPARISONS: Readonly<Record<CameraView, string>> = {
+  front: 'NO-GO: separate facial pieces and cylindrical sleeves lack the approved sculpted face and tailored shoulder shape.',
+  'three-quarter': 'NO-GO: intersecting cowl, torso, and robe shells lose the continuous cloth volume and folds of the sheet.',
+  side: 'NO-GO: the face profile, flat hair mass, and boot shape do not match the approved silhouette.',
+  back: 'NO-GO: exposed rear scalp and plain robe surface lack the layered hair and cloth construction in the sheet.',
+  top: 'No approved top view exists. Inspect geometry here, but do not infer a top-view art approval from the sheet.',
+}
 
 interface AssetBoundaryProps {
   readonly resetKey: string
@@ -46,10 +61,11 @@ class AssetBoundary extends Component<AssetBoundaryProps, { failed: boolean; res
   render() { return this.state.failed ? null : this.props.children }
 }
 
-function CameraControls({ view, fitToken, bounds }: {
+function CameraControls({ view, fitToken, bounds, comparisonLocked }: {
   readonly view: CameraView
   readonly fitToken: number
   readonly bounds?: CharacterStats['bounds']
+  readonly comparisonLocked: boolean
 }) {
   const { camera, gl, size } = useThree()
   const controlsRef = useRef<OrbitControls | null>(null)
@@ -72,9 +88,12 @@ function CameraControls({ view, fitToken, bounds }: {
   useEffect(() => {
     const controls = controlsRef.current
     if (!controls) return
-    const center = bounds?.center ?? [0, 1.1, 0]
-    const height = Math.max(bounds?.size[1] ?? 2.25, 1.8)
-    const width = Math.max(bounds?.size[0] ?? 1.25, bounds?.size[2] ?? 0.8)
+    controls.enabled = !comparisonLocked
+    controls.enableDamping = !comparisonLocked
+    const center = comparisonLocked ? FIXED_COMPARISON_CENTER : bounds?.center ?? [0, 1.1, 0]
+    const frameSize = comparisonLocked ? FIXED_COMPARISON_SIZE : bounds?.size ?? [1.25, 2.25, 0.8]
+    const height = Math.max(frameSize[1], 1.8)
+    const width = Math.max(frameSize[0], frameSize[2])
     const aspect = Math.max(size.width / Math.max(size.height, 1), 0.3)
     const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 35
     const halfFov = THREE.MathUtils.degToRad(fov) / 2
@@ -86,9 +105,9 @@ function CameraControls({ view, fitToken, bounds }: {
     controls.target.set(center[0], center[1], center[2])
     camera.lookAt(controls.target)
     controls.update()
-  }, [bounds, camera, fitToken, size.height, size.width, view])
+  }, [bounds, camera, comparisonLocked, fitToken, size.height, size.width, view])
 
-  useFrame(() => controlsRef.current?.update())
+  useFrame(() => { if (!comparisonLocked) controlsRef.current?.update() })
   return null
 }
 
@@ -100,6 +119,19 @@ function StudioFloor() {
     </mesh>
     <gridHelper args={[6, 12, '#91928f', '#b6b6b2']} position={[0, -0.012, 0]} />
   </>
+}
+
+function MeterRuler({ view }: { readonly view: CameraView }) {
+  const position = RULER_POSITIONS[view]
+  if (!position) return null
+  const rotation = view === 'side' ? Math.PI / 2 : view === 'three-quarter' ? Math.PI / 4 : 0
+  return <group position={position} rotation={[0, rotation, 0]}>
+    <mesh position={[0, 1, 0]}><boxGeometry args={[0.018, 2, 0.018]} /><meshBasicMaterial color="#50315d" /></mesh>
+    {[0, 0.5, 1, 1.5, 2].map((height) => <mesh key={height} position={[0, height, 0]}>
+      <boxGeometry args={[height === 0 || height === 2 ? 0.22 : 0.14, 0.022, 0.022]} />
+      <meshBasicMaterial color="#50315d" />
+    </mesh>)}
+  </group>
 }
 
 function formatDuration(value: number) { return `${value.toFixed(2)}s` }
@@ -117,6 +149,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [turntable, setTurntable] = useState(false)
   const [showReference, setShowReference] = useState(true)
+  const [comparisonLocked, setComparisonLocked] = useState(true)
   const [stats, setStats] = useState<CharacterStats>()
   const [loadError, setLoadError] = useState<string>()
   const [clipError, setClipError] = useState<string>()
@@ -135,6 +168,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
     setShowSkeleton(false)
     setTurntable(false)
     setShowReference(true)
+    setComparisonLocked(true)
   }, [])
 
   useEffect(() => {
@@ -180,7 +214,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
     </p>
 
     <div className="character-workbench__layout">
-      <section className="character-workbench__stage" aria-label="Interactive 3D character viewer and approved reference">
+      <section className={`character-workbench__stage${comparisonLocked && showReference ? ' character-workbench__stage--compare' : ''}`} aria-label="Interactive 3D character viewer and approved reference">
         <div className="character-workbench__stage-viewer">
           <Canvas
           camera={{ fov: 35, near: 0.01, far: 100, position: [3.4, 2.2, 4.3] }}
@@ -194,8 +228,9 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           <hemisphereLight args={['#f3f5f7', '#8b8178', 1.35]} />
           <directionalLight castShadow position={[3.5, 7, 5]} intensity={3.1} shadow-mapSize={[1024, 1024]} shadow-camera-left={-3} shadow-camera-right={3} shadow-camera-top={4} shadow-camera-bottom={-2} />
           <directionalLight position={[-4, 3, -4]} color="#d6c4ff" intensity={1.4} />
-          <CameraControls view={cameraView} fitToken={fitToken} bounds={stats?.bounds} />
+          <CameraControls view={cameraView} fitToken={fitToken} bounds={stats?.bounds} comparisonLocked={comparisonLocked} />
           <StudioFloor />
+          {comparisonLocked && <MeterRuler view={cameraView} />}
           <AssetBoundary resetKey={candidate.id} onError={handleLoadError}>
             <Suspense fallback={null}>
               <CharacterModel
@@ -217,7 +252,8 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           {!stats && !loadError && <div className="character-workbench__loading" role="status">Loading rigged GLB…</div>}
           {loadError && <div className="character-workbench__error" role="alert">Asset load failed: {loadError}</div>}
           {clipError && <div className="character-workbench__error character-workbench__error--clip" role="alert">{clipError}</div>}
-          <p className="character-workbench__orbit-hint">Drag to orbit · wheel to zoom · right-drag to pan</p>
+          {comparisonLocked && <p className="character-workbench__meter-hint">2 m ruler · 0.5 m ticks · GLB height {stats ? `${stats.bounds.size[1].toFixed(2)} m` : 'loading'}</p>}
+          <p className="character-workbench__orbit-hint">{comparisonLocked ? `Candidate GLB · ${cameraView} · fixed metric camera` : 'Drag to orbit · wheel to zoom · right-drag to pan'}</p>
         </div>
         {showReference && <aside className="character-workbench__stage-reference" aria-label={`Approved ${cameraView} character reference`}>
           <a href={candidate.referenceUrl} target="_blank" rel="noreferrer" title="Open the full approved character sheet">
@@ -227,7 +263,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
                   alt={`Approved ${cameraView} Wayfarer pose`}
                   style={{ transform: `translateX(-${12.5 + 25 * referencePanel}%)` }} />}
           </a>
-          <span className="character-workbench__reference-caption">Approved target · {referencePanel === undefined ? 'no top view' : cameraView}</span>
+          <span className="character-workbench__reference-caption">Approved target · {referencePanel === undefined ? 'no top view' : cameraView} · sheet scale is illustrative</span>
         </aside>}
       </section>
 
@@ -238,9 +274,11 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
             {CAMERA_VIEWS.map((view, index) => <button key={view} type="button" aria-pressed={cameraView === view} onClick={() => setCameraView(view)}>{index + 1}. {view === 'three-quarter' ? '3/4' : view}</button>)}
           </div>
           <div className="character-workbench__button-grid character-workbench__button-grid--two">
-            <button type="button" onClick={() => setFitToken((value) => value + 1)}>Fit model</button>
-            <button type="button" aria-pressed={turntable} onClick={() => setTurntable((value) => !value)}>Turntable</button>
+            <button type="button" disabled={comparisonLocked} onClick={() => setFitToken((value) => value + 1)}>Fit model</button>
+            <button type="button" aria-pressed={turntable} disabled={comparisonLocked} onClick={() => setTurntable((value) => !value)}>Turntable</button>
           </div>
+          <button className="character-workbench__play" type="button" aria-pressed={comparisonLocked} onClick={() => { setComparisonLocked((value) => !value); setShowReference(true); setTurntable(false) }}>Fixed-scale comparison {comparisonLocked ? 'on' : 'off'}</button>
+          <small>Compare each angle with the same world-space camera, fitted to a 2.5 m guide with margin. Unlock to orbit and fit freely. The concept art has no measured height.</small>
         </fieldset>
 
         <fieldset>
@@ -261,7 +299,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
         <fieldset>
           <legend>Inspection</legend>
           <div className="character-workbench__button-grid character-workbench__button-grid--two">
-            <button type="button" aria-pressed={showReference} onClick={() => setShowReference((value) => !value)}>Reference</button>
+            <button type="button" aria-pressed={showReference} disabled={comparisonLocked} onClick={() => setShowReference((value) => !value)}>Reference</button>
             <button type="button" aria-pressed={wireframe} onClick={() => setWireframe((value) => !value)}>Wireframe</button>
             <button type="button" aria-pressed={showSkeleton} onClick={() => setShowSkeleton((value) => !value)}>Skeleton</button>
             <button type="button" onClick={reset}>Reset</button>
@@ -275,6 +313,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
       <div>
         <h2>Candidate inspection</h2>
         <p><strong>Status:</strong> {candidate.statusLabel}. No in-game promotion is implied by a valid rig or playable clips.</p>
+        <p className="character-workbench__view-verdict"><strong>{cameraView} comparison:</strong> {candidate.id === 'wayfarer-v2-male' ? VIEW_COMPARISONS[cameraView] : candidate.visualDebt[0]}</p>
         <ul>{candidate.visualDebt.map((debt) => <li key={debt}>{debt}</li>)}</ul>
         <h3>Loaded GLB</h3>
         <dl className="character-workbench__stats">

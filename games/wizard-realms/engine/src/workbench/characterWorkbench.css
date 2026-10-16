@@ -73,6 +73,8 @@ body:has(.character-workbench) #root {
   background: #d8d8d4;
 }
 .character-workbench__stage-viewer { position: relative; flex: 1 1 0; min-width: 0; height: 100%; }
+.character-workbench__stage--compare .character-workbench__stage-viewer,
+.character-workbench__stage--compare .character-workbench__stage-reference { flex: 0 0 50%; }
 .character-workbench__stage canvas { display: block; }
 .character-workbench__stage-reference {
   position: relative;
@@ -108,6 +110,7 @@ body:has(.character-workbench) #root {
   pointer-events: none;
 }
 .character-workbench__orbit-hint,
+.character-workbench__meter-hint,
 .character-workbench__loading,
 .character-workbench__error {
   position: absolute;
@@ -122,6 +125,8 @@ body:has(.character-workbench) #root {
   pointer-events: none;
 }
 .character-workbench__loading { top: 14px; bottom: auto; }
+.character-workbench__meter-hint { top: 14px; bottom: auto; }
+.character-workbench__loading + .character-workbench__meter-hint { top: 55px; }
 .character-workbench__error {
   top: 14px;
   bottom: auto;
@@ -162,6 +167,7 @@ body:has(.character-workbench) #root {
 }
 .character-workbench__controls select { width: 100%; padding: 5px 8px; }
 .character-workbench__controls button:hover { border-color: #b39ad5; background: #433650; }
+.character-workbench__controls button:disabled { opacity: .55; cursor: not-allowed; }
 .character-workbench__controls button[aria-pressed="true"] { border-color: #ddb1ff; background: #65447c; }
 .character-workbench__button-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-bottom: 8px; }
 .character-workbench__button-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -185,6 +191,7 @@ body:has(.character-workbench) #root {
 .character-workbench__clips { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .character-workbench__clips code { padding: 4px 7px; border-radius: 6px; background: #3d3150; }
 .character-workbench__missing-clips { color: #ffb2a2; }
+.character-workbench__view-verdict { padding: 9px 11px; border-left: 3px solid #ff9e91; background: #3b242b; color: #ffe6e1; }
 .character-workbench__comparison-images { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .character-workbench__comparison-images figure { min-width: 0; margin: 0; }
 .character-workbench__comparison-images img { display: block; width: 100%; height: 250px; object-fit: contain; border-radius: 8px; background: #bcbac0; }
