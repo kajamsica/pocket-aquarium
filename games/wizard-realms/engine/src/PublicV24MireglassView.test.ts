@@ -3,7 +3,7 @@ import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { mireglassAnchors, mireglassFairyRing, mireglassResources } from './domain/mireglassContent'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
-import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
+import { mireglassApproachTrail, mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassBermFaceRowAt } from './domain/mireglassTerrain'
 import { nearbyWorldTileIds, PUBLIC_WALK_REVEAL_RADIUS_METERS,
   PUBLIC_SPELL_REVEAL_RADIUS_METERS } from './domain/publicWorldDiscovery'
@@ -131,6 +131,57 @@ describe('V24 Mireglass read adapter', () => {
     expect(output.defaultInteractionId).toBeNull()
     expect(output.projection.checkedActionChoices).toBe(wilderness.checkedActionChoices)
     expect(output.projection.nearbyInteraction).toBe(wilderness.nearbyInteraction)
+  })
+  it('projects the V42 center-bridge approach as Mireglass without changing legacy wilderness', () => {
+    const tile = worldTileAtGrid(seed, -20, 14) // x -80, z 56: V42 route, not the old z=0 connector.
+    expect(mireglassV42FullApproachTrail(seed).some((point) =>
+      point.x === tile.center.x && point.z === tile.center.z)).toBe(true)
+    const input = at(tile)
+    const wilderness = { ...input.base, map: { ...input.base.map, title: 'Open Wilderness' } }
+    const before = JSON.stringify(input.progress)
+    const legacy = projectPublicV24Mireglass(wilderness, input.progress, input.active)
+    expect(legacy.projection.map.title).toBe('Open Wilderness')
+    expect(legacy.choices).toEqual([])
+    const learned = { ...input.progress, state: { ...input.progress.state,
+      player: { ...input.progress.state.player,
+        learnedSpellIds: ['wayfinder_glow' as const] } } }
+    const active = { ...input.active, player: learned.state.player }
+    const current = projectPublicV24Mireglass(wilderness, learned, active, 'v42-center-bridge')
+    expect(current.projection.map.title).toBe('Mireglass Reach')
+    expect(current.projection.unavailableActions).toBeUndefined()
+    expect(current.projection.map.tiles[0].hasFrontierTrail).toBe(true)
+    expect(current.choices.map((choice) => choice.id)).toContain('mireglass:cast:wayfinder_glow')
+    expect(current.projection.map.guidance).toContain('center Greenway creek bridge')
+    const hidden = at(tile, false)
+    const hiddenView = projectPublicV24Mireglass({ ...hidden.base,
+      map: { ...hidden.base.map, title: 'Open Wilderness' } }, hidden.progress,
+    hidden.active, 'v42-center-bridge')
+    expect(hiddenView.projection.map.tiles[0]).toMatchObject({ discovered: false,
+      terrain: null, hasFrontierTrail: false })
+    expect(hiddenView.projection.resources).toEqual([])
+    expect(JSON.stringify(input.progress)).toBe(before)
+  })
+
+  it('exposes the discovered V42 frontier marker interaction despite the inherited wilderness title', () => {
+    const input = at(mireglassAnchors(seed).fringeMarker.tile)
+    const wilderness = { ...input.base, map: { ...input.base.map, title: 'Open Wilderness' } }
+    expect(projectPublicV24Mireglass(wilderness, input.progress, input.active).choices).toEqual([])
+    const current = projectPublicV24Mireglass(wilderness, input.progress, input.active,
+      'v42-center-bridge')
+    expect(current.defaultInteractionId).toBe('mireglass:study:fringe_marker')
+    expect(current.projection.nearbyInteraction?.actionable).toBe(true)
+  })
+
+  it.each([0, 1])('does not reactivate V24 choices on the obsolete V42 west-only connector at z=%i', (gridZ) => {
+    const input = at(worldTileAtGrid(seed, -20, gridZ))
+    const legacyTitle = { ...input.base, map: { ...input.base.map,
+      title: 'mireglass_reach' } }
+    const current = projectPublicV24Mireglass(legacyTitle, input.progress,
+      input.active, 'v42-center-bridge')
+    expect(current.choices).toEqual([])
+    expect(current.defaultInteractionId).toBeNull()
+    expect(current.projection.unavailableActions).toBe(true)
+    expect(current.projection.map.tiles[0].hasFrontierTrail).toBe(false)
   })
   it('leaves Greenway projections untouched', () => {
     const input = at(mireglassAnchors(seed).fringeMarker.tile)

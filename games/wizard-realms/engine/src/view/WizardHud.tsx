@@ -698,7 +698,9 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
                 : works3Greenway || works4Greenway
                 ? 'Greenway Works include creek bridges, cliff ladders, and far-bank digs. Gather logs or equip a spade.'
                 : 'Starter Works are near the south creek. Gather logs, then use Bridge; a spade enables Dig across it.'
-              : 'Works start in Mireglass. Follow the ⇦ west trail, then choose Bridge, Ladder, or Dig at discovered ground.'}</p>}
+              : projection.v42IronHall
+                ? 'Mireglass Works are beyond the center Greenway creek bridge. Build it before crossing if needed, then choose Bridge, Ladder, or Dig at discovered ground.'
+                : 'Works start in Mireglass. Follow the ⇦ west trail, then choose Bridge, Ladder, or Dig at discovered ground.'}</p>}
         {unbuiltRoutePreview && <p className="wr-caption" role="note">
           Placement preview only. Confirm the build before crossing or climbing.
         </p>}
@@ -749,7 +751,9 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
                 ? works3Greenway || works4Greenway
                   ? 'Explore Greenway to reveal a creek bridge, clear cliff ladder, or dry dig patch.'
                   : 'Explore the south creek to reveal the starter bridge; cross it to find the dig patch.'
-                : 'Follow the west trail into Mireglass to unlock saved Bridge, Ladder, and Dig previews.'}</p>
+                : projection.v42IronHall
+                  ? 'Use the center Greenway creek bridge, building it before crossing if needed, to reach Mireglass Works.'
+                  : 'Follow the west trail into Mireglass to unlock saved Bridge, Ladder, and Dig previews.'}</p>
           {savedWorks.actionsEnabled && workPreview?.nearby.length === 0 && <p className="wr-caption">
             {greenwayWorks
               ? works3Greenway || works4Greenway

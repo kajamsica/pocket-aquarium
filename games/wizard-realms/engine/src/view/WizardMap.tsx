@@ -134,6 +134,7 @@ function Tile({ tile, player, cacheLabel, onSelect, tabIndex, selected }: {
   const upperShelf = naturalShelf(tile)
   const campSuitable = !!onSelect && tile.discovered && tile.campSuitable === true
   const westTrail = tile.hasWestTrail === true
+  const centerBridgeRoute = tile.hasCenterBridgeRoute === true
   const eastTrail = tile.discovered && tile.hasEastTrail === true
   const frontierMarker = tile.hasFrontierMarker === true
   const frontierTrail = tile.hasFrontierTrail === true
@@ -141,16 +142,16 @@ function Tile({ tile, player, cacheLabel, onSelect, tabIndex, selected }: {
   const highlandNode = tile.discovered && tile.hasHighlandNode === true
   const highlandTrail = tile.discovered && tile.hasHighlandTrail === true
   const mireglassTimber = tile.discovered && tile.hasMireglassTimber === true
-  const landmark = westTrail ? '⇦' : eastTrail ? '⇨' : frontierMarker ? 'M' : tile.discovered
+  const landmark = centerBridgeRoute ? '⇣' : westTrail ? '⇦' : eastTrail ? '⇨' : frontierMarker ? 'M' : tile.discovered
     ? camp ? 'C' : campSuitable ? '⌂' : bridgehead ? 'P' : tile.hasCache ? '✦' : highlandLandmark ? 'Q'
       : highlandNode ? tile.highlandNodeReady ? '◆' : '◌'
         : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : digSite ? '⌄' : store ? 'S' : tile.hasRing ? 'R' : mireglassTimber ? '♣' : tile.hasResource ? '•' : highlandTrail || frontierTrail ? '·' : ''
     : frontierTrail ? '·' : '?'
-  const occupiedBadge = camp ? 'C' : campSuitable ? '⌂' : bridgehead ? 'P' : westTrail ? '⇦' : eastTrail ? '⇨'
+  const occupiedBadge = camp ? 'C' : campSuitable ? '⌂' : bridgehead ? 'P' : centerBridgeRoute ? '⇣' : westTrail ? '⇦' : eastTrail ? '⇨'
     : highlandLandmark ? 'Q' : highlandNode ? tile.highlandNodeReady ? '◆' : '◌'
       : store ? 'S' : waystone ? 'W' : builtRoute ? '✓' : routeSite ? '◇' : digSite ? '⌄' : mireglassTimber ? '♣' : null
   const Element = onSelect ? 'button' : 'span'
-  return <Element type={onSelect ? 'button' : undefined} role={onSelect ? undefined : 'img'} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: upperShelf ? '#91ab82' : tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e', ...(raised ? { boxShadow: 'inset 0 0 0 2px #9fdcb3, inset 0 0 8px #101b18' } : lowered ? { boxShadow: 'inset 0 0 0 2px #d3a66f, inset 0 0 8px #101b18' } : upperShelf ? { boxShadow: 'inset 0 0 0 2px #dbe8c4' } : {}) }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${upperShelf ? ', natural upper shelf' : ''}${bridgehead ? ', River Works survey post' : ''}${westTrail ? ', west trail to Mireglass' : ''}${eastTrail ? ', east trail toward Highland Quarry' : ''}${frontierTrail ? ', marked frontier trail' : ''}${highlandTrail ? ', walked quarry path' : ''}${frontierMarker ? ', frontier marker' : ''}${highlandLandmark ? ', Quarry Crown' : ''}${highlandNode ? tile.highlandNodeReady ? ', ready stone shelf' : ', recovering stone shelf' : ''}${mireglassTimber ? ', harvestable dry Mireglass timber' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${raised ? `, raised soil top at ${tile.elevationMeters!.toFixed(2)} m` : lowered ? `, lowered ground at ${tile.elevationMeters!.toFixed(2)} m` : ''}${routeSite ? ', route build site' : ''}${digSite ? ', dig site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
+  return <Element type={onSelect ? 'button' : undefined} role={onSelect ? undefined : 'img'} tabIndex={tabIndex} data-camp-tile={onSelect ? tile.id : undefined} aria-pressed={onSelect ? selected : undefined} onClick={onSelect ? () => onSelect(tile.id) : undefined} className="wr-map-tile" data-discovered={tile.discovered} style={{ position: 'relative', background: upperShelf ? '#91ab82' : tile.terrain ? TERRAIN[tile.terrain as keyof typeof TERRAIN] : '#17201e', ...(raised ? { boxShadow: 'inset 0 0 0 2px #9fdcb3, inset 0 0 8px #101b18' } : lowered ? { boxShadow: 'inset 0 0 0 2px #d3a66f, inset 0 0 8px #101b18' } : upperShelf ? { boxShadow: 'inset 0 0 0 2px #dbe8c4' } : {}) }} aria-label={`${tile.id}: ${tile.discovered ? tile.biome : 'unexplored'}${occupied ? ', player location' : ''}${upperShelf ? ', natural upper shelf' : ''}${bridgehead ? ', River Works survey post' : ''}${centerBridgeRoute ? ', center creek bridge toward Mireglass; build before crossing' : ''}${westTrail ? ', west trail to Mireglass' : ''}${eastTrail ? ', east trail toward Highland Quarry' : ''}${frontierTrail ? ', marked frontier trail' : ''}${highlandTrail ? ', walked quarry path' : ''}${frontierMarker ? ', frontier marker' : ''}${highlandLandmark ? ', Quarry Crown' : ''}${highlandNode ? tile.highlandNodeReady ? ', ready stone shelf' : ', recovering stone shelf' : ''}${mireglassTimber ? ', harvestable dry Mireglass timber' : ''}${store ? ', store' : ''}${waystone ? ', Greenway waystone' : ''}${tile.discovered && tile.hasCache ? `, ${cacheLabel}` : ''}${raised ? `, raised soil top at ${tile.elevationMeters!.toFixed(2)} m` : lowered ? `, lowered ground at ${tile.elevationMeters!.toFixed(2)} m` : ''}${routeSite ? ', route build site' : ''}${digSite ? ', dig site' : ''}${builtRoute ? ', completed route' : ''}${campSuitable ? ', suitable field camp ground' : ''}${camp ? ', field camp' : ''}`}>
     <b style={occupied ? { transform: `rotate(${mapHeadingRotation(player.yaw)}rad)`,
       ...(upperShelf ? { color: '#1b2b21' } : {}) }
       : upperShelf ? { color: '#1b2b21' } : campSuitable ? { color: '#ffe395' }
@@ -214,7 +215,8 @@ export function OverviewGrid({ overview }: { overview: WizardWorldOverview }) {
         : cell.markers.some((label) => /Ring/.test(label)) ? 'R'
           : cell.markers.some((label) => /built/.test(label)) ? '✓'
             : cell.markers.some((label) => /cache/.test(label)) ? '✦'
-              : cell.markers.some((label) => /trail/.test(label)) ? '⇦'
+              : cell.markers.some((label) => /Center creek bridge to Mireglass/.test(label)) ? '⇣'
+                : cell.markers.some((label) => /trail/.test(label)) ? '⇦'
                 : cell.markers.some((label) => /waystone/.test(label)) ? 'W'
                   : cell.markers.length ? '•' : cell.discoveredCells ? '·' : '?'
       const exploration = cell.discoveredCells === 0 ? 'unexplored'
@@ -466,7 +468,9 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
           ? 'South of spawn, discover both creek banks for a bridge. North of spawn, discover both cliff ledges for an upright ladder. The fixed starter ladder remains at the center; free placement on clear cliff face is off-center. Move the Works ghost along the obstacle with the reticle or aim slider.'
         : works3Greenway
           ? 'South of spawn, reveal creek bridge sites. The fixed starter cliff ladder is centered; Works can add clear off-center ladders. Follow the selected Works preview coordinates for the structure F will build. Bridge and ladder building is limited to discovered obstacle sites; freeform placement is a future system.'
-        : 'From Greenway, follow the west trail (⇦) through the dry gap into Mireglass. Explore on foot to chart ground; hidden work sites stay off the map.'}</p>
+        : projection.v42IronHall
+          ? 'From Greenway, use the center creek bridge, building it before crossing if needed. Follow revealed dry ground to the Mireglass frontier marker; hidden work sites stay off the map.'
+          : 'From Greenway, follow the west trail (⇦) through the dry gap into Mireglass. Explore on foot to chart ground; hidden work sites stay off the map.'}</p>
       <p>{v28River
         ? 'Gather 8 logs. Stand grounded in the marked dry source-bank cell, within 3 m of its foot. A blocked preview states the actual reason; do not step into the water before the deck is built.'
         : starterGreenwayWorks
@@ -503,7 +507,9 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
           : v28River ? 'Gather logs and reveal a complete supported crossing before trying Works again.'
           : starterGreenwayWorks ? 'Gather logs for the bridge, then equip a field spade for the far-bank dig.'
             : works3Greenway || works4Greenway ? 'Gather logs for bridges and ladders, or equip a spade for far-bank digging.'
-            : 'Gather logs and equip a field spade before heading west. Saved building and digging become available beyond Greenway.'}</p>
+            : projection.v42IronHall
+              ? 'Gather logs and equip a field spade before using the center creek bridge. Saved building and digging become available beyond Greenway.'
+              : 'Gather logs and equip a field spade before heading west. Saved building and digging become available beyond Greenway.'}</p>
       {projection.savedTerrainWorks.preview?.guidance && (!v26Terrain || v28River) && <p role="note">{projection.savedTerrainWorks.preview.guidance}</p>}
       {(works4Greenway ? knownWorks : projection.savedTerrainWorks.preview?.nearby ?? [])
         .map(({ site, distanceMeters, benefit, reason }) => <p key={site.id}>

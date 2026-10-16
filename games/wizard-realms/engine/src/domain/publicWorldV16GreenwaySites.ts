@@ -1,4 +1,3 @@
-import { publicV14InsideGreenway } from './publicWorldV14Boundary'
 import { STORE_HALF_DEPTH, STORE_HALF_WIDTH } from './generation'
 import { PUBLIC_V15_STARTER_BRIDGE_WIDTH_METERS, PUBLIC_V15_STARTER_CREEK_BOUNDS,
   publicWorldV15ClearStarterResources, publicWorldV15StarterTileAtGrid } from './publicWorldV15StarterSites'
@@ -8,6 +7,11 @@ import { WORLD_GRID_MAX, WORLD_GRID_MIN } from './worldChunks'
 
 export const PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID = 'works3:bridge:0' as const
 export const PUBLIC_V16_GREENWAY_AUTHORED_DIG_ID = 'works3:dig:1:3' as const
+
+/** The V14 owner rectangle, kept acyclic so world support can be read during content initialization. */
+export const publicV16InsideGreenway = (point: Readonly<{ x: number; z: number }>): boolean =>
+  Number.isFinite(point.x) && Number.isFinite(point.z)
+    && point.x >= -30 && point.x <= 34 && point.z >= -30 && point.z <= 34
 
 const CELL = 4
 const MAX_WINDOW_CELLS = 16
@@ -88,7 +92,7 @@ export function publicWorldV16TileAtGrid(seed: string, gx: number, gz: number): 
 
 const dry = (tile: WorldTile) => tile.terrain !== 'wetland'
 const step = (a: WorldTile, b: WorldTile) => Math.abs(a.center.y - b.center.y) <= MAX_GROUND_STEP
-const inGreenway = (tile: WorldTile) => publicV14InsideGreenway(tile.center)
+const inGreenway = (tile: WorldTile) => publicV16InsideGreenway(tile.center)
 const seam = (gz: number) => gz === -1 || gz === -2
 
 type Context = ReturnType<typeof context>

@@ -17,6 +17,7 @@ import { pickV26TerrainColumn, type V26PickedTerrainColumn, type V26TerrainPickK
 import { highlandRidgeCellAt, highlandRidgeMoveBarrier } from '../domain/highlandRidge'
 import { discoveredTileSet } from '../domain/publicWorldDiscovery'
 import { publicV25RiverCellAtGrid } from '../domain/publicWorldV25River'
+import { mireglassV42FullApproachTrail } from '../domain/mireglassApproachTrail'
 import { publicV26TerrainCellIsWet } from '../domain/publicWorldV26TerrainSurface'
 import { publicV14InsideGreenway } from '../domain/publicWorldV14Boundary'
 import { publicV23PlacementId, resolvePublicV23Site } from '../domain/publicWorldV23Sites'
@@ -1866,12 +1867,61 @@ function IronHallWard({ position, phase, defeated }: {
   </group>
 }
 
+type V42TrailSegment = NonNullable<WizardTerrainCell['mireglassTrailSegment']>
+const v42TrailLayouts = new Map<string, ReadonlyMap<string, V42TrailSegment>>()
+const routeCellKey = (x: number, z: number) =>
+  `${Math.ceil(x / WORLD_CELL_METERS - 0.5)}:${Math.ceil(z / WORLD_CELL_METERS - 0.5)}`
+const routeMidpoint = (a: Readonly<{ x: number; z: number }>, b: Readonly<{ x: number; z: number }>) =>
+  [(a.x + b.x) / 2, (a.z + b.z) / 2] as const
+
+/** V42-only, display-only center-bridge trail. The actual bridge owns the wet gap. */
+function v42TrailLayout(seed: string): ReadonlyMap<string, V42TrailSegment> {
+  const cached = v42TrailLayouts.get(seed)
+  if (cached) return cached
+  const points = mireglassV42FullApproachTrail(seed)
+  const layout = new Map<string, V42TrailSegment>()
+  for (let index = 0; index < points.length; index += 1) {
+    if (index === 2) continue // The creek gap is bridged by Works, not painted as ground.
+    const point = points[index]
+    const before = index === 0 || index === 3
+      ? [point.x, point.z] as const : routeMidpoint(points[index - 1], point)
+    const after = index === 1 || index === points.length - 1
+      ? [point.x, point.z] as const : routeMidpoint(point, points[index + 1])
+    layout.set(routeCellKey(point.x, point.z), { from: before, to: after })
+  }
+  v42TrailLayouts.set(seed, layout)
+  if (v42TrailLayouts.size > 8) v42TrailLayouts.delete(v42TrailLayouts.keys().next().value!)
+  return layout
+}
+
+/** No saved terrain or movement rule is changed by this visual-only replacement. */
+export function v42TrailTerrainFor(seed: string, cells: readonly WizardTerrainCell[],
+  openPitColumns?: WizardViewProjection['v26OpenPitColumns']): readonly WizardTerrainCell[] {
+  const layout = v42TrailLayout(seed)
+  const pits = new Set(openPitColumns?.filter(({ openDepth }) => openDepth > 0)
+    .map(({ gx, gz }) => `${gx}:${gz}`))
+  return cells.map((cell) => {
+    const [x, , z] = cell.position
+    const key = routeCellKey(x, z)
+    const canonical = cell.size[0] === WORLD_CELL_METERS && cell.size[1] === WORLD_CELL_METERS
+      && Number.isInteger(x / WORLD_CELL_METERS) && Number.isInteger(z / WORLD_CELL_METERS)
+      && cell.id === `tile-${x / WORLD_CELL_METERS + 3}-${z / WORLD_CELL_METERS + 3}`
+    const planned = layout.get(key)
+    const segment = planned && canonical && !pits.has(key)
+      && !publicV25RiverCellAtGrid(seed, x / WORLD_CELL_METERS, z / WORLD_CELL_METERS)
+      && cell.mireglassTerrain !== 'wetland' ? planned : undefined
+    if (!cell.mireglassApproach && !cell.mireglassTrailSegment && !segment) return cell
+    const { mireglassApproach: _oldApproach, mireglassTrailSegment: _oldTrail, ...plain } = cell
+    return segment ? { ...plain, mireglassApproach: true, mireglassTrailSegment: segment } : plain
+  })
+}
+
 /** One bounded scene partition for public discoveries and the opt-in ordinary preview. */
-export function sceneTerrainFor(projection: WizardViewProjection) {
-  const visual = projection.visualWorld ?? projection
+export function sceneTerrainFor(projection: WizardViewProjection,
+  terrain = (projection.visualWorld ?? projection).terrain) {
   const discoveryIds = projection.visualWorld?.discoveredTileIds ?? projection.previewSceneDiscoveryIds
   const discovered = discoveryIds === undefined ? null : discoveredTileSet(discoveryIds)
-  const visibleTerrain = visibleTerrainCells(visual.terrain, projection.player.position,
+  const visibleTerrain = visibleTerrainCells(terrain, projection.player.position,
     projection.visualWorld ? PUBLIC_VISUAL_RADIUS_CELLS : undefined)
   return {
     revealedTerrain: discovered ? visibleTerrain.filter((cell) => discovered.has(cell.id)) : visibleTerrain,
@@ -2059,7 +2109,11 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   const graphics = sceneGraphicsOptionsForSearch(typeof window === 'undefined' ? '' : window.location.search)
   // Region ownership controls actions and HUD state, never which established scenery exists.
   const visual = projection.visualWorld ?? projection
-  const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection)
+  const v42 = !!projection.v42IronHall
+  const visualTerrain = useMemo(() => v42 ? v42TrailTerrainFor(projection.seed, visual.terrain,
+    projection.v26OpenPitColumns)
+    : visual.terrain, [v42, visual.terrain, projection.seed, projection.v26OpenPitColumns])
+  const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection, visualTerrain)
   const hallSite = projection.v41IronHallSite
   const quartermasterSite = projection.v42QuartermasterSite
   const quartermasterVisible = quartermasterSite?.revealed && revealedTerrain.some((cell) =>
@@ -2103,7 +2157,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     }
   }, [hoverSurface, v26HoverEnabled, hoverPickKind])
   const targetedTerrain = v26TargetedTerrainCell(projection, revealedTerrain, hoveredTerrain)
-  const terrainRevision = terrainSignature(visual.terrain)
+  const terrainRevision = terrainSignature(visualTerrain)
   const v27SurfaceReady = projection.v27WalkableSurface === true
     && Boolean(projection.v26ValleyRimSegments?.length)
     && projection.v26OpenPitColumns !== undefined
@@ -2114,7 +2168,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   const raisedSignature = projection.v31Soil?.raisedCells.map(({ gx, gz }) => `${gx},${gz}`).join('|') ?? ''
   // A classic projection may recreate equal cells at 20 Hz; reuse the presentation lookup by content.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const terrainSampler = useMemo(() => createTerrainSurfaceSampler(projection.seed, visual.terrain,
+  const terrainSampler = useMemo(() => createTerrainSurfaceSampler(projection.seed, visualTerrain,
     terrainAppearanceFor, projection.v26ValleyRimSegments !== undefined || projection.v27WalkableSurface === true,
     v27SurfaceReady ? { rimSegments: projection.v26ValleyRimSegments!,
       openPitColumns: projection.v26OpenPitColumns! } : undefined,
@@ -2247,7 +2301,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       <CameraRig pose={pose} cameraOrbit={cameraOrbit} orbiting={orbiting} stores={visual.stores}
         highlandRidgeActive={projection.highlandRidgeActive === true} />
       <TerrainSurfaceLayer seed={projection.seed} cells={revealedTerrain}
-        allCells={visual.terrain} appearanceFor={terrainAppearanceFor}
+        allCells={visualTerrain} appearanceFor={terrainAppearanceFor}
         discoveryFog={discoveryFog} v26RimSegments={projection.v26ValleyRimSegments}
         v27WalkableSurface={projection.v27WalkableSurface}
         v26OpenPitColumns={projection.v26OpenPitColumns}
@@ -2265,7 +2319,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       <MireglassWaterLayer seed={projection.seed} cells={revealedTerrain} />
       {(projection.v25RiverActive || projection.savedTerrainWorks?.context === 'works4-greenway')
         && <GreenwayCreekWaterLayer seed={projection.seed} cells={revealedTerrain}
-          allCells={visual.terrain} appearanceFor={terrainAppearanceFor}
+          allCells={visualTerrain} appearanceFor={terrainAppearanceFor}
           v25RiverActive={projection.v25RiverActive} />}
       <MireglassCliffLayer seed={projection.seed} cells={revealedTerrain} />
       {projection.highlandRidgeActive && <HighlandRidgeLayer cells={revealedTerrain}

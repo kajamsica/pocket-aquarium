@@ -3,6 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import * as THREE from 'three'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
+import { mireglassFullApproachTrail, mireglassV42FullApproachTrail } from '../domain/mireglassApproachTrail'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from '../domain/discoveryMask'
 import { discoveredTileIdsInActiveWindow } from '../domain/publicV13DiscoveryWindow'
 import { publicWorldV16TileAtGrid, resolvePublicV16GreenwaySite } from '../domain/publicWorldV16GreenwaySites'
@@ -14,11 +15,11 @@ import { publicWorldV16ViewProjection } from '../PublicV16WorldView'
 import { displayPublicV28RiverBridge } from '../PublicV28WorldView'
 import { resolveTerrainWorkSite } from '../domain/terrainWorks'
 import { highlandRidgeCellAt } from '../domain/highlandRidge'
-import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
+import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from '../domain/worldChunks'
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, v26TargetedTerrainCell, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -58,6 +59,52 @@ describe('finite world bedrock', () => {
     expect(WORLD_BEDROCK_BOUNDS.centerZ).toBe(-2)
     expect(WORLD_BEDROCK_BOUNDS.width).toBe(2048)
     expect(WORLD_BEDROCK_BOUNDS.depth).toBe(2048)
+  })
+})
+
+describe('V42 center-bridge scene trail', () => {
+  it('replaces the obsolete west trail on dry cells without mutating source terrain or older views', () => {
+    const seed = 'wizard-realms'
+    const current = mireglassV42FullApproachTrail(seed)
+    const currentKeys = new Set(current.map(({ x, z }) => `${x}:${z}`))
+    const old = mireglassFullApproachTrail(seed).find(({ x, z }) =>
+      !currentKeys.has(`${x}:${z}`) && x === -32 && z === 0)!
+    const point = current.slice(5).find(({ x, z }) =>
+      Number.isInteger(x / 4) && Number.isInteger(z / 4))!
+    const next = current.slice(6).find(({ x, z }) =>
+      Number.isInteger(x / 4) && Number.isInteger(z / 4)
+        && (x !== point.x || z !== point.z))!
+    const cell = ({ x, z }: { x: number; z: number }): WizardTerrainCell => {
+      const tile = worldTileAtGrid(seed, x / 4, z / 4)
+      return { id: tile.id, position: [x, tile.center.y, z], size: [4, 4],
+        height: tile.center.y, climate: 'temperate_forest' }
+    }
+    const oldCell = { ...cell(old), mireglassApproach: true,
+      mireglassTrailSegment: { from: [old.x - 2, old.z] as const,
+        to: [old.x + 2, old.z] as const } }
+    const currentCell = cell(point)
+    const hiddenCell = cell(next)
+    const gapCell: WizardTerrainCell = { id: 'tile-3-5', position: [0, 0, 8],
+      size: [4, 4], height: 0, climate: 'temperate_forest' }
+    const source = [oldCell, currentCell, hiddenCell, gapCell]
+    const before = JSON.stringify(source)
+    const dressed = v42TrailTerrainFor(seed, source)
+    expect(dressed[0]).not.toHaveProperty('mireglassTrailSegment')
+    expect(dressed[0]).not.toHaveProperty('mireglassApproach')
+    expect(dressed[1].mireglassTrailSegment).toBeDefined()
+    expect(dressed[2].mireglassTrailSegment).toBeDefined()
+    expect(dressed[3].mireglassTrailSegment).toBeUndefined()
+    expect(JSON.stringify(source)).toBe(before)
+    const projection = { seed, player: { position: currentCell.position }, visualWorld: {
+      terrain: source, discoveredTileIds: [oldCell.id, currentCell.id] } } as unknown as WizardViewProjection
+    expect(sceneTerrainFor(projection).revealedTerrain.find((tile) => tile.id === oldCell.id))
+      .toBe(oldCell) // V6-V41 still use their existing scene cells.
+    const visible = sceneTerrainFor(projection, dressed).revealedTerrain
+    expect(visible.map(({ id }) => id)).toEqual([oldCell.id, currentCell.id])
+    expect(visible.find((tile) => tile.id === oldCell.id)?.mireglassTrailSegment).toBeUndefined()
+    expect(visible.find((tile) => tile.id === currentCell.id)?.mireglassTrailSegment).toBeDefined()
+    expect(v42TrailTerrainFor(seed, source, [{ gx: point.x / 4, gz: point.z / 4,
+      openDepth: 1 }])[1].mireglassTrailSegment).toBeUndefined()
   })
 })
 

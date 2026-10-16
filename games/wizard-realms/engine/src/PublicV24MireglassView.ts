@@ -3,7 +3,8 @@ import { applyMireglassExpeditionAction, MIREGLASS_OUTPOST_CATALOG,
   MIREGLASS_OUTPOST_SELL_PRICES } from './domain/mireglassExpedition'
 import { applyMireglassHerbForage, HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
-import { mireglassFullApproachTrail } from './domain/mireglassApproachTrail'
+import { mireglassFrontierRoute, mireglassFullApproachTrail,
+  mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassPlateauAt } from './domain/mireglassTerrain'
 import type { PublicV24MireglassAction } from './domain/publicWorldV24MireglassAction'
 import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
@@ -54,18 +55,27 @@ function prompt(choice: PublicV24MireglassChoice): WizardInteractionPrompt {
 export function projectPublicV24Mireglass(base: WizardViewProjection,
   progress: PublicV23Progress & { terrain?: { columns: readonly {
     gx: number; gz: number; openDepth: number }[] } },
-  active: PublicV17ActiveView): PublicV24MireglassView {
+  active: PublicV17ActiveView,
+  routeRevision: 'legacy' | 'v42-center-bridge' = 'legacy'): PublicV24MireglassView {
   const { state } = progress
   if (state.movementOwner !== 'streamed') return {
     projection: base, choices: [], defaultInteractionId: null,
   }
   const { seed, player, mireglass } = state
-  const trailTileIds = new Set(mireglassFullApproachTrail(seed).map(({ x, z }) =>
+  const v42Route = routeRevision === 'v42-center-bridge'
+  const trail = v42Route ? mireglassV42FullApproachTrail(seed) : mireglassFullApproachTrail(seed)
+  const trailTileIds = new Set(trail.map(({ x, z }) =>
     `tile-${x / 4 + 3}-${z / 4 + 3}`))
   const trailTiles = base.map.tiles.map((tile) => ({ ...tile,
     hasFrontierTrail: tile.discovered && (tile.hasFrontierTrail === true
       || trailTileIds.has(tile.id)) }))
-  const region = base.map.title === 'mireglass_reach'
+  const nearTrail = v42Route && trail.some((point) => Math.hypot(
+    player.position.x - point.x, player.position.z - point.z) <= 8)
+  const oldOnlyConnector = v42Route && !nearTrail && base.map.title === 'mireglass_reach'
+    && mireglassFullApproachTrail(seed)
+    .some((point) => Math.hypot(player.position.x - point.x,
+      player.position.z - point.z) <= 8)
+  const region = nearTrail || base.map.title === 'mireglass_reach' && !oldOnlyConnector
   if (!region) return { projection: { ...base, map: { ...base.map, tiles: trailTiles,
     ...(trailTiles.some((tile) => tile.hasFrontierTrail) ? {
       legend: `${base.map.legend ?? '▲ you · ? unexplored'} · · marked frontier trail`,
@@ -180,7 +190,7 @@ export function projectPublicV24Mireglass(base: WizardViewProjection,
     && shown(anchors.sealCache.tile.id)) add('mireglass:excavate:seal_cache',
     'Excavate seal cache', 'Requires a field spade and Excavation Lv2',
     anchors.sealCache.tile.center, { type: 'excavate_cache' }, true)
-  if (player.learnedSpellIds.includes('wayfinder_glow') && base.map.title === 'mireglass_reach') {
+  if (player.learnedSpellIds.includes('wayfinder_glow') && region) {
     add('mireglass:cast:wayfinder_glow', 'Cast Wayfinder Glow',
       'Survey farther terrain; hidden magic still needs proximity', player.position,
       { type: 'cast_wayfinder_glow_wide' }, false)
@@ -239,7 +249,11 @@ export function projectPublicV24Mireglass(base: WizardViewProjection,
     } } : {}),
     map: { ...base.map, ...(region ? { title: 'Mireglass Reach',
       guidance: !mireglass.fringeMarkerStudied
-        ? 'Follow the dry west trail and study the frontier marker.'
+        ? v42Route
+          ? `${progress.greenwayWorks.builtBridgeIds.includes(mireglassFrontierRoute(seed).requiredBridgeId)
+            ? 'Cross the built center Greenway creek bridge'
+            : 'Build the center Greenway creek bridge before crossing'}, then follow the revealed dry trail and study the frontier marker.`
+          : 'Follow the dry west trail and study the frontier marker.'
         : !mireglass.cacheRevealed
           ? 'Explore the fen and slate shelf. Use Works for crossings and cast Wayfinder Glow.'
           : !mireglass.cacheExcavated

@@ -263,6 +263,8 @@ export interface WizardMapTile {
   hasWaystone?: boolean
   /** A learned destination marker, which may sit on a still-unexplored tile. */
   hasWestTrail?: boolean
+  /** V42-only learned center bridge approach, not a traversable deck until built. */
+  hasCenterBridgeRoute?: boolean
   /** V11 only. These cues mark walked and discovered ground, never remote fog. */
   hasEastTrail?: boolean
   hasHighlandTrail?: boolean

@@ -1451,7 +1451,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       modeActive: workMode && status.gate !== 'blocked',
       actionsEnabled: status.gate !== 'blocked' })
   const baseProjectionFinishedAt = trace ? performance.now() : 0
-  const mireglass = v24 ? projectPublicV24Mireglass(baseProjection, snapshot, active) : null
+  const mireglass = v24 ? projectPublicV24Mireglass(baseProjection, snapshot, active,
+    v42 ? 'v42-center-bridge' : 'legacy') : null
   const mireglassProjectionFinishedAt = trace && v24 ? performance.now() : baseProjectionFinishedAt
   const projected = mireglass?.projection ?? baseProjection
   const physical = physicalWorld ? publicWorldV26ViewProjection(snapshot as PublicV26Progress, projected)
