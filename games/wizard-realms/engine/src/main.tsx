@@ -37,6 +37,7 @@ import { PublicV39EntryApp } from './PublicV39Entry'
 import { PublicV40EntryApp } from './PublicV40Entry'
 import { PublicV41EntryApp } from './PublicV41Entry'
 import { PublicV42EntryApp } from './PublicV42Entry'
+import { PublicV43EntryApp } from './PublicV43Entry'
 import { StreamedPreviewApp } from './StreamedPreviewApp'
 
 const root = document.getElementById('root')
@@ -76,7 +77,12 @@ export const PUBLIC_V36_ENTRY_READY = true
 reactRoot.render(<StrictMode>{workbenchId !== null
   ? <Suspense fallback={<main role="status">Loading character workbench…</main>}><CharacterWorkbench workbenchId={workbenchId} /></Suspense>
   : mireglassDev ? <MireglassPlayableApp />
-  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v42'
+  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v43'
+    ? import.meta.env.DEV
+      ? <PublicV43EntryApp renderSession={(start, bindings) =>
+        <PublicV23Controller version="v43" start={start} {...bindings} />} />
+      : <main role="status">Experimental V43 is development-only.</main>
+    : publicWorld === 'v42'
     ? import.meta.env.DEV
       ? <PublicV42EntryApp renderSession={(start, bindings) =>
         <PublicV23Controller version="v42" start={start} {...bindings} />} />
