@@ -364,6 +364,11 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
     expect(runtime.status().pendingFrames).toBe(12)
     expect(await runtime.save()).toMatchObject({ status: 'saved' })
     const reopened = createAtomicV42Store(factory)
+    const checked = await reopened.readChecked()
+    expect(checked.status).toBe('valid')
+    if (checked.status !== 'valid') throw Error('Turn and move did not persist as a checked V42 root')
+    expect(checked.root.head.state.player).toMatchObject({ yaw: player.yaw,
+      position: player.position })
     const resumed = await resumePublicV42(locks, reopened, 1, root.lineage)
     expect(resumed.ok).toBe(true)
     if (!resumed.ok) throw Error(resumed.reason)
@@ -372,6 +377,15 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
       (revision, lineage, witness) => commitPublicV42(locks, reopened, revision, lineage, witness))
     expect(replayed.preview().state.player).toMatchObject({ yaw: player.yaw,
       position: player.position })
+    expect(replayed.advanceFrame(publicV14MovementIntents(player.yaw, [0, 1], 0.16), true)
+      .rejections).toEqual([])
+    const afterContinue = replayed.preview().state.player
+    expect(afterContinue.yaw).toBe(player.yaw)
+    expect(afterContinue.position.x).toBeCloseTo(player.position.x - Math.sin(player.yaw) * 0.16)
+    expect(afterContinue.position.z).toBeCloseTo(player.position.z - Math.cos(player.yaw) * 0.16)
+    expect(await replayed.save()).toMatchObject({ status: 'saved' })
+    expect(await reopened.readChecked()).toMatchObject({ status: 'valid', root: { head: {
+      state: { player: { yaw: player.yaw, position: afterContinue.position } } } } })
   }, 120_000)
 
   it('offers checked V41 copy, independent fresh start, resume and older preview links', async () => {
