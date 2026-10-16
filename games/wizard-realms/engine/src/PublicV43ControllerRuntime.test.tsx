@@ -3,7 +3,8 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { publicV14MovementIntents } from './PublicV14Controller'
-import { PublicV23Controller } from './PublicV23Controller'
+import { PublicV23Controller, publicV42SavePhaseReporter } from './PublicV23Controller'
+import { createPublicV17InputTrace } from './PublicV17InputScheduler'
 import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
 import { createAtomicV42Store } from './domain/atomicV42Database'
 import { createAtomicV43Store } from './domain/atomicV43Database'
@@ -33,6 +34,18 @@ async function setup() {
 }
 
 describe('V43 checked controller bridge', () => {
+  it('does not label V43 UI save callbacks as V42-only phases', () => {
+    const trace = createPublicV17InputTrace()
+    expect(publicV42SavePhaseReporter('v43', trace)).toBeUndefined()
+    expect(JSON.parse(trace.json()).records).toEqual([])
+    const v42 = publicV42SavePhaseReporter('v42', trace)
+    expect(v42).toBeTypeOf('function')
+    v42!({ phase: 'ui-message', durationMs: 1 })
+    expect(JSON.parse(trace.json()).records).toMatchObject([
+      { event: 'controller.save.phase', data: { phase: 'ui-message', durationMs: 1 } },
+    ])
+  })
+
   it('renders the V42 projection under an explicit V43 controller without changing V42', async () => {
     const { start, store, v42Store } = await setup()
     const source = await v42Store.readChecked()

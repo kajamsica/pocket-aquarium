@@ -28,6 +28,19 @@ export type PublicV42Operation<T> = { ok: true; value: T } | { ok: false; reason
 export type PublicV42Inspection = { status: 'migration-available' }
   | { status: 'valid'; start: PublicV42Start }
   | { status: 'blocked'; reason: string }
+export type PublicV42SavePhase = Readonly<{ phase: 'grounded-check' | 'witness-decode'
+  | 'local-frame-replay' | 'local-frame-compare' | 'writer-await' | 'reply-check-clone'
+  | 'lock-wait' | 'store-read' | 'writer-preflight' | 'writer-replay'
+  | 'candidate-clone' | 'store-commit'
+  | 'ui-message' | 'ui-finalize-queue'; durationMs: number; pendingFrames?: number }>
+export type PublicV42SaveTrace = (sample: PublicV42SavePhase) => void
+
+function reportPhase(trace: PublicV42SaveTrace | undefined,
+  phase: PublicV42SavePhase['phase'], startedAt: number) {
+  if (!trace) return
+  try { trace({ phase, durationMs: performance.now() - startedAt }) }
+  catch { /* Diagnostics must not affect checked writes. */ }
+}
 
 function sameLineage(raw: unknown, checked: PublicV42Root['lineage']): boolean {
   return sameStrictBoundedRaw(raw, checked, 3 << 20)
@@ -35,10 +48,20 @@ function sameLineage(raw: unknown, checked: PublicV42Root['lineage']): boolean {
 }
 
 async function lock<T>(locks: PublicV7LockProvider | undefined,
-  body: () => Promise<PublicV42Operation<T>>): Promise<PublicV42Operation<T>> {
+  body: () => Promise<PublicV42Operation<T>>,
+  trace?: PublicV42SaveTrace): Promise<PublicV42Operation<T>> {
   if (!locks) return { ok: false, reason: 'lock-unavailable' }
-  try { return await locks.request(PUBLIC_V7_LOCK_NAME, { mode: 'exclusive' }, body) }
-  catch { return { ok: false, reason: 'storage-error' } }
+  const startedAt = trace ? performance.now() : 0
+  let acquired = false
+  try { return await locks.request(PUBLIC_V7_LOCK_NAME, { mode: 'exclusive' }, () => {
+    acquired = true
+    reportPhase(trace, 'lock-wait', startedAt)
+    return body()
+  }) }
+  catch {
+    if (!acquired) reportPhase(trace, 'lock-wait', startedAt)
+    return { ok: false, reason: 'storage-error' }
+  }
 }
 
 export function inspectPublicV42(locks: PublicV7LockProvider | undefined,
@@ -110,19 +133,27 @@ export function resumePublicV42(locks: PublicV7LockProvider | undefined,
 }
 
 async function commitWitnessUnderLock(store: Store, revision: number, rawLineage: unknown,
-  witnessFromWriter: () => unknown, returnHome: boolean):
+  witnessFromWriter: () => unknown, returnHome: boolean,
+  trace?: PublicV42SaveTrace):
   Promise<PublicV42Operation<PublicV42Start>> {
+  const readStartedAt = trace ? performance.now() : 0
   const read = await store.readChecked()
+  reportPhase(trace, 'store-read', readStartedAt)
   if (read.status !== 'valid') return { ok: false,
     reason: read.status === 'blocked' ? read.reason : 'root-missing' }
   const { head, lineage } = read.root
-  if (!sameLineage(rawLineage, lineage)) return { ok: false, reason: 'lineage-changed' }
+  const preflightStartedAt = trace ? performance.now() : 0
+  const lineageMatches = sameLineage(rawLineage, lineage)
+  reportPhase(trace, 'writer-preflight', preflightStartedAt)
+  if (!lineageMatches) return { ok: false, reason: 'lineage-changed' }
   if (head.saveRevision !== revision) return { ok: false, reason: 'revision-changed' }
   if (!Number.isSafeInteger(revision + 1)) return { ok: false, reason: 'invalid-revision' }
+  const replayStartedAt = trace ? performance.now() : 0
   const decoded = decodePublicV42Witness(witnessFromWriter())
   if (!decoded || (decoded.kind === 'return-home/v1') !== returnHome)
     return { ok: false, reason: 'invalid-witness' }
   const replayed = replayPublicV42Witness(head, decoded)
+  reportPhase(trace, 'writer-replay', replayStartedAt)
   if (!replayed) {
     if (decodePublicV42RewardWitness(decoded))
       return { ok: false, reason: confirmPublicV42RewardAction(head, decoded).rejection
@@ -169,21 +200,28 @@ async function commitWitnessUnderLock(store: Store, revision: number, rawLineage
     }
     return { ok: false, reason: 'frame-rejected' }
   }
+  const cloneStartedAt = trace ? performance.now() : 0
   const next: PublicV42Head = { ...replayed, schemaVersion: head.schemaVersion,
     saveRevision: revision + 1, witness: structuredClone(decoded) }
+  reportPhase(trace, 'candidate-clone', cloneStartedAt)
+  const commitStartedAt = trace ? performance.now() : 0
   const result = await store.commit(read.proof, { lineage, previous: head, head: next })
+  reportPhase(trace, 'store-commit', commitStartedAt)
   return result === 'committed' ? { ok: true, value: { head: next, lineage } }
     : { ok: false, reason: result }
 }
 
 export function commitPublicV42(locks: PublicV7LockProvider | undefined,
-  store: Store, revision: number, rawLineage: unknown, witness: PublicV42Witness):
+  store: Store, revision: number, rawLineage: unknown, witness: PublicV42Witness,
+  trace?: PublicV42SaveTrace):
   Promise<PublicV42Operation<PublicV42Start>> {
-  return lock(locks, () => commitWitnessUnderLock(store, revision, rawLineage, () => witness, false))
+  return lock(locks, () => commitWitnessUnderLock(store, revision, rawLineage,
+    () => witness, false, trace), trace)
 }
 
 export function requestPublicV42ReturnHome(locks: PublicV7LockProvider | undefined,
-  store: Store, revision: number, rawLineage: unknown): Promise<PublicV42Operation<PublicV42Start>> {
+  store: Store, revision: number, rawLineage: unknown,
+  trace?: PublicV42SaveTrace): Promise<PublicV42Operation<PublicV42Start>> {
   return lock(locks, () => commitWitnessUnderLock(store, revision, rawLineage,
-    () => ({ kind: 'return-home/v1', atMs: Date.now() }), true))
+    () => ({ kind: 'return-home/v1', atMs: Date.now() }), true, trace), trace)
 }

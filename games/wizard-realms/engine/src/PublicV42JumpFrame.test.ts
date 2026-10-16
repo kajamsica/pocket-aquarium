@@ -4,6 +4,7 @@ import { createPublicV42ControllerRuntime } from './PublicV42ControllerRuntime'
 import { createAtomicV42Store } from './domain/atomicV42Database'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { commitPublicV42 } from './domain/publicWorldV42Flow'
+import type { PublicV42SavePhase } from './domain/publicWorldV42Flow'
 import { createFreshPublicV41Root } from './domain/publicWorldV41Snapshot'
 import { createPublicV42Root, replayPublicV42Witness } from './domain/publicWorldV42Snapshot'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
@@ -155,5 +156,37 @@ describe('V42 copied movement frames', () => {
     expect(await runtime.save()).toMatchObject({ status: 'saved' })
     expect(await store.readChecked()).toMatchObject({ status: 'valid', root: {
       head: { witness: { kind: 'frame-batch/v1' } } } })
+  })
+
+  it('traces opt-in V42 checkpoint phases without changing its checked write', async () => {
+    const root = createPublicV42Root(createFreshPublicV41Root('wizard-realms'))
+    const store = createAtomicV42Store(new IDBFactory())
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw Error('Unexpected V42 target')
+    expect(await store.commit(missing.proof, root)).toBe('committed')
+    const phases: PublicV42SavePhase[] = []
+    const trace = (sample: PublicV42SavePhase) => { phases.push(sample) }
+    const runtime = createPublicV42ControllerRuntime({ head: root.head,
+      lineage: root.lineage }, (revision, lineage, witness) =>
+      commitPublicV42(locks, store, revision, lineage, witness, trace), undefined, trace)
+    expect(runtime.advanceFrame([], false).rejections).toEqual([])
+    expect(await runtime.save()).toMatchObject({ status: 'saved' })
+    expect(phases.map(({ phase }) => phase)).toEqual([
+      'grounded-check', 'witness-decode', 'local-frame-replay', 'local-frame-compare',
+      'lock-wait', 'store-read', 'writer-preflight', 'writer-replay', 'candidate-clone', 'store-commit',
+      'writer-await', 'reply-check-clone'])
+    expect(phases.every(({ durationMs }) => Number.isFinite(durationMs)
+      && durationMs >= 0)).toBe(true)
+    expect(await store.readChecked()).toMatchObject({ status: 'valid', root: {
+      head: { saveRevision: 1, witness: { kind: 'frame-batch/v1' } } } })
+
+    const throwing = createPublicV42ControllerRuntime(runtime.committed(),
+      (revision, lineage, witness) => commitPublicV42(locks, store, revision, lineage,
+        witness, () => { throw Error('diagnostic failure') }), undefined,
+      () => { throw Error('diagnostic failure') })
+    expect(throwing.advanceFrame([], false).rejections).toEqual([])
+    expect(await throwing.save()).toMatchObject({ status: 'saved' })
+    expect(await store.readChecked()).toMatchObject({ status: 'valid', root: {
+      head: { saveRevision: 2 } } })
   })
 })

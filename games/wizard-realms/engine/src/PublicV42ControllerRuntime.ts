@@ -15,6 +15,7 @@ import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { starterCliffFace } from './domain/starterCliffProfile'
 import { decodePublicV36Witness, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
 import type { PublicV42Operation, PublicV42Start } from './domain/publicWorldV42Flow'
+import type { PublicV42SavePhase, PublicV42SaveTrace } from './domain/publicWorldV42Flow'
 import { decodePublicV42Head, decodePublicV42Lineage, replayPublicV42Witness } from './domain/publicWorldV42Snapshot'
 import type { PublicV42Witness } from './domain/publicWorldV42Snapshot'
 import { confirmPublicV37WindwardAction, decodePublicV37WindwardWitness } from './domain/publicWorldV37WindwardAction'
@@ -94,9 +95,16 @@ function asV36(start: PublicV42Start): PublicV36Start {
 
 /** Preview and writer verify the same ordinary witnesses with V37's private movement policy. */
 export function createPublicV42ControllerRuntime(initial: PublicV42Start,
-  write: Writer, homeWrite?: HomeWriter) {
+  write: Writer, homeWrite?: HomeWriter, onSavePhase?: PublicV42SaveTrace) {
   let committed = structuredClone(initial), preview = progress(committed)
   let pending: PublicV14Frame[] = [], busy = false, blockedReason: string | null = null
+  const reportPhase = (phase: PublicV42SavePhase['phase'], startedAt: number,
+    frameCount: number) => {
+    if (!onSavePhase) return
+    try { onSavePhase({ phase, durationMs: performance.now() - startedAt,
+      pendingFrames: frameCount }) }
+    catch { /* Diagnostics must not affect checked saves. */ }
+  }
   const grounded = (value: PublicV42RewardProgress) => {
     const pose = projectPublicV31Pose(value)
     return value.state.player.verticalVelocity === 0 && !!pose
@@ -123,14 +131,29 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
   }
   const flush = async (): Promise<PublicV23ControllerOutcome> => {
     if (!pending.length) return { status: 'unchanged' }
-    if (!grounded(preview)) return { status: 'deferred-airborne' }
+    const frameCount = pending.length
+    const groundedStartedAt = onSavePhase ? performance.now() : 0
+    const canSave = grounded(preview)
+    reportPhase('grounded-check', groundedStartedAt, frameCount)
+    if (!canSave) return { status: 'deferred-airborne' }
+    const decodeStartedAt = onSavePhase ? performance.now() : 0
     const witness = decodePublicV14FrameWitness({ kind: 'frame-batch/v1', frames: pending })
+    reportPhase('witness-decode', decodeStartedAt, frameCount)
+    const replayStartedAt = onSavePhase ? performance.now() : 0
     const expected = witness && replayPublicV42Witness(progress(committed), witness)
-    if (!witness || !expected || !samePublicV14Value(expected, preview)) return freeze('local-replay')
+    reportPhase('local-frame-replay', replayStartedAt, frameCount)
+    const compareStartedAt = onSavePhase ? performance.now() : 0
+    const matchesPreview = !!witness && !!expected && samePublicV14Value(expected, preview)
+    reportPhase('local-frame-compare', compareStartedAt, frameCount)
+    if (!matchesPreview || !witness || !expected) return freeze('local-replay')
     try {
       const revision = committed.head.saveRevision
-      const result = checked(await write(revision, structuredClone(committed.lineage), witness),
-        revision, witness, expected)
+      const writerStartedAt = onSavePhase ? performance.now() : 0
+      const reply = await write(revision, structuredClone(committed.lineage), witness)
+        .finally(() => reportPhase('writer-await', writerStartedAt, frameCount))
+      const replyStartedAt = onSavePhase ? performance.now() : 0
+      const result = checked(reply, revision, witness, expected)
+      reportPhase('reply-check-clone', replyStartedAt, frameCount)
       return result.ok ? { status: 'saved', events: [], resetWalkRequested: false } : freeze(result.reason)
     } catch { return freeze('storage-error') }
   }

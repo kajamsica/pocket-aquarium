@@ -46,7 +46,7 @@ import { createPublicV42ControllerRuntime } from './PublicV42ControllerRuntime'
 import { projectPublicV42IronHall } from './PublicV42WorldView'
 import type { PublicV42EntryBindings } from './PublicV42Entry'
 import { commitPublicV42, requestPublicV42ReturnHome } from './domain/publicWorldV42Flow'
-import type { PublicV42Start } from './domain/publicWorldV42Flow'
+import type { PublicV42SavePhase, PublicV42Start } from './domain/publicWorldV42Flow'
 import type { PublicV42RewardProgress, PublicV42RewardWitness } from './domain/publicWorldV42RewardAction'
 import { publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
 import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
@@ -1253,6 +1253,15 @@ export function publicV32HighlandObjective(view: WizardViewProjection,
   action: view.map.guidance || 'Follow the revealed eastern trail on walkable ground toward Highland Quarry.' }
 }
 
+/** Only V42's save path has phase ownership; V43 currently uses a different checked writer. */
+export function publicV42SavePhaseReporter(version: string | undefined,
+  trace: ReturnType<typeof createPublicV17InputTrace> | null | undefined) {
+  return version === 'v42' && trace ? (sample: PublicV42SavePhase) => {
+    try { trace.record('controller.save.phase', sample) }
+    catch { /* Diagnostics must not affect checked saves. */ }
+  } : undefined
+}
+
 export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24ControllerProps
   | PublicV25ControllerProps | PublicV26ControllerProps | PublicV27ControllerProps
   | PublicV28ControllerProps | PublicV29ControllerProps | PublicV30ControllerProps
@@ -1293,6 +1302,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     typeof window === 'undefined' ? '' : window.location?.search ?? '')
     ? createPublicV17InputTrace() : null
   const trace = traceRef.current
+  const v42SaveTrace = publicV42SavePhaseReporter('version' in props ? props.version : undefined,
+    trace)
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
     | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | null>(null)
@@ -1304,8 +1315,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           props.v42Store, revision, lineage))
       : 'version' in props && props.version === 'v42'
       ? createPublicV42ControllerRuntime(props.start, (revision, lineage, witness) =>
-        commitPublicV42(props.locks, props.store, revision, lineage, witness),
-        (revision, lineage) => requestPublicV42ReturnHome(props.locks, props.store, revision, lineage))
+        commitPublicV42(props.locks, props.store, revision, lineage, witness, v42SaveTrace),
+        (revision, lineage) => requestPublicV42ReturnHome(props.locks, props.store,
+          revision, lineage, v42SaveTrace), v42SaveTrace)
       : 'version' in props && props.version === 'v41'
       ? createPublicV41ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV41(props.locks, props.store, revision, lineage, witness),
@@ -1606,6 +1618,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       try {
         const result = await runtime.save()
         trace?.record('controller.save.result', { status: result.status })
+        const messageStartedAt = v42SaveTrace ? performance.now() : 0
         if (result.status === 'blocked') {
           devRoute.current = null
           held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
@@ -1613,14 +1626,19 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           tell(`Save blocked: ${result.reason}.`)
         } else if (result.status === 'saved') tell(`V${saveVersion} progress saved on this device.`)
         else if (result.status === 'deferred-airborne') tell('Land before saving pending travel.')
+        if (v42SaveTrace) v42SaveTrace({
+          phase: 'ui-message', durationMs: performance.now() - messageStartedAt })
       } catch { devRoute.current = null
         held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
         inputQueue.current = [];
         tell('Save blocked: storage-error.') }
     })()
     saveTask.current = task.finally(() => {
+      const finalizeStartedAt = v42SaveTrace ? performance.now() : 0
       sampleTimedUntil(performance.now())
       busy.current = false; saveTask.current = null; repaint(); drainChecked()
+      if (v42SaveTrace) v42SaveTrace({
+        phase: 'ui-finalize-queue', durationMs: performance.now() - finalizeStartedAt })
     })
     return saveTask.current
   }
