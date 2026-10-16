@@ -751,6 +751,89 @@ describe('V23 controller input admission', () => {
       .toEqual([['move'], ['move']])
   })
 
+  it('coalesces open-gate tap feedback into the consuming frame repaint', () => {
+    mount()
+    const redraws = probe.states[0]
+    probe.now = 10
+    probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    expect(probe.states[0]).toBe(redraws)
+    probe.now = 50; probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
+    expect(probe.states[0]).toBe((redraws as number) + 1)
+  })
+
+  it('still repaints queued feedback when the runtime gate is closed', () => {
+    probe.gate = 'checkpointing'; mount()
+    const redraws = probe.states[0]
+    probe.now = 10
+    probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    expect(probe.states[0]).toBe((redraws as number) + 1)
+    expect(probe.frames).toHaveLength(0)
+  })
+
+  it('drains at most four aged taps as distinct frames after a delayed timer callback', () => {
+    mount()
+    for (const atMs of [10, 70, 130, 190, 250]) {
+      probe.now = atMs
+      probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    }
+    const redraws = probe.states[0]
+    probe.now = 500; probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
+      .toEqual(Array(4).fill(['move']))
+    expect(probe.states[0]).toBe((redraws as number) + 1)
+    probe.now = 550; probe.tick!()
+    expect(probe.frames).toHaveLength(5)
+  })
+
+  it('keeps normal timer cadence and does not accelerate newly queued taps', () => {
+    mount()
+    for (const atMs of [10, 20, 30]) {
+      probe.now = atMs
+      probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    }
+    probe.now = 50; probe.tick!()
+    expect(probe.frames).toHaveLength(1)
+    probe.now = 100; probe.tick!()
+    expect(probe.frames).toHaveLength(2)
+    probe.now = 490
+    probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    probe.now = 500; probe.tick!()
+    expect(probe.frames).toHaveLength(3)
+    probe.now = 550; probe.tick!()
+    expect(probe.frames).toHaveLength(4)
+  })
+
+  it('stops delayed catch-up on rejection and does not cross a save barrier', async () => {
+    mount()
+    for (const atMs of [10, 70, 130]) {
+      probe.now = atMs
+      probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    }
+    probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
+    probe.now = 500; probe.tick!()
+    expect(probe.frames).toHaveLength(1)
+    probe.pending = 96
+    probe.now = 1000; probe.tick!()
+    expect(probe.frames).toHaveLength(1)
+    expect(probe.saveCalls).toBe(1)
+    probe.releaseSave!(); await settle()
+    probe.now = 1050; probe.tick!()
+    expect(probe.frames).toHaveLength(2)
+  })
+
+  it('stops within a catch-up batch when a frame starts a checkpoint', () => {
+    probe.pending = 63; probe.countFrames = true; mount()
+    for (const atMs of [10, 70, 130]) {
+      probe.now = atMs
+      probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    }
+    probe.now = 500; probe.tick!()
+    expect(probe.frames).toHaveLength(1)
+    expect(probe.saveCalls).toBe(1)
+    expect(probe.gate).toBe('checkpointing')
+  })
+
   it('queues one F or touch confirm during save, revalidates on recovery, and keeps a short W step', async () => {
     probe.pending = 96; mount(); probe.tick!()
     const keyboard = savedWorkKeyboardIntent('KeyF', probe.projection!.savedTerrainWorks)
@@ -805,11 +888,11 @@ describe('V23 controller input admission', () => {
     expect(probe.actions).toEqual([])
     probe.releaseSave!(); await settle()
     for (let index = 0; index < 16; index++) { probe.tick!(); await settle() }
-    expect(probe.events).toEqual([
+    expect(probe.events.filter((event) => event !== 'frame:')).toEqual([
       ...Array(7).fill('frame:look'), 'action', ...Array(9).fill('frame:look'),
     ])
     expect(probe.actions).toHaveLength(1)
-    expect(probe.frames).toHaveLength(16)
+    expect(probe.frames.filter((frame) => frame.length)).toHaveLength(16)
   })
 
   it('keeps a short timestamped D tap to one pivot across a checked save', async () => {
@@ -918,8 +1001,8 @@ describe('V23 controller input admission', () => {
     probe.now = 263; probe.tick!()
     probe.now = 523; probe.tick!()
     for (const intent of keyboardMovementIntents(keys, 'KeyD', false, 801)) probe.onIntent!(intent)
-    expect(probe.frames).toHaveLength(2)
-    for (let index = 0; index < 14; index++) probe.tick!()
+    expect(probe.frames).toHaveLength(7)
+    for (let index = 0; index < 9; index++) probe.tick!()
     expect(probe.frames).toHaveLength(16)
     expect(probe.frames.every((frame) => frame.length === 1 && frame[0].type === 'look')).toBe(true)
   })

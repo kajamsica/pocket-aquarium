@@ -210,7 +210,8 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV42RewardWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
-type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean }
+type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
+  queuedAtMs: number }
   | { kind: 'checked'; intent: CheckedIntent }
 const STEP_MS = 50
 const MOVE_RESERVE_AT = 96
@@ -1552,6 +1553,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     const timed = timedHeld.current
     if (!timed || !Number.isFinite(atMs) || atMs < timed.nextAtMs) return
     const due = Math.floor((atMs - timed.nextAtMs) / STEP_MS) + 1
+    const firstSampleAtMs = timed.nextAtMs
     timed.nextAtMs += due * STEP_MS
     if (!timed.vector.some(Boolean) || readActive().player.verticalVelocity !== 0) return
     let queued = inputQueue.current.filter((token) => token.kind === 'pulse').length
@@ -1562,7 +1564,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         && edge.vector.some((value, axis) => value && value === timed.vector[axis])) {
         edge.vector = timed.vector; edgePulse.current = null; merged++
       } else if (queued < MAX_PULSES) {
-        inputQueue.current.push({ kind: 'pulse', vector: timed.vector, jump: false })
+        inputQueue.current.push({ kind: 'pulse', vector: timed.vector, jump: false,
+          queuedAtMs: firstSampleAtMs + index * STEP_MS })
         queued++; accepted++
       } else break
     }
@@ -1823,13 +1826,20 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     if (inputQueue.current.filter((token) => token.kind === 'pulse').length >= MAX_PULSES) {
       tell('The 16-step input queue is full; retry this tap after the save.'); return
     }
-    const token: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse', vector, jump }
+    const token: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse', vector, jump,
+      queuedAtMs: performance.now() }
     inputQueue.current.push(token)
     if (!jump) edgePulse.current = token
-    repaintQueued()
+    // An open-world tick will repaint after consuming the pulse. Repainting on
+    // admission rebuilds the entire projection before that tick can run.
+    if (busy.current || runtime.status().gate !== 'open') repaintQueued()
   }
   useEffect(() => {
+    let lastTickAtMs = performance.now()
     const timer = window.setInterval(() => {
+      const tickAtMs = performance.now()
+      const elapsedMs = Math.max(0, tickAtMs - lastTickAtMs)
+      lastTickAtMs = tickAtMs
       if (obstacleCueUntil.current && performance.now() >= obstacleCueUntil.current) {
         obstacleCueUntil.current = 0; setObstacleCue(null)
       }
@@ -1845,7 +1855,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           trace?.record('controller.sample', { phase: 'write', outcome: 'edge', vector,
             queued: inputQueue.current.length })
         } else if (inputQueue.current.filter((token) => token.kind === 'pulse').length < MAX_PULSES) {
-          inputQueue.current.push({ kind: 'pulse', vector, jump: false })
+          inputQueue.current.push({ kind: 'pulse', vector, jump: false,
+            queuedAtMs: tickAtMs })
           trace?.record('controller.sample', { phase: 'write', outcome: 'queued', vector,
             queued: inputQueue.current.length })
           repaintQueued()
@@ -1855,7 +1866,16 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       }
       if (running.current || runtime.status().gate !== 'open') return
       running.current = true
+      let advanced = false
       try {
+        // A busy renderer may deliver the 50 ms callback late. Catch up only
+        // already-aged queued pulses, in separate authoritative frames.
+        const budget = Math.min(4, Math.max(1, Math.floor(elapsedMs / STEP_MS)))
+        for (let index = 0; index < budget; index++) {
+          if (index > 0) {
+            const next = inputQueue.current[0]
+            if (next?.kind !== 'pulse' || tickAtMs - next.queuedAtMs < index * STEP_MS) break
+          }
         if (timedHeld.current) sampleTimedUntil(performance.now())
         if (inputQueue.current[0]?.kind === 'checked') { drainChecked(); return }
         if (!devRoute.current && !timedHeld.current && !held.current.some(Boolean) && !edgePulse.current
@@ -1907,6 +1927,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             routeStepMeters === null ? gaitStep : Math.min(gaitStep, routeStepMeters))
         const frameStartedAt = trace ? performance.now() : 0
         const result = runtime.advanceFrame(intents, walkRequested)
+        advanced = true
         const frameFinishedAt = trace ? performance.now() : 0
         const after = readActive()
         trace?.record('controller.frame', { vector, jump, intents: intents.map((intent) => intent.type),
@@ -1955,8 +1976,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         if (runtime.status().pendingFrames >= 64
           && after.player.verticalVelocity === 0) void save()
         else drainChecked()
-        repaint()
-      } finally { running.current = false }
+        if (!request || request.jump || before.player.verticalVelocity !== 0
+          || after.player.verticalVelocity !== 0 || result.rejections.length
+          || busy.current || runtime.status().gate !== 'open'
+          || inputQueue.current[0]?.kind !== 'pulse') break
+        }
+      } finally { running.current = false; if (advanced) repaint() }
     }, STEP_MS)
     return () => window.clearInterval(timer)
   }, [runtime, walkRequested])
