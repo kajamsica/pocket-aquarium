@@ -565,20 +565,20 @@ function PresentationPoseDriver({ player, pose, worldSupport, presentationTarget
 
 function CameraRig({ pose, cameraOrbit, orbiting, stores, highlandRidgeActive }: {
   pose: PresentationPose
-  cameraOrbit: readonly [number, number]
+  cameraOrbit: RefObject<readonly [number, number]>
   orbiting: boolean
   stores: readonly WizardStore[]
   highlandRidgeActive: boolean
 }) {
-  const orbitYaw = useRef(cameraOrbit[0])
-  const orbitPitch = useRef(cameraOrbit[1])
+  const orbitYaw = useRef(cameraOrbit.current[0])
+  const orbitPitch = useRef(cameraOrbit.current[1])
   const initialized = useRef(false)
   const target = useMemo(() => new THREE.Vector3(), [])
   const desired = useMemo(() => new THREE.Vector3(), [])
   useFrame(({ camera, size }, delta) => {
     const blend = 1 - Math.exp(-(orbiting ? 18 : 2.6) * delta)
-    orbitYaw.current += (cameraOrbit[0] - orbitYaw.current) * blend
-    orbitPitch.current += (cameraOrbit[1] - orbitPitch.current) * blend
+    orbitYaw.current += (cameraOrbit.current[0] - orbitYaw.current) * blend
+    orbitPitch.current += (cameraOrbit.current[1] - orbitPitch.current) * blend
     const heading = pose.yaw + orbitYaw.current
     const framing = cameraFramingFor(size.width, size.height)
     const horizontal = Math.cos(orbitPitch.current * framing.pitchScale) * framing.distance
@@ -2100,7 +2100,7 @@ export function pickVisibleRegionalLadderAimZ(scene: THREE.Scene, camera: THREE.
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady, onTerrainPickerReady, onGroundPickerReady }: {
   projection: WizardViewProjection
-  cameraOrbit: readonly [number, number]
+  cameraOrbit: RefObject<readonly [number, number]>
   orbiting: boolean
   terrainMode?: 'dig' | 'fill' | 'mine' | 'place-soil' | null
   onAimPickerReady?: (picker: SceneWorkAimPicker) => void
@@ -2143,6 +2143,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     if (!hoverSurface || !v26HoverEnabled) { setHoveredTerrain(null); return }
     const { canvas, picker } = hoverSurface
     const update = (event: PointerEvent) => {
+      if (event.type === 'pointermove' && event.buttons !== 0) return
       const next = picker(event.clientX, event.clientY, hoverPickKind)
       setHoveredTerrain((previous) => previous?.gx === next?.gx && previous?.gz === next?.gz
         ? previous : next)

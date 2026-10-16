@@ -343,7 +343,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const [terrainMode, setTerrainMode] = useState<V31TerrainMode | null>(activePick ? 'mine' : spadeEquipped ? 'dig' : null)
   const [terrainTapHint, setTerrainTapHint] = useState<string | null>(null)
   const [devNavHint, setDevNavHint] = useState<string | null>(null)
-  const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
+  const cameraOrbit = useRef<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
   const [backpackOpen, setBackpackOpen] = useState(false)
   const [actionKeys, setActionKeys] = useState<ActionKeys>(() => {
@@ -419,7 +419,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
       lastDragPoint.current = null
-      setCameraOrbit(CENTERED_CAMERA_ORBIT)
+      cameraOrbit.current = CENTERED_CAMERA_ORBIT
       window.requestAnimationFrame(() => mapCloseRef.current?.focus())
     } else window.requestAnimationFrame(() => mapButtonRef.current?.focus())
     setMapOpen(next)
@@ -436,7 +436,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       pendingTerrainTap.current = null
       setDragging(false)
       lastDragPoint.current = null
-      setCameraOrbit(CENTERED_CAMERA_ORBIT)
+      cameraOrbit.current = CENTERED_CAMERA_ORBIT
     }
     const onVisibilityChange = () => { if (document.visibilityState !== 'visible') clearControls() }
     const onKeyDown = (event: KeyboardEvent) => {
@@ -574,7 +574,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           if (!previous) return
           const next = [event.clientX, event.clientY] as const
           lastDragPoint.current = next
-          setCameraOrbit((current) => cameraOrbitFromDrag(current, [next[0] - previous[0], next[1] - previous[1]]))
+          cameraOrbit.current = cameraOrbitFromDrag(cameraOrbit.current, [next[0] - previous[0], next[1] - previous[1]])
         }}
         onPointerUp={(event) => {
           const press = pointerPress.current
