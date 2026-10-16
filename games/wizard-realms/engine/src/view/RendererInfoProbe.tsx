@@ -3,7 +3,8 @@ import { useMemo } from 'react'
 import type { WebGLInfo } from 'three'
 
 const SAMPLE_PERIOD_MS = 2_000
-const LIMITATIONS = 'Previous renderer.info frame, not GPU time or visible-only cost; shadow-pass attribution is not guaranteed. Memory counters are resource counts, not bytes.'
+const MAX_FRAME_INTERVALS = 512
+const LIMITATIONS = 'useFrame intervals are frame pacing, not GPU timings; droppedFrames counts discarded samples, not missed displays. renderer.info describes the previous frame, not visible-only cost; shadow-pass attribution is not guaranteed. Memory counters are resource counts, not bytes.'
 
 export function rendererInfoProbeEnabled(search: string, development: boolean): boolean {
   const query = new URLSearchParams(search)
@@ -12,18 +13,36 @@ export function rendererInfoProbeEnabled(search: string, development: boolean): 
 
 export function createRendererInfoSampler(periodMs = SAMPLE_PERIOD_MS) {
   let previousSampleAtMs: number | null = null
+  const frameIntervals: number[] = []
+  let observedFrames = 0
+  let droppedFrames = 0
   return (nowMs: number, frameIntervalMs: number, info: Pick<WebGLInfo, 'render' | 'memory' | 'programs'>) => {
     if (previousSampleAtMs === null) {
       previousSampleAtMs = nowMs
       return null
     }
+    if (Number.isFinite(frameIntervalMs) && frameIntervalMs >= 0) {
+      observedFrames += 1
+      frameIntervals.push(frameIntervalMs)
+      if (frameIntervals.length > MAX_FRAME_INTERVALS) {
+        frameIntervals.shift()
+        droppedFrames += 1
+      }
+    }
     const sampleIntervalMs = nowMs - previousSampleAtMs
     if (sampleIntervalMs < periodMs) return null
     previousSampleAtMs = nowMs
-    return {
+    const sortedIntervals = [...frameIntervals].sort((a, b) => a - b)
+    const percentile = (fraction: number) => sortedIntervals[Math.ceil(fraction * sortedIntervals.length) - 1] ?? null
+    const report = {
       timestamp: new Date().toISOString(),
       sampleIntervalMs,
       frameIntervalMs,
+      frameIntervalP50Ms: percentile(0.5),
+      frameIntervalP95Ms: percentile(0.95),
+      frameIntervalMaxMs: sortedIntervals.at(-1) ?? null,
+      observedFrames,
+      droppedFrames,
       rendererInfoFrame: info.render.frame,
       calls: info.render.calls,
       triangles: info.render.triangles,
@@ -32,6 +51,10 @@ export function createRendererInfoSampler(periodMs = SAMPLE_PERIOD_MS) {
       programs: info.programs?.length ?? null,
       limitations: LIMITATIONS,
     }
+    frameIntervals.length = 0
+    observedFrames = 0
+    droppedFrames = 0
+    return report
   }
 }
 
