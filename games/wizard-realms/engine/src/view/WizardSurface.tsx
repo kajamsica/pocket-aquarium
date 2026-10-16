@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { WizardViewIntent, WizardViewProjection } from './contracts'
 import { WizardHud } from './WizardHud'
 import { WizardMap, mapToggleForKey } from './WizardMap'
-import { WizardScene, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
+import { WizardScene, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneGroundPicker, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
 import type { PublicV17InputTrace } from '../PublicV17InputScheduler'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
 
@@ -130,6 +130,35 @@ export function pointerAimTap(press: PointerPress | null, pointerId: number,
   end: readonly [number, number]): boolean {
   return !!press && press.id === pointerId && press.primary && !press.dragged
     && !pointerMovedBeyondOrbitThreshold(press.start, end)
+}
+
+export function devNavigationEnabled(search: string): boolean {
+  const params = new URLSearchParams(search)
+  return params.get('dev') === '1' && params.get('publicWorld') === 'v42'
+}
+
+type SceneTap = { atMs: number; point: readonly [number, number] }
+export function devDoubleTap(previous: SceneTap | null, current: SceneTap): boolean {
+  return !!previous && current.atMs >= previous.atMs && current.atMs - previous.atMs <= 500
+    && Math.hypot(current.point[0] - previous.point[0],
+      current.point[1] - previous.point[1]) <= 9
+}
+
+/** Keep ordinary and Works taps immediate; only dev terrain taps wait for a possible second click. */
+export function devSceneTapDecision(eligible: boolean, previous: SceneTap | null,
+  current: SceneTap, terrainMode: V31TerrainMode | null): 'navigate' | 'defer-terrain' | 'terrain' {
+  return !eligible ? 'terrain' : devDoubleTap(previous, current) ? 'navigate'
+    : terrainMode ? 'defer-terrain' : 'terrain'
+}
+
+/** Works and open panels keep ownership; a selected ground tool still permits a double-click. */
+export function pointerDevNavigateIntent(enabled: boolean, projection: WizardViewProjection,
+  mapOpen: boolean, ground: ReturnType<SceneGroundPicker>): WizardViewIntent | null {
+  if (!enabled || mapOpen || projection.openStoreId
+    || projection.savedTerrainWorks?.modeActive || projection.controllerActionsEnabled === false
+    || projection.unavailableActions
+    || !ground || !Number.isFinite(ground.x) || !Number.isFinite(ground.z)) return null
+  return { type: 'dev.navigate', destination: { x: ground.x, z: ground.z } }
 }
 
 export function pointerWorkAimIntent(kind: SceneWorkAimKind, aimed: number | null): WizardViewIntent | null {
@@ -286,16 +315,21 @@ const STYLES = `
 .wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain{display:none}
 .wr-v26-terrain[data-v29="true"] .wr-v26-terrain-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .wr-keybinds{margin-top:7px;font-size:12px}.wr-keybinds summary{cursor:pointer;color:#f5d889}.wr-keybinds>div{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.wr-keybinds button{min-height:36px}.wr-keybinds summary:focus-visible,.wr-keybinds button:focus-visible{outline:3px solid #ffe395;outline-offset:2px}
+.wr-dev-nav-hint{position:absolute;z-index:4;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(520px,80vw);padding:6px 10px;border-radius:7px;background:#101a17d9;color:#f5e6b2;text-align:center;font-size:12px;pointer-events:none}
 @media(max-width:719px){.wr-v26-terrain{right:8px;bottom:150px;width:180px}}
 `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
+  const devNavigation = typeof window !== 'undefined' && devNavigationEnabled(window.location.search)
   const pressedKeys = useRef(new Set<string>())
   const lastDragPoint = useRef<readonly [number, number] | null>(null)
   const pointerPress = useRef<PointerPress | null>(null)
   const aimPicker = useRef<SceneWorkAimPicker | null>(null)
   const terrainPicker = useRef<SceneTerrainPicker | null>(null)
+  const groundPicker = useRef<SceneGroundPicker | null>(null)
+  const lastSceneTap = useRef<SceneTap | null>(null)
+  const pendingTerrainTap = useRef<{ timer: number; run: () => void } | null>(null)
   const terrainPointer = useRef<readonly [number, number] | null>(null)
   const spadeEquipped = projection.equipment?.mainHand?.itemId === 'field_spade'
   const activePick = projection.v29Mining?.tools.activePick ?? null
@@ -308,6 +342,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const [dragging, setDragging] = useState(false)
   const [terrainMode, setTerrainMode] = useState<V31TerrainMode | null>(activePick ? 'mine' : spadeEquipped ? 'dig' : null)
   const [terrainTapHint, setTerrainTapHint] = useState<string | null>(null)
+  const [devNavHint, setDevNavHint] = useState<string | null>(null)
   const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
   const [backpackOpen, setBackpackOpen] = useState(false)
@@ -354,10 +389,31 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
     return () => window.clearTimeout(timeout)
   }, [terrainTapHint])
 
+  useEffect(() => {
+    if (!devNavHint) return
+    const timeout = window.setTimeout(() => setDevNavHint(null), 3000)
+    return () => window.clearTimeout(timeout)
+  }, [devNavHint])
+
+  useEffect(() => () => {
+    if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
+  }, [])
+
+  useEffect(() => {
+    if (!mapOpen && !projection.openStoreId && !projection.savedTerrainWorks?.modeActive) return
+    if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
+    pendingTerrainTap.current = null
+    lastSceneTap.current = null
+  }, [mapOpen, projection.openStoreId, projection.savedTerrainWorks?.modeActive])
+
   const toggleMap = () => {
     const next = !mapOpen
     inputTrace?.record('dom.map.toggle', { before: mapOpen, after: next })
     if (next) {
+      if (devNavigation) onIntent({ type: 'dev.navigate.cancel' })
+      lastSceneTap.current = null
+      if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
+      pendingTerrainTap.current = null
       setBackpackOpen(false)
       terrainPointer.current = null
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
@@ -374,6 +430,10 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       inputTrace?.record('dom.clear', { cause: event?.type ?? 'controls',
         visibility: document.visibilityState })
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
+      if (devNavigation) onIntent({ type: 'dev.navigate.cancel' })
+      lastSceneTap.current = null
+      if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
+      pendingTerrainTap.current = null
       setDragging(false)
       lastDragPoint.current = null
       setCameraOrbit(CENTERED_CAMERA_ORBIT)
@@ -456,10 +516,14 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       if (event.code === 'KeyE' && !projection.unavailableActions) onIntent({ type: 'interact' })
       if (event.code === 'Space') {
         event.preventDefault()
+        lastSceneTap.current = null
+        if (devNavigation) onIntent({ type: 'dev.navigate.cancel' })
         onIntent({ type: 'jump' })
       }
       if (MOVEMENT_KEYS.has(event.code)) {
         event.preventDefault()
+        lastSceneTap.current = null
+        if (devNavigation) onIntent({ type: 'dev.navigate.cancel' })
         for (const intent of keyboardMovementIntents(pressedKeys.current, event.code, true,
           keyboardEventTime(event.timeStamp, performance.now()))) onIntent(intent)
       }
@@ -481,7 +545,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('blur', clearControls)
     }
-  }, [actionKeys, bindingAction, inputTrace, mapOpen, onIntent, projection, spadeEquipped])
+  }, [actionKeys, bindingAction, devNavigation, inputTrace, mapOpen, onIntent, projection, spadeEquipped])
 
   return (
     <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen} data-work-mode={projection.savedTerrainWorks?.modeActive === true}
@@ -516,10 +580,27 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           const press = pointerPress.current
           if (!press || press.id !== event.pointerId) return
           const tap = pointerAimTap(press, event.pointerId, [event.clientX, event.clientY])
+          const eligible = devNavigation && tap && pressedKeys.current.size === 0
+            && !mapOpen && !projection.openStoreId
+            && !projection.savedTerrainWorks?.modeActive && !projection.unavailableActions
+          const currentTap = { atMs: event.timeStamp,
+            point: [event.clientX, event.clientY] as const }
+          const decision = devSceneTapDecision(eligible, lastSceneTap.current, currentTap, terrainMode)
+          const doubleTap = decision === 'navigate'
+          lastSceneTap.current = eligible && !doubleTap ? currentTap : null
           if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
           pointerPress.current = null
           lastDragPoint.current = null
           setDragging(false)
+          if (doubleTap) {
+            if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
+            pendingTerrainTap.current = null
+            const intent = pointerDevNavigateIntent(devNavigation, projection, mapOpen,
+              groundPicker.current?.(event.clientX, event.clientY) ?? null)
+            if (intent) { setDevNavHint('Finding a safe route to the selected ground.'); onIntent(intent) }
+            else setDevNavHint('No visible revealed ground at that point. Double-click a clear terrain surface.')
+            return
+          }
           const kind = tap && pointerWorkAimKind(projection, mapOpen)
           if (kind) {
             const aimed = aimPicker.current?.(event.clientX, event.clientY, kind,
@@ -530,47 +611,61 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
             if (intent) onIntent(intent)
             return
           }
-          const soilIntent = pointerV31SoilPlaceTapIntent(projection, mapOpen, terrainMode,
-            press, event.pointerId, [event.clientX, event.clientY],
-            () => terrainPicker.current?.(event.clientX, event.clientY, 'dig') ?? null)
-          if (soilIntent?.type === 'v31.soil-place') {
-            setTerrainTapHint(`Cell x ${soilIntent.gx * 4}, z ${soilIntent.gz * 4} m selected. The checked action decides if soil can be placed here.`)
-            onIntent(soilIntent)
-            return
+          const dispatchTerrainTap = () => {
+            const soilIntent = pointerV31SoilPlaceTapIntent(projection, mapOpen, terrainMode,
+              press, event.pointerId, [event.clientX, event.clientY],
+              () => terrainPicker.current?.(event.clientX, event.clientY, 'dig') ?? null)
+            if (soilIntent?.type === 'v31.soil-place') {
+              setTerrainTapHint(`Cell x ${soilIntent.gx * 4}, z ${soilIntent.gz * 4} m selected. The checked action decides if soil can be placed here.`)
+              onIntent(soilIntent)
+              return
+            }
+            const mineIntent = pointerV29TerrainTapIntent(projection, mapOpen,
+              terrainMode === 'place-soil' ? null : terrainMode,
+              press, event.pointerId, [event.clientX, event.clientY],
+              () => terrainPicker.current?.(event.clientX, event.clientY,
+                sceneTerrainPickKind(projection, 'mine')) ?? null)
+            if (mineIntent?.type === 'v29.deep-dig') {
+              setTerrainTapHint(`Cell x ${mineIntent.gx * 4}, z ${mineIntent.gz * 4} m selected. The checked dig decides this layer or reports why it is blocked.`)
+              onIntent(mineIntent)
+              return
+            }
+            const v26Mode = terrainMode === 'mine' || terrainMode === 'place-soil' ? null : terrainMode
+            const intent = pointerV26TerrainTapIntent(projection, mapOpen, v26Mode,
+              press, event.pointerId, [event.clientX, event.clientY],
+              () => terrainPicker.current?.(event.clientX, event.clientY,
+                sceneTerrainPickKind(projection, v26Mode)) ?? null)
+            if (intent) { setTerrainTapHint(null); onIntent(intent) }
+            else if (tap && terrainMode === 'place-soil' && projection.v31Soil) {
+              setTerrainTapHint(projection.v31Soil.soilAvailable < 1
+                ? 'No carried soil. Dig safe dry ground first.'
+                : 'No clear dry ground cell targeted. Move within 5 m and tap the visible top, not its side.')
+            } else if (tap && terrainMode === 'mine' && projection.v29Mining?.tools.activePick) {
+              setTerrainTapHint(V29_NO_GROUND_TARGET_HINT)
+            } else if (tap && pointerV26TerrainKind(projection, mapOpen, v26Mode)) {
+              setTerrainTapHint(projection.v29Mining && terrainMode === 'dig'
+                ? V29_NO_GROUND_TARGET_HINT
+                : terrainMode === 'fill'
+                ? 'Tap the exposed floor or inner wall of a saved pit. Rocks and water block the spade.'
+                : 'Tap clear, revealed dry ground. Rocks and water block the spade.')
+            }
           }
-          const mineIntent = pointerV29TerrainTapIntent(projection, mapOpen,
-            terrainMode === 'place-soil' ? null : terrainMode,
-            press, event.pointerId, [event.clientX, event.clientY],
-            () => terrainPicker.current?.(event.clientX, event.clientY,
-              sceneTerrainPickKind(projection, 'mine')) ?? null)
-          if (mineIntent?.type === 'v29.deep-dig') {
-            setTerrainTapHint(`Cell x ${mineIntent.gx * 4}, z ${mineIntent.gz * 4} m selected. The checked dig decides this layer or reports why it is blocked.`)
-            onIntent(mineIntent)
-            return
+          if (pendingTerrainTap.current) {
+            window.clearTimeout(pendingTerrainTap.current.timer)
+            pendingTerrainTap.current.run()
+            pendingTerrainTap.current = null
           }
-          const v26Mode = terrainMode === 'mine' || terrainMode === 'place-soil' ? null : terrainMode
-          const intent = pointerV26TerrainTapIntent(projection, mapOpen, v26Mode,
-            press, event.pointerId, [event.clientX, event.clientY],
-            () => terrainPicker.current?.(event.clientX, event.clientY,
-              sceneTerrainPickKind(projection, v26Mode)) ?? null)
-          if (intent) { setTerrainTapHint(null); onIntent(intent) }
-          else if (tap && terrainMode === 'place-soil' && projection.v31Soil) {
-            setTerrainTapHint(projection.v31Soil.soilAvailable < 1
-              ? 'No carried soil. Dig safe dry ground first.'
-              : 'No clear dry ground cell targeted. Move within 5 m and tap the visible top, not its side.')
-          } else if (tap && terrainMode === 'mine' && projection.v29Mining?.tools.activePick) {
-            setTerrainTapHint(V29_NO_GROUND_TARGET_HINT)
-          } else if (tap && pointerV26TerrainKind(projection, mapOpen, v26Mode)) {
-            setTerrainTapHint(projection.v29Mining && terrainMode === 'dig'
-              ? V29_NO_GROUND_TARGET_HINT
-              : terrainMode === 'fill'
-              ? 'Tap the exposed floor or inner wall of a saved pit. Rocks and water block the spade.'
-              : 'Tap clear, revealed dry ground. Rocks and water block the spade.')
-          }
+          if (decision === 'defer-terrain') {
+            const timer = window.setTimeout(() => {
+              pendingTerrainTap.current = null
+              dispatchTerrainTap()
+            }, 510)
+            pendingTerrainTap.current = { timer, run: dispatchTerrainTap }
+          } else dispatchTerrainTap()
         }}
         onPointerCancel={(event) => {
           if (pointerPress.current?.id !== event.pointerId) return
-          pointerPress.current = null; lastDragPoint.current = null; setDragging(false)
+          pointerPress.current = null; lastDragPoint.current = null; lastSceneTap.current = null; setDragging(false)
         }}
         onPointerLeave={() => { terrainPointer.current = null }}
         onLostPointerCapture={(event) => {
@@ -580,7 +675,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
           terrainMode={terrainMode}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
-          onTerrainPickerReady={(picker) => { terrainPicker.current = picker }} />
+          onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
+          onGroundPickerReady={(picker) => { groundPicker.current = picker }} />
       </div>
       {projection.v26ValleyRimSegments !== undefined && <div className="wr-v26-terrain"
         data-v29={projection.v29Mining ? 'true' : undefined}
@@ -630,6 +726,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         {inOpenPit && <p>Open pit view: step onto neighboring ground or orbit until its floor or inner wall outlines.</p>}
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />
+      {devNavigation && <div className="wr-dev-nav-hint" role="status">{devNavHint
+        ?? 'Dev: double-click clear revealed ground to follow a safe route. Single-click uses the selected terrain tool.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}
       <WizardMap projection={projection} open={mapOpen} onToggle={toggleMap} onIntent={onIntent} buttonRef={mapButtonRef} closeRef={mapCloseRef} />
       <div className="wr-focus-note">{projection.v31Soil

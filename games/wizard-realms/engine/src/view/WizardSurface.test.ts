@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, focusGameplayAfterClick, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMovementIntents, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
+import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, devDoubleTap, devNavigationEnabled, devSceneTapDecision, focusGameplayAfterClick, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMovementIntents, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerDevNavigateIntent, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
 import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
 import type { WizardTerrainCell, WizardViewProjection } from './contracts'
@@ -38,6 +38,48 @@ const projection = {
     player: { gridX: 0, gridZ: 0, yaw: 0 },
   },
 } as unknown as WizardViewProjection
+
+describe('dev-only ground navigation handoff', () => {
+  const ground = { x: 5.75, y: 1.2, z: -12.25 }
+  it('requires exactly the V42 dev URL, never the ordinary public world', () => {
+    expect(devNavigationEnabled('?dev=1&publicWorld=v42')).toBe(true)
+    expect(devNavigationEnabled('?publicWorld=v42')).toBe(false)
+    expect(devNavigationEnabled('?dev=0&publicWorld=v42')).toBe(false)
+    expect(devNavigationEnabled('?dev=1&publicWorld=v41')).toBe(false)
+    expect(pointerDevNavigateIntent(devNavigationEnabled('?publicWorld=v42'), projection,
+      false, ground)).toBeNull()
+    expect(pointerDevNavigateIntent(devNavigationEnabled('?dev=1&publicWorld=v42'), projection,
+      false, ground)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
+  })
+
+  it('recognizes two close taps without depending on lost-pointer-capture event order', () => {
+    const first = { atMs: 100, point: [100, 100] as const }
+    const second = { atMs: 345, point: [104, 103] as const }
+    expect(devDoubleTap(first, { atMs: 345, point: [104, 103] })).toBe(true)
+    expect(devDoubleTap(first, { atMs: 700, point: [100, 100] })).toBe(false)
+    expect(devDoubleTap(first, { atMs: 200, point: [120, 100] })).toBe(false)
+    expect(devDoubleTap(null, { atMs: 200, point: [100, 100] })).toBe(false)
+    for (const mode of ['dig', 'fill', 'mine', 'place-soil'] as const) {
+      expect(devSceneTapDecision(true, null, first, mode)).toBe('defer-terrain')
+      expect(devSceneTapDecision(true, first, second, mode)).toBe('navigate')
+      expect(devSceneTapDecision(false, first, second, mode)).toBe('terrain')
+    }
+    expect(devSceneTapDecision(true, first, second, null)).toBe('navigate')
+  })
+
+  it('keeps ground-tool double taps available without stealing map, store, Works, or obscured taps', () => {
+    const request = (current: WizardViewProjection, mapOpen: boolean,
+      point: typeof ground | null = ground) => pointerDevNavigateIntent(true, current,
+        mapOpen, point)
+    expect(request(projection, true)).toBeNull()
+    expect(request({ ...projection, openStoreId: 'outfitters' }, false)).toBeNull()
+    expect(request({ ...projection, controllerActionsEnabled: false }, false)).toBeNull()
+    expect(request({ ...projection, savedTerrainWorks: { modeActive: true } as WizardViewProjection['savedTerrainWorks'] }, false)).toBeNull()
+    expect(request({ ...projection, equipment: { mainHand: { itemId: 'field_spade' } } as WizardViewProjection['equipment'] }, false)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
+    expect(request({ ...projection, v29Mining: { tools: { activePick: 'basic' } } as WizardViewProjection['v29Mining'] }, false)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
+    expect(request(projection, false, null)).toBeNull()
+  })
+})
 
 type Props = Record<string, unknown>
 const mapProps = (open: boolean, onToggle = vi.fn(), onIntent = vi.fn()) => ({ projection, open, onToggle, onIntent, buttonRef: createRef<HTMLButtonElement>(), closeRef: createRef<HTMLButtonElement>() })

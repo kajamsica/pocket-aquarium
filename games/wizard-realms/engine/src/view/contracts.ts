@@ -479,6 +479,8 @@ export type WizardViewIntent =
   // v5 and the streamed preview continue reading vector only.
   | { type: 'movement'; vector: Vec2; atMs?: number }
   | { type: 'movement.tap'; vector: Vec2; atMs?: number; source?: 'keyboard' }
+  | { type: 'dev.navigate'; destination: { x: number; z: number } }
+  | { type: 'dev.navigate.cancel' }
   | { type: 'gait.toggle' }
   | { type: 'jump' }
   | { type: 'interact' }

@@ -866,7 +866,7 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
     cell.highlandTrailSegment])
   const [x, y, z] = cell.position
   return (
-    <group position={[x, 0, z]}>
+    <group name="Terrain cell dressing" position={[x, 0, z]}>
       {highland.trail && <mesh geometry={UNIT_BOX} material={HIGHLAND_TRAIL_MATERIAL}
         position={[highland.trailX, y + 0.023, highland.trailZ]} rotation={[0, highland.yaw, 0]}
         scale={[1.16, 0.025, highland.length + 0.06]} receiveShadow />}
@@ -1022,7 +1022,8 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
       <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
         rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow={castShadow} /></>}
       <mesh geometry={timber ? MIREGLASS_TIMBER_CROWN_GEOMETRY : TREE_CROWN_GEOMETRY}
-        material={crownMaterial} position={timber ? [0, 3.75, 0] : undefined} castShadow={castShadow} />
+        name="Tree crown" material={crownMaterial}
+        position={timber ? [0, 3.75, 0] : undefined} castShadow={castShadow} />
     </group>
   )
 }
@@ -1885,6 +1886,65 @@ export type SceneWorkAimPicker = (clientX: number, clientY: number, kind: SceneW
   regional?: SceneRegionalAim) => number | null
 export type SceneTerrainPicker = (clientX: number, clientY: number,
   kind?: V26TerrainPickKind) => V26PickedTerrainColumn | null
+export type SceneGroundPicker = (clientX: number, clientY: number) =>
+  { x: number; y: number; z: number } | null
+
+/** Ground dressing sits just above the walkable surface; taller scenery still occludes it. */
+export function pickVisibleGroundPoint(scene: THREE.Scene, camera: THREE.Camera,
+  bounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  clientX: number, clientY: number, revealed: readonly WizardTerrainCell[]):
+  ReturnType<SceneGroundPicker> {
+  if (!(camera instanceof THREE.PerspectiveCamera || camera instanceof THREE.OrthographicCamera)
+    || ![bounds.left, bounds.top, bounds.width, bounds.height, clientX, clientY].every(Number.isFinite)
+    || bounds.width <= 0 || bounds.height <= 0
+    || !Number.isFinite(bounds.left + bounds.width) || !Number.isFinite(bounds.top + bounds.height)
+    || clientX < bounds.left || clientX > bounds.left + bounds.width
+    || clientY < bounds.top || clientY > bounds.top + bounds.height) return null
+  const top = scene.getObjectByName('Continuous terrain surface')
+  if (!(top instanceof THREE.Mesh) || !top.visible) return null
+  scene.updateMatrixWorld(true)
+  camera.updateMatrixWorld()
+  const ray = new THREE.Raycaster()
+  ray.setFromCamera(new THREE.Vector2(
+    (clientX - bounds.left) / bounds.width * 2 - 1,
+    1 - (clientY - bounds.top) / bounds.height * 2), camera)
+  const meshes: THREE.Mesh[] = []
+  scene.traverseVisible((object) => {
+    if (!(object instanceof THREE.Mesh)) return
+    const materials = Array.isArray(object.material) ? object.material : [object.material]
+    if (materials.some((material) => material.visible && (!material.transparent || material.opacity > 0))) {
+      meshes.push(object)
+    }
+  })
+  const front = ray.intersectObjects(meshes, false).find((candidate) => {
+    if (candidate.object.name !== 'Tree crown' || !(candidate.object instanceof THREE.Mesh)) return true
+    const material = Array.isArray(candidate.object.material)
+      ? candidate.object.material[0] : candidate.object.material
+    return !material.transparent || material.opacity > OCCLUDED_OPACITY + 0.04
+  })
+  const hit = ray.intersectObject(top, false)[0]
+  if (!hit || ![hit.point.x, hit.point.y, hit.point.z].every(Number.isFinite)
+    || scene.fog instanceof THREE.Fog && hit.distance >= scene.fog.far) return null
+  const gx = Math.ceil(hit.point.x / WORLD_CELL_METERS - 0.5)
+  const gz = Math.ceil(hit.point.z / WORLD_CELL_METERS - 0.5)
+  if (!Number.isSafeInteger(gx) || !Number.isSafeInteger(gz)
+    || gx < WORLD_GRID_MIN || gx > WORLD_GRID_MAX || gz < WORLD_GRID_MIN || gz > WORLD_GRID_MAX
+    || Math.abs(hit.point.x - gx * WORLD_CELL_METERS) >= WORLD_CELL_METERS / 2 - 0.001
+    || Math.abs(hit.point.z - gz * WORLD_CELL_METERS) >= WORLD_CELL_METERS / 2 - 0.001
+    || revealed.filter((cell) => cell.id === `tile-${gx + 3}-${gz + 3}`
+      && cell.size[0] === WORLD_CELL_METERS && cell.size[1] === WORLD_CELL_METERS
+      && cell.position[0] === gx * WORLD_CELL_METERS
+      && cell.position[2] === gz * WORLD_CELL_METERS).length !== 1) return null
+  if (!front) return null
+  if (front.object !== top) {
+    const groundDressing = front.object.parent?.name === 'Terrain cell dressing'
+    const fogEdge = front.object.name === 'Discovery fog edge'
+    if ((!groundDressing && !fogEdge)
+      || front.point.y - hit.point.y > 0.16
+      || Math.hypot(front.point.x - hit.point.x, front.point.z - hit.point.z) > 0.6) return null
+  }
+  return { x: hit.point.x, y: hit.point.y, z: hit.point.z }
+}
 
 /** V29 can address a saved pit wall; earlier Dig remains ground-only. */
 export function sceneTerrainPickKind(projection: WizardViewProjection,
@@ -1987,13 +2047,14 @@ export function pickVisibleRegionalLadderAimZ(scene: THREE.Scene, camera: THREE.
 }
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
-  onAimPickerReady, onTerrainPickerReady }: {
+  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady }: {
   projection: WizardViewProjection
   cameraOrbit: readonly [number, number]
   orbiting: boolean
   terrainMode?: 'dig' | 'fill' | 'mine' | 'place-soil' | null
   onAimPickerReady?: (picker: SceneWorkAimPicker) => void
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
+  onGroundPickerReady?: (picker: SceneGroundPicker) => void
 }) {
   const graphics = sceneGraphicsOptionsForSearch(typeof window === 'undefined' ? '' : window.location.search)
   // Region ownership controls actions and HUD state, never which established scenery exists.
@@ -2141,6 +2202,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
           gl.domElement.getBoundingClientRect(), clientX, clientY, revealedTerrainRef.current,
           kind, openPitColumnsRef.current)
         onTerrainPickerReady?.(terrainPicker)
+        onGroundPickerReady?.((clientX, clientY) => pickVisibleGroundPoint(scene, camera,
+          gl.domElement.getBoundingClientRect(), clientX, clientY, revealedTerrainRef.current))
         if (projection.v26ValleyRimSegments !== undefined) {
           setHoverSurface({ canvas: gl.domElement, picker: terrainPicker })
         }

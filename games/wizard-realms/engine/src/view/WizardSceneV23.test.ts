@@ -5,8 +5,9 @@ import { describe, expect, it } from 'vitest'
 import { resolvePublicV23Site } from '../domain/publicWorldV23Sites'
 import { resolveTerrainWorkSite } from '../domain/terrainWorks'
 import type { WizardSavedTerrainWorksView, WizardTerrainCell } from './contracts'
+import { pickV26TerrainColumn } from './V26TerrainPicker'
 import { GreenwayWorksSurvey, greenwayWorksSurveySegments, pickVisibleRegionalLadderAimZ,
-  pickVisibleWorkAimX, regionalLadderVisuals, savedTerrainWorkVisuals,
+  pickVisibleWorkAimX, pickVisibleGroundPoint, regionalLadderVisuals, savedTerrainWorkVisuals,
   terrainWorkApproachMarkers, terrainWorkStructureGeometry, TerrainWorkStructure } from './WizardScene'
 
 const seed = 'greenway-alpha'
@@ -21,6 +22,64 @@ const surveyColumn = (gx: number, rows: readonly number[], y: number): WizardTer
 const surveyWorks = (selectedKind: 'ladder' | 'bridge'): WizardSavedTerrainWorksView => ({
   builtSites: [], dugTileIds: [], preview: null, context: 'works4-greenway',
   modeActive: true, actionsEnabled: true, selectedKind,
+})
+
+describe('dev ground destination picking', () => {
+  it('returns the exact frontmost revealed top-surface point, not its cell center', () => {
+    const scene = new THREE.Scene()
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshBasicMaterial())
+    ground.name = 'Continuous terrain surface'
+    ground.rotation.x = -Math.PI / 2
+    scene.add(ground)
+    const camera = new THREE.PerspectiveCamera(68, 1, 0.08, 180)
+    camera.position.set(1, 6, 8)
+    camera.lookAt(1, 0, 0)
+    camera.updateProjectionMatrix()
+    const bounds = { left: 0, top: 0, width: 200, height: 200 }
+    const revealed: WizardTerrainCell[] = [{ id: 'tile-3-3', position: [0, 0, 0],
+      size: [4, 4], height: 0, climate: 'loam' }]
+    const point = pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)
+    expect(point?.x).toBeCloseTo(1)
+    expect(point?.y).toBeCloseTo(0)
+    expect(point?.z).toBeCloseTo(0)
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, [])).toBeNull()
+    const dressing = new THREE.Group()
+    dressing.name = 'Terrain cell dressing'
+    const trail = new THREE.Mesh(new THREE.BoxGeometry(1, 0.025, 1), new THREE.MeshBasicMaterial())
+    trail.position.set(1, 0.023, 0)
+    dressing.add(trail)
+    scene.add(dressing)
+    expect(pickV26TerrainColumn(scene, camera, bounds, 100, 100, revealed)).toBeNull()
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)?.x).toBeCloseTo(1)
+    const water = new THREE.Mesh(new THREE.BoxGeometry(1, 0.025, 1), new THREE.MeshBasicMaterial())
+    water.name = 'Greenway creek water'
+    water.position.set(1, 0.07, 0)
+    scene.add(water)
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
+    scene.remove(water)
+    const stake = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1, 0.6), new THREE.MeshBasicMaterial())
+    stake.position.set(1, 0.5, 0)
+    dressing.add(stake)
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
+    dressing.remove(stake)
+    const crownMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12 })
+    const crown = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 2), crownMaterial)
+    crown.name = 'Tree crown'
+    crown.position.set(1, 3, 4)
+    scene.add(crown)
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)?.x).toBeCloseTo(1)
+    crownMaterial.opacity = 1
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
+    crownMaterial.opacity = 0.12
+    crown.name = 'Tree trunk'
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
+    scene.remove(crown)
+    const rock = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial())
+    rock.name = 'Foreground rock'
+    rock.position.set(1, 3, 4)
+    scene.add(rock)
+    expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
+  })
 })
 
 describe('V49 Greenway Works survey', () => {

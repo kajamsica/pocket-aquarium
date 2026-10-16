@@ -143,6 +143,7 @@ import { terrainWorkSupportAt } from './domain/terrainWorkSupport'
 import type { PublicV24Witness } from './domain/publicWorldV24Snapshot'
 import { publicV23PlacementId, resolvePublicV23Site } from './domain/publicWorldV23Sites'
 import type { WizardViewIntent, WizardViewProjection } from './view/contracts'
+import { planDevRoute } from './view/devNavigation'
 import { publicV25NorthLadderGuidance } from './view/WizardHud'
 import { surveyorCrossingQuest } from './view/surveyorCrossingQuest'
 import { publicV35LedgerQuest } from './view/publicV35LedgerQuest'
@@ -1426,6 +1427,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const held = useRef<readonly [number, number]>([0, 0])
   const timedHeld = useRef<{ nextAtMs: number; vector: readonly [number, number] } | null>(null)
   const inputQueue = useRef<InputToken[]>([])
+  const devRoute = useRef<{ waypoints: readonly { x: number; z: number }[]; index: number } | null>(null)
   const edgePulse = useRef<Extract<InputToken, { kind: 'pulse' }> | null>(null)
   const busy = useRef(false)
   const running = useRef(false)
@@ -1579,12 +1581,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const result = await runtime.save()
         trace?.record('controller.save.result', { status: result.status })
         if (result.status === 'blocked') {
+          devRoute.current = null
           held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
           inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
           tell(`Save blocked: ${result.reason}.`)
         } else if (result.status === 'saved') tell(`V${saveVersion} progress saved on this device.`)
         else if (result.status === 'deferred-airborne') tell('Land before saving pending travel.')
-      } catch { held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
+      } catch { devRoute.current = null
+        held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
         inputQueue.current = [];
         tell('Save blocked: storage-error.') }
     })()
@@ -1798,6 +1802,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       trace?.record('controller.checked', { admitted: false })
       tell('A checked action is already queued; retry after it finishes.'); return
     }
+    devRoute.current = null
     trace?.record('controller.checked', { admitted: true, queued: inputQueue.current.length })
     inputQueue.current.push({ kind: 'checked', intent }); repaintQueued(); drainChecked()
   }
@@ -1852,7 +1857,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       try {
         if (timedHeld.current) sampleTimedUntil(performance.now())
         if (inputQueue.current[0]?.kind === 'checked') { drainChecked(); return }
-        if (!timedHeld.current && !held.current.some(Boolean) && !edgePulse.current
+        if (!devRoute.current && !timedHeld.current && !held.current.some(Boolean) && !edgePulse.current
           && inputQueue.current.length === 0 && !runtime.idleFrameNeeded()) {
           if (runtime.status().pendingFrames === 0) return
           if (readActive().player.verticalVelocity === 0) { void save(); return }
@@ -1867,11 +1872,38 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const request = !neutral && inputQueue.current[0]?.kind === 'pulse'
           ? inputQueue.current.shift() as Extract<InputToken, { kind: 'pulse' }> : null
         if (request === edgePulse.current) edgePulse.current = null
-        const vector = request?.vector ?? held.current
+        let routeDriving = false
+        let routeVector: readonly [number, number] = [0, 0]
+        let routeStepMeters: number | null = null
+        if (!neutral && !request && !held.current.some(Boolean)
+          && before.player.verticalVelocity === 0 && devRoute.current) {
+          const route = devRoute.current
+          const position = before.player.position
+          while (route.index < route.waypoints.length) {
+            const waypoint = route.waypoints[route.index]
+            const remaining = Math.hypot(waypoint.x - position.x, waypoint.z - position.z)
+            if (remaining > (route.index === route.waypoints.length - 1 ? 0.5 : 0.04)) break
+            route.index++
+          }
+          if (route.index === route.waypoints.length) {
+            devRoute.current = null
+            tell('Auto-route arrived at the selected ground.')
+          } else {
+            const waypoint = route.waypoints[route.index]
+            const heading = Math.atan2(position.x - waypoint.x, position.z - waypoint.z)
+            const turn = Math.atan2(Math.sin(heading - before.player.yaw),
+              Math.cos(heading - before.player.yaw))
+            routeVector = [-Math.max(-1, Math.min(1, turn / 0.13)), Math.abs(turn) <= 0.18 ? 1 : 0]
+            routeStepMeters = Math.hypot(waypoint.x - position.x, waypoint.z - position.z)
+            routeDriving = true
+          }
+        }
+        const vector = request?.vector ?? (routeDriving ? routeVector : held.current)
         const jump = request?.jump ?? false
+        const gaitStep = publicV11Gait(before.player.equipment.feet, walkRequested).metersPerStep
         const intents = neutral ? [] : jump ? [{ type: 'jump' as const }]
           : publicV14MovementIntents(before.player.yaw, vector,
-            publicV11Gait(before.player.equipment.feet, walkRequested).metersPerStep)
+            routeStepMeters === null ? gaitStep : Math.min(gaitStep, routeStepMeters))
         const frameStartedAt = trace ? performance.now() : 0
         const result = runtime.advanceFrame(intents, walkRequested)
         const frameFinishedAt = trace ? performance.now() : 0
@@ -1886,6 +1918,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           ? result.rejections.find((rejection) => rejection.intentType === 'move'
             || rejection.code === 'terrain_missing') : undefined
         if (movementRejection) {
+          if (routeDriving) {
+            devRoute.current = null
+            tell(`Auto-route blocked: ${movementRejection.message}`)
+          }
           const newMessage = lastMovementRejection.current !== movementRejection.message
           const cueExpired = obstacleCueUntil.current === 0
           obstacleCueUntil.current = performance.now() + OBSTACLE_CUE_MS
@@ -1898,9 +1934,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
               : movementRejection.message === 'Build a ladder at this cliff face.'
                 ? ' Chop 4 logs. Open Works (tap Works or press B), then choose Ladder.' : ''
             setObstacleCue(movementRejection.message + hint)
-            if (newMessage) tell(movementRejection.message)
+            if (newMessage && !routeDriving) tell(movementRejection.message)
           }
-        } else if (result.rejections.length) tell(result.rejections.at(-1)!.message)
+        } else if (result.rejections.length) {
+          if (routeDriving) devRoute.current = null
+          tell(routeDriving ? `Auto-route blocked: ${result.rejections.at(-1)!.message}`
+            : result.rejections.at(-1)!.message)
+        }
         else if (intents.some((intent) => intent.type === 'move')) {
           lastMovementRejection.current = null; obstacleCueUntil.current = 0
           setObstacleCue(null)
@@ -1925,8 +1965,30 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       ...('vector' in intent ? { vector: intent.vector } : {}),
       gate: runtime.status().gate, busy: busy.current,
       queued: inputQueue.current.length })
+    if (intent.type === 'dev.navigate.cancel') {
+      if (devRoute.current) { devRoute.current = null; tell('Auto-route cancelled.') }
+      return
+    }
     if (runtime.status().gate === 'blocked') return
+    if (intent.type === 'dev.navigate') {
+      if (!v42 || new URLSearchParams(window.location.search).get('dev') !== '1') return
+      if (actionTask.current || inputQueue.current.some((token) => token.kind === 'checked')) {
+        tell('Finish the checked action before setting an auto-route.'); return
+      }
+      devRoute.current = null
+      held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
+      inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
+      const player = readActive().player
+      if (player.verticalVelocity !== 0) { tell('Land before setting an auto-route.'); return }
+      const route = planDevRoute(view, player.position, intent.destination)
+      if (!route.ok) tell(`Auto-route unavailable: ${route.reason}`)
+      else if (!route.waypoints.length) tell('Already at the selected ground.')
+      else { devRoute.current = { waypoints: route.waypoints, index: 0 }
+        tell('Auto-route started. Use movement keys or Esc to cancel.') }
+      return
+    }
     if (intent.type === 'movement') {
+      if (intent.vector.some(Boolean) || intent.atMs === undefined) devRoute.current = null
       const prior = held.current
       if (intent.atMs !== undefined) sampleTimedUntil(intent.atMs)
       held.current = intent.vector
@@ -1956,10 +2018,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       return
     }
     if (intent.type === 'movement.tap') {
+      devRoute.current = null
       if (performance.now() >= obstacleCueUntil.current) lastMovementRejection.current = null
       queuePulse(intent.vector, false); return
     }
-    if (intent.type === 'jump') { queuePulse([0, 0], true); return }
+    if (intent.type === 'jump') { devRoute.current = null; queuePulse([0, 0], true); return }
     if (intent.type === 'gait.toggle') { setWalkRequested((value) => !value); return }
     if (v37 && (intent.type === 'windward.study' || intent.type === 'windward.cast')) {
       queueChecked({ kind: intent.type === 'windward.study' ? 'windward-study/v1' : 'windward-cast/v1' })
