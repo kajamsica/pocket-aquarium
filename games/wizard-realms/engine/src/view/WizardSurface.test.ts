@@ -52,7 +52,7 @@ describe('dev-only ground navigation handoff', () => {
       false, ground)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
   })
 
-  it('recognizes two close taps without depending on lost-pointer-capture event order', () => {
+  it('routes close dev double taps only with terrain tools off; active tools submit each tap immediately', () => {
     const first = { atMs: 100, point: [100, 100] as const }
     const second = { atMs: 345, point: [104, 103] as const }
     expect(devDoubleTap(first, { atMs: 345, point: [104, 103] })).toBe(true)
@@ -60,14 +60,16 @@ describe('dev-only ground navigation handoff', () => {
     expect(devDoubleTap(first, { atMs: 200, point: [120, 100] })).toBe(false)
     expect(devDoubleTap(null, { atMs: 200, point: [100, 100] })).toBe(false)
     for (const mode of ['dig', 'fill', 'mine', 'place-soil'] as const) {
-      expect(devSceneTapDecision(true, null, first, mode)).toBe('defer-terrain')
-      expect(devSceneTapDecision(true, first, second, mode)).toBe('navigate')
+      expect(devSceneTapDecision(true, null, first, mode)).toBe('terrain')
+      expect(devSceneTapDecision(true, first, second, mode)).toBe('terrain')
       expect(devSceneTapDecision(false, first, second, mode)).toBe('terrain')
     }
+    expect(devSceneTapDecision(true, null, first, null)).toBe('terrain')
     expect(devSceneTapDecision(true, first, second, null)).toBe('navigate')
+    expect(devSceneTapDecision(false, first, second, null)).toBe('terrain')
   })
 
-  it('keeps ground-tool double taps available without stealing map, store, Works, or obscured taps', () => {
+  it('keeps map, store, Works, and obscured taps from routing even when tools are off', () => {
     const request = (current: WizardViewProjection, mapOpen: boolean,
       point: typeof ground | null = ground) => pointerDevNavigateIntent(true, current,
         mapOpen, point)
@@ -75,8 +77,6 @@ describe('dev-only ground navigation handoff', () => {
     expect(request({ ...projection, openStoreId: 'outfitters' }, false)).toBeNull()
     expect(request({ ...projection, controllerActionsEnabled: false }, false)).toBeNull()
     expect(request({ ...projection, savedTerrainWorks: { modeActive: true } as WizardViewProjection['savedTerrainWorks'] }, false)).toBeNull()
-    expect(request({ ...projection, equipment: { mainHand: { itemId: 'field_spade' } } as WizardViewProjection['equipment'] }, false)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
-    expect(request({ ...projection, v29Mining: { tools: { activePick: 'basic' } } as WizardViewProjection['v29Mining'] }, false)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
     expect(request(projection, false, null)).toBeNull()
   })
 })

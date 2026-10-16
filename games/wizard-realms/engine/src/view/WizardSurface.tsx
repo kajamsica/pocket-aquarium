@@ -144,14 +144,13 @@ export function devDoubleTap(previous: SceneTap | null, current: SceneTap): bool
       current.point[1] - previous.point[1]) <= 9
 }
 
-/** Keep ordinary and Works taps immediate; only dev terrain taps wait for a possible second click. */
+/** A selected terrain tool owns taps; dev double-click routing only applies with tools off. */
 export function devSceneTapDecision(eligible: boolean, previous: SceneTap | null,
-  current: SceneTap, terrainMode: V31TerrainMode | null): 'navigate' | 'defer-terrain' | 'terrain' {
-  return !eligible ? 'terrain' : devDoubleTap(previous, current) ? 'navigate'
-    : terrainMode ? 'defer-terrain' : 'terrain'
+  current: SceneTap, terrainMode: V31TerrainMode | null): 'navigate' | 'terrain' {
+  return eligible && !terrainMode && devDoubleTap(previous, current) ? 'navigate' : 'terrain'
 }
 
-/** Works and open panels keep ownership; a selected ground tool still permits a double-click. */
+/** Works and open panels keep ownership; callers arbitrate active ground tools first. */
 export function pointerDevNavigateIntent(enabled: boolean, projection: WizardViewProjection,
   mapOpen: boolean, ground: ReturnType<SceneGroundPicker>): WizardViewIntent | null {
   if (!enabled || mapOpen || projection.openStoreId
@@ -329,7 +328,6 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const terrainPicker = useRef<SceneTerrainPicker | null>(null)
   const groundPicker = useRef<SceneGroundPicker | null>(null)
   const lastSceneTap = useRef<SceneTap | null>(null)
-  const pendingTerrainTap = useRef<{ timer: number; run: () => void } | null>(null)
   const terrainPointer = useRef<readonly [number, number] | null>(null)
   const spadeEquipped = projection.equipment?.mainHand?.itemId === 'field_spade'
   const activePick = projection.v29Mining?.tools.activePick ?? null
@@ -395,14 +393,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
     return () => window.clearTimeout(timeout)
   }, [devNavHint])
 
-  useEffect(() => () => {
-    if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
-  }, [])
-
   useEffect(() => {
     if (!mapOpen && !projection.openStoreId && !projection.savedTerrainWorks?.modeActive) return
-    if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
-    pendingTerrainTap.current = null
     lastSceneTap.current = null
   }, [mapOpen, projection.openStoreId, projection.savedTerrainWorks?.modeActive])
 
@@ -412,8 +404,6 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
     if (next) {
       if (devNavigation) onIntent({ type: 'dev.navigate.cancel' })
       lastSceneTap.current = null
-      if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
-      pendingTerrainTap.current = null
       setBackpackOpen(false)
       terrainPointer.current = null
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
@@ -432,8 +422,6 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       if (devNavigation) onIntent({ type: 'dev.navigate.cancel' })
       lastSceneTap.current = null
-      if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
-      pendingTerrainTap.current = null
       setDragging(false)
       lastDragPoint.current = null
       cameraOrbit.current = CENTERED_CAMERA_ORBIT
@@ -587,14 +575,12 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
             point: [event.clientX, event.clientY] as const }
           const decision = devSceneTapDecision(eligible, lastSceneTap.current, currentTap, terrainMode)
           const doubleTap = decision === 'navigate'
-          lastSceneTap.current = eligible && !doubleTap ? currentTap : null
+          lastSceneTap.current = eligible && !terrainMode && !doubleTap ? currentTap : null
           if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
           pointerPress.current = null
           lastDragPoint.current = null
           setDragging(false)
           if (doubleTap) {
-            if (pendingTerrainTap.current) window.clearTimeout(pendingTerrainTap.current.timer)
-            pendingTerrainTap.current = null
             const intent = pointerDevNavigateIntent(devNavigation, projection, mapOpen,
               groundPicker.current?.(event.clientX, event.clientY) ?? null)
             if (intent) { setDevNavHint('Finding a safe route to the selected ground.'); onIntent(intent) }
@@ -650,18 +636,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
                 : 'Tap clear, revealed dry ground. Rocks and water block the spade.')
             }
           }
-          if (pendingTerrainTap.current) {
-            window.clearTimeout(pendingTerrainTap.current.timer)
-            pendingTerrainTap.current.run()
-            pendingTerrainTap.current = null
-          }
-          if (decision === 'defer-terrain') {
-            const timer = window.setTimeout(() => {
-              pendingTerrainTap.current = null
-              dispatchTerrainTap()
-            }, 510)
-            pendingTerrainTap.current = { timer, run: dispatchTerrainTap }
-          } else dispatchTerrainTap()
+          dispatchTerrainTap()
         }}
         onPointerCancel={(event) => {
           if (pointerPress.current?.id !== event.pointerId) return
@@ -727,7 +702,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />
       {devNavigation && <div className="wr-dev-nav-hint" role="status">{devNavHint
-        ?? 'Dev: double-click clear revealed ground to follow a safe route. Single-click uses the selected terrain tool.'}</div>}
+        ?? 'Dev: select a terrain tool to use it with one click. Turn tools off, then double-click clear revealed ground to follow a safe route.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}
       <WizardMap projection={projection} open={mapOpen} onToggle={toggleMap} onIntent={onIntent} buttonRef={mapButtonRef} closeRef={mapCloseRef} />
       <div className="wr-focus-note">{projection.v31Soil
