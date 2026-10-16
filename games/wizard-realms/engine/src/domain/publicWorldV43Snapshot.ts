@@ -6,8 +6,8 @@ import { publicV32Monotonic, publicV32Preserves } from './publicWorldV32Snapshot
 import { decodePublicV42Root, decodePublicV42Witness,
   createFreshPublicV42Root, replayPublicV42Witness } from './publicWorldV42Snapshot'
 import type { PublicV42Root, PublicV42Witness } from './publicWorldV42Snapshot'
-import { decodePublicV42RewardProgress, PUBLIC_V42_PROGRESS_KEYS,
-  previewPublicV42RewardFrameBatch } from './publicWorldV42RewardAction'
+import { PUBLIC_V42_PROGRESS_KEYS, previewPublicV42RewardFrameBatch }
+  from './publicWorldV42RewardAction'
 import type { PublicV42RewardProgress } from './publicWorldV42RewardAction'
 import { confirmPublicV43FamiliarAction, createPublicV43FamiliarProgress,
   decodePublicV43FamiliarProgress, decodePublicV43FamiliarWitness,
@@ -116,9 +116,7 @@ function replayFrames(before: PublicV43FamiliarProgress,
       if (projected.state.player.verticalVelocity !== 0
         || Math.abs(pose.effective.position.y - pose.effective.floorY) > 1e-6)
         continue
-      const grounded = decodePublicV42RewardProgress(projected)
-      if (!grounded) return null
-      const advanced = advancePublicV43FamiliarFollower(current, grounded)
+      const advanced = advancePublicV43FamiliarFollower(current, projected)
       if (!advanced) return null
       current = advanced
     }
