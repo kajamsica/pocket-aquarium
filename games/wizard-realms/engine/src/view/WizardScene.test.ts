@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -577,6 +577,68 @@ describe('terrain presentation', () => {
 })
 
 describe('Mireglass terrain detail', () => {
+  it('merges each reed cluster without changing its world shape or ray hit locations', () => {
+    const unit = new THREE.BoxGeometry(1, 1, 1)
+    const original = new THREE.Group()
+    original.position.set(17.9, 2.3, -8.7)
+    original.rotation.y = 0.43
+    const reeds = [
+      { position: [-0.12, 0.24, 0], rotation: -0.12, scale: [0.045, 0.48, 0.045] },
+      { position: [0.09, 0.31, 0.09], rotation: 0.16, scale: [0.04, 0.62, 0.04] },
+      { position: [0.02, 0.18, -0.1], rotation: 0, scale: [0.04, 0.36, 0.04] },
+    ] as const
+    const originalMeshes = reeds.map(({ position, rotation, scale }) => {
+      const mesh = new THREE.Mesh(unit)
+      mesh.position.set(position[0], position[1], position[2])
+      mesh.rotation.z = rotation
+      mesh.scale.set(scale[0], scale[1], scale[2])
+      original.add(mesh)
+      return mesh
+    })
+    const merged = new THREE.Mesh(MIREGLASS_REED_GEOMETRY)
+    const mergedGroup = new THREE.Group()
+    mergedGroup.position.copy(original.position)
+    mergedGroup.rotation.copy(original.rotation)
+    mergedGroup.add(merged)
+    original.updateMatrixWorld(true)
+    mergedGroup.updateMatrixWorld(true)
+
+    const vertices = (meshes: THREE.Mesh[]) => meshes.flatMap((mesh) => {
+      const positions = mesh.geometry.getAttribute('position')
+      return Array.from({ length: positions.count }, (_, index) =>
+        new THREE.Vector3().fromBufferAttribute(positions, index).applyMatrix4(mesh.matrixWorld))
+    })
+    const expected = vertices(originalMeshes)
+    const actual = vertices([merged])
+    expect(actual).toHaveLength(expected.length)
+    for (let index = 0; index < actual.length; index += 1) {
+      expect(actual[index].distanceTo(expected[index])).toBeLessThan(1e-6)
+    }
+    expect(MIREGLASS_REED_GEOMETRY.index?.count).toBe(3 * unit.index!.count)
+    expect(MIREGLASS_REED_GEOMETRY.groups).toHaveLength(0)
+    const originalBounds = new THREE.Box3().setFromObject(original, true)
+    const mergedBounds = new THREE.Box3().setFromObject(mergedGroup, true)
+    expect(mergedBounds.min.distanceTo(originalBounds.min)).toBeLessThan(1e-6)
+    expect(mergedBounds.max.distanceTo(originalBounds.max)).toBeLessThan(1e-6)
+    expect(merged.frustumCulled).toBe(true)
+    expect(merged.castShadow).toBe(false)
+    expect(merged.receiveShadow).toBe(false)
+
+    for (const { position } of reeds) {
+      const origin = original.localToWorld(new THREE.Vector3(position[0], position[1], position[2] + 1))
+      const target = original.localToWorld(new THREE.Vector3(...position))
+      const ray = new THREE.Raycaster(origin, target.sub(origin).normalize())
+      const originalHits = ray.intersectObjects(originalMeshes)
+      const mergedHits = ray.intersectObject(merged)
+      expect(mergedHits).toHaveLength(originalHits.length)
+      for (let index = 0; index < mergedHits.length; index += 1) {
+        expect(mergedHits[index].distance).toBeCloseTo(originalHits[index].distance, 6)
+        expect(mergedHits[index].point.distanceTo(originalHits[index].point)).toBeLessThan(1e-6)
+      }
+    }
+    unit.dispose()
+  })
+
   it('is stable, sparse, non-interactive scenery within the 17 by 17 visible window', () => {
     const terrains = ['wetland', 'loam', 'rocky'] as const
     const cells = Array.from({ length: 32 * 32 }, (_, index) => {

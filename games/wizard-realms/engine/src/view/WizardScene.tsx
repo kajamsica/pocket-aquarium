@@ -69,6 +69,14 @@ export const UNCHARTED_GROUND_MATERIAL = new THREE.MeshBasicMaterial({ color: '#
 
 // Shared geometry/material instances for primitives that have no per-instance variance.
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1)
+const MIREGLASS_REED_PARTS = [
+  UNIT_BOX.clone().scale(0.045, 0.48, 0.045).rotateZ(-0.12).translate(-0.12, 0.24, 0),
+  UNIT_BOX.clone().scale(0.04, 0.62, 0.04).rotateZ(0.16).translate(0.09, 0.31, 0.09),
+  UNIT_BOX.clone().scale(0.04, 0.36, 0.04).translate(0.02, 0.18, -0.1),
+]
+export const MIREGLASS_REED_GEOMETRY = mergeGeometries(MIREGLASS_REED_PARTS)
+MIREGLASS_REED_PARTS.forEach((part) => part.dispose())
+if (!MIREGLASS_REED_GEOMETRY) throw new Error('Mireglass reed geometry could not be merged.')
 const TERRAIN_TARGET_OUTLINE = new THREE.BufferGeometry().setFromPoints([
   new THREE.Vector3(-1.45, 0, -1.45), new THREE.Vector3(1.45, 0, -1.45),
   new THREE.Vector3(1.45, 0, 1.45), new THREE.Vector3(-1.45, 0, 1.45),
@@ -890,9 +898,7 @@ function TerrainCell({ cell }: { cell: WizardTerrainCell }) {
       {detail.water && <mesh geometry={MIREGLASS_PATCH_GEOMETRY} material={MIREGLASS_WATER_MATERIAL}
         position={[detail.x, y + 0.019, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.32, 1, 0.88]} />}
       {detail.reeds && <group position={[detail.x + 0.9, y, detail.z - 0.7]} rotation={[0, detail.rotation, 0]}>
-        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[-0.12, 0.24, 0]} rotation={[0, 0, -0.12]} scale={[0.045, 0.48, 0.045]} />
-        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.09, 0.31, 0.09]} rotation={[0, 0, 0.16]} scale={[0.04, 0.62, 0.04]} />
-        <mesh geometry={UNIT_BOX} material={MIREGLASS_REED_MATERIAL} position={[0.02, 0.18, -0.1]} scale={[0.04, 0.36, 0.04]} />
+        <mesh geometry={MIREGLASS_REED_GEOMETRY} material={MIREGLASS_REED_MATERIAL} />
       </group>}
       {detail.peat && <mesh geometry={MIREGLASS_PATCH_GEOMETRY} material={MIREGLASS_PEAT_MATERIAL}
         position={[detail.x, y + 0.018, detail.z]} rotation={[0, detail.rotation, 0]} scale={[1.08, 1, 0.74]} />}
