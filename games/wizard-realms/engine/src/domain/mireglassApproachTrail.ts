@@ -1,7 +1,8 @@
 import { mireglassAnchors } from './mireglassContent'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID, publicV16InsideGreenway,
-  publicWorldV16TileAtGrid, resolvePublicV16GreenwaySite } from './publicWorldV16GreenwaySites'
+  publicWorldV16TileAtGrid } from './publicWorldV16GreenwaySites'
+import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { publicV25RiverCellAtGrid } from './publicWorldV25River'
 import { publicV26ValleyRimPassage } from './publicWorldV26ValleyRim'
 import type { Vec3 } from './types'
@@ -16,11 +17,24 @@ const greenwayTrailCache = new Map<string, readonly Readonly<Vec3>[]>()
 const frontierRouteCache = new Map<string, MireglassFrontierRoute>()
 const fullTrailCache = new Map<string, readonly Readonly<Vec3>[]>()
 const v42FullTrailCache = new Map<string, readonly Readonly<Vec3>[]>()
+const V42_CENTER_BRIDGE_ID = 'works4:bridge:greenway-creek:0'
 
 export type MireglassFrontierRoute = Readonly<{
-  requiredBridgeId: typeof PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID
+  requiredBridgeId: string
   points: readonly Readonly<Vec3>[]
 }>
+
+/** Select a built, resolvable creek span, otherwise preview the current center site. */
+export function mireglassV42BridgeId(seed: string, builtBridgeIds: readonly string[]): string {
+  const placed = builtBridgeIds.flatMap((id) => {
+    const site = resolvePublicV17GreenwaySite(seed, id)
+    return site?.kind === 'bridge' ? [site] : []
+  }).sort((a, b) => Math.abs(a.from.x) - Math.abs(b.from.x)
+    || a.id.localeCompare(b.id))[0]
+  if (placed) return placed.id
+  return resolvePublicV17GreenwaySite(seed, V42_CENTER_BRIDGE_ID)?.kind === 'bridge'
+    ? V42_CENTER_BRIDGE_ID : PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID
+}
 
 /** A dry, reversible 4 m connector from the Greenway origin to the fringe marker. */
 export function mireglassGreenwayToMarkerTrail(seed: string): readonly Readonly<Vec3>[] {
@@ -148,21 +162,23 @@ export function mireglassApproachTrail(seed: string): readonly Readonly<Vec3>[] 
   return trail
 }
 
-/** A bounded, reversible route from the built center bridge to the frontier marker. */
-export function mireglassFrontierRoute(seed: string): MireglassFrontierRoute {
+/** A bounded, reversible route from the selected checked bridge geometry to the marker. */
+export function mireglassFrontierRoute(seed: string,
+  bridgeId: string = PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID): MireglassFrontierRoute {
   const normalizedSeed = seed || 'wizard-realms'
-  const cached = frontierRouteCache.get(normalizedSeed)
+  const key = JSON.stringify([normalizedSeed, bridgeId])
+  const cached = frontierRouteCache.get(key)
   if (cached) {
-    frontierRouteCache.delete(normalizedSeed)
-    frontierRouteCache.set(normalizedSeed, cached)
+    frontierRouteCache.delete(key)
+    frontierRouteCache.set(key, cached)
     return cached
   }
-  const bridge = resolvePublicV16GreenwaySite(normalizedSeed, PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID)
+  const bridge = resolvePublicV17GreenwaySite(normalizedSeed, bridgeId)
   if (!bridge || bridge.kind !== 'bridge') {
-    throw new Error(`No center bridge site for ${normalizedSeed}`)
+    throw new Error(`No Greenway bridge site for ${normalizedSeed}: ${bridgeId}`)
   }
   const marker = mireglassAnchors(normalizedSeed).fringeMarker.tile.center
-  const sx = bridge.exit.x / CELL, sz = bridge.exit.z / CELL
+  const sx = Math.ceil(bridge.exit.x / CELL - 0.5), sz = bridge.exit.z / CELL
   const gx = marker.x / CELL, gz = marker.z / CELL
   if (![sx, sz, gx, gz].every(Number.isSafeInteger)) {
     throw new Error(`No frontier route for ${normalizedSeed}: noncanonical endpoint`)
@@ -213,20 +229,22 @@ export function mireglassFrontierRoute(seed: string): MireglassFrontierRoute {
     const { x, z } = point(at)
     reversed.push(tile(x, z).center)
   }
+  const exitCenter = tile(sx, sz).center
   const points = Object.freeze([
     bridge.approach, bridge.from, bridge.supportPath[1], bridge.to, bridge.exit,
+    ...(exitCenter.x === bridge.exit.x ? [] : [exitCenter]),
     ...reversed.reverse(),
   ].map((entry) => Object.freeze({ ...entry })))
-  const route = Object.freeze({ requiredBridgeId: PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID, points })
-  frontierRouteCache.set(normalizedSeed, route)
+  const route = Object.freeze({ requiredBridgeId: bridge.id, points })
+  frontierRouteCache.set(key, route)
   if (frontierRouteCache.size > CACHE_LIMIT) frontierRouteCache.delete(frontierRouteCache.keys().next().value!)
   return route
 }
 
 function joinedTrail(seed: string, connector: readonly Readonly<Vec3>[],
-  cache: Map<string, readonly Readonly<Vec3>[]>): readonly Readonly<Vec3>[] {
+  cache: Map<string, readonly Readonly<Vec3>[]>, key = seed): readonly Readonly<Vec3>[] {
   const normalizedSeed = seed || 'wizard-realms'
-  const cached = cache.get(normalizedSeed)
+  const cached = cache.get(key)
   if (cached) return cached
   const outpost = mireglassApproachTrail(normalizedSeed)
   const marker = connector.at(-1)
@@ -234,7 +252,7 @@ function joinedTrail(seed: string, connector: readonly Readonly<Vec3>[],
     throw new Error(`Mireglass trail does not join at the frontier marker for ${normalizedSeed}`)
   }
   const trail = Object.freeze([...connector, ...outpost.slice(1)])
-  cache.set(normalizedSeed, trail)
+  cache.set(key, trail)
   if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value!)
   return trail
 }
@@ -244,7 +262,9 @@ export function mireglassFullApproachTrail(seed: string): readonly Readonly<Vec3
   return joinedTrail(seed, mireglassGreenwayToMarkerTrail(seed), fullTrailCache)
 }
 
-/** V42-only cue: the built center bridge leads to one reversible frontier route. */
-export function mireglassV42FullApproachTrail(seed: string): readonly Readonly<Vec3>[] {
-  return joinedTrail(seed, mireglassFrontierRoute(seed).points, v42FullTrailCache)
+/** V42-only cue: a selected bridge leads to one reversible frontier route. */
+export function mireglassV42FullApproachTrail(seed: string,
+  bridgeId: string = PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID): readonly Readonly<Vec3>[] {
+  return joinedTrail(seed, mireglassFrontierRoute(seed, bridgeId).points, v42FullTrailCache,
+    JSON.stringify([seed || 'wizard-realms', bridgeId]))
 }

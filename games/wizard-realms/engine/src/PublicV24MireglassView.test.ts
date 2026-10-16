@@ -3,17 +3,23 @@ import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { mireglassAnchors, mireglassFairyRing, mireglassResources } from './domain/mireglassContent'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
-import { mireglassApproachTrail, mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
+import { mireglassApproachTrail, mireglassFrontierRoute,
+  mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassBermFaceRowAt } from './domain/mireglassTerrain'
 import { nearbyWorldTileIds, PUBLIC_WALK_REVEAL_RADIUS_METERS,
   PUBLIC_SPELL_REVEAL_RADIUS_METERS } from './domain/publicWorldDiscovery'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
+import { confirmPublicV17GreenwayWork } from './domain/publicWorldV17GreenwayWork'
+import { resolvePublicV17GreenwaySite } from './domain/publicWorldV17GreenwaySites'
+import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
 import { applyPublicV24MireglassAction } from './domain/publicWorldV24MireglassAction'
 import { createPublicV23Root, type PublicV23Progress } from './domain/publicWorldV23Snapshot'
+import { createFreshPublicV42Root } from './domain/publicWorldV42Snapshot'
 import { worldTileAtGrid } from './domain/worldChunks'
 import type { ReadonlyWorldTile } from './domain/activeWorldTerrain'
 import type { PublicV17ActiveView } from './PublicV17WorldView'
 import { projectPublicV24Mireglass } from './PublicV24MireglassView'
+import { projectPublicV42FrontierRoute } from './PublicV42WorldView'
 import type { WizardViewProjection } from './view/contracts'
 import { WizardMap } from './view/WizardMap'
 
@@ -43,6 +49,26 @@ function at(tile: ReadonlyWorldTile, discovered = true, worldSeed = seed) {
       gridZ: tile.gridZ, yaw: 0 } },
   } as unknown as WizardViewProjection
   return { progress, active, base }
+}
+
+function checkedBridge(id: string) {
+  const fresh = createFreshPublicV42Root(seed).head
+  const site = resolvePublicV17GreenwaySite(seed, id)
+  if (!site || site.kind !== 'bridge') throw new Error(`Missing bridge ${id}`)
+  const point = { x: site.from.x, z: site.from.z - 0.6 }
+  const y = publicV17StarterSupportAt({ seed, profile: fresh.state.generationProfile,
+    route: fresh.state.greenway.routes[0] ?? null, built: false,
+    greenwayWorks: fresh.greenwayWorks }, point)?.floorY
+  if (y === undefined) throw new Error('No dry bridge stance')
+  const known = [...new Set([...decodeDiscoveredTileIds(fresh.state.discoveryMask),
+    ...site.footprintTileIds])].sort()
+  const result = confirmPublicV17GreenwayWork({ state: { ...fresh.state,
+    discoveryMask: encodeDiscoveredTileIds(known), player: { ...fresh.state.player,
+      position: { ...point, y }, inventory: [...fresh.state.player.inventory,
+        { itemId: 'logs', quantity: 8 }] } }, greenwayWorks: fresh.greenwayWorks }, id)
+  if (!result.progress) throw new Error(`Bridge build rejected: ${result.rejection}`)
+  return { ...fresh, state: result.progress.state,
+    greenwayWorks: result.progress.greenwayWorks }
 }
 
 describe('V24 Mireglass read adapter', () => {
@@ -160,6 +186,25 @@ describe('V24 Mireglass read adapter', () => {
       terrain: null, hasFrontierTrail: false })
     expect(hiddenView.projection.resources).toEqual([])
     expect(JSON.stringify(input.progress)).toBe(before)
+  })
+
+  it.each(['works4:bridge:greenway-creek:0', 'works3:bridge:1',
+    'works4:bridge:greenway-creek:-60'])('uses the same checked %s bridge in V24 and V42 views', (id) => {
+    const checked = checkedBridge(id)
+    const route = mireglassFrontierRoute(seed, id)
+    const entry = route.points[5]
+    const tile = worldTileAtGrid(seed, entry.x / 4, entry.z / 4)
+    const input = at(tile)
+    const progress = { ...input.progress, greenwayWorks: checked.greenwayWorks }
+    const base = { ...input.base, map: { ...input.base.map, title: 'Open Wilderness' } }
+    const v24 = projectPublicV24Mireglass(base, progress, input.active, 'v42-center-bridge')
+    const v42 = projectPublicV42FrontierRoute(checked, v24.projection)
+    expect(v24.projection.v42FrontierBridgeId).toBe(id)
+    expect(v42.v42FrontierBridgeId).toBe(id)
+    expect(v24.projection.map.tiles[0].hasFrontierTrail).toBe(true)
+    expect(v42.map.tiles[0].hasFrontierTrail).toBe(true)
+    expect(projectPublicV24Mireglass(base, progress, input.active).projection.v42FrontierBridgeId)
+      .toBeUndefined()
   })
 
   it('exposes the discovered V42 frontier marker interaction despite the inherited wilderness title', () => {

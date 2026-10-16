@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createGeneratedWorld } from './generation'
 import { mireglassApproachTrail, mireglassFrontierRoute, mireglassFullApproachTrail,
-  mireglassGreenwayToMarkerTrail, mireglassV42FullApproachTrail } from './mireglassApproachTrail'
+  mireglassGreenwayToMarkerTrail, mireglassV42BridgeId,
+  mireglassV42FullApproachTrail } from './mireglassApproachTrail'
 import { mireglassAnchors } from './mireglassContent'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
 import { discoveryMaskHasTileId, encodeDiscoveredTileIds } from './discoveryMask'
@@ -10,11 +11,11 @@ import { createFreshPublicV14State } from './publicWorldV14Validation'
 import { resolvePublicV14Surface } from './publicWorldV14Terrain'
 import { PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID, publicV16InsideGreenway,
   publicWorldV16TileAtGrid } from './publicWorldV16GreenwaySites'
-import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { createFreshPublicV17Head } from './publicWorldV17Snapshot'
 import { publicV17StarterAdvanceMove, publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { publicV25RiverCellAtGrid } from './publicWorldV25River'
 import { publicV26ValleyRimPassage } from './publicWorldV26ValleyRim'
+import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { starterCliffSupportAt } from './starterCliffMovement'
 import { starterCliffWorldTileAtGrid } from './starterCliffWorld'
 import { createStreamedWorld } from './streamedWorld'
@@ -84,6 +85,40 @@ describe('Mireglass dry approach trail', () => {
     expect(legacy.some(({ x, z }) => x === -32 && z === 0)).toBe(true)
     expect(mireglassFullApproachTrail(seed)).toBe(legacy)
     expect(mireglassV42FullApproachTrail(seed)).not.toEqual(legacy)
+  })
+
+  it('starts V42 routes on the exact works4 deck while retaining the legacy works3 route', () => {
+    const seed = 'wizard-realms'
+    const legacy = mireglassFrontierRoute(seed)
+    expect(legacy.requiredBridgeId).toBe(PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID)
+    expect(mireglassV42BridgeId(seed, [])).toBe('works4:bridge:greenway-creek:0')
+    expect(mireglassV42BridgeId(seed, ['works3:bridge:1'])).toBe('works3:bridge:1')
+    expect(mireglassV42BridgeId(seed, ['works4:bridge:greenway-creek:-60']))
+      .toBe('works4:bridge:greenway-creek:-60')
+    expect(mireglassV42BridgeId(seed, ['works4:bridge:greenway-creek:00',
+      'works3:ladder:1'])).toBe('works4:bridge:greenway-creek:0')
+    for (const id of ['works3:bridge:1', 'works4:bridge:greenway-creek:0',
+      'works4:bridge:greenway-creek:-60']) {
+      const bridge = resolvePublicV17GreenwaySite(seed, id)
+      if (!bridge || bridge.kind !== 'bridge') throw new Error(`Missing ${id}`)
+      const route = mireglassFrontierRoute(seed, id)
+      expect(route.requiredBridgeId).toBe(id)
+      expect(route.points.slice(0, 5)).toEqual([
+        bridge.approach, bridge.from, bridge.supportPath[1], bridge.to, bridge.exit,
+      ])
+      expect(mireglassV42FullApproachTrail(seed, id).slice(0, route.points.length))
+        .toEqual(route.points)
+      expect(route.points.at(-1)).toEqual(mireglassAnchors(seed).fringeMarker.tile.center)
+      if (bridge.exit.x % 4 !== 0) {
+        expect(route.points[5].x).toBe(4 * Math.ceil(bridge.exit.x / 4 - 0.5))
+        expect(route.points[5].z).toBe(bridge.exit.z)
+      }
+    }
+    expect(mireglassFrontierRoute(seed)).toBe(legacy)
+    expect(mireglassV42FullApproachTrail(seed)).not.toEqual(
+      mireglassV42FullApproachTrail(seed, 'works4:bridge:greenway-creek:-60'))
+    expect(() => mireglassFrontierRoute(seed, 'works4:bridge:greenway-creek:00'))
+      .toThrow('No Greenway bridge site')
   })
 
   it('bounds route memoization without changing generated points or the required bridge fact', () => {

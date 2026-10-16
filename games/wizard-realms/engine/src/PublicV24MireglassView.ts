@@ -3,7 +3,7 @@ import { applyMireglassExpeditionAction, MIREGLASS_OUTPOST_CATALOG,
   MIREGLASS_OUTPOST_SELL_PRICES } from './domain/mireglassExpedition'
 import { applyMireglassHerbForage, HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import { mireglassHerbPatches } from './domain/mireglassHerbPatches'
-import { mireglassFrontierRoute, mireglassFullApproachTrail,
+import { mireglassFrontierRoute, mireglassFullApproachTrail, mireglassV42BridgeId,
   mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassPlateauAt } from './domain/mireglassTerrain'
 import type { PublicV24MireglassAction } from './domain/publicWorldV24MireglassAction'
@@ -63,12 +63,14 @@ export function projectPublicV24Mireglass(base: WizardViewProjection,
   }
   const { seed, player, mireglass } = state
   const v42Route = routeRevision === 'v42-center-bridge'
-  const trail = v42Route ? mireglassV42FullApproachTrail(seed) : mireglassFullApproachTrail(seed)
+  const v42BridgeId = v42Route ? mireglassV42BridgeId(seed, progress.greenwayWorks.builtBridgeIds) : null
+  const trail = v42BridgeId ? mireglassV42FullApproachTrail(seed, v42BridgeId)
+    : mireglassFullApproachTrail(seed)
   const trailTileIds = new Set(trail.map(({ x, z }) =>
-    `tile-${x / 4 + 3}-${z / 4 + 3}`))
+    `tile-${Math.ceil(x / 4 - 0.5) + 3}-${Math.ceil(z / 4 - 0.5) + 3}`))
   const trailTiles = base.map.tiles.map((tile) => ({ ...tile,
-    hasFrontierTrail: tile.discovered && (tile.hasFrontierTrail === true
-      || trailTileIds.has(tile.id)) }))
+    hasFrontierTrail: tile.discovered && (v42Route ? trailTileIds.has(tile.id)
+      : tile.hasFrontierTrail === true || trailTileIds.has(tile.id)) }))
   const nearTrail = v42Route && trail.some((point) => Math.hypot(
     player.position.x - point.x, player.position.z - point.z) <= 8)
   const oldOnlyConnector = v42Route && !nearTrail && base.map.title === 'mireglass_reach'
@@ -76,7 +78,9 @@ export function projectPublicV24Mireglass(base: WizardViewProjection,
     .some((point) => Math.hypot(player.position.x - point.x,
       player.position.z - point.z) <= 8)
   const region = nearTrail || base.map.title === 'mireglass_reach' && !oldOnlyConnector
-  if (!region) return { projection: { ...base, map: { ...base.map, tiles: trailTiles,
+  if (!region) return { projection: { ...base,
+    ...(v42BridgeId ? { v42FrontierBridgeId: v42BridgeId } : {}),
+    map: { ...base.map, tiles: trailTiles,
     ...(trailTiles.some((tile) => tile.hasFrontierTrail) ? {
       legend: `${base.map.legend ?? '▲ you · ? unexplored'} · · marked frontier trail`,
     } : {}) } }, choices: [], defaultInteractionId: null }
@@ -223,6 +227,7 @@ export function projectPublicV24Mireglass(base: WizardViewProjection,
     ...dryTimberTileIds, ...herbs.map((herb) => herb.tile.id),
   ])
   const projection: WizardViewProjection = { ...base,
+    ...(v42BridgeId ? { v42FrontierBridgeId: v42BridgeId } : {}),
     // V14's starter-only HUD gate must not suppress regional V24 interactions.
     starterCliff: undefined, unavailableActions: undefined,
     unsupportedEquipmentUnequipReason: 'Mireglass supports equipping another item to switch gear, but not unequipping yet.',
@@ -250,9 +255,10 @@ export function projectPublicV24Mireglass(base: WizardViewProjection,
     map: { ...base.map, ...(region ? { title: 'Mireglass Reach',
       guidance: !mireglass.fringeMarkerStudied
         ? v42Route
-          ? `${progress.greenwayWorks.builtBridgeIds.includes(mireglassFrontierRoute(seed).requiredBridgeId)
-            ? 'Cross the built center Greenway creek bridge'
-            : 'Build the center Greenway creek bridge before crossing'}, then follow the revealed dry trail and study the frontier marker.`
+          ? `${progress.greenwayWorks.builtBridgeIds.includes(v42BridgeId!)
+            ? 'Cross the built' : 'Build the'} ${mireglassFrontierRoute(seed, v42BridgeId!).points[1].x === 0
+              ? 'center Greenway creek bridge' : 'Greenway creek bridge'}${progress.greenwayWorks.builtBridgeIds.includes(v42BridgeId!)
+                ? '' : ' before crossing'}, then follow the revealed dry trail and study the frontier marker.`
           : 'Follow the dry west trail and study the frontier marker.'
         : !mireglass.cacheRevealed
           ? 'Explore the fen and slate shelf. Use Works for crossings and cast Wayfinder Glow.'

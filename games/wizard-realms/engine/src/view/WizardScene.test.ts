@@ -62,7 +62,30 @@ describe('finite world bedrock', () => {
   })
 })
 
-describe('V42 center-bridge scene trail', () => {
+describe('V42 selected-bridge scene trail', () => {
+  it('keeps the selected off-center bridge trail fixed as the camera/player moves away', () => {
+    const seed = 'wizard-realms'
+    const offCenterId = 'works4:bridge:greenway-creek:-60'
+    const center = new Set(mireglassV42FullApproachTrail(seed).map(({ x, z }) => `${x}:${z}`))
+    const point = mireglassV42FullApproachTrail(seed, offCenterId).slice(5)
+      .find(({ x, z }) => x % 4 === 0 && z % 4 === 0 && !center.has(`${x}:${z}`))!
+    const tile = worldTileAtGrid(seed, point.x / 4, point.z / 4)
+    const cell: WizardTerrainCell = { id: tile.id,
+      position: [point.x, tile.center.y, point.z], size: [4, 4],
+      height: tile.center.y, climate: 'temperate_forest' }
+    const selected = v42TrailTerrainFor(seed, [cell], undefined, offCenterId)
+    expect(selected[0].mireglassTrailSegment).toBeDefined()
+    expect(v42TrailTerrainFor(seed, [cell])[0].mireglassTrailSegment).toBeUndefined()
+    const seen = (x: number) => sceneTerrainFor({ seed,
+      player: { position: [x, tile.center.y, point.z] },
+      visualWorld: { terrain: selected, discoveredTileIds: [cell.id] },
+    } as unknown as WizardViewProjection, selected).revealedTerrain
+    expect(seen(point.x)[0].mireglassTrailSegment).toEqual(
+      seen(point.x + 4)[0].mireglassTrailSegment)
+    expect(v42TrailTerrainFor(seed, [cell], undefined, offCenterId)[0].mireglassTrailSegment)
+      .toEqual(selected[0].mireglassTrailSegment)
+  })
+
   it('replaces the obsolete west trail on dry cells without mutating source terrain or older views', () => {
     const seed = 'wizard-realms'
     const current = mireglassV42FullApproachTrail(seed)

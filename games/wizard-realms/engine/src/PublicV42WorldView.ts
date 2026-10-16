@@ -1,7 +1,8 @@
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
 import { ironHallQuartermasterSite } from './domain/ironHallQuartermasterSite'
-import { mireglassFrontierRoute, mireglassFullApproachTrail,
+import { mireglassFrontierRoute, mireglassFullApproachTrail, mireglassV42BridgeId,
   mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
+import { PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID } from './domain/publicWorldV16GreenwaySites'
 import { previewPublicV42RewardActions } from './domain/publicWorldV42RewardAction'
 import type { PublicV42RewardProgress, PublicV42RewardRejection } from './domain/publicWorldV42RewardAction'
 import { projectPublicV41IronHall } from './PublicV41WorldView'
@@ -11,34 +12,42 @@ import type { WizardViewProjection } from './view/contracts'
 const tileId = (point: { x: number; z: number }) =>
   `tile-${Math.ceil(point.x / 4 - 0.5) + 3}-${Math.ceil(point.z / 4 - 0.5) + 3}`
 const chunkMeters = 64
+const v42CenterBridgeId = 'works4:bridge:greenway-creek:0'
 const routeCueCache = new Map<string, ReturnType<typeof routeCueForUncached>>()
-function routeCueForUncached(seed: string) {
-  const route = mireglassFrontierRoute(seed)
-  const v42Points = mireglassV42FullApproachTrail(seed)
+function routeCueForUncached(seed: string, bridgeId: string) {
+  const route = mireglassFrontierRoute(seed, bridgeId)
+  const v42Points = mireglassV42FullApproachTrail(seed, bridgeId)
   const v42Trail = new Set(v42Points.map(tileId))
   const legacyOnlyPoints = mireglassFullApproachTrail(seed)
     .filter((point) => !v42Trail.has(tileId(point)))
   const deckTileIds = new Set(route.points.slice(2, 4).map(tileId))
   return { route, v42Points, v42Trail, legacyOnlyPoints, deckTileIds }
 }
-function routeCueFor(seed: string) {
-  const cached = routeCueCache.get(seed)
+function routeCueFor(seed: string, bridgeId: string) {
+  const key = JSON.stringify([seed, bridgeId])
+  const cached = routeCueCache.get(key)
   if (cached) return cached
-  const cue = routeCueForUncached(seed)
-  routeCueCache.set(seed, cue)
+  const cue = routeCueForUncached(seed, bridgeId)
+  routeCueCache.set(key, cue)
   if (routeCueCache.size > 8) routeCueCache.delete(routeCueCache.keys().next().value!)
   return cue
 }
-const bridgeGuidance = (built: boolean) => built
-  ? 'Mireglass route: cross the built center Greenway creek bridge, then follow the revealed dry frontier trail to the marker.'
-  : 'Mireglass route: build the center Greenway creek bridge before crossing, then follow the revealed dry frontier trail to the marker.'
+const bridgeGuidance = (built: boolean, center: boolean) => {
+  const label = center ? 'center Greenway creek bridge' : 'Greenway creek bridge'
+  return built
+    ? `Mireglass route: cross the built ${label}, then follow the revealed dry frontier trail to the marker.`
+    : `Mireglass route: build the ${label} before crossing, then follow the revealed dry frontier trail to the marker.`
+}
 
 /** Correct only V42 presentation; old saves retain their west-trail map contract. */
 export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
   carrier: WizardViewProjection): WizardViewProjection {
   const { state } = progress
-  const { route, v42Points, v42Trail, legacyOnlyPoints, deckTileIds } = routeCueFor(state.seed)
+  const bridgeId = mireglassV42BridgeId(state.seed, progress.greenwayWorks.builtBridgeIds)
+  const { route, v42Points, v42Trail, legacyOnlyPoints, deckTileIds } = routeCueFor(state.seed, bridgeId)
   const built = progress.greenwayWorks.builtBridgeIds.includes(route.requiredBridgeId)
+  const center = bridgeId === v42CenterBridgeId
+    || bridgeId === PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID
   const learned = state.greenway.studiedInscriptionIds.includes('greenway_waystone')
   const bridgeTileId = tileId(route.points[1])
   const nearPlayer = (point: { x: number; z: number }) => Math.hypot(
@@ -49,9 +58,9 @@ export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
   const staleGuidance = /West to Mireglass:|west trail to Mireglass|dry west trail|dry west exit|west from Greenway into Mireglass|Mireglass remains west/i
   const replaceOld = (value: string) => value.replace(
     /West to Mireglass:[^.!?]*[.!?]?|Follow the west trail to Mireglass[^.!?]*[.!?]?|Follow the dry west trail[^.!?]*[.!?]?|Dry west exit[^.!?]*[.!?]?|Follow the revealed dry trail west from Greenway into Mireglass[^.!?]*[.!?]?|Mireglass remains west[.!?]?/gi,
-    bridgeGuidance(built))
+    bridgeGuidance(built, center))
   const guidance = onNewTrail && !state.mireglass.fringeMarkerStudied
-    ? bridgeGuidance(built)
+    ? bridgeGuidance(built, center)
     : staleGuidance.test(carrier.map.guidance ?? '')
       ? replaceOld(carrier.map.guidance!) : carrier.map.guidance
   const overview = carrier.map.overview
@@ -61,6 +70,7 @@ export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
   const bridgeChunkZ = Math.floor(route.points[1].z / chunkMeters)
   const landmarkVisible = (entry: { id: string }) => entry.id !== 'greenway/landmark/west_trail_gate'
   return { ...carrier,
+    v42FrontierBridgeId: bridgeId,
     landmarks: carrier.landmarks?.filter(landmarkVisible),
     ...(carrier.savedTerrainWorks?.preview?.guidance
       && staleGuidance.test(carrier.savedTerrainWorks.preview.guidance)
@@ -71,7 +81,7 @@ export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
       landmarks: carrier.visualWorld.landmarks.filter(landmarkVisible) } } : {}),
     ...(carrier.v36MarkerQuest?.stage === 'trail' ? { v36MarkerQuest: {
       ...carrier.v36MarkerQuest,
-      objective: `${bridgeGuidance(built)} The map and visible stone landmark guide the route.`,
+      objective: `${bridgeGuidance(built, center)} The map and visible stone landmark guide the route.`,
     } } : {}),
     map: { ...carrier.map,
       ...(onNewTrail ? { title: 'Mireglass Reach' }
@@ -80,7 +90,7 @@ export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
           ? { title: 'Open Wilderness' } : {}),
       guidance,
       legend: learned
-        ? `${legend} · ⇣ center creek bridge toward Mireglass (build before crossing)`
+        ? `${legend} · ⇣ ${center ? 'center creek' : 'Greenway creek'} bridge toward Mireglass ${built ? '(built)' : '(build before crossing)'}`
         : legend,
       tiles: carrier.map.tiles.map((tile) => ({ ...tile,
         hasWestTrail: false,
@@ -93,8 +103,8 @@ export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
         return { ...shown, cells: shown.cells.map((cell) => {
           const markers = cell.markers.filter((label) => label !== 'West trail to Mireglass')
           if (cell.gridX === bridgeChunkX && cell.gridZ === bridgeChunkZ) markers.push(
-            built ? 'Center creek bridge to Mireglass built'
-              : 'Center creek bridge to Mireglass (build required)')
+            built ? `${center ? 'Center creek' : 'Greenway creek'} bridge to Mireglass built`
+              : `${center ? 'Center creek' : 'Greenway creek'} bridge to Mireglass (build required)`)
           return markers.length === cell.markers.length && markers.every((label, index) =>
             label === cell.markers[index]) ? cell : { ...cell, markers }
         }) }

@@ -2,6 +2,10 @@ import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { mireglassFrontierRoute, mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
+import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
+import { confirmPublicV17GreenwayWork } from './domain/publicWorldV17GreenwayWork'
+import { resolvePublicV17GreenwaySite } from './domain/publicWorldV17GreenwaySites'
+import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
 import { createFreshPublicV42Root } from './domain/publicWorldV42Snapshot'
 import { createFreshPublicWorld } from './domain/publicWorldState'
 import { publicWorldViewProjection } from './PublicWorldView'
@@ -15,8 +19,74 @@ const idOf = (point: { x: number; z: number }) => `tile-${point.x / 4 + 3}-${poi
 const root = () => createFreshPublicV42Root(seed)
 const carrier = () => publicWorldViewProjection(
   createFreshPublicWorld(seed, 'greenway-classic-v1'), [], null)
+function checkedBridge(id: string) {
+  const fresh = root().head
+  const site = resolvePublicV17GreenwaySite(seed, id)
+  if (!site || site.kind !== 'bridge') throw new Error(`Missing bridge ${id}`)
+  const point = { x: site.from.x, z: site.from.z - 0.6 }
+  const y = publicV17StarterSupportAt({ seed, profile: fresh.state.generationProfile,
+    route: fresh.state.greenway.routes[0] ?? null, built: false,
+    greenwayWorks: fresh.greenwayWorks }, point)?.floorY
+  if (y === undefined) throw new Error('No dry bridge stance')
+  const known = [...new Set([...decodeDiscoveredTileIds(fresh.state.discoveryMask),
+    ...site.footprintTileIds])].sort()
+  const result = confirmPublicV17GreenwayWork({ state: { ...fresh.state,
+    discoveryMask: encodeDiscoveredTileIds(known), player: { ...fresh.state.player,
+      position: { ...point, y }, inventory: [...fresh.state.player.inventory,
+        { itemId: 'logs', quantity: 8 }] } }, greenwayWorks: fresh.greenwayWorks }, id)
+  if (!result.progress) throw new Error(`Bridge build rejected: ${result.rejection}`)
+  return { ...fresh, state: result.progress.state,
+    greenwayWorks: result.progress.greenwayWorks }
+}
 
 describe('V42-only center bridge route presentation', () => {
+  it('recognizes a checked fresh works4 bridge and its exact deck tile', () => {
+    const id = 'works4:bridge:greenway-creek:0'
+    const built = checkedBridge(id)
+    const route = mireglassFrontierRoute(seed, id)
+    const tile = { ...carrier().map.tiles[0], id: idOf(route.points[2]),
+      discovered: true, terrain: 'loam' as const }
+    const shown = projectPublicV42FrontierRoute(built, { ...carrier(), map: {
+      ...carrier().map, tiles: [tile], guidance: 'West to Mireglass: use the dry west exit.' } })
+    expect(built.greenwayWorks.builtBridgeIds).toEqual([id])
+    expect(shown.map.guidance).toContain('cross the built center Greenway creek bridge')
+    expect(shown.map.tiles[0].hasFrontierTrail).toBe(true)
+    expect(shown.map.overview?.().cells.flatMap((cell) => cell.markers))
+      .not.toContain('Center creek bridge to Mireglass (build required)')
+  })
+
+  it('follows an off-center checked works4 span but ignores wrong-site bridge IDs', () => {
+    const id = 'works4:bridge:greenway-creek:-60'
+    const built = checkedBridge(id)
+    const route = mireglassFrontierRoute(seed, id)
+    const placedTileId = idOf({ x: -8, z: route.points[1].z })
+    const centerTileId = idOf({ x: 0, z: route.points[1].z })
+    const tile = { ...carrier().map.tiles[0], discovered: true, terrain: 'loam' as const }
+    const input = { ...carrier(), map: { ...carrier().map,
+      tiles: [{ ...tile, id: placedTileId }, { ...tile, id: centerTileId }],
+      guidance: 'West to Mireglass: follow the dry west trail.' } }
+    const shown = projectPublicV42FrontierRoute(built, input)
+    expect(route.points[1].x).toBe(-6)
+    expect(shown.map.guidance).toContain('cross the built Greenway creek bridge')
+    expect(shown.map.tiles[0].hasCenterBridgeRoute).toBe(false)
+    expect(shown.map.tiles[1].hasCenterBridgeRoute).toBe(false)
+    const learned = { ...built, state: { ...built.state, greenway: { ...built.state.greenway,
+      studiedInscriptionIds: ['greenway_waystone' as const] } } }
+    const marked = projectPublicV42FrontierRoute(learned, input)
+    expect(marked.map.tiles[0].hasCenterBridgeRoute).toBe(true)
+    expect(marked.map.tiles[1].hasCenterBridgeRoute).toBe(false)
+    const wrongBank = projectPublicV42FrontierRoute({ ...learned,
+      state: { ...learned.state, movementOwner: 'greenway' as const,
+        player: { ...learned.state.player, position: route.points[4] } } }, {
+      ...input, map: { ...input.map, title: 'Open Wilderness' } })
+    expect(wrongBank.map.title).toBe('Open Wilderness')
+    const wrong = projectPublicV42FrontierRoute({ ...root().head,
+      greenwayWorks: { ...root().head.greenwayWorks,
+        builtBridgeIds: ['works4:bridge:greenway-creek:00', 'works3:ladder:1'] } }, input)
+    expect(wrong.map.guidance).toContain('build the center Greenway creek bridge')
+    expect(wrong.map.guidance).not.toContain('cross the built')
+  })
+
   it('keeps legacy west cues outside V42 and renders the learned center bridge without revealing fog', () => {
     const fresh = root().head
     const progress = { ...fresh, state: { ...fresh.state, greenway: { ...fresh.state.greenway,

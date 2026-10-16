@@ -1884,11 +1884,12 @@ const routeCellKey = (x: number, z: number) =>
 const routeMidpoint = (a: Readonly<{ x: number; z: number }>, b: Readonly<{ x: number; z: number }>) =>
   [(a.x + b.x) / 2, (a.z + b.z) / 2] as const
 
-/** V42-only, display-only center-bridge trail. The actual bridge owns the wet gap. */
-function v42TrailLayout(seed: string): ReadonlyMap<string, V42TrailSegment> {
-  const cached = v42TrailLayouts.get(seed)
+/** V42-only, display-only selected-bridge trail. The actual bridge owns the wet gap. */
+function v42TrailLayout(seed: string, bridgeId?: string): ReadonlyMap<string, V42TrailSegment> {
+  const key = JSON.stringify([seed, bridgeId])
+  const cached = v42TrailLayouts.get(key)
   if (cached) return cached
-  const points = mireglassV42FullApproachTrail(seed)
+  const points = mireglassV42FullApproachTrail(seed, bridgeId)
   const layout = new Map<string, V42TrailSegment>()
   for (let index = 0; index < points.length; index += 1) {
     if (index === 2) continue // The creek gap is bridged by Works, not painted as ground.
@@ -1899,15 +1900,15 @@ function v42TrailLayout(seed: string): ReadonlyMap<string, V42TrailSegment> {
       ? [point.x, point.z] as const : routeMidpoint(point, points[index + 1])
     layout.set(routeCellKey(point.x, point.z), { from: before, to: after })
   }
-  v42TrailLayouts.set(seed, layout)
+  v42TrailLayouts.set(key, layout)
   if (v42TrailLayouts.size > 8) v42TrailLayouts.delete(v42TrailLayouts.keys().next().value!)
   return layout
 }
 
 /** No saved terrain or movement rule is changed by this visual-only replacement. */
 export function v42TrailTerrainFor(seed: string, cells: readonly WizardTerrainCell[],
-  openPitColumns?: WizardViewProjection['v26OpenPitColumns']): readonly WizardTerrainCell[] {
-  const layout = v42TrailLayout(seed)
+  openPitColumns?: WizardViewProjection['v26OpenPitColumns'], bridgeId?: string): readonly WizardTerrainCell[] {
+  const layout = v42TrailLayout(seed, bridgeId)
   const pits = new Set(openPitColumns?.filter(({ openDepth }) => openDepth > 0)
     .map(({ gx, gz }) => `${gx}:${gz}`))
   return cells.map((cell) => {
@@ -2124,8 +2125,9 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   const visual = projection.visualWorld ?? projection
   const v42 = !!projection.v42IronHall
   const visualTerrain = useMemo(() => v42 ? v42TrailTerrainFor(projection.seed, visual.terrain,
-    projection.v26OpenPitColumns)
-    : visual.terrain, [v42, visual.terrain, projection.seed, projection.v26OpenPitColumns])
+    projection.v26OpenPitColumns, projection.v42FrontierBridgeId)
+    : visual.terrain, [v42, visual.terrain, projection.seed, projection.v26OpenPitColumns,
+      projection.v42FrontierBridgeId])
   const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection, visualTerrain)
   const hallSite = projection.v41IronHallSite
   const quartermasterSite = projection.v42QuartermasterSite

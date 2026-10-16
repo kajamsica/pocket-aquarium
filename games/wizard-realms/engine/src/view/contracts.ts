@@ -330,6 +330,8 @@ export interface WizardViewProjection {
   terrain: readonly WizardTerrainCell[]
   /** Optional continuous scene data for the public world, never an action source. */
   visualWorld?: WizardVisualWorld
+  /** V42 checked Works bridge selected for read-only frontier trail presentation. */
+  v42FrontierBridgeId?: string
   /** Unsaved streamed preview scene mask; absent from campaign views. */
   previewSceneDiscoveryIds?: readonly string[]
   resources: readonly WizardResourceNode[]
