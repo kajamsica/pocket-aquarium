@@ -65,7 +65,7 @@ export const WORLD_BEDROCK_BOUNDS = {
   width: BEDROCK_MAX_FACE_M - BEDROCK_MIN_FACE_M,
   depth: BEDROCK_MAX_FACE_M - BEDROCK_MIN_FACE_M,
 } as const
-const UNCHARTED_GROUND_MATERIAL = new THREE.MeshBasicMaterial({ color: '#5b657c', fog: false })
+export const UNCHARTED_GROUND_MATERIAL = new THREE.MeshBasicMaterial({ color: '#5b657c', fog: true })
 
 // Shared geometry/material instances for primitives that have no per-instance variance.
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1)
