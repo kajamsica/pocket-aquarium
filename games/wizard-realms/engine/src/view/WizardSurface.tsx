@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { WizardViewIntent, WizardViewProjection } from './contracts'
 import { WizardHud } from './WizardHud'
 import { WizardMap, mapToggleForKey } from './WizardMap'
-import { WizardScene, sceneTerrainPickKind, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
+import { WizardScene, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
 import type { PublicV17InputTrace } from '../PublicV17InputScheduler'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
 
@@ -16,6 +16,32 @@ export interface WizardSurfaceProps {
 const MOVEMENT_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
 const TRACE_KEYS = new Set([...MOVEMENT_KEYS, 'KeyM', 'KeyR', 'KeyE', 'KeyB', 'KeyF',
   'Digit1', 'Digit2', 'Digit3', 'Space', 'Escape'])
+const RESERVED_SHORTCUTS = new Set([...TRACE_KEYS, 'Tab', 'Enter'])
+const KEYBIND_STORAGE_KEY = 'wizard-realms:keybinds:v1'
+export const DEFAULT_ACTION_KEYS = { dig: 'KeyG', switchTool: 'KeyQ' } as const
+export type ActionKeys = { dig: string; switchTool: string }
+export type ActionKey = keyof ActionKeys
+export function bindableActionCode(code: string, other: string): boolean {
+  return /^(Key[A-Z]|Digit[0-9])$/.test(code) && !RESERVED_SHORTCUTS.has(code)
+    && code !== other
+}
+export function parseActionKeys(raw: string | null): ActionKeys {
+  if (!raw) return { ...DEFAULT_ACTION_KEYS }
+  try {
+    const value = JSON.parse(raw) as Partial<ActionKeys> & { version?: number }
+    if (value.version === 1 && typeof value.dig === 'string'
+      && typeof value.switchTool === 'string'
+      && bindableActionCode(value.dig, value.switchTool)
+      && bindableActionCode(value.switchTool, value.dig)) return { dig: value.dig, switchTool: value.switchTool }
+  } catch { /* Invalid or older client preference. */ }
+  return { ...DEFAULT_ACTION_KEYS }
+}
+export function keybindCaptureVisible(projection: WizardViewProjection, mapOpen: boolean,
+  detailsOpen: boolean): boolean {
+  return detailsOpen && projection.v26ValleyRimSegments !== undefined && !mapOpen
+    && !projection.openStoreId && !projection.savedTerrainWorks?.modeActive
+}
+const actionKeyLabel = (code: string) => code.replace(/^(Key|Digit)/, '')
 const ORBIT_DRAG_THRESHOLD_PX = 6
 export const CENTERED_CAMERA_ORBIT = [0, 0.28] as const
 export const keyboardEventTime = (eventTimeMs: number, nowMs: number) =>
@@ -71,7 +97,7 @@ export function releaseHeldControls(keys: Set<string>): readonly [0, 0] {
 /** Pointer actions return to gameplay; keyboard activation keeps the control's focus. */
 export function focusGameplayAfterClick(root: HTMLElement, target: Element, detail: number): void {
   if (detail > 0 && target.closest('.wr-hud button, .wr-backpack-toggle, .wr-v26-terrain button')
-    && !target.closest('.wr-touch')) root.focus({ preventScroll: true })
+    && !target.closest('.wr-touch') && !target.closest('.wr-keybinds')) root.focus({ preventScroll: true })
 }
 
 export function shouldHandleGameplayKey(event: Pick<KeyboardEvent, 'code' | 'repeat' | 'target'>): boolean {
@@ -140,6 +166,43 @@ export function pointerV26TerrainTapIntent(projection: WizardViewProjection, map
   if (!picked || ![picked.gx, picked.gz].every((value) => Number.isSafeInteger(value)
     && value >= WORLD_GRID_MIN && value <= WORLD_GRID_MAX)) return null
   return { type: 'v26.terrain', kind, gx: picked.gx, gz: picked.gz }
+}
+
+/** Keyboard Dig uses the same frontmost scene ray as pointer Dig, never an assumed avatar cell. */
+export function keyboardDigIntent(projection: WizardViewProjection, mapOpen: boolean,
+  pointer: readonly [number, number] | null, picker: SceneTerrainPicker | null): WizardViewIntent | null {
+  if (!pointer || !picker || !pointerV26TerrainKind(projection, mapOpen, 'dig')
+    || pointerWorkAimKind(projection, mapOpen)) return null
+  const picked = picker(pointer[0], pointer[1], sceneTerrainPickKind(projection, 'dig'))
+  if (!picked || !v26TargetedTerrainCell(projection, sceneTerrainFor(projection).revealedTerrain,
+    picked)) return null
+  return { type: 'v26.terrain', kind: 'dig', gx: picked.gx, gz: picked.gz }
+}
+
+/** Cycle only usable, owned main-hand tools; the controller remains the equipment authority. */
+export function nextToolIntent(projection: WizardViewProjection): WizardViewIntent | null {
+  if (projection.controllerActionsEnabled !== true || projection.unavailableActions
+    || projection.openStoreId || projection.savedTerrainWorks?.modeActive) return null
+  const physical = (itemId: string) => {
+    const stack = projection.backpack.stacks.find((item) => item.itemId === itemId
+      && item.quantity > 0 && item.equippableSlots?.includes('mainHand'))
+    const choice = projection.checkedEquipmentChoices?.find((item) => item.itemId === itemId)
+    return stack && (!projection.checkedEquipmentChoices || choice?.actionable) ? stack : null
+  }
+  const choices = [
+    { id: 'woodcutters_axe', stack: physical('woodcutters_axe') },
+    { id: 'field_spade', stack: physical('field_spade') },
+    { id: 'basic', owned: projection.v29Mining?.tools.basicPickOwned },
+    { id: 'enchanted', owned: projection.v29Mining?.tools.enchantedPickOwned },
+  ]
+  const current = projection.v29Mining?.tools.activePick ?? projection.equipment.mainHand?.itemId
+  const index = choices.findIndex((choice) => choice.id === current)
+  const next = Array.from({ length: choices.length }, (_, offset) =>
+    choices[(index + offset + 1) % choices.length]).find((choice) =>
+    choice.id !== current && (choice.stack || choice.owned))
+  if (!next) return null
+  return next.stack ? { type: 'equipment.equip', stackId: next.stack.id, slot: 'mainHand' }
+    : { type: 'v29.mining-tool', action: 'equip', tier: next.id as 'basic' | 'enchanted' }
 }
 
 /** A V29 mine tap preflights reach and names one cell; authority checks its exact pose and geology. */
@@ -222,6 +285,7 @@ const STYLES = `
 @media(max-width:719px) and (min-height:401px) and (max-height:599px){.wr-surface .wr-context[data-field-camp-panel]{left:8px;top:208px;bottom:auto;transform:none;box-sizing:border-box;width:min(280px,calc(100% - 108px));max-height:calc(100% - 350px);overflow-y:auto;overscroll-behavior:contain;padding:8px;font-size:12px}.wr-surface .wr-context[data-field-camp-panel] header{margin-bottom:5px}}
 .wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain{display:none}
 .wr-v26-terrain[data-v29="true"] .wr-v26-terrain-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.wr-keybinds{margin-top:7px;font-size:12px}.wr-keybinds summary{cursor:pointer;color:#f5d889}.wr-keybinds>div{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.wr-keybinds button{min-height:36px}.wr-keybinds summary:focus-visible,.wr-keybinds button:focus-visible{outline:3px solid #ffe395;outline-offset:2px}
 @media(max-width:719px){.wr-v26-terrain{right:8px;bottom:150px;width:180px}}
 `
 
@@ -232,6 +296,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const pointerPress = useRef<PointerPress | null>(null)
   const aimPicker = useRef<SceneWorkAimPicker | null>(null)
   const terrainPicker = useRef<SceneTerrainPicker | null>(null)
+  const terrainPointer = useRef<readonly [number, number] | null>(null)
   const spadeEquipped = projection.equipment?.mainHand?.itemId === 'field_spade'
   const activePick = projection.v29Mining?.tools.activePick ?? null
   const inOpenPit = !!projection.v29Mining && projection.v26OpenPitColumns?.some((column) =>
@@ -246,8 +311,27 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const [cameraOrbit, setCameraOrbit] = useState<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
   const [backpackOpen, setBackpackOpen] = useState(false)
+  const [actionKeys, setActionKeys] = useState<ActionKeys>(() => {
+    if (typeof window === 'undefined') return { ...DEFAULT_ACTION_KEYS }
+    try { return parseActionKeys(window.localStorage.getItem(KEYBIND_STORAGE_KEY)) }
+    catch { return { ...DEFAULT_ACTION_KEYS } }
+  })
+  const [bindingAction, setBindingAction] = useState<ActionKey | null>(null)
+  const [bindingHint, setBindingHint] = useState<string | null>(null)
+  const keybindDetailsRef = useRef<HTMLDetailsElement>(null)
   const mapButtonRef = useRef<HTMLButtonElement>(null)
   const mapCloseRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    try { window.localStorage.setItem(KEYBIND_STORAGE_KEY, JSON.stringify({ version: 1, ...actionKeys })) }
+    catch { /* Shortcuts remain usable when browser storage is unavailable. */ }
+  }, [actionKeys])
+
+  useEffect(() => {
+    if (mapOpen || projection.openStoreId || projection.savedTerrainWorks?.modeActive
+      || projection.v26ValleyRimSegments === undefined) setBindingAction(null)
+  }, [mapOpen, projection.openStoreId, projection.savedTerrainWorks?.modeActive,
+    projection.v26ValleyRimSegments])
 
   useEffect(() => {
     if (previouslySpadeEquipped.current === spadeEquipped) return
@@ -275,6 +359,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
     inputTrace?.record('dom.map.toggle', { before: mapOpen, after: next })
     if (next) {
       setBackpackOpen(false)
+      terrainPointer.current = null
       onIntent({ type: 'movement', vector: releaseHeldControls(pressedKeys.current) })
       setDragging(false)
       lastDragPoint.current = null
@@ -299,6 +384,24 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         eventTimeMs: event.timeStamp, repeat: event.repeat, mapOpen,
         targetTag: (event.target as HTMLElement | null)?.tagName ?? null,
         handled: shouldHandleGameplayKey(event) })
+      if (bindingAction && keybindCaptureVisible(projection, mapOpen,
+        keybindDetailsRef.current?.open === true)) {
+        if (event.code === 'Escape') {
+          event.preventDefault(); setBindingAction(null); setBindingHint('Key change cancelled.')
+          return
+        }
+        if (event.ctrlKey || event.metaKey || event.altKey || event.code === 'Tab') return
+        if (event.repeat || event.code !== 'Space' && !shouldHandleGameplayKey(event)) return
+        event.preventDefault()
+        if (!bindableActionCode(event.code, actionKeys[bindingAction === 'dig' ? 'switchTool' : 'dig'])) {
+          setBindingHint('That key is reserved or already assigned. Choose another letter or number.')
+          return
+        }
+        setActionKeys((keys) => ({ ...keys, [bindingAction]: event.code }))
+        setBindingHint(`${bindingAction === 'dig' ? 'Dig' : 'Switch tool'} bound to ${actionKeyLabel(event.code)}.`)
+        setBindingAction(null)
+        return
+      }
       if (event.code === 'Escape') {
         clearControls()
         if (mapOpen) toggleMap()
@@ -317,6 +420,27 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         return
       }
       if (mapOpen) return
+      if ((event.code === actionKeys.dig || event.code === actionKeys.switchTool)
+        && (event.ctrlKey || event.metaKey || event.altKey)) return
+      if (event.code === actionKeys.dig) {
+        event.preventDefault()
+        if (projection.openStoreId || projection.savedTerrainWorks?.modeActive
+          || projection.controllerActionsEnabled !== true || projection.unavailableActions) return
+        if (!spadeEquipped) { setTerrainTapHint('Equip a field spade to dig.'); return }
+        setTerrainMode('dig')
+        const intent = keyboardDigIntent(projection, mapOpen, terrainPointer.current, terrainPicker.current)
+        if (intent) { setTerrainTapHint(null); onIntent(intent) }
+        else setTerrainTapHint(V29_NO_GROUND_TARGET_HINT)
+        return
+      }
+      if (event.code === actionKeys.switchTool) {
+        event.preventDefault()
+        if (projection.openStoreId || projection.savedTerrainWorks?.modeActive) return
+        const intent = nextToolIntent(projection)
+        if (intent) { setTerrainTapHint(null); onIntent(intent) }
+        else setTerrainTapHint('No other owned, usable main-hand tool to switch to.')
+        return
+      }
       const workIntent = savedWorkKeyboardIntent(event.code, projection.savedTerrainWorks,
         projection.v26ValleyRimSegments !== undefined)
       if (workIntent) {
@@ -357,8 +481,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('blur', clearControls)
     }
-  }, [mapOpen, onIntent, !!projection.gait, projection.unavailableActions,
-    projection.savedTerrainWorks])
+  }, [actionKeys, bindingAction, inputTrace, mapOpen, onIntent, projection, spadeEquipped])
 
   return (
     <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen} data-work-mode={projection.savedTerrainWorks?.modeActive === true}
@@ -368,12 +491,14 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         onPointerDown={(event) => {
           if (pointerPress.current) return
           rootRef.current?.focus()
+          terrainPointer.current = [event.clientX, event.clientY]
           event.currentTarget.setPointerCapture(event.pointerId)
           const start = [event.clientX, event.clientY] as const
           pointerPress.current = { id: event.pointerId, start, primary: event.button === 0 && event.isPrimary, dragged: false }
           lastDragPoint.current = start
         }}
         onPointerMove={(event) => {
+          terrainPointer.current = [event.clientX, event.clientY]
           const press = pointerPress.current
           if (!press || press.id !== event.pointerId) return
           if (!press.dragged && pointerMovedBeyondOrbitThreshold(press.start, [event.clientX, event.clientY])) {
@@ -447,6 +572,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           if (pointerPress.current?.id !== event.pointerId) return
           pointerPress.current = null; lastDragPoint.current = null; setDragging(false)
         }}
+        onPointerLeave={() => { terrainPointer.current = null }}
         onLostPointerCapture={(event) => {
           if (pointerPress.current?.id !== event.pointerId) return
           pointerPress.current = null; lastDragPoint.current = null; setDragging(false)
@@ -479,7 +605,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           : projection.v29Mining && terrainMode === 'mine' && activePick
           ? terrainTapHint ?? `Active ${activePick} pick. Tap or click clear ground within 5 m; an outline shows the target when available. The checked action reports its layer, reach, skill, tool, and capacity result. Not every cell holds ore.`
           : projection.equipment?.mainHand?.itemId !== 'field_spade'
-          ? 'Equip a field spade to work the ground.'
+          ? terrainTapHint ?? 'Equip a field spade to work the ground.'
           : projection.controllerActionsEnabled !== true
             ? 'Terrain actions are unavailable while the world is saving.'
             : projection.unavailableActions
@@ -489,6 +615,18 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
               : terrainMode === 'dig' ? 'Tap revealed dry ground to dig one layer.'
               : terrainMode === 'fill' ? 'Tap an open pit to fill one layer with earned soil.'
                 : 'Choose Dig or Fill, then tap clear ground. Drag to look around.')}</p>
+        <details className="wr-keybinds" ref={keybindDetailsRef}
+          onToggle={(event) => { if (!event.currentTarget.open) setBindingAction(null) }}>
+          <summary>Keys: {actionKeyLabel(actionKeys.dig)} Dig · {actionKeyLabel(actionKeys.switchTool)} Tool</summary>
+          <div>
+            {(['dig', 'switchTool'] as const).map((action) => <button key={action} type="button"
+              aria-label={`Rebind ${action === 'dig' ? 'Dig' : 'Switch tool'}`}
+              onClick={() => { setBindingAction(action); setBindingHint(`Press a letter or number for ${action === 'dig' ? 'Dig' : 'Switch tool'}. Escape cancels.`) }}>
+              {action === 'dig' ? 'Dig' : 'Switch tool'}: {actionKeyLabel(actionKeys[action])}
+            </button>)}
+          </div>
+          {bindingHint && <p role="status">{bindingHint}</p>}
+        </details>
         {inOpenPit && <p>Open pit view: step onto neighboring ground or orbit until its floor or inner wall outlines.</p>}
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />

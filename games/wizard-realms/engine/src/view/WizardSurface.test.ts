@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, focusGameplayAfterClick, keyboardEventTime, keyboardMovementIntents, movementVector, pointerAimTap, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
+import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, focusGameplayAfterClick, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMovementIntents, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
 import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
-import type { WizardViewProjection } from './contracts'
+import type { WizardTerrainCell, WizardViewProjection } from './contracts'
 import { publicV13WorkIntentStillReady } from '../PublicV13Controller'
 import { encodeDiscoveredTileIds } from '../domain/discoveryMask'
 import { createFreshPublicWorld } from '../domain/publicWorldState'
@@ -194,6 +194,87 @@ const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) =
 }
 
 describe('third-person control grammar', () => {
+  it('loads only valid versioned, non-conflicting action keys and exposes them in compact controls', () => {
+    expect(parseActionKeys(null)).toEqual(DEFAULT_ACTION_KEYS)
+    expect(parseActionKeys('{bad')).toEqual(DEFAULT_ACTION_KEYS)
+    expect(parseActionKeys(JSON.stringify({ version: 2, dig: 'KeyH', switchTool: 'KeyJ' })))
+      .toEqual(DEFAULT_ACTION_KEYS)
+    expect(parseActionKeys(JSON.stringify({ version: 1, dig: 'KeyH', switchTool: 'Digit4' })))
+      .toEqual({ dig: 'KeyH', switchTool: 'Digit4' })
+    for (const code of ['KeyW', 'KeyB', 'Digit1', 'Space', 'Escape', 'Tab', 'Enter', 'KeyQ']) {
+      expect(bindableActionCode(code, 'KeyQ')).toBe(false)
+    }
+    expect(bindableActionCode('KeyH', 'KeyQ')).toBe(true)
+    const view = { ...sellProjection, openStoreId: null, v26ValleyRimSegments: [] }
+    const html = renderToStaticMarkup(createElement(WizardSurface, { projection: view, onIntent: vi.fn() }))
+    expect(html).toContain('Keys: G Dig · Q Tool')
+    expect(html).toContain('aria-label="Rebind Dig"')
+    expect(html).toContain('aria-label="Rebind Switch tool"')
+  })
+
+  it('captures a pending rebind only while its actual details and terrain panel are visible', () => {
+    const view = { ...sellProjection, openStoreId: null,
+      v26ValleyRimSegments: [] } as WizardViewProjection
+    expect(keybindCaptureVisible(view, false, true)).toBe(true)
+    expect(keybindCaptureVisible(view, false, false)).toBe(false)
+    expect(keybindCaptureVisible(view, true, true)).toBe(false)
+    expect(keybindCaptureVisible({ ...view, openStoreId: 'store-greenway' }, false, true)).toBe(false)
+    expect(keybindCaptureVisible({ ...view, savedTerrainWorks: { actionsEnabled: true,
+      modeActive: true, builtSites: [], dugTileIds: [], preview: null } }, false, true)).toBe(false)
+    expect(keybindCaptureVisible({ ...view, v26ValleyRimSegments: undefined }, false, true)).toBe(false)
+  })
+
+  it('digs only the hovered frontmost revealed dry cell with the checked spade gate', () => {
+    const ground: WizardTerrainCell = { id: 'tile-3-3', position: [0, 1, 0],
+      size: [4, 4], height: 1.8, climate: 'temperate_forest' }
+    const current = { ...sellProjection, seed: 'wizard-realms', openStoreId: null,
+      controllerActionsEnabled: true, terrain: [ground], v26ValleyRimSegments: [],
+      player: { ...sellProjection.player, position: [0, 1, 0] as const },
+      equipment: { ...sellProjection.equipment, mainHand: { id: 'spade-1', itemId: 'field_spade',
+        name: 'Field spade', quantity: 1 } } } as WizardViewProjection
+    const picker = vi.fn(() => ({ gx: 0, gz: 0 }))
+    expect(keyboardDigIntent(current, false, [200, 100], picker))
+      .toEqual({ type: 'v26.terrain', kind: 'dig', gx: 0, gz: 0 })
+    expect(picker).toHaveBeenCalledWith(200, 100, 'dig')
+    expect(keyboardDigIntent(current, false, null, picker)).toBeNull()
+    expect(keyboardDigIntent(current, true, [200, 100], picker)).toBeNull()
+    expect(keyboardDigIntent({ ...current, equipment: sellProjection.equipment }, false,
+      [200, 100], picker)).toBeNull()
+    expect(keyboardDigIntent({ ...current, terrain: [] }, false, [200, 100], picker)).toBeNull()
+    expect(keyboardDigIntent({ ...current, player: { ...current.player,
+      position: [40, 1, 0] } }, false, [200, 100], picker)).toBeNull()
+    expect(keyboardDigIntent({ ...current, savedTerrainWorks: { actionsEnabled: true,
+      modeActive: true, builtSites: [], dugTileIds: [], preview: null } }, false,
+    [200, 100], picker)).toBeNull()
+    expect(keyboardDigIntent(current, false, [200, 100], () => null)).toBeNull()
+  })
+
+  it('cycles only owned actionable main-hand gear and never buys or unequips', () => {
+    const axe = { id: 'axe-1', itemId: 'woodcutters_axe', name: 'Axe', quantity: 1,
+      equippableSlots: ['mainHand'] as const }
+    const spade = { id: 'spade-1', itemId: 'field_spade', name: 'Spade', quantity: 1,
+      equippableSlots: ['mainHand'] as const }
+    const current = { ...sellProjection, openStoreId: null, controllerActionsEnabled: true,
+      backpack: { ...sellProjection.backpack, stacks: [axe, spade] },
+      equipment: { ...sellProjection.equipment, mainHand: axe },
+      v29Mining: { ...v29Mining, tools: { ...v29Mining.tools, activePick: null } } } as WizardViewProjection
+    expect(nextToolIntent(current)).toEqual({ type: 'equipment.equip', stackId: 'spade-1', slot: 'mainHand' })
+    expect(nextToolIntent({ ...current, equipment: { ...current.equipment, mainHand: spade } }))
+      .toEqual({ type: 'v29.mining-tool', action: 'equip', tier: 'basic' })
+    expect(nextToolIntent({ ...current, equipment: { ...current.equipment, mainHand: spade },
+      checkedEquipmentChoices: [{ itemId: 'woodcutters_axe', actionable: true, reason: null }] }))
+      .toEqual({ type: 'v29.mining-tool', action: 'equip', tier: 'basic' })
+    expect(nextToolIntent({ ...current, equipment: { ...current.equipment, mainHand: null },
+      v29Mining })).toEqual({ type: 'equipment.equip', stackId: 'axe-1', slot: 'mainHand' })
+    expect(nextToolIntent({ ...current, checkedEquipmentChoices: [
+      { itemId: 'woodcutters_axe', actionable: false, reason: 'Blocked' },
+      { itemId: 'field_spade', actionable: true, reason: null }],
+      v29Mining: undefined })).toEqual({ type: 'equipment.equip', stackId: 'spade-1', slot: 'mainHand' })
+    expect(nextToolIntent({ ...current, backpack: { ...current.backpack, stacks: [] },
+      v29Mining: undefined })).toBeNull()
+    expect(nextToolIntent({ ...current, openStoreId: 'store-greenway' })).toBeNull()
+    expect(nextToolIntent({ ...current, controllerActionsEnabled: false })).toBeNull()
+  })
   it('shows V31 Place soil only in V31 and submits a checked top-cell intent under spade gates', () => {
     const ready: WizardViewProjection = { ...sellProjection, openStoreId: null,
       controllerActionsEnabled: true, v26ValleyRimSegments: [],

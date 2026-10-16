@@ -1001,6 +1001,27 @@ describe('V23 controller input admission', () => {
     expect(probe.events).toEqual(['frame:', 'frame:jump', 'frame:'])
   })
 
+  it('keeps held forward and pivot input through a jump, then stops each on release', () => {
+    probe.poseOnJump = true; mount()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true)) probe.onIntent!(intent)
+    probe.tick!()
+    for (const intent of keyboardMovementIntents(keys, 'KeyA', true)) probe.onIntent!(intent)
+    probe.onIntent!({ type: 'jump' })
+    probe.tick!(); probe.tick!()
+    expect(probe.airborne).toBe(true)
+    probe.tick!(); probe.tick!()
+    for (const intent of keyboardMovementIntents(keys, 'KeyA', false)) probe.onIntent!(intent)
+    probe.tick!()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false)) probe.onIntent!(intent)
+    probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([
+      ['move'], ['look'], ['jump'], ['look', 'move'], ['look', 'move'], ['move'], [],
+    ])
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'jump')))
+      .toHaveLength(1)
+  })
+
   it.each(['jump', 'tap'] as const)(
     'does not defer a second %s pulse across a pending-95 jump and landing', async (second) => {
       probe.pending = 95; probe.poseOnJump = true; mount()
