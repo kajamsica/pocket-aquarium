@@ -319,6 +319,7 @@ const STYLES = `
 .wr-keybinds{margin-top:7px;font-size:12px}.wr-keybinds summary{cursor:pointer;color:#f5d889}.wr-keybinds>div{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.wr-keybinds button{min-height:36px}.wr-keybinds summary:focus-visible,.wr-keybinds button:focus-visible{outline:3px solid #ffe395;outline-offset:2px}
 .wr-dev-nav-hint{position:absolute;z-index:4;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(520px,80vw);padding:6px 10px;border-radius:7px;background:#101a17d9;color:#f5e6b2;text-align:center;font-size:12px;pointer-events:none}
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}
+@media(min-width:901px) and (min-height:591px){[data-public-version=v42] .wr-dev-nav-hint{bottom:64px}}
 @media(max-width:719px){.wr-v26-terrain{right:8px;bottom:150px;width:180px}}
 `
 

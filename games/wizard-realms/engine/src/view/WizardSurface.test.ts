@@ -891,6 +891,13 @@ describe('third-person control grammar', () => {
     expect(styles).toContain('@media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}')
   })
 
+  it('positions the wide V42 DEV navigation hint above Safety', () => {
+    const markup = renderToStaticMarkup(createElement(WizardSurface, {
+      projection: sellProjection, onIntent: () => {} }))
+    const styles = markup.match(/<style>([\s\S]*?)<\/style>/)?.[1]
+    expect(styles).toContain('@media(min-width:901px) and (min-height:591px){[data-public-version=v42] .wr-dev-nav-hint{bottom:64px}}')
+  })
+
   it('keeps forward, backward, and pivot axes independent', () => {
     expect(movementVector(new Set(['KeyW']))).toEqual([0, 1])
     expect(movementVector(new Set(['KeyS']))).toEqual([0, -1])
