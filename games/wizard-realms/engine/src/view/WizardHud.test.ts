@@ -191,16 +191,18 @@ describe('starter cliff HUD capability gate', () => {
     const cue = (view: WizardViewProjection) => objective(view)
       .match(/aria-label="Greenway field objective"[^>]*>(.*?)<\/div>/)?.[1] ?? ''
     expect(cue(fresh)).toContain('Field objective:</strong> Open Backpack and equip your Woodcutter axe.')
-    expect(cue(fresh)).not.toContain('South creek bridge')
+    expect(cue(fresh)).toContain('Its logs build the required creek bridge')
     expect(cue(fresh)).not.toContain('connected-river bridge')
     expect(opening).not.toContain('Field objective:</strong> Buy a field spade')
 
     const axe = { ...fresh, equipment: { ...fresh.equipment, mainHand: {
       id: 'axe-test', itemId: 'woodcutters_axe', name: 'Woodcutter axe', quantity: 1 } } }
-    expect(cue(axe)).toContain('Chop a Greenway oak twice (E) for 4 logs. 0/8 logs')
+    expect(cue(axe)).toContain('Chop a Greenway oak twice (E) for your first 4 logs.')
+    expect(cue(axe)).toContain('Keep them for the 8-log South creek bridge. 0/8 logs.')
     const logs = (quantity: number): WizardViewProjection => ({ ...axe,
       backpack: { ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity }] } })
-    expect(cue(logs(4))).toContain('4/8 logs for the South creek bridge')
+    expect(cue(logs(4))).toContain('First 4 logs collected. Keep them; gather 4 more')
+    expect(cue(logs(4))).toContain('4/8 logs.')
     expect(cue(logs(8))).toContain('Follow the map south to a marked Ready creek crossing')
     expect(cue(logs(8))).toContain('Open Works (B), choose Bridge (1), aim, then confirm (F).')
     expect(cue(logs(8))).not.toContain('Chop a Greenway oak')
@@ -212,7 +214,8 @@ describe('starter cliff HUD capability gate', () => {
         { id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: stone }] } })
     expect(cue(blockedPack(11))).toContain('An oak yields 4 logs, but only 2 pack slots are free.')
     expect(cue(blockedPack(13))).toContain('An oak yields 4 logs, but only 0 pack slots are free.')
-    expect(cue(blockedPack(11))).toContain('If you find a marked Ready ladder, spend 4 logs there.')
+    expect(cue(blockedPack(11))).toContain('Keep your logs for the required 8-log creek bridge.')
+    expect(cue(blockedPack(11))).not.toContain('spend 4 logs there')
     expect(cue(blockedPack(11))).toContain('Check Outfitters for a sale of carried stone or terrain materials')
     expect(cue(blockedPack(11))).not.toContain('Chop a Greenway oak')
     expect(objective(blockedPack(13))).not.toContain('Pack full. Use carried logs only')
@@ -232,11 +235,23 @@ describe('starter cliff HUD capability gate', () => {
       v41IronHall: { health: 12, wardHealth: 9, phase: 'dormant', phaseUntilTick: 0,
         wardDefeated: false, learnedBolt: false } as NonNullable<WizardViewProjection['v41IronHall']> })
     expect(journal).toContain('Logs 4/8 ▾')
-    expect(journal).toContain('Chop a Greenway oak twice (E) for 4 logs. 4/8 logs')
+    expect(journal).toContain('First 4 logs collected. Keep them; gather 4 more')
     expect(journal).not.toContain('Old multi-step opening objective.')
     expect(objective({ ...bridgeReadyWithoutAxe, v34Quest: quest })).toContain('Build bridge ▾')
     expect(objective({ ...blockedPack(11), v34Quest: quest })).toContain('Make room ▾')
     expect(objective({ ...full, v34Quest: quest })).toContain('Greenway Outfitters does not buy logs.')
+
+    const readyCreek = resolvePublicV17GreenwaySite(state.seed, 'works4:bridge:greenway-creek:-14')!
+    if (readyCreek?.kind !== 'bridge') throw new Error('Missing creek fixture')
+    const readyChoice = { site: { ...readyCreek, obstacle: 'fen_channel' as const }, angleRadians: 0, distanceMeters: 2,
+      rejection: null, reason: 'Ready', benefit: 'Cross the creek.' }
+    const ready = cue({ ...logs(8), savedTerrainWorks: { ...saved,
+      preview: { selected: readyChoice, nearby: [readyChoice], guidance: null } } })
+    expect(ready).toContain('Ready South creek bridge')
+    expect(ready).toContain('Keep all 8 logs for this required crossing.')
+    expect(cue({ ...logs(8), savedTerrainWorks: { ...saved, actionsEnabled: false,
+      preview: { selected: readyChoice, nearby: [readyChoice], guidance: null } } }))
+      .not.toContain('Ready South creek bridge')
 
     const ladder = resolveTerrainWorkSite(state.seed, 'works1:ladder:-103:108:W')!
     const bridge = publicWorldV15StarterSites(state.seed)[0]
@@ -251,8 +266,31 @@ describe('starter cliff HUD capability gate', () => {
     const bridgeStage = objective({ ...fresh, savedTerrainWorks: { ...saved, builtSites: [displayedBridge] },
       map: { ...fresh.map, guidance: bridgeGuidance } })
     expect(bridgeStage).toContain(`Field objective:</strong> ${bridgeGuidance}`)
+    // Desktop top 192px + capped 85px leaves 8px before the Works panel at 285px.
+    expect(bridgeStage).toContain('.wr-greenway-objective:not(.wr-v34-quest):not(.wr-v35-quest){max-height:85px;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto}')
+    expect(bridgeStage).toContain('Next route: keep 0/4 logs for the north cliff ladder; chop 4 more.')
+    expect(bridgeStage).toContain('reserve 8 logs for the connected-river bridge')
+    expect(bridgeStage).toContain('Boots and the carpenter order are optional.')
     expect(bridgeStage).not.toContain('Open Backpack and equip your Woodcutter axe.')
     expect(bridgeStage).not.toContain('Pack full of logs?')
+    const ladderLogs = objective({ ...logs(4), savedTerrainWorks: { ...saved,
+      builtSites: [displayedBridge] }, map: { ...fresh.map, guidance: bridgeGuidance } })
+    expect(ladderLogs).toContain('Next route: keep 4 logs for a marked north cliff ladder.')
+    const readyLadder = resolvePublicV17GreenwaySite(state.seed, 'works4:ladder:greenway-north-cliff:11')!
+    if (readyLadder?.kind !== 'ladder') throw new Error('Missing ladder fixture')
+    const readyLadderChoice = { site: { ...readyLadder, obstacle: 'slate_cliff' as const }, angleRadians: 0, distanceMeters: 2,
+      rejection: null, reason: 'Ready', benefit: 'Climb north cliff.' }
+    expect(objective({ ...logs(4), savedTerrainWorks: { ...saved,
+      builtSites: [displayedBridge], preview: { selected: readyLadderChoice,
+        nearby: [readyLadderChoice], guidance: null } } })).toContain('Ready north cliff ladder')
+    expect(objective({ ...logs(4), v34Quest: quest, savedTerrainWorks: { ...saved,
+      builtSites: [displayedBridge] } })).toContain('Next route: keep 4 logs for a marked north cliff ladder.')
+    expect(objective({ ...logs(4), v34Quest: { ...quest, stage: 'complete', complete: true },
+      savedTerrainWorks: { ...saved, builtSites: [displayedBridge] } }))
+      .toContain('Next route: keep 4 logs for a marked north cliff ladder.')
+    expect(objective({ ...logs(4), controllerActionsEnabled: false,
+      savedTerrainWorks: { ...saved, builtSites: [displayedBridge] } }))
+      .not.toContain('Next route: keep 4 logs for a marked north cliff ladder.')
 
     const historical = objective({ ...fresh, v29Mining: undefined,
       map: { ...fresh.map, guidance: 'V27 route guidance.' } })
