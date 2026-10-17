@@ -165,6 +165,9 @@ import { surveyorCrossingQuest } from './view/surveyorCrossingQuest'
 import { publicV35LedgerQuest } from './view/publicV35LedgerQuest'
 import { publicV36MarkerQuest, publicV36MarkerRejectionMessage } from './view/publicV36MarkerQuest'
 import { WizardSurface } from './view/WizardSurface'
+import { greenwayCarpenterOrderStep, greenwayCarpenterReserve }
+  from './view/greenwayCarpenterReserve'
+import type { GreenwayCarpenterReserve } from './view/greenwayCarpenterReserve'
 
 type Runtime = ReturnType<typeof createPublicV23ControllerRuntime>
 type V24Runtime = ReturnType<typeof createPublicV24ControllerRuntime>
@@ -1489,6 +1492,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const [, redraw] = useState(0)
   const [messages, setMessages] = useState<string[]>([])
   const [familiarOpen, setFamiliarOpen] = useState(false)
+  const [greenwayOrderPending, setGreenwayOrderPending] = useState<GreenwayCarpenterReserve | null>(null)
   const [walkRequested, setWalkRequested] = useState(false)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
@@ -2560,6 +2564,19 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     stack.itemId === GREENWAY_LOG_ORDER.itemId).reduce((sum, stack) => sum + stack.quantity, 0) : 0
   const greenwayOrderClaimed = v43
     && (snapshot as PublicV43Progress).greenwayOrder?.claimedAtSequence != null
+  const greenwayOrderReserve = v43 && !greenwayOrderClaimed
+    ? greenwayCarpenterReserve(snapshot as PublicV43Progress) : null
+  const orderPrompt = greenwayOrderPending && greenwayOrderReserve
+    && greenwayOrderPending.route === greenwayOrderReserve.route
+    && greenwayOrderPending.required === greenwayOrderReserve.required
+    && greenwayOrderPending.remaining === greenwayOrderReserve.remaining
+    ? greenwayOrderReserve : null
+  const handleGreenwayOrder = (request: 'offer' | 'confirm' | 'cancel') => {
+    const step = greenwayCarpenterOrderStep(request, greenwayOrderPending,
+      greenwayOrderReserve || null)
+    setGreenwayOrderPending(step.pending)
+    if (step.submit) queueChecked({ kind: 'fulfill-greenway-logs/v1' })
+  }
   const greenwayBagClaimed = v43
     && (snapshot as PublicV43Progress).greenwayBagUpgrade?.claimedAtSequence != null
   const questCue = v43 ? (() => {
@@ -2686,11 +2703,19 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             <p role="status" className="wr-caption">{greenwayOrderLogs}/{GREENWAY_LOG_ORDER.quantity} logs carried
               {greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity
                 ? '. Gather more from Greenway oaks.' : '. Ready to deliver.'}</p>
-            <button type="button" disabled={status.gate !== 'open' || busy.current
+            {orderPrompt ? <div role="alert" className="wr-caption">
+              <p>Delivering 4 logs leaves {orderPrompt.remaining} for the {orderPrompt.route},
+                which needs {orderPrompt.required}. You would be {orderPrompt.shortfall} logs short.
+                Gather more logs before building, or confirm this optional order.</p>
+              <button type="button" disabled={status.gate !== 'open' || busy.current
+                || queuedChecked || greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity}
+                onClick={() => handleGreenwayOrder('confirm')}>Confirm delivery · 10 coins</button>{' '}
+              <button type="button" onClick={() => handleGreenwayOrder('cancel')}>Cancel delivery</button>
+            </div> : <button type="button" disabled={status.gate !== 'open' || busy.current
               || queuedChecked || greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity}
-              onClick={() => queueChecked({ kind: 'fulfill-greenway-logs/v1' })}>
+              onClick={() => handleGreenwayOrder('offer')}>
               Deliver 4 logs · 10 coins
-            </button></>}
+            </button>}</>}
       </section><section aria-label="Backpack upgrade">
         <h3 className="wr-caption">Larger backpack · once</h3>
         {greenwayBagClaimed
