@@ -38,10 +38,13 @@ describe('save-only scene frame loop', () => {
   })
 })
 
-const renderedMeshes = (node: unknown): { material?: THREE.Material; name?: string; castShadow?: boolean }[] => {
+type RenderedMesh = { material?: THREE.Material; geometry?: THREE.BufferGeometry; name?: string;
+  castShadow?: boolean; position?: readonly [number, number, number];
+  rotation?: readonly [number, number, number]; scale?: number | readonly [number, number, number] }
+const renderedMeshes = (node: unknown): RenderedMesh[] => {
   if (Array.isArray(node)) return node.flatMap(renderedMeshes)
   if (!node || typeof node !== 'object' || !('type' in node) || !('props' in node)) return []
-  const element = node as { type: unknown; props: { children?: unknown; material?: THREE.Material; name?: string; castShadow?: boolean } }
+  const element = node as { type: unknown; props: RenderedMesh & { children?: unknown } }
   return [...(element.type === 'mesh' ? [element.props] : []), ...renderedMeshes(element.props.children)]
 }
 
@@ -1436,7 +1439,7 @@ describe('tree harvest visual state', () => {
       available: node.available, timber, barkMaterial, crownMaterial,
     }))
     const live = meshes(liveNode)
-    expect(live).toHaveLength(6)
+    expect(live).toHaveLength(2)
     expect(live.map(({ name }) => name)).toContain('Tree crown')
     expect(live.every(({ castShadow }) => castShadow === true)).toBe(true)
     const occluded = renderedMeshes(TreeMeshes({ available: true, timber: false, barkMaterial, crownMaterial,
@@ -1445,11 +1448,61 @@ describe('tree harvest visual state', () => {
     expect(occluded.every(({ castShadow }) => castShadow === false)).toBe(true)
     const restored = renderedMeshes(TreeMeshes({ available: true, timber: false, barkMaterial, crownMaterial,
       castShadow: treeOcclusionAppearance(false, 1, 1).castShadow }))
+    expect(restored).toHaveLength(2)
     expect(restored.every(({ castShadow }) => castShadow === true)).toBe(true)
-    expect(meshes(liveNode, true)).toHaveLength(3)
+    const nearlyRestored = renderedMeshes(TreeMeshes({ available: true, timber: false,
+      barkMaterial, crownMaterial, castShadow: true, mergeBark: false }))
+    expect(nearlyRestored).toHaveLength(6)
+    expect(nearlyRestored.every(({ castShadow }) => castShadow === true)).toBe(true)
+    expect(restored[0].geometry).toBe(live[0].geometry)
+    expect(restored[0].material).toBe(barkMaterial)
+    expect(restored[1].geometry).toBe(live[1].geometry)
+    expect(restored[1].material).toBe(crownMaterial)
+    expect(meshes(liveNode, true)).toHaveLength(2)
+    expect(renderedMeshes(TreeMeshes({ available: true, timber: true, barkMaterial, crownMaterial,
+      castShadow: false }))).toHaveLength(3)
     const depleted = meshes(depletedNode)
     expect(depleted.map(({ name }) => name)).toEqual(['Tree stump', 'Tree stump cut'])
     expect(depleted.every(({ castShadow }) => castShadow === false)).toBe(true)
+    barkMaterial.dispose()
+    crownMaterial.dispose()
+  })
+
+  it.each([false, true])('bakes %s timber bark with the same triangles, bounds and first-hit rays', (timber) => {
+    const barkMaterial = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.45, depthWrite: false })
+    const crownMaterial = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.45, depthWrite: false })
+    const clear = renderedMeshes(TreeMeshes({ available: true, timber, barkMaterial, crownMaterial }))
+    const fading = renderedMeshes(TreeMeshes({ available: true, timber, barkMaterial, crownMaterial,
+      castShadow: false }))
+    const bark = clear[0].geometry!
+    const original = new THREE.Group()
+    for (const part of fading.slice(0, -1)) {
+      const mesh = new THREE.Mesh(part.geometry!, barkMaterial)
+      if (part.position) mesh.position.set(...part.position)
+      if (part.rotation) mesh.rotation.set(...part.rotation)
+      if (typeof part.scale === 'number') mesh.scale.setScalar(part.scale)
+      else if (part.scale) mesh.scale.set(...part.scale)
+      original.add(mesh)
+    }
+    const baked = new THREE.Mesh(bark, barkMaterial)
+    const triangles = (geometry: THREE.BufferGeometry) =>
+      (geometry.index?.count ?? geometry.getAttribute('position').count) / 3
+    expect(triangles(bark)).toBe(fading.slice(0, -1).reduce((count, part) => count + triangles(part.geometry!), 0))
+    const oldBounds = new THREE.Box3().setFromObject(original, true)
+    const newBounds = new THREE.Box3().setFromObject(baked, true)
+    expect(newBounds.min.distanceTo(oldBounds.min)).toBeLessThan(1e-6)
+    expect(newBounds.max.distanceTo(oldBounds.max)).toBeLessThan(1e-6)
+    for (const [x, y, z] of [[0, 2, 7], [-0.46, 2.75, 7], [0.46, 2.9, -7]] as const) {
+      const origin = new THREE.Vector3(x, y, z)
+      const direction = new THREE.Vector3(0, y, 0).sub(origin).normalize()
+      const ray = new THREE.Raycaster(origin, direction)
+      const oldHit = ray.intersectObjects(original.children)[0]
+      const newHit = ray.intersectObject(baked)[0]
+      expect(Boolean(newHit)).toBe(Boolean(oldHit))
+      if (oldHit && newHit) expect(newHit.distance).toBeCloseTo(oldHit.distance, 6)
+    }
+    expect(clear[1].geometry).toBe(fading.at(-1)?.geometry)
+    expect(clear[1].material).toBe(crownMaterial)
     barkMaterial.dispose()
     crownMaterial.dispose()
   })

@@ -279,6 +279,23 @@ const TERRAIN_SURFACE: Record<string, { side: string }> = {
 const TREE_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.17, 0.39, 3.35, 10, 3)
 const TREE_ROOT_GEOMETRY = new THREE.CylinderGeometry(0.36, 0.55, 0.48, 10)
 const TREE_BRANCH_GEOMETRY = new THREE.CylinderGeometry(0.06, 0.16, 1, 8)
+function mergedTreeBark(timber: boolean) {
+  const parts = [
+    TREE_ROOT_GEOMETRY.clone().translate(0, 0.24, 0),
+    TREE_TRUNK_GEOMETRY.clone().translate(0, 1.68, 0),
+    ...(!timber ? [
+      TREE_BRANCH_GEOMETRY.clone().scale(1, 1.55, 1).rotateZ(0.82).translate(-0.46, 2.75, 0.08),
+      TREE_BRANCH_GEOMETRY.clone().scale(1, 1.44, 1).rotateZ(-0.76).translate(0.46, 2.9, -0.12),
+      TREE_BRANCH_GEOMETRY.clone().scale(1, 1.15, 1).rotateX(0.72).translate(0, 2.87, 0.39),
+    ] : []),
+  ]
+  const merged = mergeGeometries(parts)
+  parts.forEach((part) => part.dispose())
+  if (!merged) throw new Error('Tree bark geometry could not be merged.')
+  return merged
+}
+const TREE_BARK_GEOMETRY = mergedTreeBark(false)
+const MIREGLASS_TIMBER_BARK_GEOMETRY = mergedTreeBark(true)
 const TREE_STUMP_SCAR_GEOMETRY = new THREE.CircleGeometry(0.32, 10)
 const TREE_STUMP_BARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#5c3b27', roughness: 0.95 })
 const TREE_STUMP_SCAR_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a77a4d', roughness: 0.95, side: THREE.DoubleSide })
@@ -1043,8 +1060,10 @@ export function treeOcclusionAppearance(occluded: boolean, opacity: number, base
     ? CLEAR_TREE_APPEARANCE : REVEALING_TREE_APPEARANCE
 }
 
-export function TreeMeshes({ available, timber, barkMaterial, crownMaterial, castShadow = true }: {
-  available: boolean; timber: boolean; barkMaterial: THREE.Material; crownMaterial: THREE.Material; castShadow?: boolean
+export function TreeMeshes({ available, timber, barkMaterial, crownMaterial, castShadow = true,
+  mergeBark = castShadow }: {
+  available: boolean; timber: boolean; barkMaterial: THREE.Material; crownMaterial: THREE.Material
+  castShadow?: boolean; mergeBark?: boolean
 }) {
   if (!available) return <>
     <mesh name="Tree stump" geometry={TREE_ROOT_GEOMETRY} material={TREE_STUMP_BARK_MATERIAL}
@@ -1053,15 +1072,21 @@ export function TreeMeshes({ available, timber, barkMaterial, crownMaterial, cas
       position={[0, 0.485, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow={false} />
   </>
   return <>
+    {/* Separate transparent bark parts retain their camera sorting while the tree fades. */}
+    {mergeBark ? <mesh geometry={timber ? MIREGLASS_TIMBER_BARK_GEOMETRY : TREE_BARK_GEOMETRY}
+      material={barkMaterial} castShadow={castShadow} /> : <>
+      <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow={castShadow} />
+      <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow={castShadow} />
+      {!timber && <>
+        <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[-0.46, 2.75, 0.08]}
+          rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow={castShadow} />
+        <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0.46, 2.9, -0.12]}
+          rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow={castShadow} />
+        <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
+          rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow={castShadow} />
+      </>}
+    </>}
     {/* Crown depth writing prevents its overlapping transparent lobes from stacking over the wizard while clear. */}
-    <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow={castShadow} />
-    <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow={castShadow} />
-    {!timber && <><mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[-0.46, 2.75, 0.08]}
-      rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow={castShadow} />
-    <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0.46, 2.9, -0.12]}
-      rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow={castShadow} />
-    <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
-      rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow={castShadow} /></>}
     <mesh geometry={timber ? MIREGLASS_TIMBER_CROWN_GEOMETRY : TREE_CROWN_GEOMETRY}
       name="Tree crown" material={crownMaterial}
       position={timber ? [0, 3.75, 0] : undefined} castShadow={castShadow} />
@@ -1083,6 +1108,8 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
   const treeGroup = useRef<THREE.Group>(null)
   const [treeCastsShadow, setTreeCastsShadow] = useState(true)
   const castsShadow = useRef(true)
+  const [barkMerged, setBarkMerged] = useState(true)
+  const merged = useRef(true)
   const [x, y, z] = node.position
   useFrame(({ camera }, delta) => {
     const centreY = y + CANOPY_CENTRE_Y_M * scale
@@ -1108,13 +1135,18 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
       castsShadow.current = appearance.castShadow
       setTreeCastsShadow(appearance.castShadow)
     }
+    const nextMerged = !nextOccluded && treeOpacity.current >= baseOpacity * 0.999
+    if (merged.current !== nextMerged) {
+      merged.current = nextMerged
+      setBarkMerged(nextMerged)
+    }
     if (treeGroup.current) treeGroup.current.visible = !nextOccluded || treeOpacity.current > 0.01
   })
   return (
     <group ref={treeGroup} name={timber ? 'Harvestable Mireglass timber' : 'Live tree'}
       position={[x, y, z]} rotation={[0, yaw, 0]} scale={scale}>
       <TreeMeshes available={node.available} timber={timber} barkMaterial={barkMaterial} crownMaterial={crownMaterial}
-        castShadow={treeCastsShadow} />
+        castShadow={treeCastsShadow} mergeBark={barkMerged} />
     </group>
   )
 }
