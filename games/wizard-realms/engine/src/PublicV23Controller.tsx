@@ -1491,6 +1491,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const inputQueue = useRef<InputToken[]>([])
   const devRoute = useRef<{ waypoints: readonly { x: number; z: number }[]; index: number } | null>(null)
   const edgePulse = useRef<Extract<InputToken, { kind: 'pulse' }> | null>(null)
+  const saveTurnLatch = useRef<Extract<InputToken, { kind: 'pulse' }> | null>(null)
   const busy = useRef(false)
   const running = useRef(false)
   const saveTask = useRef<Promise<void> | null>(null)
@@ -1650,9 +1651,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     if (busy.current || runtime.status().pendingFrames === 0) return Promise.resolve()
     busy.current = true; trace?.record('controller.save.start', {
       pendingFrames: runtime.status().pendingFrames, queued: inputQueue.current.length }); repaint()
+    let saved = false
     const task = (async () => {
       try {
         const result = await runtime.save()
+        saved = result.status === 'saved'
         trace?.record('controller.save.result', { status: result.status })
         const messageStartedAt = v42SaveTrace ? performance.now() : 0
         if (result.status === 'blocked') {
@@ -1672,6 +1675,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     saveTask.current = task.finally(() => {
       const finalizeStartedAt = v42SaveTrace ? performance.now() : 0
       sampleTimedUntil(performance.now())
+      if (!saved && saveTurnLatch.current)
+        inputQueue.current = inputQueue.current.filter((token) => token !== saveTurnLatch.current)
+      saveTurnLatch.current = null
       busy.current = false; saveTask.current = null; repaint(); drainChecked()
       if (v42SaveTrace) v42SaveTrace({
         phase: 'ui-finalize-queue', durationMs: performance.now() - finalizeStartedAt })
@@ -2178,6 +2184,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       }
       devRoute.current = null
       held.current = [0, 0]; timedHeld.current = null; edgePulse.current = null
+      saveTurnLatch.current = null
       inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
       const player = readActive().player
       if (player.verticalVelocity !== 0) { tell('Land before setting an auto-route.'); return }
@@ -2220,7 +2227,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       if (!intent.vector.some(Boolean) && intent.atMs === undefined) {
         // Map open, blur and other untimed releases cancel unready taps.
         const cancelled = inputQueue.current.filter((token) => token.kind === 'pulse').length
-        timedHeld.current = null; edgePulse.current = null
+        timedHeld.current = null; edgePulse.current = null; saveTurnLatch.current = null
         inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
         if (cancelled) {
           trace?.record('controller.cancel', { reason: 'untimed-release', cancelled })
@@ -2243,6 +2250,32 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     if (intent.type === 'movement.tap') {
       devRoute.current = null
       if (performance.now() >= obstacleCueUntil.current) lastMovementRejection.current = null
+      if (saveTask.current && intent.source === 'keyboard'
+        && Math.abs(intent.vector[0]) === 1 && intent.vector[1] === 0
+        && readActive().player.verticalVelocity === 0
+        && !inputQueue.current.some((token) => token.kind === 'pulse' && token.jump)) {
+        const priorTurn = saveTurnLatch.current && inputQueue.current.includes(saveTurnLatch.current)
+          ? saveTurnLatch.current : null
+        const heldIndex = inputQueue.current.findIndex((token) => token.kind === 'pulse'
+          && token.heldInput)
+        if (priorTurn || (heldIndex >= 0
+          && inputQueue.current.filter((token) => token.kind === 'pulse').length >= MAX_PULSES)) {
+          // Reserve one existing queue slot for the latest turn, keeping its
+          // order relative to checked actions while the save owns the world.
+          if (priorTurn) inputQueue.current = inputQueue.current.filter((token) => token !== priorTurn)
+          else inputQueue.current.splice(heldIndex, 1)
+          const turn: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse',
+            vector: intent.vector, jump: false,
+            queuedAtMs: intent.atMs !== undefined && Number.isFinite(intent.atMs)
+              ? intent.atMs : performance.now() }
+          inputQueue.current.push(turn)
+          saveTurnLatch.current = turn
+          trace?.record('controller.turn.latch', { replaced: !!priorTurn,
+            queued: inputQueue.current.length })
+          repaintQueued()
+          return
+        }
+      }
       queuePulse(intent.vector, false); return
     }
     if (intent.type === 'jump') { devRoute.current = null; queueJump(); return }
