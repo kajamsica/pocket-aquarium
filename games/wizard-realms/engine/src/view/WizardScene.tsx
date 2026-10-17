@@ -2523,7 +2523,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       whiteSpace: 'nowrap' }}>{terrainMode === 'place-soil'
         ? 'Place soil target only. Tap to check this dry cell.'
         : 'Ground target only. Tap to check if digging is possible.'}</div>}
-    {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 180,
+    {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 232,
       display: 'flex', alignItems: 'center', gap: 6, padding: '5px 7px', borderRadius: 7,
       background: '#102622d9', color: '#d3e7e7', font: '12px system-ui, sans-serif' }}
       onPointerDown={(event) => event.stopPropagation()}
