@@ -17,7 +17,6 @@ import { PublicV16Controller } from './PublicV16Controller'
 import { PublicV17EntryApp } from './PublicV17Entry'
 import { PublicV17Controller } from './PublicV17Controller'
 import { PublicV23EntryApp } from './PublicV23Entry'
-import { PublicV23Controller } from './PublicV23Controller'
 import { PublicV24EntryApp } from './PublicV24Entry'
 import { PublicV25EntryApp } from './PublicV25Entry'
 import { PublicV26EntryApp } from './PublicV26Entry'
@@ -48,6 +47,7 @@ import.meta.hot?.dispose((data) => { data.reactRoot = reactRoot })
 // The inspector is a separate route and code chunk. It never mounts a playable app or its save flow.
 const workbenchId = new URLSearchParams(window.location.search).get('workbench')
 const CharacterWorkbench = lazy(() => import('./workbench/CharacterWorkbench').then(({ CharacterWorkbench: Component }) => ({ default: Component })))
+const PublicV23Controller = lazy(() => import('./PublicV23Controller').then(({ PublicV23Controller: Component }) => ({ default: Component })))
 // The streamed preview never mounts the v5 App, so it never reads or writes a v5 save.
 const streamedPreview = new URLSearchParams(window.location.search).get('devRegion') === 'streamed'
 const mireglassDev = new URLSearchParams(window.location.search).get('devRegion') === 'mireglass'
@@ -74,7 +74,7 @@ export const PUBLIC_V34_ENTRY_READY = true
 export const PUBLIC_V35_ENTRY_READY = true
 // V36 is a separate development save copied only by an explicit V35 choice.
 export const PUBLIC_V36_ENTRY_READY = true
-reactRoot.render(<StrictMode>{workbenchId !== null
+reactRoot.render(<StrictMode><Suspense fallback={<main role="status">Loading game…</main>}>{workbenchId !== null
   ? <Suspense fallback={<main role="status">Loading character workbench…</main>}><CharacterWorkbench workbenchId={workbenchId} /></Suspense>
   : mireglassDev ? <MireglassPlayableApp />
   : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v43'
@@ -201,4 +201,4 @@ reactRoot.render(<StrictMode>{workbenchId !== null
     : publicWorld === 'v10' ? <PublicV10EntryApp />
     : publicWorld === 'v9' ? <PublicV9EntryApp />
     : publicWorld === 'v8' ? <PublicV8EntryApp />
-    : publicWorld === '1' ? <PublicWizardApp /> : <App />}</StrictMode>)
+    : publicWorld === '1' ? <PublicWizardApp /> : <App />}</Suspense></StrictMode>)
