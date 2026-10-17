@@ -3,7 +3,7 @@ import { ironHallQuartermasterSite } from './domain/ironHallQuartermasterSite'
 import { mireglassFrontierRoute, mireglassFullApproachTrail, mireglassV42BridgeId,
   mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
 import { PUBLIC_V16_GREENWAY_CENTER_BRIDGE_ID } from './domain/publicWorldV16GreenwaySites'
-import { previewPublicV42RewardActions } from './domain/publicWorldV42RewardAction'
+import { previewPublicV42IronHallActions } from './domain/publicWorldV42RewardAction'
 import type { PublicV42RewardProgress, PublicV42RewardRejection } from './domain/publicWorldV42RewardAction'
 import { projectPublicV41IronHall } from './PublicV41WorldView'
 import { publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
@@ -116,14 +116,12 @@ export function projectPublicV42FrontierRoute(progress: PublicV42RewardProgress,
 /** Discovery-gated presentation of the V42 writer's reward state and preflight. */
 export function projectPublicV42IronHall(progress: PublicV42RewardProgress,
   carrier: WizardViewProjection): WizardViewProjection {
+  const { combat, reward: [claim, equip, unequip, repair, sparStart] } =
+    previewPublicV42IronHallActions(progress)
   const inherited = projectPublicV42FrontierRoute(progress,
-    projectPublicV41IronHall(progress, carrier))
+    projectPublicV41IronHall(progress, carrier, combat))
   const site = ironHallQuartermasterSite(progress)
   const revealed = !!site && discoveryMaskHasTileId(progress.state.discoveryMask, site.id)
-  const [claim, equip, unequip, repair, sparStart] = previewPublicV42RewardActions(progress, [
-    'ironhall-claim/v1', 'ironhall-vest-equip/v1', 'ironhall-vest-unequip/v1',
-    'ironhall-vest-repair/v1', 'ironhall-spar/v1',
-  ])
   const preview = (rejection: PublicV42RewardRejection | null) => {
     return { rejection, hint: rejection ? publicV42IronHallRejectionHint(rejection) : null }
   }

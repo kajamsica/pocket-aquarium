@@ -6,10 +6,12 @@ import { ironHallSite } from './ironHallSite'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { createPublicV23Root } from './publicWorldV23Snapshot'
 import { createFreshPublicV41Root } from './publicWorldV41Snapshot'
+import { previewPublicV41CombatActions } from './publicWorldV41CombatAction'
 import { previewPublicV37FrameBatch } from './publicWorldV37Movement'
 import { replayPublicV40Witness } from './publicWorldV40Snapshot'
 import { confirmPublicV42RewardAction, decodePublicV42RewardProgress,
   decodePublicV42RewardWitness, INITIAL_IRON_HALL_REWARD,
+  previewPublicV42IronHallActions,
   previewPublicV42RewardAction, previewPublicV42RewardActions,
   previewPublicV42RewardFrameBatch, replayPublicV42RewardFrameBatch,
   resolveIronHallCrestOutcome,
@@ -83,6 +85,24 @@ function claimed(seed?: string): PublicV42RewardProgress {
 }
 
 describe('V42 Iron Hall reward authority', () => {
+  it('shares one checked preview decode without changing combat or reward rejections', () => {
+    const base = ready(), owned = claimed(), ward = ironHallSite(owned)!
+    const combatBase = ready('wizard-realms', false)
+    const combatReady = at(combatBase, ironHallSite(combatBase)!.alcove.center)
+    const combatKinds = ['ironhall-study/v1', 'ironhall-engage/v1', 'ironhall-bolt/v1',
+      'ironhall-guard/v1', 'ironhall-rest/v1'] as const
+    const rewardKinds = [claim.kind, equip.kind, unequip.kind, repair.kind, spar.kind]
+    const cases = [base, combatReady, owned, at(owned, ward.ward.center), accepted(owned, unequip),
+      { ...base, southbankReached: false },
+      { ...base, ironHallReward: { ...base.ironHallReward, vestDurability: -1 } },
+      { ...base, state: { ...base.state, tick: -1 } }]
+    for (const candidate of cases) {
+      const shown = previewPublicV42IronHallActions(candidate)
+      expect(shown.combat).toEqual(previewPublicV41CombatActions(candidate, combatKinds))
+      expect(shown.reward).toEqual(previewPublicV42RewardActions(candidate, rewardKinds))
+    }
+  })
+
   it('keeps batched preview rejections identical across sites, gear and invalid heads', () => {
     const base = ready(), owned = claimed(), ward = ironHallSite(owned)!
     const nearLevelUp = { ...base, state: { ...base.state,

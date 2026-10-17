@@ -14,6 +14,7 @@ import { projectPublicV31Pose } from './publicWorldV31Support'
 import { previewPublicV37FrameBatch } from './publicWorldV37Movement'
 import { replayPublicV40Witness } from './publicWorldV40Snapshot'
 import { decodePublicV41CombatProgress, PUBLIC_V41_PROGRESS_KEYS,
+  previewPublicV41CombatActions, previewValidatedPublicV41CombatActions,
   replayPublicV41CombatFrameBatch } from './publicWorldV41CombatAction'
 import type { PublicV41CombatProgress } from './publicWorldV41CombatAction'
 import { waystationRiverSite } from './waystationRiverContent'
@@ -240,13 +241,41 @@ export function previewPublicV42RewardAction(progress: PublicV42RewardProgress,
 export function previewPublicV42RewardActions(progress: PublicV42RewardProgress,
   kinds: readonly PublicV42RewardWitness['kind'][]): readonly Readonly<{
     rejection: PublicV42RewardRejection | null }>[] {
-  const witnesses = kinds.map((kind) => decodePublicV42RewardWitness({ kind }))
   const decoded = progressOf(progress)
-  const preflight = decoded && witnesses.some((witness) => witness
+  return decoded ? previewValidatedPublicV42RewardActions(decoded, kinds)
+    : kinds.map((kind) => ({ rejection: decodePublicV42RewardWitness({ kind })
+      ? 'invalid_progress' : 'invalid_value' }))
+}
+
+function previewValidatedPublicV42RewardActions(progress: PublicV42RewardProgress,
+  kinds: readonly PublicV42RewardWitness['kind'][]): readonly Readonly<{
+    rejection: PublicV42RewardRejection | null }>[] {
+  const witnesses = kinds.map((kind) => decodePublicV42RewardWitness({ kind }))
+  const preflight = witnesses.some((witness) => witness
     && witness.kind !== 'ironhall-vest-equip/v1'
-    && witness.kind !== 'ironhall-vest-unequip/v1') ? rewardPreflight(decoded) : undefined
-  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
-    ? confirmDecodedRewardAction(decoded, witness, preflight).rejection ?? null : 'invalid_progress' }))
+    && witness.kind !== 'ironhall-vest-unequip/v1') ? rewardPreflight(progress) : undefined
+  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value'
+    : confirmDecodedRewardAction(progress, witness, preflight).rejection ?? null }))
+}
+
+/** One strict read decode for both Iron Hall action trays; writer paths stay separate. */
+export function previewPublicV42IronHallActions(progress: PublicV42RewardProgress) {
+  const combatKinds = ['ironhall-study/v1', 'ironhall-engage/v1', 'ironhall-bolt/v1',
+    'ironhall-guard/v1', 'ironhall-rest/v1'] as const
+  const rewardKinds = ['ironhall-claim/v1', 'ironhall-vest-equip/v1',
+    'ironhall-vest-unequip/v1', 'ironhall-vest-repair/v1', 'ironhall-spar/v1'] as const
+  const decoded = progressOf(progress)
+  if (decoded) {
+    const { ironHallReward: _reward, ...combatProgress } = decoded
+    return {
+      combat: previewValidatedPublicV41CombatActions(combatProgress, combatKinds),
+      reward: previewValidatedPublicV42RewardActions(decoded, rewardKinds),
+    }
+  }
+  return {
+    combat: previewPublicV41CombatActions(progress, combatKinds),
+    reward: rewardKinds.map(() => ({ rejection: 'invalid_progress' as const })),
+  }
 }
 
 function resolveSparStrike(current: PublicV42RewardProgress): PublicV42RewardProgress | null {

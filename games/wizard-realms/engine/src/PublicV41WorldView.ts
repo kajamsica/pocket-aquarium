@@ -8,7 +8,8 @@ import type { WizardViewProjection } from './view/contracts'
 
 /** A discovery-gated world cue. Combat state and outcomes remain checked-writer owned. */
 export function projectPublicV41IronHall(progress: PublicV41CombatProgress,
-  carrier: WizardViewProjection): WizardViewProjection {
+  carrier: WizardViewProjection, checkedPreviews?: readonly Readonly<{
+    rejection: PublicV41CombatRejection | null }>[]): WizardViewProjection {
   const site = ironHallSite(progress)
   const revealed = !!site && discoveryMaskHasTileId(progress.state.discoveryMask, site.alcove.id)
   const marker = site && revealed ? {
@@ -17,7 +18,7 @@ export function projectPublicV41IronHall(progress: PublicV41CombatProgress,
     door: [site.door.center.x, site.door.center.y, site.door.center.z] as const,
     revealed: true,
   } : null
-  const [study, engage, bolt, guard, rest] = previewPublicV41CombatActions(progress, [
+  const [study, engage, bolt, guard, rest] = checkedPreviews ?? previewPublicV41CombatActions(progress, [
     'ironhall-study/v1', 'ironhall-engage/v1', 'ironhall-bolt/v1',
     'ironhall-guard/v1', 'ironhall-rest/v1',
   ])

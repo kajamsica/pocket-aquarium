@@ -190,11 +190,20 @@ export function previewPublicV41CombatAction(progress: PublicV41CombatProgress,
 export function previewPublicV41CombatActions(progress: PublicV41CombatProgress,
   kinds: readonly PublicV41CombatWitness['kind'][]): readonly Readonly<{
     rejection: PublicV41CombatRejection | null }>[] {
-  const witnesses = kinds.map((kind) => decodePublicV41CombatWitness({ kind }))
   const decoded = progressOf(progress)
-  const preflight = decoded && witnesses.some(Boolean) ? combatPreflight(decoded) : undefined
-  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
-    ? confirmDecodedCombatAction(decoded, witness, preflight).rejection ?? null : 'invalid_progress' }))
+  return decoded ? previewValidatedPublicV41CombatActions(decoded, kinds)
+    : kinds.map((kind) => ({ rejection: decodePublicV41CombatWitness({ kind })
+      ? 'invalid_progress' : 'invalid_value' }))
+}
+
+/** Read-only batch for a progress value already returned by the strict V42 decoder. */
+export function previewValidatedPublicV41CombatActions(progress: PublicV41CombatProgress,
+  kinds: readonly PublicV41CombatWitness['kind'][]): readonly Readonly<{
+    rejection: PublicV41CombatRejection | null }>[] {
+  const witnesses = kinds.map((kind) => decodePublicV41CombatWitness({ kind }))
+  const preflight = witnesses.some(Boolean) ? combatPreflight(progress) : undefined
+  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value'
+    : confirmDecodedCombatAction(progress, witness, preflight).rejection ?? null }))
 }
 
 /** Reuse the V40 movement authority one frame at a time before resolving each strike. */
