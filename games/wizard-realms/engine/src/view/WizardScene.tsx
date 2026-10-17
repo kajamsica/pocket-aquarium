@@ -2141,6 +2141,21 @@ export function sceneTerrainPickKind(projection: WizardViewProjection,
     : projection.v29Mining ? 'v29-open-pit' : 'dig'
 }
 
+/** Only an active, usable ground mode may advertise a candidate. The writer still checks a tap. */
+export function sceneTerrainTargetHint(projection: WizardViewProjection,
+  mode?: 'dig' | 'fill' | 'mine' | 'place-soil' | null): string | null {
+  if (!mode || projection.v26ValleyRimSegments === undefined
+    || projection.controllerActionsEnabled !== true || projection.unavailableActions
+    || projection.openStoreId || projection.savedTerrainWorks?.modeActive) return null
+  if (mode === 'mine') return projection.v29Mining?.tools.activePick
+    ? 'Mine candidate. Tap to check this cell.' : null
+  if (projection.equipment.mainHand?.itemId !== 'field_spade') return null
+  if (mode === 'place-soil') return (projection.v31Soil?.soilAvailable ?? 0) > 0
+    ? 'Place soil candidate. Tap to check this dry cell.' : null
+  return mode === 'fill' ? 'Fill candidate. Tap to check this cell.'
+    : 'Dig candidate. Tap to check this dry cell.'
+}
+
 /** A neutral view hint, not a terrain-action authorization. The writer checks every tap. */
 export function v26TargetedTerrainCell(projection: WizardViewProjection,
   revealed: readonly WizardTerrainCell[], picked: V26PickedTerrainColumn | null): WizardTerrainCell | null {
@@ -2320,10 +2335,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   useLayoutEffect(() => { openPitColumnsRef.current = projection.v26OpenPitColumns }, [projection.v26OpenPitColumns])
   const [hoverSurface, setHoverSurface] = useState<{ canvas: HTMLCanvasElement; picker: SceneTerrainPicker } | null>(null)
   const [hoveredTerrain, setHoveredTerrain] = useState<V26PickedTerrainColumn | null>(null)
-  const v26HoverEnabled = projection.v26ValleyRimSegments !== undefined
-    && projection.controllerActionsEnabled === true && !projection.unavailableActions
-    && (projection.equipment.mainHand?.itemId === 'field_spade'
-      || !!projection.v29Mining?.tools.activePick)
+  const terrainTargetHint = sceneTerrainTargetHint(projection, terrainMode)
+  const v26HoverEnabled = terrainTargetHint !== null
   const hoverPickKind = sceneTerrainPickKind(projection, terrainMode)
   useEffect(() => {
     if (!hoverSurface || !v26HoverEnabled) { setHoveredTerrain(null); return }
@@ -2346,7 +2359,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       canvas.removeEventListener('pointercancel', clear)
     }
   }, [hoverSurface, v26HoverEnabled, hoverPickKind])
-  const targetedTerrain = v26TargetedTerrainCell(projection, revealedTerrain, hoveredTerrain)
+  const targetedTerrain = terrainTargetHint
+    ? v26TargetedTerrainCell(projection, revealedTerrain, hoveredTerrain) : null
   const terrainRevision = terrainSignature(visualTerrain)
   const v27SurfaceReady = projection.v27WalkableSurface === true
     && Boolean(projection.v26ValleyRimSegments?.length)
@@ -2572,9 +2586,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     {targetedTerrain && <div role="status" style={{ position: 'absolute', left: '50%', top: 84,
       transform: 'translateX(-50%)', padding: '5px 9px', borderRadius: 7,
       background: '#102622d9', color: '#d3e7e7', fontSize: 11, pointerEvents: 'none',
-      whiteSpace: 'nowrap' }}>{terrainMode === 'place-soil'
-        ? 'Place soil target only. Tap to check this dry cell.'
-        : 'Ground target only. Tap to check if digging is possible.'}</div>}
+      whiteSpace: 'nowrap' }}>{terrainTargetHint}</div>}
     {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 232,
       display: 'flex', alignItems: 'center', gap: 6, padding: '5px 7px', borderRadius: 7,
       background: '#102622d9', color: '#d3e7e7', font: '12px system-ui, sans-serif' }}
