@@ -87,26 +87,40 @@ function progressOf(raw: PublicV41CombatProgress): PublicV41CombatProgress | nul
   catch { return null }
 }
 
-function confirmDecodedCombatAction(progress: PublicV41CombatProgress,
-  witness: PublicV41CombatWitness): PublicV41CombatResult {
-  const reject = (rejection: PublicV41CombatRejection): PublicV41CombatResult => ({ rejection })
+type CombatPreflight = Readonly<{ rejection: PublicV41CombatRejection }>
+  | Readonly<{ site: NonNullable<ReturnType<typeof ironHallSite>>;
+    pose: NonNullable<ReturnType<typeof projectPublicV31Pose>> }>
+
+function combatPreflight(progress: PublicV41CombatProgress): CombatPreflight {
   try {
-    const { state, ironHall: h } = progress, { player } = state
+    const { state } = progress, { player } = state
     const bridge = waystationRiverSite(state.seed), site = ironHallSite(progress)
-    if (!bridge || !site) return reject('invalid_progress')
+    if (!bridge || !site) return { rejection: 'invalid_progress' }
     if (!progress.southbankReached || !progress.riverBridgeIds.includes(bridge.id))
-      return reject('requires_crossing')
-    if (state.movementOwner !== 'streamed') return reject('wrong_region')
+      return { rejection: 'requires_crossing' }
+    if (state.movementOwner !== 'streamed') return { rejection: 'wrong_region' }
     const pose = projectPublicV31Pose(progress)
     if (!pose || player.verticalVelocity !== 0 || pose.support !== 'terrain'
       || Math.abs(pose.effective.position.y - pose.effective.floorY) > 1e-6)
-      return reject('not_grounded')
+      return { rejection: 'not_grounded' }
     if (publicV25RiverCellAtGrid(state.seed, pose.cell.gx, pose.cell.gz)
       || publicV26TerrainCellIsWet(state.seed, pose.cell.gx, pose.cell.gz, 'streamed')
       || progress.terrain.columns.some(({ gx, gz, openDepth }) =>
         gx === pose.cell.gx && gz === pose.cell.gz && openDepth > 0)
       || publicV31HasRaisedSoilCell(progress.raisedSoilCells, pose.cell.gx, pose.cell.gz))
-      return reject('unsafe_source')
+      return { rejection: 'unsafe_source' }
+    return { site, pose }
+  } catch { return { rejection: 'invalid_progress' } }
+}
+
+function confirmDecodedCombatAction(progress: PublicV41CombatProgress,
+  witness: PublicV41CombatWitness, preflight?: CombatPreflight): PublicV41CombatResult {
+  const reject = (rejection: PublicV41CombatRejection): PublicV41CombatResult => ({ rejection })
+  try {
+    const { state, ironHall: h } = progress, { player } = state
+    const checked = preflight ?? combatPreflight(progress)
+    if ('rejection' in checked) return reject(checked.rejection)
+    const { site, pose } = checked
     const kind = witness.kind, destination = kind === 'ironhall-study/v1'
       || kind === 'ironhall-rest/v1' ? site.alcove : site.ward
     if (!discoveryMaskHasTileId(state.discoveryMask, destination.id)) return reject('unrevealed')
@@ -178,8 +192,9 @@ export function previewPublicV41CombatActions(progress: PublicV41CombatProgress,
     rejection: PublicV41CombatRejection | null }>[] {
   const witnesses = kinds.map((kind) => decodePublicV41CombatWitness({ kind }))
   const decoded = progressOf(progress)
+  const preflight = decoded && witnesses.some(Boolean) ? combatPreflight(decoded) : undefined
   return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
-    ? confirmDecodedCombatAction(decoded, witness).rejection ?? null : 'invalid_progress' }))
+    ? confirmDecodedCombatAction(decoded, witness, preflight).rejection ?? null : 'invalid_progress' }))
 }
 
 /** Reuse the V40 movement authority one frame at a time before resolving each strike. */

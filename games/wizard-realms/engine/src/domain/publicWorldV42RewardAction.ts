@@ -131,8 +131,37 @@ function progressOf(raw: PublicV42RewardProgress): PublicV42RewardProgress | nul
     PUBLIC_V42_PROGRESS_KEYS.map((key) => [key, raw[key]])))
 }
 
+type RewardPreflight = Readonly<{ rejection: PublicV42RewardRejection }>
+  | Readonly<{ quartermaster: NonNullable<ReturnType<typeof ironHallQuartermasterSite>>;
+    site: NonNullable<ReturnType<typeof ironHallSite>>;
+    pose: NonNullable<ReturnType<typeof projectPublicV31Pose>> }>
+
+function rewardPreflight(progress: PublicV42RewardProgress): RewardPreflight {
+  try {
+    const { state } = progress, { player } = state
+    const quartermaster = ironHallQuartermasterSite(progress)
+    const site = ironHallSite(progress)
+    const bridge = waystationRiverSite(state.seed)
+    if (!quartermaster || !site || !bridge) return { rejection: 'invalid_progress' }
+    if (!progress.southbankReached || !progress.riverBridgeIds.includes(bridge.id))
+      return { rejection: 'requires_crossing' }
+    if (state.movementOwner !== 'streamed') return { rejection: 'wrong_region' }
+    const pose = projectPublicV31Pose(progress)
+    if (!pose || player.verticalVelocity !== 0 || pose.support !== 'terrain'
+      || Math.abs(pose.effective.position.y - pose.effective.floorY) > 1e-6)
+      return { rejection: 'not_grounded' }
+    if (publicV25RiverCellAtGrid(state.seed, pose.cell.gx, pose.cell.gz)
+      || publicV26TerrainCellIsWet(state.seed, pose.cell.gx, pose.cell.gz, 'streamed')
+      || progress.terrain.columns.some(({ gx, gz, openDepth }) =>
+        gx === pose.cell.gx && gz === pose.cell.gz && openDepth > 0)
+      || publicV31HasRaisedSoilCell(progress.raisedSoilCells, pose.cell.gx, pose.cell.gz))
+      return { rejection: 'unsafe_source' }
+    return { quartermaster, site, pose }
+  } catch { return { rejection: 'invalid_progress' } }
+}
+
 function confirmDecodedRewardAction(progress: PublicV42RewardProgress,
-  witness: PublicV42RewardWitness): PublicV42RewardResult {
+  witness: PublicV42RewardWitness, preflight?: RewardPreflight): PublicV42RewardResult {
   const reject = (rejection: PublicV42RewardRejection): PublicV42RewardResult => ({ rejection })
   try {
     const { state, ironHall: hall, ironHallReward: reward } = progress
@@ -152,23 +181,9 @@ function confirmDecodedRewardAction(progress: PublicV42RewardProgress,
         nextReward = { ...reward, vestEquipped: false }
       }
     } else {
-      const quartermaster = ironHallQuartermasterSite(progress)
-      const site = ironHallSite(progress)
-      const bridge = waystationRiverSite(state.seed)
-      if (!quartermaster || !site || !bridge) return reject('invalid_progress')
-      if (!progress.southbankReached || !progress.riverBridgeIds.includes(bridge.id))
-        return reject('requires_crossing')
-      if (state.movementOwner !== 'streamed') return reject('wrong_region')
-      const pose = projectPublicV31Pose(progress)
-      if (!pose || player.verticalVelocity !== 0 || pose.support !== 'terrain'
-        || Math.abs(pose.effective.position.y - pose.effective.floorY) > 1e-6)
-        return reject('not_grounded')
-      if (publicV25RiverCellAtGrid(state.seed, pose.cell.gx, pose.cell.gz)
-        || publicV26TerrainCellIsWet(state.seed, pose.cell.gx, pose.cell.gz, 'streamed')
-        || progress.terrain.columns.some(({ gx, gz, openDepth }) =>
-          gx === pose.cell.gx && gz === pose.cell.gz && openDepth > 0)
-        || publicV31HasRaisedSoilCell(progress.raisedSoilCells, pose.cell.gx, pose.cell.gz))
-        return reject('unsafe_source')
+      const checked = preflight ?? rewardPreflight(progress)
+      if ('rejection' in checked) return reject(checked.rejection)
+      const { quartermaster, site, pose } = checked
       const destination = kind === 'ironhall-spar/v1' ? site.ward : quartermaster
       if (!discoveryMaskHasTileId(state.discoveryMask, destination.id)) return reject('unrevealed')
       if (distance(pose.effective.position, destination.center) > 3) return reject('too_far')
@@ -227,8 +242,11 @@ export function previewPublicV42RewardActions(progress: PublicV42RewardProgress,
     rejection: PublicV42RewardRejection | null }>[] {
   const witnesses = kinds.map((kind) => decodePublicV42RewardWitness({ kind }))
   const decoded = progressOf(progress)
+  const preflight = decoded && witnesses.some((witness) => witness
+    && witness.kind !== 'ironhall-vest-equip/v1'
+    && witness.kind !== 'ironhall-vest-unequip/v1') ? rewardPreflight(decoded) : undefined
   return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
-    ? confirmDecodedRewardAction(decoded, witness).rejection ?? null : 'invalid_progress' }))
+    ? confirmDecodedRewardAction(decoded, witness, preflight).rejection ?? null : 'invalid_progress' }))
 }
 
 function resolveSparStrike(current: PublicV42RewardProgress): PublicV42RewardProgress | null {

@@ -10,11 +10,13 @@ import { previewPublicV37FrameBatch } from './publicWorldV37Movement'
 import { replayPublicV40Witness } from './publicWorldV40Snapshot'
 import { confirmPublicV42RewardAction, decodePublicV42RewardProgress,
   decodePublicV42RewardWitness, INITIAL_IRON_HALL_REWARD,
+  previewPublicV42RewardAction, previewPublicV42RewardActions,
   previewPublicV42RewardFrameBatch, replayPublicV42RewardFrameBatch,
   resolveIronHallCrestOutcome,
   resolvePublicV42CrestAfterDefeat } from './publicWorldV42RewardAction'
 import type { PublicV42RewardProgress, PublicV42RewardWitness } from './publicWorldV42RewardAction'
 import { replayPublicV42Witness } from './publicWorldV42Snapshot'
+import { STARTER_CLIFF_SITE_ID } from './starterCliffProfile'
 import { waystationRiverSite } from './waystationRiverContent'
 import { worldTileAtGrid } from './worldChunks'
 
@@ -81,6 +83,33 @@ function claimed(seed?: string): PublicV42RewardProgress {
 }
 
 describe('V42 Iron Hall reward authority', () => {
+  it('keeps batched preview rejections identical across sites, gear and invalid heads', () => {
+    const base = ready(), owned = claimed(), ward = ironHallSite(owned)!
+    const nearLevelUp = { ...base, state: { ...base.state,
+      greenway: { ...base.state.greenway, builtRouteIds: ['greenway_ladder'],
+        routes: base.state.greenway.routes.map((route) => route.id === 'greenway_ladder'
+          ? { ...route, siteId: STARTER_CLIFF_SITE_ID } : route) },
+      player: { ...base.state.player, xp: 95, skillXp: { ...base.state.player.skillXp,
+        construction: 60 } } } } as PublicV42RewardProgress
+    expect(decodePublicV42RewardProgress(nearLevelUp)).not.toBeNull()
+    expect(confirmPublicV42RewardAction(nearLevelUp, claim).rejection).toBe('invalid_value')
+    const cases = [base, owned, at(owned, ward.ward.center),
+      nearLevelUp,
+      accepted(owned, unequip),
+      { ...owned, ironHallReward: { ...owned.ironHallReward, vestDurability: 11 } },
+      { ...base, state: { ...base.state, player: { ...base.state.player,
+        coins: Number.MAX_SAFE_INTEGER } } },
+      { ...base, southbankReached: false },
+      at(base, { x: 900, y: base.state.player.position.y, z: 900 }),
+      { ...base, state: { ...base.state, player: { ...base.state.player,
+        verticalVelocity: 1 } } },
+      { ...base, state: { ...base.state, eventSequence: Number.MAX_SAFE_INTEGER } },
+      { ...base, state: { ...base.state, tick: -1 } }]
+    const kinds = [claim.kind, equip.kind, unequip.kind, repair.kind, spar.kind,
+      'forged/v1'] as unknown as readonly PublicV42RewardWitness['kind'][]
+    for (const candidate of cases) expect(previewPublicV42RewardActions(candidate, kinds))
+      .toEqual(kinds.map((kind) => previewPublicV42RewardAction(candidate, { kind })))
+  })
   it('uses supported dry quartermasters and one seed-bound crest result', () => {
     for (const seed of ['wizard-realms', 'greenway-alpha']) {
       const before = ready(seed, false), site = ironHallQuartermasterSite(before)!

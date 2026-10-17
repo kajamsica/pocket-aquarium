@@ -6,9 +6,11 @@ import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { createPublicV23Root } from './publicWorldV23Snapshot'
 import * as terrainSurface from './publicWorldV26TerrainSurface'
 import { decodePublicV41CombatProgress, decodePublicV41CombatWitness,
-  confirmPublicV41CombatAction, replayPublicV41CombatFrameBatch } from './publicWorldV41CombatAction'
+  confirmPublicV41CombatAction, previewPublicV41CombatAction,
+  previewPublicV41CombatActions, replayPublicV41CombatFrameBatch } from './publicWorldV41CombatAction'
 import type { PublicV41CombatProgress, PublicV41CombatWitness } from './publicWorldV41CombatAction'
 import { createFreshPublicV41Root } from './publicWorldV41Snapshot'
+import { STARTER_CLIFF_SITE_ID } from './starterCliffProfile'
 import { waystationRiverSite } from './waystationRiverContent'
 import { worldTileAtGrid } from './worldChunks'
 
@@ -67,6 +69,32 @@ function inFight(): PublicV41CombatProgress {
 }
 
 describe('V41 physical Iron Hall combat', () => {
+  it('keeps batched preview rejections identical across combat, pose and invalid heads', () => {
+    const base = ready(), hall = hallContent.ironHallSite(base)!
+    const learned = accepted(base, study)
+    const fighting = accepted(at(hall.ward.center, learned), engage)
+    const hurt = { ...base, ironHall: { ...base.ironHall, playerHealth: 8 } }
+    const nearLevelUp = { ...base, state: { ...base.state,
+      greenway: { ...base.state.greenway, builtRouteIds: ['greenway_ladder'],
+        routes: base.state.greenway.routes.map((route) => route.id === 'greenway_ladder'
+          ? { ...route, siteId: STARTER_CLIFF_SITE_ID } : route) },
+      player: { ...base.state.player, xp: 95, skillXp: { ...base.state.player.skillXp,
+        construction: 60 } } } } as PublicV41CombatProgress
+    expect(decodePublicV41CombatProgress(nearLevelUp)).not.toBeNull()
+    expect(confirmPublicV41CombatAction(nearLevelUp, study).rejection).toBe('invalid_value')
+    const cases = [base, learned, fighting, hurt,
+      nearLevelUp,
+      { ...base, southbankReached: false },
+      at({ x: 900, y: base.state.player.position.y, z: 900 }, base),
+      { ...base, state: { ...base.state, player: { ...base.state.player,
+        verticalVelocity: 1 } } },
+      { ...base, state: { ...base.state, eventSequence: Number.MAX_SAFE_INTEGER } },
+      { ...base, state: { ...base.state, tick: -1 } }]
+    const kinds = [study.kind, engage.kind, bolt.kind, guard.kind, rest.kind,
+      'forged/v1'] as unknown as readonly PublicV41CombatWitness['kind'][]
+    for (const candidate of cases) expect(previewPublicV41CombatActions(candidate, kinds))
+      .toEqual(kinds.map((kind) => previewPublicV41CombatAction(candidate, { kind })))
+  })
   it('selects dry supported alcove, ward and door for both terrain seeds', () => {
     for (const testSeed of [seed, 'greenway-alpha']) {
       const base = ready(), progress = { ...base,
