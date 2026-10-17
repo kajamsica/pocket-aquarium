@@ -43,6 +43,15 @@ function buttonsWithLabel(node: ReactNode, label: string): Array<{ onClick?: () 
   return [...(node.type === 'button' && props['aria-label'] === label ? [props] : []),
     ...buttonsWithLabel(props.children, label)]
 }
+function hudButtonsWithLabel(projection: Parameters<typeof WizardHud>[0]['projection'],
+  onIntent: Parameters<typeof WizardHud>[0]['onIntent'], label: string) {
+  let tree: ReactNode = null
+  renderToStaticMarkup(createElement(() => {
+    tree = WizardHud({ projection, onIntent })
+    return null
+  }))
+  return buttonsWithLabel(tree, label)
+}
 
 describe('v12 Windward Step presentation', () => {
   it('keeps the legacy spell list, fog, and v11 projection unchanged', () => {
@@ -146,8 +155,7 @@ describe('v12 Windward Step presentation', () => {
   it('dispatches one semantic study or cast intent and announces market and spell status', () => {
     const studyView = publicWorldV12ViewProjection(atCrown(), [], null)
     const onIntent = vi.fn()
-    const studyHud = WizardHud({ projection: studyView, onIntent })
-    const study = buttonsWithLabel(studyHud, 'Study Windward Step glyph')
+    const study = hudButtonsWithLabel(studyView, onIntent, 'Study Windward Step glyph')
     expect(study).toHaveLength(2) // HUD and touch layout share the same semantic action.
     expect(study.every((button) => button.disabled === false)).toBe(true)
     study[0].onClick?.()
@@ -156,8 +164,7 @@ describe('v12 Windward Step presentation', () => {
     const held = { ...learned, player: { ...learned.player,
       inventory: [...learned.player.inventory, { itemId: 'stone' as const, quantity: 2 }] } }
     const castView = publicWorldV12ViewProjection(held, [], null)
-    const castHud = WizardHud({ projection: castView, onIntent })
-    const cast = buttonsWithLabel(castHud, 'Cast Windward Step')
+    const cast = hudButtonsWithLabel(castView, onIntent, 'Cast Windward Step')
     expect(cast).toHaveLength(2)
     cast[0].onClick?.()
     expect(onIntent).toHaveBeenCalledWith({ type: 'windward.cast' })

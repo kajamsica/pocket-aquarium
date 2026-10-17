@@ -27,6 +27,14 @@ const buttons = (node: ReactNode): ReactElement<Record<string, unknown>>[] => {
   if (!isValidElement<Record<string, unknown>>(node)) return []
   return [...(node.type === 'button' ? [node] : []), ...buttons(node.props.children as ReactNode)]
 }
+const hudButtons = (projection: WizardViewProjection) => {
+  let tree: ReactNode = null
+  renderToStaticMarkup(createElement(() => {
+    tree = WizardHud({ projection, onIntent: () => {} })
+    return null
+  }))
+  return buttons(tree)
+}
 
 describe('V24 controller choice routing', () => {
   it('requires the current actionable choice for E and explicit actions', () => {
@@ -148,7 +156,7 @@ describe('V24 controller choice routing', () => {
         { id: 'mireglass:sell:logs', actionable: false, reason: 'Coin total would exceed safe limits.' },
         { id: 'mireglass:sell-all:logs', actionable: false, reason: 'Coin total would exceed safe limits.' },
       ] }
-    const all = buttons(WizardHud({ projection: view, onIntent: () => {} }))
+    const all = hudButtons(view)
     const named = (label: string) => all.filter((button) => button.props['aria-label'] === label)
     expect(named('Cast Wayfinder Glow')).toHaveLength(2)
     expect(named('Cast Wayfinder Glow').every((button) => button.props.disabled === true
@@ -161,8 +169,7 @@ describe('V24 controller choice routing', () => {
     }
     expect(named('Sell 1 Logs')[0].props.disabled).toBe(true)
     expect(named('Sell all 2 Logs for 8 gold')[0].props.disabled).toBe(true)
-    const v23 = buttons(WizardHud({ projection: { ...view, checkedActionChoices: undefined },
-      onIntent: () => {} }))
+    const v23 = hudButtons({ ...view, checkedActionChoices: undefined })
     expect(v23.filter((button) => button.props['aria-label'] === 'Cast Wayfinder Glow')
       .every((button) => button.props.disabled === false)).toBe(true)
   })
@@ -172,8 +179,8 @@ describe('V24 controller choice routing', () => {
     const view: WizardViewProjection = { ...base, starterCliff: undefined,
       unavailableActions: undefined, checkedActionChoices: [], nearbyInteraction: null,
       nearbyStoreId: null }
-    const touch = (projection: WizardViewProjection) => buttons(WizardHud({ projection,
-      onIntent: () => {} })).find((button) => button.props.className === 'wr-touch-action'
+    const touch = (projection: WizardViewProjection) => hudButtons(projection)
+      .find((button) => button.props.className === 'wr-touch-action'
         && button.props.children === 'Interact')!
     expect(touch(view).props.disabled).toBe(true)
     const marker = { ...view, checkedActionChoices: [{

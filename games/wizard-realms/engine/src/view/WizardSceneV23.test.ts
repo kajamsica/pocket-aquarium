@@ -62,18 +62,21 @@ describe('dev ground destination picking', () => {
     dressing.add(stake)
     expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
     dressing.remove(stake)
-    const crownMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12 })
+    const crownMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.03 })
     const crown = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 2), crownMaterial)
     crown.name = 'Tree crown'
     crown.position.set(1, 3, 4)
-    scene.add(crown)
+    const tree = new THREE.Group()
+    tree.name = 'Live tree'
+    tree.add(crown)
+    scene.add(tree)
     expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)?.x).toBeCloseTo(1)
     crownMaterial.opacity = 1
     expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
-    crownMaterial.opacity = 0.12
-    crown.name = 'Tree trunk'
+    crownMaterial.opacity = 0.03
+    tree.name = 'Depleted tree stump'
     expect(pickVisibleGroundPoint(scene, camera, bounds, 100, 100, revealed)).toBeNull()
-    scene.remove(crown)
+    scene.remove(tree)
     const rock = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial())
     rock.name = 'Foreground rock'
     rock.position.set(1, 3, 4)

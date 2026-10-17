@@ -64,7 +64,7 @@ describe('V28 controller integration', () => {
       v24Store: createAtomicV24Store(factory), v23Store: createAtomicV23Store(factory),
       v17Store: createAtomicV17Store(factory) }))
     expect(html).toContain('data-public-version="v28"')
-    expect(html).toContain('First steps: chop trees for logs')
+    expect(html).toContain('First steps: 8-log South creek bridge')
     expect(html).toContain('Safety options')
     expect(v27.head.schemaVersion).toBe('wizard-world/v27')
     expect(v28.head.riverBridgeIds).toEqual([])
