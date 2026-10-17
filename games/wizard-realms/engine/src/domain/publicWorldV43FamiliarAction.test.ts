@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
 import { createFreshPublicV42Root, replayPublicV42Witness } from './publicWorldV42Snapshot'
+import { replayPublicV43Witness } from './publicWorldV43Snapshot'
 import { publicV43FamiliarTouchesForbiddenSupport,
   publicV43FamiliarTouchesUnrevealedCell,
   replayPublicV43FamiliarFrame,
@@ -97,6 +98,9 @@ describe('V43 Lost Familiar domain-only contract', () => {
     expect(confirmPublicV43FamiliarAction(sheltered,
       witness('familiar-shelter/v1')).rejection).toBe('wrong_stage')
     const escort = act(sheltered, 'familiar-escort/v1')
+    // Retained V43 heads may contain this original v1 calm immediately after escort.
+    expect(replayPublicV43Witness(escort,
+      witness('familiar-calm/v1'))?.familiar).toMatchObject({ calmed: true, trust: 3 })
     const calmed = act(escort, 'familiar-calm/v1')
     expect(calmed.familiar).toMatchObject({ phase: 'escort', calmed: true,
       trust: 3, creatureCareXp: 20 })
