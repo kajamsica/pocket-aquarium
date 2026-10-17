@@ -28,13 +28,16 @@ const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): 
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
 
 describe('save-only scene frame loop', () => {
-  it('runs normally outside a save and pauses only an active save', () => {
+  it('runs normally outside a save and pauses active saves by default', () => {
     expect(sceneFrameLoopForSave(false, '', true)).toBe('always')
-    expect(sceneFrameLoopForSave(true, '', true)).toBe('always')
+    expect(sceneFrameLoopForSave(false, '', false)).toBe('always')
+    expect(sceneFrameLoopForSave(true, '', true)).toBe('demand')
+    expect(sceneFrameLoopForSave(true, '', false)).toBe('demand')
     expect(sceneFrameLoopForSave(true, '?saveRenderPause=on', true)).toBe('demand')
     expect(sceneFrameLoopForSave(false, '?saveRenderPause=off', true)).toBe('always')
     expect(sceneFrameLoopForSave(true, '?saveRenderPause=off', true)).toBe('always')
-    expect(sceneFrameLoopForSave(true, '?saveRenderPause=on', false)).toBe('always')
+    expect(sceneFrameLoopForSave(true, '?saveRenderPause=off', false)).toBe('demand')
+    expect(sceneFrameLoopForSave(true, '?saveRenderPause=on', false)).toBe('demand')
   })
 })
 

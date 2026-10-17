@@ -75,7 +75,7 @@ export function landscapeDressingEnabledForSearch(search: string, development: b
   return !development || query.get('dev') !== '1' || query.get('landscapeDressing') !== 'off'
 }
 export function sceneFrameLoopForSave(saveInProgress: boolean, search: string, development: boolean) {
-  return saveInProgress && development && new URLSearchParams(search).get('saveRenderPause') === 'on'
+  return saveInProgress && !(development && new URLSearchParams(search).get('saveRenderPause') === 'off')
     ? 'demand' : 'always'
 }
 const BEDROCK_COLOR = '#4a6a3e'
