@@ -10,7 +10,8 @@ import { projectPublicV31Pose } from './publicWorldV31Support'
 import { previewPublicV37FrameBatch } from './publicWorldV37Movement'
 import { createFreshPublicV38Root } from './publicWorldV38Snapshot'
 import { confirmPublicV39RingAction as confirm, decodePublicV39RingProgress,
-  decodePublicV39RingWitness as decode, previewPublicV39RingAction as preview } from './publicWorldV39RingAction'
+  decodePublicV39RingWitness as decode, previewPublicV39RingAction as preview,
+  previewPublicV39RingActions as previewBatch } from './publicWorldV39RingAction'
 import type { PublicV39RingProgress, PublicV39RingWitness } from './publicWorldV39RingAction'
 import { createStreamedWorld } from './streamedWorld'
 import { worldTileAtGrid } from './worldChunks'
@@ -64,6 +65,26 @@ function withOpenPit(progress: PublicV39RingProgress, gx: number,
 }
 
 describe('V39 Ringkeeper checked action', () => {
+  it('batches advisory readiness with one checked decode and unchanged rejections', () => {
+    const found = accepted(atQuarry(), discover)
+    const ready = linked()
+    const paid = accepted(accepted(accepted(ready, outbound), inbound), claim)
+    const kinds = [discover.kind, link.kind, claim.kind] as const
+    for (const progress of [atQuarry(), found, ready, paid,
+      { ...ready, ringLinkEstablished: false }]) {
+      expect(previewBatch(progress, kinds)).toEqual(kinds.map((kind) =>
+        preview(progress, { kind })))
+    }
+    const source = atQuarry()
+    const clone = vi.spyOn(globalThis, 'structuredClone')
+    try {
+      kinds.forEach((kind) => preview(source, { kind }))
+      const separateClones = clone.mock.calls.length
+      clone.mockClear()
+      previewBatch(source, kinds)
+      expect(clone.mock.calls.length).toBeLessThan(separateClones)
+    } finally { clone.mockRestore() }
+  })
   it('has a dry supported site and a real reversible walk from the Highland trail', () => {
     expect(quarry.id).toBe('ring-highland-quarry')
     expect(quarry.tile.center).toMatchObject({ x: 520, z: -488 })

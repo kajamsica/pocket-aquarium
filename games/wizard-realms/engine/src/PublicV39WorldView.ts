@@ -1,6 +1,6 @@
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
 import { highlandQuarryRing } from './domain/highlandQuarryRingContent'
-import { previewPublicV39RingAction } from './domain/publicWorldV39RingAction'
+import { previewPublicV39RingActions } from './domain/publicWorldV39RingAction'
 import type { PublicV39RingProgress, PublicV39RingRejection } from './domain/publicWorldV39RingAction'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS, worldTileAtGrid } from './domain/worldChunks'
 import { publicV39RingkeeperQuest } from './view/publicV39RingkeeperQuest'
@@ -71,9 +71,9 @@ export function projectPublicV39Ringkeeper(progress: PublicV39RingProgress,
     map: { ...carrier.map, tiles: carrier.map.tiles.map((tile) => tile.id === tileId
       ? { ...tile, hasRing: shown } : tile) },
   }
-  const discover = previewPublicV39RingAction(progress, { kind: 'ringkeeper-discover/v1' }).rejection
-  const link = previewPublicV39RingAction(progress, { kind: 'ringkeeper-link/v1' }).rejection
-  const claim = previewPublicV39RingAction(progress, { kind: 'ringkeeper-claim/v1' }).rejection
+  const [discover, link, claim] = previewPublicV39RingActions(progress, [
+    'ringkeeper-discover/v1', 'ringkeeper-link/v1', 'ringkeeper-claim/v1',
+  ]).map((result) => result.rejection)
   const quest = publicV39RingkeeperQuest(projected, {
     quarryRingDiscovered: progress.quarryRingDiscovered,
     ringLinkEstablished: progress.ringLinkEstablished,

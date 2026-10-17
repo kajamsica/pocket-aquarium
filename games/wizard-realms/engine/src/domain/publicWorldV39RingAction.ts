@@ -91,6 +91,12 @@ export function confirmPublicV39RingAction(raw: PublicV39RingProgress,
     PUBLIC_V39_PROGRESS_KEYS.map((key) => [key, raw[key]]))) }
   catch { return reject('invalid_progress') }
   if (!progress) return reject('invalid_progress')
+  return confirmDecodedRingAction(progress, witness)
+}
+
+function confirmDecodedRingAction(progress: PublicV39RingProgress,
+  witness: PublicV39RingWitness): PublicV39RingResult {
+  const reject = (rejection: PublicV39RingRejection): PublicV39RingResult => ({ rejection })
   try {
     const { state } = progress, { player } = state
     const greenway = state.greenway.fairyRings.find(({ id }) => id === 'ring-greenway')
@@ -195,4 +201,17 @@ export function confirmPublicV39RingAction(raw: PublicV39RingProgress,
 export function previewPublicV39RingAction(progress: PublicV39RingProgress,
   witness: unknown): Readonly<{ rejection: PublicV39RingRejection | null }> {
   return { rejection: confirmPublicV39RingAction(progress, witness).rejection ?? null }
+}
+
+/** Read-only view batch: validate the checked progress once for independent actions. */
+export function previewPublicV39RingActions(progress: PublicV39RingProgress,
+  kinds: readonly ('ringkeeper-discover/v1' | 'ringkeeper-link/v1' | 'ringkeeper-claim/v1')[]):
+  readonly Readonly<{ rejection: PublicV39RingRejection | null }>[] {
+  const witnesses = kinds.map((kind) => decodePublicV39RingWitness({ kind }))
+  let decoded: PublicV39RingProgress | null
+  try { decoded = decodePublicV39RingProgress(Object.fromEntries(
+    PUBLIC_V39_PROGRESS_KEYS.map((key) => [key, progress[key]]))) }
+  catch { decoded = null }
+  return witnesses.map((witness) => ({ rejection: !witness ? 'invalid_value' : decoded
+    ? confirmDecodedRingAction(decoded, witness).rejection ?? null : 'invalid_progress' }))
 }
