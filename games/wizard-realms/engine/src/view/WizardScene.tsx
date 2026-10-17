@@ -45,10 +45,20 @@ const FOG_COLOR = DISCOVERY_FOG_COLOR
 export const PUBLIC_FOG_START_M = 24
 export const PUBLIC_FOG_END_M = 31
 export const fogEndFor = (hasPublicVisualWorld: boolean) => hasPublicVisualWorld ? PUBLIC_FOG_END_M : 40
-export function sceneGraphicsOptionsForSearch(search: string) {
+export type SceneResolution = 'quality' | 'performance'
+export const sceneResolutionForSearch = (search: string): SceneResolution =>
+  new URLSearchParams(search).get('graphics') === 'resolution75' ? 'performance' : 'quality'
+export function sceneGraphicsSearchForResolution(search: string, resolution: SceneResolution): string {
+  const query = new URLSearchParams(search)
+  if (resolution === 'performance') query.set('graphics', 'resolution75')
+  else query.delete('graphics')
+  const next = query.toString()
+  return next ? `?${next}` : ''
+}
+export function sceneGraphicsOptionsForSearch(search: string, resolution = sceneResolutionForSearch(search)) {
   const profile = new URLSearchParams(search).get('graphics')
   const software = profile === 'software'
-  const dpr: number | [number, number] = software ? 1 : profile === 'resolution75' ? 0.75 : [1, 1.5]
+  const dpr: number | [number, number] = software ? 1 : resolution === 'performance' ? 0.75 : [1, 1.5]
   return { dpr, shadows: software ? false : { type: THREE.PCFShadowMap }, antialias: !software }
 }
 export function landscapeDressingEnabledForSearch(search: string, development: boolean): boolean {
@@ -2221,7 +2231,15 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   saveInProgress?: boolean
 }) {
   const search = typeof window === 'undefined' ? '' : window.location.search
-  const graphics = sceneGraphicsOptionsForSearch(search)
+  const softwareGraphics = new URLSearchParams(search).get('graphics') === 'software'
+  const [resolution, setResolution] = useState<SceneResolution>(() => sceneResolutionForSearch(search))
+  const graphics = sceneGraphicsOptionsForSearch(search, resolution)
+  const changeResolution = (next: SceneResolution) => {
+    const url = new URL(window.location.href)
+    url.search = sceneGraphicsSearchForResolution(url.search, next)
+    window.history.replaceState(window.history.state, '', url.toString())
+    setResolution(next)
+  }
   const frameloop = sceneFrameLoopForSave(saveInProgress, search, import.meta.env.DEV)
   const rendererProbe = rendererInfoProbeEnabled(search, import.meta.env.DEV)
   const landscapeDressingEnabled = landscapeDressingEnabledForSearch(search, import.meta.env.DEV)
@@ -2505,6 +2523,19 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       whiteSpace: 'nowrap' }}>{terrainMode === 'place-soil'
         ? 'Place soil target only. Tap to check this dry cell.'
         : 'Ground target only. Tap to check if digging is possible.'}</div>}
+    {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 180,
+      display: 'flex', alignItems: 'center', gap: 6, padding: '5px 7px', borderRadius: 7,
+      background: '#102622d9', color: '#d3e7e7', font: '12px system-ui, sans-serif' }}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerMove={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}>
+      Resolution
+      <select aria-label="Graphics resolution" value={resolution}
+        onChange={(event) => changeResolution(event.target.value as SceneResolution)}>
+        <option value="quality">Quality</option>
+        <option value="performance">Performance</option>
+      </select>
+    </label>}
   </>
   )
 }

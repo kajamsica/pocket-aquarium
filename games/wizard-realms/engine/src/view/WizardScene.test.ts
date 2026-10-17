@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneResolutionForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -234,6 +234,22 @@ describe('opt-in software graphics profile', () => {
     expect(sceneGraphicsOptionsForSearch('?graphics=resolution75ish')).toEqual({
       dpr: [1, 1.5], shadows: { type: THREE.PCFShadowMap }, antialias: true,
     })
+  })
+
+  it('switches only resolution and preserves the rest of the running scene URL', () => {
+    const initial = '?dev=1&rendererProbe=1&graphics=resolution75'
+    expect(sceneResolutionForSearch(initial)).toBe('performance')
+    const quality = sceneGraphicsSearchForResolution(initial, 'quality')
+    expect(quality).toBe('?dev=1&rendererProbe=1')
+    expect(sceneGraphicsOptionsForSearch(quality, 'quality')).toEqual({
+      dpr: [1, 1.5], shadows: { type: THREE.PCFShadowMap }, antialias: true,
+    })
+    const performance = sceneGraphicsSearchForResolution(quality, 'performance')
+    expect(performance).toBe(initial)
+    expect(sceneGraphicsOptionsForSearch(performance, 'performance')).toEqual({
+      dpr: 0.75, shadows: { type: THREE.PCFShadowMap }, antialias: true,
+    })
+    expect(sceneResolutionForSearch('?graphics=software')).toBe('quality')
   })
 })
 
