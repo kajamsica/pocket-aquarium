@@ -117,7 +117,8 @@ describe('V42 copied movement frames', () => {
     const blocked = createPublicV42ControllerRuntime(unbuilt.start,
       async () => ({ ok: false, reason: 'not-called' }))
     expect(blocked.advanceFrame(move, false).rejections)
-      .toEqual([expect.objectContaining({ message: 'This move cannot be replayed safely.' })])
+      .toEqual([expect.objectContaining({ message:
+        'The cliff lip is a drop. Back away and stay on the upper shelf.' })])
   })
   it('explains a checked unbridged creek rejection without advancing preview', () => {
     const { start, before } = starterAt({ x: 0, z: 5.9 }, 0, false)
