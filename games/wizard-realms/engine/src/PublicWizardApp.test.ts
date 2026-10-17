@@ -577,7 +577,7 @@ describe('public v9 play session', () => {
     expect(render(dug)).not.toContain('<b>Dig:</b>')
   })
 
-  it('puts discovered route previews before the map grid and names the actual v11 route feet', () => {
+  it('puts discovered route previews after the map grid and names the actual v11 route feet', () => {
     const f = fixture()
     const v10 = withPublicV10TerrainRevision(f.state)
     const sourceReceipt = { sourceV10Head: encodePublicV10Head(v10, f.bootstrap, 7),
@@ -600,7 +600,8 @@ describe('public v9 play session', () => {
     expect(map).toContain('North foot')
     expect(map).toContain('to south foot')
     expect(map).toContain('Approach the foot on your side until Cross appears; press E or tap Interact as a shortcut. You can also walk across the built route.')
-    expect(map.indexOf('class="wr-map-routes"')).toBeLessThan(map.indexOf('class="wr-map-grid"'))
+    expect(map).toContain('class="wr-map-grid"')
+    expect(map.indexOf('class="wr-map-grid"')).toBeLessThan(map.indexOf('class="wr-map-routes"'))
     for (const site of renderedProjection.buildSites.filter((candidate) => !candidate.discovered)) {
       expect(map).not.toContain(`aria-label="Preview ${site.label}"`)
     }
