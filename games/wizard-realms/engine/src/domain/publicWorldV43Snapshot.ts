@@ -15,6 +15,11 @@ import { confirmPublicV43FamiliarAction, createPublicV43FamiliarProgress,
 import type { PublicV43FamiliarProgress,
   PublicV43FamiliarWitness } from './publicWorldV43FamiliarAction'
 import { advancePublicV43FamiliarFollower } from './publicWorldV43FamiliarFollower'
+import { confirmPublicV43LogOrder, createPublicV43LogOrder,
+  decodePublicV43LogOrderState, decodePublicV43LogOrderWitness }
+  from './publicWorldV43LogOrder'
+import type { PublicV43LogOrderProgress,
+  PublicV43LogOrderWitness } from './publicWorldV43LogOrder'
 import { confirmPublicV43MountTraining, createPublicV43MountTraining,
   decodePublicV43MountTrainingProgress,
   decodePublicV43MountTrainingWitness } from './publicWorldV43MountTraining'
@@ -37,27 +42,47 @@ function parentV43Of(raw: PublicV43Progress): PublicV43FamiliarProgress {
 }
 function progressOf(raw: PublicV43Progress): PublicV43Progress {
   const familiar = parentV43Of(raw)
-  return Object.hasOwn(raw, 'mountTraining')
-    ? { ...familiar, mountTraining: raw.mountTraining } : familiar
+  return { ...familiar,
+    ...(Object.hasOwn(raw, 'mountTraining') && { mountTraining: raw.mountTraining }),
+    ...(Object.hasOwn(raw, 'greenwayOrder') && { greenwayOrder: raw.greenwayOrder }) }
 }
 function decodeProgress(raw: unknown): PublicV43Progress | null {
-  return decodePublicV43FamiliarProgress(raw)
-    ?? decodePublicV43MountTrainingProgress(raw)
+  try {
+    if (raw === null || typeof raw !== 'object') return null
+    const mount = Object.hasOwn(raw, 'mountTraining')
+    const order = Object.hasOwn(raw, 'greenwayOrder')
+    if (!exactPublicV23(raw, [...PUBLIC_V43_PROGRESS_KEYS,
+      ...(mount ? ['mountTraining'] : []), ...(order ? ['greenwayOrder'] : [])])) return null
+    const source = raw as PublicV43Progress
+    const familiar = decodePublicV43FamiliarProgress(parentV43Of(source))
+    const checkedMount = familiar && mount && decodePublicV43MountTrainingProgress({
+      ...familiar, mountTraining: source.mountTraining })
+    const checkedOrder = familiar && order && decodePublicV43LogOrderState(
+      source.greenwayOrder, familiar.state.eventSequence)
+    if (!familiar || mount && !checkedMount || order && !checkedOrder) return null
+    return { ...familiar,
+      ...(checkedMount && { mountTraining: checkedMount.mountTraining }),
+      ...(checkedOrder && { greenwayOrder: checkedOrder }) }
+  } catch { return null }
 }
-function preserveMount(before: PublicV43Progress,
+function preserveOverlays(before: PublicV43Progress,
   after: PublicV43FamiliarProgress | null): PublicV43Progress | null {
   if (!after) return null
-  return decodeProgress(Object.hasOwn(before, 'mountTraining')
-    ? { ...after, mountTraining: before.mountTraining } : after)
+  return decodeProgress({ ...after,
+    ...(Object.hasOwn(before, 'mountTraining')
+      && { mountTraining: before.mountTraining }),
+    ...(Object.hasOwn(before, 'greenwayOrder')
+      && { greenwayOrder: before.greenwayOrder }) })
 }
 const canonicalFreshGenesis = createPublicV43FamiliarProgress(
   createFreshPublicV42Root(FRESH_SEED).head)
 if (!canonicalFreshGenesis) throw new Error('Missing canonical V43 familiar site')
 
 export type PublicV43Witness = PublicV42Witness | PublicV43FamiliarWitness
-  | PublicV43MountTrainingWitness
+  | PublicV43MountTrainingWitness | PublicV43LogOrderWitness
 export type PublicV43Progress = PublicV43FamiliarProgress & Readonly<{
   mountTraining?: PublicV43MountTraining
+  greenwayOrder?: PublicV43LogOrderProgress['greenwayOrder']
 }>
 export type PublicV43Lineage = Readonly<{ rulesProfile: 'sedgehorn-familiar/v1';
   seed: string; genesis: PublicV43FamiliarProgress }> & (
@@ -72,6 +97,8 @@ export type PublicV43Root = Readonly<{ lineage: PublicV43Lineage;
 const headKeys = ['schemaVersion', 'saveRevision', ...PUBLIC_V43_PROGRESS_KEYS,
   'witness'] as const
 const mountHeadKeys = [...headKeys, 'mountTraining'] as const
+const orderHeadKeys = [...headKeys, 'greenwayOrder'] as const
+const mountOrderHeadKeys = [...headKeys, 'mountTraining', 'greenwayOrder'] as const
 const genesisHead = (lineage: PublicV43Lineage): PublicV43Head => ({
   ...structuredClone(lineage.genesis), schemaVersion: PUBLIC_V43_SCHEMA,
   saveRevision: 0, witness: null })
@@ -121,6 +148,7 @@ export function decodePublicV43Lineage(raw: unknown): PublicV43Lineage | null {
 
 export function decodePublicV43Witness(raw: unknown): PublicV43Witness | null {
   return decodePublicV43MountTrainingWitness(raw)
+    ?? decodePublicV43LogOrderWitness(raw)
     ?? decodePublicV43FamiliarWitness(raw) ?? decodePublicV42Witness(raw)
 }
 
@@ -160,21 +188,34 @@ export function replayPublicV43Witness(beforeRaw: PublicV43Progress,
   if (!witness || !before) return null
   if (witness.kind === 'sedgehorn-care/v1') {
     const training = Object.hasOwn(before, 'mountTraining')
-      ? before as PublicV43MountTrainingProgress
-      : createPublicV43MountTraining(before)
-    return training ? confirmPublicV43MountTraining(training, witness).progress ?? null
-      : null
+      ? { ...parentV43Of(before), mountTraining: before.mountTraining } as
+        PublicV43MountTrainingProgress
+      : createPublicV43MountTraining(parentV43Of(before))
+    const after = training && confirmPublicV43MountTraining(training, witness).progress
+    return after ? decodeProgress({ ...after,
+      ...(Object.hasOwn(before, 'greenwayOrder')
+        && { greenwayOrder: before.greenwayOrder }) }) : null
+  }
+  if (witness.kind === 'fulfill-greenway-logs/v1') {
+    const order = Object.hasOwn(before, 'greenwayOrder')
+      ? { ...parentV43Of(before), greenwayOrder: before.greenwayOrder } as
+        PublicV43LogOrderProgress
+      : createPublicV43LogOrder(parentV43Of(before))
+    const after = order && confirmPublicV43LogOrder(order, witness).progress
+    return after ? decodeProgress({ ...after,
+      ...(Object.hasOwn(before, 'mountTraining')
+        && { mountTraining: before.mountTraining }) }) : null
   }
   const familiar = decodePublicV43FamiliarProgress(parentV43Of(before))
   if (!familiar) return null
   if (decodePublicV43FamiliarWitness(witness))
-    return preserveMount(before,
+    return preserveOverlays(before,
       confirmPublicV43FamiliarAction(familiar, witness).progress ?? null)
   if (witness.kind === 'frame-batch/v1')
-    return preserveMount(before, replayFrames(familiar, witness))
+    return preserveOverlays(before, replayFrames(familiar, witness))
   const parent = replayPublicV42Witness(parentOf(familiar), witness)
   const next = parent && { ...parent, familiar: familiar.familiar }
-  return preserveMount(before, next ? decodePublicV43FamiliarProgress(next) : null)
+  return preserveOverlays(before, next ? decodePublicV43FamiliarProgress(next) : null)
 }
 
 const phaseOrder = ['search', 'tracks', 'fed', 'route-ready',
@@ -206,9 +247,13 @@ function inheritedMonotonic(a: PublicV43FamiliarProgress,
     && a.ironHall.combatXp <= b.ironHall.combatXp
     && a.ironHall.knockouts <= b.ironHall.knockouts
 }
-function monotonic(a: PublicV43FamiliarProgress, b: PublicV43FamiliarProgress): boolean {
+function monotonic(a: PublicV43Progress, b: PublicV43Progress): boolean {
   const before = a.familiar, after = b.familiar
   return inheritedMonotonic(a, b)
+    && (!Object.hasOwn(a, 'greenwayOrder') || Object.hasOwn(b, 'greenwayOrder'))
+    && (a.greenwayOrder?.claimedAtSequence === null
+      || a.greenwayOrder?.claimedAtSequence === undefined
+      || b.greenwayOrder?.claimedAtSequence === a.greenwayOrder.claimedAtSequence)
     && before.id === after.id
     && phaseOrder.indexOf(before.phase) <= phaseOrder.indexOf(after.phase)
     && before.trust <= after.trust
@@ -231,7 +276,9 @@ function monotonic(a: PublicV43FamiliarProgress, b: PublicV43FamiliarProgress): 
 
 function decodeHead(raw: unknown, lineage: PublicV43Lineage): PublicV43Head | null {
   try {
-    if (!(exactPublicV23(raw, headKeys) || exactPublicV23(raw, mountHeadKeys))
+    if (!(exactPublicV23(raw, headKeys) || exactPublicV23(raw, mountHeadKeys)
+      || exactPublicV23(raw, orderHeadKeys)
+      || exactPublicV23(raw, mountOrderHeadKeys))
       || raw.schemaVersion !== PUBLIC_V43_SCHEMA
       || !Number.isSafeInteger(raw.saveRevision) || (raw.saveRevision as number) < 0)
       return null
