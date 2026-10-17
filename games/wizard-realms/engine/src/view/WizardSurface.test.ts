@@ -881,6 +881,16 @@ describe('third-person control grammar', () => {
       onIntent: () => {} }))).not.toContain('aria-label="Walk"')
   })
 
+  it('keeps V42 compact movement status accessible without covering panels or Safety', () => {
+    const running = { ...sellProjection, gait: { pace: 'run' as const, canRun: true,
+      reason: 'Running in leather boots' } }
+    const markup = renderToStaticMarkup(createElement(WizardSurface, {
+      projection: running, onIntent: () => {} }))
+    const styles = markup.match(/<style>([\s\S]*?)<\/style>/)?.[1]
+    expect(markup).toContain('<small role="status">Running in leather boots</small>')
+    expect(styles).toContain('@media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}')
+  })
+
   it('keeps forward, backward, and pivot axes independent', () => {
     expect(movementVector(new Set(['KeyW']))).toEqual([0, 1])
     expect(movementVector(new Set(['KeyS']))).toEqual([0, -1])
