@@ -24,6 +24,15 @@ const projectionAtGreenwayRing = (discoveredRingIds: string[]) => {
 
 const renderHud = (projection: ReturnType<typeof projectionAtGreenwayRing>) =>
   renderToStaticMarkup(createElement(WizardHud, { projection, onIntent: () => {} }))
+const renderHudTree = (props: Parameters<typeof WizardHud>[0]): ReactNode => {
+  let tree: ReactNode = null
+  function CaptureHud() {
+    tree = WizardHud(props)
+    return null
+  }
+  renderToStaticMarkup(createElement(CaptureHud))
+  return tree
+}
 type Props = Record<string, unknown>
 const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) => boolean): ReactElement<Props>[] => {
   if (Array.isArray(node)) return node.flatMap((child) => findElements(child, matches))
@@ -77,7 +86,7 @@ describe('starter cliff HUD capability gate', () => {
     expect(renderHud({ ...view, savedTerrainWorks: { ...view.savedTerrainWorks!,
       builtSites: [shownSite] } })).not.toContain('Placement preview only.')
     const emitted: unknown[] = []
-    const button = findElements(WizardHud({ projection: view,
+    const button = findElements(renderHudTree({ projection: view,
       onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
       .find((element) => element.props['aria-label'] === 'Confirm aimed saved work')
     expect(button?.props.disabled).toBe(false)
@@ -99,7 +108,7 @@ describe('starter cliff HUD capability gate', () => {
       savedTerrainWorks: saved, map: { ...base.map,
         guidance: 'Return east via your saved north ladder to accessible Greenway oaks. Gather 5 more logs for the 8-log connected-river bridge.' } }
     const backpack = (view: WizardViewProjection) => {
-      const panel = findElements(WizardHud({ projection: view, onIntent: () => {} }),
+      const panel = findElements(renderHudTree({ projection: view, onIntent: () => {} }),
         (element) => element.type === 'aside' && element.props.id === 'wizard-backpack')[0]
       expect(panel).toBeDefined()
       return renderToStaticMarkup(panel)
@@ -256,14 +265,14 @@ describe('starter cliff HUD capability gate', () => {
       claimReady: true, reward: 'basic-pick' as const }
     const ready: WizardViewProjection = { ...base, controllerActionsEnabled: true,
       v30Bridgehead: post }
-    const button = findElements(WizardHud({ projection: ready,
+    const button = findElements(renderHudTree({ projection: ready,
       onIntent: () => {} }), (element) => element.type === 'button')
       .find((element) => element.props['aria-label'] === 'Claim River Works bridgehead reward')
     expect(button).toBeDefined()
     expect(renderHud(ready)).toContain('Basic mining pick, not auto-equipped.')
     expect(renderHud(ready)).toContain('A field spade still digs soil.')
     const emitted: unknown[] = []
-    const actionable = findElements(WizardHud({ projection: ready,
+    const actionable = findElements(renderHudTree({ projection: ready,
       onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
       .find((element) => element.props['aria-label'] === 'Claim River Works bridgehead reward')
     ;(actionable?.props.onClick as (() => void))()
@@ -290,7 +299,7 @@ describe('starter cliff HUD capability gate', () => {
     const html = renderHud(view)
     expect(html).toContain('Claim River Works bridgehead reward')
     expect(html).not.toContain('<b>Chop</b>Old oak')
-    const equip = findElements(WizardHud({ projection: view,
+    const equip = findElements(renderHudTree({ projection: view,
       onIntent: () => {} }), (element) => element.type === 'button')
       .find((element) => element.props['aria-label'] === 'Equip Woodcutter axe')
     expect(equip?.props.disabled).toBe(true)
@@ -337,14 +346,14 @@ describe('starter cliff HUD capability gate', () => {
         modeActive: true, selectedKind: 'ladder', aimX: 2.9, actionsEnabled: true,
         preview: { selected: null, nearby: [], guidance } } }
     const statuses = (projection: WizardViewProjection) =>
-      [...renderHud(projection).matchAll(/<p class="wr-caption" role="status">([^<]*)<\/p>/g)]
+      [...renderHud(projection).matchAll(/<p class="wr-work-selection" role="status" aria-label="Selected Works status">([^<]*)<\/p>/g)]
         .map(([, message]) => message)
     expect(statuses(view)).toContain(guidance)
-    expect(statuses(view)).not.toContain('Choose Bridge or Ladder in Works, or close Works for spade Dig/Fill.')
+    expect(statuses(view).some((message) => message.includes('Choose Bridge or Ladder in Works'))).toBe(false)
     expect(renderHud(view)).not.toContain('aria-label="Confirm selected saved work"')
     expect(statuses({ ...view, savedTerrainWorks: { ...view.savedTerrainWorks!,
       preview: { selected: null, nearby: [], guidance: null } } }))
-      .toContain('Choose Bridge or Ladder in Works, or close Works for spade Dig/Fill.')
+      .toEqual([expect.stringContaining('No site selected. Aim at a discovered site to check Ready.')])
   })
 
   it('prioritizes the V25 north ladder after the bridge using actual remaining logs', () => {
@@ -374,6 +383,45 @@ describe('starter cliff HUD capability gate', () => {
       ...saved, builtSites: [displayedBridge, ladder] } })).toBeNull()
   })
 
+  it('gives a checked Greenway waystone lesson before study and a frontier casting hint after learning', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const base = toViewProjection(state, [])
+    const inscription = base.inscriptions.find((entry) => entry.id === 'greenway_waystone')!
+    const view: WizardViewProjection = { ...base,
+      starterCliff: { face: starterCliffCanonicalFace(state.seed), ladder: null },
+      inscriptions: [inscription],
+      savedTerrainWorks: { context: 'works4-greenway', builtSites: [], dugTileIds: [],
+        modeActive: false, actionsEnabled: true, preview: null } }
+    const distant = renderHud(view)
+    expect(distant).toContain('aria-label="Wayfinder Glow lesson"')
+    expect(distant).toContain('Explore Greenway for W on Map / routes. Get close and Study the waystone.')
+    expect(distant).not.toContain('Unexplored ground nearby: Cast Wayfinder Glow')
+
+    const nearby = renderHud({ ...view, player: { ...view.player,
+      position: inscription.position } })
+    expect(nearby).toContain('Waystone in reach: Study Greenway waystone to learn Wayfinder Glow.')
+    expect(nearby).toContain('aria-label="Study Greenway waystone"')
+
+    const learned = { ...view, inscriptions: [{ ...inscription, studied: true }],
+      learnedSpellIds: ['wayfinder_glow' as const] }
+    const frontier = renderHud(learned)
+    expect(frontier).toContain('Unexplored ground nearby: Cast Wayfinder Glow to reveal it. Barriers still need a route.')
+    expect(frontier).not.toContain('Explore Greenway for W')
+    expect(frontier).not.toContain('Waystone in reach:')
+    const afterLocalReveal = renderHud({ ...learned, map: { ...learned.map,
+      tiles: [...learned.map.tiles.map((tile) => ({ ...tile, discovered: true })),
+        { ...learned.map.tiles[0]!, id: 'tile-100-100', gridX: 100, gridZ: 100,
+          discovered: false }] } })
+    expect(afterLocalReveal).not.toContain('aria-label="Wayfinder Glow lesson"')
+    expect(afterLocalReveal).toContain('aria-label="Cast Wayfinder Glow"')
+    expect(renderHud({ ...learned, controllerActionsEnabled: false }))
+      .not.toContain('aria-label="Wayfinder Glow lesson"')
+    expect(renderHud({ ...view, unavailableActions: true }))
+      .not.toContain('aria-label="Wayfinder Glow lesson"')
+    expect(renderHud({ ...view, inscriptions: [] }))
+      .not.toContain('aria-label="Wayfinder Glow lesson"')
+  })
+
   it('offers v16 waystone study and learned Glow on desktop and touch only while enabled', () => {
     const state = createWizardWorld('greenway-alpha')
     const base = toViewProjection(state, [])
@@ -386,7 +434,7 @@ describe('starter cliff HUD capability gate', () => {
         builtSites: [], dugTileIds: [], modeActive: false,
         selectedKind: 'bridge' as const, actionsEnabled: true, preview: null } }
     const emitted: unknown[] = []
-    const buttons = (projection: WizardViewProjection) => findElements(WizardHud({ projection,
+    const buttons = (projection: WizardViewProjection) => findElements(renderHudTree({ projection,
       onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
     const study = buttons(view).filter((button) =>
       button.props['aria-label'] === 'Study Greenway waystone')
@@ -430,7 +478,7 @@ describe('starter cliff HUD capability gate', () => {
       modeActive: true, selectedKind: 'bridge' as const }
     const emitted: unknown[] = []
     const v16 = { ...base, savedTerrainWorks: { ...saved, context: 'works3-greenway' as const } }
-    const buttons = findElements(WizardHud({ projection: v16,
+    const buttons = findElements(renderHudTree({ projection: v16,
       onIntent: (intent) => emitted.push(intent) }),
     (element) => element.type === 'button')
     const ladder = buttons.find((button) => button.props['aria-label'] === 'Choose ladder')
@@ -537,7 +585,7 @@ describe('starter cliff HUD capability gate', () => {
         aimX: 1.1, actionsEnabled: true, suggestedSites: [suggestedBridge, farLadder, nearLadder],
         preview: { selected: choice, nearby: [choice], guidance: null } } }
     const emitted: unknown[] = []
-    const buttons = findElements(WizardHud({ projection: view,
+    const buttons = findElements(renderHudTree({ projection: view,
       onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
     const nearest = buttons.find((button) => button.props['aria-label'] === 'Nearest discovered site')
     expect(nearest?.props.disabled).toBe(false)
@@ -547,7 +595,7 @@ describe('starter cliff HUD capability gate', () => {
     expect(renderHud(view)).toContain('Place along north cliff · x 1.1 m')
     const otherKind = { ...view, savedTerrainWorks: { ...view.savedTerrainWorks,
       suggestedSites: [suggestedBridge] } }
-    const otherKindButton = findElements(WizardHud({ projection: otherKind, onIntent: () => {} }),
+    const otherKindButton = findElements(renderHudTree({ projection: otherKind, onIntent: () => {} }),
       (element) => element.type === 'button'
         && element.props['aria-label'] === 'Nearest discovered site')[0]
     expect(otherKindButton.props.disabled).toBe(true)
@@ -569,7 +617,7 @@ describe('starter cliff HUD capability gate', () => {
         dugTileIds: [], modeActive: true, selectedKind: 'bridge' as const,
         aimX: null, actionsEnabled: true, preview: null } }
     const emitted: unknown[] = []
-    const buttons = findElements(WizardHud({ projection: view,
+    const buttons = findElements(renderHudTree({ projection: view,
       onIntent: (intent) => emitted.push(intent) }),
     (element) => element.type === 'button')
     const nearest = buttons.find((button) => button.props['aria-label'] === 'Nearest discovered site')
@@ -580,7 +628,7 @@ describe('starter cliff HUD capability gate', () => {
     for (const phrase of ['south', 'dry ground', 'both banks', 'marked crossing',
       'Nearest', 'north cliff ladder', 'west']) expect(cue?.toLowerCase()).toContain(phrase.toLowerCase())
     expect(cue).not.toMatch(/slider|aim manually/i)
-    const slider = findElements(WizardHud({ projection: view,
+    const slider = findElements(renderHudTree({ projection: view,
       onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'input'
       && element.props['aria-label'] === 'Structure position along obstacle')[0]
     ;(slider.props.onChange as (event: { currentTarget: { value: string } }) => void)({ currentTarget: { value: '2.4' } })
@@ -601,7 +649,7 @@ describe('starter cliff HUD capability gate', () => {
       rejection: null, reason: 'Ready', benefit: 'Cross South creek.' }
     const discovered = { ...view, savedTerrainWorks: { ...view.savedTerrainWorks,
       suggestedSites: [shownBridge], preview: { selected: choice, nearby: [choice], guidance: null } } }
-    const discoveredButtons = findElements(WizardHud({ projection: discovered, onIntent: () => {} }),
+    const discoveredButtons = findElements(renderHudTree({ projection: discovered, onIntent: () => {} }),
       (element) => element.type === 'button')
     expect(discoveredButtons.find((button) => button.props['aria-label'] === 'Nearest discovered site')
       ?.props.disabled).toBe(false)
@@ -628,7 +676,7 @@ describe('starter cliff HUD capability gate', () => {
       starterCliff: { face: starterCliffCanonicalFace(state.seed), ladder: null },
       savedTerrainWorks: saved }
     const emitted: unknown[] = []
-    const offTree = WizardHud({ projection: view, onIntent: (intent) => emitted.push(intent) })
+    const offTree = renderHudTree({ projection: view, onIntent: (intent) => emitted.push(intent) })
     const panel = findElements(offTree, (element) => element.type === 'aside'
       && element.props['aria-label'] === 'Saved terrain works')[0]
     expect(panel.props.style).toMatchObject({ width: 'auto', maxHeight: 'none', padding: 5 })
@@ -651,7 +699,7 @@ describe('starter cliff HUD capability gate', () => {
       rejection: null, reason: 'Ready', benefit: 'Climb the north cliff.' }
     const onView = { ...view, savedTerrainWorks: { ...saved, builtSites: [],
       modeActive: true, preview: { selected: choice, nearby: [choice], guidance: null } } }
-    const onTree = WizardHud({ projection: onView, onIntent: (intent) => emitted.push(intent) })
+    const onTree = renderHudTree({ projection: onView, onIntent: (intent) => emitted.push(intent) })
     const on = renderHud(onView)
     expect(on).toContain('aria-label="Close Works mode"')
     expect(on).toContain('aria-label="Choose ladder" aria-pressed="true"')
@@ -842,7 +890,7 @@ describe('starter cliff HUD capability gate', () => {
           { itemId: 'logs', name: 'Greenway logs', quantity: 4, unitPrice: 2 }],
       } : store) }
     const emitted: unknown[] = []
-    const buttons = findElements(WizardHud({ projection: view, onIntent: (intent) => emitted.push(intent) }),
+    const buttons = findElements(renderHudTree({ projection: view, onIntent: (intent) => emitted.push(intent) }),
       (element) => element.type === 'button')
     const spade = buttons.find((button) => findElements(button,
       (element) => element.type === 'b' && element.props.children === 'Field spade').length > 0)
@@ -867,7 +915,7 @@ describe('starter cliff HUD capability gate', () => {
     const unowned = renderHud({ ...view, backpack: { ...view.backpack,
       stacks: view.backpack.stacks.filter((stack) => stack.itemId !== 'stone') } })
     expect(unowned).not.toContain('Sell 1 Stone')
-    const paused = findElements(WizardHud({ projection: { ...view,
+    const paused = findElements(renderHudTree({ projection: { ...view,
       controllerActionsEnabled: false }, onIntent: () => {} }),
     (element) => element.type === 'button')
     expect(paused.find((button) => button.props['aria-label'] === 'Sell 1 Stone')?.props.disabled).toBe(true)
@@ -883,14 +931,14 @@ describe('starter cliff HUD capability gate', () => {
     const marker = { face: starterCliffCanonicalFace(state.seed), ladder: null }
     const emitted: unknown[] = []
     const spadeView = { ...toViewProjection(state, []), starterCliff: marker }
-    const spade = findElements(WizardHud({ projection: spadeView,
+    const spade = findElements(renderHudTree({ projection: spadeView,
       onIntent: (intent) => emitted.push(intent) }),
     (element) => element.type === 'button' && element.props['aria-label'] === 'Equip Field spade')[0]
     expect(spade).toBeDefined()
     ;(spade.props.onClick as () => void)()
     state.player.equipment.mainHand = 'field_spade'
     const axeView = { ...toViewProjection(state, []), starterCliff: marker }
-    const axe = findElements(WizardHud({ projection: axeView,
+    const axe = findElements(renderHudTree({ projection: axeView,
       onIntent: (intent) => emitted.push(intent) }),
     (element) => element.type === 'button' && element.props['aria-label'] === 'Equip Woodcutter axe')[0]
     expect(axe).toBeDefined()
@@ -900,7 +948,7 @@ describe('starter cliff HUD capability gate', () => {
       { type: 'equipment.equip', stackId: 'inventory-woodcutters_axe', slot: 'mainHand' },
     ])
     expect(renderHud(axeView)).not.toContain('Unequip Field spade')
-    const paused = findElements(WizardHud({ projection: { ...spadeView,
+    const paused = findElements(renderHudTree({ projection: { ...spadeView,
       controllerActionsEnabled: false }, onIntent: () => {} }),
     (element) => element.type === 'button' && element.props['aria-label'] === 'Equip Field spade')[0]
     expect(paused.props.disabled).toBe(true)
@@ -923,13 +971,13 @@ describe('starter cliff HUD capability gate', () => {
     const on = { ...off, savedTerrainWorks: { ...off.savedTerrainWorks,
       modeActive: true, preview: { selected: choice, nearby: [choice], guidance: null } } }
     const emitted: unknown[] = []
-    const confirm = findElements(WizardHud({ projection: on, onIntent: (intent) => emitted.push(intent) }),
+    const confirm = findElements(renderHudTree({ projection: on, onIntent: (intent) => emitted.push(intent) }),
       (element) => element.type === 'button'
         && element.props['aria-label'] === 'Confirm aimed saved work')[0]
     expect(confirm.props.disabled).toBe(false)
     ;(confirm.props.onClick as () => void)()
     expect(emitted).toEqual([{ type: 'saved-work.confirm', id: site.id }])
-    const paused = findElements(WizardHud({ projection: { ...on,
+    const paused = findElements(renderHudTree({ projection: { ...on,
       controllerActionsEnabled: false, savedTerrainWorks: { ...on.savedTerrainWorks,
         actionsEnabled: false } }, onIntent: () => {} }),
     (element) => element.type === 'button' && element.props['aria-label'] === 'Open Works mode'

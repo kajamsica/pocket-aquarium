@@ -2,6 +2,7 @@ import { Component, useState, type ReactNode } from 'react'
 import type { EquipmentSlot, WizardViewIntent, WizardViewProjection } from './contracts'
 import type { TerrainWorkSite } from '../domain/terrainWorks'
 import { PUBLIC_V11_BOOTS_LISTING_ID } from '../domain/publicWorldGait'
+import { nearbyWorldTileIds, PUBLIC_SPELL_REVEAL_RADIUS_METERS } from '../domain/publicWorldDiscovery'
 import { publicV36MarkerRejectionMessage } from './publicV36MarkerQuest'
 import { publicV40WaystationRejectionHint } from './publicV40WaystationQuest'
 import { publicV41IronHallQuest, publicV41IronHallRejectionHint,
@@ -171,6 +172,20 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const inReach = (position: readonly [number, number, number]) => Math.hypot(position[0] - projection.player.position[0], position[1] - projection.player.position[1], position[2] - projection.player.position[2]) <= 3
   const nearbyInscriptions = !showGlow || legacyActionsUnavailable ? []
     : projection.inscriptions.filter((inscription) => !inscription.studied && inReach(inscription.position))
+  const greenwayWaystone = projection.inscriptions.find((inscription) => inscription.id === 'greenway_waystone')
+  const glowCandidateTileIds = v16Magic && learnedGlow && !glowUnavailable
+    ? new Set(nearbyWorldTileIds({ x: projection.player.position[0], z: projection.player.position[2] },
+      PUBLIC_SPELL_REVEAL_RADIUS_METERS)) : null
+  const glowHasUnexploredGround = !!glowCandidateTileIds && projection.map.tiles.some((tile) =>
+    !tile.discovered && glowCandidateTileIds.has(tile.id))
+  const firstMagicLesson = !v16Magic || savePaused ? null
+    : learnedGlow && glowHasUnexploredGround
+      ? 'Unexplored ground nearby: Cast Wayfinder Glow to reveal it. Barriers still need a route.'
+      : !learnedGlow && greenwayWaystone && !greenwayWaystone.studied
+        ? nearbyInscriptions.some((inscription) => inscription.id === greenwayWaystone.id)
+          ? 'Waystone in reach: Study Greenway waystone to learn Wayfinder Glow.'
+          : 'Explore Greenway for W on Map / routes. Get close and Study the waystone.'
+        : null
   const nearbyDigSites = starterCliff || legacyActionsUnavailable ? [] : projection.digSites.filter((site) => site.revealed && !site.excavated && inReach(site.position))
   const campPreview = starterCliff || legacyActionsUnavailable ? null : projection.fieldCamp?.preview
   const selectedBuildSite = !legacyActionsUnavailable && !campPreview && projection.buildSites.find((site) => site.id === projection.selectedBuildSiteId && site.discovered && site.status !== 'built'
@@ -633,8 +648,10 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
             onClick={() => onIntent({ type: 'saved-work.kind', kind })}>{kind}</button>)}
         </div>}
         {workMode && works4Greenway && <p className="wr-work-selection" role="status" aria-label="Selected Works status">
-          {aimedWork ? <>Selected {workName(aimedWork.site.kind)} · {workLocation(projection.player.position, aimedWork.site)} · {aimedWork.site.kind === 'dig' ? 'field spade + one free bag slot' : `${aimedWork.site.logCost} logs`} · {savePaused ? 'Saved Works paused; check the save status.' : workReason(aimedWork)}</>
-            : <>{savedWorks.selectedKind === 'bridge' ? 'Bridge · 8 logs' : savedWorks.selectedKind === 'ladder' ? 'Ladder · 4 logs' : savedWorks.selectedKind === 'dig' ? 'Dig · field spade + one free bag slot' : 'Choose a work type'} · No site selected. Aim at a discovered site to check Ready.</>}
+          {aimedWork ? <>Selected {workName(aimedWork.site.kind)} · {workLocation(projection.player.position, aimedWork.site)} · {aimedWork.site.kind === 'dig' ? 'field spade + one free bag slot' : `${aimedWork.site.logCost} logs`} · {savePaused ? 'Saved Works paused; check the save status.' : workReason(aimedWork)} · {aimedWork.benefit}</>
+            : v26Terrain && savedWorks.selectedKind === 'dig'
+              ? 'Choose Bridge or Ladder in Works, or close Works to use spade Dig/Fill in Terrain tools.'
+              : workPreview?.guidance ?? <>{savedWorks.selectedKind === 'bridge' ? 'Bridge · 8 logs' : savedWorks.selectedKind === 'ladder' ? 'Ladder · 4 logs' : 'Choose a work type'} · No site selected. Aim at a discovered site to check Ready.</>}
         </p>}
         {workMode && <p className="wr-caption">{v28River
           ? '1 Bridge · F confirm · Esc cancel. On touch: tap a marked river crossing, then Confirm when Ready.'
@@ -901,6 +918,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} disabled={savePaused} aria-label={`Open ${availableStore.name}`} onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>Open {availableStore.name}</button>}
         <section aria-label="Magic and skills" style={{ display: 'grid', gap: 5, marginBottom: 8 }}>
           {showGlow && <small className="wr-caption">Wayfinder Glow: {learnedGlow ? 'Learned' : 'Unknown'} · Excavation Lv{excavationLevel}</small>}
+          {firstMagicLesson && <small className="wr-caption" role="note" aria-label="Wayfinder Glow lesson">{firstMagicLesson}</small>}
           {!starterCliff && projection.highlandExtraction && <>
             <button type="button" style={FIELD_ACTION_STYLE} disabled={savePaused || legacyActionsUnavailable || !projection.highlandExtraction.actionable}
               aria-label="Extract quarry stone"
