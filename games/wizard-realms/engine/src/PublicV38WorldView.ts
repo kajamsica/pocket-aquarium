@@ -1,6 +1,6 @@
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
 import { HIGHLAND_SIGNAL_BEARING, highlandSignalVane } from './domain/highlandSignalContent'
-import { previewPublicV38SignalAction } from './domain/publicWorldV38SignalAction'
+import { previewPublicV38SignalPair } from './domain/publicWorldV38SignalAction'
 import type { PublicV38SignalProgress, PublicV38SignalRejection } from './domain/publicWorldV38SignalAction'
 import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
 import { publicV38SignalQuest } from './view/publicV38SignalQuest'
@@ -30,8 +30,7 @@ export function projectPublicV38Signal(progress: PublicV38SignalProgress,
   const projected: WizardViewProjection = { ...base,
     v38SignalVane: known ? { position: [vane.tile.center.x, vane.tile.center.y,
       vane.tile.center.z], inspected: progress.signalVantageInspected } : null }
-  const inspect = previewPublicV38SignalAction(progress, { kind: 'signal-vantage/v1' }).rejection
-  const claim = previewPublicV38SignalAction(progress, { kind: 'signal-claim/v1' }).rejection
+  const { inspect, claim } = previewPublicV38SignalPair(progress)
   const quest = publicV38SignalQuest(projected, {
     signalVantageInspected: progress.signalVantageInspected,
     signalClaimed: progress.signalClaimed,

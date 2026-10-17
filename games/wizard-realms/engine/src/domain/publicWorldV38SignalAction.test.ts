@@ -9,7 +9,8 @@ import { projectPublicV31Pose } from './publicWorldV31Support'
 import { createFreshPublicV36Root } from './publicWorldV36Snapshot'
 import { previewPublicV37FrameBatch, replayPublicV37FrameBatch } from './publicWorldV37Movement'
 import { confirmPublicV38SignalAction as confirm, decodePublicV38SignalWitness as decode,
-  previewPublicV38SignalAction as preview } from './publicWorldV38SignalAction'
+  previewPublicV38SignalAction as preview,
+  previewPublicV38SignalPair as previewPair } from './publicWorldV38SignalAction'
 import type { PublicV38SignalProgress } from './publicWorldV38SignalAction'
 import { worldTileAtGrid } from './worldChunks'
 
@@ -133,6 +134,21 @@ describe('V38 checked Highland Signal action', () => {
     expect(paid.state.player.equipment).toEqual(atCrown.state.player.equipment)
     expect(confirm(paid, claim).rejection).toBe('already_claimed')
     expect(ready.signalVantageInspected).toBe(false)
+  })
+
+  it('pairs fixed view previews without changing individual rejections or source progress', () => {
+    const ready = practiced()
+    const inspected = confirm(ready, inspect).progress!
+    const atCrown = relocate(inspected, 464, -432)
+    const claimed = confirm(atCrown, claim).progress!
+    const partial = { ...ready, signalClaimed: undefined } as unknown as PublicV38SignalProgress
+    for (const source of [at(512, -472), ready, inspected, atCrown, claimed,
+      { ...ready, signalClaimed: true }, partial]) {
+      const before = structuredClone(source)
+      expect(previewPair(source)).toEqual({ inspect: preview(source, inspect).rejection,
+        claim: preview(source, claim).rejection })
+      expect(source).toEqual(before)
+    }
   })
 
   it('refuses invalid flags and unsafe reward arithmetic', () => {

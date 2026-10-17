@@ -50,11 +50,16 @@ function checkedProgress(raw: PublicV38SignalProgress): PublicV38SignalProgress 
 /** Pure transition. The locked V38 writer must replay it against its checked head. */
 export function confirmPublicV38SignalAction(raw: PublicV38SignalProgress,
   rawWitness: unknown): PublicV38SignalResult {
-  const reject = (rejection: PublicV38SignalRejection): PublicV38SignalResult => ({ rejection })
   const witness = decodePublicV38SignalWitness(rawWitness)
-  if (!witness) return reject('invalid_value')
+  if (!witness) return { rejection: 'invalid_value' }
   const progress = checkedProgress(raw)
-  if (!progress) return reject('invalid_progress')
+  if (!progress) return { rejection: 'invalid_progress' }
+  return confirmCheckedSignalAction(progress, witness)
+}
+
+function confirmCheckedSignalAction(progress: PublicV38SignalProgress,
+  witness: PublicV38SignalWitness): PublicV38SignalResult {
+  const reject = (rejection: PublicV38SignalRejection): PublicV38SignalResult => ({ rejection })
   try {
     const { state } = progress, { player, windstep } = state
     if (state.movementOwner !== 'streamed') return reject('unavailable_here')
@@ -104,4 +109,17 @@ export function confirmPublicV38SignalAction(raw: PublicV38SignalProgress,
 export function previewPublicV38SignalAction(progress: PublicV38SignalProgress,
   witness: unknown): Readonly<{ rejection: PublicV38SignalRejection | null }> {
   return { rejection: confirmPublicV38SignalAction(progress, witness).rejection ?? null }
+}
+
+/** The V38 view checks its two fixed action previews against one decoded snapshot. */
+export function previewPublicV38SignalPair(raw: PublicV38SignalProgress): Readonly<{
+  inspect: PublicV38SignalRejection | null
+  claim: PublicV38SignalRejection | null
+}> {
+  const progress = checkedProgress(raw)
+  if (!progress) return { inspect: 'invalid_progress', claim: 'invalid_progress' }
+  return {
+    inspect: confirmCheckedSignalAction(progress, { kind: 'signal-vantage/v1' }).rejection ?? null,
+    claim: confirmCheckedSignalAction(progress, { kind: 'signal-claim/v1' }).rejection ?? null,
+  }
 }
