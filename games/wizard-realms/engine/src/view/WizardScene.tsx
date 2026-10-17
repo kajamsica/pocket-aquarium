@@ -660,8 +660,8 @@ function Wand({ side, light }: { side: 1 | -1; light: boolean }) {
   </>
 }
 
-function Axe() {
-  return <group position={[0.24, -0.5, 0.04]} rotation={[0.1, 0, 0.1]}>
+export function Axe() {
+  return <group position={[0.24, -0.5, 0.04]} rotation={[0.1, Math.PI / 2, 0.1]}>
     <mesh position={[0, 0.12, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.055, 1.35, 6]} /></mesh>
     <mesh geometry={AXE_BLADE_GEOMETRY} material={AXE_HEAD_MATERIAL} position={[0, 0.65, -0.045]} castShadow />
     <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.65, 0.02]} scale={[0.09, 0.24, 0.13]} />
@@ -681,7 +681,7 @@ function Spade() {
 /** One lightweight held pick, with a distinct enchanted head. V29 is the only caller. */
 export function MiningPick({ tier }: { tier: 'basic' | 'enchanted' }) {
   const enchanted = tier === 'enchanted'
-  return <group name={`${tier} mining pick`} position={[0.24, -0.46, 0.04]} rotation={[0.08, 0, 0.08]}>
+  return <group name={`${tier} mining pick`} position={[0.24, -0.46, 0.04]} rotation={[0.08, Math.PI / 2, 0.08]}>
     <mesh position={[0, 0.05, 0]} material={DARK_WOOD_MATERIAL} castShadow>
       <cylinderGeometry args={[0.045, 0.052, 1.22, 7]} />
     </mesh>

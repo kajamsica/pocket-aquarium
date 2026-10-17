@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -1130,6 +1130,16 @@ describe('Highland quarry scenery', () => {
 })
 
 describe('avatar gear projection', () => {
+  it('faces the axe edge and both pick heads forward in idle and walking arm poses', () => {
+    for (const tool of [Axe(), MiningPick({ tier: 'basic' }), MiningPick({ tier: 'enchanted' })]) {
+      const [x, y, z] = (tool as React.ReactElement<{ rotation: [number, number, number] }>).props.rotation
+      const headDirection = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(x, y, z))
+      for (const armSwing of [-0.3, 0, 0.3]) {
+        const posedDirection = headDirection.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), armSwing)
+        expect(posedDirection.z).toBeLessThan(-0.85)
+      }
+    }
+  })
   it('shows only the V29 active pick as held gear, with distinct basic and enchanted heads', () => {
     expect(avatarGearFor(equipment(), 'basic').mainHand).toBe('basic-pick')
     expect(avatarGearFor(equipment(), 'enchanted').mainHand).toBe('enchanted-pick')
