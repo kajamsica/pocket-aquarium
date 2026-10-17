@@ -80,7 +80,7 @@ describe('V34 separate-branch entry', () => {
     expect(copy).toContain('does not yet create a new adventure')
     expect(copy).toContain('Copy V33 adventure into V34')
     expect(copy).not.toContain('Start new adventure')
-    expect(mainSource).toContain('export const PUBLIC_V34_ENTRY_READY = false')
+    expect(mainSource).toContain('export const PUBLIC_V34_ENTRY_READY = true')
     expect(mainSource).toContain("publicWorld === 'v34'")
   })
 })
