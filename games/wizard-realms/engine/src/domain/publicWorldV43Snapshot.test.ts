@@ -1,5 +1,5 @@
 import { IDBFactory } from 'fake-indexeddb'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 // Initialize V41 ancestry before the cross-version V43 module graph.
 import './atomicV41Database'
 import { createAtomicV42Store } from './atomicV42Database'
@@ -130,6 +130,67 @@ function next43(root: PublicV43Root, witness: PublicV43Witness): PublicV43Root {
 }
 
 describe('V43 familiar checked save', () => {
+  it('reuses the checked succession proof for one save', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    const started = await startPublicV43(locks as never, store, oldStore, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const checkedReads = vi.spyOn(store, 'readChecked')
+    const saved = await commitPublicV43(locks as never, store, oldStore,
+      started.value.head.saveRevision, started.value.lineage,
+      { kind: 'familiar-tracks/v1' })
+    expect(saved).toMatchObject({ ok: true, value: { head: { saveRevision: 1 } } })
+    expect(checkedReads).toHaveBeenCalledTimes(1)
+    expect((await createAtomicV43Store(factory).readChecked())).toMatchObject({
+      status: 'valid', root: { head: { saveRevision: 1 } } })
+  })
+
+  it('rejects a competing root change after the reused proof', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    const started = await startPublicV43(locks as never, store, oldStore, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const readChecked = store.readChecked.bind(store)
+    let competitor: PublicV43Root | null = null
+    const racingStore = { ...store, async readChecked() {
+      const read = await readChecked()
+      if (read.status === 'valid' && !competitor) {
+        competitor = next43(read.root, { kind: 'familiar-tracks/v1' })
+        await putRaw(factory, PUBLIC_V43_DATABASE_NAME, competitor)
+      }
+      return read
+    } }
+    expect(await commitPublicV43(locks as never, racingStore, oldStore,
+      started.value.head.saveRevision, started.value.lineage,
+      { kind: 'familiar-tracks/v1' }))
+      .toEqual({ ok: false, reason: 'revision-changed' })
+    expect((await store.readChecked())).toMatchObject({ status: 'valid', root: competitor })
+  })
+
+  it('rejects a V44 reservation between the reused proof and commit', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    const started = await startPublicV43(locks as never, store, oldStore, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const commit = store.commit.bind(store)
+    const racingStore = { ...store, async commit(proof: object, next: PublicV43Root) {
+      const promotion = await store.readForPromotion()
+      if (promotion.status !== 'valid') throw new Error('Expected valid V43 promotion')
+      expect(await store.transitionSuccessor(promotion.proof, 'pending')).toBe('committed')
+      return commit(proof, next)
+    } }
+    expect(await commitPublicV43(locks as never, racingStore, oldStore,
+      started.value.head.saveRevision, started.value.lineage,
+      { kind: 'familiar-tracks/v1' }))
+      .toEqual({ ok: false, reason: 'revision-changed' })
+    expect(await store.readForPromotion()).toMatchObject({
+      status: 'valid', marker: { phase: 'pending' },
+      root: { head: { saveRevision: started.value.head.saveRevision } } })
+  })
+
   it('pins a fresh canonical root and copies only a checked V42 source', () => {
     const fresh = createFreshPublicV43Root(seed)
     expect(fresh).toMatchObject({ lineage: { origin: 'fresh',

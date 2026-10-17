@@ -34,7 +34,7 @@ export type PublicV43Inspection = { status: 'migration-available' }
   | { status: 'blocked'; reason: string }
 
 type Succession = { status: 'migration-available' }
-  | { status: 'valid'; root: PublicV43Root }
+  | { status: 'valid'; root: PublicV43Root; proof: object }
   | { status: 'blocked'; reason: string }
 
 function sameLineage(raw: unknown, checked: PublicV43Root['lineage']): boolean {
@@ -106,7 +106,7 @@ async function succession(store: Store, source: SourceStore, create: boolean,
     if (finalized !== 'committed' && finalized !== 'unchanged')
       return { status: 'blocked', reason: finalized }
   }
-  return { status: 'valid', root: target.root }
+  return { status: 'valid', root: target.root, proof: target.proof }
 }
 
 export function inspectPublicV43(locks: PublicV7LockProvider | undefined,
@@ -192,10 +192,7 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore, revisio
   const fenced = await succession(store, source, false)
   if (fenced.status !== 'valid') return { ok: false,
     reason: fenced.status === 'blocked' ? fenced.reason : 'target-missing' }
-  const read = await store.readChecked()
-  if (read.status !== 'valid') return { ok: false,
-    reason: read.status === 'blocked' ? read.reason : 'root-missing' }
-  const { head, lineage } = read.root
+  const { head, lineage } = fenced.root
   if (!sameLineage(rawLineage, lineage)) return { ok: false, reason: 'lineage-changed' }
   if (head.saveRevision !== revision) return { ok: false, reason: 'revision-changed' }
   if (!Number.isSafeInteger(revision + 1)) return { ok: false, reason: 'invalid-revision' }
@@ -253,7 +250,7 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore, revisio
   }
   const next: PublicV43Head = { ...replayed, schemaVersion: head.schemaVersion,
     saveRevision: revision + 1, witness: structuredClone(decoded) }
-  const result = await store.commit(read.proof, { lineage, previous: head, head: next })
+  const result = await store.commit(fenced.proof, { lineage, previous: head, head: next })
   return result === 'committed' ? { ok: true, value: { head: next, lineage } }
     : { ok: false, reason: result }
 }
