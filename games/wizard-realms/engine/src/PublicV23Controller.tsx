@@ -1917,7 +1917,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     else tell('This Mireglass action is not currently available.')
   }
   const queuePulse = (vector: readonly [number, number], jump: boolean,
-    heldInput = false) => {
+    heldInput = false, atMs?: number) => {
     if (readActive().player.verticalVelocity !== 0) {
       tell('Land before starting another short movement or jump.'); return
     }
@@ -1928,7 +1928,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       tell('The 16-step input queue is full; retry this tap after the save.'); return
     }
     const token: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse', vector, jump,
-      queuedAtMs: performance.now(), heldInput }
+      queuedAtMs: atMs !== undefined && Number.isFinite(atMs) ? atMs : performance.now(), heldInput }
     inputQueue.current.push(token)
     if (!jump) edgePulse.current = token
     // An open-world tick will repaint after consuming the pulse. Repainting on
@@ -2191,8 +2191,27 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     if (intent.type === 'movement') {
       if (intent.vector.some(Boolean) || intent.atMs === undefined) devRoute.current = null
       const prior = held.current
-      if (intent.atMs !== undefined) sampleTimedUntil(intent.atMs)
+      const directionChanged = intent.vector[0] !== prior[0] || intent.vector[1] !== prior[1]
+      if (intent.atMs !== undefined && !directionChanged) sampleTimedUntil(intent.atMs)
       held.current = intent.vector
+      if (intent.atMs !== undefined && directionChanged) {
+        if (!intent.vector.some(Boolean) && edgePulse.current?.heldInput
+          && intent.atMs >= edgePulse.current.queuedAtMs
+          && intent.atMs - edgePulse.current.queuedAtMs < STEP_MS)
+          edgePulse.current.heldInput = false
+        const queued = inputQueue.current.length
+        inputQueue.current = inputQueue.current.filter((token) => token.kind !== 'pulse'
+          || !token.heldInput || (intent.vector.some(Boolean)
+            && token.vector[0] === intent.vector[0] && token.vector[1] === intent.vector[1]))
+        if (edgePulse.current && !inputQueue.current.includes(edgePulse.current))
+          edgePulse.current = null
+        const cancelled = queued - inputQueue.current.length
+        if (cancelled) {
+          trace?.record('controller.cancel', { reason: 'held-direction-change', cancelled,
+            vector: intent.vector })
+          repaintQueued()
+        }
+      }
       if (blockedHeldVector.current && !matchesBlockedHeld(intent.vector))
         blockedHeldVector.current = null
       if (!prior.some(Boolean) && intent.vector.some(Boolean)
@@ -2213,12 +2232,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       if (intent.atMs !== undefined && Number.isFinite(intent.atMs)
         && readActive().player.verticalVelocity === 0) {
         if (intent.vector.some(Boolean)) {
-          if (timedHeld.current) timedHeld.current.vector = intent.vector
+          if (timedHeld.current && !directionChanged) timedHeld.current.vector = intent.vector
           else timedHeld.current = { nextAtMs: intent.atMs + STEP_MS, vector: intent.vector }
         } else timedHeld.current = null
       }
       if (readActive().player.verticalVelocity === 0 && intent.vector[1]
-        && intent.vector[1] !== prior[1]) queuePulse([0, intent.vector[1]], false, true)
+        && intent.vector[1] !== prior[1]) queuePulse([0, intent.vector[1]], false, true, intent.atMs)
       return
     }
     if (intent.type === 'movement.tap') {
