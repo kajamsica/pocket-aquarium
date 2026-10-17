@@ -12,6 +12,7 @@ import { GreenwayCreekWaterLayer, MireglassWaterLayer } from './MireglassWaterLa
 import { MireglassCliffLayer } from './MireglassCliffLayer'
 import { HighlandRidgeLayer } from './HighlandRidgeLayer'
 import { RendererInfoProbe, rendererInfoProbeEnabled } from './RendererInfoProbe'
+import type { PublicV17InputTrace } from '../PublicV17InputScheduler'
 import { createTerrainSurfaceSampler, DISCOVERY_FOG_COLOR, terrainSignature, TerrainSurfaceLayer } from './TerrainSurfaceLayer'
 import { V26ValleyRimLayer } from './V26ValleyRimLayer'
 import { pickV26TerrainColumn, type V26PickedTerrainColumn, type V26TerrainPickKind } from './V26TerrainPicker'
@@ -2126,7 +2127,7 @@ export function pickVisibleRegionalLadderAimZ(scene: THREE.Scene, camera: THREE.
 }
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
-  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady }: {
+  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, inputTrace }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
   orbiting: boolean
@@ -2134,6 +2135,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady?: (picker: SceneWorkAimPicker) => void
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
+  inputTrace?: PublicV17InputTrace | null
 }) {
   const search = typeof window === 'undefined' ? '' : window.location.search
   const graphics = sceneGraphicsOptionsForSearch(search)
@@ -2297,7 +2299,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         }
       }}
     >
-      {rendererProbe && <RendererInfoProbe />}
+      {rendererProbe && <RendererInfoProbe onSample={inputTrace
+        ? (sample) => inputTrace.record('renderer.info', sample) : undefined} />}
       <color attach="background" args={[SKY_COLOR]} />
       <fog attach="fog" args={[FOG_COLOR, projection.visualWorld ? PUBLIC_FOG_START_M : 16, fogEndFor(Boolean(projection.visualWorld))]} />
       {/* Light hierarchy: warm sun key with shadows, sky/ground hemisphere fill, cool rim from the shaded side. */}

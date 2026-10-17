@@ -58,12 +58,29 @@ export function createRendererInfoSampler(periodMs = SAMPLE_PERIOD_MS) {
   }
 }
 
-export function RendererInfoProbe() {
+export type RendererInfoReport = NonNullable<ReturnType<ReturnType<typeof createRendererInfoSampler>>>
+
+/** Keep downloadable traces numeric and bounded; the trace already records event time. */
+export function rendererInfoTraceSample(report: RendererInfoReport) {
+  const { sampleIntervalMs, frameIntervalMs, frameIntervalP50Ms, frameIntervalP95Ms,
+    frameIntervalMaxMs, observedFrames, droppedFrames, rendererInfoFrame, calls,
+    triangles, geometries, textures, programs } = report
+  return { sampleIntervalMs, frameIntervalMs, frameIntervalP50Ms, frameIntervalP95Ms,
+    frameIntervalMaxMs, observedFrames, droppedFrames, rendererInfoFrame, calls,
+    triangles, geometries, textures, programs }
+}
+
+export function RendererInfoProbe({ onSample }: {
+  onSample?: (sample: ReturnType<typeof rendererInfoTraceSample>) => void
+}) {
   const sample = useMemo(() => createRendererInfoSampler(), [])
   // R3F useFrame runs before Canvas renders; renderer.info still describes the previous render.
   useFrame(({ gl }, delta) => {
     const report = sample(performance.now(), delta * 1_000, gl.info)
-    if (report) console.info('[wizard.renderer.info]', report)
+    if (report) {
+      onSample?.(rendererInfoTraceSample(report))
+      console.info('[wizard.renderer.info]', report)
+    }
   })
   return null
 }

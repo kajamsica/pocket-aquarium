@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WebGLInfo } from 'three'
-import { createRendererInfoSampler, rendererInfoProbeEnabled } from './RendererInfoProbe'
+import { createRendererInfoSampler, rendererInfoProbeEnabled, rendererInfoTraceSample } from './RendererInfoProbe'
 
 describe('opt-in renderer info probe', () => {
   it('requires both explicit query flags and a development build', () => {
@@ -52,5 +52,22 @@ describe('opt-in renderer info probe', () => {
       observedFrames: 520, droppedFrames: 8,
       frameIntervalP50Ms: 8, frameIntervalP95Ms: 8, frameIntervalMaxMs: 100,
     })
+  })
+
+  it('provides only numeric renderer fields for an opt-in downloadable trace', () => {
+    const sample = createRendererInfoSampler(1)
+    const info = { render: { frame: 1, calls: 3, triangles: 9 },
+      memory: { geometries: 2, textures: 4 }, programs: null,
+    } as unknown as Pick<WebGLInfo, 'render' | 'memory' | 'programs'>
+    sample(1, 16, info)
+    const report = sample(2, 17, info)
+    expect(report).not.toBeNull()
+    const traceSample = rendererInfoTraceSample(report!)
+    expect(traceSample).toMatchObject({ calls: 3, triangles: 9,
+      frameIntervalP50Ms: 17, programs: null })
+    expect(Object.values(traceSample).every((value) => value === null
+      || typeof value === 'number')).toBe(true)
+    expect(traceSample).not.toHaveProperty('timestamp')
+    expect(traceSample).not.toHaveProperty('limitations')
   })
 })

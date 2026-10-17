@@ -648,7 +648,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           pointerPress.current = null; lastDragPoint.current = null; setDragging(false)
         }}>
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
-          terrainMode={terrainMode}
+          terrainMode={terrainMode} inputTrace={inputTrace}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
           onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
           onGroundPickerReady={(picker) => { groundPicker.current = picker }} />
