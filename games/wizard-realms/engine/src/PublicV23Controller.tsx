@@ -1641,9 +1641,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const v26ToV36ProjectionFinishedAt = trace && physicalWorld
     ? performance.now() : mireglassProjectionFinishedAt
   const windwardView = v37 ? projectPublicV37Windward(snapshot as PublicV36MarkerProgress, markerView) : markerView
+  const v37FinishedAt = trace && v37 ? performance.now() : v26ToV36ProjectionFinishedAt
   const signalView = v38 ? projectPublicV38Signal(snapshot as PublicV38SignalProgress, windwardView) : windwardView
+  const v38FinishedAt = trace && v38 ? performance.now() : v37FinishedAt
   const ringView = v39 ? projectPublicV39Ringkeeper(snapshot as PublicV39RingProgress, signalView) : signalView
+  const v39FinishedAt = trace && v39 ? performance.now() : v38FinishedAt
   const waystationView = v40 ? projectPublicV40Waystation(snapshot as PublicV40WaystationProgress, ringView) : ringView
+  const v40FinishedAt = trace && v40 ? performance.now() : v39FinishedAt
   const view = v42 ? projectPublicV42IronHall(snapshot as PublicV42RewardProgress, waystationView)
     : v41 ? projectPublicV41IronHall(snapshot as PublicV41CombatProgress, waystationView) : waystationView
   const projectionFinishedAt = trace ? performance.now() : 0
@@ -1653,6 +1657,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     mireglassProjectionMs: mireglassProjectionFinishedAt - baseProjectionFinishedAt,
     v26ToV36ProjectionMs: v26ToV36ProjectionFinishedAt - mireglassProjectionFinishedAt,
     v37ToV42ProjectionMs: v37 ? projectionFinishedAt - v26ToV36ProjectionFinishedAt : 0,
+    v37ProjectionMs: v37FinishedAt - v26ToV36ProjectionFinishedAt,
+    v38ProjectionMs: v38FinishedAt - v37FinishedAt,
+    v39ProjectionMs: v39FinishedAt - v38FinishedAt,
+    v40ProjectionMs: v40FinishedAt - v39FinishedAt,
+    v41V42ProjectionMs: v37 ? projectionFinishedAt - v40FinishedAt : 0,
     gate: status.gate })
 
   function sampleTimedUntil(atMs: number) {

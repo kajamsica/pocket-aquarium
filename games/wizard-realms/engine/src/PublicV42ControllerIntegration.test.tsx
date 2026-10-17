@@ -196,6 +196,14 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
         expect(Number.isFinite(render[key])).toBe(true)
         expect(render[key]).toBeGreaterThanOrEqual(0)
       }
+      const chapterParts = ['v37ProjectionMs', 'v38ProjectionMs', 'v39ProjectionMs',
+        'v40ProjectionMs', 'v41V42ProjectionMs']
+      for (const key of chapterParts) {
+        expect(Number.isFinite(render[key])).toBe(true)
+        expect(render[key]).toBeGreaterThanOrEqual(0)
+      }
+      expect(chapterParts.reduce((sum, key) => sum + (render[key] as number), 0))
+        .toBeCloseTo(render.v37ToV42ProjectionMs as number, 5)
       expect(render.projectionMs).toBeGreaterThanOrEqual(
         (render.v26ToV36ProjectionMs as number) + (render.v37ToV42ProjectionMs as number))
     } finally { vi.unstubAllGlobals() }
