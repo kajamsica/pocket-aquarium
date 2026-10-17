@@ -13,6 +13,7 @@ import type { PublicV23ControllerOutcome } from './PublicV23ControllerRuntime'
 import type { PublicV36Start } from './domain/publicWorldV36Flow'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { starterCliffFace } from './domain/starterCliffProfile'
+import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from './domain/worldChunks'
 import { decodePublicV36Witness, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
 import type { PublicV42Operation, PublicV42Start } from './domain/publicWorldV42Flow'
 import type { PublicV42SavePhase, PublicV42SaveTrace } from './domain/publicWorldV42Flow'
@@ -237,9 +238,20 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
       const wholeBatch = hasJump || !grounded(preview)
       const next = previewPublicV42RewardFrameBatch(wholeBatch ? progress(committed) : preview,
         { kind: 'frame-batch/v1', frames: wholeBatch ? candidate : frame.frames })
-      if (!next) return reject(intents, 'terrain_missing', starterLadderRejection(preview, intents)
-        ?? starterCreekRejection(preview, intents)
-        ?? 'This move cannot be replayed safely.')
+      if (!next) {
+        const move = intents.find((intent) => intent.type === 'move')
+        const from = preview.state.player.position
+        const target = move?.type === 'move'
+          ? [from.x + move.delta.x, from.z + move.delta.z] : []
+        const worldEdge = target.some((coordinate) => {
+          const cell = Math.ceil(coordinate / WORLD_CELL_METERS - 0.5)
+          return cell < WORLD_GRID_MIN || cell > WORLD_GRID_MAX
+        })
+        return reject(intents, 'terrain_missing', starterLadderRejection(preview, intents)
+          ?? starterCreekRejection(preview, intents)
+          ?? (worldEdge ? 'You reached the edge of this world. Turn back and explore another direction.'
+            : 'This move cannot be replayed safely.'))
+      }
       pending = candidate; preview = next
       return { events: [], rejections: [] }
     },
