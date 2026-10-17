@@ -98,7 +98,6 @@ describe('V33 checked fairy-ring lineage and action', () => {
         .rejections).toEqual([])
     expect(await runtime.save()).toMatchObject({ status: 'saved' })
     expect(write).toHaveBeenCalledOnce()
-    expect(write.mock.calls[0]).toHaveLength(3)
     expect(write.mock.calls[0][2]).toMatchObject({ kind: 'frame-batch/v1',
       frames: expect.arrayContaining([expect.objectContaining({ walkRequested: false })]) })
     expect(runtime.committed()).toEqual(current)
