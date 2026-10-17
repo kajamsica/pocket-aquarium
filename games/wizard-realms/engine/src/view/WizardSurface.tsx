@@ -210,6 +210,13 @@ export function keyboardDigIntent(projection: WizardViewProjection, mapOpen: boo
   return { type: 'v26.terrain', kind: 'dig', gx: picked.gx, gz: picked.gz }
 }
 
+/** Keyboard Mine uses the pointer Mine gates and the same frontmost scene ray. */
+export function keyboardMineIntent(projection: WizardViewProjection, mapOpen: boolean,
+  pointer: readonly [number, number] | null, picker: SceneTerrainPicker | null): WizardViewIntent | null {
+  return pointer && picker ? v29TerrainIntent(projection, mapOpen, 'mine',
+    () => picker(pointer[0], pointer[1], sceneTerrainPickKind(projection, 'mine'))) : null
+}
+
 /** Cycle only usable, owned main-hand tools; the controller remains the equipment authority. */
 export function nextToolIntent(projection: WizardViewProjection): WizardViewIntent | null {
   if (projection.controllerActionsEnabled !== true || projection.unavailableActions
@@ -240,11 +247,15 @@ export function nextToolIntent(projection: WizardViewProjection): WizardViewInte
 export function pointerV29TerrainTapIntent(projection: WizardViewProjection, mapOpen: boolean,
   mode: V29TerrainMode | null, press: PointerPress | null, pointerId: number,
   end: readonly [number, number], picker: () => ReturnType<SceneTerrainPicker>): WizardViewIntent | null {
+  return pointerAimTap(press, pointerId, end) ? v29TerrainIntent(projection, mapOpen, mode, picker) : null
+}
+
+function v29TerrainIntent(projection: WizardViewProjection, mapOpen: boolean,
+  mode: V29TerrainMode | null, picker: () => ReturnType<SceneTerrainPicker>): WizardViewIntent | null {
   if (mode !== 'mine' || !projection.v29Mining?.tools.activePick
     || !projection.v26ValleyRimSegments || mapOpen || projection.openStoreId
     || projection.controllerActionsEnabled !== true || projection.unavailableActions
-    || projection.savedTerrainWorks?.modeActive || pointerWorkAimKind(projection, mapOpen)
-    || !pointerAimTap(press, pointerId, end)) return null
+    || projection.savedTerrainWorks?.modeActive || pointerWorkAimKind(projection, mapOpen)) return null
   const picked = picker()
   if (!picked || ![picked.gx, picked.gz].every((value) => Number.isSafeInteger(value)
     && value >= WORLD_GRID_MIN && value <= WORLD_GRID_MAX)
@@ -338,6 +349,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const terrainPointer = useRef<readonly [number, number] | null>(null)
   const spadeEquipped = projection.equipment?.mainHand?.itemId === 'field_spade'
   const activePick = projection.v29Mining?.tools.activePick ?? null
+  const groundActionLabel = activePick ? 'Mine' : 'Dig'
   const inOpenPit = !!projection.v29Mining && projection.v26OpenPitColumns?.some((column) =>
     column.openDepth > 0
     && column.gx === Math.ceil(projection.player.position[0] / WORLD_CELL_METERS - 0.5)
@@ -453,7 +465,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           return
         }
         setActionKeys((keys) => ({ ...keys, [bindingAction]: event.code }))
-        setBindingHint(`${bindingAction === 'dig' ? 'Dig' : 'Switch tool'} bound to ${actionKeyLabel(event.code)}.`)
+        setBindingHint(`${bindingAction === 'dig' ? groundActionLabel : 'Switch tool'} bound to ${actionKeyLabel(event.code)}.`)
         setBindingAction(null)
         return
       }
@@ -481,9 +493,13 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         event.preventDefault()
         if (projection.openStoreId || projection.savedTerrainWorks?.modeActive
           || projection.controllerActionsEnabled !== true || projection.unavailableActions) return
-        if (!spadeEquipped) { setTerrainTapHint('Equip a field spade to dig.'); return }
-        setTerrainMode('dig')
-        const intent = keyboardDigIntent(projection, mapOpen, terrainPointer.current, terrainPicker.current)
+        if (!activePick && !spadeEquipped) {
+          setTerrainTapHint('Equip a field spade to dig or an owned pick to mine.'); return
+        }
+        setTerrainMode(activePick ? 'mine' : 'dig')
+        const intent = activePick
+          ? keyboardMineIntent(projection, mapOpen, terrainPointer.current, terrainPicker.current)
+          : keyboardDigIntent(projection, mapOpen, terrainPointer.current, terrainPicker.current)
         if (intent) { setTerrainTapHint(null); onIntent(intent) }
         else setTerrainTapHint(V29_NO_GROUND_TARGET_HINT)
         return
@@ -540,7 +556,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('blur', clearControls)
     }
-  }, [actionKeys, bindingAction, devNavigation, inputTrace, mapOpen, onIntent, projection, spadeEquipped])
+  }, [actionKeys, activePick, bindingAction, devNavigation, groundActionLabel, inputTrace, mapOpen, onIntent, projection, spadeEquipped])
 
   return (
     <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen} data-work-mode={projection.savedTerrainWorks?.modeActive === true}
@@ -695,12 +711,12 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
                 : 'Choose Dig or Fill, then tap clear ground. Drag to look around.')}</p>
         <details className="wr-keybinds" ref={keybindDetailsRef}
           onToggle={(event) => { if (!event.currentTarget.open) setBindingAction(null) }}>
-          <summary>Keys: {actionKeyLabel(actionKeys.dig)} Dig · {actionKeyLabel(actionKeys.switchTool)} Tool</summary>
+          <summary>Keys: {actionKeyLabel(actionKeys.dig)} {groundActionLabel} · {actionKeyLabel(actionKeys.switchTool)} Tool</summary>
           <div>
             {(['dig', 'switchTool'] as const).map((action) => <button key={action} type="button"
-              aria-label={`Rebind ${action === 'dig' ? 'Dig' : 'Switch tool'}`}
-              onClick={() => { setBindingAction(action); setBindingHint(`Press a letter or number for ${action === 'dig' ? 'Dig' : 'Switch tool'}. Escape cancels.`) }}>
-              {action === 'dig' ? 'Dig' : 'Switch tool'}: {actionKeyLabel(actionKeys[action])}
+              aria-label={`Rebind ${action === 'dig' ? groundActionLabel : 'Switch tool'}`}
+              onClick={() => { setBindingAction(action); setBindingHint(`Press a letter or number for ${action === 'dig' ? groundActionLabel : 'Switch tool'}. Escape cancels.`) }}>
+              {action === 'dig' ? groundActionLabel : 'Switch tool'}: {actionKeyLabel(actionKeys[action])}
             </button>)}
           </div>
           {bindingHint && <p role="status">{bindingHint}</p>}

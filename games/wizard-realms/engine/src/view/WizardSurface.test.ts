@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, devDoubleTap, devNavigationEnabled, devSceneTapDecision, focusGameplayAfterClick, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMovementIntents, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerDevNavigateIntent, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
+import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, devDoubleTap, devNavigationEnabled, devSceneTapDecision, focusGameplayAfterClick, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMineIntent, keyboardMovementIntents, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerDevNavigateIntent, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
 import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
 import type { WizardTerrainCell, WizardViewProjection } from './contracts'
@@ -193,6 +193,30 @@ describe('V29-only mining controls', () => {
     expect(surface).toContain('an outline shows the target when available')
     expect(surface).toContain('The checked action reports its layer, reach, skill, tool, and capacity result.')
     expect(surface).toContain('Not every cell holds ore.')
+  })
+
+  it('uses the same visible, in-reach Mine target for the equipped-pick key', () => {
+    const current: WizardViewProjection = { ...sellProjection, v29Mining,
+      v26ValleyRimSegments: [], openStoreId: null, controllerActionsEnabled: true }
+    const picker = vi.fn(() => ({ gx: 1, gz: 0 }))
+    expect(keyboardMineIntent(current, false, [200, 100], picker))
+      .toEqual({ type: 'v29.deep-dig', gx: 1, gz: 0 })
+    expect(picker).toHaveBeenCalledWith(200, 100, 'v29-open-pit')
+    expect(keyboardMineIntent(current, false, null, picker)).toBeNull()
+    expect(keyboardMineIntent(current, false, [200, 100], () => null)).toBeNull()
+    expect(keyboardMineIntent(current, false, [200, 100], () => ({ gx: 3, gz: 4 }))).toBeNull()
+    expect(keyboardMineIntent(current, true, [200, 100], picker)).toBeNull()
+    expect(keyboardMineIntent({ ...current, openStoreId: 'store-greenway' }, false,
+      [200, 100], picker)).toBeNull()
+    expect(keyboardMineIntent({ ...current, savedTerrainWorks: { actionsEnabled: true,
+      modeActive: true, builtSites: [], dugTileIds: [], preview: null } }, false,
+    [200, 100], picker)).toBeNull()
+    expect(keyboardMineIntent({ ...current, v29Mining: { ...v29Mining,
+      tools: { ...v29Mining.tools, activePick: null } } }, false, [200, 100], picker)).toBeNull()
+    const panel = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: current, onIntent: vi.fn() }))
+    expect(panel).toContain('Keys: G Mine · Q Tool')
+    expect(panel).toContain('aria-label="Rebind Mine"')
   })
 
   it('tells a V29 Dig or Mine player to wait for an outline and explains an occluded no-target tap', () => {
