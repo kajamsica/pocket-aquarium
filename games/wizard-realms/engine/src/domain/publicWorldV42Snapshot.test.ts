@@ -255,10 +255,15 @@ describe('V42 checked save and reward replay', () => {
     expect(decodePublicV42Root(repaired)).toEqual(repaired)
     const factory = new IDBFactory(), store = createAtomicV42Store(factory)
     await putRaw(factory, PUBLIC_V42_DATABASE_NAME, returned)
+    const savePhases: string[] = []
     const saved = await commitPublicV42(locks as never, store,
-      returned.head.saveRevision, returned.lineage, repair)
+      returned.head.saveRevision, returned.lineage, repair,
+      (sample) => savePhases.push(sample.phase))
     expect(saved).toMatchObject({ ok: true,
       value: { head: { ironHallReward: { vestDurability: 12 } } } })
+    expect(savePhases).toContain('atomic-readChecked-decode')
+    expect(savePhases).toContain('atomic-commit-cas')
+    expect(savePhases).toContain('atomic-commit-tx-completion')
     expect(await createAtomicV42Store(factory).readChecked())
       .toMatchObject({ status: 'valid', root: repaired })
   }, 30000)

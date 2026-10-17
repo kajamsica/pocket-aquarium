@@ -6,6 +6,20 @@ import { sameStrictBoundedRaw } from './strictBoundedRaw'
 export type AtomicV42Read = { status: 'missing'; proof: object }
   | { status: 'valid'; root: PublicV42Root; proof: object }
   | { status: 'blocked'; reason: string }
+/** Optional numeric diagnostics. The caller owns the localhost/opt-in gate. */
+export type AtomicV42StoreTrace = (sample: Readonly<{
+  operation: 'readChecked' | 'commit'; phase: 'validate' | 'candidate-clone'
+    | 'open' | 'transaction' | 'request-wait' | 'cas' | 'put'
+    | 'tx-completion' | 'decode' | 'clone'; durationMs: number
+}>) => void
+type AtomicV42StoreSample = Parameters<AtomicV42StoreTrace>[0]
+function reportStorePhase(trace: AtomicV42StoreTrace | undefined,
+  operation: AtomicV42StoreSample['operation'], phase: AtomicV42StoreSample['phase'],
+  startedAt: number) {
+  if (!trace) return
+  try { trace({ operation, phase, durationMs: performance.now() - startedAt }) }
+  catch { /* Diagnostics must not affect checked writes. */ }
+}
 type Prior = { raw: unknown; root: PublicV42Root } | null
 const SUCCESSOR_KEY = 'v43-successor'
 const SUCCESSOR_SCHEMA = 'v43-successor/v1' as const
@@ -191,46 +205,73 @@ export function createAtomicV42Store(factory: IDBFactory,
       } catch { return 'storage-error' }
       finally { db?.close() }
     },
-    async readChecked(): Promise<AtomicV42Read> {
+    async readChecked(trace?: AtomicV42StoreTrace): Promise<AtomicV42Read> {
       let db: IDBDatabase | undefined
       try {
+        const openStartedAt = trace ? performance.now() : 0
         db = await open()
+        reportStorePhase(trace, 'readChecked', 'open', openStartedAt)
         return await new Promise<AtomicV42Read>((resolve) => {
+          const transactionStartedAt = trace ? performance.now() : 0
           const tx = db!.transaction('records', 'readonly'), records = tx.objectStore('records')
+          reportStorePhase(trace, 'readChecked', 'transaction', transactionStartedAt)
+          const requestStartedAt = trace ? performance.now() : 0
           const value = records.get('root'), keys = records.getAllKeys()
-          tx.onabort = () => resolve({ status: 'blocked', reason: 'storage-error' })
+          let completionStartedAt = requestStartedAt
+          keys.onsuccess = () => {
+            reportStorePhase(trace, 'readChecked', 'request-wait', requestStartedAt)
+            completionStartedAt = trace ? performance.now() : 0
+          }
+          tx.onabort = () => {
+            reportStorePhase(trace, 'readChecked', 'tx-completion', completionStartedAt)
+            resolve({ status: 'blocked', reason: 'storage-error' })
+          }
           tx.oncomplete = () => {
+            reportStorePhase(trace, 'readChecked', 'tx-completion', completionStartedAt)
             try {
               if (keys.result.length === 0) {
                 const proof = {}; proofs.set(proof, null)
                 resolve({ status: 'missing', proof }); return
               }
               const exactKeys = keys.result.length === 1 && keys.result[0] === 'root'
+              const decodeStartedAt = trace ? performance.now() : 0
               const root = exactKeys ? decodePublicV42Root(value.result) : null
+              reportStorePhase(trace, 'readChecked', 'decode', decodeStartedAt)
               if (!root) {
                 resolve({ status: 'blocked', reason: 'invalid-v42-root' }); return
               }
               const proof = {}
               proofs.set(proof, { raw: value.result, root })
-              resolve({ status: 'valid', root: structuredClone(root), proof })
+              const cloneStartedAt = trace ? performance.now() : 0
+              const clone = structuredClone(root)
+              reportStorePhase(trace, 'readChecked', 'clone', cloneStartedAt)
+              resolve({ status: 'valid', root: clone, proof })
             } catch { resolve({ status: 'blocked', reason: 'invalid-v42-root' }) }
           }
         })
       } catch { return { status: 'blocked', reason: 'storage-error' } }
       finally { db?.close() }
     },
-    async commit(proof: object, next: PublicV42Root): Promise<
+    async commit(proof: object, next: PublicV42Root,
+      trace?: AtomicV42StoreTrace): Promise<
       'committed' | 'invalid' | 'revision-changed' | 'storage-error'> {
       if (!proofs.has(proof)) return 'invalid'
       const prior = proofs.get(proof)!; proofs.delete(proof)
+      const validateStartedAt = trace ? performance.now() : 0
       const decoded = prior === null ? decodePublicV42Root(next)
         : decodePublicV42CheckedSuccessor(prior.root, next)
+      reportStorePhase(trace, 'commit', 'validate', validateStartedAt)
       if (!decoded || prior === null && decoded.head.saveRevision !== 0) return 'invalid'
+      const cloneStartedAt = trace ? performance.now() : 0
       const candidate = structuredClone(decoded)
+      reportStorePhase(trace, 'commit', 'candidate-clone', cloneStartedAt)
       let db: IDBDatabase | undefined
       try {
+        const openStartedAt = trace ? performance.now() : 0
         db = await open()
+        reportStorePhase(trace, 'commit', 'open', openStartedAt)
         return await new Promise((resolve) => {
+          const transactionStartedAt = trace ? performance.now() : 0
           let tx: IDBTransaction
           try { tx = db!.transaction('records', 'readwrite', { durability: 'strict' }) }
           catch (error) {
@@ -238,21 +279,40 @@ export function createAtomicV42Store(factory: IDBFactory,
               && error.name === 'NotSupportedError')) throw error
             tx = db!.transaction('records', 'readwrite')
           }
+          reportStorePhase(trace, 'commit', 'transaction', transactionStartedAt)
+          const requestStartedAt = trace ? performance.now() : 0
           const records = tx.objectStore('records'), read = records.get('root')
           const keys = records.getAllKeys()
           let result: 'committed' | 'revision-changed' | 'storage-error' = 'storage-error'
-          tx.oncomplete = () => resolve(result)
-          tx.onabort = () => resolve('storage-error')
+          let completionStartedAt = requestStartedAt
+          tx.oncomplete = () => {
+            reportStorePhase(trace, 'commit', 'tx-completion', completionStartedAt)
+            resolve(result)
+          }
+          tx.onabort = () => {
+            reportStorePhase(trace, 'commit', 'tx-completion', completionStartedAt)
+            resolve('storage-error')
+          }
           keys.onsuccess = () => {
+            reportStorePhase(trace, 'commit', 'request-wait', requestStartedAt)
+            const casStartedAt = trace ? performance.now() : 0
             let unchanged = false
             try {
               unchanged = keys.result.length === (prior === null ? 0 : 1)
                 && (prior === null || keys.result[0] === 'root'
                   && sameStrictBoundedRaw(read.result, prior.raw, 3 << 20))
             } catch { /* Competing data cannot satisfy the CAS. */ }
-            if (!unchanged) { result = 'revision-changed'; return }
+            reportStorePhase(trace, 'commit', 'cas', casStartedAt)
+            if (!unchanged) {
+              result = 'revision-changed'
+              completionStartedAt = trace ? performance.now() : 0
+              return
+            }
+            const putStartedAt = trace ? performance.now() : 0
             try { records.put(candidate, 'root'); result = 'committed' }
             catch { tx.abort() }
+            reportStorePhase(trace, 'commit', 'put', putStartedAt)
+            completionStartedAt = trace ? performance.now() : 0
           }
         })
       } catch { return 'storage-error' }

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 // Initialize the established V41 ancestry before V42's cross-version module graph.
 import './atomicV41Database'
 import { createAtomicV42Store } from './atomicV42Database'
+import type { AtomicV42StoreTrace } from './atomicV42Database'
 import { createFreshPublicV42Root, decodePublicV42CheckedSuccessor,
   PUBLIC_V42_DATABASE_NAME, replayPublicV42Witness } from './publicWorldV42Snapshot'
 import type { PublicV42Root } from './publicWorldV42Snapshot'
@@ -41,6 +42,51 @@ async function record(factory: IDBFactory, key: string, next?: unknown): Promise
 }
 
 describe('atomic V42 successor fence', () => {
+  it('reports only numeric, opt-in store subphases without changing checked records', async () => {
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    await record(factory, 'root', createFreshPublicV42Root(seed))
+    const samples: Parameters<AtomicV42StoreTrace>[0][] = []
+    const read = await store.readChecked((sample) => samples.push(sample))
+    if (read.status !== 'valid') throw new Error('Expected checked root')
+    expect(samples.map(({ operation, phase }) => [operation, phase])).toEqual([
+      ['readChecked', 'open'], ['readChecked', 'transaction'],
+      ['readChecked', 'request-wait'], ['readChecked', 'tx-completion'],
+      ['readChecked', 'decode'], ['readChecked', 'clone'],
+    ])
+    const expected = successor(read.root)
+    expect(await store.commit(read.proof, expected, (sample) => samples.push(sample)))
+      .toBe('committed')
+    expect(samples.slice(6).map(({ operation, phase }) => [operation, phase])).toEqual([
+      ['commit', 'validate'], ['commit', 'candidate-clone'], ['commit', 'open'],
+      ['commit', 'transaction'], ['commit', 'request-wait'], ['commit', 'cas'],
+      ['commit', 'put'], ['commit', 'tx-completion'],
+    ])
+    for (const sample of samples) {
+      expect(Object.keys(sample).sort()).toEqual(['durationMs', 'operation', 'phase'])
+      expect(Number.isFinite(sample.durationMs)).toBe(true)
+      expect(sample.durationMs).toBeGreaterThanOrEqual(0)
+    }
+    expect(await record(factory, 'root')).toEqual(expected)
+    expect(await record(factory, 'v43-successor')).toBeUndefined()
+  }, 30000)
+
+  it('ignores a failing trace and still enforces one-use proof and stale CAS', async () => {
+    const factory = new IDBFactory(), store = createAtomicV42Store(factory)
+    await record(factory, 'root', createFreshPublicV42Root(seed))
+    const badTrace: AtomicV42StoreTrace = () => { throw new Error('trace failed') }
+    const stale = await store.readChecked(badTrace)
+    const current = await store.readChecked()
+    if (stale.status !== 'valid' || current.status !== 'valid')
+      throw new Error('Expected checked roots')
+    expect(await store.commit(current.proof, successor(current.root), badTrace))
+      .toBe('committed')
+    expect(await store.commit(stale.proof, successor(stale.root), badTrace))
+      .toBe('revision-changed')
+    expect(await store.commit(stale.proof, successor(stale.root), badTrace))
+      .toBe('invalid')
+    expect((await store.readChecked(badTrace)).status).toBe('valid')
+  }, 30000)
+
   it('co-creates a checked fresh root and pending fence before old V42 can write', async () => {
     const factory = new IDBFactory(), store = createAtomicV42Store(factory)
     const oldTab = createAtomicV42Store(factory)

@@ -1,5 +1,6 @@
 import type { createAtomicV41Store } from './atomicV41Database'
 import type { createAtomicV42Store } from './atomicV42Database'
+import type { AtomicV42StoreTrace } from './atomicV42Database'
 import { applyPublicV26ReturnHome } from './publicWorldV26Escape'
 import { confirmPublicV31SoilAction } from './publicWorldV31Soil'
 import { confirmPublicV32HighlandAction } from './publicWorldV32Highland'
@@ -32,8 +33,17 @@ export type PublicV42SavePhase = Readonly<{ phase: 'grounded-check' | 'witness-d
   | 'local-frame-replay' | 'local-frame-compare' | 'writer-await' | 'reply-check-clone'
   | 'lock-wait' | 'store-read' | 'writer-preflight' | 'writer-replay'
   | 'candidate-clone' | 'store-commit'
-  | 'ui-message' | 'ui-finalize-queue'; durationMs: number; pendingFrames?: number }>
+  | 'ui-message' | 'ui-finalize-queue'
+  | `atomic-${Parameters<AtomicV42StoreTrace>[0]['operation']}-${Parameters<AtomicV42StoreTrace>[0]['phase']}`;
+  durationMs: number; pendingFrames?: number }>
 export type PublicV42SaveTrace = (sample: PublicV42SavePhase) => void
+
+function atomicStoreTrace(trace?: PublicV42SaveTrace): AtomicV42StoreTrace | undefined {
+  return trace ? (sample) => trace({
+    phase: `atomic-${sample.operation}-${sample.phase}`,
+    durationMs: sample.durationMs,
+  }) : undefined
+}
 
 function reportPhase(trace: PublicV42SaveTrace | undefined,
   phase: PublicV42SavePhase['phase'], startedAt: number) {
@@ -137,7 +147,7 @@ async function commitWitnessUnderLock(store: Store, revision: number, rawLineage
   trace?: PublicV42SaveTrace):
   Promise<PublicV42Operation<PublicV42Start>> {
   const readStartedAt = trace ? performance.now() : 0
-  const read = await store.readChecked()
+  const read = await store.readChecked(atomicStoreTrace(trace))
   reportPhase(trace, 'store-read', readStartedAt)
   if (read.status !== 'valid') return { ok: false,
     reason: read.status === 'blocked' ? read.reason : 'root-missing' }
@@ -205,7 +215,8 @@ async function commitWitnessUnderLock(store: Store, revision: number, rawLineage
     saveRevision: revision + 1, witness: structuredClone(decoded) }
   reportPhase(trace, 'candidate-clone', cloneStartedAt)
   const commitStartedAt = trace ? performance.now() : 0
-  const result = await store.commit(read.proof, { lineage, previous: head, head: next })
+  const result = await store.commit(read.proof, { lineage, previous: head, head: next },
+    atomicStoreTrace(trace))
   reportPhase(trace, 'store-commit', commitStartedAt)
   return result === 'committed' ? { ok: true, value: { head: next, lineage } }
     : { ok: false, reason: result }
