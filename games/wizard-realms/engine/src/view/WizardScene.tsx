@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
@@ -54,6 +54,10 @@ export function sceneGraphicsOptionsForSearch(search: string) {
 export function landscapeDressingEnabledForSearch(search: string, development: boolean): boolean {
   const query = new URLSearchParams(search)
   return !development || query.get('dev') !== '1' || query.get('landscapeDressing') !== 'off'
+}
+export function sceneFrameLoopForSave(saveInProgress: boolean, search: string, development: boolean) {
+  return saveInProgress && development && new URLSearchParams(search).get('saveRenderPause') === 'on'
+    ? 'demand' : 'always'
 }
 const BEDROCK_COLOR = '#4a6a3e'
 const BEDROCK_MIN_FACE_M = (WORLD_GRID_MIN - 0.5) * WORLD_CELL_METERS
@@ -2170,8 +2174,42 @@ export function pickVisibleRegionalLadderAimZ(scene: THREE.Scene, camera: THREE.
     && hit.point.y <= Math.max(lower.y, upper.y) + 0.2 ? site.from.z : null
 }
 
+function SaveFrameLoopResume({ saveInProgress, frameloop, inputTrace }: {
+  saveInProgress: boolean; frameloop: 'always' | 'demand';
+  inputTrace?: PublicV17InputTrace | null }) {
+  const invalidate = useThree((state) => state.invalidate)
+  const wasSaving = useRef(saveInProgress)
+  const saveStartedAt = useRef<number | null>(null)
+  const framesDuringSave = useRef(0)
+  const resumeRequestedAt = useRef<number | null>(null)
+  useEffect(() => {
+    if (!wasSaving.current && saveInProgress) {
+      saveStartedAt.current = performance.now()
+      framesDuringSave.current = 0
+      inputTrace?.record('scene.save.loop-start', { frameloop })
+    }
+    if (wasSaving.current && !saveInProgress) {
+      resumeRequestedAt.current = performance.now()
+      inputTrace?.record('scene.save.resume-request', {
+        framesDuringSave: framesDuringSave.current,
+        saveLoopMs: resumeRequestedAt.current - (saveStartedAt.current ?? resumeRequestedAt.current) })
+      invalidate()
+    }
+    wasSaving.current = saveInProgress
+  }, [frameloop, invalidate, inputTrace, saveInProgress])
+  useFrame(() => {
+    if (saveInProgress) framesDuringSave.current++
+    if (resumeRequestedAt.current === null) return
+    inputTrace?.record('scene.save.first-frame', {
+      afterRequestMs: performance.now() - resumeRequestedAt.current })
+    resumeRequestedAt.current = null
+  })
+  return null
+}
+
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
-  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, inputTrace }: {
+  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, inputTrace,
+  saveInProgress = false }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
   orbiting: boolean
@@ -2180,9 +2218,11 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
   inputTrace?: PublicV17InputTrace | null
+  saveInProgress?: boolean
 }) {
   const search = typeof window === 'undefined' ? '' : window.location.search
   const graphics = sceneGraphicsOptionsForSearch(search)
+  const frameloop = sceneFrameLoopForSave(saveInProgress, search, import.meta.env.DEV)
   const rendererProbe = rendererInfoProbeEnabled(search, import.meta.env.DEV)
   const landscapeDressingEnabled = landscapeDressingEnabledForSearch(search, import.meta.env.DEV)
   // Region ownership controls actions and HUD state, never which established scenery exists.
@@ -2313,6 +2353,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   ])
   return (<>
     <Canvas
+      frameloop={frameloop}
       shadows={graphics.shadows}
       dpr={graphics.dpr}
       gl={{
@@ -2343,6 +2384,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         }
       }}
     >
+      <SaveFrameLoopResume saveInProgress={saveInProgress} frameloop={frameloop}
+        inputTrace={inputTrace} />
       {rendererProbe && <RendererInfoProbe onSample={inputTrace
         ? (sample) => inputTrace.record('renderer.info', sample) : undefined} />}
       <color attach="background" args={[SKY_COLOR]} />

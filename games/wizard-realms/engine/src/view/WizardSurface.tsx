@@ -12,6 +12,7 @@ export interface WizardSurfaceProps {
   onIntent: (intent: WizardViewIntent) => void
   diagnostics?: boolean
   inputTrace?: PublicV17InputTrace | null
+  saveInProgress?: boolean
   greenwayLogOrder?: ReactNode
 }
 
@@ -321,6 +322,7 @@ const STYLES = `
 `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace,
+  saveInProgress = false,
   greenwayLogOrder }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const devNavigation = typeof window !== 'undefined' && devNavigationEnabled(window.location.search)
@@ -651,7 +653,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           pointerPress.current = null; lastDragPoint.current = null; setDragging(false)
         }}>
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
-          terrainMode={terrainMode} inputTrace={inputTrace}
+          terrainMode={terrainMode} inputTrace={inputTrace} saveInProgress={saveInProgress}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
           onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
           onGroundPickerReady={(picker) => { groundPicker.current = picker }} />

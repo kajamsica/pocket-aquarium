@@ -43,6 +43,7 @@ const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   onIntent: null as ((intent: WizardViewIntent) => void) | null,
   trace: null as PublicV17InputTrace | null,
   projection: null as WizardViewProjection | null,
+  saveInProgress: null as boolean | null,
   gate: 'open' as 'open' | 'checkpointing' | 'blocked', pending: 0,
   idleNeeded: true, countFrames: false,
   saveCalls: 0, cleanups: [] as Array<() => void>,
@@ -84,6 +85,7 @@ vi.mock('./view/WizardSurface', async (importOriginal) => {
   return { ...actual, WizardSurface: (props: Parameters<typeof actual.WizardSurface>[0]) => {
     if (probe.enabled) { probe.onIntent = props.onIntent; probe.projection = props.projection
       probe.trace = props.inputTrace ?? null
+      probe.saveInProgress = props.saveInProgress ?? false
       return null }
     return actual.WizardSurface(props)
   } }
@@ -346,6 +348,7 @@ afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = p
   probe.poseOnJump = probe.poseOnMove = false
   probe.cursor = probe.stateCursor = 0; probe.refs = []; probe.states = []
   probe.tick = probe.onIntent = probe.releaseSave = null; probe.projection = probe.trace = null
+  probe.saveInProgress = null
   probe.holdAction = false; probe.releaseAction = null
   probe.actionRejection = null
   probe.raisedCell = false
@@ -620,6 +623,7 @@ describe('V23 controller input admission', () => {
   it('shows pending travel, active save, and a checked saved notice without claiming an early save', async () => {
     probe.pending = 1
     const pending = mount()
+    expect(probe.saveInProgress).toBe(false)
     expect(savePanel(pending)).toContain('Save now</button>')
     expect(savePanel(pending)).toContain('Travel since the last checkpoint is not saved.')
     expect(pending).not.toContain('V23 progress saved on this device.')
@@ -628,6 +632,7 @@ describe('V23 controller input admission', () => {
     visibilityChange()()
     expect(probe.saveCalls).toBe(1)
     const saving = rerender()
+    expect(probe.saveInProgress).toBe(true)
     expect(savePanel(saving)).toContain('Save now</button>')
     expect(savePanel(saving)).toContain('Saving progress')
     expect(savePanel(saving)).toContain('disabled=""')
@@ -636,6 +641,7 @@ describe('V23 controller input admission', () => {
 
     probe.releaseSave!(); await settle()
     const saved = rerender()
+    expect(probe.saveInProgress).toBe(false)
     expect(savePanel(saved)).not.toContain('Save now</button>')
     expect(savePanel(saved)).toContain('V23 progress saved on this device.')
     probe.pending = 1
@@ -647,8 +653,12 @@ describe('V23 controller input admission', () => {
   it('keeps a failed save visibly blocked and disables Save now', async () => {
     probe.pending = 1; mount()
     Object.assign(document, { hidden: true }); visibilityChange()()
+    const saving = rerender()
+    expect(probe.saveInProgress).toBe(true)
+    expect(savePanel(saving)).toContain('Saving progress')
     probe.releaseSave!(true); await settle()
     const blocked = rerender()
+    expect(probe.saveInProgress).toBe(false)
     expect(blocked).toContain('Save blocked')
     expect(blocked).toContain('Movement is frozen; keep this tab open.')
     expect(savePanel(blocked)).not.toContain('Save now</button>')

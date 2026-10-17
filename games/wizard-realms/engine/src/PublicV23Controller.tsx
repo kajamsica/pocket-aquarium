@@ -2659,6 +2659,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </button>}
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
+      saveInProgress={saveTask.current !== null}
       greenwayLogOrder={v43 ? <section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
