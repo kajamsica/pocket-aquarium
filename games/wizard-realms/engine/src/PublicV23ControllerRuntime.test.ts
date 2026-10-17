@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { createPublicV23ControllerRuntime, createPublicV24ControllerRuntime } from './PublicV23ControllerRuntime'
 import { PublicV23Controller, publicV23SavedWorkMessage,
+  publicV23WayfinderGlowSavedMessage,
   publicV23WorkRouteForView } from './PublicV23Controller'
 import { choosePublicV23Entry, inspectPublicV23Entry } from './PublicV23Entry'
 import { publicV23ReticleAimZ, publicWorldV23ViewProjection } from './PublicV23WorldView'
@@ -334,6 +335,21 @@ describe('V23 controller journey', () => {
     expect(publicV23SavedWorkMessage(result.workEvent)).toBe(label === 'Dig'
       ? `Dig saved: ${id}. 1 stone gained, 30 XP.`
       : `Build saved: ${id}. 8 logs spent, 80 XP.`)
+  })
+
+  it('reports only the checked Wayfinder Glow reveal count and points to the map', () => {
+    const message = publicV23WayfinderGlowSavedMessage([
+      { type: 'spell_cast', spellId: 'wayfinder_glow', revealedTileIds: ['tile-1', 'tile-2'] },
+      { type: 'skill_xp_gained' },
+    ])
+    expect(message).toBe('Wayfinder Glow charted 2 new tiles. Open Map / routes to inspect the revealed ground and any newly visible works sites.')
+    expect(publicV23WayfinderGlowSavedMessage([{ type: 'skill_xp_gained' }])).toBeNull()
+  })
+
+  it('gives a fog-edge cue when a checked Wayfinder Glow cast reveals no new tiles', () => {
+    expect(publicV23WayfinderGlowSavedMessage([
+      { type: 'spell_cast', spellId: 'wayfinder_glow', revealedTileIds: [] },
+    ])).toBe('Wayfinder Glow found no new terrain nearby. Move toward the fog and cast again.')
   })
 
   it('does not expose a regional ghost or lower-foot coordinate for a partial discovery', async () => {

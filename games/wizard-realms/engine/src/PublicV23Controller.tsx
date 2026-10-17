@@ -1006,6 +1006,17 @@ export function publicV23SavedWorkMessage(event: NonNullable<Extract<
     ? `Dig saved: ${event.id}. ${event.stoneGained} stone gained, ${event.xp} XP.`
     : `Build saved: ${event.id}. ${event.logsSpent} logs spent, ${event.xp} XP.`
 }
+export function publicV23WayfinderGlowSavedMessage(events: readonly {
+  type: string; spellId?: string; revealedTileIds?: readonly string[]
+}[]): string | null {
+  const cast = events.find((event) => event.type === 'spell_cast'
+    && event.spellId === 'wayfinder_glow' && Array.isArray(event.revealedTileIds))
+  if (!cast?.revealedTileIds) return null
+  const count = cast.revealedTileIds.length
+  return count > 0
+    ? `Wayfinder Glow charted ${count} new ${count === 1 ? 'tile' : 'tiles'}. Open Map / routes to inspect the revealed ground and any newly visible works sites.`
+    : 'Wayfinder Glow found no new terrain nearby. Move toward the fog and cast again.'
+}
 const v26TerrainRejection: Record<string, string> = {
   unrevealed: 'Reveal this ground before changing it.',
   invalid_pose: 'Stand on supported ground before changing terrain.',
@@ -1876,6 +1887,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
               : `${intent.action.kind === 'dig' ? 'Dig' : 'Fill'} saved at column ${intent.action.gx}, ${intent.action.gz}.`
             : 'workEvent' in result && result.workEvent
               ? publicV23SavedWorkMessage(result.workEvent)
+            : 'type' in intent && intent.type === 'cast_spell'
+              && intent.spellId === 'wayfinder_glow'
+              ? publicV23WayfinderGlowSavedMessage(result.events) ?? 'Wayfinder Glow saved.'
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
         } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
