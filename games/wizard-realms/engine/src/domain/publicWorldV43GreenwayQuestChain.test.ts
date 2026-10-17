@@ -211,6 +211,14 @@ describe('checked Greenway quest guidance', () => {
       .toContain('marked north-cliff ladder (4 logs)')
     expect(projectPublicV43GreenwayQuestChain(bridgeOnly)[1].objective)
       .toContain('Chop another oak for at least 4 more logs')
+    expect(projectPublicV43GreenwayQuestChain(bridgeOnly)[1].objective)
+      .toContain('on the starting side of the creek')
+    const bridgeWithLadderLogs = { ...bridgeOnly,
+      state: { ...bridgeOnly.state, player: { ...bridgeOnly.state.player,
+        inventory: [...bridgeOnly.state.player.inventory,
+          { itemId: 'logs' as const, quantity: 4 }] } } }
+    expect(projectPublicV43GreenwayQuestChain(bridgeWithLadderLogs)[1].objective)
+      .toContain('on the starting side of the creek')
     const bridgeAndLadder = { ...bridgeOnly, greenwayWorks: {
       ...bridgeOnly.greenwayWorks,
       builtLadderIds: ['works4:ladder:greenway-north-cliff:11'],

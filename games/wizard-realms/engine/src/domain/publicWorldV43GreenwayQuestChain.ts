@@ -105,8 +105,8 @@ export function projectPublicV43GreenwayQuestChain(
       status: ladderBuilt ? 'complete' : 'active',
       objective: ladderBuilt ? 'The marked north-cliff ladder is built.'
         : !bridgeBuilt ? 'After the creek bridge, gather 4 logs for the marked north-cliff ladder.'
-          : logs < 4 ? `${makeOakRoom}Chop another oak for at least ${4 - logs} more logs, then build the marked north-cliff ladder with 4 logs.`
-            : 'Build the marked north-cliff ladder with 4 logs.',
+          : logs < 4 ? `${makeOakRoom}Chop another oak for at least ${4 - logs} more logs, then build the marked north-cliff ladder on the starting side of the creek with 4 logs.`
+            : 'Build the marked north-cliff ladder on the starting side of the creek with 4 logs.',
       existingReward: 'Building grants 60 character XP and 60 Construction XP.' },
     { id: 'waystone/v1', title: 'Waystone Spark',
       status: waystoneStudied ? 'complete' : 'active',
