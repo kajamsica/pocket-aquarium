@@ -106,7 +106,8 @@ export function focusGameplayAfterClick(root: HTMLElement, target: Element, deta
 export function shouldHandleGameplayKey(event: Pick<KeyboardEvent, 'code' | 'repeat' | 'target'>): boolean {
   const target = event.target as HTMLElement | null
   return !event.repeat && !/INPUT|TEXTAREA|SELECT/.test(target?.tagName ?? '')
-    && !target?.isContentEditable && !(event.code === 'Space' && target?.closest?.('button'))
+    && !target?.isContentEditable && !(event.code === 'Space' && target?.closest?.(
+      'button, summary, details, dialog, menu, a, [role="button"], [role="dialog"], [role="menu"], [role="menuitem"]'))
 }
 
 export function pointerWorkAimKind(projection: WizardViewProjection, mapOpen: boolean): SceneWorkAimKind | null {
@@ -458,7 +459,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           return
         }
         if (event.ctrlKey || event.metaKey || event.altKey || event.code === 'Tab') return
-        if (event.repeat || event.code !== 'Space' && !shouldHandleGameplayKey(event)) return
+        if (!shouldHandleGameplayKey(event)) return
         event.preventDefault()
         if (!bindableActionCode(event.code, actionKeys[bindingAction === 'dig' ? 'switchTool' : 'dig'])) {
           setBindingHint('That key is reserved or already assigned. Choose another letter or number.')

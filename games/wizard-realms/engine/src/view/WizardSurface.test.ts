@@ -532,7 +532,7 @@ describe('third-person control grammar', () => {
     expect(root.focus).not.toHaveBeenCalled()
   })
 
-  it('keeps gameplay keys on buttons while preserving typing, range and Space activation', () => {
+  it('keeps gameplay keys on controls without stealing native Space activation', () => {
     const key = (code: string, target: Partial<HTMLInputElement>) => ({ code, repeat: false,
       target: target as EventTarget })
     const button = { tagName: 'BUTTON', closest: () => ({}) }
@@ -541,7 +541,15 @@ describe('third-person control grammar', () => {
     expect(shouldHandleGameplayKey(key('KeyF', button))).toBe(true)
     expect(shouldHandleGameplayKey(key('Space', button))).toBe(false)
     expect(shouldHandleGameplayKey(key('Space', { tagName: 'DIV', closest: () => null }))).toBe(true)
+    for (const ancestor of ['button', 'summary', 'details', 'dialog', 'menu', 'a',
+      '[role="button"]', '[role="dialog"]', '[role="menu"]', '[role="menuitem"]']) {
+      const nested = { tagName: 'SPAN', closest: (selector: string) => selector.split(', ').includes(ancestor) ? {} : null }
+      expect(shouldHandleGameplayKey(key('Space', nested))).toBe(false)
+      expect(shouldHandleGameplayKey(key('Enter', nested))).toBe(true)
+    }
+    expect(shouldHandleGameplayKey(key('KeyW', { tagName: 'SUMMARY', closest: () => ({}) }))).toBe(true)
     expect(shouldHandleGameplayKey(key('KeyW', { tagName: 'INPUT', type: 'range' }))).toBe(false)
+    expect(shouldHandleGameplayKey(key('Space', { tagName: 'INPUT', type: 'range' }))).toBe(false)
     expect(shouldHandleGameplayKey(key('KeyB', { tagName: 'INPUT', type: 'text' }))).toBe(false)
     expect(shouldHandleGameplayKey(key('KeyF', { tagName: 'TEXTAREA' }))).toBe(false)
     expect(shouldHandleGameplayKey(key('KeyW', { tagName: 'DIV', isContentEditable: true }))).toBe(false)
