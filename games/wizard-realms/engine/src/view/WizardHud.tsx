@@ -111,13 +111,22 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
   const nearHallWard = hallSite?.revealed && Math.hypot(
     projection.player.position[0] - hallSite.ward[0],
     projection.player.position[2] - hallSite.ward[2]) < 10
-  const journalQuest = earlierJournalQuest && !earlierJournalQuest.complete
-    ? earlierJournalQuest : hallReward && hall?.wardDefeated && v42Quest
-      ? v42Quest : signalQuest && projection.v36MarkerQuest?.complete
-        ? signalQuest : earlierJournalQuest
+  const unfinishedStarter = projection.v34Quest && !projection.v34Quest.complete
+    ? projection.v34Quest : projection.v35LedgerQuest && !projection.v35LedgerQuest.complete
+      ? projection.v35LedgerQuest : null
+  const v42Mainline = v42Quest && projection.v35LedgerQuest?.complete && waystationQuest
+    ? !waystationQuest.complete ? waystationQuest
+      : !v42Quest.complete ? v42Quest : null : null
+  const journalQuest = unfinishedStarter ?? v42Mainline
+    ?? (earlierJournalQuest && !earlierJournalQuest.complete
+      ? earlierJournalQuest : hallReward && hall?.wardDefeated && v42Quest
+        ? v42Quest : signalQuest && projection.v36MarkerQuest?.complete
+          ? signalQuest : earlierJournalQuest)
   const ledgerQuestPrimary = journalQuest?.id === 'outfitters-ledger/v1'
   const markerQuestPrimary = journalQuest?.id === 'beneath-old-marker/v1'
   const signalQuestPrimary = journalQuest?.id === 'highland-signal/v1'
+  const waystationQuestPrimary = journalQuest?.id === 'waystation-repair/v1'
+  const hallQuestPrimary = journalQuest?.id === 'iron-hall-watch/v2'
   const starterCliff = projection.starterCliff !== undefined
   const mining = projection.v29Mining
   const knownCliffFoot = starterCliff && (projection.buildSites.some((site) =>
@@ -125,6 +134,26 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
     || projection.routes.some((route) => route.id === 'greenway_ladder' && route.built))
   const legacyActionsUnavailable = projection.unavailableActions === true
   const savePaused = projection.controllerActionsEnabled === false
+  const markerClaimAction = projection.v36MarkerClaim && <>
+    <button type="button" disabled={savePaused || !!projection.v36MarkerClaim.rejection}
+      onClick={() => onIntent({ type: 'v36.marker.claim' })}>Claim Old Marker reward</button>
+    {(projection.v36MarkerClaim.hint || projection.v36MarkerClaim.rejection) &&
+      <small role="status">{projection.v36MarkerClaim.hint ?? publicV36MarkerRejectionMessage(projection.v36MarkerClaim.rejection!)}</small>}
+  </>
+  const signalActions = signalQuest && !signalQuest.complete && <>
+    {signalQuest.stage === 'vane' && <>
+      <button type="button" disabled={savePaused || !!signalQuest.inspect.rejection}
+        onClick={() => onIntent({ type: 'v38.signal.inspect' })}>Inspect signal vane</button>
+      {(signalQuest.inspect.hint || signalQuest.inspect.rejection) && <small role="status">
+        {signalQuest.inspect.hint ?? 'The checked inspection is not ready yet.'}</small>}
+    </>}
+    {signalQuest.stage === 'return' && <>
+      <button type="button" disabled={savePaused || !!signalQuest.claim.rejection}
+        onClick={() => onIntent({ type: 'v38.signal.claim' })}>Claim Highland Signal reward</button>
+      {(signalQuest.claim.hint || signalQuest.claim.rejection) && <small role="status">
+        {signalQuest.claim.hint ?? 'The checked reward is not ready yet.'}</small>}
+    </>}
+  </>
   const v16Magic = starterCliff
     && (projection.savedTerrainWorks?.context === 'works3-greenway'
       || projection.savedTerrainWorks?.context === 'works4-greenway')
@@ -367,6 +396,12 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
     ? 'Build bridge' : firstCreekHarvestBlocked ? 'Make room'
       : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
         ? 'Equip axe' : `Bridge ${greenwayLogs}/8`
+  const openingGlowCue = !savePaused && firstCreekBridgePending && !firstCreekHarvestBlocked
+    && greenwayLogs < 8 && journalQuest?.id === 'surveyor-first-find/v1'
+    && journalQuest.stage === 'gather'
+    ? learnedGlow ? 'Optional: cast Glow near fog.'
+      : 'Optional: study nearby waystone; cast Glow near fog.'
+    : null
 
   return (
     <div className="wr-hud">
@@ -436,24 +471,31 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           data-expanded={ledgerOpen} aria-label={`Quest journal: ${journalQuest.title}`}>
           <button type="button" className="wr-v35-mobile-toggle" aria-expanded={ledgerOpen}
             aria-label={ledgerOpen ? 'Close quest journal' : firstCreekBridgePending
-              ? `Open quest journal: ${greenwayObjective}`
-              : hallQuest ? `Open quest journal: ${hallQuest.title}, ${hallQuest.next}. ${hallQuest.status}`
+              ? `Open quest journal: ${greenwayObjective}${openingGlowCue ? ` ${openingGlowCue}` : ''}`
+              : hallQuestPrimary && hallQuest ? `Open quest journal: ${hallQuest.title}, ${hallQuest.next}. ${hallQuest.status}`
+              : waystationQuestPrimary && waystationQuest
+                ? `Open quest journal: ${waystationQuest.title}, ${WAYSTATION_NEXT[waystationQuest.stage]}. ${waystationQuest.objective}`
               : `Open quest journal: ${journalQuest.title}`}
             aria-controls="wr-v35-journal-content"
             onKeyDown={(event) => { if (event.code === 'Space') event.stopPropagation() }}
             onClick={() => setLedgerOpen((open) => !open)}>
-            {ledgerOpen ? 'Close quest journal ×' : firstCreekBridgePending ? `${firstCreekStep} ▾`
-              : hallQuest && hall ? <>
+            {ledgerOpen ? 'Close quest journal ×' : firstCreekBridgePending ? <>
+              {firstCreekStep} ▾{openingGlowCue && <small>Optional: Glow</small>}
+            </>
+              : hallQuestPrimary && hallQuest && hall ? <>
               <span>HP {hall.health} · W {hall.wardHealth}</span>
               <small>{hall.phase === 'windup'
                 ? `Slam ${Math.max(0, hall.phaseUntilTick - projection.tick)}t ▾`
                 : hall.phase === 'recovery' ? 'Ward recovering ▾' : 'Iron Hall ▾'}</small>
             </>
+              : waystationQuestPrimary && waystationQuest
+                ? `Waystation: ${WAYSTATION_NEXT[waystationQuest.stage]} ▾`
               : ringkeeperQuest || waystationQuest ? 'Quests ▾' : 'Quest ▾'}
           </button>
           <div id="wr-v35-journal-content" className="wr-v35-quest-content">
           <strong>{journalQuest.complete ? 'Quest complete' : 'Quest'}: {journalQuest.title}</strong>
           <small>{firstCreekBridgePending ? greenwayObjective : journalQuest.objective}</small>
+          {openingGlowCue && <small role="note">{openingGlowCue}</small>}
           {northLadderCue && <small role="note">{northLadderCue}</small>}
           {firstCreekBridgePending && fullOfBridgeLogs && <small>
             Pack full of logs? Spend 8 at a discovered creek candidate only after Works says Ready. Greenway Outfitters {logSaleLimit}
@@ -469,26 +511,8 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
               onClick={() => onIntent({ type: 'v35.ledger.deliver' })}>Deliver stone to Outfitters</button>
             {projection.v35LedgerDeliver.hint && <small role="status">{projection.v35LedgerDeliver.hint}</small>}
           </>}
-          {markerQuestPrimary && projection.v36MarkerClaim && <>
-            <button type="button" disabled={savePaused || !!projection.v36MarkerClaim.rejection}
-              onClick={() => onIntent({ type: 'v36.marker.claim' })}>Claim Old Marker reward</button>
-            {(projection.v36MarkerClaim.hint || projection.v36MarkerClaim.rejection) &&
-              <small role="status">{projection.v36MarkerClaim.hint ?? publicV36MarkerRejectionMessage(projection.v36MarkerClaim.rejection!)}</small>}
-          </>}
-          {signalQuestPrimary && signalQuest && !signalQuest.complete && <>
-            {signalQuest.stage === 'vane' && <>
-              <button type="button" disabled={savePaused || !!signalQuest.inspect.rejection}
-                onClick={() => onIntent({ type: 'v38.signal.inspect' })}>Inspect signal vane</button>
-              {(signalQuest.inspect.hint || signalQuest.inspect.rejection) && <small role="status">
-                {signalQuest.inspect.hint ?? 'The checked inspection is not ready yet.'}</small>}
-            </>}
-            {signalQuest.stage === 'return' && <>
-              <button type="button" disabled={savePaused || !!signalQuest.claim.rejection}
-                onClick={() => onIntent({ type: 'v38.signal.claim' })}>Claim Highland Signal reward</button>
-              {(signalQuest.claim.hint || signalQuest.claim.rejection) && <small role="status">
-                {signalQuest.claim.hint ?? 'The checked reward is not ready yet.'}</small>}
-            </>}
-          </>}
+          {markerQuestPrimary && markerClaimAction}
+          {signalQuestPrimary && signalActions}
           {hallQuest && hall && <details className="wr-ironhall-chapter"
             data-phase={hall.phase} aria-label={`Quest chapter: ${hallQuest.title}`}>
             <summary>{hallQuest.title} · {hallQuest.next}
@@ -558,7 +582,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
               </>}
             </section>}
           </details>}
-          {waystationQuest && <details className="wr-waystation-chapter"
+          {waystationQuest && <details className="wr-waystation-chapter" open={waystationQuestPrimary}
             aria-label={`Quest chapter: ${waystationQuest.title}`}>
             <summary>{waystationQuest.title} · {WAYSTATION_NEXT[waystationQuest.stage]}</summary>
             <p>{waystationQuest.objective}</p>
@@ -593,6 +617,22 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
                 {waystationQuest.claim.hint ?? publicV40WaystationRejectionHint(waystationQuest.claim.rejection!)}</small>}
             </>}
           </details>}
+          {projection.v36MarkerQuest?.active && !markerQuestPrimary
+            && !projection.v36MarkerQuest.complete && <details className="wr-marker-chapter"
+              aria-label={`Quest chapter: ${projection.v36MarkerQuest.title}`}>
+              <summary>{projection.v36MarkerQuest.title}</summary>
+              <p>{projection.v36MarkerQuest.objective}</p>
+              <p>{projection.v36MarkerQuest.reward}</p>
+              {markerClaimAction}
+            </details>}
+          {signalQuest && !signalQuestPrimary && !signalQuest.complete
+            && <details className="wr-signal-chapter"
+              aria-label={`Quest chapter: ${signalQuest.title}`}>
+              <summary>{signalQuest.title}</summary>
+              <p>{signalQuest.objective}</p>
+              <p>{signalQuest.reward}</p>
+              {signalActions}
+            </details>}
           {ringkeeperQuest && <details className="wr-ringkeeper-chapter"
             aria-label={`Quest chapter: ${ringkeeperQuest.title}`}>
             <summary>{ringkeeperQuest.title} · {RINGKEEPER_NEXT[ringkeeperQuest.stage]}</summary>
@@ -622,7 +662,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
             {projection.v35LedgerQuest?.complete && !ledgerQuestPrimary && <p>{projection.v35LedgerQuest.title}: {projection.v35LedgerQuest.objective} {projection.v35LedgerQuest.reward}</p>}
             {projection.v34Quest?.complete && journalQuest.id !== projection.v34Quest.id && <p>{projection.v34Quest.title}: {projection.v34Quest.objective}</p>}
             {projection.v36MarkerQuest?.complete && !markerQuestPrimary && <p>{projection.v36MarkerQuest.title}: {projection.v36MarkerQuest.objective} {projection.v36MarkerQuest.reward}</p>}
-            {signalQuest && !signalQuestPrimary && <p>Optional: {signalQuest.title}. {signalQuest.objective} {signalQuest.reward}</p>}
+            {signalQuest?.complete && !signalQuestPrimary && <p>{signalQuest.title}: {signalQuest.objective} {signalQuest.reward}</p>}
           </details>
           </div>
         </section>}

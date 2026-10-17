@@ -535,6 +535,9 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
     {open && <div className="wr-map-backdrop"><section id="wizard-world-map" className="wr-map-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-world-map-title"
       onKeyDown={(event) => {
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onToggle(); return }
+        if (!mapToggleForKey(true, event.code, event.repeat)) {
+          event.preventDefault(); event.stopPropagation(); onToggle(); return
+        }
         if (event.key !== 'Tab') return
         const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button, summary, [href], input, select, textarea, [tabindex]')]
           .filter((control) => control.tabIndex >= 0 && !control.hasAttribute('disabled') && control.getClientRects().length > 0)

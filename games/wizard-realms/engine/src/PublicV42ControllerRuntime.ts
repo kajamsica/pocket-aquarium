@@ -202,6 +202,7 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
   return {
     committed: () => structuredClone(committed),
     preview: () => structuredClone(preview),
+    previewTick: () => preview.state.tick,
     view() {
       const { state } = preview
       const activeTiles = state.movementOwner === 'greenway' ? state.greenway.tiles.map((tile) =>

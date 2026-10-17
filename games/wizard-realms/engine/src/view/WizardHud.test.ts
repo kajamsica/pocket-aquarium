@@ -238,8 +238,20 @@ describe('starter cliff HUD capability gate', () => {
       v41IronHall: { health: 12, wardHealth: 9, phase: 'dormant', phaseUntilTick: 0,
         wardDefeated: false, learnedBolt: false } as NonNullable<WizardViewProjection['v41IronHall']> })
     expect(journal).toContain('Bridge 4/8 ▾')
+    expect(journal).toContain('Bridge 4/8 ▾<small>Optional: Glow</small>')
     expect(journal).toContain('First 4 logs collected. Keep them; gather 4 more')
+    expect(journal).toContain('Optional: study nearby waystone; cast Glow near fog.')
+    expect(journal).toMatch(/aria-label="Open quest journal:[^"]*Optional: study nearby waystone; cast Glow near fog\./)
+    expect(journal.indexOf('First 4 logs collected')).toBeLessThan(journal.indexOf('Optional: study nearby waystone'))
     expect(journal).not.toContain('Old multi-step opening objective.')
+    const learnedJournal = objective({ ...logs(4), v34Quest: quest,
+      learnedSpellIds: ['wayfinder_glow'] })
+    expect(learnedJournal).toContain('Optional: cast Glow near fog.')
+    expect(learnedJournal).toContain('Bridge 4/8 ▾<small>Optional: Glow</small>')
+    expect(learnedJournal).not.toContain('Optional: study nearby waystone')
+    expect(objective({ ...logs(8), v34Quest: quest })).not.toContain('Optional: cast Glow near fog.')
+    expect(objective({ ...blockedPack(11), v34Quest: quest })).not.toContain('Optional: study nearby waystone')
+    expect(objective({ ...blockedPack(11), v34Quest: quest })).not.toContain('<small>Optional: Glow</small>')
     expect(objective({ ...bridgeReadyWithoutAxe, v34Quest: quest })).toContain('Build bridge ▾')
     expect(objective({ ...blockedPack(11), v34Quest: quest })).toContain('Make room ▾')
     expect(objective({ ...full, v34Quest: quest })).toContain('Greenway Outfitters does not buy logs.')
@@ -1341,5 +1353,85 @@ describe('V42 Iron Hall journal precedence', () => {
     const completeHtml = renderHud({ ...markerView,
       v36MarkerQuest: { ...marker, stage: 'complete', complete: true } })
     expect(completeHtml).toContain('aria-label="Quest journal: Iron Hall Watch"')
+  })
+
+  it('leads through Waystation build, crossing, and claim before Iron Hall without losing other claims', () => {
+    const base = projectionAtGreenwayRing([])
+    const ready = { rejection: null, hint: null }
+    const surveyor = { id: 'surveyor-first-find/v1' as const,
+      title: "The Surveyor's First Find" as const, stage: 'gather' as const,
+      objective: 'Build the creek bridge.', reward: 'Basic pick.', complete: false }
+    const ledger = { id: 'outfitters-ledger/v1' as const,
+      title: "Outfitters' Ledger" as const, stage: 'route' as const,
+      objective: 'Deliver a terrain-bag stone.', reward: 'Traveler Tunic.', complete: false }
+    const marker = { id: 'beneath-old-marker/v1' as const,
+      title: 'Beneath the Old Marker' as const, stage: 'salvager' as const,
+      objective: 'Return to the salvager.', reward: 'Fen Waders.', active: true, complete: false }
+    const signal = { id: 'highland-signal/v1' as const, title: 'Highland Signal' as const,
+      stage: 'return' as const, objective: 'Claim at Quarry Crown.', reward: '30 coins.',
+      complete: false, inspect: ready, claim: ready }
+    const waystation = { id: 'waystation-repair/v1' as const,
+      title: 'Windward Waystation' as const, stage: 'build' as const,
+      objective: 'Build the marked bridge.', reward: '45 coins.', complete: false,
+      barter: ready, cross: ready, claim: ready }
+    const hall = { health: 12, wardHealth: 9, phase: 'dormant' as const, phaseUntilTick: 0,
+      learnedBolt: false, wardDefeated: false, study: ready, engage: ready,
+      bolt: ready, guard: ready, rest: ready }
+    const view: WizardViewProjection = { ...base, v34Quest: surveyor,
+      v35LedgerQuest: ledger, v36MarkerQuest: marker, v36MarkerClaim: ready,
+      v38SignalQuest: signal, v40WaystationQuest: waystation,
+      v40WaystationSite: { id: 'waystation', approach: base.player.position,
+        exit: base.player.position, built: false, revealed: true },
+      v41IronHall: hall,
+      v42IronHall: { crestOutcome: 'unrolled', questClaimed: false,
+        vestOwned: false, vestEquipped: false, vestDurability: 0,
+        spar: { active: false, strikeAtTick: 0, nextReadyTick: 0, strikesResolved: 0 },
+        claim: ready, equip: ready, unequip: ready, repair: ready, sparStart: ready } }
+
+    const fresh = renderHud(view)
+    expect(fresh).toContain('aria-label="Quest journal: The Surveyor&#x27;s First Find"')
+    const ledgerPending = renderHud({ ...view, v34Quest: { ...surveyor,
+      stage: 'complete', complete: true } })
+    expect(ledgerPending).toContain('aria-label="Quest journal: Outfitters&#x27; Ledger"')
+    expect(ledgerPending).not.toContain('Open quest journal: Iron Hall Watch')
+
+    const routed: WizardViewProjection = { ...view,
+      v34Quest: { ...surveyor, stage: 'complete', complete: true },
+      v35LedgerQuest: { ...ledger, stage: 'complete', complete: true } }
+    for (const [stage, next] of [
+      ['find', 'Find the river crossing'],
+      ['choose-materials', 'Gather or barter timber'],
+      ['build', 'Build the bridge'], ['cross', 'Reach the south bank'],
+      ['return', 'Claim at Outfitters'],
+    ] as const) {
+      const html = renderHud({ ...routed, v40WaystationQuest: { ...waystation, stage } })
+      expect(html).toContain('aria-label="Quest journal: Windward Waystation"')
+      expect(html).toContain(`Waystation: ${next} ▾`)
+      expect(html).toContain('class="wr-waystation-chapter" open=""')
+      expect(html).toContain('aria-label="Quest chapter: Beneath the Old Marker"')
+      expect(html).toContain('<button type="button">Claim Old Marker reward</button>')
+      expect(html).toContain('aria-label="Quest chapter: Highland Signal"')
+      expect(html).toContain('<button type="button">Claim Highland Signal reward</button>')
+    }
+    const inspecting = renderHud({ ...routed,
+      v38SignalQuest: { ...signal, stage: 'vane' } })
+    expect(inspecting).toContain('<button type="button">Inspect signal vane</button>')
+    const building = renderHud(routed)
+    expect(building).toContain('Plan Waystation bridge</button>')
+    const crossing = renderHud({ ...routed,
+      v40WaystationQuest: { ...waystation, stage: 'cross' },
+      v40WaystationSite: { ...routed.v40WaystationSite!, built: true } })
+    expect(crossing).toContain('Record south-bank crossing</button>')
+    const store = base.stores.find((entry) => entry.id === 'store-greenway')!
+    const returning = renderHud({ ...routed,
+      player: { ...base.player, position: store.position },
+      v40WaystationQuest: { ...waystation, stage: 'return' } })
+    expect(returning).toContain('Claim Waystation reward</button>')
+
+    const atHall = renderHud({ ...routed,
+      v40WaystationQuest: { ...waystation, stage: 'complete', complete: true } })
+    expect(atHall).toContain('aria-label="Quest journal: Iron Hall Watch"')
+    expect(atHall).toContain('Iron Hall ▾')
+    expect(atHall).toContain('aria-label="Quest chapter: Beneath the Old Marker"')
   })
 })

@@ -15,7 +15,11 @@ import { commitPublicV43, resumePublicV43, startFreshPublicV43,
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
 import { createFreshPublicV42Root, PUBLIC_V42_SCHEMA } from './domain/publicWorldV42Snapshot'
 import type { PublicV42Root } from './domain/publicWorldV42Snapshot'
-import { createPublicV43FamiliarProgress } from './domain/publicWorldV43FamiliarAction'
+import { createPublicV43FamiliarProgress,
+  decodePublicV43FamiliarProgress } from './domain/publicWorldV43FamiliarAction'
+import { decodePublicV42RewardProgress,
+  PUBLIC_V42_PROGRESS_KEYS } from './domain/publicWorldV42RewardAction'
+import { decodePublicV43MountTrainingProgress } from './domain/publicWorldV43MountTraining'
 import { decodePublicV43CheckedSuccessor, replayPublicV43Witness,
   createPublicV43Root, PUBLIC_V43_SCHEMA } from './domain/publicWorldV43Snapshot'
 import type { PublicV43Root, PublicV43Witness } from './domain/publicWorldV43Snapshot'
@@ -61,6 +65,42 @@ function atGreenwayStore(logs: number): PublicV43Start {
 }
 
 describe('V43 checked controller bridge', () => {
+  it('keeps the care clock advancing while grounded and idle, then parks at readiness', () => {
+    const start = atGreenwayStore(4)
+    expect(createPublicV43ControllerRuntime(start, async () =>
+      ({ ok: false as const, reason: 'not-called' })).idleFrameNeeded()).toBe(false)
+    const site = resolveSedgehornFamiliarSite(start.head)!
+    const head = { ...start.head,
+      familiar: { ...start.head.familiar, phase: 'claimed' as const,
+        routeChoice: 'shelter' as const, position: { ...site.keeper.center },
+        trust: 2, creatureCareXp: 40, stationKnown: true },
+      state: { ...start.head.state, tick: 599, eventSequence: 1 },
+      mountTraining: { careWitnesses: [{ kind: 'sedgehorn-care/v1' as const,
+        tick: 0, eventSequence: 1 }] } }
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...progress } = head
+    const { mountTraining: _training, ...familiarProgress } = progress
+    expect(decodePublicV42RewardProgress(Object.fromEntries(PUBLIC_V42_PROGRESS_KEYS
+      .map((key) => [key, familiarProgress[key]])))).not.toBeNull()
+    expect(decodePublicV43FamiliarProgress(familiarProgress)).not.toBeNull()
+    expect(decodePublicV43MountTrainingProgress(progress)).not.toBeNull()
+    const runtime = createPublicV43ControllerRuntime({ ...start, head }, async () =>
+      ({ ok: false as const, reason: 'not-called' }))
+    expect(runtime.idleFrameNeeded()).toBe(true)
+    expect(runtime.advanceFrame([], false).rejections).toEqual([])
+    expect(runtime.view().tick).toBe(600)
+    expect(runtime.status().pendingFrames).toBe(1)
+    expect(runtime.idleFrameNeeded()).toBe(false)
+    const mature = createPublicV43ControllerRuntime({ ...start, head: { ...head,
+      mountTraining: { careWitnesses: [
+        { kind: 'sedgehorn-care/v1', tick: 0, eventSequence: 1 },
+        { kind: 'sedgehorn-care/v1', tick: 600, eventSequence: 2 },
+        { kind: 'sedgehorn-care/v1', tick: 1200, eventSequence: 3 },
+      ] }, state: { ...head.state, tick: 1200, eventSequence: 3 } } }, async () =>
+      ({ ok: false as const, reason: 'not-called' }))
+    expect(mature.idleFrameNeeded()).toBe(false)
+  })
+
   it('routes the fixed carpenter order through the checked V43 action and remembers its claim', async () => {
     let saved = atGreenwayStore(4)
     const writer = async (revision: number, _lineage: PublicV43Start['lineage'],

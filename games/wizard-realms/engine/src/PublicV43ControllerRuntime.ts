@@ -12,7 +12,8 @@ import { confirmPublicV43FamiliarAction, decodePublicV43FamiliarWitness,
   PUBLIC_V43_PROGRESS_KEYS } from './domain/publicWorldV43FamiliarAction'
 import type { PublicV43FamiliarProgress } from './domain/publicWorldV43FamiliarAction'
 import { confirmPublicV43MountTraining, createPublicV43MountTraining,
-  decodePublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
+  decodePublicV43MountTrainingWitness, SEDGEHORN_CARES_TO_MATURE,
+  SEDGEHORN_CARE_INTERVAL_TICKS } from './domain/publicWorldV43MountTraining'
 import type { PublicV43MountTrainingProgress } from './domain/publicWorldV43MountTraining'
 import { confirmPublicV43LogOrder, createPublicV43LogOrder,
   decodePublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
@@ -82,7 +83,14 @@ export function createPublicV43ControllerRuntime(initial: PublicV43Start,
     status: () => directBlocked ? { ...runtime.status(), gate: 'blocked' as const,
       blockedReason: directBlocked } : directBusy ? { ...runtime.status(), gate: 'barrier' as const }
       : runtime.status(),
-    idleFrameNeeded: () => !directGate() && runtime.idleFrameNeeded(),
+    idleFrameNeeded: () => {
+      if (directGate()) return false
+      if (runtime.idleFrameNeeded()) return true
+      const cares = committed.head.mountTraining?.careWitnesses
+      if (!cares?.length || cares.length >= SEDGEHORN_CARES_TO_MATURE) return false
+      return runtime.previewTick() - cares[cares.length - 1].tick
+        < SEDGEHORN_CARE_INTERVAL_TICKS
+    },
     advanceFrame: (...args: Parameters<typeof runtime.advanceFrame>) => directGate()
       ? { events: [], rejections: [{ intentIndex: 0,
         intentType: args[0][0]?.type ?? 'move', code: 'unavailable_here' as const,

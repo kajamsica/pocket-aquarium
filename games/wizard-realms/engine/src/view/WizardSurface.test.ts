@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, devDoubleTap, devNavigationEnabled, devSceneTapDecision, focusGameplayAfterClick, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMineIntent, keyboardMovementIntents, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerDevNavigateIntent, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
+import * as THREE from 'three'
+import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, devDoubleTap, devNavigationEnabled, devSceneTapDecision, escapeSurfaceTarget, focusGameplayAfterClick, focusStoreOpener, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMineIntent, keyboardMovementIntents, keyboardTerrainPointer, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerDevNavigateIntent, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
+import { cameraFramingFor } from './WizardScene'
+import { pickV26TerrainColumn } from './V26TerrainPicker'
 import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
 import type { WizardTerrainCell, WizardViewProjection } from './contracts'
 import { publicV13WorkIntentStillReady } from '../PublicV13Controller'
@@ -202,6 +205,10 @@ describe('V29-only mining controls', () => {
     expect(keyboardMineIntent(current, false, [200, 100], picker))
       .toEqual({ type: 'v29.deep-dig', gx: 1, gz: 0 })
     expect(picker).toHaveBeenCalledWith(200, 100, 'v29-open-pit')
+    expect(keyboardMineIntent(current, false,
+      keyboardTerrainPointer(null, { left: 10, top: 20, width: 400, height: 300 }), picker))
+      .toEqual({ type: 'v29.deep-dig', gx: 1, gz: 0 })
+    expect(picker).toHaveBeenCalledWith(298, 206, 'v29-open-pit')
     expect(keyboardMineIntent(current, false, null, picker)).toBeNull()
     expect(keyboardMineIntent(current, false, [200, 100], () => null)).toBeNull()
     expect(keyboardMineIntent(current, false, [200, 100], () => ({ gx: 3, gz: 4 }))).toBeNull()
@@ -329,6 +336,65 @@ describe('third-person control grammar', () => {
       modeActive: true, builtSites: [], dugTileIds: [], preview: null } }, false,
     [200, 100], picker)).toBeNull()
     expect(keyboardDigIntent(current, false, [200, 100], () => null)).toBeNull()
+  })
+
+  it('uses the marked keyboard aim only without a hovered cell, through the same checked picker', () => {
+    const ground: WizardTerrainCell = { id: 'tile-3-3', position: [0, 1, 0],
+      size: [4, 4], height: 1.8, climate: 'temperate_forest' }
+    const current = { ...sellProjection, seed: 'wizard-realms', openStoreId: null,
+      controllerActionsEnabled: true, terrain: [ground], v26ValleyRimSegments: [],
+      player: { ...sellProjection.player, position: [0, 1, 0] as const },
+      equipment: { ...sellProjection.equipment, mainHand: { id: 'spade-1', itemId: 'field_spade',
+        name: 'Field spade', quantity: 1 } } } as WizardViewProjection
+    const bounds = { left: 10, top: 20, width: 400, height: 300 }
+    const aim = keyboardTerrainPointer(null, bounds)
+    expect(aim).toEqual([298, 206])
+    expect(keyboardTerrainPointer([200, 100], bounds)).toEqual([200, 100])
+    expect(keyboardTerrainPointer(null, null)).toBeNull()
+    expect(keyboardTerrainPointer(null, { ...bounds, width: 0 })).toBeNull()
+    expect(keyboardTerrainPointer(null, { ...bounds, width: 800 })).toEqual([314, 206])
+    const picker = vi.fn(() => ({ gx: 0, gz: 0 }))
+    expect(keyboardDigIntent(current, false, aim, picker))
+      .toEqual({ type: 'v26.terrain', kind: 'dig', gx: 0, gz: 0 })
+    expect(picker).toHaveBeenCalledWith(298, 206, 'dig')
+    expect(keyboardDigIntent(current, false, aim, () => null)).toBeNull()
+    const html = renderToStaticMarkup(createElement(WizardSurface, { projection: current, onIntent: vi.fn() }))
+    expect(html).toContain('class="wr-keyboard-terrain-aim"')
+    expect(html).toContain('left:38%;top:62%')
+    expect(html).toContain('@media(max-width:719px){.wr-keyboard-terrain-aim{left:72%}}')
+    expect(html).toContain('G aims at the mouse over the world. Move the mouse onto this panel to aim at +; turn or step to line up the ring. Click ground for an exact cell.')
+  })
+
+  it('projects keyboard aim through the real frontmost terrain picker within 5 m at desktop and narrow framing', () => {
+    const ground: WizardTerrainCell = { id: 'tile-3-3', position: [0, 0, 0],
+      size: [4, 4], height: 0, climate: 'temperate_forest' }
+    for (const [width, height] of [[390, 600], [390, 844], [800, 600], [1200, 800]]) {
+      const scene = new THREE.Scene()
+      const surface = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial())
+      surface.name = 'Continuous terrain surface'
+      surface.rotation.x = -Math.PI / 2
+      scene.add(surface)
+      scene.add(new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 2, 8),
+        new THREE.MeshBasicMaterial()))
+      scene.children[1].position.y = 1
+      const framing = cameraFramingFor(width, height)
+      const pitch = CENTERED_CAMERA_ORBIT[1] * framing.pitchScale
+      const camera = new THREE.PerspectiveCamera(68, width / height, 0.08, 180)
+      camera.position.set(0, framing.focusHeight + framing.eyeRise
+        + Math.sin(pitch) * framing.distance, Math.cos(pitch) * framing.distance)
+      camera.lookAt(0, framing.focusHeight, 0)
+      camera.updateMatrixWorld()
+      const bounds = { left: 0, top: 0, width, height }
+      const aim = keyboardTerrainPointer(null, bounds)!
+      const ray = new THREE.Raycaster()
+      ray.setFromCamera(new THREE.Vector2(aim[0] / width * 2 - 1,
+        1 - aim[1] / height * 2), camera)
+      const point = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
+        new THREE.Vector3())
+      expect(point && Math.hypot(point.x, point.z)).toBeLessThan(5)
+      expect(pickV26TerrainColumn(scene, camera, bounds, aim[0], aim[1], [ground]))
+        .toEqual({ gx: 0, gz: 0 })
+    }
   })
 
   it('cycles only owned actionable main-hand gear and never buys or unequips', () => {
@@ -627,6 +693,30 @@ describe('third-person control grammar', () => {
     expect(savedWorkKeyboardIntent('KeyB', { ...on, actionsEnabled: false })).toBeNull()
     expect(savedWorkKeyboardIntent('KeyB', { ...on, preview: null, modeActive: false,
       actionsEnabled: false })).toBeNull()
+  })
+
+  it('closes the V42/V43 store before underlying Works on Escape, without stealing Map', () => {
+    const works = { actionsEnabled: true, modeActive: true, builtSites: [],
+      dugTileIds: [], preview: null }
+    const store = { ...sellProjection, savedTerrainWorks: works, v26ValleyRimSegments: [] }
+    expect(escapeSurfaceTarget(true, store)).toBe('map')
+    expect(escapeSurfaceTarget(false, store)).toEqual({ type: 'store.close' })
+    expect(escapeSurfaceTarget(false, { ...store, openStoreId: null }))
+      .toEqual({ type: 'saved-work.mode', active: false })
+    expect(escapeSurfaceTarget(false, { ...store, openStoreId: null,
+      savedTerrainWorks: { ...works, modeActive: false } })).toBeNull()
+    const closed = { ...store, openStoreId: null, nearbyStoreId: 'store-greenway' }
+    expect(renderToStaticMarkup(createElement(WizardSurface, { projection: closed,
+      onIntent: vi.fn() }))).toContain('aria-label="Open Greenway Outfitters"')
+    const focus = vi.fn(), rootFocus = vi.fn()
+    const other = { getAttribute: () => 'Open Works mode', focus: vi.fn() }
+    const opener = { getAttribute: () => 'Open Greenway Outfitters', focus }
+    const root = { querySelectorAll: () => [other, opener], focus: rootFocus } as unknown as HTMLElement
+    focusStoreOpener(root, 'Greenway Outfitters')
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
+    expect(other.focus).not.toHaveBeenCalled()
+    focusStoreOpener(root, 'Absent store')
+    expect(rootFocus).toHaveBeenCalledWith({ preventScroll: true })
   })
 
   it('offers collapsed novice work guidance in Greenway without changing the compact map', () => {
@@ -928,6 +1018,21 @@ describe('third-person control grammar', () => {
       projection: sellProjection, onIntent: () => {} }))
     const styles = markup.match(/<style>([\s\S]*?)<\/style>/)?.[1]
     expect(styles).toContain('@media(min-width:901px) and (min-height:591px){[data-public-version=v42] .wr-dev-nav-hint{bottom:64px}}')
+  })
+
+  it('hides the DEV navigation hint while the Greenway store panel owns the screen', () => {
+    vi.stubGlobal('window', { location: { search: '?dev=1&publicWorld=v42' },
+      localStorage: { getItem: () => null },
+      ResizeObserver: class { observe() {} unobserve() {} disconnect() {} } })
+    try {
+      const store = renderToStaticMarkup(createElement(WizardSurface, {
+        projection: sellProjection, onIntent: () => {} }))
+      const world = renderToStaticMarkup(createElement(WizardSurface, {
+        projection: { ...sellProjection, openStoreId: null }, onIntent: () => {} }))
+      expect(store).toContain('data-store-panel="true"')
+      expect(store).not.toContain('class="wr-dev-nav-hint"')
+      expect(world).toContain('class="wr-dev-nav-hint"')
+    } finally { vi.unstubAllGlobals() }
   })
 
   it('keeps forward, backward, and pivot axes independent', () => {
@@ -1328,7 +1433,7 @@ describe('wizard atlas markup', () => {
     expect(renderToStaticMarkup(createElement(WizardSurface, { projection: sellProjection, onIntent: vi.fn() }))).toContain('max-height:min(52vh,480px);overflow:auto;overscroll-behavior:contain')
   })
 
-  it('cycles visible controls without entering hidden overview content and closes on Escape', () => {
+  it('cycles visible controls and closes the focused map with M or Escape', () => {
     const onToggle = vi.fn()
     const dialog = findElements(WizardMap(mapProps(true, onToggle)), (element) => element.props.role === 'dialog')[0]
     const close = { tabIndex: 0, hasAttribute: () => false, getClientRects: () => [1], focus: vi.fn() }
@@ -1345,9 +1450,14 @@ describe('wizard atlas markup', () => {
       expect(route.focus).toHaveBeenCalledTimes(2)
       expect(hidden.focus).not.toHaveBeenCalled()
       expect(untabbable.focus).not.toHaveBeenCalled()
-      keydown({ ...event, key: 'Escape' })
+      keydown({ ...event, key: 'm', code: 'KeyM', repeat: true })
+      expect(onToggle).not.toHaveBeenCalled()
+      keydown({ ...event, key: 'm', code: 'KeyM', repeat: false })
       expect(onToggle).toHaveBeenCalledOnce()
       expect(event.stopPropagation).toHaveBeenCalledOnce()
+      keydown({ ...event, key: 'Escape' })
+      expect(onToggle).toHaveBeenCalledTimes(2)
+      expect(event.stopPropagation).toHaveBeenCalledTimes(2)
     } finally { vi.unstubAllGlobals() }
   })
 

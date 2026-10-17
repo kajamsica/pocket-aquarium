@@ -47,8 +47,20 @@ export function keybindCaptureVisible(projection: WizardViewProjection, mapOpen:
 const actionKeyLabel = (code: string) => code.replace(/^(Key|Digit)/, '')
 const ORBIT_DRAG_THRESHOLD_PX = 6
 export const CENTERED_CAMERA_ORBIT = [0, 0.28] as const
+const KEYBOARD_TERRAIN_AIM_Y = 0.62
+const keyboardTerrainAimX = (width: number) => width < 720 ? 0.72 : 0.38
 export const keyboardEventTime = (eventTimeMs: number, nowMs: number) =>
   Number.isFinite(eventTimeMs) && Math.abs(eventTimeMs - nowMs) <= 60_000 ? eventTimeMs : nowMs
+
+/** A visible off-avatar reticle is the keyboard fallback; mouse hover keeps priority. */
+export function keyboardTerrainPointer(pointer: readonly [number, number] | null,
+  bounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'> | null): readonly [number, number] | null {
+  if (pointer) return pointer
+  if (!bounds || ![bounds.left, bounds.top, bounds.width, bounds.height].every(Number.isFinite)
+    || bounds.width <= 0 || bounds.height <= 0) return null
+  return [bounds.left + bounds.width * keyboardTerrainAimX(bounds.width),
+    bounds.top + bounds.height * KEYBOARD_TERRAIN_AIM_Y]
+}
 
 export function movementVector(keys: ReadonlySet<string>): readonly [number, number] {
   const x = Number(keys.has('KeyD')) - Number(keys.has('KeyA'))
@@ -90,6 +102,22 @@ export function savedWorkKeyboardIntent(code: string,
   const aimed = saved.preview?.selected
   return code === 'KeyF' && aimed?.rejection === null
     ? { type: 'saved-work.confirm', id: aimed.site.id } : null
+}
+
+/** The top visible overlay owns Escape before underlying Works or backpack controls. */
+export function escapeSurfaceTarget(mapOpen: boolean,
+  projection: Pick<WizardViewProjection, 'openStoreId' | 'savedTerrainWorks' | 'v26ValleyRimSegments'>):
+  'map' | WizardViewIntent | null {
+  if (mapOpen) return 'map'
+  if (projection.openStoreId) return { type: 'store.close' }
+  return savedWorkKeyboardIntent('Escape', projection.savedTerrainWorks,
+    projection.v26ValleyRimSegments !== undefined)
+}
+
+export function focusStoreOpener(root: HTMLElement | null, storeName: string | null): void {
+  const opener = root && storeName ? Array.from(root.querySelectorAll<HTMLButtonElement>('button[aria-label]'))
+    .find((button) => button.getAttribute('aria-label') === `Open ${storeName}`) : null
+  ;(opener ?? root)?.focus({ preventScroll: true })
 }
 
 export function releaseHeldControls(keys: Set<string>): readonly [0, 0] {
@@ -326,8 +354,10 @@ const STYLES = `
 @media(min-width:901px) and (max-height:400px){.wr-gear{max-height:96px}.wr-trade{max-height:100px}.wr-saved-work-panel{top:128px;max-height:calc(100% - 260px)}}
 @media(max-width:719px){.wr-surface:has([data-field-camp-panel]) .wr-prompt,.wr-surface:has([data-field-camp-panel]) .wr-events{display:none}}
 @media(max-width:719px) and (min-height:401px) and (max-height:599px){.wr-surface .wr-context[data-field-camp-panel]{left:8px;top:208px;bottom:auto;transform:none;box-sizing:border-box;width:min(280px,calc(100% - 108px));max-height:calc(100% - 350px);overflow-y:auto;overscroll-behavior:contain;padding:8px;font-size:12px}.wr-surface .wr-context[data-field-camp-panel] header{margin-bottom:5px}}
-.wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain{display:none}
+.wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain,.wr-surface:has(.wr-context[data-store-panel]) .wr-v26-terrain{display:none}
 .wr-v26-terrain[data-v29="true"] .wr-v26-terrain-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.wr-keyboard-terrain-aim{position:absolute;z-index:1;left:38%;top:62%;display:grid;place-items:center;width:26px;height:26px;transform:translate(-50%,-50%);border:2px solid #ffe395;border-radius:50%;background:#101a1788;color:#fff;font:bold 20px/1 system-ui;pointer-events:none;text-shadow:0 1px 3px #000}.wr-scene:hover .wr-keyboard-terrain-aim{display:none}
+@media(max-width:719px){.wr-keyboard-terrain-aim{left:72%}}
 .wr-keybinds{margin-top:7px;font-size:12px}.wr-keybinds summary{cursor:pointer;color:#f5d889}.wr-keybinds>div{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.wr-keybinds button{min-height:36px}.wr-keybinds summary:focus-visible,.wr-keybinds button:focus-visible{outline:3px solid #ffe395;outline-offset:2px}
 .wr-dev-nav-hint{position:absolute;z-index:4;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(520px,80vw);padding:6px 10px;border-radius:7px;background:#101a17d9;color:#f5e6b2;text-align:center;font-size:12px;pointer-events:none}
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}
@@ -471,14 +501,17 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         return
       }
       if (event.code === 'Escape') {
+        if (event.repeat) return
         clearControls()
-        if (mapOpen) toggleMap()
-        else {
-          const workIntent = savedWorkKeyboardIntent(event.code, projection.savedTerrainWorks,
-            projection.v26ValleyRimSegments !== undefined)
-          if (workIntent) onIntent(workIntent)
-          else setBackpackOpen(false)
-        }
+        const target = escapeSurfaceTarget(mapOpen, projection)
+        if (target === 'map') toggleMap()
+        else if (target?.type === 'store.close') {
+          event.preventDefault()
+          const storeName = projection.stores.find((store) => store.id === projection.openStoreId)?.name ?? null
+          onIntent(target)
+          window.requestAnimationFrame(() => focusStoreOpener(rootRef.current, storeName))
+        } else if (target) onIntent(target)
+        else setBackpackOpen(false)
         return
       }
       if (!shouldHandleGameplayKey(event)) return
@@ -498,9 +531,11 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           setTerrainTapHint('Equip a field spade to dig or an owned pick to mine.'); return
         }
         setTerrainMode(activePick ? 'mine' : 'dig')
+        const pointer = keyboardTerrainPointer(terrainPointer.current,
+          rootRef.current?.querySelector('canvas')?.getBoundingClientRect() ?? null)
         const intent = activePick
-          ? keyboardMineIntent(projection, mapOpen, terrainPointer.current, terrainPicker.current)
-          : keyboardDigIntent(projection, mapOpen, terrainPointer.current, terrainPicker.current)
+          ? keyboardMineIntent(projection, mapOpen, pointer, terrainPicker.current)
+          : keyboardDigIntent(projection, mapOpen, pointer, terrainPicker.current)
         if (intent) { setTerrainTapHint(null); onIntent(intent) }
         else setTerrainTapHint(V29_NO_GROUND_TARGET_HINT)
         return
@@ -564,6 +599,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       onClickCapture={(event) => focusGameplayAfterClick(event.currentTarget, event.target as Element, event.detail)}>
       <style>{STYLES}</style>
       <div className="wr-scene" data-dragging={dragging}
+        onPointerEnter={(event) => { terrainPointer.current = [event.clientX, event.clientY] }}
         onPointerDown={(event) => {
           if (pointerPress.current) return
           rootRef.current?.focus()
@@ -671,6 +707,9 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           if (pointerPress.current?.id !== event.pointerId) return
           pointerPress.current = null; lastDragPoint.current = null; setDragging(false)
         }}>
+        {(spadeEquipped || activePick) && terrainMode && !mapOpen
+          && !projection.openStoreId && !projection.savedTerrainWorks?.modeActive
+          && <span className="wr-keyboard-terrain-aim" aria-hidden="true">+</span>}
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
           terrainMode={terrainMode} inputTrace={inputTrace} saveInProgress={saveInProgress}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
@@ -710,6 +749,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
               : terrainMode === 'dig' ? 'Tap revealed dry ground to dig one layer.'
               : terrainMode === 'fill' ? 'Tap an open pit to fill one layer with earned soil.'
                 : 'Choose Dig or Fill, then tap clear ground. Drag to look around.')}</p>
+        {(spadeEquipped || activePick) && terrainMode && <p>{actionKeyLabel(actionKeys.dig)} aims at the mouse over the world. Move the mouse onto this panel to aim at +; turn or step to line up the ring. Click ground for an exact cell.</p>}
         <details className="wr-keybinds" ref={keybindDetailsRef}
           onToggle={(event) => { if (!event.currentTarget.open) setBindingAction(null) }}>
           <summary>Keys: {actionKeyLabel(actionKeys.dig)} {groundActionLabel} · {actionKeyLabel(actionKeys.switchTool)} Tool</summary>
@@ -726,7 +766,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics}
         greenwayLogOrder={greenwayLogOrder} />
-      {devNavigation && <div className="wr-dev-nav-hint" role="status">{devNavHint
+      {devNavigation && !projection.openStoreId && <div className="wr-dev-nav-hint" role="status">{devNavHint
         ?? 'Dev: select a terrain tool to use it with one click. Turn tools off, then double-click clear revealed ground to follow a safe route.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}
       <WizardMap projection={projection} open={mapOpen} onToggle={toggleMap} onIntent={onIntent} buttonRef={mapButtonRef} closeRef={mapCloseRef} />

@@ -1,5 +1,8 @@
+import { publicV16InsideGreenway } from './publicWorldV16GreenwaySites'
 import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
+import { publicV25StratumAt } from './publicWorldV25Strata'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
+import { WORLD_CELL_METERS } from './worldChunks'
 import { GREENWAY_BAG_UPGRADE } from './publicWorldV43BagUpgrade'
 import { SEDGEHORN_CARES_TO_MATURE, SEDGEHORN_CARE_INTERVAL_TICKS }
   from './publicWorldV43MountTraining'
@@ -62,14 +65,19 @@ export function projectPublicV43GreenwayQuestChain(
   const ladderBuilt = built(greenwayWorks.builtLadderIds, 'ladder')
   const waystoneStudied = state.greenway.studiedInscriptionIds
     .includes('greenway_waystone')
-  const firstDigDone = greenwayWorks.dugTileIds.some((id) =>
+  const legacyDigDone = greenwayWorks.dugTileIds.some((id) =>
     resolvePublicV17GreenwaySite(state.seed, id)?.kind === 'dig')
+  const terrainDigDone = progress.terrain.columns.some(({ gx, gz, rewardDepth }) =>
+    rewardDepth > 0
+    && publicV16InsideGreenway({ x: gx * WORLD_CELL_METERS, z: gz * WORLD_CELL_METERS })
+    && publicV25StratumAt(state.seed, gx, gz, 0).material === 'soil')
+  const firstDigDone = legacyDigDone || terrainDigDone
   const orderClaimed = progress.greenwayOrder?.claimedAtSequence != null
   const bridgeObjective = logs < 8
-    ? `${makeOakRoom}${player.equipment.mainHand === 'woodcutters_axe' ? '' : 'Equip your woodcutter axe from Backpack. '}Chop nearby oaks (4 logs per oak), pressing E twice on each: ${logs}/8 logs. Keep them for the creek bridge to reach the dry far bank. Boots let you run but are not required.`
+    ? `${makeOakRoom}${player.equipment.mainHand === 'woodcutters_axe' ? '' : 'Equip your woodcutter axe from Backpack. '}Chop each nearby oak twice (4 logs per oak): ${logs}/8 logs. Keep them for the creek bridge to reach the dry far bank. Boots let you run but are not required.`
     : '8/8 logs: find the marked creek bridge on Map / routes. B opens Works, 1 selects Bridge; confirm with F only when Ready. Cross to its dry far bank. Boots are optional.'
-  // The Ledger route also needs a separate connected-river bridge. The first
-  // Greenway dig adds backpack stone, not the terrain-bag sample it requests.
+  // The Ledger route also needs a separate connected-river bridge and a mined
+  // terrain-bag stone; a first Greenway soil dig does not supply that sample.
   const nextRoute = !bridgeBuilt ? 'marked creek bridge (8 logs)'
     : !ladderBuilt ? 'marked north-cliff ladder (4 logs)'
       : !connectedRiverBuilt(progress) ? 'connected-river bridge (8 logs)' : null
@@ -109,9 +117,13 @@ export function projectPublicV43GreenwayQuestChain(
     { id: 'first-excavation/v1', title: 'First Excavation',
       status: firstDigDone ? 'complete' : 'active',
       objective: firstDigDone
-        ? 'Your first Greenway work-site dig is recorded. Its backpack stone is not the later Ledger terrain-bag sample.'
-        : 'Equip a field spade (sold at Greenway Outfitters if needed), then dig a marked Greenway work site. This is separate from the later Ledger terrain-bag sample.',
-      existingReward: 'A marked Greenway dig grants 30 character XP, 30 Excavation XP, and one backpack stone.' },
+        ? terrainDigDone
+          ? 'Your Greenway Terrain Dig is recorded, even if its pit was filled. Its terrain-bag soil is not the later Ledger stone sample.'
+          : 'Your legacy Greenway Works dig is recorded. Its backpack stone is not the later Ledger terrain-bag stone sample.'
+        : 'Equip a field spade (sold at Greenway Outfitters if needed), choose Terrain Dig, and tap clear, revealed dry loam within 5 m in Greenway. The later Ledger needs a mined terrain-bag stone sample.',
+      existingReward: terrainDigDone || !legacyDigDone
+        ? 'A rewarded Greenway Terrain Dig grants 30 character XP, 30 Excavation XP, and one soil unit in the terrain bag.'
+        : 'A legacy Greenway Works dig granted 30 character XP, 30 Excavation XP, and one backpack stone.' },
     { id: 'carpenter-order/v1', title: 'Carpenter Order',
       status: orderClaimed ? 'complete' : 'active',
       objective: orderClaimed ? 'The one-time carpenter order is fulfilled.'

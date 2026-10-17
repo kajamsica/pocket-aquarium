@@ -38,6 +38,7 @@ const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   now: 0,
   stateCursor: 0, states: [] as unknown[], streamed: false, known: false, airborne: false,
   westPose: false, bootsEquipped: false,
+  greenwayOak: false, actionEvents: [] as Array<{ type: string }>,
   suggested: false,
   poseOnJump: false, poseOnMove: false,
   refs: [] as { current: unknown }[], tick: null as (() => void) | null,
@@ -108,7 +109,11 @@ vi.mock('./PublicV23WorldView', async (importOriginal) => {
           preview: { selected: choice, nearby: [choice], guidance: null } } } as
           ReturnType<typeof actual.publicWorldV23ViewProjection>
       }
-      return { ...view, ...(probe.bootsEquipped
+      const oak = probe.greenwayOak ? view.resources.find((resource) => resource.kind === 'tree') : null
+      return { ...view, ...(oak ? { nearbyInteraction: { kind: 'resource' as const,
+        targetId: oak.id, label: oak.label, action: 'Chop', actionable: true },
+        resources: view.resources.map((resource) => resource.id === oak.id
+          ? { ...resource, available: true } : resource) } : {}), ...(probe.bootsEquipped
         ? { gait: publicV11Gait('leather_boots', args[5]) } : {}),
         savedTerrainWorks: { ...view.savedTerrainWorks!, modeActive: true,
         actionsEnabled: true, preview: { selected: { site: { id: workId },
@@ -156,7 +161,7 @@ vi.mock('./PublicV23ControllerRuntime', async (importOriginal) => {
           probe.events.push('action')
           if (probe.holdAction) await new Promise<void>((resolve) => { probe.releaseAction = resolve })
           return probe.actionRejection ? { status: 'rejected', reason: probe.actionRejection }
-            : { status: 'saved', events: [], resetWalkRequested: false } },
+            : { status: 'saved', events: probe.actionEvents, resetWalkRequested: false } },
         advanceFrame: (intents: readonly { type: string; yawDelta?: number }[]) => {
           probe.frames.push(intents); probe.events.push(`frame:${intents.map((intent) =>
             intent.type).join(',')}`)
@@ -343,7 +348,8 @@ const visibilityChange = () => vi.mocked(document.addEventListener).mock.calls
 const savePanel = (html: string) => html.match(/<div class="v23-save">([\s\S]*?)<\/div>/)?.[1] ?? ''
 async function settle() { for (let i = 0; i < 8; i++) await Promise.resolve() }
 afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = probe.airborne = false
-  probe.westPose = false; probe.bootsEquipped = false
+  probe.westPose = false; probe.bootsEquipped = false; probe.greenwayOak = false
+  probe.actionEvents = []
   probe.now = 0
   probe.suggested = false
   probe.poseOnJump = probe.poseOnMove = false
@@ -386,6 +392,37 @@ describe('V23 controller input admission', () => {
     expect(probe.actions).toEqual([])
     expect((probe.states[1] as string[]).at(-1)).toBe(
       'No available E interaction here. Move near an actionable object or use its explicit control.')
+  })
+
+  it('projects input-neutral repeat-chop feedback for the interact intent used by click and touch', async () => {
+    probe.greenwayOak = true; probe.holdAction = true
+    probe.actionEvents = [{ type: 'resource_damaged' }]
+    mount()
+    const oak = probe.projection!.resources.find((resource) => resource.kind === 'tree')
+    expect(oak).toBeDefined()
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).toEqual([{ kind: 'legacy-action', intent: {
+      type: 'harvest', resourceId: oak!.id } }])
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).toHaveLength(1)
+    expect((probe.states[1] as string[]).at(-1)).toBe(
+      'That chop did not count: a checked action is pending. Wait for it to finish, then chop again.')
+    rerender()
+    expect(probe.projection!.recentEvents.at(-1)).toContain('That chop did not count')
+    probe.releaseAction!(); await settle()
+    expect((probe.states[1] as string[]).at(-1)).toBe(
+      'Oak chopped once and saved. Chop again to gather 4 logs.')
+    rerender()
+    expect(probe.projection!.recentEvents.at(-1)).toBe(
+      'Oak chopped once and saved. Chop again to gather 4 logs.')
+    probe.holdAction = false
+    probe.actionEvents = [{ type: 'resource_harvested' }, { type: 'skill_xp_gained' }]
+    probe.onIntent!({ type: 'interact' }); await settle()
+    expect(probe.actions).toHaveLength(2)
+    expect((probe.states[1] as string[]).at(-1)).toBe(
+      'Oak felled. Four logs saved to your backpack.')
+    rerender()
+    expect(probe.projection!.recentEvents.at(-1)).toBe('Oak felled. Four logs saved to your backpack.')
   })
 
   it('ignores barefoot pace toggles so newly equipped boots begin at the default run pace', () => {

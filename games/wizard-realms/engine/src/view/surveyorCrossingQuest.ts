@@ -51,8 +51,11 @@ export function surveyorCrossingQuest(view: WizardViewProjection,
   }
   const equipAxe = view.equipment.mainHand?.itemId !== 'woodcutters_axe'
     && view.backpack.stacks.some((stack) => stack.itemId === 'woodcutters_axe' && stack.quantity > 0)
-    ? 'Equip the Woodcutter axe from Backpack before chopping. ' : ''
+    ? 'Equip Woodcutter axe from Backpack. ' : ''
+  const magicCue = view.learnedSpellIds.includes('wayfinder_glow')
+    ? 'cast Glow near fog'
+    : 'study nearby waystone, then cast Glow near fog'
   return logs >= 8
     ? finish('build', 'Find a marked Ready dry-bank bridge site in Greenway. Open Works and build its crossing with 8 logs.', `${actionXp} ${findReward}`)
-    : finish('gather', `${equipAxe}Chop accessible Greenway oaks for ${8 - logs} more ${8 - logs === 1 ? 'log' : 'logs'}. A supported creek bridge costs 8 logs and reaches the surveyor’s post.`, `${actionXp} ${findReward}`)
+    : finish('gather', `${equipAxe}Chop oaks for ${8 - logs} more ${8 - logs === 1 ? 'log' : 'logs'} (${logs}/8) for a creek bridge. Optional: ${magicCue}; bridge still needed.`, `${actionXp} ${findReward}`)
 }

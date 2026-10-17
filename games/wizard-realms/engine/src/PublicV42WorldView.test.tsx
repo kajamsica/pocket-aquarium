@@ -3,13 +3,19 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { mireglassFrontierRoute, mireglassV42FullApproachTrail } from './domain/mireglassApproachTrail'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
+import { highlandRidgeMoveBarrier } from './domain/highlandRidge'
+import { mireglassMoveBarrier } from './domain/mireglassMovementGate'
+import { publicV25RiverTouchesSegment } from './domain/publicWorldV25RiverSweep'
 import { confirmPublicV17GreenwayWork } from './domain/publicWorldV17GreenwayWork'
 import { resolvePublicV17GreenwaySite } from './domain/publicWorldV17GreenwaySites'
 import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
 import { createFreshPublicV42Root } from './domain/publicWorldV42Snapshot'
 import { createFreshPublicWorld } from './domain/publicWorldState'
+import { waystationRiverSite } from './domain/waystationRiverContent'
+import { worldTileAtGrid } from './domain/worldChunks'
 import { publicWorldViewProjection } from './PublicWorldView'
-import { projectPublicV42FrontierRoute, projectPublicV42IronHall } from './PublicV42WorldView'
+import { projectPublicV42CopperleafRoute, projectPublicV42FrontierRoute,
+  projectPublicV42IronHall } from './PublicV42WorldView'
 import type { WizardViewProjection } from './view/contracts'
 import { WizardHud } from './view/WizardHud'
 import { WizardMap } from './view/WizardMap'
@@ -181,5 +187,130 @@ describe('V42-only center bridge route presentation', () => {
       map: { ...input.map, title: 'Mireglass Reach' } })
     expect(west.map.title).toBe('Open Wilderness')
     expect(west.map.tiles[1].hasFrontierTrail).toBe(false)
+  })
+})
+
+const copperleafPoints = (start: { x: number; z: number }) => [
+  ...Array.from({ length: (48 - start.z) / 4 + 1 }, (_, index) =>
+    ({ x: start.x, z: start.z + index * 4 })),
+  ...Array.from({ length: (192 - start.x) / 4 }, (_, index) =>
+    ({ x: start.x + (index + 1) * 4, z: 48 })),
+  ...Array.from({ length: (96 - 48) / 4 }, (_, index) =>
+    ({ x: 192, z: 48 + (index + 1) * 4 })),
+]
+const withDiscovery = (seedName: string, ids: readonly string[]) => {
+  const fresh = root().head
+  const known = [...new Set([...decodeDiscoveredTileIds(fresh.state.discoveryMask), ...ids])].sort()
+  return { ...fresh, state: { ...fresh.state,
+    seed: seedName, discoveryMask: encodeDiscoveredTileIds(known) } }
+}
+
+describe('post-Waystation Copperleaf route presentation', () => {
+  it('marks only saved-discovered dry ground after the canonical bridge and reward', () => {
+    const site = waystationRiverSite(seed)!
+    const points = copperleafPoints(site.exit)
+    const startId = idOf(points[0])
+    const nextId = idOf(points[1])
+    const gladeId = idOf(points[points.length - 1])
+    const base = carrier()
+    const tile = base.map.tiles[0]
+    const input: WizardViewProjection = { ...base, map: { ...base.map,
+      title: 'Open Wilderness', guidance: 'Existing route guidance.',
+      tiles: [{ ...tile, id: startId, discovered: true, hasFrontierTrail: false },
+        { ...tile, id: nextId, discovered: true, hasFrontierTrail: false },
+        { ...tile, id: gladeId, discovered: false, terrain: null, biome: null,
+          hasFrontierTrail: false }],
+      overview: () => ({ player: { gridX: 0, gridZ: 0, yaw: 0 }, cells: [
+        { id: 'chunk-3-1', gridX: 3, gridZ: 1, discoveredCells: 0,
+          terrain: null, biome: null, markers: [] },
+      ] }) } }
+    const known = withDiscovery(seed, [startId])
+    const located = { ...known, state: { ...known.state, movementOwner: 'streamed' as const,
+      player: { ...known.state.player, position: site.exit } } }
+    const beforeCrossing = projectPublicV42FrontierRoute({ ...located,
+      riverBridgeIds: [site.id] }, input)
+    expect(beforeCrossing.map.tiles.every((entry) => !entry.hasFrontierTrail)).toBe(true)
+    expect(beforeCrossing.map.title).toBe('Open Wilderness')
+    expect(beforeCrossing.map.guidance).toBe('Existing route guidance.')
+    const firstTrip = { ...located, southbankReached: true, riverBridgeIds: [site.id] }
+    expect(firstTrip.waystationClaimed).toBe(false)
+    const noBridge = projectPublicV42FrontierRoute({ ...firstTrip, riverBridgeIds: [] }, input)
+    expect(noBridge.map.tiles.every((entry) => !entry.hasFrontierTrail)).toBe(true)
+    const shown = projectPublicV42FrontierRoute(firstTrip, input)
+    expect(shown.map.tiles.map((entry) => entry.hasFrontierTrail)).toEqual([true, false, false])
+    expect(shown.map.title).toBe('Southbank Woods')
+    expect(shown.map.guidance).toContain('follow discovered dry ground')
+    expect(shown.map.guidance).not.toContain('Copperleaf Hollow')
+    expect(shown.map.legend).toContain('southbank trail')
+    expect(shown.map.overview!().cells[0].markers).toEqual([])
+    const gladeFound = { ...firstTrip, state: { ...firstTrip.state,
+      discoveryMask: withDiscovery(seed, [startId, gladeId]).state.discoveryMask } }
+    const discovered = projectPublicV42FrontierRoute(gladeFound, input)
+    expect(discovered.map.tiles.map((entry) => entry.hasFrontierTrail))
+      .toEqual([true, false, false])
+    expect(discovered.map.title).toBe('Copperleaf Hollow')
+    expect(discovered.map.guidance).toContain('saved Windward Waystation river bridge')
+    expect(projectPublicV42FrontierRoute({ ...gladeFound,
+      waystationClaimed: true }, input).map.tiles[0].hasFrontierTrail).toBe(true)
+    const priority = projectPublicV42FrontierRoute(gladeFound, { ...input,
+      map: { ...input.map, guidancePriority: true } })
+    expect(priority.map.guidance).toBe('Existing route guidance.')
+    expect(priority.map.title).toBe('Open Wilderness')
+    const elsewhere = projectPublicV42FrontierRoute({ ...gladeFound,
+      state: { ...gladeFound.state, player: { ...gladeFound.state.player,
+        position: { ...site.exit, x: site.exit.x + 8 } } } }, input)
+    expect(elsewhere.map.title).toBe('Open Wilderness')
+    expect(elsewhere.map.guidance).toBe('Existing route guidance.')
+    const overviewInput: WizardViewProjection = { ...input, map: { ...input.map,
+      overview: () => ({ player: { gridX: 0, gridZ: 0, yaw: 0 }, cells: [
+        { id: 'chunk-3-1', gridX: 3, gridZ: 1, discoveredCells: 1,
+          terrain: 'loam', biome: 'temperate_forest', markers: [] },
+      ] }) } }
+    expect(projectPublicV42FrontierRoute(firstTrip, overviewInput).map.overview!()
+      .cells[0].markers).toEqual([])
+    expect(projectPublicV42FrontierRoute(gladeFound, overviewInput).map.overview!()
+      .cells[0].markers).toEqual(['Copperleaf Hollow'])
+    expect(input.map.tiles.map((entry) => entry.hasFrontierTrail)).toEqual([false, false, false])
+  })
+
+  it('uses only safe cardinal loam cells on representative and shifted-river seeds', () => {
+    const seeds = ['wizard-realms', 'greenway-alpha', 'edge-test', 'v42',
+      'copperleaf-adversarial-10', 'copperleaf-adversarial-24',
+      ...Array.from({ length: 24 }, (_, index) => `copperleaf-adversarial-${index}`)]
+    for (const seedName of new Set(seeds)) {
+      const site = waystationRiverSite(seedName)
+      expect(site, seedName).not.toBeNull()
+      const points = copperleafPoints(site!.exit)
+      expect(points[0]).toEqual({ x: site!.exit.x, z: site!.exit.z })
+      expect(points[points.length - 1]).toEqual({ x: 192, z: 96 })
+      const tiles = points.map((point) => worldTileAtGrid(seedName, point.x / 4, point.z / 4))
+      for (let index = 0; index < tiles.length; index++) {
+        const tile = tiles[index]
+        expect(tile.terrain, seedName).toBe('loam')
+        expect(tile.biome, seedName).toBe('temperate_forest')
+        if (!index) continue
+        const before = tiles[index - 1].center
+        const after = tile.center
+        expect(Math.abs(after.x - before.x) + Math.abs(after.z - before.z), seedName).toBe(4)
+        expect(Math.abs(after.y - before.y), seedName).toBeLessThanOrEqual(0.55)
+        expect(publicV25RiverTouchesSegment(seedName, before, after), seedName).toBe(false)
+        expect(highlandRidgeMoveBarrier(before, after), seedName).toBeNull()
+        expect(mireglassMoveBarrier(seedName, before, after), seedName).toBeNull()
+      }
+      const ids = tiles.map((tile) => tile.id)
+      const fresh = withDiscovery(seedName, ids)
+      const ready = { ...fresh, southbankReached: true,
+        riverBridgeIds: [site!.id], state: { ...fresh.state,
+          movementOwner: 'streamed' as const, player: { ...fresh.state.player,
+            position: site!.exit } } }
+      const base = publicWorldViewProjection(createFreshPublicWorld(seedName,
+        'greenway-classic-v1'), [], null)
+      const mapTiles = tiles.map((tile) => ({ ...base.map.tiles[0], id: tile.id,
+        gridX: tile.gridX, gridZ: tile.gridZ, discovered: true,
+        terrain: tile.terrain, biome: tile.biome, hasFrontierTrail: false }))
+      const shown = projectPublicV42CopperleafRoute(ready, { ...base,
+        map: { ...base.map, tiles: mapTiles } })
+      expect(shown.map.tiles.every((tile) => tile.hasFrontierTrail), seedName).toBe(true)
+    }
   })
 })

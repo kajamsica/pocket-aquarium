@@ -49,7 +49,7 @@ import type { PublicV42EntryBindings } from './PublicV42Entry'
 import { commitPublicV42, requestPublicV42ReturnHome } from './domain/publicWorldV42Flow'
 import type { PublicV42SavePhase, PublicV42Start } from './domain/publicWorldV42Flow'
 import type { PublicV42RewardProgress, PublicV42RewardWitness } from './domain/publicWorldV42RewardAction'
-import { publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
+import { publicV42IronHallQuest, publicV42IronHallRejectionHint } from './view/publicV42IronHallQuest'
 import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
 import type { PublicV43EntryBindings } from './PublicV43Entry'
 import { commitPublicV43, requestPublicV43ReturnHome } from './domain/publicWorldV43Flow'
@@ -60,12 +60,10 @@ import { GREENWAY_LOG_ORDER } from './domain/greenwayProcurementOrder'
 import type { PublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
 import { GREENWAY_BAG_UPGRADE } from './domain/publicWorldV43BagUpgrade'
 import type { PublicV43BagUpgradeWitness } from './domain/publicWorldV43BagUpgrade'
-import { projectPublicV43GreenwayQuestChain, projectPublicV43QuestContinuation }
-  from './domain/publicWorldV43GreenwayQuestChain'
 import type { PublicV43Progress } from './domain/publicWorldV43Snapshot'
 import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint }
   from './view/PublicV43FamiliarQuest'
-import { PublicV43QuestJournal } from './view/PublicV43QuestJournal'
+import { PublicV43QuestJournal, selectPublicV43QuestLead } from './view/PublicV43QuestJournal'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -1925,6 +1923,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : 'type' in intent && intent.type === 'cast_spell'
               && intent.spellId === 'wayfinder_glow'
               ? publicV23WayfinderGlowSavedMessage(result.events) ?? 'Wayfinder Glow saved.'
+            : result.events.some((event) => event.type === 'resource_damaged')
+              ? 'Oak chopped once and saved. Chop again to gather 4 logs.'
+            : result.events.some((event) => event.type === 'resource_harvested')
+              ? 'Oak felled. Four logs saved to your backpack.'
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
         } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
@@ -1990,7 +1992,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     sampleTimedUntil(performance.now())
     if (inputQueue.current.some((token) => token.kind === 'checked')) {
       trace?.record('controller.checked', { admitted: false })
-      tell('A checked action is already queued; retry after it finishes.'); return
+      tell('type' in intent && intent.type === 'harvest'
+        ? 'That chop did not count: a checked action is pending. Wait for it to finish, then chop again.'
+        : 'A checked action is already queued; retry after it finishes.'); return
     }
     devRoute.current = null
     trace?.record('controller.checked', { admitted: true, queued: inputQueue.current.length })
@@ -2643,19 +2647,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   }
   const greenwayBagClaimed = v43
     && (snapshot as PublicV43Progress).greenwayBagUpgrade?.claimedAtSequence != null
-  const questCue = v43 ? (() => {
-    const head = snapshot as PublicV43Progress
-    const starter = projectPublicV43GreenwayQuestChain(head).find((quest) =>
-      quest.status === 'active' && quest.id !== 'carpenter-order/v1')
-    if (starter) return { title: starter.title, objective: starter.objective }
-    if (ledgerQuest && ledgerQuest.stage !== 'complete') return {
-      title: 'Outfitters Ledger', objective: ledgerQuest.objective }
-    const later = projectPublicV43QuestContinuation(head)
-    if (later.familiar.stage !== 'mount-ready') return { title: 'Lost Familiar',
-      objective: later.familiar.objective }
-    return { title: 'Route recorded',
-      objective: 'Open the journal for completed leads and the optional carpenter order.' }
-  })() : null
+  const questLeads = v43 ? { head: snapshot as PublicV43Progress, ledgerQuest: ledgerQuest!,
+    waystationQuest: view.v40WaystationQuest, ironHallQuest: publicV42IronHallQuest(view) } : null
+  const questCue = questLeads && selectPublicV43QuestLead(questLeads)
   const savedNotice = messages.at(-1) === `V${saveVersion} progress saved on this device.`
   const MireglassActionsPanel = v36 ? 'details' : 'aside'
   return <main data-public-v23="true" data-public-version={`v${saveVersion}`}
@@ -2797,11 +2791,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </section></> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary><span>Quest Journal · {questCue!.title === 'Route recorded'
-        ? questCue!.title : `Next: ${questCue!.title}`}</span>
-        <small>{questCue!.objective}</small></summary>
-      {familiarOpen && <><PublicV43QuestJournal head={snapshot as PublicV43Progress}
-        ledgerQuest={ledgerQuest!} />
+      <summary><span>Quest Journal · {questCue ? `Next: ${questCue.title}` : 'Route recorded'}</span>
+        <small>{questCue?.objective
+          ?? 'Open the journal for completed leads and the optional carpenter order.'}</small></summary>
+      {familiarOpen && <><PublicV43QuestJournal {...questLeads!} />
         <PublicV43FamiliarQuestPanel
           head={snapshot as PublicV43Progress}
           actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked}
