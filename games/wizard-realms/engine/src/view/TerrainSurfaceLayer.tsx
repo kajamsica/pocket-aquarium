@@ -20,6 +20,15 @@ const DIRECTIONS = [
 ] as const
 const FAN = [2, 1, 8, 7, 6, 5, 4, 3] as const
 const key = (x: number, z: number) => `${x}:${z}`
+const atWorldFace = (cell: WizardTerrainCell, dx: number, dz: number) => {
+  const [x, , z] = cell.position
+  const gx = x / WORLD_CELL_METERS, gz = z / WORLD_CELL_METERS
+  return cell.size[0] === WORLD_CELL_METERS && cell.size[1] === WORLD_CELL_METERS
+    && Number.isInteger(gx) && Number.isInteger(gz)
+    && cell.id === `tile-${gx + 3}-${gz + 3}`
+    && (dx < 0 && gx === WORLD_GRID_MIN || dx > 0 && gx === WORLD_GRID_MAX
+      || dz < 0 && gz === WORLD_GRID_MIN || dz > 0 && gz === WORLD_GRID_MAX)
+}
 const TOP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 })
 const FASCIA_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97 })
 const DISCOVERY_EDGE_MATERIAL = new THREE.MeshBasicMaterial({ vertexColors: true,
@@ -160,7 +169,7 @@ export function createTerrainSurfaceSampler(seed: string, allCells: readonly Wiz
   return { appearance, neighbor, linked, pointsFor, presentationTargetYAt }
 }
 
-/** One continuous, shaded top; only cliffs, fen banks and the visible perimeter have side faces. */
+/** One continuous, shaded top; only physical cliffs, banks and world faces get fascia. */
 export function buildTerrainSurfaceGeometry(seed: string, cells: readonly WizardTerrainCell[],
   allCells: readonly WizardTerrainCell[], appearanceFor: (cell: WizardTerrainCell) => Appearance,
   v26RimSegments?: readonly PublicV26ValleyRimSegment[],
@@ -233,6 +242,8 @@ export function buildTerrainSurfaceGeometry(seed: string, cells: readonly Wizard
       // Discovery concealment is not a cliff. The neighbor is still part of the
       // continuous world even when its top is temporarily hidden by fog.
       if (next && !nextVisible) continue
+      // A missing neighbor at the bounded render window is not the end of the world.
+      if (!next && !atWorldFace(cell, dx, dz)) continue
       if (nextVisible && linked(cell, next)) continue
       if (nextVisible && cell.position[1] <= next.position[1]) continue
       const lower = nextVisible ? pointsFor(next) : null

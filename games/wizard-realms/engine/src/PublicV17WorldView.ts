@@ -10,11 +10,12 @@ import type { PublicV17Progress } from './domain/publicWorldV17Validation'
 import { decodePublicV17ViewProgress } from './domain/publicWorldV17Validation'
 import type { TerrainWorkSite } from './domain/terrainWorks'
 import type { Vec3 } from './domain/types'
-import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS } from './domain/worldChunks'
+import { WORLD_CELL_METERS, WORLD_CHUNK_CELLS, WORLD_GRID_MAX,
+  WORLD_GRID_MIN } from './domain/worldChunks'
 import { publicWorldV15SuppressedStarterResourceIds } from './domain/publicWorldV15StarterSites'
 import { highlandTerrainFor } from './PublicV11WorldView'
 import { publicWorldV14ViewProjection } from './PublicV14WorldView'
-import type { WizardViewProjection } from './view/contracts'
+import type { WizardTerrainCell, WizardViewProjection } from './view/contracts'
 import { visibleTerrainCells, PUBLIC_VISUAL_RADIUS_CELLS } from './view/visibleTerrain'
 
 export type PublicV17ActiveView = Readonly<{
@@ -44,6 +45,32 @@ const colors = { loam: '#56824b', wetland: '#466f62', rocky: '#7b765e', snow: '#
 type StructureSite = Extract<PublicV17GreenwaySite, { kind: 'bridge' | 'ladder' }>
 const candidateCache = new Map<string, readonly StructureSite[]>()
 let cachedDigSites: { key: string; sites: readonly PublicV17GreenwaySite[] } | null = null
+const GREENWAY_HALO_RADIUS_CELLS = 11
+let cachedVisualHalo: { key: string; cells: readonly WizardTerrainCell[] } | null = null
+let cachedDugHalo: { base: readonly WizardTerrainCell[]; key: string;
+  cells: readonly WizardTerrainCell[] } | null = null
+
+/** Canonical scene-only ground extends past the 16×16 starter owner before the fog ends. */
+function greenwayVisualHalo(seed: string, position: Vec3): readonly WizardTerrainCell[] {
+  const side = GREENWAY_HALO_RADIUS_CELLS * 2 + 1
+  const startX = Math.max(WORLD_GRID_MIN, Math.min(grid(position.x) - GREENWAY_HALO_RADIUS_CELLS,
+    WORLD_GRID_MAX - side + 1))
+  const startZ = Math.max(WORLD_GRID_MIN, Math.min(grid(position.z) - GREENWAY_HALO_RADIUS_CELLS,
+    WORLD_GRID_MAX - side + 1))
+  const key = `${seed}:${startX}:${startZ}`
+  if (cachedVisualHalo?.key === key) return cachedVisualHalo.cells
+  const cells: WizardTerrainCell[] = []
+  for (let gz = startZ; gz < startZ + side; gz += 1) {
+    for (let gx = startX; gx < startX + side; gx += 1) {
+      const tile = publicWorldV16TileAtGrid(seed, gx, gz)
+      cells.push({ id: tile.id, position: point(tile.center),
+        size: [WORLD_CELL_METERS, WORLD_CELL_METERS], height: 0.7 + tile.center.y,
+        climate: tile.biome, color: colors[tile.terrain] })
+    }
+  }
+  cachedVisualHalo = { key, cells: highlandTerrainFor(cells, seed) }
+  return cachedVisualHalo.cells
+}
 
 /** Choose separated canonical works4 positions once per seed, never from a UI-invented point. */
 function canonicalCandidates(seed: string): readonly StructureSite[] {
@@ -188,6 +215,18 @@ export function publicWorldV17ViewProjection(progress: PublicV17Progress,
   }), state.seed)
   const terrain = visibleTerrainCells(cells, point(state.player.position), PUBLIC_VISUAL_RADIUS_CELLS)
   const visible = new Set(terrain.map((cell) => cell.id))
+  const halo = greenwayVisualHalo(state.seed, state.player.position)
+  const dugKey = greenwayWorks.dugTileIds.join('|')
+  if (dug.size && (cachedDugHalo?.base !== halo || cachedDugHalo.key !== dugKey)) {
+    cachedDugHalo = { base: halo, key: dugKey, cells: halo.map((cell) => {
+      const lowered = dug.get(cell.id)?.loweredCenter.y
+      return lowered === undefined ? cell : { ...cell,
+        position: [cell.position[0], lowered, cell.position[2]] as const,
+        height: 0.7 + lowered }
+    }) }
+  }
+  const visualTerrain = dug.size ? cachedDugHalo!.cells : halo
+  const visualVisible = new Set(visualTerrain.map((cell) => cell.id))
   const inscriptions = state.greenway.inscriptions.filter((inscription) =>
     inscription.id === 'greenway_waystone' && known.has(tileAt(inscription.position)))
     .map((inscription) => ({ id: inscription.id, name: inscription.name,
@@ -357,10 +396,10 @@ export function publicWorldV17ViewProjection(progress: PublicV17Progress,
       modeActive: workPreview?.modeActive === true,
       selectedKind: workPreview?.kind ?? 'bridge',
       aimX: workPreview?.aimX ?? null, preview },
-    visualWorld: { ...base.visualWorld!, terrain, resources,
+    visualWorld: { ...base.visualWorld!, terrain: visualTerrain, resources,
       inscriptions: inscriptions.filter((inscription) => visible.has(tileAt({
         x: inscription.position[0], z: inscription.position[2] }))),
-      discoveredTileIds: [...known].filter((id) => visible.has(id)) },
+      discoveredTileIds: [...known].filter((id) => visualVisible.has(id)) },
     map: { ...base.map, tiles: mapTiles,
       legend: '▲ you · W waystone · ◇ discovered bridge/ladder candidate · ✓ built route · ⌄ dig patch · S Outfitters · • oak · ? unexplored',
       guidance: guidance(checked) } }

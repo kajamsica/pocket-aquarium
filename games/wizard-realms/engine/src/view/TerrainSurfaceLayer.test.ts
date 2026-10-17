@@ -243,12 +243,22 @@ describe('continuous terrain surface', () => {
       expect(normals[axis](4)).toBeCloseTo(normals[axis](17))
     }
     expect(hasFaceAt(sides, 'x', 2)).toBe(false)
-    expect(matchingHeights(sides, -2, 0).some((height) => Math.abs(height + 0.72) < 0.00001)).toBe(true)
+    expect(hasFaceAt(sides, 'x', -2)).toBe(false) // Bounded scene edge, not world edge.
     const first = surface([tiles[0]], tiles)
     expect(matchingHeights(first.top, 2, 0)[0]).toBeCloseTo(matchingHeights(top, 2, 0)[0])
     expect(hasFaceAt(first.sides, 'x', 2)).toBe(false) // A hidden adjacent tile is fog, not a cliff.
     first.top.dispose(); first.sides.dispose()
     top.dispose(); sides.dispose()
+  })
+
+  it('closes only a genuine canonical world face, not a dry render cutoff', () => {
+    const cutoff = surface([cell(32, 1, 0)])
+    expect(hasFaceAt(cutoff.sides, 'x', 34)).toBe(false)
+    const westernEdge = { ...cell(-1024, 1, 0), id: 'tile--253-3' }
+    const world = surface([westernEdge])
+    expect(hasFaceAt(world.sides, 'x', -1026)).toBe(true)
+    cutoff.top.dispose(); cutoff.sides.dispose()
+    world.top.dispose(); world.sides.dispose()
   })
 
   it('gives pale terrain broad color mass while keeping neighboring seams identical', () => {

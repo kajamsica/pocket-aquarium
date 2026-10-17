@@ -9,6 +9,7 @@ import { placementId, resolvePublicV17GreenwaySite } from './domain/publicWorldV
 import { createPublicV17ContinuousSession } from './domain/publicWorldV17ContinuousSession'
 import { createFreshPublicV17Head, encodePublicV17Head } from './domain/publicWorldV17Snapshot'
 import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
+import { resolvePublicV14Surface } from './domain/publicWorldV14Terrain'
 import type { PublicV17Progress } from './domain/publicWorldV17Validation'
 import { decodePublicV17Progress } from './domain/publicWorldV17Validation'
 import { publicWorldV17ViewProjection } from './PublicV17WorldView'
@@ -99,6 +100,10 @@ describe('v17 Greenway aimed Works view', () => {
       ?.hasBuiltRoute).toBe(true)
     expect(views.dug.map.tiles.find((tile) => tile.id === dig.footprintTileIds[0])
       ?.elevationMeters).toBe(dig.loweredCenter.y)
+    expect(views.dug.visualWorld?.terrain.find((tile) => tile.id === dig.footprintTileIds[0])
+      ?.position[1]).toBe(dig.loweredCenter.y)
+    expect(project(dug, 'dig', null, false).visualWorld?.terrain)
+      .toBe(views.dug.visualWorld?.terrain)
     const digest = (view: WizardViewProjection) => {
       const json = JSON.stringify(view)
       let hash = 0xcbf29ce484222325n
@@ -108,14 +113,39 @@ describe('v17 Greenway aimed Works view', () => {
       }
       return `${json.length}:${hash.toString(16)}`
     }
-    // Complete pre-index V17 projection content, verified unchanged after indexing.
+    // Complete V17 projection content, including the canonical visual-only halo.
     expect(Object.fromEntries(Object.entries(views).map(([name, view]) =>
       [name, digest(view)]))).toEqual({
-      fresh: '133419:96e61d9869940ad9',
-      partial: '133416:f277e626507d9a3c',
-      built: '133861:2099291ccf97c536',
-      dug: '133739:19b01746a443ebe8',
+      fresh: '171344:16a0c70436d2fbfe',
+      partial: '171341:1dfe0ce29fe6e209',
+      built: '171786:17cc5013720080c5',
+      dug: '171664:1a17e1fe38e6fe3b',
     })
+  })
+
+  it('keeps seeded ground continuous past the starter presentation seam without extending authority', () => {
+    const start = fresh()
+    const before = project(start, 'bridge', null, false)
+    const seamTile = publicWorldV16TileAtGrid(seed, 9, 0)
+    const shown = before.visualWorld!.terrain.find((cell) => cell.id === seamTile.id)
+    expect(before.terrain.some((cell) => cell.id === seamTile.id)).toBe(false)
+    expect(shown).toMatchObject({ position: [seamTile.center.x, seamTile.center.y,
+      seamTile.center.z], climate: seamTile.biome })
+    expect(shown?.position[1]).toBe(resolvePublicV14Surface(start.state,
+      seamTile.center)?.terrainY)
+    expect(before.visualWorld!.discoveredTileIds).not.toContain(seamTile.id)
+    expect(before.visualWorld!.terrain).toHaveLength(23 * 23)
+
+    const walked = at(start, 32, 0)
+    const nearEdge = project(walked, 'bridge', null, false)
+    expect(nearEdge.visualWorld!.terrain.some((cell) => cell.id === seamTile.id)).toBe(true)
+    expect(nearEdge.visualWorld!.terrain).toHaveLength(23 * 23)
+    expect(project(start, 'bridge', null, false).visualWorld!.terrain).toEqual(before.visualWorld!.terrain)
+
+    const revealed = reveal(walked, [seamTile.id])
+    const resumed = structuredClone(revealed)
+    expect(project(resumed, 'bridge', null, false).visualWorld!.discoveredTileIds)
+      .toContain(seamTile.id)
   })
 
   it('keeps cached dig geometry separate from the live projected site and discovery', () => {
@@ -269,7 +299,7 @@ describe('v17 Greenway aimed Works view', () => {
     expect(decodePublicV17Progress(session.previewSnapshot(), seed)).not.toBeNull()
   })
 
-  it('puts the route key before the grid and reveals exact work positions only after discovery', () => {
+  it('keeps the route key after the expanded grid and reveals exact work positions only after discovery', () => {
     const markup = (progress: PublicV17Progress, kind: 'bridge' | 'ladder' | 'dig', aimX: number | null,
       modeActive = true) =>
       renderToStaticMarkup(createElement(WizardMap, {
@@ -282,7 +312,10 @@ describe('v17 Greenway aimed Works view', () => {
       key(html).match(new RegExp(`<li><b>${name}</b>.*?<small>(.*?)</small>`))?.[1] ?? ''
     const freshMap = markup(fresh(), 'bridge', 0)
     expect(freshMap.indexOf('aria-label="Greenway route key"')).toBeLessThan(freshMap.indexOf('class="wr-map-work-guide"'))
-    expect(freshMap.indexOf('aria-label="Greenway route key"')).toBeLessThan(freshMap.indexOf('class="wr-map-grid"'))
+    const localMapStart = freshMap.indexOf('class="wr-map-local"')
+    const expandedGrid = freshMap.indexOf('class="wr-map-grid"', localMapStart)
+    expect(expandedGrid).toBeGreaterThan(localMapStart)
+    expect(expandedGrid).toBeLessThan(freshMap.indexOf('aria-label="Greenway route key"'))
     expect(key(freshMap)).toContain('South creek · Bridge')
     expect(key(freshMap)).toContain('North cliff · Ladder')
     expect(key(freshMap)).toContain('Dry loam · Dig')
