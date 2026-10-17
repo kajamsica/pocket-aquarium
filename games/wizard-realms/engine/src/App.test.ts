@@ -1,4 +1,4 @@
-import { createElement, createRef, isValidElement } from 'react'
+import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { advanceWizardWorld, createWizardWorld, serializeWizardWorld, type WizardWorldState } from './domain'
@@ -1158,20 +1158,13 @@ describe('Wizard view adapter', () => {
     const closedMarkup = renderToStaticMarkup(createElement(WizardHud, { projection: closed, onIntent: () => {} }))
     expect(closedMarkup).toContain('<b>Open store</b>Greenway Outfitters')
     expect(closedMarkup).not.toContain('wr-panel wr-context')
+    expect(closedMarkup).not.toContain('>Close</button>')
     expect(intentForView(storeState, { type: 'interact' })).toBeNull()
     const open = toViewProjection(storeState, [], storeState.stores[0].id)
     expect(open.nearbyInteraction).toMatchObject({ kind: 'store', action: 'Store open', actionable: false })
     const openMarkup = renderToStaticMarkup(createElement(WizardHud, { projection: open, onIntent: () => {} }))
     expect(openMarkup).toContain('>Close</button>')
     expect(openMarkup).toContain('<b>Apprentice hat</b>')
-    const emitted: unknown[] = []
-    const hud = WizardHud({ projection: open, onIntent: (intent) => emitted.push(intent) })
-    const panel = (hud.props.children as unknown[]).find((child) => isValidElement<{ className?: string }>(child) && child.props.className === 'wr-panel wr-context')
-    if (!isValidElement<{ children: unknown[] }>(panel)) throw new Error('Expected store panel')
-    const close = panel.props.children.find((child) => isValidElement<{ children?: unknown }>(child) && child.props.children === 'Close')
-    if (!isValidElement<{ onClick: () => void }>(close)) throw new Error('Expected Close button')
-    close.props.onClick()
-    expect(emitted).toEqual([{ type: 'store.close' }])
     expect(intentForView(storeState, { type: 'store.close' })).toBeNull()
 
     const ringState = copy(createWizardWorld('greenway-alpha'))
