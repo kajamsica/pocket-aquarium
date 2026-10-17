@@ -357,6 +357,10 @@ const STYLES = `
 @media(max-width:719px) and (min-height:401px) and (max-height:599px){.wr-surface .wr-context[data-field-camp-panel]{left:8px;top:208px;bottom:auto;transform:none;box-sizing:border-box;width:min(280px,calc(100% - 108px));max-height:calc(100% - 350px);overflow-y:auto;overscroll-behavior:contain;padding:8px;font-size:12px}.wr-surface .wr-context[data-field-camp-panel] header{margin-bottom:5px}}
 .wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain,.wr-surface:has(.wr-context[data-store-panel]) .wr-v26-terrain{display:none}
 .wr-v26-terrain[data-v29="true"] .wr-v26-terrain-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.wr-terrain-inline-hint{display:none}
+.wr-terrain-hover-hint{position:absolute;left:50%;top:142px;transform:translateX(-50%);box-sizing:border-box;max-width:min(420px,calc(100% - 24px));padding:5px 9px;border-radius:7px;background:#102622e8;color:#d3e7e7;font-size:11px;text-align:center;pointer-events:none}
+@media(min-width:720px) and (max-width:1199px){.wr-terrain-hover-hint{left:280px;top:136px;width:calc(100% - 560px);max-width:none;transform:none;font-size:10px;line-height:1.2}}
+@media(max-width:719px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block;color:#d3e7e7!important}}
 .wr-keyboard-terrain-aim{position:absolute;z-index:1;left:38%;top:62%;display:grid;place-items:center;width:26px;height:26px;transform:translate(-50%,-50%);border:2px solid #ffe395;border-radius:50%;background:#101a1788;color:#fff;font:bold 20px/1 system-ui;pointer-events:none;text-shadow:0 1px 3px #000}.wr-scene:hover .wr-keyboard-terrain-aim{display:none}
 @media(max-width:719px){.wr-keyboard-terrain-aim{left:72%}}
 .wr-keybinds{margin-top:7px;font-size:12px}.wr-keybinds summary{cursor:pointer;color:#f5d889}.wr-keybinds>div{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.wr-keybinds button{min-height:36px}.wr-keybinds summary:focus-visible,.wr-keybinds button:focus-visible{outline:3px solid #ffe395;outline-offset:2px}
@@ -391,6 +395,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const [dragging, setDragging] = useState(false)
   const [terrainMode, setTerrainMode] = useState<V31TerrainMode | null>(activePick ? 'mine' : spadeEquipped ? 'dig' : null)
   const [terrainTapHint, setTerrainTapHint] = useState<string | null>(null)
+  const [terrainHoverFeedback, setTerrainHoverFeedback] = useState<string | null>(null)
   const [devNavHint, setDevNavHint] = useState<string | null>(null)
   const cameraOrbit = useRef<readonly [number, number]>(CENTERED_CAMERA_ORBIT)
   const [mapOpen, setMapOpen] = useState(false)
@@ -713,6 +718,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           && <span className="wr-keyboard-terrain-aim" aria-hidden="true">+</span>}
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
           terrainMode={terrainMode} inputTrace={inputTrace} saveInProgress={saveInProgress}
+          onTerrainHoverFeedback={setTerrainHoverFeedback}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
           onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
           onGroundPickerReady={(picker) => { groundPicker.current = picker }} />
@@ -738,7 +744,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
             ? 'No carried soil. Dig safe dry ground first.'
             : `Carried soil: ${projection.v31Soil.soilAvailable}. Hover for a ground outline, then tap a revealed dry top to request one 0.4 m lift. The checked action decides reach and clearance.`)
           : projection.v29Mining && terrainMode === 'mine' && activePick
-          ? terrainTapHint ?? `Active ${activePick} pick. Tap or click clear ground within 5 m; an outline shows the target when available. The checked action reports its layer, reach, skill, tool, and capacity result. Not every cell holds ore.`
+          ? terrainTapHint ?? `Active ${activePick} pick. Grey rocks are scenery, not mineable nodes. Wet or river cells cannot be excavated. Tap or click clear ground within 5 m; an outline shows the target when available. The checked action reports its layer, reach, skill, tool, and capacity result. Not every cell holds ore.`
           : projection.equipment?.mainHand?.itemId !== 'field_spade'
           ? terrainTapHint ?? 'Equip a field spade to work the ground.'
           : projection.controllerActionsEnabled !== true
@@ -750,6 +756,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
               : terrainMode === 'dig' ? 'Tap revealed dry ground to dig one layer.'
               : terrainMode === 'fill' ? 'Tap an open pit to fill one layer with earned soil.'
                 : 'Choose Dig or Fill, then tap clear ground. Drag to look around.')}</p>
+        {terrainMode === 'mine' && terrainHoverFeedback && <p className="wr-terrain-inline-hint" role="status">
+          {terrainHoverFeedback}</p>}
         {(spadeEquipped || activePick) && terrainMode && <p>{actionKeyLabel(actionKeys.dig)} aims at the mouse over the world. Move the mouse onto this panel to aim at +; turn or step to line up the ring. Click ground for an exact cell.</p>}
         <details className="wr-keybinds" ref={keybindDetailsRef}
           onToggle={(event) => { if (!event.currentTarget.open) setBindingAction(null) }}>

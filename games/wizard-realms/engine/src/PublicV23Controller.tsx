@@ -943,6 +943,8 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v23-save{position:fixed;z-index:21;top:8px;right:12px;max-width:220px;box-sizing:border-box;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v23-save button{min-height:44px}
 [data-public-v23] .v23-save p{margin:4px 0 0}
+[data-public-v23] .v23-input-trace{box-sizing:border-box;max-width:min(640px,calc(100vw - 260px));overflow-wrap:anywhere}
+@media(max-width:719px){[data-public-v23] .v23-input-trace{max-width:calc(100vw - 200px)}}
 [data-public-v23] .v24-actions{position:fixed;z-index:21;right:12px;bottom:96px;box-sizing:border-box;width:min(300px,calc(100vw - 24px));max-height:45vh;overflow:auto;padding:10px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v24-actions button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
 :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
@@ -2815,8 +2817,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           {choice.label}{choice.actionable ? '' : `: ${choice.disabledReason ?? 'Unavailable'}`}
         </button>)}
       </MireglassActionsPanel> : null}
-    {trace && <details style={{ position: 'fixed', bottom: 8, left: 8, zIndex: 100,
-      background: '#101a17', color: '#fff', maxWidth: 'min(640px, 95vw)', padding: 8 }}
+    {trace && <details className="v23-input-trace" style={{ position: 'fixed', bottom: 8, left: 8, zIndex: 100,
+      background: '#101a17', color: '#fff', padding: 8 }}
       onToggle={(event) => { if (event.currentTarget.open) setTraceJson(trace.json()) }}>
       <summary>Input trace (local diagnostics)</summary>
       <button type="button" onClick={() => setTraceJson(trace.json())}>Refresh trace</button>

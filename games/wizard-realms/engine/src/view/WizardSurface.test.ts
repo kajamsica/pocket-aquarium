@@ -234,7 +234,14 @@ describe('V29-only mining controls', () => {
       v26ValleyRimSegments: [], openStoreId: null, controllerActionsEnabled: true }
     const pickPanel = renderToStaticMarkup(createElement(WizardSurface,
       { projection: pickView, onIntent: vi.fn() }))
+    expect(pickPanel).toContain('Grey rocks are scenery, not mineable nodes.')
+    expect(pickPanel).toContain('Wet or river cells cannot be excavated.')
     expect(pickPanel).toContain('Tap or click clear ground within 5 m; an outline shows the target when available.')
+    expect(pickPanel).toContain('G aims at the mouse over the world.')
+    expect(pickPanel).toContain('Click ground for an exact cell.')
+    expect(pickPanel).toContain('.wr-terrain-hover-hint{position:absolute;left:50%;top:142px')
+    expect(pickPanel).toContain('@media(min-width:720px) and (max-width:1199px){.wr-terrain-hover-hint{left:280px;top:136px;width:calc(100% - 560px)')
+    expect(pickPanel).toContain('@media(max-width:719px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block')
     expect(pickPanel).toContain('The checked action reports its layer, reach, skill, tool, and capacity result.')
     expect(V29_NO_GROUND_TARGET_HINT).toContain('No ground cell in reach targeted.')
     expect(V29_NO_GROUND_TARGET_HINT).toContain('within 5 m')

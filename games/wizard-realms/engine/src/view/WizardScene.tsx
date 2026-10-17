@@ -2156,6 +2156,13 @@ export function sceneTerrainTargetHint(projection: WizardViewProjection,
     : 'Dig candidate. Tap to check this dry cell.'
 }
 
+export function sceneTerrainHoverFeedback(mode: 'dig' | 'fill' | 'mine' | 'place-soil' | null | undefined,
+  candidate: string | null, target: WizardTerrainCell | null, hovering: boolean): string | null {
+  if (!hovering || !candidate) return null
+  return target ? candidate : mode === 'mine'
+    ? 'Rocks are scenery; wet ground is blocked. Mine dry ground within 5 m.' : null
+}
+
 /** A neutral view hint, not a terrain-action authorization. The writer checks every tap. */
 export function v26TargetedTerrainCell(projection: WizardViewProjection,
   revealed: readonly WizardTerrainCell[], picked: V26PickedTerrainColumn | null): WizardTerrainCell | null {
@@ -2283,7 +2290,7 @@ function SaveFrameLoopResume({ saveInProgress, frameloop, inputTrace }: {
 }
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
-  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, inputTrace,
+  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onTerrainHoverFeedback, inputTrace,
   saveInProgress = false }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
@@ -2292,6 +2299,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady?: (picker: SceneWorkAimPicker) => void
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
+  onTerrainHoverFeedback?: (feedback: string | null) => void
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
 }) {
@@ -2335,19 +2343,25 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   useLayoutEffect(() => { openPitColumnsRef.current = projection.v26OpenPitColumns }, [projection.v26OpenPitColumns])
   const [hoverSurface, setHoverSurface] = useState<{ canvas: HTMLCanvasElement; picker: SceneTerrainPicker } | null>(null)
   const [hoveredTerrain, setHoveredTerrain] = useState<V26PickedTerrainColumn | null>(null)
+  const [hoveringTerrainCanvas, setHoveringTerrainCanvas] = useState(false)
   const terrainTargetHint = sceneTerrainTargetHint(projection, terrainMode)
   const v26HoverEnabled = terrainTargetHint !== null
   const hoverPickKind = sceneTerrainPickKind(projection, terrainMode)
   useEffect(() => {
-    if (!hoverSurface || !v26HoverEnabled) { setHoveredTerrain(null); return }
+    if (!hoverSurface || !v26HoverEnabled) {
+      setHoveredTerrain(null)
+      setHoveringTerrainCanvas(false)
+      return
+    }
     const { canvas, picker } = hoverSurface
     const update = (event: PointerEvent) => {
       if (event.type === 'pointermove' && event.buttons !== 0) return
+      setHoveringTerrainCanvas(true)
       const next = picker(event.clientX, event.clientY, hoverPickKind)
       setHoveredTerrain((previous) => previous?.gx === next?.gx && previous?.gz === next?.gz
         ? previous : next)
     }
-    const clear = () => setHoveredTerrain(null)
+    const clear = () => { setHoveredTerrain(null); setHoveringTerrainCanvas(false) }
     canvas.addEventListener('pointermove', update)
     canvas.addEventListener('pointerdown', update)
     canvas.addEventListener('pointerleave', clear)
@@ -2361,6 +2375,10 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   }, [hoverSurface, v26HoverEnabled, hoverPickKind])
   const targetedTerrain = terrainTargetHint
     ? v26TargetedTerrainCell(projection, revealedTerrain, hoveredTerrain) : null
+  const terrainHoverFeedback = sceneTerrainHoverFeedback(terrainMode,
+    terrainTargetHint, targetedTerrain, hoveringTerrainCanvas)
+  useEffect(() => { onTerrainHoverFeedback?.(terrainHoverFeedback) },
+    [onTerrainHoverFeedback, terrainHoverFeedback])
   const terrainRevision = terrainSignature(visualTerrain)
   const v27SurfaceReady = projection.v27WalkableSurface === true
     && Boolean(projection.v26ValleyRimSegments?.length)
@@ -2583,10 +2601,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
           (projection.v42IronHall?.vestDurability ?? 0) > 0}
         windwardActive={(projection.windwardStep?.activeSeconds ?? 0) > 0} />
     </Canvas>
-    {targetedTerrain && <div role="status" style={{ position: 'absolute', left: '50%', top: 84,
-      transform: 'translateX(-50%)', padding: '5px 9px', borderRadius: 7,
-      background: '#102622d9', color: '#d3e7e7', fontSize: 11, pointerEvents: 'none',
-      whiteSpace: 'nowrap' }}>{terrainTargetHint}</div>}
+    {terrainHoverFeedback && <div className="wr-terrain-hover-hint" role="status">
+      {terrainHoverFeedback}</div>}
     {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 232,
       display: 'flex', alignItems: 'center', gap: 6, padding: '5px 7px', borderRadius: 7,
       background: '#102622d9', color: '#d3e7e7', font: '12px system-ui, sans-serif' }}

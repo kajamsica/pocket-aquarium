@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainPickKind, sceneTerrainTargetHint, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -227,6 +227,24 @@ describe('V26 scene discovery gate', () => {
     expect(sceneTerrainTargetHint({ ...spade, controllerActionsEnabled: false }, 'dig')).toBeNull()
     expect(sceneTerrainTargetHint({ ...spade, unavailableActions: true }, 'dig')).toBeNull()
     expect(sceneTerrainTargetHint({ ...spade, v26ValleyRimSegments: undefined }, 'dig')).toBeNull()
+  })
+  it('explains a rock or empty Mine hover without pretending it is a checked ground cell', () => {
+    const pick = { equipment: equipment(), v26ValleyRimSegments: [],
+      controllerActionsEnabled: true, openStoreId: null,
+      v29Mining: { tools: { activePick: 'basic' } } } as unknown as WizardViewProjection
+    const candidate = sceneTerrainTargetHint(pick, 'mine')
+    const ground: WizardTerrainCell = { id: 'tile-3-3', position: [0, 1, 0], size: [4, 4],
+      height: 1, climate: 'temperate_forest' }
+    const missing = sceneTerrainHoverFeedback('mine', candidate, null, true)
+    expect(missing).toContain('Rocks are scenery')
+    expect(missing).toContain('wet ground is blocked')
+    expect(missing).toContain('Mine dry ground within 5 m.')
+    expect(sceneTerrainHoverFeedback('mine', candidate, ground, true)).toBe(candidate)
+    expect(sceneTerrainHoverFeedback('mine', candidate, null, false)).toBeNull()
+    expect(sceneTerrainHoverFeedback('mine', sceneTerrainTargetHint(pick, null), null, true)).toBeNull()
+    expect(sceneTerrainHoverFeedback('mine', sceneTerrainTargetHint({ ...pick,
+      v29Mining: { tools: { activePick: null } } } as unknown as WizardViewProjection, 'mine'),
+    null, true)).toBeNull()
   })
   it('highlights only a nearby revealed dry canonical spade target, without claiming authorization', () => {
     const ground: WizardTerrainCell = { id: 'tile-3-3', position: [0, 1, 0], size: [4, 4],

@@ -1514,6 +1514,8 @@ describe('V23 controller input admission', () => {
   it('exposes local opt-in trace records for intent, save-time sample, and frame drain', async () => {
     probe.pending = 96; const markup = mount(true); probe.tick!()
     expect(markup).toContain('Input trace (local diagnostics)')
+    expect(markup).toContain('class="v23-input-trace"')
+    expect(markup).toContain('max-width:min(640px,calc(100vw - 260px))')
     expect(probe.trace).not.toBeNull()
     const keys = new Set<string>()
     for (const intent of keyboardMovementIntents(keys, 'KeyD', true, 1)) probe.onIntent!(intent)

@@ -57,6 +57,8 @@ describe('V26 click-to-column terrain picker', () => {
     surface(scene)
     const blocker = surface(scene, 'Rock', 1)
     expect(pick(scene, cameraAt(0, 0), [cell(0, 0)])).toBeNull()
+    expect(pickV26TerrainColumn(scene, cameraAt(0, 0), bounds, 200, 100,
+      [cell(0, 0)], 'v29-open-pit')).toBeNull()
     blocker.name = 'Greenway creek water'
     expect(pick(scene, cameraAt(0, 0), [cell(0, 0)])).toBeNull()
     blocker.name = 'Terrain perimeter and cliff fascia'
