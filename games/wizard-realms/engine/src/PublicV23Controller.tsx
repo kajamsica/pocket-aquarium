@@ -1132,7 +1132,7 @@ export type PublicV43ControllerProps = PublicV43EntryBindings & Readonly<{
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
   const message: Record<string, string> = {
-    requires_spade: 'This soil layer needs a spade. Equip one before digging.',
+    requires_spade: 'This cell’s top two layers are soil. Use a field spade to Dig any remaining soil in this same cell, then switch back to your pick and Mine.',
     requires_pick: 'This rock layer needs a pick. Buy and equip one at Greenway Outfitters.',
     requires_enchanted_pick: 'This deep layer needs an enchanted pick equipped.',
     skill_locked: 'Your Excavation skill is not high enough for this layer yet.',
