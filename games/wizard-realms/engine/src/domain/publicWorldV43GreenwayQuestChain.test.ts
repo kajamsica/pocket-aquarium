@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
-import { createFreshPublicV43Root } from './publicWorldV43Snapshot'
+import { GREENWAY_BAG_UPGRADE } from './publicWorldV43BagUpgrade'
+import { createFreshPublicV43Root, replayPublicV43Witness }
+  from './publicWorldV43Snapshot'
 import { projectPublicV43GreenwayQuestChain, projectPublicV43QuestContinuation }
   from './publicWorldV43GreenwayQuestChain'
 
@@ -13,9 +15,9 @@ describe('checked Greenway quest guidance', () => {
     const quests = projectPublicV43GreenwayQuestChain(head)
     expect(quests).toHaveLength(5)
     expect(quests[0]).toMatchObject({ id: 'creek-span/v1', status: 'active' })
-    expect(quests[0].objective).toContain('nearby oaks (4 logs per oak)')
-    expect(quests[0].objective).toContain('at least 8 more logs')
-    expect(quests[0].objective).toContain('cross to its dry far bank')
+    expect(quests[0].objective).toContain('Equip your woodcutter axe from Backpack')
+    expect(quests[0].objective).toContain('Chop nearby oaks (4 logs per oak), pressing E twice on each: 0/8 logs')
+    expect(quests[0].objective).toContain('creek bridge to reach the dry far bank')
     expect(quests[0].existingReward).toContain('20 character XP, and 20 Woodcutting XP')
     expect(quests[0].objective).toContain('Boots let you run but are not required')
     expect(quests[0].objective).not.toContain('wet-ground travel')
@@ -42,12 +44,12 @@ describe('checked Greenway quest guidance', () => {
           { itemId: 'leather_boots' as const, quantity: 1 },
           { itemId: 'logs' as const, quantity: 8 }] } } }
     expect(projectPublicV43GreenwayQuestChain(prepared)[0].objective)
-      .toContain('Build the marked creek bridge')
+      .toContain('8/8 logs: find the marked creek bridge on Map / routes')
     const equipped = { ...prepared, state: { ...prepared.state,
       player: { ...prepared.state.player,
         equipment: { ...prepared.state.player.equipment, feet: 'leather_boots' as const } } } }
     expect(projectPublicV43GreenwayQuestChain(equipped)[0].objective)
-      .toContain('Build the marked creek bridge')
+      .toContain('B opens Works, 1 selects Bridge; confirm with F only when Ready')
     expect(projectPublicV43GreenwayQuestChain(equipped)[0].objective)
       .toBe(projectPublicV43GreenwayQuestChain(prepared)[0].objective)
     expect(projectPublicV43GreenwayQuestChain(equipped)[0].status).toBe('active')
@@ -58,7 +60,14 @@ describe('checked Greenway quest guidance', () => {
         inventory: [...head.state.player.inventory,
           { itemId: 'logs' as const, quantity: 4 }] } } }
     expect(projectPublicV43GreenwayQuestChain(oneOak)[0].objective)
-      .toContain('at least 4 more logs')
+      .toContain('4/8 logs')
+    const axeEquipped = { ...oneOak, state: { ...oneOak.state,
+      player: { ...oneOak.state.player, equipment: {
+        ...oneOak.state.player.equipment, mainHand: 'woodcutters_axe' as const } } } }
+    expect(projectPublicV43GreenwayQuestChain(axeEquipped)[0].objective)
+      .not.toContain('Equip your woodcutter axe')
+    expect(projectPublicV43GreenwayQuestChain(axeEquipped)[0].objective)
+      .toContain('Chop nearby oaks (4 logs per oak), pressing E twice on each: 4/8 logs')
     expect(projectPublicV43GreenwayQuestChain(oneOak)[1].objective)
       .toContain('After the creek bridge')
 
@@ -71,6 +80,8 @@ describe('checked Greenway quest guidance', () => {
     expect(projectPublicV43GreenwayQuestChain(bridgeOnly)[0]).toMatchObject({
       status: 'active', objective: expect.stringContaining('bridgehead reward'),
     })
+    expect(projectPublicV43GreenwayQuestChain(bridgeOnly)[0].objective)
+      .toContain('approach the River Works post, then Claim')
     expect(projectPublicV43GreenwayQuestChain(bridgeOnly)[4].objective)
       .toContain('marked north-cliff ladder (4 logs)')
     expect(projectPublicV43GreenwayQuestChain(bridgeOnly)[1].objective)
@@ -117,6 +128,8 @@ describe('checked Greenway quest guidance', () => {
           { itemId: 'stone' as const, quantity: 12 }] } } }
     expect(projectPublicV43GreenwayQuestChain(crowded)[0].objective)
       .toMatch(/^Free 1 backpack space before chopping an oak\./)
+    expect(projectPublicV43GreenwayQuestChain(crowded)[0].objective)
+      .toContain('Greenway Outfitters offers 8 more spaces for 70 coins')
     const withListing = { ...crowded, state: { ...crowded.state,
       player: { ...crowded.state.player,
         tradeSlots: [
@@ -143,6 +156,32 @@ describe('checked Greenway quest guidance', () => {
           { itemId: 'stone' as const, quantity: 15 }] } } }
     expect(projectPublicV43GreenwayQuestChain(noRoom)[0].objective)
       .toMatch(/^Free 4 backpack spaces before chopping an oak\./)
+  })
+
+  it('does not offer the one-time bag upgrade after a checked purchase fills again', () => {
+    const head = fresh()
+    const store = head.state.greenway.stores.find((entry) =>
+      entry.id === GREENWAY_BAG_UPGRADE.storeId)!
+    const atStore = { ...head, state: { ...head.state, player: {
+      ...head.state.player, position: { ...store.position } } } }
+    const purchased = replayPublicV43Witness(atStore,
+      { kind: 'buy-greenway-backpack/v1' })!
+    expect(purchased.state.player.backpackCapacity).toBe(GREENWAY_BAG_UPGRADE.upgradedCapacity)
+    expect(purchased.greenwayBagUpgrade?.claimedAtSequence).toBeGreaterThanOrEqual(1)
+    const carried = purchased.state.player.inventory.reduce((sum, stack) =>
+      sum + stack.quantity, 0)
+    const fullAgain = { ...purchased, state: { ...purchased.state, player: {
+      ...purchased.state.player, inventory: [...purchased.state.player.inventory,
+        { itemId: 'logs' as const, quantity: 4 },
+        { itemId: 'stone' as const,
+          quantity: GREENWAY_BAG_UPGRADE.upgradedCapacity - carried - 4 }] } } }
+    expect(fullAgain.state.player.inventory.reduce((sum, stack) =>
+      sum + stack.quantity, 0)).toBe(GREENWAY_BAG_UPGRADE.upgradedCapacity)
+    const original = structuredClone(fullAgain)
+    const objective = projectPublicV43GreenwayQuestChain(fullAgain)[0].objective
+    expect(objective).toMatch(/^Free 4 backpack spaces before chopping an oak\./)
+    expect(objective).not.toContain('Greenway Outfitters offers')
+    expect(fullAgain).toEqual(original)
   })
 
   it('guides later care visits without presenting a mount or payout before maturity', () => {

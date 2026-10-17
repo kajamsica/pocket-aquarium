@@ -1,5 +1,6 @@
 import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
+import { GREENWAY_BAG_UPGRADE } from './publicWorldV43BagUpgrade'
 import { SEDGEHORN_CARES_TO_MATURE, SEDGEHORN_CARE_INTERVAL_TICKS }
   from './publicWorldV43MountTraining'
 import type { PublicV43Progress } from './publicWorldV43Snapshot'
@@ -30,7 +31,8 @@ const connectedRiverBuilt = (progress: Pick<PublicV43Progress,
 /** Guidance from a checked V43 head. It does not claim or award anything. */
 export function projectPublicV43GreenwayQuestChain(
   progress: Pick<PublicV43Progress, 'state' | 'greenwayWorks'
-    | 'claimedBridgeheadId' | 'greenwayOrder' | 'riverBridgeIds'>):
+    | 'claimedBridgeheadId' | 'greenwayOrder' | 'greenwayBagUpgrade'
+    | 'riverBridgeIds'>):
   readonly GreenwayQuest[] {
   const { state, greenwayWorks } = progress
   const { player } = state
@@ -39,8 +41,11 @@ export function projectPublicV43GreenwayQuestChain(
   const carried = player.inventory.reduce((total, stack) => total + stack.quantity, 0)
     + player.tradeSlots.reduce((total, slot) => total + slot.quantity, 0)
   const oakRoom = Math.max(0, 4 - (player.backpackCapacity - carried))
+  const bagOffer = player.backpackCapacity === GREENWAY_BAG_UPGRADE.initialCapacity
+    && progress.greenwayBagUpgrade?.claimedAtSequence == null
+    ? ` Greenway Outfitters offers ${GREENWAY_BAG_UPGRADE.extraSlots} more spaces for ${GREENWAY_BAG_UPGRADE.price} coins.` : ''
   const makeOakRoom = oakRoom > 0
-    ? `Free ${oakRoom} backpack ${oakRoom === 1 ? 'space' : 'spaces'} before chopping an oak. ` : ''
+    ? `Free ${oakRoom} backpack ${oakRoom === 1 ? 'space' : 'spaces'} before chopping an oak.${bagOffer} ` : ''
   const built = (ids: readonly string[], kind: 'bridge' | 'ladder') => ids.some((id) => {
     const site = resolvePublicV17GreenwaySite(state.seed, id)
     return site?.kind === kind && site.obstacle ===
@@ -60,8 +65,8 @@ export function projectPublicV43GreenwayQuestChain(
     resolvePublicV17GreenwaySite(state.seed, id)?.kind === 'dig')
   const orderClaimed = progress.greenwayOrder?.claimedAtSequence != null
   const bridgeObjective = logs < 8
-    ? `${makeOakRoom}Equip your woodcutter's axe and chop nearby oaks (4 logs per oak) for at least ${8 - logs} more logs, then build the marked creek bridge with 8 logs and cross to its dry far bank. Boots let you run but are not required to build or cross it.`
-    : 'Build the marked creek bridge with 8 logs, then cross to its dry far bank. Boots let you run but are not required to cross it.'
+    ? `${makeOakRoom}${player.equipment.mainHand === 'woodcutters_axe' ? '' : 'Equip your woodcutter axe from Backpack. '}Chop nearby oaks (4 logs per oak), pressing E twice on each: ${logs}/8 logs. Keep them for the creek bridge to reach the dry far bank. Boots let you run but are not required.`
+    : '8/8 logs: find the marked creek bridge on Map / routes. B opens Works, 1 selects Bridge; confirm with F only when Ready. Cross to its dry far bank. Boots are optional.'
   // The Ledger route also needs a separate connected-river bridge. The first
   // Greenway dig adds backpack stone, not the terrain-bag sample it requests.
   const nextRoute = !bridgeBuilt ? 'marked creek bridge (8 logs)'
@@ -80,7 +85,7 @@ export function projectPublicV43GreenwayQuestChain(
       objective: bridgeBuilt
         ? !bridgeheadClaimed
           ? !bridgeheadClaimedElsewhere
-            ? 'Cross to the dry far bank to claim the one-time creek bridgehead reward.'
+            ? 'Cross the saved deck to the dry far bank, approach the River Works post, then Claim the one-time bridgehead reward: a basic pick, or 35 coins if already owned.'
             : 'The creek bridge is built. The one-time bridgehead reward was claimed at another bridge, so no creek claim remains.'
           : 'The creek bridge is built and the bridgehead reward has been claimed.'
         : bridgeObjective,
