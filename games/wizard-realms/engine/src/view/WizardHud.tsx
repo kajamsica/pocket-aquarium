@@ -366,7 +366,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
   const firstCreekStep = savePaused ? 'Save paused' : greenwayLogs >= 8
     ? 'Build bridge' : firstCreekHarvestBlocked ? 'Make room'
       : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
-        ? 'Equip axe' : `Logs ${greenwayLogs}/8`
+        ? 'Equip axe' : `Bridge ${greenwayLogs}/8`
 
   return (
     <div className="wr-hud">

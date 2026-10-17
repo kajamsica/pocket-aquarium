@@ -285,6 +285,10 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
       start: { head: root.head, lineage: root.lineage }, locks, store,
       v41Store: createAtomicV41Store(factory) }))
     expect(html).toContain('data-public-version="v42"')
+    expect(hud(probe.projection!)).toContain('Equip axe ▾')
+    const axe = probe.projection!.backpack.stacks.find((stack) => stack.itemId === 'woodcutters_axe')!
+    expect(hud({ ...probe.projection!, equipment: { ...probe.projection!.equipment,
+      mainHand: axe } })).toContain('Bridge 0/8 ▾')
     expect(probe.projection?.v42IronHall).toMatchObject({ questClaimed: false,
       vestOwned: false, crestOutcome: 'unrolled' })
     const intents = ['v42.ironhall.claim', 'v42.ironhall.vest-equip',

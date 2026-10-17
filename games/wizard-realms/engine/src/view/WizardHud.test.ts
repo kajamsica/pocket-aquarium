@@ -237,7 +237,7 @@ describe('starter cliff HUD capability gate', () => {
     const journal = objective({ ...logs(4), v34Quest: quest,
       v41IronHall: { health: 12, wardHealth: 9, phase: 'dormant', phaseUntilTick: 0,
         wardDefeated: false, learnedBolt: false } as NonNullable<WizardViewProjection['v41IronHall']> })
-    expect(journal).toContain('Logs 4/8 ▾')
+    expect(journal).toContain('Bridge 4/8 ▾')
     expect(journal).toContain('First 4 logs collected. Keep them; gather 4 more')
     expect(journal).not.toContain('Old multi-step opening objective.')
     expect(objective({ ...bridgeReadyWithoutAxe, v34Quest: quest })).toContain('Build bridge ▾')
@@ -310,6 +310,9 @@ describe('starter cliff HUD capability gate', () => {
         nearby: [readyLadderChoice], guidance: null } } })).toContain('Ready north cliff ladder')
     expect(objective({ ...logs(4), v34Quest: quest, savedTerrainWorks: { ...saved,
       builtSites: [displayedBridge] } })).toContain('Next route: keep 4 logs for a marked north cliff ladder.')
+    expect(objective({ ...logs(4), v34Quest: { ...quest, stage: 'cross' },
+      savedTerrainWorks: { ...saved, builtSites: [displayedBridge] } }))
+      .toContain('Quest ▾')
     expect(objective({ ...logs(4), v34Quest: { ...quest, stage: 'complete', complete: true },
       savedTerrainWorks: { ...saved, builtSites: [displayedBridge] } }))
       .toContain('Next route: keep 4 logs for a marked north cliff ladder.')
