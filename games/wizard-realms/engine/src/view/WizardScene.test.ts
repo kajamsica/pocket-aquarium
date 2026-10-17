@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -1332,6 +1332,49 @@ describe('tree camera obstruction', () => {
     expect(treeTrunkBlocksView(camera, avatar, [0, 0, 8], 1, 0.25)).toBe(false)
     expect(treeTrunkBlocksView(new THREE.Vector3(0, 6, 6), new THREE.Vector3(0, 6, 0), [0, 0, 5], 1, 0.25)).toBe(false)
   })
+
+  it('keeps shadows and depth writes off through fade-out and fade-in until the tree is nearly opaque', () => {
+    const fade = [
+      treeOcclusionAppearance(true, 1, 1),
+      treeOcclusionAppearance(true, 0.4, 1),
+      treeOcclusionAppearance(false, 0, 1),
+      treeOcclusionAppearance(false, 0.5, 1),
+      treeOcclusionAppearance(false, 0.89, 1),
+      treeOcclusionAppearance(false, 0.9, 1),
+      treeOcclusionAppearance(false, 1, 1),
+    ]
+    expect(fade.map(({ castShadow, depthWrite }) => [castShadow, depthWrite])).toEqual([
+      [false, false], [false, false], [false, false], [false, false], [false, false], [true, true], [true, true],
+    ])
+    expect(fade.map(({ targetOpacity }) => targetOpacity)).toEqual([0, 0, 1, 1, 1, 1, 1])
+    expect(treeOcclusionAppearance(false, 0.44, 0.5).castShadow).toBe(false)
+    expect(treeOcclusionAppearance(false, 0.45, 0.5).castShadow).toBe(true)
+  })
+
+  it('lets ground clicks pass through every faint live-tree part but not a stump', () => {
+    const tree = new THREE.Group()
+    tree.name = 'Live tree'
+    const faint = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.03 })
+    const trunk = new THREE.Mesh(undefined, faint)
+    const crown = new THREE.Mesh(undefined, faint)
+    crown.name = 'Tree crown'
+    tree.add(trunk, crown)
+    expect(treeMeshBlocksGroundPick(trunk)).toBe(false)
+    expect(treeMeshBlocksGroundPick(crown)).toBe(false)
+    faint.opacity = 0.05
+    expect(treeMeshBlocksGroundPick(trunk)).toBe(true)
+    const timber = new THREE.Group()
+    timber.name = 'Harvestable Mireglass timber'
+    timber.add(crown)
+    faint.opacity = 0.03
+    expect(treeMeshBlocksGroundPick(crown)).toBe(false)
+    const stump = new THREE.Group()
+    stump.name = 'Depleted tree stump'
+    stump.add(trunk)
+    faint.opacity = 0.03
+    expect(treeMeshBlocksGroundPick(trunk)).toBe(true)
+    faint.dispose()
+  })
 })
 
 describe('tree harvest visual state', () => {
@@ -1348,6 +1391,13 @@ describe('tree harvest visual state', () => {
     expect(live).toHaveLength(6)
     expect(live.map(({ name }) => name)).toContain('Tree crown')
     expect(live.every(({ castShadow }) => castShadow === true)).toBe(true)
+    const occluded = renderedMeshes(TreeMeshes({ available: true, timber: false, barkMaterial, crownMaterial,
+      castShadow: treeOcclusionAppearance(true, 1, 1).castShadow }))
+    expect(occluded).toHaveLength(6)
+    expect(occluded.every(({ castShadow }) => castShadow === false)).toBe(true)
+    const restored = renderedMeshes(TreeMeshes({ available: true, timber: false, barkMaterial, crownMaterial,
+      castShadow: treeOcclusionAppearance(false, 1, 1).castShadow }))
+    expect(restored.every(({ castShadow }) => castShadow === true)).toBe(true)
     expect(meshes(liveNode, true)).toHaveLength(3)
     const depleted = meshes(depletedNode)
     expect(depleted.map(({ name }) => name)).toEqual(['Tree stump', 'Tree stump cut'])

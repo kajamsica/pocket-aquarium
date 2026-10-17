@@ -316,7 +316,8 @@ const CANOPY_CENTRE_Y_M = 3.4
 const CANOPY_RADIUS_M = 1.75
 const OCCLUDE_ENTER_MARGIN_M = 0.25
 const OCCLUDE_EXIT_MARGIN_M = 0.8
-const OCCLUDED_OPACITY = 0.12
+const OCCLUDED_OPACITY = 0
+const TREE_OPAQUE_SHADOW_THRESHOLD = 0.9
 const AVATAR_FOCUS_HEIGHT_M = 1.5
 const FADE_OUT_PER_S = 12
 const FADE_IN_PER_S = 5
@@ -1010,8 +1011,17 @@ function UnchartedTerrain({ cells }: { cells: readonly WizardTerrainCell[] }) {
     frustumCulled={false} /> : null
 }
 
-export function TreeMeshes({ available, timber, barkMaterial, crownMaterial }: {
-  available: boolean; timber: boolean; barkMaterial: THREE.Material; crownMaterial: THREE.Material
+const OCCLUDED_TREE_APPEARANCE = { targetOpacity: OCCLUDED_OPACITY, depthWrite: false, castShadow: false } as const
+const REVEALING_TREE_APPEARANCE = { targetOpacity: 1, depthWrite: false, castShadow: false } as const
+const CLEAR_TREE_APPEARANCE = { targetOpacity: 1, depthWrite: true, castShadow: true } as const
+export function treeOcclusionAppearance(occluded: boolean, opacity: number, baseOpacity: number) {
+  if (occluded) return OCCLUDED_TREE_APPEARANCE
+  return opacity >= baseOpacity * TREE_OPAQUE_SHADOW_THRESHOLD
+    ? CLEAR_TREE_APPEARANCE : REVEALING_TREE_APPEARANCE
+}
+
+export function TreeMeshes({ available, timber, barkMaterial, crownMaterial, castShadow = true }: {
+  available: boolean; timber: boolean; barkMaterial: THREE.Material; crownMaterial: THREE.Material; castShadow?: boolean
 }) {
   if (!available) return <>
     <mesh name="Tree stump" geometry={TREE_ROOT_GEOMETRY} material={TREE_STUMP_BARK_MATERIAL}
@@ -1020,18 +1030,18 @@ export function TreeMeshes({ available, timber, barkMaterial, crownMaterial }: {
       position={[0, 0.485, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow={false} />
   </>
   return <>
-    {/* Crown depth writing prevents its overlapping transparent lobes from stacking over the wizard. */}
-    <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow />
-    <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow />
+    {/* Crown depth writing prevents its overlapping transparent lobes from stacking over the wizard while clear. */}
+    <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow={castShadow} />
+    <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow={castShadow} />
     {!timber && <><mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[-0.46, 2.75, 0.08]}
-      rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow />
+      rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow={castShadow} />
     <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0.46, 2.9, -0.12]}
-      rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow />
+      rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow={castShadow} />
     <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
-      rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow /></>}
+      rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow={castShadow} /></>}
     <mesh geometry={timber ? MIREGLASS_TIMBER_CROWN_GEOMETRY : TREE_CROWN_GEOMETRY}
       name="Tree crown" material={crownMaterial}
-      position={timber ? [0, 3.75, 0] : undefined} castShadow />
+      position={timber ? [0, 3.75, 0] : undefined} castShadow={castShadow} />
   </>
 }
 
@@ -1047,6 +1057,9 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
   }, [barkMaterial, crownMaterial])
   const occluded = useRef(false)
   const treeOpacity = useRef(baseOpacity)
+  const treeGroup = useRef<THREE.Group>(null)
+  const [treeCastsShadow, setTreeCastsShadow] = useState(true)
+  const castsShadow = useRef(true)
   const [x, y, z] = node.position
   useFrame(({ camera }, delta) => {
     const centreY = y + CANOPY_CENTRE_Y_M * scale
@@ -1061,16 +1074,24 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
     const distance = Math.hypot(ax + dx * t - x, ay + dy * t - centreY, az + dz * t - z)
     const radius = CANOPY_RADIUS_M * scale
     const margin = occluded.current ? OCCLUDE_EXIT_MARGIN_M : OCCLUDE_ENTER_MARGIN_M
-    occluded.current = distance < radius + margin || treeTrunkBlocksView(camera.position, pose.position, node.position, scale, margin)
-    const target = occluded.current ? Math.min(baseOpacity, OCCLUDED_OPACITY) : baseOpacity
-    treeOpacity.current += (target - treeOpacity.current) * damping(occluded.current ? FADE_OUT_PER_S : FADE_IN_PER_S, delta)
+    const nextOccluded = distance < radius + margin || treeTrunkBlocksView(camera.position, pose.position, node.position, scale, margin)
+    occluded.current = nextOccluded
+    const targetOpacity = treeOcclusionAppearance(nextOccluded, treeOpacity.current, baseOpacity).targetOpacity * baseOpacity
+    treeOpacity.current += (targetOpacity - treeOpacity.current) * damping(nextOccluded ? FADE_OUT_PER_S : FADE_IN_PER_S, delta)
+    const appearance = treeOcclusionAppearance(nextOccluded, treeOpacity.current, baseOpacity)
     barkMaterial.opacity = crownMaterial.opacity = treeOpacity.current
-    barkMaterial.depthWrite = !occluded.current
+    barkMaterial.depthWrite = crownMaterial.depthWrite = appearance.depthWrite
+    if (castsShadow.current !== appearance.castShadow) {
+      castsShadow.current = appearance.castShadow
+      setTreeCastsShadow(appearance.castShadow)
+    }
+    if (treeGroup.current) treeGroup.current.visible = !nextOccluded || treeOpacity.current > 0.01
   })
   return (
-    <group name={timber ? 'Harvestable Mireglass timber' : undefined}
+    <group ref={treeGroup} name={timber ? 'Harvestable Mireglass timber' : 'Live tree'}
       position={[x, y, z]} rotation={[0, yaw, 0]} scale={scale}>
-      <TreeMeshes available={node.available} timber={timber} barkMaterial={barkMaterial} crownMaterial={crownMaterial} />
+      <TreeMeshes available={node.available} timber={timber} barkMaterial={barkMaterial} crownMaterial={crownMaterial}
+        castShadow={treeCastsShadow} />
     </group>
   )
 }
@@ -1990,6 +2011,13 @@ export type SceneTerrainPicker = (clientX: number, clientY: number,
 export type SceneGroundPicker = (clientX: number, clientY: number) =>
   { x: number; y: number; z: number } | null
 
+export function treeMeshBlocksGroundPick(object: THREE.Object3D) {
+  if (!(object instanceof THREE.Mesh)
+    || object.parent?.name !== 'Live tree' && object.parent?.name !== 'Harvestable Mireglass timber') return true
+  const materials = Array.isArray(object.material) ? object.material : [object.material]
+  return materials.some((material) => !material.transparent || material.opacity > OCCLUDED_OPACITY + 0.04)
+}
+
 /** Ground dressing sits just above the walkable surface; taller scenery still occludes it. */
 export function pickVisibleGroundPoint(scene: THREE.Scene, camera: THREE.Camera,
   bounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
@@ -2017,12 +2045,7 @@ export function pickVisibleGroundPoint(scene: THREE.Scene, camera: THREE.Camera,
       meshes.push(object)
     }
   })
-  const front = ray.intersectObjects(meshes, false).find((candidate) => {
-    if (candidate.object.name !== 'Tree crown' || !(candidate.object instanceof THREE.Mesh)) return true
-    const material = Array.isArray(candidate.object.material)
-      ? candidate.object.material[0] : candidate.object.material
-    return !material.transparent || material.opacity > OCCLUDED_OPACITY + 0.04
-  })
+  const front = ray.intersectObjects(meshes, false).find((candidate) => treeMeshBlocksGroundPick(candidate.object))
   const hit = ray.intersectObject(top, false)[0]
   if (!hit || ![hit.point.x, hit.point.y, hit.point.z].every(Number.isFinite)
     || scene.fog instanceof THREE.Fog && hit.distance >= scene.fog.far) return null
