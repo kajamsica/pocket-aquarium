@@ -8,11 +8,19 @@ import { createPublicV17InputTrace } from './PublicV17InputScheduler'
 import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
 import { createAtomicV42Store } from './domain/atomicV42Database'
 import { createAtomicV43Store } from './domain/atomicV43Database'
+import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { commitPublicV43, resumePublicV43, startFreshPublicV43,
   startPublicV43 } from './domain/publicWorldV43Flow'
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
 import { createFreshPublicV42Root } from './domain/publicWorldV42Snapshot'
+import { createPublicV43FamiliarProgress } from './domain/publicWorldV43FamiliarAction'
+import { decodePublicV43CheckedSuccessor, replayPublicV43Witness,
+  PUBLIC_V43_SCHEMA } from './domain/publicWorldV43Snapshot'
+import type { PublicV43Root, PublicV43Witness } from './domain/publicWorldV43Snapshot'
+import { resolveSedgehornFamiliarSite } from './domain/sedgehornFamiliarContent'
+import { waystationRiverSite } from './domain/waystationRiverContent'
+import { worldTileAtGrid } from './domain/worldChunks'
 import type { WizardViewProjection } from './view/contracts'
 
 const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null }))
@@ -34,6 +42,116 @@ async function setup() {
 }
 
 describe('V43 checked controller bridge', () => {
+  it('rejects unavailable familiar actions without a write on the fresh V43 start', async () => {
+    const { start, makeRuntime, store } = await setup()
+    const runtime = makeRuntime(start)
+    expect(await runtime.action({ kind: 'familiar-claim/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'requires_crossing' })
+    expect(await runtime.action({ kind: 'sedgehorn-care/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'not_claimed' })
+    expect(await runtime.action({ kind: 'familiar-tracks/v1', x: 999 } as never))
+      .toMatchObject({ status: 'rejected', reason: 'invalid_value' })
+    expect(runtime.preview().familiar.phase).toBe('search')
+    expect(await store.readChecked()).toMatchObject({ status: 'valid', root: { head: {
+      saveRevision: 0 } } })
+  }, 120_000)
+
+  it('saves a checked familiar step, reloads its phase, and refuses a duplicate', async () => {
+    const factory = new IDBFactory(), store = createAtomicV43Store(factory)
+    const base = createFreshPublicV42Root('wizard-realms').head
+    const site = resolveSedgehornFamiliarSite(base)!, bridge = waystationRiverSite(base.state.seed)!
+    const pocket = [] as string[]
+    const gx = Math.floor(site.tracks.center.x / 4), gz = Math.floor(site.tracks.center.z / 4)
+    for (let x = gx - 1; x <= gx + 1; x++) for (let z = gz - 1; z <= gz + 1; z++)
+      pocket.push(worldTileAtGrid(base.state.seed, x, z).id)
+    const source = { ...base, southbankReached: true,
+      riverBridgeIds: [bridge.id], state: { ...base.state,
+        movementOwner: 'streamed' as const,
+        discoveryMask: encodeDiscoveredTileIds([...new Set([
+          ...decodeDiscoveredTileIds(base.state.discoveryMask),
+          ...bridge.footprintTileIds, ...pocket])].sort()),
+        player: { ...base.state.player, position: { ...site.tracks.center },
+          verticalVelocity: 0 } } }
+    const genesis = createPublicV43FamiliarProgress(source)!
+    expect(genesis).not.toBeNull()
+    const lineage: PublicV43Root['lineage'] = { origin: 'v42-migration',
+      rulesProfile: 'sedgehorn-familiar/v1', seed: source.state.seed,
+      sourceRevision: 0, genesis }
+    const head: PublicV43Root['head'] = { ...genesis, schemaVersion: PUBLIC_V43_SCHEMA,
+      saveRevision: 0, witness: null }
+    const missing = await store.readChecked()
+    expect(missing.status).toBe('missing')
+    if (missing.status !== 'missing') throw Error('Expected empty V43 fixture store')
+    expect(await store.commit(missing.proof, { lineage, previous: null, head }))
+      .toBe('committed')
+    const persistedStart = await store.readChecked()
+    if (persistedStart.status !== 'valid') throw Error('Missing checked fixture start')
+    let releaseWrite: (() => void) | undefined
+    let enteredWrite: (() => void) | undefined
+    const writerEntered = new Promise<void>((resolve) => { enteredWrite = resolve })
+    const writerHeld = new Promise<void>((resolve) => { releaseWrite = resolve })
+    let pauseFamiliar = true
+    const write = async (revision: number, _lineage: PublicV43Root['lineage'],
+      witness: PublicV43Witness) => {
+      if (pauseFamiliar && witness.kind === 'familiar-tracks/v1') {
+        pauseFamiliar = false
+        enteredWrite?.()
+        await writerHeld
+      }
+      const read = await store.readChecked()
+      if (read.status !== 'valid' || read.root.head.saveRevision !== revision)
+        return { ok: false as const, reason: 'revision-changed' }
+      const next = replayPublicV43Witness(read.root.head, witness)
+      if (!next) return { ok: false as const, reason: 'action-rejected' }
+      const successor: PublicV43Root = { lineage: read.root.lineage,
+        previous: read.root.head, head: { ...next, schemaVersion: PUBLIC_V43_SCHEMA,
+          saveRevision: revision + 1, witness } }
+      expect(decodePublicV43CheckedSuccessor(read.root, successor)).not.toBeNull()
+      const committed = await store.commit(read.proof, successor)
+      return committed === 'committed'
+        ? { ok: true as const, value: { head: successor.head, lineage: successor.lineage } }
+        : { ok: false as const, reason: committed }
+    }
+    const runtime = createPublicV43ControllerRuntime({
+      lineage: persistedStart.root.lineage, head: persistedStart.root.head }, write)
+    const initialPosition = runtime.preview().state.player.position
+    const claiming = runtime.action({ kind: 'familiar-tracks/v1' })
+    await writerEntered
+    try {
+      expect(runtime.status()).toMatchObject({ gate: 'barrier', pendingFrames: 0 })
+      expect(runtime.advanceFrame([{ type: 'jump' }], false).rejections)
+        .toMatchObject([{ code: 'unavailable_here' }])
+      expect(await runtime.save()).toEqual({ status: 'busy' })
+      expect(await runtime.returnHome()).toEqual({ status: 'busy' })
+      expect(await runtime.action({ kind: 'familiar-tracks/v1' }))
+        .toEqual({ status: 'busy' })
+      expect(await runtime.action({ kind: 'ironhall-claim/v1' }))
+        .toEqual({ status: 'busy' })
+      expect(runtime.status().pendingFrames).toBe(0)
+    } finally { releaseWrite?.() }
+    expect(await claiming)
+      .toEqual({ status: 'saved', events: [], resetWalkRequested: false })
+    expect(runtime.preview().state.player.position).toEqual(initialPosition)
+    expect(runtime.preview().familiar.phase).toBe('tracks')
+    expect(runtime.advanceFrame([], true).rejections).toEqual([])
+    expect(runtime.status().pendingFrames).toBe(1)
+    const reopened = createAtomicV43Store(factory)
+    const checked = await reopened.readChecked()
+    expect(checked).toMatchObject({ status: 'valid', root: { head: {
+      saveRevision: 1, familiar: { phase: 'tracks' }, witness: {
+        kind: 'familiar-tracks/v1' } } } })
+    if (checked.status !== 'valid') throw Error('Missing checked familiar save')
+    const resumed = createPublicV43ControllerRuntime({ lineage: checked.root.lineage,
+      head: checked.root.head }, write)
+    expect(resumed.preview().familiar.phase).toBe('tracks')
+    expect(await resumed.action({ kind: 'familiar-tracks/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'wrong_stage' })
+    expect(resumed.advanceFrame([], true).rejections).toEqual([])
+    expect(await resumed.save()).toMatchObject({ status: 'saved' })
+    expect(await reopened.readChecked()).toMatchObject({ status: 'valid', root: {
+      head: { saveRevision: 2, familiar: { phase: 'tracks' } } } })
+  }, 120_000)
+
   it('does not label V43 UI save callbacks as V42-only phases', () => {
     const trace = createPublicV17InputTrace()
     expect(publicV42SavePhaseReporter('v43', trace)).toBeUndefined()
@@ -52,6 +170,8 @@ describe('V43 checked controller bridge', () => {
     const html = renderToStaticMarkup(createElement(PublicV23Controller, {
       version: 'v43', start, locks, store, v42Store }))
     expect(html).toContain('data-public-version="v43"')
+    expect(html).toContain('The Lost Familiar · search')
+    expect(html).toContain('class="v43-familiar"')
     expect(probe.projection?.v42IronHall).toMatchObject({ questClaimed: false,
       vestOwned: false, crestOutcome: 'unrolled' })
     expect(await v42Store.readChecked()).toEqual(source)

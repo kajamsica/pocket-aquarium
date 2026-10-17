@@ -1,13 +1,17 @@
 import { discoveryMaskHasTileId } from '../domain/discoveryMask'
+import type { PublicV43FamiliarWitness } from '../domain/publicWorldV43FamiliarAction'
+import { SEDGEHORN_CARE_INTERVAL_TICKS, SEDGEHORN_CARES_TO_MATURE }
+  from '../domain/publicWorldV43MountTraining'
+import type { PublicV43MountTrainingWitness } from '../domain/publicWorldV43MountTraining'
 import { resolveSedgehornFamiliarSite } from '../domain/sedgehornFamiliarContent'
-import type { PublicV43Head } from '../domain/publicWorldV43Snapshot'
+import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
 import type { WorldTile } from '../domain/types'
 
 export type PublicV43FamiliarQuestView = Readonly<{
-  stage: PublicV43Head['familiar']['phase']
+  stage: PublicV43Progress['familiar']['phase']
   eligible: boolean
   completedSteps: number
-  routeChoice: PublicV43Head['familiar']['routeChoice']
+  routeChoice: PublicV43Progress['familiar']['routeChoice']
   objective: string
   location: string
   targets: readonly Readonly<{ tileId: string; label: string; distanceMeters: number }>[]
@@ -21,7 +25,7 @@ const TOTAL_STEPS = 7
 const reward = '25 coins and 40 character XP at the keeper; Creature Care grows to 40 XP across the quest. The sedgehorn becomes a bonded companion, not a rideable mount.'
 
 /** Presentation only. The caller must supply a head from the checked V43 runtime or store. */
-export function projectPublicV43FamiliarQuest(head: PublicV43Head):
+export function projectPublicV43FamiliarQuest(head: PublicV43Progress):
   PublicV43FamiliarQuestView | null {
   const site = resolveSedgehornFamiliarSite(head)
   if (!site) return null
@@ -83,9 +87,68 @@ export function projectPublicV43FamiliarQuest(head: PublicV43Head):
     location: 'Care station known', targets: target(site.careStation, 'Care station') }
 }
 
-export function PublicV43FamiliarQuestPanel({ head }: { head: PublicV43Head }) {
+type FamiliarAction = PublicV43FamiliarWitness | PublicV43MountTrainingWitness
+const phaseActions: Partial<Record<PublicV43Progress['familiar']['phase'],
+  readonly Readonly<{ kind: PublicV43FamiliarWitness['kind']; label: string }>[]>> = {
+  search: [{ kind: 'familiar-tracks/v1', label: 'Inspect tracks' }],
+  tracks: [{ kind: 'familiar-herb/v1', label: 'Offer marsh herb' }],
+  fed: [{ kind: 'familiar-shelter/v1', label: 'Build shelter, 2 logs' },
+    { kind: 'familiar-dry-approach/v1', label: 'Take dry approach' }],
+  'route-ready': [{ kind: 'familiar-escort/v1', label: 'Begin escort' }],
+  escort: [{ kind: 'familiar-calm/v1', label: 'Calm sedgehorn' },
+    { kind: 'familiar-return/v1', label: 'Record return at keeper' }],
+  returned: [{ kind: 'familiar-claim/v1', label: 'Claim familiar reward' }],
+}
+const rejectionHint: Record<string, string> = {
+  requires_crossing: 'Cross at Windward Waystation first.',
+  wrong_region: 'Return to Mireglass Reach.',
+  not_grounded: 'Land on supported dry ground first.',
+  unsafe_source: 'Step onto safe, unchanged dry ground.',
+  unrevealed: 'Explore until this quest marker is revealed.',
+  too_far: 'Move within 3 m of the marked quest location.',
+  wrong_stage: 'Finish the current quest step first.',
+  not_owned: 'Gather the required marsh herb or logs first.',
+  companion_not_here: 'Lead the sedgehorn safely beside the keeper.',
+  already_claimed: 'The one-time reward is already claimed.',
+  not_claimed: 'Claim the familiar quest reward first.',
+  too_soon: 'Give the sedgehorn more time before the next care visit.',
+  already_mature: 'All three care visits are complete.',
+}
+export function publicV43FamiliarRejectionHint(reason: string): string {
+  return rejectionHint[reason] ?? `Checked familiar action unavailable (${reason}).`
+}
+
+export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = false }:
+  { head: PublicV43Progress; onAction?: (action: FamiliarAction) => void;
+    actionsEnabled?: boolean }) {
   const quest = projectPublicV43FamiliarQuest(head)
   if (!quest) return null
+  const site = resolveSedgehornFamiliarSite(head)!
+  const careCount = head.mountTraining?.careWitnesses.length ?? 0
+  const lastCareTick = head.mountTraining?.careWitnesses.at(-1)?.tick
+  const actions = (phaseActions[quest.stage] ?? []).filter(({ kind }) =>
+    kind !== 'familiar-calm/v1' || !head.familiar.calmed)
+  const availability = (kind: PublicV43FamiliarWitness['kind'] | 'sedgehorn-care/v1') => {
+    const target = kind === 'familiar-tracks/v1' ? site.tracks
+      : kind === 'familiar-herb/v1' ? site.shelter
+        : kind === 'familiar-dry-approach/v1' ? site.dryApproach
+        : kind === 'familiar-return/v1' || kind === 'familiar-claim/v1'
+          ? site.keeper : site.careStation
+    if (!quest.eligible) return 'requires_crossing'
+    if (head.state.movementOwner !== 'streamed') return 'wrong_region'
+    if (head.state.player.verticalVelocity !== 0) return 'not_grounded'
+    if (!discoveryMaskHasTileId(head.state.discoveryMask, target.id)) return 'unrevealed'
+    if (Math.hypot(head.state.player.position.x - target.center.x,
+      head.state.player.position.z - target.center.z) > 3) return 'too_far'
+    if (kind === 'familiar-herb/v1' || kind === 'sedgehorn-care/v1')
+      if (quest.herbCount < 1) return 'not_owned'
+    if (kind === 'familiar-shelter/v1' && quest.logCount < 2) return 'not_owned'
+    if (kind === 'familiar-return/v1' && head.familiar.waitReason !== 'none')
+      return 'companion_not_here'
+    if (kind === 'sedgehorn-care/v1' && lastCareTick !== undefined
+      && head.state.tick - lastCareTick < SEDGEHORN_CARE_INTERVAL_TICKS) return 'too_soon'
+    return null
+  }
   return <section aria-label="The Lost Familiar quest" data-quest-stage={quest.stage}
     style={{ background: '#172b25', border: '1px solid #8ea87e', borderRadius: 12,
       color: '#f4efda', padding: 16, maxWidth: 440, font: '16px/1.5 system-ui' }}>
@@ -108,5 +171,26 @@ export function PublicV43FamiliarQuestPanel({ head }: { head: PublicV43Head }) {
       ? 'Shelter' : 'Dry approach'}</p>}
     <p>Creature Care XP: {quest.careXp}/40</p>
     <p><strong>{quest.stage === 'claimed' ? 'Claimed reward:' : 'Reward:'}</strong> {quest.reward}</p>
+    {onAction && <div aria-label="Familiar actions">
+      {actions.map(({ kind, label }) => {
+        const rejection = availability(kind)
+        return <div key={kind}><button type="button"
+          disabled={!actionsEnabled || !!rejection}
+          onClick={() => onAction({ kind })}>{label}</button>
+          {rejection && <small role="status">{publicV43FamiliarRejectionHint(rejection)}</small>}</div>
+      })}
+      {quest.stage === 'claimed' && <>
+        <p>Sedgehorn care visits: {careCount}/{SEDGEHORN_CARES_TO_MATURE}.
+          {careCount === SEDGEHORN_CARES_TO_MATURE
+            ? ' Adult-ready, but not rideable yet.' : ' One marsh herb per visit.'}</p>
+        {careCount < SEDGEHORN_CARES_TO_MATURE && (() => {
+          const rejection = availability('sedgehorn-care/v1')
+          return <><button type="button" disabled={!actionsEnabled || !!rejection}
+            onClick={() => onAction({ kind: 'sedgehorn-care/v1' })}>Care for sedgehorn</button>
+            {rejection && <small role="status">{publicV43FamiliarRejectionHint(rejection)}</small>}</>
+        })()}
+      </>}
+      <small>The checked world confirms each action when you choose it.</small>
+    </div>}
   </section>
 }

@@ -53,6 +53,11 @@ import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
 import type { PublicV43EntryBindings } from './PublicV43Entry'
 import { commitPublicV43, requestPublicV43ReturnHome } from './domain/publicWorldV43Flow'
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
+import type { PublicV43FamiliarWitness } from './domain/publicWorldV43FamiliarAction'
+import type { PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
+import type { PublicV43Progress } from './domain/publicWorldV43Snapshot'
+import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint }
+  from './view/PublicV43FamiliarQuest'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -213,14 +218,23 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV40WaystationWitness
   | PublicV41CombatWitness
   | PublicV42RewardWitness
+  | PublicV43FamiliarWitness | PublicV43MountTrainingWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
-  queuedAtMs: number }
+  queuedAtMs: number; heldInput?: boolean }
   | { kind: 'checked'; intent: CheckedIntent }
 const STEP_MS = 50
 const MOVE_RESERVE_AT = 96
 const MAX_PULSES = 16
+function pageTraceState() {
+  const visibilityState = document.visibilityState
+  let hasFocus: boolean | null = null
+  try { if (typeof document.hasFocus === 'function') hasFocus = document.hasFocus() }
+  catch { /* Some embedding contexts cannot report focus. */ }
+  return { visibilityState: visibilityState === 'visible' || visibilityState === 'hidden'
+    ? visibilityState : 'unknown', hasFocus }
+}
 const OBSTACLE_CUE_MS = 3500
 const SALVAGER_LEG_CELLS = 8
 const REJOIN_RADIUS_CELLS = 24
@@ -927,9 +941,18 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v26-safety summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 [data-public-v23] .v26-safety button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
 [data-public-v23] .v26-safety p{margin:6px 0 0;font-size:12px}
+[data-public-v23] .v43-familiar{position:fixed;z-index:23;right:12px;top:148px;box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 164px);overflow:auto;background:#172b25;color:#f4efda;border:1px solid #8ea87e;border-radius:12px}
+[data-public-v23] .v43-familiar:not([open]){width:200px}
+[data-public-v23] .v43-familiar>summary{min-height:44px;display:flex;align-items:center;padding:0 12px;cursor:pointer;font-weight:700}
+[data-public-v23] .v43-familiar section{border:0!important;max-width:none!important}
+[data-public-v23] .v43-familiar button{min-height:44px;max-width:100%;margin:4px 8px 4px 0}
+[data-public-v23] .v43-familiar button:disabled{opacity:.55;cursor:not-allowed}
+[data-public-v23] .v43-familiar small{display:block;color:#dfd3af}
+[data-public-v23]:has(.v43-familiar[open]) .v24-actions{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v23-guide,[data-public-v23]:has(.wr-map-backdrop) .v23-aim{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v24-actions{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v26-safety{display:none}
+[data-public-v23]:has(.wr-map-backdrop) .v43-familiar{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v23-obstacle-cue{display:none}
 @media(max-height:400px){[data-public-v23] .v23-obstacle-cue{top:64px;max-height:calc(100dvh - 215px - env(safe-area-inset-bottom,0px));overflow:hidden;padding:6px 10px;font-size:12px;line-height:1.2}}
 @media(max-width:719px),(min-width:720px) and (max-width:900px) and (max-height:590px){
@@ -943,6 +966,7 @@ const PUBLIC_V23_PANEL_STYLES = `
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
+  [data-public-v23] .v43-familiar{top:210px;right:8px;bottom:auto;max-height:calc(100dvh - 220px - env(safe-area-inset-bottom,0px))}
   [data-public-version=v42] .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
   [data-public-version=v42] .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
@@ -1442,6 +1466,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     publicV23ReadActiveView(runtime, activeMemo, status)
   const [, redraw] = useState(0)
   const [messages, setMessages] = useState<string[]>([])
+  const [familiarOpen, setFamiliarOpen] = useState(false)
   const [walkRequested, setWalkRequested] = useState(false)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [openStoreId, setOpenStoreId] = useState<string | null>(null)
@@ -1596,7 +1621,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         edge.vector = timed.vector; edgePulse.current = null; merged++
       } else if (queued < MAX_PULSES) {
         inputQueue.current.push({ kind: 'pulse', vector: timed.vector, jump: false,
-          queuedAtMs: firstSampleAtMs + index * STEP_MS })
+          queuedAtMs: firstSampleAtMs + index * STEP_MS, heldInput: true })
         queued++; accepted++
       } else break
     }
@@ -1674,6 +1699,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const result = 'kind' in intent && intent.kind === 'return-home-request'
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
+          : 'kind' in intent && (intent.kind.startsWith('familiar-')
+            || intent.kind === 'sedgehorn-care/v1')
+          ? await (runtime as V43Runtime).action(intent as PublicV43FamiliarWitness
+            | PublicV43MountTrainingWitness)
           : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
             || intent.kind === 'ironhall-vest-equip/v1'
             || intent.kind === 'ironhall-vest-unequip/v1'
@@ -1731,6 +1760,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if ('id' in intent) setWorkMode(false)
           tell('kind' in intent && intent.kind === 'return-home-request'
             ? 'Returned home safely. A 30-minute rescue cooldown has started.'
+            : 'kind' in intent && (intent.kind.startsWith('familiar-')
+              || intent.kind === 'sedgehorn-care/v1')
+            ? intent.kind === 'familiar-claim/v1'
+              ? 'The Lost Familiar reward and bond saved. Check your coins, XP, and care station.'
+              : intent.kind === 'sedgehorn-care/v1'
+                ? 'Sedgehorn care visit saved. The companion is not rideable yet.'
+                : 'The Lost Familiar quest step saved. Check the quest panel for the next objective.'
             : 'kind' in intent && intent.kind === 'ironhall-claim/v1'
             ? 'Iron Hall reward saved: 60 coins, 70 character XP, 70 Combat XP, and Guard Vest.'
             : 'kind' in intent && intent.kind === 'ironhall-vest-equip/v1'
@@ -1801,6 +1837,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
         } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
+          : 'kind' in intent && (intent.kind.startsWith('familiar-')
+            || intent.kind === 'sedgehorn-care/v1')
+          ? publicV43FamiliarRejectionHint(result.reason ?? 'unavailable_here')
           : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
             || intent.kind === 'ironhall-vest-equip/v1'
             || intent.kind === 'ironhall-vest-unequip/v1'
@@ -1856,7 +1895,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     if (witness && v24 && active.movementOwner === 'streamed') queueChecked(witness)
     else tell('This Mireglass action is not currently available.')
   }
-  const queuePulse = (vector: readonly [number, number], jump: boolean) => {
+  const queuePulse = (vector: readonly [number, number], jump: boolean,
+    heldInput = false) => {
     if (readActive().player.verticalVelocity !== 0) {
       tell('Land before starting another short movement or jump.'); return
     }
@@ -1867,15 +1907,60 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       tell('The 16-step input queue is full; retry this tap after the save.'); return
     }
     const token: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse', vector, jump,
-      queuedAtMs: performance.now() }
+      queuedAtMs: performance.now(), heldInput }
     inputQueue.current.push(token)
     if (!jump) edgePulse.current = token
     // An open-world tick will repaint after consuming the pulse. Repainting on
     // admission rebuilds the entire projection before that tick can run.
     if (busy.current || runtime.status().gate !== 'open') repaintQueued()
   }
+  const queueJump = () => {
+    const vector = held.current
+    if (vector.some(Boolean) && !busy.current && runtime.status().gate === 'open'
+      && readActive().player.verticalVelocity === 0
+      && !inputQueue.current.some((token) => token.kind === 'checked'
+        || token.kind === 'pulse' && token.jump)) {
+      const queued = inputQueue.current.length
+      inputQueue.current = inputQueue.current.filter((token) => token.kind !== 'pulse'
+        || !token.heldInput)
+      const dropped = queued - inputQueue.current.length
+      if (edgePulse.current?.heldInput) edgePulse.current = null
+      timedHeld.current = null
+      trace?.record('controller.jump.prioritized', { droppedHeldSteps: dropped,
+        retained: inputQueue.current.length, vector })
+    }
+    queuePulse(vector, true)
+  }
   useEffect(() => {
     let lastTickAtMs = performance.now()
+    let longTaskObserver: PerformanceObserver | null = null
+    let observing = true
+    if (trace && typeof PerformanceObserver !== 'undefined'
+      && PerformanceObserver.supportedEntryTypes?.includes('longtask')) {
+      try {
+        let recorded = 0, limitReported = false
+        longTaskObserver = new PerformanceObserver((list) => {
+          if (!observing) return
+          for (const entry of list.getEntries()) {
+            if (recorded >= 120) {
+              if (!limitReported) trace.record('controller.longtask.limit', { maxEntries: 120 })
+              limitReported = true
+              break
+            }
+            if (!Number.isFinite(entry.startTime) || !Number.isFinite(entry.duration)) continue
+            recorded++
+            trace.record('controller.longtask', {
+              startMs: Math.round(Math.max(0, Math.min(entry.startTime, performance.now()))),
+              durationMs: Math.round(Math.max(0, Math.min(entry.duration, 60_000))),
+              durationCapped: entry.duration > 60_000,
+            })
+          }
+        })
+        longTaskObserver.observe({ type: 'longtask' })
+      } catch { longTaskObserver?.disconnect(); longTaskObserver = null }
+    }
+    trace?.record('controller.environment', { ...pageTraceState(),
+      longTaskObserved: longTaskObserver !== null })
     const timer = window.setInterval(() => {
       const tickAtMs = performance.now()
       const elapsedMs = Math.max(0, tickAtMs - lastTickAtMs)
@@ -1884,7 +1969,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         trace.record('controller.tick', { elapsedMs, queued: inputQueue.current.length,
           head: inputQueue.current[0]?.kind ?? 'none', headIsEdge: inputQueue.current[0] === edgePulse.current,
           held: held.current, timedHeld: timedHeld.current !== null,
-          busy: busy.current, running: running.current, gate: runtime.status().gate })
+          busy: busy.current, running: running.current, gate: runtime.status().gate,
+          ...pageTraceState() })
       if (obstacleCueUntil.current && performance.now() >= obstacleCueUntil.current) {
         obstacleCueUntil.current = 0; setObstacleCue(null)
       }
@@ -1901,7 +1987,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             queued: inputQueue.current.length })
         } else if (inputQueue.current.filter((token) => token.kind === 'pulse').length < MAX_PULSES) {
           inputQueue.current.push({ kind: 'pulse', vector, jump: false,
-            queuedAtMs: tickAtMs })
+            queuedAtMs: tickAtMs, heldInput: true })
           trace?.record('controller.sample', { phase: 'write', outcome: 'queued', vector,
             queued: inputQueue.current.length })
           repaintQueued()
@@ -2032,14 +2118,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         }
       } finally { running.current = false; if (advanced) repaint() }
     }, STEP_MS)
-    return () => window.clearInterval(timer)
+    return () => { observing = false; window.clearInterval(timer); longTaskObserver?.disconnect() }
   }, [runtime, walkRequested])
 
   const onIntent = (intent: WizardViewIntent) => {
     trace?.record('controller.intent', { type: intent.type,
       ...('vector' in intent ? { vector: intent.vector } : {}),
       gate: runtime.status().gate, busy: busy.current,
-      queued: inputQueue.current.length })
+      queued: inputQueue.current.length, ...pageTraceState() })
     if (intent.type === 'dev.navigate.cancel') {
       if (devRoute.current) { devRoute.current = null; tell('Auto-route cancelled.') }
       return
@@ -2089,7 +2175,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         } else timedHeld.current = null
       }
       if (readActive().player.verticalVelocity === 0 && intent.vector[1]
-        && intent.vector[1] !== prior[1]) queuePulse([0, intent.vector[1]], false)
+        && intent.vector[1] !== prior[1]) queuePulse([0, intent.vector[1]], false, true)
       return
     }
     if (intent.type === 'movement.tap') {
@@ -2097,7 +2183,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       if (performance.now() >= obstacleCueUntil.current) lastMovementRejection.current = null
       queuePulse(intent.vector, false); return
     }
-    if (intent.type === 'jump') { devRoute.current = null; queuePulse([0, 0], true); return }
+    if (intent.type === 'jump') { devRoute.current = null; queueJump(); return }
     if (intent.type === 'gait.toggle') {
       if (view.gait?.canRun) setWalkRequested((value) => !value)
       return
@@ -2449,6 +2535,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </button>}
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace} />
+    {v43 && <details className="v43-familiar" open={familiarOpen}
+      onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
+      <summary>The Lost Familiar · {(snapshot as PublicV43Progress).familiar.phase}</summary>
+      {familiarOpen && <PublicV43FamiliarQuestPanel
+        head={snapshot as PublicV43Progress}
+        actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked}
+        onAction={(action) => queueChecked(action)} />}
+    </details>}
     {v24 && active.movementOwner === 'streamed' && mireglass?.choices.length
       ? <MireglassActionsPanel className="v24-actions" aria-label="Mireglass actions">
         {v36 ? <summary>Mireglass actions</summary> : <strong>Mireglass actions</strong>}

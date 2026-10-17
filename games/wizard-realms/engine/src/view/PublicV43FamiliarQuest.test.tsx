@@ -91,4 +91,57 @@ describe('V43 Lost Familiar quest readout', () => {
     expect(html).toContain('not a rideable mount')
     expect(html).not.toContain('<button')
   })
+
+  it('shows an actionable revealed clue nearby and a clear disabled reason out of reach', () => {
+    const crossed = withTiles({ ...initial, southbankReached: true,
+      state: { ...initial.state, movementOwner: 'streamed' as const,
+        player: { ...initial.state.player, position: { ...site.tracks.center } } } },
+    site.tracks.id)
+    const nearby = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: crossed, actionsEnabled: true, onAction: () => {} }))
+    expect(nearby).toContain('Inspect tracks</button>')
+    expect(nearby).not.toContain('Move within 3 m')
+    const distant = { ...crossed, state: { ...crossed.state, player: {
+      ...crossed.state.player, position: { ...crossed.state.player.position,
+        x: crossed.state.player.position.x + 12 } } } }
+    const far = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: distant, actionsEnabled: true, onAction: () => {} }))
+    expect(far).toContain('disabled=""')
+    expect(far).toContain('Move within 3 m of the marked quest location.')
+  })
+
+  it('targets the checked shelter for the herb offer, including near and far hints', () => {
+    // The current site resolver aliases the later care station to this shelter tile.
+    expect(site.careStation.id).toBe(site.shelter.id)
+    const crossed = withTiles({ ...initial, southbankReached: true,
+      familiar: { ...initial.familiar, phase: 'tracks' as const },
+      state: { ...initial.state, movementOwner: 'streamed' as const,
+        player: { ...initial.state.player, position: { ...site.shelter.center },
+          inventory: [...initial.state.player.inventory,
+            { itemId: 'marsh_herb' as const, quantity: 1 }] } } }, site.shelter.id)
+    const near = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: crossed, actionsEnabled: true, onAction: () => {} }))
+    expect(near).toContain('Offer marsh herb</button>')
+    expect(near).not.toContain('disabled=""')
+    const distant = { ...crossed, state: { ...crossed.state, player: {
+      ...crossed.state.player, position: { ...site.shelter.center,
+        x: site.shelter.center.x + 12 } } } }
+    const far = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: distant, actionsEnabled: true, onAction: () => {} }))
+    expect(far).toContain('disabled=""')
+    expect(far).toContain('Move within 3 m of the marked quest location.')
+  })
+
+  it('offers checked care after claim without presenting the companion as rideable', () => {
+    const claimed = { ...initial, southbankReached: true, familiar: {
+      ...initial.familiar, phase: 'claimed' as const,
+      routeChoice: 'dry-approach' as const, trust: 2, creatureCareXp: 40,
+      stationKnown: true } }
+    const html = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: claimed, actionsEnabled: true, onAction: () => {} }))
+    expect(html).toContain('Sedgehorn care visits: 0/3')
+    expect(html).toContain('Care for sedgehorn')
+    expect(html).toContain('Return to Mireglass Reach.')
+    expect(html).toContain('not a rideable mount')
+  })
 })

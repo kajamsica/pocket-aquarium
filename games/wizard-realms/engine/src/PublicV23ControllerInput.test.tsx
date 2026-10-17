@@ -1070,6 +1070,61 @@ describe('V23 controller input admission', () => {
       .toMatchObject({ projectionMs: 0, baseProjectionMs: 0, mireglassProjectionMs: 0 })
   })
 
+  it('records only bounded page and long-task diagnostics when local input tracing is enabled', () => {
+    let deliver: PerformanceObserverCallback | null = null
+    const observe = vi.fn(), disconnect = vi.fn()
+    vi.stubGlobal('PerformanceObserver', class {
+      static supportedEntryTypes = ['longtask']
+      constructor(callback: PerformanceObserverCallback) { deliver = callback }
+      observe = observe
+      disconnect = disconnect
+    })
+    mount(true)
+    expect(observe).toHaveBeenCalledWith({ type: 'longtask' })
+    Object.assign(document, { visibilityState: 'hidden', hasFocus: () => false })
+    probe.now = 100
+    probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    probe.now = 200; probe.tick!()
+    const entries = Array.from({ length: 130 }, (_, index) => ({
+      startTime: index === 0 ? -12 : index === 1 ? 20 : 30,
+      duration: index === 1 ? 65_000 : 57,
+      name: 'private-attribution',
+    })) as PerformanceEntry[]
+    deliver!({ getEntries: () => entries } as PerformanceObserverEntryList,
+      {} as PerformanceObserver)
+    const records = (JSON.parse(probe.trace!.json()) as { records: { event: string;
+      data: Record<string, unknown> }[] }).records
+    expect(records.find((record) => record.event === 'controller.environment')?.data)
+      .toMatchObject({ visibilityState: 'unknown', hasFocus: null, longTaskObserved: true })
+    expect(records.find((record) => record.event === 'controller.intent')?.data)
+      .toMatchObject({ visibilityState: 'hidden', hasFocus: false })
+    expect(records.find((record) => record.event === 'controller.tick')?.data)
+      .toMatchObject({ visibilityState: 'hidden', hasFocus: false, elapsedMs: 200 })
+    const tasks = records.filter((record) => record.event === 'controller.longtask')
+    expect(tasks).toHaveLength(120)
+    expect(records.find((record) => record.event === 'controller.longtask.limit')?.data)
+      .toEqual({ maxEntries: 120 })
+    expect(tasks[0].data).toEqual({ startMs: 0, durationMs: 57, durationCapped: false })
+    expect(tasks[1].data).toEqual({ startMs: 20, durationMs: 60_000,
+      durationCapped: true })
+    expect(JSON.stringify(tasks)).not.toContain('private-attribution')
+    for (const cleanup of probe.cleanups) cleanup()
+    expect(disconnect).toHaveBeenCalledTimes(1)
+    deliver!({ getEntries: () => entries } as PerformanceObserverEntryList,
+      {} as PerformanceObserver)
+    const later = (JSON.parse(probe.trace!.json()) as { records: { event: string }[] }).records
+    expect(later.filter((record) => record.event === 'controller.longtask')).toHaveLength(120)
+  })
+
+  it('does not create a long-task observer without local trace opt-in', () => {
+    const observer = vi.fn()
+    Object.assign(observer, { supportedEntryTypes: ['longtask'] })
+    vi.stubGlobal('PerformanceObserver', observer)
+    mount()
+    expect(observer).not.toHaveBeenCalled()
+    expect(probe.trace).toBeNull()
+  })
+
   it('reports finite nonnegative V24 base and Mireglass projection times in local trace', () => {
     mount(true, true)
     const records = (JSON.parse(probe.trace!.json()) as { records: { event: string;
@@ -1162,6 +1217,63 @@ describe('V23 controller input admission', () => {
       .toHaveLength(1)
   })
 
+  it('takes off before stale sampled W steps, then moves only while W stays held', () => {
+    probe.poseOnJump = true; mount(true)
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 260; probe.tick!() // Delayed callback leaves sampled W steps queued.
+    const framesBeforeJump = probe.frames.length
+    probe.now = 400; probe.onIntent!({ type: 'jump' })
+    const records = (JSON.parse(probe.trace!.json()) as { records: { event: string;
+      data: Record<string, unknown> }[] }).records
+    expect(records.find((record) => record.event === 'controller.jump.prioritized')?.data)
+      .toMatchObject({ droppedHeldSteps: 2, retained: 0, vector: [0, 1] })
+    probe.now = 1000; probe.tick!()
+    expect(probe.frames.slice(framesBeforeJump).map((frame) => frame.map((intent) => intent.type)))
+      .toEqual([['jump']])
+    const jumpFrame = (JSON.parse(probe.trace!.json()) as { records: { event: string;
+      data: Record<string, unknown> }[] }).records.findLast((record) =>
+      record.event === 'controller.frame')
+    expect(jumpFrame?.data).toMatchObject({ vector: [0, 1], jump: true, queued: 0 })
+    probe.now = 1050; probe.tick!()
+    expect(probe.frames.at(-1)?.map((intent) => intent.type)).toEqual(['move'])
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 1100)) probe.onIntent!(intent)
+    probe.now = 1150; probe.tick!()
+    probe.now = 1200; probe.tick!()
+    expect(probe.frames.slice(-2)).toEqual([[], []])
+  })
+
+  it('keeps explicit taps and checked actions ahead of a held-W jump', async () => {
+    probe.holdAction = true; probe.poseOnJump = true; mount(true)
+    const keys = new Set<string>()
+    probe.onIntent!({ type: 'movement.tap', vector: [1, 0], source: 'keyboard' })
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.onIntent!({ type: 'saved-work.confirm', id: workId })
+    probe.now = 260; probe.onIntent!({ type: 'jump' })
+    expect(probe.trace!.json()).not.toContain('controller.jump.prioritized')
+    probe.tick!()
+    expect(probe.events).toContain('action')
+    expect(probe.events).not.toContain('frame:jump')
+    probe.releaseAction!(); await settle()
+    probe.now = 320; probe.tick!()
+    expect(probe.events.indexOf('action')).toBeLessThan(probe.events.indexOf('frame:jump'))
+  })
+
+  it('prioritizes takeoff over sampled hold steps without deleting an explicit tap', () => {
+    probe.poseOnJump = true; mount(true)
+    const keys = new Set<string>()
+    probe.onIntent!({ type: 'movement.tap', vector: [1, 0], source: 'keyboard' })
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 260; probe.onIntent!({ type: 'jump' })
+    const prioritized = (JSON.parse(probe.trace!.json()) as { records: { event: string;
+      data: Record<string, unknown> }[] }).records.find((record) =>
+      record.event === 'controller.jump.prioritized')
+    expect(prioritized?.data).toMatchObject({ droppedHeldSteps: 1, retained: 1 })
+    probe.now = 500; probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
+      .toEqual([['look'], ['jump']])
+  })
+
   it.each(['jump', 'tap'] as const)(
     'does not defer a second %s pulse across a pending-95 jump and landing', async (second) => {
       probe.pending = 95; probe.poseOnJump = true; mount()
@@ -1234,9 +1346,9 @@ describe('V23 controller input admission', () => {
     probe.suggested = true
     mount()
     probe.onIntent!({ type: 'saved-work.mode', active: true })
-    expect(probe.states[7]).toBe(1.1)
+    expect(probe.states[8]).toBe(1.1)
     probe.onIntent!({ type: 'saved-work.mode', active: false })
-    expect(probe.states[7]).toBeNull()
+    expect(probe.states[8]).toBeNull()
   })
 
   it('hides the exact Z control and rejects a hidden scene aim, then accepts a discovered aim', () => {
@@ -1252,7 +1364,7 @@ describe('V23 controller input admission', () => {
     expect(hidden).not.toContain('430.6')
     expect(hidden).not.toContain('move the slider')
     probe.onIntent!({ type: 'saved-work.aim-west', aimZ: 430.6 })
-    expect(probe.states[8]).toBeNull()
+    expect(probe.states[9]).toBeNull()
     probe.enabled = probe.reuse = false; probe.refs = []; probe.states = []
     probe.streamed = probe.known = true
     mount()
@@ -1262,7 +1374,7 @@ describe('V23 controller input admission', () => {
     const discovered = renderToStaticMarkup(createElement(PublicV23Controller, props()))
     expect(discovered).toContain('id="v23-west-aim"')
     probe.onIntent!({ type: 'saved-work.aim-west', aimZ: 430.6 })
-    expect(probe.states[8]).toBe(430.6)
+    expect(probe.states[9]).toBe(430.6)
   })
 
   it('explains the checked west-side too_far pose as an east-side grounded approach', () => {
