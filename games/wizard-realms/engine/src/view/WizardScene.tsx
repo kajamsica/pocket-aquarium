@@ -485,6 +485,18 @@ export function cameraFramingFor(width: number, height: number) {
   return width < 720 || (width <= 900 && height <= 590) ? COMPACT_CAMERA : DESKTOP_CAMERA
 }
 
+/** Match the terrain window's 4 m anchor so small player steps do not rebuild cosmetic instances. */
+export function fogVisibleDressingCells(cells: readonly WizardTerrainCell[], player: WizardViewProjection['player']['position'],
+  publicVisualWorld: boolean): readonly WizardTerrainCell[] {
+  if (!publicVisualWorld) return cells
+  const anchorX = Math.round(player[0] / WORLD_CELL_METERS) * WORLD_CELL_METERS
+  const anchorZ = Math.round(player[2] / WORLD_CELL_METERS) * WORLD_CELL_METERS
+  const reach = PUBLIC_FOG_END_M + DESKTOP_CAMERA.distance + TELEPORT_SNAP_DISTANCE_M + 0.5
+    + WORLD_CELL_METERS / Math.SQRT2 // Maximum player-to-anchor drift within one grid cell.
+  return cells.filter((cell) => Math.hypot(cell.position[0] - anchorX, cell.position[2] - anchorZ)
+    <= reach + Math.hypot(cell.size[0], cell.size[1]) / 2)
+}
+
 /** Deterministic [0, 1) from a stable id, so cosmetic variation never depends on randomness or time. */
 function hashUnit(id: string, salt: number) {
   let hash = 2166136261 ^ salt
@@ -2347,7 +2359,9 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       <MireglassCliffLayer seed={projection.seed} cells={revealedTerrain} />
       {projection.highlandRidgeActive && <HighlandRidgeLayer cells={revealedTerrain}
         playerPosition={projection.player.position} />}
-      {landscapeDressingEnabled && <LandscapeDressing cells={revealedTerrain} clearings={landscapeClearings} />}
+      {landscapeDressingEnabled && <LandscapeDressing
+        cells={fogVisibleDressingCells(revealedTerrain, projection.player.position, Boolean(projection.visualWorld))}
+        clearings={landscapeClearings} />}
       {visual.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {visual.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
       {visual.fairyRings.filter((ring) => ring.id !== 'ring-highland-quarry'

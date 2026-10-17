@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -480,6 +480,35 @@ describe('new-world starter cliff scenery', () => {
 })
 
 describe('public scenery horizon', () => {
+  it('culls only fully fogged cosmetic cells and restores the same cell after movement', () => {
+    const cell = (x: number, size: readonly [number, number] = [4, 4]): WizardTerrainCell => ({
+      id: `tile-${x / 4 + 3}-3`, position: [x, 0, 0], size, height: 0, climate: 'temperate_forest',
+    })
+    const near = cell(36)
+    const fogged = cell(48)
+    const wide = { ...cell(48, [20, 20]), id: 'wide-cosmetic-cell' }
+    const cells = [near, fogged, wide]
+    const selected = fogVisibleDressingCells(cells, [0, 0, 0], true)
+    expect(selected).toEqual([near, wide])
+    expect(selected[0]).toBe(near)
+    expect(near.position[0] - near.size[0] / 2 - cameraFramingFor(1280, 800).distance)
+      .toBeLessThan(PUBLIC_FOG_END_M) // Fog-visible dressing remains available to ground picking.
+    expect(sceneTerrainFor({ seed: 'greenway-alpha', player: { position: [0, 0, 0] },
+      visualWorld: { terrain: [fogged], discoveredTileIds: [fogged.id] },
+    } as unknown as WizardViewProjection).revealedTerrain).toEqual([fogged])
+    for (const x of [-1.99, -1, 0, 1, 1.99]) for (const z of [-1.99, -1, 0, 1, 1.99]) {
+      expect(fogVisibleDressingCells(cells, [x, 0, z], true)).toEqual(selected)
+    }
+    for (let step = -7; step <= 7; step++) {
+      expect(fogVisibleDressingCells(cells, [step / 4, 0, 0], true)).toEqual(selected)
+    }
+    expect(fogVisibleDressingCells(cells, [2.01, 0, 0], true)).toEqual(cells)
+    expect(fogVisibleDressingCells(cells, [16, 0, 0], true)).toEqual(cells)
+    expect(fogVisibleDressingCells(cells, [0, 0, 0], true)).toEqual(selected)
+    expect(fogVisibleDressingCells(cells, [0, 0, 0], false)).toBe(cells)
+    expect(cells).toEqual([near, fogged, wide])
+  })
+
   it('fades uncharted terrain through the same distance fog as the scene', () => {
     expect(UNCHARTED_GROUND_MATERIAL).toBeInstanceOf(THREE.MeshBasicMaterial)
     expect(UNCHARTED_GROUND_MATERIAL.fog).toBe(true)
