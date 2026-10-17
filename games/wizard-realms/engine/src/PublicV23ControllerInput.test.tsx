@@ -1717,9 +1717,11 @@ describe('V23 controller input admission', () => {
     probe.suggested = true
     mount()
     probe.onIntent!({ type: 'saved-work.mode', active: true })
-    expect(probe.states[8]).toBe(1.1)
+    rerender()
+    expect(probe.projection?.savedTerrainWorks).toMatchObject({ selectedKind: 'bridge', aimX: 1.1 })
     probe.onIntent!({ type: 'saved-work.mode', active: false })
-    expect(probe.states[8]).toBeNull()
+    rerender()
+    expect(probe.projection?.savedTerrainWorks?.aimX).toBeNull()
   })
 
   it('hides the exact Z control and rejects a hidden scene aim, then accepts a discovered aim', () => {
@@ -1734,8 +1736,9 @@ describe('V23 controller input admission', () => {
     expect(hidden).not.toContain('id="v23-west-aim"')
     expect(hidden).not.toContain('430.6')
     expect(hidden).not.toContain('move the slider')
+    const hiddenStates = [...probe.states]
     probe.onIntent!({ type: 'saved-work.aim-west', aimZ: 430.6 })
-    expect(probe.states[9]).toBeNull()
+    expect(probe.states).toEqual(hiddenStates)
     probe.enabled = probe.reuse = false; probe.refs = []; probe.states = []
     probe.streamed = probe.known = true
     mount()
@@ -1744,8 +1747,11 @@ describe('V23 controller input admission', () => {
     probe.reuse = true; probe.cursor = probe.stateCursor = 0
     const discovered = renderToStaticMarkup(createElement(PublicV23Controller, props()))
     expect(discovered).toContain('id="v23-west-aim"')
+    const beforeAim = [...probe.states]
     probe.onIntent!({ type: 'saved-work.aim-west', aimZ: 430.6 })
-    expect(probe.states[9]).toBe(430.6)
+    const aimed = rerender()
+    expect(probe.states.some((value, index) => beforeAim[index] === null && value === 430.6)).toBe(true)
+    expect(aimed).toContain('value="430.6"')
   })
 
   it('explains the checked west-side too_far pose as an east-side grounded approach', () => {
