@@ -234,7 +234,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
-  queuedAtMs: number; heldInput?: boolean }
+  queuedAtMs: number; heldInput?: boolean; saveBuffered?: boolean }
   | { kind: 'checked'; intent: CheckedIntent }
 const STEP_MS = 50
 const MOVE_RESERVE_AT = 96
@@ -1663,16 +1663,22 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     timed.nextAtMs += due * STEP_MS
     if (!timed.vector.some(Boolean) || matchesBlockedHeld(timed.vector)
       || readActive().player.verticalVelocity !== 0) return
+    const saveForward = !!saveTask.current && timed.vector[1] > 0
+    if (saveForward && inputQueue.current.some((token) => token.kind === 'pulse'
+      && token.saveBuffered)) return
     let queued = inputQueue.current.filter((token) => token.kind === 'pulse').length
     let accepted = 0, merged = 0
-    for (let index = 0; index < Math.min(due, MAX_PULSES + 1); index++) {
+    for (let index = 0; index < Math.min(due, saveForward ? 1 : MAX_PULSES + 1); index++) {
       const edge = edgePulse.current
       if (edge && inputQueue.current.includes(edge)
         && edge.vector.some((value, axis) => value && value === timed.vector[axis])) {
-        edge.vector = timed.vector; edgePulse.current = null; merged++
+        edge.vector = timed.vector; edge.saveBuffered = saveForward || edge.saveBuffered
+        if (saveForward) edge.heldInput = false
+        edgePulse.current = null; merged++
       } else if (queued < MAX_PULSES) {
         inputQueue.current.push({ kind: 'pulse', vector: timed.vector, jump: false,
-          queuedAtMs: firstSampleAtMs + index * STEP_MS, heldInput: true })
+          queuedAtMs: firstSampleAtMs + index * STEP_MS, heldInput: !saveForward,
+          saveBuffered: saveForward })
         queued++; accepted++
       } else break
     }
@@ -1688,6 +1694,17 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const save = (): Promise<void> => {
     if (saveTask.current) return saveTask.current
     if (busy.current || runtime.status().pendingFrames === 0) return Promise.resolve()
+    // Seal one pending forward key edge at the save boundary. Later held
+    // samples must not turn a slow checkpoint into a burst of movement.
+    const forwardEdge = inputQueue.current.find((token) => token.kind === 'pulse'
+      && (token.saveBuffered || token.heldInput && token.vector[1] > 0))
+    if (forwardEdge?.kind === 'pulse') {
+      forwardEdge.saveBuffered = true; forwardEdge.heldInput = false
+      inputQueue.current = inputQueue.current.filter((token) => token === forwardEdge
+        || token.kind !== 'pulse' || !token.heldInput || token.vector[1] <= 0)
+      if (edgePulse.current && !inputQueue.current.includes(edgePulse.current))
+        edgePulse.current = null
+    }
     busy.current = true; trace?.record('controller.save.start', {
       pendingFrames: runtime.status().pendingFrames, queued: inputQueue.current.length }); repaint()
     let saved = false
@@ -1714,8 +1731,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     saveTask.current = task.finally(() => {
       const finalizeStartedAt = v42SaveTrace ? performance.now() : 0
       sampleTimedUntil(performance.now())
-      if (!saved && saveTurnLatch.current)
-        inputQueue.current = inputQueue.current.filter((token) => token !== saveTurnLatch.current)
+      if (!saved) inputQueue.current = inputQueue.current.filter((token) =>
+        token !== saveTurnLatch.current && (token.kind !== 'pulse' || !token.saveBuffered))
       saveTurnLatch.current = null
       busy.current = false; saveTask.current = null; repaint(); drainChecked()
       if (v42SaveTrace) v42SaveTrace({
@@ -1984,11 +2001,15 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     if (inputQueue.current.some((token) => token.kind === 'pulse' && token.jump)) {
       tell('Finish the queued jump before another short movement or jump.'); return
     }
+    const saveForward = heldInput && !!saveTask.current && vector[1] > 0
+    if (saveForward && inputQueue.current.some((token) => token.kind === 'pulse'
+      && token.saveBuffered)) return
     if (inputQueue.current.filter((token) => token.kind === 'pulse').length >= MAX_PULSES) {
       tell('The 16-step input queue is full; retry this tap after the save.'); return
     }
     const token: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse', vector, jump,
-      queuedAtMs: atMs !== undefined && Number.isFinite(atMs) ? atMs : performance.now(), heldInput }
+      queuedAtMs: atMs !== undefined && Number.isFinite(atMs) ? atMs : performance.now(),
+      heldInput: heldInput && !saveForward, saveBuffered: saveForward }
     inputQueue.current.push(token)
     if (!jump) edgePulse.current = token
     // An open-world tick will repaint after consuming the pulse. Repainting on
@@ -2062,14 +2083,20 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         edgePulse.current = null
         if (runtime.status().gate === 'blocked' || !vector.some(Boolean)
           || matchesBlockedHeld(vector)) return
+        if (saveTask.current && vector[1] > 0 && inputQueue.current.some((token) =>
+          token.kind === 'pulse' && token.saveBuffered)) return
         if (edge && inputQueue.current.includes(edge)
           && edge.vector.some((value, index) => value && value === vector[index])) {
           edge.vector = vector
+          if (saveTask.current && vector[1] > 0) {
+            edge.saveBuffered = true; edge.heldInput = false
+          }
           trace?.record('controller.sample', { phase: 'write', outcome: 'edge', vector,
             queued: inputQueue.current.length })
         } else if (inputQueue.current.filter((token) => token.kind === 'pulse').length < MAX_PULSES) {
           inputQueue.current.push({ kind: 'pulse', vector, jump: false,
-            queuedAtMs: tickAtMs, heldInput: true })
+            queuedAtMs: tickAtMs, heldInput: !(saveTask.current && vector[1] > 0),
+            saveBuffered: !!saveTask.current && vector[1] > 0 })
           trace?.record('controller.sample', { phase: 'write', outcome: 'queued', vector,
             queued: inputQueue.current.length })
           repaintQueued()
@@ -2103,7 +2130,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const neutral = runtime.status().pendingFrames >= MOVE_RESERVE_AT
           && before.player.verticalVelocity !== 0
         if (!neutral && timedHeld.current
-          && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current)) {
+          && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current
+            && !edgePulse.current?.saveBuffered)) {
           trace?.record('controller.tick.parked', { reason: 'awaiting-sampled-edge',
             queued: inputQueue.current.length })
           return
@@ -2158,7 +2186,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const movementRejection = intents.some((intent) => intent.type === 'move')
           ? result.rejections.find((rejection) => rejection.intentType === 'move'
             || rejection.code === 'terrain_missing') : undefined
-        if (request?.heldInput && movementRejection?.code === 'terrain_missing'
+        if ((request?.heldInput || request?.saveBuffered) && movementRejection?.code === 'terrain_missing'
           && before.player.verticalVelocity === 0 && after.player.verticalVelocity === 0) {
           const matchesRequest = (token: InputToken) => token.kind === 'pulse'
             && !!token.heldInput && token.vector[0] === request.vector[0]
@@ -2264,6 +2292,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         inputQueue.current = inputQueue.current.filter((token) => token.kind !== 'pulse'
           || !token.heldInput || (intent.vector.some(Boolean)
             && token.vector[0] === intent.vector[0] && token.vector[1] === intent.vector[1]))
+          .filter((token) => token.kind !== 'pulse' || !token.saveBuffered
+            || !intent.vector.some(Boolean) || intent.vector[1] > 0)
         if (edgePulse.current && !inputQueue.current.includes(edgePulse.current))
           edgePulse.current = null
         const cancelled = queued - inputQueue.current.length
@@ -2312,12 +2342,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           ? saveTurnLatch.current : null
         const heldIndex = inputQueue.current.findIndex((token) => token.kind === 'pulse'
           && token.heldInput)
-        if (priorTurn || (heldIndex >= 0
-          && inputQueue.current.filter((token) => token.kind === 'pulse').length >= MAX_PULSES)) {
+        const pulseCount = inputQueue.current.filter((token) => token.kind === 'pulse').length
+        if (priorTurn || pulseCount < MAX_PULSES || heldIndex >= 0) {
           // Reserve one existing queue slot for the latest turn, keeping its
           // order relative to checked actions while the save owns the world.
           if (priorTurn) inputQueue.current = inputQueue.current.filter((token) => token !== priorTurn)
-          else inputQueue.current.splice(heldIndex, 1)
+          else if (pulseCount >= MAX_PULSES) inputQueue.current.splice(heldIndex, 1)
           const turn: Extract<InputToken, { kind: 'pulse' }> = { kind: 'pulse',
             vector: intent.vector, jump: false,
             queuedAtMs: intent.atMs !== undefined && Number.isFinite(intent.atMs)

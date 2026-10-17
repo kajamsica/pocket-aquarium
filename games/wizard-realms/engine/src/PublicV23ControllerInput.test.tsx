@@ -990,7 +990,7 @@ describe('V23 controller input admission', () => {
       .toEqual([['look'], []])
   })
 
-  it('cancels obsolete held vectors without repeating the explicit edge pivot', async () => {
+  it('cancels obsolete held vectors without repeating the pivot or buffered W step', async () => {
     probe.pending = 96; mount(); probe.tick!()
     const keys = new Set<string>()
     for (const intent of keyboardMovementIntents(keys, 'KeyD', true, 1)) probe.onIntent!(intent)
@@ -1001,7 +1001,7 @@ describe('V23 controller input admission', () => {
     probe.releaseSave!(); await settle()
     for (let index = 0; index < 8; index++) probe.tick!()
     expect(probe.frames.filter((frame) => frame.length)
-      .map((frame) => frame.map((intent) => intent.type))).toEqual([['look']])
+      .map((frame) => frame.map((intent) => intent.type))).toEqual([['look'], ['move']])
   })
 
   it('cancels timestamped catch-up after an untimed blur release', async () => {
@@ -1033,21 +1033,21 @@ describe('V23 controller input admission', () => {
       .toEqual([['look'], ['look']])
   })
 
-  it('keeps one turn pressed into a full held queue during a checked save', async () => {
+  it('keeps one turn and one forward step during a checked save', async () => {
     probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
     const keys = new Set<string>()
     for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
     probe.now = 801; probe.tick!()
-    expect(rerender()).toContain('16 short input step(s) queued')
+    expect(rerender()).toContain('1 short input step(s) queued')
     for (const intent of keyboardMovementIntents(keys, 'KeyA', true, 801)) probe.onIntent!(intent)
     for (const intent of keyboardMovementIntents(keys, 'KeyA', false, 826)) probe.onIntent!(intent)
     for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 827)) probe.onIntent!(intent)
     expect(probe.frames).toEqual([])
     probe.releaseSave!(); await settle()
-    probe.now = 850; probe.tick!()
+    probe.now = 850; probe.tick!(); probe.tick!()
     expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
-      .toEqual([['look']])
-    expect(probe.frames[0][0].yawDelta).toBeCloseTo(0.13)
+      .toEqual([['move'], ['look']])
+    expect(probe.frames[1][0].yawDelta).toBeCloseTo(0.13)
   })
 
   it('keeps only the latest latched turn while the checked save is pending', async () => {
@@ -1063,8 +1063,8 @@ describe('V23 controller input admission', () => {
     probe.releaseSave!(); await settle()
     probe.now = 900; probe.tick!(); probe.tick!()
     expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
-      .toEqual([['look']])
-    expect(probe.frames[0][0].yawDelta).toBeCloseTo(-0.13)
+      .toEqual([['move'], ['look']])
+    expect(probe.frames[1][0].yawDelta).toBeCloseTo(-0.13)
   })
 
   it('keeps checked-action order when a later turn replaces a latched turn', async () => {
@@ -1079,10 +1079,10 @@ describe('V23 controller input admission', () => {
     for (const intent of keyboardMovementIntents(keys, 'KeyD', false, 851)) probe.onIntent!(intent)
     for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 852)) probe.onIntent!(intent)
     probe.releaseSave!(); await settle()
-    probe.now = 900; probe.tick!(); await settle(); probe.tick!()
+    probe.now = 900; probe.tick!(); await settle(); probe.tick!(); await settle(); probe.tick!()
     expect(probe.events.filter((event) => event !== 'frame:'))
-      .toEqual(['action', 'frame:look'])
-    expect(probe.frames[0][0].yawDelta).toBeCloseTo(-0.13)
+      .toEqual(['frame:move', 'action', 'frame:look'])
+    expect(probe.frames[1][0].yawDelta).toBeCloseTo(-0.13)
   })
 
   it('does not replay a latched turn when the checked save is blocked', async () => {
@@ -1120,42 +1120,166 @@ describe('V23 controller input admission', () => {
       .toEqual([['look']])
   })
 
-  it('drops unsent W hold steps on release during a checked save', async () => {
+  it('retains only one intentional W step when keyup precedes a successful save', async () => {
     probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
     const keys = new Set<string>()
     for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
     for (let index = 0; index < 8; index++) { probe.now = 51 + index * 50; probe.tick!() }
     for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 401)) probe.onIntent!(intent)
     expect(probe.frames).toEqual([])
+    expect(rerender()).toContain('1 short input step(s) queued')
+    probe.releaseSave!(); await settle()
+    for (let index = 0; index < 8; index++) probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
+  })
+
+  it('keeps a pre-save W edge if keyup arrives before the first save-time sample', async () => {
+    probe.idleNeeded = false; probe.pending = 96; mount()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 40; probe.tick!()
+    expect(probe.saveCalls).toBe(1)
+    expect(probe.frames).toEqual([])
+    probe.now = 70
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 70)) probe.onIntent!(intent)
+    expect(rerender()).toContain('1 short input step(s) queued')
+    probe.releaseSave!(); await settle()
+    probe.now = 100; probe.tick!(); probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
+  })
+
+  it('keeps a W edge pressed before the save starts when keyup follows a save-time sample', async () => {
+    probe.idleNeeded = false; probe.pending = 96; mount()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 40; probe.tick!()
+    expect(probe.saveCalls).toBe(1)
+    expect(probe.frames).toEqual([])
+    probe.now = 51; probe.tick!() // Save-time sample merges the pre-save held edge.
+    probe.now = 70
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 70)) probe.onIntent!(intent)
+    expect(rerender()).toContain('1 short input step(s) queued')
+    probe.releaseSave!(); await settle()
+    probe.now = 100; probe.tick!(); probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
+  })
+
+  it('bounds sampled W backlog when the save begins before queued steps drain', async () => {
+    probe.idleNeeded = false; probe.pending = 96; mount()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 801; probe.tick!()
+    expect(probe.saveCalls).toBe(1)
+    expect(probe.frames).toEqual([])
+    expect(rerender()).toContain('1 short input step(s) queued')
+    probe.now = 827
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 827)) probe.onIntent!(intent)
+    probe.releaseSave!(); await settle()
+    probe.now = 850
+    for (let index = 0; index < 8; index++) probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
+  })
+
+  it.each(['timed', 'untimed'] as const)(
+    'retains a fresh %s W sample after the pre-save edge drained', async (sample) => {
+      probe.idleNeeded = false; probe.pending = 62; probe.countFrames = true; mount()
+      probe.onIntent!({ type: 'movement', vector: [0, 1],
+        ...(sample === 'timed' ? { atMs: 1 } : {}) })
+      probe.now = 51; probe.tick!()
+      expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
+        .toEqual([['move']])
+      probe.pending = 96; probe.now = 75; probe.tick!()
+      expect(probe.saveCalls).toBe(1)
+      probe.now = 101; probe.tick!() // A new sample, not the earlier edge, is now buffered.
+      expect(rerender()).toContain('1 short input step(s) queued')
+      probe.onIntent!({ type: 'movement', vector: [0, 0], atMs: 120 })
+      expect(rerender()).toContain('1 short input step(s) queued')
+      probe.releaseSave!(); await settle()
+      probe.now = 150; probe.tick!(); probe.tick!()
+      expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
+        .toEqual([['move'], ['move']])
+    })
+
+  it.each(['direction', 'blur', 'blocked'] as const)(
+    'cancels the pre-save W edge on %s before replay', async (cancel) => {
+      probe.idleNeeded = false; probe.pending = 96; mount()
+      probe.onIntent!({ type: 'movement', vector: [0, 1], atMs: 1 })
+      probe.now = 40; probe.tick!()
+      probe.now = 51; probe.tick!()
+      probe.now = 70
+      if (cancel === 'direction') {
+        probe.onIntent!({ type: 'movement', vector: [1, 0], atMs: 70 })
+        probe.onIntent!({ type: 'movement', vector: [0, 0], atMs: 80 })
+      } else if (cancel === 'blur') probe.onIntent!({ type: 'movement', vector: [0, 0] })
+      else probe.onIntent!({ type: 'movement', vector: [0, 0], atMs: 70 })
+      probe.releaseSave!(cancel === 'blocked'); await settle()
+      if (cancel === 'blocked') probe.gate = 'open'
+      probe.now = 100
+      for (let index = 0; index < 8; index++) probe.tick!()
+      expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+        .toEqual([])
+    })
+
+  it('buffers at most one W step across repeated presses during one checked save', async () => {
+    probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
+    const keys = new Set<string>()
+    for (const atMs of [1, 201, 401]) {
+      for (const intent of keyboardMovementIntents(keys, 'KeyW', true, atMs)) probe.onIntent!(intent)
+      probe.now = atMs + 150; probe.tick!()
+      for (const intent of keyboardMovementIntents(keys, 'KeyW', false, atMs + 150)) probe.onIntent!(intent)
+    }
+    expect(rerender()).toContain('1 short input step(s) queued')
+    probe.releaseSave!(); await settle()
+    for (let index = 0; index < 8; index++) { probe.now += 50; probe.tick!() }
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
+  })
+
+  it('cancels the buffered W step on map-open or blur before save completes', async () => {
+    probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 30)) probe.onIntent!(intent)
+    probe.onIntent!({ type: 'movement', vector: [0, 0] })
     probe.releaseSave!(); await settle()
     for (let index = 0; index < 8; index++) probe.tick!()
     expect(probe.frames).toEqual([])
   })
 
-  it('cancels 16 valid held W steps on keyup and accepts a fresh D turn', async () => {
+  it('does not replay a buffered W step after a blocked save', async () => {
+    probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 30)) probe.onIntent!(intent)
+    probe.releaseSave!(true); await settle()
+    probe.gate = 'open'
+    for (let index = 0; index < 8; index++) probe.tick!()
+    expect(probe.frames).toEqual([])
+  })
+
+  it('does not catch up a long W hold after keyup, then accepts a fresh D turn', async () => {
     probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
     const keys = new Set<string>()
     for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
     probe.now = 801; probe.tick!()
-    expect(rerender()).toContain('16 short input step(s) queued')
+    expect(rerender()).toContain('1 short input step(s) queued')
     for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 801)) probe.onIntent!(intent)
-    expect(rerender()).not.toContain('short input step(s) queued')
+    expect(rerender()).toContain('1 short input step(s) queued')
     probe.releaseSave!(); await settle()
     for (let index = 0; index < 20; index++) { probe.now += 50; probe.tick!() }
-    expect(probe.frames).toEqual([])
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type))).toEqual([['move']])
     for (const intent of keyboardMovementIntents(keys, 'KeyD', true, 1851)) probe.onIntent!(intent)
     probe.now = 1901; probe.tick!()
     for (const intent of keyboardMovementIntents(keys, 'KeyD', false, 1901)) probe.onIntent!(intent)
     for (let index = 0; index < 20; index++) { probe.now += 50; probe.tick!() }
     expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
-      .toEqual([['look']])
+      .toEqual([['move'], ['look']])
   })
 
   it('replaces a queued W hold with the new D direction before replay', async () => {
     probe.idleNeeded = false; probe.pending = 96; mount(); probe.tick!()
     probe.onIntent!({ type: 'movement', vector: [0, 1], atMs: 1 })
     probe.now = 801; probe.tick!()
-    expect(rerender()).toContain('16 short input step(s) queued')
+    expect(rerender()).toContain('1 short input step(s) queued')
     probe.onIntent!({ type: 'movement', vector: [1, 0], atMs: 801 })
     expect(rerender()).not.toContain('short input step(s) queued')
     probe.now = 851; probe.tick!()
@@ -1176,8 +1300,8 @@ describe('V23 controller input admission', () => {
     probe.now = 101; probe.tick!()
     for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 101)) probe.onIntent!(intent)
     probe.releaseSave!(); await settle()
-    probe.tick!(); await settle()
-    expect(probe.events).toEqual(['frame:move', 'action'])
+    probe.tick!(); probe.tick!(); await settle(); probe.tick!()
+    expect(probe.events).toEqual(['frame:move', 'frame:move', 'action'])
     expect(probe.actions).toEqual([{ kind: 'legacy-work', id: workId }])
   })
 
@@ -1196,12 +1320,12 @@ describe('V23 controller input admission', () => {
       .toEqual([['move'], ['move']])
   })
 
-  it('drops 15 queued W hold steps after the first grounded terrain rejection', async () => {
+  it('does not repeat the one saved W step after grounded terrain rejection', async () => {
     probe.pending = 96; mount(); probe.tick!()
     const keys = new Set<string>()
     for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
     probe.now = 801; probe.tick!()
-    expect(rerender()).toContain('16 short input step(s) queued')
+    expect(rerender()).toContain('1 short input step(s) queued')
     probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
     probe.releaseSave!(); await settle()
     probe.tick!()
@@ -1225,7 +1349,7 @@ describe('V23 controller input admission', () => {
     probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
     probe.releaseSave!(); await settle()
     probe.tick!()
-    probe.tick!(); await settle()
+    probe.tick!(); await settle(); probe.tick!()
     expect(probe.events.slice(0, 3)).toEqual(['frame:move', 'frame:move', 'action'])
     expect(probe.actions).toEqual([{ kind: 'legacy-work', id: workId }])
     for (let index = 0; index < 8; index++) probe.tick!()
