@@ -833,7 +833,7 @@ describe('starter cliff HUD capability gate', () => {
     expect(fresh).toContain('.wr-greenway-objective{position:relative;right:auto;top:156px')
     expect(fresh).toContain('.wr-surface:has(.wr-greenway-objective) .wr-saved-work-panel{position:relative;right:auto;top:164px')
     expect(fresh).toContain('@media(min-width:720px) and (max-width:900px) and (orientation:portrait){.wr-greenway-objective{position:relative;right:auto;top:192px')
-    expect(fresh).toContain('@media(min-width:720px) and (max-width:900px) and (min-height:591px) and (orientation:landscape){[data-public-version=v43] .wr-v35-quest{left:280px;right:auto;width:240px}}')
+    expect(fresh).toContain('@media(min-width:720px) and (max-width:900px) and (min-height:591px) and (orientation:landscape){[data-public-version=v42] .wr-v35-quest,[data-public-version=v43] .wr-v35-quest{left:280px;right:auto;width:240px}}')
     expect(fresh).toContain('.wr-surface:has(.wr-greenway-objective) .wr-saved-work-panel{position:relative;right:auto;top:200px')
     expect(fresh).toContain('@media(max-width:360px) and (max-height:600px){.wr-surface:has(.wr-greenway-objective) .wr-saved-work-panel{margin:0 auto 0 8px}')
     expect(fresh).toContain('[data-public-v23]:has(.wr-greenway-objective) .v23-guide{display:none}')
