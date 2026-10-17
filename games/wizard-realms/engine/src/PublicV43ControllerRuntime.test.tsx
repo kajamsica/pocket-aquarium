@@ -332,7 +332,7 @@ describe('V43 checked controller bridge', () => {
       version: 'v43', start, locks, store, v42Store }))
     expect(html).toContain('data-public-version="v43"')
     expect(html).toContain('Quest Journal · Next: Creek Span')
-    expect(html).toContain('nearby oaks (4 logs per oak)')
+    expect(html).toContain('Chop each nearby oak twice (4 logs per oak)')
     expect(html).toContain('class="v43-familiar"')
     expect(html).not.toContain('data-quest-journal="v43"')
     expect(html).toContain(':has(.wr-context) .v43-familiar')
