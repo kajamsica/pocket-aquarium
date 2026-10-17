@@ -372,7 +372,7 @@ describe('V23 controller input admission', () => {
     expect(probe.projection?.gait).toMatchObject({ canRun: true, pace: 'walk' })
   })
 
-  it('explains exact creek and cliff rejections once during a held input, then clears after travel', () => {
+  it('explains exact creek and cliff rejections on deliberate retries, then clears after travel', () => {
     probe.idleNeeded = false
     probe.frameRejections = [
       { intentType: 'move', message: 'Build a Greenway bridge lane to cross the creek.' },
@@ -385,13 +385,13 @@ describe('V23 controller input admission', () => {
     probe.tick!()
     expect(rerender()).toContain('Chop 8 logs. Open Works (tap Works or press B), then choose Bridge.')
     expect(probe.states[1]).toEqual(['Build a Greenway bridge lane to cross the creek.'])
-    probe.now = 1000; probe.tick!()
+    probe.now = 1000; move()
     expect(probe.states[1]).toHaveLength(1)
     expect(rerender()).toContain('Chop 8 logs. Open Works (tap Works or press B), then choose Bridge.')
-    probe.now = 1100; probe.tick!()
+    probe.now = 1100; move()
     expect(rerender()).toContain('Chop 4 logs. Open Works (tap Works or press B), then choose Ladder.')
     expect(probe.states[1]).toHaveLength(2)
-    probe.tick!()
+    move()
     expect(rerender()).not.toContain('class="v23-obstacle-cue"')
   })
 
@@ -415,9 +415,9 @@ describe('V23 controller input admission', () => {
     probe.tick!()
     expect(rerender(false, true)).toContain(`${river} A bridge costs 8 logs. Open Works (tap Works or press B), then choose Bridge.`)
     expect(probe.states[1]).toEqual([river])
-    probe.now = 1000; probe.tick!()
+    probe.now = 1000; move()
     expect(probe.states[1]).toEqual([river])
-    probe.now = 1100; probe.tick!()
+    probe.now = 1100; move()
     const html = rerender(false, true)
     expect(html).toContain('No supported move at this position.')
     expect(html).not.toContain(`${river} A bridge costs 8 logs`)
@@ -445,7 +445,7 @@ describe('V23 controller input admission', () => {
     probe.onIntent!({ type: 'movement', vector: [0, 1] })
     probe.tick!()
     expect(rerender(false, false, true)).toContain('A bridge costs 8 logs.')
-    probe.tick!()
+    move()
     expect(rerender(false, false, true)).toContain('Chop 4 logs.')
   })
 
@@ -495,31 +495,28 @@ describe('V23 controller input admission', () => {
     expect(probe.states[1]).toEqual([ownerMessage, ownerMessage])
   })
 
-  it('keeps one held block visible without reannouncing, then expires after release', () => {
+  it('stops a blocked hold, expires its cue, then rearms after release', () => {
     probe.idleNeeded = false
     const creek = 'Build a Greenway bridge lane to cross the creek.'
-    probe.frameRejections = [
-      { intentType: 'move', message: creek },
-      { intentType: 'move', message: creek },
-      { intentType: 'move', message: creek },
-      { intentType: 'move', message: creek },
-      { intentType: 'move', message: creek },
-    ]
+    probe.frameRejections = [{ intentType: 'move', message: creek }]
     mount()
     probe.onIntent!({ type: 'movement', vector: [0, 1] })
     probe.tick!()
     probe.now = 1000; probe.tick!()
     probe.now = 3600; probe.tick!()
-    expect(rerender()).toContain('Chop 8 logs. Open Works (tap Works or press B), then choose Bridge.')
+    expect(rerender()).not.toContain('class="v23-obstacle-cue"')
     probe.now = 8200; probe.tick!()
-    expect(rerender()).toContain('Chop 8 logs. Open Works (tap Works or press B), then choose Bridge.')
-    expect(probe.frameRejections).toHaveLength(1)
+    expect(rerender()).not.toContain('class="v23-obstacle-cue"')
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(1)
     expect(probe.states[1]).toEqual([creek])
     probe.onIntent!({ type: 'movement', vector: [0, 0] })
     probe.now = 11701; probe.tick!()
     expect(rerender()).not.toContain('class="v23-obstacle-cue"')
-    expect(probe.frameRejections).toHaveLength(1)
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(1)
     expect(probe.states[1]).toEqual([creek])
+    probe.frameRejections = [{ intentType: 'move', message: creek }]
     probe.onIntent!({ type: 'movement', vector: [0, 1] })
     probe.tick!()
     expect(rerender()).toContain('Chop 8 logs. Open Works (tap Works or press B), then choose Bridge.')
@@ -1022,6 +1019,81 @@ describe('V23 controller input admission', () => {
     for (let index = 0; index < 8; index++) probe.tick!()
     expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
       .toEqual(Array.from({ length: 8 }, () => ['move']))
+  })
+
+  it('drops 15 queued W hold steps after the first grounded terrain rejection', async () => {
+    probe.pending = 96; mount(); probe.tick!()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 801; probe.tick!()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 801)) probe.onIntent!(intent)
+    expect(rerender()).toContain('16 short input step(s) queued')
+    probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
+    probe.releaseSave!(); await settle()
+    probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(1)
+    expect(rerender()).not.toContain('short input step(s) queued')
+    for (let index = 0; index < 20; index++) probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(1)
+  })
+
+  it('keeps an explicit W tap and checked action behind a rejected held W', async () => {
+    probe.pending = 96; mount(); probe.tick!()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 51; probe.tick!()
+    probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    probe.now = 101; probe.onIntent!({ type: 'saved-work.confirm', id: workId })
+    probe.now = 151; probe.tick!()
+    probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
+    probe.releaseSave!(); await settle()
+    probe.tick!()
+    probe.tick!(); await settle()
+    expect(probe.events.slice(0, 3)).toEqual(['frame:move', 'frame:move', 'action'])
+    expect(probe.actions).toEqual([{ kind: 'legacy-work', id: workId }])
+    for (let index = 0; index < 8; index++) probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(2)
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', false, 201)) probe.onIntent!(intent)
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 251)) probe.onIntent!(intent)
+    probe.now = 301; probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(3)
+  })
+
+  it('rearms held sampling when the direction changes after a terrain rejection', () => {
+    probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
+    mount()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 51; probe.tick!()
+    probe.now = 101; probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(1)
+    for (const intent of keyboardMovementIntents(keys, 'KeyD', true, 151)) probe.onIntent!(intent)
+    probe.now = 201; probe.tick!()
+    expect(probe.frames.filter((frame) => frame.some((intent) => intent.type === 'move')))
+      .toHaveLength(2)
+    expect(probe.frames.at(-1)?.map((intent) => intent.type)).toEqual(['look', 'move'])
+  })
+
+  it('does not persist neutral frames while a rejected W remains held', () => {
+    probe.idleNeeded = false
+    probe.frameRejections = [{ intentType: 'move', message: 'No supported move.' }]
+    mount()
+    const keys = new Set<string>()
+    for (const intent of keyboardMovementIntents(keys, 'KeyW', true, 1)) probe.onIntent!(intent)
+    probe.now = 51; probe.tick!()
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
+      .toEqual([['move']])
+    for (let index = 0; index < 20; index++) {
+      probe.now += 50; probe.tick!()
+    }
+    expect(probe.frames.map((frame) => frame.map((intent) => intent.type)))
+      .toEqual([['move']])
+    expect(probe.saveCalls).toBe(0)
   })
 
   it('turns on every open-gate tick when a D keydown reaches the controller', () => {

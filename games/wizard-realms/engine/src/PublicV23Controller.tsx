@@ -975,6 +975,11 @@ const PUBLIC_V23_PANEL_STYLES = `
 body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has([data-public-version=v28]),body:has([data-public-version=v29]),body:has([data-public-version=v30]),body:has([data-public-version=v31]),body:has([data-public-version=v32]),body:has([data-public-version=v33]),body:has([data-public-version=v34]){margin:0;background:#14221f}
 [data-public-version=v26],[data-public-version=v27],[data-public-version=v28],[data-public-version=v29],[data-public-version=v30],[data-public-version=v31],[data-public-version=v32],[data-public-version=v33],[data-public-version=v34]{height:100dvh}
 [data-public-version=v26] .wr-surface,[data-public-version=v27] .wr-surface,[data-public-version=v28] .wr-surface,[data-public-version=v29] .wr-surface,[data-public-version=v30] .wr-surface,[data-public-version=v31] .wr-surface,[data-public-version=v32] .wr-surface,[data-public-version=v33] .wr-surface,[data-public-version=v34] .wr-surface{height:100%;min-height:0}
+@media(min-width:901px),(min-width:720px) and (min-height:591px){
+  body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43])){margin:0;background:#14221f}
+  :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43]){height:100dvh}
+  :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43]) .wr-surface{height:100%;min-height:0}
+}
 @media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide{left:166px;bottom:16px}}
 `
 export function publicV23SavedWorkMessage(event: NonNullable<Extract<
@@ -1479,6 +1484,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const [traceJson, setTraceJson] = useState('')
   const [obstacleCue, setObstacleCue] = useState<string | null>(null)
   const held = useRef<readonly [number, number]>([0, 0])
+  const blockedHeldVector = useRef<readonly [number, number] | null>(null)
+  const matchesBlockedHeld = (vector: readonly [number, number]) =>
+    blockedHeldVector.current?.[0] === vector[0] && blockedHeldVector.current?.[1] === vector[1]
   const timedHeld = useRef<{ nextAtMs: number; vector: readonly [number, number] } | null>(null)
   const inputQueue = useRef<InputToken[]>([])
   const devRoute = useRef<{ waypoints: readonly { x: number; z: number }[]; index: number } | null>(null)
@@ -1613,7 +1621,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     const due = Math.floor((atMs - timed.nextAtMs) / STEP_MS) + 1
     const firstSampleAtMs = timed.nextAtMs
     timed.nextAtMs += due * STEP_MS
-    if (!timed.vector.some(Boolean) || readActive().player.verticalVelocity !== 0) return
+    if (!timed.vector.some(Boolean) || matchesBlockedHeld(timed.vector)
+      || readActive().player.verticalVelocity !== 0) return
     let queued = inputQueue.current.filter((token) => token.kind === 'pulse').length
     let accepted = 0, merged = 0
     for (let index = 0; index < Math.min(due, MAX_PULSES + 1); index++) {
@@ -1991,7 +2000,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         // Keep only sampled, bounded input while the checked writer owns the world.
         const vector = held.current, edge = edgePulse.current
         edgePulse.current = null
-        if (runtime.status().gate === 'blocked' || !vector.some(Boolean)) return
+        if (runtime.status().gate === 'blocked' || !vector.some(Boolean)
+          || matchesBlockedHeld(vector)) return
         if (edge && inputQueue.current.includes(edge)
           && edge.vector.some((value, index) => value && value === vector[index])) {
           edge.vector = vector
@@ -2021,7 +2031,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           }
         if (timedHeld.current) sampleTimedUntil(performance.now())
         if (inputQueue.current[0]?.kind === 'checked') { drainChecked(); return }
-        if (!devRoute.current && !timedHeld.current && !held.current.some(Boolean) && !edgePulse.current
+        if (!devRoute.current && !timedHeld.current
+          && (!held.current.some(Boolean) || matchesBlockedHeld(held.current)) && !edgePulse.current
           && inputQueue.current.length === 0 && !runtime.idleFrameNeeded()) {
           if (runtime.status().pendingFrames === 0) return
           if (readActive().player.verticalVelocity === 0) { void save(); return }
@@ -2066,7 +2077,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             routeDriving = true
           }
         }
-        const vector = request?.vector ?? (routeDriving ? routeVector : held.current)
+        const vector = request?.vector ?? (routeDriving ? routeVector
+          : matchesBlockedHeld(held.current) ? [0, 0] : held.current)
         const jump = request?.jump ?? false
         const gaitStep = publicV11Gait(before.player.equipment.feet, walkRequested).metersPerStep
         const intents = neutral ? [] : jump ? [{ type: 'jump' as const }]
@@ -2086,6 +2098,22 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const movementRejection = intents.some((intent) => intent.type === 'move')
           ? result.rejections.find((rejection) => rejection.intentType === 'move'
             || rejection.code === 'terrain_missing') : undefined
+        if (request?.heldInput && movementRejection?.code === 'terrain_missing'
+          && before.player.verticalVelocity === 0 && after.player.verticalVelocity === 0) {
+          const matchesRequest = (token: InputToken) => token.kind === 'pulse'
+            && !!token.heldInput && token.vector[0] === request.vector[0]
+            && token.vector[1] === request.vector[1]
+          const queued = inputQueue.current.length
+          inputQueue.current = inputQueue.current.filter((token) => !matchesRequest(token))
+          if (edgePulse.current && !inputQueue.current.includes(edgePulse.current))
+            edgePulse.current = null
+          if (held.current[0] === request.vector[0] && held.current[1] === request.vector[1])
+            blockedHeldVector.current = request.vector
+          if (timedHeld.current?.vector[0] === request.vector[0]
+            && timedHeld.current.vector[1] === request.vector[1]) timedHeld.current = null
+          trace?.record('controller.cancel', { reason: 'held-terrain-missing',
+            cancelled: queued - inputQueue.current.length, vector: request.vector })
+        }
         if (movementRejection) {
           if (routeDriving) {
             devRoute.current = null
@@ -2165,6 +2193,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       const prior = held.current
       if (intent.atMs !== undefined) sampleTimedUntil(intent.atMs)
       held.current = intent.vector
+      if (blockedHeldVector.current && !matchesBlockedHeld(intent.vector))
+        blockedHeldVector.current = null
       if (!prior.some(Boolean) && intent.vector.some(Boolean)
         && performance.now() >= obstacleCueUntil.current)
         lastMovementRejection.current = null
@@ -2179,6 +2209,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         }
         repaintQueued(); drainChecked(); return
       }
+      if (matchesBlockedHeld(intent.vector)) return
       if (intent.atMs !== undefined && Number.isFinite(intent.atMs)
         && readActive().player.verticalVelocity === 0) {
         if (intent.vector.some(Boolean)) {
