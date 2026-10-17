@@ -216,6 +216,14 @@ describe('opt-in software graphics profile', () => {
     expect(sceneGraphicsOptionsForSearch('?publicWorld=v17&graphics=software'))
       .toEqual({ dpr: 1, shadows: false, antialias: false })
   })
+
+  it('uses a lower pixel ratio only for the exact resolution75 profile', () => {
+    const reduced = { dpr: 0.75, shadows: { type: THREE.PCFShadowMap }, antialias: true }
+    expect(sceneGraphicsOptionsForSearch('?dev=1&graphics=resolution75')).toEqual(reduced)
+    expect(sceneGraphicsOptionsForSearch('?graphics=resolution75ish')).toEqual({
+      dpr: [1, 1.5], shadows: { type: THREE.PCFShadowMap }, antialias: true,
+    })
+  })
 })
 
 describe('opt-in landscape dressing A/B probe', () => {

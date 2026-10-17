@@ -45,8 +45,9 @@ export const PUBLIC_FOG_START_M = 24
 export const PUBLIC_FOG_END_M = 31
 export const fogEndFor = (hasPublicVisualWorld: boolean) => hasPublicVisualWorld ? PUBLIC_FOG_END_M : 40
 export function sceneGraphicsOptionsForSearch(search: string) {
-  const software = new URLSearchParams(search).get('graphics') === 'software'
-  const dpr: number | [number, number] = software ? 1 : [1, 1.5]
+  const profile = new URLSearchParams(search).get('graphics')
+  const software = profile === 'software'
+  const dpr: number | [number, number] = software ? 1 : profile === 'resolution75' ? 0.75 : [1, 1.5]
   return { dpr, shadows: software ? false : { type: THREE.PCFShadowMap }, antialias: !software }
 }
 export function landscapeDressingEnabledForSearch(search: string, development: boolean): boolean {
