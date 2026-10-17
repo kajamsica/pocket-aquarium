@@ -16,8 +16,12 @@ import { createAtomicV28Store } from './domain/atomicV28Database'
 import { createAtomicV29Store } from './domain/atomicV29Database'
 import { createAtomicV30Store } from './domain/atomicV30Database'
 import { createAtomicV31Store } from './domain/atomicV31Database'
+import { createAtomicV42Store } from './domain/atomicV42Database'
+import { createAtomicV43Store } from './domain/atomicV43Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { publicV11Gait } from './domain/publicWorldGait'
+import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
+import { resolvePublicV17GreenwaySite } from './domain/publicWorldV17GreenwaySites'
 import { createPublicV23Root, decodePublicV23Progress } from './domain/publicWorldV23Snapshot'
 import { createPublicV24Root } from './domain/publicWorldV24Snapshot'
 import { createPublicV25Root } from './domain/publicWorldV25Snapshot'
@@ -27,6 +31,7 @@ import { createPublicV28Root } from './domain/publicWorldV28Snapshot'
 import { createPublicV29Root } from './domain/publicWorldV29Snapshot'
 import { createPublicV30Root } from './domain/publicWorldV30Snapshot'
 import { createPublicV31Root } from './domain/publicWorldV31Snapshot'
+import { createFreshPublicV43Root } from './domain/publicWorldV43Snapshot'
 import type { PublicV17ActiveView } from './PublicV17WorldView'
 import { resolvePublicV23Site } from './domain/publicWorldV23Sites'
 import { resolvePublicV14Surface } from './domain/publicWorldV14Terrain'
@@ -38,6 +43,7 @@ const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   now: 0,
   stateCursor: 0, states: [] as unknown[], streamed: false, known: false, airborne: false,
   westPose: false, bootsEquipped: false,
+  v43Blocked: false,
   greenwayOak: false, actionEvents: [] as Array<{ type: string }>,
   suggested: false,
   poseOnJump: false, poseOnMove: false,
@@ -231,6 +237,20 @@ vi.mock('./PublicV31ControllerRuntime', async (importOriginal) => {
             : { status: 'saved' as const, events: [], resetWalkRequested: false } } }
     } }
 })
+vi.mock('./PublicV43ControllerRuntime', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./PublicV43ControllerRuntime')>()
+  return { ...actual, createPublicV43ControllerRuntime:
+    (...args: Parameters<typeof actual.createPublicV43ControllerRuntime>) => {
+      const base = actual.createPublicV43ControllerRuntime(...args)
+      return !probe.enabled ? base : { ...base,
+        status: () => probe.v43Blocked ? { ...base.status(), gate: 'blocked' as const,
+          blockedReason: 'test-blocked' } : base.status(),
+        action: async (witness: Parameters<typeof base.action>[0]) => {
+          probe.actions.push(witness)
+          return { status: 'saved' as const, events: [], resetWalkRequested: false }
+        } }
+    } }
+})
 
 const seed = 'greenway-alpha'
 const lock = { request: async <T,>(_name: string,
@@ -266,6 +286,8 @@ const v26Props = () => { const factory = new IDBFactory(), v23 = createPublicV23
     v17Store: createAtomicV17Store(factory) } }
 let preparedV31Start: ReturnType<typeof createPublicV31Root> | null = null
 let preparedStreamedV31Start: ReturnType<typeof createPublicV31Root> | null = null
+let preparedV43Start: ReturnType<typeof createFreshPublicV43Root> | null = null
+let preparedBridgeheadV43Start: ReturnType<typeof createFreshPublicV43Root> | null = null
 function v31FromV23(v23: ReturnType<typeof createPublicV23Root>) {
   const v24 = createPublicV24Root({ head: v23.head, lineage: v23.lineage })
   const v25 = createPublicV25Root({ head: v24.head, lineage: v24.lineage })
@@ -291,6 +313,25 @@ function prepareV31Start() { const v23 = createPublicV23Root(seed)
   preparedStreamedV31Start = v31FromV23({ ...v23, head: { ...v23.head, ...progress,
     saveRevision: 1, witness: { kind: 'checkpoint' } } })
 }
+function prepareV43Start() {
+  preparedV43Start = createFreshPublicV43Root('wizard-realms')
+  const head = preparedV43Start.head
+  const bridge = resolvePublicV17GreenwaySite(head.state.seed, workId)
+  if (!bridge || bridge.kind !== 'bridge') throw new Error('Missing Greenway creek bridge')
+  const greenwayWorks = { ...head.greenwayWorks, builtBridgeIds: [bridge.id] }
+  const support = publicV17StarterSupportAt({ seed: head.state.seed,
+    profile: head.state.generationProfile,
+    route: head.state.greenway.routes[0] ?? null,
+    built: false, greenwayWorks }, bridge.exit)
+  if (!support || support.kind !== 'ground') throw new Error('Missing dry bridge exit')
+  preparedBridgeheadV43Start = { ...preparedV43Start, head: {
+    ...head, greenwayWorks, state: { ...head.state,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(head.state.discoveryMask), ...bridge.footprintTileIds])].sort()),
+      player: { ...head.state.player, xp: head.state.player.xp + 80,
+        skillXp: { ...head.state.player.skillXp, construction: 80 },
+        position: { ...bridge.exit, y: support.floorY } } } } }
+}
 const v31Props = () => { const factory = new IDBFactory()
   if (!preparedV31Start) throw new Error('V31 test ancestry was not prepared')
   const start = probe.streamed ? preparedStreamedV31Start : preparedV31Start
@@ -314,6 +355,19 @@ function mountV31() {
 function rerenderV31() {
   probe.reuse = true; probe.cursor = probe.stateCursor = 0
   return renderToStaticMarkup(createElement(PublicV23Controller, v31Props()))
+}
+function mountV43(start: NonNullable<typeof preparedV43Start>) {
+  probe.enabled = true; probe.cursor = probe.stateCursor = 0
+  vi.spyOn(performance, 'now').mockImplementation(() => probe.now)
+  vi.stubGlobal('window', { location: { hostname: 'localhost', search: '?publicWorld=v43' },
+    addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    setInterval: (tick: () => void) => { probe.tick = tick; return 1 }, clearInterval: () => {} })
+  vi.stubGlobal('document', { hidden: false,
+    addEventListener: vi.fn(), removeEventListener: vi.fn() })
+  const factory = new IDBFactory()
+  return renderToStaticMarkup(createElement(PublicV23Controller, {
+    version: 'v43', start, locks: lock,
+    store: createAtomicV43Store(factory), v42Store: createAtomicV42Store(factory) }))
 }
 function mount(trace = false, v24 = false, v25 = false, v26 = false) {
   probe.enabled = true; probe.cursor = probe.stateCursor = 0
@@ -349,6 +403,7 @@ const savePanel = (html: string) => html.match(/<div class="v23-save">([\s\S]*?)
 async function settle() { for (let i = 0; i < 8; i++) await Promise.resolve() }
 afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = probe.airborne = false
   probe.westPose = false; probe.bootsEquipped = false; probe.greenwayOak = false
+  probe.v43Blocked = false
   probe.actionEvents = []
   probe.now = 0
   probe.suggested = false
@@ -1884,6 +1939,55 @@ describe('V31 controller soil intent routing', () => {
     mount(false, false, false, true)
     probe.onIntent!({ type: 'v31.soil-place', gx: 1, gz: 0 })
     await settle()
+    expect(probe.actions).toEqual([])
+  })
+})
+
+describe('V43 River Works E interaction', () => {
+  beforeAll(prepareV43Start, 30000)
+
+  it('claims the real projected ready post with E on the current V43 route', async () => {
+    const html = mountV43(preparedBridgeheadV43Start!)
+    expect(html).toContain('data-public-version="v43"')
+    expect(probe.projection?.v30Bridgehead).toMatchObject({ bridgeId: workId,
+      claimReady: true, reward: 'basic-pick' })
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).toEqual([{ kind: 'bridgehead-claim/v1', bridgeId: workId }])
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).toHaveLength(1)
+    expect((probe.states[1] as string[]).at(-1)).toBe(
+      'A checked action is already queued; retry after it finishes.')
+    await settle()
+    probe.onIntent!({ type: 'v30.bridgehead.claim', bridgeId: workId })
+    expect(probe.actions).toHaveLength(2)
+    await settle()
+  })
+
+  it('prioritizes the ready post over a competing projected E action', async () => {
+    probe.greenwayOak = true
+    mountV43(preparedBridgeheadV43Start!)
+    expect(probe.projection?.nearbyInteraction?.kind).toBe('resource')
+    expect(probe.projection?.v30Bridgehead?.claimReady).toBe(true)
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).toEqual([{ kind: 'bridgehead-claim/v1', bridgeId: workId }])
+    await settle()
+  })
+
+  it('does not invent a River Works claim without a ready projected post', async () => {
+    probe.greenwayOak = true
+    mountV43(preparedV43Start!)
+    expect(probe.projection?.v30Bridgehead).toBeUndefined()
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).not.toContainEqual({ kind: 'bridgehead-claim/v1', bridgeId: workId })
+    await settle()
+  })
+
+  it('does not claim a ready post while the checked world is blocked', () => {
+    probe.v43Blocked = true
+    mountV43(preparedBridgeheadV43Start!)
+    expect(probe.projection?.v30Bridgehead?.claimReady).toBe(true)
+    expect(probe.projection?.controllerActionsEnabled).toBe(false)
+    probe.onIntent!({ type: 'interact' })
     expect(probe.actions).toEqual([])
   })
 })

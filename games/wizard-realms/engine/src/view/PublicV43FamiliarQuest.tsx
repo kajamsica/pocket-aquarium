@@ -1,5 +1,6 @@
 import { discoveryMaskHasTileId } from '../domain/discoveryMask'
 import type { PublicV43FamiliarWitness } from '../domain/publicWorldV43FamiliarAction'
+import { projectPublicV43QuestContinuation } from '../domain/publicWorldV43GreenwayQuestChain'
 import { SEDGEHORN_CARE_INTERVAL_TICKS, SEDGEHORN_CARES_TO_MATURE }
   from '../domain/publicWorldV43MountTraining'
 import type { PublicV43MountTrainingWitness } from '../domain/publicWorldV43MountTraining'
@@ -83,7 +84,7 @@ export function projectPublicV43FamiliarQuest(head: PublicV43Progress):
     objective: 'Claim the one-time reward at the keeper from within 3 m.',
     location: 'Revealed keeper', targets: target(site.keeper, 'Keeper') }
   return { ...base, completedSteps: TOTAL_STEPS,
-    objective: 'The familiar bond and care station are saved. The sedgehorn is a companion, not a mount.',
+    objective: projectPublicV43QuestContinuation(head).familiar.objective,
     location: 'Care station known', targets: target(site.careStation, 'Care station') }
 }
 
@@ -182,7 +183,7 @@ export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = f
       {quest.stage === 'claimed' && <>
         <p>Sedgehorn care visits: {careCount}/{SEDGEHORN_CARES_TO_MATURE}.
           {careCount === SEDGEHORN_CARES_TO_MATURE
-            ? ' Adult-ready, but not rideable yet.' : ' One marsh herb per visit.'}</p>
+            ? ' Mature, but cannot be ridden in this preview.' : ' One marsh herb per visit.'}</p>
         {careCount < SEDGEHORN_CARES_TO_MATURE && (() => {
           const rejection = availability('sedgehorn-care/v1')
           return <><button type="button" disabled={!actionsEnabled || !!rejection}

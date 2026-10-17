@@ -578,7 +578,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
                     {publicV42IronHallActionHint(hallReward.sparStart) && <small role="status">{
                       publicV42IronHallActionHint(hallReward.sparStart)}</small>}
                   </>}
-                <small>Next lead: the lower Iron Hall challenge awaits beyond this watch.</small>
+                <small>Iron Hall Watch complete. Practice or repair the vest here, then explore your other discovered routes.</small>
               </>}
             </section>}
           </details>}

@@ -24,9 +24,9 @@ export function selectPublicV43QuestLead({ head, ledgerQuest, waystationQuest, i
   if (starter) return starter
   if (ledgerQuest.stage !== 'complete') return { id: ledgerQuest.id,
     title: 'Outfitters Ledger', objective: ledgerQuest.objective }
-  const lead = !head.southbankReached ? waystationQuest
-    : ironHallQuest && !ironHallQuest.complete ? ironHallQuest
-      : waystationQuest && !waystationQuest.complete ? waystationQuest : undefined
+  const lead = waystationQuest && !waystationQuest.complete ? waystationQuest
+    : head.southbankReached && ironHallQuest && !ironHallQuest.complete ? ironHallQuest
+      : undefined
   if (lead) return lead
   const familiar = projectPublicV43QuestContinuation(head).familiar
   return familiar.stage !== 'mount-ready'
@@ -65,7 +65,8 @@ export function PublicV43QuestJournal(leads: PublicV43QuestLeads) {
       {ironHallQuest && <><p><strong>{ironHallQuest.title}, {ironHallQuest.next}:</strong>{' '}
         {ironHallQuest.objective}</p>
       <p><small>{ironHallQuest.reward}</small></p></>}
-      <p><strong>Lost Familiar, {continuation.familiar.stage}:</strong>{' '}
+      <p><strong>Lost Familiar, {continuation.familiar.stage === 'mount-ready'
+        ? 'mature companion' : continuation.familiar.stage}:</strong>{' '}
         {continuation.familiar.objective}</p>
       <p><small>{continuation.familiar.existingReward}</small></p>
     </details>

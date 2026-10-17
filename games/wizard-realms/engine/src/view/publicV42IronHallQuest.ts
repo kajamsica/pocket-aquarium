@@ -85,7 +85,7 @@ export function publicV42IronHallQuest(view: WizardViewProjection): PublicV42Iro
     : view.tick < reward.spar.nextReadyTick
       ? `Practice ward resets in ${reward.spar.nextReadyTick - view.tick} ticks`
       : 'Practice ward ready'
-  return finish('Practice, repair, then Iron Hall Depths',
-    'The Guard Vest is yours. Test it against the practice ward, repair it with the quartermaster, then seek the lower Iron Hall challenge.',
+  return finish('Iron Hall Watch complete',
+    'The Guard Vest is yours. Practice against the ward and repair it with the quartermaster when needed. This chapter is complete; continue exploring your discovered routes.',
     `${crest} · Vest ${reward.vestDurability}/12 · ${spar}`, true)
 }

@@ -78,7 +78,7 @@ describe('V43 quest journal', () => {
     expect(html).toContain('Chop each nearby oak twice (4 logs per oak)')
     expect(html).toContain('Starter leads (0/5 resolved)')
     expect(html).toContain('Outfitters Ledger, first-find')
-    expect(html).toContain('Each accepted care visit records 5 more Creature Care XP')
+    expect(html).toContain('Each accepted care visit adds one of three maturity marks')
     expect(html).toContain('this journal does not claim extra rewards.')
     expect(head).toEqual(before)
   })
@@ -155,10 +155,10 @@ describe('V43 quest journal', () => {
     expect(html).toContain('Carpenter Order: Optional')
   })
 
-  it('suggests Iron Hall after the recorded crossing, then the Waystation claim, then the familiar', () => {
+  it('suggests the Waystation turn-in before Iron Hall after the crossing, then the familiar', () => {
     const head = ledgerClaimedHead(true)
     expectLead(head, { waystationQuest: waystation(true, false), ironHallQuest: ironHall(false) },
-      'Iron Hall Watch', 'Return to the Iron Hall quartermaster on foot to claim your reward.')
+      'Windward Waystation', 'Return to Greenway Outfitters and claim the Waystation repair reward.')
     expectLead(head, { waystationQuest: waystation(true, true), ironHallQuest: ironHall(false) },
       'Iron Hall Watch', 'Return to the Iron Hall quartermaster on foot to claim your reward.')
     expectLead(head, { waystationQuest: waystation(true, false), ironHallQuest: ironHall(true) },
@@ -178,6 +178,25 @@ describe('V43 quest journal', () => {
       'Repair and record the Waystation crossing before searching for the sedgehorn.')
   })
 
+  it('renders rescue-complete care leads without simulation jargon or a ride promise', () => {
+    const crossed = ledgerClaimedHead(true)
+    const claimed = { ...crossed, familiar: { ...crossed.familiar,
+      phase: 'claimed' as const } }
+    const extra = { waystationQuest: waystation(true, true), ironHallQuest: ironHall(true) }
+    const html = expectLead(claimed, extra, 'Lost Familiar', expect.stringContaining('Rescue complete.'))
+    expect(html).toContain('3 more care visits')
+    expect(html).toContain('one marsh herb per visit')
+    expect(html).toContain('cannot be ridden in this preview')
+    expect(html).not.toContain('600 ticks')
+    const twoCares = { ...claimed, mountTraining: { careWitnesses: [
+      { kind: 'sedgehorn-care/v1' as const, tick: 0, eventSequence: 1 },
+      { kind: 'sedgehorn-care/v1' as const, tick: 600, eventSequence: 2 },
+    ] } }
+    const later = renderJournal(twoCares, extra)
+    expect(later).toContain('1 more care visit at the station')
+    expect(later).not.toContain('600 ticks')
+  })
+
   it('records the route once every lead is claimed and the familiar is mature', () => {
     const crossed = ledgerClaimedHead(true)
     const head = { ...crossed, familiar: { ...crossed.familiar, phase: 'claimed' as const },
@@ -188,6 +207,9 @@ describe('V43 quest journal', () => {
     const html = renderJournal(head, extra)
     expect(html).not.toContain('Next:')
     expect(html).toContain('Starter route, Ledger, and familiar care are recorded.')
-    expect(html).toContain('Lost Familiar, mount-ready:')
+    expect(html).toContain('Lost Familiar, mature companion:')
+    expect(html).toContain('cannot be ridden in this preview')
+    expect(html).not.toContain('mount-ready')
+    expect(html).not.toContain('Ground mounting')
   })
 })

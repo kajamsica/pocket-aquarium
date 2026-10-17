@@ -1006,6 +1006,8 @@ export function publicV23SavedWorkMessage(event: NonNullable<Extract<
     ? `Dig saved: ${event.id}. ${event.stoneGained} stone gained, ${event.xp} XP.`
     : `Build saved: ${event.id}. ${event.logsSpent} logs spent, ${event.xp} XP.`
 }
+export const publicV43SedgehornCareSavedMessage =
+  'Sedgehorn care visit saved. The sedgehorn cannot be ridden in this preview.'
 export function publicV23WayfinderGlowSavedMessage(events: readonly {
   type: string; spellId?: string; revealedTileIds?: readonly string[]
 }[]): string | null {
@@ -1848,7 +1850,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             ? intent.kind === 'familiar-claim/v1'
               ? 'The Lost Familiar reward and bond saved. Check your coins, XP, and care station.'
               : intent.kind === 'sedgehorn-care/v1'
-                ? 'Sedgehorn care visit saved. The companion is not rideable yet.'
+                ? publicV43SedgehornCareSavedMessage
                 : 'The Lost Familiar quest step saved. Check the quest panel for the next objective.'
             : 'kind' in intent && intent.kind === 'fulfill-greenway-logs/v1'
             ? 'Carpenter order saved: 4 logs delivered at Greenway Outfitters for 10 coins. One-time order complete.'
@@ -2447,10 +2449,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         quantity: intent.quantity })
       return
     }
-    if (intent.type === 'v30.bridgehead.claim') {
-      if (bridgeheadWorld && view.v30Bridgehead?.bridgeId === intent.bridgeId
+    const bridgeheadClaimId = intent.type === 'v30.bridgehead.claim' ? intent.bridgeId
+      : intent.type === 'interact' && bridgeheadWorld && view.v30Bridgehead?.claimReady
+        ? view.v30Bridgehead.bridgeId : null
+    if (bridgeheadClaimId !== null) {
+      if (bridgeheadWorld && view.v30Bridgehead?.bridgeId === bridgeheadClaimId
         && view.v30Bridgehead.claimReady) queueChecked({ kind: 'bridgehead-claim/v1',
-        bridgeId: intent.bridgeId })
+        bridgeId: bridgeheadClaimId })
       else tell('The River Works claim is not ready from here. Check the saved post at the dry far exit.')
       return
     }

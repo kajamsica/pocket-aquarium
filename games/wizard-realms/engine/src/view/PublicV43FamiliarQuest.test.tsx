@@ -144,4 +144,38 @@ describe('V43 Lost Familiar quest readout', () => {
     expect(html).toContain('Return to Mireglass Reach.')
     expect(html).toContain('not a rideable mount')
   })
+
+  it('keeps the completed rescue and ongoing care instructions distinct at 0, 2, and 3 visits', () => {
+    const claimed = { ...initial, southbankReached: true, familiar: {
+      ...initial.familiar, phase: 'claimed' as const,
+      routeChoice: 'dry-approach' as const, trust: 2, creatureCareXp: 40,
+      stationKnown: true } }
+    const withCares = (count: number) => ({ ...claimed, mountTraining: { careWitnesses:
+      Array.from({ length: count }, (_, index) => ({
+        kind: 'sedgehorn-care/v1' as const, tick: index * 600,
+        eventSequence: index + 1,
+      })) } })
+    const first = projectPublicV43FamiliarQuest(withCares(0))!
+    expect(first.objective).toContain('Rescue complete.')
+    expect(first.objective).toContain('3 more care visits')
+    expect(first.objective).toContain('one marsh herb per visit')
+    expect(first.objective).toContain('cannot be ridden in this preview')
+    expect(first.objective).not.toContain('ticks')
+    const html = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: withCares(0) }))
+    expect(html).toContain('<strong>Complete</strong>')
+    expect(html).toContain('Step 7 of 7')
+    expect(html).toContain('<strong>Next:</strong> Rescue complete.')
+    expect(projectPublicV43FamiliarQuest(withCares(2))!.objective)
+      .toContain('1 more care visit at the station')
+    const mature = projectPublicV43FamiliarQuest(withCares(3))!
+    expect(mature.objective).toContain('All three care visits are recorded.')
+    expect(mature.objective).toContain('cannot be ridden in this preview')
+    expect(mature.objective).not.toContain('more care')
+    expect(mature.objective).not.toContain('ticks')
+    const matureHtml = renderToStaticMarkup(createElement(PublicV43FamiliarQuestPanel,
+      { head: withCares(3), actionsEnabled: true, onAction: () => {} }))
+    expect(matureHtml).toContain('Mature, but cannot be ridden in this preview.')
+    expect(matureHtml).not.toContain('not rideable yet')
+  })
 })

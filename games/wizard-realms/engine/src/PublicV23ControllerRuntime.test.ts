@@ -3,7 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { createPublicV23ControllerRuntime, createPublicV24ControllerRuntime } from './PublicV23ControllerRuntime'
-import { PublicV23Controller, publicV23SavedWorkMessage,
+import { PublicV23Controller, publicV23SavedWorkMessage, publicV43SedgehornCareSavedMessage,
   publicV23WayfinderGlowSavedMessage,
   publicV23WorkRouteForView } from './PublicV23Controller'
 import { choosePublicV23Entry, inspectPublicV23Entry } from './PublicV23Entry'
@@ -103,6 +103,12 @@ function readyLegacyWork(id: string): PublicV23Progress {
 }
 
 describe('V23 controller journey', () => {
+  it('reports a saved sedgehorn care visit without suggesting a current ride', () => {
+    expect(publicV43SedgehornCareSavedMessage).toBe(
+      'Sedgehorn care visit saved. The sedgehorn cannot be ridden in this preview.')
+    expect(publicV43SedgehornCareSavedMessage).not.toContain('yet')
+  })
+
   it.each([
     ['creek', 5.9, 0.16, 'Build a Greenway bridge lane to cross the creek.'],
     ['cliff', -5.9, -0.16, 'Build a ladder at this cliff face.'],

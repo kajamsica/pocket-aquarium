@@ -44,10 +44,13 @@ const projection = {
 
 describe('dev-only ground navigation handoff', () => {
   const ground = { x: 5.75, y: 1.2, z: -12.25 }
-  it('requires exactly the V42 dev URL, never the ordinary public world', () => {
+  it('requires a V42 or V43 dev URL, never the ordinary public world', () => {
     expect(devNavigationEnabled('?dev=1&publicWorld=v42')).toBe(true)
+    expect(devNavigationEnabled('?dev=1&publicWorld=v43')).toBe(true)
     expect(devNavigationEnabled('?publicWorld=v42')).toBe(false)
+    expect(devNavigationEnabled('?publicWorld=v43')).toBe(false)
     expect(devNavigationEnabled('?dev=0&publicWorld=v42')).toBe(false)
+    expect(devNavigationEnabled('?dev=0&publicWorld=v43')).toBe(false)
     expect(devNavigationEnabled('?dev=1&publicWorld=v41')).toBe(false)
     expect(pointerDevNavigateIntent(devNavigationEnabled('?publicWorld=v42'), projection,
       false, ground)).toBeNull()

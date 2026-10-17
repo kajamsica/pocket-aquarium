@@ -4,7 +4,7 @@ import { publicV25StratumAt } from './publicWorldV25Strata'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { WORLD_CELL_METERS } from './worldChunks'
 import { GREENWAY_BAG_UPGRADE } from './publicWorldV43BagUpgrade'
-import { SEDGEHORN_CARES_TO_MATURE, SEDGEHORN_CARE_INTERVAL_TICKS }
+import { SEDGEHORN_CARES_TO_MATURE }
   from './publicWorldV43MountTraining'
 import type { PublicV43Progress } from './publicWorldV43Snapshot'
 
@@ -154,12 +154,12 @@ export function projectPublicV43QuestContinuation(
               objective: 'Escort the sedgehorn safely to its keeper and record the return.' }
             : phase === 'returned'
               ? { stage: 'claim' as const,
-                objective: 'Claim the one-time keeper reward. This does not yet grant a rideable mount.' }
+                objective: 'Claim the one-time keeper reward. The sedgehorn cannot be ridden in this preview.' }
               : careCount < SEDGEHORN_CARES_TO_MATURE
                 ? { stage: 'care' as const,
-                  objective: `Make ${SEDGEHORN_CARES_TO_MATURE - careCount} more care ${SEDGEHORN_CARES_TO_MATURE - careCount === 1 ? 'visit' : 'visits'} at the station. Each spends one marsh herb; wait at least ${SEDGEHORN_CARE_INTERVAL_TICKS} ticks between accepted visits.` }
+                  objective: `Rescue complete. Make ${SEDGEHORN_CARES_TO_MATURE - careCount} more care ${SEDGEHORN_CARES_TO_MATURE - careCount === 1 ? 'visit' : 'visits'} at the station, using one marsh herb per visit. If it is too soon, explore and return. The sedgehorn cannot be ridden in this preview.` }
                 : { stage: 'mount-ready' as const,
-                  objective: 'The sedgehorn is mature. Ground mounting is a separate later action on safe revealed terrain.' }
+                  objective: 'All three care visits are recorded. The sedgehorn is mature, but cannot be ridden in this preview.' }
   return { familiar: { id: 'sedgehorn-familiar/v1', ...familiar,
-    existingReward: 'Feeding, route choice, and keeper claim record 10, 10, and 20 Creature Care XP in the familiar record. The keeper claim also grants 25 coins and 40 character XP. Each accepted care visit records 5 more Creature Care XP; care gives no additional coins or character XP.' } }
+    existingReward: 'Feeding, route choice, and keeper claim record 10, 10, and 20 Creature Care XP in the familiar record. The keeper claim also grants 25 coins and 40 character XP. Each accepted care visit adds one of three maturity marks; care gives no additional coins or character XP.' } }
 }

@@ -27,13 +27,18 @@ import { resolveSedgehornFamiliarSite } from './domain/sedgehornFamiliarContent'
 import { waystationRiverSite } from './domain/waystationRiverContent'
 import { worldTileAtGrid } from './domain/worldChunks'
 import type { WizardViewProjection } from './view/contracts'
+import { planDevRoute } from './view/devNavigation'
+import { devNavigationEnabled, devSceneTapDecision, pointerDevNavigateIntent }
+  from './view/WizardSurface'
 import { WizardHud } from './view/WizardHud'
 
 const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null,
   greenwayLogOrder: null as ReactNode }))
-vi.mock('./view/WizardSurface', () => ({ WizardSurface: ({ projection, greenwayLogOrder }: {
+vi.mock('./view/WizardSurface', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./view/WizardSurface')>(),
+  WizardSurface: ({ projection, greenwayLogOrder }: {
   projection: WizardViewProjection; greenwayLogOrder?: ReactNode }) => {
-  probe.projection = projection; probe.greenwayLogOrder = greenwayLogOrder; return null } }))
+    probe.projection = projection; probe.greenwayLogOrder = greenwayLogOrder; return null } }))
 const locks = { request: async <T,>(_name: string, _options: { mode: 'exclusive' },
   body: () => T | Promise<T>) => body() }
 
@@ -65,6 +70,28 @@ function atGreenwayStore(logs: number): PublicV43Start {
 }
 
 describe('V43 checked controller bridge', () => {
+  it('hands a dev-only double-click on real V43 projected ground to the checked route controller', async () => {
+    const { start, store, v42Store } = await setup()
+    renderToStaticMarkup(createElement(PublicV23Controller, {
+      version: 'v43', start, locks, store, v42Store }))
+    const view = probe.projection!
+    const ground = { x: view.player.position[0], y: view.player.position[1],
+      z: view.player.position[2] - 1 }
+    const devUrl = '?dev=1&publicWorld=v43'
+    expect(devNavigationEnabled(devUrl)).toBe(true)
+    expect(devSceneTapDecision(true, { atMs: 100, point: [20, 20] },
+      { atMs: 250, point: [20, 20] }, null)).toBe('navigate')
+    expect(pointerDevNavigateIntent(devNavigationEnabled(devUrl), view, false, ground))
+      .toEqual({ type: 'dev.navigate', destination: { x: ground.x, z: ground.z } })
+    const route = planDevRoute(view,
+      { x: view.player.position[0], z: view.player.position[2] }, ground)
+    expect(route.ok).toBe(true)
+    if (route.ok) expect(route.waypoints.length).toBeGreaterThan(0)
+    expect(pointerDevNavigateIntent(devNavigationEnabled('?publicWorld=v43'), view,
+      false, ground)).toBeNull()
+    expect(devNavigationEnabled('?dev=1&publicWorld=v41')).toBe(false)
+  })
+
   it('keeps the care clock advancing while grounded and idle, then parks at readiness', () => {
     const start = atGreenwayStore(4)
     expect(createPublicV43ControllerRuntime(start, async () =>

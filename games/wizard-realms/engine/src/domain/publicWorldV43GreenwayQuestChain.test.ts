@@ -326,23 +326,38 @@ describe('checked Greenway quest guidance', () => {
     expect(projectPublicV43QuestContinuation(head).familiar.stage).toBe('cross')
     const claimed = { ...head, southbankReached: true,
       familiar: { ...head.familiar, phase: 'claimed' as const } }
+    const keeper = projectPublicV43QuestContinuation({ ...claimed,
+      familiar: { ...claimed.familiar, phase: 'returned' as const } }).familiar
+    expect(keeper.stage).toBe('claim')
+    expect(keeper.objective).toContain('cannot be ridden in this preview')
+    expect(keeper.objective).not.toContain('yet')
     const beforeCare = projectPublicV43QuestContinuation(claimed).familiar
     expect(beforeCare).toMatchObject({ stage: 'care',
       objective: expect.stringContaining('3 more care visits') })
-    expect(beforeCare.objective).toContain('600 ticks')
+    expect(beforeCare.objective).toContain('Rescue complete.')
+    expect(beforeCare.objective).toContain('one marsh herb per visit')
+    expect(beforeCare.objective).toContain('explore and return')
+    expect(beforeCare.objective).toContain('cannot be ridden in this preview')
+    expect(beforeCare.objective).not.toContain('ticks')
     expect(beforeCare.existingReward).toContain('care gives no additional coins')
     expect(beforeCare.existingReward).toContain('10, 10, and 20 Creature Care XP')
     const twoCares = { ...claimed, mountTraining: { careWitnesses: [
       { kind: 'sedgehorn-care/v1' as const, tick: 0, eventSequence: 1 },
       { kind: 'sedgehorn-care/v1' as const, tick: 600, eventSequence: 2 },
     ] } }
-    expect(projectPublicV43QuestContinuation(twoCares).familiar.objective)
-      .toContain('1 more care visit')
+    const oneLeft = projectPublicV43QuestContinuation(twoCares).familiar.objective
+    expect(oneLeft).toContain('1 more care visit at the station')
+    expect(oneLeft).toContain('one marsh herb per visit')
+    expect(oneLeft).not.toContain('ticks')
     const mature = { ...twoCares, mountTraining: { careWitnesses: [
       ...twoCares.mountTraining.careWitnesses,
       { kind: 'sedgehorn-care/v1' as const, tick: 1200, eventSequence: 3 },
     ] } }
-    expect(projectPublicV43QuestContinuation(mature).familiar.stage)
-      .toBe('mount-ready')
+    const ready = projectPublicV43QuestContinuation(mature).familiar
+    expect(ready.stage).toBe('mount-ready')
+    expect(ready.objective).toContain('All three care visits are recorded.')
+    expect(ready.objective).toContain('cannot be ridden in this preview')
+    expect(ready.objective).not.toContain('Ground mounting')
+    expect(ready.objective).not.toContain('ticks')
   })
 })

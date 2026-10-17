@@ -417,7 +417,9 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
     expect(hud(vest)).toContain('11/12 durability')
     expect(hud(vest)).toContain('Repair Guard Vest · 18 coins')
     expect(hud(vest)).toContain('Remove Guard Vest')
-    expect(hud(vest)).toContain('lower Iron Hall challenge')
+    expect(hud(vest)).toContain('Iron Hall Watch complete')
+    expect(hud(vest)).not.toContain('lower Iron Hall challenge')
+    expect(hud(vest)).not.toContain('Iron Hall Depths')
     expect(hud(vest)).not.toContain('Claim at quartermaster')
     const unequipped = projectPublicV42IronHall({ ...claimed,
       ironHallReward: { ...claimed.ironHallReward, vestEquipped: false } }, atQuartermaster)
