@@ -16,7 +16,11 @@ import { createAtomicV42Store } from './domain/atomicV42Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { ironHallQuartermasterSite } from './domain/ironHallQuartermasterSite'
 import { ironHallSite } from './domain/ironHallSite'
+import { nearbyWorldTileIds } from './domain/publicWorldDiscovery'
 import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
+import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
+import { resolvePublicV28RiverBridge } from './domain/publicWorldV28RiverBridgeSites'
+import { replayPublicV28FramesWithEvents } from './domain/publicWorldV28Replay'
 import { createFreshPublicV36Root, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
 import { createPublicV37Root } from './domain/publicWorldV37Snapshot'
 import { createPublicV38Root } from './domain/publicWorldV38Snapshot'
@@ -72,6 +76,25 @@ const progressOf = (root: ReturnType<typeof createFreshPublicV42Root>): PublicV4
   return progress
 }
 
+function movementAt(point: { x: number; z: number },
+  owner: 'greenway' | 'streamed' = 'streamed',
+  raisedSoilCells: { gx: number; gz: number }[] = []) {
+  const seed = 'wizard-realms', root = createFreshPublicV42Root(seed), state = root.head.state
+  const support = owner === 'greenway' ? publicV17StarterSupportAt({ seed,
+    profile: state.generationProfile,
+    route: state.greenway.routes.find((route) => route.id === 'greenway_ladder') ?? null,
+    built: false, greenwayWorks: root.head.greenwayWorks }, point)
+    : resolvePublicV23Surface(state, point, root.head.regionalWorks.builtLadderIds)
+  if (!support) throw Error(`No support at ${point.x},${point.z}`)
+  const discoveryMask = encodeDiscoveredTileIds([...new Set([
+    ...decodeDiscoveredTileIds(state.discoveryMask), ...nearbyWorldTileIds(point, 24),
+  ])].sort())
+  return createPublicV42ControllerRuntime({ ...root, head: { ...root.head, raisedSoilCells,
+    state: { ...state, movementOwner: owner, discoveryMask,
+      player: { ...state.player, position: { ...point, y: support.floorY } } } } },
+  async () => ({ ok: false, reason: 'not-called' }))
+}
+
 /** A checked V40 crossing, reused as a valid Hall-side source for view projection. */
 async function crossedHallRoot(nearHall = false) {
   const base = createFreshPublicV36Root('wizard-realms')
@@ -113,6 +136,51 @@ async function crossedHallRoot(nearHall = false) {
 }
 
 describe('V42 controller, Iron Hall view and entry integration', () => {
+  it('names the checked river and cliff barriers without moving the player', () => {
+    const riverSite = resolvePublicV28RiverBridge('wizard-realms',
+      'works6:river-bridge:-11')!
+    const river = movementAt({ x: riverSite.from.x, z: riverSite.from.z + 1.95 })
+    const bank = river.preview().state.player.position
+    expect(river.advanceFrame([{ type: 'move', delta: { x: 0, z: 0.1 } }], false)
+      .rejections).toEqual([expect.objectContaining({ code: 'terrain_missing',
+        message: expect.stringMatching(/river blocks this step/i) })])
+    expect(river.preview().state.player.position).toEqual(bank)
+
+    const cliff = movementAt({ x: -24.9, z: -5.92 }, 'greenway')
+    const foot = cliff.preview().state.player.position
+    expect(cliff.advanceFrame([{ type: 'move', delta: { x: 0, z: -0.16 } }], false)
+      .rejections).toEqual([expect.objectContaining({ code: 'terrain_missing',
+        message: expect.stringMatching(/cliff needs a ladder/i) })])
+    expect(cliff.preview().state.player.position).toEqual(foot)
+  })
+
+  it('prioritizes the physical world edge and still accepts an Iron Hall ground step', () => {
+    const edge = movementAt({ x: 1021.95, z: 0 })
+    const before = edge.preview().state.player.position
+    expect(edge.advanceFrame([{ type: 'move', delta: { x: 0.1, z: 0 } }], false)
+      .rejections).toEqual([expect.objectContaining({ code: 'terrain_missing',
+        message: 'You reached the edge of this world. Turn back and explore another direction.' })])
+    expect(edge.preview().state.player.position).toEqual(before)
+
+    const hall = movementAt({ x: 80, z: 28 })
+    expect(hall.advanceFrame([{ type: 'move', delta: { x: 0.16, z: 0 } }], false)
+      .rejections).toEqual([])
+    expect(hall.preview().state.player.position.x).toBeCloseTo(80.16)
+  })
+
+  it('keeps a V42-only raised-soil rejection generic when V28 accepts the step', () => {
+    const runtime = movementAt({ x: 13.95, z: 4 }, 'greenway', [{ gx: 4, gz: 1 }])
+    const intents = [{ type: 'move' as const, delta: { x: 0.1, z: 0 } }]
+    expect(replayPublicV28FramesWithEvents(runtime.preview(),
+      [{ intents, walkRequested: false }], true)).not.toBeNull()
+    const before = runtime.preview().state.player.position
+    expect(runtime.advanceFrame(intents, false).rejections).toEqual([
+      expect.objectContaining({ code: 'terrain_missing',
+        message: 'This move cannot be replayed safely.' }),
+    ])
+    expect(runtime.preview().state.player.position).toEqual(before)
+  })
+
   it('splits opt-in V42 projection timing across V26-V36 and V37-V42', () => {
     const root = createFreshPublicV42Root('wizard-realms'), factory = new IDBFactory()
     vi.stubGlobal('window', { location: { hostname: 'localhost', search: '?inputTrace=1' } })

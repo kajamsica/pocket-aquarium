@@ -145,28 +145,8 @@ function checkedDryCornerStride(value: PublicV28Progress, frame: PublicV14Frame)
   return null
 }
 
-/** V28 owns the bridge ledger; adapting the V27 controller would discard it. */
-export function createPublicV28ControllerRuntime(initial: PublicV28Start, write: Writer,
-  returnHomeWrite?: ReturnHomeWriter) {
-  let committed = structuredClone(initial)
-  let preview = progress(committed)
-  let pending: PublicV14Frame[] = []
-  let flight: { origin: PublicV28Progress; frames: readonly PublicV14Frame[] } | null = null
-  let checkpointAfterDryDescent = false
-  let gate: Gate = 'open'
-  let blockedReason: string | null = null
-  let idleCheck: { preview: PublicV28Progress; needed: boolean } | null = null
-  let streamedTilesCache: { key: string;
-    tiles: ReturnType<ReturnType<typeof createPublicV23StreamTerrain>['activeTiles']> } | null = null
-  const freeze = (reason: string): Outcome => {
-    gate = 'blocked'; blockedReason = reason
-    return { status: 'blocked', reason }
-  }
-  const rejectedFrame = (intents: readonly PublicWorldIntent[], code: PublicWorldRejection['code'],
-    message: string): { events: readonly PublicWorldEvent[];
-      rejections: readonly PublicWorldRejection[] } => ({ events: [],
-    rejections: [{ intentIndex: 0, intentType: intents[0]?.type ?? 'move', code, message }] })
-  const blockedMoveMessage = (frame: PublicV14Frame): string => {
+/** Explain a rejected V28 move from checked terrain, without mutating progress. */
+export function publicV28BlockedMoveMessage(preview: PublicV28Progress, frame: PublicV14Frame): string {
     const move = frame.intents.find((intent) => intent.type === 'move')
     if (!move || move.type !== 'move') return 'This frame has no supported route.'
     const from = preview.state.player.position
@@ -250,7 +230,29 @@ export function createPublicV28ControllerRuntime(initial: PublicV28Start, write:
         return 'This dry rise is too steep to step over. Find a gentler slope or a marked ladder site.'
     }
     return 'This step has no supported route. Try nearby dry ground or an existing crossing.'
+}
+
+/** V28 owns the bridge ledger; adapting the V27 controller would discard it. */
+export function createPublicV28ControllerRuntime(initial: PublicV28Start, write: Writer,
+  returnHomeWrite?: ReturnHomeWriter) {
+  let committed = structuredClone(initial)
+  let preview = progress(committed)
+  let pending: PublicV14Frame[] = []
+  let flight: { origin: PublicV28Progress; frames: readonly PublicV14Frame[] } | null = null
+  let checkpointAfterDryDescent = false
+  let gate: Gate = 'open'
+  let blockedReason: string | null = null
+  let idleCheck: { preview: PublicV28Progress; needed: boolean } | null = null
+  let streamedTilesCache: { key: string;
+    tiles: ReturnType<ReturnType<typeof createPublicV23StreamTerrain>['activeTiles']> } | null = null
+  const freeze = (reason: string): Outcome => {
+    gate = 'blocked'; blockedReason = reason
+    return { status: 'blocked', reason }
   }
+  const rejectedFrame = (intents: readonly PublicWorldIntent[], code: PublicWorldRejection['code'],
+    message: string): { events: readonly PublicWorldEvent[];
+      rejections: readonly PublicWorldRejection[] } => ({ events: [],
+    rejections: [{ intentIndex: 0, intentType: intents[0]?.type ?? 'move', code, message }] })
   const acceptCheckedReply = (value: PublicV28Start, revision: number,
     witness: PublicV28Witness, expected: PublicV28Progress,
     events: readonly Event[] = emptyEvents): Outcome => {
@@ -380,7 +382,8 @@ export function createPublicV28ControllerRuntime(initial: PublicV28Start, write:
         const corner = checkedDryCornerStride(preview, frame)
         if (corner) { frame = corner.frame; next = corner.next; flightFrames = [frame] }
       }
-      if (!next) return rejectedFrame(intents, 'terrain_missing', blockedMoveMessage(frame))
+      if (!next) return rejectedFrame(intents, 'terrain_missing',
+        publicV28BlockedMoveMessage(preview, frame))
       if (!flight && grounded(preview) && !grounded(next)
         && pending.length >= PUBLIC_V14_MAX_FRAME_BATCH - FRAME_LANDING_RESERVE)
         return rejectedFrame(intents, 'unavailable_here',

@@ -1,4 +1,5 @@
 import { createPublicV36ControllerRuntime } from './PublicV36ControllerRuntime'
+import { publicV28BlockedMoveMessage } from './PublicV28ControllerRuntime'
 import { discoveredTileIdsInActiveWindow } from './domain/publicV13DiscoveryWindow'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import { createPublicV23StreamTerrain } from './domain/publicWorldV14Terrain'
@@ -12,6 +13,7 @@ import type { PublicWorldIntent, PublicWorldRejection } from './domain/publicWor
 import type { PublicV23ControllerOutcome } from './PublicV23ControllerRuntime'
 import type { PublicV36Start } from './domain/publicWorldV36Flow'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
+import { replayPublicV28FramesWithEvents } from './domain/publicWorldV28Replay'
 import { starterCliffFace } from './domain/starterCliffProfile'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from './domain/worldChunks'
 import { decodePublicV36Witness, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
@@ -247,10 +249,18 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
           const cell = Math.ceil(coordinate / WORLD_CELL_METERS - 0.5)
           return cell < WORLD_GRID_MIN || cell > WORLD_GRID_MAX
         })
-        return reject(intents, 'terrain_missing', starterLadderRejection(preview, intents)
+        const knownReason = starterLadderRejection(preview, intents)
           ?? starterCreekRejection(preview, intents)
           ?? (worldEdge ? 'You reached the edge of this world. Turn back and explore another direction.'
-            : 'This move cannot be replayed safely.'))
+            : null)
+        if (knownReason) return reject(intents, 'terrain_missing', knownReason)
+        const v28Blocked = !hasJump && grounded(preview)
+          && frame.frames[0].intents.filter((intent) => intent.type === 'move').length === 1
+          && frame.frames[0].intents.every((intent) => intent.type === 'move' || intent.type === 'look')
+          && !replayPublicV28FramesWithEvents(preview, frame.frames, true)
+        return reject(intents, 'terrain_missing', v28Blocked
+          ? publicV28BlockedMoveMessage(preview, frame.frames[0])
+          : 'This move cannot be replayed safely.')
       }
       pending = candidate; preview = next
       return { events: [], rejections: [] }

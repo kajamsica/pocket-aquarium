@@ -13,7 +13,8 @@ import { MireglassCliffLayer } from './MireglassCliffLayer'
 import { HighlandRidgeLayer } from './HighlandRidgeLayer'
 import { RendererInfoProbe, rendererInfoProbeEnabled } from './RendererInfoProbe'
 import type { PublicV17InputTrace } from '../PublicV17InputScheduler'
-import { createTerrainSurfaceSampler, DISCOVERY_FOG_COLOR, terrainSignature, TerrainSurfaceLayer } from './TerrainSurfaceLayer'
+import { createTerrainSurfaceSampler, DISCOVERY_FOG_COLOR, terrainSignature, TerrainSurfaceLayer,
+  UNCHARTED_GROUND_COLOR } from './TerrainSurfaceLayer'
 import { V26ValleyRimLayer } from './V26ValleyRimLayer'
 import { pickV26TerrainColumn, type V26PickedTerrainColumn, type V26TerrainPickKind } from './V26TerrainPicker'
 import { highlandRidgeCellAt, highlandRidgeMoveBarrier } from '../domain/highlandRidge'
@@ -67,7 +68,7 @@ export const WORLD_BEDROCK_BOUNDS = {
   width: BEDROCK_MAX_FACE_M - BEDROCK_MIN_FACE_M,
   depth: BEDROCK_MAX_FACE_M - BEDROCK_MIN_FACE_M,
 } as const
-export const UNCHARTED_GROUND_MATERIAL = new THREE.MeshBasicMaterial({ color: '#5b657c', fog: true })
+export const UNCHARTED_GROUND_MATERIAL = new THREE.MeshBasicMaterial({ color: UNCHARTED_GROUND_COLOR, fog: true })
 
 // Shared geometry/material instances for primitives that have no per-instance variance.
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1)
@@ -255,6 +256,9 @@ const TERRAIN_SURFACE: Record<string, { side: string }> = {
 const TREE_TRUNK_GEOMETRY = new THREE.CylinderGeometry(0.17, 0.39, 3.35, 10, 3)
 const TREE_ROOT_GEOMETRY = new THREE.CylinderGeometry(0.36, 0.55, 0.48, 10)
 const TREE_BRANCH_GEOMETRY = new THREE.CylinderGeometry(0.06, 0.16, 1, 8)
+const TREE_STUMP_SCAR_GEOMETRY = new THREE.CircleGeometry(0.32, 10)
+const TREE_STUMP_BARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#5c3b27', roughness: 0.95 })
+const TREE_STUMP_SCAR_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a77a4d', roughness: 0.95, side: THREE.DoubleSide })
 const MIREGLASS_TIMBER_CROWN_GEOMETRY = new THREE.ConeGeometry(1.12, 3.5, 8)
 const TREE_CANOPY = [
   [-0.92, 2.98, 0.18, 0.72, 0.38, 0.59, '#3d7e49'],
@@ -1006,6 +1010,31 @@ function UnchartedTerrain({ cells }: { cells: readonly WizardTerrainCell[] }) {
     frustumCulled={false} /> : null
 }
 
+export function TreeMeshes({ available, timber, barkMaterial, crownMaterial }: {
+  available: boolean; timber: boolean; barkMaterial: THREE.Material; crownMaterial: THREE.Material
+}) {
+  if (!available) return <>
+    <mesh name="Tree stump" geometry={TREE_ROOT_GEOMETRY} material={TREE_STUMP_BARK_MATERIAL}
+      position={[0, 0.24, 0]} castShadow={false} />
+    <mesh name="Tree stump cut" geometry={TREE_STUMP_SCAR_GEOMETRY} material={TREE_STUMP_SCAR_MATERIAL}
+      position={[0, 0.485, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow={false} />
+  </>
+  return <>
+    {/* Crown depth writing prevents its overlapping transparent lobes from stacking over the wizard. */}
+    <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow />
+    <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow />
+    {!timber && <><mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[-0.46, 2.75, 0.08]}
+      rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow />
+    <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0.46, 2.9, -0.12]}
+      rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow />
+    <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
+      rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow /></>}
+    <mesh geometry={timber ? MIREGLASS_TIMBER_CROWN_GEOMETRY : TREE_CROWN_GEOMETRY}
+      name="Tree crown" material={crownMaterial}
+      position={timber ? [0, 3.75, 0] : undefined} castShadow />
+  </>
+}
+
 function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNode; pose: PresentationPose; yaw: number; scale: number; baseOpacity: number }) {
   const timber = node.visualKind === 'mireglass-timber' && node.available
   const [barkMaterial] = useState(() => new THREE.MeshStandardMaterial({ color: '#5c3b27', roughness: 0.95,
@@ -1038,23 +1067,10 @@ function Tree({ node, pose, yaw, scale, baseOpacity }: { node: WizardResourceNod
     barkMaterial.opacity = crownMaterial.opacity = treeOpacity.current
     barkMaterial.depthWrite = !occluded.current
   })
-  // Shadow depth ignores opacity, so a faded (depleted) node stops casting rather than leaving a solid silhouette.
-  const castShadow = node.available
   return (
     <group name={timber ? 'Harvestable Mireglass timber' : undefined}
       position={[x, y, z]} rotation={[0, yaw, 0]} scale={scale}>
-      {/* Crown depth writing prevents its overlapping transparent lobes from stacking over the wizard. */}
-      <mesh geometry={TREE_ROOT_GEOMETRY} material={barkMaterial} position={[0, 0.24, 0]} castShadow={castShadow} />
-      <mesh geometry={TREE_TRUNK_GEOMETRY} material={barkMaterial} position={[0, 1.68, 0]} castShadow={castShadow} />
-      {!timber && <><mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[-0.46, 2.75, 0.08]}
-        rotation={[0, 0, 0.82]} scale={[1, 1.55, 1]} castShadow={castShadow} />
-      <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0.46, 2.9, -0.12]}
-        rotation={[0, 0, -0.76]} scale={[1, 1.44, 1]} castShadow={castShadow} />
-      <mesh geometry={TREE_BRANCH_GEOMETRY} material={barkMaterial} position={[0, 2.87, 0.39]}
-        rotation={[0.72, 0, 0]} scale={[1, 1.15, 1]} castShadow={castShadow} /></>}
-      <mesh geometry={timber ? MIREGLASS_TIMBER_CROWN_GEOMETRY : TREE_CROWN_GEOMETRY}
-        name="Tree crown" material={crownMaterial}
-        position={timber ? [0, 3.75, 0] : undefined} castShadow={castShadow} />
+      <TreeMeshes available={node.available} timber={timber} barkMaterial={barkMaterial} crownMaterial={crownMaterial} />
     </group>
   )
 }
@@ -1064,8 +1080,12 @@ function Resource({ node, pose }: { node: WizardResourceNode; pose: Presentation
   const yaw = hashUnit(node.id, 1) * Math.PI * 2
   const scale = 0.88 + hashUnit(node.id, 2) * 0.24
   const position = node.position as [number, number, number]
-  if (node.kind === 'tree') return <Tree key={node.visualKind ?? 'tree'} node={node} pose={pose}
-    yaw={yaw} scale={scale} baseOpacity={faded.opacity} />
+  if (node.kind === 'tree') return node.available
+    ? <Tree key={node.visualKind ?? 'tree'} node={node} pose={pose} yaw={yaw} scale={scale} baseOpacity={1} />
+    : <group name="Depleted tree stump" position={position} rotation={[0, yaw, 0]} scale={scale}>
+      <TreeMeshes available={false} timber={false} barkMaterial={TREE_STUMP_BARK_MATERIAL}
+        crownMaterial={TREE_STUMP_SCAR_MATERIAL} />
+    </group>
   if (node.visualKind === 'highland-stone') return <group name={`Highland stone: ${node.label} (${node.available ? 'ready' : 'recovering'})`}
     position={position} rotation={[0, yaw, 0]} scale={scale}>
     {/* A depleted node remains a low, dark scar rather than a translucent intact rock. */}

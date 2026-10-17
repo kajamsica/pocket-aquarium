@@ -12,6 +12,7 @@ type V27WalkableOptions = Readonly<{ rimSegments: readonly PublicV26ValleyRimSeg
   openPitColumns: readonly { gx: number; gz: number; openDepth: number }[] }>
 type RaisedSoilCell = Readonly<{ gx: number; gz: number }>
 export const DISCOVERY_FOG_COLOR = '#a7cddb'
+export const UNCHARTED_GROUND_COLOR = '#5b657c'
 const BASE_Y = -0.72 // Meet the existing bedrock plane at the visible perimeter.
 const STEP_HEIGHT = 0.8
 const DIRECTIONS = [
@@ -272,10 +273,10 @@ export function buildDiscoveryEdgeGeometry(seed: string, cells: readonly WizardT
   const visible = new Set(cells.map((cell) => key(cell.position[0], cell.position[2])))
   const positions: number[] = []
   const colors: number[] = []
-  const fog = new THREE.Color(DISCOVERY_FOG_COLOR)
+  const unknown = new THREE.Color(UNCHARTED_GROUND_COLOR)
   const vertex = (point: Point, alpha: number) => {
     positions.push(point.x, point.y + 0.035, point.z)
-    colors.push(fog.r, fog.g, fog.b, alpha)
+    colors.push(unknown.r, unknown.g, unknown.b, alpha)
   }
   for (const cell of cells) {
     const points = pointsFor(cell)
@@ -289,7 +290,7 @@ export function buildDiscoveryEdgeGeometry(seed: string, cells: readonly WizardT
           x: outer.x + (center.x - outer.x) * 0.58,
           y: outer.y + (center.y - outer.y) * 0.58,
           z: outer.z + (center.z - outer.z) * 0.58,
-          color: fog,
+          color: unknown,
         })
         const innerA = inward(outerA), innerB = inward(outerB)
         vertex(innerA, 0); vertex(outerA, 1); vertex(innerB, 0)

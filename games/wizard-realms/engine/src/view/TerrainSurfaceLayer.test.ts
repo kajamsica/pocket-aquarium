@@ -6,7 +6,7 @@ import { publicV25RiverCellAtGrid } from '../domain/publicWorldV25River'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardTerrainCell } from './contracts'
 import { buildDiscoveryEdgeGeometry, buildTerrainSurfaceGeometry,
-  createTerrainSurfaceSampler, DISCOVERY_FOG_COLOR } from './TerrainSurfaceLayer'
+  createTerrainSurfaceSampler, UNCHARTED_GROUND_COLOR } from './TerrainSurfaceLayer'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 
 const seed = 'greenway-alpha'
@@ -204,7 +204,10 @@ describe('continuous terrain surface', () => {
     expect(colors.itemSize).toBe(4)
     expect(colors.getW(0)).toBe(0)
     expect(colors.getW(1)).toBe(1)
-    expect(colors.getX(1)).toBeCloseTo(new THREE.Color(DISCOVERY_FOG_COLOR).r)
+    const unknown = new THREE.Color(UNCHARTED_GROUND_COLOR)
+    expect(colors.getX(1)).toBeCloseTo(unknown.r)
+    expect(colors.getY(1)).toBeCloseTo(unknown.g)
+    expect(colors.getZ(1)).toBeCloseTo(unknown.b)
     one.dispose(); joined.dispose()
   })
 

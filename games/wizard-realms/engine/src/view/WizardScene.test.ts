@@ -18,8 +18,8 @@ import { highlandRidgeCellAt } from '../domain/highlandRidge'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } from '../domain/worldChunks'
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
-import type { WizardLandmark, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneGraphicsOptionsForSearch, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -27,10 +27,10 @@ const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: it
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
 
-const renderedMeshes = (node: unknown): { material?: THREE.Material }[] => {
+const renderedMeshes = (node: unknown): { material?: THREE.Material; name?: string; castShadow?: boolean }[] => {
   if (Array.isArray(node)) return node.flatMap(renderedMeshes)
   if (!node || typeof node !== 'object' || !('type' in node) || !('props' in node)) return []
-  const element = node as { type: unknown; props: { children?: unknown; material?: THREE.Material } }
+  const element = node as { type: unknown; props: { children?: unknown; material?: THREE.Material; name?: string; castShadow?: boolean } }
   return [...(element.type === 'mesh' ? [element.props] : []), ...renderedMeshes(element.props.children)]
 }
 
@@ -1331,6 +1331,29 @@ describe('tree camera obstruction', () => {
     expect(treeTrunkBlocksView(camera, avatar, [3, 0, 5.4], 1, 0.25)).toBe(false)
     expect(treeTrunkBlocksView(camera, avatar, [0, 0, 8], 1, 0.25)).toBe(false)
     expect(treeTrunkBlocksView(new THREE.Vector3(0, 6, 6), new THREE.Vector3(0, 6, 0), [0, 0, 5], 1, 0.25)).toBe(false)
+  })
+})
+
+describe('tree harvest visual state', () => {
+  it('keeps a live canopy and branches, then leaves only a grounded, shadowless stump', () => {
+    const barkMaterial = new THREE.MeshStandardMaterial()
+    const crownMaterial = new THREE.MeshStandardMaterial()
+    const liveNode: WizardResourceNode = { id: 'oak-1', kind: 'tree', label: 'Oak',
+      position: [0, 0, 0], available: true }
+    const depletedNode: WizardResourceNode = { ...liveNode, available: false }
+    const meshes = (node: WizardResourceNode, timber = false) => renderedMeshes(TreeMeshes({
+      available: node.available, timber, barkMaterial, crownMaterial,
+    }))
+    const live = meshes(liveNode)
+    expect(live).toHaveLength(6)
+    expect(live.map(({ name }) => name)).toContain('Tree crown')
+    expect(live.every(({ castShadow }) => castShadow === true)).toBe(true)
+    expect(meshes(liveNode, true)).toHaveLength(3)
+    const depleted = meshes(depletedNode)
+    expect(depleted.map(({ name }) => name)).toEqual(['Tree stump', 'Tree stump cut'])
+    expect(depleted.every(({ castShadow }) => castShadow === false)).toBe(true)
+    barkMaterial.dispose()
+    crownMaterial.dispose()
   })
 })
 
