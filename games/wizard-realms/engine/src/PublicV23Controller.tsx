@@ -981,9 +981,10 @@ const PUBLIC_V23_PANEL_STYLES = `
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
   [data-public-v23] .v43-familiar{top:210px;left:auto;right:8px;transform:none;bottom:auto;max-height:calc(100dvh - 220px - env(safe-area-inset-bottom,0px))}
-  [data-public-version=v42] .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
-  [data-public-version=v42] .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
+  :is([data-public-version=v42],[data-public-version=v43]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
+  :is([data-public-version=v42],[data-public-version=v43]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
+@media(min-width:380px) and (max-width:719px) and (min-height:401px){[data-public-version=v43] .v26-safety:not([open]){left:calc(50% + 55px);right:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(84px,calc(100vw - 306px))}}
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){
   [data-public-v23] .v43-familiar:not([open]){top:316px;width:calc(100vw - 560px)}
 }

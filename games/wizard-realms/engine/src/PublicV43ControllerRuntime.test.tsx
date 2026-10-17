@@ -348,6 +348,18 @@ describe('V43 checked controller bridge', () => {
     expect(await v42Store.readChecked()).toEqual(source)
   }, 120_000)
 
+  it('positions V43 mobile Safety away from the d-pad and Terrain tools', async () => {
+    const { start, store, v42Store } = await setup()
+    const html = renderToStaticMarkup(createElement(PublicV23Controller, {
+      version: 'v43', start, locks, store, v42Store }))
+    expect(html).toContain('data-public-version="v43"')
+    expect(html).toContain(':is([data-public-version=v42],[data-public-version=v43]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}')
+    expect(html).toContain(':is([data-public-version=v42],[data-public-version=v43]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}')
+    expect(html).toContain('@media(min-width:380px) and (max-width:719px) and (min-height:401px){[data-public-version=v43] .v26-safety:not([open]){left:calc(50% + 55px);right:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(84px,calc(100vw - 306px))}}')
+    expect(html).toContain('.v26-safety summary{min-height:44px;')
+    expect(html).toContain('<summary>Safety options</summary>')
+  })
+
   it('commits turn and movement frames through V43 and continues after checked reload', async () => {
     const { factory, start, makeRuntime, v42Store } = await setup()
     const source = await v42Store.readChecked()
