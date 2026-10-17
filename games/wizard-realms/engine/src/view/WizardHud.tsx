@@ -323,11 +323,11 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
       ? greenwayLogs >= 8
         ? readyCreekSite
           ? `Ready South creek bridge ${workLocation(projection.player.position, readyCreekSite.site)}. Open Works (B), choose Bridge (1), aim, then confirm (F). Keep all 8 logs for this required crossing.`
-          : 'Follow the map south to a marked Ready creek crossing. Open Works (B), choose Bridge (1), aim, then confirm (F). Keep all 8 logs for this required crossing.'
+          : 'Follow the map south to a discovered gold-stake creek crossing candidate. Open Works (B), choose Bridge (1), aim, then confirm (F) only when the checked preview says Ready. Keep all 8 logs for this required crossing.'
         : firstCreekHarvestBlocked
           ? `An oak yields 4 logs, but only ${harvestFreeSlots} pack slots are free. Keep your logs for the required 8-log creek bridge. Check Outfitters for a sale of carried stone or terrain materials; it ${logSaleLimit}`
         : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
-          ? 'Open Backpack and equip your Woodcutter axe. Its logs build the required creek bridge; boots and the carpenter order can wait.'
+          ? 'Open Backpack and equip your Woodcutter axe. Its logs build the required creek bridge. Boots and the carpenter order are optional.'
           : greenwayLogs < 4
             ? `Chop a Greenway oak twice (E) for your first 4 logs. Keep them for the 8-log South creek bridge. ${greenwayLogs}/8 logs.`
             : `First 4 logs collected. Keep them; gather ${8 - greenwayLogs} more for the required South creek bridge. ${greenwayLogs}/8 logs.`
@@ -450,7 +450,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           <small>{firstCreekBridgePending ? greenwayObjective : journalQuest.objective}</small>
           {northLadderCue && <small role="note">{northLadderCue}</small>}
           {firstCreekBridgePending && fullOfBridgeLogs && <small>
-            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters {logSaleLimit}
+            Pack full of logs? Spend 8 at a discovered creek candidate only after Works says Ready. Greenway Outfitters {logSaleLimit}
           </small>}
           {ledgerQuestPrimary && projection.v35LedgerSurvey && <>
             <button type="button" disabled={savePaused || !!projection.v35LedgerSurvey.rejection}
@@ -632,7 +632,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           <strong>Field objective:</strong> {greenwayObjective}
           {northLadderCue && <small>{northLadderCue}</small>}
           {firstCreekBridgePending && fullOfBridgeLogs ? <small>
-            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters {logSaleLimit}
+            Pack full of logs? Spend 8 at a discovered creek candidate only after Works says Ready. Greenway Outfitters {logSaleLimit}
           </small> : firstCreekBridgePending || northLadderCue ? null : <small>{mining
             ? 'Optional digging: Outfitters sells a spade for soil and picks for deeper layers. Sell terrain-bag materials to free pack space. River and cliff routes still require marked Ready Works.'
             : v27Terrain

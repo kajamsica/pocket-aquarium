@@ -9,7 +9,7 @@ import { createFreshPublicV41Root } from './domain/publicWorldV41Snapshot'
 import { createPublicV42Root, replayPublicV42Witness } from './domain/publicWorldV42Snapshot'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
-import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
+import { publicV17StarterAdvanceMove, publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
 import { decodePublicV42RewardProgress } from './domain/publicWorldV42RewardAction'
 import { STARTER_CLIFF_SITE_ID } from './domain/starterCliffProfile'
 
@@ -119,6 +119,49 @@ describe('V42 copied movement frames', () => {
     expect(blocked.advanceFrame(move, false).rejections)
       .toEqual([expect.objectContaining({ message: 'This move cannot be replayed safely.' })])
   })
+  it('explains a checked unbridged creek rejection without advancing preview', () => {
+    const { start, before } = starterAt({ x: 0, z: 5.9 }, 0, false)
+    const move = [{ type: 'move' as const, delta: { x: 0, z: 0.16 } }]
+    const { state } = before
+    expect(publicV17StarterAdvanceMove({ seed: state.seed,
+      profile: state.generationProfile,
+      route: state.greenway.routes.find((entry) => entry.id === 'greenway_ladder') ?? null,
+      built: false, greenwayWorks: before.greenwayWorks }, state.player.position,
+    { x: 0, z: 6.06 }, 0)).toMatchObject({ accepted: false, reason: 'creek_blocked' })
+    expect(replayPublicV42Witness(before, { kind: 'frame-batch/v1',
+      frames: [{ intents: move, walkRequested: false }] })).toBeNull()
+    const runtime = createPublicV42ControllerRuntime(start,
+      async () => ({ ok: false, reason: 'not-called' }))
+    expect(runtime.advanceFrame(move, false).rejections)
+      .toEqual([expect.objectContaining({ code: 'terrain_missing',
+        message: 'Build a Greenway bridge lane to cross the creek.' })])
+    expect(runtime.preview()).toEqual(before)
+    expect(runtime.status().pendingFrames).toBe(0)
+  })
+  it('points to the built bridge when a grounded creek step misses its deck', () => {
+    const initial = starterAt({ x: 2, z: 5.9 }, 0, false).start
+    const start = { ...initial, head: { ...initial.head,
+      greenwayWorks: { ...initial.head.greenwayWorks,
+        builtBridgeIds: ['works4:bridge:greenway-creek:0'] } } }
+    start.head.state.player.xp += 80
+    start.head.state.player.skillXp.construction += 80
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...before } = start.head
+    expect(decodePublicV42RewardProgress(before)).not.toBeNull()
+    const move = [{ type: 'move' as const, delta: { x: 0, z: 0.16 } }]
+    expect(publicV17StarterAdvanceMove({ seed: before.state.seed,
+      profile: before.state.generationProfile,
+      route: before.state.greenway.routes.find((entry) => entry.id === 'greenway_ladder') ?? null,
+      built: false, greenwayWorks: before.greenwayWorks }, before.state.player.position,
+    { x: 2, z: 6.06 }, 0)).toMatchObject({ accepted: false, reason: 'off_bridge' })
+    const runtime = createPublicV42ControllerRuntime(start,
+      async () => ({ ok: false, reason: 'not-called' }))
+    expect(runtime.advanceFrame(move, false).rejections)
+      .toEqual([expect.objectContaining({ code: 'terrain_missing',
+        message: 'Move along the dry bank to a built bridge, then cross centered on its deck.' })])
+    expect(runtime.preview()).toEqual(before)
+    expect(runtime.status().pendingFrames).toBe(0)
+  })
   it('keeps centered starter-ladder climb and descent replayable', () => {
     const { start, before } = starterAt({ x: 0, z: -5.2 })
     const runtime = createPublicV42ControllerRuntime(start,
@@ -173,7 +216,14 @@ describe('V42 copied movement frames', () => {
     expect(await runtime.save()).toMatchObject({ status: 'saved' })
     expect(phases.map(({ phase }) => phase)).toEqual([
       'grounded-check', 'witness-decode', 'local-frame-replay', 'local-frame-compare',
-      'lock-wait', 'store-read', 'writer-preflight', 'writer-replay', 'candidate-clone', 'store-commit',
+      'lock-wait',
+      'atomic-readChecked-open', 'atomic-readChecked-transaction',
+      'atomic-readChecked-request-wait', 'atomic-readChecked-tx-completion',
+      'atomic-readChecked-decode', 'atomic-readChecked-clone',
+      'store-read', 'writer-preflight', 'writer-replay', 'candidate-clone',
+      'atomic-commit-validate', 'atomic-commit-candidate-clone',
+      'atomic-commit-open', 'atomic-commit-transaction', 'atomic-commit-request-wait',
+      'atomic-commit-cas', 'atomic-commit-put', 'atomic-commit-tx-completion', 'store-commit',
       'writer-await', 'reply-check-clone'])
     expect(phases.every(({ durationMs }) => Number.isFinite(durationMs)
       && durationMs >= 0)).toBe(true)

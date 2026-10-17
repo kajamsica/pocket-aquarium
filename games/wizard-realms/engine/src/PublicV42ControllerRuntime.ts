@@ -71,6 +71,25 @@ function starterLadderRejection(value: PublicV42RewardProgress,
     : 'The built starter ladder is narrow. Move to the center of its upper foot, then descend within the rungs.'
 }
 
+/** Surface only a grounded creek gate proven by the same Greenway move authority. */
+function starterCreekRejection(value: PublicV42RewardProgress,
+  intents: readonly PublicWorldIntent[]): string | null {
+  const { state, greenwayWorks } = value
+  if (state.movementOwner !== 'greenway' || state.player.verticalVelocity !== 0
+    || intents.length !== 1 || intents[0].type !== 'move') return null
+  const from = state.player.position, { delta } = intents[0]
+  const step = publicV17StarterAdvanceMove({ seed: state.seed,
+    profile: state.generationProfile,
+    route: state.greenway.routes.find((entry) => entry.id === 'greenway_ladder') ?? null,
+    built: state.greenway.builtRouteIds.includes('greenway_ladder'), greenwayWorks }, from,
+  { x: from.x + delta.x, z: from.z + delta.z }, state.player.verticalVelocity)
+  if (step.accepted) return null
+  return step.reason === 'creek_blocked'
+    ? 'Build a Greenway bridge lane to cross the creek.'
+    : step.reason === 'off_bridge'
+      ? 'Move along the dry bank to a built bridge, then cross centered on its deck.' : null
+}
+
 /** Inherited controls use a disposable V36 shell. Its lineage never reaches storage. */
 function asV36(start: PublicV42Start): PublicV36Start {
   const { markerClaimReward: _marker, signalVantageInspected: _inspected,
@@ -219,6 +238,7 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
       const next = previewPublicV42RewardFrameBatch(wholeBatch ? progress(committed) : preview,
         { kind: 'frame-batch/v1', frames: wholeBatch ? candidate : frame.frames })
       if (!next) return reject(intents, 'terrain_missing', starterLadderRejection(preview, intents)
+        ?? starterCreekRejection(preview, intents)
         ?? 'This move cannot be replayed safely.')
       pending = candidate; preview = next
       return { events: [], rejections: [] }

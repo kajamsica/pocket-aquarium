@@ -192,6 +192,7 @@ describe('starter cliff HUD capability gate', () => {
       .match(/aria-label="Greenway field objective"[^>]*>(.*?)<\/div>/)?.[1] ?? ''
     expect(cue(fresh)).toContain('Field objective:</strong> Open Backpack and equip your Woodcutter axe.')
     expect(cue(fresh)).toContain('Its logs build the required creek bridge')
+    expect(cue(fresh)).toContain('Boots and the carpenter order are optional.')
     expect(cue(fresh)).not.toContain('connected-river bridge')
     expect(opening).not.toContain('Field objective:</strong> Buy a field spade')
 
@@ -203,11 +204,13 @@ describe('starter cliff HUD capability gate', () => {
       backpack: { ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity }] } })
     expect(cue(logs(4))).toContain('First 4 logs collected. Keep them; gather 4 more')
     expect(cue(logs(4))).toContain('4/8 logs.')
-    expect(cue(logs(8))).toContain('Follow the map south to a marked Ready creek crossing')
-    expect(cue(logs(8))).toContain('Open Works (B), choose Bridge (1), aim, then confirm (F).')
+    expect(cue(logs(8))).toContain('Follow the map south to a discovered gold-stake creek crossing candidate')
+    expect(cue(logs(8))).toContain('Open Works (B), choose Bridge (1), aim, then confirm (F)')
+    expect(cue(logs(8))).toContain('only when the checked preview says Ready.')
+    expect(cue(logs(8))).not.toContain('Ready South creek bridge')
     expect(cue(logs(8))).not.toContain('Chop a Greenway oak')
     const bridgeReadyWithoutAxe = { ...logs(8), equipment: fresh.equipment }
-    expect(cue(bridgeReadyWithoutAxe)).toContain('Follow the map south to a marked Ready creek crossing')
+    expect(cue(bridgeReadyWithoutAxe)).toContain('discovered gold-stake creek crossing candidate')
     expect(cue(bridgeReadyWithoutAxe)).not.toContain('equip your Woodcutter axe')
     const blockedPack = (stone: number): WizardViewProjection => ({ ...logs(7), backpack: {
       capacity: 20, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity: 7 },
@@ -223,7 +226,7 @@ describe('starter cliff HUD capability gate', () => {
       ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs',
         quantity: axe.backpack.capacity }] } }
     const fullHtml = objective(full)
-    expect(fullHtml).toContain('Pack full of logs? Spend 8 at a marked Ready creek bridge.')
+    expect(fullHtml).toContain('Pack full of logs? Spend 8 at a discovered creek candidate only after Works says Ready.')
     expect(fullHtml).toContain('Greenway Outfitters does not buy logs.')
     expect(renderHud(full, createElement('span', null, 'Carpenter order')))
       .toContain('Greenway Outfitters does not buy logs as ordinary materials.')
@@ -245,6 +248,10 @@ describe('starter cliff HUD capability gate', () => {
     if (readyCreek?.kind !== 'bridge') throw new Error('Missing creek fixture')
     const readyChoice = { site: { ...readyCreek, obstacle: 'fen_channel' as const }, angleRadians: 0, distanceMeters: 2,
       rejection: null, reason: 'Ready', benefit: 'Cross the creek.' }
+    const candidate = cue({ ...logs(8), savedTerrainWorks: { ...saved,
+      suggestedSites: [readyChoice.site] } })
+    expect(candidate).toContain('discovered gold-stake creek crossing candidate')
+    expect(candidate).not.toContain('Ready South creek bridge')
     const ready = cue({ ...logs(8), savedTerrainWorks: { ...saved,
       preview: { selected: readyChoice, nearby: [readyChoice], guidance: null } } })
     expect(ready).toContain('Ready South creek bridge')
