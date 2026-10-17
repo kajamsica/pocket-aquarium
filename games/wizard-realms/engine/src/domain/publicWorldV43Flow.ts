@@ -49,6 +49,13 @@ async function lock<T>(locks: PublicV7LockProvider | undefined,
 /** Reconcile an interrupted handoff before exposing or writing any V43 state. */
 async function succession(store: Store, source: SourceStore, create: boolean,
   expectedRevision?: number): Promise<Succession> {
+  // A checked V44 reservation takes precedence over the V42 ancestor. An
+  // immutable old V43 tab can still mark that ancestor as conflicted.
+  const newer = await store.readForPromotion()
+  if (newer.status === 'blocked') return { status: 'blocked', reason: newer.reason }
+  if (newer.status === 'valid' && newer.marker)
+    return { status: 'blocked', reason: newer.marker.phase === 'conflict'
+      ? 'successor-conflict' : 'successor-active' }
   let old = await source.readForPromotion()
   if (old.status !== 'valid') return { status: 'blocked',
     reason: old.status === 'blocked' ? old.reason : 'source-missing' }
@@ -128,6 +135,11 @@ export function startFreshPublicV43(locks: PublicV7LockProvider | undefined,
   store: Store, source: SourceStore, seed: string):
   Promise<PublicV43Operation<PublicV43Start>> {
   return lock(locks, async () => {
+    const newer = await store.readForPromotion()
+    if (newer.status === 'blocked') return { ok: false, reason: newer.reason }
+    if (newer.status === 'valid' && newer.marker)
+      return { ok: false, reason: newer.marker.phase === 'conflict'
+        ? 'successor-conflict' : 'successor-active' }
     const old = await source.readForPromotion()
     if (old.status === 'blocked') return { ok: false, reason: old.reason }
     if (old.status === 'valid' && !old.marker)

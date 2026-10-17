@@ -2,10 +2,11 @@ import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
 import './atomicV41Database'
 import { createAtomicV43Store } from './atomicV43Database'
+import { createAtomicV42Store } from './atomicV42Database'
 import { createAtomicV44Store } from './atomicV44Database'
 import { createFreshPublicV43Root, decodePublicV43CheckedSuccessor,
   createPublicV43Root, decodePublicV43Root, replayPublicV43Witness,
-  PUBLIC_V43_SCHEMA } from './publicWorldV43Snapshot'
+  PUBLIC_V43_DATABASE_NAME, PUBLIC_V43_SCHEMA } from './publicWorldV43Snapshot'
 import type { PublicV43Root } from './publicWorldV43Snapshot'
 import { createFreshPublicV42Root, decodePublicV42Root,
   PUBLIC_V42_SCHEMA } from './publicWorldV42Snapshot'
@@ -14,8 +15,10 @@ import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMas
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
 import { waystationRiverSite } from './waystationRiverContent'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
+import { sameStrictBoundedRaw } from './strictBoundedRaw'
 import { commitPublicV44, inspectPublicV44, resumePublicV44,
   startPublicV44 } from './publicWorldV44Flow'
+import { inspectPublicV43, startFreshPublicV43 } from './publicWorldV43Flow'
 import { createPublicV44Root, decodePublicV44Root,
   PUBLIC_V44_DATABASE_NAME } from './publicWorldV44Snapshot'
 
@@ -25,9 +28,10 @@ const locks = { request: async <T>(_name: string, _options: { mode: 'exclusive' 
 const idle = { kind: 'frame-batch/v1' as const,
   frames: [{ intents: [], walkRequested: true }] }
 
-async function putRaw(factory: IDBFactory, raw: unknown, key = 'root') {
+async function putRaw(factory: IDBFactory, raw: unknown, key = 'root',
+  name = PUBLIC_V44_DATABASE_NAME) {
   const db = await new Promise<IDBDatabase>((resolve, reject) => {
-    const request = factory.open(PUBLIC_V44_DATABASE_NAME, 1)
+    const request = factory.open(name, 1)
     request.onupgradeneeded = () => request.result.createObjectStore('records')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
@@ -35,6 +39,22 @@ async function putRaw(factory: IDBFactory, raw: unknown, key = 'root') {
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction('records', 'readwrite')
     tx.objectStore('records').put(raw, key)
+    tx.oncomplete = () => resolve()
+    tx.onabort = () => reject(tx.error)
+  })
+  db.close()
+}
+
+async function deleteRaw(factory: IDBFactory, key: string,
+  name = PUBLIC_V44_DATABASE_NAME) {
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = factory.open(name, 1)
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('records', 'readwrite')
+    tx.objectStore('records').delete(key)
     tx.oncomplete = () => resolve()
     tx.onabort = () => reject(tx.error)
   })
@@ -117,8 +137,10 @@ describe('V44 checked local import and writer', () => {
     if (!started.ok) return
     expect(started.value.head.saveRevision).toBe(0)
     expect(started.value.lineage.source).toEqual(fresh)
-    expect((await source.readChecked())).toMatchObject({ status: 'valid',
-      root: old.status === 'valid' ? old.root : undefined })
+    expect((await source.readChecked()).status).toBe('blocked')
+    expect((await source.readForPromotion())).toMatchObject({ status: 'valid',
+      root: old.status === 'valid' ? old.root : undefined,
+      marker: { phase: 'finalized', sourceRevision: 0 } })
     const advanced = await commitPublicV44(locks, target, source, 0,
       started.value.lineage, idle)
     expect(advanced.ok).toBe(true)
@@ -160,31 +182,30 @@ describe('V44 checked local import and writer', () => {
       root: { head: { saveRevision: 1 } } })
   })
 
-  it('fails closed on legacy source drift, malformed target and lineage tampering', async () => {
+  it('fences legacy source drift and rejects malformed target and lineage tampering', async () => {
     const { factory, source, target } = await setup()
-    const started = await startPublicV44(locks, target, source, 0)
-    if (!started.ok) throw new Error(started.reason)
     const v43 = await source.readChecked()
     if (v43.status !== 'valid') throw new Error('Missing V43 proof')
+    const started = await startPublicV44(locks, target, source, 0)
+    if (!started.ok) throw new Error(started.reason)
     const progress = replayPublicV43Witness(v43.root.head, idle)
     expect(progress).not.toBeNull()
     const next: PublicV43Root = { lineage: v43.root.lineage,
       previous: v43.root.head, head: { ...progress!,
         schemaVersion: PUBLIC_V43_SCHEMA, saveRevision: 1, witness: idle } }
     expect(decodePublicV43CheckedSuccessor(v43.root, next)).not.toBeNull()
-    expect(await source.commit(v43.proof, next)).toBe('committed')
+    expect(await source.commit(v43.proof, next)).toBe('revision-changed')
     expect(await resumePublicV44(locks, target, source, 0,
-      started.value.lineage)).toEqual({ ok: false, reason: 'source-changed' })
-    expect(await commitPublicV44(locks, target, source, 0,
-      started.value.lineage, idle)).toEqual({ ok: false,
-      reason: 'source-changed' })
+      started.value.lineage)).toEqual({ ok: true, value: started.value })
+    expect((await commitPublicV44(locks, target, source, 0,
+      started.value.lineage, idle)).ok).toBe(true)
     expect((await target.readChecked())).toMatchObject({ status: 'valid',
-      root: { head: { saveRevision: 0 } } })
+      root: { head: { saveRevision: 1 } } })
 
-    const root = createPublicV44Root(next)
+    const root = createPublicV44Root(v43.root)
     expect(decodePublicV44Root(root)).not.toBeNull()
     expect(decodePublicV44Root({ ...root, lineage: { ...root.lineage,
-      sourceRevision: 0 } })).toBeNull()
+      sourceRevision: 1 } })).toBeNull()
     expect(decodePublicV44Root({ ...root, head: { ...root.head,
       groundMount: { mode: 'riding', parkedPosition: null } } })).toBeNull()
     await putRaw(factory, { ...root, previous: { forged: true } })
@@ -202,6 +223,135 @@ describe('V44 checked local import and writer', () => {
     await putRaw(factory, { unexpected: true }, 'extra')
     expect((await target.readChecked())).toEqual({ status: 'blocked',
       reason: 'invalid-v44-root' })
+  })
+
+  it('recovers pending/missing and pending/matching handoffs, then reloads finalized/matching', async () => {
+    for (const targetPresent of [false, true]) {
+      const { factory, source, target, fresh } = await setup()
+      const checked = await source.readForPromotion()
+      if (checked.status !== 'valid') throw new Error('Missing promotion proof')
+      expect(await source.transitionSuccessor(checked.proof, 'pending')).toBe('committed')
+      expect((await source.readChecked()).status).toBe('blocked')
+      if (targetPresent) await putRaw(factory, createPublicV44Root(fresh))
+      const inspected = await inspectPublicV44(locks, target, source)
+      expect(inspected).toMatchObject({ ok: true, value: targetPresent
+        ? { status: 'valid' } : { status: 'migration-available', sourceRevision: 0 } })
+      const started = await startPublicV44(locks, target, source, 0)
+      expect(started).toMatchObject({ ok: true, value: {
+        head: { saveRevision: 0 } } })
+      expect((await source.readForPromotion())).toMatchObject({ status: 'valid',
+        marker: { phase: 'finalized', sourceRevision: 0,
+          sourceFingerprint: checked.sourceFingerprint } })
+      expect(await inspectPublicV44(locks, createAtomicV44Store(factory),
+        createAtomicV43Store(factory))).toMatchObject({ ok: true,
+        value: { status: 'valid' } })
+    }
+  })
+
+  it('does not reserve V43 for an unfenced or malformed V44 target or transient read', async () => {
+    for (const targetKind of ['valid', 'malformed', 'transient'] as const) {
+      const { factory, source, target, fresh } = await setup()
+      if (targetKind !== 'transient') await putRaw(factory,
+        targetKind === 'valid' ? createPublicV44Root(fresh) : { forged: true })
+      const candidate = targetKind === 'transient'
+        ? { ...target, readChecked: async () =>
+          ({ status: 'blocked' as const, reason: 'storage-error' }) } : target
+      const inspected = await inspectPublicV44(locks, candidate, source)
+      expect(inspected).toMatchObject({ ok: true, value: { status: 'blocked',
+        reason: targetKind === 'valid' ? 'ambiguous-legacy-target'
+          : targetKind === 'malformed' ? 'invalid-v44-root' : 'storage-error' } })
+      expect((await source.readForPromotion())).toMatchObject({ status: 'valid',
+        marker: null })
+      expect((await source.readChecked()).status).toBe('valid')
+    }
+  })
+
+  it('fails closed on divergent or missing targets after reservation', async () => {
+    const { factory, source, target, fresh } = await setup()
+    const checked = await source.readForPromotion()
+    if (checked.status !== 'valid') throw new Error('Missing promotion proof')
+    expect(await source.transitionSuccessor(checked.proof, 'pending')).toBe('committed')
+    const progress = replayPublicV43Witness(fresh.head, idle)!
+    const advanced: PublicV43Root = { lineage: fresh.lineage, previous: fresh.head,
+      head: { ...progress, schemaVersion: PUBLIC_V43_SCHEMA,
+        saveRevision: 1, witness: idle } }
+    expect(decodePublicV43Root(advanced)).not.toBeNull()
+    await putRaw(factory, createPublicV44Root(advanced))
+    expect(await inspectPublicV44(locks, target, source)).toMatchObject({
+      ok: true, value: { status: 'blocked', reason: 'target-conflict' } })
+    expect((await source.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'conflict' } })
+
+    const second = await setup()
+    expect((await startPublicV44(locks, second.target, second.source, 0)).ok).toBe(true)
+    await deleteRaw(second.factory, 'root')
+    expect(await inspectPublicV44(locks, second.target, second.source)).toMatchObject({
+      ok: true, value: { status: 'blocked', reason: 'target-conflict' } })
+    expect((await second.source.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'conflict' } })
+  })
+
+  it('orders V43 writes and V44 reservation by the source CAS', async () => {
+    const first = await setup()
+    const staleWriter = await first.source.readChecked()
+    if (staleWriter.status !== 'valid') throw new Error('Missing writer proof')
+    expect((await startPublicV44(locks, first.target, first.source, 0)).ok).toBe(true)
+    const progress = replayPublicV43Witness(staleWriter.root.head, idle)!
+    const next: PublicV43Root = { lineage: staleWriter.root.lineage,
+      previous: staleWriter.root.head, head: { ...progress,
+        schemaVersion: PUBLIC_V43_SCHEMA, saveRevision: 1, witness: idle } }
+    expect(await first.source.commit(staleWriter.proof, next)).toBe('revision-changed')
+    expect((await first.source.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: { phase: 'finalized', sourceRevision: 0 } })
+
+    const second = await setup()
+    const stalePromotion = await second.source.readForPromotion()
+    const writer = await second.source.readChecked()
+    if (stalePromotion.status !== 'valid' || writer.status !== 'valid')
+      throw new Error('Missing proofs')
+    expect(await second.source.commit(writer.proof, next)).toBe('committed')
+    expect(await second.source.transitionSuccessor(stalePromotion.proof, 'pending'))
+      .toBe('revision-changed')
+    expect((await second.source.readForPromotion())).toMatchObject({ status: 'valid',
+      marker: null, root: { head: { saveRevision: 1 } } })
+    expect((await startPublicV44(locks, second.target, second.source, 1)).ok).toBe(true)
+  })
+
+  it('keeps V44 recovery independent of a stale V43 tab changing V42 ancestry', async () => {
+    const factory = new IDBFactory()
+    const ancestor = createAtomicV42Store(factory)
+    const source = createAtomicV43Store(factory), target = createAtomicV44Store(factory)
+    expect((await startFreshPublicV43(locks, source, ancestor, seed)).ok).toBe(true)
+    expect((await startPublicV44(locks, target, source, 0)).ok).toBe(true)
+    expect(await inspectPublicV43(locks, source, ancestor)).toEqual({ ok: true,
+      value: { status: 'blocked', reason: 'successor-active' } })
+    const stale = await ancestor.readForPromotion()
+    if (stale.status !== 'valid') throw new Error('Missing V42 ancestor')
+    expect(await ancestor.transitionSuccessor(stale.proof, 'conflict')).toBe('committed')
+    expect(await inspectPublicV43(locks, source, ancestor)).toEqual({ ok: true,
+      value: { status: 'blocked', reason: 'successor-active' } })
+    expect(await inspectPublicV44(locks, target, source)).toMatchObject({ ok: true,
+      value: { status: 'valid' } })
+    expect((await source.readChecked()).status).toBe('blocked')
+  })
+
+  it('rejects malformed V43 marker records and enforces the three MiB CAS bound', async () => {
+    const { factory, source, target } = await setup()
+    const tooLarge = { payload: 'x'.repeat(3 << 20) }
+    expect(sameStrictBoundedRaw(tooLarge, structuredClone(tooLarge), 3 << 20))
+      .toBe(false)
+    const promotion = await source.readForPromotion()
+    if (promotion.status !== 'valid') throw new Error('Missing checked source')
+    await putRaw(factory, { schemaVersion: 'v44-successor/v1', phase: 'pending',
+      sourceRevision: 0, sourceFingerprint: 'v43-canonical-sha256/v1:' + '0'.repeat(64) },
+    'v44-successor', PUBLIC_V43_DATABASE_NAME)
+    expect(await source.readForPromotion()).toEqual({ status: 'blocked',
+      reason: 'invalid-successor-marker' })
+    expect((await source.readChecked()).status).toBe('blocked')
+    expect(await source.transitionSuccessor(promotion.proof, 'pending'))
+      .toBe('revision-changed')
+    expect(await inspectPublicV44(locks, target, source)).toEqual({ ok: true,
+      value: { status: 'blocked', reason: 'invalid-successor-marker' } })
   })
 
   it('persists mount and dismount witnesses with independent V44 revisions', async () => {

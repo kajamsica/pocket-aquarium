@@ -25,36 +25,65 @@ async function lock<T>(locks: PublicV7LockProvider | undefined,
   catch { return { ok: false, reason: 'storage-error' } }
 }
 
-/** V43 is not sealed by this local prototype. Every V44 read/write fences on
- * the exact imported checked source and fails closed if a V43 writer advances. */
+/** Reserve the exact checked V43 root before V44 can import it. The V42
+ * ancestor may be changed by an immutable older tab, so it is not consulted. */
 async function succession(store: Store, source: SourceStore, create: boolean,
   expectedSourceRevision?: number): Promise<
     { status: 'migration-available'; sourceRevision: number }
     | { status: 'valid'; root: PublicV44Root }
     | { status: 'blocked'; reason: string }> {
-  const old = await source.readChecked()
+  let old = await source.readForPromotion()
   if (old.status !== 'valid') return { status: 'blocked',
     reason: old.status === 'blocked' ? old.reason : 'source-missing' }
+  if (old.marker?.phase === 'conflict')
+    return { status: 'blocked', reason: 'successor-conflict' }
   if (expectedSourceRevision !== undefined
     && old.root.head.saveRevision !== expectedSourceRevision)
     return { status: 'blocked', reason: 'source-revision-changed' }
-  const target = await store.readChecked()
-  if (target.status === 'blocked') return { status: 'blocked', reason: target.reason }
-  if (target.status === 'valid') {
-    const { lineage } = target.root
-    if (lineage.sourceRevision !== old.root.head.saveRevision
-      || !sameStrictBoundedRaw(lineage.source, old.root, 3 << 20))
-      return { status: 'blocked', reason: 'source-changed' }
-    return { status: 'valid', root: target.root }
-  }
-  if (!create) return { status: 'migration-available',
+  let target = await store.readChecked()
+  if (target.status === 'blocked' && (target.reason === 'storage-error' || !old.marker))
+    return { status: 'blocked', reason: target.reason }
+  // An unreserved legacy target has no proven ancestry, even if its embedded
+  // source currently equals V43. Preserve the unfenced V43 save in this case.
+  if (!old.marker && target.status !== 'missing')
+    return { status: 'blocked', reason: 'ambiguous-legacy-target' }
+  if (!old.marker && !create) return { status: 'migration-available',
     sourceRevision: old.root.head.saveRevision }
-  let genesis: PublicV44Root
-  try { genesis = createPublicV44Root(old.root) }
-  catch { return { status: 'blocked', reason: 'invalid-source' } }
-  const result = await store.commit(target.proof, genesis)
-  if (result !== 'committed') return { status: 'blocked', reason: result }
-  return { status: 'valid', root: genesis }
+  if (!old.marker) {
+    const fingerprint = old.sourceFingerprint
+    const reserved = await source.transitionSuccessor(old.proof, 'pending')
+    if (reserved !== 'committed') return { status: 'blocked', reason: reserved }
+    old = await source.readForPromotion()
+    if (old.status !== 'valid' || old.marker?.phase !== 'pending'
+      || old.sourceFingerprint !== fingerprint)
+      return { status: 'blocked', reason: 'source-changed' }
+  }
+  if (old.marker?.phase === 'pending' && target.status === 'missing') {
+    if (!create) return { status: 'migration-available',
+      sourceRevision: old.root.head.saveRevision }
+    let genesis: PublicV44Root
+    try { genesis = createPublicV44Root(old.root) }
+    catch { return { status: 'blocked', reason: 'invalid-source' } }
+    const committed = await store.commit(target.proof, genesis)
+    if (committed !== 'committed') return { status: 'blocked', reason: committed }
+    target = await store.readChecked()
+    if (target.status === 'blocked' && target.reason === 'storage-error')
+      return { status: 'blocked', reason: target.reason }
+  }
+  if (target.status !== 'valid'
+    || target.root.lineage.sourceRevision !== old.root.head.saveRevision
+    || !sameStrictBoundedRaw(target.root.lineage.source, old.root, 3 << 20)) {
+    const conflicted = await source.transitionSuccessor(old.proof, 'conflict')
+    if (conflicted !== 'committed' && conflicted !== 'unchanged')
+      return { status: 'blocked', reason: conflicted }
+    return { status: 'blocked', reason: 'target-conflict' }
+  }
+  if (old.marker?.phase === 'pending') {
+    const finalized = await source.transitionSuccessor(old.proof, 'finalized')
+    if (finalized !== 'committed' && finalized !== 'unchanged')
+      return { status: 'blocked', reason: finalized }
+  }
+  return { status: 'valid', root: target.root }
 }
 
 export function inspectPublicV44(locks: PublicV7LockProvider | undefined,
