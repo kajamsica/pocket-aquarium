@@ -6,7 +6,8 @@ import { ironHallSite } from './ironHallSite'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { createPublicV23Root } from './publicWorldV23Snapshot'
 import { createFreshPublicV41Root } from './publicWorldV41Snapshot'
-import { previewPublicV41CombatActions } from './publicWorldV41CombatAction'
+import { previewPublicV41CombatActions,
+  replayPublicV41CombatFrameBatch } from './publicWorldV41CombatAction'
 import { previewPublicV37FrameBatch } from './publicWorldV37Movement'
 import { replayPublicV40Witness } from './publicWorldV40Snapshot'
 import { confirmPublicV42RewardAction, decodePublicV42RewardProgress,
@@ -85,6 +86,45 @@ function claimed(seed?: string): PublicV42RewardProgress {
 }
 
 describe('V42 Iron Hall reward authority', () => {
+  it('keeps one grounded ordinary preview identical to checked replay', () => {
+    const before = ready()
+    const witnesses = [
+      { kind: 'frame-batch/v1' as const, frames: [{ intents: [{
+        type: 'look' as const, yawDelta: 0.03, pitchDelta: -0.01 }], walkRequested: true }] },
+      move(1),
+      { kind: 'frame-batch/v1' as const, frames: [{ intents: [{
+        type: 'look' as const, yawDelta: 0.03, pitchDelta: -0.01 }, {
+        type: 'move' as const, delta: { x: 0.08, z: 0 } }], walkRequested: true }] },
+    ]
+    const unchanged = structuredClone(before)
+    for (const witness of witnesses) {
+      const checked = replayPublicV42RewardFrameBatch(before, witness)
+      expect(checked).not.toBeNull()
+      expect(previewPublicV42RewardFrameBatch(before, witness)).toEqual(checked)
+      expect(checked?.ironHallReward).toEqual(before.ironHallReward)
+    }
+    expect(before).toEqual(unchanged)
+    expect(previewPublicV42RewardFrameBatch({ ...before, state: {
+      ...before.state, tick: -1 } }, witnesses[0])).toBeNull()
+  })
+
+  it('matches inherited replay beside an undefeated idle Iron Hall ward', () => {
+    const base = ready('wizard-realms', false)
+    const before = at(base, ironHallSite(base)!.ward.center)
+    expect(before.ironHall).toMatchObject({ engaged: false, wardDefeated: false })
+    const witness = { kind: 'frame-batch/v1' as const, frames: [{
+      intents: [{ type: 'move' as const, delta: { x: 0.08, z: 0 } }],
+      walkRequested: true }] }
+    const inherited = replayPublicV41CombatFrameBatch(before, witness)
+    expect(inherited).not.toBeNull()
+    const expected = decodePublicV42RewardProgress({ ...inherited,
+      ironHallReward: before.ironHallReward })
+    expect(expected).not.toBeNull()
+    expect(previewPublicV42RewardFrameBatch(before, witness)).toEqual(expected)
+    expect(replayPublicV42RewardFrameBatch(before, witness)).toEqual(expected)
+    expect(expected?.ironHall).toEqual(before.ironHall)
+  })
+
   it('shares one checked preview decode without changing combat or reward rejections', () => {
     const base = ready(), owned = claimed(), ward = ironHallSite(owned)!
     const combatBase = ready('wizard-realms', false)

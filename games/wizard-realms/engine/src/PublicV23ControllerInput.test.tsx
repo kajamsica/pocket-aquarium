@@ -3,7 +3,8 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { PublicV23Controller, publicV23DiscoveredWestSite,
-  publicV26PitLadderWitness, publicV26SafetyRejectionMessage } from './PublicV23Controller'
+  publicV26PitLadderWitness, publicV26SafetyEscape,
+  publicV26SafetyRejectionMessage } from './PublicV23Controller'
 import type { PublicV17InputTrace } from './PublicV17InputScheduler'
 import { createAtomicV17Store } from './domain/atomicV17Database'
 import { createAtomicV23Store } from './domain/atomicV23Database'
@@ -362,6 +363,31 @@ afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = p
   vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('V23 controller input admission', () => {
+  it('closes open Safety on Escape and returns focus to its summary without hijacking other keys', () => {
+    const focus = vi.fn(), preventDefault = vi.fn(), stopPropagation = vi.fn()
+    const details = { open: true, querySelector: vi.fn(() => ({ focus })) }
+    const event = (key: string) => ({ key, currentTarget: details,
+      preventDefault, stopPropagation }) as unknown as Parameters<typeof publicV26SafetyEscape>[0]
+    publicV26SafetyEscape(event('Enter'))
+    expect(details.open).toBe(true)
+    expect(preventDefault).not.toHaveBeenCalled()
+    publicV26SafetyEscape(event('Escape'))
+    expect(details.open).toBe(false)
+    expect(focus).toHaveBeenCalledOnce()
+    expect(preventDefault).toHaveBeenCalledOnce()
+    expect(stopPropagation).toHaveBeenCalledOnce()
+    publicV26SafetyEscape(event('Escape'))
+    expect(stopPropagation).toHaveBeenCalledOnce()
+  })
+
+  it('explains an unmapped E interaction without inventing an action or naming an old world', () => {
+    mount(false, false, false, true)
+    probe.onIntent!({ type: 'interact' })
+    expect(probe.actions).toEqual([])
+    expect((probe.states[1] as string[]).at(-1)).toBe(
+      'No available E interaction here. Move near an actionable object or use its explicit control.')
+  })
+
   it('ignores barefoot pace toggles so newly equipped boots begin at the default run pace', () => {
     mount()
     expect(probe.projection?.gait).toMatchObject({ canRun: false, pace: 'walk' })

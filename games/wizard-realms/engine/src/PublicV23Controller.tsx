@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { publicV14MovementIntents } from './PublicV14Controller'
 import { publicV17ActionForView, publicV17ReticleAimX, publicV17SuggestedWorkAimX,
   publicV17WorkRouteForView } from './PublicV17Controller'
@@ -1054,6 +1055,14 @@ const v26SafetyRejection: Record<string, string> = {
 }
 export function publicV26SafetyRejectionMessage(reason: string): string {
   return v26SafetyRejection[reason] ?? `Safety action could not be saved (${reason}).`
+}
+
+export function publicV26SafetyEscape(event: KeyboardEvent<HTMLDetailsElement>): void {
+  if (event.key !== 'Escape' || !event.currentTarget.open) return
+  event.preventDefault()
+  event.stopPropagation()
+  event.currentTarget.querySelector('summary')?.focus()
+  event.currentTarget.open = false
 }
 export function publicV26PitLadderWitness(opportunity: NonNullable<
   WizardViewProjection['v26PitLadderOpportunity']>): PitLadderWitness {
@@ -2548,7 +2557,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     }
     const mapped = publicV17ActionForView(intent, view, active.movementOwner)
     if (mapped) queueChecked(mapped)
-    else tell('This action is unavailable in the V23 world.')
+    else tell(intent.type === 'interact'
+      ? 'No available E interaction here. Move near an actionable object or use its explicit control.'
+      : 'This action is unavailable in the V23 world.')
   }
   const nearWestFace = active.movementOwner === 'streamed'
     && publicV23HasWestStripSite(snapshot.state.seed)
@@ -2670,6 +2681,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </>}
     </details>}
     {physicalWorld && <details className="v26-safety" aria-label="Pit safety actions"
+      onKeyDown={publicV26SafetyEscape}
       open={Boolean(view.v26PitLadderOpportunity)}>
       <summary>Safety options</summary>
       {view.v26PitLadderOpportunity && <button type="button"

@@ -432,6 +432,28 @@ export function replayPublicV42RewardFrameBatch(before: PublicV42RewardProgress,
 /** Whole-batch observation may be airborne; the checked writer still waits for landing. */
 export function previewPublicV42RewardFrameBatch(before: PublicV42RewardProgress,
   rawWitness: unknown): PublicV42RewardProgress | null {
+  const witness = decodePublicV14FrameWitness(rawWitness)
+  const frame = witness?.frames.length === 1 ? witness.frames[0] : null
+  if (frame && frame.intents.length > 0 && frame.intents.every((intent) =>
+    intent.type === 'look' || intent.type === 'move')) {
+    // Without combat or spar, V40 is the same movement authority. Admit only
+    // a fully decoded, grounded V42 result; leave every uncertain case below.
+    const current = progressOf(before)
+    if (current && !current.ironHall.engaged && !current.ironHallReward.spar.active
+      && current.state.player.verticalVelocity === 0) {
+      const pose = projectPublicV31Pose(current)
+      if (pose && Math.abs(pose.effective.position.y - pose.effective.floorY) <= 1e-6) {
+        const moved = replayPublicV40Witness(current, witness)
+        if (moved && moved.state.player.verticalVelocity === 0) {
+          const next = decodePublicV42RewardProgress({ ...current, ...moved })
+          const nextPose = next && projectPublicV31Pose(next)
+          if (next && nextPose
+            && Math.abs(nextPose.effective.position.y - nextPose.effective.floorY) <= 1e-6)
+            return next
+        }
+      }
+    }
+  }
   return replayPublicV42RewardFrameBatch(before, rawWitness)
     ?? replayFrames(before, rawWitness, true)
 }
