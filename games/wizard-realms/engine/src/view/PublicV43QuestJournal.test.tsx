@@ -1,10 +1,19 @@
+import { IDBFactory } from 'fake-indexeddb'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { resolvePublicV28RiverBridge } from '../domain/publicWorldV28RiverBridgeSites'
+import { createAtomicV43Store } from '../domain/atomicV43Database'
+import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from '../domain/discoveryMask'
+import { resolvePublicV17GreenwaySite } from '../domain/publicWorldV17GreenwaySites'
 import { SEDGEHORN_CARES_TO_MATURE } from '../domain/publicWorldV43MountTraining'
-import { createFreshPublicV43Root } from '../domain/publicWorldV43Snapshot'
+import { createFreshPublicV42Root, decodePublicV42Root, PUBLIC_V42_SCHEMA }
+  from '../domain/publicWorldV42Snapshot'
+import type { PublicV42Root } from '../domain/publicWorldV42Snapshot'
+import { createFreshPublicV43Root, createPublicV43Root }
+  from '../domain/publicWorldV43Snapshot'
 import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
+import { waystationRiverSite } from '../domain/waystationRiverContent'
 import type { WizardViewProjection } from './contracts'
 import { publicV35LedgerQuest } from './publicV35LedgerQuest'
 import { publicV40WaystationQuest } from './publicV40WaystationQuest'
@@ -155,16 +164,78 @@ describe('V43 quest journal', () => {
     expect(html).toContain('Carpenter Order: Optional')
   })
 
-  it('suggests the Waystation turn-in before Iron Hall after the crossing, then the familiar', () => {
+  it('hands a saved Waystation claim to the Familiar rescue before Iron Hall', () => {
     const head = ledgerClaimedHead(true)
     expectLead(head, { waystationQuest: waystation(true, false), ironHallQuest: ironHall(false) },
       'Windward Waystation', 'Return to Greenway Outfitters and claim the Waystation repair reward.')
-    expectLead(head, { waystationQuest: waystation(true, true), ironHallQuest: ironHall(false) },
+    const savedWaystation = { ...head, waystationClaimed: true }
+    expectLead(savedWaystation,
+      { waystationQuest: waystation(true, true), ironHallQuest: ironHall(false) },
+      'Lost Familiar', 'Explore the dry Mireglass marsh edge near Bell Alder on foot to reveal tracks.')
+    const savedRescue = { ...savedWaystation, familiar: { ...savedWaystation.familiar,
+      phase: 'claimed' as const, stationKnown: true, creatureCareXp: 40 },
+    state: { ...savedWaystation.state, player: { ...savedWaystation.state.player,
+      coins: savedWaystation.state.player.coins + 25,
+      xp: savedWaystation.state.player.xp + 40 } } }
+    expectLead(structuredClone(savedRescue),
+      { waystationQuest: waystation(true, true), ironHallQuest: ironHall(false) },
       'Iron Hall Watch', 'Return to the Iron Hall quartermaster on foot to claim your reward.')
+    expect(renderJournal(savedRescue,
+      { waystationQuest: waystation(true, true), ironHallQuest: ironHall(false) }))
+      .toContain('keeper claim also grants 25 coins and 40 character XP')
     expectLead(head, { waystationQuest: waystation(true, false), ironHallQuest: ironHall(true) },
       'Windward Waystation', 'Return to Greenway Outfitters and claim the Waystation repair reward.')
-    expectLead(head, { waystationQuest: waystation(true, true), ironHallQuest: ironHall(true) },
-      'Lost Familiar', 'Find the sedgehorn tracks.')
+    expectLead(savedWaystation,
+      { waystationQuest: waystation(true, true), ironHallQuest: ironHall(true) },
+      'Lost Familiar', 'Explore the dry Mireglass marsh edge near Bell Alder on foot to reveal tracks.')
+  })
+
+  it('keeps the Familiar as next lead after a checked Waystation save is reopened', async () => {
+    const completed = ledgerClaimedHead(true)
+    const base = createFreshPublicV42Root('wizard-realms')
+    const blocked = new Set([...completed.greenwayWorks.builtBridgeIds,
+      ...completed.greenwayWorks.builtLadderIds].flatMap((id) => {
+      const site = resolvePublicV17GreenwaySite('wizard-realms', id)
+      return site && site.kind !== 'dig' ? site.blockingResourceIds : []
+    }))
+    const river = resolvePublicV28RiverBridge('wizard-realms', completed.riverBridgeIds[0])!
+    const waystationSite = waystationRiverSite('wizard-realms')!
+    const riverBridgeIds = [...completed.riverBridgeIds, waystationSite.id].sort()
+    const state = { ...completed.state,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(completed.state.discoveryMask),
+        ...river.footprintTileIds, ...waystationSite.footprintTileIds])].sort()),
+    greenway: { ...completed.state.greenway,
+      resources: completed.state.greenway.resources.map((resource) => blocked.has(resource.id)
+        ? { ...resource, health: 0, depleted: true } : resource) },
+    player: { ...completed.state.player, xp: 330, level: 4,
+      skillXp: { ...completed.state.player.skillXp, construction: 300,
+        excavation: 30 } } }
+    const genesis = { ...base.lineage.genesis, state,
+      greenwayWorks: completed.greenwayWorks,
+      claimedBridgeheadId: completed.claimedBridgeheadId,
+      riverBridgeIds,
+      ledgerSurveyBridgeId: completed.ledgerSurveyBridgeId,
+      ledgerClaimReward: completed.ledgerClaimReward,
+      southbankReached: true, waystationClaimed: true }
+    const source: PublicV42Root = { lineage: { origin: 'v41-migration',
+      rulesProfile: 'iron-hall-rewards/v1', seed: 'wizard-realms',
+      sourceRevision: 0, genesis }, previous: null,
+    head: { ...structuredClone(genesis), schemaVersion: PUBLIC_V42_SCHEMA,
+      saveRevision: 0, witness: null } }
+    expect(decodePublicV42Root(source)).not.toBeNull()
+    const factory = new IDBFactory(), store = createAtomicV43Store(factory)
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw Error('Expected empty checked V43 store')
+    expect(await store.commit(missing.proof, createPublicV43Root(source)))
+      .toBe('committed')
+    const reopened = await createAtomicV43Store(factory).readChecked()
+    if (reopened.status !== 'valid') throw Error('Expected reopened checked V43 save')
+    expect(reopened.root.head).toMatchObject({ southbankReached: true,
+      waystationClaimed: true, familiar: { phase: 'search' } })
+    expectLead(reopened.root.head,
+      { waystationQuest: waystation(true, true), ironHallQuest: ironHall(false) },
+      'Lost Familiar', 'Explore the dry Mireglass marsh edge near Bell Alder on foot to reveal tracks.')
   })
 
   it('uses Waystation then familiar without inventing a Hall state when Iron Hall is unavailable', () => {
@@ -173,7 +244,7 @@ describe('V43 quest journal', () => {
       'Windward Waystation', 'Return to Greenway Outfitters and claim the Waystation repair reward.')
     expect(html).not.toContain('Iron Hall')
     expectLead(head, { waystationQuest: waystation(true, true), ironHallQuest: null },
-      'Lost Familiar', 'Find the sedgehorn tracks.')
+      'Lost Familiar', 'Explore the dry Mireglass marsh edge near Bell Alder on foot to reveal tracks.')
     expectLead(ledgerClaimedHead(), {}, 'Lost Familiar',
       'Repair and record the Waystation crossing before searching for the sedgehorn.')
   })

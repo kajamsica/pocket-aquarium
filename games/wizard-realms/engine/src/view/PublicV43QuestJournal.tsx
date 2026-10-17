@@ -4,6 +4,7 @@ import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
 import type { PublicV35LedgerQuest } from './publicV35LedgerQuest'
 import type { PublicV40WaystationQuest } from './publicV40WaystationQuest'
 import type { PublicV42IronHallQuest } from './publicV42IronHallQuest'
+import { projectPublicV43FamiliarQuest } from './PublicV43FamiliarQuest'
 
 const statusLabel = {
   complete: 'Complete', closed: 'Closed',
@@ -24,11 +25,15 @@ export function selectPublicV43QuestLead({ head, ledgerQuest, waystationQuest, i
   if (starter) return starter
   if (ledgerQuest.stage !== 'complete') return { id: ledgerQuest.id,
     title: 'Outfitters Ledger', objective: ledgerQuest.objective }
-  const lead = waystationQuest && !waystationQuest.complete ? waystationQuest
-    : head.southbankReached && ironHallQuest && !ironHallQuest.complete ? ironHallQuest
-      : undefined
-  if (lead) return lead
+  if (waystationQuest && !waystationQuest.complete) return waystationQuest
   const familiar = projectPublicV43QuestContinuation(head).familiar
+  if (head.familiar.phase !== 'claimed') return { id: familiar.id,
+    title: 'Lost Familiar',
+    objective: head.southbankReached
+      ? projectPublicV43FamiliarQuest(head)?.objective ?? familiar.objective
+      : familiar.objective }
+  if (head.southbankReached && ironHallQuest && !ironHallQuest.complete)
+    return ironHallQuest
   return familiar.stage !== 'mount-ready'
     ? { id: familiar.id, title: 'Lost Familiar', objective: familiar.objective } : null
 }
