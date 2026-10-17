@@ -93,6 +93,52 @@ describe('V43 checked controller bridge', () => {
       .toMatchObject({ status: 'rejected', reason: 'not_owned' })
   })
 
+  it('routes the one-time backpack upgrade through the checked V43 writer and reloads it', async () => {
+    let saved = atGreenwayStore(4)
+    const writer = async (revision: number, _lineage: PublicV43Start['lineage'],
+      witness: PublicV43Witness) => {
+      if (revision !== saved.head.saveRevision)
+        return { ok: false as const, reason: 'revision-changed' }
+      const next = replayPublicV43Witness(saved.head, witness)
+      if (!next) return { ok: false as const, reason: 'action-rejected' }
+      saved = { lineage: saved.lineage, head: { ...next, schemaVersion: PUBLIC_V43_SCHEMA,
+        saveRevision: revision + 1, witness } }
+      return { ok: true as const, value: saved }
+    }
+    const runtime = createPublicV43ControllerRuntime(saved, writer)
+    expect(await runtime.action({ kind: 'buy-greenway-backpack/v1', price: 0 } as never))
+      .toMatchObject({ status: 'rejected', reason: 'invalid_value' })
+    expect(await runtime.action({ kind: 'buy-greenway-backpack/v1' }))
+      .toMatchObject({ status: 'saved' })
+    expect(runtime.preview().state.player).toMatchObject({ coins: 50, backpackCapacity: 28 })
+    expect(runtime.preview().greenwayBagUpgrade?.claimedAtSequence).toBeGreaterThan(0)
+    expect(await runtime.action({ kind: 'buy-greenway-backpack/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'already_purchased' })
+    const resumed = createPublicV43ControllerRuntime(saved, writer)
+    expect(resumed.preview().state.player.backpackCapacity).toBe(28)
+    expect(resumed.preview().greenwayBagUpgrade).toEqual(runtime.preview().greenwayBagUpgrade)
+  })
+
+  it('shows the bag offer only as a checked V43 store addon and changes it to owned after purchase',
+    async () => {
+      const { store, v42Store } = await setup()
+      const before = atGreenwayStore(4)
+      renderToStaticMarkup(createElement(PublicV23Controller, {
+        version: 'v43', start: before, locks, store, v42Store }))
+      const offer = renderToStaticMarkup(createElement('div', null, probe.greenwayLogOrder))
+      expect(offer).toContain('Backpack upgrade')
+      expect(offer).toContain('Buy 8 backpack spaces · 70 coins')
+      expect(offer).not.toContain('Owned. 28 spaces total.')
+      const after = replayPublicV43Witness(before.head, { kind: 'buy-greenway-backpack/v1' })!
+      renderToStaticMarkup(createElement(PublicV23Controller, {
+        version: 'v43', start: { lineage: before.lineage, head: { ...after,
+          schemaVersion: PUBLIC_V43_SCHEMA, saveRevision: 1,
+          witness: { kind: 'buy-greenway-backpack/v1' } } }, locks, store, v42Store }))
+      const owned = renderToStaticMarkup(createElement('div', null, probe.greenwayLogOrder))
+      expect(owned).toContain('Owned. 28 spaces total.')
+      expect(owned).not.toContain('Buy 8 backpack spaces · 70 coins')
+    }, 120_000)
+
   it('shows the fixed order inside the Greenway store, with insufficient-log feedback', async () => {
     const { store, v42Store } = await setup()
     renderToStaticMarkup(createElement(PublicV23Controller, {
@@ -314,6 +360,11 @@ describe('V43 checked controller bridge', () => {
     const { start, store, makeRuntime } = await setup()
     const runtime = makeRuntime(start)
     expect(runtime.advanceFrame([{ type: 'jump' }], false).rejections).toEqual([])
+    const before = await store.readChecked()
+    expect(await runtime.action({ kind: 'buy-greenway-backpack/v1' }))
+      .toMatchObject({ status: 'deferred-airborne' })
+    expect(await store.readChecked()).toEqual(before)
+    expect(runtime.committed().head).not.toHaveProperty('greenwayBagUpgrade')
     expect(await runtime.save()).toMatchObject({ status: 'deferred-airborne' })
     for (let index = 0; index < 40; index++) {
       const preview = runtime.preview(), pose = projectPublicV31Pose(preview)
@@ -325,6 +376,24 @@ describe('V43 checked controller bridge', () => {
     expect(await store.readChecked()).toMatchObject({ status: 'valid', root: { head: {
       saveRevision: 1, witness: { kind: 'frame-batch/v1' } } } })
   }, 120_000)
+
+  it('flushes grounded pending movement, then rejects a remote bag purchase without another write',
+    async () => {
+      const { start, store, makeRuntime } = await setup()
+      const runtime = makeRuntime(start)
+      expect(runtime.advanceFrame([], true).rejections).toEqual([])
+      expect(runtime.status().pendingFrames).toBe(1)
+      expect(await runtime.action({ kind: 'buy-greenway-backpack/v1' }))
+        .toMatchObject({ status: 'rejected', reason: 'too_far' })
+      const afterFlush = await store.readChecked()
+      expect(afterFlush).toMatchObject({ status: 'valid', root: { head: {
+        saveRevision: 1, witness: { kind: 'frame-batch/v1' },
+        state: { player: { backpackCapacity: 20 } } } } })
+      expect(runtime.committed().head).not.toHaveProperty('greenwayBagUpgrade')
+      expect(await runtime.action({ kind: 'buy-greenway-backpack/v1' }))
+        .toMatchObject({ status: 'rejected', reason: 'too_far' })
+      expect(await store.readChecked()).toEqual(afterFlush)
+    }, 120_000)
 
   it('commits movement from a checked V42 migration without changing its source root', async () => {
     const factory = new IDBFactory(), v42Store = createAtomicV42Store(factory)

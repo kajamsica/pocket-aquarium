@@ -17,6 +17,9 @@ import type { PublicV43MountTrainingProgress } from './domain/publicWorldV43Moun
 import { confirmPublicV43LogOrder, createPublicV43LogOrder,
   decodePublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
 import type { PublicV43LogOrderProgress } from './domain/publicWorldV43LogOrder'
+import { confirmPublicV43BagUpgrade, createPublicV43BagUpgrade,
+  decodePublicV43BagUpgradeWitness } from './domain/publicWorldV43BagUpgrade'
+import type { PublicV43BagUpgradeProgress } from './domain/publicWorldV43BagUpgrade'
 
 type Writer = (revision: number, lineage: PublicV43Start['lineage'], witness: PublicV43Witness) =>
   Promise<PublicV43Operation<PublicV43Start>>
@@ -92,23 +95,28 @@ export function createPublicV43ControllerRuntime(initial: PublicV43Start,
       ...(committed.head.mountTraining
         ? { mountTraining: structuredClone(committed.head.mountTraining) } : {}),
       ...(committed.head.greenwayOrder
-        ? { greenwayOrder: structuredClone(committed.head.greenwayOrder) } : {}) }),
+        ? { greenwayOrder: structuredClone(committed.head.greenwayOrder) } : {}),
+      ...(committed.head.greenwayBagUpgrade
+        ? { greenwayBagUpgrade: structuredClone(committed.head.greenwayBagUpgrade) } : {}) }),
     async action(raw: Parameters<typeof runtime.action>[0] | PublicV43Witness) {
       const gate = directGate()
       if (gate) return gate
       const familiar = decodePublicV43FamiliarWitness(raw)
       const care = decodePublicV43MountTrainingWitness(raw)
       const order = decodePublicV43LogOrderWitness(raw)
-      if (!familiar && !care && !order && raw && typeof raw === 'object' && 'kind' in raw
+      const bag = decodePublicV43BagUpgradeWitness(raw)
+      if (!familiar && !care && !order && !bag && raw && typeof raw === 'object' && 'kind' in raw
         && typeof raw.kind === 'string' && (raw.kind.startsWith('familiar-')
-          || raw.kind === 'sedgehorn-care/v1' || raw.kind === 'fulfill-greenway-logs/v1'))
+          || raw.kind === 'sedgehorn-care/v1' || raw.kind === 'fulfill-greenway-logs/v1'
+          || raw.kind === 'buy-greenway-backpack/v1'))
         return { status: 'rejected' as const, reason: 'invalid_value' }
-      if (!familiar && !care && !order) return runtime.action(raw as Parameters<typeof runtime.action>[0])
+      if (!familiar && !care && !order && !bag)
+        return runtime.action(raw as Parameters<typeof runtime.action>[0])
       directBusy = true
       try {
         const saved = await runtime.save()
         if (saved.status !== 'saved' && saved.status !== 'unchanged') return saved
-        const witness = (familiar ?? care ?? order)!
+        const witness = (familiar ?? care ?? order ?? bag)!
         const current = Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
           [key, committed.head[key]])) as PublicV43FamiliarProgress
         const training = care && (committed.head.mountTraining
@@ -117,10 +125,14 @@ export function createPublicV43ControllerRuntime(initial: PublicV43Start,
         const procurement = order && (committed.head.greenwayOrder
           ? { ...current, greenwayOrder: committed.head.greenwayOrder } as
             PublicV43LogOrderProgress : createPublicV43LogOrder(current))
+        const upgrade = bag && (committed.head.greenwayBagUpgrade
+          ? { ...current, greenwayBagUpgrade: committed.head.greenwayBagUpgrade } as
+            PublicV43BagUpgradeProgress : createPublicV43BagUpgrade(current))
         const rejection = familiar
           ? confirmPublicV43FamiliarAction(current, familiar).rejection
           : care && training ? confirmPublicV43MountTraining(training, care).rejection
             : order && procurement ? confirmPublicV43LogOrder(procurement, order).rejection
+              : bag && upgrade ? confirmPublicV43BagUpgrade(upgrade, bag).rejection
               : 'invalid_progress'
         if (rejection) return { status: 'rejected' as const, reason: rejection }
         const revision = committed.head.saveRevision

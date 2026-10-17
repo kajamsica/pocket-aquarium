@@ -57,6 +57,8 @@ import type { PublicV43FamiliarWitness } from './domain/publicWorldV43FamiliarAc
 import type { PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
 import { GREENWAY_LOG_ORDER } from './domain/greenwayProcurementOrder'
 import type { PublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
+import { GREENWAY_BAG_UPGRADE } from './domain/publicWorldV43BagUpgrade'
+import type { PublicV43BagUpgradeWitness } from './domain/publicWorldV43BagUpgrade'
 import { projectPublicV43GreenwayQuestChain, projectPublicV43QuestContinuation }
   from './domain/publicWorldV43GreenwayQuestChain'
 import type { PublicV43Progress } from './domain/publicWorldV43Snapshot'
@@ -224,6 +226,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV41CombatWitness
   | PublicV42RewardWitness
   | PublicV43FamiliarWitness | PublicV43MountTrainingWitness | PublicV43LogOrderWitness
+  | PublicV43BagUpgradeWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
@@ -1729,9 +1732,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
           : 'kind' in intent && (intent.kind.startsWith('familiar-')
-            || intent.kind === 'sedgehorn-care/v1' || intent.kind === 'fulfill-greenway-logs/v1')
+            || intent.kind === 'sedgehorn-care/v1' || intent.kind === 'fulfill-greenway-logs/v1'
+            || intent.kind === 'buy-greenway-backpack/v1')
           ? await (runtime as V43Runtime).action(intent as PublicV43FamiliarWitness
-            | PublicV43MountTrainingWitness | PublicV43LogOrderWitness)
+            | PublicV43MountTrainingWitness | PublicV43LogOrderWitness
+            | PublicV43BagUpgradeWitness)
           : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
             || intent.kind === 'ironhall-vest-equip/v1'
             || intent.kind === 'ironhall-vest-unequip/v1'
@@ -1798,6 +1803,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
                 : 'The Lost Familiar quest step saved. Check the quest panel for the next objective.'
             : 'kind' in intent && intent.kind === 'fulfill-greenway-logs/v1'
             ? 'Carpenter order saved: 4 logs delivered at Greenway Outfitters for 10 coins. One-time order complete.'
+            : 'kind' in intent && intent.kind === 'buy-greenway-backpack/v1'
+            ? 'Backpack upgrade saved: 8 more spaces for 70 coins. Capacity is now 28.'
             : 'kind' in intent && intent.kind === 'ironhall-claim/v1'
             ? 'Iron Hall reward saved: 60 coins, 70 character XP, 70 Combat XP, and Guard Vest.'
             : 'kind' in intent && intent.kind === 'ironhall-vest-equip/v1'
@@ -1879,6 +1886,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
               arbitrage: 'The carpenter order is unavailable at these store prices.' } as
               Record<string, string>)[result.reason ?? '']
             ?? `Carpenter order was not saved (${result.reason}).`
+          : 'kind' in intent && intent.kind === 'buy-greenway-backpack/v1'
+          ? ({ too_far: 'Move within 3 m of Greenway Outfitters.',
+              unavailable_here: 'Return to Greenway Outfitters to upgrade your backpack.',
+              airborne: 'Land before buying the backpack upgrade.',
+              insufficient_coins: 'The backpack upgrade costs 70 coins.',
+              already_purchased: 'The one-time backpack upgrade is already owned.' } as
+              Record<string, string>)[result.reason ?? '']
+            ?? `Backpack upgrade was not saved (${result.reason}).`
           : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
             || intent.kind === 'ironhall-vest-equip/v1'
             || intent.kind === 'ironhall-vest-unequip/v1'
@@ -2545,6 +2560,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     stack.itemId === GREENWAY_LOG_ORDER.itemId).reduce((sum, stack) => sum + stack.quantity, 0) : 0
   const greenwayOrderClaimed = v43
     && (snapshot as PublicV43Progress).greenwayOrder?.claimedAtSequence != null
+  const greenwayBagClaimed = v43
+    && (snapshot as PublicV43Progress).greenwayBagUpgrade?.claimedAtSequence != null
   const questCue = v43 ? (() => {
     const head = snapshot as PublicV43Progress
     const starter = projectPublicV43GreenwayQuestChain(head).find((quest) =>
@@ -2660,7 +2677,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
       saveInProgress={saveTask.current !== null}
-      greenwayLogOrder={v43 ? <section aria-label="Greenway carpenter order">
+      greenwayLogOrder={v43 ? <><section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
           ? <p role="status" className="wr-caption">Claimed. Four logs were delivered for 10 coins.</p>
@@ -2674,7 +2691,20 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
               onClick={() => queueChecked({ kind: 'fulfill-greenway-logs/v1' })}>
               Deliver 4 logs · 10 coins
             </button></>}
-      </section> : undefined} />
+      </section><section aria-label="Backpack upgrade">
+        <h3 className="wr-caption">Larger backpack · once</h3>
+        {greenwayBagClaimed
+          ? <p role="status" className="wr-caption">Owned. {GREENWAY_BAG_UPGRADE.upgradedCapacity} spaces total.</p>
+          : <><p className="wr-caption">Add {GREENWAY_BAG_UPGRADE.extraSlots} spaces for{' '}
+            {GREENWAY_BAG_UPGRADE.price} coins. Your full backpack can be upgraded.</p>
+            <button type="button" disabled={status.gate !== 'open' || busy.current || queuedChecked
+              || active.player.coins < GREENWAY_BAG_UPGRADE.price
+              || active.player.backpackCapacity !== GREENWAY_BAG_UPGRADE.initialCapacity}
+              onClick={() => queueChecked({ kind: 'buy-greenway-backpack/v1' })}>
+              {`Buy ${GREENWAY_BAG_UPGRADE.extraSlots} backpack spaces · ${GREENWAY_BAG_UPGRADE.price} coins`}
+            </button>{active.player.coins < GREENWAY_BAG_UPGRADE.price
+              && <p className="wr-caption">Need {GREENWAY_BAG_UPGRADE.price - active.player.coins} more coins.</p>}</>}
+      </section></> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
       <summary><span>Quest Journal · {questCue!.title === 'Route recorded'

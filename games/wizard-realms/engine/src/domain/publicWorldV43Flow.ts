@@ -14,6 +14,9 @@ import type { PublicV43MountTrainingProgress } from './publicWorldV43MountTraini
 import { confirmPublicV43LogOrder, createPublicV43LogOrder }
   from './publicWorldV43LogOrder'
 import type { PublicV43LogOrderProgress } from './publicWorldV43LogOrder'
+import { confirmPublicV43BagUpgrade, createPublicV43BagUpgrade }
+  from './publicWorldV43BagUpgrade'
+import type { PublicV43BagUpgradeProgress } from './publicWorldV43BagUpgrade'
 import { createPublicV43Root,
   decodePublicV43Lineage, decodePublicV43Witness,
   replayPublicV43Witness } from './publicWorldV43Snapshot'
@@ -201,6 +204,17 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore, revisio
     return { ok: false, reason: 'invalid-witness' }
   const replayed = replayPublicV43Witness(head, decoded)
   if (!replayed) {
+    if (decoded.kind === 'buy-greenway-backpack/v1') {
+      const familiar = Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
+        [key, head[key]])) as PublicV43FamiliarProgress
+      const bag = Object.hasOwn(head, 'greenwayBagUpgrade')
+        ? { ...familiar, greenwayBagUpgrade: head.greenwayBagUpgrade } as
+          PublicV43BagUpgradeProgress
+        : createPublicV43BagUpgrade(familiar)
+      return { ok: false, reason: bag
+        ? confirmPublicV43BagUpgrade(bag, decoded).rejection ?? 'action-rejected'
+        : 'invalid_progress' }
+    }
     if (decoded.kind === 'fulfill-greenway-logs/v1') {
       const familiar = Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
         [key, head[key]])) as PublicV43FamiliarProgress
