@@ -61,6 +61,15 @@ export function sceneGraphicsOptionsForSearch(search: string, resolution = scene
   const dpr: number | [number, number] = software ? 1 : resolution === 'performance' ? 0.75 : [1, 1.5]
   return { dpr, shadows: software ? false : { type: THREE.PCFShadowMap }, antialias: !software }
 }
+export function sceneShadowProbeEnabled(search: string, development: boolean): boolean {
+  const query = new URLSearchParams(search)
+  return development && query.get('dev') === '1' && query.get('shadowProbe') === '1'
+}
+export function sceneProbeShadows(base: ReturnType<typeof sceneGraphicsOptionsForSearch>['shadows'],
+  probe: boolean, enabled: boolean) {
+  if (!probe) return base
+  return enabled ? { type: THREE.PCFShadowMap } : false
+}
 export function landscapeDressingEnabledForSearch(search: string, development: boolean): boolean {
   const query = new URLSearchParams(search)
   return !development || query.get('dev') !== '1' || query.get('landscapeDressing') !== 'off'
@@ -2234,6 +2243,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   const softwareGraphics = new URLSearchParams(search).get('graphics') === 'software'
   const [resolution, setResolution] = useState<SceneResolution>(() => sceneResolutionForSearch(search))
   const graphics = sceneGraphicsOptionsForSearch(search, resolution)
+  const shadowProbe = sceneShadowProbeEnabled(search, import.meta.env.DEV)
+  const [probeShadowsEnabled, setProbeShadowsEnabled] = useState(() => graphics.shadows !== false)
   const changeResolution = (next: SceneResolution) => {
     const url = new URL(window.location.href)
     url.search = sceneGraphicsSearchForResolution(url.search, next)
@@ -2372,7 +2383,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   return (<>
     <Canvas
       frameloop={frameloop}
-      shadows={graphics.shadows}
+      shadows={sceneProbeShadows(graphics.shadows, shadowProbe, probeShadowsEnabled)}
       dpr={graphics.dpr}
       gl={{
         alpha: false,
@@ -2536,6 +2547,17 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         <option value="performance">Performance</option>
       </select>
     </label>}
+    {shadowProbe && <button type="button" aria-pressed={probeShadowsEnabled}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerMove={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
+      onClick={() => setProbeShadowsEnabled((enabled) => !enabled)}
+      style={{ position: 'absolute', zIndex: 2, right: 10, top: 350,
+        minHeight: 36, padding: '5px 9px', borderRadius: 7, border: '1px solid #d3e7e7',
+        background: '#102622d9', color: '#d3e7e7', font: '12px system-ui, sans-serif',
+        cursor: 'pointer' }}>
+      Shadow probe: {probeShadowsEnabled ? 'On' : 'Off'}
+    </button>}
   </>
   )
 }
