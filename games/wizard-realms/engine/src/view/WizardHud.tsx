@@ -295,9 +295,14 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
     && !greenwayBridgeBuilt && !greenwayLadderBuilt
   const firstNorthLadderPending = v27Terrain && !!mining && works4Greenway
     && !!greenwayBridgeBuilt && !greenwayLadderBuilt
-  const readyCreekSite = firstCreekBridgePending && !savePaused && savedWorks?.actionsEnabled
-    && savedWorks.preview?.nearby.find((choice) =>
-      choice.site.kind === 'bridge' && choice.rejection === null)
+  const discoveredCreekSite = firstCreekBridgePending
+    ? savedWorks?.suggestedSites?.filter((site): site is Exclude<TerrainWorkSite, { kind: 'dig' }> =>
+      site.kind === 'bridge' && site.obstacle === 'fen_channel'
+      && site.id.startsWith('works4:bridge:greenway-creek:')).sort((a, b) =>
+      Math.hypot(a.from.x - projection.player.position[0], a.from.z - projection.player.position[2])
+      - Math.hypot(b.from.x - projection.player.position[0], b.from.z - projection.player.position[2])
+      || a.id.localeCompare(b.id))[0]
+    : undefined
   const readyNorthLadder = firstNorthLadderPending && !savePaused && savedWorks?.actionsEnabled
     && savedWorks.preview?.nearby.find((choice) =>
       choice.site.kind === 'ladder' && choice.rejection === null)
@@ -321,8 +326,8 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
   const greenwayObjective = savePaused ? 'Save paused: check the save status before using Works.'
     : firstCreekBridgePending
       ? greenwayLogs >= 8
-        ? readyCreekSite
-          ? `Ready South creek bridge ${workLocation(projection.player.position, readyCreekSite.site)}. Open Works (B), choose Bridge (1), aim, then confirm (F). Keep all 8 logs for this required crossing.`
+        ? discoveredCreekSite
+          ? `Discovered South creek bridge site ${workLocation(projection.player.position, discoveredCreekSite)}. Go to its dry bank, open Works (B), choose Bridge (1) if needed, then confirm only when the checked preview says Ready. Keep all 8 logs for this required crossing.`
           : 'Follow the map south to a discovered gold-stake creek crossing candidate. Open Works (B), choose Bridge (1), aim, then confirm (F) only when the checked preview says Ready. Keep all 8 logs for this required crossing.'
         : firstCreekHarvestBlocked
           ? `An oak yields 4 logs, but only ${harvestFreeSlots} pack slots are free. Keep your logs for the required 8-log creek bridge. Check Outfitters for a sale of carried stone or terrain materials; it ${logSaleLimit}`

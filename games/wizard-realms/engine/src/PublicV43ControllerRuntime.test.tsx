@@ -245,8 +245,18 @@ describe('V43 checked controller bridge', () => {
     const html = renderToStaticMarkup(createElement(PublicV23Controller, {
       version: 'v43', start, locks, store, v42Store }))
     expect(html).toContain('data-public-version="v43"')
-    expect(html).toContain('The Lost Familiar · search')
+    expect(html).toContain('Quest Journal · Next: Creek Span')
+    expect(html).toContain('nearby oaks (4 logs per oak)')
     expect(html).toContain('class="v43-familiar"')
+    expect(html).not.toContain('data-quest-journal="v43"')
+    expect(html).toContain(':has(.wr-context) .v43-familiar')
+    expect(html).toContain(':has(.wr-surface[data-backpack-open="true"]) .v43-familiar')
+    const mobileLegacySuppression = '[data-public-v23]:has(.wr-v35-quest[data-expanded="true"]) .v43-familiar{display:none}'
+    const mobileRule = `@media(max-width:719px){${mobileLegacySuppression}}`
+    expect(html).toContain(mobileRule)
+    expect(html.slice(0, html.indexOf(mobileRule))).not.toContain(mobileLegacySuppression)
+    expect(html).toContain('.v43-familiar:not([open]){top:316px;width:calc(100vw - 560px)}')
+    expect(html).toContain('@media(max-width:719px){[data-public-v23] .v43-familiar:not([open]){top:260px;left:16px;right:auto}}')
     expect(probe.projection?.v42IronHall).toMatchObject({ questClaimed: false,
       vestOwned: false, crestOutcome: 'unrolled' })
     expect(await v42Store.readChecked()).toEqual(source)

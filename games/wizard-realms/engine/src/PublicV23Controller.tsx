@@ -57,9 +57,12 @@ import type { PublicV43FamiliarWitness } from './domain/publicWorldV43FamiliarAc
 import type { PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
 import { GREENWAY_LOG_ORDER } from './domain/greenwayProcurementOrder'
 import type { PublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
+import { projectPublicV43GreenwayQuestChain, projectPublicV43QuestContinuation }
+  from './domain/publicWorldV43GreenwayQuestChain'
 import type { PublicV43Progress } from './domain/publicWorldV43Snapshot'
 import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint }
   from './view/PublicV43FamiliarQuest'
+import { PublicV43QuestJournal } from './view/PublicV43QuestJournal'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -943,18 +946,22 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v26-safety summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 [data-public-v23] .v26-safety button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
 [data-public-v23] .v26-safety p{margin:6px 0 0;font-size:12px}
-[data-public-v23] .v43-familiar{position:fixed;z-index:23;right:12px;top:148px;box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 164px);overflow:auto;background:#172b25;color:#f4efda;border:1px solid #8ea87e;border-radius:12px}
-[data-public-v23] .v43-familiar:not([open]){width:200px}
-[data-public-v23] .v43-familiar>summary{min-height:44px;display:flex;align-items:center;padding:0 12px;cursor:pointer;font-weight:700}
+[data-public-v23] .v43-familiar{position:fixed;z-index:23;left:50%;top:128px;transform:translateX(-50%);box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 144px);overflow:auto;background:#172b25;color:#f4efda;border:1px solid #8ea87e;border-radius:12px}
+[data-public-v23] .v43-familiar:not([open]){width:min(296px,calc(100vw - 24px))}
+[data-public-v23] .v43-familiar>summary{min-height:44px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:5px 12px;cursor:pointer;font-weight:700}
+[data-public-v23] .v43-familiar>summary small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.2;font-weight:400}
 [data-public-v23] .v43-familiar section{border:0!important;max-width:none!important}
 [data-public-v23] .v43-familiar button{min-height:44px;max-width:100%;margin:4px 8px 4px 0}
 [data-public-v23] .v43-familiar button:disabled{opacity:.55;cursor:not-allowed}
 [data-public-v23] .v43-familiar small{display:block;color:#dfd3af}
-[data-public-v23]:has(.v43-familiar[open]) .v24-actions{display:none}
+[data-public-v23]:has(.v43-familiar[open]) .v24-actions,[data-public-v23]:has(.v43-familiar[open]) .wr-v35-quest{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v23-guide,[data-public-v23]:has(.wr-map-backdrop) .v23-aim{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v24-actions{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v26-safety{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v43-familiar{display:none}
+[data-public-v23]:has(.wr-context) .v43-familiar,[data-public-v23]:has(.wr-surface[data-backpack-open="true"]) .v43-familiar,[data-public-v23]:has(.wr-surface[data-work-mode="true"]) .v43-familiar{display:none}
+@media(max-width:719px){[data-public-v23]:has(.wr-v35-quest[data-expanded="true"]) .v43-familiar{display:none}}
+[data-public-v23]:has(.wr-saved-work-panel details[open]) .v43-familiar{display:none}
 [data-public-v23]:has(.wr-map-backdrop) .v23-obstacle-cue{display:none}
 @media(max-height:400px){[data-public-v23] .v23-obstacle-cue{top:64px;max-height:calc(100dvh - 215px - env(safe-area-inset-bottom,0px));overflow:hidden;padding:6px 10px;font-size:12px;line-height:1.2}}
 @media(max-width:719px),(min-width:720px) and (max-width:900px) and (max-height:590px){
@@ -968,10 +975,15 @@ const PUBLIC_V23_PANEL_STYLES = `
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
-  [data-public-v23] .v43-familiar{top:210px;right:8px;bottom:auto;max-height:calc(100dvh - 220px - env(safe-area-inset-bottom,0px))}
+  [data-public-v23] .v43-familiar{top:210px;left:auto;right:8px;transform:none;bottom:auto;max-height:calc(100dvh - 220px - env(safe-area-inset-bottom,0px))}
   [data-public-version=v42] .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
   [data-public-version=v42] .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
+@media(min-width:720px) and (max-width:900px) and (min-height:591px){
+  [data-public-v23] .v43-familiar:not([open]){top:316px;width:calc(100vw - 560px)}
+}
+@media(max-width:719px){[data-public-v23] .v43-familiar:not([open]){top:260px;left:16px;right:auto}}
+@media(min-width:720px) and (max-width:1000px){[data-public-v23]:has(.v43-familiar[open]) .wr-backpack,[data-public-v23]:has(.v43-familiar[open]) .wr-gear{display:none}}
 body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has([data-public-version=v28]),body:has([data-public-version=v29]),body:has([data-public-version=v30]),body:has([data-public-version=v31]),body:has([data-public-version=v32]),body:has([data-public-version=v33]),body:has([data-public-version=v34]){margin:0;background:#14221f}
 [data-public-version=v26],[data-public-version=v27],[data-public-version=v28],[data-public-version=v29],[data-public-version=v30],[data-public-version=v31],[data-public-version=v32],[data-public-version=v33],[data-public-version=v34]{height:100dvh}
 [data-public-version=v26] .wr-surface,[data-public-version=v27] .wr-surface,[data-public-version=v28] .wr-surface,[data-public-version=v29] .wr-surface,[data-public-version=v30] .wr-surface,[data-public-version=v31] .wr-surface,[data-public-version=v32] .wr-surface,[data-public-version=v33] .wr-surface,[data-public-version=v34] .wr-surface{height:100%;min-height:0}
@@ -2533,6 +2545,19 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     stack.itemId === GREENWAY_LOG_ORDER.itemId).reduce((sum, stack) => sum + stack.quantity, 0) : 0
   const greenwayOrderClaimed = v43
     && (snapshot as PublicV43Progress).greenwayOrder?.claimedAtSequence != null
+  const questCue = v43 ? (() => {
+    const head = snapshot as PublicV43Progress
+    const starter = projectPublicV43GreenwayQuestChain(head).find((quest) =>
+      quest.status === 'active' && quest.id !== 'carpenter-order/v1')
+    if (starter) return { title: starter.title, objective: starter.objective }
+    if (ledgerQuest && ledgerQuest.stage !== 'complete') return {
+      title: 'Outfitters Ledger', objective: ledgerQuest.objective }
+    const later = projectPublicV43QuestContinuation(head)
+    if (later.familiar.stage !== 'mount-ready') return { title: 'Lost Familiar',
+      objective: later.familiar.objective }
+    return { title: 'Route recorded',
+      objective: 'Open the journal for completed leads and the optional carpenter order.' }
+  })() : null
   const savedNotice = messages.at(-1) === `V${saveVersion} progress saved on this device.`
   const MireglassActionsPanel = v36 ? 'details' : 'aside'
   return <main data-public-v23="true" data-public-version={`v${saveVersion}`}
@@ -2651,11 +2676,15 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </section> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary>The Lost Familiar · {(snapshot as PublicV43Progress).familiar.phase}</summary>
-      {familiarOpen && <PublicV43FamiliarQuestPanel
-        head={snapshot as PublicV43Progress}
-        actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked}
-        onAction={(action) => queueChecked(action)} />}
+      <summary><span>Quest Journal · {questCue!.title === 'Route recorded'
+        ? questCue!.title : `Next: ${questCue!.title}`}</span>
+        <small>{questCue!.objective}</small></summary>
+      {familiarOpen && <><PublicV43QuestJournal head={snapshot as PublicV43Progress}
+        ledgerQuest={ledgerQuest!} />
+        <PublicV43FamiliarQuestPanel
+          head={snapshot as PublicV43Progress}
+          actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked}
+          onAction={(action) => queueChecked(action)} /></>}
     </details>}
     {v24 && active.movementOwner === 'streamed' && mireglass?.choices.length
       ? <MireglassActionsPanel className="v24-actions" aria-label="Mireglass actions">

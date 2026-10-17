@@ -248,14 +248,32 @@ describe('starter cliff HUD capability gate', () => {
     if (readyCreek?.kind !== 'bridge') throw new Error('Missing creek fixture')
     const readyChoice = { site: { ...readyCreek, obstacle: 'fen_channel' as const }, angleRadians: 0, distanceMeters: 2,
       rejection: null, reason: 'Ready', benefit: 'Cross the creek.' }
-    const candidate = cue({ ...logs(8), savedTerrainWorks: { ...saved,
-      suggestedSites: [readyChoice.site] } })
-    expect(candidate).toContain('discovered gold-stake creek crossing candidate')
+    const discovered = { ...logs(8), savedTerrainWorks: { ...saved,
+      suggestedSites: [readyChoice.site] } }
+    const candidate = cue(discovered)
+    expect(candidate).toContain('Discovered South creek bridge site')
+    expect(candidate).toContain('Go to its dry bank, open Works (B)')
+    expect(candidate).toContain('confirm only when the checked preview says Ready')
+    expect(candidate).toContain('Keep all 8 logs for this required crossing.')
     expect(candidate).not.toContain('Ready South creek bridge')
-    const ready = cue({ ...logs(8), savedTerrainWorks: { ...saved,
+    expect(renderHud(discovered)).not.toContain('aria-label="Confirm selected saved work"')
+    const connectedRiver = displayPublicV28RiverBridge(resolvePublicV28RiverBridge(
+      state.seed, 'works6:river-bridge:-14')!)
+    const nearRiver = { ...discovered, player: { ...discovered.player,
+      position: [connectedRiver.from.x, connectedRiver.from.y, connectedRiver.from.z] as const } }
+    const mixed = cue({ ...nearRiver, savedTerrainWorks: { ...saved,
+      suggestedSites: [connectedRiver, readyChoice.site] } })
+    expect(Math.hypot(connectedRiver.from.x - readyChoice.site.from.x,
+      connectedRiver.from.z - readyChoice.site.from.z)).toBeGreaterThan(0)
+    expect(mixed).toContain(`x ${Number(readyChoice.site.from.x.toFixed(1))}, z ${Number(readyChoice.site.from.z.toFixed(1))}`)
+    expect(mixed).not.toContain(`x ${Number(connectedRiver.from.x.toFixed(1))}, z ${Number(connectedRiver.from.z.toFixed(1))}`)
+    expect(cue({ ...nearRiver, savedTerrainWorks: { ...saved,
+      suggestedSites: [connectedRiver] } })).toContain('Follow the map south')
+    const offModePreview = cue({ ...discovered, savedTerrainWorks: {
+      ...discovered.savedTerrainWorks,
       preview: { selected: readyChoice, nearby: [readyChoice], guidance: null } } })
-    expect(ready).toContain('Ready South creek bridge')
-    expect(ready).toContain('Keep all 8 logs for this required crossing.')
+    expect(offModePreview).toContain('Discovered South creek bridge site')
+    expect(offModePreview).not.toContain('Ready South creek bridge')
     expect(cue({ ...logs(8), savedTerrainWorks: { ...saved, actionsEnabled: false,
       preview: { selected: readyChoice, nearby: [readyChoice], guidance: null } } }))
       .not.toContain('Ready South creek bridge')
