@@ -241,6 +241,7 @@ describe('V29-only mining controls', () => {
     expect(pickPanel).toContain('Click ground for an exact cell.')
     expect(pickPanel).toContain('.wr-terrain-hover-hint{position:absolute;left:50%;top:142px')
     expect(pickPanel).toContain('@media(min-width:720px) and (max-width:1199px){.wr-terrain-hover-hint{left:280px;top:136px;width:calc(100% - 560px)')
+    expect(pickPanel).toContain('@media(min-width:1200px) and (min-height:600px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block')
     expect(pickPanel).toContain('@media(max-width:719px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block')
     expect(pickPanel).toContain('The checked action reports its layer, reach, skill, tool, and capacity result.')
     expect(V29_NO_GROUND_TARGET_HINT).toContain('No ground cell in reach targeted.')

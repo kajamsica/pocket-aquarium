@@ -360,6 +360,7 @@ const STYLES = `
 .wr-terrain-inline-hint{display:none}
 .wr-terrain-hover-hint{position:absolute;left:50%;top:142px;transform:translateX(-50%);box-sizing:border-box;max-width:min(420px,calc(100% - 24px));padding:5px 9px;border-radius:7px;background:#102622e8;color:#d3e7e7;font-size:11px;text-align:center;pointer-events:none}
 @media(min-width:720px) and (max-width:1199px){.wr-terrain-hover-hint{left:280px;top:136px;width:calc(100% - 560px);max-width:none;transform:none;font-size:10px;line-height:1.2}}
+@media(min-width:1200px) and (min-height:600px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block;color:#d3e7e7!important}}
 @media(max-width:719px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block;color:#d3e7e7!important}}
 .wr-keyboard-terrain-aim{position:absolute;z-index:1;left:38%;top:62%;display:grid;place-items:center;width:26px;height:26px;transform:translate(-50%,-50%);border:2px solid #ffe395;border-radius:50%;background:#101a1788;color:#fff;font:bold 20px/1 system-ui;pointer-events:none;text-shadow:0 1px 3px #000}.wr-scene:hover .wr-keyboard-terrain-aim{display:none}
 @media(max-width:719px){.wr-keyboard-terrain-aim{left:72%}}
