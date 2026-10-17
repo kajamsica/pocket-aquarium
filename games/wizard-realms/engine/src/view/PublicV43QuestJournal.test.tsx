@@ -27,6 +27,9 @@ describe('V43 quest journal', () => {
     const html = renderJournal(head)
     expect(html).toContain('Greenway quest journal')
     expect(html).toContain('Next: Creek Span.')
+    expect(html).toContain('Creek Span: Next')
+    expect(html).toContain('North Cliff: Suggested')
+    expect(html).toContain('Carpenter Order: Optional')
     expect(html).toContain('nearby oaks (4 logs per oak)')
     expect(html).toContain('Starter leads (0/5 resolved)')
     expect(html).toContain('Outfitters Ledger, first-find')
@@ -42,6 +45,7 @@ describe('V43 quest journal', () => {
     claimedBridgeheadId: 'works4:bridge:greenway-creek:-14' }
     const html = renderJournal(head)
     expect(html).toContain('Next: North Cliff.')
+    expect(html).toContain('North Cliff: Next')
     expect(html).toContain('Starter leads (1/5 resolved)')
     expect(html).toContain('data-quest-status="complete"')
   })
@@ -73,7 +77,7 @@ describe('V43 quest journal', () => {
     expect(html).toContain('Starter leads (4/5 resolved)')
     expect(html).toContain('Next: Outfitters Ledger.')
     expect(html).toContain('Carry 8 logs up your saved north cliff ladder')
-    expect(html).toContain('Carpenter Order: Open')
+    expect(html).toContain('Carpenter Order: Optional')
   })
 
   it('uses the existing Ledger guidance for a blocked terrain sample', () => {
@@ -111,6 +115,6 @@ describe('V43 quest journal', () => {
     const html = renderJournal(head)
     expect(html).toContain('Next: Lost Familiar.')
     expect(html).toContain('Repair and record the Waystation crossing')
-    expect(html).toContain('Carpenter Order: Open')
+    expect(html).toContain('Carpenter Order: Optional')
   })
 })

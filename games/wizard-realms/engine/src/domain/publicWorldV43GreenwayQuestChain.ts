@@ -31,7 +31,7 @@ const connectedRiverBuilt = (progress: Pick<PublicV43Progress,
 /** Guidance from a checked V43 head. It does not claim or award anything. */
 export function projectPublicV43GreenwayQuestChain(
   progress: Pick<PublicV43Progress, 'state' | 'greenwayWorks'
-    | 'claimedBridgeheadId' | 'greenwayOrder' | 'greenwayBagUpgrade'
+    | 'terrain' | 'claimedBridgeheadId' | 'greenwayOrder' | 'greenwayBagUpgrade'
     | 'riverBridgeIds'>):
   readonly GreenwayQuest[] {
   const { state, greenwayWorks } = progress
@@ -40,6 +40,7 @@ export function projectPublicV43GreenwayQuestChain(
     total + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
   const carried = player.inventory.reduce((total, stack) => total + stack.quantity, 0)
     + player.tradeSlots.reduce((total, slot) => total + slot.quantity, 0)
+    + Object.values(progress.terrain.bag).reduce((total, quantity) => total + quantity, 0)
   const oakRoom = Math.max(0, 4 - (player.backpackCapacity - carried))
   const bagOffer = player.backpackCapacity === GREENWAY_BAG_UPGRADE.initialCapacity
     && progress.greenwayBagUpgrade?.claimedAtSequence == null

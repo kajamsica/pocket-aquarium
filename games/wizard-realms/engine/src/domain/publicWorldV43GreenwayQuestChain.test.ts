@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { GREENWAY_LOG_ORDER } from './greenwayProcurementOrder'
+import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
+import { publicWorldV15ClearStarterResources, publicWorldV15StarterTileAtGrid }
+  from './publicWorldV15StarterSites'
+import { createStarterCliffGreenwayFacts } from './starterCliffWorld'
 import { GREENWAY_BAG_UPGRADE } from './publicWorldV43BagUpgrade'
 import { createFreshPublicV43Root, replayPublicV43Witness }
   from './publicWorldV43Snapshot'
@@ -9,6 +14,42 @@ import { projectPublicV43GreenwayQuestChain, projectPublicV43QuestContinuation }
 const fresh = () => createFreshPublicV43Root('wizard-realms').head
 
 describe('checked Greenway quest guidance', () => {
+  it('keeps first-route timber and backpack use viable without optional purchases', () => {
+    const head = fresh()
+    const creek = resolvePublicV17GreenwaySite(head.state.seed,
+      'works4:bridge:greenway-creek:-14')
+    const ladder = resolvePublicV17GreenwaySite(head.state.seed,
+      'works4:ladder:greenway-north-cliff:11')
+    const river = resolvePublicV28RiverBridge(head.state.seed,
+      'works6:river-bridge:-14')
+    const costs = [creek?.kind === 'bridge' ? creek.logCost : null,
+      ladder?.kind === 'ladder' ? ladder.logCost : null, river?.logCost]
+    expect(costs).toEqual([8, 4, 8])
+    if (costs.some((cost) => cost == null)) throw new Error('Missing starter route')
+    expect(head.state.player.inventory).toEqual([{ itemId: 'woodcutters_axe', quantity: 1 }])
+    expect(head.state.player.backpackCapacity).toBe(20)
+    expect(head.state.player.coins).toBe(120)
+    let carried = 1
+    for (const cost of costs) {
+      carried += cost!
+      expect(carried).toBeLessThanOrEqual(head.state.player.backpackCapacity)
+      carried -= cost!
+    }
+    expect(costs.reduce((total, cost) => total + cost!, 0)
+      + GREENWAY_LOG_ORDER.quantity).toBe(6 * 4)
+    const seeds = ['wizard-realms', 'greenway-alpha', 'region-0', 'starter-seed-17',
+      ...Array.from({ length: 48 }, (_, index) => `resource-probe-${index}`)]
+    for (const seed of seeds) {
+      const trees = publicWorldV15ClearStarterResources(seed,
+        createStarterCliffGreenwayFacts(seed).resources).filter((node) => node.kind === 'tree')
+      const near = trees.filter((node) => node.position.z < 6 && node.position.z >= -5
+        && Math.hypot(node.position.x, node.position.z) < 18
+        && publicWorldV15StarterTileAtGrid(seed,
+          Math.ceil(node.position.x / 4 - 0.5),
+          Math.ceil(node.position.z / 4 - 0.5)).terrain !== 'wetland')
+      expect(near.length, seed).toBeGreaterThanOrEqual(6)
+    }
+  })
   it('starts with the creek and stages timber before the optional log order', () => {
     const head = fresh()
     const original = structuredClone(head)
@@ -130,6 +171,10 @@ describe('checked Greenway quest guidance', () => {
       .toMatch(/^Free 1 backpack space before chopping an oak\./)
     expect(projectPublicV43GreenwayQuestChain(crowded)[0].objective)
       .toContain('Greenway Outfitters offers 8 more spaces for 70 coins')
+    const withTerrainBag = { ...crowded,
+      terrain: { ...crowded.terrain, bag: { ...crowded.terrain.bag, soil: 2 } } }
+    expect(projectPublicV43GreenwayQuestChain(withTerrainBag)[0].objective)
+      .toMatch(/^Free 3 backpack spaces before chopping an oak\./)
     const withListing = { ...crowded, state: { ...crowded.state,
       player: { ...crowded.state.player,
         tradeSlots: [

@@ -4,7 +4,7 @@ import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
 import type { PublicV35LedgerQuest } from './publicV35LedgerQuest'
 
 const statusLabel = {
-  active: 'Open', complete: 'Complete', closed: 'Closed',
+  complete: 'Complete', closed: 'Closed',
 } as const
 
 /** Read-only guidance from the checked head; rewards remain owned by world actions. */
@@ -27,7 +27,10 @@ export function PublicV43QuestJournal({ head, ledgerQuest }: {
           : <p>Starter route, Ledger, and familiar care are recorded. The carpenter order remains optional if unclaimed.</p>}
     <details><summary>Starter leads ({resolved}/{quests.length} resolved)</summary>
       <ol>{quests.map((quest) => <li key={quest.id} data-quest-status={quest.status}>
-        <strong>{quest.title}: {statusLabel[quest.status]}</strong>
+        <strong>{quest.title}: {quest.status === 'active'
+          ? quest.id === next?.id ? 'Next'
+            : quest.id === 'carpenter-order/v1' ? 'Optional' : 'Suggested'
+          : statusLabel[quest.status]}</strong>
         <p>{quest.objective}</p>
         <small>{quest.existingReward}</small>
       </li>)}</ol>
