@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { WizardViewIntent, WizardViewProjection } from './contracts'
 import { WizardHud } from './WizardHud'
 import { WizardMap, mapToggleForKey } from './WizardMap'
@@ -11,6 +12,7 @@ export interface WizardSurfaceProps {
   onIntent: (intent: WizardViewIntent) => void
   diagnostics?: boolean
   inputTrace?: PublicV17InputTrace | null
+  greenwayLogOrder?: ReactNode
 }
 
 const MOVEMENT_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
@@ -318,7 +320,8 @@ const STYLES = `
 @media(max-width:719px){.wr-v26-terrain{right:8px;bottom:150px;width:180px}}
 `
 
-export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace }: WizardSurfaceProps) {
+export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace,
+  greenwayLogOrder }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const devNavigation = typeof window !== 'undefined' && devNavigationEnabled(window.location.search)
   const pressedKeys = useRef(new Set<string>())
@@ -700,7 +703,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         </details>
         {inOpenPit && <p>Open pit view: step onto neighboring ground or orbit until its floor or inner wall outlines.</p>}
       </div>}
-      <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics} />
+      <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics}
+        greenwayLogOrder={greenwayLogOrder} />
       {devNavigation && <div className="wr-dev-nav-hint" role="status">{devNavHint
         ?? 'Dev: select a terrain tool to use it with one click. Turn tools off, then double-click clear revealed ground to follow a safe route.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}

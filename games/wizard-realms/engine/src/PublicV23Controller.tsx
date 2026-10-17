@@ -55,6 +55,8 @@ import { commitPublicV43, requestPublicV43ReturnHome } from './domain/publicWorl
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
 import type { PublicV43FamiliarWitness } from './domain/publicWorldV43FamiliarAction'
 import type { PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
+import { GREENWAY_LOG_ORDER } from './domain/greenwayProcurementOrder'
+import type { PublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
 import type { PublicV43Progress } from './domain/publicWorldV43Snapshot'
 import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint }
   from './view/PublicV43FamiliarQuest'
@@ -218,7 +220,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV40WaystationWitness
   | PublicV41CombatWitness
   | PublicV42RewardWitness
-  | PublicV43FamiliarWitness | PublicV43MountTrainingWitness
+  | PublicV43FamiliarWitness | PublicV43MountTrainingWitness | PublicV43LogOrderWitness
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
@@ -1700,9 +1702,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
           : 'kind' in intent && (intent.kind.startsWith('familiar-')
-            || intent.kind === 'sedgehorn-care/v1')
+            || intent.kind === 'sedgehorn-care/v1' || intent.kind === 'fulfill-greenway-logs/v1')
           ? await (runtime as V43Runtime).action(intent as PublicV43FamiliarWitness
-            | PublicV43MountTrainingWitness)
+            | PublicV43MountTrainingWitness | PublicV43LogOrderWitness)
           : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
             || intent.kind === 'ironhall-vest-equip/v1'
             || intent.kind === 'ironhall-vest-unequip/v1'
@@ -1767,6 +1769,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
               : intent.kind === 'sedgehorn-care/v1'
                 ? 'Sedgehorn care visit saved. The companion is not rideable yet.'
                 : 'The Lost Familiar quest step saved. Check the quest panel for the next objective.'
+            : 'kind' in intent && intent.kind === 'fulfill-greenway-logs/v1'
+            ? 'Carpenter order saved: 4 logs delivered at Greenway Outfitters for 10 coins. One-time order complete.'
             : 'kind' in intent && intent.kind === 'ironhall-claim/v1'
             ? 'Iron Hall reward saved: 60 coins, 70 character XP, 70 Combat XP, and Guard Vest.'
             : 'kind' in intent && intent.kind === 'ironhall-vest-equip/v1'
@@ -1840,6 +1844,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : 'kind' in intent && (intent.kind.startsWith('familiar-')
             || intent.kind === 'sedgehorn-care/v1')
           ? publicV43FamiliarRejectionHint(result.reason ?? 'unavailable_here')
+          : 'kind' in intent && intent.kind === 'fulfill-greenway-logs/v1'
+          ? ({ too_far: 'Move within 3 m of Greenway Outfitters.',
+              unavailable_here: 'Return to Greenway Outfitters to deliver the logs.',
+              not_owned: 'Gather four logs before fulfilling the carpenter order.',
+              already_fulfilled: 'The one-time carpenter order is already claimed.',
+              arbitrage: 'The carpenter order is unavailable at these store prices.' } as
+              Record<string, string>)[result.reason ?? '']
+            ?? `Carpenter order was not saved (${result.reason}).`
           : 'kind' in intent && (intent.kind === 'ironhall-claim/v1'
             || intent.kind === 'ironhall-vest-equip/v1'
             || intent.kind === 'ironhall-vest-unequip/v1'
@@ -2434,6 +2446,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         && stack.quantity > 0), v32NorthLadderBuilt) : null
   const queuedChecked = inputQueue.current.some((token) => token.kind === 'checked')
   const queuedPulses = inputQueue.current.filter((token) => token.kind === 'pulse').length
+  const greenwayOrderLogs = v43 ? view.backpack.stacks.filter((stack) =>
+    stack.itemId === GREENWAY_LOG_ORDER.itemId).reduce((sum, stack) => sum + stack.quantity, 0) : 0
+  const greenwayOrderClaimed = v43
+    && (snapshot as PublicV43Progress).greenwayOrder?.claimedAtSequence != null
   const savedNotice = messages.at(-1) === `V${saveVersion} progress saved on this device.`
   const MireglassActionsPanel = v36 ? 'details' : 'aside'
   return <main data-public-v23="true" data-public-version={`v${saveVersion}`}
@@ -2534,7 +2550,22 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         Build selected ladder · 4 logs
       </button>}
     </section>}
-    <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace} />
+    <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
+      greenwayLogOrder={v43 ? <section aria-label="Greenway carpenter order">
+        <h3 className="wr-caption">Carpenter order · once</h3>
+        {greenwayOrderClaimed
+          ? <p role="status" className="wr-caption">Claimed. Four logs were delivered for 10 coins.</p>
+          : <><p className="wr-caption">Deliver {GREENWAY_LOG_ORDER.quantity} logs here for{' '}
+            {GREENWAY_LOG_ORDER.payCoins} coins. Keep route timber for ladders and bridges first.</p>
+            <p role="status" className="wr-caption">{greenwayOrderLogs}/{GREENWAY_LOG_ORDER.quantity} logs carried
+              {greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity
+                ? '. Gather more from Greenway oaks.' : '. Ready to deliver.'}</p>
+            <button type="button" disabled={status.gate !== 'open' || busy.current
+              || queuedChecked || greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity}
+              onClick={() => queueChecked({ kind: 'fulfill-greenway-logs/v1' })}>
+              Deliver 4 logs · 10 coins
+            </button></>}
+      </section> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
       <summary>The Lost Familiar · {(snapshot as PublicV43Progress).familiar.phase}</summary>

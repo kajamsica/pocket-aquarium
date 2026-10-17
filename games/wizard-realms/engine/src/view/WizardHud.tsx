@@ -81,10 +81,11 @@ export class WizardWorksFocusBoundary extends Component<WorksFocusProps> {
   }
 }
 
-export function WizardHud({ projection, onIntent, diagnostics }: {
+export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder }: {
   projection: WizardViewProjection
   onIntent: (intent: WizardViewIntent) => void
   diagnostics?: boolean
+  greenwayLogOrder?: ReactNode
 }) {
   const [ledgerOpen, setLedgerOpen] = useState(false)
   const markerQuest = projection.v36MarkerQuest?.active ? projection.v36MarkerQuest : null
@@ -296,6 +297,8 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
   const firstCreekHarvestBlocked = firstCreekBridgePending && greenwayLogs < 8 && harvestFreeSlots < 4
   const fullOfBridgeLogs = firstCreekBridgePending && usedCapacity >= projection.backpack.capacity
     && greenwayLogs >= 8
+  const logSaleLimit = greenwayLogOrder
+    ? 'does not buy logs as ordinary materials.' : 'does not buy logs.'
   const v25NorthLadder = publicV25NorthLadderGuidance(projection)
   const greenwayLadderNext = greenwayBridgeBuilt && !!savedWorks?.dugTileIds.length
     && starterStoneQuantity === 0 && projection.equipment.feet?.itemId === 'leather_boots'
@@ -305,7 +308,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       ? greenwayLogs >= 8
         ? 'Follow the map south to a marked Ready creek crossing. Open Works (B), choose Bridge (1), aim, then confirm (F).'
         : firstCreekHarvestBlocked
-          ? `An oak yields 4 logs, but only ${harvestFreeSlots} pack slots are free. ${greenwayLogs >= 4 ? 'If you find a marked Ready ladder, spend 4 logs there. ' : ''}Check Outfitters for a sale of carried stone or terrain materials; it does not buy logs.`
+          ? `An oak yields 4 logs, but only ${harvestFreeSlots} pack slots are free. ${greenwayLogs >= 4 ? 'If you find a marked Ready ladder, spend 4 logs there. ' : ''}Check Outfitters for a sale of carried stone or terrain materials; it ${logSaleLimit}`
         : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
           ? 'Open Backpack and equip your Woodcutter axe.'
           : `Chop a Greenway oak twice (E) for 4 logs. ${greenwayLogs}/8 logs for the South creek bridge.`
@@ -387,8 +390,8 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           .wr-v35-mobile-toggle{display:none}
           @media(min-width:1200px) and (min-height:600px){.wr-v35-quest{right:248px;top:266px;max-height:136px}}
           @media(min-width:901px) and (min-height:600px){.wr-surface[data-work-mode="true"] .wr-saved-work-panel{width:310px}}
-          @media(min-width:720px) and (min-height:600px){[data-public-version=v35] .wr-context[data-store-panel],[data-public-version=v36] .wr-context[data-store-panel],[data-public-version=v42] .wr-context[data-store-panel]{box-sizing:border-box;max-height:calc(100% - 80px);overflow-y:auto;overscroll-behavior:contain}}
-          @media(max-width:719px){[data-public-version=v42] .wr-context[data-store-panel]{overflow-y:auto;overscroll-behavior:contain}}
+          @media(min-width:720px) and (min-height:600px){[data-public-version=v35] .wr-context[data-store-panel],[data-public-version=v36] .wr-context[data-store-panel],[data-public-version=v42] .wr-context[data-store-panel],[data-public-version=v43] .wr-context[data-store-panel]{box-sizing:border-box;max-height:calc(100% - 80px);overflow-y:auto;overscroll-behavior:contain}}
+          @media(max-width:719px){[data-public-version=v42] .wr-context[data-store-panel],[data-public-version=v43] .wr-context[data-store-panel]{overflow-y:auto;overscroll-behavior:contain}}
           [data-public-v23]:has(.wr-surface[data-work-mode="true"]) .v23-guide{display:none}
           [data-public-v23]:has(.wr-surface[data-work-mode="true"]) .v23-save{max-height:120px;overflow-y:auto;font-size:12px;line-height:1.2;padding:6px}
           [data-public-v23]:has(.v23-save) .wr-surface[data-work-mode="true"] .wr-saved-work-panel{top:136px;max-height:calc(100% - 152px)}
@@ -426,7 +429,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
           <strong>{journalQuest.complete ? 'Quest complete' : 'Quest'}: {journalQuest.title}</strong>
           <small>{firstCreekBridgePending ? greenwayObjective : journalQuest.objective}</small>
           {firstCreekBridgePending && fullOfBridgeLogs && <small>
-            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters does not buy logs.
+            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters {logSaleLimit}
           </small>}
           {ledgerQuestPrimary && projection.v35LedgerSurvey && <>
             <button type="button" disabled={savePaused || !!projection.v35LedgerSurvey.rejection}
@@ -606,7 +609,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
         {!workMode && !journalQuest && !projection.v34Quest && <div className="wr-greenway-objective" role="note" aria-label="Greenway field objective">
           <strong>Field objective:</strong> {greenwayObjective}
           {firstCreekBridgePending && fullOfBridgeLogs ? <small>
-            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters does not buy logs.
+            Pack full of logs? Spend 8 at a marked Ready creek bridge. Greenway Outfitters {logSaleLimit}
           </small> : firstCreekBridgePending ? null : <small>{mining
             ? 'Optional digging: Outfitters sells a spade for soil and picks for deeper layers. Sell terrain-bag materials to free pack space. River and cliff routes still require marked Ready Works.'
             : v27Terrain
@@ -1045,6 +1048,7 @@ export function WizardHud({ projection, onIntent, diagnostics }: {
       {nearbyStore && !selectedBuildSite && !campPreview && <aside className="wr-panel wr-context" data-store-panel="true">
         <header>{nearbyStore.name}</header>
         <button type="button" disabled={savePaused} onClick={() => onIntent({ type: 'store.close' })}>Close</button>
+        {nearbyStore.id === 'store-greenway' && greenwayLogOrder}
         {nearbyStore.listings.filter((listing) => !starterCliff
           || listing.id === PUBLIC_V11_BOOTS_LISTING_ID && !starterHasBoots
           || listing.id === 'spade' && !starterHasSpade && (listing.stock ?? 0) > 0).map((listing) => {

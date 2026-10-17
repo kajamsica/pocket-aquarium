@@ -14,6 +14,9 @@ import type { PublicV43FamiliarProgress } from './domain/publicWorldV43FamiliarA
 import { confirmPublicV43MountTraining, createPublicV43MountTraining,
   decodePublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
 import type { PublicV43MountTrainingProgress } from './domain/publicWorldV43MountTraining'
+import { confirmPublicV43LogOrder, createPublicV43LogOrder,
+  decodePublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
+import type { PublicV43LogOrderProgress } from './domain/publicWorldV43LogOrder'
 
 type Writer = (revision: number, lineage: PublicV43Start['lineage'], witness: PublicV43Witness) =>
   Promise<PublicV43Operation<PublicV43Start>>
@@ -87,30 +90,38 @@ export function createPublicV43ControllerRuntime(initial: PublicV43Start,
     committed: () => structuredClone(committed),
     preview: () => ({ ...runtime.preview(), familiar: structuredClone(committed.head.familiar),
       ...(committed.head.mountTraining
-        ? { mountTraining: structuredClone(committed.head.mountTraining) } : {}) }),
+        ? { mountTraining: structuredClone(committed.head.mountTraining) } : {}),
+      ...(committed.head.greenwayOrder
+        ? { greenwayOrder: structuredClone(committed.head.greenwayOrder) } : {}) }),
     async action(raw: Parameters<typeof runtime.action>[0] | PublicV43Witness) {
       const gate = directGate()
       if (gate) return gate
       const familiar = decodePublicV43FamiliarWitness(raw)
       const care = decodePublicV43MountTrainingWitness(raw)
-      if (!familiar && !care && raw && typeof raw === 'object' && 'kind' in raw
+      const order = decodePublicV43LogOrderWitness(raw)
+      if (!familiar && !care && !order && raw && typeof raw === 'object' && 'kind' in raw
         && typeof raw.kind === 'string' && (raw.kind.startsWith('familiar-')
-          || raw.kind === 'sedgehorn-care/v1'))
+          || raw.kind === 'sedgehorn-care/v1' || raw.kind === 'fulfill-greenway-logs/v1'))
         return { status: 'rejected' as const, reason: 'invalid_value' }
-      if (!familiar && !care) return runtime.action(raw as Parameters<typeof runtime.action>[0])
+      if (!familiar && !care && !order) return runtime.action(raw as Parameters<typeof runtime.action>[0])
       directBusy = true
       try {
         const saved = await runtime.save()
         if (saved.status !== 'saved' && saved.status !== 'unchanged') return saved
-        const witness = (familiar ?? care)!
+        const witness = (familiar ?? care ?? order)!
         const current = Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
           [key, committed.head[key]])) as PublicV43FamiliarProgress
         const training = care && (committed.head.mountTraining
           ? { ...current, mountTraining: committed.head.mountTraining } as
             PublicV43MountTrainingProgress : createPublicV43MountTraining(current))
+        const procurement = order && (committed.head.greenwayOrder
+          ? { ...current, greenwayOrder: committed.head.greenwayOrder } as
+            PublicV43LogOrderProgress : createPublicV43LogOrder(current))
         const rejection = familiar
           ? confirmPublicV43FamiliarAction(current, familiar).rejection
-          : training ? confirmPublicV43MountTraining(training, care).rejection : 'invalid_progress'
+          : care && training ? confirmPublicV43MountTraining(training, care).rejection
+            : order && procurement ? confirmPublicV43LogOrder(procurement, order).rejection
+              : 'invalid_progress'
         if (rejection) return { status: 'rejected' as const, reason: rejection }
         const revision = committed.head.saveRevision
         const result = await checkedWrite(revision + 1, witness, () => write(revision,

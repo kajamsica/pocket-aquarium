@@ -1,5 +1,5 @@
 import { IDBFactory } from 'fake-indexeddb'
-import { createElement } from 'react'
+import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { publicV14MovementIntents } from './PublicV14Controller'
@@ -13,19 +13,23 @@ import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { commitPublicV43, resumePublicV43, startFreshPublicV43,
   startPublicV43 } from './domain/publicWorldV43Flow'
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
-import { createFreshPublicV42Root } from './domain/publicWorldV42Snapshot'
+import { createFreshPublicV42Root, PUBLIC_V42_SCHEMA } from './domain/publicWorldV42Snapshot'
+import type { PublicV42Root } from './domain/publicWorldV42Snapshot'
 import { createPublicV43FamiliarProgress } from './domain/publicWorldV43FamiliarAction'
 import { decodePublicV43CheckedSuccessor, replayPublicV43Witness,
-  PUBLIC_V43_SCHEMA } from './domain/publicWorldV43Snapshot'
+  createPublicV43Root, PUBLIC_V43_SCHEMA } from './domain/publicWorldV43Snapshot'
 import type { PublicV43Root, PublicV43Witness } from './domain/publicWorldV43Snapshot'
 import { resolveSedgehornFamiliarSite } from './domain/sedgehornFamiliarContent'
 import { waystationRiverSite } from './domain/waystationRiverContent'
 import { worldTileAtGrid } from './domain/worldChunks'
 import type { WizardViewProjection } from './view/contracts'
+import { WizardHud } from './view/WizardHud'
 
-const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null }))
-vi.mock('./view/WizardSurface', () => ({ WizardSurface: ({ projection }: {
-  projection: WizardViewProjection }) => { probe.projection = projection; return null } }))
+const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null,
+  greenwayLogOrder: null as ReactNode }))
+vi.mock('./view/WizardSurface', () => ({ WizardSurface: ({ projection, greenwayLogOrder }: {
+  projection: WizardViewProjection; greenwayLogOrder?: ReactNode }) => {
+  probe.projection = projection; probe.greenwayLogOrder = greenwayLogOrder; return null } }))
 const locks = { request: async <T,>(_name: string, _options: { mode: 'exclusive' },
   body: () => T | Promise<T>) => body() }
 
@@ -41,7 +45,78 @@ async function setup() {
   return { factory, store, v42Store, start: started.value, makeRuntime }
 }
 
+function atGreenwayStore(logs: number): PublicV43Start {
+  const source = createFreshPublicV42Root('wizard-realms')
+  const store = source.head.state.greenway.stores.find((entry) => entry.id === 'store-greenway')!
+  const genesis = { ...source.lineage.genesis, state: { ...source.head.state,
+    player: { ...source.head.state.player, position: { ...store.position },
+      inventory: [...source.head.state.player.inventory,
+        { itemId: 'logs' as const, quantity: logs }] } } }
+  const v42: PublicV42Root = { lineage: { origin: 'v41-migration',
+    rulesProfile: 'iron-hall-rewards/v1', seed: 'wizard-realms', sourceRevision: 0, genesis },
+  previous: null, head: { ...structuredClone(genesis), schemaVersion: PUBLIC_V42_SCHEMA,
+    saveRevision: 0, witness: null } }
+  const v43 = createPublicV43Root(v42)
+  return { head: v43.head, lineage: v43.lineage }
+}
+
 describe('V43 checked controller bridge', () => {
+  it('routes the fixed carpenter order through the checked V43 action and remembers its claim', async () => {
+    let saved = atGreenwayStore(4)
+    const writer = async (revision: number, _lineage: PublicV43Start['lineage'],
+      witness: PublicV43Witness) => {
+      if (revision !== saved.head.saveRevision)
+        return { ok: false as const, reason: 'revision-changed' }
+      const next = replayPublicV43Witness(saved.head, witness)
+      if (!next) return { ok: false as const, reason: 'action-rejected' }
+      saved = { lineage: saved.lineage, head: { ...next, schemaVersion: PUBLIC_V43_SCHEMA,
+        saveRevision: revision + 1, witness } }
+      return { ok: true as const, value: saved }
+    }
+    const runtime = createPublicV43ControllerRuntime(saved, writer)
+    expect(await runtime.action({ kind: 'fulfill-greenway-logs/v1', quantity: 1 } as never))
+      .toMatchObject({ status: 'rejected', reason: 'invalid_value' })
+    expect(await runtime.action({ kind: 'fulfill-greenway-logs/v1' }))
+      .toMatchObject({ status: 'saved' })
+    expect(runtime.preview().greenwayOrder?.claimedAtSequence).toBeGreaterThan(0)
+    expect(runtime.preview().state.player.inventory.some((row) => row.itemId === 'logs'))
+      .toBe(false)
+    expect(runtime.preview().state.player.coins).toBe(atGreenwayStore(4).head.state.player.coins + 10)
+    expect(await runtime.action({ kind: 'fulfill-greenway-logs/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'already_fulfilled' })
+    const resumed = createPublicV43ControllerRuntime(saved, writer)
+    expect(resumed.preview().greenwayOrder).toEqual(runtime.preview().greenwayOrder)
+    expect(await resumed.action({ kind: 'fulfill-greenway-logs/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'already_fulfilled' })
+    const poor = createPublicV43ControllerRuntime(atGreenwayStore(3), writer)
+    expect(await poor.action({ kind: 'fulfill-greenway-logs/v1' }))
+      .toMatchObject({ status: 'rejected', reason: 'not_owned' })
+  })
+
+  it('shows the fixed order inside the Greenway store, with insufficient-log feedback', async () => {
+    const { store, v42Store } = await setup()
+    renderToStaticMarkup(createElement(PublicV23Controller, {
+      version: 'v43', start: atGreenwayStore(3), locks, store, v42Store }))
+    const poorOrder = renderToStaticMarkup(createElement('div', null, probe.greenwayLogOrder))
+    expect(poorOrder).toContain('3/4 logs carried')
+    expect(poorOrder).toContain('disabled=""')
+    const insufficient = renderToStaticMarkup(createElement(WizardHud, {
+      projection: { ...probe.projection!, openStoreId: 'store-greenway' },
+      onIntent: () => {}, greenwayLogOrder: probe.greenwayLogOrder }))
+    expect(insufficient).toContain('Greenway carpenter order')
+    expect(insufficient).toContain('Gather more from Greenway oaks.')
+    renderToStaticMarkup(createElement(PublicV23Controller, {
+      version: 'v43', start: atGreenwayStore(4), locks, store, v42Store }))
+    const readyOrder = renderToStaticMarkup(createElement('div', null, probe.greenwayLogOrder))
+    expect(readyOrder).toContain('4/4 logs carried')
+    expect(readyOrder).not.toContain('disabled=""')
+    const ready = renderToStaticMarkup(createElement(WizardHud, {
+      projection: { ...probe.projection!, openStoreId: 'store-greenway' },
+      onIntent: () => {}, greenwayLogOrder: probe.greenwayLogOrder }))
+    expect(ready).toContain('Deliver 4 logs · 10 coins')
+    expect(ready).toContain('[data-public-version=v43] .wr-context[data-store-panel]')
+  }, 120_000)
+
   it('rejects unavailable familiar actions without a write on the fresh V43 start', async () => {
     const { start, makeRuntime, store } = await setup()
     const runtime = makeRuntime(start)

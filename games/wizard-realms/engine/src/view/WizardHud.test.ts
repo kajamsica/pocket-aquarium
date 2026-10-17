@@ -22,8 +22,9 @@ const projectionAtGreenwayRing = (discoveredRingIds: string[]) => {
   return projection
 }
 
-const renderHud = (projection: ReturnType<typeof projectionAtGreenwayRing>) =>
-  renderToStaticMarkup(createElement(WizardHud, { projection, onIntent: () => {} }))
+const renderHud = (projection: ReturnType<typeof projectionAtGreenwayRing>,
+  greenwayLogOrder?: ReactNode) =>
+  renderToStaticMarkup(createElement(WizardHud, { projection, onIntent: () => {}, greenwayLogOrder }))
 const renderHudTree = (props: Parameters<typeof WizardHud>[0]): ReactNode => {
   let tree: ReactNode = null
   function CaptureHud() {
@@ -221,6 +222,8 @@ describe('starter cliff HUD capability gate', () => {
     const fullHtml = objective(full)
     expect(fullHtml).toContain('Pack full of logs? Spend 8 at a marked Ready creek bridge.')
     expect(fullHtml).toContain('Greenway Outfitters does not buy logs.')
+    expect(renderHud(full, createElement('span', null, 'Carpenter order')))
+      .toContain('Greenway Outfitters does not buy logs as ordinary materials.')
     expect(fullHtml).not.toContain('sell terrain-bag soil, stone, or ore to free space')
     const quest = { id: 'surveyor-first-find/v1' as const, title: "The Surveyor's First Find" as const,
       stage: 'gather' as const, objective: 'Old multi-step opening objective.',
