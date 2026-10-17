@@ -296,6 +296,12 @@ function mergedTreeBark(timber: boolean) {
 }
 const TREE_BARK_GEOMETRY = mergedTreeBark(false)
 const MIREGLASS_TIMBER_BARK_GEOMETRY = mergedTreeBark(true)
+const STORE_POST_CENTERS = [[-1.52, 1.03], [1.52, 1.03], [-1.52, -1.03], [1.52, -1.03]] as const
+const STORE_POST_PARTS = STORE_POST_CENTERS.map(([x, z]) =>
+  UNIT_BOX.clone().scale(0.18, 2.0, 0.18).translate(x, 1.3, z))
+export const STORE_POST_GEOMETRY = mergeGeometries(STORE_POST_PARTS)
+STORE_POST_PARTS.forEach((part) => part.dispose())
+if (!STORE_POST_GEOMETRY) throw new Error('Store post geometry could not be merged.')
 const TREE_STUMP_SCAR_GEOMETRY = new THREE.CircleGeometry(0.32, 10)
 const TREE_STUMP_BARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#5c3b27', roughness: 0.95 })
 const TREE_STUMP_SCAR_MATERIAL = new THREE.MeshStandardMaterial({ color: '#a77a4d', roughness: 0.95, side: THREE.DoubleSide })
@@ -1210,6 +1216,11 @@ function Resource({ node, pose }: { node: WizardResourceNode; pose: Presentation
   )
 }
 
+export function StorePosts() {
+  return <mesh name="Store corner posts" geometry={STORE_POST_GEOMETRY}
+    material={DARK_WOOD_MATERIAL} castShadow />
+}
+
 function Store({ store, pose }: { store: WizardStore; pose: PresentationPose }) {
   const structure = useRef<THREE.Group>(null)
   useFrame(({ camera }) => {
@@ -1220,9 +1231,7 @@ function Store({ store, pose }: { store: WizardStore; pose: PresentationPose }) 
       <mesh geometry={UNIT_BOX} position={[0, 0.16, 0]} scale={[3.5, 0.32, 2.5]} castShadow receiveShadow><meshStandardMaterial color="#6d6a62" roughness={0.95} /></mesh>
       <group ref={structure}>
       <mesh geometry={UNIT_BOX} position={[0, 1.3, 0]} scale={[3.2, 2.0, 2.2]} castShadow receiveShadow><meshStandardMaterial color="#8a5a3e" roughness={0.86} /></mesh>
-      {([[-1.52, 1.03], [1.52, 1.03], [-1.52, -1.03], [1.52, -1.03]] as const).map(([x, z], index) => (
-        <mesh key={index} geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[x, 1.3, z]} scale={[0.18, 2.0, 0.18]} castShadow />
-      ))}
+      <StorePosts />
       <mesh position={[0, 2.95, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.35, 1.5, 4]} /><meshStandardMaterial color="#7c2f49" roughness={0.7} flatShading /></mesh>
       <mesh geometry={UNIT_BOX} position={[0.9, 3.35, -0.4]} scale={[0.36, 0.9, 0.36]} castShadow><meshStandardMaterial color="#5b5651" roughness={0.9} /></mesh>
       <mesh geometry={UNIT_BOX} position={[0, 1.8, 1.12]} scale={[1.8, 0.7, 0.12]}><meshStandardMaterial color="#d9b872" roughness={0.6} /></mesh>

@@ -19,7 +19,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainPickKind, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -55,6 +55,39 @@ const expectPreviewWireframe = (meshes: ReturnType<typeof renderedMeshes>) => {
     expect(material?.opacity).toBeLessThan(1)
   }
 }
+
+describe('store post batch', () => {
+  it('keeps all four post silhouettes, shadows and first-hit rays with one mesh', () => {
+    const [post] = renderedMeshes(StorePosts())
+    expect(renderedMeshes(StorePosts())).toHaveLength(1)
+    expect(post).toMatchObject({ name: 'Store corner posts', geometry: STORE_POST_GEOMETRY,
+      castShadow: true })
+    expect(post.material).toMatchObject({ transparent: false, roughness: 0.9 })
+    expect((post.material as THREE.MeshStandardMaterial).color.getHexString()).toBe('4a3222')
+    const old = new THREE.Group()
+    for (const x of [-1.52, 1.52]) for (const z of [-1.03, 1.03]) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1))
+      mesh.position.set(x, 1.3, z)
+      mesh.scale.set(0.18, 2, 0.18)
+      old.add(mesh)
+    }
+    const merged = new THREE.Mesh(STORE_POST_GEOMETRY)
+    const triangles = (geometry: THREE.BufferGeometry) =>
+      (geometry.index?.count ?? geometry.getAttribute('position').count) / 3
+    expect(triangles(STORE_POST_GEOMETRY)).toBe(48)
+    expect(triangles(STORE_POST_GEOMETRY)).toBe(old.children.reduce((count, child) =>
+      count + triangles((child as THREE.Mesh).geometry), 0))
+    const oldBounds = new THREE.Box3().setFromObject(old, true)
+    const newBounds = new THREE.Box3().setFromObject(merged, true)
+    expect(newBounds.min.distanceTo(oldBounds.min)).toBeLessThan(1e-6)
+    expect(newBounds.max.distanceTo(oldBounds.max)).toBeLessThan(1e-6)
+    for (const x of [-1.52, 1.52]) for (const z of [-1.03, 1.03]) {
+      const ray = new THREE.Raycaster(new THREE.Vector3(x, 5, z), new THREE.Vector3(0, -1, 0))
+      expect(ray.intersectObject(merged)[0].distance).toBeCloseTo(ray.intersectObjects(old.children)[0].distance, 6)
+    }
+    old.children.forEach((child) => (child as THREE.Mesh).geometry.dispose())
+  })
+})
 
 describe('finite world bedrock', () => {
   it('ends at all four canonical grid faces with a fixed center and size', () => {
