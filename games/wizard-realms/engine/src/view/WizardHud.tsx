@@ -414,6 +414,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           .wr-ironhall-rewards .wr-vest-status{color:#c6e6d7}
           .wr-v35-mobile-toggle{display:none}
           @media(min-width:1200px) and (min-height:600px){.wr-v35-quest{right:248px;top:266px;max-height:136px}}
+          @media(min-width:720px) and (max-width:900px) and (min-height:591px) and (orientation:landscape){[data-public-version=v43] .wr-v35-quest{left:280px;right:auto;width:240px}}
           @media(min-width:901px) and (min-height:600px){.wr-surface[data-work-mode="true"] .wr-saved-work-panel{width:310px}}
           @media(min-width:720px) and (min-height:600px){[data-public-version=v35] .wr-context[data-store-panel],[data-public-version=v36] .wr-context[data-store-panel],[data-public-version=v42] .wr-context[data-store-panel],[data-public-version=v43] .wr-context[data-store-panel]{box-sizing:border-box;max-height:calc(100% - 80px);overflow-y:auto;overscroll-behavior:contain}}
           @media(max-width:719px){[data-public-version=v42] .wr-context[data-store-panel],[data-public-version=v43] .wr-context[data-store-panel]{overflow-y:auto;overscroll-behavior:contain}}
