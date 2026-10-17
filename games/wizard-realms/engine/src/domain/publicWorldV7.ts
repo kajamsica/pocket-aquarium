@@ -3,7 +3,7 @@ import { HERB_CYCLE_TICKS } from './mireglassHerbForaging'
 import type { MireglassRegionProgress } from './mireglassExpedition'
 import { inspectLegacyImportSource } from './publicWorldV6'
 import {
-  PUBLIC_V6_ROOT_KEY, inspectPublicV6Artifacts, loadPublicV6Root,
+  inspectPublicV6Artifacts, loadPublicV6Root,
   parsePublicV6BootstrapRoot, parsePublicV6PlayableRoot,
 } from './publicWorldV6'
 import type { PublicV6BootstrapRoot, PublicV6PlayableRoot } from './publicWorldV6'
@@ -15,8 +15,8 @@ export const PUBLIC_V7_ROOT_KEY = 'wizard-realms:world:v7:root'
 export const PUBLIC_V7_STAGE_KEY = 'wizard-realms:world:v7:stage'
 export const PUBLIC_V7_BACKUP_KEY = 'wizard-realms:world:v7:backup'
 export const PUBLIC_V7_SCHEMA = 'wizard-world/v7'
-/** The old and new public writers must use the same cross-tab Web Lock. */
-export const PUBLIC_V7_LOCK_NAME = `${PUBLIC_V6_ROOT_KEY}:exclusive`
+/** The old and new public writers share this lock. Keep it literal across import cycles. */
+export const PUBLIC_V7_LOCK_NAME = 'wizard-realms:world:v6:root:exclusive'
 export const HERB_REGROW_TICKS = HERB_CYCLE_TICKS
 
 export type PublicWorldV7State = Omit<PublicWorldState, 'mireglass'> & {
