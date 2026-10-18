@@ -18,7 +18,8 @@ import { confirmPublicV42RewardAction, decodePublicV42RewardProgress,
   resolveIronHallCrestOutcome,
   resolvePublicV42CrestAfterDefeat } from './publicWorldV42RewardAction'
 import type { PublicV42RewardProgress, PublicV42RewardWitness } from './publicWorldV42RewardAction'
-import { replayPublicV42Witness } from './publicWorldV42Snapshot'
+import { createFreshPublicV42Root, decodePublicV42CheckedSuccessor,
+  replayPublicV42Witness } from './publicWorldV42Snapshot'
 import { STARTER_CLIFF_SITE_ID } from './starterCliffProfile'
 import { waystationRiverSite } from './waystationRiverContent'
 import { worldTileAtGrid } from './worldChunks'
@@ -86,6 +87,38 @@ function claimed(seed?: string): PublicV42RewardProgress {
 }
 
 describe('V42 Iron Hall reward authority', () => {
+  it('batches only idle-combat movement with the same checked V41 per-frame result', () => {
+    const fresh = createFreshPublicV42Root('wizard-realms')
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...greenway } = fresh.head
+    const lookMove = { intents: [{ type: 'look' as const, yawDelta: 0.01,
+      pitchDelta: 0 }, { type: 'move' as const,
+      delta: { x: 0.002, z: 0 } }], walkRequested: true }
+    const cases = [
+      { before: greenway, witness: frames(64) },
+      { before: greenway, witness: { kind: 'frame-batch/v1' as const,
+        frames: Array.from({ length: 64 }, () => lookMove) } },
+      { before: ready(), witness: frames(16) },
+      { before: ready(), witness: move(1) },
+    ]
+    for (const { before, witness } of cases) {
+      let legacy: PublicV42RewardProgress | null = before
+      for (const frame of witness.frames) {
+        if (!legacy) break
+        const moved = replayPublicV41CombatFrameBatch(legacy,
+          { kind: 'frame-batch/v1', frames: [frame] })
+        legacy = moved ? { ...moved, ironHallReward: legacy.ironHallReward } : null
+      }
+      expect(legacy).not.toBeNull()
+      expect(replayPublicV42RewardFrameBatch(before, witness))
+        .toEqual(decodePublicV42RewardProgress(legacy))
+    }
+    const checked = replayPublicV42Witness(fresh.head, frames(64))!
+    expect(decodePublicV42CheckedSuccessor(fresh, { lineage: fresh.lineage,
+      previous: fresh.head, head: { ...checked, schemaVersion: fresh.head.schemaVersion,
+        saveRevision: 1, witness: frames(64) } })).not.toBeNull()
+  })
+
   it('keeps one grounded ordinary preview identical to checked replay', () => {
     const before = ready()
     const witnesses = [

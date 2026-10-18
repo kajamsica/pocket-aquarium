@@ -402,6 +402,14 @@ function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
   if (!witness || !current) return null
   if (witness.frames.some((frame) => frame.intents.some((intent) => intent.type === 'jump')))
     return flightFrames(current, witness.frames, allowAirborne)
+  // Without an active ward or spar, V41/V42 add no per-frame effects. Let the
+  // inherited movement authority replay the batch once instead of decoding
+  // every full V40/V41 layer for each frame. Keep the original path for
+  // step-down flights and any batch the inherited authority cannot confirm.
+  if (!current.ironHall.engaged && !current.ironHallReward.spar.active) {
+    const moved = replayPublicV40Witness(current, witness)
+    if (moved) return decodePublicV42RewardProgress({ ...current, ...moved })
+  }
   const origin = current
   for (const frame of witness.frames) {
     const moved = replayPublicV41CombatFrameBatch(current,
