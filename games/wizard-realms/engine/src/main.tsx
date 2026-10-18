@@ -74,7 +74,7 @@ export const PUBLIC_V34_ENTRY_READY = true
 export const PUBLIC_V35_ENTRY_READY = true
 // V36 is a separate development save copied only by an explicit V35 choice.
 export const PUBLIC_V36_ENTRY_READY = true
-reactRoot.render(<StrictMode><Suspense fallback={<main role="status">Loading game…</main>}>{workbenchId !== null
+const routedApp = <Suspense fallback={<main role="status">Loading game…</main>}>{workbenchId !== null
   ? <Suspense fallback={<main role="status">Loading character workbench…</main>}><CharacterWorkbench workbenchId={workbenchId} /></Suspense>
   : mireglassDev ? <MireglassPlayableApp />
   : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v43'
@@ -201,4 +201,7 @@ reactRoot.render(<StrictMode><Suspense fallback={<main role="status">Loading gam
     : publicWorld === 'v10' ? <PublicV10EntryApp />
     : publicWorld === 'v9' ? <PublicV9EntryApp />
     : publicWorld === 'v8' ? <PublicV8EntryApp />
-    : publicWorld === '1' ? <PublicWizardApp /> : <App />}</Suspense></StrictMode>)
+    : publicWorld === '1' ? <PublicWizardApp /> : <App />}</Suspense>
+reactRoot.render(import.meta.env.DEV && workbenchId === null && !mireglassDev && !streamedPreview && publicWorld === 'v42'
+  ? routedApp
+  : <StrictMode>{routedApp}</StrictMode>)
