@@ -31,12 +31,12 @@ const RULER_POSITIONS: Readonly<Partial<Record<CameraView, THREE.Vector3Tuple>>>
   back: [-0.9, 0, 0],
   'three-quarter': [0.7, 0, 0.7],
 }
-const VIEW_COMPARISONS: Readonly<Record<CameraView, string>> = {
-  front: 'NO-GO: separate facial pieces and cylindrical sleeves lack the approved sculpted face and tailored shoulder shape.',
-  'three-quarter': 'NO-GO: intersecting cowl, torso, and robe shells lose the continuous cloth volume and folds of the sheet.',
-  side: 'NO-GO: the face profile, flat hair mass, and boot shape do not match the approved silhouette.',
-  back: 'NO-GO: exposed rear scalp and plain robe surface lack the layered hair and cloth construction in the sheet.',
-  top: 'No approved top view exists. Inspect geometry here, but do not infer a top-view art approval from the sheet.',
+const V2_VIEW_COMPARISONS: Readonly<Record<CameraView, string>> = {
+  front: 'NO-GO: separate facial pieces and cylindrical sleeves lack the approved V9 face and shoulder shape.',
+  'three-quarter': 'NO-GO: intersecting cowl, torso, and robe shells lose the continuous cloth volume and folds of V9.',
+  side: 'NO-GO: the face profile, flat hair mass, and boot shape do not match the approved V9 silhouette.',
+  back: 'NO-GO: exposed rear scalp and plain robe surface lack the layered hair and cloth construction of V9.',
+  top: 'No approved V9 top view exists. Inspect geometry here without inferring top-view art approval.',
 }
 
 interface AssetBoundaryProps {
@@ -195,6 +195,12 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
   const availableClips = stats?.clips.map((clip) => clip.name) ?? []
   const missingClips = stats ? candidate.expectedClips.filter((name) => !availableClips.includes(name)) : []
   const referencePanel = REFERENCE_PANELS[cameraView]
+  const approvedRender = candidate.approvedRenders[referencePanel ?? 1]
+  const comparisonText = candidate.status === 'candidate_no_go'
+    ? V2_VIEW_COMPARISONS[cameraView]
+    : cameraView === 'top'
+      ? 'No approved V9 top view exists. Inspect geometry here without inferring top-view art approval.'
+      : 'Compare the GLB here with the approved V9 bust render. The bust image is a design target, not a metric full-body guide.'
 
   return <main className="character-workbench" data-candidate-state={candidate.status}>
     <title>Wayfarer Character Workbench | Wizard Realms</title>
@@ -209,12 +215,10 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
       </div>
     </header>
 
-    <p className="character-workbench__warning">
-      This rigged model is a structural test, not accepted game art. It does not match the approved character sheet and will not replace the playable avatar.
-    </p>
+    <p className="character-workbench__notice">{candidate.summary}</p>
 
     <div className="character-workbench__layout">
-      <section className={`character-workbench__stage${comparisonLocked && showReference ? ' character-workbench__stage--compare' : ''}`} aria-label="Interactive 3D character viewer and approved reference">
+      <section className={`character-workbench__stage${comparisonLocked && showReference ? ' character-workbench__stage--compare' : ''}`} aria-label="Interactive 3D character viewer and approved V9 render">
         <div className="character-workbench__stage-viewer">
           <Canvas
           camera={{ fov: 35, near: 0.01, far: 100, position: [3.4, 2.2, 4.3] }}
@@ -226,7 +230,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           <color attach="background" args={['#d8d8d4']} />
           <ambientLight intensity={0.75} />
           <hemisphereLight args={['#f3f5f7', '#8b8178', 1.35]} />
-          <directionalLight castShadow position={[3.5, 7, 5]} intensity={3.1} shadow-mapSize={[1024, 1024]} shadow-camera-left={-3} shadow-camera-right={3} shadow-camera-top={4} shadow-camera-bottom={-2} />
+          <directionalLight castShadow position={[3.5, 7, 5]} intensity={3.1} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} shadow-normalBias={0.04} shadow-camera-left={-3} shadow-camera-right={3} shadow-camera-top={4} shadow-camera-bottom={-2} />
           <directionalLight position={[-4, 3, -4]} color="#d6c4ff" intensity={1.4} />
           <CameraControls view={cameraView} fitToken={fitToken} bounds={stats?.bounds} comparisonLocked={comparisonLocked} />
           <StudioFloor />
@@ -255,15 +259,11 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           {comparisonLocked && <p className="character-workbench__meter-hint">2 m ruler · 0.5 m ticks · GLB height {stats ? `${stats.bounds.size[1].toFixed(2)} m` : 'loading'}</p>}
           <p className="character-workbench__orbit-hint">{comparisonLocked ? `Candidate GLB · ${cameraView} · fixed metric camera` : 'Drag to orbit · wheel to zoom · right-drag to pan'}</p>
         </div>
-        {showReference && <aside className="character-workbench__stage-reference" aria-label={`Approved ${cameraView} character reference`}>
-          <a href={candidate.referenceUrl} target="_blank" rel="noreferrer" title="Open the full approved character sheet">
-            {referencePanel === undefined
-              ? <img className="character-workbench__reference-sheet" src={candidate.referenceUrl} alt="Approved character sheet, no top view supplied" />
-              : <img className="character-workbench__reference-pose" src={candidate.referenceUrl}
-                  alt={`Approved ${cameraView} Wayfarer pose`}
-                  style={{ transform: `translateX(-${12.5 + 25 * referencePanel}%)` }} />}
+        {showReference && <aside className="character-workbench__stage-reference" aria-label={`Approved V9 ${approvedRender.label.toLowerCase()} bust render`}>
+          <a href={approvedRender.url} target="_blank" rel="noreferrer" title="Open the approved V9 bust render">
+            <img className="character-workbench__reference-sheet" src={approvedRender.url} alt={`Approved V9 Wayfarer ${approvedRender.label.toLowerCase()} bust render`} />
           </a>
-          <span className="character-workbench__reference-caption">Approved target · {referencePanel === undefined ? 'no top view' : cameraView} · sheet scale is illustrative</span>
+          <span className="character-workbench__reference-caption">Approved V9 bust · {referencePanel === undefined ? 'three-quarter shown; no top view' : cameraView} · framing is illustrative</span>
         </aside>}
       </section>
 
@@ -278,7 +278,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
             <button type="button" aria-pressed={turntable} disabled={comparisonLocked} onClick={() => setTurntable((value) => !value)}>Turntable</button>
           </div>
           <button className="character-workbench__play" type="button" aria-pressed={comparisonLocked} onClick={() => { setComparisonLocked((value) => !value); setShowReference(true); setTurntable(false) }}>Fixed-scale comparison {comparisonLocked ? 'on' : 'off'}</button>
-          <small>Compare each angle with the same world-space camera, fitted to a 2.5 m guide with margin. Unlock to orbit and fit freely. The concept art has no measured height.</small>
+          <small>Compare each angle with the same world-space camera, fitted to a 2.5 m guide with margin. Unlock to orbit and fit freely. The approved V9 bust renders are not metric full-body guides.</small>
         </fieldset>
 
         <fieldset>
@@ -312,9 +312,12 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
     <section className="character-workbench__details" aria-label="Candidate review and statistics">
       <div>
         <h2>Candidate inspection</h2>
-        <p><strong>Status:</strong> {candidate.statusLabel}. No in-game promotion is implied by a valid rig or playable clips.</p>
-        <p className="character-workbench__view-verdict"><strong>{cameraView} comparison:</strong> {candidate.id === 'wayfarer-v2-male' ? VIEW_COMPARISONS[cameraView] : candidate.visualDebt[0]}</p>
-        <ul>{candidate.visualDebt.map((debt) => <li key={debt}>{debt}</li>)}</ul>
+        <p><strong>Status:</strong> {candidate.statusLabel}. Design approval and GLB technical verification are separate checks.</p>
+        <p className="character-workbench__view-verdict"><strong>{cameraView} comparison:</strong> {comparisonText}</p>
+        <ul>{candidate.reviewNotes.map((note) => <li key={note}>{note}</li>)}</ul>
+        <p>{candidate.status === 'design_approved'
+          ? <a href="?workbench=wayfarer&candidate=wayfarer-v2-male">Inspect rejected V2 technical comparison</a>
+          : <a href="?workbench=wayfarer">Return to approved V9 design candidate</a>}</p>
         <h3>Loaded GLB</h3>
         <dl className="character-workbench__stats">
           <div><dt>Triangles</dt><dd>{stats?.triangles.toLocaleString() ?? 'Loading…'}</dd></div>
@@ -326,14 +329,15 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
         {missingClips.length > 0 && <p className="character-workbench__missing-clips" role="alert">Missing expected clips: {missingClips.join(', ')}</p>}
       </div>
       <div className="character-workbench__comparison">
-        <h2>Approved target vs current render</h2>
+        <h2>Approved V9 bust and candidate render</h2>
         <div className="character-workbench__comparison-images">
-          <figure><a href={candidate.referenceUrl} target="_blank" rel="noreferrer"><img src={candidate.referenceUrl} alt="Approved male Wayfarer character sheet" loading="lazy" /></a><figcaption>Approved concept target</figcaption></figure>
-          <figure><a href={candidate.reviewRenders[1].url} target="_blank" rel="noreferrer"><img src={candidate.reviewRenders[1].url} alt="Current Wayfarer v2 male three-quarter Blender render" loading="lazy" /></a><figcaption>Rejected Blender candidate</figcaption></figure>
+          <figure><a href={candidate.approvedRenders[1].url} target="_blank" rel="noreferrer"><img src={candidate.approvedRenders[1].url} alt="Approved V9 male Wayfarer three-quarter bust render" loading="lazy" /></a><figcaption>Approved V9 bust direction</figcaption></figure>
+          <figure><a href={candidate.reviewRenders[1].url} target="_blank" rel="noreferrer"><img src={candidate.reviewRenders[1].url} alt={`${candidate.label} three-quarter Blender render`} loading="lazy" /></a><figcaption>{candidate.renderCaption}</figcaption></figure>
         </div>
+        <details><summary>Earlier concept sheet</summary><a href={candidate.conceptUrl} target="_blank" rel="noreferrer"><img className="character-workbench__historical-concept" src={candidate.conceptUrl} alt="Earlier male Wayfarer concept sheet, preceding the approved V9 bust" loading="lazy" /></a><p>The V9 bust render above is the approved target for this workbench.</p></details>
         <details><summary>Other Blender review angles</summary><div className="character-workbench__review-renders">{candidate.reviewRenders.map((render) => <a key={render.label} href={render.url} target="_blank" rel="noreferrer">{render.label}</a>)}</div></details>
       </div>
     </section>
-    <footer className="character-workbench__footer">{CHARACTER_CANDIDATES.length} inspectable candidate · no save data is read or changed by this workbench</footer>
+    <footer className="character-workbench__footer">{CHARACTER_CANDIDATES.length} inspectable candidates · no save data is read or changed by this workbench</footer>
   </main>
 }

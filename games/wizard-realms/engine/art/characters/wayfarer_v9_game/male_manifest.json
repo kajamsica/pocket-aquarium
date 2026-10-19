@@ -1,0 +1,658 @@
+{
+  "status": "v9_playable_candidate_exported_runtime_inspection_pending",
+  "gender": "male",
+  "asset": {
+    "glb": "wayfarer_v9_male.glb",
+    "blend": "wayfarer_v9_male.blend",
+    "authoring": "author_v9_game.py",
+    "renders": "render_v9_game.py",
+    "sheets": "contact_sheet_v9_game.py"
+  },
+  "designReference": "../../concepts/wayfarer-male-concept-v4.png",
+  "approvedVisualTarget": {
+    "description": "Bottom V9 row of wayfarer_v9_staging/comparison_vs_reference.png (user-approved head/shoulders sculpt). The middle V10 row is rejected. Head, face and hair are not redesigned here.",
+    "approvedDirectory": "../wayfarer_v9_approved",
+    "approvedSha256": {
+      "author_v9.py": "65d922d3d8d3e1950f302f7f27fd86737d9fd790340095e56230a961f5e304d8",
+      "wayfarer_v9_head_shoulders.blend": "85c98714bdcf347fdf5a4324fd49d2a6da126e309e0a6b886760e6ea976d9249",
+      "v9_front.png": "12d8608640657effd050218a217768f3d026cf63975d81d23306bbe7ad829a1e",
+      "v9_three_quarter.png": "9e77953fc700ec56146d9a1292da527b77fab0b809f61a58bc6205bcc17bbf4b",
+      "v9_side.png": "77e3662ee93afe410f60f4bc6ef4ff3b65a52185d9b834bd930922bc0624523d",
+      "v9_back.png": "52052e5b2c61be74382cbb305b0a9078d38ed0f876a160968aaaee51b474ad94"
+    },
+    "approvedSha256Verified": true,
+    "copiedFrom": "/Volumes/git/wizard-realms-resume-20261016/games/wizard-realms/engine/art/characters/wayfarer_v9_staging",
+    "portedFromAuthorV9": [
+      "head widening / jaw squaring / lid ease",
+      "V9_brows",
+      "V9_hair_shell",
+      "V9_hair_locks (124)",
+      "V9_tunic top",
+      "V9_robe opening and gold trim",
+      "V9_strap shoulder segment",
+      "V9_mantle",
+      "V9_hood",
+      "V9_collar",
+      "V9_cowl",
+      "V9_brooch",
+      "V9 materials and palette"
+    ]
+  },
+  "provenance": {
+    "baseMesh": {
+      "publisher": "Blender Studio and community contributions",
+      "title": "Human Base Meshes",
+      "version": "1.4.1",
+      "collection": "Body Male - Stylized",
+      "license": "CC0",
+      "licenseEvidence": "https://www.blender.org/download/demo-files/#asset-bundles",
+      "bundleSha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+      "stagedBlend": "../wayfarer_v3_staging/wayfarer_v3_artist_staging.blend",
+      "stagedBlendSha256": "c8715595d8d77546ab1de1aae34ded44c00628d65503ba312243d3e489685f6e",
+      "howUsed": "opened read-only and saved-as into this directory; body and eye meshes kept with the V9 head edits, drivers/vertex groups cleared, materials replaced, faces hidden under cloth deleted, uncut (no bust seam)"
+    },
+    "rigReference": {
+      "path": "../wayfarer_v2/wayfarer_v2_male.blend",
+      "sha256": "d9a67f5c437f74c63275ed29311df0ad4582793c510489a77a0aa03b504957fc",
+      "reuse": "17 deform-bone names/hierarchy, seven socket names with role extras, Idle/Walk/Turn NLA clip layout; no V2 geometry, materials or weights are used"
+    },
+    "authoredHere": [
+      "full-length V9_robe",
+      "V9_sleeves",
+      "V9_belt (+buckle)",
+      "V9_trousers",
+      "V9_boots",
+      "V9_feet (barefoot variant, split from the CC0 body)",
+      "V9_satchel",
+      "V9_strap hip extension",
+      "distance-falloff skinning",
+      "Idle/Walk/Turn clips",
+      "sockets",
+      "camera/light rigs"
+    ],
+    "thirdPartyPixelsOrMeshes": "none beyond the CC0 base mesh; concept sheets are visual targets only",
+    "license": "Derived asset: CC0 base mesh plus original Wizard Realms geometry, materials and rig authored in-repo."
+  },
+  "sourceAxes": {
+    "up": "+Z",
+    "forward": "+Y",
+    "origin": "floor between feet"
+  },
+  "glbAxes": {
+    "up": "+Y",
+    "forward": "-Z",
+    "origin": "floor between feet"
+  },
+  "boundsMetersGlb": {
+    "min": [
+      -0.6216,
+      0,
+      -0.2611
+    ],
+    "max": [
+      0.6291,
+      2.3132,
+      0.3167
+    ]
+  },
+  "boundsMetersBlender": {
+    "min": [
+      -0.6216,
+      -0.3167,
+      0
+    ],
+    "max": [
+      0.6291,
+      0.2611,
+      2.3132
+    ]
+  },
+  "heightMeters": 2.3132,
+  "deformBones": [
+    "Root",
+    "Hips",
+    "Spine",
+    "Neck",
+    "Head",
+    "UpperArm.L",
+    "Forearm.L",
+    "Hand.L",
+    "Thigh.L",
+    "Shin.L",
+    "Foot.L",
+    "UpperArm.R",
+    "Forearm.R",
+    "Hand.R",
+    "Thigh.R",
+    "Shin.R",
+    "Foot.R"
+  ],
+  "equipmentSockets": {
+    "Socket.Head": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        0.0,
+        2.3,
+        0.01
+      ]
+    },
+    "Socket.LeftHand": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        -0.5,
+        1.02,
+        0.02
+      ]
+    },
+    "Socket.RightHand": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        0.5,
+        1.02,
+        0.02
+      ]
+    },
+    "Socket.Chest": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        0.0,
+        1.5,
+        -0.22
+      ]
+    },
+    "Socket.LeftFoot": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        -0.15,
+        0.03,
+        -0.19
+      ]
+    },
+    "Socket.RightFoot": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        0.15,
+        0.03,
+        -0.19
+      ]
+    },
+    "Socket.Legs": {
+      "role": "equipment_socket",
+      "glbPosition": [
+        0.0,
+        0.9,
+        -0.0
+      ]
+    }
+  },
+  "animationClips": {
+    "Idle": {
+      "channels": 51,
+      "durationSeconds": 2.042
+    },
+    "Walk": {
+      "channels": 51,
+      "durationSeconds": 1.042
+    },
+    "Turn": {
+      "channels": 51,
+      "durationSeconds": 1.042
+    }
+  },
+  "footwearVariants": {
+    "barefootMesh": "V9_feet",
+    "bootsMesh": "V9_boots",
+    "runtimeRule": "show V9_feet when gear.boots is false, V9_boots when true; both nodes are exported visible",
+    "feetSource": "CC0 base-mesh feet and lower shins below z=0.58 m, skinned to Thigh/Shin/Foot per side",
+    "feetBoundsBlender": {
+      "min": [
+        -0.2355,
+        -0.1565,
+        0.0
+      ],
+      "max": [
+        0.2355,
+        0.1936,
+        0.5894
+      ]
+    },
+    "feetVertices": 1402,
+    "restClearanceToBootsMeters": {
+      "min": 0.005,
+      "median": 0.0177,
+      "verticesUnder2mm": 0,
+      "verticesOutsideBoots": 0,
+      "outsideZRange": null,
+      "soleVerticesOnFloorPlane": 75,
+      "shinVerticesAboveBootOpening": 231,
+      "zoneChecked": "0.005 < z < 0.44"
+    },
+    "restClearanceShinToTrousersMeters": {
+      "min": 0.0006,
+      "verticesOutsideTrousers": 0,
+      "zoneChecked": "0.44 <= z < 0.575"
+    },
+    "maxVertexDisplacementMeters": {
+      "Walk@frame7": {
+        "L": 0.3018,
+        "R": 0.5924
+      },
+      "Walk@frame19": {
+        "L": 0.5924,
+        "R": 0.3018
+      },
+      "Turn@frame13": {
+        "L": 0.0819,
+        "R": 0.1325
+      }
+    }
+  },
+  "meshObjects": 19,
+  "drawGroups": 30,
+  "materialCount": 13,
+  "exportedMeshes": 19,
+  "trianglesEvaluated": 63482,
+  "trianglesGlb": 63482,
+  "perObject": {
+    "V9_body": {
+      "triangles": 12796,
+      "materials": [
+        "V9_skin"
+      ]
+    },
+    "V9_brows": {
+      "triangles": 416,
+      "materials": [
+        "V9_brow"
+      ]
+    },
+    "V9_hair_shell": {
+      "triangles": 2782,
+      "materials": [
+        "V9_hair"
+      ]
+    },
+    "V9_hair_locks": {
+      "triangles": 15456,
+      "materials": [
+        "V9_hair"
+      ]
+    },
+    "V9_tunic": {
+      "triangles": 1920,
+      "materials": [
+        "V9_tunic"
+      ]
+    },
+    "V9_robe": {
+      "triangles": 5760,
+      "materials": [
+        "V9_violet_cloth",
+        "V9_gold"
+      ]
+    },
+    "V9_belt": {
+      "triangles": 224,
+      "materials": [
+        "V9_leather_dark",
+        "V9_gold"
+      ]
+    },
+    "V9_strap": {
+      "triangles": 112,
+      "materials": [
+        "V9_leather"
+      ]
+    },
+    "V9_mantle": {
+      "triangles": 6912,
+      "materials": [
+        "V9_violet_cloth",
+        "V9_gold"
+      ]
+    },
+    "V9_hood": {
+      "triangles": 1296,
+      "materials": [
+        "V9_violet_cloth",
+        "V9_gold"
+      ]
+    },
+    "V9_collar": {
+      "triangles": 1280,
+      "materials": [
+        "V9_violet_lining",
+        "V9_gold"
+      ]
+    },
+    "V9_cowl": {
+      "triangles": 5280,
+      "materials": [
+        "V9_violet_cloth"
+      ]
+    },
+    "V9_brooch": {
+      "triangles": 64,
+      "materials": [
+        "V9_gold"
+      ]
+    },
+    "V9_sleeves": {
+      "triangles": 1088,
+      "materials": [
+        "V9_violet_cloth",
+        "V9_gold"
+      ]
+    },
+    "V9_trousers": {
+      "triangles": 640,
+      "materials": [
+        "V9_trouser"
+      ]
+    },
+    "V9_boots": {
+      "triangles": 1960,
+      "materials": [
+        "V9_leather",
+        "V9_leather_dark"
+      ]
+    },
+    "V9_satchel": {
+      "triangles": 324,
+      "materials": [
+        "V9_leather",
+        "V9_leather_dark",
+        "V9_gold"
+      ]
+    },
+    "V9_eyes": {
+      "triangles": 2436,
+      "materials": [
+        "V9_eye_sclera",
+        "V9_eye_iris",
+        "V9_eye_pupil"
+      ]
+    },
+    "V9_feet": {
+      "triangles": 2736,
+      "materials": [
+        "V9_skin"
+      ]
+    }
+  },
+  "hairLocks": 124,
+  "glbBytes": 2169992,
+  "sha256": {
+    "glb": "0ecea9c079b359bb7ffbb7b8e6d5a4b832039525831f0b097759cbcd9dd32b50",
+    "blend": "c9a5a7f28f39557483354e21ab5a17c88b11c3ee807a67ce6be4c2f8488fd04f"
+  },
+  "glbChecks": {
+    "clipsIdleWalkTurn": true,
+    "oneSkinWith17Joints": true,
+    "jointNamesMatchV2": true,
+    "sevenSocketsWithRole": true,
+    "noCameras": true,
+    "noLights": true,
+    "floorAtZero": true,
+    "heightInRange": true,
+    "forwardIsNegativeZ": true,
+    "feetAndBootsExported": true,
+    "feetOnFloor": true,
+    "feetInsideBoots": true,
+    "feetDeformInWalkTurn": true
+  },
+  "glbStructureValid": true,
+  "budget": {
+    "targetTriangles": 40000,
+    "targetDrawGroups": 32,
+    "targetGlbBytes": 5242880,
+    "trianglesMet": false,
+    "drawGroupsMet": true,
+    "glbBytesMet": true
+  },
+  "compromises": [
+    "No Subdivision or Solidify on the game mesh (V9 bust renders used subsurf render level 2 at 300k triangles); cloth is single-sided sheets with double-sided materials, brows and brooch keep a small Solidify.",
+    "Procedural bump, sheen, coat and subsurface shader detail does not export to glTF; flat PBR factors only. The hair root-to-tip gradient is baked to vertex colours (COLOR_0).",
+    "Below the mantle the robe is torso-fitted with separate sleeves; the V9 bust robe wrapped the arms as a poncho.",
+    "Skinning is smooth distance falloff, tuned for the Idle/Walk/Turn amplitudes, not hand-painted weights.",
+    "V9_feet and V9_boots are both exported visible; the runtime must toggle them (feet sole and boot sole share the floor plane)."
+  ],
+  "peakProcessMemoryMB": 314.4,
+  "authorSeconds": 1.3,
+  "blender": "5.2.2 LTS",
+  "command": "blender -b -t 4 --factory-startup --python author_v9_game.py",
+  "scopeGuards": {
+    "editsOutsideThisDirectory": "only byte-identical copies added to ../wayfarer_v9_approved",
+    "github": false,
+    "commit": false,
+    "previewPorts": false,
+    "gameSave": false,
+    "v3DirectoryModified": false,
+    "v9StagingModified": false
+  },
+  "renders": {
+    "views": [
+      {
+        "view": "front",
+        "out": "male_front.png",
+        "samples": 64,
+        "seconds": 7.68,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1294057472
+      },
+      {
+        "view": "three_quarter",
+        "out": "male_three_quarter.png",
+        "samples": 64,
+        "seconds": 7.45,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1337884672
+      },
+      {
+        "view": "side",
+        "out": "male_side.png",
+        "samples": 64,
+        "seconds": 5.24,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1340588032
+      },
+      {
+        "view": "back",
+        "out": "male_back.png",
+        "samples": 64,
+        "seconds": 6.41,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1343832064
+      },
+      {
+        "view": "v9_front",
+        "out": "v9match_front.png",
+        "samples": 64,
+        "seconds": 5.52,
+        "resolution": [
+          512,
+          512
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9_CAM",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "v9_three_quarter",
+        "out": "v9match_three_quarter.png",
+        "samples": 64,
+        "seconds": 4.97,
+        "resolution": [
+          512,
+          512
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9_CAM",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "v9_side",
+        "out": "v9match_side.png",
+        "samples": 64,
+        "seconds": 4.16,
+        "resolution": [
+          512,
+          512
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9_CAM",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "v9_back",
+        "out": "v9match_back.png",
+        "samples": 64,
+        "seconds": 4.51,
+        "resolution": [
+          512,
+          512
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9_CAM",
+        "footwear": "V9_boots",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "barefoot_front",
+        "out": "male_barefoot_front.png",
+        "samples": 64,
+        "seconds": 7.86,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_feet",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "barefoot_three_quarter",
+        "out": "male_barefoot_three_quarter.png",
+        "samples": 64,
+        "seconds": 7.44,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_feet",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "barefoot_side",
+        "out": "male_barefoot_side.png",
+        "samples": 64,
+        "seconds": 5.28,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_feet",
+        "pose": "rest",
+        "maxRSSBytes": 1687273472
+      },
+      {
+        "view": "barefoot_walk",
+        "out": "male_barefoot_walk.png",
+        "samples": 64,
+        "seconds": 7.78,
+        "resolution": [
+          576,
+          1024
+        ],
+        "engine": "CYCLES/CPU",
+        "camera": "V9G_CAM_BODY",
+        "footwear": "V9_feet",
+        "pose": "Walk frame 7",
+        "maxRSSBytes": 1687273472
+      }
+    ],
+    "settings": {
+      "engine": "Cycles CPU",
+      "samples": 64,
+      "denoise": "OpenImageDenoise",
+      "maxBounces": 4,
+      "threads": 4,
+      "viewTransform": "Standard",
+      "bodyCamera": "orthographic, ortho_scale 2.62, pivot (0,0,1.16), 576x1024",
+      "v9MatchCamera": "85 mm, 36 mm sensor, pivot (0,0,1.92), distance 2.125 m, 512x512, V9 lights",
+      "command": "blender -b -t 4 --factory-startup --python render_v9_game.py -- all 64",
+      "blender": "5.2.2 LTS",
+      "peakRSSMiB": 1609.1
+    }
+  },
+  "reviewSheets": {
+    "contactSheet": "contact_sheet.png",
+    "barefootSheet": "barefoot_sheet.png",
+    "comparisonVsV9": "comparison_vs_v9.png",
+    "approvedV9RenderSha256": {
+      "front": "12d8608640657effd050218a217768f3d026cf63975d81d23306bbe7ad829a1e",
+      "three_quarter": "9e77953fc700ec56146d9a1292da527b77fab0b809f61a58bc6205bcc17bbf4b",
+      "side": "77e3662ee93afe410f60f4bc6ef4ff3b65a52185d9b834bd930922bc0624523d",
+      "back": "52052e5b2c61be74382cbb305b0a9078d38ed0f876a160968aaaee51b474ad94"
+    },
+    "sha256": {
+      "contact_sheet.png": "0356d152d7e6337ff95d414adcc047a5a44b2ee23147fcd91cf330082ab75351",
+      "barefoot_sheet.png": "4970f7ccc100735f17a7feae45e24b1a040932cebbef3c5dfaa940ca3753925f",
+      "comparison_vs_v9.png": "09c317cdbc7c4bedaea226bb523515fddffd60e593451a2c04a2fe4701048e61",
+      "male_front.png": "c0d20c991f40d2e23d2c6961569c240c32ada659dcc68a40b6d91f47cb5ede47",
+      "male_three_quarter.png": "e80049aa4ecde69d3f26961f66f9236ff516ca6bcb8e9ee9c75c31b7d8f0bc9e",
+      "male_side.png": "cc8ab93b63ef90ca9028043602ed4ced89a2b6a0359be80d49ab785c9faf470d",
+      "male_back.png": "77265627169ea6a22596e5808b2cfad1703b57d57569627fb4434d887efa98a2",
+      "male_barefoot_front.png": "480655853a2ac9fb6ff721874f4bd3151f6967e250c94621c3a8bd66c9c0ee23",
+      "male_barefoot_three_quarter.png": "32b5db6a49885f114fc0b26dec486d1720c981b7caf7fedfc1775df5676af71c",
+      "male_barefoot_side.png": "3c491497d3d6f5c699d41513d08882dac73687b7cfb1e4abb7eb70cd7cfa8b22",
+      "male_barefoot_walk.png": "d64e13c793ab05266d48b41e1ea700a3b216279d1fa48c39d71e15c15ff50825",
+      "v9match_front.png": "da14070f4ff6ed97a86ff6d23beddc902eee6fd02abc982acbf8e195c5741128",
+      "v9match_three_quarter.png": "b06b19da86182c7ab580d30e3de7eb522514581bb04ffc7738a610646b31d0f8",
+      "v9match_side.png": "c06450d81ada2408a4ade63145ed8d168944c55b7d5453f34a041574d4bda9c5",
+      "v9match_back.png": "3ef3895311becb58ad1fdf2204c793a0c47f10ecc0f370d3dd8575034d1c8d04"
+    }
+  }
+}
