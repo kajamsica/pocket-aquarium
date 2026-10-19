@@ -1,0 +1,30 @@
+# Ticket Pack: V152 Overlapping Starter Interactions
+
+## Observed failure and target
+
+The V151 visible-UI new-game run found a Greenway oak within range of Outfitters, but the contextual `Open store` prompt took priority until the player moved closer to the oak. The player was trying to satisfy the first quest's eight-log objective. After one extra movement input, the oak's `Chop` cue appeared and the entire Surveyor quest was completed. This is a discoverability defect, not a blocked quest. The full-label Playwright lookup timeout for build confirmation was a locator mismatch; it does not prove a pointer or touch defect.
+
+The smallest source owner is `PublicV14WorldView.ts`, which currently selects the store before an available in-range tree whenever the store is within 3 m. Preserve the separate shop proximity and explicit store-open action. When both are in range and the store is closed, make the **closer** target the contextual interaction, with a stable tie rule favoring the store. At the oak's position, the tree should win; at the Outfitters' position, the store should win. Do not change collision, resource placement, quest requirements, shop distance, or save format.
+
+## Contract and lanes
+
+One production expression owner and one existing focused test owner, followed by a read-only review and a guarded UI proof. There is no useful parallel production edit; do not manufacture one.
+
+1. V152-A implementer: change only `games/wizard-realms/engine/src/PublicV14WorldView.ts` and its existing `PublicV14WorldView.test.ts`. Add an overlap test with actual generated oak and store coordinates that asserts the closer target wins, including non-equipable tree action state, and preserves explicit store-open access. Keep net additions below 70 lines, no helper module or new dependency. Run focused Vitest under one 512 MiB old-space worker and exact-PID 450 MiB RSS guard, TypeScript under its 1024 MiB old-space and 1536 MiB RSS guard, `git diff --check`. If a third production file or changed checked action semantics is needed, stop and report.
+2. V152-B independent read-only reviewer after A: inspect exact diff and tests for ordering, tie behavior, action authorization, shop reachability, and no unintended prompt regression. GO or findings-first NO-GO. No browser or redundant heavy tests.
+3. V152-C guarded UI reviewer only after A/B GO and all Node exit: one fresh disposable DEV V36 browser profile on port 5195, one owned renderer with self-tested nominal 50 ms exact-PID guard at 870400/1024000 KiB. Without source coordinates or direct state calls, approach the oak adjacent to Outfitters, show that `Chop` appears while the store remains independently accessible, then move nearer the store and verify `Open store` appears and works. Capture screenshots, console/network and RSS/JS/GPU; close owned browser and guard, retain evidence and leave 5194 available. Do not touch the authentic or V150 equipped tester profiles. Stop at first genuine blocker or guard.
+4. V152-D top-level integration: accept only the smallest reviewed diff with focused and visible proof. If UI fails, follow the observed-error loop: exact error, smallest owner, one repair, affected restart, same entrypoint retry. Do not broaden to HUD redesign without separate evidence.
+
+## Constraints and success
+
+Branch `ben/wizard-playable-v2`, dirty shared worktree `/private/tmp/pa-wizard-playable-v2`. Preserve all user and prior-agent changes. Native ephemeral children with inherited model, role lock, no durable task, no nested workers, no Git/GitHub action. One renderer at a time. The user preview stays available. This is a first-quest cue fix, not a claim that the wider game or sustained RAM behavior is complete.
+
+Success is a reproducible overlap test where tree wins when closer, store wins when closer or tied, explicit store opening remains checked, focused and TypeScript validation pass, and one guarded browser confirms the cue switch. The original V151 journey remains valid evidence of a full opening quest claim, while the authentic barefoot onboarding and Ledger chapters remain separate proof gaps.
+
+## Result
+
+V152-A changed only the projection and its existing test, net +34 lines. The first all-at-once focused test run hit its exact-PID 450 MiB RSS stop at 469472 KiB before returning test results. The worker kept the same cap and ran four sequential focused partitions instead: all 14 file tests passed, with the highest successful peak 403344 KiB. TypeScript passed under its 1536 MiB guard. The independent reviewer initially found an unintended switch from horizontal to 3D ordering among oaks; A restored the original horizontal ordering in one expression. The affected guarded partition and TypeScript passed again, and B returned GO. The 3D distance remains only for interaction reach and oak-versus-store priority.
+
+V152-C used one fresh, disposable DEV V36 profile and real UI actions. At the overlapping oak and hut, the screen simultaneously showed contextual `Chop Greenway oak` and an independent `Open Greenway Outfitters` button. A Chop click produced a checked `resource damaged` event. Moving closer to the hut changed the contextual cue to `Open store`; clicking it opened the full shop. Evidence is in `/private/tmp/v152c-evidence-vn9d06/by-store.png`, `/private/tmp/v152c-evidence-vn9d06/store-cue-check.png`, `/private/tmp/v152c-evidence-vn9d06/contextual-store-open.png`, and `events.jsonl` in that directory. The self-tested exact-PID renderer guard never fired: game RSS peaked at 710752 KiB and settled at 592192 KiB. The owned browser and guard exited, and both preview ports returned HTTP 200. Authentic and equipped tester profiles were not touched.
+
+Integrated decision: accept the narrow cue priority change. This improves the first quest's oak discovery without changing rewards, store authorization, save format, or world geometry. V151 remains the full Surveyor claim proof; V152 is a scoped prompt test, not another complete journey or sustained RAM proof.

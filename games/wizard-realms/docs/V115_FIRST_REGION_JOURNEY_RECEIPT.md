@@ -1,0 +1,15 @@
+# V115 first-region journey receipt and remaining gates
+
+## What the real UI proved
+
+One genuine Wizard Realms V31 save lineage, advanced through bounded production-preview sessions and strict same-tab reloads, now completes the Mireglass first-region loop. Earlier checkpoints proved gathering timber, buying/equipping a field spade, learning Wayfinder Glow, building and crossing the Fen bridge and Slate ladder, digging for Excavation Lv2, discovering upper shelf, and persisting those world changes. V111 then used the checked spell on a player-led western shelf search to reveal the buried cache; V112 excavated one Mireglass seal and stepped out of its canonical pit; V113 used an upper-foot marker to descend the saved Slate ladder. V114 and V115 retraced visible dry ground, crossed the saved Fen deck in reverse, and reached the salvager without teleporting.
+
+At the salvager, the UI offered `Mireglass seal ×1 · 80g each` and `Sell 1`. One click removed the seal and raised coins 102→182. Same-tab reload validated save #477 with the sale, equipped spade, Excavation Lv3, and player pose intact. [Saved deck crossing](/private/tmp/pa-wizard-playable-v2/games/wizard-realms/engine/.playwright-cli/page-2026-10-11T05-37-33-500Z.png), [trade offer](/private/tmp/pa-wizard-playable-v2/games/wizard-realms/engine/.playwright-cli/page-2026-10-11T05-41-08-501Z.png), and [sold result](/private/tmp/pa-wizard-playable-v2/games/wizard-realms/engine/.playwright-cli/page-2026-10-11T05-41-19-034Z.png) are public UI evidence. The private mode-600 `.playwright-cli/wizard-v115-seal-sold-rev477-indexeddb.json` is the latest genuine checkpoint and must never be printed, edited, or committed. The sole test renderer and isolated preview are closed; dev 5193 remains live.
+
+Expected off-deck wetland and off-lane cliff refusals remained active. The guide and markers helped the tester recover through visible supported routes; no collision bypass or scripted teleport was used. Document and bundle requests returned 200. The browser reported no gameplay console error, only the existing `THREE.Clock` deprecation and an initial favicon 404. Observed renderer RSS stayed below ~0.81 GB in the final bounded session.
+
+## What this does not prove
+
+This is a continuous genuine saved journey across successive code versions, not a fresh start-to-finish novice run on one unchanged release build. It does not prove the full roughly 2 km campaign, later regions, mounts, fairy rings, boats, market economy, endgame, mobile performance, or accessibility. The newly added guide/marker fixes need a current-build fresh-start acceptance run, including recovery from ordinary mistakes. First-region content is a validated milestone, not the full-game terminal condition.
+
+The next honest gates are: (1) fresh current-build onboarding and first-region UI acceptance, and (2) inspect the connected world's current authored regions and progression against the full-game contract, then build the next distinctive region with a meaningful spell/skill/travel reward. Preserve the one-renderer memory discipline and save migration proof as new content is added.

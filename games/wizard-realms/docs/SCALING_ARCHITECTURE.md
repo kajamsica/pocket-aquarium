@@ -23,7 +23,7 @@ The first authority runs locally. Later authorities may run on servers. The boun
 
 ### Local authority today
 
-The current vertical slice locally owns its 50 ms clock, tick ordering, seeded randomness, seven-by-seven terrain, player movement and jump state, resource nodes, two shops, interactions, inventory, coins, XP, equipment, discoveries, fairy-ring travel, four trade slots, saves, events, and projections. It does not yet implement weather, creatures, regional chunks, remote services, request IDs, revision pins, authority epochs, state digests, or a durable event log.
+The current v5 local foundation owns its 50 ms clock, tick ordering, seeded randomness, player movement and jump state, resource nodes, two shops with direct sales, interactions, inventory, coins, five skill XP tracks, equipment, waystone study, Wayfinder Glow discovery, gated dig sites, fairy-ring travel, four trade slots, player-selected Greenway ladder sites, saves, events, and projections. The browser defaults to the original seven-by-seven terrain; domain generation also supports an opt-in 16 by 16 profile that preserves the original core. Neither profile is a finished region or game. General terrain-driven construction, weather, creatures, regional chunks, remote services, request IDs, authority epochs, state digests, and a durable event log are not yet implemented.
 
 Weather, creatures, chunk streaming, and every networked authority named later in this document are future milestones. Their descriptions are requirements for those milestones, not claims about the current package.
 
@@ -55,9 +55,9 @@ Render cadence never changes causal steps.
 
 ## Intents, events, and projections
 
-Representative intents include move, interact, gather, use tool, buy, sell, create or cancel listing, equip, select fairy-ring destination, and recover field pack.
+Representative intents include move, gather, select a valid construction site and build or traverse its route, buy, sell, create or cancel a listing, equip, study the waystone, cast Wayfinder Glow, excavate a dig site, and select a discovered fairy-ring destination. Field-pack recovery is a future intent.
 
-Representative committed events include player moved, resource harvested, tool durability changed, item transferred, coins changed, XP granted, listing created or settled, location discovered, fairy-ring travel committed, player died, and recovery pack created.
+Current committed events include movement, resource harvest, chosen-site route construction and traversal, tile and fairy-ring discovery, waystone study, spell casting, excavation, skill XP, equipment changes, store purchases and sales, trade-listing creation and cancellation, and fairy-ring travel. Tool durability, listing settlement, death, and recovery packs remain future events.
 
 Today, every rejection has a typed reason and every projection carries the local tick. Projection objects are detached from authoritative state. World revision, content revision, generator version, authority epoch, and digest fields are future protocol requirements.
 
@@ -65,7 +65,7 @@ Today, every rejection has a typed reason and every projection carries the local
 
 ### Coordinates
 
-The vertical slice uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. It currently uses a fixed seven-by-seven tile world. A later chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
+The local world uses right-handed meters. `X` increases east, `Y` increases upward, and `-Z` points north. Yaw zero faces north, so forward movement reduces Z and the north-up map orders lower Z rows first. The default profile has seven by seven 4 m tiles; the opt-in 16 by 16 profile is a roughly 64 m preview around the preserved core, without streaming. The full single-player game targets a connected, streamed world roughly 2 km across. The first bounded implementation step is specified in [Streamed World Foundation](STREAMED_WORLD_FOUNDATION_CONTRACT.md). A later playable chunked world must use 64 by 64 meter outdoor chunks and the following coordinate rules:
 
 ```text
 chunkX = floor(worldX / 64)
@@ -106,7 +106,7 @@ State records what an instance is doing now, such as tree progress, vendor stock
 
 ## Current save and future migration schema
 
-The current `wizard-world/v2` save contains the local world state, seed, tick, simulation RNG, event sequence, built routes, unlocked route recipes, and discovered map tiles, then sanitizes it on restore. A deterministic migration reads `wizard-world/v1` without rewriting its original storage key. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
+The current `wizard-world/v5` save pins `greenway-region-v3` content and contains the local world state, seed, generation profile, tick, simulation RNG, event sequence, chosen route site IDs and endpoints, discovered tiles, learned spells, skill XP, waystone study, and dig-site reveal and excavation state. Valid v1/v2/v3/v4 saves restore into v5 state and are written to new v5 storage keys while source bytes remain untouched; built pre-v5 routes migrate to their original canonical anchors, and profile-less v1/v2 saves restore as the original seven-by-seven world. Unknown schemas, profiles, revisions, and forged route placements fail closed before autosave. Other nested state still has sanitizing restore paths and is not a general-purpose untrusted save format. The local save does not contain the complete distributed-system metadata below. A future persistent or networked schema must add and validate these values:
 
 ```text
 schemaVersion, saveSequence, worldId, worldSeed
@@ -232,7 +232,8 @@ Targets are provisional until measured on named hardware and deployment profiles
 
 | Milestone | Capacity target | Measurable exit gates |
 |---|---|---|
-| Single-player vertical slice | 1 player, 9 active chunks, 20 ticks per second | 30-minute journey, p95 tick under 35 ms, save and replay digest pass, frame-chunk determinism, no client grants |
+| Local systems foundation | 1 player, 7 by 7 default or opt-in 16 by 16 tile profile, 20 ticks per second | 30-minute journey, p95 tick under 35 ms, save and replay digest pass, no client grants |
+| Full single-player RPG | Connected streamed world roughly 2 km across, at least 3 distinct regions, exploration, traversal, economy, and endgame | Complete fresh-save campaign and repeatable endgame journeys, exercise each travel tier and regional trade, preserve world changes across reload, p95 tick under 35 ms on named target hardware |
 | Co-op authority proof | 2 to 8 players, 64 active chunks, region handoff | 2-hour soak, p95 tick under 40 ms and p99 under 50 ms, reconnect idempotency, transaction disconnect tests, hostile-client bounds |
 | Small persistent realm | 100 concurrent players, multiple authorities and durable services | 24-hour soak at 150 players, no sustained tick debt, zero loss of acknowledged economy events, authority recovery, transfer, privacy, moderation, backup and rollback drills |
 | MMORPG launch candidate | At least 1,000 concurrent players across a realm group, horizontal regions, shards, and instances | 24-hour soak at 1.5 times launch target, hotspot degradation without corruption, security and privacy review, disaster and abuse drills, state-safe rollback, alarms tied to practiced actions |
@@ -240,7 +241,8 @@ Targets are provisional until measured on named hardware and deployment profiles
 Sequence:
 
 ```text
-vertical slice -> co-op proof -> persistent realm
+local foundation -> expanded-region proof -> full single-player RPG
+-> optional co-op proof -> persistent realm
 -> measured regional and service scaling -> MMORPG launch candidate
 ```
 

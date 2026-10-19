@@ -1,0 +1,7 @@
+# V161 browser allocation owner: understanding
+
+V157 and V160 both stopped the one owned game renderer at the agreed RAM early limit during ordinary Ledger exploration. In V160, browser JS heap was 66 MB on Continue and 316 MB at the stop, but fell from 221 MB to 118 MB after opening the map earlier in the same run. Live external WebGL buffer, texture and program counts stayed nearly flat. These observations demonstrate pressure, not retained-heap ownership. V159 separately found high checked-save transient allocation and a fake-IndexedDB retention mechanism in Node, which cannot be projected onto Chrome IndexedDB.
+
+The next discriminating question is which production browser call stacks allocate during one short movement/checkpoint interval. A one-renderer CDP allocation sample, under the same exact-PID stop, can identify hot stacks without a game-source telemetry hook. In parallel, a read-only source audit can map V36 frame, view and checked-save call boundaries so the eventual profile is interpreted against real code, not guessed from process RSS.
+
+This is diagnostic only. Preserve the two preview ports and authentic player profile. Do not change renderers, save cadence, memory thresholds, game logic, dependencies or GitHub. If the profiler itself causes the stop, report that perturbation and do not infer a production owner. A candidate repair must be separately scoped and retried from the identical visible entry and action sequence.

@@ -1,20 +1,74 @@
 import type {
-  EquipmentSlot, IntentRejection, ItemId, PlayerState, ResourceKind, Vec3, WizardAdvanceResult,
-  WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
+  AreaId, EquipmentSlot, GenerationProfile, IntentRejection, ItemId, PlayerState, ResourceKind, SkillId, Vec3, WizardAdvanceResult,
+  TradeListingSoldEvent, WizardEvent, WizardIntent, WizardProjection, WizardWorldState,
 } from './types'
-import { areaAt, createGeneratedWorld, terrainHeightAt } from './generation'
+import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
+import { canonicalRouteSites, routeBuildOptions } from './routeSites'
 
 const INTERACT_DISTANCE = 3
+const TRADE_SETTLEMENT_TICKS = 600 // A buyer checks the four escrow slots every 30 seconds.
 const itemForResource: Record<ResourceKind, ItemId> = { tree: 'logs', herb: 'marsh_herb', stone: 'stone', ore: 'iron_ore' }
+const storeSellPrices: Record<string, Partial<Record<ItemId, number>>> = {
+  'store-greenway': { logs: 2, marsh_herb: 3, stone: 1, iron_ore: 4, ancient_relic: 25 },
+  'store-highland': { logs: 1, marsh_herb: 5, stone: 3, iron_ore: 7, ancient_relic: 50 },
+}
+export function storeSellUnitPrice(storeId: string, itemId: ItemId): number | null {
+  const price = storeSellPrices[storeId]?.[itemId]
+  return typeof price === 'number' ? price : null
+}
+// Patient buyers pay at most 150% of the best instant store bid; items without a bid have no demand.
+const tradeDemandCeiling = (itemId: ItemId) => Math.floor(Math.max(0,
+  ...Object.values(storeSellPrices).map((prices) => prices[itemId] ?? 0)) * 3 / 2)
+const hasTradeDemand = (itemId: string): itemId is ItemId => Object.values(storeSellPrices)
+  .some((prices) => Object.prototype.hasOwnProperty.call(prices, itemId))
+
+type TradeSettlementSlot = { readonly slotIndex: 0 | 1 | 2 | 3; readonly itemId: string | null; readonly quantity: number; readonly unitPrice: number }
+type TradeSettlementPlayer = { readonly coins: number; readonly tradeSlots: readonly TradeSettlementSlot[] }
+
+/** Pure market step shared by v5 Greenway and the widened v6 campaign player. */
+export function settleTradeListings<P extends TradeSettlementPlayer>(
+  player: P, tick: number, eventSequence: number,
+): { player: P; events: TradeListingSoldEvent[]; eventSequence: number } {
+  const events: TradeListingSoldEvent[] = []
+  if (!Number.isSafeInteger(tick) || tick < 0 || tick % TRADE_SETTLEMENT_TICKS !== 0
+    || player.tradeSlots.length !== 4 || !Number.isSafeInteger(eventSequence) || eventSequence < 0) {
+    return { player, events, eventSequence }
+  }
+  let coins = player.coins
+  let sequence = eventSequence
+  let slots: TradeSettlementSlot[] | null = null
+  for (const [index, slot] of player.tradeSlots.entries()) {
+    if (slot.slotIndex !== index || !slot.itemId || !hasTradeDemand(slot.itemId)
+      || !Number.isSafeInteger(slot.quantity) || slot.quantity < 1
+      || !Number.isSafeInteger(slot.unitPrice) || slot.unitPrice < 1
+      || slot.unitPrice > tradeDemandCeiling(slot.itemId)) continue
+    const totalPrice = slot.quantity * slot.unitPrice
+    if (!Number.isSafeInteger(totalPrice) || !Number.isSafeInteger(coins + totalPrice)
+      || !Number.isSafeInteger(sequence + 1)) continue
+    coins += totalPrice
+    sequence += 1
+    if (!slots) slots = [...player.tradeSlots]
+    slots[index] = { ...slot, itemId: null, quantity: 0, unitPrice: 0 }
+    events.push({ type: 'trade_listing_sold', slotIndex: index, itemId: slot.itemId,
+      quantity: slot.quantity, unitPrice: slot.unitPrice, totalPrice, sequence, tick })
+  }
+  return slots ? { player: { ...player, coins, tradeSlots: slots } as P, events, eventSequence: sequence }
+    : { player, events, eventSequence }
+}
 const itemSlots: Partial<Record<ItemId, EquipmentSlot[]>> = {
-  woodcutters_axe: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
+  woodcutters_axe: ['mainHand'], field_spade: ['mainHand'], apprentice_hat: ['head'], traveler_tunic: ['chest'],
   trail_leggings: ['legs'], leather_boots: ['feet'], oak_wand: ['mainHand', 'offHand'], wooden_shield: ['offHand'],
 }
+const equipmentSlots: readonly EquipmentSlot[] = ['head', 'chest', 'legs', 'feet', 'mainHand', 'offHand']
 export const canEquipItem = (itemId: ItemId, slot: EquipmentSlot) => itemSlots[itemId]?.includes(slot) ?? false
 
 const finite = (value: number) => Number.isFinite(value)
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
-const cloneState = (state: WizardWorldState): WizardWorldState => JSON.parse(JSON.stringify(state)) as WizardWorldState
+const cloneState = (state: WizardWorldState): WizardWorldState => {
+  const clone = JSON.parse(JSON.stringify({ ...state, discoveredTileIds: [] })) as WizardWorldState
+  clone.discoveredTileIds = Object.isFrozen(state.discoveredTileIds) ? state.discoveredTileIds : [...state.discoveredTileIds]
+  return clone
+}
 const levelForXp = (xp: number) => 1 + Math.floor(Math.max(0, xp) / 100)
 const inventoryCount = (player: PlayerState) => player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
 const reservedCount = (player: PlayerState) => player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
@@ -27,8 +81,54 @@ const equippedCount = (player: PlayerState, itemId: ItemId, except?: EquipmentSl
 const routeEndpointDistance = (player: Vec3, route: WizardWorldState['routes'][number]) =>
   Math.min(distance(player, route.from), distance(player, route.to))
 
-function tileAt(state: WizardWorldState, position: Vec3) {
-  return state.tiles.reduce((closest, tile) => distance(position, tile.center) < distance(position, closest.center) ? tile : closest)
+function insideStoreFootprint(x: number, z: number, store: WizardWorldState['stores'][number]) {
+  return Math.abs(x - store.position.x) < STORE_HALF_WIDTH && Math.abs(z - store.position.z) < STORE_HALF_DEPTH
+}
+
+function segmentEntersStore(startX: number, startZ: number, endX: number, endZ: number, store: WizardWorldState['stores'][number]) {
+  let enter = 0
+  let exit = 1
+  const axes = [
+    [startX, endX, store.position.x - STORE_HALF_WIDTH, store.position.x + STORE_HALF_WIDTH],
+    [startZ, endZ, store.position.z - STORE_HALF_DEPTH, store.position.z + STORE_HALF_DEPTH],
+  ]
+  for (const [start, end, min, max] of axes) {
+    const delta = end - start
+    if (delta === 0) {
+      if (start <= min || start >= max) return false
+      continue
+    }
+    const first = (min - start) / delta
+    const second = (max - start) / delta
+    enter = Math.max(enter, Math.min(first, second))
+    exit = Math.min(exit, Math.max(first, second))
+    if (enter >= exit) return false
+  }
+  return enter < 1 && exit > 0
+}
+
+function allowsStoreMove(state: WizardWorldState, startX: number, startZ: number, endX: number, endZ: number) {
+  return state.stores.every((store) => {
+    if (!insideStoreFootprint(startX, startZ, store)) return !segmentEntersStore(startX, startZ, endX, endZ, store)
+    const start = [(startX - store.position.x) / STORE_HALF_WIDTH, (startZ - store.position.z) / STORE_HALF_DEPTH]
+    const end = [(endX - store.position.x) / STORE_HALF_WIDTH, (endZ - store.position.z) / STORE_HALF_DEPTH]
+    const outward = start[0] * (end[0] - start[0]) + start[1] * (end[1] - start[1]) >= 0
+    return outward && end[0] ** 2 + end[1] ** 2 > start[0] ** 2 + start[1] ** 2
+  })
+}
+
+function tileAt(state: WizardWorldState, position: Vec3, areaId: AreaId) {
+  let closest: WizardWorldState['tiles'][number] | undefined
+  let closestDistance = Infinity
+  for (const tile of state.tiles) {
+    if (areaAt(state.areas, tile.center.x, tile.center.z).id !== areaId) continue
+    const tileDistance = (position.x - tile.center.x) ** 2 + (position.z - tile.center.z) ** 2
+    if (tileDistance < closestDistance) {
+      closest = tile
+      closestDistance = tileDistance
+    }
+  }
+  return closest
 }
 
 function addItem(player: PlayerState, itemId: ItemId, quantity: number): boolean {
@@ -63,7 +163,19 @@ function event(state: WizardWorldState, tick: number, body: WizardEventBody): Wi
   return { ...body, sequence: state.eventSequence, tick } as WizardEvent
 }
 
-function stepRng(value: number): number {
+function gainSkillXp(state: WizardWorldState, tick: number, skillId: SkillId, xp: number): WizardEvent {
+  state.player.skillXp[skillId] += xp
+  return event(state, tick, { type: 'skill_xp_gained', skillId, xp })
+}
+
+function discoverTile(state: WizardWorldState, position: Vec3, areaId: AreaId, tick: number): WizardEvent | undefined {
+  const tile = tileAt(state, position, areaId)
+  if (!tile || state.discoveredTileIds.includes(tile.id)) return undefined
+  state.discoveredTileIds = [...state.discoveredTileIds, tile.id].sort()
+  return event(state, tick, { type: 'tile_discovered', tileId: tile.id })
+}
+
+export function stepRng(value: number): number {
   let next = value | 0
   next ^= next << 13
   next ^= next >>> 17
@@ -73,26 +185,58 @@ function stepRng(value: number): number {
 
 function applyIntent(
   current: WizardWorldState, intent: WizardIntent, index: number, tick: number,
+  allowAreaCrossing?: (from: Vec3, to: Vec3) => boolean,
 ): { state: WizardWorldState; events?: WizardEvent[]; rejection?: IntentRejection } {
   const fail = (code: IntentRejection['code'], message: string) => ({ state: current, rejection: rejection(index, intent, code, message) })
 
   if (intent.type === 'move') {
     if (![intent.delta.x, intent.delta.y, intent.delta.z].every(finite) || Math.hypot(intent.delta.x, intent.delta.y, intent.delta.z) > 4) return fail('invalid_value', 'Movement must be finite and at most four meters per tick.')
-    const state = cloneState(current)
-    const x = Math.max(-12, Math.min(12, state.player.position.x + intent.delta.x))
-    const z = Math.max(-12, Math.min(12, state.player.position.z + intent.delta.z))
+    const state = current
+    const tileEdge = state.generationProfile === 'greenway-expanded-v1'
+      ? Math.abs(state.tiles[1].center.x - state.tiles[0].center.x) / 2 : 0
+    let minX = Infinity
+    let maxX = -Infinity
+    let minZ = Infinity
+    let maxZ = -Infinity
+    for (const tile of state.tiles) {
+      minX = Math.min(minX, tile.center.x)
+      maxX = Math.max(maxX, tile.center.x)
+      minZ = Math.min(minZ, tile.center.z)
+      maxZ = Math.max(maxZ, tile.center.z)
+    }
+    let x = Math.max(minX - tileEdge, Math.min(maxX + tileEdge, state.player.position.x + intent.delta.x))
+    let z = Math.max(minZ - tileEdge, Math.min(maxZ + tileEdge, state.player.position.z + intent.delta.z))
     const currentArea = areaAt(state.areas, state.player.position.x, state.player.position.z)
     const nextArea = areaAt(state.areas, x, z)
-    if (currentArea.id !== nextArea.id) return fail('locked_area', 'Use a completed route to cross into another area.')
+    if (currentArea.id !== nextArea.id && !allowAreaCrossing?.(state.player.position,
+      { x, y: state.player.position.y, z })) {
+      const startX = state.player.position.x
+      const startZ = state.player.position.z
+      if (x !== startX && areaAt(state.areas, x, startZ).id === currentArea.id) z = startZ
+      else if (z !== startZ && areaAt(state.areas, startX, z).id === currentArea.id) x = startX
+      else return fail('locked_area', 'Use a completed route to cross into another area.')
+    }
+    const startX = state.player.position.x
+    const startZ = state.player.position.z
+    if (!allowsStoreMove(state, startX, startZ, x, z)) {
+      if (x !== startX && allowsStoreMove(state, startX, startZ, x, startZ)) z = startZ
+      else if (z !== startZ && allowsStoreMove(state, startX, startZ, startX, z)) x = startX
+      else return { state: current }
+    }
     const ground = terrainHeightAt(state.tiles, x, z)
     state.player.position = { x, y: Math.max(state.player.position.y, ground), z }
     if (state.player.position.y === ground) state.player.verticalVelocity = 0
-    return { state, events: [event(state, tick, { type: 'player_moved', position: { ...state.player.position } })] }
+    const events = [event(state, tick, { type: 'player_moved', position: { ...state.player.position } })]
+    if (x !== startX || z !== startZ) {
+      const discovered = discoverTile(state, state.player.position, areaAt(state.areas, x, z).id, tick)
+      if (discovered) events.push(discovered)
+    }
+    return { state, events }
   }
 
   if (intent.type === 'look') {
     if (!finite(intent.yawDelta) || !finite(intent.pitchDelta)) return fail('invalid_value', 'Look deltas must be finite.')
-    const state = cloneState(current)
+    const state = current
     state.player.yaw += intent.yawDelta
     state.player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.player.pitch + intent.pitchDelta))
     return { state, events: [event(state, tick, { type: 'player_looked', yaw: state.player.yaw, pitch: state.player.pitch })] }
@@ -111,38 +255,54 @@ function applyIntent(
     const recipe = current.recipes.find((candidate) => candidate.routeId === intent.routeId)
     if (!route || !recipe) return fail('not_found', 'Construction route does not exist.')
     if (current.builtRouteIds.includes(route.id)) return fail('already_built', 'This route is already complete.')
-    if (!current.unlockedRecipeIds.includes(recipe.id)) return fail('recipe_locked', 'This route recipe is not unlocked.')
-    if (current.player.level < recipe.minimumLevel || (recipe.prerequisiteRouteId && !current.builtRouteIds.includes(recipe.prerequisiteRouteId))) return fail('recipe_locked', 'This route requires more progression.')
-    if (routeEndpointDistance(current.player.position, route) > INTERACT_DISTANCE) return fail('too_far', 'Move to the route scaffold to build it.')
-    if (owns(current.player, 'logs') < recipe.logCost) return fail('not_owned', `This route requires ${recipe.logCost} logs.`)
+    const option = routeBuildOptions(current).find((candidate) => candidate.routeId === route.id && candidate.id === intent.siteId)
+    if (!option) return fail('not_found', 'Construction site does not exist for this route.')
+    if (option.status !== 'ready') {
+      const code = option.status === 'locked' ? (option.reason.startsWith('Discover') ? 'undiscovered' : 'recipe_locked')
+        : option.status === 'too_far' ? 'too_far' : option.status === 'needs_logs' ? 'not_owned'
+          : option.status === 'obstructed' ? 'site_obstructed' : 'already_built'
+      return fail(code, option.reason)
+    }
     const state = cloneState(current)
     removeItem(state.player, 'logs', recipe.logCost)
+    const placed = state.routes.find((candidate) => candidate.id === route.id)!
+    placed.from = { ...option.from }
+    placed.to = { ...option.to }
+    placed.siteId = option.id
     state.builtRouteIds.push(route.id)
     state.builtRouteIds.sort()
     state.player.xp += recipe.xpReward
     state.player.level = levelForXp(state.player.xp)
-    return { state, events: [event(state, tick, { type: 'route_built', routeId: route.id, logCost: recipe.logCost, xp: recipe.xpReward })] }
+    return { state, events: [
+      event(state, tick, { type: 'route_built', routeId: route.id, siteId: option.id, logCost: recipe.logCost, xp: recipe.xpReward }),
+      gainSkillXp(state, tick, 'construction', recipe.xpReward),
+    ] }
   }
 
   if (intent.type === 'traverse_route') {
     const route = current.routes.find((candidate) => candidate.id === intent.routeId)
     if (!route) return fail('not_found', 'Construction route does not exist.')
-    if (!current.builtRouteIds.includes(route.id)) return fail('recipe_locked', 'Finish this route before crossing it.')
-    if (routeEndpointDistance(current.player.position, route) > INTERACT_DISTANCE) return fail('too_far', 'Move to a route endpoint to cross it.')
-    const fromStart = distance(current.player.position, route.from) <= distance(current.player.position, route.to)
-    const destination = fromStart ? route.to : route.from
+    if (!current.builtRouteIds.includes(route.id) || !route.siteId) return fail('recipe_locked', 'Finish this route before crossing it.')
+    const site = canonicalRouteSites(current).find((candidate) => candidate.routeId === route.id && candidate.id === route.siteId)
+    if (!site || ['from', 'to'].some((end) => {
+      const position = route[end as 'from' | 'to']
+      const canonical = site[end as 'from' | 'to']
+      return position.x !== canonical.x || position.y !== canonical.y || position.z !== canonical.z
+    })) return fail('invalid_value', 'Route placement is invalid.')
+    const currentAreaId = areaAt(current.areas, current.player.position.x, current.player.position.z).id
+    const fromStart = currentAreaId === route.fromAreaId
+    if (!fromStart && currentAreaId !== route.toAreaId) return fail('locked_area', 'Approach a route from one of its connected areas.')
+    const source = fromStart ? site.from : site.to
+    if (distance(current.player.position, source) > INTERACT_DISTANCE) return fail('too_far', 'Move to your side of the route to cross it.')
+    const destination = fromStart ? site.to : site.from
     const fromAreaId = fromStart ? route.fromAreaId : route.toAreaId
     const toAreaId = fromStart ? route.toAreaId : route.fromAreaId
     const state = cloneState(current)
     state.player.position = { ...destination }
     state.player.verticalVelocity = 0
-    const discovered = tileAt(state, destination)
     const events = [event(state, tick, { type: 'route_used', routeId: route.id, fromAreaId, toAreaId, position: { ...destination } })]
-    if (!state.discoveredTileIds.includes(discovered.id)) {
-      state.discoveredTileIds.push(discovered.id)
-      state.discoveredTileIds.sort()
-      events.push(event(state, tick, { type: 'tile_discovered', tileId: discovered.id }))
-    }
+    const discovered = discoverTile(state, destination, toAreaId, tick)
+    if (discovered) events.push(discovered)
     return { state, events }
   }
 
@@ -152,7 +312,7 @@ function applyIntent(
     if (resource.depleted) return fail('depleted', 'Resource is depleted.')
     if (distance(current.player.position, resource.position) > INTERACT_DISTANCE) return fail('too_far', 'Resource is out of reach.')
     if (current.player.equipment.mainHand !== 'woodcutters_axe' || resource.kind !== 'tree') return fail('requires_axe', 'A tree requires an equipped woodcutter axe.')
-    const yieldQuantity = 3
+    const yieldQuantity = 4
     if (resource.health <= 1 && inventoryCount(current.player) + reservedCount(current.player) + yieldQuantity > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the harvested logs.')
     const state = cloneState(current)
     const target = state.resources.find((candidate) => candidate.id === intent.resourceId)!
@@ -163,13 +323,18 @@ function applyIntent(
     addItem(state.player, itemForResource[target.kind], yieldQuantity)
     state.player.xp += 20
     state.player.level = levelForXp(state.player.xp)
-    return { state, events: [event(state, tick, { type: 'resource_harvested', resourceId: target.id, itemId: 'logs', quantity: yieldQuantity, xp: 20 })] }
+    return { state, events: [
+      event(state, tick, { type: 'resource_harvested', resourceId: target.id, itemId: 'logs', quantity: yieldQuantity, xp: 20 }),
+      gainSkillXp(state, tick, 'woodcutting', 20),
+    ] }
   }
 
   if (intent.type === 'discover_fairy_ring') {
     const ring = current.fairyRings.find((candidate) => candidate.id === intent.ringId)
     if (!ring) return fail('not_found', 'Fairy ring does not exist.')
     if (distance(current.player.position, ring.position) > INTERACT_DISTANCE) return fail('too_far', 'Fairy ring is out of reach.')
+    if (areaAt(current.areas, current.player.position.x, current.player.position.z).id
+      !== areaAt(current.areas, ring.position.x, ring.position.z).id) return fail('locked_area', 'Cross into the fairy ring area before discovering it.')
     if (current.player.discoveredRingIds.includes(ring.id)) return fail('invalid_value', 'Fairy ring is already discovered.')
     const state = cloneState(current)
     state.player.discoveredRingIds.push(ring.id)
@@ -181,6 +346,8 @@ function applyIntent(
     const target = current.fairyRings.find((ring) => ring.id === intent.targetRingId)
     if (!source || !target) return fail('not_found', 'Fairy ring does not exist.')
     if (distance(current.player.position, source.position) > INTERACT_DISTANCE) return fail('too_far', 'Player must stand at the source fairy ring.')
+    if (areaAt(current.areas, current.player.position.x, current.player.position.z).id
+      !== areaAt(current.areas, source.position.x, source.position.z).id) return fail('locked_area', 'Cross into the source fairy ring area before traveling.')
     if (!current.player.discoveredRingIds.includes(source.id) || !current.player.discoveredRingIds.includes(target.id)) return fail('undiscovered', 'Both fairy rings must be discovered.')
     const state = cloneState(current)
     state.player.position = { ...target.position }
@@ -206,6 +373,24 @@ function applyIntent(
     return { state, events: [event(state, tick, { type: 'store_item_bought', storeId: store.id, listingId: listing.id, itemId: listing.itemId, price: listing.price })] }
   }
 
+  if (intent.type === 'sell_to_store') {
+    if (!Number.isSafeInteger(intent.quantity) || intent.quantity < 1) return fail('invalid_value', 'Sale quantity must be a positive whole number.')
+    const store = current.stores.find((candidate) => candidate.id === intent.storeId)
+    if (!store) return fail('not_found', 'Store does not exist.')
+    const unitPrice = storeSellUnitPrice(store.id, intent.itemId)
+    if (unitPrice === null) return fail('invalid_value', 'This store cannot buy that item.')
+    if (distance(current.player.position, store.position) > INTERACT_DISTANCE) return fail('too_far', 'Store is out of reach.')
+    const owned = owns(current.player, intent.itemId)
+    if (owned < intent.quantity) return fail('not_owned', 'Not enough items to sell.')
+    if (owned - intent.quantity < equippedCount(current.player, intent.itemId)) return fail('not_owned', 'Equipped items cannot be sold.')
+    const totalPrice = intent.quantity * unitPrice
+    if (!Number.isSafeInteger(current.player.coins + totalPrice)) return fail('invalid_value', 'Sale total exceeds the coin range.')
+    const state = cloneState(current)
+    removeItem(state.player, intent.itemId, intent.quantity)
+    state.player.coins += totalPrice
+    return { state, events: [event(state, tick, { type: 'store_item_sold', storeId: store.id, itemId: intent.itemId, quantity: intent.quantity, unitPrice, totalPrice })] }
+  }
+
   if (intent.type === 'equip_item') {
     if (owns(current.player, intent.itemId) < 1) return fail('not_owned', 'Item is not in the backpack.')
     if (!canEquipItem(intent.itemId, intent.slot)) return fail('wrong_slot', 'Item cannot use that equipment slot.')
@@ -215,8 +400,20 @@ function applyIntent(
     return { state, events: [event(state, tick, { type: 'item_equipped', itemId: intent.itemId, slot: intent.slot })] }
   }
 
+  if (intent.type === 'unequip_item') {
+    if (!equipmentSlots.includes(intent.slot)) return fail('invalid_value', 'Equipment slot is invalid.')
+    const itemId = current.player.equipment[intent.slot]
+    if (!itemId) return fail('invalid_value', 'Equipment slot is empty.')
+    const state = cloneState(current)
+    state.player.equipment[intent.slot] = null
+    return { state, events: [event(state, tick, { type: 'item_unequipped', itemId, slot: intent.slot })] }
+  }
+
   if (intent.type === 'create_trade_listing') {
-    if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3 || !Number.isInteger(intent.quantity) || intent.quantity < 1 || !finite(intent.unitPrice) || intent.unitPrice < 1) return fail('invalid_value', 'Trade slot, quantity, and price must be valid.')
+    if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3
+      || !Number.isSafeInteger(intent.quantity) || intent.quantity < 1
+      || !Number.isSafeInteger(intent.unitPrice) || intent.unitPrice < 1
+      || !Number.isSafeInteger(intent.quantity * intent.unitPrice)) return fail('invalid_value', 'Trade slot, quantity, and price must be valid safe integers.')
     const slot = current.player.tradeSlots[intent.slotIndex]
     if (slot.itemId !== null) return fail('trade_slot_unavailable', 'Trade slot is occupied.')
     if (owns(current.player, intent.itemId) < intent.quantity) return fail('not_owned', 'Not enough items to reserve.')
@@ -227,24 +424,87 @@ function applyIntent(
     return { state, events: [event(state, tick, { type: 'trade_listing_created', slotIndex: intent.slotIndex, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice })] }
   }
 
-  if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3) return fail('invalid_value', 'Trade slot must be between zero and three.')
-  const slot = current.player.tradeSlots[intent.slotIndex]
-  if (slot.itemId === null) return fail('trade_slot_unavailable', 'Trade slot is already empty.')
-  const state = cloneState(current)
-  state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: null, quantity: 0, unitPrice: 0 }
-  if (!addItem(state.player, slot.itemId, slot.quantity)) return fail('capacity', 'Backpack cannot accept the escrowed item.')
-  return { state, events: [event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity })] }
+  if (intent.type === 'cancel_trade_listing') {
+    if (!Number.isInteger(intent.slotIndex) || intent.slotIndex < 0 || intent.slotIndex > 3) return fail('invalid_value', 'Trade slot must be between zero and three.')
+    const slot = current.player.tradeSlots[intent.slotIndex]
+    if (slot.itemId === null) return fail('trade_slot_unavailable', 'Trade slot is already empty.')
+    const state = cloneState(current)
+    state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: null, quantity: 0, unitPrice: 0 }
+    if (!addItem(state.player, slot.itemId, slot.quantity)) return fail('capacity', 'Backpack cannot accept the escrowed item.')
+    return { state, events: [event(state, tick, { type: 'trade_listing_cancelled', slotIndex: intent.slotIndex, itemId: slot.itemId, quantity: slot.quantity })] }
+  }
+
+  if (intent.type === 'study_inscription') {
+    const inscription = current.inscriptions.find((candidate) => candidate.id === intent.inscriptionId)
+    if (!inscription) return fail('not_found', 'Inscription does not exist.')
+    if (current.studiedInscriptionIds.includes(inscription.id)) return fail('already_studied', 'Inscription was already studied.')
+    if (distance(current.player.position, inscription.position) > INTERACT_DISTANCE) return fail('too_far', 'Inscription is out of reach.')
+    const state = cloneState(current)
+    state.studiedInscriptionIds.push(inscription.id)
+    state.studiedInscriptionIds.sort()
+    if (!state.player.learnedSpellIds.includes(inscription.spellId)) state.player.learnedSpellIds.push(inscription.spellId)
+    state.player.learnedSpellIds.sort()
+    return { state, events: [event(state, tick, { type: 'inscription_studied', inscriptionId: inscription.id, spellId: inscription.spellId })] }
+  }
+
+  if (intent.type === 'cast_spell') {
+    if (!current.player.learnedSpellIds.includes(intent.spellId)) return fail('unlearned_spell', 'Study the waystone before casting this spell.')
+    const revealedTileIds = current.tiles.filter((tile) =>
+      !current.discoveredTileIds.includes(tile.id)
+      && Math.hypot(tile.center.x - current.player.position.x, tile.center.z - current.player.position.z) <= 8,
+    ).map((tile) => tile.id).sort()
+    const revealedDigSiteIds = current.digSites.filter((site) =>
+      !site.visibleFromStart && !current.revealedDigSiteIds.includes(site.id)
+      && Math.hypot(site.position.x - current.player.position.x, site.position.z - current.player.position.z) <= 8,
+    ).map((site) => site.id).sort()
+    const state = cloneState(current)
+    if (revealedTileIds.length > 0) state.discoveredTileIds = [...state.discoveredTileIds, ...revealedTileIds].sort()
+    state.revealedDigSiteIds.push(...revealedDigSiteIds)
+    state.revealedDigSiteIds.sort()
+    const events = [event(state, tick, { type: 'spell_cast', spellId: intent.spellId, revealedTileIds, revealedDigSiteIds })]
+    for (const tileId of revealedTileIds) events.push(event(state, tick, { type: 'tile_discovered', tileId }))
+    const newlyRevealed = revealedTileIds.length + revealedDigSiteIds.length
+    if (newlyRevealed > 0) {
+      events.push(gainSkillXp(state, tick, 'spellcraft', newlyRevealed * 10))
+      events.push(gainSkillXp(state, tick, 'wayfinding', newlyRevealed * 10))
+    }
+    return { state, events }
+  }
+
+  if (intent.type === 'dig_site') {
+    const site = current.digSites.find((candidate) => candidate.id === intent.digSiteId)
+    if (!site) return fail('not_found', 'Dig site does not exist.')
+    if (current.excavatedDigSiteIds.includes(site.id)) return fail('already_excavated', 'This site has already been excavated.')
+    if (!site.visibleFromStart && !current.revealedDigSiteIds.includes(site.id)) return fail('site_hidden', 'Reveal this dig site before excavating it.')
+    if (distance(current.player.position, site.position) > INTERACT_DISTANCE) return fail('too_far', 'Dig site is out of reach.')
+    if (current.player.equipment.mainHand !== 'field_spade' || owns(current.player, 'field_spade') < 1) return fail('requires_spade', 'Equip an owned field spade to excavate.')
+    if (1 + Math.floor(current.player.skillXp.excavation / 30) < site.minimumExcavationLevel) return fail('skill_locked', 'Excavation skill is too low for this site.')
+    const groundTile = tileAt(current, site.position, areaAt(current.areas, site.position.x, site.position.z).id)
+    if (!groundTile || groundTile.terrain === 'wetland') return fail('incompatible_ground', 'This ground cannot be excavated.')
+    if (inventoryCount(current.player) + reservedCount(current.player) + site.reward.quantity > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the excavation reward.')
+    const state = cloneState(current)
+    addItem(state.player, site.reward.itemId, site.reward.quantity)
+    state.excavatedDigSiteIds.push(site.id)
+    state.excavatedDigSiteIds.sort()
+    return { state, events: [
+      event(state, tick, { type: 'dig_site_excavated', digSiteId: site.id, itemId: site.reward.itemId, quantity: site.reward.quantity, xp: site.xpReward }),
+      gainSkillXp(state, tick, 'excavation', site.xpReward),
+    ] }
+  }
+
+  return fail('invalid_value', 'Unknown intent.')
 }
 
-export function createWizardWorld(seed: string): WizardWorldState { return createGeneratedWorld(seed) }
+export function createWizardWorld(seed: string, profile?: GenerationProfile): WizardWorldState { return createGeneratedWorld(seed, profile) }
 
-export function advanceWizardWorld(state: WizardWorldState, intents: readonly WizardIntent[]): WizardAdvanceResult {
+export function advanceWizardWorld(state: WizardWorldState, intents: readonly WizardIntent[],
+  allowAreaCrossing?: (from: Vec3, to: Vec3) => boolean): WizardAdvanceResult {
   let next = cloneState(state)
   const events: WizardEvent[] = []
   const rejections: IntentRejection[] = []
   const tick = state.tick + 1
   intents.forEach((intent, index) => {
-    const result = applyIntent(next, intent, index, tick)
+    const result = applyIntent(next, intent, index, tick, allowAreaCrossing)
     next = result.state
     if (result.events) events.push(...result.events)
     if (result.rejection) rejections.push(result.rejection)
@@ -256,6 +516,10 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
     next.unlockedRecipeIds.sort()
     events.push(event(next, tick, { type: 'recipe_unlocked', recipeId: recipe.id }))
   }
+  const settlement = settleTradeListings(next.player, tick, next.eventSequence)
+  next.player = settlement.player
+  next.eventSequence = settlement.eventSequence
+  events.push(...settlement.events)
   const ground = terrainHeightAt(next.tiles, next.player.position.x, next.player.position.z)
   if (next.player.position.y > ground || next.player.verticalVelocity > 0) {
     next.player.position.y += next.player.verticalVelocity * next.fixedStepMs / 1_000
@@ -275,7 +539,7 @@ export function advanceWizardWorld(state: WizardWorldState, intents: readonly Wi
 
 export function createWizardProjection(state: WizardWorldState): WizardProjection {
   const nearby = <T extends { position: Vec3 }>(values: readonly T[]) => values.filter((value) => distance(state.player.position, value.position) <= 6)
-  const currentTile = state.tiles.reduce((closest, tile) => distance(state.player.position, tile.center) < distance(state.player.position, closest.center) ? tile : closest)
+  const currentTile = tileAt(state, state.player.position, areaAt(state.areas, state.player.position.x, state.player.position.z).id)!
   return JSON.parse(JSON.stringify({
     tick: state.tick,
     player: state.player,
@@ -284,8 +548,13 @@ export function createWizardProjection(state: WizardWorldState): WizardProjectio
     nearbyFairyRings: nearby(state.fairyRings).map((ring) => ({ ...ring, discovered: state.player.discoveredRingIds.includes(ring.id) })),
     nearbyStores: nearby(state.stores),
     nearbyRoutes: state.routes.filter((route) => routeEndpointDistance(state.player.position, route) <= 6),
+    inscriptions: state.inscriptions,
+    digSites: state.digSites,
     builtRouteIds: state.builtRouteIds,
     unlockedRecipeIds: state.unlockedRecipeIds,
     discoveredTileIds: state.discoveredTileIds,
+    studiedInscriptionIds: state.studiedInscriptionIds,
+    revealedDigSiteIds: state.revealedDigSiteIds,
+    excavatedDigSiteIds: state.excavatedDigSiteIds,
   })) as WizardProjection
 }

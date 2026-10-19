@@ -1,0 +1,18 @@
+{
+  "status": "method_no_go",
+  "rigged": false,
+  "source": "original continuous surface modeling in author_bust_probe.py",
+  "concept": "../../concepts/wayfarer-male-concept-v4.png",
+  "render": {
+    "engine": "Eevee",
+    "resolution": [
+      800,
+      850
+    ],
+    "samples": 24
+  },
+  "meshObjects": 35,
+  "trianglesBeforeSubdivision": 42202,
+  "materials": 14,
+  "peakProcessRSSMB": 361.0
+}

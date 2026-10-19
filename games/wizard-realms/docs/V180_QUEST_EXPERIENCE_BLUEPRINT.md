@@ -1,0 +1,57 @@
+# V180 quest experience blueprint
+
+This is a design contract for Wizard Realms, not a claim that every quest or reward is playable. V38 Highland Signal, V39 Ringkeeper's Trail and V40 Windward Waystation have checked actions and one-time claims in the V42 lineage; their complete fresh-player UI journeys remain separate acceptance work. The older V41 preview has a learnable Arc Bolt, one clockwork ward, health, a telegraphed strike, recovery and saved defeat, but no Iron Hall reward claim. The separate V42 DEV prototype adds a discoverable quartermaster, checked one-time claim, visible Guard Vest, practice-ward protection and durability, priced repair, and a saved first-defeat cosmetic crest outcome. A physical enemy drop is not established. The V36 opening route has checked rewards, but the full fresh-player Iron Hall browser journey is still pending.
+
+## What should make a quest fun here
+
+Each quest needs a visible problem in the continuous world, a decision the player can explain afterward, and a reward that changes what they can do next. The player should be able to encounter the problem before opening a journal. A turn-in person or landmark should still exist after completion. Avoid generic kill counts, remote menu claims, fake armor with no protection, and random drops required for progress.
+
+The campaign has three useful quest rhythms:
+
+1. **Discovery:** notice an oddity, learn a tool or spell, use it on the world, return with a new route or map lead.
+2. **Preparation and choice:** gather or trade for a solution, build or repair it, then traverse it. Preparation should matter without demanding repetitive chores.
+3. **Danger and payoff:** read an enemy tell, choose when to guard, move or cast, recover if defeated, then claim guaranteed gear. A rare cosmetic is a bonus, never the reason the contract succeeds.
+
+The quest text should describe the problem, not give away the entire answer. A first-encounter cue can say what is possible. If the player is stuck, a contextual hint can name the needed tool or nearby site. Once the player demonstrates the mechanic, that hint fades while the durable journal and map record remain.
+
+## Candidate quest beats
+
+| Beat | Player moment and choice | Guaranteed claim | Optional outcome and next use |
+| --- | --- | --- | --- |
+| The Surveyor's First Find (existing V36) | The creek blocks a visible trail. Chop trees, build a marked bridge, cross to the survey post. | Existing basic pick or 35 coins, plus action XP. | The pick makes nearby stone useful. This is an opening lesson, not a grind gate. |
+| The Outfitters' Ledger (existing V36) | Build the north ladder and river bridge, find stone and bring a route report back. | Existing 50 coins, Traveler Tunic or 85 coins if owned, and checked Wayfinding/character XP. | The tunic changes appearance but is not armor. The follow-up points toward the Old Marker. |
+| Beneath the Old Marker (existing V36) | Use Wayfinder Glow on a suspicious frontier marker, dig up its seal, return to the salvager. | Existing 80 coins, Fen Waders or 230 coins if owned, and checked Spellcraft/character XP. | Waders make the next wet route more convenient. |
+| Highland Signal (V38 checked, full UI acceptance pending) | Study Windward Step, cast it on the dry trail, reach the vane under its movement effect, and return to record the bearing. | Checked 30 coins, 35 Spellcraft XP, 35 character XP and a saved map bearing. | The bearing should point to a world-visible next use, not become a menu-only prize. |
+| The Ringkeeper's Trail (V39 checked, full UI acceptance pending) | A matching rune is visible on a far Highland stone. Find it on foot, open the link, travel out **and back**, then tell the ringkeeper what connects them. | Checked 25 coins, 30 Wayfinding XP, 20 Spellcraft XP, 35 character XP and the saved shortcut. | The return journey proves the shortcut is real. The map reveals another reason to revisit the Highland. |
+| Windward Waystation (V40 checked, full UI acceptance pending) | A washed-out crossing blocks the route. Spend gathered logs now, or trade local stone for timber and keep the logs for a later build. Both routes require crossing the repaired span before claiming at Greenway Outfitters. | Checked 45 coins, 45 Wayfinding XP, 45 character XP and a persistent crossing. | The next reachable site should be visible from the repaired route, so the reward feels like access, not only numbers. |
+| Iron Hall Watch (V42 DEV prototype, browser acceptance pending) | From a safe alcove, learn Arc Bolt and see a ward's windup. Approach, move or guard through its strike, defeat it, then return to a quartermaster. Losing the fight preserves the quest and offers a clear retry. | V42 checked one-time claim: 60 coins, 70 Combat XP, 70 character XP and a visibly worn Guard Vest with protection and durability in a practice spar. | V42 saves a once-rolled cosmetic crest outcome, not a physical drop. The practice ward lets the player feel the vest's protection. |
+| The Last Watchlight (proposed next slice, after V42 UI proof) | A dark fitting beside the hall door blocks a visible lower-hall lead. Spend one stone to brace it, or lure a practice-spar strike into it during the telegraphed window, risking vest wear. | Proposed one-time 35 coins, 35 Combat XP, 35 character XP and a visibly brass-trimmed Guard Vest upgrade from 12 to 16 maximum durability, with the same mitigation. | Either choice lights a persistent entrance. Neither a checked fitting witness nor the visible gate or gear upgrade exists yet. No random drop. |
+| The Lost Familiar (proposed side story) | Read fresh tracks, choose a material-consuming quiet shelter or longer dry route, then guide the creature past a noisy crossing in one meaningful escort. No mandatory timed visits. | Proposed 25 coins, 40 Creature Care XP, 40 character XP and a saved, visible care station. | The station should immediately mark a useful safe path; later care may qualify for mount training but cannot be this quest's only payoff. Creature care and escort are unbuilt. |
+| Iron Hall Depths (proposed later chapter) | Choose a material-consuming safe repair or a direct guarded stair, explore the opened chamber, then use its record to choose which beacon or route to reopen before returning. | Proposed 70 coins, 80 Combat XP, 30 Excavation XP, 90 character XP and a choice of Stoneguard or Galeweave protection. | The two coats need tested physical/magical tradeoffs, durability and repair; a saved cosmetic or material drop is optional, never the route gate. Damage types and this dungeon are unbuilt. |
+
+The existing [V174 quest content plan](V174_QUEST_CONTENT_PLAN.md) has the fuller campaign order, including Highland Signal, The Long Road and Stormline Relay. This page sharpens the play moments; it does not replace that plan or silently promote proposed rewards into shipped features.
+
+## Later side-quest candidates worth prototyping
+
+These are hooks, not shipped rewards or promises of new regions. Prototype each only when its underlying world mechanic is real.
+
+| Hook | Why it is more than an errand | Proposed reward direction |
+| --- | --- | --- |
+| The Bell Beneath the Creek | A bell rings from the water after a storm. The player can build a dry observation bridge and use a revealing spell, or prepare a boat and investigate from the water. Both approaches reveal the same lost surveyor's cache, but change which route remains useful afterward. | Modest coins and Wayfinding/Spellcraft XP, plus a guaranteed map lead. An optional bell-shaped robe ornament is cosmetic. Requires real boat movement before the water route is offered. |
+| The Lantern That Went Walking | A village lantern appears in several places at dusk. Following its light exposes a hidden path, while finding its owner reveals why it moved. The player can return the lantern or help the owner set a permanent beacon. The chosen beacon changes what is visible on later night journeys. | Coins, Spellcraft XP and a persistent beacon or portable light recipe. No mutually exclusive power trap: both endings preserve access to the same future region. Requires a legible day/night world state. |
+| Quarry Rescue | A trapped miner is visible across a broken ledge. A short bridge is fast but spends scarce timber; a longer ladder route uses stone from the quarry and is safer. The miner must be escorted back, so the chosen route has to work in both directions. | Coins, Construction/Wayfinding XP and a guaranteed repairable belt or tool. A rare enemy material can be optional if a real guarded route is added. Requires companion traversal before implementation. |
+
+These should not all become separate UI checklists. Each should use a recognizable person, a persistent change in the world and a new reason to revisit an earlier place. The player can carry more than one lead at a time and naturally make progress through ordinary exploration.
+
+## Reward and drop rules
+
+- A story quest pays a known coin, named-skill XP and character-XP amount exactly once. XP from chopping, casting, building or combat actions is separate and shown separately, so the claim is not double-counted.
+- Guaranteed gear is the reason a milestone matters. It must be visible on the body, have an actual gameplay effect, and lead to a nearby situation where that effect is useful. The Guard Vest needs a measured damage reduction, wear, repair cost and a readable comparison to ordinary clothing.
+- The V42 DEV prototype discloses a 10% first-defeat crest outcome with no pity or repeat roll. Its result is saved once even on a miss and cannot be rerolled by retrying, reloading or migrating a save. It is cosmetic and never gates a quest; a physical drop remains a later design question.
+- Quest gear needs one ownership record. A duplicate claim is refused or uses a declared alternative, and a full backpack must leave a guaranteed reward claimable or put it in checked escrow. No silent loss or item duplication.
+- Repeatable contracts, if added, should give modest coins and practice XP with clear caps, not another unique armor claim or an endlessly farmable rare-roll reset.
+- The early reward economy should leave boots, basic tools and repair affordable while ground mounts remain a substantial later purchase. Test actual player routes before fixing late-game prices.
+
+## Next playable slice
+
+Finish accepting Iron Hall Watch before building The Last Watchlight. V42 DEV implements the version-isolated checked reward path, quartermaster site, 60/70/70 one-time claim, visible Guard Vest, practice-ward mitigation and durability, 18-coin repair, and saved one-time crest outcome while preserving the V41 source save and old decoders. The remaining acceptance gap is a real fresh-player browser journey through crossing, defeat, discovery and claim at the quartermaster, protection, repair and reload. Until that journey passes, label V42 a prototype and do not treat the quest as fully accepted. The next smallest proposed slice uses the existing hall door and spar: a new checked witness must prove either one stone spent at the nearby fitting or a correctly timed spar strike there, save the lit gate and one-time reward, and show the reinforced vest and 16-point durability limit. Its repair price must be declared and tested against V42's 18-coin baseline. The fitting, strike interaction, gate, witness, and upgrade are not implemented.

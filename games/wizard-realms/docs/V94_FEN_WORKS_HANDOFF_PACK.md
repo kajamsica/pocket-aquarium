@@ -1,0 +1,31 @@
+# Ticket Pack: V94 discovered Fen site to checked Works handoff
+
+## Observed error and owner
+
+The full Wizard Realms goal remains active. V93-E3 restored genuine eight-log save #154, followed visible dry Fen guidance, and reached the dry north bank. The objective said a fully revealed Fen bridge footprint was nearby and instructed opening Works. At four dry poses, Works On with Bridge selected showed only generic copy, with no Ready or blocked candidate. Aim sweeps did not help. Save/reload #171 at (-334.06, 1.18, 338.35) retained eight logs, axe, spade, and 102 coins. The private mode-600 same-origin checkpoint is `.playwright-cli/wizard-v93e3-fen-works-handoff-rev171-indexeddb.json`; do not print or commit it. The sole test browser and preview are closed, dev 5193 remains live.
+
+Two independent read-only audits found the same cause. The Fen guide in `PublicV23Controller.tsx` calls any fully discovered authored bridge source within 24 m "nearby" and says to open Works. V14 Works scans only a ±4-cell window, then drops sites beyond 16 m. At the four observed poses the closest canonical candidate is 19.32 to 22.45 m away; no preview can appear by turning. An authentic saved-mask probe found a revealed, dry, pit-free safe approach that gets into Works range after roughly 8 m. The game authority's separate 3 m build reach is not the current blocker. Do not widen the Works enumeration or authority radius.
+
+## Frozen repair contract
+
+- In V31 post-Dig pre-Fen with eight logs, distinguish **fully discovered footprint** from **actually previewable Works site**. Tell the player to open Works only when a discovered Fen bridge can enter the current checked Works preview. Until then, route toward a fully discovered dry source-bank approach using the existing bounded saved-discovery, pit/grade/barrier-safe waypoint helper. Bearings end on revealed dry cells from the actual player pose. Never disclose a hidden site, invent a dry route, change saved state or authority, or ask the player to cross wetland without a built deck.
+- Preserve the V92/V93 timber handoff below eight logs, the Fen full-footprint discovery gate, checked Ready/blocked preview and 3 m confirmation, later Slate/cache/return priorities, two named seeds, and honest no-route fallback. The observed source owner is `PublicV23Controller.tsx` plus `PublicV23Controller.test.tsx` only. If a UI-only panel issue remains after the identical retry, replan separately rather than changing the HUD in this repair.
+
+## Lanes and gates
+
+1. V94-A/B read-only domain and UI audits completed. Both identify the 24 m guide versus bounded Works preview mismatch; no edits.
+2. V94-C controller owner first makes a #171-like test red (eight logs, full footprint, empty Works preview, safe known approach), applies one minimal causal guide repair, and retries identical test. Add nearer discovered source cases: Works exposes a checked `too_far` candidate, then Ready within 3 m. Cover no known dry route, fog/pit, stage priority, and stable perturbation. No browser, save/schema, placement, authority, or HUD edits. Run focused tests, TypeScript, whitespace checks.
+3. V94-D independent review checks target discovery, actual-pose dry path, Works preview range consistency, source-vs-water anchor offset, old stages, and smallest diff. No production retry until GO.
+4. V94-E production UI restores authentic #171 on same-origin 5194, verifies eight logs and pose, follows visible revised approach, obtains a checked Works preview, builds only when Ready, crosses if safe, and saves/reloads. Stop at first new blocker or ~1.2 GB renderer RSS, export a genuine private mode-600 checkpoint, close sole browser/preview, leave dev 5193.
+
+## Stop rule
+
+If the same UI handoff fails after this grounded guide repair, capture exact visible error and console/network, then broaden to the Works presentation/preview contract. Do not repeatedly change copy or silently expand enumeration.
+
+## V94-C/D source receipt and review GO
+
+The controller owner's #171-pose regression first reproduced an "Open Works" instruction with zero actual V14 Fen candidates. The two-file repair maps authored, fully discovered Fen source banks to canonical terrain-Works bridge sites and only invites Works after both its ±4-cell water-anchor scan and 16 m source range can include a candidate. Before that, it reuses the bounded discovered-dry, saved-pit, grade/barrier-safe waypoint from the player's actual pose, or gives an honest no-route fallback. A real V14 projection test for both named seeds shows `too_far` at an 8 m approach, Ready at source, and no preview while Works is closed. Focused tests passed 59/59, TypeScript and whitespace checks passed. Independent reviewer found no blocker and returned GO for an identical #171 production UI retry. No authority, save, resource placement, or HUD file changed; bridge construction remains unproven.
+
+## V94-E authentic production UI result
+
+The rebuilt production preview restored genuine save #171. Works still had no candidate at the original pose, while the corrected guide now gave an SSW 11 m dry approach. Following only visible cues reached (-340.42, 1.20, 351.37), where the guide correctly said Works could preview a bridge. Turning toward it exposed a checked `too_far` result; a short dry approach produced `Fen bridge: Ready to build here`. The tester clicked the enabled Confirm action, and the UI reported `Build saved: works1:bridge:-86:91:z. 8 logs spent, 80 XP.` Level 4 and a rendered deck followed. Same-tab reload validated save #183 with one visible saved bridge, spent logs, and the deck. The player later approached slightly off the deck and received `Unsupported wetland blocks this step`; this is a correct off-edge refusal, not a proven aligned crossing. Save/reload #197 at (-339.35, 1.20, 361.93) retained the built bridge and no logs. Its private mode-600 same-origin checkpoint is `.playwright-cli/wizard-v94e-fen-bridge-built-rev197-indexeddb.json`; do not print or commit it. Renderer RSS rose to about 1.208 GB only after export and the browser/preview were closed immediately; dev 5193 remained live. Console had no gameplay error. The V94 handoff is solved through build persistence; centered deck traversal and subsequent Slate/cache/return stages remain unproven.

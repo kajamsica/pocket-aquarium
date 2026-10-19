@@ -1,0 +1,11 @@
+# Wayfarer Step 3: face study, visual NO-GO
+
+The approved `../../concepts/wayfarer-male-concept-v4.png` is still the target. `wayfarer_v3_step3_head.blend` is an editable static study, and `step3_front.png`, `step3_three_quarter.png`, `step3_side.png`, and `step3_back.png` are its matched views. Compare them to the preserved Step 2 images in this directory. Nothing from Step 3 is approved for the character workbench or playable game.
+
+The first Step 3 render tried replacement hair masses. It exposed a skin-colored crown patch and made the silhouette more helmet-like. Revision B removed that failed geometry and retained the 13 covered Step 2 hair meshes. The identical four-view retry removed the crown gap. It did **not** improve hair fidelity. The face has slightly firmer cheeks and jaw, but the reference's adult proportions and calm confidence are still missing. The heavy-lidded expression, broad nose, downturned mouth, and a misplaced dark brow stroke remain visible.
+
+Independent review: **NO-GO** for the advertised Step 3 likeness milestone; **NO-GO** for workbench/game. This is a minor facial experiment, not an improved character. No more procedural falloff or tuft-parameter tuning should be treated as the route to approval. The next production method must use reference-measured proportions, direct sculpting of face and interlocking hair masses, and authored surface detail, then a fresh four-view comparison before rigging or costume work. If that method or an appropriately skilled asset creator is unavailable, the asset stays in staging.
+
+Reproduction: run `blender -b -t 2 --python author_step3.py` from this directory. The Revision B retry used Blender 5.2.2 LTS, one process, two threads, 16 Eevee samples, and four 720 x 800 outputs. It reopened the saved `.blend`, retained the 2.257 m height and 13 original hair mesh identities, and took 1.34 seconds real time with 439,894,016 bytes maximum RSS and 2,045,625,976 bytes macOS peak footprint. The reviewer did not independently rerender or remeasure memory.
+
+Observed error | change | restart | retry result | next action: exposed crown and repeated smooth clumps | discard replacement hair, retain Step 2 hair | same single Blender command | advanced to crown coverage, but likeness still NO-GO | switch to reference-driven direct sculpt and surface workflow.

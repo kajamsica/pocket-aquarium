@@ -4,7 +4,37 @@
 
 Wizard Realms is a working title and a design target. This document defines what the team intends to build. It does not describe a finished game.
 
-The first product is a third-person, single-player fantasy RPG. The simulation and content boundaries must leave a credible path to cooperative play and, only after measured proofs, a persistent massively multiplayer world.
+The first product is a full third-person, single-player wizard RPG, not a 15-minute vertical slice. Completion means a sustained adventure across distinct regions, with discovery, practical magic, visible equipment, meaningful progression, expeditions, return and trade, and an endgame worth pursuing. The simulation and content boundaries may leave a credible path to cooperative play and persistent realms, but multiplayer and MMO delivery are not part of the current product goal.
+
+### Full-game completion contract
+
+The first expanded Mireglass journey is a playable milestone, not the finish condition. Call the single-player game complete only when a new player can progress through a sustained campaign and an endgame pursuit on a connected world of roughly 2 km scale, with all of the following proven in the shipped build:
+
+- Distinct, navigable regions with discovery, readable maps, regional resources, settlements, and reasons to revisit them. Walking, built routes, fairy rings, boats, raised or captured ground mounts, and late-game flying mounts must each have a useful role and a tested progression path.
+- Several learnable and practiced spells with uses in travel, exploration, making, and encounters. Skills must advance from committed actions and unlock meaningful options. Clothing, armor, tools, and magical equipment must visibly change the character.
+- Material-driven placement of ladders, bridges, camps, and boats with preview, terrain validation, authoritative commit, and persistence. Digging must require an appropriate tool and skill, alter suitable terrain, and survive save and reload.
+- Regional shops, inventory and equipment decisions, useful trade listings, and a bounded single-player market with prices that make gathering, making, return trips, and upgrades worthwhile.
+- Original creatures, encounters, quests or mysteries, and a deliberate late-game challenge or stewardship goal that give the player more than a checklist of mechanics.
+- A complete first-session tutorial by play, accessible controls and feedback, reliable recovery, acceptable performance on target hardware, and independent end-to-end proof of progression, travel, economy, save and resume, and endgame completion.
+
+Online trade, shared persistence, PvP, and MMO scale are separate later releases. Passing the first 15-minute loop, or publishing a technical preview, does not satisfy this contract.
+
+### Delivery gates toward the full game
+
+These are proof gates, not substitutes for the full-game completion contract. Each gate must be playable in the same authoritative public world and must preserve earlier saves or provide an explicit, tested migration.
+
+1. **Expanded-region proof:** A fresh player completes Greenway and the distinctive Mireglass expedition in the real UI, learning a spell, visibly changing gear, choosing and building both crossings, digging the seal cache, gathering a renewable herb, returning to trade, and resuming the same world after reload. Deterministic reachability and source-safe save recovery pass alongside the playthrough.
+2. **Connected-world breadth:** Extend the traversable world toward the roughly 2 km target with multiple visually and mechanically distinct regions, legible exploration and map discovery, regional resources and settlements, several practiced spells and skill paths, equipment choices, camps, boats, and terrain-valid construction and digging. Revisit and return journeys must be useful, not just possible.
+3. **Living progression:** Add original creatures, encounters, quests or mysteries, tool and armor progression, regional commerce and bounded trade listings, captured or raised ground mounts, and late flying mounts. Travel tiers must each retain a purpose. Long-session saves, migrations, and performance must hold across the connected world.
+4. **Campaign and release proof:** A new player can reach and complete a deliberate endgame pursuit without developer intervention. Independent playtests verify first-session learning, sustained midgame decisions, endgame payoff, accessible controls, visual readability, save/recovery, and target-hardware performance. Only then is the single-player game complete; online systems are a separate product decision.
+
+### Current implementation status
+
+The current development branch of the public game contains Greenway, the connected Mireglass expedition, and an experimental v11 Highland Quarry reached through the existing 2,048 m streamed world. Greenway and Mireglass provide authored travel, gathering, route choices, a spell, visible equipment, a field camp, persistent seal-cache terrain, and local trade. The quarry adds a distinct rocky destination, landmark discovery, tool- and skill-gated stone extraction, a bounded recovery ledger, and a return trade reason. Each new state version uses an explicit upgrade; v7 through v10 saves remain separate and unchanged. A clean-origin browser journey successfully upgraded v7 through v11, interacted, saved, reloaded, and resumed v11. The integrated single-worker suite passed 873 tests across 64 files, and the production build passed.
+
+Independent playtesting has completed the Greenway relic sale, both fairy-ring discoveries, travel in both directions, a chosen Mireglass camp, both built crossings, and repeated save/reload. It has not yet completed the seal-cache, Bell Alder herb return, or the full Highland out-and-back in the real UI. The tester found that hidden-cache search guidance vanished too early on the upper shelf, and that the herb bearing pointed straight over a cliff instead of via the built ladder. Both guidance paths have focused regression fixes, but an updated independent UI retry is still required. The complete Mireglass-to-trade journey, Highland journey, long-session stability, and visual-quality target remain open. This is progress through gates 1 and 2, not a full-game release.
+
+The roughly 2 km world, multiple practiced spell paths, terrain-wide construction and digging, boats, creatures and quests, mounts, late flight, a sustained economy, endgame, and release proof remain open work. Each completed slice must leave the older save lineage intact or provide an explicit, tested migration.
 
 The design inherits the authority, behavior, asset, tooling, and validation methods in the [Simulation-Rich Game Development Playbook](../../../docs/game-development/README.md). In particular:
 
@@ -65,7 +95,7 @@ Generation may select, combine, and place authored content. It must not invent u
 
 ### Initial biome set
 
-The vertical slice needs one temperate woodland and a neighboring meadow or river edge. V1 may expand to:
+The vertical slice needs one temperate woodland and a neighboring meadow or river edge. The full single-player game can expand through:
 
 - temperate woodland with common timber, mushrooms, herbs, and small settlements;
 - wetland with reeds, medicinal plants, bog resources, mist, and difficult ground;
@@ -106,15 +136,15 @@ The renderer may show anticipatory movement and impact effects, but it never gra
 
 Players can buy, find, maintain, improve, and eventually craft tools. A tool profile defines legal actions, efficiency, durability, handling, quality, repair rules, and presentation assets.
 
-The first tool set should stay small: axe, pick, gathering knife, and simple magical focus. General building systems are later than basic tool production. The first slice proves only two bounded route recipes, not free-form construction.
+The first tool set should stay small: axe, pick, gathering knife, and simple magical focus. General building systems are later than basic tool production. The current slice proves two bounded route recipes. The first expanded region must let players choose valid ladder and bridge placements based on terrain and carried materials; fixed project endpoints are only a foundation milestone.
 
 ### Building and placement
 
-V1 may add bounded structures, camps, or regional projects after the world has transactional editing. Placement must follow `begin -> preview -> validate -> freeze -> commit or cancel`. Preview geometry cannot consume materials, alter terrain, or create collision until commit.
+Later single-player milestones add bounded camps and regional projects after the world has transactional editing. Placement must follow `begin -> preview -> validate -> freeze -> commit or cancel`. Preview geometry cannot consume materials, alter terrain, or create collision until commit.
 
 Construction checks land permissions, support, overlap, resource ownership, biome restrictions, and a safe rollback path. Free-form building, shared claims, and large settlements remain outside MVP.
 
-The current vertical slice proves only two fixed, profiled regional projects. The known Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Each project has stable endpoints, a deterministic recipe, atomic resource use, and authoritative two-way traversal. It is not a general placement or building system.
+The current vertical slice proves two profiled regional projects with selectable, validated sites. The Greenway ladder costs 4 logs and grants 60 XP. It opens the northern ridge. At level 2, completing that ladder unlocks the Highland bridge, which costs 6 logs, grants 80 XP, and opens the eastern highland and Highland Arcanum. Chosen endpoints persist and traverse authoritatively in both directions. This is not yet terrain-wide free placement, camps, boats, or a general building system.
 
 ### Shops
 
@@ -260,7 +290,7 @@ Controller and touch support are intentions only until real-device journeys pass
 
 ### MVP vertical slice
 
-MVP includes:
+This is an early systems milestone, not the full-game completion condition. The current v5 Greenway build lets the player study a waystone to learn Wayfinder Glow, reveal nearby terrain and a hidden cache, gain woodcutting, construction, wayfinding, spellcraft, and excavation XP, excavate spade- and skill-gated sites, choose a valid ladder or bridge placement, and return to sell a relic at a shop. The expedition and nondefault site-selection flows have passed live UI journeys. The 16 by 16 profile is still only a roughly 64 m preview. The planned milestone also includes:
 
 - one deterministic seed and one validated woodland region with a neighboring subregion;
 - third-person movement, pivot, jump, camera orbit, collision, interaction focus, and pause;
@@ -270,26 +300,31 @@ MVP includes:
 - starter tools, equipment, and armor data;
 - day and one weather transition;
 - one dormant or two linked fairy rings with discovery-gated travel;
-- a compact and expanded fog-of-discovery map, plus the two fixed Greenway ladder and Highland bridge projects;
+- a compact and expanded fog-of-discovery map, plus player-selected sites for the Greenway ladder and Highland bridge projects;
 - death and recovery;
 - save, migration seed, replay, diagnostics, and one real player surface.
 
 MVP excludes multiplayer, persistent remote realms, player combat, deep questing, free-form building, mounts, guilds, global chat, raids, controller completion, and touch completion.
 
-### V1 single-player game
+### First expanded-region milestone
 
-V1 may add:
+The next playable milestone must extend this foundation into one distinctive region large enough for an expedition beyond the current route demonstration. A player can discover and map its locations, use an exploration spell to reveal or interact with something in the world, see equipped gear change the character, gather materials and build a ladder or bridge at a valid player-selected site, and excavate a dig site only with the required tool and skill. The excavation and constructed route persist across save and reload. The player can return to a settlement and sell or list the expedition's finds. This complete outward-and-return journey is the milestone's acceptance proof, not the full-game finish.
 
-- several validated biomes and settlements;
-- broader resources, tools, recipes, equipment, shops, and progression;
-- active fairy-ring network and regional goals;
-- authored quests and characters;
-- creatures, defensive magic, and combat after separate interaction contracts pass;
-- bounded construction or regional projects after transactional editing exists;
-- richer weather, day schedules, death recovery, and endgame projects;
+[Mireglass Reach](FIRST_EXPANDED_REGION_CONTENT.md) is the first authored content pack for that milestone. Its southwest wetland systems are partly implemented in the local public world, but the complete fresh-player outward-and-return UI proof is still pending.
+
+### Full single-player game
+
+After the expanded region, completion requires:
+
+- several validated, mechanically distinct regions and settlements, with authored quests, characters, creatures, magic, and regional goals;
+- broader resources, tools, recipes, visible equipment, skill growth, regional shops, and single-player trade that deepen the economy before any online market;
+- travel progression from walking and built routes through discovered fairy rings and boats to hard-earned ground mounts captured or raised by the player; rare, expensive top-tier flying mounts open vertical and distant routes without trivializing ground travel, while camps support longer expeditions;
+- defensive magic and combat after separate interaction contracts pass, plus richer weather, day schedules, death recovery, and endgame projects;
 - workbench, creator, accessibility, desktop, controller, and touch journeys as individually proven capabilities.
 
-V1 does not require networked multiplayer or an online economy.
+Full-game acceptance requires a connected, streamed world roughly 2 km across with at least three mechanically distinct regions. A fresh character must be able to finish an authored campaign and a repeatable endgame project; recorded journeys must exercise each travel tier, regional shops and single-player trade, and save/reload persistence for discoveries, equipment, built routes, excavations, and economy state.
+
+The full single-player game does not require networked multiplayer or an online economy.
 
 ### Later multiplayer and MMO direction
 
@@ -307,5 +342,6 @@ The design remains aligned only if:
 - backpack, coins, XP, equipment, shops, and trade listings survive save and replay;
 - fairy rings connect only previously discovered locations;
 - procedural generation is versioned and validated;
-- the MVP remains a complete single-player loop rather than a thin MMO lobby;
+- the expanded region proves an expedition, persistent player-shaped access, a gated dig site, and return to trade;
+- the product finish is a full single-player RPG across distinct regions, not the MVP slice or its two profiled construction routes;
 - later network scale does not require replacing client presentation or redefining world rules.
