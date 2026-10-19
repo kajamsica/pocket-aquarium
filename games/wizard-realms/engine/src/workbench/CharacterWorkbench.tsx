@@ -1,9 +1,9 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Component, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Component, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { CharacterModel, type CharacterStats } from './CharacterModel'
-import { CHARACTER_CANDIDATES, CHARACTER_CLIPS, selectCharacterCandidate, type CharacterClip } from './characterCatalog'
+import { CHARACTER_CANDIDATES, CHARACTER_HELD_TOOLS, CHARACTER_ON_FOOT_CLIPS, CHARACTER_RIDE_CLIPS, RIDER_SEAT_OFFSET, selectCharacterCandidate, type CharacterClip, type CharacterHeldTool } from './characterCatalog'
 import './characterWorkbench.css'
 
 type CameraView = 'front' | 'side' | 'back' | 'top' | 'three-quarter'
@@ -17,6 +17,14 @@ const CAMERA_DIRECTIONS: Readonly<Record<CameraView, THREE.Vector3Tuple>> = {
   'three-quarter': [0.7, 0.28, -0.7],
 }
 const PLAYBACK_RATES = [0.25, 0.5, 1, 2] as const
+const CLIP_LABELS: Partial<Record<CharacterClip, string>> = {
+  TurnLeft: 'TurnLeft (stepping)',
+  TurnRight: 'TurnRight (stepping)',
+  Jump: 'Jump (preview)',
+  RideIdle: 'Ride idle',
+  RideWalk: 'Ride walk',
+  RideRun: 'Ride run',
+}
 const REFERENCE_PANELS: Partial<Record<CameraView, number>> = {
   front: 0,
   'three-quarter': 1,
@@ -25,6 +33,26 @@ const REFERENCE_PANELS: Partial<Record<CameraView, number>> = {
 }
 const FIXED_COMPARISON_CENTER: THREE.Vector3Tuple = [0, 1.13, 0]
 const FIXED_COMPARISON_SIZE: THREE.Vector3Tuple = [1.3, 2.5, 1.3]
+const STAFF_FRAME_WIDTH_METERS = 2.8
+
+export function shouldFrameHeldStaff(view: CameraView, heldTool: CharacterHeldTool, riding: boolean) {
+  return !riding && heldTool === 'wand' && (view === 'side' || view === 'three-quarter')
+}
+const DEFAULT_RIDE_BOUNDS: CharacterStats['bounds'] = { center: [0, 1.4, 0], size: [3.8, 3.2, 4.2] }
+
+export function combinedRideBounds(rider: CharacterStats['bounds'] | undefined, mount: CharacterStats['bounds'] | undefined): CharacterStats['bounds'] {
+  if (!rider || !mount) return DEFAULT_RIDE_BOUNDS
+  const riderBox = new THREE.Box3().setFromCenterAndSize(
+    new THREE.Vector3(...rider.center).add(new THREE.Vector3(...RIDER_SEAT_OFFSET)),
+    new THREE.Vector3(...rider.size),
+  )
+  const mountBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(...mount.center), new THREE.Vector3(...mount.size))
+  mountBox.union(riderBox)
+  return {
+    center: mountBox.getCenter(new THREE.Vector3()).toArray() as THREE.Vector3Tuple,
+    size: mountBox.getSize(new THREE.Vector3()).toArray() as THREE.Vector3Tuple,
+  }
+}
 const RULER_POSITIONS: Readonly<Partial<Record<CameraView, THREE.Vector3Tuple>>> = {
   front: [0.9, 0, 0],
   side: [0, 0, 0.9],
@@ -61,11 +89,13 @@ class AssetBoundary extends Component<AssetBoundaryProps, { failed: boolean; res
   render() { return this.state.failed ? null : this.props.children }
 }
 
-function CameraControls({ view, fitToken, bounds, comparisonLocked }: {
+function CameraControls({ view, fitToken, bounds, comparisonLocked, fixedBounds, staffFraming }: {
   readonly view: CameraView
   readonly fitToken: number
   readonly bounds?: CharacterStats['bounds']
   readonly comparisonLocked: boolean
+  readonly fixedBounds?: CharacterStats['bounds']
+  readonly staffFraming: boolean
 }) {
   const { camera, gl, size } = useThree()
   const controlsRef = useRef<OrbitControls | null>(null)
@@ -90,10 +120,10 @@ function CameraControls({ view, fitToken, bounds, comparisonLocked }: {
     if (!controls) return
     controls.enabled = !comparisonLocked
     controls.enableDamping = !comparisonLocked
-    const center = comparisonLocked ? FIXED_COMPARISON_CENTER : bounds?.center ?? [0, 1.1, 0]
-    const frameSize = comparisonLocked ? FIXED_COMPARISON_SIZE : bounds?.size ?? [1.25, 2.25, 0.8]
+    const center = comparisonLocked ? fixedBounds?.center ?? FIXED_COMPARISON_CENTER : bounds?.center ?? [0, 1.1, 0]
+    const frameSize = comparisonLocked ? fixedBounds?.size ?? FIXED_COMPARISON_SIZE : bounds?.size ?? [1.25, 2.25, 0.8]
     const height = Math.max(frameSize[1], 1.8)
-    const width = Math.max(frameSize[0], frameSize[2])
+    const width = Math.max(frameSize[0], frameSize[2], staffFraming ? STAFF_FRAME_WIDTH_METERS : 0)
     const aspect = Math.max(size.width / Math.max(size.height, 1), 0.3)
     const fov = camera instanceof THREE.PerspectiveCamera ? camera.fov : 35
     const halfFov = THREE.MathUtils.degToRad(fov) / 2
@@ -105,7 +135,7 @@ function CameraControls({ view, fitToken, bounds, comparisonLocked }: {
     controls.target.set(center[0], center[1], center[2])
     camera.lookAt(controls.target)
     controls.update()
-  }, [bounds, camera, comparisonLocked, fitToken, size.height, size.width, view])
+  }, [bounds, camera, comparisonLocked, fitToken, fixedBounds, size.height, size.width, staffFraming, view])
 
   useFrame(() => { if (!comparisonLocked) controlsRef.current?.update() })
   return null
@@ -139,7 +169,9 @@ function formatDuration(value: number) { return `${value.toFixed(2)}s` }
 export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: string }) {
   const requestedCandidateId = new URLSearchParams(window.location.search).get('candidate')
   const candidate = selectCharacterCandidate(workbenchId, requestedCandidateId)
+  const [previewMode, setPreviewMode] = useState<'on-foot' | 'riding'>('on-foot')
   const [clipName, setClipName] = useState<CharacterClip>('Idle')
+  const [heldTool, setHeldTool] = useState<CharacterHeldTool>('none')
   const [playing, setPlaying] = useState(true)
   const [playbackRate, setPlaybackRate] = useState<number>(1)
   const [phase, setPhase] = useState(0)
@@ -151,14 +183,21 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
   const [showReference, setShowReference] = useState(true)
   const [comparisonLocked, setComparisonLocked] = useState(true)
   const [stats, setStats] = useState<CharacterStats>()
+  const [mountBounds, setMountBounds] = useState<CharacterStats['bounds']>()
+  const phaseRef = useRef(0)
   const [loadError, setLoadError] = useState<string>()
   const [clipError, setClipError] = useState<string>()
+  const [gripError, setGripError] = useState<string>()
   const handleReady = useCallback((value: CharacterStats) => setStats(value), [])
+  const handleMountReady = useCallback((value: CharacterStats['bounds']) => setMountBounds(value), [])
   const handleLoadError = useCallback((message: string) => setLoadError(message), [])
   const handleClipError = useCallback((message?: string) => setClipError(message), [])
+  const handleGripError = useCallback((message?: string) => setGripError(message), [])
   const handlePhase = useCallback((value: number) => setPhase(value), [])
   const reset = useCallback(() => {
+    setPreviewMode('on-foot')
     setClipName('Idle')
+    setHeldTool('none')
     setPlaying(true)
     setPlaybackRate(1)
     setPhase(0)
@@ -169,7 +208,26 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
     setTurntable(false)
     setShowReference(true)
     setComparisonLocked(true)
+    setLoadError(undefined)
+    setClipError(undefined)
+    setGripError(undefined)
+    setMountBounds(undefined)
+    phaseRef.current = 0
   }, [])
+
+  const selectPreviewMode = useCallback((mode: 'on-foot' | 'riding') => {
+    if (mode === previewMode) return
+    setPreviewMode(mode)
+    setClipName(mode === 'riding' ? 'RideIdle' : 'Idle')
+    setPhase(0)
+    phaseRef.current = 0
+    setLoadError(undefined)
+    setClipError(undefined)
+    setGripError(undefined)
+    setMountBounds(undefined)
+    setShowReference(mode === 'on-foot')
+    setFitToken((value) => value + 1)
+  }, [previewMode])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -184,6 +242,8 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [reset])
 
+  const rideBounds = useMemo(() => combinedRideBounds(stats?.bounds, mountBounds), [mountBounds, stats?.bounds])
+
   if (!candidate) {
     return <main className="character-workbench character-workbench--missing">
       <h1>Character candidate not found</h1>
@@ -193,10 +253,16 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
   }
 
   const availableClips = stats?.clips.map((clip) => clip.name) ?? []
-  const missingClips = stats ? candidate.expectedClips.filter((name) => !availableClips.includes(name)) : []
+  const riding = candidate.id === 'wayfarer-v9-male' && previewMode === 'riding'
+  const staffFraming = shouldFrameHeldStaff(cameraView, heldTool, riding)
+  const selectableClips = riding ? CHARACTER_RIDE_CLIPS : candidate.id === 'wayfarer-v9-male' ? CHARACTER_ON_FOOT_CLIPS : candidate.expectedClips
+  const missingClips = stats ? selectableClips.filter((name) => !availableClips.includes(name)) : []
+  const viewedBounds = riding ? rideBounds : stats?.bounds
   const referencePanel = REFERENCE_PANELS[cameraView]
   const approvedRender = candidate.approvedRenders[referencePanel ?? 1]
-  const comparisonText = candidate.status === 'candidate_no_go'
+  const comparisonText = riding
+    ? 'The adult sedgehorn and V9 rider are being inspected as one visual asset. The approved V9 bust remains a character-design reference, not a riding-pose or mount approval.'
+    : candidate.status === 'candidate_no_go'
     ? V2_VIEW_COMPARISONS[cameraView]
     : cameraView === 'top'
       ? 'No approved V9 top view exists. Inspect geometry here without inferring top-view art approval.'
@@ -218,7 +284,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
     <p className="character-workbench__notice">{candidate.summary}</p>
 
     <div className="character-workbench__layout">
-      <section className={`character-workbench__stage${comparisonLocked && showReference ? ' character-workbench__stage--compare' : ''}`} aria-label="Interactive 3D character viewer and approved V9 render">
+      <section className={`character-workbench__stage${comparisonLocked && showReference && !riding ? ' character-workbench__stage--compare' : ''}`} aria-label="Interactive 3D character viewer and approved V9 render">
         <div className="character-workbench__stage-viewer">
           <Canvas
           camera={{ fov: 35, near: 0.01, far: 100, position: [3.4, 2.2, 4.3] }}
@@ -232,14 +298,17 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           <hemisphereLight args={['#f3f5f7', '#8b8178', 1.35]} />
           <directionalLight castShadow position={[3.5, 7, 5]} intensity={3.1} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} shadow-normalBias={0.04} shadow-camera-left={-3} shadow-camera-right={3} shadow-camera-top={4} shadow-camera-bottom={-2} />
           <directionalLight position={[-4, 3, -4]} color="#d6c4ff" intensity={1.4} />
-          <CameraControls view={cameraView} fitToken={fitToken} bounds={stats?.bounds} comparisonLocked={comparisonLocked} />
+          <CameraControls view={cameraView} fitToken={fitToken} bounds={viewedBounds} fixedBounds={riding ? rideBounds : undefined} comparisonLocked={comparisonLocked} staffFraming={staffFraming} />
           <StudioFloor />
-          {comparisonLocked && <MeterRuler view={cameraView} />}
-          <AssetBoundary resetKey={candidate.id} onError={handleLoadError}>
+          {comparisonLocked && !riding && <MeterRuler view={cameraView} />}
+          <AssetBoundary resetKey={`${candidate.id}:${previewMode}`} onError={handleLoadError}>
             <Suspense fallback={null}>
               <CharacterModel
                 candidate={candidate}
                 clipName={clipName}
+                heldTool={heldTool}
+                riding={riding}
+                phaseRef={phaseRef}
                 playing={playing}
                 playbackRate={playbackRate}
                 phase={phase}
@@ -247,19 +316,21 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
                 showSkeleton={showSkeleton}
                 turntable={turntable}
                 onReady={handleReady}
+                onMountReady={handleMountReady}
                 onClipError={handleClipError}
+                onGripError={handleGripError}
                 onPhase={handlePhase}
               />
             </Suspense>
           </AssetBoundary>
           </Canvas>
-          {!stats && !loadError && <div className="character-workbench__loading" role="status">Loading rigged GLB…</div>}
+          {(!stats || (riding && !mountBounds)) && !loadError && <div className="character-workbench__loading" role="status">Loading {riding ? 'rider and adult sedgehorn' : 'rigged GLB'}…</div>}
           {loadError && <div className="character-workbench__error" role="alert">Asset load failed: {loadError}</div>}
-          {clipError && <div className="character-workbench__error character-workbench__error--clip" role="alert">{clipError}</div>}
-          {comparisonLocked && <p className="character-workbench__meter-hint">2 m ruler · 0.5 m ticks · GLB height {stats ? `${stats.bounds.size[1].toFixed(2)} m` : 'loading'}</p>}
-          <p className="character-workbench__orbit-hint">{comparisonLocked ? `Candidate GLB · ${cameraView} · fixed metric camera` : 'Drag to orbit · wheel to zoom · right-drag to pan'}</p>
+          {(clipError || gripError) && <div className="character-workbench__error character-workbench__error--clip" role="alert">{clipError || gripError}</div>}
+          {comparisonLocked && !riding && <p className="character-workbench__meter-hint">2 m ruler · 0.5 m ticks · GLB height {stats ? `${stats.bounds.size[1].toFixed(2)} m` : 'loading'}</p>}
+          <p className="character-workbench__orbit-hint">{comparisonLocked ? `${riding ? 'Rider and adult mount' : 'Candidate GLB'} · ${cameraView} · fixed metric camera` : 'Drag to orbit · wheel to zoom · right-drag to pan'}</p>
         </div>
-        {showReference && <aside className="character-workbench__stage-reference" aria-label={`Approved V9 ${approvedRender.label.toLowerCase()} bust render`}>
+        {showReference && !riding && <aside className="character-workbench__stage-reference" aria-label={`Approved V9 ${approvedRender.label.toLowerCase()} bust render`}>
           <a href={approvedRender.url} target="_blank" rel="noreferrer" title="Open the approved V9 bust render">
             <img className="character-workbench__reference-sheet" src={approvedRender.url} alt={`Approved V9 Wayfarer ${approvedRender.label.toLowerCase()} bust render`} />
           </a>
@@ -277,15 +348,22 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
             <button type="button" disabled={comparisonLocked} onClick={() => setFitToken((value) => value + 1)}>Fit model</button>
             <button type="button" aria-pressed={turntable} disabled={comparisonLocked} onClick={() => setTurntable((value) => !value)}>Turntable</button>
           </div>
-          <button className="character-workbench__play" type="button" aria-pressed={comparisonLocked} onClick={() => { setComparisonLocked((value) => !value); setShowReference(true); setTurntable(false) }}>Fixed-scale comparison {comparisonLocked ? 'on' : 'off'}</button>
-          <small>Compare each angle with the same world-space camera, fitted to a 2.5 m guide with margin. Unlock to orbit and fit freely. The approved V9 bust renders are not metric full-body guides.</small>
+          <button className="character-workbench__play" type="button" aria-pressed={comparisonLocked} onClick={() => { setComparisonLocked((value) => !value); setShowReference(!riding); setTurntable(false) }}>Fixed-scale comparison {comparisonLocked ? 'on' : 'off'}</button>
+          <small>{riding ? 'The fixed camera fits rider and adult mount together. Unlock to orbit and fit freely.' : staffFraming ? 'Side and three-quarter staff views widen just enough to include both ends and the gripping hand. Remove the staff to return to standard fixed-scale character framing.' : 'Compare each angle with the same world-space camera, fitted to a 2.5 m guide with margin. Unlock to orbit and fit freely. The approved V9 bust renders are not metric full-body guides.'}</small>
         </fieldset>
 
         <fieldset>
           <legend>Animation</legend>
+          {candidate.id === 'wayfarer-v9-male' && <>
+            <div className="character-workbench__button-grid character-workbench__button-grid--two" aria-label="Preview mode">
+              <button type="button" aria-pressed={!riding} onClick={() => selectPreviewMode('on-foot')}>On foot</button>
+              <button type="button" aria-pressed={riding} onClick={() => selectPreviewMode('riding')}>Riding</button>
+            </div>
+            {riding && <small>The adult Sedgehorn is rideable in opt-in V44 after checked juvenile care and maturity. The V43 juvenile remains unrideable.</small>}
+          </>}
           <label htmlFor="character-workbench-clip">Clip</label>
-          <select id="character-workbench-clip" value={clipName} onChange={(event) => { setClipName(event.target.value as CharacterClip); setPhase(0) }}>
-            {CHARACTER_CLIPS.map((name) => <option key={name} value={name} disabled={Boolean(stats && !availableClips.includes(name))}>{name}</option>)}
+          <select id="character-workbench-clip" value={clipName} onChange={(event) => { setClipName(event.target.value as CharacterClip); setPhase(0); setClipError(undefined) }}>
+            {selectableClips.map((name) => <option key={name} value={name} disabled={Boolean(stats && !availableClips.includes(name))}>{CLIP_LABELS[name] ?? name}</option>)}
           </select>
           <div className="character-workbench__button-grid character-workbench__button-grid--rates" aria-label="Playback speed">
             {PLAYBACK_RATES.map((rate) => <button key={rate} type="button" aria-pressed={playbackRate === rate} onClick={() => setPlaybackRate(rate)}>{rate}×</button>)}
@@ -293,13 +371,24 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           <button className="character-workbench__play" type="button" aria-pressed={playing} onClick={() => setPlaying((value) => !value)}>{playing ? 'Pause animation' : 'Play animation'}</button>
           <label className="character-workbench__scrub" htmlFor="character-workbench-phase">Phase {(phase * 100).toFixed(0)}%</label>
           <input id="character-workbench-phase" type="range" min="0" max="1" step="0.01" value={phase} disabled={playing} onChange={(event) => setPhase(Number(event.target.value))} />
-          <small>Pause to scrub the rig pose. The model stays in place during Walk.</small>
+          <small>{candidate.id === 'wayfarer-v9-male'
+            ? riding ? 'Ride idle, walk, and run loop in place with the adult mount. Pause to scrub both together.' : 'Turn left and right play the full stepping clips. Jump repeats as a preview. Pause to scrub any clip.'
+            : 'Pause to scrub the rig pose.'}</small>
         </fieldset>
+
+        {candidate.id === 'wayfarer-v9-male' && <fieldset>
+          <legend>Held gear</legend>
+          <label htmlFor="character-workbench-held-tool">Right-hand tool</label>
+          <select id="character-workbench-held-tool" value={heldTool} disabled={riding} onChange={(event) => setHeldTool(event.target.value as CharacterHeldTool)}>
+            {CHARACTER_HELD_TOOLS.map((tool) => <option key={tool.id} value={tool.id}>{tool.label}</option>)}
+          </select>
+          <small>{riding ? 'Held tools are hidden in riding mode. Your on-foot selection is kept for when you switch back.' : 'Visual preview using the current game tools. ToolGrip closes the fingers while a tool is selected; this does not change equipped gear or save data.'}</small>
+        </fieldset>}
 
         <fieldset>
           <legend>Inspection</legend>
           <div className="character-workbench__button-grid character-workbench__button-grid--two">
-            <button type="button" aria-pressed={showReference} disabled={comparisonLocked} onClick={() => setShowReference((value) => !value)}>Reference</button>
+            <button type="button" aria-pressed={showReference && !riding} disabled={comparisonLocked || riding} onClick={() => setShowReference((value) => !value)}>Reference</button>
             <button type="button" aria-pressed={wireframe} onClick={() => setWireframe((value) => !value)}>Wireframe</button>
             <button type="button" aria-pressed={showSkeleton} onClick={() => setShowSkeleton((value) => !value)}>Skeleton</button>
             <button type="button" onClick={reset}>Reset</button>
@@ -318,7 +407,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
         <p>{candidate.status === 'design_approved'
           ? <a href="?workbench=wayfarer&candidate=wayfarer-v2-male">Inspect rejected V2 technical comparison</a>
           : <a href="?workbench=wayfarer">Return to approved V9 design candidate</a>}</p>
-        <h3>Loaded GLB</h3>
+        <h3>Loaded wizard GLB</h3>
         <dl className="character-workbench__stats">
           <div><dt>Triangles</dt><dd>{stats?.triangles.toLocaleString() ?? 'Loading…'}</dd></div>
           <div><dt>Nodes</dt><dd>{stats?.nodes.toLocaleString() ?? 'Loading…'}</dd></div>
@@ -326,6 +415,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           <div><dt>Materials</dt><dd>{stats?.materials.toLocaleString() ?? 'Loading…'}</dd></div>
         </dl>
         <div className="character-workbench__clips"><strong>Actual clips:</strong> {stats?.clips.map((clip) => <code key={clip.name}>{clip.name} {formatDuration(clip.duration)}</code>) ?? 'Loading…'}</div>
+        {riding && <p><strong>Adult sedgehorn:</strong> {mountBounds ? `Mount GLB loaded; ${clipName.replace(/^Ride/, '')} motion selected for this visual preview.` : 'Loading mount GLB…'}</p>}
         {missingClips.length > 0 && <p className="character-workbench__missing-clips" role="alert">Missing expected clips: {missingClips.join(', ')}</p>}
       </div>
       <div className="character-workbench__comparison">

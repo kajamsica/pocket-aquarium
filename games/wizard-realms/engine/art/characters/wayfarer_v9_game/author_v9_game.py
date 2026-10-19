@@ -10,7 +10,9 @@ hair and upper garments reproduce on the UNCUT CC0 body: there is no bust seam b
 New in this file (technical completion in V9 style, authorised by the lane): full-length open robe with
 gold trim, bell sleeves with gold cuffs, leather belt and buckle, trousers, boots, hip satchel, removal of
 body faces hidden under cloth, the V2-compatible 17-deform-bone rig, seven equipment sockets, Idle /
-Walk / Turn clips, GLB export with +Y up / -Z forward, GLB structure validation and the manifest.
+Walk / Turn clips, GLB export with +Y up / -Z forward, GLB structure validation and the manifest. Later additions:
+Run, TurnLeft/TurnRight, Jump, the dormant GripRight morph, and riding (RideIdle/RideWalk/RideRun seated clips plus the
+RideDrape robe/tunic morph) authored against ../../creatures/sedgehorn_mount.
 
 Base mesh: Blender Studio "Human Base Meshes" v1.4.1, collection "Body Male - Stylized", CC0, as staged
 in ../wayfarer_v3_staging/wayfarer_v3_artist_staging.blend (opened read-only, saved-as here first).
@@ -930,6 +932,105 @@ for f in bm.faces:
 bmesh.ops.delete(bm, geom=hidden, context='FACES')
 bm.to_mesh(body.data); bm.free(); body.data.update()
 
+# ------------------------------------------------------------------------ rejected right-hand grip experiment: shape key "GripRight"
+# Basis is the accepted open hand (weight 0). This alternate shape key remains exported as dormant historical work;
+# the user rejected its closed wrist/finger pose. Game and workbench must leave its influence at 0 for every tool.
+# The following geometry is retained for export reproducibility, not as an instruction to activate the morph.
+import numpy as np
+GRIP_R = 0.0275             # fit radius: axe/pick/spade shafts are 0.045..0.055 m thick; wand/staff 0.035..0.05 sits 3..8 mm looser
+GRIP_TILT = 20.0            # handle axis leans this far forward of vertical in the rest pose
+GRIP_WRIST = 70.0           # wrist extension (degrees), ramped over the first 5 cm below the wrist
+hand_idx = [v.index for v in body.data.vertices if v.co.x > 0.36 and v.co.z < 1.20]
+HP = np.array([body.data.vertices[i].co[:] for i in hand_idx])
+W = Vector(HP[(HP[:, 2] > 1.14) & (HP[:, 2] < 1.18)].mean(0))                        # wrist centre
+_, _, Vt = np.linalg.svd(HP - HP.mean(0), full_matrices=False)
+f_hand = Vector(Vt[0]); f_hand = -f_hand if f_hand.z > 0 else f_hand                  # fingers point down
+n_palm = Vector(Vt[2]); n_palm = n_palm if n_palm.x < 0 else -n_palm                  # palm faces the body (medial)
+k_hand = f_hand.cross(n_palm).normalized()
+rel = HP - np.array(HP.mean(0)); s_all = rel @ np.array(f_hand); u_all = rel @ np.array(k_hand)
+mid = np.abs(s_all) < 0.03
+if -u_all[mid].min() > u_all[mid].max():
+    k_hand = -k_hand; u_all = -u_all                                                  # thumb side is +k
+S_W = (HP - np.array(W)) @ np.array(f_hand)                                           # distance below the wrist
+thumb = (u_all > 0.075) & (S_W < 0.17)
+rot_sign = 1.0 if (Matrix.Rotation(deg(90), 4, n_palm) @ f_hand).y > 0 else -1.0     # fingers swing forward
+def wrist_rotated(co, sw):
+    return W + Matrix.Rotation(rot_sign * deg(GRIP_WRIST) * smooth(0.0, 0.05, sw), 4, n_palm) @ (Vector(co) - W)
+f_ext = (Matrix.Rotation(rot_sign * deg(GRIP_WRIST), 4, n_palm) @ f_hand).normalized()
+g_axis = Vector((0.0, math.sin(deg(GRIP_TILT)), math.cos(deg(GRIP_TILT))))           # handle axis (world, rest pose)
+m_c = (-n_palm - g_axis * (-n_palm).dot(g_axis)).normalized()                         # from the handle toward the back of the hand
+f_c = g_axis.cross(m_c).normalized()
+if f_c.dot(f_ext) < 0:
+    f_c = -f_c
+S_K = 0.146                                                                           # knuckle line below the wrist
+palm_pts = [wrist_rotated(HP[j], S_W[j]) for j in range(len(hand_idx)) if S_K - 0.04 < S_W[j] < S_K and not thumb[j]]
+K = sum(palm_pts, Vector()) / len(palm_pts)                                           # local hand centre at the knuckles
+K = K - f_c * (K - W).dot(f_c) + f_c * S_K                                            # ...kept on the knuckle plane
+t_palm = max((p - K).dot(n_palm) for p in palm_pts)                                   # palm-side half thickness at the knuckles
+finger_pts = [wrist_rotated(HP[j], S_W[j]) for j in range(len(hand_idx)) if S_W[j] > S_K + 0.03 and not thumb[j]]
+Kf = sum(finger_pts, Vector()) / len(finger_pts)                                      # finger mid-line centre
+t_finger = max((p - Kf).dot(n_palm) for p in finger_pts)                              # finger palm-side half thickness
+def grip_deform(rho_a, rho_f):
+    """Curl the fingers around the handle axis placed rho_a from the palm mid-plane, finger mid-line at radius rho_f."""
+    A = K + n_palm * rho_a
+    d_f0 = (Kf - A).dot(m_c)                                                          # finger mid-line distance before the curl
+    out = []
+    for j in range(len(hand_idx)):
+        v = wrist_rotated(HP[j], S_W[j])
+        if not thumb[j]:
+            sp = (v - K).dot(f_c)
+            if sp > 0:
+                theta = min(sp / rho_f, 2.6)
+                d = (v - A).dot(m_c) - (d_f0 - rho_f) * smooth(0.0, 0.4, theta)
+                u = (v - A).dot(g_axis)
+                v = A + g_axis * u + d * (m_c * math.cos(theta) + f_c * math.sin(theta))
+        r_vec = (v - A) - g_axis * (v - A).dot(g_axis)
+        if r_vec.length < GRIP_R + 0.002:                                             # never let skin sit inside the handle
+            v = v + r_vec.normalized() * (GRIP_R + 0.002 - r_vec.length)
+        out.append(v)
+    return A, d_f0, out
+def radial_of(A, coords):
+    return [((v - A) - g_axis * (v - A).dot(g_axis)).length for v in coords]
+# pass 1 from the measured thicknesses, then tighten by the measured palm/finger slack (the clamp keeps skin outside the handle)
+rho_a = GRIP_R + t_palm + 0.003
+rho_f = GRIP_R + t_finger + 0.002
+A_grip, d_f0, grip_co = grip_deform(rho_a, rho_f)
+r1 = radial_of(A_grip, grip_co)
+slack_palm = min(r1[j] for j in range(len(hand_idx)) if S_K - 0.04 < S_W[j] < S_K and not thumb[j]) - (GRIP_R + 0.003)
+slack_finger = min(r1[j] for j in range(len(hand_idx)) if S_W[j] > S_K + 0.02 and not thumb[j]) - (GRIP_R + 0.002)
+rho_a -= max(0.0, slack_palm); rho_f -= max(0.0, slack_finger)
+A_grip, d_f0, grip_co = grip_deform(rho_a, rho_f)
+body.shape_key_add(name="Basis", from_mix=False)
+grip_key = body.shape_key_add(name="GripRight", from_mix=False)
+for i, v in zip(hand_idx, grip_co):
+    grip_key.data[i].co = v
+grip_key.value = 0.0
+radial = radial_of(A_grip, grip_co)
+finger_radial = sorted(r for r, j in zip(radial, range(len(hand_idx))) if S_W[j] > S_K + 0.02 and not thumb[j])
+palm_radial = sorted(r for r, j in zip(radial, range(len(hand_idx))) if S_K - 0.04 < S_W[j] < S_K and not thumb[j])
+thumb_radial = sorted(r for r, j in zip(radial, range(len(hand_idx))) if thumb[j])
+def pct(a, q):
+    return round(a[min(len(a) - 1, int(q * len(a)))], 4)
+GRIP = {
+    "node": "V9_body", "morphTarget": "GripRight", "basisWeight": 0.0, "grippedWeight": 1.0,
+    "usageStatus": "rejected_dormant", "runtimeWeight": 0.0,
+    "usageNote": "User rejected the closed GripRight pose. Game and workbench keep the original open Basis hand at weight 0 for every tool; never activate this morph.",
+    "fitRadiusMeters": GRIP_R, "wristExtensionDeg": GRIP_WRIST, "handleTiltForwardDeg": GRIP_TILT,
+    "handleAxisBlender": {"point": [round(x, 4) for x in A_grip], "direction": [round(x, 4) for x in g_axis]},
+    "handleAxisGlb": {"point": [round(A_grip.x, 4), round(A_grip.z, 4), round(-A_grip.y, 4)],
+                      "direction": [round(g_axis.x, 4), round(g_axis.z, 4), round(-g_axis.y, 4)]},
+    "handVertices": len(hand_idx), "thumbVertices": int(thumb.sum()),
+    "measuredMeters": {"palmHalfThickness": round(t_palm, 4), "fingerHalfThickness": round(t_finger, 4),
+                       "pass1SlackPalm": round(slack_palm, 4), "pass1SlackFinger": round(slack_finger, 4),
+                       "axisFromPalmMidPlane": round(rho_a, 4), "fingerWrapRadius": round(rho_f, 4), "fingerMidLineBeforeCurl": round(d_f0, 4)},
+    "skinToHandleAxisMeters": {"min": round(min(radial), 4), "verticesInsideHandle": sum(1 for r in radial if r < GRIP_R),
+                               "fingerVerticesTouching(<=R+5mm)": sum(1 for r in finger_radial if r <= GRIP_R + 0.005),
+                               "fingerRadialP0_P10_P50": [pct(finger_radial, 0), pct(finger_radial, 0.1), pct(finger_radial, 0.5)],
+                               "palmRadialP0_P10_P50": [pct(palm_radial, 0), pct(palm_radial, 0.1), pct(palm_radial, 0.5)],
+                               "thumbRadialP0_P10": [pct(thumb_radial, 0), pct(thumb_radial, 0.1)],
+                               "fingerWrapDeg": round(math.degrees(2.6))},
+}
+
 # ------------------------------------------------------------------------ rig (V2 bone names and hierarchy)
 BONE_SPECS = [
     ("Root", None, (0, 0, 0.0), (0, 0, 0.12)),
@@ -962,6 +1063,79 @@ for name, parent, head, tail in BONE_SPECS:
     b.head, b.tail = head, tail
     if parent:
         b.parent = arm_data.edit_bones[parent]
+bpy.ops.object.mode_set(mode='OBJECT')
+
+# ------------------------------------------------------------------------ right-hand finger bones (approved ToolGrip follow-up)
+# Ten child bones of Hand.R: two per finger (knuckle -> PIP, PIP -> tip) and two for the thumb (CMC -> MCP, MCP -> tip). They are
+# deform bones so the exported skin can curl the fingers, but no on-foot or ride clip keys them: at rest they carry Hand.R's own
+# transform, so the approved open hand and every existing clip deform exactly as before (verified below and in the GLB checks).
+# Landmarks come from the hand mesh itself: the four fingers are the connected tubes below the finger web, the thumb is the
+# lateral (+k) lobe of the palm block. Roll: local +Z points to the palm side, so rotation about local +X curls toward the palm.
+_hand_pos = {vi: j for j, vi in enumerate(hand_idx)}
+_hand_adj = {j: [] for j in range(len(hand_idx))}
+for e in body.data.edges:
+    a, b = e.vertices
+    if a in _hand_pos and b in _hand_pos:
+        _hand_adj[_hand_pos[a]].append(_hand_pos[b]); _hand_adj[_hand_pos[b]].append(_hand_pos[a])
+U_W = (HP - np.array(W)) @ np.array(k_hand)                                           # across the hand, + toward the thumb
+N_W = (HP - np.array(W)) @ np.array(n_palm)                                           # + toward the palm side
+def _hand_components(mask):
+    seen = set(); comps = []
+    for s in np.where(mask)[0]:
+        if s in seen:
+            continue
+        stack = [s]; seen.add(s); comp = []
+        while stack:
+            x = stack.pop(); comp.append(x)
+            for y in _hand_adj[x]:
+                if mask[y] and y not in seen:
+                    seen.add(y); stack.append(y)
+        comps.append(np.array(comp))
+    return comps
+FINGER_WEB = 0.15                                                                     # below this distance from the wrist the fingers are separate tubes
+FINGER_MCP = FINGER_WEB - 0.015                                                       # knuckle joints sit 1.5 cm above the web
+FINGER_NAMES = ["Index", "Middle", "Ring", "Pinky"]
+_fcomps = sorted(_hand_components(S_W > FINGER_WEB), key=lambda c: -U_W[c].mean())
+assert len(_fcomps) == 4, "expected four finger tubes below the web, found %d" % len(_fcomps)
+_thumb_comp = max(_hand_components((U_W > 0.07) & (S_W > 0.02) & (S_W < 0.17)), key=len)
+FINGER_COMP = dict(zip(FINGER_NAMES, _fcomps)); FINGER_COMP["Thumb"] = _thumb_comp
+FINGER_U = {n: float(U_W[c][(S_W[c] > FINGER_WEB) & (S_W[c] < FINGER_WEB + 0.03)].mean()) for n, c in zip(FINGER_NAMES, _fcomps)}
+def _hand_point(s, u, nn):
+    return Vector(W) + f_hand * s + k_hand * u + n_palm * nn
+def _centre(mask):
+    return float(U_W[mask].mean()), float(N_W[mask].mean())
+FINGER_JOINTS = {}                                                                    # name -> (mcp_s, pip_s, tip_s, head, mid, tip) in rest world space
+for name, comp in zip(FINGER_NAMES, _fcomps):
+    cm = np.zeros(len(hand_idx), bool); cm[comp] = True
+    tip_s = float(S_W[comp].max())
+    pip_s = FINGER_MCP + 0.45 * (tip_s - FINGER_MCP)                                  # proximal phalanx 45 % of knuckle-to-tip; middle+distal share one bone
+    strip = (np.abs(U_W - FINGER_U[name]) < 0.02) & (U_W < 0.07)
+    u0, n0 = _centre(strip & (np.abs(S_W - FINGER_MCP) < 0.012))
+    u1, n1 = _centre(cm & (np.abs(S_W - pip_s) < 0.012))
+    u2, n2 = _centre(cm & (S_W > tip_s - 0.015))
+    FINGER_JOINTS[name] = (FINGER_MCP, pip_s, tip_s, _hand_point(FINGER_MCP, u0, n0), _hand_point(pip_s, u1, n1), _hand_point(tip_s, u2, n2))
+_tm = np.zeros(len(hand_idx), bool); _tm[_thumb_comp] = True
+THUMB_CMC, THUMB_MCP = 0.03, 0.085                                                    # along the hand from the wrist
+_thumb_tip_s = float(S_W[_thumb_comp].max())
+_tu0, _tn0 = _centre(_tm & (S_W < THUMB_CMC + 0.025))
+_tu1, _tn1 = _centre(_tm & (np.abs(S_W - THUMB_MCP) < 0.012))
+_tu2, _tn2 = _centre(_tm & (S_W > _thumb_tip_s - 0.015))
+FINGER_JOINTS["Thumb"] = (THUMB_CMC, THUMB_MCP, _thumb_tip_s, _hand_point(THUMB_CMC, _tu0 - 0.01, _tn0 - 0.01),
+                          _hand_point(THUMB_MCP, _tu1, _tn1), _hand_point(_thumb_tip_s, _tu2, _tn2))
+THUMB_CURL_DIR = (-k_hand + n_palm).normalized()                                      # thumb flexes toward the fingers and the palm side
+FINGER_SPECS = []                                                                     # (name, parent, head, tail, roll target)
+for name in FINGER_NAMES + ["Thumb"]:
+    _, _, _, h, m, t = FINGER_JOINTS[name]
+    curl = THUMB_CURL_DIR if name == "Thumb" else n_palm
+    FINGER_SPECS.append(("%s1.R" % name, "Hand.R", h, m, curl))
+    FINGER_SPECS.append(("%s2.R" % name, "%s1.R" % name, m, t, curl))
+FINGER_BONES = [n for n, *_ in FINGER_SPECS]
+bpy.ops.object.mode_set(mode='EDIT')
+for name, parent, head, tail, roll_target in FINGER_SPECS:
+    b = arm_data.edit_bones.new(name)
+    b.head, b.tail = head, tail
+    b.parent = arm_data.edit_bones[parent]
+    b.align_roll(roll_target)
 bpy.ops.object.mode_set(mode='OBJECT')
 RIG.select_set(False)
 for pb in RIG.pose.bones:
@@ -1003,6 +1177,59 @@ def side_of(co):
 
 skin(body, lambda co: ["Head"] if co.z > 1.92 else
      ["Head", "Neck", "Spine", "UpperArm.L", "UpperArm.R", "Forearm.L", "Forearm.R", "Hand.L", "Hand.R"])
+
+# Finger weights are carved out of each hand vertex's existing Hand.R share only (Hand.R + finger bones = the old Hand.R weight;
+# Forearm.R/Spine shares untouched), so with the finger bones at rest the skinning is identical to the approved export.
+# Membership: finger tubes by mesh connectivity below the web, nearest finger centre across the knuckle band, thumb lobe by
+# connectivity; smooth ramps into Hand.R above the knuckles and between the two segments. Influences stay at four or fewer:
+# where a vertex already has three body bones and would need both segments, the smaller segment share folds into the larger.
+FINGER_WEIGHT_STATS = {"verticesWeighted": 0, "hardSegmentSplits": 0, "maxInfluences": 0, "perBone": {}}
+_finger_comp_sets = {n: set(c.tolist()) for n, c in FINGER_COMP.items()}
+def finger_membership(j):
+    """-> (finger name or None, ramp into the finger from Hand.R, split from segment 1 to segment 2)."""
+    s = S_W[j]
+    if _tm[j]:
+        return "Thumb", smooth(THUMB_CMC - 0.01, THUMB_CMC + 0.03, s), smooth(THUMB_MCP - 0.012, THUMB_MCP + 0.012, s)
+    if s > FINGER_WEB:
+        name = next((n for n in FINGER_NAMES if j in _finger_comp_sets[n]), None)
+    elif s < FINGER_MCP - 0.02 or U_W[j] > 0.07:
+        name = None
+    else:
+        name = min(FINGER_NAMES, key=lambda n: abs(U_W[j] - FINGER_U[n]))
+    if name is None:
+        return None, 0.0, 0.0
+    pip_s = FINGER_JOINTS[name][1]
+    return name, smooth(FINGER_MCP - 0.015, FINGER_MCP + 0.015, s), smooth(pip_s - 0.012, pip_s + 0.012, s)
+hand_vg = body.vertex_groups["Hand.R"]
+finger_vgs = {n: body.vertex_groups.new(name=n) for n in FINGER_BONES}
+for j, vi in enumerate(hand_idx):
+    name, ramp, split = finger_membership(j)
+    if name is None or ramp <= 0.0:
+        continue
+    v = body.data.vertices[vi]
+    existing = {body.vertex_groups[g.group].name: g.weight for g in v.groups}
+    w_hand = existing.get("Hand.R", 0.0)
+    if w_hand <= 0.0:
+        continue
+    w_f = w_hand * ramp
+    w1, w2 = w_f * (1.0 - split), w_f * split
+    others = len([g for g in existing if g != "Hand.R"]) + (1 if w_hand - w_f > 1e-6 else 0)
+    if w1 > 1e-6 and w2 > 1e-6 and others + 2 > 4:
+        FINGER_WEIGHT_STATS["hardSegmentSplits"] += 1
+        if w1 >= w2:
+            w1, w2 = w_f, 0.0
+        else:
+            w1, w2 = 0.0, w_f
+    if w_hand - w_f > 1e-6:
+        hand_vg.add([vi], w_hand - w_f, 'REPLACE')
+    else:
+        hand_vg.remove([vi])
+    for bone_n, w in (("%s1.R" % name, w1), ("%s2.R" % name, w2)):
+        if w > 1e-6:
+            finger_vgs[bone_n].add([vi], w, 'REPLACE')
+            FINGER_WEIGHT_STATS["perBone"][bone_n] = FINGER_WEIGHT_STATS["perBone"].get(bone_n, 0) + 1
+    FINGER_WEIGHT_STATS["verticesWeighted"] += 1
+    FINGER_WEIGHT_STATS["maxInfluences"] = max(FINGER_WEIGHT_STATS["maxInfluences"], len(body.data.vertices[vi].groups))
 for ob in (eyes, brows, shell, locks):
     skin(ob, ["Head"])
 skin(collar, ["Neck", "Head", "Spine"])
@@ -1043,7 +1270,7 @@ for name, bone, point in SOCKET_SPECS:
     empty["role"] = "equipment_socket"
     SOCKETS.append(empty)
 
-# ------------------------------------------------------------------------ animation clips: Idle, Walk, Turn
+# ------------------------------------------------------------------------ animation clips: Idle, Walk, Run, Turn (legacy), TurnLeft, TurnRight, Jump
 sc.render.fps = 24
 ANIM_BONES = [n for n, _, _, _ in BONE_SPECS if n != "Root"]
 
@@ -1063,18 +1290,465 @@ def idle_pose(phase):
             "UpperArm.L": (0.015 * s, 0, -0.01 * s), "UpperArm.R": (0.015 * s, 0, 0.01 * s)}
     return pose, (0, 0.006 * s, 0)
 
+def run_pose(phase):
+    # in-place run, 0.75 s cycle: longer stride with a forward lean, high heel kick in the back swing, elbows held
+    # bent with a strong counter-swing, pelvis/spine counter-rotation and a flight-phase rise at maximum leg split
+    ph = 2 * math.pi * phase; s = math.sin(ph)
+    kick_l = max(0.0, -math.sin(ph - 0.5)); kick_r = max(0.0, math.sin(ph - 0.5))
+    # bone-local X: Thigh + = hip flexion, Shin - = knee flexion, Foot + = toes up, Spine/Head + = lean back (probed on the rig)
+    pose = {"Thigh.L": (0.15 + 0.75 * s, 0, 0), "Thigh.R": (0.15 - 0.75 * s, 0, 0),
+            "Shin.L": (-(0.15 + 1.15 * kick_l), 0, 0), "Shin.R": (-(0.15 + 1.15 * kick_r), 0, 0),
+            "Foot.L": (0.55 * kick_l + 0.60 * max(0.0, -s) + 0.45 * max(0.0, s), 0, 0),    # toes up through toe-off and knee drive
+            "Foot.R": (0.55 * kick_r + 0.60 * max(0.0, s) + 0.45 * max(0.0, -s), 0, 0),
+            "UpperArm.L": (-0.05 - 0.45 * s, 0, 0), "UpperArm.R": (-0.05 + 0.45 * s, 0, 0),   # 0.45 keeps the sleeve top under the mantle
+            "Forearm.L": (1.15 + 0.25 * max(0.0, -s), 0, 0), "Forearm.R": (1.15 + 0.25 * max(0.0, s), 0, 0),
+            "Hips": (0, -0.08 * s, 0.03 * s), "Spine": (-0.14 - 0.02 * math.cos(2 * ph), 0.14 * s, 0),
+            "Neck": (0.04, 0, 0), "Head": (0.09, -0.05 * s, 0)}
+    return pose, (0, 0.020 - 0.025 * math.cos(2 * ph), 0)
+
 def turn_pose(phase):
     yaw = 0.52 * smooth(0.0, 1.0, phase); st = math.sin(math.pi * phase)
     pose = {"Hips": (0, yaw, 0), "Head": (0, 0.25 * st, 0), "Spine": (0, 0.08 * st, 0),
             "Thigh.R": (0.18 * st, 0, 0), "Shin.R": (-0.30 * st, 0, 0), "UpperArm.L": (0.05 * st, 0, 0), "UpperArm.R": (-0.05 * st, 0, 0)}
     return pose, (0, 0.004 * st, 0)
 
-CLIPS = [("Idle", 48, idle_pose, True), ("Walk", 24, walk_pose, True), ("Turn", 24, turn_pose, False)]
+# --- stepping turns and a pose-only jump. Pose functions below return (pose, (hips_x, grounded_weight, hips_z)); `floored`
+# turns the grounded weight into the Hips vertical offset that puts the lowest planted foot point on the floor plane, so
+# crouches and heel-raises never push feet through the ground and airborne frames keep the root at zero (physics owns Y).
+# Probed bone-local axes: Hips +Y = positive yaw (turn left, CCW from above), Hips location X = world X (lateral shift),
+# Thigh +Y = toes toward +X (twist), Thigh/UpperArm +Z = limb toward -X, so the exact mirror swaps L/R and negates Y, Z and hips X.
+def feet_lowest_z(pose, hips_x, hips_z):
+    for name in ANIM_BONES:
+        RIG.pose.bones[name].rotation_euler = pose.get(name, (0, 0, 0))
+    RIG.pose.bones["Hips"].location = (hips_x, 0.0, hips_z)
+    RIG.update_tag(); bpy.context.view_layer.update()
+    ev = feet.evaluated_get(bpy.context.evaluated_depsgraph_get()); m = ev.to_mesh()
+    z = min(v.co.z for v in m.vertices); ev.to_mesh_clear()
+    return z
+def floored(raw_fn):
+    cache = {}
+    def fn(phase):
+        if phase not in cache:
+            pose, (hx, g, hz) = raw_fn(phase)
+            lift = -feet_lowest_z(pose, hx, hz) * g if g > 0 else 0.0
+            cache[phase] = (pose, (hx, round(lift, 5), hz))
+        return cache[phase]
+    fn.cache = cache
+    return fn
+def mirror_pose(fn):
+    def mirrored(phase):
+        pose, (hx, g, hz) = fn(phase)
+        out = {}
+        for name, (x, y, z) in pose.items():
+            n = name[:-2] + {".L": ".R", ".R": ".L"}[name[-2:]] if name[-2:] in (".L", ".R") else name
+            out[n] = (x, -y, -z)
+        return out, (-hx, g, hz)
+    return mirrored
+
+TURN_T, TURN_A, TURN_F = 0.28, 0.20, 0.10   # thigh twist, step-out abduction, planted fore/aft drift (radians)
+def lift_window(q):
+    return max(0.0, math.sin(math.pi * q) - 0.12) / 0.88          # lift bell with a short double-support dwell at both ends
+def turn_left_raw(phase):
+    # TurnLeft (A key, positive yaw). The left foot steps out first (phase 0 to 0.5), the right foot follows (0.5 to 1).
+    # While a foot is planted the simulation rotates the body over it, so planted thighs drift linearly toward the start of
+    # their next step (toes toward +X, left foot forward / right foot back); the lifted foot swings to the opposite end.
+    # The drift of 2*TURN_T per half cycle matches a sustained yaw of about 0.84 rad/s; other rates slide the planted foot.
+    p = phase % 1.0
+    if p < 0.5:
+        q = p / 0.5; sw = smooth(0.0, 1.0, q); lift_l, lift_r = lift_window(q), 0.0
+        tw_l, tw_r = TURN_T * (1 - 2 * sw), -TURN_T + 2 * TURN_T * q
+        fl_l, fl_r = TURN_F * (1 - 2 * sw), TURN_F * (1 - 2 * q)
+        ab_l, ab_r = TURN_A * (0.35 + 0.65 * sw), 0.0
+    else:
+        q = (p - 0.5) / 0.5; sw = smooth(0.0, 1.0, q); lift_l, lift_r = 0.0, lift_window(q)
+        tw_l, tw_r = -TURN_T + 2 * TURN_T * q, TURN_T * (1 - 2 * sw)
+        fl_l, fl_r = -TURN_F + 2 * TURN_F * q, -TURN_F + 2 * TURN_F * sw
+        ab_l, ab_r = TURN_A * (1.0 - 0.65 * q), 0.08 * math.sin(math.pi * q)
+    s = math.sin(2 * math.pi * p)
+    def leg(side, tw, fl, ab, lift, hip, knee):
+        thigh = fl + hip * lift; shin = -knee * lift
+        foot = -(thigh + shin) - 0.10 * lift                     # sole stays level with the floor; lifted foot hangs slightly toe-down
+        return {"Thigh." + side: (thigh, tw, ab), "Shin." + side: (shin, 0, 0), "Foot." + side: (foot, 0, 0)}
+    # the follow foot swings forward, which lowers its arc, so it gets more hip and knee for a similar clearance
+    pose = {**leg("L", tw_l, fl_l, ab_l, lift_l, 0.38, 0.70), **leg("R", tw_r, fl_r, ab_r, lift_r, 0.46, 1.00),
+            "Hips": (0, 0.12 * s, -0.03 * s), "Spine": (-0.03, -0.06 * s, 0.03 * s), "Neck": (0, 0.10, 0), "Head": (0, 0.26, 0),
+            "UpperArm.L": (0.10 * lift_r - 0.05 * lift_l, 0, 0.08 * lift_l), "UpperArm.R": (0.10 * lift_l - 0.05 * lift_r, 0, -0.08 * lift_r),
+            "Forearm.L": (0.12 + 0.10 * lift_r, 0, 0), "Forearm.R": (0.12 + 0.10 * lift_l, 0, 0)}
+    return pose, (0.045 * s, 1.0, 0.0)                                   # weight shifts over the planted foot; net zero per cycle
+turn_left_pose = floored(turn_left_raw)
+turn_right_pose = floored(mirror_pose(turn_left_raw))
+
+# Jump: symmetric key poses at the manifest phase markers, smoothstep-blended; grounded weight 1 on the floor, 0 airborne.
+# Symmetric entries ("Thigh") expand to .L as given and .R with Y/Z negated.
+JUMP_KEYS = [
+    ("rest",      0.00, {}, 1.0),
+    ("crouch",    0.22, {"Thigh": (0.85, 0, 0.04), "Shin": (-1.45, 0, 0), "Foot": (0.60, 0, 0), "Spine": (-0.35, 0, 0), "Neck": (0.05, 0, 0),
+                         "Head": (0.20, 0, 0), "UpperArm": (-0.55, 0, 0.10), "Forearm": (0.25, 0, 0)}, 1.0),
+    ("push",      0.33, {"Thigh": (0.08, 0, 0.03), "Shin": (-0.10, 0, 0), "Foot": (-0.32, 0, 0), "Spine": (0.06, 0, 0), "Head": (-0.02, 0, 0),
+                         "UpperArm": (1.00, 0, 0.15), "Forearm": (0.35, 0, 0)}, 1.0),
+    ("tuck",      0.50, {"Thigh": (1.05, 0, 0.06), "Shin": (-1.55, 0, 0), "Foot": (0.15, 0, 0), "Spine": (-0.22, 0, 0), "Neck": (0.05, 0, 0),
+                         "Head": (0.12, 0, 0), "UpperArm": (0.55, 0, 0.25), "Forearm": (0.70, 0, 0)}, 0.0),
+    ("reach",     0.72, {"Thigh": (0.35, 0, 0.08), "Shin": (-0.35, 0, 0), "Foot": (-0.12, 0, 0), "Spine": (-0.05, 0, 0),
+                         "UpperArm": (0.30, 0, 0.35), "Forearm": (0.30, 0, 0)}, 0.0),
+    ("touchdown", 0.80, {"Thigh": (0.45, 0, 0.08), "Shin": (-0.75, 0, 0), "Foot": (0.30, 0, 0), "Spine": (-0.15, 0, 0), "Head": (0.08, 0, 0),
+                         "UpperArm": (0.45, 0, 0.30), "Forearm": (0.35, 0, 0)}, 1.0),
+    ("absorb",    0.90, {"Thigh": (0.95, 0, 0.06), "Shin": (-1.55, 0, 0), "Foot": (0.60, 0, 0), "Spine": (-0.40, 0, 0), "Neck": (0.05, 0, 0),
+                         "Head": (0.22, 0, 0), "UpperArm": (0.65, 0, 0.20), "Forearm": (0.45, 0, 0)}, 1.0),
+    ("rest",      1.00, {}, 1.0)]
+def expand_symmetric(pose):
+    out = {}
+    for name, (x, y, z) in pose.items():
+        if name in ("Thigh", "Shin", "Foot", "UpperArm", "Forearm"):
+            out[name + ".L"] = (x, y, z); out[name + ".R"] = (x, -y, -z)
+        else:
+            out[name] = (x, y, z)
+    return out
+JUMP_EXPANDED = [(n, ph, expand_symmetric(p), g) for n, ph, p, g in JUMP_KEYS]
+def jump_raw(phase):
+    p = min(max(phase, 0.0), 1.0)
+    for (n0, p0, a, g0), (n1, p1, b, g1) in zip(JUMP_EXPANDED, JUMP_EXPANDED[1:]):
+        if p0 <= p <= p1:
+            t = smooth(p0, p1, p) if p1 > p0 else 1.0
+            pose = {k: tuple(a.get(k, (0, 0, 0))[i] + (b.get(k, (0, 0, 0))[i] - a.get(k, (0, 0, 0))[i]) * t for i in range(3))
+                    for k in set(a) | set(b)}
+            return pose, (0.0, g0 + (g1 - g0) * t, 0.0)
+    raise ValueError(phase)
+jump_pose = floored(jump_raw)
+
+# ------------------------------------------------------------------------ riding: seated pose, RideIdle/RideWalk/RideRun, robe drape morph
+# The adult sedgehorn (../../creatures/sedgehorn_mount) is the reference mount. Its manifest gives the saddle seat point, stirrup
+# treads, rein-hand points and the per-frame seat motion of its Idle/Walk/Run clips (all glTF space: +Y up, -Z forward). The rider
+# clips are authored in the rider's own space; the viewer places the rider root at RIDER_SEAT_OFFSET (rideClips.riderSeatOffsetGlb)
+# above the mount origin, so the seated pelvis rests on the seat. Legs and arms are solved once (aim/2-bone IK) against the seat,
+# stirrups and rein points; the gait layers only add the seat motion to Hips plus small torso/arm follow-through.
+MOUNT_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "creatures", "sedgehorn_mount"))
+MOUNT_BLEND = os.path.join(MOUNT_DIR, "sedgehorn_adult.blend")
+MOUNT_MANIFEST = os.path.join(MOUNT_DIR, "sedgehorn_manifest.json")
+mount_m = json.load(open(MOUNT_MANIFEST)) if os.path.exists(MOUNT_MANIFEST) else {}
+MOUNT_AVAILABLE = bool(mount_m) and os.path.exists(MOUNT_BLEND)
+def gltf_to_blender(p):
+    return Vector((p[0], -p[2], p[1]))
+def blender_to_gltf(p):
+    return [round(p.x, 4), round(p.z, 4), round(-p.y, 4)]
+_seat = mount_m.get("seat", {})
+SEAT_B = gltf_to_blender(_seat.get("glbPosition", [0.0, 1.9732, -0.02]))
+STIRRUP_B = {s: gltf_to_blender(_seat.get("stirrupTreadGlb", {}).get(s, [0.576 * (1 if s == "R" else -1), 1.372, -0.084])) for s in ("L", "R")}
+REIN_B = {s: gltf_to_blender(_seat.get("reinHandGlb", {}).get(s, [0.17 * (1 if s == "R" else -1), 2.293, -0.24])) for s in ("L", "R")}
+SEATED_PELVIS_DROP = 0.823                 # hip-joint height 0.95 minus the seated pelvis-bottom depth (0.127) measured on the tunic/trousers
+RIDE_ROOT = Vector((0.0, SEAT_B.y + 0.02, SEAT_B.z - SEATED_PELVIS_DROP))    # rider floor origin in mount space (Blender axes)
+RIDE_GAITS = {"RideIdle": "Idle", "RideWalk": "Walk", "RideRun": "Run"}
+RIDE_FRAMES = {g: int(mount_m.get("clipEvidence", {}).get(m_, {}).get("frames", {"Idle": 72, "Walk": 32, "Run": 20}[m_]))
+               for g, m_ in RIDE_GAITS.items()}
+RIDE_STEP = {"RideIdle": 3, "RideWalk": 2, "RideRun": 1}
+SEAT_DELTA = {g: [tuple(d) for d in mount_m.get("clipEvidence", {}).get(m_, {}).get("seatDeltaPerFrameGlb", [])] for g, m_ in RIDE_GAITS.items()}
+RIDE_LEAN = {"RideIdle": -0.04, "RideWalk": -0.06, "RideRun": -0.16}       # Spine X (negative leans forward)
+KNEE_POLE = (0.75, 1.0, 0.15)                                                # knee direction off the hip-to-ankle line: out (x mirrors), forward, slightly up
+HAND_DIR = Vector((0.08, 0.90, -0.42)).normalized()                         # open hand sloping down onto the rein end (right side; x mirrors)
+HAND_PRONATION = 0.7                                                         # palm normal = (-0.7 inward, 0, -1 down) normalised: resting on the rein, thumb forward
+ANKLE_ABOVE_TREAD = 0.115                                                    # ankle joint above the stirrup tread: boot sole (0.108 below the joint) clears the tread by 7 mm
+
+def set_pose(pose, hips_loc=(0.0, 0.0, 0.0)):
+    for name in ANIM_BONES:
+        RIG.pose.bones[name].rotation_euler = pose.get(name, (0, 0, 0))
+    RIG.pose.bones["Hips"].location = hips_loc
+    RIG.update_tag(); bpy.context.view_layer.update()
+def bone_world_rot(pb):
+    return pb.matrix.to_3x3() @ pb.bone.matrix_local.to_3x3().inverted()
+def aim_bone(name, target_dir, twist=0.0, hint=None):
+    """Rotate a bone (in its parent's current pose) so its axis points along target_dir (armature space). `hint` = (axis, vector)
+    rolls the bone so its rest local axis ('X' lateral or 'Z' front, see the probed rest axes) points as close as possible to the
+    vector; otherwise the shortest arc from the rest direction is used, plus `twist` about the target."""
+    pb = RIG.pose.bones[name]; B = pb.bone.matrix_local.to_3x3()
+    rest_dir = (B @ Vector((0, 1, 0))).normalized(); t = Vector(target_dir).normalized()
+    if hint is None:
+        Rw = Matrix.Rotation(twist, 3, t) @ rest_dir.rotation_difference(t).to_matrix()
+    else:
+        axis, vec = hint
+        a0 = (B @ (Vector((1, 0, 0)) if axis == 'X' else Vector((0, 0, 1)))).normalized()
+        a0 = (a0 - rest_dir * a0.dot(rest_dir)).normalized()
+        a1 = Vector(vec) - t * Vector(vec).dot(t); a1 = a1.normalized()
+        F0 = Matrix((a0, rest_dir, a0.cross(rest_dir))).transposed(); F1 = Matrix((a1, t, a1.cross(t))).transposed()
+        Rw = Matrix.Rotation(twist, 3, t) @ F1 @ F0.inverted()
+    Rp = bone_world_rot(pb.parent) if pb.parent else Matrix.Identity(3)
+    pb.rotation_euler = (B.inverted() @ Rp.inverted() @ Rw @ B).to_euler('XYZ')
+    RIG.update_tag(); bpy.context.view_layer.update()
+    return tuple(round(c, 6) for c in pb.rotation_euler)
+def two_bone_elbow(S, W, a, b, pole):
+    d = W - S; L = min(d.length, a + b - 1e-3); dn = d.normalized()
+    cos_a = max(-1.0, min(1.0, (a * a + L * L - b * b) / (2 * a * L)))
+    perp = pole - dn * pole.dot(dn)
+    perp = perp.normalized() if perp.length > 1e-6 else Vector((0, -1, 0))
+    return S + dn * (a * cos_a) + perp * (a * math.sqrt(max(0.0, 1 - cos_a * cos_a)))
+
+def solve_ride_pose(lean):
+    """Seated pose in armature space with the rig origin at RIDE_ROOT: thighs splayed over the barrel, shins aimed at the stirrup
+    treads, feet level in the irons, hands aimed at the rein ends with the original open hand geometry (GripRight stays 0)."""
+    pose = {"Hips": (0.03, 0, 0), "Spine": (lean, 0, 0), "Neck": (-0.35 * lean, 0, 0), "Head": (-0.55 * lean, 0, 0)}
+    set_pose(pose)
+    for sign, side in ((-1, "L"), (1, "R")):
+        # leg: 2-bone IK from the hip joint to the stirrup ankle point, knee pushed forward-and-out by the pole so the thigh
+        # splays over the barrel and the calf hangs beside the flank
+        hip = RIG.pose.bones["Thigh." + side].head
+        thigh_len = (BONE_SEG["Thigh." + side][1] - BONE_SEG["Thigh." + side][0]).length
+        shin_len = (BONE_SEG["Shin." + side][1] - BONE_SEG["Shin." + side][0]).length
+        ankle_target = (STIRRUP_B[side] - RIDE_ROOT) + Vector((0.0, -0.035, ANKLE_ABOVE_TREAD))
+        knee_t = two_bone_elbow(hip, ankle_target, thigh_len, shin_len, Vector((sign * KNEE_POLE[0], KNEE_POLE[1], KNEE_POLE[2])))
+        pose["Thigh." + side] = aim_bone("Thigh." + side, knee_t - hip, hint=('Z', (sign * 0.5, 1.0, 0.2)))      # kneecap forward-out
+        knee = RIG.pose.bones["Thigh." + side].tail
+        pose["Shin." + side] = aim_bone("Shin." + side, ankle_target - knee, hint=('Z', (sign * 0.4, 1.0, 0.0)))   # shin front forward-out
+        pose["Foot." + side] = aim_bone("Foot." + side, Vector((sign * 0.10, 0.93, -0.18)), hint=('Z', (sign * 0.15, 0.0, 1.0)))   # sole down
+        shoulder = RIG.pose.bones["UpperArm." + side].head
+        a = (BONE_SEG["UpperArm." + side][1] - BONE_SEG["UpperArm." + side][0]).length
+        b = (BONE_SEG["Forearm." + side][1] - BONE_SEG["Forearm." + side][0]).length
+        hd = Vector((sign * HAND_DIR.x, HAND_DIR.y, HAND_DIR.z))
+        wrist_target = (REIN_B[side] - RIDE_ROOT) - hd * 0.125
+        elbow = two_bone_elbow(shoulder, wrist_target, a, b, Vector((sign * 0.55, -1.0, -0.25)))
+        pose["UpperArm." + side] = aim_bone("UpperArm." + side, elbow - shoulder, hint=('Z', (sign * 0.2, 1.0, 0.0)))          # elbow back
+        pose["Forearm." + side] = aim_bone("Forearm." + side, wrist_target - RIG.pose.bones["Forearm." + side].head, hint=('Z', (0.0, 0.3, 1.0)))
+        # rest palms face medially (local -X right, +X left); local X toward (p, 0, sign) turns each palm down-and-inward over its rein
+        pose["Hand." + side] = aim_bone("Hand." + side, hd, hint=('X', (HAND_PRONATION, 0.0, float(sign))))
+    report = {}
+    for sign, side in ((-1, "L"), (1, "R")):
+        hd = Vector((sign * HAND_DIR.x, HAND_DIR.y, HAND_DIR.z))
+        hand = RIG.pose.bones["Hand." + side]
+        report[side] = {"kneeGlb": blender_to_gltf(RIDE_ROOT + RIG.pose.bones["Thigh." + side].tail),
+                        "ankleGlb": blender_to_gltf(RIDE_ROOT + RIG.pose.bones["Shin." + side].tail),
+                        "toeGlb": blender_to_gltf(RIDE_ROOT + RIG.pose.bones["Foot." + side].tail),
+                        "wristGlb": blender_to_gltf(RIDE_ROOT + hand.head),
+                        "knuckleGlb": blender_to_gltf(RIDE_ROOT + hand.head.lerp(hand.tail, 0.6)),
+                        "knuckleToReinHandMeters": round(((RIDE_ROOT + hand.head.lerp(hand.tail, 0.6)) - REIN_B[side]).length, 4),
+                        "wristToIkTargetMeters": round(((RIDE_ROOT + hand.head) - (REIN_B[side] - hd * 0.125)).length, 4),
+                        "ankleToStirrupTargetMeters": round(((RIDE_ROOT + RIG.pose.bones["Shin." + side].tail) - (STIRRUP_B[side] + Vector((0.0, -0.035, ANKLE_ABOVE_TREAD)))).length, 4)}
+    set_pose({})
+    return pose, report
+RIDE_STATIC, RIDE_REPORT = {}, {}
+for g in RIDE_GAITS:
+    RIDE_STATIC[g], RIDE_REPORT[g] = solve_ride_pose(RIDE_LEAN[g])
+
+def ride_pose_factory(gait):
+    static = RIDE_STATIC[gait]; frames = RIDE_FRAMES[gait]; deltas = SEAT_DELTA[gait]
+    def add(pose, name, d):
+        x, y, z = pose.get(name, (0, 0, 0)); pose[name] = (x + d[0], y + d[1], z + d[2])
+    def fn(phase):
+        p = phase % 1.0; ph = 2 * math.pi * p
+        d = deltas[int(round(p * frames)) % frames] if deltas else (0.0, 0.0, 0.0)
+        pose = dict(static)
+        if gait == "RideIdle":
+            s = math.sin(ph)
+            add(pose, "Spine", (0.012 * s, 0, 0)); add(pose, "Head", (-0.008 * s, 0.035 * math.sin(ph + 1.0), 0))
+            add(pose, "UpperArm.L", (0.01 * s, 0, 0)); add(pose, "UpperArm.R", (0.01 * s, 0, 0))
+        elif gait == "RideWalk":
+            s2 = math.sin(2 * ph); s = math.sin(ph)
+            add(pose, "Hips", (0.03 * s2, 0, 0.9 * d[0])); add(pose, "Spine", (-0.03 * s2, 0, -0.6 * d[0])); add(pose, "Head", (0.0, 0.03 * s, 0))
+            add(pose, "UpperArm.L", (0.025 * s2, 0, 0)); add(pose, "UpperArm.R", (0.025 * s2, 0, 0))
+            add(pose, "Forearm.L", (0.02 * s2, 0, 0)); add(pose, "Forearm.R", (0.02 * s2, 0, 0))
+        else:
+            dy = d[1]
+            add(pose, "Hips", (0.4 * dy, 0, 0)); add(pose, "Spine", (0.9 * dy, 0, 0)); add(pose, "Head", (-0.5 * dy, 0, 0))
+            add(pose, "UpperArm.L", (0.6 * dy, 0, 0)); add(pose, "UpperArm.R", (0.6 * dy, 0, 0))
+        # Hips bone-local axes (X = world X, Y = up, Z = back) coincide with glTF axes, so the seat delta is applied as-is
+        return pose, (round(d[0], 5), round(d[1], 5), round(d[2], 5))
+    return fn
+ride_idle_pose, ride_walk_pose, ride_run_pose = (ride_pose_factory(g) for g in ("RideIdle", "RideWalk", "RideRun"))
+
+# Robe and tunic drape morph "RideDrape": with the thighs flexed, the skirt rows weighted to Thigh/Shin would swing into the
+# saddle and barrel. The morph re-lays every skirt vertex below the hips as cloth falling from the hip ring under gravity: it
+# drops row by row along its rest spacing, is pushed out of the mount body/tack and the rider's own legs, and slides down the
+# local slope so the rest length is kept. The result is inverted through the seated skinning matrices, so the morph is a rest-
+# space offset that the ride clips key to 1 and every on-foot clip keys to 0.
+from mathutils.bvhtree import BVHTree
+RIDE_FIT = {"mountReferenceAvailable": MOUNT_AVAILABLE}
+DRAPE = {}
+def load_mount_collision():
+    before = {k: set(getattr(bpy.data, k).keys()) for k in ("objects", "meshes", "materials", "armatures", "actions", "node_groups", "images", "collections")}
+    with bpy.data.libraries.load(MOUNT_BLEND, link=False) as (src, dst):
+        dst.objects = [n for n in src.objects if n in ("SH_body", "SH_saddle", "SH_blanket")]   # closed/consistently oriented shells only; the girth ring has mixed normals
+    ref = bpy.data.collections.new("MountRefTemp"); sc.collection.children.link(ref)
+    for ob in dst.objects:
+        if ob is not None:
+            ref.objects.link(ob)
+            for mod in list(ob.modifiers):
+                if mod.type == 'ARMATURE':
+                    ob.modifiers.remove(mod)
+    bpy.context.view_layer.update()
+    dg_ = bpy.context.evaluated_depsgraph_get()
+    # one BVH per closed shell: the inside test (nearest point normal) is only meaningful per shell, a point under the saddle
+    # would otherwise be judged "outside" by the saddle's inner face while sitting inside the body
+    # (tree, depth cap): a thin shell cannot be penetrated deeper than its thickness, which also rejects the false "inside" the
+    # nearest-face normal test gives for points off a shell's rim; the closed body volume needs no cap
+    caps = {"SH_body": None, "SH_saddle": 0.05, "SH_blanket": 0.025}
+    trees = [(world_bvh(ob, dg_), caps.get(ob.name, 0.05)) for ob in dst.objects if ob is not None]
+    all_bm = bmesh.new()
+    for ob in dst.objects:
+        if ob is not None:
+            ev = ob.evaluated_get(dg_); me = ev.to_mesh(); me.transform(ob.matrix_world); all_bm.from_mesh(me); ev.to_mesh_clear()
+    all_tree = BVHTree.FromBMesh(all_bm); all_bm.free()
+    def cleanup():
+        for k, names in before.items():
+            coll = getattr(bpy.data, k)
+            for n in list(coll.keys()):
+                if n not in names:
+                    coll.remove(coll[n])
+    return trees, all_tree, cleanup
+def world_bvh(ob, dg_):
+    ev = ob.evaluated_get(dg_); me = ev.to_mesh(); me.transform(ob.matrix_world)
+    bm = bmesh.new(); bm.from_mesh(me); ev.to_mesh_clear()
+    tree = BVHTree.FromBMesh(bm); bm.free(); return tree
+def rider_leg_bvhs():
+    dg_ = bpy.context.evaluated_depsgraph_get()
+    return [(world_bvh(trousers, dg_), 0.10), (world_bvh(boots, dg_), 0.10)]
+def drape_cloth(ob, cols, start_z, trees, gap=0.016, iters=220, settle_iters=70, g_step=0.006, passes=3):
+    """Position-based cloth settle for a drape_patch grid (row-major rows from the top, `cols` u samples per row).
+    Rows at or above start_z keep their skinned position and pin the sheet; every row below is released from the pose,
+    hung straight down from its anchor, then settled: a gravity step per iteration, Gauss-Seidel distance constraints on the
+    grid edges and both diagonals (rest lengths from the authored garment), and a push-out of every mount/leg shell with a
+    `gap` clearance. The last `settle_iters` iterations run without gravity so the edges relax to their rest lengths.
+    Returns (rest, target world positions, draped mask)."""
+    dg_ = bpy.context.evaluated_depsgraph_get()
+    ev = ob.evaluated_get(dg_); me = ev.to_mesh(); posed = [ob.matrix_world @ v.co for v in me.vertices]; ev.to_mesh_clear()
+    rest = [v.co.copy() for v in ob.data.vertices]
+    nrows = len(rest) // cols
+    def collide(C):
+        for _ in range(3):
+            moved = False
+            for tree, cap in trees:
+                loc, nrm, idx, dist = tree.find_nearest(C)
+                if loc is not None and (C - loc).dot(nrm) < gap and (cap is None or dist < cap + gap):
+                    C = loc + nrm * gap; moved = True
+            if not moved:
+                break
+        return C
+    draped = [rest[k].z < start_z for k in range(len(rest))]
+    x = list(posed)
+    for i in range(cols):                                   # initial state: hang each column straight down from its anchor row
+        anchor = None
+        for j in range(nrows):
+            k = j * cols + i
+            if not draped[k]:
+                continue
+            if anchor is None:
+                anchor = x[(j - 1) * cols + i] - rest[(j - 1) * cols + i] if j > 0 else Vector((0, 0, 0))
+            x[k] = collide(anchor + rest[k])
+    edges = []
+    for j in range(nrows):
+        for i in range(cols):
+            k = j * cols + i
+            for (dj, di) in ((0, 1), (1, 0), (1, 1), (1, -1)):
+                jj, ii = j + dj, i + di
+                if 0 <= jj < nrows and 0 <= ii < cols:
+                    kk = jj * cols + ii
+                    if draped[k] or draped[kk]:
+                        edges.append((k, kk, (rest[k] - rest[kk]).length))
+    free = [k for k in range(len(rest)) if draped[k]]
+    down = Vector((0, 0, g_step))
+    for it in range(iters):
+        if it < iters - settle_iters:
+            for k in free:
+                x[k] = x[k] - down
+        for _ in range(passes):
+            for a, b, L in edges:
+                d = x[b] - x[a]; dl = d.length
+                if dl < 1e-9:
+                    continue
+                corr = d * (1.0 - L / dl)
+                if draped[a] and draped[b]:
+                    x[a] = x[a] + corr * 0.5; x[b] = x[b] - corr * 0.5
+                elif draped[a]:
+                    x[a] = x[a] + corr
+                else:
+                    x[b] = x[b] - corr
+        for k in free:
+            x[k] = collide(x[k])
+    strain = max(abs((x[b] - x[a]).length - L) for a, b, L in edges) if edges else 0.0
+    drape_cloth.last_strain = round(strain, 4)
+    return rest, x, draped
+def skin_matrix(ob, vi):
+    M = Matrix.Diagonal((0.0, 0.0, 0.0, 0.0))
+    for g in ob.data.vertices[vi].groups:
+        pb = RIG.pose.bones[ob.vertex_groups[g.group].name]
+        M = M + (pb.matrix @ pb.bone.matrix_local.inverted()) * g.weight
+    return M
+def bake_drape_morph(ob, cols, start_z, trees):
+    rest, target, draped = drape_cloth(ob, cols, start_z, trees)
+    if not ob.data.shape_keys:
+        ob.shape_key_add(name="Basis", from_mix=False)
+    key = ob.shape_key_add(name="RideDrape", from_mix=False); key.value = 0.0
+    skin_err = 0.0; moved = []
+    for i, (r, t, d) in enumerate(zip(rest, target, draped)):
+        M = skin_matrix(ob, i)
+        if not d:
+            skin_err = max(skin_err, (RIDE_ROOT + (M @ r) - t).length)
+            continue
+        key.data[i].co = M.inverted() @ (t - RIDE_ROOT)
+        moved.append((key.data[i].co - r).length)
+    return {"vertices": len(rest), "drapedVertices": len(moved), "maxRestOffsetMeters": round(max(moved), 4) if moved else 0.0,
+            "maxEdgeStrainMeters": drape_cloth.last_strain,
+            "meanRestOffsetMeters": round(sum(moved) / len(moved), 4) if moved else 0.0,
+            "skinningReconstructionErrorMeters": round(skin_err, 6), "drapeStartZ": start_z}
+def fit_against(trees, names, label):
+    """Per rider mesh: vertices inside any mount shell (body, saddle, blanket), deepest penetration, nearest outside distance."""
+    dg_ = bpy.context.evaluated_depsgraph_get(); out = {}
+    for name in names:
+        ob = bpy.data.objects[name]; ev = ob.evaluated_get(dg_); me = ev.to_mesh()
+        inside = 0; deepest = 0.0; nearest = 9.0; lowest = 9.0; nverts = len(me.vertices)
+        for v in me.vertices:
+            p = ob.matrix_world @ v.co; lowest = min(lowest, p.z)
+            depth = 0.0; near = 9.0
+            for tree, cap in trees:
+                loc, nrm, idx, dist = tree.find_nearest(p)
+                if loc is None:
+                    continue
+                if (p - loc).dot(nrm) < 0 and (cap is None or dist < cap):
+                    depth = max(depth, dist)
+                else:
+                    near = min(near, dist)
+            if depth > 0:
+                inside += 1; deepest = max(deepest, depth)
+            else:
+                nearest = min(nearest, near)
+        ev.to_mesh_clear()
+        out[name] = {"vertices": nverts, "verticesInsideMount": inside, "deepestPenetrationMeters": round(deepest, 4),
+                     "nearestOutsideMeters": round(nearest, 4), "lowestWorldZ": round(lowest, 4)}
+    return out
+if MOUNT_AVAILABLE:
+    mount_trees, mount_tree, mount_cleanup = load_mount_collision()
+    RIG.location = RIDE_ROOT
+    pose0, hips0 = ride_idle_pose(0.0)
+    set_pose(pose0, hips0)
+    RIDE_FIT["beforeDrape"] = fit_against(mount_trees, ["V9_robe", "V9_tunic"], "before")
+    leg_trees = rider_leg_bvhs()
+    DRAPE["V9_robe"] = bake_drape_morph(robe, 96 + 1, 0.98, mount_trees + leg_trees)
+    DRAPE["V9_tunic"] = bake_drape_morph(tunic, 40 + 1, 0.98, mount_trees + leg_trees)
+    for ob in (robe, tunic):
+        ob.data.shape_keys.key_blocks["RideDrape"].value = 1.0
+    set_pose(pose0, hips0)
+    RIDE_FIT["rideIdleFrame1"] = fit_against(mount_trees, ["V9_robe", "V9_tunic", "V9_trousers", "V9_boots", "V9_sleeves", "V9_body", "V9_satchel"], "after")
+    RIDE_FIT["note"] = "rideIdleFrame1 is measured against the rest-pose mount; animated frames (both rigs moving) are measured by render_sedgehorn.py and recorded in sedgehorn_manifest.json riderFit"
+    for ob in (robe, tunic):
+        ob.data.shape_keys.key_blocks["RideDrape"].value = 0.0
+    set_pose({})
+    RIG.location = (0.0, 0.0, 0.0)
+    mount_cleanup()
+    RIG.update_tag(); bpy.context.view_layer.update()
+
+CLIPS = [("Idle", 48, idle_pose, True, 3), ("Walk", 24, walk_pose, True, 3), ("Run", 18, run_pose, True, 2),
+         ("Turn", 24, turn_pose, False, 3),                 # legacy single-leg pivot, kept for compatibility until runtime hookup
+         ("TurnLeft", 32, turn_left_pose, True, 2), ("TurnRight", 32, turn_right_pose, True, 2),
+         ("Jump", 36, jump_pose, False, 2),                 # (name, cycle frames at 24 fps, pose, loops, key step)
+         ("RideIdle", RIDE_FRAMES["RideIdle"], ride_idle_pose, True, RIDE_STEP["RideIdle"]),
+         ("RideWalk", RIDE_FRAMES["RideWalk"], ride_walk_pose, True, RIDE_STEP["RideWalk"]),
+         ("RideRun", RIDE_FRAMES["RideRun"], ride_run_pose, True, RIDE_STEP["RideRun"])]
+for clip_name, frames, pose_fn, loop, step in CLIPS:        # warm the floor-solve caches before any action is assigned
+    for f in range(1, frames + 2):
+        pose_fn((f - 1) / frames)
+for pb in RIG.pose.bones:
+    pb.rotation_euler = (0, 0, 0); pb.location = (0, 0, 0)
+RIG.update_tag(); bpy.context.view_layer.update()
 RIG.animation_data_create()
-for clip_name, frames, pose_fn, loop in CLIPS:
+for clip_name, frames, pose_fn, loop, step in CLIPS:
     action = bpy.data.actions.new(clip_name)
     RIG.animation_data.action = action
-    for f in range(1, frames + 2, 3):
+    for f in range(1, frames + 2, step):
         phase = (f - 1) / frames
         pose, hips_loc = pose_fn(phase)
         for name in ANIM_BONES:
@@ -1093,6 +1767,139 @@ RIG.animation_data.action = None
 for pb in RIG.pose.bones:
     pb.rotation_euler = (0, 0, 0)
     pb.location = (0, 0, 0)
+
+# RideDrape weight tracks: 1 across the three ride clips, 0 across every on-foot clip (same NLA track names as the rig, so the
+# glTF exporter merges them into the same animations; a clip switch in the viewer then always carries the right drape state)
+def key_morph_tracks(ob):
+    sk = ob.data.shape_keys
+    if sk.animation_data is None:
+        sk.animation_data_create()
+    kb = sk.key_blocks["RideDrape"]
+    for clip_name, frames, pose_fn, loop, step in CLIPS:
+        action = bpy.data.actions.new("%s_%s" % (ob.name, clip_name))
+        sk.animation_data.action = action
+        value = 1.0 if clip_name in RIDE_GAITS else 0.0
+        for f in (1, frames + 1):
+            kb.value = value
+            kb.keyframe_insert(data_path="value", frame=f)
+        track = sk.animation_data.nla_tracks.new(); track.name = clip_name
+        strip = track.strips.new(clip_name, 1, action)
+        if hasattr(strip, "action_slot") and len(action.slots):
+            strip.action_slot = action.slots[0]
+        track.mute = True
+    sk.animation_data.action = None
+    kb.value = 0.0
+if MOUNT_AVAILABLE:
+    for ob in (robe, tunic):
+        key_morph_tracks(ob)
+
+# ------------------------------------------------------------------------ ToolGrip: finger-only constant clip (approved grip follow-up)
+# Representative shaft: a cylinder of radius TOOL_GRIP_SHAFT_R along world Y at rest (handle trailing toward the back, working head
+# forward, as the user specified for the carry) whose axis passes through the runtime's shared contact line RUNTIME_CONTACT_GLB
+# (src/view/WizardScene.tsx `V9_RIGHT_HAND_CONTACT`, inspected read-only). The runtime mounts the tool once against the REST
+# Socket.RightHand (`rightHandToolMountFor(mainHand, restSocket)`) so the shaft is hand-relative and rides the posed hand; while a
+# tool is equipped it also slerps UpperArm.R/Forearm.R 70 % toward rest (`applyV9EquippedCarryPose`, V9_EQUIPPED_CARRY_STRENGTH).
+# Nothing moves the hand toward a tool: each finger is curled (two segments, fixed proximal:distal ratio) to the largest subtle
+# angle at which its skin still clears the shaft surface; the thumb adducts toward the shaft the same way. Only the ten finger
+# bones are keyed, as a constant two-key clip: no Hand.R/arm/Hips/robe/face channel, so playing it on top of any locomotion clip
+# only closes the fingers. The art-side derived placement (tangent to the open hand 2 cm below the knuckles) is still computed
+# as ART_SHAFT_C so the manifest reports how far the runtime line sits from it.
+TOOL_GRIP_SHAFT_R = 0.0475                  # axe 0.045-0.055, spade 0.045-0.05, pick 0.045-0.052, wand 0.035-0.05 at mid shaft (WizardScene radii)
+TOOL_GRIP_GAP = 0.003                       # open-hand clearance used by the art-side derived placement (diagnostic only)
+TOOL_GRIP_SKIN_GAP = 0.0015                 # curled finger skin must stay at least this far outside the shaft
+TOOL_GRIP_S = FINGER_MCP + 0.02             # art-side derived placement: shaft centre 2 cm below the knuckle line (diagnostic only)
+RUNTIME_CONTACT_GLB = (0.402, 0.984, 0.0345)    # V9_RIGHT_HAND_CONTACT, rest-pose glTF point on the shaft axis (x, up, z)
+RUNTIME_CARRY_BLEND = 0.7                       # V9_EQUIPPED_CARRY_STRENGTH: equipped right arm slerped this far toward rest
+TOOL_GRIP_MAX_DEG = {"Index": (38.0, 34.0), "Middle": (40.0, 36.0), "Ring": (40.0, 36.0), "Pinky": (38.0, 34.0), "Thumb": (32.0, 18.0)}
+                                            # thumb cap raised from 18/10: the runtime line sits 2.3 cm lower than the art-side placement, so the
+                                            # thumb has to adduct further to reach it
+TOOL_GRIP_FRAMES = 12                       # constant clip length (0.5 s at 24 fps) so viewers get a non-zero duration
+def eval_hand():
+    ev = body.evaluated_get(bpy.context.evaluated_depsgraph_get()); m = ev.to_mesh()
+    out = np.array([m.vertices[i].co[:] for i in hand_idx]); ev.to_mesh_clear(); return out
+def set_fingers(angles):
+    for name in FINGER_NAMES + ["Thumb"]:
+        d1, d2 = angles.get(name, (0.0, 0.0))
+        RIG.pose.bones["%s1.R" % name].rotation_euler = (deg(d1), 0.0, 0.0)
+        RIG.pose.bones["%s2.R" % name].rotation_euler = (deg(d2), 0.0, 0.0)
+    RIG.update_tag(); bpy.context.view_layer.update()
+def shaft_clearance(points, centre_xz, radius=TOOL_GRIP_SHAFT_R, axis=None, centre=None):
+    """Signed clearance of points to a cylinder (negative = inside): world-Y axis through centre_xz, or `axis` through `centre`."""
+    if axis is None:
+        d = np.sqrt((points[:, 0] - centre_xz[0]) ** 2 + (points[:, 2] - centre_xz[1]) ** 2)
+        return d - radius
+    a = np.array(axis, float); a /= np.linalg.norm(a)
+    rel = points - np.array(centre, float)
+    perp = rel - np.outer(rel @ a, a)
+    return np.linalg.norm(perp, axis=1) - radius
+set_fingers({})
+OPEN_HAND = eval_hand()
+NEUTRAL_HAND_DRIFT = float(np.abs(OPEN_HAND - HP).max())                             # finger bones at rest must not move the approved hand
+SHAFT_C = Vector((RUNTIME_CONTACT_GLB[0], -RUNTIME_CONTACT_GLB[2], RUNTIME_CONTACT_GLB[1]))   # rest-pose world (Blender) point on the shaft axis
+SHAFT_CX, SHAFT_CY, SHAFT_CZ = SHAFT_C
+_art_cz = (Vector(W) + f_hand * TOOL_GRIP_S).z                                        # art-side derived placement, diagnostic only
+_band = np.abs(OPEN_HAND[:, 2] - _art_cz) < TOOL_GRIP_SHAFT_R
+_art_cx = float(min(OPEN_HAND[j, 0] - math.sqrt(max(0.0, TOOL_GRIP_SHAFT_R ** 2 - (OPEN_HAND[j, 2] - _art_cz) ** 2))
+                    for j in np.where(_band)[0])) - TOOL_GRIP_GAP
+ART_SHAFT_C = Vector((_art_cx, float(OPEN_HAND[:, 1].mean()), _art_cz))
+_open_clear = shaft_clearance(OPEN_HAND, (SHAFT_CX, SHAFT_CZ))
+OPEN_HAND_RUNTIME_GAP = float(_open_clear.min())                                      # the runtime line must sit outside the approved open hand
+FINGER_VERTS = {}                                                                     # finger -> hand-array indices it moves
+for j in range(len(hand_idx)):
+    name, ramp, _ = finger_membership(j)
+    if name is not None and ramp > 0.0:
+        FINGER_VERTS.setdefault(name, []).append(j)
+FINGER_VERTS = {n: np.array(v) for n, v in FINGER_VERTS.items()}
+TOOL_GRIP_DEG = {n: (0.0, 0.0) for n in TOOL_GRIP_MAX_DEG}
+_locked = set()
+_thumb_best = float(_open_clear[FINGER_VERTS["Thumb"]].min())                         # the thumb sweeps past the shaft rather than onto it:
+for step in range(1, 41):                                                             # 2.5 % increments of each finger's cap
+    trial = {n: (TOOL_GRIP_MAX_DEG[n][0] * step / 40.0, TOOL_GRIP_MAX_DEG[n][1] * step / 40.0) for n in TOOL_GRIP_MAX_DEG if n not in _locked}
+    if not trial:
+        break
+    set_fingers({**TOOL_GRIP_DEG, **trial})
+    posed = eval_hand()
+    cl = shaft_clearance(posed, (SHAFT_CX, SHAFT_CZ))
+    for n, ang in trial.items():
+        c_min = float(cl[FINGER_VERTS[n]].min())
+        if n == "Thumb":                                                              # keep the angle that brings it closest, not the largest
+            if c_min < TOOL_GRIP_SKIN_GAP:
+                _locked.add(n)
+            elif c_min < _thumb_best:
+                _thumb_best = c_min; TOOL_GRIP_DEG[n] = ang
+        elif c_min >= TOOL_GRIP_SKIN_GAP:
+            TOOL_GRIP_DEG[n] = ang
+        else:
+            _locked.add(n)
+set_fingers(TOOL_GRIP_DEG)
+GRIPPED_HAND = eval_hand()
+_grip_clear = shaft_clearance(GRIPPED_HAND, (SHAFT_CX, SHAFT_CZ))
+def _clear_stats(cl, sel):
+    c = cl[sel]
+    return {"minMeters": round(float(c.min()), 4), "verticesInsideShaft": int((c < 0).sum()), "verticesWithin5mm": int((c <= 0.005).sum()),
+            "verticesWithin10mm": int((c <= 0.010).sum())}
+TOOL_GRIP_REST_FIT = {"openHand": _clear_stats(_open_clear, np.arange(len(hand_idx))),
+                      "grippedHand": _clear_stats(_grip_clear, np.arange(len(hand_idx))),
+                      "perFinger": {n: {"open": _clear_stats(_open_clear, FINGER_VERTS[n]), "gripped": _clear_stats(_grip_clear, FINGER_VERTS[n]),
+                                        "maxVertexTravelMeters": round(float(np.linalg.norm(GRIPPED_HAND[FINGER_VERTS[n]] - OPEN_HAND[FINGER_VERTS[n]], axis=1).max()), 4)}
+                                    for n in FINGER_NAMES + ["Thumb"]}}
+action = bpy.data.actions.new("ToolGrip")
+RIG.animation_data.action = action
+for f in (1, TOOL_GRIP_FRAMES + 1):
+    for name in FINGER_BONES:
+        RIG.pose.bones[name].keyframe_insert(data_path="rotation_euler", frame=f, group=name)
+track = RIG.animation_data.nla_tracks.new(); track.name = "ToolGrip"
+strip = track.strips.new("ToolGrip", 1, action)
+if hasattr(strip, "action_slot") and len(action.slots):
+    strip.action_slot = action.slots[0]
+track.mute = True
+RIG.animation_data.action = None
+set_fingers({})
+HAND_REST_INV = RIG.pose.bones["Hand.R"].bone.matrix_local.inverted()
+def posed_shaft():
+    """The rest shaft point and axis carried by the posed Hand.R: (centre, hand-relative axis direction)."""
+    m = (RIG.matrix_world @ RIG.pose.bones["Hand.R"].matrix) @ HAND_REST_INV
+    return m @ SHAFT_C, (m.to_3x3() @ Vector((0.0, 1.0, 0.0))).normalized()
 
 # ------------------------------------------------------------------------ camera rigs + lights (saved, not exported)
 rig = bpy.data.objects.new("V9_RIG", None); COLL.objects.link(rig); rig.location = PIVOT
@@ -1142,6 +1949,145 @@ bpy.ops.export_scene.gltf(filepath=OUT_GLB, export_format='GLB', use_selection=T
                           export_apply=True, export_animations=True, export_animation_mode='NLA_TRACKS',
                           export_extras=True, export_cameras=False, export_lights=False,
                           export_vertex_color='ACTIVE', export_image_format='NONE')   # only the hair meshes carry "Col"
+
+# ------------------------------------------------------------------------ ToolGrip channel contract (GLB post-pass)
+# The NLA_TRACKS exporter bakes every bone into every track (constant rest channels included; its "keep constant armature
+# channels" switch cannot tell a keyed-but-constant bone from an unkeyed one in NLA mode, so it would also drop the ride clips'
+# constant seated legs). The .blend already holds the contract (ToolGrip keys only the finger bones; no other action keys
+# them), so the GLB is rewritten to match it: finger channels are removed from every other clip, and ToolGrip keeps only the
+# finger rotation channels. Nothing else in the file changes; the other clips' remaining channels are byte-identical to the
+# exporter's output, and orphaned accessors/bufferViews are pruned (indices remapped, binary blob untouched).
+def parse_glb(path):
+    data = open(path, "rb").read()
+    magic, version, length = struct.unpack_from("<III", data, 0)
+    assert magic == 0x46546C67 and version == 2, "not a GLB v2"
+    off = 12; gltf = None; blob = None
+    while off < length:
+        clen, ctype = struct.unpack_from("<II", data, off); off += 8
+        chunk = data[off:off + clen]; off += clen
+        if ctype == 0x4E4F534A:
+            gltf = json.loads(chunk)
+        elif ctype == 0x004E4942:
+            blob = chunk
+    return gltf, blob, len(data)
+
+def write_glb(path, gltf, blob):
+    js = json.dumps(gltf, separators=(",", ":")).encode("utf-8")
+    js += b" " * (-len(js) % 4)
+    blob = bytes(blob) + b"\0" * (-len(blob) % 4)
+    with open(path, "wb") as fh:
+        fh.write(struct.pack("<III", 0x46546C67, 2, 12 + 8 + len(js) + 8 + len(blob)))
+        fh.write(struct.pack("<II", len(js), 0x4E4F534A)); fh.write(js)
+        fh.write(struct.pack("<II", len(blob), 0x004E4942)); fh.write(blob)
+
+def apply_tool_grip_channel_contract(path):
+    gltf, blob, _ = parse_glb(path)
+    names = [n.get("name") for n in gltf["nodes"]]
+    report = {}
+    for a in gltf.get("animations", []):
+        keep = []
+        for ch in a["channels"]:
+            finger = names[ch["target"]["node"]] in FINGER_BONES
+            wanted = (finger and ch["target"]["path"] == "rotation") if a["name"] == "ToolGrip" else not finger
+            if wanted:
+                keep.append(ch)
+        used = sorted({ch["sampler"] for ch in keep}); remap = {o: i for i, o in enumerate(used)}
+        report[a["name"]] = {"channelsBefore": len(a["channels"]), "channelsAfter": len(keep), "samplersRemoved": len(a["samplers"]) - len(used)}
+        a["samplers"] = [a["samplers"][o] for o in used]
+        for ch in keep:
+            ch["sampler"] = remap[ch["sampler"]]
+        a["channels"] = keep
+    used_acc = set()
+    for mesh in gltf.get("meshes", []):
+        for prim in mesh.get("primitives", []):
+            used_acc.update(prim.get("attributes", {}).values())
+            if "indices" in prim:
+                used_acc.add(prim["indices"])
+            for t in prim.get("targets", []):
+                used_acc.update(t.values())
+    for sk in gltf.get("skins", []):
+        if "inverseBindMatrices" in sk:
+            used_acc.add(sk["inverseBindMatrices"])
+    for a in gltf.get("animations", []):
+        for s in a["samplers"]:
+            used_acc.update((s["input"], s["output"]))
+    acc_map = {o: i for i, o in enumerate(sorted(used_acc))}
+    n_acc_before, n_bv_before = len(gltf["accessors"]), len(gltf["bufferViews"])
+    gltf["accessors"] = [gltf["accessors"][o] for o in sorted(used_acc)]
+    used_bv = set()
+    for acc in gltf["accessors"]:
+        if "bufferView" in acc:
+            used_bv.add(acc["bufferView"])
+        if "sparse" in acc:                                   # morph targets (GripRight, RideDrape) are sparse accessors
+            used_bv.update((acc["sparse"]["indices"]["bufferView"], acc["sparse"]["values"]["bufferView"]))
+    used_bv.update(im["bufferView"] for im in gltf.get("images", []) if "bufferView" in im)
+    used_bv = sorted(used_bv)
+    bv_map = {o: i for i, o in enumerate(used_bv)}
+    gltf["bufferViews"] = [gltf["bufferViews"][o] for o in used_bv]
+    for acc in gltf["accessors"]:
+        if "bufferView" in acc:
+            acc["bufferView"] = bv_map[acc["bufferView"]]
+        if "sparse" in acc:
+            acc["sparse"]["indices"]["bufferView"] = bv_map[acc["sparse"]["indices"]["bufferView"]]
+            acc["sparse"]["values"]["bufferView"] = bv_map[acc["sparse"]["values"]["bufferView"]]
+    for mesh in gltf.get("meshes", []):
+        for prim in mesh.get("primitives", []):
+            prim["attributes"] = {k: acc_map[v] for k, v in prim["attributes"].items()}
+            if "indices" in prim:
+                prim["indices"] = acc_map[prim["indices"]]
+            if "targets" in prim:
+                prim["targets"] = [{k: acc_map[v] for k, v in t.items()} for t in prim["targets"]]
+    for sk in gltf.get("skins", []):
+        if "inverseBindMatrices" in sk:
+            sk["inverseBindMatrices"] = acc_map[sk["inverseBindMatrices"]]
+    for a in gltf.get("animations", []):
+        for s in a["samplers"]:
+            s["input"], s["output"] = acc_map[s["input"]], acc_map[s["output"]]
+    for im in gltf.get("images", []):
+        if "bufferView" in im:
+            im["bufferView"] = bv_map[im["bufferView"]]
+    report["accessorsPruned"] = n_acc_before - len(gltf["accessors"])
+    report["bufferViewsPruned"] = n_bv_before - len(gltf["bufferViews"])
+    write_glb(path, gltf, blob)
+    return report
+TOOL_GRIP_CHANNEL_PASS = apply_tool_grip_channel_contract(OUT_GLB)
+
+# ------------------------------------------------------------------------ Run timeline normalization (GLB post-pass)
+# The NLA strips start at frame 1, so every exported sampler's first key is at 1/24 s. For a LoopRepeat clip Three.js holds the
+# first pose from t=0 until that key each cycle: on Run a 41.7 ms stop every 0.79 s, invisible unarmed but an obvious hand/axe
+# hitch with a long tool equipped. Only Run is moved: Idle/Walk are phase-driven by the runtime, and the ride clips must keep the
+# mount's durations. Run's two time (input) accessors are exclusive to Run and each sit in their own bufferView, so their floats
+# are rewritten in place as t -> (round(t*fps) - 1)/fps: first key 0, closing key 18/24 = 0.75 s, same key count, same outputs,
+# samplers, channels and interpolation; no other byte of the file changes.
+def normalize_clip_timeline(path, clip_name, fps=24):
+    gltf, blob, _ = parse_glb(path)
+    blob = bytearray(blob)
+    clip = next(a for a in gltf["animations"] if a["name"] == clip_name)
+    inputs = sorted({s["input"] for s in clip["samplers"]})
+    elsewhere = {s["input"] for a in gltf["animations"] if a is not clip for s in a["samplers"]} \
+        | {s["output"] for a in gltf["animations"] for s in a["samplers"]}
+    assert not (set(inputs) & elsewhere), "%s time accessors are shared with other data; in-place rewrite unsafe" % clip_name
+    bv_users = {}
+    for i, acc in enumerate(gltf["accessors"]):
+        if "bufferView" in acc:
+            bv_users.setdefault(acc["bufferView"], []).append(i)
+    report = {"clip": clip_name, "fps": fps, "inputAccessors": []}
+    for i in inputs:
+        acc = gltf["accessors"][i]; bv = gltf["bufferViews"][acc["bufferView"]]
+        assert acc["componentType"] == 5126 and acc["type"] == "SCALAR" and bv_users[acc["bufferView"]] == [i] and "byteStride" not in bv
+        off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+        fmt = "<%df" % acc["count"]
+        old = struct.unpack_from(fmt, blob, off)
+        struct.pack_into(fmt, blob, off, *((round(t * fps) - 1) / fps for t in old))
+        new = struct.unpack_from(fmt, blob, off)
+        assert new[0] == 0.0 and all(b > a for a, b in zip(new, new[1:])), "normalized timeline must start at 0 and stay increasing"
+        acc["min"], acc["max"] = [new[0]], [new[-1]]
+        report["inputAccessors"].append({"accessor": i, "keys": acc["count"], "firstKeyBefore": round(old[0], 7), "lastKeyBefore": round(old[-1], 7),
+                                         "firstKeyAfter": new[0], "lastKeyAfter": new[-1]})
+    report["samplersUsingTheseAccessors"] = len(clip["samplers"])
+    write_glb(path, gltf, blob)
+    return report
+RUN_TIMELINE_PASS = normalize_clip_timeline(OUT_GLB, "Run")
 
 # ------------------------------------------------------------------------ evaluated geometry report (Blender side)
 dg = bpy.context.evaluated_depsgraph_get()
@@ -1209,7 +2155,147 @@ def clip_displacement(pose_fn, frames, frame):
     rest_pose()
     return {k: round(v, 4) for k, v in d.items()}
 feet_deform = {"Walk@frame7": clip_displacement(walk_pose, 24, 7), "Walk@frame19": clip_displacement(walk_pose, 24, 19),
-               "Turn@frame13": clip_displacement(turn_pose, 24, 13)}
+               "Run@frame5": clip_displacement(run_pose, 18, 5), "Run@frame14": clip_displacement(run_pose, 18, 14),
+               "Turn@frame13": clip_displacement(turn_pose, 24, 13), "TurnLeft@frame9": clip_displacement(turn_left_pose, 32, 9),
+               "TurnRight@frame9": clip_displacement(turn_right_pose, 32, 9), "Jump@frame19": clip_displacement(jump_pose, 36, 19)}
+
+# ToolGrip through the locomotion clips, open and gripped hand at the same frames, shaft hand-relative as the runtime mounts it
+# (fixed in Hand.R space, rides the socket with its rotation, so the finger clearances are the rest values unless the wrist's own
+# skinning shears the hand). Two arm regimes:
+#  clipArm:        the clip's right arm as exported (unequipped presentation, or the first frames before the carry blend settles);
+#  equippedCarry:  UpperArm.R/Forearm.R slerped RUNTIME_CARRY_BLEND toward rest, what `applyV9EquippedCarryPose` shows while a tool
+#                  is equipped. Bone rotations are relative to rest, so the slerp target is identity.
+def _carry_blend(euler_xyz, blend):
+    q = Euler(euler_xyz, 'XYZ').to_quaternion(); q = q.slerp(Quaternion((1.0, 0.0, 0.0, 0.0)), blend)
+    return tuple(q.to_euler('XYZ'))
+def tool_grip_frame_fit(pose_fn, frames, frame):
+    pose, hips_loc = pose_fn((frame - 1) / frames)
+    out = {}
+    for arm_label, blend in (("clipArm", 0.0), ("equippedCarry", RUNTIME_CARRY_BLEND)):
+        for name in ANIM_BONES:
+            rot = pose.get(name, (0, 0, 0))
+            RIG.pose.bones[name].rotation_euler = _carry_blend(rot, blend) if blend and name in ("UpperArm.R", "Forearm.R") else rot
+        RIG.pose.bones["Hips"].location = hips_loc
+        for label, angles in (("open", {}), ("gripped", TOOL_GRIP_DEG)):
+            set_fingers(angles)
+            c, axis = posed_shaft()
+            hand = eval_hand()
+            cl_h = shaft_clearance(hand, None, axis=axis, centre=c)
+            out["%s.%s" % (arm_label, label)] = {"shaftAxisPointGlb": blender_to_gltf(c), "shaftAxisGlb": blender_to_gltf(axis),
+                                                 **_clear_stats(cl_h, np.arange(len(hand_idx))),
+                                                 "perFinger": {n: _clear_stats(cl_h, FINGER_VERTS[n]) for n in FINGER_NAMES + ["Thumb"]}}
+    rest_pose()
+    return out
+TOOL_GRIP_FRAME_FIT = {"Idle@frame1": tool_grip_frame_fit(idle_pose, 48, 1), "Idle@frame25": tool_grip_frame_fit(idle_pose, 48, 25),
+                       "Walk@frame7": tool_grip_frame_fit(walk_pose, 24, 7), "Walk@frame19": tool_grip_frame_fit(walk_pose, 24, 19),
+                       "Run@frame5": tool_grip_frame_fit(run_pose, 18, 5), "Run@frame14": tool_grip_frame_fit(run_pose, 18, 14)}
+# Run clip proof: foot height through the cycle (stance foot near the floor, swing foot clear), loop closure and
+# amplitude contrast against Walk, all from the same pose functions that keyed the NLA actions
+def foot_heights(pose_fn, frames):
+    lows = {"L": [], "R": []}
+    for f in range(1, frames + 1):
+        pose, hips_loc = pose_fn((f - 1) / frames)
+        for name in ANIM_BONES:
+            RIG.pose.bones[name].rotation_euler = pose.get(name, (0, 0, 0))
+        RIG.pose.bones["Hips"].location = hips_loc
+        RIG.update_tag(); bpy.context.view_layer.update()
+        cos = eval_coords(feet)
+        for side in lows:
+            lows[side].append(round(min(c.z for c, r in zip(cos, feet_rest) if side_of(r) == side), 3))
+    rest_pose()
+    return lows
+run_heights = foot_heights(run_pose, 18)
+p0, h0 = run_pose(0.0); p1, h1 = run_pose(1.0)
+RUN_CLIP = {
+    "cycleFrames": 18, "fps": 24, "keyStepFrames": 2, "inPlace": True,
+    "loopClosure": {"poseAtPhase0EqualsPhase1": all(max(abs(a - b) for a, b in zip(p0[k], p1[k])) < 1e-9 for k in p0) and h0 == h1},
+    "footLowestPointPerFrameMeters": run_heights,
+    "stanceFootMinZ": min(min(run_heights["L"]), min(run_heights["R"])),
+    "swingFootMaxOfMinZ": max(max(run_heights["L"]), max(run_heights["R"])),
+    "amplitudeVsWalkRadians": {"thighSwing": {"Walk": 0.32, "Run": 0.75}, "kneeFlex": {"Walk": 0.55, "Run": 1.30},
+                               "upperArmSwing": {"Walk": 0.22, "Run": 0.45}, "forearmHold": {"Walk": 0.10, "Run": 1.15},
+                               "spineLean": {"Walk": 0.04, "Run": 0.14}, "spineTwist": {"Walk": 0.06, "Run": 0.14},
+                               "hipsBobMeters": {"Walk": 0.012, "Run": 0.025}},
+}
+
+# Stepping turns and Jump proof, from the same pose functions that keyed the NLA actions
+def pose_equal(fn, a, b):
+    pa, ha = fn(a); pb, hb = fn(b)
+    return set(pa) == set(pb) and all(max(abs(x - y) for x, y in zip(pa[k], pb[k])) < 1e-9 for k in pa) and \
+        max(abs(x - y) for x, y in zip(ha, hb)) < 1e-9
+def hips_track(fn, frames):
+    ys = [fn((f - 1) / frames)[0].get("Hips", (0, 0, 0))[1] for f in range(1, frames + 1)]
+    xs = [fn((f - 1) / frames)[1][0] for f in range(1, frames + 1)]
+    zs = [fn((f - 1) / frames)[1][1] for f in range(1, frames + 1)]
+    return {"yawRadians": {"min": round(min(ys), 4), "max": round(max(ys), 4), "mean": round(sum(ys) / len(ys), 5)},
+            "lateralMeters": {"min": round(min(xs), 4), "max": round(max(xs), 4), "mean": round(sum(xs) / len(xs), 5)},
+            "verticalMeters": {"min": round(min(zs), 4), "max": round(max(zs), 4)}, "forwardMetersBoneLocal": 0.0,
+            "note": "offsets are Hips bone-local; the bone axis is tilted about 3 deg, so a vertical offset couples about 5 percent into glTF forward (-Z)"}
+def lifted_frames(fn, frames, heights):
+    out = {}
+    for side in ("L", "R"):
+        out[side] = [f for f, z in zip(range(1, frames + 1), heights[side]) if z > 0.01]
+    return out
+STEP_TURNS = {}
+for clip_name, fn in (("TurnLeft", turn_left_pose), ("TurnRight", turn_right_pose)):
+    heights = foot_heights(fn, 32)
+    STEP_TURNS[clip_name] = {
+        "cycleFrames": 32, "fps": 24, "keyStepFrames": 2, "loops": True, "inPlace": True,
+        "yawDirection": "positive yaw, A key (counter-clockwise from above)" if clip_name == "TurnLeft" else "negative yaw, D key (clockwise from above)",
+        "steppingOrder": ("left foot steps out (frames 1-16), right foot follows (17-32)" if clip_name == "TurnLeft"
+                          else "right foot steps out (frames 1-16), left foot follows (17-32)"),
+        "loopClosure": {"poseAtPhase0EqualsPhase1": pose_equal(fn, 0.0, 1.0), "bothFeetPlantedAtSeam": heights["L"][0] < 0.005 and heights["R"][0] < 0.005},
+        "footLowestPointPerFrameMeters": heights,
+        "liftedFrames(>1cm)": lifted_frames(fn, 32, heights),
+        "plantedFootMinZ": min(min(heights["L"]), min(heights["R"])), "swingFootPeakZ": max(max(heights["L"]), max(heights["R"])),
+        "hipsTrack": hips_track(fn, 32),
+        "amplitudesRadians": {"thighTwist": TURN_T, "stepOutAbduction": TURN_A, "plantedDrift": TURN_F, "hipYaw": 0.12, "chestCounterYaw": 0.06,
+                              "pelvisRoll": 0.03, "headYawIntoTurn": 0.26, "armBalance": 0.10},
+        "assumedSustainedYawRateRadPerSec": round(2 * TURN_T / (16 / 24.0), 3),
+    }
+STEP_TURNS["mirror"] = "TurnRight is the exact mirror of TurnLeft: L/R bones swapped, Y and Z rotations and Hips X location negated"
+jump_heights = foot_heights(jump_pose, 36)
+jump_keys_report = []
+for name, ph, _, g in JUMP_KEYS:
+    pose, (hx, hy, hz) = jump_pose(ph)
+    jump_keys_report.append({"phase": ph, "frame": round(1 + ph * 36, 1), "name": name, "grounded": g, "hipsVerticalOffsetMeters": round(hy, 4)})
+JUMP_RANGES = {"takeoff": [0.0, 0.33], "airborne": [0.33, 0.78], "landing": [0.78, 1.0],
+               "crouch": [0.0, 0.22], "push": [0.22, 0.33], "tuck": [0.33, 0.62], "tuckHold": [0.44, 0.62], "reach": [0.62, 0.78],
+               "touchdown": [0.78, 0.80], "absorb": [0.80, 0.90], "recover": [0.90, 1.0]}
+grounded_frames = [f for f in range(1, 37) if (f - 1) / 36 <= 0.33 or (f - 1) / 36 >= 0.80]
+airborne_frames = [f for f in range(1, 37) if 0.44 <= (f - 1) / 36 <= 0.62]
+JUMP_CLIP = {
+    "frames": 36, "fps": 24, "keyStepFrames": 2, "loops": False, "poseOnly": True,
+    "rootRule": "Hips location is the body's own crouch/extension offset (vertical, zero horizontal); airborne frames keep it at 0. No world-space arc is baked: game physics owns world Y.",
+    "phaseMarkersNormalized": JUMP_RANGES,
+    "phaseMarkersSeconds": {k: [round(a * 1.5, 3), round(b * 1.5, 3)] for k, (a, b) in JUMP_RANGES.items()},
+    "keyPoses": jump_keys_report,
+    "footLowestPointPerFrameMeters": jump_heights,
+    "groundedFramesMinZ": round(min(min(jump_heights[s][f - 1] for s in ("L", "R")) for f in grounded_frames), 4),
+    "airborneFramesMinZ": round(min(min(jump_heights[s][f - 1] for s in ("L", "R")) for f in airborne_frames), 4),
+    "hipsTrack": hips_track(jump_pose, 36),
+    "runtimeHint": "play takeoff 0 to 0.33 on jump input, hold or ping-pong inside tuckHold 0.44 to 0.62 while airborne, play 0.62 to 1.0 on ground contact",
+    "poseSpaceNote": "between push and tuckHold (0.33 to 0.44) and in reach (0.62 to 0.78) the extended feet dip up to about 2 cm below the root floor plane; the character is airborne in physics there, so this is not ground penetration",
+}
+# Ride clips proof: loop closure, Hips track (seat follow), frame counts against the mount clips
+def ride_hips_track(fn, frames):
+    locs = [fn((f - 1) / frames)[1] for f in range(1, frames + 1)]
+    yaws = [fn((f - 1) / frames)[0].get("Hips", (0, 0, 0))[1] for f in range(1, frames + 1)]
+    comp = lambda i: {"min": round(min(l[i] for l in locs), 4), "max": round(max(l[i] for l in locs), 4), "mean": round(sum(l[i] for l in locs) / len(locs), 5)}
+    return {"lateralMeters": comp(0), "verticalMeters": comp(1), "backwardMeters": comp(2),
+            "yawRadians": {"min": round(min(yaws), 4), "max": round(max(yaws), 4)},
+            "note": "Hips bone-local offsets equal the mount seat delta (glTF x, y, z) for the same frame; the rider follows the saddle, no drift"}
+RIDE_CLIPS = {}
+for g, m_ in RIDE_GAITS.items():
+    fn = {"RideIdle": ride_idle_pose, "RideWalk": ride_walk_pose, "RideRun": ride_run_pose}[g]
+    RIDE_CLIPS[g] = {"cycleFrames": RIDE_FRAMES[g], "fps": 24, "keyStepFrames": RIDE_STEP[g], "loops": True, "inPlace": True,
+                     "mountClip": m_, "mountClipFrames": mount_m.get("clipEvidence", {}).get(m_, {}).get("frames"),
+                     "mountClipDurationSeconds": mount_m.get("animationClips", {}).get(m_, {}).get("durationSeconds"),
+                     "loopClosure": {"poseAtPhase0EqualsPhase1": pose_equal(fn, 0.0, 1.0)},
+                     "hipsTrack": ride_hips_track(fn, RIDE_FRAMES[g]),
+                     "seatDeltaSource": "sedgehorn_manifest.json clipEvidence.%s.seatDeltaPerFrameGlb" % m_ if SEAT_DELTA[g] else "none (mount manifest missing): static seat",
+                     "spineLeanRadians": RIDE_LEAN[g], "staticPoseSolve": RIDE_REPORT[g]}
+
 FOOTWEAR = {
     "barefootMesh": "V9_feet", "bootsMesh": "V9_boots",
     "runtimeRule": "show V9_feet when gear.boots is false, V9_boots when true; both nodes are exported visible",
@@ -1226,21 +2312,7 @@ FOOTWEAR = {
     "maxVertexDisplacementMeters": feet_deform,
 }
 
-# ------------------------------------------------------------------------ GLB structure validation (minimal parser)
-def parse_glb(path):
-    data = open(path, "rb").read()
-    magic, version, length = struct.unpack_from("<III", data, 0)
-    assert magic == 0x46546C67 and version == 2, "not a GLB v2"
-    off = 12; gltf = None; blob = None
-    while off < length:
-        clen, ctype = struct.unpack_from("<II", data, off); off += 8
-        chunk = data[off:off + clen]; off += clen
-        if ctype == 0x4E4F534A:
-            gltf = json.loads(chunk)
-        elif ctype == 0x004E4942:
-            blob = chunk
-    return gltf, blob, len(data)
-
+# ------------------------------------------------------------------------ GLB structure validation (minimal parser, defined above the export)
 gltf, blob, GLB_BYTES = parse_glb(OUT_GLB)
 acc = gltf.get("accessors", [])
 glb_tris = 0
@@ -1281,23 +2353,101 @@ for i, n in enumerate(nodes):
 skins = gltf.get("skins", [])
 joint_names = [nodes[j]["name"] for j in skins[0]["joints"]] if skins else []
 animations = {}
+weight_targets = {}
+node_names = [n.get("name") for n in nodes]
+finger_channels = {}
 for a in gltf.get("animations", []):
     dur = max((acc[s["input"]]["max"][0] for s in a.get("samplers", [])), default=0.0)
-    animations[a["name"]] = {"channels": len(a.get("channels", [])), "durationSeconds": round(dur, 3)}
+    first = min((acc[s["input"]]["min"][0] for s in a.get("samplers", [])), default=0.0)
+    animations[a["name"]] = {"channels": len(a.get("channels", [])), "durationSeconds": round(dur, 3), "firstKeySeconds": round(first, 4)}
+    by_path = {}
+    for ch in a.get("channels", []):
+        by_path[ch["target"].get("path")] = by_path.get(ch["target"].get("path"), 0) + 1
+    animations[a["name"]]["channelsByPath"] = by_path
+    finger_channels[a["name"]] = sorted("%s.%s" % (node_names[ch["target"]["node"]], ch["target"]["path"]) for ch in a.get("channels", [])
+                                        if node_names[ch["target"]["node"]] in FINGER_BONES)
+    animations[a["name"]]["fingerChannels"] = len(finger_channels[a["name"]])
+    wt = {}
+    for ch in a.get("channels", []):
+        if ch["target"].get("path") == "weights":
+            s = a["samplers"][ch["sampler"]]
+            o = acc[s["output"]]; bv = gltf["bufferViews"][o["bufferView"]]
+            start = bv.get("byteOffset", 0) + o.get("byteOffset", 0)
+            vals = struct.unpack_from("<%df" % o["count"], blob, start)
+            wt[node_names[ch["target"]["node"]]] = {"min": round(min(vals), 3), "max": round(max(vals), 3)}
+    weight_targets[a["name"]] = wt
+    animations[a["name"]]["morphWeightTracks"] = wt
 ext_used = gltf.get("extensionsUsed", [])
 checks = {
-    "clipsIdleWalkTurn": set(animations) == {"Idle", "Walk", "Turn"},
-    "oneSkinWith17Joints": len(skins) == 1 and len(joint_names) == 17,
-    "jointNamesMatchV2": set(joint_names) == {n for n, _, _, _ in BONE_SPECS},
+    "clipsIdleWalkRunTurn": {"Idle", "Walk", "Run", "Turn"} <= set(animations) and all(v["durationSeconds"] > 0 for v in animations.values()),
+    "clipsTurnLeftTurnRightJump": {"TurnLeft", "TurnRight", "Jump"} <= set(animations) and len(animations) == 11
+                                  and all(animations[k]["durationSeconds"] > 0 for k in ("TurnLeft", "TurnRight", "Jump")),
+    "toolGripClipFingerRotationOnly": animations.get("ToolGrip", {}).get("durationSeconds", 0) > 0
+                                      and animations.get("ToolGrip", {}).get("channelsByPath") == {"rotation": len(FINGER_BONES)}
+                                      and finger_channels.get("ToolGrip") == sorted("%s.rotation" % n for n in FINGER_BONES),
+    "locomotionAndRideClipsHaveNoFingerChannels": all(not finger_channels[k] for k in animations if k != "ToolGrip"),
+    "neutralHandUnchangedByFingerBones": NEUTRAL_HAND_DRIFT < 1e-5,
+    "toolGripFingersClearOfRepresentativeShaft": TOOL_GRIP_REST_FIT["grippedHand"]["verticesInsideShaft"] == 0
+                                                 and TOOL_GRIP_REST_FIT["openHand"]["verticesInsideShaft"] == 0,
+    "toolGripIsSubtleCurl": all(TOOL_GRIP_DEG[n][0] <= 45.0 and TOOL_GRIP_DEG[n][1] <= 40.0 for n in TOOL_GRIP_DEG),
+    "openHandClearsRuntimeContactShaft": OPEN_HAND_RUNTIME_GAP >= 0.0,
+    "toolGripFourFingersTouchRuntimeShaft": all(TOOL_GRIP_REST_FIT["perFinger"][n]["gripped"]["minMeters"] <= 0.005 for n in FINGER_NAMES),
+    "clipsRideIdleWalkRun": {"RideIdle", "RideWalk", "RideRun"} <= set(animations) and all(animations[k]["durationSeconds"] > 0 for k in RIDE_GAITS),
+    "rideClipDurationsMatchMount": all(RIDE_CLIPS[g]["mountClipDurationSeconds"] is not None
+                                       and abs(animations.get(g, {}).get("durationSeconds", -1) - RIDE_CLIPS[g]["mountClipDurationSeconds"]) < 1e-3 for g in RIDE_GAITS),
+    "rideClipsLoopClosed": all(RIDE_CLIPS[g]["loopClosure"]["poseAtPhase0EqualsPhase1"] for g in RIDE_GAITS),
+    "rideClipsNoNetRootMotion": all(abs(RIDE_CLIPS[g]["hipsTrack"]["lateralMeters"]["mean"]) < 0.005 and abs(RIDE_CLIPS[g]["hipsTrack"]["backwardMeters"]["mean"]) < 0.02
+                                    and RIDE_CLIPS[g]["hipsTrack"]["yawRadians"] == {"min": 0.0, "max": 0.0} for g in RIDE_GAITS),
+    "gripRightNeverAnimated": all("V9_body" not in wt for wt in weight_targets.values()),
+    "runShorterThanWalk": animations.get("Run", {}).get("durationSeconds", 9) < animations.get("Walk", {}).get("durationSeconds", 0),
+    "runTimelineStartsAtZeroNoHeldFrame": animations.get("Run", {}).get("firstKeySeconds") == 0.0
+                                          and abs(animations.get("Run", {}).get("durationSeconds", 0) - RUN_CLIP["cycleFrames"] / RUN_CLIP["fps"]) < 1e-6
+                                          and all(r["firstKeyAfter"] == 0.0 and r["lastKeyAfter"] == 0.75 for r in RUN_TIMELINE_PASS["inputAccessors"]),
+    "stepTurnsLoopClosed": all(STEP_TURNS[k]["loopClosure"]["poseAtPhase0EqualsPhase1"] and STEP_TURNS[k]["loopClosure"]["bothFeetPlantedAtSeam"]
+                               for k in ("TurnLeft", "TurnRight")),
+    "stepTurnsNoNetRootMotion": all(abs(STEP_TURNS[k]["hipsTrack"]["yawRadians"]["mean"]) < 1e-3 and abs(STEP_TURNS[k]["hipsTrack"]["lateralMeters"]["mean"]) < 1e-3
+                                    and STEP_TURNS[k]["hipsTrack"]["forwardMetersBoneLocal"] == 0.0 for k in ("TurnLeft", "TurnRight")),
+    "stepTurnsPlantedFootOnFloor": all(STEP_TURNS[k]["plantedFootMinZ"] > -0.005 for k in ("TurnLeft", "TurnRight")),
+    "jumpGroundedFeetOnFloor": JUMP_CLIP["groundedFramesMinZ"] > -0.005,
+    "jumpAirborneFeetClear": JUMP_CLIP["airborneFramesMinZ"] > 0.05 and JUMP_CLIP["hipsTrack"]["verticalMeters"]["min"] <= 0.0,
+    "oneSkinWith17BodyJointsPlus10FingerJoints": len(skins) == 1 and len(joint_names) == 17 + len(FINGER_BONES) == 27,
+    "jointNamesMatchV2PlusRightFingers": set(joint_names) == {n for n, _, _, _ in BONE_SPECS} | set(FINGER_BONES),
     "sevenSocketsWithRole": len(socket_nodes) == 7 and all(v["role"] == "equipment_socket" for v in socket_nodes.values()),
     "noCameras": "cameras" not in gltf,
     "noLights": "KHR_lights_punctual" not in ext_used,
     "floorAtZero": abs(pos_min[1]) < 0.005,
     "heightInRange": 2.1 <= (pos_max[1] - pos_min[1]) <= 2.4,
 }
+def glb_indices_in_range():
+    n_acc, n_bv = len(acc), len(gltf.get("bufferViews", []))
+    for a in acc:
+        if a.get("bufferView", 0) >= n_bv or ("sparse" in a and max(a["sparse"]["indices"]["bufferView"], a["sparse"]["values"]["bufferView"]) >= n_bv):
+            return False
+    for mesh in gltf.get("meshes", []):
+        for prim in mesh.get("primitives", []):
+            refs = list(prim["attributes"].values()) + ([prim["indices"]] if "indices" in prim else []) + [v for t in prim.get("targets", []) for v in t.values()]
+            if any(r >= n_acc for r in refs):
+                return False
+    return all(s["input"] < n_acc and s["output"] < n_acc for a_ in gltf.get("animations", []) for s_ in [a_["samplers"]] for s in s_) \
+        and all(sk.get("inverseBindMatrices", 0) < n_acc for sk in skins)
+def sparse_target_max_displacement(mesh_name, target_index=0):
+    mesh = next((m for m in gltf.get("meshes", []) if m.get("name") == mesh_name), None)
+    worst = 0.0
+    for prim in (mesh or {}).get("primitives", []):
+        a = acc[prim["targets"][target_index]["POSITION"]]
+        if "sparse" not in a:
+            continue
+        sp = a["sparse"]; vb = gltf["bufferViews"][sp["values"]["bufferView"]]
+        vals = struct.unpack_from("<%df" % (sp["count"] * 3), blob, vb.get("byteOffset", 0) + sp["values"].get("byteOffset", 0))
+        worst = max(worst, max(math.sqrt(vals[i] ** 2 + vals[i + 1] ** 2 + vals[i + 2] ** 2) for i in range(0, len(vals), 3)))
+    return worst
+GRIP_MORPH_MAX_BLENDER = max((Vector(v) - Vector(HP[j])).length for j, v in enumerate(grip_co))
+GRIP_MORPH_MAX_GLB = sparse_target_max_displacement("V9_body")
 eye_mesh = next((m for m in gltf.get("meshes", []) if m.get("name") == "V9_eyes"), None)
 checks["forwardIsNegativeZ"] = bool(eye_mesh) and all(
     acc[p["attributes"]["POSITION"]]["max"][2] < 0 for p in eye_mesh["primitives"])   # the eyes sit entirely on the -Z side
+checks["glbIndicesInRangeAfterChannelPass"] = glb_indices_in_range()
+checks["gripRightTargetDataIntactAfterChannelPass"] = abs(GRIP_MORPH_MAX_BLENDER - GRIP_MORPH_MAX_GLB) < 1e-3   # sparse morph buffers survived the prune
 height = pos_max[1] - pos_min[1]
 GLB_SHA = sha256(OUT_GLB)
 
@@ -1309,6 +2459,26 @@ for fn, expected in V9_APPROVED_SHA256.items():
     if v9_src[fn] != expected:
         raise RuntimeError("approved V9 source mismatch: %s %s != %s" % (fn, v9_src[fn], expected))
 checks["feetAndBootsExported"] = {"V9_feet", "V9_boots"} <= {m.get("name") for m in gltf.get("meshes", [])}
+body_mesh = next((m for m in gltf.get("meshes", []) if m.get("name") == "V9_body"), {})
+body_targets = [p.get("targets", []) for p in body_mesh.get("primitives", [])]
+checks["gripRightMorphExported"] = (body_mesh.get("extras", {}).get("targetNames") == ["GripRight"]
+                                    and bool(body_targets) and all(len(t) == 1 and "POSITION" in t[0] for t in body_targets)
+                                    and body_mesh.get("weights", [0.0]) == [0.0])
+checks["gripRightSkinClearOfHandle"] = GRIP["skinToHandleAxisMeters"]["verticesInsideHandle"] == 0
+GRIP["glb"] = {"meshName": body_mesh.get("name"), "targetNames": body_mesh.get("extras", {}).get("targetNames"),
+               "defaultWeights": body_mesh.get("weights"), "primitivesWithTargets": len(body_targets)}
+drape_meshes = {m.get("name"): m for m in gltf.get("meshes", []) if m.get("name") in ("V9_robe", "V9_tunic")}
+checks["rideDrapeMorphExported"] = MOUNT_AVAILABLE and all(
+    drape_meshes.get(n, {}).get("extras", {}).get("targetNames") == ["RideDrape"] and drape_meshes.get(n, {}).get("weights", [0.0]) == [0.0]
+    and all(len(p.get("targets", [])) == 1 for p in drape_meshes.get(n, {}).get("primitives", [])) for n in ("V9_robe", "V9_tunic"))
+checks["rideDrapeWeightTracksComplete"] = MOUNT_AVAILABLE and all(
+    weight_targets.get(c, {}).get(n, {}).get("max") == (1.0 if c in RIDE_GAITS else 0.0) and weight_targets.get(c, {}).get(n, {}).get("min") == (1.0 if c in RIDE_GAITS else 0.0)
+    for c, *_ in CLIPS for n in ("V9_robe", "V9_tunic"))
+_fit = RIDE_FIT.get("rideIdleFrame1", {})
+checks["rideLegsClearOfMount"] = MOUNT_AVAILABLE and all(_fit.get(n, {}).get("deepestPenetrationMeters", 1) < 0.025 for n in ("V9_boots", "V9_trousers"))   # calf/boot contact with the flank, under 2.5 cm
+checks["rideClothClearOfMount"] = MOUNT_AVAILABLE and all(_fit.get(n, {}).get("deepestPenetrationMeters", 1) < 0.02 for n in ("V9_robe", "V9_tunic"))
+checks["rideHandsAtReins"] = all(RIDE_REPORT[g][s]["knuckleToReinHandMeters"] < 0.06 for g in RIDE_GAITS for s in ("L", "R"))
+checks["rideBootsOnStirrups"] = all(RIDE_REPORT[g][s]["ankleToStirrupTargetMeters"] < 0.03 for g in RIDE_GAITS for s in ("L", "R"))
 checks["feetOnFloor"] = FEET_BOUNDS["min"][2] <= 0.005
 checks["feetInsideBoots"] = outside == 0 and min(clear) >= 0.002
 checks["feetDeformInWalkTurn"] = all(v > 0.01 for d in feet_deform.values() for v in d.values())
@@ -1346,10 +2516,11 @@ manifest = {
                        "drivers/vertex groups cleared, materials replaced, faces hidden under cloth deleted, uncut (no bust seam)",
         },
         "rigReference": {"path": "../wayfarer_v2/wayfarer_v2_male.blend", "sha256": sha256(v2_blend) if os.path.exists(v2_blend) else None,
-                         "reuse": "17 deform-bone names/hierarchy, seven socket names with role extras, Idle/Walk/Turn NLA clip layout; "
+                         "reuse": "17 deform-bone names/hierarchy, seven socket names with role extras, NLA clip layout (Idle/Walk/Turn, plus Run authored here); "
                                   "no V2 geometry, materials or weights are used"},
         "authoredHere": ["full-length V9_robe", "V9_sleeves", "V9_belt (+buckle)", "V9_trousers", "V9_boots", "V9_feet (barefoot variant, split from the CC0 body)", "V9_satchel",
-                         "V9_strap hip extension", "distance-falloff skinning", "Idle/Walk/Turn clips", "sockets", "camera/light rigs"],
+                         "V9_strap hip extension", "distance-falloff skinning", "Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump/RideIdle/RideWalk/RideRun clips", "RideDrape robe/tunic morph", "sockets", "camera/light rigs",
+                         "right-hand finger bones (10) and the finger-only ToolGrip clip"],
         "thirdPartyPixelsOrMeshes": "none beyond the CC0 base mesh; concept sheets are visual targets only",
         "license": "Derived asset: CC0 base mesh plus original Wizard Realms geometry, materials and rig authored in-repo.",
     },
@@ -1359,10 +2530,78 @@ manifest = {
     "boundsMetersBlender": {"min": [round(pos_min[0], 4), round(-pos_max[2], 4), round(pos_min[1], 4)],
                             "max": [round(pos_max[0], 4), round(-pos_min[2], 4), round(pos_max[1], 4)]},
     "heightMeters": round(height, 4),
-    "deformBones": [n for n, _, _, _ in BONE_SPECS],
+    "deformBones": [n for n, _, _, _ in BONE_SPECS] + FINGER_BONES,
+    "fingerBones": FINGER_BONES,
+    "toolGrip": {
+        "clip": "ToolGrip", "poseStatus": "solved_against_runtime_contact",
+        "poseStatusNote": "Finger angles were solved against the representative shaft below: axis through the runtime's shared contact line "
+                          "V9_RIGHT_HAND_CONTACT (src/view/WizardScene.tsx, read-only) along glTF Z at rest, hand-relative as rightHandToolMountFor "
+                          "mounts it against the rest Socket.RightHand. If that constant or the mount regime changes, re-run author_v9_game.py with "
+                          "RUNTIME_CONTACT_GLB updated; bones, weights, channels and the neutral hand do not depend on it.",
+        "runtimeContract": {"contactGlb": list(RUNTIME_CONTACT_GLB), "contactSource": "src/view/WizardScene.tsx V9_RIGHT_HAND_CONTACT",
+                            "mount": "hand-relative: rightHandToolMountFor(mainHand, restSocket) places the shaft axis through the contact once, "
+                                     "in rest Socket.RightHand space; carry along avatar -Z (axe/pick/wand) or +Z (spade)",
+                            "equippedArmCarryBlend": RUNTIME_CARRY_BLEND,
+                            "artDerivedAxisPointRestGlb": blender_to_gltf(ART_SHAFT_C),
+                            "runtimeMinusArtDerivedGlb": [round(a - b, 4) for a, b in zip(blender_to_gltf(SHAFT_C), blender_to_gltf(ART_SHAFT_C))],
+                            "openHandClearanceToRuntimeShaftMeters": round(OPEN_HAND_RUNTIME_GAP, 4)},
+        "channels": ["%s.rotation" % n for n in FINGER_BONES],
+        "channelRule": "finger bones only, constant two-key clip; no Hand.R, arm, Hips, Root, robe/tunic weight or face channel. On-foot and ride clips "
+                       "carry no finger channels, so ToolGrip layered at weight 1 only closes the fingers. GripRight stays at weight 0 and unanimated.",
+        "usage": "play ToolGrip (loop, weight 1) alongside the locomotion clip only while a main-hand tool is equipped; stop it to return to the approved open hand",
+        "durationSeconds": animations.get("ToolGrip", {}).get("durationSeconds"),
+        "curlDegrees": {n: {"knuckle": round(TOOL_GRIP_DEG[n][0], 1), "secondJoint": round(TOOL_GRIP_DEG[n][1], 1),
+                            "capKnuckle": TOOL_GRIP_MAX_DEG[n][0], "capSecondJoint": TOOL_GRIP_MAX_DEG[n][1]} for n in FINGER_NAMES + ["Thumb"]},
+        "curlAxis": "each finger bone's local +X (palm-side roll); positive curls toward the palm; the thumb rolls toward the fingers and palm",
+        "representativeShaft": {"radiusMeters": TOOL_GRIP_SHAFT_R, "openHandGapMeters": TOOL_GRIP_GAP,
+                                "axisDirectionGlb": [0.0, 0.0, 1.0], "axisPointRestGlb": blender_to_gltf(SHAFT_C),
+                                "axisPointRestBlender": [round(c, 4) for c in SHAFT_C],
+                                "axisPointInSocketRightHandGlb": None,          # filled below from the exported socket transform
+                                "placementRule": "axis through the runtime contact line (handle to the back, head forward, along glTF Z at rest), hand-relative; "
+                                                 "the hand is not moved toward the tool and the open hand must clear the shaft"},
+        "restFit": TOOL_GRIP_REST_FIT,
+        "clipFrameFit": TOOL_GRIP_FRAME_FIT,
+        "fingerJointsRestBlender": {n: {"knuckle": [round(c, 4) for c in FINGER_JOINTS[n][3]], "secondJoint": [round(c, 4) for c in FINGER_JOINTS[n][4]],
+                                        "tip": [round(c, 4) for c in FINGER_JOINTS[n][5]]} for n in FINGER_NAMES + ["Thumb"]},
+        "weights": FINGER_WEIGHT_STATS,
+        "neutralHandMaxDriftMeters": NEUTRAL_HAND_DRIFT,
+        "glbChannelPass": {"rule": "post-export: finger channels removed from every clip except ToolGrip; ToolGrip keeps only the ten finger rotation "
+                                   "channels (the NLA exporter bakes every bone into every track). Remaining channels are the exporter's own output; "
+                                   "orphaned accessors/bufferViews pruned with indices remapped, binary blob untouched.",
+                           "perClip": TOOL_GRIP_CHANNEL_PASS},
+    },
     "equipmentSockets": socket_nodes,
     "animationClips": animations,
+    "runClip": {**RUN_CLIP,
+                "glbTimeline": {"firstKeySeconds": animations.get("Run", {}).get("firstKeySeconds"), "closingKeySeconds": animations.get("Run", {}).get("durationSeconds"),
+                                "rule": "post-export: Run's time accessors are shifted so the first key is t=0 and the closing (loop-matching) key is cycleFrames/fps; "
+                                        "LoopRepeat then has no held first frame. Output values, channel set, interpolation and every other clip are untouched. "
+                                        "Idle/Walk/Turn/Jump and the ride clips keep the exporter's 1/24 s start (the runtime drives Idle/Walk by phase; "
+                                        "ride clips must keep the mount's durations).",
+                                "pass": RUN_TIMELINE_PASS}},
+    "stepTurnClips": STEP_TURNS,
+    "jumpClip": JUMP_CLIP,
+    "rideClips": {
+        "clips": RIDE_CLIPS,
+        "mountAsset": {"glb": os.path.relpath(os.path.join(MOUNT_DIR, "sedgehorn_adult.glb"), HERE), "manifest": os.path.relpath(MOUNT_MANIFEST, HERE),
+                       "mountGlbSha256": mount_m.get("sha256", {}).get("glb"), "available": MOUNT_AVAILABLE},
+        "riderSeatOffsetGlb": blender_to_gltf(RIDE_ROOT),
+        "riderSeatOffsetBlender": [round(c, 4) for c in RIDE_ROOT],
+        "riderSeatOffsetRule": "mount-local translation of the rider root (its floor origin), no rotation: Seat.glbPosition + (0, -%.3f, +0.02 forward); "
+                               "rider and mount both face -Z. Apply as RIDER_SEAT_OFFSET in the workbench; the ride clips then put the pelvis on the seat." % SEATED_PELVIS_DROP,
+        "seatGlb": blender_to_gltf(SEAT_B), "stirrupTreadGlb": {s: blender_to_gltf(v) for s, v in STIRRUP_B.items()}, "reinHandGlb": {s: blender_to_gltf(v) for s, v in REIN_B.items()},
+        "seatedPelvisDropMeters": SEATED_PELVIS_DROP,
+        "staticPose": {"kneePoleBlender": list(KNEE_POLE),
+                       "handDirectionBlender": [round(c, 3) for c in HAND_DIR], "handPalmNormalBlender(right)": [round(c, 3) for c in Vector((-HAND_PRONATION, 0.0, -1.0)).normalized()], "ankleAboveTreadMeters": ANKLE_ABOVE_TREAD,
+                       "solver": "2-bone IK hip/knee/ankle to the stirrup tread + ankle height with the knee pole; foot aimed level; 2-bone IK upper arm/forearm to the rein end minus 12.5 cm along the hand; hand aimed along the rein with the palm turned down-and-in"},
+        "gripRight": "weight 0 in every clip and never animated; the open Basis hand rests on the rein ends",
+        "heldTools": "the workbench hides held tools in riding mode; sockets are unchanged",
+        "drapeMorph": {"name": "RideDrape", "meshes": DRAPE, "weightRule": "1.0 across RideIdle/RideWalk/RideRun, 0.0 across all on-foot clips (keyed in every clip)",
+                       "method": "skirt rows below z=0.98 released from the pose and settled as position-based cloth (gravity steps, grid and diagonal distance constraints at the authored rest lengths, 1.6 cm push-out from the mount body/saddle/blanket and the rider's trousers/boots), then inverted through the seated skinning matrices into a rest-space offset"},
+        "fit": RIDE_FIT,
+    },
     "footwearVariants": FOOTWEAR,
+    "gripMorph": GRIP,
     "meshObjects": len(MESHES),
     "drawGroups": draw_groups,
     "materialCount": len(gltf.get("materials", [])),
@@ -1383,7 +2622,9 @@ manifest = {
         "Procedural bump, sheen, coat and subsurface shader detail does not export to glTF; flat PBR factors only. The hair "
         "root-to-tip gradient is baked to vertex colours (COLOR_0).",
         "Below the mantle the robe is torso-fitted with separate sleeves; the V9 bust robe wrapped the arms as a poncho.",
-        "Skinning is smooth distance falloff, tuned for the Idle/Walk/Turn amplitudes, not hand-painted weights.",
+        "Skinning is smooth distance falloff, tuned for the Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump amplitudes, not hand-painted weights.",
+        "Riding: the robe and tunic skirt use the RideDrape morph (solved once for the seated pose) instead of cloth simulation; it is keyed 1 in the ride clips and 0 elsewhere, so a blend between an on-foot and a ride clip crossfades the drape.",
+        "Run is in place with no root motion or foot IK; the stance foot dips a few centimetres through the floor at mid-stance.",
         "V9_feet and V9_boots are both exported visible; the runtime must toggle them (feet sole and boot sole share the floor plane).",
     ],
     "peakProcessMemoryMB": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1048576, 1),
@@ -1393,6 +2634,17 @@ manifest = {
     "scopeGuards": {"editsOutsideThisDirectory": "only byte-identical copies added to ../wayfarer_v9_approved", "github": False,
                     "commit": False, "previewPorts": False, "gameSave": False, "v3DirectoryModified": False, "v9StagingModified": False},
 }
+_si = next(i for i, n_ in enumerate(nodes) if n_.get("name") == "Socket.RightHand")
+_sm = world[_si]
+manifest["toolGrip"]["representativeShaft"]["axisPointInSocketRightHandGlb"] = [round(c, 4) for c in (_sm.inverted() @ Vector(blender_to_gltf(SHAFT_C)))]
+manifest["toolGrip"]["representativeShaft"]["axisDirectionInSocketRightHandGlb"] = [round(c, 4) for c in (_sm.to_3x3().inverted() @ Vector((0.0, 0.0, 1.0))).normalized()]
+# carry the render and review-sheet records over from the previous manifest; each block states which GLB it was rendered from,
+# so a reviewer can tell stale proofs apart from current ones without re-rendering unchanged views
+prev = json.load(open(OUT_MANIFEST)) if os.path.exists(OUT_MANIFEST) else {}
+for key in ("renders", "reviewSheets", "toolGripRenders", "toolGripReviewSheet"):
+    if key in prev:
+        manifest[key] = prev[key]
+        manifest[key]["currentForGlb"] = prev[key].get("renderedFromGlbSha256") == GLB_SHA
 with open(OUT_MANIFEST, "w") as f:
     json.dump(manifest, f, indent=1)
 print("AUTHOR_DONE", json.dumps({k: manifest[k] for k in ("trianglesGlb", "trianglesEvaluated", "drawGroups", "materialCount",

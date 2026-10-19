@@ -276,7 +276,8 @@ export function publicWorldV14ViewProjection(state: PublicV14State, active: Acti
         : status === 'ready' ? `Starter cliff ladder ready. Select its discovered map site to spend ${cost} logs.`
           : `Starter cliff ladder: ${reason} Each oak takes two chops and yields four logs.`
   return { seed: state.seed, tick: state.tick,
-    player: { position: point(player.position), yaw: player.yaw, pitch: player.pitch },
+    player: { position: point(player.position), yaw: player.yaw, pitch: player.pitch,
+      verticalVelocity: player.verticalVelocity },
     terrain, visualWorld: { terrain, resources, stores, fairyRings: [], inscriptions: [],
       digSites: [], landmarks: [], routes, buildSites,
       discoveredTileIds: [...known].filter((id) => visible.has(id)) },

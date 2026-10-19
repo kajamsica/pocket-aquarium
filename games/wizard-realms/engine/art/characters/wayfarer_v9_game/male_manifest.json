@@ -1,658 +1,4273 @@
 {
-  "status": "v9_playable_candidate_exported_runtime_inspection_pending",
-  "gender": "male",
-  "asset": {
-    "glb": "wayfarer_v9_male.glb",
-    "blend": "wayfarer_v9_male.blend",
-    "authoring": "author_v9_game.py",
-    "renders": "render_v9_game.py",
-    "sheets": "contact_sheet_v9_game.py"
+ "status": "v9_playable_candidate_exported_runtime_inspection_pending",
+ "gender": "male",
+ "asset": {
+  "glb": "wayfarer_v9_male.glb",
+  "blend": "wayfarer_v9_male.blend",
+  "authoring": "author_v9_game.py",
+  "renders": "render_v9_game.py",
+  "sheets": "contact_sheet_v9_game.py"
+ },
+ "designReference": "../../concepts/wayfarer-male-concept-v4.png",
+ "approvedVisualTarget": {
+  "description": "Bottom V9 row of wayfarer_v9_staging/comparison_vs_reference.png (user-approved head/shoulders sculpt). The middle V10 row is rejected. Head, face and hair are not redesigned here.",
+  "approvedDirectory": "../wayfarer_v9_approved",
+  "approvedSha256": {
+   "author_v9.py": "65d922d3d8d3e1950f302f7f27fd86737d9fd790340095e56230a961f5e304d8",
+   "wayfarer_v9_head_shoulders.blend": "85c98714bdcf347fdf5a4324fd49d2a6da126e309e0a6b886760e6ea976d9249",
+   "v9_front.png": "12d8608640657effd050218a217768f3d026cf63975d81d23306bbe7ad829a1e",
+   "v9_three_quarter.png": "9e77953fc700ec56146d9a1292da527b77fab0b809f61a58bc6205bcc17bbf4b",
+   "v9_side.png": "77e3662ee93afe410f60f4bc6ef4ff3b65a52185d9b834bd930922bc0624523d",
+   "v9_back.png": "52052e5b2c61be74382cbb305b0a9078d38ed0f876a160968aaaee51b474ad94"
   },
-  "designReference": "../../concepts/wayfarer-male-concept-v4.png",
-  "approvedVisualTarget": {
-    "description": "Bottom V9 row of wayfarer_v9_staging/comparison_vs_reference.png (user-approved head/shoulders sculpt). The middle V10 row is rejected. Head, face and hair are not redesigned here.",
-    "approvedDirectory": "../wayfarer_v9_approved",
-    "approvedSha256": {
-      "author_v9.py": "65d922d3d8d3e1950f302f7f27fd86737d9fd790340095e56230a961f5e304d8",
-      "wayfarer_v9_head_shoulders.blend": "85c98714bdcf347fdf5a4324fd49d2a6da126e309e0a6b886760e6ea976d9249",
-      "v9_front.png": "12d8608640657effd050218a217768f3d026cf63975d81d23306bbe7ad829a1e",
-      "v9_three_quarter.png": "9e77953fc700ec56146d9a1292da527b77fab0b809f61a58bc6205bcc17bbf4b",
-      "v9_side.png": "77e3662ee93afe410f60f4bc6ef4ff3b65a52185d9b834bd930922bc0624523d",
-      "v9_back.png": "52052e5b2c61be74382cbb305b0a9078d38ed0f876a160968aaaee51b474ad94"
-    },
-    "approvedSha256Verified": true,
-    "copiedFrom": "/Volumes/git/wizard-realms-resume-20261016/games/wizard-realms/engine/art/characters/wayfarer_v9_staging",
-    "portedFromAuthorV9": [
-      "head widening / jaw squaring / lid ease",
-      "V9_brows",
-      "V9_hair_shell",
-      "V9_hair_locks (124)",
-      "V9_tunic top",
-      "V9_robe opening and gold trim",
-      "V9_strap shoulder segment",
-      "V9_mantle",
-      "V9_hood",
-      "V9_collar",
-      "V9_cowl",
-      "V9_brooch",
-      "V9 materials and palette"
-    ]
+  "approvedSha256Verified": true,
+  "copiedFrom": "/Volumes/git/wizard-realms-resume-20261016/games/wizard-realms/engine/art/characters/wayfarer_v9_staging",
+  "portedFromAuthorV9": [
+   "head widening / jaw squaring / lid ease",
+   "V9_brows",
+   "V9_hair_shell",
+   "V9_hair_locks (124)",
+   "V9_tunic top",
+   "V9_robe opening and gold trim",
+   "V9_strap shoulder segment",
+   "V9_mantle",
+   "V9_hood",
+   "V9_collar",
+   "V9_cowl",
+   "V9_brooch",
+   "V9 materials and palette"
+  ]
+ },
+ "provenance": {
+  "baseMesh": {
+   "publisher": "Blender Studio and community contributions",
+   "title": "Human Base Meshes",
+   "version": "1.4.1",
+   "collection": "Body Male - Stylized",
+   "license": "CC0",
+   "licenseEvidence": "https://www.blender.org/download/demo-files/#asset-bundles",
+   "bundleSha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+   "stagedBlend": "../wayfarer_v3_staging/wayfarer_v3_artist_staging.blend",
+   "stagedBlendSha256": "c8715595d8d77546ab1de1aae34ded44c00628d65503ba312243d3e489685f6e",
+   "howUsed": "opened read-only and saved-as into this directory; body and eye meshes kept with the V9 head edits, drivers/vertex groups cleared, materials replaced, faces hidden under cloth deleted, uncut (no bust seam)"
   },
-  "provenance": {
-    "baseMesh": {
-      "publisher": "Blender Studio and community contributions",
-      "title": "Human Base Meshes",
-      "version": "1.4.1",
-      "collection": "Body Male - Stylized",
-      "license": "CC0",
-      "licenseEvidence": "https://www.blender.org/download/demo-files/#asset-bundles",
-      "bundleSha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
-      "stagedBlend": "../wayfarer_v3_staging/wayfarer_v3_artist_staging.blend",
-      "stagedBlendSha256": "c8715595d8d77546ab1de1aae34ded44c00628d65503ba312243d3e489685f6e",
-      "howUsed": "opened read-only and saved-as into this directory; body and eye meshes kept with the V9 head edits, drivers/vertex groups cleared, materials replaced, faces hidden under cloth deleted, uncut (no bust seam)"
-    },
-    "rigReference": {
-      "path": "../wayfarer_v2/wayfarer_v2_male.blend",
-      "sha256": "d9a67f5c437f74c63275ed29311df0ad4582793c510489a77a0aa03b504957fc",
-      "reuse": "17 deform-bone names/hierarchy, seven socket names with role extras, Idle/Walk/Turn NLA clip layout; no V2 geometry, materials or weights are used"
-    },
-    "authoredHere": [
-      "full-length V9_robe",
-      "V9_sleeves",
-      "V9_belt (+buckle)",
-      "V9_trousers",
-      "V9_boots",
-      "V9_feet (barefoot variant, split from the CC0 body)",
-      "V9_satchel",
-      "V9_strap hip extension",
-      "distance-falloff skinning",
-      "Idle/Walk/Turn clips",
-      "sockets",
-      "camera/light rigs"
-    ],
-    "thirdPartyPixelsOrMeshes": "none beyond the CC0 base mesh; concept sheets are visual targets only",
-    "license": "Derived asset: CC0 base mesh plus original Wizard Realms geometry, materials and rig authored in-repo."
+  "rigReference": {
+   "path": "../wayfarer_v2/wayfarer_v2_male.blend",
+   "sha256": "d9a67f5c437f74c63275ed29311df0ad4582793c510489a77a0aa03b504957fc",
+   "reuse": "17 deform-bone names/hierarchy, seven socket names with role extras, NLA clip layout (Idle/Walk/Turn, plus Run authored here); no V2 geometry, materials or weights are used"
   },
-  "sourceAxes": {
-    "up": "+Z",
-    "forward": "+Y",
-    "origin": "floor between feet"
-  },
-  "glbAxes": {
-    "up": "+Y",
-    "forward": "-Z",
-    "origin": "floor between feet"
-  },
-  "boundsMetersGlb": {
-    "min": [
-      -0.6216,
-      0,
-      -0.2611
-    ],
-    "max": [
-      0.6291,
-      2.3132,
-      0.3167
-    ]
-  },
-  "boundsMetersBlender": {
-    "min": [
-      -0.6216,
-      -0.3167,
-      0
-    ],
-    "max": [
-      0.6291,
-      0.2611,
-      2.3132
-    ]
-  },
-  "heightMeters": 2.3132,
-  "deformBones": [
-    "Root",
-    "Hips",
-    "Spine",
-    "Neck",
-    "Head",
-    "UpperArm.L",
-    "Forearm.L",
-    "Hand.L",
-    "Thigh.L",
-    "Shin.L",
-    "Foot.L",
-    "UpperArm.R",
-    "Forearm.R",
-    "Hand.R",
-    "Thigh.R",
-    "Shin.R",
-    "Foot.R"
+  "authoredHere": [
+   "full-length V9_robe",
+   "V9_sleeves",
+   "V9_belt (+buckle)",
+   "V9_trousers",
+   "V9_boots",
+   "V9_feet (barefoot variant, split from the CC0 body)",
+   "V9_satchel",
+   "V9_strap hip extension",
+   "distance-falloff skinning",
+   "Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump/RideIdle/RideWalk/RideRun clips",
+   "RideDrape robe/tunic morph",
+   "sockets",
+   "camera/light rigs",
+   "right-hand finger bones (10) and the finger-only ToolGrip clip"
   ],
-  "equipmentSockets": {
-    "Socket.Head": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        0.0,
-        2.3,
-        0.01
-      ]
-    },
-    "Socket.LeftHand": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        -0.5,
-        1.02,
-        0.02
-      ]
-    },
-    "Socket.RightHand": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        0.5,
-        1.02,
-        0.02
-      ]
-    },
-    "Socket.Chest": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        0.0,
-        1.5,
-        -0.22
-      ]
-    },
-    "Socket.LeftFoot": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        -0.15,
-        0.03,
-        -0.19
-      ]
-    },
-    "Socket.RightFoot": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        0.15,
-        0.03,
-        -0.19
-      ]
-    },
-    "Socket.Legs": {
-      "role": "equipment_socket",
-      "glbPosition": [
-        0.0,
-        0.9,
-        -0.0
-      ]
-    }
+  "thirdPartyPixelsOrMeshes": "none beyond the CC0 base mesh; concept sheets are visual targets only",
+  "license": "Derived asset: CC0 base mesh plus original Wizard Realms geometry, materials and rig authored in-repo."
+ },
+ "sourceAxes": {
+  "up": "+Z",
+  "forward": "+Y",
+  "origin": "floor between feet"
+ },
+ "glbAxes": {
+  "up": "+Y",
+  "forward": "-Z",
+  "origin": "floor between feet"
+ },
+ "boundsMetersGlb": {
+  "min": [
+   -0.6216,
+   0,
+   -0.2611
+  ],
+  "max": [
+   0.6291,
+   2.3132,
+   0.3167
+  ]
+ },
+ "boundsMetersBlender": {
+  "min": [
+   -0.6216,
+   -0.3167,
+   0
+  ],
+  "max": [
+   0.6291,
+   0.2611,
+   2.3132
+  ]
+ },
+ "heightMeters": 2.3132,
+ "deformBones": [
+  "Root",
+  "Hips",
+  "Spine",
+  "Neck",
+  "Head",
+  "UpperArm.L",
+  "Forearm.L",
+  "Hand.L",
+  "Thigh.L",
+  "Shin.L",
+  "Foot.L",
+  "UpperArm.R",
+  "Forearm.R",
+  "Hand.R",
+  "Thigh.R",
+  "Shin.R",
+  "Foot.R",
+  "Index1.R",
+  "Index2.R",
+  "Middle1.R",
+  "Middle2.R",
+  "Ring1.R",
+  "Ring2.R",
+  "Pinky1.R",
+  "Pinky2.R",
+  "Thumb1.R",
+  "Thumb2.R"
+ ],
+ "fingerBones": [
+  "Index1.R",
+  "Index2.R",
+  "Middle1.R",
+  "Middle2.R",
+  "Ring1.R",
+  "Ring2.R",
+  "Pinky1.R",
+  "Pinky2.R",
+  "Thumb1.R",
+  "Thumb2.R"
+ ],
+ "toolGrip": {
+  "clip": "ToolGrip",
+  "poseStatus": "solved_against_runtime_contact",
+  "poseStatusNote": "Finger angles were solved against the representative shaft below: axis through the runtime's shared contact line V9_RIGHT_HAND_CONTACT (src/view/WizardScene.tsx, read-only) along glTF Z at rest, hand-relative as rightHandToolMountFor mounts it against the rest Socket.RightHand. If that constant or the mount regime changes, re-run author_v9_game.py with RUNTIME_CONTACT_GLB updated; bones, weights, channels and the neutral hand do not depend on it.",
+  "runtimeContract": {
+   "contactGlb": [
+    0.402,
+    0.984,
+    0.0345
+   ],
+   "contactSource": "src/view/WizardScene.tsx V9_RIGHT_HAND_CONTACT",
+   "mount": "hand-relative: rightHandToolMountFor(mainHand, restSocket) places the shaft axis through the contact once, in rest Socket.RightHand space; carry along avatar -Z (axe/pick/wand) or +Z (spade)",
+   "equippedArmCarryBlend": 0.7,
+   "artDerivedAxisPointRestGlb": [
+    0.4026,
+    1.0068,
+    0.0345
+   ],
+   "runtimeMinusArtDerivedGlb": [
+    -0.0006,
+    -0.0228,
+    0.0
+   ],
+   "openHandClearanceToRuntimeShaftMeters": 0.0188
   },
-  "animationClips": {
+  "channels": [
+   "Index1.R.rotation",
+   "Index2.R.rotation",
+   "Middle1.R.rotation",
+   "Middle2.R.rotation",
+   "Ring1.R.rotation",
+   "Ring2.R.rotation",
+   "Pinky1.R.rotation",
+   "Pinky2.R.rotation",
+   "Thumb1.R.rotation",
+   "Thumb2.R.rotation"
+  ],
+  "channelRule": "finger bones only, constant two-key clip; no Hand.R, arm, Hips, Root, robe/tunic weight or face channel. On-foot and ride clips carry no finger channels, so ToolGrip layered at weight 1 only closes the fingers. GripRight stays at weight 0 and unanimated.",
+  "usage": "play ToolGrip (loop, weight 1) alongside the locomotion clip only while a main-hand tool is equipped; stop it to return to the approved open hand",
+  "durationSeconds": 0.542,
+  "curlDegrees": {
+   "Index": {
+    "knuckle": 12.3,
+    "secondJoint": 11.1,
+    "capKnuckle": 38.0,
+    "capSecondJoint": 34.0
+   },
+   "Middle": {
+    "knuckle": 21.0,
+    "secondJoint": 18.9,
+    "capKnuckle": 40.0,
+    "capSecondJoint": 36.0
+   },
+   "Ring": {
+    "knuckle": 25.0,
+    "secondJoint": 22.5,
+    "capKnuckle": 40.0,
+    "capSecondJoint": 36.0
+   },
+   "Pinky": {
+    "knuckle": 38.0,
+    "secondJoint": 34.0,
+    "capKnuckle": 38.0,
+    "capSecondJoint": 34.0
+   },
+   "Thumb": {
+    "knuckle": 19.2,
+    "secondJoint": 10.8,
+    "capKnuckle": 32.0,
+    "capSecondJoint": 18.0
+   }
+  },
+  "curlAxis": "each finger bone's local +X (palm-side roll); positive curls toward the palm; the thumb rolls toward the fingers and palm",
+  "representativeShaft": {
+   "radiusMeters": 0.0475,
+   "openHandGapMeters": 0.003,
+   "axisDirectionGlb": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "axisPointRestGlb": [
+    0.402,
+    0.984,
+    0.0345
+   ],
+   "axisPointRestBlender": [
+    0.402,
+    -0.0345,
+    0.984
+   ],
+   "axisPointInSocketRightHandGlb": [
+    -0.098,
+    -0.036,
+    0.0145
+   ],
+   "placementRule": "axis through the runtime contact line (handle to the back, head forward, along glTF Z at rest), hand-relative; the hand is not moved toward the tool and the open hand must clear the shaft",
+   "axisDirectionInSocketRightHandGlb": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  "restFit": {
+   "openHand": {
+    "minMeters": 0.0188,
+    "verticesInsideShaft": 0,
+    "verticesWithin5mm": 0,
+    "verticesWithin10mm": 0
+   },
+   "grippedHand": {
+    "minMeters": 0.0016,
+    "verticesInsideShaft": 0,
+    "verticesWithin5mm": 19,
+    "verticesWithin10mm": 41
+   },
+   "perFinger": {
+    "Index": {
+     "open": {
+      "minMeters": 0.0293,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 0,
+      "verticesWithin10mm": 0
+     },
+     "gripped": {
+      "minMeters": 0.0035,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 1,
+      "verticesWithin10mm": 6
+     },
+     "maxVertexTravelMeters": 0.0377
+    },
+    "Middle": {
+     "open": {
+      "minMeters": 0.0541,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 0,
+      "verticesWithin10mm": 0
+     },
+     "gripped": {
+      "minMeters": 0.0034,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 4,
+      "verticesWithin10mm": 11
+     },
+     "maxVertexTravelMeters": 0.0712
+    },
+    "Ring": {
+     "open": {
+      "minMeters": 0.0558,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 0,
+      "verticesWithin10mm": 0
+     },
+     "gripped": {
+      "minMeters": 0.0016,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 11,
+      "verticesWithin10mm": 15
+     },
+     "maxVertexTravelMeters": 0.0771
+    },
+    "Pinky": {
+     "open": {
+      "minMeters": 0.0454,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 0,
+      "verticesWithin10mm": 0
+     },
+     "gripped": {
+      "minMeters": 0.0022,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 3,
+      "verticesWithin10mm": 9
+     },
+     "maxVertexTravelMeters": 0.0806
+    },
+    "Thumb": {
+     "open": {
+      "minMeters": 0.0188,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 0,
+      "verticesWithin10mm": 0
+     },
+     "gripped": {
+      "minMeters": 0.0125,
+      "verticesInsideShaft": 0,
+      "verticesWithin5mm": 0,
+      "verticesWithin10mm": 0
+     },
+     "maxVertexTravelMeters": 0.0409
+    }
+   }
+  },
+  "clipFrameFit": {
+   "Idle@frame1": {
+    "clipArm.open": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0188,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0188,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "clipArm.gripped": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0125,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.open": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0188,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0188,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.gripped": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0125,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    }
+   },
+   "Idle@frame25": {
+    "clipArm.open": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0188,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0188,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "clipArm.gripped": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0125,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.open": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0188,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0188,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.gripped": {
+     "shaftAxisPointGlb": [
+      0.402,
+      0.9838,
+      0.0318
+     ],
+     "shaftAxisGlb": [
+      -0.0,
+      0.02,
+      -0.9998
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0125,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    }
+   },
+   "Walk@frame7": {
+    "clipArm.open": {
+     "shaftAxisPointGlb": [
+      0.4598,
+      1.0496,
+      -0.2125
+     ],
+     "shaftAxisGlb": [
+      -0.2243,
+      0.3539,
+      -0.908
+     ],
+     "minMeters": 0.0095,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 2,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0095,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 2
+      }
+     }
+    },
+    "clipArm.gripped": {
+     "shaftAxisPointGlb": [
+      0.4598,
+      1.0496,
+      -0.2125
+     ],
+     "shaftAxisGlb": [
+      -0.2243,
+      0.3539,
+      -0.908
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 25,
+     "verticesWithin10mm": 59,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0041,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 6,
+       "verticesWithin10mm": 18
+      }
+     }
+    },
+    "equippedCarry.open": {
+     "shaftAxisPointGlb": [
+      0.4224,
+      0.9894,
+      -0.0613
+     ],
+     "shaftAxisGlb": [
+      -0.1067,
+      0.1384,
+      -0.9846
+     ],
+     "minMeters": 0.0151,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0151,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.gripped": {
+     "shaftAxisPointGlb": [
+      0.4224,
+      0.9894,
+      -0.0613
+     ],
+     "shaftAxisGlb": [
+      -0.1067,
+      0.1384,
+      -0.9846
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 52,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0089,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 11
+      }
+     }
+    }
+   },
+   "Walk@frame19": {
+    "clipArm.open": {
+     "shaftAxisPointGlb": [
+      0.3319,
+      0.9491,
+      0.1599
+     ],
+     "shaftAxisGlb": [
+      0.1253,
+      -0.0489,
+      -0.9909
+     ],
+     "minMeters": 0.0254,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0254,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "clipArm.gripped": {
+     "shaftAxisPointGlb": [
+      0.3319,
+      0.9491,
+      0.1599
+     ],
+     "shaftAxisGlb": [
+      0.1253,
+      -0.0489,
+      -0.9909
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0182,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.open": {
+     "shaftAxisPointGlb": [
+      0.3816,
+      0.9526,
+      0.0865
+     ],
+     "shaftAxisGlb": [
+      0.0812,
+      0.013,
+      -0.9966
+     ],
+     "minMeters": 0.0208,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0208,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.gripped": {
+     "shaftAxisPointGlb": [
+      0.3816,
+      0.9526,
+      0.0865
+     ],
+     "shaftAxisGlb": [
+      0.0812,
+      0.013,
+      -0.9966
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0143,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    }
+   },
+   "Run@frame5": {
+    "clipArm.open": {
+     "shaftAxisPointGlb": [
+      0.354,
+      1.5268,
+      -0.5333
+     ],
+     "shaftAxisGlb": [
+      -0.6637,
+      0.7471,
+      0.0365
+     ],
+     "minMeters": 0.0293,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0395,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "clipArm.gripped": {
+     "shaftAxisPointGlb": [
+      0.354,
+      1.5268,
+      -0.5333
+     ],
+     "shaftAxisGlb": [
+      -0.6637,
+      0.7471,
+      0.0365
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 41,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0332,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.open": {
+     "shaftAxisPointGlb": [
+      0.4492,
+      1.1027,
+      -0.22
+     ],
+     "shaftAxisGlb": [
+      -0.2589,
+      0.3235,
+      -0.9101
+     ],
+     "minMeters": 0.0104,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0104,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.gripped": {
+     "shaftAxisPointGlb": [
+      0.4492,
+      1.1027,
+      -0.22
+     ],
+     "shaftAxisGlb": [
+      -0.2589,
+      0.3235,
+      -0.9101
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 20,
+     "verticesWithin10mm": 58,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0048,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 17
+      }
+     }
+    }
+   },
+   "Run@frame14": {
+    "clipArm.open": {
+     "shaftAxisPointGlb": [
+      0.382,
+      1.1462,
+      -0.0269
+     ],
+     "shaftAxisGlb": [
+      -0.0441,
+      0.4919,
+      -0.8696
+     ],
+     "minMeters": 0.0039,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 3,
+     "verticesWithin10mm": 13,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0039,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 13
+      }
+     }
+    },
+    "clipArm.gripped": {
+     "shaftAxisPointGlb": [
+      0.382,
+      1.1462,
+      -0.0269
+     ],
+     "shaftAxisGlb": [
+      -0.0441,
+      0.4919,
+      -0.8696
+     ],
+     "minMeters": -0.0055,
+     "verticesInsideShaft": 16,
+     "verticesWithin5mm": 40,
+     "verticesWithin10mm": 66,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": -0.0055,
+       "verticesInsideShaft": 16,
+       "verticesWithin5mm": 21,
+       "verticesWithin10mm": 25
+      }
+     }
+    },
+    "equippedCarry.open": {
+     "shaftAxisPointGlb": [
+      0.3954,
+      1.0268,
+      0.0402
+     ],
+     "shaftAxisGlb": [
+      0.0376,
+      0.0737,
+      -0.9966
+     ],
+     "minMeters": 0.0166,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 0,
+     "verticesWithin10mm": 0,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0293,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Middle": {
+       "minMeters": 0.0541,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Ring": {
+       "minMeters": 0.0558,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Pinky": {
+       "minMeters": 0.0454,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      },
+      "Thumb": {
+       "minMeters": 0.0166,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 0
+      }
+     }
+    },
+    "equippedCarry.gripped": {
+     "shaftAxisPointGlb": [
+      0.3954,
+      1.0268,
+      0.0402
+     ],
+     "shaftAxisGlb": [
+      0.0376,
+      0.0737,
+      -0.9966
+     ],
+     "minMeters": 0.0016,
+     "verticesInsideShaft": 0,
+     "verticesWithin5mm": 19,
+     "verticesWithin10mm": 48,
+     "perFinger": {
+      "Index": {
+       "minMeters": 0.0035,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 1,
+       "verticesWithin10mm": 6
+      },
+      "Middle": {
+       "minMeters": 0.0034,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 4,
+       "verticesWithin10mm": 11
+      },
+      "Ring": {
+       "minMeters": 0.0016,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 11,
+       "verticesWithin10mm": 15
+      },
+      "Pinky": {
+       "minMeters": 0.0022,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 3,
+       "verticesWithin10mm": 9
+      },
+      "Thumb": {
+       "minMeters": 0.0096,
+       "verticesInsideShaft": 0,
+       "verticesWithin5mm": 0,
+       "verticesWithin10mm": 7
+      }
+     }
+    }
+   }
+  },
+  "fingerJointsRestBlender": {
+   "Index": {
+    "knuckle": [
+     0.515,
+     0.0084,
+     1.0288
+    ],
+    "secondJoint": [
+     0.5035,
+     0.0139,
+     0.9782
+    ],
+    "tip": [
+     0.4827,
+     0.0199,
+     0.9162
+    ]
+   },
+   "Middle": {
+    "knuckle": [
+     0.5234,
+     -0.0256,
+     1.0276
+    ],
+    "secondJoint": [
+     0.52,
+     -0.0225,
+     0.9689
+    ],
+    "tip": [
+     0.4989,
+     -0.0187,
+     0.897
+    ]
+   },
+   "Ring": {
+    "knuckle": [
+     0.5257,
+     -0.063,
+     1.0261
+    ],
+    "secondJoint": [
+     0.5232,
+     -0.0604,
+     0.9721
+    ],
+    "tip": [
+     0.5049,
+     -0.0598,
+     0.9057
+    ]
+   },
+   "Pinky": {
+    "knuckle": [
+     0.5262,
+     -0.0872,
+     1.0252
+    ],
+    "secondJoint": [
+     0.5143,
+     -0.0935,
+     0.9878
+    ],
+    "tip": [
+     0.5001,
+     -0.0923,
+     0.9426
+    ]
+   },
+   "Thumb": {
+    "knuckle": [
+     0.4851,
+     0.0266,
+     1.1343
+    ],
+    "secondJoint": [
+     0.4638,
+     0.0381,
+     1.0794
+    ],
+    "tip": [
+     0.452,
+     0.0598,
+     1.0287
+    ]
+   }
+  },
+  "weights": {
+   "verticesWeighted": 550,
+   "hardSegmentSplits": 0,
+   "maxInfluences": 4,
+   "perBone": {
+    "Middle2.R": 71,
+    "Pinky2.R": 68,
+    "Thumb1.R": 34,
+    "Thumb2.R": 64,
+    "Ring1.R": 64,
+    "Ring2.R": 70,
+    "Index2.R": 69,
+    "Middle1.R": 70,
+    "Index1.R": 63,
+    "Pinky1.R": 79
+   }
+  },
+  "neutralHandMaxDriftMeters": 2.384185791015625e-07,
+  "glbChannelPass": {
+   "rule": "post-export: finger channels removed from every clip except ToolGrip; ToolGrip keeps only the ten finger rotation channels (the NLA exporter bakes every bone into every track). Remaining channels are the exporter's own output; orphaned accessors/bufferViews pruned with indices remapped, binary blob untouched.",
+   "perClip": {
     "Idle": {
-      "channels": 51,
-      "durationSeconds": 2.042
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
     },
     "Walk": {
-      "channels": 51,
-      "durationSeconds": 1.042
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "Run": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
     },
     "Turn": {
-      "channels": 51,
-      "durationSeconds": 1.042
-    }
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "TurnLeft": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "TurnRight": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "Jump": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "RideIdle": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "RideWalk": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "RideRun": {
+     "channelsBefore": 83,
+     "channelsAfter": 53,
+     "samplersRemoved": 30
+    },
+    "ToolGrip": {
+     "channelsBefore": 81,
+     "channelsAfter": 10,
+     "samplersRemoved": 71
+    },
+    "accessorsPruned": 253,
+    "bufferViewsPruned": 253
+   }
+  }
+ },
+ "equipmentSockets": {
+  "Socket.Head": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    0.0,
+    2.3,
+    0.01
+   ]
   },
-  "footwearVariants": {
-    "barefootMesh": "V9_feet",
-    "bootsMesh": "V9_boots",
-    "runtimeRule": "show V9_feet when gear.boots is false, V9_boots when true; both nodes are exported visible",
-    "feetSource": "CC0 base-mesh feet and lower shins below z=0.58 m, skinned to Thigh/Shin/Foot per side",
-    "feetBoundsBlender": {
-      "min": [
-        -0.2355,
-        -0.1565,
-        0.0
-      ],
-      "max": [
-        0.2355,
-        0.1936,
-        0.5894
-      ]
-    },
-    "feetVertices": 1402,
-    "restClearanceToBootsMeters": {
-      "min": 0.005,
-      "median": 0.0177,
-      "verticesUnder2mm": 0,
-      "verticesOutsideBoots": 0,
-      "outsideZRange": null,
-      "soleVerticesOnFloorPlane": 75,
-      "shinVerticesAboveBootOpening": 231,
-      "zoneChecked": "0.005 < z < 0.44"
-    },
-    "restClearanceShinToTrousersMeters": {
-      "min": 0.0006,
-      "verticesOutsideTrousers": 0,
-      "zoneChecked": "0.44 <= z < 0.575"
-    },
-    "maxVertexDisplacementMeters": {
-      "Walk@frame7": {
-        "L": 0.3018,
-        "R": 0.5924
-      },
-      "Walk@frame19": {
-        "L": 0.5924,
-        "R": 0.3018
-      },
-      "Turn@frame13": {
-        "L": 0.0819,
-        "R": 0.1325
-      }
-    }
+  "Socket.LeftHand": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    -0.5,
+    1.02,
+    0.02
+   ]
   },
-  "meshObjects": 19,
-  "drawGroups": 30,
-  "materialCount": 13,
-  "exportedMeshes": 19,
-  "trianglesEvaluated": 63482,
-  "trianglesGlb": 63482,
-  "perObject": {
-    "V9_body": {
-      "triangles": 12796,
-      "materials": [
-        "V9_skin"
-      ]
-    },
-    "V9_brows": {
-      "triangles": 416,
-      "materials": [
-        "V9_brow"
-      ]
-    },
-    "V9_hair_shell": {
-      "triangles": 2782,
-      "materials": [
-        "V9_hair"
-      ]
-    },
-    "V9_hair_locks": {
-      "triangles": 15456,
-      "materials": [
-        "V9_hair"
-      ]
+  "Socket.RightHand": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    0.5,
+    1.02,
+    0.02
+   ]
+  },
+  "Socket.Chest": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    0.0,
+    1.5,
+    -0.22
+   ]
+  },
+  "Socket.LeftFoot": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    -0.15,
+    0.03,
+    -0.19
+   ]
+  },
+  "Socket.RightFoot": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    0.15,
+    0.03,
+    -0.19
+   ]
+  },
+  "Socket.Legs": {
+   "role": "equipment_socket",
+   "glbPosition": [
+    0.0,
+    0.9,
+    -0.0
+   ]
+  }
+ },
+ "animationClips": {
+  "Idle": {
+   "channels": 53,
+   "durationSeconds": 2.042,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
     },
     "V9_tunic": {
-      "triangles": 1920,
-      "materials": [
-        "V9_tunic"
-      ]
-    },
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Walk": {
+   "channels": 53,
+   "durationSeconds": 1.042,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
     "V9_robe": {
-      "triangles": 5760,
-      "materials": [
-        "V9_violet_cloth",
-        "V9_gold"
-      ]
+     "min": 0.0,
+     "max": 0.0
     },
-    "V9_belt": {
-      "triangles": 224,
-      "materials": [
-        "V9_leather_dark",
-        "V9_gold"
-      ]
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Run": {
+   "channels": 53,
+   "durationSeconds": 0.75,
+   "firstKeySeconds": 0.0,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
     },
-    "V9_strap": {
-      "triangles": 112,
-      "materials": [
-        "V9_leather"
-      ]
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Turn": {
+   "channels": 53,
+   "durationSeconds": 1.042,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
     },
-    "V9_mantle": {
-      "triangles": 6912,
-      "materials": [
-        "V9_violet_cloth",
-        "V9_gold"
-      ]
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "TurnLeft": {
+   "channels": 53,
+   "durationSeconds": 1.375,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
     },
-    "V9_hood": {
-      "triangles": 1296,
-      "materials": [
-        "V9_violet_cloth",
-        "V9_gold"
-      ]
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "TurnRight": {
+   "channels": 53,
+   "durationSeconds": 1.375,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
     },
-    "V9_collar": {
-      "triangles": 1280,
-      "materials": [
-        "V9_violet_lining",
-        "V9_gold"
-      ]
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Jump": {
+   "channels": 53,
+   "durationSeconds": 1.542,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
     },
-    "V9_cowl": {
-      "triangles": 5280,
-      "materials": [
-        "V9_violet_cloth"
-      ]
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "RideIdle": {
+   "channels": 53,
+   "durationSeconds": 3.042,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 1.0,
+     "max": 1.0
     },
-    "V9_brooch": {
-      "triangles": 64,
-      "materials": [
-        "V9_gold"
-      ]
+    "V9_tunic": {
+     "min": 1.0,
+     "max": 1.0
+    }
+   }
+  },
+  "RideWalk": {
+   "channels": 53,
+   "durationSeconds": 1.375,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 1.0,
+     "max": 1.0
     },
-    "V9_sleeves": {
-      "triangles": 1088,
-      "materials": [
-        "V9_violet_cloth",
-        "V9_gold"
-      ]
+    "V9_tunic": {
+     "min": 1.0,
+     "max": 1.0
+    }
+   }
+  },
+  "RideRun": {
+   "channels": 53,
+   "durationSeconds": 0.875,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "translation": 17,
+    "rotation": 17,
+    "scale": 17,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 1.0,
+     "max": 1.0
+    },
+    "V9_tunic": {
+     "min": 1.0,
+     "max": 1.0
+    }
+   }
+  },
+  "ToolGrip": {
+   "channels": 10,
+   "durationSeconds": 0.542,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "rotation": 10
+   },
+   "fingerChannels": 10,
+   "morphWeightTracks": {}
+  }
+ },
+ "runClip": {
+  "cycleFrames": 18,
+  "fps": 24,
+  "keyStepFrames": 2,
+  "inPlace": true,
+  "loopClosure": {
+   "poseAtPhase0EqualsPhase1": true
+  },
+  "footLowestPointPerFrameMeters": {
+   "L": [
+    -0.004,
+    0.028,
+    0.124,
+    0.227,
+    0.292,
+    0.292,
+    0.227,
+    0.124,
+    0.035,
+    -0.003,
+    0.01,
+    0.1,
+    0.285,
+    0.445,
+    0.507,
+    0.46,
+    0.322,
+    0.134
+   ],
+   "R": [
+    -0.003,
+    0.01,
+    0.1,
+    0.285,
+    0.445,
+    0.507,
+    0.46,
+    0.322,
+    0.134,
+    -0.005,
+    0.028,
+    0.125,
+    0.227,
+    0.292,
+    0.292,
+    0.227,
+    0.125,
+    0.035
+   ]
+  },
+  "stanceFootMinZ": -0.005,
+  "swingFootMaxOfMinZ": 0.507,
+  "amplitudeVsWalkRadians": {
+   "thighSwing": {
+    "Walk": 0.32,
+    "Run": 0.75
+   },
+   "kneeFlex": {
+    "Walk": 0.55,
+    "Run": 1.3
+   },
+   "upperArmSwing": {
+    "Walk": 0.22,
+    "Run": 0.45
+   },
+   "forearmHold": {
+    "Walk": 0.1,
+    "Run": 1.15
+   },
+   "spineLean": {
+    "Walk": 0.04,
+    "Run": 0.14
+   },
+   "spineTwist": {
+    "Walk": 0.06,
+    "Run": 0.14
+   },
+   "hipsBobMeters": {
+    "Walk": 0.012,
+    "Run": 0.025
+   }
+  },
+  "glbTimeline": {
+   "firstKeySeconds": 0.0,
+   "closingKeySeconds": 0.75,
+   "rule": "post-export: Run's time accessors are shifted so the first key is t=0 and the closing (loop-matching) key is cycleFrames/fps; LoopRepeat then has no held first frame. Output values, channel set, interpolation and every other clip are untouched. Idle/Walk/Turn/Jump and the ride clips keep the exporter's 1/24 s start (the runtime drives Idle/Walk by phase; ride clips must keep the mount's durations).",
+   "pass": {
+    "clip": "Run",
+    "fps": 24,
+    "inputAccessors": [
+     {
+      "accessor": 248,
+      "keys": 2,
+      "firstKeyBefore": 0.0416667,
+      "lastKeyBefore": 0.7916667,
+      "firstKeyAfter": 0.0,
+      "lastKeyAfter": 0.75
+     },
+     {
+      "accessor": 249,
+      "keys": 19,
+      "firstKeyBefore": 0.0416667,
+      "lastKeyBefore": 0.7916667,
+      "firstKeyAfter": 0.0,
+      "lastKeyAfter": 0.75
+     }
+    ],
+    "samplersUsingTheseAccessors": 53
+   }
+  }
+ },
+ "stepTurnClips": {
+  "TurnLeft": {
+   "cycleFrames": 32,
+   "fps": 24,
+   "keyStepFrames": 2,
+   "loops": true,
+   "inPlace": true,
+   "yawDirection": "positive yaw, A key (counter-clockwise from above)",
+   "steppingOrder": "left foot steps out (frames 1-16), right foot follows (17-32)",
+   "loopClosure": {
+    "poseAtPhase0EqualsPhase1": true,
+    "bothFeetPlantedAtSeam": true
+   },
+   "footLowestPointPerFrameMeters": {
+    "L": [
+     -0.0,
+     -0.0,
+     -0.0,
+     0.005,
+     0.014,
+     0.025,
+     0.035,
+     0.044,
+     0.05,
+     0.053,
+     0.051,
+     0.046,
+     0.04,
+     0.033,
+     0.027,
+     0.02,
+     0.017,
+     0.015,
+     0.009,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     0.0,
+     -0.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "R": [
+     0.001,
+     0.001,
+     0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     0.0,
+     0.0,
+     -0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.005,
+     0.023,
+     0.042,
+     0.058,
+     0.07,
+     0.075,
+     0.072,
+     0.061,
+     0.046,
+     0.029,
+     0.014,
+     0.003,
+     0.001
+    ]
+   },
+   "liftedFrames(>1cm)": {
+    "L": [
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18
+    ],
+    "R": [
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     30
+    ]
+   },
+   "plantedFootMinZ": -0.0,
+   "swingFootPeakZ": 0.075,
+   "hipsTrack": {
+    "yawRadians": {
+     "min": -0.12,
+     "max": 0.12,
+     "mean": 0.0
+    },
+    "lateralMeters": {
+     "min": -0.045,
+     "max": 0.045,
+     "mean": 0.0
+    },
+    "verticalMeters": {
+     "min": -0.0121,
+     "max": 0.0049
+    },
+    "forwardMetersBoneLocal": 0.0,
+    "note": "offsets are Hips bone-local; the bone axis is tilted about 3 deg, so a vertical offset couples about 5 percent into glTF forward (-Z)"
+   },
+   "amplitudesRadians": {
+    "thighTwist": 0.28,
+    "stepOutAbduction": 0.2,
+    "plantedDrift": 0.1,
+    "hipYaw": 0.12,
+    "chestCounterYaw": 0.06,
+    "pelvisRoll": 0.03,
+    "headYawIntoTurn": 0.26,
+    "armBalance": 0.1
+   },
+   "assumedSustainedYawRateRadPerSec": 0.84
+  },
+  "TurnRight": {
+   "cycleFrames": 32,
+   "fps": 24,
+   "keyStepFrames": 2,
+   "loops": true,
+   "inPlace": true,
+   "yawDirection": "negative yaw, D key (clockwise from above)",
+   "steppingOrder": "right foot steps out (frames 1-16), left foot follows (17-32)",
+   "loopClosure": {
+    "poseAtPhase0EqualsPhase1": true,
+    "bothFeetPlantedAtSeam": true
+   },
+   "footLowestPointPerFrameMeters": {
+    "L": [
+     0.002,
+     0.001,
+     0.001,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     -0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.004,
+     0.023,
+     0.042,
+     0.058,
+     0.07,
+     0.075,
+     0.072,
+     0.062,
+     0.047,
+     0.03,
+     0.014,
+     0.004,
+     0.001
+    ],
+    "R": [
+     0.0,
+     -0.0,
+     -0.0,
+     0.005,
+     0.014,
+     0.024,
+     0.035,
+     0.044,
+     0.05,
+     0.053,
+     0.051,
+     0.046,
+     0.039,
+     0.033,
+     0.027,
+     0.02,
+     0.017,
+     0.015,
+     0.009,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -0.0,
+     0.0,
+     0.0,
+     -0.0,
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "liftedFrames(>1cm)": {
+    "L": [
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     30
+    ],
+    "R": [
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18
+    ]
+   },
+   "plantedFootMinZ": -0.0,
+   "swingFootPeakZ": 0.075,
+   "hipsTrack": {
+    "yawRadians": {
+     "min": -0.12,
+     "max": 0.12,
+     "mean": -0.0
+    },
+    "lateralMeters": {
+     "min": -0.045,
+     "max": 0.045,
+     "mean": -0.0
+    },
+    "verticalMeters": {
+     "min": -0.0121,
+     "max": 0.0049
+    },
+    "forwardMetersBoneLocal": 0.0,
+    "note": "offsets are Hips bone-local; the bone axis is tilted about 3 deg, so a vertical offset couples about 5 percent into glTF forward (-Z)"
+   },
+   "amplitudesRadians": {
+    "thighTwist": 0.28,
+    "stepOutAbduction": 0.2,
+    "plantedDrift": 0.1,
+    "hipYaw": 0.12,
+    "chestCounterYaw": 0.06,
+    "pelvisRoll": 0.03,
+    "headYawIntoTurn": 0.26,
+    "armBalance": 0.1
+   },
+   "assumedSustainedYawRateRadPerSec": 0.84
+  },
+  "mirror": "TurnRight is the exact mirror of TurnLeft: L/R bones swapped, Y and Z rotations and Hips X location negated"
+ },
+ "jumpClip": {
+  "frames": 36,
+  "fps": 24,
+  "keyStepFrames": 2,
+  "loops": false,
+  "poseOnly": true,
+  "rootRule": "Hips location is the body's own crouch/extension offset (vertical, zero horizontal); airborne frames keep it at 0. No world-space arc is baked: game physics owns world Y.",
+  "phaseMarkersNormalized": {
+   "takeoff": [
+    0.0,
+    0.33
+   ],
+   "airborne": [
+    0.33,
+    0.78
+   ],
+   "landing": [
+    0.78,
+    1.0
+   ],
+   "crouch": [
+    0.0,
+    0.22
+   ],
+   "push": [
+    0.22,
+    0.33
+   ],
+   "tuck": [
+    0.33,
+    0.62
+   ],
+   "tuckHold": [
+    0.44,
+    0.62
+   ],
+   "reach": [
+    0.62,
+    0.78
+   ],
+   "touchdown": [
+    0.78,
+    0.8
+   ],
+   "absorb": [
+    0.8,
+    0.9
+   ],
+   "recover": [
+    0.9,
+    1.0
+   ]
+  },
+  "phaseMarkersSeconds": {
+   "takeoff": [
+    0.0,
+    0.495
+   ],
+   "airborne": [
+    0.495,
+    1.17
+   ],
+   "landing": [
+    1.17,
+    1.5
+   ],
+   "crouch": [
+    0.0,
+    0.33
+   ],
+   "push": [
+    0.33,
+    0.495
+   ],
+   "tuck": [
+    0.495,
+    0.93
+   ],
+   "tuckHold": [
+    0.66,
+    0.93
+   ],
+   "reach": [
+    0.93,
+    1.17
+   ],
+   "touchdown": [
+    1.17,
+    1.2
+   ],
+   "absorb": [
+    1.2,
+    1.35
+   ],
+   "recover": [
+    1.35,
+    1.5
+   ]
+  },
+  "keyPoses": [
+   {
+    "phase": 0.0,
+    "frame": 1.0,
+    "name": "rest",
+    "grounded": 1.0,
+    "hipsVerticalOffsetMeters": -0.0001
+   },
+   {
+    "phase": 0.22,
+    "frame": 8.9,
+    "name": "crouch",
+    "grounded": 1.0,
+    "hipsVerticalOffsetMeters": -0.1983
+   },
+   {
+    "phase": 0.33,
+    "frame": 12.9,
+    "name": "push",
+    "grounded": 1.0,
+    "hipsVerticalOffsetMeters": 0.0687
+   },
+   {
+    "phase": 0.5,
+    "frame": 19.0,
+    "name": "tuck",
+    "grounded": 0.0,
+    "hipsVerticalOffsetMeters": 0.0
+   },
+   {
+    "phase": 0.72,
+    "frame": 26.9,
+    "name": "reach",
+    "grounded": 0.0,
+    "hipsVerticalOffsetMeters": 0.0
+   },
+   {
+    "phase": 0.8,
+    "frame": 29.8,
+    "name": "touchdown",
+    "grounded": 1.0,
+    "hipsVerticalOffsetMeters": -0.0515
+   },
+   {
+    "phase": 0.9,
+    "frame": 33.4,
+    "name": "absorb",
+    "grounded": 1.0,
+    "hipsVerticalOffsetMeters": -0.233
+   },
+   {
+    "phase": 1.0,
+    "frame": 37.0,
+    "name": "rest",
+    "grounded": 1.0,
+    "hipsVerticalOffsetMeters": -0.0001
+   }
+  ],
+  "footLowestPointPerFrameMeters": {
+   "L": [
+    0.0,
+    0.0,
+    -0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -0.0,
+    -0.0,
+    -0.006,
+    -0.012,
+    0.004,
+    0.062,
+    0.144,
+    0.187,
+    0.173,
+    0.139,
+    0.097,
+    0.057,
+    0.027,
+    0.009,
+    0.001,
+    -0.001,
+    0.009,
+    0.008,
+    0.0,
+    0.0,
+    0.0,
+    0.001,
+    0.001,
+    0.0,
+    0.0
+   ],
+   "R": [
+    -0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -0.0,
+    -0.0,
+    -0.006,
+    -0.012,
+    0.003,
+    0.062,
+    0.144,
+    0.187,
+    0.173,
+    0.139,
+    0.097,
+    0.057,
+    0.027,
+    0.009,
+    0.001,
+    -0.001,
+    0.009,
+    0.008,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "groundedFramesMinZ": 0.0,
+  "airborneFramesMinZ": 0.057,
+  "hipsTrack": {
+   "yawRadians": {
+    "min": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "lateralMeters": {
+    "min": 0.0,
+    "max": 0.0,
+    "mean": 0.0
+   },
+   "verticalMeters": {
+    "min": -0.2248,
+    "max": 0.0686
+   },
+   "forwardMetersBoneLocal": 0.0,
+   "note": "offsets are Hips bone-local; the bone axis is tilted about 3 deg, so a vertical offset couples about 5 percent into glTF forward (-Z)"
+  },
+  "runtimeHint": "play takeoff 0 to 0.33 on jump input, hold or ping-pong inside tuckHold 0.44 to 0.62 while airborne, play 0.62 to 1.0 on ground contact",
+  "poseSpaceNote": "between push and tuckHold (0.33 to 0.44) and in reach (0.62 to 0.78) the extended feet dip up to about 2 cm below the root floor plane; the character is airborne in physics there, so this is not ground penetration"
+ },
+ "rideClips": {
+  "clips": {
+   "RideIdle": {
+    "cycleFrames": 72,
+    "fps": 24,
+    "keyStepFrames": 3,
+    "loops": true,
+    "inPlace": true,
+    "mountClip": "Idle",
+    "mountClipFrames": 72,
+    "mountClipDurationSeconds": 3.042,
+    "loopClosure": {
+     "poseAtPhase0EqualsPhase1": true
+    },
+    "hipsTrack": {
+     "lateralMeters": {
+      "min": -0.015,
+      "max": 0.015,
+      "mean": 0.0
+     },
+     "verticalMeters": {
+      "min": -0.0001,
+      "max": 0.0025,
+      "mean": 0.00088
+     },
+     "backwardMeters": {
+      "min": -0.0013,
+      "max": 0.0016,
+      "mean": 0.00016
+     },
+     "yawRadians": {
+      "min": 0,
+      "max": 0
+     },
+     "note": "Hips bone-local offsets equal the mount seat delta (glTF x, y, z) for the same frame; the rider follows the saddle, no drift"
+    },
+    "seatDeltaSource": "sedgehorn_manifest.json clipEvidence.Idle.seatDeltaPerFrameGlb",
+    "spineLeanRadians": -0.04,
+    "staticPoseSolve": {
+     "L": {
+      "kneeGlb": [
+       -0.4587,
+       1.8989,
+       -0.2069
+      ],
+      "ankleGlb": [
+       -0.6062,
+       1.5622,
+       -0.049
+      ],
+      "toeGlb": [
+       -0.6319,
+       1.516,
+       -0.2877
+      ],
+      "wristGlb": [
+       -0.16,
+       2.3459,
+       -0.1271
+      ],
+      "knuckleGlb": [
+       -0.1716,
+       2.2847,
+       -0.2581
+      ],
+      "knuckleToReinHandMeters": 0.0201,
+      "wristToIkTargetMeters": 0.0,
+      "ankleToStirrupTargetMeters": 0.0
+     },
+     "R": {
+      "kneeGlb": [
+       0.4587,
+       1.8989,
+       -0.2069
+      ],
+      "ankleGlb": [
+       0.6062,
+       1.5622,
+       -0.049
+      ],
+      "toeGlb": [
+       0.6319,
+       1.516,
+       -0.2877
+      ],
+      "wristGlb": [
+       0.16,
+       2.3459,
+       -0.1271
+      ],
+      "knuckleGlb": [
+       0.1716,
+       2.2847,
+       -0.2581
+      ],
+      "knuckleToReinHandMeters": 0.0201,
+      "wristToIkTargetMeters": 0.0,
+      "ankleToStirrupTargetMeters": 0.0
+     }
+    }
+   },
+   "RideWalk": {
+    "cycleFrames": 32,
+    "fps": 24,
+    "keyStepFrames": 2,
+    "loops": true,
+    "inPlace": true,
+    "mountClip": "Walk",
+    "mountClipFrames": 32,
+    "mountClipDurationSeconds": 1.375,
+    "loopClosure": {
+     "poseAtPhase0EqualsPhase1": true
+    },
+    "hipsTrack": {
+     "lateralMeters": {
+      "min": -0.0247,
+      "max": 0.0247,
+      "mean": 0.0
+     },
+     "verticalMeters": {
+      "min": -0.0287,
+      "max": 0.0054,
+      "mean": -0.00779
+     },
+     "backwardMeters": {
+      "min": -0.0012,
+      "max": 0.0003,
+      "mean": -0.00049
+     },
+     "yawRadians": {
+      "min": 0,
+      "max": 0
+     },
+     "note": "Hips bone-local offsets equal the mount seat delta (glTF x, y, z) for the same frame; the rider follows the saddle, no drift"
+    },
+    "seatDeltaSource": "sedgehorn_manifest.json clipEvidence.Walk.seatDeltaPerFrameGlb",
+    "spineLeanRadians": -0.06,
+    "staticPoseSolve": {
+     "L": {
+      "kneeGlb": [
+       -0.4587,
+       1.8989,
+       -0.2069
+      ],
+      "ankleGlb": [
+       -0.6062,
+       1.5622,
+       -0.049
+      ],
+      "toeGlb": [
+       -0.6319,
+       1.516,
+       -0.2877
+      ],
+      "wristGlb": [
+       -0.16,
+       2.3459,
+       -0.1271
+      ],
+      "knuckleGlb": [
+       -0.1716,
+       2.2847,
+       -0.2581
+      ],
+      "knuckleToReinHandMeters": 0.0201,
+      "wristToIkTargetMeters": 0.0,
+      "ankleToStirrupTargetMeters": 0.0
+     },
+     "R": {
+      "kneeGlb": [
+       0.4587,
+       1.8989,
+       -0.2069
+      ],
+      "ankleGlb": [
+       0.6062,
+       1.5622,
+       -0.049
+      ],
+      "toeGlb": [
+       0.6319,
+       1.516,
+       -0.2877
+      ],
+      "wristGlb": [
+       0.16,
+       2.3459,
+       -0.1271
+      ],
+      "knuckleGlb": [
+       0.1716,
+       2.2847,
+       -0.2581
+      ],
+      "knuckleToReinHandMeters": 0.0201,
+      "wristToIkTargetMeters": 0.0,
+      "ankleToStirrupTargetMeters": 0.0
+     }
+    }
+   },
+   "RideRun": {
+    "cycleFrames": 20,
+    "fps": 24,
+    "keyStepFrames": 1,
+    "loops": true,
+    "inPlace": true,
+    "mountClip": "Run",
+    "mountClipFrames": 20,
+    "mountClipDurationSeconds": 0.875,
+    "loopClosure": {
+     "poseAtPhase0EqualsPhase1": true
+    },
+    "hipsTrack": {
+     "lateralMeters": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0
+     },
+     "verticalMeters": {
+      "min": -0.1068,
+      "max": 0.0232,
+      "mean": -0.0261
+     },
+     "backwardMeters": {
+      "min": -0.0266,
+      "max": 0.0279,
+      "mean": 0.00054
+     },
+     "yawRadians": {
+      "min": 0,
+      "max": 0
+     },
+     "note": "Hips bone-local offsets equal the mount seat delta (glTF x, y, z) for the same frame; the rider follows the saddle, no drift"
+    },
+    "seatDeltaSource": "sedgehorn_manifest.json clipEvidence.Run.seatDeltaPerFrameGlb",
+    "spineLeanRadians": -0.16,
+    "staticPoseSolve": {
+     "L": {
+      "kneeGlb": [
+       -0.4587,
+       1.8989,
+       -0.2069
+      ],
+      "ankleGlb": [
+       -0.6062,
+       1.5622,
+       -0.049
+      ],
+      "toeGlb": [
+       -0.6319,
+       1.516,
+       -0.2877
+      ],
+      "wristGlb": [
+       -0.16,
+       2.3459,
+       -0.1271
+      ],
+      "knuckleGlb": [
+       -0.1716,
+       2.2847,
+       -0.2581
+      ],
+      "knuckleToReinHandMeters": 0.0201,
+      "wristToIkTargetMeters": 0.0,
+      "ankleToStirrupTargetMeters": 0.0
+     },
+     "R": {
+      "kneeGlb": [
+       0.4587,
+       1.8989,
+       -0.2069
+      ],
+      "ankleGlb": [
+       0.6062,
+       1.5622,
+       -0.049
+      ],
+      "toeGlb": [
+       0.6319,
+       1.516,
+       -0.2877
+      ],
+      "wristGlb": [
+       0.16,
+       2.3459,
+       -0.1271
+      ],
+      "knuckleGlb": [
+       0.1716,
+       2.2847,
+       -0.2581
+      ],
+      "knuckleToReinHandMeters": 0.0201,
+      "wristToIkTargetMeters": 0.0,
+      "ankleToStirrupTargetMeters": 0.0
+     }
+    }
+   }
+  },
+  "mountAsset": {
+   "glb": "../../creatures/sedgehorn_mount/sedgehorn_adult.glb",
+   "manifest": "../../creatures/sedgehorn_mount/sedgehorn_manifest.json",
+   "mountGlbSha256": "660dcfecec9790d49f288f1ca5fe136c5985018fd6d5e6a230bd347328555482",
+   "available": true
+  },
+  "riderSeatOffsetGlb": [
+   0.0,
+   1.1502,
+   -0.04
+  ],
+  "riderSeatOffsetBlender": [
+   0.0,
+   0.04,
+   1.1502
+  ],
+  "riderSeatOffsetRule": "mount-local translation of the rider root (its floor origin), no rotation: Seat.glbPosition + (0, -0.823, +0.02 forward); rider and mount both face -Z. Apply as RIDER_SEAT_OFFSET in the workbench; the ride clips then put the pelvis on the seat.",
+  "seatGlb": [
+   0.0,
+   1.9732,
+   -0.02
+  ],
+  "stirrupTreadGlb": {
+   "L": [
+    -0.6062,
+    1.4472,
+    -0.084
+   ],
+   "R": [
+    0.6062,
+    1.4472,
+    -0.084
+   ]
+  },
+  "reinHandGlb": {
+   "L": [
+    -0.17,
+    2.2932,
+    -0.24
+   ],
+   "R": [
+    0.17,
+    2.2932,
+    -0.24
+   ]
+  },
+  "seatedPelvisDropMeters": 0.823,
+  "staticPose": {
+   "kneePoleBlender": [
+    0.75,
+    1.0,
+    0.15
+   ],
+   "handDirectionBlender": [
+    0.08,
+    0.903,
+    -0.422
+   ],
+   "handPalmNormalBlender(right)": [
+    -0.573,
+    0.0,
+    -0.819
+   ],
+   "ankleAboveTreadMeters": 0.115,
+   "solver": "2-bone IK hip/knee/ankle to the stirrup tread + ankle height with the knee pole; foot aimed level; 2-bone IK upper arm/forearm to the rein end minus 12.5 cm along the hand; hand aimed along the rein with the palm turned down-and-in"
+  },
+  "gripRight": "weight 0 in every clip and never animated; the open Basis hand rests on the rein ends",
+  "heldTools": "the workbench hides held tools in riding mode; sockets are unchanged",
+  "drapeMorph": {
+   "name": "RideDrape",
+   "meshes": {
+    "V9_robe": {
+     "vertices": 3007,
+     "drapedVertices": 1358,
+     "maxRestOffsetMeters": 0.6564,
+     "maxEdgeStrainMeters": 0.1264,
+     "meanRestOffsetMeters": 0.2898,
+     "skinningReconstructionErrorMeters": 0.0,
+     "drapeStartZ": 0.98
+    },
+    "V9_tunic": {
+     "vertices": 1025,
+     "drapedVertices": 246,
+     "maxRestOffsetMeters": 0.2591,
+     "maxEdgeStrainMeters": 0.0433,
+     "meanRestOffsetMeters": 0.0897,
+     "skinningReconstructionErrorMeters": 0.0,
+     "drapeStartZ": 0.98
+    }
+   },
+   "weightRule": "1.0 across RideIdle/RideWalk/RideRun, 0.0 across all on-foot clips (keyed in every clip)",
+   "method": "skirt rows below z=0.98 released from the pose and settled as position-based cloth (gravity steps, grid and diagonal distance constraints at the authored rest lengths, 1.6 cm push-out from the mount body/saddle/blanket and the rider's trousers/boots), then inverted through the seated skinning matrices into a rest-space offset"
+  },
+  "fit": {
+   "mountReferenceAvailable": true,
+   "beforeDrape": {
+    "V9_robe": {
+     "vertices": 3007,
+     "verticesInsideMount": 127,
+     "deepestPenetrationMeters": 0.2274,
+     "nearestOutsideMeters": 0.0001,
+     "lowestWorldZ": 1.6043
+    },
+    "V9_tunic": {
+     "vertices": 1025,
+     "verticesInsideMount": 23,
+     "deepestPenetrationMeters": 0.0168,
+     "nearestOutsideMeters": 0.0,
+     "lowestWorldZ": 1.9627
+    }
+   },
+   "rideIdleFrame1": {
+    "V9_robe": {
+     "vertices": 3007,
+     "verticesInsideMount": 254,
+     "deepestPenetrationMeters": 0.006,
+     "nearestOutsideMeters": 0.0005,
+     "lowestWorldZ": 1.52
+    },
+    "V9_tunic": {
+     "vertices": 1025,
+     "verticesInsideMount": 8,
+     "deepestPenetrationMeters": 0.0039,
+     "nearestOutsideMeters": 0.0117,
+     "lowestWorldZ": 1.9301
     },
     "V9_trousers": {
-      "triangles": 640,
-      "materials": [
-        "V9_trouser"
-      ]
+     "vertices": 360,
+     "verticesInsideMount": 0,
+     "deepestPenetrationMeters": 0.0,
+     "nearestOutsideMeters": 0.0009,
+     "lowestWorldZ": 1.7962
     },
     "V9_boots": {
-      "triangles": 1960,
-      "materials": [
-        "V9_leather",
-        "V9_leather_dark"
-      ]
+     "vertices": 1010,
+     "verticesInsideMount": 0,
+     "deepestPenetrationMeters": 0.0,
+     "nearestOutsideMeters": 0.0109,
+     "lowestWorldZ": 1.4583
+    },
+    "V9_sleeves": {
+     "vertices": 576,
+     "verticesInsideMount": 0,
+     "deepestPenetrationMeters": 0.0,
+     "nearestOutsideMeters": 0.3345,
+     "lowestWorldZ": 2.2533
+    },
+    "V9_body": {
+     "vertices": 6491,
+     "verticesInsideMount": 0,
+     "deepestPenetrationMeters": 0.0,
+     "nearestOutsideMeters": 0.1354,
+     "lowestWorldZ": 2.2029
     },
     "V9_satchel": {
-      "triangles": 324,
-      "materials": [
-        "V9_leather",
-        "V9_leather_dark",
-        "V9_gold"
-      ]
-    },
-    "V9_eyes": {
-      "triangles": 2436,
-      "materials": [
-        "V9_eye_sclera",
-        "V9_eye_iris",
-        "V9_eye_pupil"
-      ]
-    },
-    "V9_feet": {
-      "triangles": 2736,
-      "materials": [
-        "V9_skin"
-      ]
+     "vertices": 168,
+     "verticesInsideMount": 0,
+     "deepestPenetrationMeters": 0.0,
+     "nearestOutsideMeters": 0.1194,
+     "lowestWorldZ": 2.0647
     }
-  },
-  "hairLocks": 124,
-  "glbBytes": 2169992,
-  "sha256": {
-    "glb": "0ecea9c079b359bb7ffbb7b8e6d5a4b832039525831f0b097759cbcd9dd32b50",
-    "blend": "c9a5a7f28f39557483354e21ab5a17c88b11c3ee807a67ce6be4c2f8488fd04f"
-  },
-  "glbChecks": {
-    "clipsIdleWalkTurn": true,
-    "oneSkinWith17Joints": true,
-    "jointNamesMatchV2": true,
-    "sevenSocketsWithRole": true,
-    "noCameras": true,
-    "noLights": true,
-    "floorAtZero": true,
-    "heightInRange": true,
-    "forwardIsNegativeZ": true,
-    "feetAndBootsExported": true,
-    "feetOnFloor": true,
-    "feetInsideBoots": true,
-    "feetDeformInWalkTurn": true
-  },
-  "glbStructureValid": true,
-  "budget": {
-    "targetTriangles": 40000,
-    "targetDrawGroups": 32,
-    "targetGlbBytes": 5242880,
-    "trianglesMet": false,
-    "drawGroupsMet": true,
-    "glbBytesMet": true
-  },
-  "compromises": [
-    "No Subdivision or Solidify on the game mesh (V9 bust renders used subsurf render level 2 at 300k triangles); cloth is single-sided sheets with double-sided materials, brows and brooch keep a small Solidify.",
-    "Procedural bump, sheen, coat and subsurface shader detail does not export to glTF; flat PBR factors only. The hair root-to-tip gradient is baked to vertex colours (COLOR_0).",
-    "Below the mantle the robe is torso-fitted with separate sleeves; the V9 bust robe wrapped the arms as a poncho.",
-    "Skinning is smooth distance falloff, tuned for the Idle/Walk/Turn amplitudes, not hand-painted weights.",
-    "V9_feet and V9_boots are both exported visible; the runtime must toggle them (feet sole and boot sole share the floor plane)."
-  ],
-  "peakProcessMemoryMB": 314.4,
-  "authorSeconds": 1.3,
-  "blender": "5.2.2 LTS",
-  "command": "blender -b -t 4 --factory-startup --python author_v9_game.py",
-  "scopeGuards": {
-    "editsOutsideThisDirectory": "only byte-identical copies added to ../wayfarer_v9_approved",
-    "github": false,
-    "commit": false,
-    "previewPorts": false,
-    "gameSave": false,
-    "v3DirectoryModified": false,
-    "v9StagingModified": false
-  },
-  "renders": {
-    "views": [
-      {
-        "view": "front",
-        "out": "male_front.png",
-        "samples": 64,
-        "seconds": 7.68,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1294057472
-      },
-      {
-        "view": "three_quarter",
-        "out": "male_three_quarter.png",
-        "samples": 64,
-        "seconds": 7.45,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1337884672
-      },
-      {
-        "view": "side",
-        "out": "male_side.png",
-        "samples": 64,
-        "seconds": 5.24,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1340588032
-      },
-      {
-        "view": "back",
-        "out": "male_back.png",
-        "samples": 64,
-        "seconds": 6.41,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1343832064
-      },
-      {
-        "view": "v9_front",
-        "out": "v9match_front.png",
-        "samples": 64,
-        "seconds": 5.52,
-        "resolution": [
-          512,
-          512
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9_CAM",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "v9_three_quarter",
-        "out": "v9match_three_quarter.png",
-        "samples": 64,
-        "seconds": 4.97,
-        "resolution": [
-          512,
-          512
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9_CAM",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "v9_side",
-        "out": "v9match_side.png",
-        "samples": 64,
-        "seconds": 4.16,
-        "resolution": [
-          512,
-          512
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9_CAM",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "v9_back",
-        "out": "v9match_back.png",
-        "samples": 64,
-        "seconds": 4.51,
-        "resolution": [
-          512,
-          512
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9_CAM",
-        "footwear": "V9_boots",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "barefoot_front",
-        "out": "male_barefoot_front.png",
-        "samples": 64,
-        "seconds": 7.86,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_feet",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "barefoot_three_quarter",
-        "out": "male_barefoot_three_quarter.png",
-        "samples": 64,
-        "seconds": 7.44,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_feet",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "barefoot_side",
-        "out": "male_barefoot_side.png",
-        "samples": 64,
-        "seconds": 5.28,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_feet",
-        "pose": "rest",
-        "maxRSSBytes": 1687273472
-      },
-      {
-        "view": "barefoot_walk",
-        "out": "male_barefoot_walk.png",
-        "samples": 64,
-        "seconds": 7.78,
-        "resolution": [
-          576,
-          1024
-        ],
-        "engine": "CYCLES/CPU",
-        "camera": "V9G_CAM_BODY",
-        "footwear": "V9_feet",
-        "pose": "Walk frame 7",
-        "maxRSSBytes": 1687273472
-      }
-    ],
-    "settings": {
-      "engine": "Cycles CPU",
-      "samples": 64,
-      "denoise": "OpenImageDenoise",
-      "maxBounces": 4,
-      "threads": 4,
-      "viewTransform": "Standard",
-      "bodyCamera": "orthographic, ortho_scale 2.62, pivot (0,0,1.16), 576x1024",
-      "v9MatchCamera": "85 mm, 36 mm sensor, pivot (0,0,1.92), distance 2.125 m, 512x512, V9 lights",
-      "command": "blender -b -t 4 --factory-startup --python render_v9_game.py -- all 64",
-      "blender": "5.2.2 LTS",
-      "peakRSSMiB": 1609.1
-    }
-  },
-  "reviewSheets": {
-    "contactSheet": "contact_sheet.png",
-    "barefootSheet": "barefoot_sheet.png",
-    "comparisonVsV9": "comparison_vs_v9.png",
-    "approvedV9RenderSha256": {
-      "front": "12d8608640657effd050218a217768f3d026cf63975d81d23306bbe7ad829a1e",
-      "three_quarter": "9e77953fc700ec56146d9a1292da527b77fab0b809f61a58bc6205bcc17bbf4b",
-      "side": "77e3662ee93afe410f60f4bc6ef4ff3b65a52185d9b834bd930922bc0624523d",
-      "back": "52052e5b2c61be74382cbb305b0a9078d38ed0f876a160968aaaee51b474ad94"
-    },
-    "sha256": {
-      "contact_sheet.png": "0356d152d7e6337ff95d414adcc047a5a44b2ee23147fcd91cf330082ab75351",
-      "barefoot_sheet.png": "4970f7ccc100735f17a7feae45e24b1a040932cebbef3c5dfaa940ca3753925f",
-      "comparison_vs_v9.png": "09c317cdbc7c4bedaea226bb523515fddffd60e593451a2c04a2fe4701048e61",
-      "male_front.png": "c0d20c991f40d2e23d2c6961569c240c32ada659dcc68a40b6d91f47cb5ede47",
-      "male_three_quarter.png": "e80049aa4ecde69d3f26961f66f9236ff516ca6bcb8e9ee9c75c31b7d8f0bc9e",
-      "male_side.png": "cc8ab93b63ef90ca9028043602ed4ced89a2b6a0359be80d49ab785c9faf470d",
-      "male_back.png": "77265627169ea6a22596e5808b2cfad1703b57d57569627fb4434d887efa98a2",
-      "male_barefoot_front.png": "480655853a2ac9fb6ff721874f4bd3151f6967e250c94621c3a8bd66c9c0ee23",
-      "male_barefoot_three_quarter.png": "32b5db6a49885f114fc0b26dec486d1720c981b7caf7fedfc1775df5676af71c",
-      "male_barefoot_side.png": "3c491497d3d6f5c699d41513d08882dac73687b7cfb1e4abb7eb70cd7cfa8b22",
-      "male_barefoot_walk.png": "d64e13c793ab05266d48b41e1ea700a3b216279d1fa48c39d71e15c15ff50825",
-      "v9match_front.png": "da14070f4ff6ed97a86ff6d23beddc902eee6fd02abc982acbf8e195c5741128",
-      "v9match_three_quarter.png": "b06b19da86182c7ab580d30e3de7eb522514581bb04ffc7738a610646b31d0f8",
-      "v9match_side.png": "c06450d81ada2408a4ade63145ed8d168944c55b7d5453f34a041574d4bda9c5",
-      "v9match_back.png": "3ef3895311becb58ad1fdf2204c793a0c47f10ecc0f370d3dd8575034d1c8d04"
-    }
+   },
+   "note": "rideIdleFrame1 is measured against the rest-pose mount; animated frames (both rigs moving) are measured by render_sedgehorn.py and recorded in sedgehorn_manifest.json riderFit"
   }
+ },
+ "footwearVariants": {
+  "barefootMesh": "V9_feet",
+  "bootsMesh": "V9_boots",
+  "runtimeRule": "show V9_feet when gear.boots is false, V9_boots when true; both nodes are exported visible",
+  "feetSource": "CC0 base-mesh feet and lower shins below z=0.58 m, skinned to Thigh/Shin/Foot per side",
+  "feetBoundsBlender": {
+   "min": [
+    -0.2355,
+    -0.1565,
+    0.0
+   ],
+   "max": [
+    0.2355,
+    0.1936,
+    0.5894
+   ]
+  },
+  "feetVertices": 1402,
+  "restClearanceToBootsMeters": {
+   "min": 0.005,
+   "median": 0.0177,
+   "verticesUnder2mm": 0,
+   "verticesOutsideBoots": 0,
+   "outsideZRange": null,
+   "soleVerticesOnFloorPlane": 75,
+   "shinVerticesAboveBootOpening": 231,
+   "zoneChecked": "0.005 < z < 0.44"
+  },
+  "restClearanceShinToTrousersMeters": {
+   "min": 0.0006,
+   "verticesOutsideTrousers": 0,
+   "zoneChecked": "0.44 <= z < 0.575"
+  },
+  "maxVertexDisplacementMeters": {
+   "Walk@frame7": {
+    "L": 0.3018,
+    "R": 0.5924
+   },
+   "Walk@frame19": {
+    "L": 0.5924,
+    "R": 0.3018
+   },
+   "Run@frame5": {
+    "L": 0.8191,
+    "R": 0.9587
+   },
+   "Run@frame14": {
+    "L": 0.9583,
+    "R": 0.8192
+   },
+   "Turn@frame13": {
+    "L": 0.0819,
+    "R": 0.1325
+   },
+   "TurnLeft@frame9": {
+    "L": 0.1667,
+    "R": 0.0446
+   },
+   "TurnRight@frame9": {
+    "L": 0.0446,
+    "R": 0.1665
+   },
+   "Jump@frame19": {
+    "L": 0.4909,
+    "R": 0.4909
+   }
+  }
+ },
+ "gripMorph": {
+  "node": "V9_body",
+  "morphTarget": "GripRight",
+  "basisWeight": 0.0,
+  "grippedWeight": 1.0,
+  "usageStatus": "rejected_dormant",
+  "runtimeWeight": 0.0,
+  "usageNote": "User rejected the closed GripRight pose. Game and workbench keep the original open Basis hand at weight 0 for every tool; never activate this morph.",
+  "fitRadiusMeters": 0.0275,
+  "wristExtensionDeg": 70.0,
+  "handleTiltForwardDeg": 20.0,
+  "handleAxisBlender": {
+   "point": [
+    0.4213,
+    0.0684,
+    1.1054
+   ],
+   "direction": [
+    0.0,
+    0.342,
+    0.9397
+   ]
+  },
+  "handleAxisGlb": {
+   "point": [
+    0.4213,
+    1.1054,
+    -0.0684
+   ],
+   "direction": [
+    0.0,
+    0.9397,
+    -0.342
+   ]
+  },
+  "handVertices": 814,
+  "thumbVertices": 69,
+  "measuredMeters": {
+   "palmHalfThickness": 0.035,
+   "fingerHalfThickness": 0.0326,
+   "pass1SlackPalm": 0.0082,
+   "pass1SlackFinger": 0.008,
+   "axisFromPalmMidPlane": 0.0573,
+   "fingerWrapRadius": 0.054,
+   "fingerMidLineBeforeCurl": 0.0397
+  },
+  "skinToHandleAxisMeters": {
+   "min": 0.0295,
+   "verticesInsideHandle": 0,
+   "fingerVerticesTouching(<=R+5mm)": 13,
+   "fingerRadialP0_P10_P50": [
+    0.0295,
+    0.0373,
+    0.054
+   ],
+   "palmRadialP0_P10_P50": [
+    0.0351,
+    0.0423,
+    0.0569
+   ],
+   "thumbRadialP0_P10": [
+    0.0295,
+    0.0295
+   ],
+   "fingerWrapDeg": 149
+  },
+  "glb": {
+   "meshName": "V9_body",
+   "targetNames": [
+    "GripRight"
+   ],
+   "defaultWeights": [
+    0
+   ],
+   "primitivesWithTargets": 1
+  }
+ },
+ "meshObjects": 19,
+ "drawGroups": 30,
+ "materialCount": 13,
+ "exportedMeshes": 19,
+ "trianglesEvaluated": 63482,
+ "trianglesGlb": 63482,
+ "perObject": {
+  "V9_body": {
+   "triangles": 12796,
+   "materials": [
+    "V9_skin"
+   ]
+  },
+  "V9_brows": {
+   "triangles": 416,
+   "materials": [
+    "V9_brow"
+   ]
+  },
+  "V9_hair_shell": {
+   "triangles": 2782,
+   "materials": [
+    "V9_hair"
+   ]
+  },
+  "V9_hair_locks": {
+   "triangles": 15456,
+   "materials": [
+    "V9_hair"
+   ]
+  },
+  "V9_tunic": {
+   "triangles": 1920,
+   "materials": [
+    "V9_tunic"
+   ]
+  },
+  "V9_robe": {
+   "triangles": 5760,
+   "materials": [
+    "V9_violet_cloth",
+    "V9_gold"
+   ]
+  },
+  "V9_belt": {
+   "triangles": 224,
+   "materials": [
+    "V9_leather_dark",
+    "V9_gold"
+   ]
+  },
+  "V9_strap": {
+   "triangles": 112,
+   "materials": [
+    "V9_leather"
+   ]
+  },
+  "V9_mantle": {
+   "triangles": 6912,
+   "materials": [
+    "V9_violet_cloth",
+    "V9_gold"
+   ]
+  },
+  "V9_hood": {
+   "triangles": 1296,
+   "materials": [
+    "V9_violet_cloth",
+    "V9_gold"
+   ]
+  },
+  "V9_collar": {
+   "triangles": 1280,
+   "materials": [
+    "V9_violet_lining",
+    "V9_gold"
+   ]
+  },
+  "V9_cowl": {
+   "triangles": 5280,
+   "materials": [
+    "V9_violet_cloth"
+   ]
+  },
+  "V9_brooch": {
+   "triangles": 64,
+   "materials": [
+    "V9_gold"
+   ]
+  },
+  "V9_sleeves": {
+   "triangles": 1088,
+   "materials": [
+    "V9_violet_cloth",
+    "V9_gold"
+   ]
+  },
+  "V9_trousers": {
+   "triangles": 640,
+   "materials": [
+    "V9_trouser"
+   ]
+  },
+  "V9_boots": {
+   "triangles": 1960,
+   "materials": [
+    "V9_leather",
+    "V9_leather_dark"
+   ]
+  },
+  "V9_satchel": {
+   "triangles": 324,
+   "materials": [
+    "V9_leather",
+    "V9_leather_dark",
+    "V9_gold"
+   ]
+  },
+  "V9_eyes": {
+   "triangles": 2436,
+   "materials": [
+    "V9_eye_sclera",
+    "V9_eye_iris",
+    "V9_eye_pupil"
+   ]
+  },
+  "V9_feet": {
+   "triangles": 2736,
+   "materials": [
+    "V9_skin"
+   ]
+  }
+ },
+ "hairLocks": 124,
+ "glbBytes": 2396520,
+ "sha256": {
+  "glb": "916b2a2961595c9c332488816c56a4770125d30d5fe57c27c3859d1a86ee9044",
+  "blend": "40a93bbc2eec5fe66fe5325bf8ff7e939e53b52420475e8da5bde6e2f52e47ae"
+ },
+ "glbChecks": {
+  "clipsIdleWalkRunTurn": true,
+  "clipsTurnLeftTurnRightJump": true,
+  "toolGripClipFingerRotationOnly": true,
+  "locomotionAndRideClipsHaveNoFingerChannels": true,
+  "neutralHandUnchangedByFingerBones": true,
+  "toolGripFingersClearOfRepresentativeShaft": true,
+  "toolGripIsSubtleCurl": true,
+  "openHandClearsRuntimeContactShaft": true,
+  "toolGripFourFingersTouchRuntimeShaft": true,
+  "clipsRideIdleWalkRun": true,
+  "rideClipDurationsMatchMount": true,
+  "rideClipsLoopClosed": true,
+  "rideClipsNoNetRootMotion": true,
+  "gripRightNeverAnimated": true,
+  "runShorterThanWalk": true,
+  "runTimelineStartsAtZeroNoHeldFrame": true,
+  "stepTurnsLoopClosed": true,
+  "stepTurnsNoNetRootMotion": true,
+  "stepTurnsPlantedFootOnFloor": true,
+  "jumpGroundedFeetOnFloor": true,
+  "jumpAirborneFeetClear": true,
+  "oneSkinWith17BodyJointsPlus10FingerJoints": true,
+  "jointNamesMatchV2PlusRightFingers": true,
+  "sevenSocketsWithRole": true,
+  "noCameras": true,
+  "noLights": true,
+  "floorAtZero": true,
+  "heightInRange": true,
+  "forwardIsNegativeZ": true,
+  "glbIndicesInRangeAfterChannelPass": true,
+  "gripRightTargetDataIntactAfterChannelPass": true,
+  "feetAndBootsExported": true,
+  "gripRightMorphExported": true,
+  "gripRightSkinClearOfHandle": true,
+  "rideDrapeMorphExported": true,
+  "rideDrapeWeightTracksComplete": true,
+  "rideLegsClearOfMount": true,
+  "rideClothClearOfMount": true,
+  "rideHandsAtReins": true,
+  "rideBootsOnStirrups": true,
+  "feetOnFloor": true,
+  "feetInsideBoots": true,
+  "feetDeformInWalkTurn": true
+ },
+ "glbStructureValid": true,
+ "budget": {
+  "targetTriangles": 40000,
+  "targetDrawGroups": 32,
+  "targetGlbBytes": 5242880,
+  "trianglesMet": false,
+  "drawGroupsMet": true,
+  "glbBytesMet": true
+ },
+ "compromises": [
+  "No Subdivision or Solidify on the game mesh (V9 bust renders used subsurf render level 2 at 300k triangles); cloth is single-sided sheets with double-sided materials, brows and brooch keep a small Solidify.",
+  "Procedural bump, sheen, coat and subsurface shader detail does not export to glTF; flat PBR factors only. The hair root-to-tip gradient is baked to vertex colours (COLOR_0).",
+  "Below the mantle the robe is torso-fitted with separate sleeves; the V9 bust robe wrapped the arms as a poncho.",
+  "Skinning is smooth distance falloff, tuned for the Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump amplitudes, not hand-painted weights.",
+  "Riding: the robe and tunic skirt use the RideDrape morph (solved once for the seated pose) instead of cloth simulation; it is keyed 1 in the ride clips and 0 elsewhere, so a blend between an on-foot and a ride clip crossfades the drape.",
+  "Run is in place with no root motion or foot IK; the stance foot dips a few centimetres through the floor at mid-stance.",
+  "V9_feet and V9_boots are both exported visible; the runtime must toggle them (feet sole and boot sole share the floor plane)."
+ ],
+ "peakProcessMemoryMB": 330.1,
+ "authorSeconds": 13.79,
+ "blender": "5.2.2 LTS",
+ "command": "blender -b -t 4 --factory-startup --python author_v9_game.py",
+ "scopeGuards": {
+  "editsOutsideThisDirectory": "only byte-identical copies added to ../wayfarer_v9_approved",
+  "github": false,
+  "commit": false,
+  "previewPorts": false,
+  "gameSave": false,
+  "v3DirectoryModified": false,
+  "v9StagingModified": false
+ },
+ "renders": {
+  "views": [
+   {
+    "view": "front",
+    "out": "male_front.png",
+    "samples": 64,
+    "seconds": 8.26,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1230897152
+   },
+   {
+    "view": "three_quarter",
+    "out": "male_three_quarter.png",
+    "samples": 64,
+    "seconds": 7.92,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1264877568
+   },
+   {
+    "view": "side",
+    "out": "male_side.png",
+    "samples": 64,
+    "seconds": 5.4,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1269039104
+   },
+   {
+    "view": "back",
+    "out": "male_back.png",
+    "samples": 64,
+    "seconds": 6.67,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1278820352
+   },
+   {
+    "view": "v9_front",
+    "out": "v9match_front.png",
+    "samples": 64,
+    "seconds": 5.72,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9_CAM",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1670316032
+   },
+   {
+    "view": "v9_three_quarter",
+    "out": "v9match_three_quarter.png",
+    "samples": 64,
+    "seconds": 5.21,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9_CAM",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1670381568
+   },
+   {
+    "view": "v9_side",
+    "out": "v9match_side.png",
+    "samples": 64,
+    "seconds": 4.59,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9_CAM",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1670381568
+   },
+   {
+    "view": "v9_back",
+    "out": "v9match_back.png",
+    "samples": 64,
+    "seconds": 4.61,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9_CAM",
+    "footwear": "V9_boots",
+    "pose": "rest",
+    "maxRSSBytes": 1670381568
+   },
+   {
+    "view": "barefoot_front",
+    "out": "male_barefoot_front.png",
+    "samples": 64,
+    "seconds": 7.74,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_feet",
+    "pose": "rest",
+    "maxRSSBytes": 1678016512
+   },
+   {
+    "view": "barefoot_three_quarter",
+    "out": "male_barefoot_three_quarter.png",
+    "samples": 64,
+    "seconds": 7.7,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_feet",
+    "pose": "rest",
+    "maxRSSBytes": 1678082048
+   },
+   {
+    "view": "barefoot_side",
+    "out": "male_barefoot_side.png",
+    "samples": 64,
+    "seconds": 5.37,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_feet",
+    "pose": "rest",
+    "maxRSSBytes": 1678196736
+   },
+   {
+    "view": "barefoot_walk",
+    "out": "male_barefoot_walk.png",
+    "samples": 64,
+    "seconds": 8.14,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_feet",
+    "pose": "Walk frame 7",
+    "maxRSSBytes": 1678196736
+   },
+   {
+    "view": "run",
+    "out": "male_run.png",
+    "samples": 64,
+    "seconds": 8.2,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "Run frame 5",
+    "maxRSSBytes": 1678196736
+   },
+   {
+    "view": "turn_left",
+    "out": "male_turn_left.png",
+    "samples": 64,
+    "seconds": 8.33,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "TurnLeft frame 9",
+    "maxRSSBytes": 1295777792
+   },
+   {
+    "view": "turn_right",
+    "out": "male_turn_right.png",
+    "samples": 64,
+    "seconds": 8.09,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "TurnRight frame 9",
+    "maxRSSBytes": 1296285696
+   },
+   {
+    "view": "jump_air",
+    "out": "male_jump_air.png",
+    "samples": 64,
+    "seconds": 7.54,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "Jump frame 19",
+    "maxRSSBytes": 1296285696
+   },
+   {
+    "view": "jump_land",
+    "out": "male_jump_land.png",
+    "samples": 64,
+    "seconds": 7.49,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "footwear": "V9_boots",
+    "pose": "Jump frame 33",
+    "maxRSSBytes": 1296285696
+   },
+   {
+    "view": "grip_before",
+    "out": "male_grip_before.png",
+    "samples": 64,
+    "seconds": 4.65,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "GripCam",
+    "gripRightWeight": 0.0,
+    "proxyHandleRadius": 0.026,
+    "pose": "rest",
+    "maxRSSBytes": 793460736
+   },
+   {
+    "view": "grip_front",
+    "out": "male_grip_front.png",
+    "samples": 64,
+    "seconds": 4.25,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "GripCam",
+    "gripRightWeight": 1.0,
+    "proxyHandleRadius": 0.026,
+    "pose": "rest",
+    "maxRSSBytes": 798359552
+   },
+   {
+    "view": "grip_side",
+    "out": "male_grip_side.png",
+    "samples": 64,
+    "seconds": 6.81,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "GripCam",
+    "gripRightWeight": 1.0,
+    "proxyHandleRadius": 0.026,
+    "pose": "rest",
+    "maxRSSBytes": 805732352
+   },
+   {
+    "view": "grip_run",
+    "out": "male_grip_run.png",
+    "samples": 64,
+    "seconds": 8.09,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "camera": "V9G_CAM_BODY",
+    "gripRightWeight": 1.0,
+    "proxyHandleRadius": 0.026,
+    "pose": "Run frame 5",
+    "maxRSSBytes": 1514078208
+   }
+  ],
+  "settings": {
+   "engine": "Cycles CPU",
+   "samples": 64,
+   "denoise": "OpenImageDenoise",
+   "maxBounces": 4,
+   "threads": 4,
+   "viewTransform": "Standard",
+   "bodyCamera": "orthographic, ortho_scale 2.62, pivot (0,0,1.16), 576x1024",
+   "v9MatchCamera": "85 mm, 36 mm sensor, pivot (0,0,1.92), distance 2.125 m, 512x512, V9 lights",
+   "command": "blender -b -t 4 --factory-startup --python render_v9_game.py -- all 64",
+   "blender": "5.2.2 LTS",
+   "peakRSSMiB": 1600.5
+  },
+  "renderedFromGlbSha256": "a739e64efba47577d17edf5498995520f4d3faf1d96860c4e526e4596e39decf",
+  "currentForGlb": false
+ },
+ "reviewSheets": {
+  "contactSheet": "contact_sheet.png",
+  "barefootSheet": "barefoot_sheet.png",
+  "gripSheet": "grip_sheet.png",
+  "comparisonVsV9": "comparison_vs_v9.png",
+  "approvedV9RenderSha256": {
+   "front": "12d8608640657effd050218a217768f3d026cf63975d81d23306bbe7ad829a1e",
+   "three_quarter": "9e77953fc700ec56146d9a1292da527b77fab0b809f61a58bc6205bcc17bbf4b",
+   "side": "77e3662ee93afe410f60f4bc6ef4ff3b65a52185d9b834bd930922bc0624523d",
+   "back": "52052e5b2c61be74382cbb305b0a9078d38ed0f876a160968aaaee51b474ad94"
+  },
+  "renderedFromGlbSha256": "a739e64efba47577d17edf5498995520f4d3faf1d96860c4e526e4596e39decf",
+  "sha256": {
+   "contact_sheet.png": "0356d152d7e6337ff95d414adcc047a5a44b2ee23147fcd91cf330082ab75351",
+   "barefoot_sheet.png": "4970f7ccc100735f17a7feae45e24b1a040932cebbef3c5dfaa940ca3753925f",
+   "grip_sheet.png": "fcf68c0de635c7d563765769fcf319958dd9dd7bc3b9b40e0c166fa5fa064b45",
+   "comparison_vs_v9.png": "2597b5f67cf0306931564c6c4429df68ad603ba46fced9751f31d9333b2b1033",
+   "male_front.png": "aef2e4230fa18fab3fbc8678d349641a4c5c003eee4fc843f93e9bc3fa42bd2f",
+   "male_three_quarter.png": "3f30935f76efc0db5c75860029c8736ab976d234f98145e00b00953c0c2e4f24",
+   "male_side.png": "30f90d2539e419a2b7ab5fdddd1534dd35c192a96847b921c94f4bf301ad68e5",
+   "male_back.png": "79bee412803480958da9d35cea2fe01593e102e8cd1d996815e188d883de3f07",
+   "male_barefoot_front.png": "aca9c66bec1e592b98d76fa9e3e3c812625a213faab396fa19da662733d061ed",
+   "male_barefoot_three_quarter.png": "b6a5d58e1eb7ec19a6b80e5cfa37e73233b23f60aa8b77126221c91042e63641",
+   "male_barefoot_side.png": "b82f8c535c054d7fe7ef1512d49c3d046cb914e618655a97a865238ac88c2a5e",
+   "male_barefoot_walk.png": "b5f2dad18f6ed7c736a65fe9b1dce6263430997a12148eb8db25f989b10037dc",
+   "male_grip_before.png": "4c5f31ee0b794c9460682799e385f6a92af097a001026d1407bad391ea2bab7c",
+   "male_grip_front.png": "d9ddc04202617e22fb3390905992978902316d7983ee22751ee0bdc66c33f498",
+   "male_grip_side.png": "d22a470e3e7a57bc4d855d27cade1b7a102c9bec81adc22a86e3f64d10333f68",
+   "male_grip_run.png": "505016c83e7a84fb46cef54c93d8dab0f8fbd829e7622d185a00a6650831f0b5",
+   "male_turn_left.png": "93ab60dbc634bb64c712f22243b6bb6d44dacdbd32066535735c2a6cfc7aa80a",
+   "male_turn_right.png": "bae41ec80bebf8e28ca80dcc30d06270a5311246c744977c937738f89110bca7",
+   "male_jump_air.png": "428d8ea9aa146538021a21eb811e10152759e9ba381d80aa58aeb54d3c7d24f0",
+   "male_jump_land.png": "e92d6f09f2eb26a2c4b8e124c3c9a9532f0fd2349ca0ee924489f33c9f48885f",
+   "v9match_front.png": "f04bd7e71daff1ba8c798c95df55542314a264e17d98df40cdb98f5427c152dd",
+   "v9match_three_quarter.png": "afd53c4fe383a61f5f50d3aeaf6e6c9f9f109836589a4a1a03036c0d31e84136",
+   "v9match_side.png": "4a42c7c741633f57e432673134e70a221fe04af9a36696d6cd3d34361fed025e",
+   "v9match_back.png": "d1c4d698fcaeb073685cf6a7400afd4edce5d40a8974435a048bf562c0b5f9ad"
+  },
+  "currentForGlb": false
+ },
+ "toolGripRenders": {
+  "views": [
+   {
+    "view": "idle_open_front",
+    "out": "tool_grip_idle_open_front.png",
+    "samples": 32,
+    "seconds": 2.36,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "rest (Idle frame 1)",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.402,
+     0.984,
+     0.0345
+    ],
+    "maxRSSBytes": 793853952
+   },
+   {
+    "view": "idle_open_side",
+    "out": "tool_grip_idle_open_side.png",
+    "samples": 32,
+    "seconds": 4.93,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "rest (Idle frame 1)",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.402,
+     0.984,
+     0.0345
+    ],
+    "maxRSSBytes": 811401216
+   },
+   {
+    "view": "idle_open_low",
+    "out": "tool_grip_idle_open_low.png",
+    "samples": 32,
+    "seconds": 3.95,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "rest (Idle frame 1)",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.402,
+     0.984,
+     0.0345
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "idle_grip_front",
+    "out": "tool_grip_idle_grip_front.png",
+    "samples": 32,
+    "seconds": 1.82,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "rest (Idle frame 1)",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.402,
+     0.984,
+     0.0345
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "idle_grip_side",
+    "out": "tool_grip_idle_grip_side.png",
+    "samples": 32,
+    "seconds": 4.2,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "rest (Idle frame 1)",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.402,
+     0.984,
+     0.0345
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "idle_grip_low",
+    "out": "tool_grip_idle_grip_low.png",
+    "samples": 32,
+    "seconds": 3.83,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "rest (Idle frame 1)",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.402,
+     0.984,
+     0.0345
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "walk_open_front",
+    "out": "tool_grip_walk_open_front.png",
+    "samples": 32,
+    "seconds": 2.49,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Walk frame 7",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.4598,
+     1.0496,
+     -0.2125
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "walk_open_side",
+    "out": "tool_grip_walk_open_side.png",
+    "samples": 32,
+    "seconds": 3.39,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Walk frame 7",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.4598,
+     1.0496,
+     -0.2125
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "walk_grip_front",
+    "out": "tool_grip_walk_grip_front.png",
+    "samples": 32,
+    "seconds": 2.45,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Walk frame 7",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.4598,
+     1.0496,
+     -0.2125
+    ],
+    "maxRSSBytes": 811630592
+   },
+   {
+    "view": "walk_grip_side",
+    "out": "tool_grip_walk_grip_side.png",
+    "samples": 32,
+    "seconds": 3.34,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Walk frame 7",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.4598,
+     1.0496,
+     -0.2125
+    ],
+    "maxRSSBytes": 862142464
+   },
+   {
+    "view": "run_open_front",
+    "out": "tool_grip_run_open_front.png",
+    "samples": 32,
+    "seconds": 3.5,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 5",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.354,
+     1.5268,
+     -0.5333
+    ],
+    "maxRSSBytes": 862142464
+   },
+   {
+    "view": "run_open_side",
+    "out": "tool_grip_run_open_side.png",
+    "samples": 32,
+    "seconds": 1.91,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 5",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.354,
+     1.5268,
+     -0.5333
+    ],
+    "maxRSSBytes": 862142464
+   },
+   {
+    "view": "run_open_body",
+    "out": "tool_grip_run_open_body.png",
+    "samples": 32,
+    "seconds": 4.42,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 5",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.354,
+     1.5268,
+     -0.5333
+    ],
+    "maxRSSBytes": 1244561408
+   },
+   {
+    "view": "run_grip_front",
+    "out": "tool_grip_run_grip_front.png",
+    "samples": 32,
+    "seconds": 3.5,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 5",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.354,
+     1.5268,
+     -0.5333
+    ],
+    "maxRSSBytes": 1264599040
+   },
+   {
+    "view": "run_grip_side",
+    "out": "tool_grip_run_grip_side.png",
+    "samples": 32,
+    "seconds": 1.88,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 5",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.354,
+     1.5268,
+     -0.5333
+    ],
+    "maxRSSBytes": 1264599040
+   },
+   {
+    "view": "run_grip_body",
+    "out": "tool_grip_run_grip_body.png",
+    "samples": 32,
+    "seconds": 4.44,
+    "resolution": [
+     576,
+     1024
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 5",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.354,
+     1.5268,
+     -0.5333
+    ],
+    "maxRSSBytes": 1293991936
+   },
+   {
+    "view": "run14_open_front",
+    "out": "tool_grip_run14_open_front.png",
+    "samples": 32,
+    "seconds": 2.65,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 14",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.3842,
+     1.1455,
+     -0.0322
+    ],
+    "maxRSSBytes": 1294057472
+   },
+   {
+    "view": "run14_open_side",
+    "out": "tool_grip_run14_open_side.png",
+    "samples": 32,
+    "seconds": 4.7,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 14",
+    "toolGrip": false,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.3842,
+     1.1455,
+     -0.0322
+    ],
+    "maxRSSBytes": 1294057472
+   },
+   {
+    "view": "run14_grip_front",
+    "out": "tool_grip_run14_grip_front.png",
+    "samples": 32,
+    "seconds": 2.66,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 14",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.3842,
+     1.1455,
+     -0.0322
+    ],
+    "maxRSSBytes": 1294057472
+   },
+   {
+    "view": "run14_grip_side",
+    "out": "tool_grip_run14_grip_side.png",
+    "samples": 32,
+    "seconds": 4.56,
+    "resolution": [
+     512,
+     512
+    ],
+    "engine": "CYCLES/CPU",
+    "pose": "Run frame 14",
+    "toolGrip": true,
+    "shaftRegime": "hand-relative",
+    "shaftAxisPointGlb": [
+     0.3842,
+     1.1455,
+     -0.0322
+    ],
+    "maxRSSBytes": 1294057472
+   }
+  ],
+  "renderedFromGlbSha256": "6bc0a3b9f76c051481374296c8dbd9ec62882c7363a3efa6d40e05d7d698da33",
+  "settings": {
+   "engine": "Cycles CPU",
+   "samples": 32,
+   "denoise": "OpenImageDenoise",
+   "threads": 4,
+   "closeCamera": "orthographic, ortho_scale 0.42, centred 3.5 cm lateral of the posed shaft axis point, 512x512",
+   "bodyCamera": "V9G_CAM_BODY three-quarter, 576x1024",
+   "proxyShaft": "render-only cylinder, radius 0.0475 m, 1.4 m long, grip 0.4 m from the trailing end, iron head block forward; axis through the runtime contact (manifest toolGrip.representativeShaft.axisPointRestBlender), hand-relative (rides Hand.R with its rotation) as rightHandToolMountFor mounts it",
+   "armRegime": "the clip's own right arm (clipArm); the runtime's 70 % equipped carry blend toward rest is not applied here",
+   "command": "blender -b -t 4 --factory-startup --python render_tool_grip.py -- 32",
+   "blender": "5.2.2 LTS",
+   "totalSeconds": 67.1,
+   "peakRSSMiB": 1234.1
+  },
+  "currentForGlb": false
+ },
+ "toolGripReviewSheet": {
+  "file": "tool_grip_sheet.png",
+  "sha256": "5f5e6bf4ab90e1e9793f08ed44a07e7a211b12464a71de58dd4ae3ae24d0e5bd",
+  "rows": [
+   "idle_side",
+   "idle_front",
+   "idle_low",
+   "walk_side",
+   "walk_front",
+   "run_side",
+   "run_front",
+   "run_body",
+   "run14_side",
+   "run14_front"
+  ],
+  "composedFromGlbSha256": "6bc0a3b9f76c051481374296c8dbd9ec62882c7363a3efa6d40e05d7d698da33",
+  "currentForGlb": false
+ }
 }

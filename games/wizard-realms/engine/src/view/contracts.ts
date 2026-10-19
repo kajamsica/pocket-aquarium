@@ -326,6 +326,8 @@ export interface WizardViewProjection {
     position: Vec3
     yaw: number
     pitch: number
+    /** Read-only jump animation signal; absent on older view projections. */
+    verticalVelocity?: number
   }
   terrain: readonly WizardTerrainCell[]
   /** Optional continuous scene data for the public world, never an action source. */
@@ -373,6 +375,8 @@ export interface WizardViewProjection {
   /** V42 read-only quest gear and checked action previews. Reward authority stays in the V42 writer. */
   v42IronHall?: PublicV42IronHallView
   v42QuartermasterSite?: Readonly<{ position: Vec3; revealed: true }> | null
+  /** V44 read-only adult presentation. Checked mount state and movement remain in the V44 writer. */
+  groundMount?: Readonly<{ mode: 'parked' | 'riding'; position: Vec3; yaw: number }>
   regionalLadders?: WizardRegionalLaddersView
   /** Streamed v13 hides unsupported legacy actions while retaining their read-only state. */
   unavailableActions?: true

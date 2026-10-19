@@ -133,7 +133,11 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
     site.id === projection.starterCliff!.face.siteId && site.discovered)
     || projection.routes.some((route) => route.id === 'greenway_ladder' && route.built))
   const legacyActionsUnavailable = projection.unavailableActions === true
-  const savePaused = projection.controllerActionsEnabled === false
+  const mounted = projection.groundMount?.mode === 'riding'
+  const movementPaused = projection.controllerActionsEnabled === false
+  const savePaused = movementPaused || mounted
+  const worksPauseHint = movementPaused
+    ? 'Saved Works paused; check the save status.' : 'Dismount to use Works.'
   const markerClaimAction = projection.v36MarkerClaim && <>
     <button type="button" disabled={savePaused || !!projection.v36MarkerClaim.rejection}
       onClick={() => onIntent({ type: 'v36.marker.claim' })}>Claim Old Marker reward</button>
@@ -352,7 +356,8 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
   const greenwayLadderNext = greenwayBridgeBuilt && !!savedWorks?.dugTileIds.length
     && starterStoneQuantity === 0 && projection.equipment.feet?.itemId === 'leather_boots'
     && !greenwayLadderBuilt
-  const greenwayObjective = savePaused ? 'Save paused: check the save status before using Works.'
+  const greenwayObjective = movementPaused ? 'Save paused: check the save status before using Works.'
+    : mounted ? 'Dismount to gather or use Works.'
     : firstCreekBridgePending
       ? greenwayLogs >= 8
         ? discoveredCreekSite
@@ -392,7 +397,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           ? 'Equip your leather boots to run by default.'
           : !greenwayLadderBuilt ? 'North cliff Ladder to upper ledge: gather 4 logs; B, 2, aim at a discovered clear face, F.'
             : 'Explore Greenway for more discovered works.'
-  const firstCreekStep = savePaused ? 'Save paused' : greenwayLogs >= 8
+  const firstCreekStep = movementPaused ? 'Save paused' : mounted ? 'Dismount' : greenwayLogs >= 8
     ? 'Build bridge' : firstCreekHarvestBlocked ? 'Make room'
       : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
         ? 'Equip axe' : `Bridge ${greenwayLogs}/8`
@@ -415,7 +420,8 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
         <button type="button" aria-label={works3Greenway || works4Greenway ? 'Toggle Walk/Run pace' : 'Walk'}
           aria-pressed={projection.gait.pace === 'walk'} disabled={!projection.gait.canRun || savePaused}
           onClick={() => onIntent({ type: 'gait.toggle' })}>{works3Greenway || works4Greenway ? 'Walk/Run' : 'Walk'}</button>
-        <small role="status">{savePaused ? 'Pace changes paused while the save is not ready.'
+        <small role="status">{movementPaused ? 'Pace changes paused while the save is not ready.'
+          : mounted ? `Sedgehorn riding at ${projection.gait.pace} pace. Dismount to change on-foot pace or use ground actions.`
           : works3Greenway || works4Greenway ? projection.gait.canRun
             ? `${projection.gait.pace === 'run' ? 'Run' : 'Walk'} now in leather boots; R or Walk/Run switches to ${projection.gait.pace === 'run' ? 'Walk' : 'Run'}.`
             : 'Walk now: barefoot walking only. Outfitters boots enable Run by default.'
@@ -692,7 +698,8 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
             : !greenwayLadderNext && (greenwayLadderBuilt
               ? 'North cliff Ladder built: climb its rungs to the upper ledge.'
               : 'North cliff Ladder: 4 logs, B, 2, aim, F; climb rungs to the upper ledge.')}
-            {' '}{projection.gait?.canRun ? `Boots: ${projection.gait.pace} now; R or Walk/Run toggles pace.`
+            {' '}{mounted ? 'Dismount to change pace or use ground actions.'
+              : projection.gait?.canRun ? `Boots: ${projection.gait.pace} now; R or Walk/Run toggles pace.`
               : projection.equipment.feet?.itemId === 'leather_boots'
                 ? 'Boots equipped; run is default, R or Walk/Run toggles pace.'
                 : 'Barefoot walks; boots run by default, R toggles walk.'}</small>}
@@ -720,7 +727,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
             onClick={() => onIntent({ type: 'saved-work.kind', kind })}>{kind}</button>)}
         </div>}
         {workMode && works4Greenway && <p className="wr-work-selection" role="status" aria-label="Selected Works status">
-          {aimedWork ? <>Selected {workName(aimedWork.site.kind)} · {workLocation(projection.player.position, aimedWork.site)} · {aimedWork.site.kind === 'dig' ? 'field spade + one free bag slot' : `${aimedWork.site.logCost} logs`} · {savePaused ? 'Saved Works paused; check the save status.' : workReason(aimedWork)} · {aimedWork.benefit}</>
+          {aimedWork ? <>Selected {workName(aimedWork.site.kind)} · {workLocation(projection.player.position, aimedWork.site)} · {aimedWork.site.kind === 'dig' ? 'field spade + one free bag slot' : `${aimedWork.site.logCost} logs`} · {savePaused ? worksPauseHint : workReason(aimedWork)} · {aimedWork.benefit}</>
             : v26Terrain && savedWorks.selectedKind === 'dig'
               ? 'Choose Bridge or Ladder in Works, or close Works to use spade Dig/Fill in Terrain tools.'
               : workPreview?.guidance ?? <>{savedWorks.selectedKind === 'bridge' ? 'Bridge · 8 logs' : savedWorks.selectedKind === 'ladder' ? 'Ladder · 4 logs' : 'Choose a work type'} · No site selected. Aim at a discovered site to check Ready.</>}
@@ -786,7 +793,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           ? starterWork
             ? starterWorkComplete
               ? `${workName(starterWork.site.kind)} complete. ${projection.map.guidance ?? 'Check the map for your next route.'}`
-              : `${(works3Greenway || works4Greenway) && aimedWork ? 'Selected ' : ''}${workName(starterWork.site.kind)} · ${workLocation(projection.player.position, starterWork.site)} · ${starterWork.benefit} ${savePaused ? 'Saved Works paused; check the save status.' : `${aimedWork ? '' : 'Face the site to aim. '}${workReason(starterWork)}`}`
+              : `${(works3Greenway || works4Greenway) && aimedWork ? 'Selected ' : ''}${workName(starterWork.site.kind)} · ${workLocation(projection.player.position, starterWork.site)} · ${starterWork.benefit} ${savePaused ? worksPauseHint : `${aimedWork ? '' : 'Face the site to aim. '}${workReason(starterWork)}`}`
             : v26Terrain ? workPreview?.guidance ?? 'Choose Bridge or Ladder in Works, or close Works for spade Dig/Fill.'
               : workPreview?.guidance ?? projection.map.guidance ?? 'Explore south to discover the creek crossing.'
           : savedWorks.actionsEnabled && !workMode && (works3Greenway || works4Greenway)
@@ -806,7 +813,9 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
                   ? 'Press B or tap Works to preview Greenway Bridge, Ladder, or Dig.'
                   : 'Press B or tap Works to preview the creek Bridge or far-bank Dig.'
                 : 'Press B or tap Works to preview Bridge, Ladder, or Dig.'
-          : savePaused ? 'Saved Works paused. Check the save status; changing sites will not enable building or digging.'
+          : savePaused ? movementPaused
+            ? 'Saved Works paused. Check the save status; changing sites will not enable building or digging.'
+            : 'Dismount to build or dig.'
             : greenwayWorks
               ? v26Terrain ? 'Works builds creek bridges and cliff ladders; spade Terrain tools change ground.'
                 : works3Greenway || works4Greenway
@@ -860,7 +869,9 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
               ? 'Choose a work type, approach a discovered site until Ready, then confirm the selected preview.'
               : 'Choose a work type, face a discovered site, then confirm the aimed preview.'
               : 'Open Works, then choose a work type and face a discovered site.'
-            : savePaused ? 'Construction and digging are paused while the save is not ready. Aim previews do not spend materials or change the save.'
+            : savePaused ? movementPaused
+              ? 'Construction and digging are paused while the save is not ready. Aim previews do not spend materials or change the save.'
+              : 'Dismount to build or dig. Aim previews do not spend materials or change the save.'
               : greenwayWorks
                 ? works3Greenway || works4Greenway
                   ? 'Explore Greenway to reveal a creek bridge, clear cliff ladder, or dry dig patch.'
@@ -951,7 +962,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
       )}
       {nearbyAction && (savePaused || legacyActionsUnavailable || !nearbyAction.actionable) && (
         <div className="wr-prompt" data-actionable="false" role="status">
-          <span><b>{savePaused ? 'Interaction paused for save' : legacyActionsUnavailable ? 'Interaction unavailable here' : nearbyAction.action}</b>{nearbyAction.label}</span>
+          <span><b>{movementPaused ? 'Interaction paused for save' : mounted ? 'Dismount to interact' : legacyActionsUnavailable ? 'Interaction unavailable here' : nearbyAction.action}</b>{nearbyAction.label}</span>
         </div>
       )}
 
@@ -966,7 +977,9 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           {' '}Excavated terrain-bag materials cannot be sold yet.
         </p>}
         {starterCliff && starterGreenwayWorks && <p className="wr-caption" role="note">
-          {projection.map.guidance} The separate starter ladder climbs the north cliff. Barefoot travel is walking only; leather boots from Greenway Outfitters enable default running, then Walk/R toggles pace.
+          {projection.map.guidance} The separate starter ladder climbs the north cliff. {mounted
+            ? 'Dismount to use the ladder or change on-foot pace.'
+            : 'Barefoot travel is walking only; leather boots from Greenway Outfitters enable default running, then Walk/R toggles pace.'}
         </p>}
         {starterCliff && v28River && <p className="wr-caption" role="note">
           {projection.map.guidancePriority
@@ -1188,11 +1201,11 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
       <div className="wr-touch" aria-label="Touch controls">
         <div className="wr-dpad">
           {([['↑', [0, 1]], ['←', [-1, 0]], ['↓', [0, -1]], ['→', [1, 0]]] as const).map(([label, vector]) => (
-            <button key={label} aria-disabled={savePaused} style={savePaused ? { opacity: .5, cursor: 'not-allowed' } : undefined}
-              onPointerDown={() => { if (!savePaused) onIntent({ type: 'movement', vector }) }}
+            <button key={label} aria-disabled={movementPaused} style={movementPaused ? { opacity: .5, cursor: 'not-allowed' } : undefined}
+              onPointerDown={() => { if (!movementPaused) onIntent({ type: 'movement', vector }) }}
               onPointerUp={() => onIntent({ type: 'movement', vector: [0, 0] })}
               onPointerCancel={() => onIntent({ type: 'movement', vector: [0, 0] })}
-              onClick={() => { if (!savePaused) onIntent({ type: 'movement.tap', vector }) }}>{label}</button>
+              onClick={() => { if (!movementPaused) onIntent({ type: 'movement.tap', vector }) }}>{label}</button>
           ))}
         </div>
         <div className="wr-touch-actions">

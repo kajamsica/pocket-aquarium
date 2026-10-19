@@ -39,6 +39,12 @@ const withFirstRegionCompleted = (state: WizardWorldState) => {
 }
 
 describe('Wizard view adapter', () => {
+  it('passes authoritative vertical speed to animation without changing the world', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.verticalVelocity = 2.5
+    expect(toViewProjection(state, []).player.verticalVelocity).toBe(2.5)
+    expect(state.player.verticalVelocity).toBe(2.5)
+  })
   it('presents old Greenway ladder saves as low steps without rewriting the saved route', () => {
     const state = chartedGreenway('greenway-alpha')
     const rawName = state.routes.find((route) => route.id === 'greenway_ladder')!.name

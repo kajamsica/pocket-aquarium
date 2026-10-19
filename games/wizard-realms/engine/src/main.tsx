@@ -37,6 +37,7 @@ import { PublicV40EntryApp } from './PublicV40Entry'
 import { PublicV41EntryApp } from './PublicV41Entry'
 import { PublicV42EntryApp } from './PublicV42Entry'
 import { PublicV43EntryApp } from './PublicV43Entry'
+import { PublicV44EntryApp } from './PublicV44Entry'
 import { StreamedPreviewApp } from './StreamedPreviewApp'
 
 const root = document.getElementById('root')
@@ -77,7 +78,12 @@ export const PUBLIC_V36_ENTRY_READY = true
 const routedApp = <Suspense fallback={<main role="status">Loading game…</main>}>{workbenchId !== null
   ? <Suspense fallback={<main role="status">Loading character workbench…</main>}><CharacterWorkbench workbenchId={workbenchId} /></Suspense>
   : mireglassDev ? <MireglassPlayableApp />
-  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v43'
+  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v44'
+    ? import.meta.env.DEV
+      ? <PublicV44EntryApp renderSession={(start, bindings) =>
+        <PublicV23Controller version="v44" start={start} {...bindings} />} />
+      : <main role="status">Experimental V44 is development-only.</main>
+    : publicWorld === 'v43'
     ? import.meta.env.DEV
       ? <PublicV43EntryApp renderSession={(start, bindings) =>
         <PublicV23Controller version="v43" start={start} {...bindings} />} />

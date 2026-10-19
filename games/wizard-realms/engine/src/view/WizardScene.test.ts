@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import * as THREE from 'three'
+import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js'
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import { mireglassRouteSites } from '../domain/mireglassRouteSites'
 import { mireglassFullApproachTrail, mireglassV42FullApproachTrail } from '../domain/mireglassApproachTrail'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from '../domain/discoveryMask'
@@ -19,7 +21,12 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { advanceV9JumpPresentation, advanceV9TurnPhase, applyV9EquippedCarryPose,
+  restoreV9EquippedCarryPose,
+  authoritativeAvatarClipFor, V9_EQUIPPED_CARRY_STRENGTH, V9_RIGHT_HAND_CONTACT,
+  v9AnimationWeightsFor,
+  type V9JumpPresentation } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
 
@@ -1268,16 +1275,453 @@ describe('Highland quarry scenery', () => {
   })
 })
 
+describe('avatar turn presentation', () => {
+  it('preserves left and right yaw while suppressing teleport and zero-time snaps', () => {
+    expect(presentationTurnRate(0, 0.1, 0.05, false)).toBeCloseTo(2)
+    expect(presentationTurnRate(0, -0.1, 0.05, false)).toBeCloseTo(-2)
+    expect(presentationTurnRate(Math.PI - 0.1, -Math.PI + 0.1, 0.1, false)).toBeCloseTo(2)
+    expect(presentationTurnRate(0, 2, 0.05, true)).toBe(0)
+    expect(presentationTurnRate(0, 2, 0, false)).toBe(0)
+  })
+  it('selects directional footstep clips and gives an airborne jump priority', () => {
+    expect(v9AnimationWeightsFor(0, 2, 0)).toEqual({ idle: 0, walk: 0, run: 0,
+      turnLeft: 1, turnRight: 0, jump: 0 })
+    expect(v9AnimationWeightsFor(0, -2, 0)).toEqual({ idle: 0, walk: 0, run: 0,
+      turnLeft: 0, turnRight: 1, jump: 0 })
+    expect(v9AnimationWeightsFor(0, 0, 1)).toEqual({ idle: 0, walk: 0, run: 0,
+      turnLeft: 0, turnRight: 0, jump: 1 })
+    expect(v9AnimationWeightsFor(0, 0, 0).idle).toBe(1)
+  })
+  it('blends Walk into the authored Run clip only as grounded on-foot speed rises', () => {
+    expect(v9AnimationWeightsFor(3.2, 0, 0)).toMatchObject({ walk: 1, run: 0 })
+    const halfway = v9AnimationWeightsFor(4, 0, 0)
+    expect(halfway.walk).toBeCloseTo(0.5)
+    expect(halfway.run).toBeCloseTo(0.5)
+    const fullRun = v9AnimationWeightsFor(4.8, 0, 0)
+    expect(fullRun.walk).toBeCloseTo(0)
+    expect(fullRun.run).toBeCloseTo(1)
+    const turning = v9AnimationWeightsFor(4.8, 1, 0)
+    expect(turning.walk).toBeCloseTo(0)
+    expect(turning.run).toBeCloseTo(0.5)
+    expect(turning.turnLeft).toBeCloseTo(0.5)
+    const airborne = v9AnimationWeightsFor(4.8, 0, 1)
+    expect(airborne).toMatchObject({ walk: 0, run: 0, jump: 1 })
+    for (const weights of [turning, airborne, v9AnimationWeightsFor(4, 0, 0)])
+      expect(Object.values(weights).reduce((sum, weight) => sum + weight, 0)).toBeCloseTo(1)
+  })
+  it('advances planted turn steps by actual facing change at slow and fast yaw rates', () => {
+    const duration = 1.375
+    const slow = advanceV9TurnPhase(0, 0.84, 0.25, duration, false)
+    const fast = advanceV9TurnPhase(0, 2.6, 0.25, duration, false)
+    expect(slow).toBeCloseTo(0.25)
+    expect(fast).toBeCloseTo(0.25 * 2.6 / 0.84)
+    expect(advanceV9TurnPhase(slow, -2.6, 0.1, duration, false))
+      .toBeCloseTo(slow + 0.1 * 2.6 / 0.84)
+    expect(advanceV9TurnPhase(fast, 0, 0.1, duration, false)).toBe(fast)
+    expect(advanceV9TurnPhase(fast, 2.6, 0.25, duration, false)).toBeLessThan(duration)
+    expect(advanceV9TurnPhase(fast, 2.6, 0.25, duration, true)).toBe(0)
+  })
+  it('holds air poses for long jumps and falls, then completes landing only after contact', () => {
+    const rest: V9JumpPresentation = { stage: 'grounded', phase: 0,
+      airborneSeconds: 0, landingSeconds: 0 }
+    let long = advanceV9JumpPresentation(rest, 4.5, 0.05, false)
+    expect(long.stage).toBe('airborne')
+    expect(long.phase).toBeCloseTo(0.33) // Domain launch already happened, so no late crouch.
+    for (let index = 0; index < 30; index++) {
+      long = advanceV9JumpPresentation(long, index < 10 ? 2 : -2, 0.05, false)
+      expect(long.stage).toBe('airborne')
+      expect(long.phase).toBeLessThanOrEqual(index < 10 ? 0.62 : 0.78)
+    }
+    expect(long.phase).toBeCloseTo(0.78)
+    let landed = advanceV9JumpPresentation(long, 0, 0.05, false)
+    expect(landed.stage).toBe('landing')
+    expect(landed.phase).toBeCloseTo(0.80)
+    landed = advanceV9JumpPresentation(landed, 0, 0.18, false)
+    expect(landed.phase).toBeCloseTo(0.90)
+    landed = advanceV9JumpPresentation(landed, 0, 0.18, false)
+    expect(landed.stage).toBe('grounded')
+    expect(landed.phase).toBeCloseTo(0.9999)
+
+    const short = advanceV9JumpPresentation(rest, 3, 0.02, false)
+    const shortLanding = advanceV9JumpPresentation(short, 0, 0.02, false)
+    expect(shortLanding.stage).toBe('landing')
+    expect(shortLanding.phase).toBeCloseTo(0.80)
+    const fall = advanceV9JumpPresentation(rest, -3, 0.05, false)
+    expect(fall.stage).toBe('airborne')
+    expect(fall.phase).toBeGreaterThan(0.62)
+    let longFall = fall
+    for (let index = 0; index < 40; index++) {
+      longFall = advanceV9JumpPresentation(longFall, -3, 0.05, false)
+      expect(longFall.phase).toBeLessThanOrEqual(0.78)
+    }
+    expect(longFall.phase).toBeCloseTo(0.78)
+    expect(advanceV9JumpPresentation(fall, 0, 0.05, true)).toEqual(rest)
+  })
+  it('uses exported stepping and jump poses without animated root motion', async () => {
+    const { readFileSync } = await vi.importActual<{ readFileSync(path: URL): Uint8Array }>('node:fs')
+    const glb = readFileSync(new URL('../../art/characters/wayfarer_v9_game/wayfarer_v9_male.glb', import.meta.url))
+    const source = await new Promise<GLTF>((resolve, reject) => new GLTFLoader().parse(
+      glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength) as ArrayBuffer, '', resolve, reject))
+    const footTrack = (name: 'Run' | 'TurnLeft' | 'TurnRight' | 'Jump') =>
+      authoritativeAvatarClipFor(source, name).tracks.find((track) => track.name === 'FootL.quaternion')!
+    for (const name of ['Run', 'TurnLeft', 'TurnRight', 'Jump'] as const) {
+      const clip = authoritativeAvatarClipFor(source, name)
+      expect(clip.duration).toBeGreaterThan(0)
+      expect(clip.tracks.some((track) => track.name.startsWith('Root.'))).toBe(false)
+      expect(footTrack(name).values.length).toBeGreaterThan(8)
+    }
+    expect(Array.from(footTrack('TurnLeft').values)).not.toEqual(Array.from(footTrack('TurnRight').values))
+  })
+  it('keeps the exported Run loop aligned and its equipped hand seamless', async () => {
+    const { readFileSync } = await vi.importActual<{ readFileSync(path: URL): Uint8Array }>('node:fs')
+    const glb = readFileSync(new URL('../../art/characters/wayfarer_v9_game/wayfarer_v9_male.glb', import.meta.url))
+    const source = await new Promise<GLTF>((resolve, reject) => new GLTFLoader().parse(
+      glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength) as ArrayBuffer, '', resolve, reject))
+    const exported = THREE.AnimationClip.findByName(source.animations, 'Run')!
+    const clip = new THREE.AnimationClip(exported.name, exported.duration,
+      exported.tracks.filter((track) => !track.name.startsWith('Root.')))
+    expect(exported.duration).toBeCloseTo(0.75, 3)
+    for (const track of exported.tracks) {
+      expect(track.times[0], `${track.name} starts at the Run boundary`).toBeCloseTo(0, 4)
+      expect(track.times[track.times.length - 1], `${track.name} retains the Run endpoint`)
+        .toBeCloseTo(exported.duration, 4)
+    }
+    const model = cloneSkinned(source.scene)
+    const body = model.getObjectByName('V9_body') as THREE.SkinnedMesh
+    const socket = model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!
+    const upperArm = body.skeleton.bones.find((bone) => bone.name === 'UpperArmR')!
+    const forearm = body.skeleton.bones.find((bone) => bone.name === 'ForearmR')!
+    const restUpperArm = upperArm.quaternion.clone()
+    const restForearm = forearm.quaternion.clone()
+    const carryState = { rawUpperArm: restUpperArm.clone(), rawForearm: restForearm.clone(), applied: false }
+    const mixer = new THREE.AnimationMixer(model)
+    const action = mixer.clipAction(clip).play()
+    const sample = (time: number) => {
+      restoreV9EquippedCarryPose(upperArm, forearm, carryState)
+      mixer.setTime(time)
+      applyV9EquippedCarryPose(upperArm, forearm, restUpperArm, restForearm,
+        V9_EQUIPPED_CARRY_STRENGTH, carryState)
+      model.updateWorldMatrix(true, true)
+      return { position: socket.getWorldPosition(new THREE.Vector3()),
+        rotation: socket.getWorldQuaternion(new THREE.Quaternion()) }
+    }
+    const start = sample(0)
+    const end = sample(clip.duration - 0.00001)
+    expect(end.position.distanceTo(start.position), 'Run hand has no visible seam step')
+      .toBeLessThan(0.025)
+    expect(end.rotation.angleTo(start.rotation), 'Run hand has no visible seam spin')
+      .toBeLessThan(THREE.MathUtils.degToRad(5))
+    let previous: ReturnType<typeof sample> | null = null
+    let largestStep = 0
+    let largestSpin = 0
+    let largestStepFrame = 0
+    const framesPerLoop = Math.round(clip.duration * 120)
+    for (let frame = 0; frame <= 2 * framesPerLoop; frame++) {
+      restoreV9EquippedCarryPose(upperArm, forearm, carryState)
+      action.time = (frame / 120) % clip.duration
+      mixer.update(0)
+      applyV9EquippedCarryPose(upperArm, forearm, restUpperArm, restForearm,
+        V9_EQUIPPED_CARRY_STRENGTH, carryState)
+      model.updateWorldMatrix(true, true)
+      const current = { position: socket.getWorldPosition(new THREE.Vector3()),
+        rotation: socket.getWorldQuaternion(new THREE.Quaternion()) }
+      if (previous) {
+        const step = current.position.distanceTo(previous.position)
+        if (step > largestStep) { largestStep = step; largestStepFrame = frame }
+        largestSpin = Math.max(largestSpin, current.rotation.angleTo(previous.rotation))
+      }
+      previous = current
+    }
+    expect(largestStep, `equipped Run has no single-frame hand hitch at frame ${largestStepFrame}`)
+      .toBeLessThan(0.025)
+    expect(largestSpin, 'equipped Run has no single-frame hand spin')
+      .toBeLessThan(THREE.MathUtils.degToRad(5))
+    const noToolModel = cloneSkinned(source.scene)
+    const noToolSocket = noToolModel.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!
+    const noToolMixer = new THREE.AnimationMixer(noToolModel)
+    const noToolAction = noToolMixer.clipAction(clip).play()
+    for (let frame = 0; frame <= framesPerLoop; frame++) {
+      const time = (frame / 120) % clip.duration
+      restoreV9EquippedCarryPose(upperArm, forearm, carryState)
+      action.time = time
+      mixer.update(0)
+      applyV9EquippedCarryPose(upperArm, forearm, restUpperArm, restForearm, 0, carryState)
+      noToolAction.time = time
+      noToolMixer.update(0)
+      model.updateWorldMatrix(true, true)
+      noToolModel.updateWorldMatrix(true, true)
+      expect(socket.getWorldPosition(new THREE.Vector3()).distanceTo(
+        noToolSocket.getWorldPosition(new THREE.Vector3())), `unequipped frame ${frame} restores raw Run`)
+        .toBeLessThan(0.0001)
+    }
+    applyV9EquippedCarryPose(upperArm, forearm, restUpperArm, restForearm,
+      V9_EQUIPPED_CARRY_STRENGTH, carryState)
+    restoreV9EquippedCarryPose(upperArm, forearm, carryState)
+    mixer.setTime(clip.duration * 0.37)
+    noToolMixer.setTime(clip.duration * 0.37)
+    const noToolBones = (noToolModel.getObjectByName('V9_body') as THREE.SkinnedMesh).skeleton.bones
+    applyV9EquippedCarryPose(upperArm, forearm, restUpperArm, restForearm,
+      V9_EQUIPPED_CARRY_STRENGTH, carryState)
+    expect(upperArm.quaternion.angleTo(noToolBones.find((bone) => bone.name === 'UpperArmR')!
+      .quaternion.clone().slerp(restUpperArm, V9_EQUIPPED_CARRY_STRENGTH)),
+    'scrubbed upper arm starts from the raw Run pose').toBeLessThan(0.001)
+    expect(forearm.quaternion.angleTo(noToolBones.find((bone) => bone.name === 'ForearmR')!
+      .quaternion.clone().slerp(restForearm, V9_EQUIPPED_CARRY_STRENGTH)),
+    'scrubbed forearm starts from the raw Run pose').toBeLessThan(0.001)
+    const previewModel = cloneSkinned(source.scene)
+    const previewBody = previewModel.getObjectByName('V9_body') as THREE.SkinnedMesh
+    const previewSocket = previewModel.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!
+    const previewUpperArm = previewBody.skeleton.bones.find((bone) => bone.name === 'UpperArmR')!
+    const previewForearm = previewBody.skeleton.bones.find((bone) => bone.name === 'ForearmR')!
+    const previewRestUpperArm = previewUpperArm.quaternion.clone()
+    const previewRestForearm = previewForearm.quaternion.clone()
+    const previewState = { rawUpperArm: previewRestUpperArm.clone(),
+      rawForearm: previewRestForearm.clone(), applied: false }
+    const previewMixer = new THREE.AnimationMixer(previewModel)
+    previewMixer.clipAction(clip).play()
+    let previewPrevious: ReturnType<typeof sample> | null = null
+    let previewLargestStep = 0
+    let previewLargestSpin = 0
+    for (let frame = 0; frame <= 2 * framesPerLoop; frame++) {
+      restoreV9EquippedCarryPose(previewUpperArm, previewForearm, previewState)
+      previewMixer.update(frame === 0 ? 0 : 1 / 120)
+      applyV9EquippedCarryPose(previewUpperArm, previewForearm,
+        previewRestUpperArm, previewRestForearm, V9_EQUIPPED_CARRY_STRENGTH, previewState)
+      previewModel.updateWorldMatrix(true, true)
+      const current = { position: previewSocket.getWorldPosition(new THREE.Vector3()),
+        rotation: previewSocket.getWorldQuaternion(new THREE.Quaternion()) }
+      if (previewPrevious) {
+        previewLargestStep = Math.max(previewLargestStep,
+          current.position.distanceTo(previewPrevious.position))
+        previewLargestSpin = Math.max(previewLargestSpin,
+          current.rotation.angleTo(previewPrevious.rotation))
+      }
+      previewPrevious = current
+    }
+    expect(previewLargestStep, 'preview Run has no equipped hand hitch').toBeLessThan(0.025)
+    expect(previewLargestSpin, 'preview Run has no equipped hand spin')
+      .toBeLessThan(THREE.MathUtils.degToRad(5))
+  })
+})
+
 describe('avatar gear projection', () => {
-  it('faces the axe edge and both pick heads forward in idle and walking arm poses', () => {
-    for (const tool of [Axe(), MiningPick({ tier: 'basic' }), MiningPick({ tier: 'enchanted' })]) {
-      const [x, y, z] = (tool as React.ReactElement<{ rotation: [number, number, number] }>).props.rotation
-      const headDirection = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(x, y, z))
-      for (const armSwing of [-0.3, 0, 0.3]) {
-        const posedDirection = headDirection.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), armSwing)
-        expect(posedDirection.z).toBeLessThan(-0.85)
+  it('holds working ends forward and shafts clear of the original hand through idle, walk, and run', async () => {
+    const { readFileSync } = await vi.importActual<{ readFileSync(path: URL): Uint8Array }>('node:fs')
+    const glb = readFileSync(new URL('../../art/characters/wayfarer_v9_game/wayfarer_v9_male.glb', import.meta.url))
+    const source = await new Promise<GLTF>((resolve, reject) => new GLTFLoader().parse(
+      glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength) as ArrayBuffer, '', resolve, reject))
+    source.scene.updateWorldMatrix(true, true)
+    const restSocket = source.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!
+    const model = cloneSkinned(source.scene)
+    const socket = model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!
+    const body = model.getObjectByName('V9_body') as THREE.SkinnedMesh
+    const upperArm = body.skeleton.bones.find((bone) => bone.name === 'UpperArmR')!
+    const forearm = body.skeleton.bones.find((bone) => bone.name === 'ForearmR')!
+    const restUpperArm = upperArm.quaternion.clone()
+    const restForearm = forearm.quaternion.clone()
+    const carryState = { rawUpperArm: restUpperArm.clone(), rawForearm: restForearm.clone(), applied: false }
+    const position = body.geometry.getAttribute('position')
+    const joints = body.geometry.getAttribute('skinIndex')
+    const weights = body.geometry.getAttribute('skinWeight')
+    const handBones = new Set(body.skeleton.bones.map((bone, index) =>
+      /^(HandR|(?:Index|Middle|Ring|Pinky|Thumb)[12]R)$/.test(bone.name) ? index : -1)
+      .filter((index) => index >= 0))
+    const handVertices: number[] = []
+    const otherVertices: number[] = []
+    for (let index = 0; index < position.count; index++) {
+      let handWeight = 0
+      for (let slot = 0; slot < 4; slot++) {
+        if (handBones.has(joints.getComponent(index, slot))) handWeight += weights.getComponent(index, slot)
+      }
+      if (handWeight >= 0.5) handVertices.push(index)
+      else otherVertices.push(index)
+    }
+    expect(handVertices.length).toBeGreaterThan(500)
+    type ToolPart = React.ReactElement<{ position: THREE.Vector3Tuple; rotation?: THREE.Vector3Tuple;
+      children?: readonly React.ReactElement[] | React.ReactElement; args?: readonly number[];
+      geometry?: THREE.BufferGeometry }>
+    const cases = [
+      ['axe', Axe(), false], ['spade', Spade(), false],
+      ['basic-pick', MiningPick({ tier: 'basic' }), false],
+      ['enchanted-pick', MiningPick({ tier: 'enchanted' }), false],
+      ['wand', Wand({ side: 1, light: false }), true],
+    ] as const
+    const mixer = new THREE.AnimationMixer(model)
+    const gripClip = THREE.AnimationClip.findByName(source.animations, 'ToolGrip')!
+    const fingerTrack = /^(?:Index|Middle|Ring|Pinky|Thumb)[12]R\.quaternion$/
+    expect(gripClip.tracks).toHaveLength(10)
+    expect(gripClip.tracks.every((track) => fingerTrack.test(track.name))).toBe(true)
+    for (const name of ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump']) {
+      expect(THREE.AnimationClip.findByName(source.animations, name)!.tracks
+        .some((track) => fingerTrack.test(track.name)), `${name} leaves ToolGrip fingers independent`).toBe(false)
+    }
+    expect(rightHandToolMountFor(null, restSocket)).toBeNull()
+    const geometryFor = (part: ToolPart) => {
+      if (part.props.geometry) return part.props.geometry
+      const children = part.props.children as ToolPart | readonly ToolPart[]
+      const element = Array.isArray(children) ? children[0] : children as ToolPart
+      const args = element.props.args!
+      if (element.type === 'coneGeometry') return new THREE.ConeGeometry(...args as [number, number, number])
+      if (element.type === 'sphereGeometry') return new THREE.SphereGeometry(...args as [number, number, number])
+      return new THREE.CylinderGeometry(...args as [number, number, number, number])
+    }
+    for (const [caseIndex, [tool, element, wand]] of cases.entries()) {
+      const root = element as ToolPart
+      const shaft = (root.props.children as readonly ToolPart[])[0]
+      const head = (root.props.children as readonly ToolPart[])[wand ? 2 : 1]
+      const [topRadius, bottomRadius, length] = (shaft.props.children as ToolPart).props.args!
+      const shaftRadius = Math.max(topRadius, bottomRadius)
+      const rootPosition = wand ? new THREE.Vector3() : new THREE.Vector3(...root.props.position)
+      const rootRotation = wand ? new THREE.Quaternion()
+        : new THREE.Quaternion().setFromEuler(new THREE.Euler(...root.props.rotation!))
+      const shaftCenter = new THREE.Vector3(...shaft.props.position)
+        .applyQuaternion(rootRotation).add(rootPosition)
+      const shaftAxis = new THREE.Vector3(0, 1, 0)
+        .applyEuler(new THREE.Euler(...(shaft.props.rotation ?? [0, 0, 0])))
+        .applyQuaternion(rootRotation)
+      const headCenter = new THREE.Vector3(...head.props.position)
+        .applyQuaternion(rootRotation).add(rootPosition)
+      for (const [clipName, time, gripped] of [
+        ['Idle', 0, false], ['Walk', 7 / 24, false], ['Walk', 19 / 24, false],
+        ['Run', 5 / 24, false], ['Run', 14 / 24, false],
+        ['Idle', 0, true], ['Walk', 7 / 24, true], ['Walk', 19 / 24, true],
+        ['Run', 5 / 24, true], ['Run', 14 / 24, true],
+      ] as const) {
+        restoreV9EquippedCarryPose(upperArm, forearm, carryState)
+        mixer.stopAllAction()
+        mixer.clipAction(THREE.AnimationClip.findByName(source.animations, clipName)!).reset().play()
+        if (gripped) mixer.clipAction(gripClip).reset().play()
+        mixer.setTime(time)
+        applyV9EquippedCarryPose(upperArm, forearm, restUpperArm, restForearm,
+          V9_EQUIPPED_CARRY_STRENGTH, carryState)
+        model.updateWorldMatrix(true, true)
+        const mount = rightHandToolMountFor(tool, restSocket)!
+        const shaftWorld = socket.localToWorld(shaftCenter.clone().applyQuaternion(mount.quaternion)
+          .add(mount.position))
+        const axisWorld = shaftAxis.clone().applyQuaternion(mount.quaternion)
+          .applyQuaternion(socket.getWorldQuaternion(new THREE.Quaternion())).normalize()
+        const contactWorld = socket.localToWorld(restSocket.worldToLocal(
+          new THREE.Vector3(...V9_RIGHT_HAND_CONTACT)))
+        const gripFromCenter = tool === 'axe' ? 0.28
+          : tool === 'basic-pick' || tool === 'enchanted-pick' ? 0.24 : 0
+        expect(shaftWorld.clone().addScaledVector(axisWorld, -gripFromCenter)
+          .distanceTo(contactWorld), `${tool} shares the lower-palm contact line`).toBeLessThan(0.005)
+        const crossAxis = new THREE.Vector3(1, 0, 0).applyQuaternion(rootRotation)
+          .applyQuaternion(mount.quaternion)
+          .applyQuaternion(socket.getWorldQuaternion(new THREE.Quaternion())).normalize()
+        if (tool === 'spade') {
+          expect(axisWorld.z, `${clipName} ${time} spade handle trails back`).toBeGreaterThan(0.9)
+          expect(crossAxis.x, `${clipName} ${time} spade blade width stays lateral`).toBeGreaterThan(0.9)
+        } else {
+          expect(axisWorld.z, `${tool} ${clipName} ${time} head aims forward`).toBeLessThan(-0.85)
+        }
+        if (tool === 'axe') {
+          expect(crossAxis.y, `${clipName} ${time} axe blade edge aims down`).toBeLessThan(-0.9)
+        }
+        if (tool === 'basic-pick' || tool === 'enchanted-pick') {
+          expect(crossAxis.y, `${tool} ${clipName} ${time} pick points stay vertical`).toBeGreaterThan(0.9)
+        }
+        let nearestHandClearance = Infinity
+        let nearestHandAlong = Infinity
+        let nearestHandPoint = new THREE.Vector3()
+        for (const index of handVertices) {
+          const vertex = new THREE.Vector3().fromBufferAttribute(position, index)
+          body.applyBoneTransform(index, vertex)
+          body.localToWorld(vertex)
+          const along = THREE.MathUtils.clamp(vertex.clone().sub(shaftWorld).dot(axisWorld), -length / 2, length / 2)
+          const axisPoint = shaftWorld.clone().addScaledVector(axisWorld, along)
+          const radiusAtVertex = bottomRadius + (topRadius - bottomRadius) * (along / length + 0.5)
+          const clearance = vertex.distanceTo(axisPoint) - radiusAtVertex
+          if (clearance < nearestHandClearance) {
+            nearestHandClearance = clearance
+            nearestHandAlong = along
+            nearestHandPoint = vertex
+          }
+        }
+        if (clipName === 'Idle') {
+          expect(nearestHandPoint.y, `${tool} shaft meets palm below wrist`)
+            .toBeLessThan(1.1)
+        }
+        if (tool === 'axe' || tool === 'basic-pick' || tool === 'enchanted-pick') {
+          const gripFractionFromButt = (nearestHandAlong + length / 2) / length
+          expect(gripFractionFromButt, `${tool} grip above butt end`)
+            .toBeGreaterThan(0.2)
+          expect(gripFractionFromButt, `${tool} grip before shaft midpoint`)
+            .toBeLessThan(0.38)
+        }
+        if (tool === 'wand') {
+          expect(Math.abs(nearestHandAlong), `${clipName} ${time} staff held near shaft center`)
+            .toBeLessThan(0.1)
+          expect(length / 2 - Math.abs(nearestHandAlong), `${clipName} ${time} staff extends both ways`)
+            .toBeGreaterThan(1.1)
+        }
+        const headWorld = socket.localToWorld(headCenter.clone().applyQuaternion(mount.quaternion)
+          .add(mount.position))
+        expect(headWorld.z, `${tool} ${clipName} ${time} working end is forward of grip`)
+          .toBeLessThan(shaftWorld.z - 0.25)
+        let nearestBodyToShaft = Infinity
+        const bodyWorldPoints: THREE.Vector3[] = []
+        for (let index = 0; index < position.count; index++) {
+          const vertex = new THREE.Vector3().fromBufferAttribute(position, index)
+          body.applyBoneTransform(index, vertex)
+          body.localToWorld(vertex)
+          bodyWorldPoints.push(vertex)
+        }
+        for (const index of otherVertices) {
+          const vertex = bodyWorldPoints[index]
+          const along = THREE.MathUtils.clamp(vertex.clone().sub(shaftWorld).dot(axisWorld), -length / 2, length / 2)
+          const clearance = vertex.distanceTo(shaftWorld.clone().addScaledVector(axisWorld, along)) - shaftRadius
+          nearestBodyToShaft = Math.min(nearestBodyToShaft, clearance)
+        }
+        expect(nearestBodyToShaft, `${tool} ${clipName} ${time} shaft-to-body clearance`)
+          .toBeGreaterThanOrEqual(0)
+        const headParts = tool === 'basic-pick' || tool === 'enchanted-pick'
+          ? (root.props.children as readonly ToolPart[]).slice(1, 4)
+          : tool === 'wand' ? (root.props.children as readonly ToolPart[]).slice(1, 3) : [head]
+        let nearestHeadToBody = Infinity
+        let nearestHeadToFace = Infinity
+        for (const part of headParts) {
+          const geometry = geometryFor(part)
+          const vertices = geometry.getAttribute('position')
+          const partRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(...(part.props.rotation ?? [0, 0, 0])))
+          for (let headIndex = 0; headIndex < vertices.count; headIndex++) {
+            const headVertex = new THREE.Vector3().fromBufferAttribute(vertices, headIndex)
+              .applyQuaternion(partRotation).add(new THREE.Vector3(...part.props.position))
+              .applyQuaternion(rootRotation).add(rootPosition).applyQuaternion(mount.quaternion)
+              .add(mount.position)
+            socket.localToWorld(headVertex)
+            for (const vertex of bodyWorldPoints) {
+              const distance = vertex.distanceTo(headVertex)
+              nearestHeadToBody = Math.min(nearestHeadToBody, distance)
+              if (vertex.y > 1.45 && Math.abs(vertex.x) < 0.45)
+                nearestHeadToFace = Math.min(nearestHeadToFace, distance)
+            }
+          }
+          if (geometry !== part.props.geometry) geometry.dispose()
+        }
+        expect(nearestHeadToBody, `${tool} ${clipName} ${time} head-to-body clearance`)
+          .toBeGreaterThan(0.025)
+        expect(nearestHeadToFace, `${tool} ${clipName} ${time} head-to-face clearance`)
+          .toBeGreaterThan(0.15)
+        expect(nearestHandClearance, `${tool} ${clipName} ${time} ${gripped ? 'gripped' : 'open'} shaft-to-hand clearance`)
+          .toBeGreaterThanOrEqual(0)
+        expect(nearestHandClearance, `${tool} ${clipName} ${time} ${gripped ? 'gripped' : 'open'} shaft-to-hand contact`)
+          .toBeLessThan(gripped ? 0.012 : 0.03)
       }
     }
+    mixer.stopAllAction()
+    const finger = body.skeleton.bones.find((bone) => bone.name === 'Index1R')!
+    mixer.clipAction(THREE.AnimationClip.findByName(source.animations, 'Idle')!).reset().play()
+    const gripAction = mixer.clipAction(gripClip).reset().play()
+    gripAction.setEffectiveWeight(0)
+    mixer.setTime(0)
+    const openFinger = finger.quaternion.clone()
+    gripAction.setEffectiveWeight(1)
+    mixer.update(0)
+    expect(finger.quaternion.angleTo(openFinger)).toBeGreaterThan(0.05)
+    gripAction.setEffectiveWeight(0)
+    mixer.update(0)
+    expect(finger.quaternion.angleTo(openFinger)).toBeLessThan(0.0001)
   })
   it('shows only the V29 active pick as held gear, with distinct basic and enchanted heads', () => {
     expect(avatarGearFor(equipment(), 'basic').mainHand).toBe('basic-pick')
