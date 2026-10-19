@@ -60,7 +60,8 @@ function next(root: PublicV43Root, witness: PublicV43Witness): PublicV43Root {
 
 /** V43 accepts coherent older offline-history rewrites. Its own care suite
  * separately proves the full earned route and three spaced checked writes. */
-function matureRoot(playerOffset = 0, animalOffset = 0): PublicV43Root {
+function matureRoot(playerOffset = 0, animalOffset = 0,
+  boots = false): PublicV43Root {
   let root = createPublicV43Root(eligibleSource())
   for (let i = 0; i < 3; i++) root = next(root, idle)
   const site = resolveSedgehornFamiliarSite(root.head)!
@@ -75,6 +76,11 @@ function matureRoot(playerOffset = 0, animalOffset = 0): PublicV43Root {
     state: { ...head.state, player: { ...head.state.player,
       position: { ...site.keeper.center,
         x: site.keeper.center.x - playerOffset },
+      inventory: boots ? [...head.state.player.inventory,
+        { itemId: 'leather_boots' as const, quantity: 1 }]
+        : head.state.player.inventory,
+      equipment: boots ? { ...head.state.player.equipment,
+        feet: 'leather_boots' as const } : head.state.player.equipment,
       coins: head.state.player.coins + 25, xp: head.state.player.xp + 40,
       level: 1 + Math.floor((head.state.player.xp + 40) / 100) } } })
   const checked = decodePublicV43Root({ ...root,
@@ -158,5 +164,42 @@ describe('V44 ground Sedgehorn domain seam', () => {
       { kind: 'sedgehorn-ride-frame/v1', intents: [{ type: 'jump' }] }))
       .toEqual({ rejection: 'invalid_witness' })
     expect(JSON.stringify(mounted)).toBe(before)
+  })
+
+  it('replays V1 walking while V2 permits the inherited boots pace only', () => {
+    const mounted = confirmPublicV44GroundMountAction(
+      createPublicV44GroundMountProgress(matureRoot(0, 0, true))!,
+      { kind: 'sedgehorn-mount/v1' }).progress!
+    const run = { kind: 'sedgehorn-ride-frame/v2',
+      intents: [{ type: 'move', delta: { x: 0.24, z: 0 } }] } as const
+    expect(confirmPublicV44GroundMountAction(mounted,
+      { ...run, kind: 'sedgehorn-ride-frame/v1' }))
+      .toEqual({ rejection: 'ride_blocked' })
+    const advanced = confirmPublicV44GroundMountAction(mounted, run).progress
+    expect(advanced?.v43.head.state.player.position.x).toBeCloseTo(
+      mounted.v43.head.state.player.position.x + 0.24)
+    expect(advanced?.v43.head.state.tick).toBe(mounted.v43.head.state.tick + 1)
+    expect(decodePublicV44GroundMountSuccessor(mounted, run, advanced))
+      .not.toBeNull()
+    expect(confirmPublicV44GroundMountAction(mounted,
+      { kind: 'sedgehorn-ride-frame/v2', intents: [{ type: 'move',
+        delta: { x: 0.241, z: 0 } }] }))
+      .toEqual({ rejection: 'invalid_witness' })
+    expect(confirmPublicV44GroundMountAction(mounted,
+      { kind: 'sedgehorn-ride-frame/v2', intents: [{ type: 'jump' }] }))
+      .toEqual({ rejection: 'invalid_witness' })
+    const barefoot = confirmPublicV44GroundMountAction(
+      createPublicV44GroundMountProgress(matureRoot())!,
+      { kind: 'sedgehorn-mount/v1' }).progress!
+    expect(confirmPublicV44GroundMountAction(barefoot, run))
+      .toEqual({ rejection: 'ride_blocked' })
+    expect(confirmPublicV44GroundMountAction(barefoot,
+      { kind: 'sedgehorn-ride-frame/v2', intents: [{ type: 'move',
+        delta: { x: 0.16, z: 0 } }] }).progress?.v43.head.state.player.position.x)
+      .toBeCloseTo(barefoot.v43.head.state.player.position.x + 0.16)
+    const old = { kind: 'sedgehorn-ride-frame/v1',
+      intents: [{ type: 'move', delta: { x: 0.1, z: 0 } }] } as const
+    expect(decodePublicV44GroundMountSuccessor(mounted, old,
+      confirmPublicV44GroundMountAction(mounted, old).progress)).not.toBeNull()
   })
 })

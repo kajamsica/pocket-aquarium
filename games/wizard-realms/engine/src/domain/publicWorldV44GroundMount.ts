@@ -30,6 +30,9 @@ export type PublicV44GroundMountWitness = Readonly<{
 }> | Readonly<{
   kind: 'sedgehorn-ride-frame/v1'
   intents: readonly PublicV43RideIntent[]
+}> | Readonly<{
+  kind: 'sedgehorn-ride-frame/v2'
+  intents: readonly PublicV43RideIntent[]
 }>
 type PublicV43RideIntent = Extract<PublicV43Witness,
   { kind: 'frame-batch/v1' }>['frames'][number]['intents'][number]
@@ -110,12 +113,13 @@ export function decodePublicV44GroundMountWitness(raw: unknown):
       && (raw.kind === 'sedgehorn-mount/v1'
         || raw.kind === 'sedgehorn-dismount/v1')) return { kind: raw.kind }
     if (!exactPublicV23(raw, ['kind', 'intents'])
-      || raw.kind !== 'sedgehorn-ride-frame/v1') return null
+      || raw.kind !== 'sedgehorn-ride-frame/v1'
+        && raw.kind !== 'sedgehorn-ride-frame/v2') return null
     const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1',
       frames: [{ intents: raw.intents, walkRequested: true }] })?.frames[0]
     if (!frame || frame.intents.some((intent) => intent.type === 'jump')) return null
     structuredClone(raw)
-    return { kind: 'sedgehorn-ride-frame/v1', intents: frame.intents }
+    return { kind: raw.kind, intents: frame.intents }
   } catch { return null }
 }
 
@@ -154,7 +158,8 @@ export function confirmPublicV44GroundMountAction(raw: PublicV44GroundMountProgr
     return { progress: { v43, groundMount: { mode: 'parked',
       parkedPosition: { ...position } } } }
   const frame = { kind: 'frame-batch/v1' as const,
-    frames: [{ intents: witness.intents, walkRequested: true }] }
+    frames: [{ intents: witness.intents,
+      walkRequested: witness.kind === 'sedgehorn-ride-frame/v1' }] }
   const next = advanceV43(v43, frame)
   if (!next || !safePose(next, next.head.state.player.position))
     return reject('ride_blocked')
