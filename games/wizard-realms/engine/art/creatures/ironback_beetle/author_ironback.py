@@ -563,15 +563,8 @@ def leg_prefix(co):
 def leg_bones(co):
     p = leg_prefix(co); s = side_of(co)
     return [f"{p}{n}.{s}" for n in ("Coxa", "Femur", "Tibia", "Tarsus")]
-def body_allowed(co):
-    if co.y > 1.05:
-        return ["Head", "Thorax"]
-    if abs(co.x) > 0.40 and co.z < 1.2:
-        return leg_bones(co) + ["Thorax"]
-    if co.y < -0.35:
-        return ["Abdomen", "Thorax"]
-    return ["Thorax", "Abdomen"]
-skin(body, body_allowed)
+body_bones = ["Thorax", "Abdomen", "Head"] + [f"{p}{n}.{s}" for p in LEGS for s in ("L", "R") for n in ("Coxa", "Femur", "Tibia", "Tarsus")]
+skin(body, body_bones)
 skin(feet, lambda co: leg_bones(co)[2:])
 skin(mandibles, lambda co: ["Mandible." + side_of(co), "Head"])
 skin(antennae, lambda co: ["Antenna2." + side_of(co), "Antenna1." + side_of(co)])

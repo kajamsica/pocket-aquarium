@@ -3098,8 +3098,8 @@
   "feetRaised": 0.1
  },
  "sha256": {
-  "glb": "3f07623092a31525a58a48bbdccf3642aab47b3599dcee4d53f52c2b930e34a5",
-  "blend": "6ff2ceb51b9a8b909e2a470400d839b471251586a58243f003f0dac8d9f80b13"
+  "glb": "2ab223bc053347c11ba4e1715e8e8a3bf508effae94d3d45ca68f4f909c1894d",
+  "blend": "744aabe7650e3a2cfc33dd16952b5717201c63ec25445130f4d08d140b3cdeb3"
  },
  "glbChecks": {
   "clipsIdleTrundleHaul": true,
@@ -3123,7 +3123,7 @@
   "sixLegs": true
  },
  "glbStructureValid": true,
- "peakProcessMemoryMB": 319.8,
+ "peakProcessMemoryMB": 324.6,
  "authorSeconds": 1.0,
  "blender": "5.2.2 LTS",
  "command": "blender -b -t 4 --factory-startup --python author_ironback.py",
