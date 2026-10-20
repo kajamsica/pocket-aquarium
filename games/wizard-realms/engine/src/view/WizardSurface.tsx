@@ -14,6 +14,8 @@ export interface WizardSurfaceProps {
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
   greenwayLogOrder?: ReactNode
+  starterChapterActors?: boolean
+  starterChapterPrimary?: boolean
 }
 
 const MOVEMENT_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
@@ -373,7 +375,7 @@ const STYLES = `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace,
   saveInProgress = false,
-  greenwayLogOrder }: WizardSurfaceProps) {
+  greenwayLogOrder, starterChapterActors = false, starterChapterPrimary = false }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const devNavigation = typeof window !== 'undefined' && devNavigationEnabled(window.location.search)
   const pressedKeys = useRef(new Set<string>())
@@ -719,6 +721,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           && <span className="wr-keyboard-terrain-aim" aria-hidden="true">+</span>}
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
           terrainMode={terrainMode} inputTrace={inputTrace} saveInProgress={saveInProgress}
+          starterChapterActors={starterChapterActors}
           onTerrainHoverFeedback={setTerrainHoverFeedback}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
           onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
@@ -775,7 +778,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         {inOpenPit && <p>Open pit view: step onto neighboring ground or orbit until its floor or inner wall outlines.</p>}
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics}
-        greenwayLogOrder={greenwayLogOrder} />
+        greenwayLogOrder={greenwayLogOrder} starterChapterPrimary={starterChapterPrimary} />
       {devNavigation && !projection.openStoreId && <div className="wr-dev-nav-hint" role="status">{devNavHint
         ?? 'Dev: select a terrain tool to use it with one click. Turn tools off, then double-click clear revealed ground to follow a safe route.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}

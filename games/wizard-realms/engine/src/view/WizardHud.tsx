@@ -81,11 +81,13 @@ export class WizardWorksFocusBoundary extends Component<WorksFocusProps> {
   }
 }
 
-export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder }: {
+export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
+  starterChapterPrimary = false }: {
   projection: WizardViewProjection
   onIntent: (intent: WizardViewIntent) => void
   diagnostics?: boolean
   greenwayLogOrder?: ReactNode
+  starterChapterPrimary?: boolean
 }) {
   const [ledgerOpen, setLedgerOpen] = useState(false)
   const markerQuest = projection.v36MarkerQuest?.active ? projection.v36MarkerQuest : null
@@ -190,6 +192,19 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
     + projection.tradeListings.reduce((total, listing) => total + (listing?.quantity ?? 0), 0)
   const usedCapacity = carriedCapacityUsed
     + excavatedMaterials.reduce((total, [, quantity]) => total + quantity, 0)
+  const occupiedSpaces: { itemId: string; icon: string; title: string; color: string }[] = []
+  const fillSpaces = (quantity: number, itemId: string, icon: string, name: string, color: string) => {
+    for (let unit = 0; unit < quantity && occupiedSpaces.length < projection.backpack.capacity; unit += 1)
+      occupiedSpaces.push({ itemId, icon, title: `${name}, unit ${unit + 1} of ${quantity}`, color })
+  }
+  projection.backpack.stacks.forEach((stack) => fillSpaces(stack.quantity, stack.itemId,
+    stack.icon ?? (stack.itemId === 'logs' ? '▥' : '◆'), stack.name,
+    stack.itemId === 'logs' ? '#70502a' : stack.equippableSlots ? '#4d3869' : '#385c4c'))
+  projection.tradeListings.forEach((listing) => {
+    if (listing) fillSpaces(listing.quantity, 'listed', '↗', `Listed ${listing.itemName}`, '#5e5734')
+  })
+  excavatedMaterials.forEach(([material, quantity]) => fillSpaces(quantity, `terrain-${material}`,
+    '◈', `Terrain bag ${material.replaceAll('_', ' ')}`, '#345667'))
   const firstTradeSlot = projection.tradeListings.findIndex((listing) => listing === null)
   const learnedGlow = projection.learnedSpellIds.includes('wayfinder_glow')
   const checkedReason = (id: string): string | null => {
@@ -339,7 +354,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
   const readyNorthLadder = firstNorthLadderPending && !savePaused && savedWorks?.actionsEnabled
     && savedWorks.preview?.nearby.find((choice) =>
       choice.site.kind === 'ladder' && choice.rejection === null)
-  const harvestFreeSlots = Math.max(0, projection.backpack.capacity - carriedCapacityUsed)
+  const harvestFreeSlots = Math.max(0, projection.backpack.capacity - usedCapacity)
   const firstCreekHarvestBlocked = firstCreekBridgePending && greenwayLogs < 8 && harvestFreeSlots < 4
   const fullOfBridgeLogs = firstCreekBridgePending && usedCapacity >= projection.backpack.capacity
     && greenwayLogs >= 8
@@ -407,6 +422,21 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
     ? learnedGlow ? 'Optional: cast Glow near fog.'
       : 'Optional: study nearby waystone; cast Glow near fog.'
     : null
+  const chapterHidesLegacyLead = starterChapterPrimary && (!journalQuest
+    || journalQuest.id === 'surveyor-first-find/v1' || ledgerQuestPrimary)
+  const ledgerActions = ledgerQuestPrimary && <>
+    {projection.v35LedgerSurvey && <>
+      <button type="button" disabled={savePaused || !!projection.v35LedgerSurvey.rejection}
+        onClick={() => onIntent({ type: 'v35.ledger.survey',
+          bridgeId: projection.v35LedgerSurvey!.bridgeId })}>Survey connected-river exit</button>
+      {projection.v35LedgerSurvey.hint && <small role="status">{projection.v35LedgerSurvey.hint}</small>}
+    </>}
+    {projection.v35LedgerDeliver && <>
+      <button type="button" disabled={savePaused || !!projection.v35LedgerDeliver.rejection}
+        onClick={() => onIntent({ type: 'v35.ledger.deliver' })}>Deliver stone to Outfitters</button>
+      {projection.v35LedgerDeliver.hint && <small role="status">{projection.v35LedgerDeliver.hint}</small>}
+    </>}
+  </>
 
   return (
     <div className="wr-hud">
@@ -473,7 +503,12 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           @media(max-width:719px){[data-public-version=v42] .wr-v26-terrain{left:8px;right:auto}}
           @media(max-width:360px) and (max-height:600px){.wr-surface:has(.wr-greenway-objective) .wr-saved-work-panel{margin:0 auto 0 8px}[data-public-v23]:has(.wr-greenway-objective) .v23-guide{display:none}}
         `}</style>
-        {!workMode && journalQuest && <section className="wr-greenway-objective wr-v35-quest"
+        {!workMode && starterChapterPrimary && ledgerQuestPrimary
+          && (projection.v35LedgerSurvey || projection.v35LedgerDeliver)
+          && <section className="wr-greenway-objective wr-v35-quest" aria-label="Available Ledger action">
+            {ledgerActions}
+          </section>}
+        {!workMode && journalQuest && !chapterHidesLegacyLead && <section className="wr-greenway-objective wr-v35-quest"
           data-expanded={ledgerOpen} aria-label={`Quest journal: ${journalQuest.title}`}>
           <button type="button" className="wr-v35-mobile-toggle" aria-expanded={ledgerOpen}
             aria-label={ledgerOpen ? 'Close quest journal' : firstCreekBridgePending
@@ -506,17 +541,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           {firstCreekBridgePending && fullOfBridgeLogs && <small>
             Pack full of logs? Spend 8 at a discovered creek candidate only after Works says Ready. Greenway Outfitters {logSaleLimit}
           </small>}
-          {ledgerQuestPrimary && projection.v35LedgerSurvey && <>
-            <button type="button" disabled={savePaused || !!projection.v35LedgerSurvey.rejection}
-              onClick={() => onIntent({ type: 'v35.ledger.survey',
-                bridgeId: projection.v35LedgerSurvey!.bridgeId })}>Survey connected-river exit</button>
-            {projection.v35LedgerSurvey.hint && <small role="status">{projection.v35LedgerSurvey.hint}</small>}
-          </>}
-          {ledgerQuestPrimary && projection.v35LedgerDeliver && <>
-            <button type="button" disabled={savePaused || !!projection.v35LedgerDeliver.rejection}
-              onClick={() => onIntent({ type: 'v35.ledger.deliver' })}>Deliver stone to Outfitters</button>
-            {projection.v35LedgerDeliver.hint && <small role="status">{projection.v35LedgerDeliver.hint}</small>}
-          </>}
+          {ledgerActions}
           {markerQuestPrimary && markerClaimAction}
           {signalQuestPrimary && signalActions}
           {hallQuest && hall && <details className="wr-ironhall-chapter"
@@ -672,7 +697,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
           </details>
           </div>
         </section>}
-        {!workMode && !journalQuest && projection.v34Quest && <details className="wr-greenway-objective wr-v34-quest"
+        {!workMode && !journalQuest && !chapterHidesLegacyLead && projection.v34Quest && <details className="wr-greenway-objective wr-v34-quest"
           aria-label="Quest journal: The Surveyor's First Find">
           <summary onKeyDown={(event) => { if (event.code === 'Space') event.stopPropagation() }}>
             <strong>{projection.v34Quest.complete ? 'Quest complete' : 'Quest'}: {projection.v34Quest.title}</strong>
@@ -680,7 +705,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
             {northLadderCue && <small>{northLadderCue}</small>}</summary>
           <p><strong>Rewards and progress:</strong> {projection.v34Quest.reward}</p>
         </details>}
-        {!workMode && !journalQuest && !projection.v34Quest && <div className="wr-greenway-objective" role="note" aria-label="Greenway field objective">
+        {!workMode && !journalQuest && !chapterHidesLegacyLead && !projection.v34Quest && <div className="wr-greenway-objective" role="note" aria-label="Greenway field objective">
           <strong>Field objective:</strong> {greenwayObjective}
           {northLadderCue && <small>{northLadderCue}</small>}
           {firstCreekBridgePending && fullOfBridgeLogs ? <small>
@@ -967,7 +992,31 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder 
       )}
 
       <aside id="wizard-backpack" className="wr-panel wr-backpack">
-        <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity}</small></header>
+        <header><span>Backpack</span><small>{usedCapacity}/{projection.backpack.capacity} item spaces</small></header>
+        <div style={{ display: 'grid', gap: 3, marginBottom: 7 }}>
+          <progress aria-label="Item spaces used" value={Math.min(usedCapacity, projection.backpack.capacity)}
+            max={projection.backpack.capacity} style={{ width: '100%', height: 9, accentColor: '#d9ba6a' }} />
+          <small>{Math.max(0, projection.backpack.capacity - usedCapacity)} free item spaces</small>
+        </div>
+        <div className="wr-pack-spaces" role="img"
+          aria-label={`${usedCapacity} of ${projection.backpack.capacity} item spaces filled; ${Math.max(0, projection.backpack.capacity - usedCapacity)} free`}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(10,minmax(0,1fr))', gap: 2, marginBottom: 7 }}>
+          {Array.from({ length: projection.backpack.capacity }, (_, index) => {
+            const item = occupiedSpaces[index]
+            return <span key={index} aria-hidden="true" title={item?.title ?? 'Empty item space'}
+              data-occupied={!!item} data-item={item?.itemId}
+              style={{ display: 'grid', placeItems: 'center', minWidth: 0, aspectRatio: '1',
+                border: `1px solid ${item ? '#d9ba6a88' : '#71807366'}`, borderRadius: 3,
+                background: item?.color ?? '#1a2720', color: '#f7e9be', fontSize: 10, overflow: 'hidden' }}>
+              {item?.icon}
+            </span>
+          })}
+        </div>
+        <p aria-label="Carried wood" style={{ display: 'flex', justifyContent: 'space-between', gap: 5,
+          margin: '0 0 4px', color: '#f5d889' }}><b>Wood: {greenwayLogs} logs</b>
+          {firstCreekBridgePending && <small>Creek bridge {Math.min(greenwayLogs, 8)}/8</small>}
+        </p>
+        <p className="wr-caption">Logs stack in one row, but each uses one item space. No separate stack limit.</p>
         {mining && usedCapacity >= projection.backpack.capacity && !firstCreekHarvestBlocked && !fullOfBridgeLogs && <p className="wr-caption" role="note">
           Pack full. Use carried logs only at a marked Ready bridge or ladder. At Greenway Outfitters, sell terrain-bag soil, stone, or ore to free space. If you have soil, Fill can refill an open pit in reach.
         </p>}

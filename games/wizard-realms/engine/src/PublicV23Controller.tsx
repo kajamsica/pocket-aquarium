@@ -71,6 +71,8 @@ import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint,
   publicV44FamiliarObjective }
   from './view/PublicV43FamiliarQuest'
 import { PublicV43QuestJournal, selectPublicV43QuestLead } from './view/PublicV43QuestJournal'
+import { PublicV43StarterChapter, projectPublicV43StarterChapter }
+  from './view/PublicV43StarterChapter'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -2730,6 +2732,23 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       (snapshot as PublicV43Progress).familiar.phase,
       (snapshot as PublicV43Progress).mountTraining?.careWitnesses.length ?? 0)
     : questCue?.objective
+  const starterChapter = v43
+    ? projectPublicV43StarterChapter(snapshot as PublicV43Progress) : null
+  const chapterHead = v43 ? snapshot as PublicV43Progress : null
+  const laterWorldMilestone = chapterHead && (
+    chapterHead.greenwayWorks.builtLadderIds.length > 0
+    || chapterHead.state.greenway.studiedInscriptionIds.includes('greenway_waystone')
+    || chapterHead.riverBridgeIds.length > 0
+    || chapterHead.ledgerSurveyBridgeId !== null
+    || chapterHead.ledgerClaimReward !== null
+    || chapterHead.southbankReached
+    || chapterHead.waystationClaimed
+    || chapterHead.familiar.phase !== 'search')
+  const chapterIsLead = starterChapter && !starterChapter.complete && !laterWorldMilestone
+  const journalLeadTitle = chapterIsLead
+    ? starterChapter.title : questCue?.title
+  const journalLeadObjective = chapterIsLead
+    ? starterChapter.objective : questCueObjective
   const adultDistance = adult?.visible ? Math.hypot(
     active.player.position.x - adult.position.x,
     active.player.position.y - adult.position.y,
@@ -2839,6 +2858,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
       saveInProgress={saveTask.current !== null}
+      starterChapterActors={v43}
+      starterChapterPrimary={!!chapterIsLead}
       greenwayLogOrder={v43 && !mounted ? <><section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
@@ -2877,11 +2898,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </section></> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {questCue ? `Next: ${questCue.title}` : 'Route recorded'}</span>
+      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
         <small>{v44 && adult?.visible
           ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
             : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`
-          : questCueObjective
+          : journalLeadObjective
           ?? 'Open the journal for completed leads and the optional carpenter order.'}</small></summary>
       {familiarOpen && <>{v44 && <section aria-label="Ground mount">
         <h3>Adult Sedgehorn</h3>
@@ -2897,7 +2918,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             ? 'sedgehorn-dismount/v1' : 'sedgehorn-mount/v1' })}>
           {adult.mode === 'riding' ? 'Dismount Sedgehorn' : 'Mount Sedgehorn'}
         </button>}
-      </section>}<PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
+      </section>}<PublicV43StarterChapter head={snapshot as PublicV43Progress} />
+        <PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
         <PublicV43FamiliarQuestPanel
           head={snapshot as PublicV43Progress}
           actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked && !mounted}

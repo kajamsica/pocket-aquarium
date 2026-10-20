@@ -44,6 +44,8 @@ const WAYFARER_V9_SOCKETS = ['Socket.RightHand', 'Socket.LeftHand', 'Socket.Head
   'Socket.Legs', 'Socket.RightFoot', 'Socket.LeftFoot'] as const
 const WAYFARER_V9_CLIPS = ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump', 'ToolGrip',
   'RideIdle', 'RideWalk', 'RideRun'] as const
+const WILD_SEDGEHORN_TACK = ['SH_blanket', 'SH_saddle', 'SH_girth', 'SH_stirrups',
+  'SH_bridle', 'SH_reins'] as const
 
 // Atmosphere palette. three applies fog after tone mapping and colour-space conversion, and both fog and clear colour
 // are converted as unlit output-space colours, so these values compare directly (neither is ACES-compressed).
@@ -1169,6 +1171,74 @@ function AdultSedgehorn({ source, mount, pose }: {
     mixer.update(0)
   })
   return <group ref={root} aria-label="Adult Sedgehorn ground mount">
+    <primitive object={model} />
+  </group>
+}
+
+/** Scene-only chapter characters never intercept terrain picks or affect simulation. */
+function StarterOutfittersKeeper({ source, position }: { source: GLTF;
+  position: [number, number, number] }) {
+  const model = useMemo(() => {
+    const copy = cloneSkinned(source.scene) as THREE.Group
+    copy.name = 'Greenway Outfitters keeper'
+    const tinted = new Map<THREE.Material, THREE.Material>()
+    copy.traverse((node) => {
+      if ((node as THREE.Mesh).isMesh !== true) return
+      const mesh = node as THREE.Mesh
+      mesh.castShadow = true
+      mesh.raycast = () => {}
+      const recolor = (material: THREE.Material) => {
+        if (!(material instanceof THREE.MeshStandardMaterial)
+          || !['V9_violet_cloth', 'V9_violet_lining'].includes(material.name)) return material
+        let changed = tinted.get(material)
+        if (!changed) {
+          const recolored = material.clone()
+          recolored.color.set(material.name === 'V9_violet_cloth' ? '#477960' : '#345844')
+          changed = recolored
+          tinted.set(material, changed)
+        }
+        return changed
+      }
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(recolor) : recolor(mesh.material)
+    })
+    copy.getObjectByName('V9_feet')!.visible = false
+    copy.getObjectByName('V9_boots')!.visible = true
+    return copy
+  }, [source.scene])
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model])
+  useEffect(() => {
+    mixer.clipAction(authoritativeAvatarClipFor(source, 'Idle')).play()
+    return () => { mixer.stopAllAction() }
+  }, [mixer, source])
+  useFrame((_, delta) => { mixer.update(delta) })
+  return <group name="Greenway Outfitters keeper" position={position} rotation={[0, Math.PI, 0]}>
+    <primitive object={model} />
+  </group>
+}
+
+function WildStarterSedgehorn({ source, position }: { source: GLTF;
+  position: [number, number, number] }) {
+  const model = useMemo(() => {
+    const copy = cloneSkinned(source.scene) as THREE.Group
+    copy.name = 'Wild untacked Sedgehorn'
+    for (const name of WILD_SEDGEHORN_TACK) copy.getObjectByName(name)?.traverse((node) => {
+      node.visible = false
+    })
+    copy.traverse((node) => {
+      if ((node as THREE.Mesh).isMesh !== true) return
+      node.castShadow = true
+      node.raycast = () => {}
+    })
+    return copy
+  }, [source.scene])
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model])
+  useEffect(() => {
+    mixer.clipAction(THREE.AnimationClip.findByName(source.animations, 'Idle')!).play()
+    return () => { mixer.stopAllAction() }
+  }, [mixer, source])
+  useFrame((_, delta) => { mixer.update(delta) })
+  return <group name="Wild Sedgehorn, visual encounter only" position={position}
+    rotation={[0, -Math.PI / 2, 0]} scale={0.6}>
     <primitive object={model} />
   </group>
 }
@@ -2557,7 +2627,7 @@ function SaveFrameLoopResume({ saveInProgress, frameloop, inputTrace }: {
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onTerrainHoverFeedback, inputTrace,
-  saveInProgress = false }: {
+  saveInProgress = false, starterChapterActors = false }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
   orbiting: boolean
@@ -2568,6 +2638,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onTerrainHoverFeedback?: (feedback: string | null) => void
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
+  starterChapterActors?: boolean
 }) {
   const [wayfarerV9, setWayfarerV9] = useState<{ source: GLTF | null; error: string | null }>({
     source: null, error: null,
@@ -2587,9 +2658,9 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     })
     return () => { mounted = false }
   }, [])
-  const showAdultSedgehorn = projection.groundMount !== undefined
+  const showSedgehornAsset = projection.groundMount !== undefined || starterChapterActors
   useEffect(() => {
-    if (!showAdultSedgehorn) return
+    if (!showSedgehornAsset) return
     let active = true
     new GLTFLoader().load(ADULT_SEDGEHORN_PREVIEW.glbUrl, (source) => {
       if (!active) return
@@ -2602,7 +2673,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         error: 'Adult Sedgehorn asset could not load. Check sedgehorn_mount/sedgehorn_adult.glb.' })
     })
     return () => { active = false }
-  }, [showAdultSedgehorn])
+  }, [showSedgehornAsset])
   const search = typeof window === 'undefined' ? '' : window.location.search
   const softwareGraphics = new URLSearchParams(search).get('graphics') === 'software'
   const [resolution, setResolution] = useState<SceneResolution>(() => sceneResolutionForSearch(search))
@@ -2626,6 +2697,22 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     : visual.terrain, [v42, visual.terrain, projection.seed, projection.v26OpenPitColumns,
       projection.v42FrontierBridgeId])
   const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection, visualTerrain)
+  const keeperStore = starterChapterActors
+    ? visual.stores.find((store) => store.id === 'store-greenway') : undefined
+  const keeperPosition: [number, number, number] | null = keeperStore
+    && revealedTerrain.some((cell) => Math.abs(cell.position[0] - keeperStore.position[0]) < cell.size[0] / 2
+      && Math.abs(cell.position[2] - (keeperStore.position[2] + 2.6)) < cell.size[1] / 2)
+    ? [keeperStore.position[0], keeperStore.position[1], keeperStore.position[2] + 2.6] : null
+  // The far-bank tile at (20,24) is off every creek bridge lane. Its default-seed ore
+  // protects the cell from soil placement while present; the visual has no collider.
+  const wildCell = starterChapterActors && !publicV25RiverCellAtGrid(projection.seed, 5, 6)
+    && !publicV26TerrainCellIsWet(projection.seed, 5, 6, 'greenway')
+    && !projection.v26OpenPitColumns?.some(({ gx, gz, openDepth }) =>
+      gx === 5 && gz === 6 && openDepth > 0)
+    ? revealedTerrain.find((cell) => cell.position[0] === 20 && cell.position[2] === 24
+      && cell.size[0] === WORLD_CELL_METERS && cell.size[1] === WORLD_CELL_METERS) : undefined
+  const wildPosition: [number, number, number] | null = wildCell
+    ? [21.3, wildCell.position[1], 25.3] : null
   const hallSite = projection.v41IronHallSite
   const quartermasterSite = projection.v42QuartermasterSite
   const quartermasterVisible = quartermasterSite?.revealed && revealedTerrain.some((cell) =>
@@ -2857,6 +2944,10 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         clearings={landscapeClearings} />}
       {visual.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
       {visual.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
+      {keeperPosition && wayfarerV9.source && <StarterOutfittersKeeper source={wayfarerV9.source}
+        position={keeperPosition} />}
+      {wildPosition && sedgehorn.source && <WildStarterSedgehorn source={sedgehorn.source}
+        position={wildPosition} />}
       {visual.fairyRings.filter((ring) => ring.id !== 'ring-highland-quarry'
         || projection.v39QuarryRing && revealedTerrain.some((cell) =>
           Math.abs(cell.position[0] - projection.v39QuarryRing!.position[0]) <= cell.size[0] / 2
@@ -2910,7 +3001,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       left: 12, bottom: 12, maxWidth: 380, padding: '10px 12px', borderRadius: 6,
       border: '1px solid #ee8585', background: '#311b22ee', color: '#fff2f2',
       font: '13px system-ui, sans-serif' }}>{wayfarerV9.error}</div>}
-    {projection.groundMount && sedgehorn.error && <div role="alert" style={{ position: 'absolute', zIndex: 3,
+    {showSedgehornAsset && sedgehorn.error && <div role="alert" style={{ position: 'absolute', zIndex: 3,
       left: 12, bottom: wayfarerV9.error ? 78 : 12, maxWidth: 380, padding: '10px 12px', borderRadius: 6,
       border: '1px solid #ee8585', background: '#311b22ee', color: '#fff2f2',
       font: '13px system-ui, sans-serif' }}>{sedgehorn.error}</div>}
