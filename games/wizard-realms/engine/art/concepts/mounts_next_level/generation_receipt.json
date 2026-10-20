@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "status": "GO_READY_FOR_HUMAN_REVIEW",
+  "scope": "2D concept references only; no 3D or gameplay integration approval",
+  "source": {
+    "catalog_path": "work/mount-concepts-25/catalog.json",
+    "catalog_sha256": "33862a7bc97924fa05c90ff39f2a5dc6280c4c04e102f3d1b013b05de1d15be8",
+    "review_path": "work/mount-concepts-25/review_findings.md",
+    "review_sha256": "0f3e6630fefebc79f0030e2f5edda8d55dac60aa1ae9620f597f9ded2175085e",
+    "image_set_digest_sha256": "eedc0d184e384dfff632d3e764a69759320d7bb602f2cc6e2c7b34711a9db0d9",
+    "image_set_digest_method": "SHA-256 of UTF-8 lines: id + space + SHA256(PNG bytes) + newline, sorted by id"
+  },
+  "generation": {
+    "mode": "installed imagegen CLI",
+    "model": "gpt-image-2",
+    "quality": "medium",
+    "requested_size": "1024x1024",
+    "prompt_source": "catalog.json",
+    "prompt_augmentation": false,
+    "batch_concurrency": 1,
+    "maximum_concurrent_local_cli_processes": 2,
+    "corrected_v2_pilots_included": true,
+    "success_count": 25,
+    "failure_count": 0
+  },
+  "review": {
+    "disposition": "GO",
+    "blocking_findings": 0,
+    "activated_rerenders": 0,
+    "limitations": "Accepted for human concept comparison only, not 3D production or playable mounting"
+  },
+  "counts": {
+    "total": 25,
+    "ground": 15,
+    "flying": 10
+  },
+  "images": [
+    {
+      "id": "hearthshell-tortoise",
+      "travel_mode": "ground",
+      "path": "renders/hearthshell-tortoise.png",
+      "sha256": "7cf7f0a0a49d174d037723d9101b954f262795317149f2feb84960f502ccc2dc",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "rillrunner-strider",
+      "travel_mode": "ground",
+      "path": "renders/rillrunner-strider.png",
+      "sha256": "083638cd79f2eaa88ea400d33c694dface22c2de320c6d2e3f12507e4339c38b",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "mooncoil-snail",
+      "travel_mode": "ground",
+      "path": "renders/mooncoil-snail.png",
+      "sha256": "b7d437fa9a36672d970f2fcfb8a581add7f38fcbc10982c3e462055d6b5dae28",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "brineglass-crab",
+      "travel_mode": "ground",
+      "path": "renders/brineglass-crab.png",
+      "sha256": "dc84017e0ed296b8c429c06de3912f93dc1ea2c7b51c960d9f41f9e4ca7ae66a",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "bristleforge-boar",
+      "travel_mode": "ground",
+      "path": "renders/bristleforge-boar.png",
+      "sha256": "08ef4a821b238314edc6c2b947f0a1bb07971e25743382aa185912e548f639be",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "springvale-hare",
+      "travel_mode": "ground",
+      "path": "renders/springvale-hare.png",
+      "sha256": "2bd8a4a25ad254ccc9028e6e20274776e7ac3d9b4ddd8af90ebc5a518cc3b75b",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "silkspan-spider",
+      "travel_mode": "ground",
+      "path": "renders/silkspan-spider.png",
+      "sha256": "58e60ab79e33f109adf84221876ff361087a03bd9c7e4ebf9a4a1306eba7dfb9",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "mistwood-mammoth",
+      "travel_mode": "ground",
+      "path": "renders/mistwood-mammoth.png",
+      "sha256": "6ab2879377cbacf815fe3a763d104d13a2b7aa82376a0b29a5bca6855234f317",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "bellroot-walker",
+      "travel_mode": "ground",
+      "path": "renders/bellroot-walker.png",
+      "sha256": "f151806d5bf6823a4a8ce89a75218e681d645c623f40d32b04da5916f080d72c",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "longarm-sloth",
+      "travel_mode": "ground",
+      "path": "renders/longarm-sloth.png",
+      "sha256": "c67609e2d16bd83b855dcbd3a422ee51f8cca399d9151e463c03f39e7b3ca9a7",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "stormscale-pangolin",
+      "travel_mode": "ground",
+      "path": "renders/stormscale-pangolin.png",
+      "sha256": "cde884bb0d2fbcdbed38c3268d605bed25021ece00693f1b95e49e43257ac003",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "lanternbelly-octopod",
+      "travel_mode": "ground",
+      "path": "renders/lanternbelly-octopod.png",
+      "sha256": "30e8d10fcc74a0362b96811b7a443f03fd1fd8a084708cf7a5acde14ce0dd180",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "duskwhisker-lynx",
+      "travel_mode": "ground",
+      "path": "renders/duskwhisker-lynx.png",
+      "sha256": "f6389bd4341633bdaf305f93a373be01e44ecef8f9e527104bd3688eabe20c05",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "thunderdrum-caterpillar",
+      "travel_mode": "ground",
+      "path": "renders/thunderdrum-caterpillar.png",
+      "sha256": "a5ef3f7a4e2fa6b727a4bf7e19f671b68f3c921e7b77fcb269a28070ecee1080",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "stonebrow-bison",
+      "travel_mode": "ground",
+      "path": "renders/stonebrow-bison.png",
+      "sha256": "37e1a7ed0700d4074ea1a788b35dede4afc5a677a9f82ff61de04713339b75a9",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "velvetspoke-moth",
+      "travel_mode": "flying",
+      "path": "renders/velvetspoke-moth.png",
+      "sha256": "5d6a68a44909640f4a1b7c81b1b93f6970b08470cba72bdb8abab107dd60d23c",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "lanternkeel-heron",
+      "travel_mode": "flying",
+      "path": "renders/lanternkeel-heron.png",
+      "sha256": "2371289c1376080965a0ea3f4b49b30d34d6bba7a2b5132652e84634f8d87286",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "kiteback-prowler",
+      "travel_mode": "flying",
+      "path": "renders/kiteback-prowler.png",
+      "sha256": "ad3ce0de1009d2c4ea94ffd69d642abe76b7438d912fb9027062026f750460e5",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "bellowsack-wispback",
+      "travel_mode": "flying",
+      "path": "renders/bellowsack-wispback.png",
+      "sha256": "0ed97a4c05b73f2b6154e0b55269e6315fbed287604a6044e9d1d435ef140da5",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "crownseed-whirler",
+      "travel_mode": "flying",
+      "path": "renders/crownseed-whirler.png",
+      "sha256": "c7f7b69b4952247bede92b467dc9aaae6f25cabd2006f2225ad8beefcc47efb5",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "spirecoil-skyworm",
+      "travel_mode": "flying",
+      "path": "renders/spirecoil-skyworm.png",
+      "sha256": "44bfe25fe3636e36074978ed0c1dc09d9a15b8154af5554647de10e6deffd8ba",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "ventcrest-caskbeast",
+      "travel_mode": "flying",
+      "path": "renders/ventcrest-caskbeast.png",
+      "sha256": "1caa12855ead788a47236114544f2ff8f395571616380015d6262a6e7b1068f4",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "sablehook-aeromantis",
+      "travel_mode": "flying",
+      "path": "renders/sablehook-aeromantis.png",
+      "sha256": "4bd6302928de2aa86fe6971aecd0c19db1562aa5e0e71123b42c26653588e13c",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "hushbell-drifter",
+      "travel_mode": "flying",
+      "path": "renders/hushbell-drifter.png",
+      "sha256": "63a2815267a371f25d33882fc259384ddd4809b65cba7d4ae8bb3c9587458160",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "prismclast-rover",
+      "travel_mode": "flying",
+      "path": "renders/prismclast-rover.png",
+      "sha256": "42c35438b46296b91dc0e530477acf00ac5a43e22dae9af869c84392ae426409",
+      "width": 1024,
+      "height": 1024
+    }
+  ],
+  "contact_sheets": {
+    "ground": {
+      "path": "ground_contact_sheet.png",
+      "sha256": "6b61aa5fca3216213e856989cc3e4aa08e78bb33cfa91f7ee2114bb18565142d",
+      "width": 1256,
+      "height": 2282,
+      "image_count": 15
+    },
+    "flying": {
+      "path": "flying_contact_sheet.png",
+      "sha256": "e39c583f157708ac7459eded34d4dbdecde0ec2ad6c09db3666aa2354c93b2b5",
+      "width": 856,
+      "height": 2282,
+      "image_count": 10
+    }
+  }
+}

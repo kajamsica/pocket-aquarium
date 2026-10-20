@@ -37,6 +37,7 @@ import { PublicV40EntryApp } from './PublicV40Entry'
 import { PublicV41EntryApp } from './PublicV41Entry'
 import { PublicV42EntryApp } from './PublicV42Entry'
 import { PublicV43EntryApp } from './PublicV43Entry'
+import { PublicV44EntryApp } from './PublicV44Entry'
 import { StreamedPreviewApp } from './StreamedPreviewApp'
 
 const root = document.getElementById('root')
@@ -47,6 +48,7 @@ import.meta.hot?.dispose((data) => { data.reactRoot = reactRoot })
 // The inspector is a separate route and code chunk. It never mounts a playable app or its save flow.
 const workbenchId = new URLSearchParams(window.location.search).get('workbench')
 const CharacterWorkbench = lazy(() => import('./workbench/CharacterWorkbench').then(({ CharacterWorkbench: Component }) => ({ default: Component })))
+const MountWorkbench = lazy(() => import('./workbench/MountWorkbench').then(({ MountWorkbench: Component }) => ({ default: Component })))
 const PublicV23Controller = lazy(() => import('./PublicV23Controller').then(({ PublicV23Controller: Component }) => ({ default: Component })))
 // The streamed preview never mounts the v5 App, so it never reads or writes a v5 save.
 const streamedPreview = new URLSearchParams(window.location.search).get('devRegion') === 'streamed'
@@ -75,9 +77,14 @@ export const PUBLIC_V35_ENTRY_READY = true
 // V36 is a separate development save copied only by an explicit V35 choice.
 export const PUBLIC_V36_ENTRY_READY = true
 const routedApp = <Suspense fallback={<main role="status">Loading game…</main>}>{workbenchId !== null
-  ? <Suspense fallback={<main role="status">Loading character workbench…</main>}><CharacterWorkbench workbenchId={workbenchId} /></Suspense>
+  ? <Suspense fallback={<main role="status">Loading asset workbench…</main>}>{workbenchId === 'mounts' ? <MountWorkbench /> : <CharacterWorkbench workbenchId={workbenchId} />}</Suspense>
   : mireglassDev ? <MireglassPlayableApp />
-  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v43'
+  : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v44'
+    ? import.meta.env.DEV
+      ? <PublicV44EntryApp renderSession={(start, bindings) =>
+        <PublicV23Controller version="v44" start={start} {...bindings} />} />
+      : <main role="status">Experimental V44 is development-only.</main>
+    : publicWorld === 'v43'
     ? import.meta.env.DEV
       ? <PublicV43EntryApp renderSession={(start, bindings) =>
         <PublicV23Controller version="v43" start={start} {...bindings} />} />

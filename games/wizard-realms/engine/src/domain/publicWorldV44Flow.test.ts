@@ -1,5 +1,5 @@
 import { IDBFactory } from 'fake-indexeddb'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import './atomicV41Database'
 import { createAtomicV43Store } from './atomicV43Database'
 import { createAtomicV42Store } from './atomicV42Database'
@@ -13,11 +13,12 @@ import { createFreshPublicV42Root, decodePublicV42Root,
 import type { PublicV42Root } from './publicWorldV42Snapshot'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
+import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { waystationRiverSite } from './waystationRiverContent'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
 import { commitPublicV44, inspectPublicV44, resumePublicV44,
-  startPublicV44 } from './publicWorldV44Flow'
+  requestPublicV44ReturnHome, startPublicV44 } from './publicWorldV44Flow'
 import { inspectPublicV43, startFreshPublicV43 } from './publicWorldV43Flow'
 import { createPublicV44Root, decodePublicV44Root,
   PUBLIC_V44_DATABASE_NAME } from './publicWorldV44Snapshot'
@@ -75,7 +76,7 @@ async function setup() {
 
 /** An already V43-accepted mature state, not a proof of the earning journey.
  * The V43 care suite independently covers the checked quest and care path. */
-function matureSource(): PublicV43Root {
+function matureSource(boots = false): PublicV43Root {
   const fresh = createFreshPublicV42Root(seed)
   const site = resolveSedgehornFamiliarSite(fresh.head)!
   const bridge = waystationRiverSite(seed)!
@@ -116,12 +117,38 @@ function matureSource(): PublicV43Root {
       trust: 2, creatureCareXp: 40, stationKnown: true },
     mountTraining: { careWitnesses },
     state: { ...head.state, player: { ...head.state.player,
+      inventory: boots ? [...head.state.player.inventory,
+        { itemId: 'leather_boots' as const, quantity: 1 }]
+        : head.state.player.inventory,
+      equipment: boots ? { ...head.state.player.equipment,
+        feet: 'leather_boots' as const } : head.state.player.equipment,
       coins: head.state.player.coins + 25, xp: head.state.player.xp + 40,
       level: 1 + Math.floor((head.state.player.xp + 40) / 100) } } })
   const accepted = decodePublicV43Root({ ...v43,
     previous: mature(v43.previous!), head: mature(v43.head) })
   expect(accepted).not.toBeNull()
   return accepted!
+}
+
+function trappedSource(): PublicV43Root {
+  const source = matureSource()
+  const point = { x: 12, z: 4 }
+  const support = publicV17StarterSupportAt({ seed,
+    profile: source.head.state.generationProfile,
+    route: source.head.state.greenway.routes.find((entry) =>
+      entry.id === 'greenway_ladder') ?? null,
+    built: false, greenwayWorks: source.head.greenwayWorks }, point)
+  if (!support || support.kind !== 'ground') throw new Error('Missing pit floor')
+  const trapped = (head: PublicV43Root['head']) => ({ ...head,
+    terrain: { ...head.terrain, columns: [{ gx: 3, gz: 1,
+      openDepth: 8, rewardDepth: 8, pitLadder: false }] },
+    state: { ...head.state, movementOwner: 'greenway' as const,
+      player: { ...head.state.player, verticalVelocity: 0,
+        position: { ...point, y: support.floorY } } } })
+  const checked = decodePublicV43Root({ ...source,
+    previous: trapped(source.previous!), head: trapped(source.head) })
+  expect(checked).not.toBeNull()
+  return checked!
 }
 
 describe('V44 checked local import and writer', () => {
@@ -182,6 +209,27 @@ describe('V44 checked local import and writer', () => {
       root: { head: { saveRevision: 1 } } })
   })
 
+  it('reuses the fenced proof for one checked read and preserves invalid/stale results', async () => {
+    const { source, target } = await setup()
+    const started = await startPublicV44(locks, target, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const reads = vi.spyOn(target, 'readChecked')
+    const saved = await commitPublicV44(locks, target, source, 0,
+      started.value.lineage, idle)
+    expect(saved.ok).toBe(true)
+    expect(reads).toHaveBeenCalledTimes(1)
+    reads.mockRestore()
+
+    const invalid = vi.spyOn(target, 'commit').mockResolvedValueOnce('invalid')
+    expect(await commitPublicV44(locks, target, source, 1,
+      started.value.lineage, idle)).toEqual({ ok: false,
+      reason: 'invalid-successor' })
+    invalid.mockRestore()
+    expect(await commitPublicV44(locks, target, source, 0,
+      started.value.lineage, idle)).toEqual({ ok: false,
+      reason: 'revision-changed' })
+  })
+
   it('fences legacy source drift and rejects malformed target and lineage tampering', async () => {
     const { factory, source, target } = await setup()
     const v43 = await source.readChecked()
@@ -220,10 +268,46 @@ describe('V44 checked local import and writer', () => {
     expect(await commitPublicV44(locks, target, source, 0,
       started.value.lineage, { kind: 'return-home/v1', atMs: 10 } as never))
       .toEqual({ ok: false, reason: 'invalid-witness' })
+    expect(await requestPublicV44ReturnHome(locks, target, source, 0,
+      started.value.lineage)).toEqual({ ok: false, reason: 'not_trapped' })
     await putRaw(factory, { unexpected: true }, 'extra')
     expect((await target.readChecked())).toEqual({ status: 'blocked',
       reason: 'invalid-v44-root' })
   })
+
+  it('mints, replays, and reloads a trapped Return Home with its checked cooldown', async () => {
+    const factory = new IDBFactory()
+    const source = createAtomicV43Store(factory), target = createAtomicV44Store(factory)
+    const trapped = trappedSource()
+    expect((await source.readChecked()).status).toBe('missing')
+    await putRaw(factory, trapped, 'root', PUBLIC_V43_DATABASE_NAME)
+    expect((await source.readChecked()).status).toBe('valid')
+    const started = await startPublicV44(locks, target, source,
+      trapped.head.saveRevision)
+    if (!started.ok) throw new Error(started.reason)
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(10_000)
+    try {
+      const saved = await requestPublicV44ReturnHome(locks, target, source, 0,
+        started.value.lineage)
+      if (!saved.ok) throw new Error(saved.reason)
+      expect(saved.value.head.witness).toEqual({ kind: 'return-home/v1', atMs: 10_000 })
+      expect(saved.value.head.v43.head.nextHomeAtMs).toBe(1_810_000)
+      expect(saved.value.head.v43.head.state.player.position)
+        .toMatchObject({ x: 0, z: 0 })
+      expect(saved.value.head.groundMount.mode).toBe('parked')
+      expect(saved.value.head.v43.head.terrain).toEqual(trapped.head.terrain)
+      expect(await resumePublicV44(locks, createAtomicV44Store(factory), source, 1,
+        started.value.lineage)).toEqual(saved)
+      expect((await createAtomicV44Store(factory).readChecked())).toMatchObject({
+        status: 'valid', root: { head: { saveRevision: 1,
+          witness: { kind: 'return-home/v1', atMs: 10_000 } } } })
+      expect(await commitPublicV44(locks, target, source, 1,
+        started.value.lineage, { kind: 'return-home/v1', atMs: 2_000_000 } as never))
+        .toEqual({ ok: false, reason: 'invalid-witness' })
+      expect(await requestPublicV44ReturnHome(locks, target, source, 1,
+        started.value.lineage)).toEqual({ ok: false, reason: 'cooldown' })
+    } finally { clock.mockRestore() }
+  }, 20_000)
 
   it('recovers pending/missing and pending/matching handoffs, then reloads finalized/matching', async () => {
     for (const targetPresent of [false, true]) {
@@ -354,12 +438,12 @@ describe('V44 checked local import and writer', () => {
       value: { status: 'blocked', reason: 'invalid-successor-marker' } })
   })
 
-  it('persists mount and dismount witnesses with independent V44 revisions', async () => {
+  it('persists a boots-paced ride and dismount with independent V44 revisions', async () => {
     const factory = new IDBFactory()
     const source = createAtomicV43Store(factory), target = createAtomicV44Store(factory)
     const old = await source.readChecked()
     if (old.status !== 'missing') throw new Error('Expected empty source')
-    const mature = matureSource()
+    const mature = matureSource(true)
     expect(await source.commit(old.proof, mature)).toBe('invalid')
     // A legacy mature V43 save is imported only after its own checked read.
     const sourceName = 'wizard-realms:world:v43'
@@ -384,16 +468,28 @@ describe('V44 checked local import and writer', () => {
     expect(mounted).toMatchObject({ ok: true,
       value: { head: { saveRevision: 1, groundMount: { mode: 'riding' },
         v43: { head: { saveRevision: mature.head.saveRevision } } } } })
+    expect(await requestPublicV44ReturnHome(locks, target, source, 1,
+      started.value.lineage)).toEqual({ ok: false, reason: 'must-dismount' })
     const reload = createAtomicV44Store(factory)
     expect(await reload.readChecked()).toMatchObject({ status: 'valid',
       root: { head: { saveRevision: 1, groundMount: { mode: 'riding' } } } })
-    const parked = await commitPublicV44(locks, reload, source, 1,
+    const ride = { kind: 'sedgehorn-ride-frame/v2' as const,
+      intents: [{ type: 'move' as const, delta: { x: 0.24, z: 0 } }] }
+    const advanced = await commitPublicV44(locks, reload, source, 1,
+      started.value.lineage, ride)
+    expect(advanced).toMatchObject({ ok: true,
+      value: { head: { saveRevision: 2, witness: ride,
+        v43: { head: { saveRevision: mature.head.saveRevision + 1 } } } } })
+    const resumed = await resumePublicV44(locks, createAtomicV44Store(factory),
+      source, 2, started.value.lineage)
+    expect(resumed).toEqual(advanced)
+    const parked = await commitPublicV44(locks, reload, source, 2,
       started.value.lineage, { kind: 'sedgehorn-dismount/v1' })
     expect(parked).toMatchObject({ ok: true,
-      value: { head: { saveRevision: 2, groundMount: { mode: 'parked' },
-        v43: { head: { saveRevision: mature.head.saveRevision } } } } })
+      value: { head: { saveRevision: 3, groundMount: { mode: 'parked' },
+        v43: { head: { saveRevision: mature.head.saveRevision + 1 } } } } })
     expect((await createAtomicV44Store(factory).readChecked())).toMatchObject({
-      status: 'valid', root: { head: { saveRevision: 2 },
-        previous: { saveRevision: 1 } } })
+      status: 'valid', root: { head: { saveRevision: 3 },
+        previous: { saveRevision: 2 } } })
   }, 20_000)
 })

@@ -4,7 +4,8 @@ import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
 import type { PublicV35LedgerQuest } from './publicV35LedgerQuest'
 import type { PublicV40WaystationQuest } from './publicV40WaystationQuest'
 import type { PublicV42IronHallQuest } from './publicV42IronHallQuest'
-import { projectPublicV43FamiliarQuest } from './PublicV43FamiliarQuest'
+import { projectPublicV43FamiliarQuest, publicV44FamiliarObjective }
+  from './PublicV43FamiliarQuest'
 
 const statusLabel = {
   complete: 'Complete', closed: 'Closed',
@@ -39,16 +40,24 @@ export function selectPublicV43QuestLead({ head, ledgerQuest, waystationQuest, i
 }
 
 /** Read-only guidance from the checked head; rewards remain owned by world actions. */
-export function PublicV43QuestJournal(leads: PublicV43QuestLeads) {
-  const { head, ledgerQuest, waystationQuest, ironHallQuest } = leads
+export function PublicV43QuestJournal(leads: PublicV43QuestLeads & Readonly<{
+  rideableAfterMaturity?: boolean }>) {
+  const { head, ledgerQuest, waystationQuest, ironHallQuest, rideableAfterMaturity = false } = leads
   const quests = projectPublicV43GreenwayQuestChain(head)
   const continuation = projectPublicV43QuestContinuation(head)
   const next = selectPublicV43QuestLead(leads)
+  const careCount = head.mountTraining?.careWitnesses.length ?? 0
+  const familiarObjective = rideableAfterMaturity
+    ? publicV44FamiliarObjective(continuation.familiar.objective, head.familiar.phase, careCount)
+    : continuation.familiar.objective
   const resolved = quests.filter((quest) => quest.status === 'complete'
     || quest.status === 'closed').length
   return <section aria-label="Greenway quest journal" data-quest-journal="v43">
     <h2>Greenway route</h2>
-    {next ? <p><strong>Next: {next.title}.</strong> {next.objective}</p>
+    {next ? <p><strong>Next: {next.title}.</strong> {rideableAfterMaturity
+      && next.id === continuation.familiar.id
+      ? publicV44FamiliarObjective(next.objective, head.familiar.phase, careCount)
+      : next.objective}</p>
       : <p>Starter route, Ledger, and familiar care are recorded. The carpenter order remains optional if unclaimed.</p>}
     <details><summary>Starter leads ({resolved}/{quests.length} resolved)</summary>
       <ol>{quests.map((quest) => <li key={quest.id} data-quest-status={quest.status}>
@@ -72,7 +81,7 @@ export function PublicV43QuestJournal(leads: PublicV43QuestLeads) {
       <p><small>{ironHallQuest.reward}</small></p></>}
       <p><strong>Lost Familiar, {continuation.familiar.stage === 'mount-ready'
         ? 'mature companion' : continuation.familiar.stage}:</strong>{' '}
-        {continuation.familiar.objective}</p>
+        {familiarObjective}</p>
       <p><small>{continuation.familiar.existingReward}</small></p>
     </details>
     <small>Suggested lead order does not lock available actions. Progress follows checked world actions; this journal does not claim extra rewards.</small>

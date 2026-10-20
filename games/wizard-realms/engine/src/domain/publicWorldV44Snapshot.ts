@@ -70,9 +70,7 @@ export function decodePublicV44Lineage(raw: unknown): PublicV44Lineage | null {
 export function decodePublicV44Witness(raw: unknown): PublicV44Witness | null {
   const mount = decodePublicV44GroundMountWitness(raw)
   if (mount) return mount
-  const inherited = decodePublicV43Witness(raw)
-  // Return-home timestamps must still be minted by a future locked writer.
-  return inherited?.kind === 'return-home/v1' ? null : inherited
+  return decodePublicV43Witness(raw)
 }
 
 function decodeHead(raw: unknown, lineage: PublicV44Lineage): PublicV44Head | null {

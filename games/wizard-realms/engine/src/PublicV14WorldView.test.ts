@@ -147,6 +147,7 @@ describe('pure v14 view projection', () => {
     expect(advancePublicV14GreenwayAction(jumped.state, { type: 'build_route',
       routeId: 'greenway_ladder', siteId: STARTER_CLIFF_SITE_ID }).rejections[0]?.code).toBe('airborne')
     const airborne = project(jumped.state, STARTER_CLIFF_SITE_ID)
+    expect(airborne.player.verticalVelocity).toBe(jumped.state.player.verticalVelocity)
     expect(airborne.buildSites[0]).toMatchObject({ status: 'obstructed', reason: expect.stringContaining('Land') })
     expect(airborne.starterCliff?.ladder).toBeNull()
     expect(renderToStaticMarkup(createElement(WizardHud, { projection: airborne,
@@ -156,6 +157,7 @@ describe('pure v14 view projection', () => {
       state = advancePublicV14GreenwayFrame(state, [], { walkRequested: false }).state
     }
     expect(validatePublicV14State(state, seed)).not.toBeNull()
+    expect(project(state).player.verticalVelocity).toBe(0)
     expect(project(state, STARTER_CLIFF_SITE_ID).buildSites[0].status).toBe('ready')
   })
 

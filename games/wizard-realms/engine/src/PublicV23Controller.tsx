@@ -61,7 +61,14 @@ import type { PublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
 import { GREENWAY_BAG_UPGRADE } from './domain/publicWorldV43BagUpgrade'
 import type { PublicV43BagUpgradeWitness } from './domain/publicWorldV43BagUpgrade'
 import type { PublicV43Progress } from './domain/publicWorldV43Snapshot'
-import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint }
+import { createPublicV44ControllerRuntime } from './PublicV44ControllerRuntime'
+import type { PublicV44EntryBindings } from './PublicV44Entry'
+import { commitPublicV44, requestPublicV44ReturnHome } from './domain/publicWorldV44Flow'
+import type { PublicV44Start } from './domain/publicWorldV44Flow'
+import { PUBLIC_V44_MAX_RIDE_BATCH } from './domain/publicWorldV44GroundMount'
+import type { PublicV44GroundMountWitness } from './domain/publicWorldV44GroundMount'
+import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint,
+  publicV44FamiliarObjective }
   from './view/PublicV43FamiliarQuest'
 import { PublicV43QuestJournal, selectPublicV43QuestLead } from './view/PublicV43QuestJournal'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
@@ -189,7 +196,8 @@ type V40Runtime = ReturnType<typeof createPublicV40ControllerRuntime>
 type V41Runtime = ReturnType<typeof createPublicV41ControllerRuntime>
 type V42Runtime = ReturnType<typeof createPublicV42ControllerRuntime>
 type V43Runtime = ReturnType<typeof createPublicV43ControllerRuntime>
-type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime
+type V44Runtime = ReturnType<typeof createPublicV44ControllerRuntime>
+type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime
 type V32PlusRuntime = V32Runtime | V33PlusRuntime
 type ActiveViewSource = Readonly<{ status: () => { saveRevision: number; pendingFrames: number }
   view: () => PublicV17ActiveView }>
@@ -229,6 +237,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV42RewardWitness
   | PublicV43FamiliarWitness | PublicV43MountTrainingWitness | PublicV43LogOrderWitness
   | PublicV43BagUpgradeWitness
+  | Extract<PublicV44GroundMountWitness, { kind: 'sedgehorn-mount/v1' | 'sedgehorn-dismount/v1' }>
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
@@ -983,8 +992,8 @@ const PUBLIC_V23_PANEL_STYLES = `
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
   [data-public-v23] .v43-familiar{top:210px;left:auto;right:8px;transform:none;bottom:auto;max-height:calc(100dvh - 220px - env(safe-area-inset-bottom,0px))}
-  :is([data-public-version=v42],[data-public-version=v43]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
-  :is([data-public-version=v42],[data-public-version=v43]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
+  :is([data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
+  :is([data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
 @media(min-width:380px) and (max-width:719px) and (min-height:401px){[data-public-version=v43] .v26-safety:not([open]){left:calc(50% + 55px);right:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(84px,calc(100vw - 306px))}}
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){
@@ -996,9 +1005,9 @@ body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has
 [data-public-version=v26],[data-public-version=v27],[data-public-version=v28],[data-public-version=v29],[data-public-version=v30],[data-public-version=v31],[data-public-version=v32],[data-public-version=v33],[data-public-version=v34]{height:100dvh}
 [data-public-version=v26] .wr-surface,[data-public-version=v27] .wr-surface,[data-public-version=v28] .wr-surface,[data-public-version=v29] .wr-surface,[data-public-version=v30] .wr-surface,[data-public-version=v31] .wr-surface,[data-public-version=v32] .wr-surface,[data-public-version=v33] .wr-surface,[data-public-version=v34] .wr-surface{height:100%;min-height:0}
 @media(min-width:901px),(min-width:720px) and (min-height:591px){
-  body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43])){margin:0;background:#14221f}
-  :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43]){height:100dvh}
-  :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43]) .wr-surface{height:100%;min-height:0}
+body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44])){margin:0;background:#14221f}
+:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]){height:100dvh}
+:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .wr-surface{height:100%;min-height:0}
 }
 @media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide{left:166px;bottom:16px}}
 `
@@ -1010,6 +1019,10 @@ export function publicV23SavedWorkMessage(event: NonNullable<Extract<
 }
 export const publicV43SedgehornCareSavedMessage =
   'Sedgehorn care visit saved. The sedgehorn cannot be ridden in this preview.'
+export function publicV44EffectiveGait(feet: string | null, riding: boolean,
+  walkRequested: boolean) {
+  return publicV11Gait(feet, riding ? false : walkRequested)
+}
 export function publicV23WayfinderGlowSavedMessage(events: readonly {
   type: string; spellId?: string; revealedTileIds?: readonly string[]
 }[]): string | null {
@@ -1151,6 +1164,8 @@ export type PublicV42ControllerProps = PublicV42EntryBindings & Readonly<{
   start: PublicV42Start; version: 'v42' }>
 export type PublicV43ControllerProps = PublicV43EntryBindings & Readonly<{
   start: PublicV43Start; version: 'v43' }>
+export type PublicV44ControllerProps = PublicV44EntryBindings & Readonly<{
+  start: PublicV44Start; version: 'v44' }>
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
@@ -1341,8 +1356,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps
   | PublicV37ControllerProps | PublicV38ControllerProps | PublicV39ControllerProps
   | PublicV40ControllerProps | PublicV41ControllerProps | PublicV42ControllerProps
-  | PublicV43ControllerProps) {
-  const v43 = 'version' in props && props.version === 'v43'
+  | PublicV43ControllerProps | PublicV44ControllerProps) {
+  const v44 = 'version' in props && props.version === 'v44'
+  const v43 = 'version' in props && (props.version === 'v43' || v44)
   const v42 = 'version' in props && (props.version === 'v42' || v43)
   const v41 = 'version' in props && (props.version === 'v41' || v42)
   const v40 = 'version' in props && (props.version === 'v40' || v41)
@@ -1367,7 +1383,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const physicalWorld = v26 || v27 || riverBridgeWorld
   const river = v25 || physicalWorld
   const v24 = 'version' in props
-  const saveVersion = v43 ? '43' : v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
+  const saveVersion = v44 ? '44' : v43 ? '43' : v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
   const traceRef = useRef<ReturnType<typeof createPublicV17InputTrace> | null | undefined>(undefined)
   if (traceRef.current === undefined) traceRef.current = publicV17InputTraceEnabled(
     typeof window === 'undefined' ? '' : window.location?.hostname ?? '',
@@ -1378,9 +1394,14 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     trace)
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
-    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | null>(null)
+    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime | null>(null)
   if (!runtimeRef.current) {
-    runtimeRef.current = 'version' in props && props.version === 'v43'
+    runtimeRef.current = 'version' in props && props.version === 'v44'
+      ? createPublicV44ControllerRuntime(props.start, (revision, lineage, witness) =>
+        commitPublicV44(props.locks, props.store, props.v43Store, revision, lineage, witness),
+        (revision, lineage) => requestPublicV44ReturnHome(props.locks, props.store,
+          props.v43Store, revision, lineage))
+      : 'version' in props && props.version === 'v43'
       ? createPublicV43ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV43(props.locks, props.store, props.v42Store, revision, lineage, witness),
         (revision, lineage) => requestPublicV43ReturnHome(props.locks, props.store,
@@ -1651,8 +1672,19 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const v39FinishedAt = trace && v39 ? performance.now() : v38FinishedAt
   const waystationView = v40 ? projectPublicV40Waystation(snapshot as PublicV40WaystationProgress, ringView) : ringView
   const v40FinishedAt = trace && v40 ? performance.now() : v39FinishedAt
-  const view = v42 ? projectPublicV42IronHall(snapshot as PublicV42RewardProgress, waystationView)
+  const worldProjection = v42 ? projectPublicV42IronHall(snapshot as PublicV42RewardProgress, waystationView)
     : v41 ? projectPublicV41IronHall(snapshot as PublicV41CombatProgress, waystationView) : waystationView
+  const adult = v44 ? (runtime as V44Runtime).groundMount() : null
+  const mounted = v44 && adult?.mode === 'riding'
+  const view: WizardViewProjection = { ...worldProjection,
+    ...(mounted ? { unavailableActions: true as const, openStoreId: null,
+      gait: publicV44EffectiveGait(active.player.equipment.feet, true, walkRequested),
+      savedTerrainWorks: worldProjection.savedTerrainWorks
+        ? { ...worldProjection.savedTerrainWorks, actionsEnabled: false, modeActive: false }
+        : undefined } : {}),
+    ...(adult?.visible ? { groundMount: { mode: adult.mode,
+      position: [adult.position.x, adult.position.y, adult.position.z] as const,
+      yaw: adult.mode === 'riding' ? adult.yaw : 0 } } : {}) }
   const projectionFinishedAt = trace ? performance.now() : 0
   trace?.record('controller.render', { viewMs: viewFinishedAt - renderStartedAt,
     projectionMs: projectionFinishedAt - viewFinishedAt,
@@ -1781,7 +1813,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     actionTask.current = (async () => {
       try {
         const { intent } = token
-        const result = 'kind' in intent && intent.kind === 'return-home-request'
+        const result = 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
+          || intent.kind === 'sedgehorn-dismount/v1')
+          ? await (runtime as V44Runtime).action(intent)
+          : 'kind' in intent && intent.kind === 'return-home-request'
           ? await (runtime as V26Runtime | V27Runtime | V28Runtime | V29Runtime | V30Runtime
             | V31Runtime | V32PlusRuntime).returnHome()
           : 'kind' in intent && (intent.kind.startsWith('familiar-')
@@ -1845,14 +1880,22 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         if (result.status === 'saved') {
           if (result.resetWalkRequested) setWalkRequested(false)
           if ('id' in intent) setWorkMode(false)
+          if ('kind' in intent && intent.kind === 'sedgehorn-mount/v1') {
+            setWorkMode(false); setOpenStoreId(null)
+          }
           tell('kind' in intent && intent.kind === 'return-home-request'
             ? 'Returned home safely. A 30-minute rescue cooldown has started.'
+            : 'kind' in intent && intent.kind === 'sedgehorn-mount/v1'
+            ? 'Mounted the adult Sedgehorn. Stay on revealed, safe ground.'
+            : 'kind' in intent && intent.kind === 'sedgehorn-dismount/v1'
+            ? 'Dismounted. Your adult Sedgehorn is parked here and saved.'
             : 'kind' in intent && (intent.kind.startsWith('familiar-')
               || intent.kind === 'sedgehorn-care/v1')
             ? intent.kind === 'familiar-claim/v1'
               ? 'The Lost Familiar reward and bond saved. Check your coins, XP, and care station.'
               : intent.kind === 'sedgehorn-care/v1'
-                ? publicV43SedgehornCareSavedMessage
+                ? v44 ? 'Sedgehorn care visit saved. Check the quest panel; the adult can be mounted after the third visit.'
+                  : publicV43SedgehornCareSavedMessage
                 : 'The Lost Familiar quest step saved. Check the quest panel for the next objective.'
             : 'kind' in intent && intent.kind === 'fulfill-greenway-logs/v1'
             ? 'Carpenter order saved: 4 logs delivered at Greenway Outfitters for 10 coins. One-time order complete.'
@@ -1935,6 +1978,15 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
         } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
+          : 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
+            || intent.kind === 'sedgehorn-dismount/v1')
+          ? ({ not_mature: 'Care for and bond with the juvenile Sedgehorn before riding.',
+              too_far: 'Move within 3 m of your adult Sedgehorn.',
+              unsafe_mount: 'Mount only on revealed, dry, level ground.',
+              not_grounded: 'Land on safe ground before dismounting.',
+              wrong_region: 'Mount in the explorable world, not the starter area.' } as
+              Record<string, string>)[result.reason ?? '']
+            ?? `Sedgehorn action was not saved (${result.reason}).`
           : 'kind' in intent && (intent.kind.startsWith('familiar-')
             || intent.kind === 'sedgehorn-care/v1')
           ? publicV43FamiliarRejectionHint(result.reason ?? 'unavailable_here')
@@ -1994,6 +2046,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     })()
   }
   const queueChecked = (intent: CheckedIntent) => {
+    if (v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
+      && (!('kind' in intent) || intent.kind !== 'sedgehorn-dismount/v1')) {
+      tell('Dismount the Sedgehorn to gather, build, trade, or use quest actions.'); return
+    }
     sampleTimedUntil(performance.now())
     if (inputQueue.current.some((token) => token.kind === 'checked')) {
       trace?.record('controller.checked', { admitted: false })
@@ -2122,6 +2178,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           queued: inputQueue.current.length })
         return
       }
+      if (v44 && runtime.status().gate === 'cap-paused'
+        && runtime.status().pendingFrames > 0) { void save(); return }
       if (running.current || runtime.status().gate !== 'open') return
       running.current = true
       let advanced = false
@@ -2143,9 +2201,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if (readActive().player.verticalVelocity === 0) { void save(); return }
         }
         const before = readActive()
-        if (runtime.status().pendingFrames >= MOVE_RESERVE_AT
+        const riding = v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
+        const reserveAt = riding ? PUBLIC_V44_MAX_RIDE_BATCH : MOVE_RESERVE_AT
+        if (runtime.status().pendingFrames >= reserveAt
           && before.player.verticalVelocity === 0) { void save(); return }
-        const neutral = runtime.status().pendingFrames >= MOVE_RESERVE_AT
+        const neutral = runtime.status().pendingFrames >= reserveAt
           && before.player.verticalVelocity !== 0
         if (!neutral && timedHeld.current
           && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current
@@ -2186,12 +2246,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         const vector = request?.vector ?? (routeDriving ? routeVector
           : matchesBlockedHeld(held.current) ? [0, 0] : held.current)
         const jump = request?.jump ?? false
-        const gaitStep = publicV11Gait(before.player.equipment.feet, walkRequested).metersPerStep
+        const gaitStep = publicV44EffectiveGait(before.player.equipment.feet,
+          riding, walkRequested).metersPerStep
         const intents = neutral ? [] : jump ? [{ type: 'jump' as const }]
           : publicV14MovementIntents(before.player.yaw, vector,
             routeStepMeters === null ? gaitStep : Math.min(gaitStep, routeStepMeters))
         const frameStartedAt = trace ? performance.now() : 0
-        const result = runtime.advanceFrame(intents, walkRequested)
+        const result = runtime.advanceFrame(intents, riding ? false : walkRequested)
         advanced = true
         const frameFinishedAt = trace ? performance.now() : 0
         const after = readActive()
@@ -2254,7 +2315,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
           if (remaining) tell('Short inputs queued before takeoff were cancelled; land before pressing again.')
         }
-        if (runtime.status().pendingFrames >= 64
+        if (runtime.status().pendingFrames >= (riding ? PUBLIC_V44_MAX_RIDE_BATCH : 64)
           && after.player.verticalVelocity === 0) void save()
         else drainChecked()
         if (!request || request.jump || before.player.verticalVelocity !== 0
@@ -2277,6 +2338,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       return
     }
     if (runtime.status().gate === 'blocked') return
+    if (v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
+      && intent.type !== 'movement' && intent.type !== 'movement.tap'
+      && intent.type !== 'store.close'
+      && !(intent.type === 'saved-work.mode' && !intent.active)) {
+      tell('Dismount the Sedgehorn to gather, build, trade, jump, or use quest actions.'); return
+    }
     if (intent.type === 'dev.navigate') {
       if (!v42 || new URLSearchParams(window.location.search).get('dev') !== '1') return
       if (actionTask.current || inputQueue.current.some((token) => token.kind === 'checked')) {
@@ -2658,6 +2725,15 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const questLeads = v43 ? { head: snapshot as PublicV43Progress, ledgerQuest: ledgerQuest!,
     waystationQuest: view.v40WaystationQuest, ironHallQuest: publicV42IronHallQuest(view) } : null
   const questCue = questLeads && selectPublicV43QuestLead(questLeads)
+  const questCueObjective = v44 && questCue?.id === 'sedgehorn-familiar/v1'
+    ? publicV44FamiliarObjective(questCue.objective,
+      (snapshot as PublicV43Progress).familiar.phase,
+      (snapshot as PublicV43Progress).mountTraining?.careWitnesses.length ?? 0)
+    : questCue?.objective
+  const adultDistance = adult?.visible ? Math.hypot(
+    active.player.position.x - adult.position.x,
+    active.player.position.y - adult.position.y,
+    active.player.position.z - adult.position.z) : null
   const savedNotice = messages.at(-1) === `V${saveVersion} progress saved on this device.`
   const MireglassActionsPanel = v36 ? 'details' : 'aside'
   return <main data-public-v23="true" data-public-version={`v${saveVersion}`}
@@ -2726,19 +2802,21 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       open={Boolean(view.v26PitLadderOpportunity)}>
       <summary>Safety options</summary>
       {view.v26PitLadderOpportunity && <button type="button"
-        disabled={status.gate !== 'open' || busy.current || queuedChecked}
+        disabled={status.gate !== 'open' || busy.current || queuedChecked || mounted}
         onClick={() => queueChecked(publicV26PitLadderWitness(view.v26PitLadderOpportunity!))}>
         Build pit ladder (4 logs)
       </button>}
       <button type="button" disabled={status.gate !== 'open'
-        || busy.current || queuedChecked || publicV26KnownPitLadderHere(view)}
+        || busy.current || queuedChecked || publicV26KnownPitLadderHere(view)
+        || v44 && adult?.mode === 'riding'}
         onClick={() => queueChecked({ kind: 'return-home-request' })}>
         Return home if trapped
       </button>
-      <p>The checked rescue works only when every exit is blocked.
+      <p>{mounted ? 'Dismount to use ground tools or the current rescue action. ' : ''}
+        The checked rescue works only when every exit is blocked.
         Successful rescue starts a 30-minute cooldown.</p>
     </details>}
-    {regional && <section className="v23-aim" aria-label="West cliff ladder aim">
+    {regional && !mounted && <section className="v23-aim" aria-label="West cliff ladder aim">
       {marker ? <><label htmlFor="v23-west-aim">West cliff ladder, {preview?.site
         ? `z ${preview.site.from.z.toFixed(1)} m` : 'aim along the discovered face'}</label>
         <input id="v23-west-aim" type="range" min="430.6" max="433.4" step="0.1"
@@ -2761,7 +2839,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
       saveInProgress={saveTask.current !== null}
-      greenwayLogOrder={v43 ? <><section aria-label="Greenway carpenter order">
+      greenwayLogOrder={v43 && !mounted ? <><section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
           ? <p role="status" className="wr-caption">Claimed. Four logs were delivered for 10 coins.</p>
@@ -2799,20 +2877,38 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </section></> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary><span>Quest Journal · {questCue ? `Next: ${questCue.title}` : 'Route recorded'}</span>
-        <small>{questCue?.objective
+      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {questCue ? `Next: ${questCue.title}` : 'Route recorded'}</span>
+        <small>{v44 && adult?.visible
+          ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
+            : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`
+          : questCueObjective
           ?? 'Open the journal for completed leads and the optional carpenter order.'}</small></summary>
-      {familiarOpen && <><PublicV43QuestJournal {...questLeads!} />
+      {familiarOpen && <>{v44 && <section aria-label="Ground mount">
+        <h3>Adult Sedgehorn</h3>
+        <p role="status">{!adult?.visible
+          ? 'Bond with your juvenile Sedgehorn and complete its care before it can grow into a mount.'
+          : adult.mode === 'riding'
+            ? 'Riding on revealed safe ground. Dismount to gather, build, trade, jump, or use quest actions.'
+            : `Parked ${Math.ceil(adultDistance ?? 0)} m away. Stand within 3 m on dry, level ground to mount.`}</p>
+        {adult?.visible && <button type="button"
+          disabled={status.gate !== 'open' || busy.current || queuedChecked
+            || (adult.mode === 'parked' && (adultDistance ?? Infinity) > 3)}
+          onClick={() => queueChecked({ kind: adult.mode === 'riding'
+            ? 'sedgehorn-dismount/v1' : 'sedgehorn-mount/v1' })}>
+          {adult.mode === 'riding' ? 'Dismount Sedgehorn' : 'Mount Sedgehorn'}
+        </button>}
+      </section>}<PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
         <PublicV43FamiliarQuestPanel
           head={snapshot as PublicV43Progress}
-          actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked}
+          actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked && !mounted}
+          rideableAfterMaturity={v44}
           onAction={(action) => queueChecked(action)} /></>}
     </details>}
     {v24 && active.movementOwner === 'streamed' && mireglass?.choices.length
       ? <MireglassActionsPanel className="v24-actions" aria-label="Mireglass actions">
         {v36 ? <summary>Mireglass actions</summary> : <strong>Mireglass actions</strong>}
         {mireglass.choices.map((choice) => <button key={choice.id} type="button"
-          disabled={!choice.actionable || status.gate === 'blocked'}
+          disabled={!choice.actionable || status.gate === 'blocked' || mounted}
           onClick={() => queueMireglassChoice(choice.id, 'explicit')}>
           {choice.label}{choice.actionable ? '' : `: ${choice.disabledReason ?? 'Unavailable'}`}
         </button>)}

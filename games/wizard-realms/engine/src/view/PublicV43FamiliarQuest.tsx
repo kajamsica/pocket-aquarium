@@ -24,6 +24,14 @@ export type PublicV43FamiliarQuestView = Readonly<{
 
 const TOTAL_STEPS = 7
 const reward = '25 coins and 40 character XP at the keeper; Creature Care grows to 40 XP across the quest. The sedgehorn becomes a bonded companion, not a rideable mount.'
+const v44Reward = '25 coins and 40 character XP at the keeper; Creature Care grows to 40 XP across the quest. After all three care visits, the adult Sedgehorn can be mounted in V44.'
+export function publicV44FamiliarObjective(objective: string, stage: PublicV43Progress['familiar']['phase'],
+  careCount: number): string {
+  if (stage === 'claimed' && careCount === SEDGEHORN_CARES_TO_MATURE)
+    return 'All three care visits are recorded. The adult Sedgehorn is ready. Use the checked Mount Sedgehorn action while nearby.'
+  return objective.replace('The sedgehorn cannot be ridden in this preview.',
+    'Riding unlocks after all three care visits.')
+}
 
 /** Presentation only. The caller must supply a head from the checked V43 runtime or store. */
 export function projectPublicV43FamiliarQuest(head: PublicV43Progress):
@@ -119,9 +127,10 @@ export function publicV43FamiliarRejectionHint(reason: string): string {
   return rejectionHint[reason] ?? `Checked familiar action unavailable (${reason}).`
 }
 
-export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = false }:
+export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = false,
+  rideableAfterMaturity = false }:
   { head: PublicV43Progress; onAction?: (action: FamiliarAction) => void;
-    actionsEnabled?: boolean }) {
+    actionsEnabled?: boolean; rideableAfterMaturity?: boolean }) {
   const quest = projectPublicV43FamiliarQuest(head)
   if (!quest) return null
   const site = resolveSedgehornFamiliarSite(head)!
@@ -160,7 +169,9 @@ export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = f
       {' · '}Step {quest.completedSteps} of {TOTAL_STEPS}</p>
     <progress aria-label="Lost Familiar progress" value={quest.completedSteps}
       max={TOTAL_STEPS} style={{ width: '100%' }} />
-    <p><strong>Next:</strong> {quest.objective}</p>
+    <p><strong>Next:</strong> {rideableAfterMaturity
+      ? publicV44FamiliarObjective(quest.objective, quest.stage, careCount)
+      : quest.objective}</p>
     <p><strong>Where:</strong> {quest.location}</p>
     {quest.targets.length > 0 && <ul aria-label="Revealed quest markers">
       {quest.targets.map(({ tileId, label, distanceMeters }) =>
@@ -171,7 +182,7 @@ export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = f
     {quest.routeChoice && <p>Chosen route: {quest.routeChoice === 'shelter'
       ? 'Shelter' : 'Dry approach'}</p>}
     <p>Creature Care XP: {quest.careXp}/40</p>
-    <p><strong>{quest.stage === 'claimed' ? 'Claimed reward:' : 'Reward:'}</strong> {quest.reward}</p>
+    <p><strong>{quest.stage === 'claimed' ? 'Claimed reward:' : 'Reward:'}</strong> {rideableAfterMaturity ? v44Reward : quest.reward}</p>
     {onAction && <div aria-label="Familiar actions">
       {actions.map(({ kind, label }) => {
         const rejection = availability(kind)
@@ -183,7 +194,8 @@ export function PublicV43FamiliarQuestPanel({ head, onAction, actionsEnabled = f
       {quest.stage === 'claimed' && <>
         <p>Sedgehorn care visits: {careCount}/{SEDGEHORN_CARES_TO_MATURE}.
           {careCount === SEDGEHORN_CARES_TO_MATURE
-            ? ' Mature, but cannot be ridden in this preview.' : ' One marsh herb per visit.'}</p>
+            ? rideableAfterMaturity ? ' Mature and ready for the checked V44 mount action.'
+              : ' Mature, but cannot be ridden in this preview.' : ' One marsh herb per visit.'}</p>
         {careCount < SEDGEHORN_CARES_TO_MATURE && (() => {
           const rejection = availability('sedgehorn-care/v1')
           return <><button type="button" disabled={!actionsEnabled || !!rejection}

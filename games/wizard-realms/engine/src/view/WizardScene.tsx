@@ -1,6 +1,8 @@
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, createPortal, useFrame, useThree } from '@react-three/fiber'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
+import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js'
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { WizardBuildSite, WizardDigSite, WizardFairyRing, WizardInscription, WizardLandmark, WizardRegionalLaddersView, WizardResourceNode, WizardRoute, WizardStore, WizardTerrainCell, WizardV26PitLadder, WizardV30BridgeheadPost, WizardViewProjection } from './contracts'
 import type { BuiltTerrainWorkTrialSite } from '../domain/terrainWorkTrial'
@@ -25,6 +27,7 @@ import { publicV26TerrainCellIsWet } from '../domain/publicWorldV26TerrainSurfac
 import { publicV14InsideGreenway } from '../domain/publicWorldV14Boundary'
 import { publicV23PlacementId, resolvePublicV23Site } from '../domain/publicWorldV23Sites'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
+import { ADULT_SEDGEHORN_PREVIEW, RIDER_SEAT_OFFSET, missingAdultSedgehornClips } from '../workbench/characterCatalog'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -32,10 +35,15 @@ const POSITION_DAMPING_PER_S = 14
 const YAW_DAMPING_PER_S = 16
 const SPEED_DAMPING_PER_S = 10
 const WALK_SPEED_M_PER_S = 3.2
+const V9_TURN_AUTHORED_YAW_RATE = 0.84
+const V9_JUMP_LANDING_SECONDS = 0.36
 const STRIDE_LENGTH_M = 1.4
-const LEG_SWING_RAD = 0.5
-const ARM_SWING_RAD = 0.3
 const BODY_BOB_M = 0.05
+const WAYFARER_V9_URL = new URL('../../art/characters/wayfarer_v9_game/wayfarer_v9_male.glb', import.meta.url).href
+const WAYFARER_V9_SOCKETS = ['Socket.RightHand', 'Socket.LeftHand', 'Socket.Head', 'Socket.Chest',
+  'Socket.Legs', 'Socket.RightFoot', 'Socket.LeftFoot'] as const
+const WAYFARER_V9_CLIPS = ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump', 'ToolGrip',
+  'RideIdle', 'RideWalk', 'RideRun'] as const
 
 // Atmosphere palette. three applies fog after tone mapping and colour-space conversion, and both fog and clear colour
 // are converted as unlit output-space colours, so these values compare directly (neither is ACES-compressed).
@@ -117,28 +125,6 @@ const LEAF_GEOMETRY = new THREE.IcosahedronGeometry(1, 1)
 const ROCK_GEOMETRY = new THREE.DodecahedronGeometry(1, 0)
 const CRYSTAL_GEOMETRY = new THREE.OctahedronGeometry(1, 0)
 const AVATAR_ROUND_GEOMETRY = new THREE.SphereGeometry(1, 14, 10)
-const ROBE_GEOMETRY = new THREE.LatheGeometry([
-  new THREE.Vector2(0.48, 0.2), new THREE.Vector2(0.54, 0.25), new THREE.Vector2(0.5, 0.36),
-  new THREE.Vector2(0.38, 0.68), new THREE.Vector2(0.28, 1.02), new THREE.Vector2(0.29, 1.28),
-  new THREE.Vector2(0.35, 1.48), new THREE.Vector2(0.25, 1.58),
-], 16)
-const WADER_ROBE_GEOMETRY = new THREE.LatheGeometry([
-  new THREE.Vector2(0.36, 0.57), new THREE.Vector2(0.43, 0.63), new THREE.Vector2(0.4, 0.74),
-  new THREE.Vector2(0.3, 1.02), new THREE.Vector2(0.29, 1.28), new THREE.Vector2(0.35, 1.48),
-  new THREE.Vector2(0.25, 1.58),
-], 16)
-const ROBE_HEM_GEOMETRY = new THREE.CylinderGeometry(0.51, 0.54, 0.08, 16)
-const ROBE_MANTLE_GEOMETRY = new THREE.CylinderGeometry(0.38, 0.46, 0.68, 16, 2, true, -Math.PI / 2, Math.PI)
-const ROBE_BELT_GEOMETRY = new THREE.CylinderGeometry(0.33, 0.34, 0.09, 16)
-const ROBE_FOLD_GEOMETRY = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
-  new THREE.Vector3(0, 1.03, 0.27), new THREE.Vector3(0, 0.82, 0.31),
-  new THREE.Vector3(0, 0.52, 0.39), new THREE.Vector3(0, 0.29, 0.49),
-]), 10, 0.025, 4, false)
-const SATCHEL_STRAP_GEOMETRY = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
-  new THREE.Vector3(-0.2, 1.54, 0.31), new THREE.Vector3(-0.1, 1.35, 0.43),
-  new THREE.Vector3(0.17, 1.13, 0.43), new THREE.Vector3(0.43, 0.93, 0.21),
-]), 10, 0.03, 4, false)
-const SLEEVE_GEOMETRY = new THREE.CylinderGeometry(0.12, 0.18, 0.68, 12)
 const LEG_GEOMETRY = new THREE.CylinderGeometry(0.1, 0.13, 0.65, 10)
 // A waisted, pointed surcoat follows the robe; shallow flutes keep the cloth from reading as a flat apron.
 const TRAVELER_TUNIC_PANELS = ([-1, 1] as const).map((side) => {
@@ -171,7 +157,6 @@ const TRAVELER_TUNIC_PANELS = ([-1, 1] as const).map((side) => {
   return geometry
 })
 const TRAVELER_TUNIC_BELT_GEOMETRY = new THREE.CylinderGeometry(0.52, 0.52, 0.085, 16)
-const COLLAR_GEOMETRY = new THREE.TorusGeometry(0.23, 0.026, 6, 16)
 const HAT_GEOMETRY = new THREE.LatheGeometry([
   new THREE.Vector2(0.42, 0), new THREE.Vector2(0.38, 0.08), new THREE.Vector2(0.3, 0.28),
   new THREE.Vector2(0.24, 0.46), new THREE.Vector2(0.13, 0.62), new THREE.Vector2(0.03, 0.7),
@@ -200,13 +185,8 @@ const STAKE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#9a8a70', roughn
 const BRIDGEHEAD_SIGN_MATERIAL = new THREE.MeshStandardMaterial({ color: '#477782', roughness: 0.75 })
 const BRIDGEHEAD_MARK_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bce7eb', roughness: 0.38,
   emissive: '#5b9299', emissiveIntensity: 0.28 })
-const ROBE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4f3176', roughness: 0.76 })
 const ROBE_TRIM_MATERIAL = new THREE.MeshStandardMaterial({ color: '#2d1f45', roughness: 0.82 })
-const ROBE_FOLD_MATERIAL = new THREE.MeshStandardMaterial({ color: '#75539a', roughness: 0.86 })
 const SKIN_MATERIAL = new THREE.MeshStandardMaterial({ color: '#d6a27a', roughness: 0.82 })
-const HAIR_MATERIAL = new THREE.MeshStandardMaterial({ color: '#4a302b', roughness: 0.9 })
-const EYE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#292032', roughness: 0.7 })
-const TUNIC_MATERIAL = new THREE.MeshStandardMaterial({ color: '#8c6e4d', roughness: 0.9 })
 const TRAVELER_TUNIC_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86,
   side: THREE.DoubleSide })
 const GUARD_VEST_MATERIAL = new THREE.MeshStandardMaterial({ color: '#526c72', roughness: 0.48, metalness: 0.55 })
@@ -374,6 +354,9 @@ interface PresentationPose {
   yaw: number
   speed: number
   phase: number
+  turnRate: number
+  verticalVelocity: number
+  snapped: boolean
 }
 
 function damping(ratePerSecond: number, delta: number) {
@@ -387,6 +370,10 @@ export function cameraOrbitDamping(orbiting: boolean, delta: number) {
 
 function shortestArc(from: number, to: number) {
   return Math.atan2(Math.sin(to - from), Math.cos(to - from))
+}
+
+export function presentationTurnRate(fromYaw: number, toYaw: number, delta: number, snapped: boolean): number {
+  return snapped || delta <= 0 ? 0 : shortestArc(fromYaw, toYaw) / delta
 }
 
 /** A trunk may fill the near camera even when its canopy misses the avatar sightline. */
@@ -627,7 +614,9 @@ function PresentationPoseDriver({ player, pose, worldSupport, presentationTarget
   useFrame((_, delta) => {
     target.set(player.position[0], presentationTargetYAt(player.position[0], player.position[2],
       player.position[1]), player.position[2])
-    if (Math.hypot(target.x - pose.position.x, target.z - pose.position.z) > TELEPORT_SNAP_DISTANCE_M) {
+    const previousYaw = pose.yaw
+    const snapped = Math.hypot(target.x - pose.position.x, target.z - pose.position.z) > TELEPORT_SNAP_DISTANCE_M
+    if (snapped) {
       pose.position.copy(target)
       pose.yaw = player.yaw
       pose.speed = 0
@@ -640,6 +629,9 @@ function PresentationPoseDriver({ player, pose, worldSupport, presentationTarget
       pose.speed += (realizedSpeed - pose.speed) * damping(SPEED_DAMPING_PER_S, delta)
       pose.phase = (pose.phase + pose.speed / STRIDE_LENGTH_M * Math.PI * 2 * delta) % (Math.PI * 2)
     }
+    pose.turnRate = presentationTurnRate(previousYaw, pose.yaw, delta, snapped)
+    pose.verticalVelocity = player.verticalVelocity ?? 0
+    pose.snapped = snapped
     worldSupport.current?.position.set(pose.position.x, 0, pose.position.z)
   }, -1)
   return null
@@ -702,9 +694,100 @@ export function avatarGearFor(equipment: AvatarEquipment, activePick: ActivePick
   } as const
 }
 
-function Wand({ side, light }: { side: 1 | -1; light: boolean }) {
+// The shared hand-local contact line is tangent to the open palm below the knuckles.
+export const V9_RIGHT_HAND_CONTACT: THREE.Vector3Tuple = [0.402, 0.984, 0.0345]
+const RIGHT_HAND_TOOL_SHAFTS = {
+  axe: { position: [0.24, -0.5, 0.04], rotation: [0.1, Math.PI / 2, 0.1], center: [0, 0.12, 0],
+    contact: V9_RIGHT_HAND_CONTACT, carry: [0, 0, -1], headFacing: [0, -1, 0],
+    gripFromCenter: 0.28 },
+  spade: { position: [0.24, -0.44, 0.04], rotation: [0.08, 0, 0.08], center: [0, 0.08, 0],
+    contact: V9_RIGHT_HAND_CONTACT, carry: [0, 0, 1], headFacing: [1, 0, 0], gripFromCenter: 0 },
+  pick: { position: [0.24, -0.46, 0.04], rotation: [0.08, Math.PI / 2, 0.08], center: [0, 0.05, 0],
+    contact: V9_RIGHT_HAND_CONTACT, carry: [0, 0, -1], headFacing: [0, 1, 0],
+    gripFromCenter: 0.24 },
+  wand: { position: [0.18, -0.32, 0], rotation: [0.05, 0, 0.12], center: [0, 0, 0],
+    contact: V9_RIGHT_HAND_CONTACT, carry: [0, 0, -1], headFacing: [1, 0, 0],
+    gripFromCenter: 0 },
+} satisfies Record<'axe' | 'spade' | 'pick' | 'wand', {
+  position: THREE.Vector3Tuple; rotation: THREE.Vector3Tuple; center: THREE.Vector3Tuple;
+  contact: THREE.Vector3Tuple; carry: THREE.Vector3Tuple; headFacing: THREE.Vector3Tuple;
+  gripFromCenter: number
+}>
+
+const V9_TOOL_MOUNT_SCRATCH = {
+  contact: new THREE.Vector3(), carry: new THREE.Vector3(), headFacing: new THREE.Vector3(),
+  center: new THREE.Vector3(), axis: new THREE.Vector3(), cross: new THREE.Vector3(),
+  crossProduct: new THREE.Vector3(), rootPosition: new THREE.Vector3(),
+  rootEuler: new THREE.Euler(),
+  rootRotation: new THREE.Quaternion(), socketRotation: new THREE.Quaternion(),
+  twist: new THREE.Quaternion(),
+}
+
+/** One socket-local mount shared by game and workbench, so the shaft follows the gripped hand. */
+export function rightHandToolMountFor(mainHand: ReturnType<typeof avatarGearFor>['mainHand'],
+  restSocket: THREE.Object3D) {
+  if (!mainHand) return null
+  restSocket.updateWorldMatrix(true, false)
+  const shaft = mainHand === 'basic-pick' || mainHand === 'enchanted-pick'
+    ? RIGHT_HAND_TOOL_SHAFTS.pick : RIGHT_HAND_TOOL_SHAFTS[mainHand]
+  const s = V9_TOOL_MOUNT_SCRATCH
+  const mount = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() }
+  s.contact.fromArray(shaft.contact)
+  restSocket.worldToLocal(s.contact)
+  restSocket.getWorldQuaternion(s.socketRotation).invert()
+  s.carry.fromArray(shaft.carry).normalize()
+  s.headFacing.fromArray(shaft.headFacing)
+  s.carry.applyQuaternion(s.socketRotation)
+  s.headFacing.applyQuaternion(s.socketRotation).projectOnPlane(s.carry).normalize()
+  s.rootRotation.setFromEuler(s.rootEuler.set(...shaft.rotation))
+  s.center.fromArray(shaft.center).applyQuaternion(s.rootRotation)
+    .add(s.rootPosition.fromArray(shaft.position))
+  s.axis.set(0, 1, 0).applyQuaternion(s.rootRotation)
+  mount.quaternion.setFromUnitVectors(s.axis, s.carry)
+  s.cross.set(1, 0, 0).applyQuaternion(s.rootRotation).applyQuaternion(mount.quaternion)
+  const twist = Math.atan2(s.carry.dot(s.crossProduct.copy(s.cross).cross(s.headFacing)),
+    s.cross.dot(s.headFacing))
+  mount.quaternion.premultiply(s.twist.setFromAxisAngle(s.carry, twist))
+  s.center.addScaledVector(s.axis, -shaft.gripFromCenter)
+  mount.position.copy(s.contact).sub(s.center.applyQuaternion(mount.quaternion))
+  return mount
+}
+
+export const V9_EQUIPPED_CARRY_STRENGTH = 0.7
+
+export interface V9EquippedCarryState {
+  rawUpperArm: THREE.Quaternion
+  rawForearm: THREE.Quaternion
+  applied: boolean
+}
+
+/** Undo only our prior visual correction before Three samples the next animation frame. */
+export function restoreV9EquippedCarryPose(upperArm: THREE.Bone, forearm: THREE.Bone,
+  state: V9EquippedCarryState) {
+  if (!state.applied) return
+  upperArm.quaternion.copy(state.rawUpperArm)
+  forearm.quaternion.copy(state.rawForearm)
+  state.applied = false
+}
+
+/** Keep the tool hand broadly forward during gait without changing unequipped animation. */
+export function applyV9EquippedCarryPose(upperArm: THREE.Bone, forearm: THREE.Bone,
+  restUpperArm: THREE.Quaternion, restForearm: THREE.Quaternion, blend: number,
+  state: V9EquippedCarryState) {
+  state.rawUpperArm.copy(upperArm.quaternion)
+  state.rawForearm.copy(forearm.quaternion)
+  upperArm.quaternion.slerp(restUpperArm, blend)
+  forearm.quaternion.slerp(restForearm, blend)
+  state.applied = blend > 0
+}
+
+export function Wand({ side, light }: { side: 1 | -1; light: boolean }) {
   return <>
-    <mesh position={[0.18 * side, -0.32, 0]} rotation={[0.05, 0, 0.12 * side]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /></mesh>
+    <mesh position={[RIGHT_HAND_TOOL_SHAFTS.wand.position[0] * side,
+      RIGHT_HAND_TOOL_SHAFTS.wand.position[1], RIGHT_HAND_TOOL_SHAFTS.wand.position[2]]}
+      rotation={[RIGHT_HAND_TOOL_SHAFTS.wand.rotation[0], RIGHT_HAND_TOOL_SHAFTS.wand.rotation[1],
+        RIGHT_HAND_TOOL_SHAFTS.wand.rotation[2] * side]}
+      material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.035, 0.05, 2.45, 7]} /></mesh>
     <mesh position={[0.04 * side, 0.78, -0.06]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.06, 0.04, 0.12, 7]} /></mesh>
     <mesh position={[0.03 * side, 0.95, -0.07]}><sphereGeometry args={[0.12, 12, 10]} /><meshStandardMaterial color="#e9dcff" emissive="#bd82ff" emissiveIntensity={2.2} roughness={0.25} /></mesh>
     {light && <pointLight position={[0.03 * side, 1.0, -0.07]} color="#bd82ff" intensity={2.6} distance={3.8} />}
@@ -712,16 +795,16 @@ function Wand({ side, light }: { side: 1 | -1; light: boolean }) {
 }
 
 export function Axe() {
-  return <group position={[0.24, -0.5, 0.04]} rotation={[0.1, Math.PI / 2, 0.1]}>
-    <mesh position={[0, 0.12, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.055, 1.35, 6]} /></mesh>
+  return <group position={RIGHT_HAND_TOOL_SHAFTS.axe.position} rotation={RIGHT_HAND_TOOL_SHAFTS.axe.rotation}>
+    <mesh position={RIGHT_HAND_TOOL_SHAFTS.axe.center} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.0475, 1.35, 6]} /></mesh>
     <mesh geometry={AXE_BLADE_GEOMETRY} material={AXE_HEAD_MATERIAL} position={[0, 0.65, -0.045]} castShadow />
     <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0, 0.65, 0.02]} scale={[0.09, 0.24, 0.13]} />
   </group>
 }
 
-function Spade() {
-  return <group position={[0.24, -0.44, 0.04]} rotation={[0.08, 0, 0.08]}>
-    <mesh position={[0, 0.08, 0]} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.05, 1.18, 6]} /></mesh>
+export function Spade() {
+  return <group position={RIGHT_HAND_TOOL_SHAFTS.spade.position} rotation={RIGHT_HAND_TOOL_SHAFTS.spade.rotation}>
+    <mesh position={RIGHT_HAND_TOOL_SHAFTS.spade.center} material={DARK_WOOD_MATERIAL} castShadow><cylinderGeometry args={[0.045, 0.05, 1.18, 6]} /></mesh>
     <mesh geometry={SPADE_BLADE_GEOMETRY} material={AXE_HEAD_MATERIAL} position={[0, -0.5, -0.03]} castShadow />
     <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[-0.15, 0.75, 0]} scale={[0.06, 0.3, 0.08]} />
     <mesh geometry={UNIT_BOX} material={DARK_WOOD_MATERIAL} position={[0.15, 0.75, 0]} scale={[0.06, 0.3, 0.08]} />
@@ -732,9 +815,10 @@ function Spade() {
 /** One lightweight held pick, with a distinct enchanted head. V29 is the only caller. */
 export function MiningPick({ tier }: { tier: 'basic' | 'enchanted' }) {
   const enchanted = tier === 'enchanted'
-  return <group name={`${tier} mining pick`} position={[0.24, -0.46, 0.04]} rotation={[0.08, Math.PI / 2, 0.08]}>
-    <mesh position={[0, 0.05, 0]} material={DARK_WOOD_MATERIAL} castShadow>
-      <cylinderGeometry args={[0.045, 0.052, 1.22, 7]} />
+  return <group name={`${tier} mining pick`} position={RIGHT_HAND_TOOL_SHAFTS.pick.position}
+    rotation={RIGHT_HAND_TOOL_SHAFTS.pick.rotation}>
+    <mesh position={RIGHT_HAND_TOOL_SHAFTS.pick.center} material={DARK_WOOD_MATERIAL} castShadow>
+      <cylinderGeometry args={[0.045, 0.0475, 1.22, 7]} />
     </mesh>
     <mesh position={[0, 0.55, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
       <cylinderGeometry args={[0.018, 0.018, 0.52, 7]} />
@@ -761,150 +845,332 @@ function Shield() {
   </group>
 }
 
-function WizardAvatar({ pose, equipment, activePick = null, windwardActive = false, guardVestVisible = false }: {
-  pose: PresentationPose; equipment: AvatarEquipment; activePick?: ActivePick
-  windwardActive?: boolean; guardVestVisible?: boolean
+function wayfarerV9AssetError(source: GLTF): string | null {
+  const missingSockets = WAYFARER_V9_SOCKETS.filter((name) =>
+    !source.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name)))
+  const invalidClips = WAYFARER_V9_CLIPS.filter((name) => {
+    const clip = THREE.AnimationClip.findByName(source.animations, name)
+    return !clip || clip.duration <= 0
+  })
+  let meshes = 0
+  source.scene.traverse((node) => { if ((node as THREE.Mesh).isMesh === true) meshes++ })
+  if (!meshes) return 'V9 character asset contains no visible meshes.'
+  const invalidFootwear = ['V9_feet', 'V9_boots'].filter((name) => {
+    let hasSkinnedMesh = false
+    source.scene.getObjectByName(name)?.traverse((node) => {
+      if ((node as THREE.SkinnedMesh).isSkinnedMesh === true) hasSkinnedMesh = true
+    })
+    return !hasSkinnedMesh
+  })
+  if (invalidFootwear.length) return `V9 character asset is incomplete: ${invalidFootwear.join(', ')} skinned mesh missing.`
+  if (!missingSockets.length && !invalidClips.length) return null
+  return `V9 character asset is incomplete: ${[...missingSockets, ...invalidClips].join(', ')} missing or invalid.`
+}
+
+/** Keep all locomotion in the authored bones; world position and yaw belong to the controller. */
+export function authoritativeAvatarClipFor(source: GLTF, name: typeof WAYFARER_V9_CLIPS[number]) {
+  const clip = THREE.AnimationClip.findByName(source.animations, name)!
+  return new THREE.AnimationClip(clip.name, clip.duration,
+    clip.tracks.filter((track) => !track.name.startsWith('Root.')))
+}
+
+export function v9AnimationWeightsFor(speed: number, turnRate: number, jumpBlend: number) {
+  const jump = THREE.MathUtils.clamp(jumpBlend, 0, 1)
+  const turn = Math.min(Math.abs(turnRate) / 2, 1) * (1 - jump)
+  const move = Math.min(Math.max(speed / WALK_SPEED_M_PER_S, 0), 1) * (1 - jump - turn)
+  const run = Math.min(Math.max((speed - WALK_SPEED_M_PER_S) / 1.6, 0), 1) * move
+  return { idle: 1 - jump - turn - move, walk: move - run, run,
+    turnLeft: turnRate > 0 ? turn : 0, turnRight: turnRate < 0 ? turn : 0, jump }
+}
+
+/** Rider and mount share gait weights so their authored clips never drift apart. */
+export function rideAnimationWeightsFor(speed: number) {
+  const move = Math.min(Math.max(speed / WALK_SPEED_M_PER_S, 0), 1)
+  const run = Math.min(Math.max((speed - WALK_SPEED_M_PER_S) / 1.6, 0), 1)
+  return { idle: 1 - move, walk: Math.max(0, move - run), run }
+}
+
+/** The authored turn loop plants feet for 0.84 radians per second, not wall-clock time. */
+export function advanceV9TurnPhase(phaseSeconds: number, turnRate: number, delta: number,
+  duration: number, snapped: boolean) {
+  return snapped ? 0 : (phaseSeconds + Math.abs(turnRate) * Math.max(delta, 0)
+    / V9_TURN_AUTHORED_YAW_RATE) % duration
+}
+
+export interface V9JumpPresentation {
+  stage: 'grounded' | 'airborne' | 'landing'
+  phase: number
+  airborneSeconds: number
+  landingSeconds: number
+}
+
+/** Only authoritative airborne/contact transitions can begin takeoff or landing. */
+export function advanceV9JumpPresentation(previous: V9JumpPresentation, verticalVelocity: number,
+  delta: number, snapped: boolean): V9JumpPresentation {
+  if (snapped) return { stage: 'grounded', phase: 0, airborneSeconds: 0, landingSeconds: 0 }
+  const airborne = Math.abs(verticalVelocity) > 0.001
+  if (airborne) {
+    const seconds = previous.stage === 'airborne' ? previous.airborneSeconds + Math.max(delta, 0) : 0
+    // The first domain signal already means launch occurred; begin at the authored push, not the crouch.
+    const phase = verticalVelocity > 0
+      ? Math.max(previous.stage === 'airborne' ? previous.phase : 0.33,
+        Math.min(0.62, 0.33 + seconds * 1.6))
+      : Math.min(0.78, Math.max(previous.stage === 'airborne' ? previous.phase : 0.62, 0.62)
+        + Math.max(delta, 0) * 0.67)
+    return { stage: 'airborne', phase, airborneSeconds: seconds, landingSeconds: 0 }
+  }
+  if (previous.stage === 'airborne') {
+    return { stage: 'landing', phase: 0.80, airborneSeconds: 0, landingSeconds: 0 }
+  }
+  if (previous.stage === 'landing') {
+    const seconds = previous.landingSeconds + Math.max(delta, 0)
+    const phase = Math.min(0.9999, 0.80 + 0.20 * seconds / V9_JUMP_LANDING_SECONDS)
+    return { stage: seconds >= V9_JUMP_LANDING_SECONDS ? 'grounded' : 'landing',
+      phase, airborneSeconds: 0, landingSeconds: seconds }
+  }
+  return previous
+}
+
+function WizardAvatar({ source, pose, equipment, activePick = null, windwardActive = false,
+  guardVestVisible = false, riding = false }: {
+  source: GLTF; pose: PresentationPose; equipment: AvatarEquipment; activePick?: ActivePick
+  windwardActive?: boolean; guardVestVisible?: boolean; riding?: boolean
 }) {
   const gear = avatarGearFor(equipment, activePick)
-  const legMaterial = gear.leggings ? STAKE_MATERIAL : ROBE_TRIM_MATERIAL
   const root = useRef<THREE.Group>(null)
-  const torso = useRef<THREE.Group>(null)
-  const leftLeg = useRef<THREE.Group>(null)
-  const rightLeg = useRef<THREE.Group>(null)
-  const leftArm = useRef<THREE.Group>(null)
-  const rightArm = useRef<THREE.Group>(null)
+  const modelRoot = useRef<THREE.Group>(null)
   const windRibbon = useRef<THREE.Group>(null)
-  useFrame(({ clock }) => {
-    if (!root.current || !torso.current || !leftLeg.current || !rightLeg.current || !leftArm.current || !rightArm.current) return
-    root.current.position.copy(pose.position)
+  const seatOffset = useMemo(() => new THREE.Vector3(...RIDER_SEAT_OFFSET), [])
+  // The workbench uses the same skinned clone path. The asset remains immutable across projections.
+  const model = useMemo(() => {
+    const copy = cloneSkinned(source.scene) as THREE.Group
+    copy.name = 'Wayfarer V9 playable character'
+    copy.traverse((node) => {
+      if ((node as THREE.Mesh).isMesh !== true) return
+      node.castShadow = true
+      node.receiveShadow = true
+    })
+    copy.getObjectByName('V9_feet')!.visible = false
+    copy.getObjectByName('V9_boots')!.visible = false
+    return copy
+  }, [source.scene])
+  useLayoutEffect(() => {
+    model.getObjectByName('V9_feet')!.visible = !gear.boots
+    model.getObjectByName('V9_boots')!.visible = gear.boots
+  }, [gear.boots, model])
+  const sockets = useMemo(() => ({
+    rightHand: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!,
+    leftHand: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.LeftHand'))!,
+    head: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.Head'))!,
+    chest: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.Chest'))!,
+    legs: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.Legs'))!,
+    rightFoot: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightFoot'))!,
+    leftFoot: model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.LeftFoot'))!,
+  }), [model])
+  const restRightHandSocket = useMemo(() =>
+    source.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Socket.RightHand'))!, [source.scene])
+  const rightHandMount = useMemo(() => rightHandToolMountFor(gear.mainHand, restRightHandSocket),
+    [gear.mainHand, restRightHandSocket])
+  const rightArmCarry = useMemo(() => {
+    const bones = (model.getObjectByName('V9_body') as THREE.SkinnedMesh).skeleton.bones
+    const upperArm = bones.find((bone) => bone.name === 'UpperArmR')!
+    const forearm = bones.find((bone) => bone.name === 'ForearmR')!
+    return { upperArm, forearm, restUpperArm: upperArm.quaternion.clone(),
+      restForearm: forearm.quaternion.clone(), state: {
+        rawUpperArm: upperArm.quaternion.clone(), rawForearm: forearm.quaternion.clone(), applied: false } }
+  }, [model])
+  const carryBlend = useRef(gear.mainHand ? V9_EQUIPPED_CARRY_STRENGTH : 0)
+  // Blender's bone sockets carry local rotations. Cancel their rest orientation while retaining motion.
+  const gearFrames = useMemo(() => {
+    model.updateWorldMatrix(true, true)
+    const at = (socket: THREE.Object3D, origin: THREE.Vector3Tuple) => ({
+      position: socket.worldToLocal(new THREE.Vector3(...origin)),
+      quaternion: socket.getWorldQuaternion(new THREE.Quaternion()).invert(),
+    })
+    return {
+      leftHand: at(sockets.leftHand, [-0.34, 1.47, 0]),
+      head: at(sockets.head, [0, 0, 0]),
+      chest: at(sockets.chest, [0, 0, 0]),
+      legs: at(sockets.legs, [0, 0, 0]),
+      leftFoot: at(sockets.leftFoot, [-0.16, 0.6, 0]),
+      rightFoot: at(sockets.rightFoot, [0.16, 0.6, 0]),
+    }
+  }, [model, sockets])
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model])
+  const actions = useMemo(() => {
+    const action = (name: typeof WAYFARER_V9_CLIPS[number]) =>
+      mixer.clipAction(authoritativeAvatarClipFor(source, name))
+    return { idle: action('Idle'), walk: action('Walk'), run: action('Run'),
+      turnLeft: action('TurnLeft'),
+      turnRight: action('TurnRight'), jump: action('Jump'), toolGrip: action('ToolGrip'),
+      rideIdle: action('RideIdle'), rideWalk: action('RideWalk'), rideRun: action('RideRun') }
+  }, [mixer, source.animations])
+  useEffect(() => {
+    actions.jump.setLoop(THREE.LoopOnce, 1)
+    actions.jump.clampWhenFinished = true
+    actions.toolGrip.setEffectiveWeight(0)
+    Object.values(actions).forEach((action) => action.play())
+    return () => { mixer.stopAllAction() }
+  }, [actions, mixer])
+  const turnPhase = useRef(0)
+  const jumpPresentation = useRef<V9JumpPresentation>({ stage: 'grounded', phase: 0,
+    airborneSeconds: 0, landingSeconds: 0 })
+  const jumpBlend = useRef(0)
+  useFrame(({ clock }, delta) => {
+    if (!root.current || !modelRoot.current) return
+    root.current.position.copy(seatOffset).applyAxisAngle(THREE.Object3D.DEFAULT_UP, pose.yaw)
+      .multiplyScalar(riding ? 1 : 0).add(pose.position)
     root.current.rotation.y = pose.yaw
-    // Swing amplitude follows realized speed, so stopping fades to idle while the phase stays continuous.
-    const stride = Math.min(pose.speed / WALK_SPEED_M_PER_S, 1)
-    const swing = Math.sin(pose.phase) * stride
-    leftLeg.current.rotation.x = swing * LEG_SWING_RAD
-    rightLeg.current.rotation.x = -swing * LEG_SWING_RAD
-    leftArm.current.rotation.x = -swing * ARM_SWING_RAD
-    rightArm.current.rotation.x = swing * ARM_SWING_RAD
-    torso.current.position.y = BODY_BOB_M * stride * 0.5 * (1 + Math.cos(2 * pose.phase))
+    jumpPresentation.current = advanceV9JumpPresentation(jumpPresentation.current,
+      pose.verticalVelocity, delta, pose.snapped)
+    if (pose.snapped) jumpBlend.current = 0
+    const jumpActive = jumpPresentation.current.stage !== 'grounded'
+    jumpBlend.current += ((jumpActive ? 1 : 0) - jumpBlend.current) * damping(20, delta)
+    const weights = v9AnimationWeightsFor(pose.speed, pose.turnRate, jumpBlend.current)
+    const rideWeights = riding ? rideAnimationWeightsFor(pose.speed) : null
+    actions.idle.setEffectiveWeight(riding ? 0 : weights.idle)
+    actions.walk.setEffectiveWeight(riding ? 0 : weights.walk)
+    actions.run.setEffectiveWeight(riding ? 0 : weights.run)
+    actions.turnLeft.setEffectiveWeight(riding ? 0 : weights.turnLeft)
+    actions.turnRight.setEffectiveWeight(riding ? 0 : weights.turnRight)
+    actions.jump.setEffectiveWeight(riding ? 0 : weights.jump)
+    actions.toolGrip.setEffectiveWeight(!riding && gear.mainHand ? 1 : 0)
+    actions.rideIdle.setEffectiveWeight(rideWeights?.idle ?? 0)
+    actions.rideWalk.setEffectiveWeight(rideWeights?.walk ?? 0)
+    actions.rideRun.setEffectiveWeight(rideWeights?.run ?? 0)
+    actions.idle.time = clock.elapsedTime % actions.idle.getClip().duration
+    actions.walk.time = pose.phase / (Math.PI * 2) * actions.walk.getClip().duration
+    actions.run.time = pose.phase / (Math.PI * 2) * actions.run.getClip().duration
+    turnPhase.current = advanceV9TurnPhase(turnPhase.current, pose.turnRate,
+      delta, actions.turnLeft.getClip().duration, pose.snapped)
+    actions.turnLeft.time = turnPhase.current
+    actions.turnRight.time = turnPhase.current
+    actions.jump.time = jumpPresentation.current.phase * actions.jump.getClip().duration
+    actions.toolGrip.time = 0
+    actions.rideIdle.time = clock.elapsedTime % actions.rideIdle.getClip().duration
+    actions.rideWalk.time = pose.phase / (Math.PI * 2) * actions.rideWalk.getClip().duration
+    actions.rideRun.time = pose.phase / (Math.PI * 2) * actions.rideRun.getClip().duration
+    restoreV9EquippedCarryPose(rightArmCarry.upperArm, rightArmCarry.forearm, rightArmCarry.state)
+    mixer.update(0)
+    carryBlend.current += ((!riding && gear.mainHand ? V9_EQUIPPED_CARRY_STRENGTH : 0) - carryBlend.current)
+      * damping(10, delta)
+    if (!riding) applyV9EquippedCarryPose(rightArmCarry.upperArm, rightArmCarry.forearm,
+      rightArmCarry.restUpperArm, rightArmCarry.restForearm, carryBlend.current, rightArmCarry.state)
+    modelRoot.current.position.y = riding ? 0
+      : BODY_BOB_M * (weights.walk + weights.run) * 0.5 * (1 + Math.cos(2 * pose.phase))
     if (windRibbon.current) windRibbon.current.rotation.y = clock.elapsedTime * 1.4
   })
-  return (
-    <group ref={root} aria-label="Player wizard">
-      {[leftLeg, rightLeg].map((leg, index) => (
-        <group key={index} ref={leg} position={[index === 0 ? -0.16 : 0.16, 0.6, 0]}>
-          <mesh geometry={LEG_GEOMETRY} position={[0, -0.31, 0]} material={legMaterial} castShadow />
-          {gear.boots && <mesh geometry={AVATAR_ROUND_GEOMETRY} material={DARK_WOOD_MATERIAL}
-            position={[0, -0.54, -0.1]} scale={[0.17, 0.13, 0.28]} castShadow />}
-          {gear.waders && <>
-            <mesh geometry={WADER_SHAFT_GEOMETRY} material={WADER_MATERIAL} position={[0, -0.3, 0]} castShadow />
-            <mesh geometry={AVATAR_ROUND_GEOMETRY} material={WADER_CUFF_MATERIAL}
-              position={[0, -0.06, 0]} scale={[0.16, 0.055, 0.16]} castShadow />
-            <mesh geometry={AVATAR_ROUND_GEOMETRY} material={WADER_MATERIAL}
-              position={[0, -0.52, -0.12]} scale={[0.18, 0.15, 0.34]} castShadow />
-          </>}
-        </group>
-      ))}
-      <group ref={torso}>
-        <mesh geometry={gear.waders ? WADER_ROBE_GEOMETRY : ROBE_GEOMETRY}
-          material={ROBE_MATERIAL} castShadow />
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_MATERIAL}
-          position={[0, 1.46, 0]} scale={[0.36, 0.18, 0.27]} castShadow />
-        <mesh geometry={ROBE_MANTLE_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0, 1.32, 0]} castShadow />
-        <mesh geometry={SATCHEL_STRAP_GEOMETRY} material={TUNIC_MATERIAL} castShadow />
-        <mesh geometry={ROBE_BELT_GEOMETRY} material={DARK_WOOD_MATERIAL} position={[0, 1.03, 0]} castShadow />
-        <mesh geometry={UNIT_BOX} material={GOLD_MATERIAL} position={[0, 1.03, -0.36]}
-          scale={[0.14, 0.12, 0.045]} />
-        {!gear.waders && <>
-          {[-0.18, 0.18].map((side) => <mesh key={side} geometry={ROBE_FOLD_GEOMETRY}
-            material={ROBE_FOLD_MATERIAL} position={[side, 0, 0]} castShadow />)}
-          <mesh geometry={ROBE_FOLD_GEOMETRY} material={GOLD_MATERIAL} rotation={[0, Math.PI, 0]} />
-        </>}
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={TUNIC_MATERIAL}
-          position={[0.45, 0.83, 0.18]} scale={[0.17, 0.2, 0.11]} castShadow />
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={DARK_WOOD_MATERIAL}
-          position={[0.45, 0.97, 0.23]} scale={[0.16, 0.075, 0.12]} castShadow />
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={GOLD_MATERIAL}
-          position={[0.45, 0.94, 0.35]} scale={[0.035, 0.035, 0.02]} />
-        {gear.waders && <mesh geometry={UNIT_BOX} material={WADER_MATERIAL} position={[0, 0.75, 0.43]} scale={[0.42, 0.66, 0.1]} castShadow />}
-        <mesh geometry={ROBE_HEM_GEOMETRY} material={ROBE_TRIM_MATERIAL}
-          position={[0, gear.waders ? 0.62 : 0.24, 0]} scale={gear.waders ? [0.8, 1, 0.8] : [1, 1, 1]} castShadow />
-        {gear.tunic && <>
-          {TRAVELER_TUNIC_PANELS.map((geometry, side) => <mesh key={side}
-            name="Traveler tunic over-robe panel" geometry={geometry}
-            material={TRAVELER_TUNIC_MATERIAL} castShadow />)}
-          <mesh geometry={TRAVELER_TUNIC_BELT_GEOMETRY} material={DARK_WOOD_MATERIAL}
-            position={[0, 1.03, 0]} castShadow />
-          <mesh geometry={UNIT_BOX} material={GOLD_MATERIAL} position={[0, 1.03, -0.54]}
-            scale={[0.16, 0.12, 0.045]} />
-        </>}
-        {guardVestVisible && <group name="Guard Vest chest armor over clothing">
-          {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY}
-            material={GUARD_VEST_MATERIAL} position={[0, 1.25, side * 0.54]}
-            scale={[0.38, 0.36, 0.11]} castShadow />)}
-          {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY}
-            material={GUARD_VEST_MATERIAL} position={[side * 0.34, 1.49, -0.08]}
-            scale={[0.2, 0.11, 0.32]} castShadow />)}
-          <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
-            position={[0, 1.32, -0.65]} scale={[0.1, 0.45, 0.035]} />
-          <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
-            position={[0, 1.08, -0.62]} scale={[0.58, 0.055, 0.04]} />
-        </group>}
-        <mesh geometry={COLLAR_GEOMETRY} material={GOLD_MATERIAL} position={[0, 1.63, 0]} rotation={[Math.PI / 2, 0, 0]} />
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL}
-          position={[0, 1.88, 0]} scale={[0.28, 0.32, 0.27]} castShadow />
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
-          position={[0, 2.11, 0.03]} scale={[0.29, 0.15, 0.27]} castShadow />
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
-          position={[0, 1.91, 0.2]} scale={[0.24, 0.18, 0.1]} castShadow />
-        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
-          position={[side * 0.25, 1.9, -0.02]} scale={[0.065, 0.16, 0.09]} castShadow />)}
-        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY} material={HAIR_MATERIAL}
-          position={[side * 0.13, 2.08, -0.19]} scale={[0.15, 0.08, 0.095]} castShadow />)}
-        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL}
-          position={[0, 1.83, -0.28]} scale={[0.055, 0.085, 0.065]} />
-        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY} material={EYE_MATERIAL}
-          position={[side * 0.1, 1.94, -0.255]} scale={[0.03, 0.04, 0.018]} />)}
-        <mesh geometry={UNIT_BOX} material={EYE_MATERIAL} position={[0, 1.75, -0.255]}
-          scale={[0.09, 0.018, 0.018]} />
-        {gear.hat && <>
-          <mesh geometry={HAT_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0, 2.07, 0]} castShadow />
-          <mesh position={[0, 2.17, 0]} material={GOLD_MATERIAL}><cylinderGeometry args={[0.38, 0.39, 0.055, 16]} /></mesh>
-          <mesh position={[0, 2.07, 0]} material={ROBE_TRIM_MATERIAL} castShadow><cylinderGeometry args={[0.53, 0.53, 0.055, 16]} /></mesh>
-        </>}
-        <group ref={leftArm} position={[-0.34, 1.47, 0]}>
-          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_MATERIAL} position={[-0.02, -0.08, 0]}
-            scale={[0.18, 0.18, 0.18]} castShadow />
-          <mesh geometry={SLEEVE_GEOMETRY} position={[-0.07, -0.3, 0]} rotation={[0, 0, 0.2]} material={ROBE_MATERIAL} castShadow />
-          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[-0.13, -0.59, 0]}
-            scale={[0.17, 0.065, 0.15]} castShadow />
-          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL} position={[-0.13, -0.66, 0]}
-            scale={[0.1, 0.12, 0.1]} castShadow />
-          {gear.offHand === 'shield' && <Shield />}
-          {gear.offHand === 'wand' && <Wand side={-1} light={gear.offHandLight} />}
-        </group>
-        <group ref={rightArm} position={[0.34, 1.47, 0]}>
-          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_MATERIAL} position={[0.02, -0.08, 0]}
-            scale={[0.18, 0.18, 0.18]} castShadow />
-          <mesh geometry={SLEEVE_GEOMETRY} position={[0.07, -0.3, 0]} rotation={[0, 0, -0.2]} material={ROBE_MATERIAL} castShadow />
-          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0.13, -0.59, 0]}
-            scale={[0.17, 0.065, 0.15]} castShadow />
-          <mesh geometry={AVATAR_ROUND_GEOMETRY} material={SKIN_MATERIAL} position={[0.13, -0.66, 0]}
-            scale={[0.1, 0.12, 0.1]} castShadow />
-          {gear.mainHand === 'axe' && <Axe />}
-          {gear.mainHand === 'spade' && <Spade />}
-          {gear.mainHand === 'basic-pick' && <MiningPick tier="basic" />}
-          {gear.mainHand === 'enchanted-pick' && <MiningPick tier="enchanted" />}
-          {gear.mainHand === 'wand' && <Wand side={1} light />}
-        </group>
-      </group>
-      {windwardActive && <group ref={windRibbon} name="Windward Step active wind" position={[0, 1.05, 0]}>
-        <mesh geometry={WINDWARD_RIBBON_GEOMETRY} material={WINDWARD_RIBBON_MATERIAL}
-          rotation={[Math.PI / 2, 0, 0]} position={[0, -0.3, 0]} />
-        <mesh geometry={WINDWARD_RIBBON_GEOMETRY} material={WINDWARD_RIBBON_MATERIAL}
-          rotation={[Math.PI / 2, Math.PI, 0]} position={[0, 0.25, 0]} />
+  return <group ref={root} aria-label="Player wizard">
+    <group ref={modelRoot}><primitive object={model} /></group>
+    {!riding && rightHandMount && createPortal(<group {...rightHandMount}>
+      {gear.mainHand === 'axe' && <Axe />}
+      {gear.mainHand === 'spade' && <Spade />}
+      {gear.mainHand === 'basic-pick' && <MiningPick tier="basic" />}
+      {gear.mainHand === 'enchanted-pick' && <MiningPick tier="enchanted" />}
+      {gear.mainHand === 'wand' && <Wand side={1} light />}
+    </group>, sockets.rightHand)}
+    {!riding && createPortal(<group {...gearFrames.leftHand}>
+      {gear.offHand === 'shield' && <Shield />}
+      {gear.offHand === 'wand' && <Wand side={-1} light={gear.offHandLight} />}
+    </group>, sockets.leftHand)}
+    {gear.hat && createPortal(<group {...gearFrames.head}>
+      <mesh geometry={HAT_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0, 2.07, 0]} castShadow />
+      <mesh position={[0, 2.17, 0]} material={GOLD_MATERIAL}>
+        <cylinderGeometry args={[0.38, 0.39, 0.055, 16]} />
+      </mesh>
+      <mesh position={[0, 2.07, 0]} material={ROBE_TRIM_MATERIAL} castShadow>
+        <cylinderGeometry args={[0.53, 0.53, 0.055, 16]} />
+      </mesh>
+    </group>, sockets.head)}
+    {(gear.tunic || guardVestVisible) && createPortal(<group {...gearFrames.chest}>
+      {gear.tunic && <>
+        {TRAVELER_TUNIC_PANELS.map((geometry, side) => <mesh key={side}
+          name="Traveler tunic over-robe panel" geometry={geometry}
+          material={TRAVELER_TUNIC_MATERIAL} castShadow />)}
+        <mesh geometry={TRAVELER_TUNIC_BELT_GEOMETRY} material={DARK_WOOD_MATERIAL}
+          position={[0, 1.03, 0]} castShadow />
+      </>}
+      {guardVestVisible && <group name="Guard Vest chest armor over clothing">
+        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY}
+          material={GUARD_VEST_MATERIAL} position={[0, 1.25, side * 0.54]}
+          scale={[0.38, 0.36, 0.11]} castShadow />)}
+        {[-1, 1].map((side) => <mesh key={side} geometry={AVATAR_ROUND_GEOMETRY}
+          material={GUARD_VEST_MATERIAL} position={[side * 0.34, 1.49, -0.08]}
+          scale={[0.2, 0.11, 0.32]} castShadow />)}
+        <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
+          position={[0, 1.32, -0.65]} scale={[0.1, 0.45, 0.035]} />
+        <mesh geometry={UNIT_BOX} material={GUARD_VEST_TRIM_MATERIAL}
+          position={[0, 1.08, -0.62]} scale={[0.58, 0.055, 0.04]} />
       </group>}
-    </group>
-  )
+    </group>, sockets.chest)}
+    {(gear.leggings || gear.waders) && createPortal(<group {...gearFrames.legs}>
+      {gear.leggings && [-0.16, 0.16].map((x) => <mesh key={x} geometry={LEG_GEOMETRY}
+        material={STAKE_MATERIAL} position={[x, 0.29, 0]} castShadow />)}
+      {gear.waders && <mesh geometry={UNIT_BOX} material={WADER_MATERIAL}
+        position={[0, 0.75, 0.43]} scale={[0.42, 0.66, 0.1]} castShadow />}
+    </group>, sockets.legs)}
+    {([sockets.leftFoot, sockets.rightFoot] as const).map((socket, index) =>
+      gear.waders && createPortal(<group key={index}
+        {...(index === 0 ? gearFrames.leftFoot : gearFrames.rightFoot)}>
+        <mesh geometry={WADER_SHAFT_GEOMETRY} material={WADER_MATERIAL}
+          position={[0, -0.3, 0]} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={WADER_CUFF_MATERIAL}
+          position={[0, -0.06, 0]} scale={[0.16, 0.055, 0.16]} castShadow />
+        <mesh geometry={AVATAR_ROUND_GEOMETRY} material={WADER_MATERIAL}
+          position={[0, -0.52, -0.12]} scale={[0.18, 0.15, 0.34]} castShadow />
+      </group>, socket))}
+    {windwardActive && <group ref={windRibbon} name="Windward Step active wind" position={[0, 1.05, 0]}>
+      <mesh geometry={WINDWARD_RIBBON_GEOMETRY} material={WINDWARD_RIBBON_MATERIAL}
+        rotation={[Math.PI / 2, 0, 0]} position={[0, -0.3, 0]} />
+      <mesh geometry={WINDWARD_RIBBON_GEOMETRY} material={WINDWARD_RIBBON_MATERIAL}
+        rotation={[Math.PI / 2, Math.PI, 0]} position={[0, 0.25, 0]} />
+    </group>}
+  </group>
+}
+
+function AdultSedgehorn({ source, mount, pose }: {
+  source: GLTF; mount: NonNullable<WizardViewProjection['groundMount']>; pose: PresentationPose
+}) {
+  const root = useRef<THREE.Group>(null)
+  const model = useMemo(() => {
+    const copy = cloneSkinned(source.scene) as THREE.Group
+    copy.name = 'Adult Sedgehorn ground mount'
+    copy.traverse((node) => {
+      if ((node as THREE.Mesh).isMesh !== true) return
+      node.castShadow = true
+      node.receiveShadow = true
+    })
+    return copy
+  }, [source.scene])
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model])
+  const actions = useMemo(() => {
+    const action = (name: 'RideIdle' | 'RideWalk' | 'RideRun') => mixer.clipAction(
+      THREE.AnimationClip.findByName(source.animations,
+        ADULT_SEDGEHORN_PREVIEW.clipsByRiderClip[name])!)
+    return { idle: action('RideIdle'), walk: action('RideWalk'), run: action('RideRun') }
+  }, [mixer, source.animations])
+  useEffect(() => {
+    Object.values(actions).forEach((action) => action.play())
+    return () => { mixer.stopAllAction() }
+  }, [actions, mixer])
+  useFrame(({ clock }) => {
+    if (!root.current) return
+    const riding = mount.mode === 'riding'
+    if (riding) root.current.position.copy(pose.position)
+    else root.current.position.set(...mount.position)
+    root.current.rotation.y = riding ? pose.yaw : mount.yaw
+    const weights = riding ? rideAnimationWeightsFor(pose.speed) : { idle: 1, walk: 0, run: 0 }
+    actions.idle.setEffectiveWeight(weights.idle)
+    actions.walk.setEffectiveWeight(weights.walk)
+    actions.run.setEffectiveWeight(weights.run)
+    actions.idle.time = clock.elapsedTime % actions.idle.getClip().duration
+    actions.walk.time = pose.phase / (Math.PI * 2) * actions.walk.getClip().duration
+    actions.run.time = pose.phase / (Math.PI * 2) * actions.run.getClip().duration
+    mixer.update(0)
+  })
+  return <group ref={root} aria-label="Adult Sedgehorn ground mount">
+    <primitive object={model} />
+  </group>
 }
 
 /** Slow world-space colour drift keeps adjacent caps visually continuous without changing tile geometry. */
@@ -2303,6 +2569,40 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
 }) {
+  const [wayfarerV9, setWayfarerV9] = useState<{ source: GLTF | null; error: string | null }>({
+    source: null, error: null,
+  })
+  const [sedgehorn, setSedgehorn] = useState<{ source: GLTF | null; error: string | null }>({
+    source: null, error: null,
+  })
+  useEffect(() => {
+    let mounted = true
+    new GLTFLoader().load(WAYFARER_V9_URL, (source) => {
+      if (!mounted) return
+      const error = wayfarerV9AssetError(source)
+      setWayfarerV9({ source: error ? null : source, error })
+    }, undefined, () => {
+      if (mounted) setWayfarerV9({ source: null,
+        error: 'Approved V9 character asset could not load. Check wayfarer_v9_game/wayfarer_v9_male.glb.' })
+    })
+    return () => { mounted = false }
+  }, [])
+  const showAdultSedgehorn = projection.groundMount !== undefined
+  useEffect(() => {
+    if (!showAdultSedgehorn) return
+    let active = true
+    new GLTFLoader().load(ADULT_SEDGEHORN_PREVIEW.glbUrl, (source) => {
+      if (!active) return
+      const missing = missingAdultSedgehornClips(source.animations.map((clip) => clip.name))
+      setSedgehorn(missing.length ? { source: null,
+        error: `Adult Sedgehorn asset is missing ${missing.join(', ')} animation.` }
+        : { source, error: null })
+    }, undefined, () => {
+      if (active) setSedgehorn({ source: null,
+        error: 'Adult Sedgehorn asset could not load. Check sedgehorn_mount/sedgehorn_adult.glb.' })
+    })
+    return () => { active = false }
+  }, [showAdultSedgehorn])
   const search = typeof window === 'undefined' ? '' : window.location.search
   const softwareGraphics = new URLSearchParams(search).get('graphics') === 'software'
   const [resolution, setResolution] = useState<SceneResolution>(() => sceneResolutionForSearch(search))
@@ -2407,6 +2707,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         ? terrainSampler.presentationTargetYAt(projection.player.position[0], projection.player.position[2],
           projection.player.position[1]) : projection.player.position[1],
       projection.player.position[2]), yaw: projection.player.yaw, speed: 0, phase: 0,
+    turnRate: 0, verticalVelocity: projection.player.verticalVelocity ?? 0, snapped: false,
   }))
   const worldSupport = useRef<THREE.Group>(null)
   const sunTarget = useMemo(() => new THREE.Object3D(), [])
@@ -2595,12 +2896,24 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       {approachMarkers.map((marker) => <TerrainWorkApproachMarker key={marker.id} marker={marker} />)}
       {visibleCamps.map((camp) => <FieldCamp key={`${camp.status}:${camp.tileId}`} camp={camp} />)}
       {projection.ambience === 'highland-wind' && <HighlandWind pose={pose} />}
-      <WizardAvatar pose={pose} equipment={projection.equipment}
+      {projection.groundMount && sedgehorn.source && <AdultSedgehorn source={sedgehorn.source}
+        mount={projection.groundMount} pose={pose} />}
+      {wayfarerV9.source && <WizardAvatar source={wayfarerV9.source}
+        pose={pose} equipment={projection.equipment}
+        riding={projection.groundMount?.mode === 'riding' && sedgehorn.source !== null}
         activePick={projection.v29Mining?.tools.activePick}
         guardVestVisible={!!projection.v42IronHall?.vestEquipped &&
           (projection.v42IronHall?.vestDurability ?? 0) > 0}
-        windwardActive={(projection.windwardStep?.activeSeconds ?? 0) > 0} />
+        windwardActive={(projection.windwardStep?.activeSeconds ?? 0) > 0} />}
     </Canvas>
+    {wayfarerV9.error && <div role="alert" style={{ position: 'absolute', zIndex: 3,
+      left: 12, bottom: 12, maxWidth: 380, padding: '10px 12px', borderRadius: 6,
+      border: '1px solid #ee8585', background: '#311b22ee', color: '#fff2f2',
+      font: '13px system-ui, sans-serif' }}>{wayfarerV9.error}</div>}
+    {projection.groundMount && sedgehorn.error && <div role="alert" style={{ position: 'absolute', zIndex: 3,
+      left: 12, bottom: wayfarerV9.error ? 78 : 12, maxWidth: 380, padding: '10px 12px', borderRadius: 6,
+      border: '1px solid #ee8585', background: '#311b22ee', color: '#fff2f2',
+      font: '13px system-ui, sans-serif' }}>{sedgehorn.error}</div>}
     {terrainHoverFeedback && <div className="wr-terrain-hover-hint" role="status">
       {terrainHoverFeedback}</div>}
     {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 232,

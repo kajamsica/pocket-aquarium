@@ -266,6 +266,10 @@ describe('V43 quest journal', () => {
     const later = renderJournal(twoCares, extra)
     expect(later).toContain('1 more care visit at the station')
     expect(later).not.toContain('600 ticks')
+    const v44 = renderToStaticMarkup(createElement(PublicV43QuestJournal,
+      { ...leadsFor(twoCares, extra), rideableAfterMaturity: true }))
+    expect(v44).toContain('Riding unlocks after all three care visits.')
+    expect(v44).not.toContain('cannot be ridden in this preview')
   })
 
   it('records the route once every lead is claimed and the familiar is mature', () => {
@@ -282,5 +286,10 @@ describe('V43 quest journal', () => {
     expect(html).toContain('cannot be ridden in this preview')
     expect(html).not.toContain('mount-ready')
     expect(html).not.toContain('Ground mounting')
+    const v44 = renderToStaticMarkup(createElement(PublicV43QuestJournal,
+      { ...leadsFor(head, extra), rideableAfterMaturity: true }))
+    expect(v44).toContain('The adult Sedgehorn is ready.')
+    expect(v44).toContain('Mount Sedgehorn')
+    expect(v44).not.toContain('cannot be ridden in this preview')
   })
 })

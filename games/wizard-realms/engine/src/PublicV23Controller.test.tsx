@@ -3,7 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { PublicV23Controller, publicV23ReadActiveView, publicV23WorkRouteForView,
-  publicV27StarterGuide } from './PublicV23Controller'
+  publicV27StarterGuide, publicV44EffectiveGait } from './PublicV23Controller'
 import { publicV23HasWestStripSite, publicWorldV23ViewProjection } from './PublicV23WorldView'
 import { createPublicV31ControllerRuntime } from './PublicV31ControllerRuntime'
 import { createPublicV26ControllerRuntime } from './PublicV26ControllerRuntime'
@@ -67,6 +67,20 @@ const ladder = 'works4:ladder:greenway-north-cliff:11'
 const bridge = 'works4:bridge:greenway-creek:0'
 const locks = { request: async <T,>(_name: string,
   _options: { mode: 'exclusive' }, body: () => T | Promise<T>) => body() }
+
+describe('V44 mounted pace', () => {
+  it('uses boots run distance on the V2 ride and retains on-foot Walk choice', () => {
+    expect(publicV44EffectiveGait('leather_boots', true, true))
+      .toMatchObject({ pace: 'run', metersPerStep: 0.24 })
+    expect(publicV44EffectiveGait(null, true, false))
+      .toMatchObject({ pace: 'walk', metersPerStep: 0.16 })
+    expect(publicV44EffectiveGait('leather_boots', false, true))
+      .toMatchObject({ pace: 'walk', metersPerStep: 0.16 })
+    expect(publicV44EffectiveGait('leather_boots', false, false))
+      .toMatchObject({ pace: 'run', metersPerStep: 0.24 })
+  })
+})
+
 function withKnownLocalGround(view: WizardViewProjection,
   position: readonly [number, number, number], radius = 24,
   terrainRadius = radius): WizardViewProjection {

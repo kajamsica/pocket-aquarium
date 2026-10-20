@@ -293,6 +293,50 @@ const renderHudTree = (props: Parameters<typeof WizardHud>[0]): ReactNode => {
   return tree
 }
 
+describe('V44 mounted HUD actions', () => {
+  it('keeps directional riding available while disabling ground actions until dismount', () => {
+    const current = { ...sellProjection, openStoreId: null,
+      controllerActionsEnabled: true,
+      gait: { pace: 'run' as const, canRun: true, reason: 'Boots equipped' },
+      nearbyInteraction: { kind: 'resource' as const, targetId: 'tree-1',
+        label: 'Tree', action: 'Chop tree', actionable: true },
+      savedTerrainWorks: { context: 'works4-greenway' as const,
+        actionsEnabled: false, modeActive: false, selectedKind: 'bridge' as const,
+        builtSites: [], dugTileIds: [], preview: null },
+      groundMount: { mode: 'riding' as const, position: [0, 0, 0] as const, yaw: 0 },
+    } as WizardViewProjection
+    const emitted: unknown[] = []
+    const controls = findElements(renderHudTree({ projection: current,
+      onIntent: (intent) => emitted.push(intent) }), (element) => element.type === 'button')
+    const button = (label: string) => controls.find((entry) => entry.props['aria-label'] === label
+      || entry.props.children === label)
+    expect(button('Toggle Walk/Run pace')?.props.disabled).toBe(true)
+    expect(button('Jump')?.props.disabled).toBe(true)
+    expect(button('Interact')?.props.disabled).toBe(true)
+    expect(button('↑')?.props['aria-disabled']).toBe(false)
+    ;(button('↑')!.props.onClick as () => void)()
+    expect(emitted).toEqual([{ type: 'movement.tap', vector: [0, 1] }])
+    const markup = renderToStaticMarkup(createElement(WizardHud,
+      { projection: current, onIntent: vi.fn() }))
+    expect(markup).toContain('Sedgehorn riding at run pace. Dismount to change on-foot pace or use ground actions.')
+    expect(markup).toContain('Dismount to interact')
+    expect(markup).toContain('Dismount to gather or use Works.')
+    expect(markup).not.toContain('Save paused')
+    expect(markup).not.toContain('paused while the save is not ready')
+    const blockedSave = renderToStaticMarkup(createElement(WizardHud,
+      { projection: { ...current, controllerActionsEnabled: false }, onIntent: vi.fn() }))
+    expect(blockedSave).toContain('Pace changes paused while the save is not ready.')
+    expect(blockedSave).toContain('Interaction paused for save')
+    const parked = { ...current, groundMount: { ...current.groundMount!, mode: 'parked' as const } }
+    const parkedButtons = findElements(renderHudTree({ projection: parked, onIntent: vi.fn() }),
+      (element) => element.type === 'button')
+    expect(parkedButtons.find((entry) => entry.props['aria-label'] === 'Toggle Walk/Run pace')?.props.disabled)
+      .toBe(false)
+    expect(parkedButtons.find((entry) => entry.props.children === 'Jump')?.props.disabled)
+      .toBe(false)
+  })
+})
+
 describe('third-person control grammar', () => {
   it('loads only valid versioned, non-conflicting action keys and exposes them in compact controls', () => {
     expect(parseActionKeys(null)).toEqual(DEFAULT_ACTION_KEYS)

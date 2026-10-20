@@ -1,8 +1,8 @@
 import type { createAtomicV43Store } from './atomicV43Database'
 import type { createAtomicV44Store } from './atomicV44Database'
+import { applyPublicV26ReturnHome } from './publicWorldV26Escape'
 import { confirmPublicV44GroundMountAction } from './publicWorldV44GroundMount'
-import { createPublicV44Root, decodePublicV44Witness,
-  decodePublicV44CheckedSuccessor } from './publicWorldV44Snapshot'
+import { createPublicV44Root, decodePublicV44Witness } from './publicWorldV44Snapshot'
 import type { PublicV44Head, PublicV44Root,
   PublicV44Witness } from './publicWorldV44Snapshot'
 import { PUBLIC_V7_LOCK_NAME } from './publicWorldV7'
@@ -30,7 +30,7 @@ async function lock<T>(locks: PublicV7LockProvider | undefined,
 async function succession(store: Store, source: SourceStore, create: boolean,
   expectedSourceRevision?: number): Promise<
     { status: 'migration-available'; sourceRevision: number }
-    | { status: 'valid'; root: PublicV44Root }
+    | { status: 'valid'; root: PublicV44Root; proof: object }
     | { status: 'blocked'; reason: string }> {
   let old = await source.readForPromotion()
   if (old.status !== 'valid') return { status: 'blocked',
@@ -83,7 +83,7 @@ async function succession(store: Store, source: SourceStore, create: boolean,
     if (finalized !== 'committed' && finalized !== 'unchanged')
       return { status: 'blocked', reason: finalized }
   }
-  return { status: 'valid', root: target.root }
+  return { status: 'valid', root: target.root, proof: target.proof }
 }
 
 export function inspectPublicV44(locks: PublicV7LockProvider | undefined,
@@ -127,37 +127,55 @@ export function resumePublicV44(locks: PublicV7LockProvider | undefined,
   })
 }
 
-export function commitPublicV44(locks: PublicV7LockProvider | undefined,
-  store: Store, source: SourceStore, revision: number,
-  rawLineage: unknown, rawWitness: PublicV44Witness):
-  Promise<PublicV44Operation<PublicV44Start>> {
-  return lock(locks, async () => {
+async function commitWitnessUnderLock(store: Store, source: SourceStore,
+  revision: number, rawLineage: unknown, witnessFromWriter: () => unknown,
+  returnHome: boolean): Promise<PublicV44Operation<PublicV44Start>> {
     const fenced = await succession(store, source, false)
     if (fenced.status !== 'valid') return { ok: false,
       reason: fenced.status === 'blocked' ? fenced.reason : 'target-missing' }
-    const read = await store.readChecked()
-    if (read.status !== 'valid') return { ok: false,
-      reason: read.status === 'blocked' ? read.reason : 'root-missing' }
-    const { head, lineage } = read.root
+    const { head, lineage } = fenced.root
     if (!sameStrictBoundedRaw(rawLineage, lineage, 3 << 20))
       return { ok: false, reason: 'lineage-changed' }
     if (head.saveRevision !== revision) return { ok: false, reason: 'revision-changed' }
     if (!Number.isSafeInteger(revision + 1))
       return { ok: false, reason: 'invalid-revision' }
-    const witness = decodePublicV44Witness(rawWitness)
-    if (!witness) return { ok: false, reason: 'invalid-witness' }
+    if (returnHome && head.groundMount.mode !== 'parked')
+      return { ok: false, reason: 'must-dismount' }
+    const witness = decodePublicV44Witness(witnessFromWriter())
+    if (!witness || (witness.kind === 'return-home/v1') !== returnHome)
+      return { ok: false, reason: 'invalid-witness' }
     const action = confirmPublicV44GroundMountAction({ v43: head.v43,
       groundMount: head.groundMount }, witness)
-    if (!action.progress) return { ok: false,
-      reason: action.rejection ?? 'action-rejected' }
+    if (!action.progress) {
+      if (returnHome && witness.kind === 'return-home/v1') {
+        const { state, greenwayWorks, regionalWorks, terrain, nextHomeAtMs } = head.v43.head
+        const reason = applyPublicV26ReturnHome({ state, greenwayWorks,
+          regionalWorks, terrain, nextHomeAtMs }, witness.atMs).rejection
+        if (reason === 'not_trapped' || reason === 'cooldown')
+          return { ok: false, reason }
+      }
+      return { ok: false, reason: action.rejection ?? 'action-rejected' }
+    }
     const nextHead: PublicV44Head = { ...action.progress,
       schemaVersion: head.schemaVersion, saveRevision: revision + 1, witness }
-    const candidate = decodePublicV44CheckedSuccessor(read.root, { lineage,
-      previous: head, head: nextHead })
-    if (!candidate) return { ok: false, reason: 'invalid-successor' }
-    const result = await store.commit(read.proof, candidate)
+    const candidate: PublicV44Root = { lineage, previous: head, head: nextHead }
+    const result = await store.commit(fenced.proof, candidate)
     return result === 'committed'
       ? { ok: true, value: { head: candidate.head, lineage } }
-      : { ok: false, reason: result }
-  })
+      : { ok: false, reason: result === 'invalid' ? 'invalid-successor' : result }
+}
+
+export function commitPublicV44(locks: PublicV7LockProvider | undefined,
+  store: Store, source: SourceStore, revision: number,
+  rawLineage: unknown, rawWitness: PublicV44Witness):
+  Promise<PublicV44Operation<PublicV44Start>> {
+  return lock(locks, () => commitWitnessUnderLock(store, source, revision,
+    rawLineage, () => rawWitness, false))
+}
+
+export function requestPublicV44ReturnHome(locks: PublicV7LockProvider | undefined,
+  store: Store, source: SourceStore, revision: number, rawLineage: unknown):
+  Promise<PublicV44Operation<PublicV44Start>> {
+  return lock(locks, () => commitWitnessUnderLock(store, source, revision,
+    rawLineage, () => ({ kind: 'return-home/v1', atMs: Date.now() }), true))
 }
