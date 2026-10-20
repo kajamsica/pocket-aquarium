@@ -81,6 +81,32 @@ export class WizardWorksFocusBoundary extends Component<WorksFocusProps> {
   }
 }
 
+function BackpackMiniature({ itemId }: { itemId: string }) {
+  const material = itemId.startsWith('terrain-') ? itemId.slice(8) : itemId
+  const kind = itemId === 'logs' ? 'log' : itemId === 'listed' ? 'listing'
+    : material === 'soil' ? 'soil' : ['stone', 'iron_ore', 'gold_ore', 'diamond'].includes(material) ? 'rock'
+      : itemId === 'woodcutters_axe' ? 'axe' : itemId === 'field_spade' ? 'spade'
+        : itemId === 'oak_wand' ? 'wand' : itemId === 'leather_boots' ? 'boots'
+          : itemId === 'marsh_herb' ? 'herb' : itemId === 'wooden_shield' ? 'shield'
+            : itemId === 'apprentice_hat' ? 'hat' : itemId === 'traveler_tunic' ? 'tunic'
+              : itemId === 'trail_leggings' ? 'leggings' : itemId === 'ancient_relic' ? 'relic' : 'parcel'
+  return <svg data-miniature={kind} viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true">
+    {kind === 'log' && <><path d="M5 6h12v12H5z" fill="#a66b38" stroke="#4a2b1a" strokeWidth="1.5"/><ellipse cx="17" cy="12" rx="3" ry="6" fill="#cf9956" stroke="#4a2b1a" strokeWidth="1.5"/><path d="M17 9c-2 1-2 5 0 6M8 8v8" fill="none" stroke="#704421" strokeWidth="1"/></>}
+    {kind === 'listing' && <><path d="M4 5h12l4 7-8 8-8-8z" fill="#d8b65f" stroke="#533b20" strokeWidth="1.5"/><circle cx="10" cy="9" r="1.5" fill="#533b20"/><path d="M12 14h5m-2-2 2 2-2 2" fill="none" stroke="#533b20" strokeWidth="1.5"/></>}
+    {kind === 'soil' && <><path d="M3 17c2-5 4-7 8-5 2-4 6-3 10 5z" fill="#93603a" stroke="#4b3728" strokeWidth="1.5"/><path d="M7 16h2m5-2h2" stroke="#d0a66b" strokeWidth="1.5"/></>}
+    {kind === 'rock' && <><path d="m3 17 4-9 8-3 6 10-5 5H7z" fill={material === 'gold_ore' ? '#bca356' : material === 'iron_ore' ? '#9ba6a7' : material === 'diamond' ? '#8fd2d7' : '#a5a4a0'} stroke="#495057" strokeWidth="1.5"/><path d="m7 8 5 7 9 0m-9 0-5 5" fill="none" stroke="#58616a" strokeWidth="1"/></>}
+    {['axe', 'spade', 'wand'].includes(kind) && <><path d="M5 20 18 4" stroke="#7f4e2b" strokeWidth="3" strokeLinecap="round"/>{kind === 'axe' ? <path d="m13 5 4-3 5 5-3 4-2-4z" fill="#a9b8be" stroke="#506169" strokeWidth="1.5"/> : kind === 'spade' ? <path d="m17 2 5 4-3 6-5-5z" fill="#a9b8be" stroke="#506169" strokeWidth="1.5"/> : <circle cx="19" cy="4" r="2.5" fill="#e7cf79"/>}</>}
+    {kind === 'boots' && <path d="M5 4h7v10l6 2 2 4H4v-5l2-2z" fill="#986338" stroke="#4a2b1a" strokeWidth="1.5"/>}
+    {kind === 'herb' && <><path d="M12 21V5" stroke="#9ebc6d" strokeWidth="2"/><path d="M12 14C6 15 4 11 4 8c5-1 8 1 8 6m0-4c0-5 3-7 8-6 0 4-2 7-8 6" fill="#79a35e" stroke="#426b43" strokeWidth="1"/></>}
+    {kind === 'shield' && <path d="m12 2 8 3v8c0 5-4 8-8 9-4-1-8-4-8-9V5z" fill="#a47741" stroke="#e7c979" strokeWidth="2"/>}
+    {kind === 'hat' && <path d="m4 15 4-11h8l4 11-8 5z" fill="#654182" stroke="#d6ae5b" strokeWidth="1.5"/>}
+    {kind === 'tunic' && <path d="m6 3-4 5 4 4v9h12v-9l4-4-4-5-4 3h-4z" fill="#654182" stroke="#d6ae5b" strokeWidth="1.5"/>}
+    {kind === 'leggings' && <path d="M5 3h14l-2 18h-5l-1-10-1 10H5z" fill="#544230" stroke="#a7895d" strokeWidth="1.5"/>}
+    {kind === 'relic' && <><path d="m12 2 8 10-8 10L4 12z" fill="#aa85bf" stroke="#efcf7d" strokeWidth="1.5"/><circle cx="12" cy="12" r="3" fill="#efcf7d"/></>}
+    {kind === 'parcel' && <><path d="m3 7 9-4 9 4v11l-9 4-9-4z" fill="#a5835b" stroke="#493727" strokeWidth="1.5"/><path d="m3 7 9 4 9-4m-9 4v11" fill="none" stroke="#493727" strokeWidth="1.5"/></>}
+  </svg>
+}
+
 export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
   starterChapterPrimary = false }: {
   projection: WizardViewProjection
@@ -192,19 +218,26 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
     + projection.tradeListings.reduce((total, listing) => total + (listing?.quantity ?? 0), 0)
   const usedCapacity = carriedCapacityUsed
     + excavatedMaterials.reduce((total, [, quantity]) => total + quantity, 0)
-  const occupiedSpaces: { itemId: string; icon: string; title: string; color: string }[] = []
-  const fillSpaces = (quantity: number, itemId: string, icon: string, name: string, color: string) => {
+  const occupiedSpaces: { itemId: string; title: string; color: string; badge?: number }[] = []
+  const fillSpaces = (quantity: number, itemId: string, name: string, color: string) => {
     for (let unit = 0; unit < quantity && occupiedSpaces.length < projection.backpack.capacity; unit += 1)
-      occupiedSpaces.push({ itemId, icon, title: `${name}, unit ${unit + 1} of ${quantity}`, color })
+      occupiedSpaces.push({ itemId, title: `${name}, unit ${unit + 1} of ${quantity}`, color,
+        badge: unit === 0 && quantity > 1 ? quantity : undefined })
   }
   projection.backpack.stacks.forEach((stack) => fillSpaces(stack.quantity, stack.itemId,
-    stack.icon ?? (stack.itemId === 'logs' ? '▥' : '◆'), stack.name,
+    stack.name,
     stack.itemId === 'logs' ? '#70502a' : stack.equippableSlots ? '#4d3869' : '#385c4c'))
   projection.tradeListings.forEach((listing) => {
-    if (listing) fillSpaces(listing.quantity, 'listed', '↗', `Listed ${listing.itemName}`, '#5e5734')
+    if (listing) fillSpaces(listing.quantity, 'listed', `Listed ${listing.itemName}`, '#5e5734')
   })
   excavatedMaterials.forEach(([material, quantity]) => fillSpaces(quantity, `terrain-${material}`,
-    '◈', `Terrain bag ${material.replaceAll('_', ' ')}`, '#345667'))
+    `Terrain bag ${material.replaceAll('_', ' ')}`, '#345667'))
+  const spaceContents = [
+    ...projection.backpack.stacks.map((stack) => `${stack.name} ×${stack.quantity}`),
+    ...projection.tradeListings.filter((listing) => listing !== null)
+      .map((listing) => `listed ${listing.itemName} ×${listing.quantity}`),
+    ...excavatedMaterials.map(([material, quantity]) => `terrain bag ${material.replaceAll('_', ' ')} ×${quantity}`),
+  ].join('; ') || 'empty'
   const firstTradeSlot = projection.tradeListings.findIndex((listing) => listing === null)
   const learnedGlow = projection.learnedSpellIds.includes('wayfinder_glow')
   const checkedReason = (id: string): string | null => {
@@ -999,16 +1032,19 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
           <small>{Math.max(0, projection.backpack.capacity - usedCapacity)} free item spaces</small>
         </div>
         <div className="wr-pack-spaces" role="img"
-          aria-label={`${usedCapacity} of ${projection.backpack.capacity} item spaces filled; ${Math.max(0, projection.backpack.capacity - usedCapacity)} free`}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(10,minmax(0,1fr))', gap: 2, marginBottom: 7 }}>
+          aria-label={`${usedCapacity} of ${projection.backpack.capacity} item spaces filled; ${Math.max(0, projection.backpack.capacity - usedCapacity)} free. Contents: ${spaceContents}`}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 2, marginBottom: 7 }}>
           {Array.from({ length: projection.backpack.capacity }, (_, index) => {
             const item = occupiedSpaces[index]
             return <span key={index} aria-hidden="true" title={item?.title ?? 'Empty item space'}
               data-occupied={!!item} data-item={item?.itemId}
-              style={{ display: 'grid', placeItems: 'center', minWidth: 0, aspectRatio: '1',
+              style={{ display: 'grid', placeItems: 'center', position: 'relative', minWidth: 0, aspectRatio: '1',
                 border: `1px solid ${item ? '#d9ba6a88' : '#71807366'}`, borderRadius: 3,
-                background: item?.color ?? '#1a2720', color: '#f7e9be', fontSize: 10, overflow: 'hidden' }}>
-              {item?.icon}
+                background: item?.color ?? '#1a2720' }}>
+              {item && <BackpackMiniature itemId={item.itemId} />}
+              {item?.badge && <b aria-hidden="true" data-stack-count={item.badge}
+                style={{ position: 'absolute', right: 0, bottom: 0, borderRadius: 3, padding: '0 1px',
+                  background: '#efcf7d', color: '#251c11', fontSize: 10, lineHeight: '12px' }}>×{item.badge}</b>}
             </span>
           })}
         </div>
