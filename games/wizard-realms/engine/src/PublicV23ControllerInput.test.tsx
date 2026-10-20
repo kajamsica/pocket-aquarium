@@ -52,6 +52,7 @@ const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   trace: null as PublicV17InputTrace | null,
   projection: null as WizardViewProjection | null,
   saveInProgress: null as boolean | null,
+  soilPlaceRejection: null as string | null,
   gate: 'open' as 'open' | 'checkpointing' | 'blocked', pending: 0,
   idleNeeded: true, countFrames: false,
   saveCalls: 0, cleanups: [] as Array<() => void>,
@@ -94,6 +95,7 @@ vi.mock('./view/WizardSurface', async (importOriginal) => {
     if (probe.enabled) { probe.onIntent = props.onIntent; probe.projection = props.projection
       probe.trace = props.inputTrace ?? null
       probe.saveInProgress = props.saveInProgress ?? false
+      probe.soilPlaceRejection = props.soilPlaceRejection ?? null
       return null }
     return actual.WizardSurface(props)
   } }
@@ -411,6 +413,7 @@ afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = p
   probe.cursor = probe.stateCursor = 0; probe.refs = []; probe.states = []
   probe.tick = probe.onIntent = probe.releaseSave = null; probe.projection = probe.trace = null
   probe.saveInProgress = null
+  probe.soilPlaceRejection = null
   probe.holdAction = false; probe.releaseAction = null
   probe.actionRejection = null
   probe.raisedCell = false
@@ -1898,6 +1901,8 @@ describe('V31 controller soil intent routing', () => {
     expect(message).toContain('reserved for a bridge or ladder')
     expect(message).toContain('open dry ground')
     expect(message).not.toContain('Soil action rejected: occupied')
+    rerenderV31()
+    expect(probe.soilPlaceRejection).toBe(message)
   })
   it('explains a raised-soil route overlap without a raw rejection token', async () => {
     probe.actionRejection = 'soil_overlap'

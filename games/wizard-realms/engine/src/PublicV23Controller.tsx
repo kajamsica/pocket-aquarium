@@ -1058,6 +1058,10 @@ export function publicV31SoilRejectionMessage(reason: string): string {
   if (reason === 'occupied') return 'This ground is underfoot, occupied, or reserved for a bridge or ladder. Try open dry ground a few steps away.'
   if (reason === 'too_far') return 'Move within 5 m of the ground cell before placing or removing soil.'
   if (reason === 'wet') return 'Soil cannot be placed in the river or wetland. Choose dry ground.'
+  if (reason === 'open_column') return 'This is an open dig hole. Place soil on a different intact dry cell, or Fill the hole first.'
+  if (reason === 'unrevealed') return 'Walk closer to reveal this ground before placing soil.'
+  if (reason === 'invalid_pose') return 'Land on supported ground before placing soil.'
+  if (reason === 'already_raised') return 'This cell already has a raised soil step. Choose a different clear dry cell.'
   if (reason === 'requires_soil') return 'Dig safe dry ground first to collect soil for this lift.'
   if (reason === 'requires_tool') return 'Equip your owned field spade to place or remove soil.'
   return `Soil action rejected: ${reason}.`
@@ -1548,6 +1552,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const [aimZ, setAimZ] = useState<number | null>(null)
   const [traceJson, setTraceJson] = useState('')
   const [obstacleCue, setObstacleCue] = useState<string | null>(null)
+  const [soilPlaceRejection, setSoilPlaceRejection] = useState<string | null>(null)
   const held = useRef<readonly [number, number]>([0, 0])
   const blockedHeldVector = useRef<readonly [number, number] | null>(null)
   const matchesBlockedHeld = (vector: readonly [number, number]) =>
@@ -1885,6 +1890,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if ('kind' in intent && intent.kind === 'sedgehorn-mount/v1') {
             setWorkMode(false); setOpenStoreId(null)
           }
+          if ('kind' in intent && intent.kind === 'soil-place/v1') setSoilPlaceRejection(null)
           tell('kind' in intent && intent.kind === 'return-home-request'
             ? 'Returned home safely. A 30-minute rescue cooldown has started.'
             : 'kind' in intent && intent.kind === 'sedgehorn-mount/v1'
@@ -1978,7 +1984,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : result.events.some((event) => event.type === 'resource_harvested')
               ? 'Oak felled. Four logs saved to your backpack.'
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
-        } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
+        } else if (result.status === 'rejected') {
+          const rejectionMessage = v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
           : 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
             || intent.kind === 'sedgehorn-dismount/v1')
@@ -2035,7 +2042,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : 'kind' in intent && intent.kind === 'terrain-action/v1' ? publicV26TerrainRejectionMessage(result.reason ?? 'unavailable_here')
           : 'kind' in intent && (intent.kind === 'pit-ladder/v1'
             || intent.kind === 'return-home-request') ? publicV26SafetyRejectionMessage(result.reason ?? 'unavailable_here')
-          : `Action rejected: ${result.reason}.`)
+          : `Action rejected: ${result.reason}.`
+          if ('kind' in intent && intent.kind === 'soil-place/v1')
+            setSoilPlaceRejection(rejectionMessage)
+          tell(rejectionMessage)
+        }
         else if (result.status === 'blocked') { held.current = [0, 0]
           timedHeld.current = null; edgePulse.current = null; inputQueue.current = [];
           tell(`Save blocked: ${result.reason}.`) }
@@ -2048,6 +2059,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     })()
   }
   const queueChecked = (intent: CheckedIntent) => {
+    if ('kind' in intent && intent.kind === 'soil-place/v1') setSoilPlaceRejection(null)
     if (v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
       && (!('kind' in intent) || intent.kind !== 'sedgehorn-dismount/v1')) {
       tell('Dismount the Sedgehorn to gather, build, trade, or use quest actions.'); return
@@ -2858,6 +2870,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
       saveInProgress={saveTask.current !== null}
+      soilPlaceRejection={soilPlaceRejection}
       starterChapterActors={v43}
       starterChapterPrimary={!!chapterIsLead}
       greenwayLogOrder={v43 && !mounted ? <><section aria-label="Greenway carpenter order">

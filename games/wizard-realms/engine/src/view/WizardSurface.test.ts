@@ -562,6 +562,10 @@ describe('third-person control grammar', () => {
     expect(enabled).toMatch(/aria-pressed="true"[^>]*>Dig<\/button>/)
     expect(enabled).toMatch(/aria-pressed="false"[^>]*>Fill<\/button>/)
     expect(enabled).toContain('equip spade to dig, choose Fill to refill')
+    const rejected = renderToStaticMarkup(createElement(WizardSurface, { projection: equipped,
+      onIntent: vi.fn(), soilPlaceRejection: 'This ground is occupied.' }))
+    expect(rejected).toMatch(/aria-label="Terrain tools"[\s\S]*class="wr-soil-rejection" role="alert">Soil placement was not saved: This ground is occupied\./)
+    expect(rejected).toContain('max-height:calc(100% - 170px);overflow-y:auto')
     const restricted = renderToStaticMarkup(createElement(WizardSurface, {
       projection: { ...equipped, unavailableActions: true }, onIntent: vi.fn() }))
     expect(restricted).toContain('Terrain actions are unavailable in this region.')
