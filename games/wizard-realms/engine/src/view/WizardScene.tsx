@@ -1074,13 +1074,15 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
       {gear.offHand === 'wand' && <Wand side={-1} light={gear.offHandLight} />}
     </group>, sockets.leftHand)}
     {gear.hat && createPortal(<group {...gearFrames.head}>
-      <mesh geometry={HAT_GEOMETRY} material={ROBE_TRIM_MATERIAL} position={[0, 2.07, 0]} castShadow />
-      <mesh position={[0, 2.17, 0]} material={GOLD_MATERIAL}>
-        <cylinderGeometry args={[0.38, 0.39, 0.055, 16]} />
-      </mesh>
-      <mesh position={[0, 2.07, 0]} material={ROBE_TRIM_MATERIAL} castShadow>
-        <cylinderGeometry args={[0.53, 0.53, 0.055, 16]} />
-      </mesh>
+      <group position={[0, 2.22, 0]} scale={0.6}>
+        <mesh geometry={HAT_GEOMETRY} material={ROBE_TRIM_MATERIAL} castShadow />
+        <mesh position={[0, 0.1, 0]} material={GOLD_MATERIAL}>
+          <cylinderGeometry args={[0.38, 0.39, 0.055, 16]} />
+        </mesh>
+        <mesh material={ROBE_TRIM_MATERIAL} castShadow>
+          <cylinderGeometry args={[0.53, 0.53, 0.055, 16]} />
+        </mesh>
+      </group>
     </group>, sockets.head)}
     {(gear.tunic || guardVestVisible) && createPortal(<group {...gearFrames.chest}>
       {gear.tunic && <>
