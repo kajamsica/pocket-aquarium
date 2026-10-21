@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { backpackSlotsUsed } from './backpackSlots'
 import { encodeDiscoveredTileIds } from './discoveryMask'
 import { selectPublicV13BuildPreview } from './publicV13BuildPreview'
 import type { PublicV13Head } from './publicWorldV13Snapshot'
@@ -118,6 +119,9 @@ describe('compact public obstacle-build preview', () => {
         ? { ...stack, quantity: 7 } : stack) } }
     expect(preview(shortBridge, bridge).selected).toMatchObject({ rejection: 'not_owned',
       reason: 'Gather 8 logs before building.' })
+    const fullBridge: PublicV13Head['state'] = { ...readyBridge, player: { ...readyBridge.player,
+      backpackCapacity: backpackSlotsUsed(readyBridge.player.inventory, readyBridge.player.tradeSlots) } }
+    expect(preview(fullBridge, bridge).selected?.rejection).toBeNull()
     const readyLadder = at(ladder)
     const shortLadder: PublicV13Head['state'] = { ...readyLadder, player: { ...readyLadder.player,
       inventory: readyLadder.player.inventory.map((stack) => stack.itemId === 'logs'
@@ -129,8 +133,7 @@ describe('compact public obstacle-build preview', () => {
       equipment: { ...readyDig.player.equipment, mainHand: null } } }
     expect(preview(noSpade, dig).selected).toMatchObject({ rejection: 'requires_spade',
       reason: 'Own and equip a field spade to dig.' })
-    const used = readyDig.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + readyDig.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+    const used = backpackSlotsUsed(readyDig.player.inventory, readyDig.player.tradeSlots)
     const full: PublicV13Head['state'] = { ...readyDig, player: { ...readyDig.player,
       backpackCapacity: used } }
     expect(preview(full, dig).selected).toMatchObject({ rejection: 'capacity',

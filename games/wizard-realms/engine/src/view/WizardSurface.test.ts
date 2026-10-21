@@ -137,7 +137,7 @@ describe('V29-only mining controls', () => {
     expect(hud).not.toContain('Store sales are not available yet.')
     const full = renderToStaticMarkup(createElement(WizardHud, { projection: {
       ...current, backpack: { ...current.backpack, capacity: 3 } }, onIntent: vi.fn() }))
-    expect(full).toContain('Pack full.')
+    expect(full).toContain('Backpack full: the next 4-log oak harvest needs another item space.')
     expect(full).toContain('sell terrain-bag soil, stone, or ore')
     const map = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
     expect(map).toContain('Excavation level 2')

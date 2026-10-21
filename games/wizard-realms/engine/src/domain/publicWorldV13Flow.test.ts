@@ -1,5 +1,6 @@
 import { IDBDatabase as FakeDatabase, IDBFactory as FakeFactory } from 'fake-indexeddb'
 import { describe, expect, it, vi } from 'vitest'
+import { backpackSlotsUsed } from './backpackSlots'
 import { createAtomicV8Store } from './atomicV8Database'
 import { createAtomicV9Store } from './atomicV9Database'
 import { createAtomicV10Store } from './atomicV10Database'
@@ -601,7 +602,8 @@ describe('unmounted source-selecting public v13 flow', () => {
     ['spade', 'tile--64-76', (s: PublicV13Head['state']) => ({ ...s,
       player: { ...s.player, equipment: { ...s.player.equipment, mainHand: null } } }), 'requires_spade'],
     ['capacity', 'tile--64-76', (s: PublicV13Head['state']) => ({ ...s,
-      player: { ...s.player, backpackCapacity: 14 } }), 'capacity'],
+      player: { ...s.player, backpackCapacity: backpackSlotsUsed(s.player.inventory,
+        s.player.tradeSlots) } }), 'capacity'],
     ['original Y', 'works1:bridge:-102:92:z', (s: PublicV13Head['state']) => ({ ...s,
       player: { ...s.player, position: { ...s.player.position, y: s.player.position.y + 3.01 } } }), 'too_far'],
   ] as const)('does not write or emit an event for %s rejection', async (_name, id, change, code) => {
@@ -804,8 +806,8 @@ describe('unmounted source-selecting public v13 flow', () => {
       player: { ...s.player, coins: 24 } }), 'store-greenway',
     'Not enough coins for leather boots.'],
     ['full bag', (s: PublicV13Head['state']) => ({ ...s,
-      player: { ...s.player, backpackCapacity: s.player.inventory.reduce(
-        (sum, stack) => sum + stack.quantity, 0) } }), 'store-greenway', 'The backpack is full.'],
+      player: { ...s.player, backpackCapacity: backpackSlotsUsed(s.player.inventory,
+        s.player.tradeSlots) } }), 'store-greenway', 'The backpack is full.'],
     ['duplicate inventory', (s: PublicV13Head['state']) => ({ ...s,
       player: { ...s.player, inventory: [...s.player.inventory,
         { itemId: 'leather_boots' as const, quantity: 1 }] } }), 'store-greenway',

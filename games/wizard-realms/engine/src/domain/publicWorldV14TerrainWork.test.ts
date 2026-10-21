@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { backpackSlotsUsed } from './backpackSlots'
 import { encodeDiscoveredTileIds } from './discoveryMask'
 import { confirmPublicV14TerrainWork, previewPublicV14TerrainWork } from './publicWorldV14TerrainWork'
 import { createFreshPublicV14Head } from './publicWorldV14Snapshot'
@@ -118,9 +119,10 @@ describe('pure v14 streamed terrain work', () => {
     const dig = at(digId)
     rejectUnchanged({ ...dig, player: { ...dig.player,
       equipment: { ...dig.player.equipment, mainHand: null } } }, digId, 'requires_spade')
-    const used = dig.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + dig.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-    rejectUnchanged({ ...dig, player: { ...dig.player, backpackCapacity: used } }, digId, 'capacity')
+    const used = backpackSlotsUsed(dig.player.inventory, dig.player.tradeSlots)
+    const full = { ...dig, player: { ...dig.player, backpackCapacity: used } }
+    expect(validatePublicV14State(full, seed)).not.toBeNull()
+    rejectUnchanged(full, digId, 'capacity')
     const work = site(bridgeId)
     if (work.kind === 'dig') throw new Error('Expected bridge')
     const farFloor = resolvePublicV14Surface(bridge, work.to)!

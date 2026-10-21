@@ -252,7 +252,7 @@ describe('checked Greenway quest guidance', () => {
       .map((quest) => quest.status)).toEqual(Array(5).fill('complete'))
   })
 
-  it('asks for pack room before either four-log oak harvest', () => {
+  it('only asks for pack room when the next oak needs a wood space', () => {
     const head = fresh()
     const crowded = { ...head, state: { ...head.state,
       player: { ...head.state.player,
@@ -260,13 +260,11 @@ describe('checked Greenway quest guidance', () => {
           { itemId: 'logs' as const, quantity: 4 },
           { itemId: 'stone' as const, quantity: 12 }] } } }
     expect(projectPublicV43GreenwayQuestChain(crowded)[0].objective)
-      .toMatch(/^Free 1 backpack space before chopping an oak\./)
-    expect(projectPublicV43GreenwayQuestChain(crowded)[0].objective)
-      .toContain('Greenway Outfitters offers 8 more spaces for 70 coins')
+      .not.toMatch(/^Free \d+ backpack space/)
     const withTerrainBag = { ...crowded,
       terrain: { ...crowded.terrain, bag: { ...crowded.terrain.bag, soil: 2 } } }
     expect(projectPublicV43GreenwayQuestChain(withTerrainBag)[0].objective)
-      .toMatch(/^Free 3 backpack spaces before chopping an oak\./)
+      .not.toMatch(/^Free \d+ backpack space/)
     const withListing = { ...crowded, state: { ...crowded.state,
       player: { ...crowded.state.player,
         tradeSlots: [
@@ -277,7 +275,7 @@ describe('checked Greenway quest guidance', () => {
           crowded.state.player.tradeSlots[3],
         ] as typeof crowded.state.player.tradeSlots } } }
     expect(projectPublicV43GreenwayQuestChain(withListing)[0].objective)
-      .toMatch(/^Free 2 backpack spaces before chopping an oak\./)
+      .not.toMatch(/^Free \d+ backpack space/)
     const afterCreek = { ...crowded, state: { ...crowded.state,
       player: { ...crowded.state.player,
         inventory: [...head.state.player.inventory,
@@ -285,14 +283,15 @@ describe('checked Greenway quest guidance', () => {
     greenwayWorks: { ...head.greenwayWorks,
       builtBridgeIds: ['works4:bridge:greenway-creek:-14'] } }
     expect(projectPublicV43GreenwayQuestChain(afterCreek)[1].objective)
-      .toMatch(/^Free 1 backpack space before chopping an oak\./)
+      .not.toMatch(/^Free \d+ backpack space/)
     const noRoom = { ...crowded, state: { ...crowded.state,
       player: { ...crowded.state.player,
         inventory: [...head.state.player.inventory,
-          { itemId: 'logs' as const, quantity: 4 },
-          { itemId: 'stone' as const, quantity: 15 }] } } }
+          { itemId: 'stone' as const, quantity: 19 }] } } }
     expect(projectPublicV43GreenwayQuestChain(noRoom)[0].objective)
-      .toMatch(/^Free 4 backpack spaces before chopping an oak\./)
+      .toMatch(/^Free 1 backpack space before chopping an oak\./)
+    expect(projectPublicV43GreenwayQuestChain(noRoom)[0].objective)
+      .toContain('Greenway Outfitters offers 8 more spaces for 70 coins')
   })
 
   it('does not offer the one-time bag upgrade after a checked purchase fills again', () => {
@@ -309,14 +308,13 @@ describe('checked Greenway quest guidance', () => {
       sum + stack.quantity, 0)
     const fullAgain = { ...purchased, state: { ...purchased.state, player: {
       ...purchased.state.player, inventory: [...purchased.state.player.inventory,
-        { itemId: 'logs' as const, quantity: 4 },
         { itemId: 'stone' as const,
-          quantity: GREENWAY_BAG_UPGRADE.upgradedCapacity - carried - 4 }] } } }
+          quantity: GREENWAY_BAG_UPGRADE.upgradedCapacity - carried }] } } }
     expect(fullAgain.state.player.inventory.reduce((sum, stack) =>
       sum + stack.quantity, 0)).toBe(GREENWAY_BAG_UPGRADE.upgradedCapacity)
     const original = structuredClone(fullAgain)
     const objective = projectPublicV43GreenwayQuestChain(fullAgain)[0].objective
-    expect(objective).toMatch(/^Free 4 backpack spaces before chopping an oak\./)
+    expect(objective).toMatch(/^Free 1 backpack space before chopping an oak\./)
     expect(objective).not.toContain('Greenway Outfitters offers')
     expect(fullAgain).toEqual(original)
   })
