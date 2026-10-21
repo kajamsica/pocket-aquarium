@@ -1,5 +1,6 @@
 import { IDBFactory as FakeFactory } from 'fake-indexeddb'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { backpackSlotsUsed } from './backpackSlots'
 import { createAtomicV8Store } from './atomicV8Database'
 import { createAtomicV9Store } from './atomicV9Database'
 import { createAtomicV10Store } from './atomicV10Database'
@@ -158,9 +159,10 @@ describe('unmounted public terrain-work action', () => {
     const dig = at(digId)
     unchanged({ ...dig, player: { ...dig.player,
       equipment: { ...dig.player.equipment, mainHand: null } } }, digId, 'requires_spade')
-    const used = dig.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + dig.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-    unchanged({ ...dig, player: { ...dig.player, backpackCapacity: used } }, digId, 'capacity')
+    const used = backpackSlotsUsed(dig.player.inventory, dig.player.tradeSlots)
+    const full = { ...dig, player: { ...dig.player, backpackCapacity: used } }
+    expect(isValidPublicWorldV12State(full, null)).toBe(true)
+    unchanged(full, digId, 'capacity')
   })
 
   it('rejects invalid state, ledger, owner, malformed/wet ID and authored occupancy', () => {
@@ -284,8 +286,7 @@ describe('lease-validated compact v13 terrain-work candidate', () => {
         ? { ...stack, quantity: 7 } : stack) } } }, bridgeId, 'not_owned')
     rejected({ ...dig, state: { ...dig.state, player: { ...dig.state.player,
       equipment: { ...dig.state.player.equipment, mainHand: null } } } }, digId, 'requires_spade')
-    const used = dig.state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + dig.state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+    const used = backpackSlotsUsed(dig.state.player.inventory, dig.state.player.tradeSlots)
     rejected({ ...dig, state: { ...dig.state, player: { ...dig.state.player,
       backpackCapacity: used } } }, digId, 'capacity')
   })

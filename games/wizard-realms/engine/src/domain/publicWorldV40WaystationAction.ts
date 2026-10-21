@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from './backpackSlots'
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { publicV25RiverCellAtGrid } from './publicWorldV25River'
 import { publicV26TerrainCellIsWet } from './publicWorldV26TerrainSurface'
@@ -103,17 +104,6 @@ function confirmDecodedWaystationAction(progress: PublicV40WaystationProgress,
         .reduce((sum, stack) => sum + stack.quantity, 0)
       const bagStoneSpent = Math.max(0, 2 - stoneOwned)
       if (progress.terrain.bag.stone < bagStoneSpent) return reject('not_owned')
-      if (bagStoneSpent === 0) {
-        const used = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-        if (!Number.isSafeInteger(used + 6) || used + 6 > player.backpackCapacity)
-          return reject('capacity')
-      } else {
-        const carried = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-          + player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-          + Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
-        if (!Number.isSafeInteger(carried + 6)) return reject('invalid_value')
-        if (carried + 6 > player.backpackCapacity) return reject('capacity')
-      }
       let remaining = 2, logsAdded = false
       const inventory = player.inventory.flatMap((stack) => {
         if (stack.itemId === 'stone' && remaining) {
@@ -130,6 +120,10 @@ function confirmDecodedWaystationAction(progress: PublicV40WaystationProgress,
       if (!logsAdded) inventory.push({ itemId: 'logs', quantity: 8 })
       if (inventory.some(({ quantity }) => !Number.isSafeInteger(quantity)))
         return reject('invalid_value')
+      const bagCount = Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
+      const used = backpackSlotsUsed(inventory, player.tradeSlots, bagCount - bagStoneSpent)
+      if (!Number.isSafeInteger(used)) return reject('invalid_value')
+      if (used > player.backpackCapacity) return reject('capacity')
       const next: PublicV40WaystationProgress = { ...progress, timberBartered: true,
         ...(bagStoneSpent ? { terrain: { ...progress.terrain,
           bag: { ...progress.terrain.bag,

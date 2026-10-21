@@ -163,6 +163,41 @@ function liftCacheRootToV31(v26: ReturnType<typeof cacheReadyRoot>) {
 }
 
 describe('V26 exact root and inherited replay', () => {
+  it('keeps inherited harvests within inventory plus terrain-bag capacity', () => {
+    const source = v26Progress(genesis().head)
+    const tree = source.state.greenway.resources.find((entry) =>
+      entry.id === 'greenway-journey-tree-0')!
+    const player = structuredClone(source.state.player)
+    player.position = { ...tree.position }
+    player.equipment.mainHand = 'woodcutters_axe'
+    player.inventory.push({ itemId: 'logs', quantity: 20 })
+    const state = { ...source.state, player, greenway: { ...source.state.greenway,
+      resources: source.state.greenway.resources.map((entry) => entry.id === tree.id
+        ? { ...entry, health: 1, depleted: false } : entry) } }
+    const terrain = { ...source.terrain, bag: { ...source.terrain.bag, soil: 18 } }
+    const full = { ...source, state, terrain }
+    const witness = { kind: 'legacy-action' as const,
+      intent: { type: 'harvest' as const, resourceId: tree.id } }
+    const original = structuredClone(full)
+    expect(replayPublicV24Witness(old(full), witness)?.state.player.inventory
+      .find((stack) => stack.itemId === 'logs')?.quantity).toBe(24)
+    expect(replayPublicV26InheritedWitness(full, witness)).toBeNull()
+    expect(full).toEqual(original)
+
+    const room = { ...full, terrain: { ...terrain,
+      bag: { ...terrain.bag, soil: 17 } } }
+    expect(replayPublicV26InheritedWitness(room, witness)?.state.player.inventory
+      .find((stack) => stack.itemId === 'logs')?.quantity).toBe(24)
+
+    const inheritedOverfull = { ...full, terrain: { ...terrain,
+      bag: { ...terrain.bag, soil: 19 } } }
+    expect(replayPublicV26InheritedWitness(inheritedOverfull, { kind: 'checkpoint' }))
+      .toEqual(inheritedOverfull)
+    const moved = replayPublicV26InheritedWitness(inheritedOverfull,
+      { kind: 'frame-batch/v1', frames: [move(0.04, 0)] })
+    expect(moved?.state.player.position.x).toBeGreaterThan(player.position.x)
+  })
+
   it.each(['greenway-alpha', 'wizard-realms'])(
     'replays a checked on-cache-cell excavation through V26 and V31 in %s', async (worldSeed) => {
       const root = cacheReadyRoot(worldSeed)

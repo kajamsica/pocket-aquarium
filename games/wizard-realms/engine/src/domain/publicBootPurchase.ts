@@ -1,4 +1,5 @@
 import { PUBLIC_V11_BOOTS_LISTING_ID, PUBLIC_V11_BOOTS_PRICE } from './publicWorldGait'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import type { PublicWorldEvent } from './publicWorldRuntime'
 import type { PublicWorldV11State } from './publicWorldV11State'
 
@@ -24,9 +25,8 @@ export function publicBootPurchaseCandidate(state: BootWorld, storeId: string):
     return { rejection: 'You already own leather boots.' }
   }
   if (state.player.coins < PUBLIC_V11_BOOTS_PRICE) return { rejection: 'Not enough coins for leather boots.' }
-  const used = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-    + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-  if (used >= state.player.backpackCapacity) return { rejection: 'The backpack is full.' }
+  if (backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'leather_boots', 1)
+    > state.player.backpackCapacity) return { rejection: 'The backpack is full.' }
   if (!Number.isSafeInteger(state.eventSequence + 1)) return { rejection: 'The event sequence is exhausted.' }
   const eventSequence = state.eventSequence + 1
   return { player: { ...state.player, coins: state.player.coins - PUBLIC_V11_BOOTS_PRICE,

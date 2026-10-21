@@ -1,3 +1,4 @@
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import { publicV16InsideGreenway } from './publicWorldV16GreenwaySites'
 import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { publicV25StratumAt } from './publicWorldV25Strata'
@@ -41,10 +42,9 @@ export function projectPublicV43GreenwayQuestChain(
   const { player } = state
   const logs = player.inventory.reduce((total, stack) =>
     total + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
-  const carried = player.inventory.reduce((total, stack) => total + stack.quantity, 0)
-    + player.tradeSlots.reduce((total, slot) => total + slot.quantity, 0)
-    + Object.values(progress.terrain.bag).reduce((total, quantity) => total + quantity, 0)
-  const oakRoom = Math.max(0, 4 - (player.backpackCapacity - carried))
+  const bagCount = Object.values(progress.terrain.bag).reduce((total, quantity) => total + quantity, 0)
+  const oakRoom = Math.max(0, backpackSlotsAfterAdd(player.inventory,
+    player.tradeSlots, 'logs', 4, bagCount) - player.backpackCapacity)
   const bagOffer = player.backpackCapacity === GREENWAY_BAG_UPGRADE.initialCapacity
     && progress.greenwayBagUpgrade?.claimedAtSequence == null
     ? ` Greenway Outfitters offers ${GREENWAY_BAG_UPGRADE.extraSlots} more spaces for ${GREENWAY_BAG_UPGRADE.price} coins.` : ''

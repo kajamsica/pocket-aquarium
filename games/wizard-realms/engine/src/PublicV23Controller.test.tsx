@@ -2188,9 +2188,11 @@ describe('V27 starter route coaching', () => {
       .toContain('8-log South creek bridge (4/8)')
     expect(publicV27StarterGuide(withLogs(8), emptyWorks).action)
       .toContain('Build a marked Ready South creek bridge with 8 logs')
-    const full = publicV27StarterGuide(withLogs(base.backpack.capacity), emptyWorks)
+    expect(publicV27StarterGuide(withLogs(20), emptyWorks).summary).not.toContain('Pack full')
+    const full = publicV27StarterGuide({ ...base, backpack: { ...base.backpack,
+      stacks: [{ ...axe, id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: 20 }] } }, emptyWorks)
     expect(full.summary).toContain('Pack full')
-    expect(full.action).toContain('use or gather toward 8 logs for a Ready South creek bridge before the north ladder')
+    expect(full.action).toContain('sell carried stone at Greenway Outfitters')
     expect(full.action).toContain('Excavated terrain-bag materials cannot be sold yet')
     expect(full.action).not.toContain('sell terrain-bag')
     const soilBag = publicV27StarterGuide({ ...base,
@@ -2204,7 +2206,7 @@ describe('V27 starter route coaching', () => {
   it('prioritizes both saved routes over a full Greenway pack', () => {
     const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
     const full = { ...base, backpack: { ...base.backpack,
-      stacks: [{ ...base.backpack.stacks[0]!, id: 'logs-test', itemId: 'logs',
+      stacks: [{ ...base.backpack.stacks[0]!, id: 'stone-test', itemId: 'stone', name: 'Stone',
         quantity: base.backpack.capacity }] } }
     const works = { builtLadderIds: [ladder], builtBridgeIds: [bridge], dugTileIds: [] }
     const stage = publicV27StarterGuide(full, works,

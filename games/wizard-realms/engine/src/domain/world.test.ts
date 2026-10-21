@@ -4,6 +4,7 @@ import {
   type EquipmentSlot, type WizardEvent, type WizardIntent, type WizardWorldState,
 } from './index'
 import { areaAt, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
+import { backpackSlotsUsed } from './backpackSlots'
 import type { MireglassV6Player } from './mireglassExpedition'
 import { isRestorableWizardSave } from './persistence'
 import { canonicalRouteSites, routeBuildOptions } from './routeSites'
@@ -173,6 +174,28 @@ describe('Wizard world domain', () => {
     expect(serializeWizardWorld(invalid)).toBe(before)
     expect(rejected.state.player).toEqual(invalid.player)
     expect(rejected.state.tick).toBe(invalid.tick + 1)
+  })
+
+  it('harvests into a partly filled wood space when the pack is otherwise full', () => {
+    const ready = createWizardWorld('stacked-harvest')
+    const tree = ready.resources.find((resource) => resource.id === 'greenway-journey-tree-0')!
+    tree.health = 1
+    ready.player.position = { ...tree.position }
+    ready.player.equipment.mainHand = 'woodcutters_axe'
+    ready.player.inventory.push({ itemId: 'logs', quantity: 8 }, { itemId: 'stone', quantity: 18 })
+    expect(backpackSlotsUsed(ready.player.inventory, ready.player.tradeSlots)).toBe(20)
+    const harvested = advanceWizardWorld(ready, [{ type: 'harvest', resourceId: tree.id }])
+    expect(harvested.rejections).toEqual([])
+    expect(harvested.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 12 })
+    expect(backpackSlotsUsed(harvested.state.player.inventory, harvested.state.player.tradeSlots)).toBe(20)
+
+    const noNewSpace = copy(ready)
+    noNewSpace.player.inventory.find((stack) => stack.itemId === 'logs')!.quantity = 20
+    const before = serializeWizardWorld(noNewSpace)
+    const rejected = advanceWizardWorld(noNewSpace, [{ type: 'harvest', resourceId: tree.id }])
+    expect(rejected.rejections[0]?.code).toBe('capacity')
+    expect(rejected.events).toEqual([])
+    expect(serializeWizardWorld(noNewSpace)).toBe(before)
   })
 
   it('discovers rings, rejects undiscovered travel, and teleports between discovered rings', () => {
@@ -580,7 +603,7 @@ describe('Wizard world domain', () => {
     locked.player.position = { ...ridge.position }
     reject(locked, ridge.id, 'skill_locked')
     const full = copy(state)
-    full.player.inventory.push({ itemId: 'logs', quantity: 18 })
+    full.player.inventory.push({ itemId: 'stone', quantity: 18 })
     reject(full, practice.id, 'capacity')
     const wet = copy(state)
     wet.tiles.find((tile) => tile.id === 'tile-5-4')!.terrain = 'wetland'
@@ -673,13 +696,25 @@ describe('Wizard world domain', () => {
     const full = copy(createWizardWorld('greenway-alpha'))
     full.player.inventory.push({ itemId: 'logs', quantity: 19 })
     const listed = advanceWizardWorld(full, [{ type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 7 }]).state
+    listed.player.inventory.push({ itemId: 'stone', quantity: 17 })
+    expect(backpackSlotsUsed(listed.player.inventory, listed.player.tradeSlots)).toBe(20)
     const cancelled = advanceWizardWorld(listed, [{ type: 'cancel_trade_listing', slotIndex: 0 }])
     expect(cancelled.rejections).toEqual([])
     expect(cancelled.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 19 })
     expect(cancelled.state.player.tradeSlots[0].itemId).toBeNull()
 
+    const splitFull = copy(cancelled.state)
+    splitFull.player.inventory.find((stack) => stack.itemId === 'stone')!.quantity = 18
+    expect(backpackSlotsUsed(splitFull.player.inventory, splitFull.player.tradeSlots)).toBe(20)
+    const rejectedSplit = advanceWizardWorld(splitFull, [
+      { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 1, unitPrice: 7 },
+    ])
+    expect(rejectedSplit.rejections[0]?.code).toBe('capacity')
+    expect(rejectedSplit.state.player).toEqual(splitFull.player)
+
     const corrupt = copy(listed)
-    corrupt.player.inventory = [{ itemId: 'logs', quantity: 20 }]
+    corrupt.player.inventory = [{ itemId: 'woodcutters_axe', quantity: 1 },
+      { itemId: 'logs', quantity: 20 }, { itemId: 'stone', quantity: 18 }]
     const before = structuredClone(corrupt.player)
     const rejected = advanceWizardWorld(corrupt, [{ type: 'cancel_trade_listing', slotIndex: 0 }])
     expect(rejected.rejections[0]?.code).toBe('capacity')

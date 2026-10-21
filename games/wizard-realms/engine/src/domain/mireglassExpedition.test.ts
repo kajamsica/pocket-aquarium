@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { backpackSlotsUsed } from './backpackSlots'
 import { createGeneratedWorld } from './generation'
 import { MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing, mireglassResources } from './mireglassContent'
 import {
@@ -338,11 +339,20 @@ describe('Mireglass player and region action authority', () => {
       { type: 'equip_item', itemId: 'woodcutters_axe' }))
     const tooFar = at(armed.player, { ...trees[0].tile.center, x: trees[0].tile.center.x + 3.01 })
     rejected(applyMireglassExpeditionAction(seed, tooFar, region, forged), 'too_far', tooFar, region)
-    const full = { ...armed.player, inventory: [...armed.player.inventory, { itemId: 'logs' as const, quantity: 16 }] }
+    const partial = { ...armed.player, inventory: [...armed.player.inventory,
+      { itemId: 'logs' as const, quantity: 16 }, { itemId: 'stone' as const, quantity: 18 }] }
+    expect(backpackSlotsUsed(partial.inventory, partial.tradeSlots)).toBe(20)
+    const filled = accepted(applyMireglassExpeditionAction(seed, partial, region,
+      { type: 'chop_tree', resourceId: trees[0].id }))
+    expect(count(filled.player, 'logs')).toBe(20)
+    expect(backpackSlotsUsed(filled.player.inventory, filled.player.tradeSlots)).toBe(20)
+    const full = { ...armed.player, inventory: [...armed.player.inventory,
+      { itemId: 'logs' as const, quantity: 20 }, { itemId: 'stone' as const, quantity: 18 }] }
     rejected(applyMireglassExpeditionAction(seed, full, region,
       { type: 'chop_tree', resourceId: trees[0].id }), 'capacity', full, region)
     const escrowed = { ...armed.player,
-      inventory: [...armed.player.inventory, { itemId: 'logs' as const, quantity: 15 }],
+      inventory: [...armed.player.inventory, { itemId: 'logs' as const, quantity: 20 },
+        { itemId: 'stone' as const, quantity: 17 }],
       tradeSlots: [{ slotIndex: 0 as const, itemId: 'stone' as const, quantity: 1, unitPrice: 2 },
         ...armed.player.tradeSlots.slice(1)] as typeof armed.player.tradeSlots }
     rejected(applyMireglassExpeditionAction(seed, escrowed, region,
@@ -411,7 +421,8 @@ describe('Mireglass player and region action authority', () => {
     const novice = { ...equipped.player, skillXp: { ...equipped.player.skillXp, excavation: 29 } }
     rejected(applyMireglassExpeditionAction(seed, novice, equipped.region,
       { type: 'excavate_cache' }), 'skill_locked', novice, equipped.region)
-    const full = { ...equipped.player, inventory: [...equipped.player.inventory, { itemId: 'logs' as const, quantity: 18 }] }
+    const full = { ...equipped.player, inventory: [...equipped.player.inventory,
+      { itemId: 'logs' as const, quantity: 20 }, { itemId: 'stone' as const, quantity: 17 }] }
     rejected(applyMireglassExpeditionAction(seed, full, equipped.region,
       { type: 'excavate_cache' }), 'capacity', full, equipped.region)
     const atOutpost = at(fresh, anchors.salvager.tile.center)
@@ -475,7 +486,8 @@ describe('Mireglass player and region action authority', () => {
     const tooFar = at(spade.player, { ...tree.tile.center, x: tree.tile.center.x + 3.01 })
     rejected(applyMireglassExpeditionAction(seed, tooFar, spade.region,
       { type: 'dig_tree_stump', resourceId: tree.id }), 'too_far', tooFar, spade.region)
-    const full = { ...spade.player, inventory: [...spade.player.inventory, { itemId: 'logs' as const, quantity: 14 }] }
+    const full = { ...spade.player, inventory: [...spade.player.inventory,
+      { itemId: 'logs' as const, quantity: 16 }, { itemId: 'stone' as const, quantity: 17 }] }
     rejected(applyMireglassExpeditionAction(seed, full, spade.region,
       { type: 'dig_tree_stump', resourceId: tree.id }), 'capacity', full, spade.region)
     const maxXp = { ...spade.player, xp: Number.MAX_SAFE_INTEGER,

@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from './backpackSlots'
 import { mireglassAnchors } from './mireglassContent'
 import { exactPublicV23 } from './publicWorldV23Snapshot'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
@@ -80,9 +81,8 @@ function checked(raw: PublicV36MarkerProgress, rawWitness: unknown): Checked {
       || player.tradeSlots.some((slot) =>
         slot.itemId === 'mireglass_reach/item/waders' && slot.quantity > 0)
     const reward = owned ? 'coins' : 'fen_waders'
-    const carried = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-      + Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
+    const bagCount = Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
+    const carried = backpackSlotsUsed(player.inventory, player.tradeSlots, bagCount)
     if (!Number.isSafeInteger(carried)) return reject('invalid_value')
     if (!owned && carried + 1 > player.backpackCapacity) return reject('capacity')
     if (![state.eventSequence + 1, player.xp + 50, player.skillXp.spellcraft + 50,

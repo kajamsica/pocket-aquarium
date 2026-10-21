@@ -202,14 +202,18 @@ describe('public beginner wood tips', () => {
       state.player.tradeSlots[1], state.player.tradeSlots[2], state.player.tradeSlots[3],
     ] },
   })
+  const withStone = (state: PublicWorldState, quantity: number): PublicWorldState => ({
+    ...state, player: { ...state.player,
+      inventory: [...state.player.inventory, { itemId: 'stone', quantity }] },
+  })
 
-  it('starts with the waystone and explains the axe, oak prompt, and four-slot harvest', () => {
+  it('starts with the waystone and explains the axe, oak prompt, and wood-stack room', () => {
     const tip = publicBeginnerWoodTip(fresh())
     expect(tip?.id).toBe('intro')
     expect(tip?.body).toContain('Follow Next for the quest, starting with the waystone')
     expect(tip?.body).toContain('Your woodcutter axe is in your backpack')
     expect(tip?.body).toContain('“Chop”')
-    expect(tip?.body).toContain('E/Interact twice for 4 logs when 4 backpack slots are free')
+    expect(tip?.body).toContain('E/Interact twice for 4 logs when your pack has room for a wood stack')
   })
 
   it('explains low steps, instant sale, and listing choices with four carried logs', () => {
@@ -221,19 +225,19 @@ describe('public beginner wood tips', () => {
     expect(tip?.body).toContain('listed logs still reserve backpack space')
   })
 
-  it('warns before a four-log harvest when carried or reserved items leave fewer than four slots', () => {
-    expect(publicBeginnerWoodTip(carrying(fresh(), 15))?.id).toBe('uses') // exactly four slots remain
-    const near = publicBeginnerWoodTip(carrying(fresh(), 16))
-    expect(near).toMatchObject({ id: 'full', title: 'Make room for logs' })
-    expect(near?.body).toContain('free 4 backpack slots before its second Chop')
-    expect(near?.body).toContain('Sell all at Greenway Outfitters (2g per log)')
-    expect(near?.body).toContain('Listings still reserve space')
-    expect(publicBeginnerWoodTip(carrying(fresh(), 19))).toMatchObject({ id: 'full', title: 'Backpack full' })
-    expect(publicBeginnerWoodTip(listing(carrying(fresh(), 4), 12))?.id).toBe('full')
-    const reservedOnly = publicBeginnerWoodTip(listing(fresh(), 16))
+  it('warns only when the next four logs cross a stack boundary without a free space', () => {
+    expect(publicBeginnerWoodTip(carrying(fresh(), 19))?.id).toBe('uses')
+    expect(publicBeginnerWoodTip(withStone(carrying(fresh(), 8), 18))?.id).toBe('uses')
+    const full = publicBeginnerWoodTip(withStone(carrying(fresh(), 19), 18))
+    expect(full).toMatchObject({ id: 'full', title: 'Backpack full' })
+    expect(full?.body).toContain('free 1 backpack space before its second Chop')
+    expect(full?.body).toContain('Sell all at Greenway Outfitters (2g per log)')
+    expect(full?.body).toContain('Listings reserve their own space')
+    expect(publicBeginnerWoodTip(withStone(listing(carrying(fresh(), 19), 12), 17))?.id).toBe('full')
+    const reservedOnly = publicBeginnerWoodTip(withStone(listing(fresh(), 16), 18))
     expect(reservedOnly?.id).toBe('full')
-    expect(reservedOnly?.body).toContain('A sale frees those slots')
-    expect(reservedOnly?.body).toContain('canceling returns logs to your backpack and does not make room')
+    expect(reservedOnly?.body).toContain('A sale frees space')
+    expect(reservedOnly?.body).toContain('canceling returns logs to your backpack and may not make room')
   })
 
   it('suppresses the tip outside beginner Greenway and avoids an unconditional Chop when space is tight', () => {
@@ -247,8 +251,8 @@ describe('public beginner wood tips', () => {
     expect(publicBeginnerWoodTip({ ...logs, player: { ...logs.player,
       skillXp: { ...logs.player.skillXp, woodcutting: 120 } } })).toBeNull()
     expect(publicBeginnerWoodTip({ ...base, player: { ...base.player,
-      inventory: [...base.player.inventory, { itemId: 'stone', quantity: 16 }] } })?.body)
-      .toContain('when 4 backpack slots are free')
+      inventory: [...base.player.inventory, { itemId: 'stone', quantity: 19 }] } })?.body)
+      .toContain('when your pack has room for a wood stack')
     expect(publicBeginnerWoodTip({ ...carrying(base, 2), player: { ...carrying(base, 2).player,
       skillXp: { ...base.player.skillXp, woodcutting: 20 } } })).toBeNull()
   })

@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from '../domain/backpackSlots'
 import { resolvePublicV17GreenwaySite } from '../domain/publicWorldV17GreenwaySites'
 import { resolvePublicV28RiverBridge } from '../domain/publicWorldV28RiverBridgeSites'
 import type { WizardViewProjection } from './contracts'
@@ -43,10 +44,11 @@ export function publicV35LedgerQuest(view: WizardViewProjection,
       ? 'equip your enchanted pick'
       : mining?.basicPickOwned ? 'equip your basic pick'
         : 'get a basic pick at Greenway Outfitters and equip it'
-    const carried = view.backpack.stacks.reduce((sum, stack) => sum + stack.quantity, 0)
-      + view.tradeListings.reduce((sum, listing) => sum + (listing?.quantity ?? 0), 0)
-      + Object.values(view.v26TerrainBag ?? {}).reduce((sum, quantity) => sum + quantity, 0)
-    const room = carried >= view.backpack.capacity
+    const room = backpackSlotsUsed(view.backpack.stacks,
+      view.tradeListings.map((listing) => ({ itemId: listing?.itemId ?? null,
+        quantity: listing?.quantity ?? 0 })),
+      Object.values(view.v26TerrainBag ?? {}).reduce((sum, quantity) => sum + quantity, 0))
+      >= view.backpack.capacity
       ? 'Your pack is full; use or sell carried materials to make room. ' : ''
     return finish('sample', `${room}Return to Greenway or a streamed area with active terrain controls. Move within 5 m of clear, revealed dry loam; equip a field spade, select Dig, and tap the same ground cell twice to remove its two soil layers. Then ${pick}, select Mine, and tap the exposed stone layer. Keep one stone in your terrain bag.`, pendingReward)
   }

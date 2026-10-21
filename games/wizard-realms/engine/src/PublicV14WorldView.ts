@@ -244,7 +244,7 @@ export function publicWorldV14ViewProjection(state: PublicV14State, active: Acti
     offHand: equipped('offHand') }
   const trade = (index: 0 | 1 | 2 | 3) => {
     const slot = player.tradeSlots[index]
-    return slot.itemId ? { id: `trade-${index}`, itemName: item(slot.itemId, 1).name,
+    return slot.itemId ? { id: `trade-${index}`, itemId: slot.itemId, itemName: item(slot.itemId, 1).name,
       quantity: slot.quantity, unitPrice: slot.unitPrice } : null
   }
   const gait = publicV11Gait(player.equipment.feet, walkRequested)

@@ -1,4 +1,5 @@
 import { preservesPublicV13History } from './publicV13History'
+import { backpackSlotsUsed } from './backpackSlots'
 import { preservesPublicV17GreenwayWorks } from './publicWorldV17Validation'
 import { samePublicV14Value } from './publicWorldV14Validation'
 import { decodePublicV14FrameWitness } from './publicWorldV14Snapshot'
@@ -126,6 +127,10 @@ export function replayPublicV26InheritedWitness(before: PublicV26Progress,
         acceptsSegment(prior, after, terrain))
       : replayPublicV24Witness(old, witness)
     if (!next) return null
+    const terrainUnits = Object.values(terrain.bag).reduce((total, quantity) => total + quantity, 0)
+    const beforeUsed = backpackSlotsUsed(old.state.player.inventory, old.state.player.tradeSlots, terrainUnits)
+    const afterUsed = backpackSlotsUsed(next.state.player.inventory, next.state.player.tradeSlots, terrainUnits)
+    if (afterUsed > next.state.player.backpackCapacity && afterUsed > beforeUsed) return null
     const end = projectPublicV26Pose(next, terrain)
     if (!end) return null
     const from = old.state.player.position, to = next.state.player.position

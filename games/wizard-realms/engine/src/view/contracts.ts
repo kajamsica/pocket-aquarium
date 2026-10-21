@@ -143,6 +143,7 @@ export type WizardLandmark =
 
 export interface WizardTradeListing {
   id: string
+  itemId?: string
   itemName: string
   quantity: number
   unitPrice: number

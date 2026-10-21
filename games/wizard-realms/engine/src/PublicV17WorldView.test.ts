@@ -116,10 +116,10 @@ describe('v17 Greenway aimed Works view', () => {
     // Complete V17 projection content, including the canonical visual-only halo.
     expect(Object.fromEntries(Object.entries(views).map(([name, view]) =>
       [name, digest(view)]))).toEqual({
-      fresh: '171344:16a0c70436d2fbfe',
-      partial: '171341:1dfe0ce29fe6e209',
-      built: '171786:17cc5013720080c5',
-      dug: '171664:1a17e1fe38e6fe3b',
+      fresh: '171365:43aa562a3da84927',
+      partial: '171362:1093b313cd93116a',
+      built: '171807:269e9f2071430cc',
+      dug: '171685:e4942d998fd4cfc6',
     })
   })
 

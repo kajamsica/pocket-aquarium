@@ -1,5 +1,6 @@
 import { isValidMireglassRegionProgress, isValidMireglassV6Player } from './mireglassExpedition'
 import type { MireglassRegionProgress, MireglassV6Player } from './mireglassExpedition'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import { mireglassHerbPatches } from './mireglassHerbPatches'
 
 export const HERB_CYCLE_TICKS = 6000
@@ -62,9 +63,8 @@ export function applyMireglassHerbForage(
   if (previous && previous.cycle >= cycle) return reject('already_harvested', 'Herb patch has already been harvested this cycle.')
   if (Math.hypot(player.position.x - patch.tile.center.x, player.position.y - patch.tile.center.y,
     player.position.z - patch.tile.center.z) > 3) return reject('too_far', 'Herb patch is out of reach.')
-  const carried = player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-    + player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-  if (carried + 1 > player.backpackCapacity) return reject('capacity', 'Backpack cannot hold the herb.')
+  if (backpackSlotsAfterAdd(player.inventory, player.tradeSlots, 'marsh_herb', 1)
+    > player.backpackCapacity) return reject('capacity', 'Backpack cannot hold the herb.')
 
   const nextPlayer = structuredClone(player)
   const herbs = nextPlayer.inventory.find((stack) => stack.itemId === 'marsh_herb')

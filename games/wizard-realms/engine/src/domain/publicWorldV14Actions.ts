@@ -1,4 +1,5 @@
 import { discoveryMaskHasTileId, encodeDiscoveredTileIds } from './discoveryMask'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import { publicBootPurchaseCandidate } from './publicBootPurchase'
 import { nearbyWorldTileIds, PUBLIC_SPELL_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { advancePublicV14GreenwayFrame } from './publicWorldV14GreenwayFrame'
@@ -48,9 +49,6 @@ const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.
 const owned = (inventory: readonly { itemId: string; quantity: number }[], itemId: string) =>
   inventory.filter((stack) => stack.itemId === itemId)
     .reduce((count, stack) => count + stack.quantity, 0)
-const capacityUsed = (state: PublicV14State) => state.player.inventory
-  .reduce((count, stack) => count + stack.quantity, 0)
-  + state.player.tradeSlots.reduce((count, slot) => count + slot.quantity, 0)
 const levelForXp = (xp: number) => 1 + Math.floor(xp / 100)
 
 /** Finish the action with the same 50 ms clock, RNG, gravity and market step as movement. */
@@ -191,7 +189,8 @@ export function advancePublicV14GreenwayAction(state: PublicV14State,
       if (listing.stock < 1) return reject(state, intent, 'out_of_stock', 'Field spades are out of stock.')
       if (state.player.coins < listing.price) return reject(state,
         intent, 'insufficient_coins', 'Not enough coins for a field spade.')
-      if (capacityUsed(state) + 1 > state.player.backpackCapacity) return reject(state,
+      if (backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'field_spade', 1)
+        > state.player.backpackCapacity) return reject(state,
         intent, 'capacity', 'The backpack is full.')
       return finish(state, { ...state, greenway: { ...state.greenway,
         stores: [{ ...store, listings: store.listings.map((offer) => offer.id === listing.id
@@ -259,7 +258,8 @@ export function advancePublicV14GreenwayAction(state: PublicV14State,
       return reject(state, intent, 'requires_axe', 'Equip the woodcutter axe first.')
     }
     const finalHit = resource.health === 1
-    if (finalHit && capacityUsed(state) + TREE_YIELD > state.player.backpackCapacity) {
+    if (finalHit && backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'logs', TREE_YIELD)
+      > state.player.backpackCapacity) {
       return reject(state, intent, 'capacity', 'The backpack cannot hold four logs.')
     }
     if (finalHit && (!Number.isSafeInteger(state.player.xp + TREE_XP)

@@ -71,6 +71,8 @@ import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint,
   publicV44FamiliarObjective }
   from './view/PublicV43FamiliarQuest'
 import { PublicV43QuestJournal, selectPublicV43QuestLead } from './view/PublicV43QuestJournal'
+import { PublicV43StarterChapter, projectPublicV43StarterChapter }
+  from './view/PublicV43StarterChapter'
 import type { PublicV37EntryBindings } from './PublicV37Entry'
 import { commitPublicV37, requestPublicV37ReturnHome } from './domain/publicWorldV37Flow'
 import type { PublicV37Start } from './domain/publicWorldV37Flow'
@@ -103,6 +105,7 @@ import { projectPublicV32WorldView, PUBLIC_V32_CROWN_INTERACTION_ID,
   publicV32NodeInteractionId } from './PublicV32WorldView'
 import { projectPublicV33FairyRingView } from './PublicV33WorldView'
 import { publicV11Gait } from './domain/publicWorldGait'
+import { backpackSlotsAfterAdd, backpackSlotsUsed } from './domain/backpackSlots'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
@@ -514,10 +517,14 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     sum + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
   const stone = view.backpack.stacks.reduce((sum, stack) =>
     sum + (stack.itemId === 'stone' ? stack.quantity : 0), 0)
-  const carried = view.backpack.stacks.reduce((sum, stack) => sum + stack.quantity, 0)
-    + view.tradeListings.reduce((sum, listing) => sum + (listing?.quantity ?? 0), 0)
-    + Object.values(view.v26TerrainBag ?? {}).reduce((sum, quantity) => sum + quantity, 0)
-  const full = carried >= view.backpack.capacity
+  const listed = view.tradeListings.map((listing) => ({ itemId: listing?.itemId ?? null,
+    quantity: listing?.quantity ?? 0 }))
+  const terrainUnits = Object.values(view.v26TerrainBag ?? {})
+    .reduce((sum, quantity) => sum + quantity, 0)
+  const full = backpackSlotsUsed(view.backpack.stacks, listed, terrainUnits)
+    >= view.backpack.capacity
+  const logHarvestBlocked = backpackSlotsAfterAdd(view.backpack.stacks, listed, 'logs', 4,
+    terrainUnits) > view.backpack.capacity
   const ladder = works.builtLadderIds.length > 0, creekBridge = works.builtBridgeIds.length > 0
   const streamed = context.movementOwner === 'streamed'
   // This coordinate describes the Greenway cliff only, never the streamed world.
@@ -532,10 +539,10 @@ export function publicV27StarterGuide(view: WizardViewProjection,
   const action = streamed ? context.riverBridgeBuilt
     ? 'Connected-river bridge built: use its saved deck from a dry bank to cross.'
     : logs >= 8 ? 'You have 8 logs: open Works at a marked Ready dry-bank site, build the connected-river bridge, then cross its deck.'
-      : `${full ? 'Make pack room, then return' : 'Return'} east${ladder ? ' via your saved north ladder' : ''} to accessible Greenway oaks. Gather ${8 - logs} more logs for the 8-log connected-river bridge, then come back west to a marked Ready dry-bank site.`
+      : `${logHarvestBlocked ? 'Make pack room, then return' : 'Return'} east${ladder ? ' via your saved north ladder' : ''} to accessible Greenway oaks. Gather ${8 - logs} more logs for the 8-log connected-river bridge, then come back west to a marked Ready dry-bank site.`
     : ladder && context.riverBridgeBuilt
     ? `Routes ready: ${ladderRoute} ${riverRoute}`
-    : full
+    : logHarvestBlocked && logs < 8
     ? `Pack full: ${context.riverBridgeBuilt
       ? 'make room before exploring beyond your saved connected-river bridge'
       : !ladder && logs >= 4
@@ -924,7 +931,7 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     : logs >= 8 ? 'Connected-river bridge next: build at a Ready bank'
       : 'Connected-river bridge next: return for 8 logs'
     : ladder && context.riverBridgeBuilt ? 'Routes ready: connected-river bridge saved'
-    : full ? 'Pack full: make room to gather' : ladder
+    : logHarvestBlocked && logs < 8 ? 'Pack full: make room to gather' : ladder
       ? upperShelf ? logs >= 8 ? 'Upper shelf: head west with bridge logs'
           : 'Upper shelf: gather 8 bridge logs' : 'Ladder ready: find a river crossing'
       : creekBridge ? 'Bridge ready: cross to the far bank' : logs >= 8
@@ -1056,6 +1063,10 @@ export function publicV31SoilRejectionMessage(reason: string): string {
   if (reason === 'occupied') return 'This ground is underfoot, occupied, or reserved for a bridge or ladder. Try open dry ground a few steps away.'
   if (reason === 'too_far') return 'Move within 5 m of the ground cell before placing or removing soil.'
   if (reason === 'wet') return 'Soil cannot be placed in the river or wetland. Choose dry ground.'
+  if (reason === 'open_column') return 'This is an open dig hole. Place soil on a different intact dry cell, or Fill the hole first.'
+  if (reason === 'unrevealed') return 'Walk closer to reveal this ground before placing soil.'
+  if (reason === 'invalid_pose') return 'Land on supported ground before placing soil.'
+  if (reason === 'already_raised') return 'This cell already has a raised soil step. Choose a different clear dry cell.'
   if (reason === 'requires_soil') return 'Dig safe dry ground first to collect soil for this lift.'
   if (reason === 'requires_tool') return 'Equip your owned field spade to place or remove soil.'
   return `Soil action rejected: ${reason}.`
@@ -1546,6 +1557,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const [aimZ, setAimZ] = useState<number | null>(null)
   const [traceJson, setTraceJson] = useState('')
   const [obstacleCue, setObstacleCue] = useState<string | null>(null)
+  const [soilPlaceRejection, setSoilPlaceRejection] = useState<string | null>(null)
   const held = useRef<readonly [number, number]>([0, 0])
   const blockedHeldVector = useRef<readonly [number, number] | null>(null)
   const matchesBlockedHeld = (vector: readonly [number, number]) =>
@@ -1883,6 +1895,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if ('kind' in intent && intent.kind === 'sedgehorn-mount/v1') {
             setWorkMode(false); setOpenStoreId(null)
           }
+          if ('kind' in intent && intent.kind === 'soil-place/v1') setSoilPlaceRejection(null)
           tell('kind' in intent && intent.kind === 'return-home-request'
             ? 'Returned home safely. A 30-minute rescue cooldown has started.'
             : 'kind' in intent && intent.kind === 'sedgehorn-mount/v1'
@@ -1976,7 +1989,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : result.events.some((event) => event.type === 'resource_harvested')
               ? 'Oak felled. Four logs saved to your backpack.'
             : result.events.at(-1)?.type.replaceAll('_', ' ') ?? 'Action saved.')
-        } else if (result.status === 'rejected') tell(v31 && result.reason === 'soil_overlap'
+        } else if (result.status === 'rejected') {
+          const rejectionMessage = v31 && result.reason === 'soil_overlap'
           ? 'Raised soil overlaps this route or build. Equip your spade and Dig the raised cell to remove it before building.'
           : 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
             || intent.kind === 'sedgehorn-dismount/v1')
@@ -2033,7 +2047,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : 'kind' in intent && intent.kind === 'terrain-action/v1' ? publicV26TerrainRejectionMessage(result.reason ?? 'unavailable_here')
           : 'kind' in intent && (intent.kind === 'pit-ladder/v1'
             || intent.kind === 'return-home-request') ? publicV26SafetyRejectionMessage(result.reason ?? 'unavailable_here')
-          : `Action rejected: ${result.reason}.`)
+          : `Action rejected: ${result.reason}.`
+          if ('kind' in intent && intent.kind === 'soil-place/v1')
+            setSoilPlaceRejection(rejectionMessage)
+          tell(rejectionMessage)
+        }
         else if (result.status === 'blocked') { held.current = [0, 0]
           timedHeld.current = null; edgePulse.current = null; inputQueue.current = [];
           tell(`Save blocked: ${result.reason}.`) }
@@ -2046,6 +2064,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     })()
   }
   const queueChecked = (intent: CheckedIntent) => {
+    if ('kind' in intent && intent.kind === 'soil-place/v1') setSoilPlaceRejection(null)
     if (v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
       && (!('kind' in intent) || intent.kind !== 'sedgehorn-dismount/v1')) {
       tell('Dismount the Sedgehorn to gather, build, trade, or use quest actions.'); return
@@ -2730,6 +2749,23 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       (snapshot as PublicV43Progress).familiar.phase,
       (snapshot as PublicV43Progress).mountTraining?.careWitnesses.length ?? 0)
     : questCue?.objective
+  const starterChapter = v43
+    ? projectPublicV43StarterChapter(snapshot as PublicV43Progress) : null
+  const chapterHead = v43 ? snapshot as PublicV43Progress : null
+  const laterWorldMilestone = chapterHead && (
+    chapterHead.greenwayWorks.builtLadderIds.length > 0
+    || chapterHead.state.greenway.studiedInscriptionIds.includes('greenway_waystone')
+    || chapterHead.riverBridgeIds.length > 0
+    || chapterHead.ledgerSurveyBridgeId !== null
+    || chapterHead.ledgerClaimReward !== null
+    || chapterHead.southbankReached
+    || chapterHead.waystationClaimed
+    || chapterHead.familiar.phase !== 'search')
+  const chapterIsLead = starterChapter && !starterChapter.complete && !laterWorldMilestone
+  const journalLeadTitle = chapterIsLead
+    ? starterChapter.title : questCue?.title
+  const journalLeadObjective = chapterIsLead
+    ? starterChapter.objective : questCueObjective
   const adultDistance = adult?.visible ? Math.hypot(
     active.player.position.x - adult.position.x,
     active.player.position.y - adult.position.y,
@@ -2839,6 +2875,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
       saveInProgress={saveTask.current !== null}
+      soilPlaceRejection={soilPlaceRejection}
+      starterChapterActors={v43}
+      starterChapterPrimary={!!chapterIsLead}
       greenwayLogOrder={v43 && !mounted ? <><section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
@@ -2877,11 +2916,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </section></> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {questCue ? `Next: ${questCue.title}` : 'Route recorded'}</span>
+      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
         <small>{v44 && adult?.visible
           ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
             : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`
-          : questCueObjective
+          : journalLeadObjective
           ?? 'Open the journal for completed leads and the optional carpenter order.'}</small></summary>
       {familiarOpen && <>{v44 && <section aria-label="Ground mount">
         <h3>Adult Sedgehorn</h3>
@@ -2897,7 +2936,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             ? 'sedgehorn-dismount/v1' : 'sedgehorn-mount/v1' })}>
           {adult.mode === 'riding' ? 'Dismount Sedgehorn' : 'Mount Sedgehorn'}
         </button>}
-      </section>}<PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
+      </section>}<PublicV43StarterChapter head={snapshot as PublicV43Progress} />
+        <PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
         <PublicV43FamiliarQuestPanel
           head={snapshot as PublicV43Progress}
           actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked && !mounted}

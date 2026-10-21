@@ -1,4 +1,5 @@
 import { discoveryMaskHasTileId } from './discoveryMask'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import type { PublicTerrainWorkEvent, PublicTerrainWorkRejection } from './publicTerrainWorkAction'
 import { publicV15StarterPoseValid } from './publicWorldV15StarterMovement'
 import { publicWorldV15StarterTileAtGrid, resolvePublicWorldV15StarterSite } from './publicWorldV15StarterSites'
@@ -19,9 +20,6 @@ const REACH_METERS = 3
 const itemCount = (progress: PublicV15Progress, id: string) =>
   progress.state.player.inventory.filter((stack) => stack.itemId === id)
     .reduce((sum, stack) => sum + stack.quantity, 0)
-const capacityUsed = (progress: PublicV15Progress) =>
-  progress.state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-  + progress.state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
 const tileAt = (progress: PublicV15Progress) => {
   const { x, z } = progress.state.player.position
   return publicWorldV15StarterTileAtGrid(progress.state.seed,
@@ -69,7 +67,8 @@ function checked(progress: PublicV15Progress, id: unknown): PublicV15StarterWork
   } else {
     if (owned.state.player.equipment.mainHand !== 'field_spade'
       || itemCount(owned, 'field_spade') < 1) return reject('requires_spade', site)
-    if (capacityUsed(owned) + 1 > owned.state.player.backpackCapacity) {
+    if (backpackSlotsAfterAdd(owned.state.player.inventory, owned.state.player.tradeSlots, 'stone', 1)
+      > owned.state.player.backpackCapacity) {
       return reject('capacity', site)
     }
   }

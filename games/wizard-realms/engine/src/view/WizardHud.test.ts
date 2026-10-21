@@ -23,8 +23,9 @@ const projectionAtGreenwayRing = (discoveredRingIds: string[]) => {
 }
 
 const renderHud = (projection: ReturnType<typeof projectionAtGreenwayRing>,
-  greenwayLogOrder?: ReactNode) =>
-  renderToStaticMarkup(createElement(WizardHud, { projection, onIntent: () => {}, greenwayLogOrder }))
+  greenwayLogOrder?: ReactNode, starterChapterPrimary = false) =>
+  renderToStaticMarkup(createElement(WizardHud, { projection, onIntent: () => {},
+    greenwayLogOrder, starterChapterPrimary }))
 const renderHudTree = (props: Parameters<typeof WizardHud>[0]): ReactNode => {
   let tree: ReactNode = null
   function CaptureHud() {
@@ -163,8 +164,8 @@ describe('starter cliff HUD capability gate', () => {
     expect(renderHud(v27)).toContain('Field objective:</strong> Chop trees for logs.')
     expect(renderHud(v27)).toContain('not every river bank is buildable')
     const full = { ...v27, backpack: { ...base.backpack,
-      stacks: [{ ...base.backpack.stacks[0]!, id: 'logs-test', itemId: 'logs',
-        quantity: base.backpack.capacity }] } }
+      stacks: [{ ...base.backpack.stacks[0]!, id: 'logs-test', itemId: 'logs', quantity: 8 },
+        { id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: 19 }] } }
     expect(renderHud(full)).toContain('Pack full. A Ready ladder costs 4 logs; a Ready bridge costs 8.')
     expect(renderHud(full)).toContain('Excavated terrain-bag materials cannot be sold yet')
     expect(renderHud({ ...full, v26TerrainBag: { soil: 1, stone: 0,
@@ -212,19 +213,21 @@ describe('starter cliff HUD capability gate', () => {
     const bridgeReadyWithoutAxe = { ...logs(8), equipment: fresh.equipment }
     expect(cue(bridgeReadyWithoutAxe)).toContain('discovered gold-stake creek crossing candidate')
     expect(cue(bridgeReadyWithoutAxe)).not.toContain('equip your Woodcutter axe')
-    const blockedPack = (stone: number): WizardViewProjection => ({ ...logs(7), backpack: {
+    const nearlyFull: WizardViewProjection = { ...logs(7), backpack: {
       capacity: 20, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity: 7 },
-        { id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: stone }] } })
-    expect(cue(blockedPack(11))).toContain('An oak yields 4 logs, but only 2 pack slots are free.')
-    expect(cue(blockedPack(13))).toContain('An oak yields 4 logs, but only 0 pack slots are free.')
-    expect(cue(blockedPack(11))).toContain('Keep your logs for the required 8-log creek bridge.')
-    expect(cue(blockedPack(11))).not.toContain('spend 4 logs there')
-    expect(cue(blockedPack(11))).toContain('Check Outfitters for a sale of carried stone or terrain materials')
-    expect(cue(blockedPack(11))).not.toContain('Chop a Greenway oak')
-    expect(objective(blockedPack(13))).not.toContain('Pack full. Use carried logs only')
-    const full = { ...logs(axe.backpack.capacity), backpack: {
-      ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs',
-        quantity: axe.backpack.capacity }] } }
+        { id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: 19 }] } }
+    expect(cue(nearlyFull)).toContain('First 4 logs collected. Keep them; gather 1 more')
+    expect(cue(nearlyFull)).not.toContain('Make room')
+    const blocked: WizardViewProjection = { ...logs(0), backpack: {
+      capacity: 20, stacks: [{ id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: 20 }] } }
+    expect(cue(blocked)).toContain('An oak yields 4 logs, needing 1 pack space, but only 0 are free.')
+    expect(cue(blocked)).toContain('Keep your logs for the required 8-log creek bridge.')
+    expect(cue(blocked)).toContain('Check Outfitters for a sale of carried stone or terrain materials')
+    expect(cue(blocked)).not.toContain('Chop a Greenway oak')
+    expect(objective(blocked)).not.toContain('Pack full. Use carried logs only')
+    const full = { ...logs(8), backpack: {
+      ...axe.backpack, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Logs', quantity: 8 },
+        { id: 'stone-test', itemId: 'stone', name: 'Stone', quantity: 19 }] } }
     const fullHtml = objective(full)
     expect(fullHtml).toContain('Pack full of logs? Spend 8 at a discovered creek candidate only after Works says Ready.')
     expect(fullHtml).toContain('Greenway Outfitters does not buy logs.')
@@ -250,10 +253,10 @@ describe('starter cliff HUD capability gate', () => {
     expect(learnedJournal).toContain('Bridge 4/8 ▾<small>Optional: Glow</small>')
     expect(learnedJournal).not.toContain('Optional: study nearby waystone')
     expect(objective({ ...logs(8), v34Quest: quest })).not.toContain('Optional: cast Glow near fog.')
-    expect(objective({ ...blockedPack(11), v34Quest: quest })).not.toContain('Optional: study nearby waystone')
-    expect(objective({ ...blockedPack(11), v34Quest: quest })).not.toContain('<small>Optional: Glow</small>')
+    expect(objective({ ...blocked, v34Quest: quest })).not.toContain('Optional: study nearby waystone')
+    expect(objective({ ...blocked, v34Quest: quest })).not.toContain('<small>Optional: Glow</small>')
     expect(objective({ ...bridgeReadyWithoutAxe, v34Quest: quest })).toContain('Build bridge ▾')
-    expect(objective({ ...blockedPack(11), v34Quest: quest })).toContain('Make room ▾')
+    expect(objective({ ...blocked, v34Quest: quest })).toContain('Make room ▾')
     expect(objective({ ...full, v34Quest: quest })).toContain('Greenway Outfitters does not buy logs.')
 
     const readyCreek = resolvePublicV17GreenwaySite(state.seed, 'works4:bridge:greenway-creek:-14')!
@@ -1217,6 +1220,29 @@ describe('Wizard field action range', () => {
 })
 
 describe('Wizard backpack capacity', () => {
+  it('distinguishes full squares with four-log stack headroom from a full wood stack', () => {
+    const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
+    const mining: NonNullable<WizardViewProjection['v29Mining']> = {
+      tools: { basicPickOwned: false, enchantedPickOwned: false, activePick: null },
+      offers: [], bids: { soil: 1, stone: 3, iron_ore: 8, gold_ore: 15, diamond: 60 },
+      bag: { soil: 0, stone: 0, iron_ore: 0, gold_ore: 0, diamond: 0 },
+      excavationLevel: 1, atOutfitters: false,
+    }
+    const fullPack = (logs: number): WizardViewProjection => ({ ...base, v29Mining: mining,
+      backpack: { ...base.backpack, stacks: [base.backpack.stacks[0]!,
+        { id: 'stone-filler', itemId: 'stone', name: 'Stone', quantity: 18 },
+        { id: 'logs-test', itemId: 'logs', name: 'Greenway logs', quantity: logs }] } })
+    const withHeadroom = renderHud(fullPack(8))
+    expect(withHeadroom).toContain('20/20 item spaces')
+    expect(withHeadroom).toContain('wood stack can hold another 4-log oak harvest')
+    expect(withHeadroom).not.toContain('next 4-log oak harvest needs another item space')
+
+    const woodStackFull = renderHud(fullPack(20))
+    expect(woodStackFull).toContain('20/20 item spaces')
+    expect(woodStackFull).toContain('next 4-log oak harvest needs another item space')
+    expect(woodStackFull).not.toContain('wood stack can hold another 4-log oak harvest')
+  })
+
   it('counts excavated material, shows only earned quantities, and offers no fake sale action', () => {
     const state = createWizardWorld('greenway-alpha')
     const base = toViewProjection(state, [])
@@ -1224,7 +1250,18 @@ describe('Wizard backpack capacity', () => {
     const baseUsed = base.backpack.stacks.reduce((sum, stack) => sum + stack.quantity, 0)
       + base.tradeListings.reduce((sum, listing) => sum + (listing?.quantity ?? 0), 0)
     const html = renderHud({ ...base, v26TerrainBag: materials })
-    expect(html).toContain(`<header><span>Backpack</span><small>${baseUsed + 3}/${base.backpack.capacity}</small></header>`)
+    expect(html).toContain(`<header><span>Backpack</span><small>${baseUsed + 3}/${base.backpack.capacity} item spaces</small></header>`)
+    expect(html).toContain(`<progress aria-label="Item spaces used" value="${baseUsed + 3}" max="${base.backpack.capacity}"`)
+    expect(html).toContain(`${base.backpack.capacity - baseUsed - 3} free item spaces`)
+    expect(html).toContain('Wood: 0 logs')
+    expect(html).toContain('Wood stacks: up to 20 logs per item space.')
+    expect(html.match(/data-item="terrain-(soil|iron_ore)"/g)).toHaveLength(3)
+    expect(html.match(/data-miniature="soil"/g)).toHaveLength(2)
+    expect(html.match(/data-miniature="rock"/g)).toHaveLength(1)
+    expect(html).toContain('terrain bag soil ×2')
+    const soilSpaces = html.match(/<span[^>]*data-item="terrain-soil"[^>]*>.*?<\/span>/g) ?? []
+    expect(soilSpaces).toHaveLength(2)
+    expect(soilSpaces.every((space) => !space.includes('data-stack-count'))).toBe(true)
     const excavated = html.match(/<section class="wr-caption" aria-label="Excavated materials">.*?<\/section>/)?.[0]
     expect(excavated).toContain('Soil ×2')
     expect(excavated).toContain('Iron ore ×1')
@@ -1239,8 +1276,10 @@ describe('Wizard backpack capacity', () => {
   it('keeps listed items reserved when showing used capacity', () => {
     const state = createWizardWorld('greenway-alpha')
     state.player.inventory.push({ itemId: 'logs', quantity: 19 })
-    const fullReadout = '<header><span>Backpack</span><small>20/20</small></header>'
-    expect(renderHud(toViewProjection(state, []))).toContain(fullReadout)
+    const fullHtml = renderHud(toViewProjection(state, []))
+    expect(fullHtml).toContain('<header><span>Backpack</span><small>2/20 item spaces</small></header>')
+    expect(fullHtml).toContain('18 free item spaces')
+    expect(fullHtml).toContain('Wood: 19 logs')
 
     const listed = advanceWizardWorld(state, [
       { type: 'create_trade_listing', slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 7 },
@@ -1249,11 +1288,115 @@ describe('Wizard backpack capacity', () => {
     expect(listed.rejections).toEqual([])
     expect(listed.state.player.inventory.find((stack) => stack.itemId === 'logs')?.quantity).toBe(14)
     expect(listed.state.player.tradeSlots.map((slot) => slot.quantity)).toEqual([2, 0, 0, 3])
-    expect(renderHud(toViewProjection(listed.state, []))).toContain(fullReadout)
+    const listedHtml = renderHud(toViewProjection(listed.state, []))
+    expect(listedHtml).toContain('<header><span>Backpack</span><small>4/20 item spaces</small></header>')
+    expect(listedHtml).toContain('16 free item spaces')
+    expect(listedHtml).toContain('Wood: 14 logs')
+    expect(listedHtml.match(/data-item="listed"/g)).toHaveLength(2)
+    expect(listedHtml.match(/data-miniature="listing"/g)).toHaveLength(2)
+    expect(listedHtml).toContain('listed Greenway logs ×2')
+    expect(listedHtml).toContain('listed Greenway logs ×3')
+    const reservedSpaces = listedHtml.match(/<span[^>]*data-item="listed"[^>]*>.*?<\/span>/g) ?? []
+    expect(reservedSpaces[0]).toContain('data-stack-count="2"')
+    expect(reservedSpaces[1]).toContain('data-stack-count="3"')
+    expect(reservedSpaces.filter((space) => space.includes('data-stack-count'))).toHaveLength(2)
+    expect(listedHtml.match(/data-occupied="false"/g) ?? []).toHaveLength(16)
+  })
+
+  it('shows one square per 20-log stack and scales to the upgraded backpack', () => {
+    const state = createWizardWorld('greenway-alpha')
+    state.player.inventory.push({ itemId: 'logs', quantity: 8 })
+    const base = toViewProjection(state, [])
+    const starter = renderHud(base)
+    expect(starter).toContain('aria-label="2 of 20 item spaces filled; 18 free. Contents: Woodcutter axe ×1; Greenway logs ×8"')
+    expect(starter).toContain('grid-template-columns:repeat(7,minmax(0,1fr))')
+    expect(starter.match(/data-item="woodcutters_axe"/g)).toHaveLength(1)
+    expect(starter.match(/data-item="logs"/g)).toHaveLength(1)
+    expect(starter.match(/data-miniature="axe"/g)).toHaveLength(1)
+    expect(starter.match(/data-miniature="log"/g)).toHaveLength(1)
+    const logSpaces = starter.match(/<span[^>]*data-item="logs"[^>]*>.*?<\/span>/g) ?? []
+    expect(logSpaces).toHaveLength(1)
+    expect(logSpaces[0]).toContain('data-stack-count="8"')
+    const axeSpace = starter.match(/<span[^>]*data-item="woodcutters_axe"[^>]*>.*?<\/span>/)?.[0]
+    expect(axeSpace).not.toContain('data-stack-count')
+    expect(starter.match(/data-occupied="true"/g)).toHaveLength(2)
+    expect(starter.match(/data-occupied="false"/g)).toHaveLength(18)
+    expect(starter).toContain('title="Greenway logs, 8 in stack 1 of 1"')
+    expect(starter).toContain('Wood: 8 logs')
+
+    const withLogs = (quantity: number) => renderHud(toViewProjection({ ...state,
+      player: { ...state.player, inventory: [{ itemId: 'woodcutters_axe', quantity: 1 },
+        { itemId: 'logs', quantity }] } }, []))
+    expect(withLogs(20)).toContain('2/20 item spaces')
+    expect(withLogs(20).match(/data-item="logs"/g)).toHaveLength(1)
+    expect(withLogs(20)).toContain('data-stack-count="20"')
+    const twentyOne = withLogs(21)
+    expect(twentyOne).toContain('3/20 item spaces')
+    expect(twentyOne.match(/data-item="logs"/g)).toHaveLength(2)
+    expect(twentyOne).toContain('title="Greenway logs, 20 in stack 1 of 2"')
+    expect(twentyOne).toContain('title="Greenway logs, 1 in stack 2 of 2"')
+
+    const upgraded = renderHud({ ...base, backpack: { ...base.backpack, capacity: 28 } })
+    expect(upgraded).toContain('aria-label="2 of 28 item spaces filled; 26 free. Contents: Woodcutter axe ×1; Greenway logs ×8"')
+    expect(upgraded.match(/data-occupied="true"/g)).toHaveLength(2)
+    expect(upgraded.match(/data-occupied="false"/g)).toHaveLength(26)
+  })
+
+  it('shows carried wood and first bridge target before the item list at upgraded capacity', () => {
+    const state = createWizardWorld('greenway-alpha')
+    const base = toViewProjection(state, [])
+    const view: WizardViewProjection = { ...base, v27WalkableSurface: true,
+      backpack: { capacity: 30, stacks: [{ id: 'logs-test', itemId: 'logs', name: 'Greenway logs', quantity: 4 }] },
+      savedTerrainWorks: { context: 'works4-greenway', builtSites: [], dugTileIds: [],
+        modeActive: false, selectedKind: 'bridge', actionsEnabled: true, preview: null },
+      v29Mining: { tools: { basicPickOwned: false, enchantedPickOwned: false, activePick: null },
+        offers: [], bids: { soil: 1, stone: 3, iron_ore: 8, gold_ore: 15, diamond: 60 },
+        bag: { soil: 0, stone: 0, iron_ore: 0, gold_ore: 0, diamond: 0 },
+        excavationLevel: 1, atOutfitters: false } }
+    const html = renderHud(view)
+    expect(html).toContain('1/30 item spaces')
+    expect(html).toContain('29 free item spaces')
+    expect(html).toContain('Wood: 4 logs')
+    expect(html).toContain('Creek bridge 4/8')
+    expect(html.indexOf('Wood: 4 logs')).toBeLessThan(html.indexOf('<b>Greenway logs</b>'))
   })
 })
 
 describe('V36 marker quest journal', () => {
+  it('gives Chapter 1 the only opening lead while retaining checked quest actions', () => {
+    const base = projectionAtGreenwayRing([])
+    const surveyor = { id: 'surveyor-first-find/v1' as const,
+      title: "The Surveyor's First Find" as const, stage: 'gather' as const,
+      objective: 'Chop eight logs.', reward: 'Basic pick.', complete: false }
+    const ledger = { id: 'outfitters-ledger/v1' as const,
+      title: "Outfitters' Ledger" as const, stage: 'first-find' as const,
+      objective: 'Claim the first find.', reward: 'Traveler Tunic.', complete: false }
+    const first: WizardViewProjection = { ...base, v34Quest: surveyor,
+      v35LedgerQuest: ledger, controllerActionsEnabled: true,
+      v30Bridgehead: { bridgeId: 'works4:bridge:greenway-creek:0',
+        position: base.player.position, tileId: 'tile-3-7', claimed: false,
+        claimReady: true, reward: 'basic-pick' } }
+    expect(renderHud(first)).toContain('aria-label="Quest journal: The Surveyor&#x27;s First Find"')
+    const opening = renderHud(first, undefined, true)
+    expect(opening).not.toContain('aria-label="Quest journal: The Surveyor&#x27;s First Find"')
+    expect(opening).toContain('aria-label="Claim River Works bridgehead reward"')
+    expect(opening).toContain('id="wizard-backpack"')
+
+    const ready = { rejection: null, hint: null }
+    const next: WizardViewProjection = { ...first,
+      v34Quest: { ...surveyor, stage: 'complete', complete: true },
+      v35LedgerSurvey: { bridgeId: 'bridge', ...ready } }
+    const actionOnly = renderHud(next, undefined, true)
+    expect(actionOnly).toContain('aria-label="Available Ledger action"')
+    expect(actionOnly).toContain('Survey connected-river exit</button>')
+    expect(actionOnly).not.toContain('aria-label="Quest journal: Outfitters&#x27; Ledger"')
+    expect(renderHud(next)).toContain('aria-label="Quest journal: Outfitters&#x27; Ledger"')
+
+    const deliver = renderHud({ ...next, v35LedgerSurvey: undefined,
+      v35LedgerDeliver: ready }, undefined, true)
+    expect(deliver).toContain('Deliver stone to Outfitters</button>')
+  })
+
   it('leads with Surveyor, then Ledger, then the active Old Marker chapter', () => {
     const base = projectionAtGreenwayRing([])
     const surveyor = { id: 'surveyor-first-find/v1' as const,

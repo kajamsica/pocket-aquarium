@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from './backpackSlots'
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { STORE_HALF_DEPTH, STORE_HALF_WIDTH } from './generation'
 import { mireglassRouteSites } from './mireglassRouteSites'
@@ -134,8 +135,7 @@ export function applyPublicV26TerrainAction(rawProgress: PublicV26Progress,
     }
     const novel = layer === (column?.rewardDepth ?? 0)
     const bagCount = materials.reduce((sum, material) => sum + terrain.bag[material], 0)
-    const used = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0) + bagCount
+    const used = backpackSlotsUsed(state.player.inventory, state.player.tradeSlots, bagCount)
     if (novel && used + 1 > state.player.backpackCapacity) return reject('capacity')
     const result = digPublicV26Column(terrain, { seed: state.seed, gx, gz, eligible: true })
     if (!result.ok) return reject(result.reason)

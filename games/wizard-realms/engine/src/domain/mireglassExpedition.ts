@@ -1,4 +1,5 @@
 import { createGeneratedWorld } from './generation'
+import { backpackSlotsAfterAdd, backpackSlotsUsed } from './backpackSlots'
 import { nearbyWorldTileIds, PUBLIC_SPELL_REVEAL_RADIUS_METERS } from './publicWorldDiscovery'
 import { mireglassAnchors, mireglassFairyRing, mireglassResources, MIREGLASS_CONTENT_REVISION, MIREGLASS_RING_ID } from './mireglassContent'
 import { mireglassRouteSites } from './mireglassRouteSites'
@@ -111,9 +112,9 @@ const equippable = (value: unknown, slot: EquipmentSlot) => value === null
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
 const owns = (player: MireglassV6Player, itemId: MireglassItemId) => player.inventory
   .filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
-const usedCapacity = (player: MireglassV6Player) => player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-  + player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-const hasCapacity = (player: MireglassV6Player, addition: number) => usedCapacity(player) + addition <= player.backpackCapacity
+const usedCapacity = (player: MireglassV6Player) => backpackSlotsUsed(player.inventory, player.tradeSlots)
+const hasCapacity = (player: MireglassV6Player, itemId: MireglassItemId, addition: number) =>
+  backpackSlotsAfterAdd(player.inventory, player.tradeSlots, itemId, addition) <= player.backpackCapacity
 const clonePlayer = (player: MireglassV6Player): MireglassV6Player => structuredClone(player)
 
 export function isValidMireglassV6Player(value: unknown): value is MireglassV6Player {
@@ -138,7 +139,7 @@ export function isValidMireglassV6Player(value: unknown): value is MireglassV6Pl
     || !value.discoveredRingIds.every((id) => id === 'ring-greenway' || id === 'ring-highland' || id === MIREGLASS_RING_ID)
     || new Set(value.discoveredRingIds).size !== value.discoveredRingIds.length) return false
   const player = value as unknown as MireglassV6Player
-  if (!hasCapacity(player, 0)) return false
+  if (usedCapacity(player) > player.backpackCapacity) return false
   return EQUIPMENT_SLOTS.every((slot) => {
     const equipped = player.equipment[slot]
     return equipped === null || EQUIPMENT_SLOTS.filter((candidate) => player.equipment[candidate] === equipped).length
@@ -279,7 +280,7 @@ export function applyMireglassExpeditionAction(
     if (region.depletedResourceIds.includes(tree.id)) return reject('depleted', 'This tree has already been chopped.')
     if (distance(player.position, tree.tile.center) > REACH_METERS) return reject('too_far', 'Tree is out of reach.')
     if (player.equipment.mainHand !== 'woodcutters_axe' || owns(player, 'woodcutters_axe') < 1) return reject('requires_axe', 'Equip an owned axe.')
-    if (!hasCapacity(player, 4)) return reject('capacity', 'Backpack cannot hold four logs.')
+    if (!hasCapacity(player, 'logs', 4)) return reject('capacity', 'Backpack cannot hold four logs.')
     if (!canGainXp(player, WOODCUTTING_XP, 'woodcutting')) return reject('invalid_value', 'Experience exceeds safe limits.')
     const next = copyAt()
     addItem(next, 'logs', 4)
@@ -314,7 +315,7 @@ export function applyMireglassExpeditionAction(
     if (region.dugStumpIds.includes(tree.id)) return reject('already_dug', 'This stump has already been dug.')
     if (distance(player.position, tree.tile.center) > REACH_METERS) return reject('too_far', 'Tree stump is out of reach.')
     if (player.equipment.mainHand !== 'field_spade' || owns(player, 'field_spade') < 1) return reject('requires_spade', 'Equip an owned spade.')
-    if (!hasCapacity(player, 1)) return reject('capacity', 'Backpack cannot hold the stone.')
+    if (!hasCapacity(player, 'stone', 1)) return reject('capacity', 'Backpack cannot hold the stone.')
     if (!canGainXp(player, STUMP_XP, 'excavation')) return reject('invalid_value', 'Experience exceeds safe limits.')
     const next = copyAt()
     addItem(next, 'stone', 1)
@@ -380,7 +381,7 @@ export function applyMireglassExpeditionAction(
     if (distance(player.position, cache.tile.center) > REACH_METERS) return reject('too_far', 'Cache is out of reach.')
     if (player.equipment.mainHand !== 'field_spade' || owns(player, 'field_spade') < 1) return reject('requires_spade', 'Equip an owned spade.')
     if (1 + Math.floor(player.skillXp.excavation / 30) < 2) return reject('skill_locked', 'Excavation level two is required.')
-    if (!hasCapacity(player, 1)) return reject('capacity', 'Backpack cannot hold the seal.')
+    if (!hasCapacity(player, 'mireglass_reach/item/seal', 1)) return reject('capacity', 'Backpack cannot hold the seal.')
     if (!canGainXp(player, EXCAVATION_XP, 'excavation')) return reject('invalid_value', 'Experience exceeds safe limits.')
     const next = copyAt()
     addItem(next, 'mireglass_reach/item/seal', 1)
@@ -397,7 +398,7 @@ export function applyMireglassExpeditionAction(
       const listing = MIREGLASS_OUTPOST_CATALOG[action.itemId]
       if (region.shopStock[action.itemId] < 1) return reject('out_of_stock', 'Item is out of stock.')
       if (player.coins < listing.price) return reject('insufficient_coins', 'Not enough coins.')
-      if (!hasCapacity(player, 1)) return reject('capacity', 'Backpack is full.')
+      if (!hasCapacity(player, action.itemId, 1)) return reject('capacity', 'Backpack is full.')
       const next = copyAt()
       next.coins -= listing.price
       addItem(next, action.itemId, 1)

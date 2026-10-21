@@ -33,12 +33,15 @@ import { devNavigationEnabled, devSceneTapDecision, pointerDevNavigateIntent }
 import { WizardHud } from './view/WizardHud'
 
 const probe = vi.hoisted(() => ({ projection: null as WizardViewProjection | null,
-  greenwayLogOrder: null as ReactNode }))
+  greenwayLogOrder: null as ReactNode, starterChapterPrimary: null as boolean | null }))
 vi.mock('./view/WizardSurface', async (importOriginal) => ({
   ...await importOriginal<typeof import('./view/WizardSurface')>(),
-  WizardSurface: ({ projection, greenwayLogOrder }: {
-  projection: WizardViewProjection; greenwayLogOrder?: ReactNode }) => {
-    probe.projection = projection; probe.greenwayLogOrder = greenwayLogOrder; return null } }))
+  WizardSurface: ({ projection, greenwayLogOrder, starterChapterPrimary }: {
+  projection: WizardViewProjection; greenwayLogOrder?: ReactNode;
+  starterChapterPrimary?: boolean }) => {
+    probe.projection = projection; probe.greenwayLogOrder = greenwayLogOrder
+    probe.starterChapterPrimary = starterChapterPrimary ?? null
+    return null } }))
 const locks = { request: async <T,>(_name: string, _options: { mode: 'exclusive' },
   body: () => T | Promise<T>) => body() }
 
@@ -358,7 +361,8 @@ describe('V43 checked controller bridge', () => {
     const html = renderToStaticMarkup(createElement(PublicV23Controller, {
       version: 'v43', start, locks, store, v42Store }))
     expect(html).toContain('data-public-version="v43"')
-    expect(html).toContain('Quest Journal · Next: Creek Span')
+    expect(html).toContain('Quest Journal · Next: The Creekside Errand')
+    expect(probe.starterChapterPrimary).toBe(true)
     expect(html).toContain('Chop each nearby oak twice (4 logs per oak)')
     expect(html).toContain('class="v43-familiar"')
     expect(html).not.toContain('data-quest-journal="v43"')
@@ -373,6 +377,14 @@ describe('V43 checked controller bridge', () => {
     expect(probe.projection?.v42IronHall).toMatchObject({ questClaimed: false,
       vestOwned: false, crestOutcome: 'unrolled' })
     expect(await v42Store.readChecked()).toEqual(source)
+
+    const demoted = { ...start, head: { ...start.head,
+      state: { ...start.head.state, greenway: { ...start.head.state.greenway,
+        studiedInscriptionIds: [...start.head.state.greenway.studiedInscriptionIds,
+          'greenway_waystone' as const] } } } }
+    renderToStaticMarkup(createElement(PublicV23Controller, {
+      version: 'v43', start: demoted, locks, store, v42Store }))
+    expect(probe.starterChapterPrimary).toBe(false)
   }, 120_000)
 
   it('positions V43 mobile Safety away from the d-pad and Terrain tools', async () => {
@@ -380,8 +392,8 @@ describe('V43 checked controller bridge', () => {
     const html = renderToStaticMarkup(createElement(PublicV23Controller, {
       version: 'v43', start, locks, store, v42Store }))
     expect(html).toContain('data-public-version="v43"')
-    expect(html).toContain(':is([data-public-version=v42],[data-public-version=v43]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}')
-    expect(html).toContain(':is([data-public-version=v42],[data-public-version=v43]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}')
+    expect(html).toContain(':is([data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}')
+    expect(html).toContain(':is([data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}')
     expect(html).toContain('@media(min-width:380px) and (max-width:719px) and (min-height:401px){[data-public-version=v43] .v26-safety:not([open]){left:calc(50% + 55px);right:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(84px,calc(100vw - 306px))}}')
     expect(html).toContain('.v26-safety summary{min-height:44px;')
     expect(html).toContain('<summary>Safety options</summary>')

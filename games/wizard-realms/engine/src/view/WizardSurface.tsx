@@ -14,6 +14,9 @@ export interface WizardSurfaceProps {
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
   greenwayLogOrder?: ReactNode
+  starterChapterActors?: boolean
+  starterChapterPrimary?: boolean
+  soilPlaceRejection?: string | null
 }
 
 const MOVEMENT_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
@@ -355,7 +358,7 @@ const STYLES = `
 @media(min-width:901px) and (max-height:400px){.wr-gear{max-height:96px}.wr-trade{max-height:100px}.wr-saved-work-panel{top:128px;max-height:calc(100% - 260px)}}
 @media(max-width:719px){.wr-surface:has([data-field-camp-panel]) .wr-prompt,.wr-surface:has([data-field-camp-panel]) .wr-events{display:none}}
 @media(max-width:719px) and (min-height:401px) and (max-height:599px){.wr-surface .wr-context[data-field-camp-panel]{left:8px;top:208px;bottom:auto;transform:none;box-sizing:border-box;width:min(280px,calc(100% - 108px));max-height:calc(100% - 350px);overflow-y:auto;overscroll-behavior:contain;padding:8px;font-size:12px}.wr-surface .wr-context[data-field-camp-panel] header{margin-bottom:5px}}
-.wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain,.wr-surface:has(.wr-context[data-store-panel]) .wr-v26-terrain{display:none}
+.wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;max-height:calc(100% - 170px);overflow-y:auto;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-v26-terrain .wr-soil-rejection{padding:6px 8px;border-left:3px solid #ffba75;background:#3b281c;color:#ffe3bd}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain,.wr-surface:has(.wr-context[data-store-panel]) .wr-v26-terrain{display:none}
 .wr-v26-terrain[data-v29="true"] .wr-v26-terrain-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .wr-terrain-inline-hint{display:none}
 .wr-terrain-hover-hint{position:absolute;left:50%;top:142px;transform:translateX(-50%);box-sizing:border-box;max-width:min(420px,calc(100% - 24px));padding:5px 9px;border-radius:7px;background:#102622e8;color:#d3e7e7;font-size:11px;text-align:center;pointer-events:none}
@@ -366,14 +369,15 @@ const STYLES = `
 @media(max-width:719px){.wr-keyboard-terrain-aim{left:72%}}
 .wr-keybinds{margin-top:7px;font-size:12px}.wr-keybinds summary{cursor:pointer;color:#f5d889}.wr-keybinds>div{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.wr-keybinds button{min-height:36px}.wr-keybinds summary:focus-visible,.wr-keybinds button:focus-visible{outline:3px solid #ffe395;outline-offset:2px}
 .wr-dev-nav-hint{position:absolute;z-index:4;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(520px,80vw);padding:6px 10px;border-radius:7px;background:#101a17d9;color:#f5e6b2;text-align:center;font-size:12px;pointer-events:none}
-@media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}
+@media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small,[data-public-version=v43] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}
 @media(min-width:901px) and (min-height:591px){[data-public-version=v42] .wr-dev-nav-hint{bottom:64px}}
 @media(max-width:719px){.wr-v26-terrain{right:8px;bottom:150px;width:180px}}
 `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace,
   saveInProgress = false,
-  greenwayLogOrder }: WizardSurfaceProps) {
+  greenwayLogOrder, starterChapterActors = false, starterChapterPrimary = false,
+  soilPlaceRejection = null }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const devNavigation = typeof window !== 'undefined' && devNavigationEnabled(window.location.search)
   const pressedKeys = useRef(new Set<string>())
@@ -719,6 +723,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           && <span className="wr-keyboard-terrain-aim" aria-hidden="true">+</span>}
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
           terrainMode={terrainMode} inputTrace={inputTrace} saveInProgress={saveInProgress}
+          starterChapterActors={starterChapterActors}
           onTerrainHoverFeedback={setTerrainHoverFeedback}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
           onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
@@ -740,6 +745,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
             disabled={!pointerV26TerrainKind(projection, mapOpen, 'dig') || projection.v31Soil.soilAvailable < 1}
             onClick={() => { setTerrainTapHint(null); setTerrainMode((current) => current === 'place-soil' ? null : 'place-soil') }}>Place soil</button>}
         </div>
+        {soilPlaceRejection && <p className="wr-soil-rejection" role="alert">
+          Soil placement was not saved: {soilPlaceRejection}</p>}
         <p role="status">{projection.v31Soil && terrainMode === 'place-soil'
           ? terrainTapHint ?? (projection.v31Soil.soilAvailable < 1
             ? 'No carried soil. Dig safe dry ground first.'
@@ -775,7 +782,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         {inOpenPit && <p>Open pit view: step onto neighboring ground or orbit until its floor or inner wall outlines.</p>}
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics}
-        greenwayLogOrder={greenwayLogOrder} />
+        greenwayLogOrder={greenwayLogOrder} starterChapterPrimary={starterChapterPrimary} />
       {devNavigation && !projection.openStoreId && <div className="wr-dev-nav-hint" role="status">{devNavHint
         ?? 'Dev: select a terrain tool to use it with one click. Turn tools off, then double-click clear revealed ground to follow a safe route.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}

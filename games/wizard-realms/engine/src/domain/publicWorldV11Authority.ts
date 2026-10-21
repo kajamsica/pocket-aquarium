@@ -1,4 +1,5 @@
 import { highlandLandmark, highlandStoneNodes, isHighlandAuthoredPosition } from './highlandContent'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import { publicV11Gait } from './publicWorldGait'
 import { publicBootPurchaseCandidate } from './publicBootPurchase'
 import { applyFieldCampV10Action } from './fieldCamp'
@@ -141,9 +142,6 @@ export function applyFieldCampV11Action(state: PublicWorldV11State, tileId: stri
   return { state: next, event: result.event }
 }
 
-const inventoryCount = (state: PublicWorldV11State) => state.player.inventory
-  .reduce((sum, stack) => sum + stack.quantity, 0)
-  + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
 const ownsSpade = (state: PublicWorldV11State) => state.player.inventory
   .some((stack) => stack.itemId === 'field_spade' && stack.quantity > 0)
 
@@ -172,7 +170,8 @@ export function actPublicV11Highland(state: PublicWorldV11State, action: PublicV
   if (1 + Math.floor(state.player.skillXp.excavation / 30) < 2) {
     return reject('skill_locked', 'Excavation level two is required.')
   }
-  if (inventoryCount(state) + 2 > state.player.backpackCapacity) {
+  if (backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'stone', 2)
+    > state.player.backpackCapacity) {
     return reject('capacity', 'The backpack cannot hold two stone.')
   }
   const progress = state.highland.stoneNodes.find(({ id }) => id === node.id)!

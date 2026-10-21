@@ -137,7 +137,7 @@ describe('V29-only mining controls', () => {
     expect(hud).not.toContain('Store sales are not available yet.')
     const full = renderToStaticMarkup(createElement(WizardHud, { projection: {
       ...current, backpack: { ...current.backpack, capacity: 3 } }, onIntent: vi.fn() }))
-    expect(full).toContain('Pack full.')
+    expect(full).toContain('Backpack full: the next 4-log oak harvest needs another item space.')
     expect(full).toContain('sell terrain-bag soil, stone, or ore')
     const map = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: current }))
     expect(map).toContain('Excavation level 2')
@@ -562,6 +562,10 @@ describe('third-person control grammar', () => {
     expect(enabled).toMatch(/aria-pressed="true"[^>]*>Dig<\/button>/)
     expect(enabled).toMatch(/aria-pressed="false"[^>]*>Fill<\/button>/)
     expect(enabled).toContain('equip spade to dig, choose Fill to refill')
+    const rejected = renderToStaticMarkup(createElement(WizardSurface, { projection: equipped,
+      onIntent: vi.fn(), soilPlaceRejection: 'This ground is occupied.' }))
+    expect(rejected).toMatch(/aria-label="Terrain tools"[\s\S]*class="wr-soil-rejection" role="alert">Soil placement was not saved: This ground is occupied\./)
+    expect(rejected).toContain('max-height:calc(100% - 170px);overflow-y:auto')
     const restricted = renderToStaticMarkup(createElement(WizardSurface, {
       projection: { ...equipped, unavailableActions: true }, onIntent: vi.fn() }))
     expect(restricted).toContain('Terrain actions are unavailable in this region.')
@@ -1058,14 +1062,14 @@ describe('third-person control grammar', () => {
       onIntent: () => {} }))).not.toContain('aria-label="Walk"')
   })
 
-  it('keeps V42 compact movement status accessible without covering panels or Safety', () => {
+  it('keeps V42 and V43 compact movement status accessible without covering panels or Safety', () => {
     const running = { ...sellProjection, gait: { pace: 'run' as const, canRun: true,
       reason: 'Running in leather boots' } }
     const markup = renderToStaticMarkup(createElement(WizardSurface, {
       projection: running, onIntent: () => {} }))
     const styles = markup.match(/<style>([\s\S]*?)<\/style>/)?.[1]
     expect(markup).toContain('<small role="status">Running in leather boots</small>')
-    expect(styles).toContain('@media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}')
+    expect(styles).toContain('@media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small,[data-public-version=v43] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}')
   })
 
   it('positions the wide V42 DEV navigation hint above Safety', () => {
