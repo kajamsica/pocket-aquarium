@@ -1,3 +1,4 @@
+import { backpackSlotsAfterAdd } from './domain/backpackSlots'
 import { HIGHLAND_CORE, HIGHLAND_LANDMARK, classifyStreamedRegion, highlandCorridorCells,
   highlandLandmark, highlandStoneNodes } from './domain/highlandContent'
 import { highlandRidgeCellAt, highlandRidgeRecoveryTarget } from './domain/highlandRidge'
@@ -41,8 +42,6 @@ const distance3 = (from: { x: number; y: number; z: number }, to: { x: number; y
   Math.hypot(from.x - to.x, from.y - to.y, from.z - to.z)
 const quantity = (state: PublicWorldV11State, itemId: string) => state.player.inventory
   .filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
-const packUsed = (state: PublicWorldV11State) => state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-  + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
 
 /** The optional Greenway lesson remains useful after routes have already been built. */
 export function publicV11PracticeDigHint(state: PublicWorldV11State): string | null {
@@ -154,7 +153,8 @@ export function highlandExtractionFor(state: PublicWorldV11State) {
   else if (quantity(state, 'field_spade') < 1) reason = 'A field spade is required'
   else if (state.player.equipment.mainHand !== 'field_spade') reason = 'Equip your field spade'
   else if (state.player.skillXp.excavation < 30) reason = 'Excavation Lv2 required'
-  else if (packUsed(state) + 2 > state.player.backpackCapacity) reason = 'Make room for 2 stone'
+  else if (backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'stone', 2)
+    > state.player.backpackCapacity) reason = 'Make room for 2 stone'
   else if (readyAtTick === undefined || state.tick < readyAtTick)
     reason = `Regrowing (about ${Math.ceil(((readyAtTick ?? state.tick) - state.tick) / 20)} s)`
   return { nodeId: node.id, label: 'Highland stone outcrop', actionable: reason.startsWith('Ready:'), reason }

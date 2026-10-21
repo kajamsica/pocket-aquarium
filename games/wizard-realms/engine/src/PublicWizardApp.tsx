@@ -7,6 +7,7 @@ import { createPublicSaveNoticeTracker, createPublicSaveScheduler } from './publ
 export { createPublicSaveNoticeTracker, createPublicSaveScheduler } from './publicSaveScheduler'
 export type { PublicSaveRequest } from './publicSaveScheduler'
 import { streamedControlIntents } from './StreamedPreviewApp'
+import { backpackSlotsAfterAdd, backpackSlotsUsed } from './domain/backpackSlots'
 import { MIREGLASS_CONTENT_REVISION, MIREGLASS_CORE } from './domain/mireglassContent'
 import { mireglassApproachTrail, mireglassGreenwayToMarkerTrail } from './domain/mireglassApproachTrail'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
@@ -210,15 +211,16 @@ export function publicBeginnerWoodTip(state: PublicWorldState): { id: 'intro' | 
     || state.greenway.builtRouteIds.includes('greenway_ladder')
     || state.player.skillXp.woodcutting >= 120) return null
   const logs = state.player.inventory.reduce((sum, stack) => sum + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
-  const carried = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-  const reserved = state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+  const usedSlots = backpackSlotsUsed(state.player.inventory, state.player.tradeSlots)
   const listedLogs = state.player.tradeSlots.some((slot) => slot.itemId === 'logs' && slot.quantity > 0)
-  const freeSlots = state.player.backpackCapacity - carried - reserved
-  if (freeSlots < 4 && (logs > 0 || listedLogs)) return {
+  const freeSlots = state.player.backpackCapacity - usedSlots
+  const slotsToFree = Math.max(0, backpackSlotsAfterAdd(state.player.inventory,
+    state.player.tradeSlots, 'logs', 4) - state.player.backpackCapacity)
+  if (slotsToFree > 0 && (logs > 0 || listedLogs)) return {
     id: 'full', title: freeSlots === 0 ? 'Backpack full' : 'Make room for logs',
     body: logs > 0
-      ? 'An oak yields 4 logs, so free 4 backpack slots before its second Chop. Find S and use Sell all at Greenway Outfitters (2g per log), or build the Greenway low steps with 4 logs at a discovered ◇ site once unlocked. Listings still reserve space.'
-      : 'An oak yields 4 logs and needs 4 free slots. Listed logs still reserve capacity. A sale frees those slots; canceling returns logs to your backpack and does not make room by itself.',
+      ? `An oak yields 4 logs. Wood stacks up to 20 per space, so free ${slotsToFree} backpack ${slotsToFree === 1 ? 'space' : 'spaces'} before its second Chop. Find S and use Sell all at Greenway Outfitters (2g per log), or build the Greenway low steps with 4 logs at a discovered ◇ site once unlocked. Listings reserve their own space.`
+      : `An oak yields 4 logs and needs ${slotsToFree} open backpack ${slotsToFree === 1 ? 'space' : 'spaces'}. Listed logs reserve their own space. A sale frees space; canceling returns logs to your backpack and may not make room.`,
   }
   if (logs >= 4) return {
     id: 'uses', title: 'Use your logs',
@@ -226,7 +228,7 @@ export function publicBeginnerWoodTip(state: PublicWorldState): { id: 'intro' | 
   }
   if (state.player.skillXp.woodcutting === 0 && logs === 0) return {
     id: 'intro', title: 'Getting started',
-    body: 'Follow Next for the quest, starting with the waystone. Your woodcutter axe is in your backpack. Equip it, find an oak’s “Chop” prompt, then use E/Interact twice for 4 logs when 4 backpack slots are free.',
+    body: 'Follow Next for the quest, starting with the waystone. Your woodcutter axe is in your backpack. Equip it, find an oak’s “Chop” prompt, then use E/Interact twice for 4 logs when your pack has room for a wood stack.',
   }
   return null
 }

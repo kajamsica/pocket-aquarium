@@ -1,5 +1,6 @@
 import { Component, useState, type ReactNode } from 'react'
 import type { EquipmentSlot, WizardViewIntent, WizardViewProjection } from './contracts'
+import { backpackSlotsAfterAdd, backpackSlotsUsed, LOGS_PER_BACKPACK_SLOT } from '../domain/backpackSlots'
 import type { TerrainWorkSite } from '../domain/terrainWorks'
 import { PUBLIC_V11_BOOTS_LISTING_ID } from '../domain/publicWorldGait'
 import { nearbyWorldTileIds, PUBLIC_SPELL_REVEAL_RADIUS_METERS } from '../domain/publicWorldDiscovery'
@@ -214,21 +215,33 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
   const discoveredDestinations = nearbyRing?.destinations.filter((destination) => destination.discovered) ?? []
   const excavatedMaterials = Object.entries(projection.v26TerrainBag ?? {})
     .filter(([, quantity]) => quantity > 0)
-  const carriedCapacityUsed = projection.backpack.stacks.reduce((total, stack) => total + stack.quantity, 0)
-    + projection.tradeListings.reduce((total, listing) => total + (listing?.quantity ?? 0), 0)
-  const usedCapacity = carriedCapacityUsed
-    + excavatedMaterials.reduce((total, [, quantity]) => total + quantity, 0)
+  const terrainUnits = excavatedMaterials.reduce((total, [, quantity]) => total + quantity, 0)
+  const tradeRows = projection.tradeListings.filter((listing) => listing !== null)
+    .map((listing) => ({ itemId: listing.itemId ?? null, quantity: listing.quantity }))
+  const usedCapacity = backpackSlotsUsed(projection.backpack.stacks, tradeRows, terrainUnits)
+  const carriedLogs = projection.backpack.stacks.reduce((total, stack) =>
+    total + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
   const occupiedSpaces: { itemId: string; title: string; color: string; badge?: number }[] = []
-  const fillSpaces = (quantity: number, itemId: string, name: string, color: string) => {
-    for (let unit = 0; unit < quantity && occupiedSpaces.length < projection.backpack.capacity; unit += 1)
-      occupiedSpaces.push({ itemId, title: `${name}, unit ${unit + 1} of ${quantity}`, color,
-        badge: unit === 0 && quantity > 1 ? quantity : undefined })
+  const fillSpaces = (quantity: number, itemId: string, name: string, color: string, perSpace = 1) => {
+    for (let unit = 0; unit < quantity && occupiedSpaces.length < projection.backpack.capacity; unit += perSpace) {
+      const inSpace = Math.min(perSpace, quantity - unit)
+      occupiedSpaces.push({ itemId, title: perSpace === 1
+        ? `${name}, unit ${unit + 1} of ${quantity}`
+        : `${name}, ${inSpace} in stack ${Math.floor(unit / perSpace) + 1} of ${Math.ceil(quantity / perSpace)}`,
+      color, badge: perSpace > 1 && inSpace > 1 ? inSpace : undefined })
+    }
   }
-  projection.backpack.stacks.forEach((stack) => fillSpaces(stack.quantity, stack.itemId,
-    stack.name,
-    stack.itemId === 'logs' ? '#70502a' : stack.equippableSlots ? '#4d3869' : '#385c4c'))
+  let logsRendered = false
+  projection.backpack.stacks.forEach((stack) => {
+    if (stack.itemId === 'logs') {
+      if (!logsRendered) fillSpaces(carriedLogs, 'logs', stack.name, '#70502a', LOGS_PER_BACKPACK_SLOT)
+      logsRendered = true
+    } else fillSpaces(stack.quantity, stack.itemId, stack.name,
+      stack.equippableSlots ? '#4d3869' : '#385c4c')
+  })
   projection.tradeListings.forEach((listing) => {
-    if (listing) fillSpaces(listing.quantity, 'listed', `Listed ${listing.itemName}`, '#5e5734')
+    if (listing) fillSpaces(listing.quantity, 'listed', `Listed ${listing.itemName}`, '#5e5734',
+      listing.itemId === 'logs' ? LOGS_PER_BACKPACK_SLOT : 1)
   })
   excavatedMaterials.forEach(([material, quantity]) => fillSpaces(quantity, `terrain-${material}`,
     `Terrain bag ${material.replaceAll('_', ' ')}`, '#345667'))
@@ -368,8 +381,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
       ? savedWorks?.builtSites.some((site) => site.id === starterWork.site.id)
     : starterWork?.site.kind === 'dig'
       && savedWorks?.dugTileIds.includes(starterWork.site.footprintTileIds[0])
-  const greenwayLogs = projection.backpack.stacks.reduce((total, stack) =>
-    total + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
+  const greenwayLogs = carriedLogs
   const greenwayBridgeBuilt = savedWorks?.builtSites.some((site) => site.kind === 'bridge')
   const greenwayLadderBuilt = savedWorks?.builtSites.some((site) => site.kind === 'ladder')
   const firstCreekBridgePending = v27Terrain && !!mining && works4Greenway
@@ -388,7 +400,10 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
     && savedWorks.preview?.nearby.find((choice) =>
       choice.site.kind === 'ladder' && choice.rejection === null)
   const harvestFreeSlots = Math.max(0, projection.backpack.capacity - usedCapacity)
-  const firstCreekHarvestBlocked = firstCreekBridgePending && greenwayLogs < 8 && harvestFreeSlots < 4
+  const harvestSlotsNeeded = backpackSlotsAfterAdd(projection.backpack.stacks, tradeRows,
+    'logs', 4, terrainUnits) - usedCapacity
+  const firstCreekHarvestBlocked = firstCreekBridgePending && greenwayLogs < 8
+    && harvestSlotsNeeded > harvestFreeSlots
   const fullOfBridgeLogs = firstCreekBridgePending && usedCapacity >= projection.backpack.capacity
     && greenwayLogs >= 8
   const logSaleLimit = greenwayLogOrder
@@ -412,7 +427,7 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
           ? `Discovered South creek bridge site ${workLocation(projection.player.position, discoveredCreekSite)}. Go to its dry bank, open Works (B), choose Bridge (1) if needed, then confirm only when the checked preview says Ready. Keep all 8 logs for this required crossing.`
           : 'Follow the map south to a discovered gold-stake creek crossing candidate. Open Works (B), choose Bridge (1), aim, then confirm (F) only when the checked preview says Ready. Keep all 8 logs for this required crossing.'
         : firstCreekHarvestBlocked
-          ? `An oak yields 4 logs, but only ${harvestFreeSlots} pack slots are free. Keep your logs for the required 8-log creek bridge. Check Outfitters for a sale of carried stone or terrain materials; it ${logSaleLimit}`
+          ? `An oak yields 4 logs, needing ${harvestSlotsNeeded} pack ${harvestSlotsNeeded === 1 ? 'space' : 'spaces'}, but only ${harvestFreeSlots} are free. Keep your logs for the required 8-log creek bridge. Check Outfitters for a sale of carried stone or terrain materials; it ${logSaleLimit}`
         : projection.equipment.mainHand?.itemId !== 'woodcutters_axe'
           ? 'Open Backpack and equip your Woodcutter axe. Its logs build the required creek bridge. Boots and the carpenter order are optional.'
           : greenwayLogs < 4
@@ -1052,9 +1067,12 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
           margin: '0 0 4px', color: '#f5d889' }}><b>Wood: {greenwayLogs} logs</b>
           {firstCreekBridgePending && <small>Creek bridge {Math.min(greenwayLogs, 8)}/8</small>}
         </p>
-        <p className="wr-caption">Logs stack in one row, but each uses one item space. No separate stack limit.</p>
+        <p className="wr-caption">Wood stacks: up to {LOGS_PER_BACKPACK_SLOT} logs per item space.</p>
         {mining && usedCapacity >= projection.backpack.capacity && !firstCreekHarvestBlocked && !fullOfBridgeLogs && <p className="wr-caption" role="note">
-          Pack full. Use carried logs only at a marked Ready bridge or ladder. At Greenway Outfitters, sell terrain-bag soil, stone, or ore to free space. If you have soil, Fill can refill an open pit in reach.
+          {harvestSlotsNeeded === 0
+            ? 'Backpack spaces are full, but your wood stack can hold another 4-log oak harvest.'
+            : 'Backpack full: the next 4-log oak harvest needs another item space. Spend logs at a marked Ready bridge or ladder.'}
+          {' '}At Greenway Outfitters, sell terrain-bag soil, stone, or ore to free space. If you have soil, Fill can refill an open pit in reach.
         </p>}
         {!mining && v27Terrain && works4Greenway && usedCapacity >= projection.backpack.capacity && <p className="wr-caption" role="note">
           Pack full. A Ready ladder costs 4 logs; a Ready bridge costs 8. Use carried logs at a valid site or sell carried stone at Greenway Outfitters.

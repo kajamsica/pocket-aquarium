@@ -497,7 +497,7 @@ export function toViewProjection(state: WizardWorldState, messages: readonly Rec
     coins: domain.player.coins,
     experience: { xp: domain.player.xp, nextLevelXp: domain.player.level * 100, level: domain.player.level },
     equipment: { head: equipped('head'), chest: equipped('chest'), legs: equipped('legs'), feet: equipped('feet'), mainHand: equipped('mainHand'), offHand: equipped('offHand') },
-    tradeListings: domain.player.tradeSlots.map((slot) => slot.itemId ? ({ id: `trade-${slot.slotIndex}`, itemName: ITEM_NAMES[slot.itemId], quantity: slot.quantity, unitPrice: slot.unitPrice }) : null) as unknown as WizardViewProjection['tradeListings'],
+    tradeListings: domain.player.tradeSlots.map((slot) => slot.itemId ? ({ id: `trade-${slot.slotIndex}`, itemId: slot.itemId, itemName: ITEM_NAMES[slot.itemId], quantity: slot.quantity, unitPrice: slot.unitPrice }) : null) as unknown as WizardViewProjection['tradeListings'],
     nearbyInteraction: interaction ? {
       kind: interaction.kind, targetId: interaction.target.id,
       label: interaction.kind === 'resource' ? 'Greenway oak'

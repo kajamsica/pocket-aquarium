@@ -105,6 +105,7 @@ import { projectPublicV32WorldView, PUBLIC_V32_CROWN_INTERACTION_ID,
   publicV32NodeInteractionId } from './PublicV32WorldView'
 import { projectPublicV33FairyRingView } from './PublicV33WorldView'
 import { publicV11Gait } from './domain/publicWorldGait'
+import { backpackSlotsAfterAdd, backpackSlotsUsed } from './domain/backpackSlots'
 import { mireglassAnchors, mireglassResources } from './domain/mireglassContent'
 import { mireglassApproachTrail } from './domain/mireglassApproachTrail'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
@@ -516,10 +517,14 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     sum + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
   const stone = view.backpack.stacks.reduce((sum, stack) =>
     sum + (stack.itemId === 'stone' ? stack.quantity : 0), 0)
-  const carried = view.backpack.stacks.reduce((sum, stack) => sum + stack.quantity, 0)
-    + view.tradeListings.reduce((sum, listing) => sum + (listing?.quantity ?? 0), 0)
-    + Object.values(view.v26TerrainBag ?? {}).reduce((sum, quantity) => sum + quantity, 0)
-  const full = carried >= view.backpack.capacity
+  const listed = view.tradeListings.map((listing) => ({ itemId: listing?.itemId ?? null,
+    quantity: listing?.quantity ?? 0 }))
+  const terrainUnits = Object.values(view.v26TerrainBag ?? {})
+    .reduce((sum, quantity) => sum + quantity, 0)
+  const full = backpackSlotsUsed(view.backpack.stacks, listed, terrainUnits)
+    >= view.backpack.capacity
+  const logHarvestBlocked = backpackSlotsAfterAdd(view.backpack.stacks, listed, 'logs', 4,
+    terrainUnits) > view.backpack.capacity
   const ladder = works.builtLadderIds.length > 0, creekBridge = works.builtBridgeIds.length > 0
   const streamed = context.movementOwner === 'streamed'
   // This coordinate describes the Greenway cliff only, never the streamed world.
@@ -534,10 +539,10 @@ export function publicV27StarterGuide(view: WizardViewProjection,
   const action = streamed ? context.riverBridgeBuilt
     ? 'Connected-river bridge built: use its saved deck from a dry bank to cross.'
     : logs >= 8 ? 'You have 8 logs: open Works at a marked Ready dry-bank site, build the connected-river bridge, then cross its deck.'
-      : `${full ? 'Make pack room, then return' : 'Return'} east${ladder ? ' via your saved north ladder' : ''} to accessible Greenway oaks. Gather ${8 - logs} more logs for the 8-log connected-river bridge, then come back west to a marked Ready dry-bank site.`
+      : `${logHarvestBlocked ? 'Make pack room, then return' : 'Return'} east${ladder ? ' via your saved north ladder' : ''} to accessible Greenway oaks. Gather ${8 - logs} more logs for the 8-log connected-river bridge, then come back west to a marked Ready dry-bank site.`
     : ladder && context.riverBridgeBuilt
     ? `Routes ready: ${ladderRoute} ${riverRoute}`
-    : full
+    : logHarvestBlocked && logs < 8
     ? `Pack full: ${context.riverBridgeBuilt
       ? 'make room before exploring beyond your saved connected-river bridge'
       : !ladder && logs >= 4
@@ -926,7 +931,7 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     : logs >= 8 ? 'Connected-river bridge next: build at a Ready bank'
       : 'Connected-river bridge next: return for 8 logs'
     : ladder && context.riverBridgeBuilt ? 'Routes ready: connected-river bridge saved'
-    : full ? 'Pack full: make room to gather' : ladder
+    : logHarvestBlocked && logs < 8 ? 'Pack full: make room to gather' : ladder
       ? upperShelf ? logs >= 8 ? 'Upper shelf: head west with bridge logs'
           : 'Upper shelf: gather 8 bridge logs' : 'Ladder ready: find a river crossing'
       : creekBridge ? 'Bridge ready: cross to the far bank' : logs >= 8

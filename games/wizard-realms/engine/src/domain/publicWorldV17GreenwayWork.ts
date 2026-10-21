@@ -1,4 +1,5 @@
 import { discoveryMaskHasTileId } from './discoveryMask'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import type { PublicTerrainWorkEvent, PublicTerrainWorkRejection } from './publicTerrainWorkAction'
 import { publicV17StarterPoseValid } from './publicWorldV17StarterMovement'
 import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
@@ -24,9 +25,6 @@ const REACH_METERS = 3
 const count = (progress: PublicV17Progress, itemId: string) =>
   progress.state.player.inventory.filter((stack) => stack.itemId === itemId)
     .reduce((sum, stack) => sum + stack.quantity, 0)
-const usedCapacity = (progress: PublicV17Progress) =>
-  progress.state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-    + progress.state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
 function underWork(site: PublicV17GreenwaySite, x: number, z: number): boolean {
   const { minX, maxX, minZ, maxZ } = physicalBounds(site)
   return site.kind === 'dig'
@@ -102,7 +100,8 @@ function checked(progress: PublicV17Progress, id: unknown): Checked {
   if (site.kind === 'dig') {
     if (state.player.equipment.mainHand !== 'field_spade'
       || count(owned, 'field_spade') < 1) return reject('requires_spade', site)
-    if (usedCapacity(owned) + 1 > state.player.backpackCapacity) return reject('capacity', site)
+    if (backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'stone', 1)
+      > state.player.backpackCapacity) return reject('capacity', site)
   } else if (count(owned, 'logs') < site.logCost) return reject('not_owned', site)
   const xp = site.kind === 'dig' ? site.reward.xp : site.xpReward
   const skill = site.kind === 'dig' ? 'excavation' : 'construction'

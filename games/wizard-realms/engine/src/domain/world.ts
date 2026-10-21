@@ -4,6 +4,7 @@ import type {
 } from './types'
 import { areaAt, createGeneratedWorld, STORE_HALF_DEPTH, STORE_HALF_WIDTH, terrainHeightAt } from './generation'
 import { canonicalRouteSites, routeBuildOptions } from './routeSites'
+import { backpackSlotsAfterAdd, backpackSlotsUsed } from './backpackSlots'
 
 const INTERACT_DISTANCE = 3
 const TRADE_SETTLEMENT_TICKS = 600 // A buyer checks the four escrow slots every 30 seconds.
@@ -70,8 +71,6 @@ const cloneState = (state: WizardWorldState): WizardWorldState => {
   return clone
 }
 const levelForXp = (xp: number) => 1 + Math.floor(Math.max(0, xp) / 100)
-const inventoryCount = (player: PlayerState) => player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-const reservedCount = (player: PlayerState) => player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
 const owns = (player: PlayerState, itemId: ItemId) => player.inventory
   .filter((stack) => stack.itemId === itemId).reduce((sum, stack) => sum + stack.quantity, 0)
 const equippedCount = (player: PlayerState, itemId: ItemId, except?: EquipmentSlot) =>
@@ -132,7 +131,7 @@ function tileAt(state: WizardWorldState, position: Vec3, areaId: AreaId) {
 }
 
 function addItem(player: PlayerState, itemId: ItemId, quantity: number): boolean {
-  if (inventoryCount(player) + reservedCount(player) + quantity > player.backpackCapacity) return false
+  if (backpackSlotsAfterAdd(player.inventory, player.tradeSlots, itemId, quantity) > player.backpackCapacity) return false
   const stack = player.inventory.find((candidate) => candidate.itemId === itemId)
   if (stack) stack.quantity += quantity
   else player.inventory.push({ itemId, quantity })
@@ -313,7 +312,8 @@ function applyIntent(
     if (distance(current.player.position, resource.position) > INTERACT_DISTANCE) return fail('too_far', 'Resource is out of reach.')
     if (current.player.equipment.mainHand !== 'woodcutters_axe' || resource.kind !== 'tree') return fail('requires_axe', 'A tree requires an equipped woodcutter axe.')
     const yieldQuantity = 4
-    if (resource.health <= 1 && inventoryCount(current.player) + reservedCount(current.player) + yieldQuantity > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the harvested logs.')
+    if (resource.health <= 1 && backpackSlotsAfterAdd(current.player.inventory, current.player.tradeSlots,
+      'logs', yieldQuantity) > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the harvested logs.')
     const state = cloneState(current)
     const target = state.resources.find((candidate) => candidate.id === intent.resourceId)!
     target.health -= 1
@@ -364,7 +364,8 @@ function applyIntent(
     if (distance(current.player.position, store.position) > INTERACT_DISTANCE) return fail('too_far', 'Store is out of reach.')
     if (listing.stock < 1) return fail('out_of_stock', 'Store listing is out of stock.')
     if (current.player.coins < listing.price) return fail('insufficient_coins', 'Not enough coins.')
-    if (inventoryCount(current.player) + reservedCount(current.player) + 1 > current.player.backpackCapacity) return fail('capacity', 'Backpack is full.')
+    if (backpackSlotsAfterAdd(current.player.inventory, current.player.tradeSlots,
+      listing.itemId, 1) > current.player.backpackCapacity) return fail('capacity', 'Backpack is full.')
     const state = cloneState(current)
     const nextListing = state.stores.find((candidate) => candidate.id === store.id)!.listings.find((candidate) => candidate.id === listing.id)!
     state.player.coins -= listing.price
@@ -421,6 +422,8 @@ function applyIntent(
     const state = cloneState(current)
     removeItem(state.player, intent.itemId, intent.quantity)
     state.player.tradeSlots[intent.slotIndex] = { slotIndex: intent.slotIndex as 0 | 1 | 2 | 3, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice }
+    if (backpackSlotsUsed(state.player.inventory, state.player.tradeSlots) > state.player.backpackCapacity)
+      return fail('capacity', 'Backpack cannot reserve a separate trade stack.')
     return { state, events: [event(state, tick, { type: 'trade_listing_created', slotIndex: intent.slotIndex, itemId: intent.itemId, quantity: intent.quantity, unitPrice: intent.unitPrice })] }
   }
 
@@ -481,7 +484,8 @@ function applyIntent(
     if (1 + Math.floor(current.player.skillXp.excavation / 30) < site.minimumExcavationLevel) return fail('skill_locked', 'Excavation skill is too low for this site.')
     const groundTile = tileAt(current, site.position, areaAt(current.areas, site.position.x, site.position.z).id)
     if (!groundTile || groundTile.terrain === 'wetland') return fail('incompatible_ground', 'This ground cannot be excavated.')
-    if (inventoryCount(current.player) + reservedCount(current.player) + site.reward.quantity > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the excavation reward.')
+    if (backpackSlotsAfterAdd(current.player.inventory, current.player.tradeSlots,
+      site.reward.itemId, site.reward.quantity) > current.player.backpackCapacity) return fail('capacity', 'Backpack cannot hold the excavation reward.')
     const state = cloneState(current)
     addItem(state.player, site.reward.itemId, site.reward.quantity)
     state.excavatedDigSiteIds.push(site.id)

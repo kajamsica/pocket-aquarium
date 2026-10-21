@@ -1,4 +1,5 @@
 import type { PublicV6BootstrapRoot } from './publicWorldV6'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { isValidPublicWorldV12State } from './publicWorldV12State'
 import type { PublicWorldV12State } from './publicWorldV12State'
@@ -39,10 +40,6 @@ const contextFor = (state: ActionState): TerrainWorkLedgerContext => ({
 const itemCount = (state: ActionState, itemId: 'logs' | 'field_spade') =>
   state.player.inventory.filter((stack) => stack.itemId === itemId)
     .reduce((sum, stack) => sum + stack.quantity, 0)
-const usedCapacity = (state: ActionState) =>
-  state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-  + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-
 type Checked<T extends ActionState> = { site: TerrainWorkSite; state: T
   ledger: TerrainWorkLedger; rejection: null }
   | { site: TerrainWorkSite | null; state: null; ledger: null
@@ -75,7 +72,8 @@ function checkedOwned<T extends ActionState>(ownedState: T, ledger: TerrainWorkL
     if (ownedState.player.equipment.mainHand !== 'field_spade' || itemCount(ownedState, 'field_spade') < 1) {
       return reject('requires_spade', site)
     }
-    if (usedCapacity(ownedState) + 1 > ownedState.player.backpackCapacity) return reject('capacity', site)
+    if (backpackSlotsAfterAdd(ownedState.player.inventory, ownedState.player.tradeSlots, 'stone', 1)
+      > ownedState.player.backpackCapacity) return reject('capacity', site)
   } else if (itemCount(ownedState, 'logs') < site.logCost) return reject('not_owned', site)
   const xp = XP[site.kind]
   const skill = site.kind === 'dig' ? 'excavation' : 'construction'

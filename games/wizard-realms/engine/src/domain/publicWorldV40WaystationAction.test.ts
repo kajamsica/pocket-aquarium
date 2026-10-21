@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { backpackSlotsUsed } from './backpackSlots'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { publicV25RiverCellAtGrid } from './publicWorldV25River'
@@ -170,7 +171,10 @@ describe('V40 Waystation physical action', () => {
     expect(confirm(atNorth(0), barter)).toEqual({ rejection: 'not_owned' })
     const full = { ...before, state: { ...before.state,
       player: { ...before.state.player, backpackCapacity: 3 } } }
-    expect(confirm(full, barter)).toEqual({ rejection: 'capacity' })
+    const fullExchange = accepted(full, barter)
+    expect(fullExchange.state.player.inventory).toContainEqual({ itemId: 'logs', quantity: 8 })
+    expect(backpackSlotsUsed(fullExchange.state.player.inventory,
+      fullExchange.state.player.tradeSlots)).toBe(2)
     const directLogs = { ...atNorth(0), state: { ...before.state,
       player: { ...before.state.player, inventory: [
         ...before.state.player.inventory.filter(({ itemId }) => itemId !== 'stone'),
@@ -195,21 +199,22 @@ describe('V40 Waystation physical action', () => {
     }
   })
 
-  it('rejects insufficient combined stone and capacity measured across inventory and bag', () => {
+  it('rejects insufficient combined stone and frees a slot even when a mixed-stone pack is full', () => {
     for (const inventoryStone of [0, 1]) {
       const insufficient = withBagStone(atNorth(inventoryStone), 1 - inventoryStone)
       expect(confirm(insufficient, barter)).toEqual({ rejection: 'not_owned' })
     }
     const ready = withBagStone(atNorth(1), 1)
-    const carried = ready.state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + ready.state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-      + Object.values(ready.terrain.bag).reduce((sum, count) => sum + count, 0)
-    const below = { ...ready, state: { ...ready.state, player: { ...ready.state.player,
-      backpackCapacity: carried + 5 } } }
-    expect(confirm(below, barter)).toEqual({ rejection: 'capacity' })
-    const boundary = { ...ready, state: { ...ready.state, player: { ...ready.state.player,
-      backpackCapacity: carried + 6 } } }
-    expect(confirm(boundary, barter).rejection).toBeUndefined()
+    const bagCount = Object.values(ready.terrain.bag).reduce((sum, count) => sum + count, 0)
+    const used = backpackSlotsUsed(ready.state.player.inventory,
+      ready.state.player.tradeSlots, bagCount)
+    const full = { ...ready, state: { ...ready.state, player: { ...ready.state.player,
+      backpackCapacity: used } } }
+    const exchanged = accepted(full, barter)
+    expect(backpackSlotsUsed(exchanged.state.player.inventory,
+      exchanged.state.player.tradeSlots,
+      Object.values(exchanged.terrain.bag).reduce((sum, count) => sum + count, 0)))
+      .toBe(used - 1)
   })
 
   it('requires the selected saved bridge and a physical far-bank exit before crossing', () => {

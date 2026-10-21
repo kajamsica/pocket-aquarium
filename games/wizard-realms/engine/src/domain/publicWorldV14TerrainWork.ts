@@ -1,4 +1,5 @@
 import { discoveryMaskHasTileId } from './discoveryMask'
+import { backpackSlotsAfterAdd } from './backpackSlots'
 import type { PublicTerrainWorkEvent, PublicTerrainWorkPreview,
   PublicTerrainWorkRejection } from './publicTerrainWorkAction'
 import type { PublicV14State } from './publicWorldV14Snapshot'
@@ -26,10 +27,6 @@ const contextFor = (state: PublicV14State) => ({ seed: state.seed,
 const itemCount = (state: PublicV14State, id: 'logs' | 'field_spade') =>
   state.player.inventory.filter((stack) => stack.itemId === id)
     .reduce((count, stack) => count + stack.quantity, 0)
-const usedCapacity = (state: PublicV14State) =>
-  state.player.inventory.reduce((count, stack) => count + stack.quantity, 0)
-  + state.player.tradeSlots.reduce((count, slot) => count + slot.quantity, 0)
-
 /** Previews are advisory. Confirmation reruns every check on a freshly owned v14 state. */
 function check(raw: PublicV14State, id: unknown): Check {
   const reject = (rejection: PublicTerrainWorkRejection,
@@ -60,7 +57,8 @@ function check(raw: PublicV14State, id: unknown): Check {
   if (site.kind === 'dig') {
     if (state.player.equipment.mainHand !== 'field_spade'
       || itemCount(state, 'field_spade') < 1) return reject('requires_spade', site)
-    if (usedCapacity(state) + 1 > state.player.backpackCapacity) return reject('capacity', site)
+    if (backpackSlotsAfterAdd(state.player.inventory, state.player.tradeSlots, 'stone', 1)
+      > state.player.backpackCapacity) return reject('capacity', site)
   } else if (itemCount(state, 'logs') < site.logCost) return reject('not_owned', site)
   const xp = XP[site.kind]
   const skill = site.kind === 'dig' ? 'excavation' : 'construction'

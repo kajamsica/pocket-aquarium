@@ -306,7 +306,8 @@ describe('wizard generation profiles', () => {
 
   it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)('preserves invalid v5 pack bytes without autosave for %s', (profile) => {
     const current = createGeneratedWorld('pack-capacity-guard', profile)
-    current.player.inventory = [{ itemId: 'woodcutters_axe', quantity: 1 }, { itemId: 'logs', quantity: 17 }]
+    current.player.inventory = [{ itemId: 'woodcutters_axe', quantity: 1 },
+      { itemId: 'logs', quantity: 17 }, { itemId: 'stone', quantity: 17 }]
     current.player.tradeSlots[0] = { slotIndex: 0, itemId: 'logs', quantity: 2, unitPrice: 7 }
     const validBytes = serializeWizardWorld(current)
     expect(restoreWizardWorld(validBytes)).toEqual(current)
@@ -318,8 +319,8 @@ describe('wizard generation profiles', () => {
     const malformed = [
       altered((player) => { player.backpackCapacity = 0 }),
       altered((player) => { player.backpackCapacity = 1_001 }),
-      altered((player) => { player.inventory[1].quantity = 18 }),
-      altered((player) => { player.tradeSlots[0].quantity = 3 }),
+      altered((player) => { player.inventory[1].quantity = 21 }),
+      altered((player) => { player.tradeSlots[0].quantity = 21 }),
       altered((player) => { player.tradeSlots[1].quantity = 1 }),
     ]
     for (const originalBytes of malformed) {
@@ -337,6 +338,16 @@ describe('wizard generation profiles', () => {
       expect(storedBytes, originalBytes).toBe(originalBytes)
     }
   })
+
+  it.each(['greenway-classic-v1', 'greenway-expanded-v1'] as const)(
+    'round-trips more than 20 carried and escrowed logs without clipping for %s', (profile) => {
+      const current = createGeneratedWorld('stacked-save', profile)
+      current.player.inventory.push({ itemId: 'logs', quantity: 25 })
+      current.player.tradeSlots[0] = { slotIndex: 0, itemId: 'logs', quantity: 21, unitPrice: 3 }
+      expect(isRestorableWizardSave(serializeWizardWorld(current), profile)).toBe(true)
+      expect(restoreWizardWorld(serializeWizardWorld(current))).toEqual(current)
+    },
+  )
 
   it.each([
     ['wizard-world/v1', 'greenway-classic-v1'],

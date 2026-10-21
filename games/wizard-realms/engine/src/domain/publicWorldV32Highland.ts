@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from './backpackSlots'
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { HIGHLAND_LANDMARK, highlandLandmark, highlandStoneNodes } from './highlandContent'
 import { exactPublicV23 } from './publicWorldV23Snapshot'
@@ -64,10 +65,9 @@ export function confirmPublicV32HighlandAction(rawProgress: PublicV32Progress,
         && stack.quantity > 0)) return reject('requires_spade')
     if (1 + Math.floor(state.player.skillXp.excavation / 30) < 2)
       return reject('skill_locked')
-    const carried = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-      + Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
-    if (carried + 2 > state.player.backpackCapacity) return reject('capacity')
+    const bagCount = Object.values(progress.terrain.bag).reduce((sum, count) => sum + count, 0)
+    if (backpackSlotsUsed(state.player.inventory, state.player.tradeSlots,
+      bagCount) + 2 > state.player.backpackCapacity) return reject('capacity')
     const entry = state.highland.stoneNodes.find(({ id }) => id === node.id)
     if (!entry) return reject('invalid_progress')
     if (state.tick < entry.readyAtTick) return reject('recovering')

@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from './backpackSlots'
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { STORE_HALF_DEPTH, STORE_HALF_WIDTH } from './generation'
 import { mireglassRouteSites } from './mireglassRouteSites'
@@ -113,9 +114,8 @@ export function applyPublicV29DeepDig(rawProgress: PublicV29Progress,
       return reject('skill_locked')
     const novel = layer === (column?.rewardDepth ?? 0)
     const bagCount = materials.reduce((sum, material) => sum + terrain.bag[material], 0)
-    const carried = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
-    if (novel && carried + bagCount + 1 > state.player.backpackCapacity) return reject('capacity')
+    const used = backpackSlotsUsed(state.player.inventory, state.player.tradeSlots, bagCount)
+    if (novel && used + 1 > state.player.backpackCapacity) return reject('capacity')
     const result = digPublicV26Column(terrain, { seed: state.seed, gx, gz, eligible: true })
     if (!result.ok) return reject(result.reason)
     if (!publicV26TerrainConserved(terrain, result.ledger, state.seed)) return reject('invalid_value')

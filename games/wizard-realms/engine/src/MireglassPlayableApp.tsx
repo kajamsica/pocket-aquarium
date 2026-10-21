@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mireglassAnchors, mireglassFairyRing, mireglassResources, MIREGLASS_RING_ID } from './domain/mireglassContent'
 import { mireglassFullApproachTrail } from './domain/mireglassApproachTrail'
+import { backpackSlotsUsed } from './domain/backpackSlots'
 import type { MireglassExpeditionAction, MireglassExpeditionEvent, MireglassItemId } from './domain/mireglassExpedition'
 import { MIREGLASS_OUTPOST_CATALOG, MIREGLASS_OUTPOST_SELL_PRICES, mireglassGlowRevealableTileIds } from './domain/mireglassExpedition'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
@@ -389,7 +390,7 @@ export function mireglassViewProjection(runtime: MireglassWorldRuntime, state: M
     ? stackFor(state.player.equipment[slot]!, 1) : null
   const tradeListing = (slotIndex: 0 | 1 | 2 | 3) => {
     const slot = state.player.tradeSlots[slotIndex]
-    return slot.itemId ? { id: `trade-${slotIndex}`, itemName: ITEM_NAMES[slot.itemId],
+    return slot.itemId ? { id: `trade-${slotIndex}`, itemId: slot.itemId, itemName: ITEM_NAMES[slot.itemId],
       quantity: slot.quantity, unitPrice: slot.unitPrice } : null
   }
   const store = anchors.salvager
@@ -739,7 +740,7 @@ export function MireglassPlayableApp() {
         {outpostQuote && <p className="readout">{outpostQuote}</p>}
         {selectedSite && <p className="readout">Selected {routeName(selectedSite.kind)} site: {bearingText(player.position, selectedSite.from)} · {pointText(selectedSite.from)} · {distance(player.position, selectedSite.from).toFixed(0)}m away</p>}
         <p className="readout">You: x {player.position.x.toFixed(1)}, y {player.position.y.toFixed(1)}, z {player.position.z.toFixed(1)} · {player.coins} coins · {state.discoveredTileIds.length} tiles</p>
-        <p className="readout">Pack {player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)}/{player.backpackCapacity}: {player.inventory.map((stack) => `${ITEM_NAMES[stack.itemId]} ×${stack.quantity}`).join(', ') || 'empty'}</p>
+        <p className="readout">Pack {backpackSlotsUsed(player.inventory, player.tradeSlots)}/{player.backpackCapacity}: {player.inventory.map((stack) => `${ITEM_NAMES[stack.itemId]} ×${stack.quantity}`).join(', ') || 'empty'}</p>
         <p className="readout">Hand: {player.equipment.mainHand ? ITEM_NAMES[player.equipment.mainHand] : 'empty'} · Feet: {player.equipment.feet ? ITEM_NAMES[player.equipment.feet] : 'empty'} · Glow: {player.learnedSpellIds.includes('wayfinder_glow') ? 'learned' : 'unknown'} · Excavation Lv{1 + Math.floor(player.skillXp.excavation / 30)}</p>
         <p className="readout">W/S move · A/D turn · Space jump · E nearest action · M map</p>
         <div className="status" data-error={statusSource === 'movement' && movementBarrierStatus !== null || error} role="status">{statusSource === 'movement' && movementBarrierStatus !== null ? movementBarrierStatus : messages.at(-1)}</div>

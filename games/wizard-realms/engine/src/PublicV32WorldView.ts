@@ -1,3 +1,4 @@
+import { backpackSlotsAfterAdd } from './domain/backpackSlots'
 import { discoveryMaskHasTileId } from './domain/discoveryMask'
 import { HIGHLAND_LANDMARK, classifyStreamedRegion, highlandCorridorCells,
   highlandLandmark, highlandStoneNodes } from './domain/highlandContent'
@@ -23,11 +24,6 @@ const distance3 = (a: { x: number; y: number; z: number },
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
 const owned = (progress: PublicV32Progress, itemId: string) => progress.state.player.inventory
   .reduce((quantity, stack) => quantity + (stack.itemId === itemId ? stack.quantity : 0), 0)
-const packUsed = (progress: PublicV32Progress) => progress.state.player.inventory
-  .reduce((quantity, stack) => quantity + stack.quantity, 0)
-  + progress.state.player.tradeSlots.reduce((quantity, slot) => quantity + slot.quantity, 0)
-  + Object.values(progress.terrain.bag).reduce((quantity, count) => quantity + count, 0)
-
 const compass = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
 const bearing = (from: Point, to: Point) => compass[(Math.round(Math.atan2(to.x - from.x,
   from.z - to.z) / (Math.PI / 4)) + 8) % 8]
@@ -180,7 +176,9 @@ export function projectPublicV32WorldView(progress: PublicV32Progress,
           : player.equipment.mainHand !== 'field_spade' ? 'Equip your field spade.'
             : 1 + Math.floor(player.skillXp.excavation / 30) < 2
               ? 'Excavation Lv2 required. Practice digging before extracting stone.'
-              : packUsed(progress) + 2 > player.backpackCapacity
+              : backpackSlotsAfterAdd(player.inventory, player.tradeSlots, 'stone', 2,
+                Object.values(progress.terrain.bag).reduce((quantity, count) => quantity + count, 0))
+                > player.backpackCapacity
                 ? 'Make room for 2 stone in your backpack.'
                 : readyAtTick === undefined ? 'This stone shelf is unavailable.'
                   : state.tick < readyAtTick

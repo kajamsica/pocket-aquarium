@@ -1,5 +1,6 @@
 import { createGeneratedWorld, terrainHeightAt, WORLD_CONTENT_REVISION } from './generation'
 import { canonicalRouteSites } from './routeSites'
+import { backpackSlotsUsed, LOGS_PER_BACKPACK_SLOT } from './backpackSlots'
 import { canEquipItem } from './world'
 import type { DigSiteId, EquipmentSlot, GenerationProfile, InscriptionId, ItemId, RecipeId, RouteId, SkillId, SpellId, WizardWorldState } from './types'
 
@@ -139,9 +140,8 @@ function validCurrentContent(source: Record<string, unknown>, base: WizardWorldS
       && (slot.itemId === null ? slot.quantity === 0 && slot.unitPrice === 0
         : itemId(slot.itemId) && positiveInteger(slot.quantity) && positiveInteger(slot.unitPrice)))
     || !knownIds(player.discoveredRingIds, ['ring-greenway', 'ring-highland'])) return false
-  const carried = (player.inventory as Array<{ quantity: number }>).reduce((sum, stack) => sum + stack.quantity, 0)
-  const reserved = (player.tradeSlots as Array<{ quantity: number }>).reduce((sum, slot) => sum + slot.quantity, 0)
-  if (carried + reserved > backpackCapacity) return false
+  if (backpackSlotsUsed(player.inventory as Array<{ itemId: string; quantity: number }>,
+    player.tradeSlots as Array<{ itemId: string | null; quantity: number }>) > backpackCapacity) return false
   const tiles = source.tiles as unknown[]
   const resources = source.resources as unknown[]
   const stores = source.stores as unknown[]
@@ -375,7 +375,8 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
     state.player.backpackCapacity = integer(player.backpackCapacity, base.player.backpackCapacity, 1, 1_000)
     if (Array.isArray(player.inventory)) state.player.inventory = player.inventory.flatMap((entry) => {
       if (!record(entry) || !itemId(entry.itemId)) return []
-      const quantity = integer(entry.quantity, 0, 0, state.player.backpackCapacity)
+      const limit = state.player.backpackCapacity * (entry.itemId === 'logs' ? LOGS_PER_BACKPACK_SLOT : 1)
+      const quantity = integer(entry.quantity, 0, 0, limit)
       return quantity > 0 ? [{ itemId: entry.itemId, quantity }] : []
     })
     state.player.discoveredRingIds = Array.isArray(player.discoveredRingIds)
@@ -385,18 +386,29 @@ export function restoreWizardWorld(serialized: string): WizardWorldState {
     if (rawTradeSlots.length === 4) state.player.tradeSlots = base.player.tradeSlots.map((fallback, index) => {
       const value = record(rawTradeSlots[index]) ? rawTradeSlots[index] : {}
       const listedItem = itemId(value.itemId) ? value.itemId : null
-      return listedItem ? { slotIndex: fallback.slotIndex, itemId: listedItem, quantity: integer(value.quantity, 1, 1, state.player.backpackCapacity), unitPrice: integer(value.unitPrice, 1, 1) } : fallback
+      const limit = state.player.backpackCapacity * (listedItem === 'logs' ? LOGS_PER_BACKPACK_SLOT : 1)
+      return listedItem ? { slotIndex: fallback.slotIndex, itemId: listedItem, quantity: integer(value.quantity, 1, 1, limit), unitPrice: integer(value.unitPrice, 1, 1) } : fallback
     }) as WizardWorldState['player']['tradeSlots']
-    let remaining = state.player.backpackCapacity
-    state.player.inventory = state.player.inventory.flatMap((stack) => {
-      const quantity = Math.min(stack.quantity, remaining)
-      remaining -= quantity
-      return quantity > 0 ? [{ ...stack, quantity }] : []
-    })
+    const restoredInventory: typeof state.player.inventory = []
+    for (const stack of state.player.inventory) {
+      const free = Math.max(0, state.player.backpackCapacity - backpackSlotsUsed(restoredInventory))
+      const carriedLogs = restoredInventory.filter((entry) => entry.itemId === 'logs')
+        .reduce((sum, entry) => sum + entry.quantity, 0)
+      const partialLogSpace = stack.itemId === 'logs'
+        ? (LOGS_PER_BACKPACK_SLOT - carriedLogs % LOGS_PER_BACKPACK_SLOT) % LOGS_PER_BACKPACK_SLOT : 0
+      const quantity = Math.min(stack.quantity,
+        stack.itemId === 'logs' ? free * LOGS_PER_BACKPACK_SLOT + partialLogSpace : free)
+      if (quantity > 0) restoredInventory.push({ ...stack, quantity })
+    }
+    state.player.inventory = restoredInventory
+    const restoredTradeSlots: WizardWorldState['player']['tradeSlots'][number][] = []
     state.player.tradeSlots = state.player.tradeSlots.map((slot) => {
-      const quantity = Math.min(slot.quantity, remaining)
-      remaining -= quantity
-      return slot.itemId && quantity > 0 ? { ...slot, quantity } : base.player.tradeSlots[slot.slotIndex]
+      const free = Math.max(0, state.player.backpackCapacity
+        - backpackSlotsUsed(state.player.inventory, restoredTradeSlots))
+      const quantity = Math.min(slot.quantity, slot.itemId === 'logs' ? free * LOGS_PER_BACKPACK_SLOT : free)
+      const restored = slot.itemId && quantity > 0 ? { ...slot, quantity } : base.player.tradeSlots[slot.slotIndex]
+      restoredTradeSlots.push(restored)
+      return restored
     }) as WizardWorldState['player']['tradeSlots']
     const requestedEquipment = record(player.equipment) ? player.equipment : {}
     equipmentSlots.forEach((slot) => {

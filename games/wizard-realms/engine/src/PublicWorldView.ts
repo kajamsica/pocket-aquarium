@@ -148,7 +148,7 @@ function greenwayView(state: PublicWorldState, messages: readonly string[],
   }
   const tradeListing = (index: 0 | 1 | 2 | 3) => {
     const listing = projection.tradeListings[index]
-    return listing ? { ...listing,
+    return listing ? { ...listing, itemId: state.player.tradeSlots[index].itemId ?? undefined,
       itemName: V6_ITEM_NAMES[state.player.tradeSlots[index].itemId ?? ''] ?? listing.itemName } : null
   }
   return {

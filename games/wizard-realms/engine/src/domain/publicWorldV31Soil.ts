@@ -1,3 +1,4 @@
+import { backpackSlotsUsed } from './backpackSlots'
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { STORE_HALF_DEPTH, STORE_HALF_WIDTH } from './generation'
 import { highlandStoneNodes } from './highlandContent'
@@ -205,10 +206,9 @@ export function confirmPublicV31SoilAction(rawProgress: PublicV31Progress,
     if (kind === 'soil-place/v1' && (!terrain.bag.soil || raisedSoilCells.length >= 256))
       return reject(terrain.bag.soil ? 'cells_full' : 'requires_soil')
     const bagCount = materials.reduce((sum, material) => sum + terrain.bag[material], 0)
-    const carried = state.player.inventory.reduce((sum, stack) => sum + stack.quantity, 0)
-      + state.player.tradeSlots.reduce((sum, slot) => sum + slot.quantity, 0)
+    const used = backpackSlotsUsed(state.player.inventory, state.player.tradeSlots, bagCount)
     if (kind === 'soil-remove/v1' && (bagCount >= 256
-      || carried + bagCount + 1 > state.player.backpackCapacity)) return reject('capacity')
+      || used + 1 > state.player.backpackCapacity)) return reject('capacity')
     const delta = kind === 'soil-place/v1' ? -1 : 1
     const next: PublicV31Progress = { ...progress,
       terrain: { ...terrain, bag: { ...terrain.bag, soil: terrain.bag.soil + delta } },
