@@ -119,6 +119,9 @@ const TERRAIN_TARGET_OUTLINE = new THREE.BufferGeometry().setFromPoints([
 ])
 const TERRAIN_TARGET_MATERIAL = new THREE.LineBasicMaterial({ color: '#b7d8e1', transparent: true,
   opacity: 0.8, depthWrite: false })
+const TREE_TARGET_CUE_MATERIAL = new THREE.MeshBasicMaterial({ color: '#ffe395', transparent: true,
+  opacity: 0.9, depthWrite: false, side: THREE.DoubleSide })
+const TREE_TARGET_CUE_RAYCAST: THREE.Mesh['raycast'] = () => {}
 const WORKS_SURVEY_MATERIAL = new THREE.LineBasicMaterial({ color: '#c6e7ed', transparent: true,
   opacity: 0.95, depthWrite: false })
 const MIREGLASS_PATCH_GEOMETRY = new THREE.CircleGeometry(1, 9)
@@ -1554,6 +1557,18 @@ function Resource({ node, pose }: { node: WizardResourceNode; pose: Presentation
   )
 }
 
+/** Follow the checked prompt's exact live resource ID, never a nearby lookalike or stump. */
+export function actionableTreeCue(resources: readonly WizardResourceNode[],
+  prompt: WizardViewProjection['nearbyInteraction']) {
+  if (prompt?.kind !== 'resource' || !prompt.actionable) return null
+  const target = resources.find((node) => node.id === prompt.targetId
+    && node.kind === 'tree' && node.available)
+  return target ? <mesh name={`Actionable tree target ${target.id}`}
+    geometry={WINDWARD_GLYPH_GEOMETRY} material={TREE_TARGET_CUE_MATERIAL}
+    position={[target.position[0], target.position[1] + 0.08, target.position[2]]}
+    rotation={[-Math.PI / 2, 0, 0]} scale={2.5} raycast={TREE_TARGET_CUE_RAYCAST} /> : null
+}
+
 export function StorePosts() {
   return <mesh name="Store corner posts" geometry={STORE_POST_GEOMETRY}
     material={DARK_WOOD_MATERIAL} castShadow />
@@ -2945,6 +2960,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         cells={fogVisibleDressingCells(revealedTerrain, projection.player.position, Boolean(projection.visualWorld))}
         clearings={landscapeClearings} />}
       {visual.resources.map((node) => <Resource key={node.id} node={node} pose={pose} />)}
+      {actionableTreeCue(visual.resources, projection.nearbyInteraction)}
       {visual.stores.map((store) => <Store key={store.id} store={store} pose={pose} />)}
       {keeperPosition && wayfarerV9.source && <StarterOutfittersKeeper source={wayfarerV9.source}
         position={keeperPosition} />}

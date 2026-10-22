@@ -21,7 +21,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { actionableTreeCue, Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { advanceV9JumpPresentation, advanceV9TurnPhase, applyV9EquippedCarryPose,
   restoreV9EquippedCarryPose,
   authoritativeAvatarClipFor, V9_EQUIPPED_CARRY_STRENGTH, V9_RIGHT_HAND_CONTACT,
@@ -1961,6 +1961,36 @@ describe('tree camera obstruction', () => {
 })
 
 describe('tree harvest visual state', () => {
+  it('marks only the actionable live oak ID, then moves the cue from A to B after A falls', () => {
+    const oakA: WizardResourceNode = { id: 'oak-a', kind: 'tree', label: 'Greenway oak',
+      position: [1, 0, 2], available: true }
+    const oakB: WizardResourceNode = { ...oakA, id: 'oak-b', position: [2, 0, 2] }
+    const promptA = { kind: 'resource' as const, targetId: oakA.id, label: oakA.label,
+      action: 'Chop', actionable: true }
+    const cueA = actionableTreeCue([oakA, oakB], promptA)
+    expect(cueA?.type).toBe('mesh')
+    expect(cueA?.props).toMatchObject({ name: 'Actionable tree target oak-a',
+      position: [1, 0.08, 2], scale: 2.5 })
+    const stumpA = { ...oakA, available: false }
+    expect(actionableTreeCue([stumpA, oakB], promptA)).toBeNull()
+    const cueB = actionableTreeCue([stumpA, oakB], { ...promptA, targetId: oakB.id })
+    expect(cueB?.props).toMatchObject({ name: 'Actionable tree target oak-b',
+      position: [2, 0.08, 2] })
+    expect(actionableTreeCue([stumpA, oakB], { ...promptA, actionable: false })).toBeNull()
+    expect(actionableTreeCue([stumpA, oakB], { ...promptA, kind: 'store' })).toBeNull()
+    expect(actionableTreeCue([stumpA, { ...oakB, kind: 'herb' }],
+      { ...promptA, targetId: oakB.id })).toBeNull()
+    const marker = new THREE.Mesh(cueB!.props.geometry, cueB!.props.material)
+    marker.position.set(cueB!.props.position[0], cueB!.props.position[1], cueB!.props.position[2])
+    marker.rotation.set(cueB!.props.rotation[0], cueB!.props.rotation[1], cueB!.props.rotation[2])
+    marker.scale.setScalar(cueB!.props.scale)
+    marker.updateMatrixWorld(true)
+    const ray = new THREE.Raycaster(new THREE.Vector3(2.8, 5, 2), new THREE.Vector3(0, -1, 0))
+    expect(ray.intersectObject(marker)).toHaveLength(1)
+    marker.raycast = cueB!.props.raycast
+    expect(ray.intersectObject(marker)).toEqual([])
+  })
+
   it('keeps a live canopy and branches, then leaves only a grounded, shadowless stump', () => {
     const barkMaterial = new THREE.MeshStandardMaterial()
     const crownMaterial = new THREE.MeshStandardMaterial()
