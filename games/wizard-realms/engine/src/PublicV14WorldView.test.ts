@@ -208,8 +208,12 @@ describe('pure v14 view projection', () => {
     expect(treeView.nearbyStoreId).toBe(store.id)
     const equipped = advancePublicV14GreenwayAction(atTree,
       { type: 'equip_item', itemId: 'woodcutters_axe', slot: 'mainHand' })
-    expect(project(equipped.state).nearbyInteraction).toMatchObject({ kind: 'resource',
+    const actionableView = project(equipped.state)
+    expect(actionableView.nearbyInteraction).toMatchObject({ kind: 'resource',
       targetId: tree.id, action: 'Chop', actionable: true })
+    expect(actionableView.visualWorld?.resources.find((resource) =>
+      resource.id === actionableView.nearbyInteraction?.targetId))
+      .toMatchObject({ id: tree.id, kind: 'tree', available: true })
     expect(project(atTree, null, store.id)).toMatchObject({ openStoreId: store.id,
       nearbyInteraction: null })
     expect(advancePublicV14GreenwayAction(atTree, { type: 'buy_store_listing',
