@@ -4,6 +4,7 @@ import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { createPublicV23Root, decodePublicV23Progress } from './publicWorldV23Snapshot'
+import type { PublicV23Progress } from './publicWorldV23Snapshot'
 import { resolvePublicV23Site } from './publicWorldV23Sites'
 import { emptyPublicV26TerrainLedger } from './publicWorldV26TerrainLedger'
 import { replayPublicV28FramesWithEvents } from './publicWorldV28Replay'
@@ -18,6 +19,7 @@ import type { PublicV31Progress } from './publicWorldV31Migration'
 import { decodePublicV31ActionProgress } from './publicWorldV31Soil'
 import { replayPublicV31FramesWithEvents, replayPublicV31ReturnHome } from './publicWorldV31Movement'
 import { projectPublicV31Pose } from './publicWorldV31Support'
+import { createPublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 
 const seed = 'wizard-realms'
 const move = (x: number, z: number) => [{ intents: [{ type: 'move' as const,
@@ -42,6 +44,25 @@ function at(x: number, z: number): PublicV31Progress {
     raisedSoilCells: [] }
 }
 
+function streamedBootsAt(point = { x: 36, z: 4 }): PublicV31Progress {
+  const { head } = createPublicV23Root(seed)
+  const floor = resolvePublicV23Surface(head.state, point, [])
+  if (!floor) throw new Error('Missing dry streamed floor')
+  const old = decodePublicV23Progress({ state: { ...head.state,
+    movementOwner: 'streamed',
+    discoveryMask: encodeDiscoveredTileIds([...new Set([
+      ...decodeDiscoveredTileIds(head.state.discoveryMask), floor.tileId])].sort()),
+    player: { ...head.state.player, position: { ...point, y: floor.floorY },
+      inventory: [...head.state.player.inventory, { itemId: 'leather_boots', quantity: 1 }],
+      equipment: { ...head.state.player.equipment, feet: 'leather_boots' } } },
+  greenwayWorks: head.greenwayWorks, regionalWorks: head.regionalWorks }, seed)
+  if (!old) throw new Error('Invalid dry streamed ride fixture')
+  return { ...old, terrain: emptyPublicV26TerrainLedger(), nextHomeAtMs: 0,
+    riverBridgeIds: [], miningTools: { basicPickOwned: false,
+      enchantedPickOwned: false, activePick: null }, claimedBridgeheadId: null,
+    raisedSoilCells: [] }
+}
+
 function oldV30Frame(before: PublicV30Progress, frames: ReturnType<typeof move>) {
   if (!canonicalClaim(before)) return null
   const replayed = replayPublicV29Witness({ state: before.state,
@@ -53,6 +74,39 @@ function oldV30Frame(before: PublicV30Progress, frames: ReturnType<typeof move>)
 }
 
 describe('V31 effective soil support and checked movement', () => {
+  it.each([false, true])('admits one dry 0.3 m frame without an extra tick, remote soil=%s', (soil) => {
+    const base = streamedBootsAt()
+    const before: PublicV31Progress = soil ? { ...base, raisedSoilCells: [{ gx: 3, gz: -4 }],
+      state: { ...base.state, discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(base.state.discoveryMask), 'tile-6--1'])].sort()) } } : base
+    const saved = structuredClone(before), from = before.state.player.position
+    const middle = { ...from, x: from.x + 0.15 }, to = { ...from, x: from.x + 0.3 }
+    const admission = createPublicV45DryRideAdmission(from, middle, to)
+    const assisted = { substeps: [{ x: 0.15, z: 0 }, { x: 0.15, z: 0 }] as const,
+      settle: (after: PublicV23Progress) => after }
+    const frames = move(0.2, 0), policy = () => assisted
+    expect(admission).not.toBeNull()
+    expect(replayPublicV31FramesWithEvents(before, frames, false, policy)).toBeNull()
+    const checked = replayPublicV31FramesWithEvents(before, frames, false, policy, admission!)
+    expect(checked).not.toBeNull()
+    expect(checked!.progress.state.player.position.x).toBeCloseTo(to.x)
+    expect(checked!.progress.state.tick).toBe(before.state.tick + 1)
+    expect(checked!.events.filter((event) => event.type === 'player_moved')).toHaveLength(2)
+    expect(checked!.events.filter((event) => event.type === 'player_moved')
+      .every((event) => event.tick === checked!.progress.state.tick)).toBe(true)
+    expect(before).toEqual(saved)
+  })
+  it('does not turn an admitted long wet span into a bridge crossing', () => {
+    const before = streamedBootsAt({ x: 36, z: 11 })
+    const from = before.state.player.position
+    const admission = createPublicV45DryRideAdmission(from,
+      { ...from, z: from.z + 0.15 }, { ...from, z: from.z + 0.3 })
+    const assisted = { substeps: [{ x: 0, z: 0.15 }, { x: 0, z: 0.15 }] as const,
+      settle: (after: PublicV23Progress) => after }
+    expect(admission).not.toBeNull()
+    expect(replayPublicV31FramesWithEvents(before, move(0, 0.2), false,
+      () => assisted, admission!)).toBeNull()
+  })
   it('retreats from the off-lane Slate upper pose, aligns on the shelf, and descends the saved rung', () => {
     const farSeed = 'greenway-alpha', { head } = createPublicV23Root(farSeed)
     const site = resolvePublicV23Site(farSeed, 'works5:ladder:mireglass-slate:W:-103:4311')!

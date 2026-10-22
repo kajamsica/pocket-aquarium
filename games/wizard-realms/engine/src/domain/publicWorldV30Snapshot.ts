@@ -3,6 +3,7 @@ import { preservesPublicV17GreenwayWorks } from './publicWorldV17Validation'
 import { samePublicV14Value } from './publicWorldV14Validation'
 import { exactPublicV23 } from './publicWorldV23Snapshot'
 import type { PublicV23StreamedMovePolicy } from './publicWorldV23Transitions'
+import type { PublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { publicV26TerrainConserved } from './publicWorldV26TerrainConservation'
 import { publicV28BridgeSitesValid } from './publicWorldV28RiverBridgeAction'
 import { replayPublicV28FramesWithEvents } from './publicWorldV28Replay'
@@ -71,13 +72,14 @@ export function decodePublicV30Witness(value: unknown): PublicV30Witness | null 
 
 /** One checked V28 frame replay supplies both V30 state and authoritative events. */
 export function replayPublicV30FramesWithEvents(before: PublicV30Progress,
-  rawWitness: unknown, streamedMove?: PublicV23StreamedMovePolicy): { progress: PublicV30Progress;
+  rawWitness: unknown, streamedMove?: PublicV23StreamedMovePolicy,
+  admission?: PublicV45DryRideAdmission): { progress: PublicV30Progress;
     events: readonly PublicWorldEvent[] } | null {
   const witness = decodePublicV30Witness(rawWitness)
   if (witness?.kind !== 'frame-batch/v1' || !canonicalClaim(before)) return null
   const prior = inherited(before)
   if (!publicV28BridgeSitesValid(prior)) return null
-  const observed = replayPublicV28FramesWithEvents(prior, witness.frames, false, streamedMove)
+  const observed = replayPublicV28FramesWithEvents(prior, witness.frames, false, streamedMove, admission)
   if (!observed || !publicV28BridgeSitesValid(observed.progress)) return null
   const activePick = observed.progress.state.player.equipment.mainHand === null
     ? before.miningTools.activePick : null
