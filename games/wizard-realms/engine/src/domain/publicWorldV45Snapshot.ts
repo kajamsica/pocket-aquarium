@@ -9,7 +9,7 @@ import type { PublicV45MountWitness } from './publicWorldV45MountTransition'
 import { confirmPublicV45Action, decodePublicV45RideBatchWitness,
   decodePublicV45RideFrameWitness } from './publicWorldV45RideAction'
 import type { PublicV45Progress, PublicV45RideWitness } from './publicWorldV45RideAction'
-import { createPublicV45Genesis, decodePublicV45Genesis, PUBLIC_V45_SCHEMA }
+import { createPublicV45GenesisFromCheckedSource, PUBLIC_V45_SCHEMA }
   from './publicWorldV45Migration'
 import type { PublicV45Lineage } from './publicWorldV45Migration'
 import { decodePublicV44Root } from './publicWorldV44Snapshot'
@@ -134,9 +134,11 @@ export function decodePublicV45Root(raw: unknown): PublicV45Root | null {
     const lineage = decodeLineage(raw.lineage)
     const head = lineage && decodeHead(raw.head, lineage)
     if (!lineage || !head) return null
-    if (head.saveRevision === 0) return decodePublicV45Genesis(raw)
+    const genesis = createPublicV45GenesisFromCheckedSource(lineage.source).head
+    if (head.saveRevision === 0) return raw.previous === null
+      && sameStrictBoundedRaw(raw.head, genesis, RAW_LIMIT)
+      ? { lineage, previous: null, head } : null
     const previous = decodeHead(raw.previous, lineage)
-    const genesis = createPublicV45Genesis(lineage.source).head
     if (!previous || head.saveRevision !== previous.saveRevision + 1
       || !preservesGenesis(genesis, head, lineage.seed)
       || !preservesGenesis(genesis, previous, lineage.seed)
@@ -155,13 +157,19 @@ export function decodePublicV45Root(raw: unknown): PublicV45Root | null {
 /** The writer must present the exact old head and the complete replayed next head. */
 export function decodePublicV45CheckedSuccessor(rawBefore: PublicV45Root,
   raw: unknown): PublicV45Root | null {
+  const before = decodePublicV45Root(rawBefore)
+  return before ? decodePublicV45SuccessorOfCheckedRoot(before, raw) : null
+}
+
+/** Only a private checked-read proof may supply before without redecoding it. */
+export function decodePublicV45SuccessorOfCheckedRoot(before: PublicV45Root,
+  raw: unknown): PublicV45Root | null {
   try {
-    const before = decodePublicV45Root(rawBefore)
-    if (!before || !exactPublicV23(raw, ['lineage', 'previous', 'head'])
+    if (!exactPublicV23(raw, ['lineage', 'previous', 'head'])
       || !sameStrictBoundedRaw(raw.lineage, before.lineage, RAW_LIMIT)
       || !sameStrictBoundedRaw(raw.previous, before.head, RAW_LIMIT)) return null
     const head = decodeHead(raw.head, before.lineage)
-    const genesis = createPublicV45Genesis(before.lineage.source).head
+    const genesis = createPublicV45GenesisFromCheckedSource(before.lineage.source).head
     return head && preservesGenesis(genesis, head, before.lineage.seed)
       && tackMonotonic(before.head, head)
       && publicV32Monotonic(before.head, head)

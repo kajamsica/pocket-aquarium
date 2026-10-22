@@ -27,10 +27,9 @@ export type PublicV45Genesis = Readonly<{
   previous: null
 }>
 
-/** Pin the complete checked V44 source and start a flat V43 progress head. */
-export function createPublicV45Genesis(rawV44: PublicV44Root): PublicV45Genesis {
-  const source = decodePublicV44Root(rawV44)
-  if (!source) throw new RangeError('Invalid checked V44 source root')
+/** Only call with a V44 root already returned by decodePublicV44Root. */
+export function createPublicV45GenesisFromCheckedSource(
+  source: PublicV44Root): PublicV45Genesis {
   const { schemaVersion: _schema, saveRevision: _revision,
     witness: _witness, ...flat } = source.head.v43.head
   const progress = decodePublicV43Progress(flat)
@@ -47,6 +46,13 @@ export function createPublicV45Genesis(rawV44: PublicV44Root): PublicV45Genesis 
     previous: null }
 }
 
+/** Pin the complete checked V44 source and start a flat V43 progress head. */
+export function createPublicV45Genesis(rawV44: PublicV44Root): PublicV45Genesis {
+  const source = decodePublicV44Root(rawV44)
+  if (!source) throw new RangeError('Invalid checked V44 source root')
+  return createPublicV45GenesisFromCheckedSource(source)
+}
+
 /** Only the deterministic V44-import genesis is accepted here. */
 export function decodePublicV45Genesis(raw: unknown): PublicV45Genesis | null {
   try {
@@ -58,7 +64,7 @@ export function decodePublicV45Genesis(raw: unknown): PublicV45Genesis | null {
     const source = decodePublicV44Root(raw.lineage.source)
     if (!source || raw.lineage.sourceRevision !== source.head.saveRevision
       || raw.lineage.seed !== source.head.v43.head.state.seed) return null
-    const expected = createPublicV45Genesis(source)
+    const expected = createPublicV45GenesisFromCheckedSource(source)
     return sameStrictBoundedRaw(raw.head, expected.head, 3 << 20)
       ? expected : null
   } catch { return null }

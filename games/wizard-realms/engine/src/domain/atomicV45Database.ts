@@ -1,4 +1,4 @@
-import { decodePublicV45CheckedSuccessor, decodePublicV45Root }
+import { decodePublicV45Root, decodePublicV45SuccessorOfCheckedRoot }
   from './publicWorldV45Snapshot'
 import type { PublicV45Root } from './publicWorldV45Snapshot'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
@@ -74,7 +74,7 @@ export function createAtomicV45Store(factory: IDBFactory,
       const prior = proofs.get(proof)!; proofs.delete(proof)
       if (!sameStrictBoundedRaw(next, next, RAW_LIMIT)) return 'invalid'
       const decoded = prior === null ? decodePublicV45Root(next)
-        : decodePublicV45CheckedSuccessor(prior.root, next)
+        : decodePublicV45SuccessorOfCheckedRoot(prior.root, next)
       if (!decoded || prior === null && decoded.head.saveRevision !== 0) return 'invalid'
       let candidate: PublicV45Root
       try {

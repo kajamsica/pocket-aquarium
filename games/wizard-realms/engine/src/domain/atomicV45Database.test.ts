@@ -180,6 +180,22 @@ describe('atomic V45 checked root storage', () => {
     expect((await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))).toEqual(second)
   }, 30_000)
 
+  it('keeps the private checked proof detached from a mutated returned root', async () => {
+    const factory = new IDBFactory(), store = createAtomicV45Store(factory)
+    const genesis = mountedGenesis()
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw new Error('Expected empty V45 store')
+    expect(await store.commit(missing.proof, genesis)).toBe('committed')
+    const read = await store.readChecked()
+    if (read.status !== 'valid') throw new Error('Expected checked root')
+    const next = structuredClone(successor(read.root))
+    ;(read.root.head as { saveRevision: number }).saveRevision = 87
+    ;(read.root.lineage.source.head as { saveRevision: number }).saveRevision = 99
+    expect(await store.commit(read.proof, next)).toBe('committed')
+    expect((await createAtomicV45Store(factory).readChecked())).toMatchObject({
+      status: 'valid', root: next })
+  }, 30_000)
+
   it('consumes proofs once and rejects stale and competing writers by CAS', async () => {
     const factory = new IDBFactory(), store = createAtomicV45Store(factory)
     const genesis = mountedGenesis()
@@ -235,12 +251,15 @@ describe('atomic V45 checked root storage', () => {
   it('blocks malformed, extra-key, torn, oversized, and absent-store reads', async () => {
     const malformed = new IDBFactory(), extra = new IDBFactory()
     const torn = new IDBFactory(), oversized = new IDBFactory()
-    const absentStore = new IDBFactory()
+    const badSource = new IDBFactory(), absentStore = new IDBFactory()
     await record(malformed, PUBLIC_V45_DATABASE_NAME, 'root', { forged: true })
     const genesis = mountedGenesis(), first = successor(genesis)
     await record(extra, PUBLIC_V45_DATABASE_NAME, 'root', genesis)
     await record(extra, PUBLIC_V45_DATABASE_NAME, 'unexpected', { forged: true })
     await record(torn, PUBLIC_V45_DATABASE_NAME, 'root', { ...first, previous: null })
+    await record(badSource, PUBLIC_V45_DATABASE_NAME, 'root', { ...genesis,
+      lineage: { ...genesis.lineage, source: { ...genesis.lineage.source,
+        head: { ...genesis.lineage.source.head, saveRevision: 23 } } } })
     await record(oversized, PUBLIC_V45_DATABASE_NAME, 'root', { ...genesis,
       padding: 'x'.repeat(1_600_000) })
     const created = absentStore.open(PUBLIC_V45_DATABASE_NAME, 1)
@@ -249,7 +268,7 @@ describe('atomic V45 checked root storage', () => {
       created.onsuccess = () => { created.result.close(); resolve() }
       created.onerror = () => reject(created.error)
     })
-    for (const factory of [malformed, extra, torn, oversized])
+    for (const factory of [malformed, extra, torn, oversized, badSource])
       expect((await createAtomicV45Store(factory).readChecked()).status).toBe('blocked')
     expect(await createAtomicV45Store(absentStore).readChecked()).toEqual({
       status: 'blocked', reason: 'invalid-v45-records' })
