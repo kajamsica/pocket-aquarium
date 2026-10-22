@@ -68,6 +68,7 @@ import type { PublicV44Start } from './domain/publicWorldV44Flow'
 import { PUBLIC_V44_MAX_RIDE_BATCH } from './domain/publicWorldV44GroundMount'
 import type { PublicV44GroundMountWitness } from './domain/publicWorldV44GroundMount'
 import { createPublicV45ControllerRuntime } from './PublicV45ControllerRuntime'
+import { createPublicV45WorkerBindings } from './PublicV45WorkerBindings'
 import type { PublicV45EntryBindings } from './PublicV45Entry'
 import { commitPublicV45, requestPublicV45ReturnHome } from './domain/publicWorldV45Flow'
 import type { PublicV45Start } from './domain/publicWorldV45Flow'
@@ -1198,6 +1199,25 @@ export type PublicV45ControllerProps = PublicV45EntryBindings & Readonly<{
   start: PublicV45Start; version: 'v45';
   v45SaveOpen?: import('./PublicV45Entry').PublicV45SessionSaveOpen }>
 
+/** READY never falls back to a page writer, including after an uncertain Worker result. */
+export function createPublicV45RuntimeForEntry(props: PublicV45ControllerProps): V45Runtime {
+  if (props.v45SaveOpen?.status === 'ready') {
+    let runtime: V45Runtime | null = null
+    const worker = createPublicV45WorkerBindings(props.v45SaveOpen.transport, props,
+      () => {
+        if (!runtime) throw Error('V45 runtime is not ready')
+        return runtime.committed()
+      })
+    runtime = createPublicV45ControllerRuntime(props.start, worker.write,
+      worker.homeWrite, worker.ridePort)
+    return runtime
+  }
+  return createPublicV45ControllerRuntime(props.start, (revision, lineage, witness) =>
+    commitPublicV45(props.locks, props.store, props.v44Store, revision, lineage, witness),
+    (revision, lineage) => requestPublicV45ReturnHome(props.locks, props.store,
+      props.v44Store, revision, lineage))
+}
+
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
   const message: Record<string, string> = {
@@ -1430,10 +1450,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime | V45Runtime | null>(null)
   if (!runtimeRef.current) {
     runtimeRef.current = 'version' in props && props.version === 'v45'
-      ? createPublicV45ControllerRuntime(props.start, (revision, lineage, witness) =>
-        commitPublicV45(props.locks, props.store, props.v44Store, revision, lineage, witness),
-        (revision, lineage) => requestPublicV45ReturnHome(props.locks, props.store,
-          props.v44Store, revision, lineage))
+      ? createPublicV45RuntimeForEntry(props)
       : 'version' in props && props.version === 'v44'
       ? createPublicV44ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV44(props.locks, props.store, props.v43Store, revision, lineage, witness),

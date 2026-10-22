@@ -49,9 +49,15 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
   let nextBatchId = 1, drainRequested = false
   let wakeFatal = () => {}
   const fatalSignal = new Promise<void>((resolve) => { wakeFatal = resolve })
+  const statusListeners = new Set<() => void>()
+  const notifyStatus = () => {
+    for (const listener of statusListeners) try { listener() }
+    catch { /* UI listeners cannot change save authority. */ }
+  }
   const unsubscribeFatal = ridePort?.onFatal((reason) => {
     directBlocked = reason || 'worker-failed'
     wakeFatal()
+    notifyStatus()
   })
   const gate = () => directBlocked
     ? { status: 'blocked' as const, reason: directBlocked }
@@ -107,7 +113,9 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
       visible: mature && familiar.phase === 'claimed',
       position: structuredClone(position), yaw: state.player.yaw }
   }
-  const blockRide = (reason: string) => { directBlocked = reason || 'worker-failed' }
+  const blockRide = (reason: string) => {
+    directBlocked = reason || 'worker-failed'; notifyStatus()
+  }
   const launchRide = () => {
     if (!ridePort || inFlight || !rideFrames.length || directBlocked) return
     const flight: RideFlight = { id: nextBatchId++, before: committed,
@@ -115,6 +123,7 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         frames: structuredClone(rideFrames) }, end: structuredClone(ridePreview) }
     rideFrames = []
     inFlight = flight
+    notifyStatus()
     flightPromise = Promise.resolve().then(() => ridePort.commitRideBatch({
       batchId: flight.id, expectedRevision: flight.before.head.saveRevision,
       witness: flight.witness })).then((outcome) => {
@@ -138,6 +147,7 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         head: { ...flight.end, schemaVersion: flight.before.head.schemaVersion,
           saveRevision: ack.nextRevision, witness: flight.witness } }
       inFlight = null
+      notifyStatus()
       if (rideFrames.length >= PUBLIC_V45_MAX_RIDE_BATCH || drainRequested)
         launchRide()
     }).catch(() => { if (!directBlocked) blockRide('worker-failed') })
@@ -169,18 +179,18 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
       const reply = accept(before, witness, await write(before.head.saveRevision,
         structuredClone(before.lineage), witness))
       if (!reply.ok) {
-        directBlocked = reply.reason
+        blockRide(reply.reason)
         return { status: 'blocked' as const, reason: reply.reason }
       }
       if (!sameStrictBoundedRaw(previewBeforeWrite, progressOf(reply.value.head), 3 << 20)) {
-        directBlocked = 'preview-desync'
+        blockRide('preview-desync')
         return { status: 'blocked' as const, reason: directBlocked }
       }
       rideFrames = []
       runtime = makeShell()
       return { status: 'saved' as const, events: [], resetWalkRequested: false }
     } catch {
-      directBlocked = 'storage-error'
+      blockRide('storage-error')
       return { status: 'blocked' as const, reason: directBlocked }
     }
   }
@@ -190,6 +200,10 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         code, message }] })
   return {
     committed: () => structuredClone(committed),
+    subscribeStatus(listener: () => void) {
+      statusListeners.add(listener)
+      return () => { statusListeners.delete(listener) }
+    },
     groundMount: mountView,
     view: () => {
       if (!isRiding()) return runtime.view()
@@ -266,13 +280,13 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         if (!reply.ok) {
           if (reply.reason === 'not_trapped' || reply.reason === 'cooldown')
             return { status: 'rejected' as const, reason: reply.reason }
-          directBlocked = reply.reason
+          blockRide(reply.reason)
           return { status: 'blocked' as const, reason: reply.reason }
         }
         runtime = makeShell()
         return { status: 'saved' as const, events: [], resetWalkRequested: false }
       } catch {
-        directBlocked = 'storage-error'
+        blockRide('storage-error')
         return { status: 'blocked' as const, reason: directBlocked }
       } finally { directBusy = false }
     },
@@ -301,16 +315,16 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         const reply = accept(before, raw, await write(before.head.saveRevision,
           structuredClone(before.lineage), raw))
         if (!reply.ok) {
-          directBlocked = reply.reason
+          blockRide(reply.reason)
           return { status: 'blocked' as const, reason: reply.reason }
         }
         runtime = makeShell()
         return { status: 'saved' as const, events: [], resetWalkRequested: false }
       } catch {
-        directBlocked = 'storage-error'
+        blockRide('storage-error')
         return { status: 'blocked' as const, reason: directBlocked }
       } finally { directBusy = false }
     },
-    dispose() { unsubscribeFatal?.() },
+    dispose() { unsubscribeFatal?.(); statusListeners.clear() },
   }
 }

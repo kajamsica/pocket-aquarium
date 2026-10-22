@@ -137,6 +137,30 @@ const turn = (delta: number) => [{ type: 'look' as const,
   yawDelta: delta, pitchDelta: 0 }]
 
 describe('V45 controller runtime', () => {
+  it('notifies subscribers on an asynchronous ride ACK and Worker fatal', async () => {
+    const { runtime, settle, fail } = await queuedRider()
+    const seen: Array<{ revision: number; gate: string }> = []
+    const unsubscribe = runtime.subscribeStatus(() => {
+      const status = runtime.status()
+      seen.push({ revision: status.durableRevision, gate: status.gate })
+    })
+    for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+      expect(runtime.advanceFrame(turn(0.04), false).rejections).toEqual([])
+    await Promise.resolve()
+    for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+      expect(runtime.advanceFrame(turn(-0.04), false).rejections).toEqual([])
+    expect(runtime.status().gate).toBe('cap-paused')
+    await settle(0)
+    expect(seen).toContainEqual({ revision: 2, gate: 'open' })
+    fail('worker-crashed')
+    expect(seen.at(-1)).toEqual({ revision: 2, gate: 'blocked' })
+    unsubscribe()
+    const count = seen.length
+    fail('worker-crashed-again')
+    expect(seen).toHaveLength(count)
+    runtime.dispose()
+  }, 30_000)
+
   it('continues checked V43 Sedgehorn care after V44 import while parked', async () => {
     const genesis = createPublicV45Genesis(createPublicV44Root(matureSource(2)))
     const writer = checkedWriter(genesis)
