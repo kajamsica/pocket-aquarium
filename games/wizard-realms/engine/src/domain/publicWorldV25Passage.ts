@@ -7,6 +7,8 @@ import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { publicWorldV16TileAtGrid } from './publicWorldV16GreenwaySites'
 import { publicV25RiverCellAtGrid } from './publicWorldV25River'
 import { publicV25RiverTouchesSegment } from './publicWorldV25RiverSweep'
+import { publicV45DryRideMidpoint } from './publicWorldV45DryRideAdmission'
+import type { PublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { terrainWorkSupportAt } from './terrainWorkSupport'
 import { resolveTerrainWorkSite } from './terrainWorks'
 import type { Vec3 } from './types'
@@ -18,14 +20,21 @@ const inWorld = (point: Vec3) => [point.x, point.y, point.z].every(Number.isFini
   && [cell(point.x), cell(point.z)].every((value) => value >= WORLD_GRID_MIN && value <= WORLD_GRID_MAX)
 const EPSILON = 1e-6
 /** Gate each old movement segment against the new river and persisted bridge geometry. */
-export function publicV25RiverPassage(progress: PublicV24Progress, from: Vec3, to: Vec3): Passage {
+export function publicV25RiverPassage(progress: PublicV24Progress, from: Vec3, to: Vec3,
+  admission?: PublicV45DryRideAdmission): Passage {
   const invalid = { ok: false, reason: 'invalid-segment' } as const,
     blocked = { ok: false, reason: 'river-needs-bridge' } as const
   try {
     if (!inWorld(from) || !inWorld(to)) return invalid
     const length = Math.hypot(to.x - from.x, to.z - from.z)
-    if (length > PUBLIC_RUN_STEP_METERS + EPSILON) return invalid
+    const overCap = length > PUBLIC_RUN_STEP_METERS + EPSILON
+    const middle = overCap ? publicV45DryRideMidpoint(admission, from, to) : null
+    if (overCap && (!middle || length > 0.4)) return invalid
     const seed = progress.state.seed
+    if (middle) {
+      return publicV25RiverTouchesSegment(seed, from, middle)
+        || publicV25RiverTouchesSegment(seed, middle, to) ? blocked : { ok: true }
+    }
     if (!publicV25RiverTouchesSegment(seed, from, to)) return { ok: true }
     const checked = decodePublicV23Progress(progress, seed)
     if (!checked) return invalid

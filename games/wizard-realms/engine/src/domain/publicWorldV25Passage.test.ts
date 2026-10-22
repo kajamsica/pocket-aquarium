@@ -7,6 +7,7 @@ import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
 import { publicV25RiverCellAtGrid, publicV25RiverCenterZ } from './publicWorldV25River'
 import { publicV25RiverPassage } from './publicWorldV25Passage'
 import { publicV25RiverTouchesSegment } from './publicWorldV25RiverSweep'
+import { createPublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from './worldChunks'
 
 const seed = 'wizard-realms'
@@ -17,6 +18,30 @@ const fresh = () => {
 }
 
 describe('V25 checked river passage', () => {
+  it('admits only a privately issued matching two-leg dry span above the old cap', () => {
+    const base = fresh(), from = { x: 36, y: 2, z: 4 }
+    const middle = { ...from, z: 4.15 }, to = { ...from, z: 4.3 }
+    const admission = createPublicV45DryRideAdmission(from, middle, to)
+    expect(admission).not.toBeNull()
+    expect(publicV25RiverTouchesSegment(seed, from, to)).toBe(false)
+    expect(publicV25RiverPassage(base, from, { ...from, z: 4.24 })).toEqual({ ok: true })
+    expect(publicV25RiverPassage(base, from, to)).toEqual({ ok: false, reason: 'invalid-segment' })
+    expect(publicV25RiverPassage(base, from, to, admission!)).toEqual({ ok: true })
+    for (const forged of [JSON.parse(JSON.stringify(admission)), { ...admission }, 0.3]) {
+      expect(publicV25RiverPassage(base, from, to, forged as never))
+        .toEqual({ ok: false, reason: 'invalid-segment' })
+    }
+    expect(publicV25RiverPassage(base, from, { ...to, z: to.z + 0.001 }, admission!))
+      .toEqual({ ok: false, reason: 'invalid-segment' })
+    const wet = { ...from, z: 11 }
+    const wetAdmission = createPublicV45DryRideAdmission(wet, { ...wet, z: 11.15 }, { ...wet, z: 11.3 })
+    expect(wetAdmission).not.toBeNull()
+    expect(publicV25RiverPassage(base, wet, { ...wet, z: 11.3 }, wetAdmission!))
+      .toEqual({ ok: false, reason: 'river-needs-bridge' })
+    expect(createPublicV45DryRideAdmission(from, { ...from, z: 4.21 }, to)).toBeNull()
+    expect(createPublicV45DryRideAdmission(from, middle, { ...from, z: 4.4 })).toBeNull()
+    expect(createPublicV45DryRideAdmission(from, middle, { ...from, x: 0.01, z: 4.3 })).toBeNull()
+  })
   it('allows a short dry step but blocks new water on old dry streamed ground', () => {
     const base = fresh()
     const dry = { x: 36, y: 2, z: 4 }
