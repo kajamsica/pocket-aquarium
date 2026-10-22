@@ -860,6 +860,7 @@ describe('V23 controller input admission', () => {
     expect(css).toContain('[data-public-v23] .wr-surface{height:100%;min-height:0}')
     expect(css).toContain('overflow-y:auto')
     expect(css).toContain('(min-width:720px) and (max-width:900px) and (max-height:590px)')
+    expect(css).toContain('@media(min-width:720px) and (min-height:591px){[data-public-version=v42] .v25-start-guide{left:166px}}')
     const bottom = Number(css.match(/bottom:calc\((\d+)px \+ env\(safe-area-inset-bottom/)?.[1])
     const rightReserve = Number([...css.matchAll(/width:min\(300px,calc\(100vw - (\d+)px\)\)/g)]
       .at(-1)?.[1])
