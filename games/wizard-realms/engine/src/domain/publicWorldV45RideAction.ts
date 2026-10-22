@@ -78,6 +78,7 @@ function safePose(progress: PublicV31Progress, point: Vec3): boolean {
     && !publicV43FamiliarTouchesForbiddenSupport(progress.state.seed, point, point,
       progress.terrain.columns, progress.raisedSoilCells)
 }
+export { safePose as publicV45SafePose }
 
 function dryLeg(progress: PublicV31Progress, from: Vec3, to: Vec3): boolean {
   return !publicV43FamiliarTouchesUnrevealedCell(progress.state.discoveryMask, from, to)
