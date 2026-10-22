@@ -1,5 +1,5 @@
 import { IDBFactory } from 'fake-indexeddb'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import './atomicV41Database'
 import { createAtomicV44Store } from './atomicV44Database'
 import { createAtomicV45Store, PUBLIC_V45_DATABASE_NAME } from './atomicV45Database'
@@ -265,5 +265,19 @@ describe('atomic V45 checked root storage', () => {
     })
     expect(await createAtomicV45Store(factory).readChecked()).toEqual({
       status: 'blocked', reason: 'storage-error' })
+  })
+
+  it('returns on blocked open without a terminal event and closes a late success', async () => {
+    const close = vi.fn()
+    const request = { result: { close }, onupgradeneeded: null,
+      onblocked: null, onerror: null, onsuccess: null } as unknown as IDBOpenDBRequest
+    const factory = { open: () => request } as unknown as IDBFactory
+    const read = createAtomicV45Store(factory).readChecked()
+    request.onblocked?.call(request, {} as IDBVersionChangeEvent)
+    expect(await Promise.race([read,
+      new Promise((resolve) => setTimeout(() => resolve('pending'), 20))]))
+      .toEqual({ status: 'blocked', reason: 'storage-error' })
+    request.onsuccess?.call(request, {} as Event)
+    expect(close).toHaveBeenCalledTimes(1)
   })
 })

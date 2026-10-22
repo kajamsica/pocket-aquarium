@@ -23,10 +23,13 @@ export function createAtomicV45Store(factory: IDBFactory,
         if (event.oldVersion !== 0) { request.transaction?.abort(); return }
         request.result.createObjectStore('records')
       }
-      request.onblocked = () => { blocked = true }
+      request.onblocked = () => {
+        blocked = true
+        reject(new Error('Database blocked'))
+      }
       request.onerror = () => reject(request.error)
       request.onsuccess = () => {
-        if (blocked) { request.result.close(); reject(new Error('Database blocked')) }
+        if (blocked) request.result.close()
         else resolve(request.result)
       }
     })
