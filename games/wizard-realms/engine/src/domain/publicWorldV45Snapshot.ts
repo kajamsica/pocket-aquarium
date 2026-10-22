@@ -118,6 +118,8 @@ export function decodePublicV45Root(raw: unknown): PublicV45Root | null {
       || !sameStrictBoundedRaw(immutableOf(previous), immutableOf(genesis), RAW_LIMIT)) return null
     if (previous.saveRevision === 0 && !sameStrictBoundedRaw(raw.previous,
       genesis, RAW_LIMIT)) return null
+    if (previous.saveRevision === 1 && !replayMatches(genesis, previous,
+      raw.previous)) return null
     return replayMatches(previous, head, raw.head)
       ? { lineage, previous, head } : null
   } catch { return null }

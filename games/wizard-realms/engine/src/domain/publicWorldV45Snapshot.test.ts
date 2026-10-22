@@ -160,6 +160,28 @@ describe('V45 checked assisted-ride root', () => {
       expect(decodePublicV45Witness(invalid)).toBeNull()
   })
 
+  it('checks retained revision one against genesis before accepting revision two', () => {
+    const genesis = mountedGenesis(true)
+    const first = next(genesis, ride(0.2))
+    for (const playerChange of [
+      { coins: first.head.state.player.coins + 100 },
+      { position: { ...first.head.state.player.position,
+        x: first.head.state.player.position.x + 0.01 } },
+    ]) {
+      const previous = { ...first.head, state: { ...first.head.state,
+        player: { ...first.head.state.player, ...playerChange } } }
+      const { schemaVersion: _schema, saveRevision: _revision,
+        witness: _prior, ...flat } = previous
+      const advanced = confirmPublicV45RideFrame(flat, ride(0.2)).progress
+      expect(advanced).toBeDefined()
+      const forged = { lineage: first.lineage, previous,
+        head: { ...advanced, schemaVersion: PUBLIC_V45_SCHEMA,
+          saveRevision: 2, witness: ride(0.2) } }
+      expect(decodePublicV45Root(forged)).toBeNull()
+    }
+    expect(decodePublicV45Root(next(first, ride(0.2)))).not.toBeNull()
+  }, 30_000)
+
   it('rejects truncated, swapped, forged, cross-seed, and noncontiguous roots', () => {
     const genesis = mountedGenesis(true)
     const first = next(genesis, ride(0.2))
