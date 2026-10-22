@@ -571,7 +571,7 @@ describe('V45 fenced source-only flow', () => {
     const batch = { kind: 'sedgehorn-assisted-ride-batch/v1' as const,
       frames: Array.from({ length: 32 }, (_, index) => ({ ...ride,
         intents: [{ type: 'move' as const,
-          delta: { x: index % 2 ? -0.12 : 0.12, z: 0 } }] })) }
+          delta: { x: index % 2 ? -0.12 : 0.12, z: 0 } }] as const })) }
     const { schemaVersion: _schema, saveRevision: _revision,
       witness: _witness, ...progress } = started.value.head
     const expected = confirmPublicV45Action(progress, batch)
@@ -588,6 +588,32 @@ describe('V45 fenced source-only flow', () => {
       .toBe(sourceBytes)
     expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
       .toEqual(marker)
+  }, 90_000)
+
+  it('uses ordinary replay for seven frames and prepared replay at eight', async () => {
+    const { factory, source, store } = await setup(mountedV44Root())
+    const started = await startPublicV45(locks, store, source, 1)
+    if (!started.ok) throw new Error(started.reason)
+    const ordinary = vi.spyOn(store, 'commit')
+    const prepared = vi.spyOn(store, 'commitPreparedRideBatch')
+    const batch = (length: number) => ({
+      kind: 'sedgehorn-assisted-ride-batch/v1' as const,
+      frames: Array.from({ length }, (_, index) => ({ ...ride,
+        intents: [{ type: 'move' as const,
+          delta: { x: index % 2 ? -0.12 : 0.12, z: 0 } }] as const })) })
+    const seven = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, batch(7))
+    if (!seven.ok) throw new Error(seven.reason)
+    expect(ordinary).toHaveBeenCalledTimes(1)
+    expect(prepared).not.toHaveBeenCalled()
+    const eight = await commitPublicV45(locks, store, source, 1,
+      started.value.lineage, batch(8))
+    if (!eight.ok) throw new Error(eight.reason)
+    expect(ordinary).toHaveBeenCalledTimes(1)
+    expect(prepared).toHaveBeenCalledTimes(1)
+    expect((await createAtomicV45Store(factory).readChecked())).toMatchObject({
+      status: 'valid', root: { head: { saveRevision: 2,
+        state: { tick: started.value.head.state.tick + 15 } } } })
   }, 90_000)
 
   it('persists a checked herb sale and reloads without rewriting V44 or its marker', async () => {

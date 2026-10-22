@@ -17,7 +17,7 @@ import { createPublicV44Root, decodePublicV44Root, PUBLIC_V44_DATABASE_NAME,
 import { confirmPublicV45RideFrame } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import { decodePublicV45CheckedSuccessor, decodePublicV45Root,
-  preparePublicV45RideBatch }
+  decodePublicV45Witness, preparePublicV45RideBatch }
   from './publicWorldV45Snapshot'
 import type { PublicV45Root, PublicV45Witness } from './publicWorldV45Snapshot'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
@@ -199,6 +199,24 @@ describe('atomic V45 checked root storage', () => {
         saveRevision: 8 } }, prepared.certificate)).toBe('invalid')
     expect(await first.commitPreparedRideBatch(competing.proof,
       prepared.candidate, prepared.certificate)).toBe('invalid')
+    const forgedRead = await first.readChecked()
+    if (forgedRead.status !== 'valid') throw new Error('Expected checked root')
+    const forged = preparePublicV45RideBatch(forgedRead.root, batch,
+      forgedRead.proof)!
+    expect(await first.commitPreparedRideBatch(forgedRead.proof,
+      forged.candidate, {})).toBe('invalid')
+    const changedRead = await first.readChecked()
+    if (changedRead.status !== 'valid') throw new Error('Expected checked root')
+    const changed = preparePublicV45RideBatch(changedRead.root, batch,
+      changedRead.proof)!
+    const alteredWitness = { ...batch, frames: [{ ...ride,
+      intents: [{ type: 'move' as const, delta: { x: 0.1, z: 0 } }] as const }, ride] }
+    expect(decodePublicV45Witness(alteredWitness)).toEqual(alteredWitness)
+    expect(await first.commitPreparedRideBatch(changedRead.proof,
+      { ...changed.candidate, head: { ...changed.candidate.head,
+        witness: alteredWitness } }, changed.certificate)).toBe('invalid')
+    expect(await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))
+      .toEqual(genesis)
     const refreshed = await first.readChecked()
     if (refreshed.status !== 'valid') throw new Error('Expected checked root')
     const good = preparePublicV45RideBatch(refreshed.root, batch,
