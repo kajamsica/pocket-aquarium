@@ -197,12 +197,13 @@ function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['
         position: settledPosition, verticalVelocity: 0 } : result.state.player
       let sequence = old.eventSequence
       const added: string[] = []
-      for (const event of result.events) {
+      const terminalMoveIndex = result.events.findLastIndex((event) => event.type === 'player_moved')
+      for (const [eventIndex, event] of result.events.entries()) {
         if (event.type === 'tile_discovered') {
           if (discoveryMaskHasTileId(old.discoveryMask, event.tileId)) continue
           added.push(event.tileId)
         }
-        events.push({ ...event, ...(settledPosition && event.type === 'player_moved'
+        events.push({ ...event, ...(settledPosition && eventIndex === terminalMoveIndex
           ? { position: settledPosition } : {}), sequence: ++sequence } as PublicWorldEvent)
       }
       const tick = old.tick + 1, mask = new Uint8Array(old.discoveryMask)
