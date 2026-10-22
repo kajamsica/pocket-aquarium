@@ -20,6 +20,25 @@ import type { StreamedWorldIntent } from './streamedWorld'
 
 const MAX_TERMINAL_DRY_DESCENT_METERS = 0.10
 
+/** Closed segment against the inclusive Greenway owner rectangle from publicWorldV14Boundary. */
+function touchesGreenwaySegment(from: Readonly<{ x: number; z: number }>,
+  to: Readonly<{ x: number; z: number }>): boolean {
+  let enter = 0, exit = 1
+  for (const [start, delta, min, max] of [
+    [from.x, to.x - from.x, -30, 34], [from.z, to.z - from.z, -30, 34],
+  ]) {
+    if (delta === 0) {
+      if (start < min || start > max) return false
+    } else {
+      const a = (min - start) / delta, b = (max - start) / delta
+      enter = Math.max(enter, Math.min(a, b))
+      exit = Math.min(exit, Math.max(a, b))
+      if (enter > exit) return false
+    }
+  }
+  return true
+}
+
 /** Trusted version policy, never decoded from a witness. Ordinary gait is checked first. */
 export type PublicV23StreamedMovePolicy = (before: PublicV23Progress,
   frame: PublicV14FrameWitness['frames'][number]) => (
@@ -157,8 +176,7 @@ function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['
           const from = old.player.position
           const between = { x: from.x + steps[0].x, z: from.z + steps[0].z }
           const to = { x: between.x + steps[1].x, z: between.z + steps[1].z }
-          if (publicV14InsideGreenway(from) !== publicV14InsideGreenway(between)
-            || publicV14InsideGreenway(from) !== publicV14InsideGreenway(to)) return failed()
+          if (touchesGreenwaySegment(from, between) || touchesGreenwaySegment(between, to)) return failed()
         }
       }
       const intents = assisted ? frame.intents.flatMap<StreamedWorldIntent>((intent) => intent.type !== 'move'
