@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
+import { mireglassAnchors } from './mireglassContent'
 import { mireglassFenRowAt } from './mireglassTerrain'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { publicV26ValleyRimPassage } from './publicWorldV26ValleyRim'
@@ -53,6 +54,96 @@ function at(x: number, z: number, boots = false): PublicV45Progress {
 }
 
 describe('V45 checked assisted Sedgehorn ride', () => {
+  it('dispatches exact mount and dismount witnesses without mutating the source', () => {
+    const site = resolveSedgehornFamiliarSite(createFreshPublicV43Root(seed).head)!
+    const rider = at(site.keeper.center.x, site.keeper.center.z)
+    const parked: PublicV45Progress = { ...rider,
+      groundMount: { mode: 'parked', parkedPosition: null } }
+    const saved = structuredClone(parked)
+    const mounted = confirmPublicV45Action(parked, { kind: 'sedgehorn-mount/v1' })
+    expect(mounted.rejection).toBeUndefined()
+    expect(mounted.events).toEqual([])
+    expect(mounted.progress!.groundMount.mode).toBe('riding')
+    const dismounted = confirmPublicV45Action(mounted.progress!,
+      { kind: 'sedgehorn-dismount/v1' })
+    expect(dismounted.rejection).toBeUndefined()
+    expect(dismounted.events).toEqual([])
+    expect(dismounted.progress!.groundMount).toEqual({ mode: 'parked',
+      parkedPosition: parked.state.player.position })
+    expect(confirmPublicV45Action(parked, { kind: 'sedgehorn-mount/v1',
+      price: 0 }).rejection).toBe('invalid_witness')
+    expect(confirmPublicV45Action({ ...parked, tack: 'not_owned' },
+      { kind: 'sedgehorn-mount/v1' }).rejection).toBe('tack_required')
+    expect(confirmPublicV45Action(parked, { kind: 'sedgehorn-dismount/v1' })
+      .rejection).toBe('not_riding')
+    expect(parked).toEqual(saved)
+  })
+
+  it('dispatches fixed-price tack purchase only from an exact witness', () => {
+    const head = createFreshPublicV43Root(seed).head
+    const store = head.state.greenway.stores
+      .find((entry) => entry.id === 'store-greenway')!
+    const site = resolveSedgehornFamiliarSite(head)!
+    const familiar = { ...head.familiar, phase: 'claimed' as const,
+      routeChoice: 'shelter' as const, position: { ...site.keeper.center },
+      trust: 2, creatureCareXp: 40, stationKnown: true }
+    const mountTraining = { careWitnesses: [0, 600, 1200].map((tick, index) => ({
+      kind: 'sedgehorn-care/v1' as const, tick, eventSequence: index + 1 })) }
+    const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+      ...flat } = head
+    const progress = decodePublicV43Progress({ ...flat, familiar, mountTraining,
+      state: { ...head.state, tick: 1300, eventSequence: 10,
+        player: { ...head.state.player, position: { ...store.position }, coins: 300,
+          xp: head.state.player.xp + 40 } } })
+    if (!progress) throw new Error('Invalid Greenway purchase fixture')
+    const before: PublicV45Progress = { ...progress, tack: 'not_owned',
+      groundMount: { mode: 'parked', parkedPosition: null } }
+    const saved = structuredClone(before)
+    const bought = confirmPublicV45Action(before, { kind: 'buy-sedgehorn-tack/v1' })
+    expect(bought.rejection).toBeUndefined()
+    expect(bought.events).toEqual([])
+    expect(bought.progress!.tack).toBe('purchased')
+    expect(bought.progress!.state.player.coins).toBe(60)
+    expect(confirmPublicV45Action(bought.progress!,
+      { kind: 'buy-sedgehorn-tack/v1' }).rejection).toBe('already_owned')
+    expect(confirmPublicV45Action(before, { kind: 'buy-sedgehorn-tack/v1',
+      price: 0 }).rejection).toBe('invalid_witness')
+    expect(confirmPublicV45Action({ ...before, groundMount: {
+      mode: 'riding', parkedPosition: null } },
+    { kind: 'buy-sedgehorn-tack/v1' }).rejection).toBe('not_parked')
+    expect(before).toEqual(saved)
+  })
+
+  it('dispatches a checked herb sale with bounded quantity and no client price', () => {
+    const salvager = mireglassAnchors(seed).salvager.tile
+    const rider = at(salvager.center.x, salvager.center.z)
+    const before: PublicV45Progress = { ...rider, tack: 'not_owned',
+      groundMount: { mode: 'parked', parkedPosition: null },
+      state: { ...rider.state,
+        discoveryMask: encodeDiscoveredTileIds([...new Set([
+          ...decodeDiscoveredTileIds(rider.state.discoveryMask), salvager.id,
+        ])].sort()), player: { ...rider.state.player, coins: 10,
+          inventory: [{ itemId: 'marsh_herb', quantity: 3 }] } } }
+    const saved = structuredClone(before)
+    const sold = confirmPublicV45Action(before,
+      { kind: 'sell-marsh-herb/v1', quantity: 2 })
+    expect(sold.rejection).toBeUndefined()
+    expect(sold.events).toEqual([])
+    expect(sold.progress!.state.player.coins).toBe(26)
+    expect(sold.progress!.state.player.inventory).toEqual([
+      { itemId: 'marsh_herb', quantity: 1 }])
+    expect(confirmPublicV45Action(before, { kind: 'sell-marsh-herb/v1',
+      quantity: 2, unitPrice: 999 }).rejection).toBe('invalid_witness')
+    expect(confirmPublicV45Action(before, { kind: 'sell-marsh-herb/v1',
+      quantity: 0 }).rejection).toBe('invalid_quantity')
+    expect(confirmPublicV45Action(before, { kind: 'sell-marsh-herb/v1',
+      quantity: '2' }).rejection).toBe('invalid_quantity')
+    expect(confirmPublicV45Action({ ...before, groundMount: {
+      mode: 'riding', parkedPosition: null } },
+    { kind: 'sell-marsh-herb/v1', quantity: 1 }).rejection).toBe('not_eligible')
+    expect(before).toEqual(saved)
+  })
+
   it('replays ordinary V43 frames only while parked without mount or tack changes', () => {
     const riding = at(36, 4)
     const parked: PublicV45Progress = { ...riding, groundMount: {
@@ -95,6 +186,10 @@ describe('V45 checked assisted Sedgehorn ride', () => {
     expect(after.greenwayBagUpgrade).toEqual(before.greenwayBagUpgrade)
     expect(after.groundMount).toEqual(before.groundMount)
     expect(after.tack).toBe('legacy')
+    expect(confirmPublicV45RideFrame({ ...before, tack: 'purchased' }, witness)
+      .rejection).toBeUndefined()
+    expect(confirmPublicV45Action({ ...before, tack: 'purchased' }, witness)
+      .rejection).toBeUndefined()
     expect(before).toEqual(saved)
   })
 
