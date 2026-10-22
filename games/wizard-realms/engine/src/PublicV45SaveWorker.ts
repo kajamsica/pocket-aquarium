@@ -16,6 +16,8 @@ let current: PublicV45Start | null = null
 let epoch = ''
 let busy = false, initialized = false
 let lastBatch = 0, lastRequest = 0
+let store: ReturnType<typeof createAtomicV45Store> | null = null
+let source: ReturnType<typeof createAtomicV44PromotionStore> | null = null
 const reply = (message: unknown) => scope.postMessage(message)
 
 async function handle(raw: unknown) {
@@ -33,8 +35,9 @@ async function handle(raw: unknown) {
       || !sameStrictBoundedRaw(expected, expected, 3 << 20)) {
       reply({ kind: 'blocked', reason: 'invalid-start' }); return
     }
-    const resumed = await resumePublicV45(navigator.locks,
-      createAtomicV45Store(indexedDB), createAtomicV44PromotionStore(indexedDB),
+    store = createAtomicV45Store(indexedDB)
+    source = createAtomicV44PromotionStore(indexedDB)
+    const resumed = await resumePublicV45(navigator.locks, store, source,
       expected.head.saveRevision, expected.lineage)
     if (!resumed.ok || !sameStrictBoundedRaw(resumed.value, expected, 3 << 20)) {
       reply({ kind: 'blocked', reason: resumed.ok ? 'start-changed' : resumed.reason }); return
@@ -44,7 +47,8 @@ async function handle(raw: unknown) {
     reply({ kind: 'ready', epoch })
     return
   }
-  if (!current || busy) { reply({ kind: 'fatal', reason: 'protocol-error' }); return }
+  if (!current || !store || !source || busy) {
+    reply({ kind: 'fatal', reason: 'protocol-error' }); return }
   const request = message as Request
   if (!['ride', 'action', 'home'].includes(request.kind)) {
     reply({ kind: 'fatal', reason: 'protocol-error' }); return
@@ -71,8 +75,6 @@ async function handle(raw: unknown) {
   else lastRequest = request.id
   busy = true
   const before = current
-  const store = createAtomicV45Store(indexedDB)
-  const source = createAtomicV44PromotionStore(indexedDB)
   try {
     const committed = request.kind === 'home'
       ? await requestPublicV45ReturnHome(navigator.locks, store, source,

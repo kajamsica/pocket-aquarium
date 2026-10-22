@@ -11,6 +11,8 @@ class FakeWorker {
   messages: Record<string, unknown>[] = []
   malformed = false
   silent = false
+  holdReplies = false
+  heldReplies: Array<() => void> = []
   constructor() { FakeWorker.last = this }
   postMessage(message: Record<string, unknown>) {
     this.messages.push(message)
@@ -25,10 +27,13 @@ class FakeWorker {
       frameCount: message.kind === 'ride' ? 1 : 0,
       terminal: { tick: 9, position: { x: 1, y: 0, z: 2 }, yaw: 0.5,
         groundMountMode: 'riding' } }
-    queueMicrotask(() => this.onmessage?.({ data: { kind: 'result', epoch: 'e',
+    const reply = () => this.onmessage?.({ data: { kind: 'result', epoch: 'e',
       id: message.id, result: { status: 'committed', ack: this.malformed
-        ? { ...ack, root: {} } : ack } } } as MessageEvent))
+        ? { ...ack, root: {} } : ack } } } as MessageEvent)
+    if (this.holdReplies) this.heldReplies.push(reply)
+    else queueMicrotask(reply)
   }
+  release() { for (const reply of this.heldReplies.splice(0)) queueMicrotask(reply) }
   terminate() {}
 }
 
@@ -100,5 +105,39 @@ it('keeps action and Return Home requests witness-only with independent IDs', as
       ack: { requestId: 2, nextRevision: 6 } })
     expect(FakeWorker.last.messages[2]).toEqual({ kind: 'home', epoch: 'e',
       id: 2, expectedRevision: 5 })
+  } finally { vi.unstubAllGlobals() }
+})
+
+it('snapshots a ride witness before its first microtask and while queued', async () => {
+  vi.stubGlobal('Worker', FakeWorker)
+  try {
+    const opened = await openPublicV45SaveTransport({} as PublicV45Start)
+    if (opened.status !== 'ready') throw new Error('Worker did not open')
+    const firstWitness = { kind: witness.kind, frames: [{ kind: witness.frames[0].kind,
+      intents: [{ type: 'move', delta: { x: 0.2, z: 0 } }] as
+        [{ type: 'move'; delta: { x: number; z: number } }] }] }
+    const first = opened.transport.commitRideBatch({ batchId: 1,
+      expectedRevision: 4, witness: firstWitness })
+    firstWitness.frames[0].intents[0].delta.x = 9
+    expect(await first).toMatchObject({ status: 'committed' })
+    expect(FakeWorker.last.messages[1].witness).toEqual(witness)
+
+    FakeWorker.last.holdReplies = true
+    const holding = opened.transport.commitRideBatch({ batchId: 2,
+      expectedRevision: 5, witness })
+    await Promise.resolve()
+    const queuedWitness = { kind: witness.kind, frames: [{ kind: witness.frames[0].kind,
+      intents: [{ type: 'move', delta: { x: 0.2, z: 0 } }] as
+        [{ type: 'move'; delta: { x: number; z: number } }] }] }
+    const queued = opened.transport.commitRideBatch({ batchId: 3,
+      expectedRevision: 6, witness: queuedWitness })
+    queuedWitness.frames[0].intents[0].delta.x = -9
+    FakeWorker.last.holdReplies = false
+    FakeWorker.last.release()
+    expect(await holding).toMatchObject({ status: 'committed' })
+    expect(await queued).toMatchObject({ status: 'committed' })
+    expect(FakeWorker.last.messages[3].witness).toEqual(witness)
+    // Fake ACK terminal is identical for both distinct inputs, so terminal-only
+    // ACK checking would not have detected the caller mutation.
   } finally { vi.unstubAllGlobals() }
 })

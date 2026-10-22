@@ -3,8 +3,9 @@ import { afterEach, expect, it, vi } from 'vitest'
 const flow = vi.hoisted(() => ({
   resume: vi.fn(), commit: vi.fn(), home: vi.fn(), receipt: vi.fn(),
 }))
-vi.mock('./domain/atomicV44Promotion', () => ({ createAtomicV44PromotionStore: () => ({}) }))
-vi.mock('./domain/atomicV45Database', () => ({ createAtomicV45Store: () => ({}) }))
+const stores = vi.hoisted(() => ({ v44: vi.fn(() => ({})), v45: vi.fn(() => ({})) }))
+vi.mock('./domain/atomicV44Promotion', () => ({ createAtomicV44PromotionStore: stores.v44 }))
+vi.mock('./domain/atomicV45Database', () => ({ createAtomicV45Store: stores.v45 }))
 vi.mock('./domain/publicWorldV45Flow', () => ({
   resumePublicV45: flow.resume, commitPublicV45: flow.commit,
   requestPublicV45ReturnHome: flow.home,
@@ -70,4 +71,25 @@ it('distinguishes a proven rejected write from unknown durability', async () => 
     expectedRevision: 4, witness })
   await vi.waitFor(() => expect(latest()).toMatchObject({ result: {
     status: 'blocked', reason: 'ride-blocked', durability: 'unknown' } }))
+})
+
+it('reuses one checked-store instance for resume and consecutive writes', async () => {
+  await openWorker()
+  flow.commit.mockImplementation(async (_locks, _store, _source, revision: number) => ({
+    ok: true, value: { ...start, head: { ...start.head,
+      saveRevision: revision + 1 } } }))
+  send({ kind: 'ride', epoch: 'epoch-1', id: 1,
+    expectedRevision: 4, witness })
+  await vi.waitFor(() => expect(latest()).toMatchObject({ result: {
+    status: 'committed', ack: { nextRevision: 5 } } }))
+  send({ kind: 'ride', epoch: 'epoch-1', id: 2,
+    expectedRevision: 5, witness })
+  await vi.waitFor(() => expect(latest()).toMatchObject({ result: {
+    status: 'committed', ack: { nextRevision: 6 } } }))
+  expect(stores.v45).toHaveBeenCalledTimes(1)
+  expect(stores.v44).toHaveBeenCalledTimes(1)
+  const v45 = flow.resume.mock.calls[0][1]
+  const v44 = flow.resume.mock.calls[0][2]
+  expect(flow.commit.mock.calls[0].slice(1, 3)).toEqual([v45, v44])
+  expect(flow.commit.mock.calls[1].slice(1, 3)).toEqual([v45, v44])
 })

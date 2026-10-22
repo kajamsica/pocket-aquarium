@@ -7,7 +7,9 @@ import type { Vec3 } from './domain/types'
 export type PublicV45SaveAck = Readonly<{ epoch: string; baseRevision: number;
   nextRevision: number; frameCount: number; terminal: Readonly<{ tick: number;
     position: Vec3; yaw: number; groundMountMode: 'parked' | 'riding' }> }>
-export type PublicV45RideSaveAck = PublicV45SaveAck & Readonly<{ batchId: number }>
+export type PublicV45RideSaveAck = Omit<PublicV45SaveAck, 'terminal'> & Readonly<{
+  batchId: number; terminal: Omit<PublicV45SaveAck['terminal'], 'groundMountMode'>
+    & Readonly<{ groundMountMode: 'riding' }> }>
 export type PublicV45ActionSaveAck = PublicV45SaveAck & Readonly<{ requestId: number }>
 export type PublicV45SaveResult<A> = { status: 'committed'; ack: A }
   | { status: 'blocked'; reason: string; durability: 'not-committed' | 'unknown' }
@@ -76,21 +78,30 @@ export function openPublicV45SaveTransport(expected: PublicV45Start):
         epoch = data.epoch
         const send = (kind: Kind, id: number, expectedRevision: number,
           witness?: PublicV45Witness): Promise<PublicV45SaveResult<PublicV45SaveAck>> => {
-          const frames = kind === 'ride' && witness?.kind
-            === 'sedgehorn-assisted-ride-batch/v1' ? witness.frames.length : 0
+          // Snapshot before enqueue. A caller can mutate its object before the first
+          // microtask or while a previous write holds the serial queue.
+          let snapshot: PublicV45Witness | undefined
+          if (kind !== 'home') {
+            if (!witness || !sameStrictBoundedRaw(witness, witness, 1 << 18))
+              return Promise.resolve(blocked('invalid-request', 'not-committed'))
+            try { snapshot = structuredClone(witness) }
+            catch { return Promise.resolve(blocked('invalid-request', 'not-committed')) }
+            if (!sameStrictBoundedRaw(snapshot, witness, 1 << 18))
+              return Promise.resolve(blocked('invalid-request', 'not-committed'))
+          }
+          const frames = kind === 'ride' && snapshot?.kind
+            === 'sedgehorn-assisted-ride-batch/v1' ? snapshot.frames.length : 0
           const run = () => new Promise<PublicV45SaveResult<PublicV45SaveAck>>((done) => {
             if (closed) { done(blocked(failure ?? 'disposed', 'not-committed')); return }
             if (!Number.isSafeInteger(id) || id < 1 || !Number.isSafeInteger(expectedRevision)
-              || expectedRevision < 0 || expectedRevision >= Number.MAX_SAFE_INTEGER
-              || kind !== 'home' && !witness
-              || witness && !sameStrictBoundedRaw(witness, witness, 1 << 18)) {
+              || expectedRevision < 0 || expectedRevision >= Number.MAX_SAFE_INTEGER) {
               done(blocked('invalid-request', 'not-committed')); return
             }
             const timeout = setTimeout(() => close('worker-request-timeout', true), 30_000)
             pending = { kind, id, revision: expectedRevision, frames,
               resolve: (value) => { clearTimeout(timeout); done(value) } }
             try { worker.postMessage({ kind, epoch, id, expectedRevision,
-              ...(kind === 'home' ? {} : { witness }) }) }
+              ...(kind === 'home' ? {} : { witness: snapshot }) }) }
             catch { clearTimeout(timeout); pending = null
               done(blocked('post-message-error', 'not-committed')) }
           })
@@ -99,12 +110,25 @@ export function openPublicV45SaveTransport(expected: PublicV45Start):
           return result
         }
         const transport: PublicV45SaveTransport = { epoch,
-          commitRideBatch: ({ batchId, expectedRevision, witness }) =>
-            send('ride', batchId, expectedRevision, witness) as Promise<PublicV45SaveResult<PublicV45RideSaveAck>>,
-          commitAction: ({ requestId, expectedRevision, witness }) =>
-            send('action', requestId, expectedRevision, witness) as Promise<PublicV45SaveResult<PublicV45ActionSaveAck>>,
-          requestReturnHome: ({ requestId, expectedRevision }) =>
-            send('home', requestId, expectedRevision) as Promise<PublicV45SaveResult<PublicV45ActionSaveAck>>,
+          commitRideBatch: async ({ batchId, expectedRevision, witness }) => {
+            const result = await send('ride', batchId, expectedRevision, witness)
+            if (result.status === 'blocked') return result
+            const { ack } = result
+            if (ack.terminal.groundMountMode !== 'riding')
+              return blocked('worker-ack-mismatch', 'unknown')
+            return { status: 'committed', ack: { ...ack, batchId,
+              terminal: { ...ack.terminal, groundMountMode: 'riding' } } }
+          },
+          commitAction: async ({ requestId, expectedRevision, witness }) => {
+            const result = await send('action', requestId, expectedRevision, witness)
+            return result.status === 'blocked' ? result
+              : { status: 'committed', ack: { ...result.ack, requestId } }
+          },
+          requestReturnHome: async ({ requestId, expectedRevision }) => {
+            const result = await send('home', requestId, expectedRevision)
+            return result.status === 'blocked' ? result
+              : { status: 'committed', ack: { ...result.ack, requestId } }
+          },
           onFatal: (fn) => { listeners.add(fn); if (failure) try { fn(failure) } catch {}
             return () => { listeners.delete(fn) } },
           dispose: () => close('disposed', false) }
