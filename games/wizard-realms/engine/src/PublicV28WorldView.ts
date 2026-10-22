@@ -126,6 +126,20 @@ export function publicWorldV28ViewProjection(progress: PublicV28Progress,
   })()
   const nearRiver = Math.abs(grid(position.z) - publicV25RiverCenterZ(state.seed,
     grid(position.x))) <= 3
+  const markedSameBank = candidates.some(({ site }) => position.z <= site.from.z
+    && site.from.z - position.z <= 16)
+  const nearestSameBank = nearRiver && !builtIds.size && !markedSameBank
+    ? local.filter((site) => !builtIds.has(site.id)
+      && position.z <= site.from.z && site.from.z - position.z <= 16)
+      .sort((a, b) => Math.abs(a.from.x - position.x) - Math.abs(b.from.x - position.x)
+        || a.id.localeCompare(b.id))[0] : null
+  const bankDirection = nearestSameBank && Math.abs(nearestSameBank.from.x - position.x) >= 2
+    ? nearestSameBank.from.x < position.x ? 'west' : 'east' : null
+  const bankCue = bankDirection
+    ? `Follow this dry bank ${bankDirection}, revealing ground until Works shows a supported crossing. Bring 8 logs and build only when the checked preview says Ready.`
+    : nearestSameBank && !known(nearestSameBank)
+      ? 'Reveal more of this crossing from the dry bank until Works shows a supported site. Build only when the checked preview says Ready.'
+      : null
   const legacy = carrier.savedTerrainWorks
   const legacyChoices = work.modeActive && work.kind === 'bridge'
     ? legacy?.preview?.nearby ?? [] : []
@@ -139,9 +153,9 @@ export function publicWorldV28ViewProjection(progress: PublicV28Progress,
         : aimedSite && !known(aimedSite)
           ? 'Reveal the full dry approach, wet span, and far-bank exit before this site appears.'
           : aimedId && !aimedSite
-            ? 'No supported crossing at this river column. Follow the bank to a marked, dry-bank site.'
+            ? `No supported crossing at this river column. ${bankCue ?? 'Follow the bank to a marked, dry-bank site.'}`
             : nearRiver
-              ? 'No supported bridge at this reached bank. Follow the river to a marked dry-bank crossing; not every bank is buildable.'
+              ? bankCue ?? 'No supported bridge at this reached bank. Follow the river to a marked dry-bank crossing; not every bank is buildable.'
               : 'Discover a complete supported river crossing before building.'
         : legacy?.preview?.guidance ?? null }
   const riverContext = nearRiver && !legacyChoices.length
@@ -156,11 +170,14 @@ export function publicWorldV28ViewProjection(progress: PublicV28Progress,
   const candidateFrom = new Set(discovered.filter((site) => !builtIds.has(site.id))
     .map((site) => tileAt(site.from.x, site.from.z)))
   const builtTiles = new Set(built.flatMap((site) => site.footprintTileIds))
+  const markedCue = 'Connected river: use only marked dry-bank crossings. Open Works, choose Bridge, and confirm when Ready.'
   const map = { ...carrier.map, tiles: carrier.map.tiles.map((tile) => ({ ...tile,
     hasRouteSite: tile.hasRouteSite || tile.discovered && candidateFrom.has(tile.id),
     hasBuiltRoute: tile.hasBuiltRoute || tile.discovered && builtTiles.has(tile.id) })),
-    ...(riverContext ? { guidance: selectedRiver?.reason ?? preview?.guidance
-      ?? 'Connected river: use only marked dry-bank crossings. Open Works, choose Bridge, and confirm when Ready.' }
+    ...(riverContext ? { guidance: builtIds.size
+      ? 'Your connected-river bridge is built; use its saved deck from a dry bank to cross.'
+      : selectedRiver?.reason ?? (markedSameBank ? markedCue : null)
+        ?? preview?.guidance ?? bankCue ?? markedCue }
       : {}) }
   return { ...carrier, player, savedTerrainWorks, map, v28TravelContinuity }
 }

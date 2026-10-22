@@ -591,6 +591,9 @@ export function publicV27StarterGuide(view: WizardViewProjection,
         action: 'Continue along the saved deck to a dry bank.' } : null
   const regionalGuide = streamed && view.map.title === 'Mireglass Reach'
     ? context.mireglassGuidance ?? view.map.guidance : null
+  const riverBankGuide = streamed && !context.riverBridgeBuilt && logs >= 8
+    && view.savedTerrainWorks?.context === 'v28-river'
+    && !view.savedTerrainWorks.preview?.selected ? view.map.guidance : null
   const salvagerGuide = streamed && context.fringeMarkerStudied && !context.mireglassCacheRevealed
     && !context.fieldSpadeOwned && riverSite && claimed
     && view.player.position[2] >= riverSite.to.z
@@ -926,7 +929,9 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     : slateGuide ? slateGuide.summary
     : upperSurveyGuide ? upperSurveyGuide.summary
     : slateReturnGuide ? slateReturnGuide.summary
-    : regionalGuide ? 'Mireglass Reach' : riverStage?.summary ?? (streamed ? context.riverBridgeBuilt
+    : regionalGuide ? 'Mireglass Reach' : riverStage?.summary
+      ?? (riverBankGuide ? 'River bank: find a supported crossing' : null)
+      ?? (streamed ? context.riverBridgeBuilt
     ? 'Connected-river bridge ready: cross its deck'
     : logs >= 8 ? 'Connected-river bridge next: build at a Ready bank'
       : 'Connected-river bridge next: return for 8 logs'
@@ -943,7 +948,7 @@ export function publicV27StarterGuide(view: WizardViewProjection,
       ?? slateGuide?.action
       ?? upperSurveyGuide?.action
       ?? slateReturnGuide?.action
-      ?? regionalGuide ?? riverStage?.action ?? action,
+      ?? regionalGuide ?? riverStage?.action ?? riverBankGuide ?? action,
     boots, spade }
 }
 const PUBLIC_V23_PANEL_STYLES = `
@@ -1017,6 +1022,8 @@ body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-ve
 :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .wr-surface{height:100%;min-height:0}
 }
 @media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide{left:166px;bottom:16px}}
+@media(min-width:720px) and (min-height:591px){[data-public-version=v42] .v25-start-guide{left:166px}}
+@media(min-width:800px) and (max-width:900px) and (min-height:720px) and (orientation:landscape){[data-public-version=v42] .v25-start-guide{left:280px;bottom:200px;width:240px;max-height:200px}}
 `
 export function publicV23SavedWorkMessage(event: NonNullable<Extract<
   Awaited<ReturnType<Runtime['action']>>, { status: 'saved' }>['workEvent']>): string {
