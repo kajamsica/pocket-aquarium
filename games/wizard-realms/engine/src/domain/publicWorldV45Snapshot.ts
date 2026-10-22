@@ -1,4 +1,3 @@
-import { decodePublicV14FrameWitness } from './publicWorldV14Snapshot'
 import { exactPublicV23 } from './publicWorldV23Snapshot'
 import { publicV32Monotonic, publicV32Preserves } from './publicWorldV32Snapshot'
 import { PUBLIC_V43_PROGRESS_KEYS } from './publicWorldV43FamiliarAction'
@@ -7,7 +6,8 @@ import { decodePublicV43Progress, decodePublicV43Witness,
 import type { PublicV43Witness } from './publicWorldV43Snapshot'
 import { projectPublicV43MountTraining } from './publicWorldV43MountTraining'
 import type { PublicV45MountWitness } from './publicWorldV45MountTransition'
-import { confirmPublicV45Action } from './publicWorldV45RideAction'
+import { confirmPublicV45Action, decodePublicV45RideBatchWitness,
+  decodePublicV45RideFrameWitness } from './publicWorldV45RideAction'
 import type { PublicV45Progress, PublicV45RideWitness } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, decodePublicV45Genesis, PUBLIC_V45_SCHEMA }
   from './publicWorldV45Migration'
@@ -53,6 +53,8 @@ const preservesGenesis = (genesis: PublicV45Head, head: PublicV45Head,
 /** Accept exact V45 mount-economy witnesses or an existing V43 ordinary witness. */
 export function decodePublicV45Witness(raw: unknown): PublicV45Witness | null {
   try {
+    const batch = decodePublicV45RideBatchWitness(raw)
+    if (batch) return batch
     if (exactPublicV23(raw, ['kind'])) {
       if (raw.kind === 'sedgehorn-mount/v1'
         || raw.kind === 'sedgehorn-dismount/v1'
@@ -63,17 +65,7 @@ export function decodePublicV45Witness(raw: unknown): PublicV45Witness | null {
       && Number.isSafeInteger(raw.quantity)
       && (raw.quantity as number) >= 1 && (raw.quantity as number) <= 256)
       return { kind: raw.kind, quantity: raw.quantity as number }
-    if (!exactPublicV23(raw, ['kind', 'intents'])
-      || raw.kind !== 'sedgehorn-assisted-ride-frame/v1')
-      return decodePublicV43Witness(raw)
-    const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1',
-      frames: [{ intents: raw.intents, walkRequested: false }] })?.frames[0]
-    const move = frame?.intents.at(-1)
-    if (!frame || move?.type !== 'move'
-      || Math.hypot(move.delta.x, move.delta.z) <= 0) return null
-    structuredClone(raw)
-    return { kind: 'sedgehorn-assisted-ride-frame/v1',
-      intents: frame.intents as PublicV45RideWitness['intents'] }
+    return decodePublicV45RideFrameWitness(raw) ?? decodePublicV43Witness(raw)
   } catch { return null }
 }
 

@@ -33,12 +33,18 @@ export type PublicV45Progress = PublicV43Progress & Readonly<{
   groundMount: PublicV44GroundMountState
   tack: 'not_owned' | 'legacy' | 'purchased'
 }>
-export type PublicV45RideWitness = Readonly<{
+export const PUBLIC_V45_MAX_RIDE_BATCH = 32
+export type PublicV45RideFrameWitness = Readonly<{
   kind: 'sedgehorn-assisted-ride-frame/v1'
   intents: readonly [{ type: 'move'; delta: Readonly<{ x: number; z: number }> }]
     | readonly [{ type: 'look'; yawDelta: number; pitchDelta: number },
       { type: 'move'; delta: Readonly<{ x: number; z: number }> }]
 }>
+export type PublicV45RideBatchWitness = Readonly<{
+  kind: 'sedgehorn-assisted-ride-batch/v1'
+  frames: readonly PublicV45RideFrameWitness[]
+}>
+export type PublicV45RideWitness = PublicV45RideFrameWitness | PublicV45RideBatchWitness
 export type PublicV45RideRejection = 'invalid_progress' | 'invalid_witness'
   | 'not_eligible' | 'competing_mode' | 'unsafe_mount' | 'ride_blocked'
 export type PublicV45RideResult = Readonly<{
@@ -53,6 +59,50 @@ const MAX_GRADE = 0.55
 const V31_KEYS = ['state', 'greenwayWorks', 'regionalWorks', 'terrain',
   'nextHomeAtMs', 'riverBridgeIds', 'miningTools', 'claimedBridgeheadId',
   'raisedSoilCells'] as const
+
+/** Decode only the existing checked single-frame input, without granting motion. */
+export function decodePublicV45RideFrameWitness(raw: unknown):
+  PublicV45RideFrameWitness | null {
+  try {
+    if (!exactPublicV23(raw, ['kind', 'intents'])
+      || raw.kind !== 'sedgehorn-assisted-ride-frame/v1') return null
+    const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1',
+      frames: [{ intents: raw.intents, walkRequested: false }] })?.frames[0]
+    const move = frame?.intents.at(-1)
+    if (!frame || move?.type !== 'move'
+      || Math.hypot(move.delta.x, move.delta.z) <= 0) return null
+    structuredClone(raw)
+    return { kind: 'sedgehorn-assisted-ride-frame/v1',
+      intents: frame.intents as PublicV45RideFrameWitness['intents'] }
+  } catch { return null }
+}
+
+/** Bound and own every frame before any pure replay or durable write. */
+export function decodePublicV45RideBatchWitness(raw: unknown):
+  PublicV45RideBatchWitness | null {
+  try {
+    if (!exactPublicV23(raw, ['kind', 'frames'])
+      || raw.kind !== 'sedgehorn-assisted-ride-batch/v1'
+      || !Array.isArray(raw.frames)
+      || Object.getPrototypeOf(raw.frames) !== Array.prototype
+      || raw.frames.length < 1 || raw.frames.length > PUBLIC_V45_MAX_RIDE_BATCH)
+      return null
+    const keys = Reflect.ownKeys(raw.frames)
+    if (keys.length !== raw.frames.length + 1
+      || keys[raw.frames.length] !== 'length') return null
+    const frames: PublicV45RideFrameWitness[] = []
+    for (let index = 0; index < raw.frames.length; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(raw.frames, index)
+      if (keys[index] !== String(index) || !descriptor?.enumerable
+        || !Object.hasOwn(descriptor, 'value')) return null
+      const frame = decodePublicV45RideFrameWitness(raw.frames[index])
+      if (!frame) return null
+      frames.push(frame)
+    }
+    structuredClone(raw)
+    return { kind: 'sedgehorn-assisted-ride-batch/v1', frames }
+  } catch { return null }
+}
 
 function decodeProgress(raw: unknown): PublicV45Progress | null {
   try {
@@ -105,14 +155,11 @@ export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
   try {
     const before = decodeProgress(rawBefore)
     if (!before) return reject('invalid_progress')
-    if (!exactPublicV23(rawWitness, ['kind', 'intents'])
-      || rawWitness.kind !== 'sedgehorn-assisted-ride-frame/v1') return reject('invalid_witness')
-    structuredClone(rawWitness)
-    const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1',
-      frames: [{ intents: rawWitness.intents, walkRequested: false }] })?.frames[0]
-    const move = frame?.intents.at(-1)
-    if (!frame || move?.type !== 'move' || frame.intents.length < 1
-      || frame.intents.some((intent) => intent.type === 'jump')) return reject('invalid_witness')
+    const witness = decodePublicV45RideFrameWitness(rawWitness)
+    if (!witness) return reject('invalid_witness')
+    const frame = { intents: witness.intents, walkRequested: false }
+    const move = frame.intents.at(-1)
+    if (move?.type !== 'move') return reject('invalid_witness')
     const length = Math.hypot(move.delta.x, move.delta.z)
     if (!(length > 0)) return reject('invalid_witness')
     if (before.familiar.phase !== 'claimed'
@@ -161,6 +208,19 @@ export function confirmPublicV45Action(rawBefore: PublicV45Progress,
   try {
     const kind = rawWitness && typeof rawWitness === 'object'
       && 'kind' in rawWitness ? rawWitness.kind : null
+    if (kind === 'sedgehorn-assisted-ride-batch/v1') {
+      const batch = decodePublicV45RideBatchWitness(rawWitness)
+      if (!batch) return { rejection: 'invalid_witness' }
+      let current = rawBefore
+      const events: PublicWorldEvent[] = []
+      for (const frame of batch.frames) {
+        const result = confirmPublicV45RideFrame(current, frame)
+        if (!result.progress) return result
+        current = result.progress
+        events.push(...result.events)
+      }
+      return { progress: current, events }
+    }
     if (kind === 'sedgehorn-assisted-ride-frame/v1')
       return confirmPublicV45RideFrame(rawBefore, rawWitness)
     const before = decodeProgress(rawBefore)

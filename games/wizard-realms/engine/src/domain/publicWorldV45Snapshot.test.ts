@@ -11,8 +11,10 @@ import type { PublicV43Root, PublicV43Witness } from './publicWorldV43Snapshot'
 import { confirmPublicV44GroundMountAction } from './publicWorldV44GroundMount'
 import { createPublicV44Root, decodePublicV44Root, PUBLIC_V44_SCHEMA }
   from './publicWorldV44Snapshot'
-import { confirmPublicV45Action, confirmPublicV45RideFrame }
+import { confirmPublicV45Action, confirmPublicV45RideFrame,
+  PUBLIC_V45_MAX_RIDE_BATCH }
   from './publicWorldV45RideAction'
+import type { PublicV45RideFrameWitness } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import { decodePublicV45CheckedSuccessor, decodePublicV45Root,
   decodePublicV45Witness } from './publicWorldV45Snapshot'
@@ -24,7 +26,7 @@ import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 const seed = 'wizard-realms'
 const idle = { kind: 'frame-batch/v1' as const,
   frames: [{ intents: [], walkRequested: true }] }
-const ride = (x: number): PublicV45Witness => ({
+const ride = (x: number): PublicV45RideFrameWitness => ({
   kind: 'sedgehorn-assisted-ride-frame/v1', intents: [{ type: 'move', delta: { x, z: 0 } }],
 })
 
@@ -326,6 +328,40 @@ describe('V45 checked assisted-ride root', () => {
         { type: 'look', yawDelta: 0, pitchDelta: 0 }] }])
       expect(decodePublicV45Witness(invalid)).toBeNull()
   })
+
+  it('replays 32 assisted frames as one checked edge and rejects malformed batches', () => {
+    const genesis = mountedGenesis()
+    const frames = Array.from({ length: PUBLIC_V45_MAX_RIDE_BATCH }, () => ride(0.002))
+    const witness = { kind: 'sedgehorn-assisted-ride-batch/v1' as const, frames }
+    expect(decodePublicV45Witness(witness)).toEqual(witness)
+    const saved = structuredClone(genesis)
+    const { schemaVersion: _schema, saveRevision: _revision,
+      witness: _prior, ...progress } = genesis.head
+    const action = confirmPublicV45Action(progress, witness)
+    expect(action.rejection).toBeUndefined()
+    expect(action.events?.filter((event) => event.type === 'player_moved'))
+      .toHaveLength(PUBLIC_V45_MAX_RIDE_BATCH * 2)
+    const checked = next(genesis, witness)
+    expect(checked.head.saveRevision).toBe(1)
+    expect(checked.head.state.tick).toBe(genesis.head.state.tick + PUBLIC_V45_MAX_RIDE_BATCH)
+    expect(checked.previous).toEqual(genesis.head)
+    expect(decodePublicV45Root(structuredClone(checked))).toEqual(checked)
+    expect(genesis).toEqual(saved)
+    const sparse = [ride(0.002), ride(0.002)]
+    delete sparse[1]
+    const extra = Object.assign([ride(0.002)], { speed: 2 })
+    const getter = [ride(0.002)]
+    Object.defineProperty(getter, '0', { get: () => ride(0.002), enumerable: true })
+    for (const invalid of [{ ...witness, frames: [] },
+      { ...witness, frames: [...frames, ride(0.002)] },
+      { ...witness, frames: sparse }, { ...witness, frames: extra },
+      { ...witness, frames: getter },
+      { ...witness, frames: [...frames.slice(0, -1), ride(0)] },
+      { ...witness, speed: 2 }]) {
+      expect(decodePublicV45Witness(invalid)).toBeNull()
+      expect(confirmPublicV45Action(progress, invalid).progress).toBeUndefined()
+    }
+  }, 60_000)
 
   it('checks purchase replay and retained tack monotonicity', () => {
     const genesis = economyGenesis('greenway')

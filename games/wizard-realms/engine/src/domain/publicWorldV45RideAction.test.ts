@@ -9,7 +9,8 @@ import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { resolveIronHallCrestOutcome } from './publicWorldV42RewardAction'
 import { createFreshPublicV43Root, decodePublicV43Progress }
   from './publicWorldV43Snapshot'
-import { confirmPublicV45Action, confirmPublicV45RideFrame }
+import { confirmPublicV45Action, confirmPublicV45RideFrame,
+  PUBLIC_V45_MAX_RIDE_BATCH }
   from './publicWorldV45RideAction'
 import type { PublicV45Progress } from './publicWorldV45RideAction'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
@@ -54,6 +55,19 @@ function at(x: number, z: number, boots = false): PublicV45Progress {
 }
 
 describe('V45 checked assisted Sedgehorn ride', () => {
+  it('rejects a whole checked batch when a later dry frame leaves the revealed area', () => {
+    const before = at(36, 4, true)
+    const saved = structuredClone(before)
+    const frame = ride(0.2)
+    expect(confirmPublicV45RideFrame(before, frame).progress).toBeDefined()
+    const witness = { kind: 'sedgehorn-assisted-ride-batch/v1',
+      frames: Array.from({ length: PUBLIC_V45_MAX_RIDE_BATCH }, () => frame) }
+    const result = confirmPublicV45Action(before, witness)
+    expect(result.progress).toBeUndefined()
+    expect(result.rejection).toBe('ride_blocked')
+    expect(before).toEqual(saved)
+  }, 30_000)
+
   it('dispatches exact mount and dismount witnesses without mutating the source', () => {
     const site = resolveSedgehornFamiliarSite(createFreshPublicV43Root(seed).head)!
     const rider = at(site.keeper.center.x, site.keeper.center.z)
