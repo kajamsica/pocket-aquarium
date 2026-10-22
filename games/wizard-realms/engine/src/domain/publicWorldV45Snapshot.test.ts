@@ -186,6 +186,45 @@ describe('V45 checked assisted-ride root', () => {
     expect(decodePublicV45Root(second)).not.toBeNull()
   }, 30_000)
 
+  it('accepts a checked parked care append after importing partial V44 training', () => {
+    const trained = matureRoot(false)
+    const station = resolveSedgehornFamiliarSite(trained.head)!.careStation
+    const partial = (head: PublicV43Root['head']) => ({ ...head,
+      mountTraining: { careWitnesses: head.mountTraining!.careWitnesses.slice(0, 2) },
+      state: { ...head.state, player: { ...head.state.player,
+        position: { ...station.center }, inventory: [...head.state.player.inventory,
+          { itemId: 'marsh_herb' as const, quantity: 1 }] } } })
+    const imported = decodePublicV43Root({ ...trained,
+      previous: partial(trained.previous!), head: partial(trained.head) })
+    expect(imported).not.toBeNull()
+    const source = createPublicV44Root(imported!)
+    const genesis = createPublicV45Genesis(source)
+    const saved = structuredClone(genesis)
+    expect(genesis.head.groundMount.mode).toBe('parked')
+    expect(genesis.head.mountTraining?.careWitnesses).toHaveLength(2)
+    const witness = { kind: 'sedgehorn-care/v1' as const }
+    const { schemaVersion: _schema, saveRevision: _revision,
+      witness: _prior, ...flat } = genesis.head
+    const action = confirmPublicV45Action(flat, witness)
+    expect(action.rejection).toBeUndefined()
+    expect(action.events).toEqual([])
+    expect(action.progress!.mountTraining!.careWitnesses).toHaveLength(3)
+    expect(action.progress!.mountTraining!.careWitnesses.slice(0, 2))
+      .toEqual(genesis.head.mountTraining!.careWitnesses)
+    expect(action.progress!.state.eventSequence).toBe(genesis.head.state.eventSequence + 1)
+    expect(action.progress!.state.player.inventory.some((stack) =>
+      stack.itemId === 'marsh_herb')).toBe(false)
+    expect(action.progress!.groundMount).toEqual(genesis.head.groundMount)
+    expect(action.progress!.tack).toBe(genesis.head.tack)
+    const checked = decodePublicV45CheckedSuccessor(genesis, { lineage: genesis.lineage,
+      previous: genesis.head, head: { ...action.progress,
+        schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: 1, witness } })
+    expect(checked).not.toBeNull()
+    expect(decodePublicV45Root(structuredClone(checked))).toEqual(checked)
+    expect(genesis).toEqual(saved)
+    expect(checked!.lineage.source).toEqual(source)
+  }, 30_000)
+
   it('accepts exact imported genesis but no flat or forged tack entitlement', () => {
     const source = createPublicV44Root(createPublicV43Root(eligibleSource()))
     const genesis = createPublicV45Genesis(source)
