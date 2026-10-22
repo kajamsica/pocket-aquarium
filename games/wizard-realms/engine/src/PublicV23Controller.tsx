@@ -1412,6 +1412,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV40ControllerProps | PublicV41ControllerProps | PublicV42ControllerProps
   | PublicV43ControllerProps | PublicV44ControllerProps | PublicV45ControllerProps) {
   const v45 = 'version' in props && props.version === 'v45'
+  const v45OverlapReady = 'version' in props && props.version === 'v45'
+    && props.v45SaveOpen?.status === 'ready'
   const v44 = 'version' in props && props.version === 'v44'
   const mountWorld = v44 || v45
   const v43 = 'version' in props && (props.version === 'v43' || mountWorld)
@@ -1592,6 +1594,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   if (v45 && !v45LifecycleRef.current)
     v45LifecycleRef.current = createPublicV45RuntimeLifecycle(runtime as V45Runtime)
   useEffect(() => v45LifecycleRef.current?.mount(), [runtime])
+  const readyRideAtCap = () => v45OverlapReady
+    && runtime.status().gate === 'cap-paused'
+    && (runtime as V45Runtime).groundMount().mode === 'riding'
   const activeMemo = useRef<ActiveViewMemo | null>(null)
   const readActive = (status?: ReturnType<typeof runtime.status>) =>
     publicV23ReadActiveView(runtime, activeMemo, status)
@@ -1626,6 +1631,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const obstacleCueUntil = useRef(0)
   const repaint = () => redraw((value) => value + 1)
   const repaintQueued = () => { if (!busy.current) repaint() }
+  useEffect(() => v45OverlapReady
+    ? (runtime as V45Runtime).subscribeStatus(repaint) : undefined, [runtime, v45OverlapReady])
   const tell = (message: string) => setMessages((prior) =>
     v45 && message === 'V45 progress saved on this device.' && prior.at(-1) === message
       ? prior : [...prior.slice(-3), message])
@@ -1770,6 +1777,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     const due = Math.floor((atMs - timed.nextAtMs) / STEP_MS) + 1
     const firstSampleAtMs = timed.nextAtMs
     timed.nextAtMs += due * STEP_MS
+    if (readyRideAtCap()) return
     if (!timed.vector.some(Boolean) || matchesBlockedHeld(timed.vector)
       || readActive().player.verticalVelocity !== 0) return
     const saveForward = !!saveTask.current && timed.vector[1] > 0
@@ -2173,6 +2181,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   }
   const queuePulse = (vector: readonly [number, number], jump: boolean,
     heldInput = false, atMs?: number) => {
+    if (heldInput && readyRideAtCap()) return
     if (readActive().player.verticalVelocity !== 0) {
       tell('Land before starting another short movement or jump.'); return
     }
@@ -2283,7 +2292,19 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         return
       }
       if (mountWorld && runtime.status().gate === 'cap-paused'
-        && runtime.status().pendingFrames > 0) { void save(); return }
+        && runtime.status().pendingFrames > 0) {
+        if (readyRideAtCap()) {
+          const queued = inputQueue.current.length
+          inputQueue.current = inputQueue.current.filter((token) => token.kind !== 'pulse'
+            || !token.heldInput)
+          if (edgePulse.current && !inputQueue.current.includes(edgePulse.current))
+            edgePulse.current = null
+          if (timedHeld.current) sampleTimedUntil(performance.now())
+          if (queued !== inputQueue.current.length) repaintQueued()
+          return
+        }
+        void save(); return
+      }
       if (running.current || runtime.status().gate !== 'open') return
       running.current = true
       let advanced = false
@@ -2309,9 +2330,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           && (runtime as V44Runtime | V45Runtime).groundMount().mode === 'riding'
         const rideBatchMax = v45 ? PUBLIC_V45_MAX_RIDE_BATCH : PUBLIC_V44_MAX_RIDE_BATCH
         const reserveAt = riding ? rideBatchMax : MOVE_RESERVE_AT
-        if (runtime.status().pendingFrames >= reserveAt
+        const reserveReached = !(v45OverlapReady && riding)
+          && runtime.status().pendingFrames >= reserveAt
+        if (reserveReached
           && before.player.verticalVelocity === 0) { void save(); return }
-        const neutral = runtime.status().pendingFrames >= reserveAt
+        const neutral = reserveReached
           && before.player.verticalVelocity !== 0
         if (!neutral && timedHeld.current
           && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current
@@ -2421,7 +2444,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
           if (remaining) tell('Short inputs queued before takeoff were cancelled; land before pressing again.')
         }
-        if (runtime.status().pendingFrames >= (riding ? rideBatchMax : 64)
+        if (!(v45OverlapReady && riding)
+          && runtime.status().pendingFrames >= (riding ? rideBatchMax : 64)
           && after.player.verticalVelocity === 0) void save()
         else drainChecked()
         if (!request || request.jump || before.player.verticalVelocity !== 0
@@ -2879,17 +2903,21 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       Movement is frozen; keep this tab open.</p>}
     {obstacleCue && <p className="v23-obstacle-cue" role="status" aria-label="Movement blocked">
       {obstacleCue}</p>}
-    {(status.pendingFrames > 0 || saveTask.current || savedNotice) &&
-      <div className="v23-save" data-v45-confirmed-idle={v45 && savedNotice
+    {(v45OverlapReady || status.pendingFrames > 0 || saveTask.current || savedNotice) &&
+      <div className="v23-save" data-v45-confirmed-idle={v45 && !v45OverlapReady && savedNotice
         && status.pendingFrames === 0 && !saveTask.current && status.gate !== 'blocked' ? 'true' : undefined}>
         {status.pendingFrames > 0 && <button type="button" onClick={() => void save()}
           disabled={busy.current || status.gate === 'blocked'}>Save now</button>}
         <p role="status">{status.gate === 'blocked' ? 'Save blocked. Keep this tab open.'
-          : saveTask.current ? 'Saving progress…'
+          : saveTask.current || v45OverlapReady && actionTask.current ? 'Saving progress…'
+            : v45OverlapReady && status.pendingFrames === 0
+              ? 'Current checked progress is saved on this device.'
             : savedNotice ? status.pendingFrames > 0
               ? 'Last checkpoint saved on this device; newer progress is not yet saved.'
               : `V${saveVersion} progress saved on this device.`
               : 'Travel since the last checkpoint is not saved.'}</p>
+        {v45OverlapReady && <p>Durable revision {(status as ReturnType<V45Runtime['status']>).durableRevision};
+          {' '}{status.pendingFrames} unsaved frame(s).</p>}
       </div>}
     {nearWestFace && !regional && !slateGuideVisible && <aside className="v23-guide v23-guide-west" role="note">
       {marker ? `West Slate cliff lower foot: x ${marker.from.x}, z ${marker.from.z}. Gather 4 logs; use B Works, 2 Ladder, then aim.`
