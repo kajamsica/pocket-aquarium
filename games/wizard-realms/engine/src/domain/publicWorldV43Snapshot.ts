@@ -79,6 +79,7 @@ function decodeProgress(raw: unknown): PublicV43Progress | null {
       ...(checkedBag && { greenwayBagUpgrade: checkedBag }) }
   } catch { return null }
 }
+export { decodeProgress as decodePublicV43Progress }
 function preserveOverlays(before: PublicV43Progress,
   after: PublicV43FamiliarProgress | null): PublicV43Progress | null {
   if (!after) return null
