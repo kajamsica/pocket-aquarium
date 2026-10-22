@@ -44,17 +44,26 @@ const projection = {
 
 describe('dev-only ground navigation handoff', () => {
   const ground = { x: 5.75, y: 1.2, z: -12.25 }
-  it('requires a V42 or V43 dev URL, never the ordinary public world', () => {
+  it('requires a V42 through V45 dev URL, never the ordinary public world', () => {
     expect(devNavigationEnabled('?dev=1&publicWorld=v42')).toBe(true)
     expect(devNavigationEnabled('?dev=1&publicWorld=v43')).toBe(true)
+    expect(devNavigationEnabled('?dev=1&publicWorld=v44')).toBe(true)
+    expect(devNavigationEnabled('?dev=1&publicWorld=v45')).toBe(true)
     expect(devNavigationEnabled('?publicWorld=v42')).toBe(false)
     expect(devNavigationEnabled('?publicWorld=v43')).toBe(false)
+    expect(devNavigationEnabled('?publicWorld=v44')).toBe(false)
+    expect(devNavigationEnabled('?publicWorld=v45')).toBe(false)
     expect(devNavigationEnabled('?dev=0&publicWorld=v42')).toBe(false)
     expect(devNavigationEnabled('?dev=0&publicWorld=v43')).toBe(false)
+    expect(devNavigationEnabled('?dev=0&publicWorld=v45')).toBe(false)
     expect(devNavigationEnabled('?dev=1&publicWorld=v41')).toBe(false)
     expect(pointerDevNavigateIntent(devNavigationEnabled('?publicWorld=v42'), projection,
       false, ground)).toBeNull()
+    expect(pointerDevNavigateIntent(devNavigationEnabled('?publicWorld=v45'), projection,
+      false, ground)).toBeNull()
     expect(pointerDevNavigateIntent(devNavigationEnabled('?dev=1&publicWorld=v42'), projection,
+      false, ground)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
+    expect(pointerDevNavigateIntent(devNavigationEnabled('?dev=1&publicWorld=v45'), projection,
       false, ground)).toEqual({ type: 'dev.navigate', destination: { x: 5.75, z: -12.25 } })
   })
 
@@ -72,6 +81,10 @@ describe('dev-only ground navigation handoff', () => {
     }
     expect(devSceneTapDecision(true, null, first, null)).toBe('terrain')
     expect(devSceneTapDecision(true, first, second, null)).toBe('navigate')
+    expect(devSceneTapDecision(devNavigationEnabled('?dev=1&publicWorld=v45'), first,
+      second, null)).toBe('navigate')
+    expect(devSceneTapDecision(devNavigationEnabled('?publicWorld=v45'), first,
+      second, null)).toBe('terrain')
     expect(devSceneTapDecision(false, first, second, null)).toBe('terrain')
   })
 
@@ -84,6 +97,16 @@ describe('dev-only ground navigation handoff', () => {
     expect(request({ ...projection, controllerActionsEnabled: false }, false)).toBeNull()
     expect(request({ ...projection, savedTerrainWorks: { modeActive: true } as WizardViewProjection['savedTerrainWorks'] }, false)).toBeNull()
     expect(request(projection, false, null)).toBeNull()
+  })
+
+  it('routes on-foot streamed dev ground without enabling mounted routing', () => {
+    const streamed = { ...projection, unavailableActions: true as const,
+      controllerActionsEnabled: true }
+    const enabled = devNavigationEnabled('?dev=1&publicWorld=v45')
+    expect(pointerDevNavigateIntent(enabled, streamed, false, ground))
+      .toEqual({ type: 'dev.navigate', destination: { x: ground.x, z: ground.z } })
+    expect(pointerDevNavigateIntent(enabled, { ...streamed, groundMount: {
+      mode: 'riding', position: [0, 0, 0], yaw: 0 } }, false, ground)).toBeNull()
   })
 })
 
