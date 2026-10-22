@@ -174,7 +174,7 @@ export function publicV28BlockedMoveMessage(preview: PublicV28Progress, frame: P
       if (from.z <= starterCliffCanonicalFace(preview.state.seed).to.z)
         return spans?.length
           ? from.x < 0
-            ? 'The cliff lip is a drop. Back north onto the upper shelf, go west past the rock return, then turn south on dry ground toward the river; use your built ladder to descend here.'
+            ? 'The cliff lip is a drop. Back north onto the upper shelf, go west past the rock return, then turn south on dry ground toward the river. To return to the valley, retrace to your built ladder.'
             : 'The cliff lip is a drop. Back away and stay on the upper shelf, or return to your built ladder to descend.'
           : 'The cliff lip is a drop. Back away and stay on the upper shelf.'
       return spans?.length

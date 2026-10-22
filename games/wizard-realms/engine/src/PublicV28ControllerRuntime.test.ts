@@ -509,7 +509,7 @@ describe('V28 checked controller runtime', () => {
 
   it.each([
     { side: 'upper', ladderBuilt: true, z: -6.08, step: 0.16,
-      message: 'The cliff lip is a drop. Back north onto the upper shelf, go west past the rock return, then turn south on dry ground toward the river; use your built ladder to descend here.' },
+      message: 'The cliff lip is a drop. Back north onto the upper shelf, go west past the rock return, then turn south on dry ground toward the river. To return to the valley, retrace to your built ladder.' },
     { side: 'lower', ladderBuilt: true, z: -5.92, step: -0.16,
       message: 'The cliff blocks this step. Follow the lower face to your built ladder and climb its rungs.' },
     { side: 'lower', ladderBuilt: false, z: -5.92, step: -0.16,
@@ -581,7 +581,7 @@ describe('V28 checked controller runtime', () => {
     const before = runtime.preview()
     expect(runtime.advanceFrame(move(0.16), false).rejections)
       .toEqual([expect.objectContaining({ code: 'terrain_missing',
-        message: expect.stringMatching(/Back north onto the upper shelf, go west past the rock return, then turn south/) })])
+        message: expect.stringMatching(/Back north onto the upper shelf, go west past the rock return, then turn south.*retrace to your built ladder\./) })])
     expect(runtime.preview()).toEqual(before)
   })
 
