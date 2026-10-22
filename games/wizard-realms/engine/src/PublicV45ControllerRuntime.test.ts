@@ -11,6 +11,7 @@ import { createPublicV43Root, decodePublicV43CheckedSuccessor,
 import type { PublicV43Root } from './domain/publicWorldV43Snapshot'
 import { createPublicV44Root } from './domain/publicWorldV44Snapshot'
 import { confirmPublicV45Action } from './domain/publicWorldV45RideAction'
+import { PUBLIC_V45_MAX_RIDE_BATCH } from './domain/publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA }
   from './domain/publicWorldV45Migration'
 import { decodePublicV45Root } from './domain/publicWorldV45Snapshot'
@@ -71,6 +72,64 @@ function matureSource(): PublicV43Root {
   return checked
 }
 
+function checkedWriter(genesis: PublicV45Root) {
+  let current = genesis
+  const writes: PublicV45Witness[] = []
+  return { writes, current: () => current,
+    write: async (revision: number, lineage: PublicV45Root['lineage'],
+      witness: PublicV45Witness) => {
+      writes.push(witness)
+      if (revision !== current.head.saveRevision
+        || !sameStrictBoundedRaw(lineage, current.lineage, 3 << 20))
+        return { ok: false as const, reason: 'revision-changed' }
+      const { schemaVersion: _schema, saveRevision: _revision,
+        witness: _prior, ...before } = current.head
+      const checked = confirmPublicV45Action(before, witness)
+      if (!checked.progress) return { ok: false as const, reason: checked.rejection }
+      const next = decodePublicV45Root({ lineage: current.lineage,
+        previous: current.head, head: { ...checked.progress,
+          schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: revision + 1, witness } })
+      if (!next) return { ok: false as const, reason: 'invalid-successor' }
+      current = next
+      return { ok: true as const, value: { head: next.head, lineage: next.lineage } }
+    } }
+}
+
+type RidePort = NonNullable<Parameters<typeof createPublicV45ControllerRuntime>[3]>
+type RideInput = Parameters<RidePort['commitRideBatch']>[0]
+type RideOutcome = Awaited<ReturnType<RidePort['commitRideBatch']>>
+type RideAck = Extract<RideOutcome, { status: 'committed' }>['ack']
+async function queuedRider() {
+  const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
+  const writer = checkedWriter(genesis)
+  const pending: { input: RideInput; resolve: (outcome: RideOutcome) => void }[] = []
+  let fatal: ((reason: string) => void) | null = null
+  const port: RidePort = { epoch: 'test-session',
+    commitRideBatch: (input) => new Promise((resolve) => { pending.push({ input, resolve }) }),
+    onFatal: (listener) => { fatal = listener; return () => { fatal = null } } }
+  const runtime = createPublicV45ControllerRuntime(genesis, writer.write, undefined, port)
+  expect(await runtime.action({ kind: 'sedgehorn-mount/v1' }))
+    .toMatchObject({ status: 'saved' })
+  const settle = async (index: number, alter: (ack: RideAck) => RideAck = (ack) => ack) => {
+    const { input, resolve } = pending[index]!
+    const reply = await writer.write(input.expectedRevision,
+      writer.current().lineage, input.witness)
+    if (!reply.ok) throw new Error(reply.reason)
+    const { state, groundMount } = reply.value.head
+    if (groundMount.mode !== 'riding') throw new Error('Not riding')
+    resolve({ status: 'committed', ack: alter({ epoch: port.epoch,
+      batchId: input.batchId, baseRevision: input.expectedRevision,
+      nextRevision: reply.value.head.saveRevision,
+      frameCount: input.witness.frames.length,
+      terminal: { tick: state.tick, position: state.player.position,
+        yaw: state.player.yaw, groundMountMode: groundMount.mode } }) })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
+  return { runtime, writer, pending, settle, fail: (reason: string) => fatal?.(reason) }
+}
+const turn = (delta: number) => [{ type: 'look' as const,
+  yawDelta: delta, pitchDelta: 0 }]
+
 describe('V45 controller runtime', () => {
   it('fully checks a writer reply with no durable Flow receipt', async () => {
     const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
@@ -84,25 +143,9 @@ describe('V45 controller runtime', () => {
 
   it('keeps assisted preview transient and writes one checked bounded ride batch', async () => {
     const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
-    let current: PublicV45Root = genesis
-    const writes: PublicV45Witness[] = []
-    const runtime = createPublicV45ControllerRuntime(genesis,
-      async (revision, lineage, witness) => {
-        writes.push(witness)
-        if (revision !== current.head.saveRevision
-          || !sameStrictBoundedRaw(lineage, current.lineage, 3 << 20))
-          return { ok: false, reason: 'revision-changed' }
-        const { schemaVersion: _schema, saveRevision: _revision,
-          witness: _prior, ...before } = current.head
-        const checked = confirmPublicV45Action(before, witness)
-        if (!checked.progress) return { ok: false, reason: checked.rejection }
-        const next = decodePublicV45Root({ lineage: current.lineage,
-          previous: current.head, head: { ...checked.progress,
-            schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: revision + 1, witness } })
-        if (!next) return { ok: false, reason: 'invalid-successor' }
-        current = next
-        return { ok: true, value: { head: next.head, lineage: next.lineage } }
-      })
+    const writer = checkedWriter(genesis)
+    const { writes } = writer
+    const runtime = createPublicV45ControllerRuntime(genesis, writer.write)
     expect(runtime.advanceFrame([], true).rejections).toEqual([])
     expect(await runtime.save()).toMatchObject({ status: 'saved' })
     expect(writes.at(-1)?.kind).toBe('frame-batch/v1')
@@ -142,8 +185,99 @@ describe('V45 controller runtime', () => {
         { kind: 'sedgehorn-assisted-ride-frame/v1' }] })
     expect(runtime.committed().head.state.player.position)
       .toEqual(runtime.preview().state.player.position)
-    const resumed = createPublicV45ControllerRuntime({ head: current.head,
-      lineage: current.lineage }, async () => ({ ok: false, reason: 'read-only' }))
+    const resumed = createPublicV45ControllerRuntime(writer.current(),
+      async () => ({ ok: false, reason: 'read-only' }))
     expect(resumed.preview().state.player.yaw).toBe(turnedYaw)
+  }, 30_000)
+
+  it('continues checked preview during A, caps B, and drains exact ACKs without a snap',
+    async () => {
+      const { runtime, pending, settle, writer } = await queuedRider()
+      const base = runtime.committed().head.saveRevision
+      for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+        expect(runtime.advanceFrame(turn(index % 2 ? -0.04 : 0.04), false)
+          .rejections).toEqual([])
+      await Promise.resolve()
+      expect(pending).toHaveLength(1)
+      expect(runtime.status().durableRevision).toBe(base)
+      for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+        expect(runtime.advanceFrame(turn(index % 2 ? -0.04 : 0.04), false)
+          .rejections).toEqual([])
+      const latest = structuredClone(runtime.preview().state)
+      expect(runtime.status()).toMatchObject({ pendingFrames:
+        2 * PUBLIC_V45_MAX_RIDE_BATCH, gate: 'cap-paused' })
+      expect(runtime.advanceFrame(turn(0.04), false).rejections).toHaveLength(1)
+      expect(runtime.preview().state).toEqual(latest)
+      let saved = false
+      const saving = runtime.save().then((result) => { saved = true; return result })
+      expect(saved).toBe(false)
+      await settle(0)
+      expect(runtime.committed().head.saveRevision).toBe(base + 1)
+      expect(runtime.preview().state).toEqual(latest)
+      expect(pending).toHaveLength(2)
+      expect(saved).toBe(false)
+      await settle(1)
+      expect(await saving).toMatchObject({ status: 'saved' })
+      expect(runtime.status()).toMatchObject({ pendingFrames: 0,
+        durableRevision: base + 2 })
+      expect(runtime.preview().state).toEqual(latest)
+      expect(runtime.committed().head.state).toEqual(latest)
+      expect(writer.writes.filter((witness) => witness.kind
+        === 'sedgehorn-assisted-ride-batch/v1')).toHaveLength(2)
+    }, 30_000)
+
+  it('freezes unsaved preview on a wrong or replayed ACK', async () => {
+    const first = await queuedRider()
+    for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+      expect(first.runtime.advanceFrame(turn(0.04), false).rejections).toEqual([])
+    await Promise.resolve()
+    expect(first.runtime.advanceFrame(turn(-0.04), false).rejections).toEqual([])
+    const preview = structuredClone(first.runtime.preview().state)
+    await first.settle(0, (ack) => ({ ...ack, batchId: ack.batchId + 1 }))
+    expect(first.runtime.status()).toMatchObject({ gate: 'blocked',
+      blockedReason: 'ride-ack-mismatch', pendingFrames:
+        PUBLIC_V45_MAX_RIDE_BATCH + 1 })
+    expect(first.runtime.preview().state).toEqual(preview)
+    expect(first.runtime.advanceFrame(turn(0.04), false).rejections).toHaveLength(1)
+
+    const second = await queuedRider()
+    for (let index = 0; index < 2 * PUBLIC_V45_MAX_RIDE_BATCH; index++)
+      expect(second.runtime.advanceFrame(turn(index % 2 ? -0.04 : 0.04), false)
+        .rejections).toEqual([])
+    await Promise.resolve()
+    const firstAckId = second.pending[0]!.input.batchId
+    await second.settle(0)
+    await second.settle(1, (ack) => ({ ...ack, batchId: firstAckId }))
+    expect(second.runtime.status()).toMatchObject({ gate: 'blocked',
+      blockedReason: 'ride-ack-mismatch', pendingFrames: PUBLIC_V45_MAX_RIDE_BATCH })
+  }, 30_000)
+
+  it('freezes on worker fatal without discarding unacknowledged frames', async () => {
+    const { runtime, fail } = await queuedRider()
+    for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH + 1; index++)
+      expect(runtime.advanceFrame(turn(index % 2 ? -0.04 : 0.04), false)
+        .rejections).toEqual([])
+    fail('worker-crashed')
+    expect(runtime.status()).toMatchObject({ gate: 'blocked',
+      blockedReason: 'worker-crashed', pendingFrames: PUBLIC_V45_MAX_RIDE_BATCH + 1 })
+    expect(await runtime.save()).toMatchObject({ status: 'blocked',
+      reason: 'worker-crashed' })
+    runtime.dispose()
+  }, 30_000)
+
+  it('does not retry an uncertain Worker write', async () => {
+    const { runtime, pending } = await queuedRider()
+    for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+      expect(runtime.advanceFrame(turn(index % 2 ? -0.04 : 0.04), false)
+        .rejections).toEqual([])
+    await Promise.resolve()
+    pending[0]!.resolve({ status: 'blocked', reason: 'storage-error',
+      durability: 'unknown' })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(runtime.status()).toMatchObject({ gate: 'blocked',
+      blockedReason: 'storage-error', pendingFrames: PUBLIC_V45_MAX_RIDE_BATCH })
+    expect(pending).toHaveLength(1)
+    expect(await runtime.save()).toMatchObject({ status: 'blocked',
+      reason: 'storage-error' })
   }, 30_000)
 })

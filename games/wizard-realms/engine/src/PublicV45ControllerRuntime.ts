@@ -9,6 +9,7 @@ import { confirmPublicV45Action, decodePublicV45RideFrameWitness,
   PUBLIC_V45_MAX_RIDE_BATCH } from './domain/publicWorldV45RideAction'
 import type { PublicV45Progress, PublicV45RideFrameWitness }
   from './domain/publicWorldV45RideAction'
+import type { PublicV45RideBatchWitness } from './domain/publicWorldV45RideAction'
 import { decodePublicV45Root } from './domain/publicWorldV45Snapshot'
 import type { PublicV45Witness } from './domain/publicWorldV45Snapshot'
 import { consumePublicV45CommitReceipt } from './domain/publicWorldV45Flow'
@@ -21,16 +22,34 @@ type HomeWriter = (revision: number, lineage: PublicV45Start['lineage']) =>
   Promise<PublicV45Operation<PublicV45Start>>
 type Shell = ReturnType<typeof createPublicV43ControllerRuntime>
 type ShellAction = Parameters<Shell['action']>[0]
+type RideAck = Readonly<{ epoch: string; batchId: number; baseRevision: number;
+  nextRevision: number; frameCount: number; terminal: Readonly<{
+    tick: number; position: PublicV45Progress['state']['player']['position'];
+    yaw: number; groundMountMode: 'riding' }> }>
+type RideSavePort = Readonly<{ epoch: string;
+  commitRideBatch: (input: Readonly<{ batchId: number; expectedRevision: number;
+    witness: PublicV45RideBatchWitness }>) => Promise<
+      { status: 'committed'; ack: RideAck } | { status: 'blocked'; reason: string;
+        durability: 'not-committed' | 'unknown' }>;
+  onFatal: (listener: (reason: string) => void) => () => void }>
+type RideFlight = Readonly<{ id: number; before: PublicV45Start;
+  witness: PublicV45RideBatchWitness; end: PublicV45Progress }>
 const progressOf = ({ schemaVersion: _schema, saveRevision: _revision,
   witness: _witness, ...progress }: PublicV45Start['head']): PublicV45Progress => progress
 
 /** V43 supplies parked controls, but every durable write goes through V45. */
 export function createPublicV45ControllerRuntime(initial: PublicV45Start, write: Writer,
-  homeWrite?: HomeWriter) {
+  homeWrite?: HomeWriter, ridePort?: RideSavePort) {
   let committed = structuredClone(initial)
   let ridePreview = progressOf(committed.head)
   let rideFrames: PublicV45RideFrameWitness[] = []
   let directBusy = false, directBlocked: string | null = null
+  let inFlight: RideFlight | null = null
+  let flightPromise: Promise<void> | null = null
+  let nextBatchId = 1, drainRequested = false
+  const unsubscribeFatal = ridePort?.onFatal((reason) => {
+    directBlocked = reason || 'worker-failed'
+  })
   const gate = () => directBlocked
     ? { status: 'blocked' as const, reason: directBlocked }
     : directBusy ? { status: 'busy' as const } : null
@@ -85,7 +104,59 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
       visible: mature && familiar.phase === 'claimed',
       position: structuredClone(position), yaw: state.player.yaw }
   }
+  const blockRide = (reason: string) => { directBlocked = reason || 'worker-failed' }
+  const launchRide = () => {
+    if (!ridePort || inFlight || !rideFrames.length || directBlocked) return
+    const flight: RideFlight = { id: nextBatchId++, before: committed,
+      witness: { kind: 'sedgehorn-assisted-ride-batch/v1',
+        frames: structuredClone(rideFrames) }, end: structuredClone(ridePreview) }
+    rideFrames = []
+    inFlight = flight
+    flightPromise = Promise.resolve().then(() => ridePort.commitRideBatch({
+      batchId: flight.id, expectedRevision: flight.before.head.saveRevision,
+      witness: flight.witness })).then((outcome) => {
+      if (directBlocked || inFlight !== flight) return
+      if (outcome.status !== 'committed') { blockRide(outcome.reason); return }
+      const { ack } = outcome
+      const { state, groundMount } = flight.end
+      if (ack.epoch !== ridePort.epoch || ack.batchId !== flight.id
+        || ack.baseRevision !== flight.before.head.saveRevision
+        || ack.nextRevision !== ack.baseRevision + 1
+        || ack.frameCount !== flight.witness.frames.length
+        || groundMount.mode !== 'riding'
+        || !sameStrictBoundedRaw(ack.terminal, {
+          tick: state.tick, position: state.player.position,
+          yaw: state.player.yaw, groundMountMode: groundMount.mode }, 1024)
+        || committed.head.saveRevision !== ack.baseRevision) {
+        blockRide('ride-ack-mismatch')
+        return
+      }
+      committed = { lineage: flight.before.lineage,
+        head: { ...flight.end, schemaVersion: flight.before.head.schemaVersion,
+          saveRevision: ack.nextRevision, witness: flight.witness } }
+      inFlight = null
+      if (rideFrames.length >= PUBLIC_V45_MAX_RIDE_BATCH || drainRequested)
+        launchRide()
+    }).catch(() => { if (!directBlocked) blockRide('worker-failed') })
+  }
+  const drainRide = async () => {
+    const hadFrames = Boolean(inFlight || rideFrames.length)
+    drainRequested = true
+    try {
+      while ((inFlight || rideFrames.length) && !directBlocked) {
+        if (!inFlight) launchRide()
+        if (!flightPromise) { blockRide('worker-failed'); break }
+        await flightPromise
+      }
+      if (directBlocked) return { status: 'blocked' as const,
+        reason: directBlocked }
+      if (hadFrames) runtime = makeShell()
+      return hadFrames ? { status: 'saved' as const, events: [],
+        resetWalkRequested: false } : { status: 'unchanged' as const }
+    } finally { drainRequested = false }
+  }
   const flushRide = async () => {
+    if (ridePort) return drainRide()
     if (!rideFrames.length) return { status: 'unchanged' as const }
     const before = committed
     const previewBeforeWrite = ridePreview
@@ -132,16 +203,19 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
     preview: () => ({ ...runtime.preview(), ...(isRiding() ? ridePreview : {}),
       groundMount: mountView(), tack: ridePreview.tack }),
     status: () => {
-      const base = runtime.status()
+      const base = { ...runtime.status(), durableRevision: committed.head.saveRevision }
       if (!isRiding()) return directBlocked ? { ...base, gate: 'blocked' as const,
         blockedReason: directBlocked } : directBusy
           ? { ...base, gate: 'barrier' as const } : base
       const pendingFrames = rideFrames.length
+        + (inFlight?.witness.frames.length ?? 0)
       return { ...base, pendingFrames,
         checkpointRecommended: pendingFrames >= PUBLIC_V45_MAX_RIDE_BATCH / 2,
-        checkpointRequired: pendingFrames >= PUBLIC_V45_MAX_RIDE_BATCH,
+        checkpointRequired: pendingFrames >= (ridePort
+          ? 2 * PUBLIC_V45_MAX_RIDE_BATCH : PUBLIC_V45_MAX_RIDE_BATCH),
         gate: directBlocked ? 'blocked' as const : directBusy ? 'barrier' as const
-          : pendingFrames >= PUBLIC_V45_MAX_RIDE_BATCH ? 'cap-paused' as const : base.gate,
+          : rideFrames.length >= PUBLIC_V45_MAX_RIDE_BATCH
+            ? 'cap-paused' as const : base.gate,
         blockedReason: directBlocked ?? base.blockedReason }
     },
     idleFrameNeeded: () => !isRiding() && !gate() && runtime.idleFrameNeeded(),
@@ -161,6 +235,8 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         `The Sedgehorn cannot ride safely here (${checked.rejection}).`)
       ridePreview = checked.progress
       rideFrames.push(witness)
+      if (ridePort && rideFrames.length === PUBLIC_V45_MAX_RIDE_BATCH)
+        launchRide()
       return { events: [...checked.events], rejections: [] }
     },
     async save() {
@@ -231,5 +307,6 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         return { status: 'blocked' as const, reason: directBlocked }
       } finally { directBusy = false }
     },
+    dispose() { unsubscribeFatal?.() },
   }
 }
