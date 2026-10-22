@@ -169,6 +169,24 @@ describe('V45 fenced source-only flow', () => {
       { forged: true })).toEqual({ ok: false, reason: 'lineage-changed' })
     expect(await commitPublicV45(locks, store, source, 0,
       started.value.lineage, ride)).toEqual({ ok: false, reason: 'not_eligible' })
+    const v44Marker = await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor')
+    const parked = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, idle)
+    if (!parked.ok) throw new Error(parked.reason)
+    expect(parked.value.head.saveRevision).toBe(1)
+    expect(parked.value.head.witness).toEqual(idle)
+    expect(parked.value.events).toEqual([])
+    expect(await createAtomicV45Store(factory).readChecked()).toMatchObject({
+      status: 'valid', root: { head: { saveRevision: 1, witness: idle } } })
+    expect(await resumePublicV45(locks, createAtomicV45Store(factory), source, 1,
+      started.value.lineage)).toMatchObject({ ok: true,
+      value: { head: { saveRevision: 1 } } })
+    expect(await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, idle)).toEqual({ ok: false, reason: 'revision-changed' })
+    expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+      .toBe(v44Bytes)
+    expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
+      .toEqual(v44Marker)
   }, 30_000)
 
   it('preflights an invalid or oversized genesis before reserving V44', async () => {
@@ -297,6 +315,8 @@ describe('V45 fenced source-only flow', () => {
       ok: false, reason: 'invalid-witness' })
     expect((await store.readChecked())).toMatchObject({ status: 'valid',
       root: { head: { saveRevision: 0 } } })
+    expect(await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, idle)).toEqual({ ok: false, reason: 'not_eligible' })
     const outcomes = await Promise.all([0, 1].map(() => commitPublicV45(
       locks, store, source, 0, started.value.lineage, ride)))
     expect(outcomes.filter((result) => result.ok)).toHaveLength(1)

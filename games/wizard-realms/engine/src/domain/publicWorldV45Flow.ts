@@ -1,6 +1,6 @@
 import type { createAtomicV44PromotionStore } from './atomicV44Promotion'
 import type { createAtomicV45Store } from './atomicV45Database'
-import { confirmPublicV45RideFrame } from './publicWorldV45RideAction'
+import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import { decodePublicV45Root, decodePublicV45Witness }
   from './publicWorldV45Snapshot'
@@ -165,7 +165,7 @@ export function commitPublicV45(locks: PublicV7LockProvider | undefined,
     if (!witness) return { ok: false, reason: 'invalid-witness' }
     const { schemaVersion: _schema, saveRevision: _revision,
       witness: _previous, ...progress } = head
-    const action = confirmPublicV45RideFrame(progress, witness)
+    const action = confirmPublicV45Action(progress, witness)
     if (!action.progress) return { ok: false,
       reason: action.rejection ?? 'action-rejected' }
     const nextHead: PublicV45Head = { ...action.progress,
