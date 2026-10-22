@@ -7,14 +7,24 @@ import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
 
 export const HIGHLAND_CONTENT_REVISION = 'highland-quarry-v1' as const
 export const HIGHLAND_CORE = Object.freeze({ minX: 448, maxX: 544, minZ: -512, maxZ: -424 })
+export const STORMLINE_CORE = Object.freeze({ minX: 600, maxX: 696, minZ: -520, maxZ: -416 })
+export const STORMLINE_GATEWAY = Object.freeze({ x: 620, z: -468 })
 export { HIGHLAND_LANDMARK, highlandCorridorCells }
 
 type Point = Readonly<{ x: number; z: number }>
 export type HighlandStoneNode = Readonly<{ id: string; tile: WorldTile }>
-export type StreamedRegion = 'highland_quarry' | 'mireglass_reach' | 'wilderness'
+export type StreamedRegion = 'highland_quarry' | 'stormline_foothill' | 'mireglass_reach' | 'wilderness'
 
 const corridor = highlandCorridorCells()
 const lateCorridor = corridor.slice(corridor.findIndex(({ x, z }) => x === 384 && z === -320))
+const stormlineApproach = (() => {
+  const cells: Point[] = []
+  for (let x = 540; x <= 552; x += WORLD_CELL_METERS) cells.push({ x, z: -500 })
+  for (let z = -496; z <= -468; z += WORLD_CELL_METERS) cells.push({ x: 552, z })
+  for (let x = 556; x <= STORMLINE_GATEWAY.x; x += WORLD_CELL_METERS) cells.push({ x, z: -468 })
+  return Object.freeze(cells.map((cell) => Object.freeze(cell)))
+})()
+export function stormlineApproachCells(): readonly Point[] { return stormlineApproach }
 const nodeCache = new Map<string, readonly HighlandStoneNode[]>()
 const CACHE_LIMIT = 8
 // Mireglass terrain authors side banks one cell beyond the core and a back bank at fenBack + 12.
@@ -75,8 +85,15 @@ export function isHighlandAuthoredPosition(position: Point): boolean {
   return inside(position, HIGHLAND_CORE) || near(position, lateCorridor, 8)
 }
 
+export function isStormlineAuthoredPosition(position: Point): boolean {
+  if (position.x < 532 || position.x > STORMLINE_CORE.maxX
+    || position.z < STORMLINE_CORE.minZ || position.z > STORMLINE_CORE.maxZ) return false
+  return inside(position, STORMLINE_CORE) || near(position, stormlineApproach, 8)
+}
+
 export function classifyStreamedRegion(seed: string, position: Point): StreamedRegion {
   if (isHighlandAuthoredPosition(position)) return 'highland_quarry'
+  if (isStormlineAuthoredPosition(position)) return 'stormline_foothill'
   if (position.x > 8 || position.x < MIREGLASS_CORE.minX - 8
     || position.z < -8 || position.z > MIREGLASS_CORE.maxZ + 8) return 'wilderness'
   if (inside(position, MIREGLASS_CORE) || inside(position, mireglassBankEnvelope)

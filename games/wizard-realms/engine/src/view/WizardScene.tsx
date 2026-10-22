@@ -216,6 +216,7 @@ const APPROACH_SOIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#6c7255'
 const APPROACH_GROUND_COLOR = new THREE.Color('#687a59')
 const HIGHLAND_QUARRY_COLOR = new THREE.Color('#888a7d')
 const HIGHLAND_TRAIL_COLOR = new THREE.Color('#aaa188')
+const STORMLINE_FOOTHILL_COLOR = new THREE.Color('#657783')
 const HIGHLAND_SCREE_MATERIAL = new THREE.MeshStandardMaterial({ color: '#8b887a', roughness: 0.98, flatShading: true })
 const HIGHLAND_STRATA_MATERIAL = new THREE.MeshStandardMaterial({ color: '#b5ab91', roughness: 0.96, flatShading: true })
 const HIGHLAND_TRAIL_MATERIAL = new THREE.MeshStandardMaterial({ color: '#bfb395', roughness: 0.98, flatShading: true })
@@ -599,9 +600,11 @@ export function highlandDetailFor(cell: WizardTerrainCell) {
   const yaw = trail ? Math.atan2(dx, dz) : 0
   const trailX = trail ? (segment.from[0] + segment.to[0]) / 2 - cell.position[0] : 0
   const trailZ = trail ? (segment.from[1] + segment.to[1]) / 2 - cell.position[2] : 0
+  const screeDensity = cell.highlandSurface === 'quarry' ? 0.28
+    : cell.highlandSurface === 'foothill' ? 0.12 : 0
   return {
     trail, yaw, length, trailX, trailZ,
-    scree: cell.highlandSurface === 'quarry' && !trail && hashUnit(cell.id, 35) < 0.28,
+    scree: screeDensity > 0 && !trail && hashUnit(cell.id, 35) < screeDensity,
     x: (hashUnit(cell.id, 36) - 0.5) * 2.0,
     z: (hashUnit(cell.id, 37) - 0.5) * 2.0,
     rotation: hashUnit(cell.id, 38) * Math.PI,
@@ -1255,6 +1258,7 @@ export function terrainAppearanceFor(cell: WizardTerrainCell) {
   if (cell.mireglassApproach) top.lerp(APPROACH_GROUND_COLOR, 0.42)
   if (cell.highlandSurface === 'quarry') top.lerp(HIGHLAND_QUARRY_COLOR, 0.85)
   else if (cell.highlandSurface === 'trail') top.lerp(HIGHLAND_TRAIL_COLOR, 0.48)
+  else if (cell.highlandSurface === 'foothill') top.lerp(STORMLINE_FOOTHILL_COLOR, 0.72)
   top.offsetHSL(tint * (cell.mireglassApproach ? 0.008 : 0.02),
     tint * (cell.mireglassApproach ? 0.02 : 0.05),
     tint * (cell.mireglassApproach ? 0.018 : 0.04) + lift)

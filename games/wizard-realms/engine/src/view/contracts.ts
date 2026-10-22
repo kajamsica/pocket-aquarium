@@ -46,8 +46,8 @@ export interface WizardTerrainCell {
   mireglassApproach?: boolean
   /** Display-only world [x,z] centerline clipped to this cell; adjacent endpoints meet. */
   mireglassTrailSegment?: { from: Vec2; to: Vec2 }
-  /** V11 display-only stone palette or dry route. Never changes collision or terrain authority. */
-  highlandSurface?: 'trail' | 'quarry'
+  /** Display-only stone, foothill, or dry route palette. Never changes collision or terrain authority. */
+  highlandSurface?: 'trail' | 'quarry' | 'foothill'
   highlandTrailSegment?: { from: Vec2; to: Vec2 }
   /** V14 display-only ridge footprint; scenery never changes movement authority. */
   highlandRidgeCell?: 'rock' | 'gallery'

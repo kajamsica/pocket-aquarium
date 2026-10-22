@@ -1024,6 +1024,24 @@ describe('public v6 app boundary', () => {
     expect(publicAreaTitle(highland)).toBe('Eastern Highland')
     expect(publicAreaTitle({ ...ridge, movementOwner: 'streamed' })).toBe('Mireglass Reach')
   })
+  it('names Stormline only for v11 saves and announces the Highland to Stormline crossing once', () => {
+    const fresh = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const v11 = withPublicV11Highland(withPublicV10TerrainRevision(
+      withFreshPublicV9Camps(withFreshPublicV7Herbs(fresh))))
+    const highland = { ...v11, movementOwner: 'streamed' as const,
+      player: { ...v11.player, position: { ...v11.player.position, x: 540, z: -500 } } }
+    const stormline = { ...highland, player: { ...highland.player,
+      position: { ...highland.player.position, x: 620, z: -468 } } }
+    expect(publicAreaTitle(highland)).toBe('Highland Quarry')
+    expect(publicAreaTitle(stormline)).toBe('Stormline Foothill')
+    expect(publicAreaTitle({ ...fresh, movementOwner: 'streamed', player: stormline.player }))
+      .toBe('Open Wilderness')
+    expect(publicRegionTransitionText(highland, stormline)).toBe(
+      'Entered Stormline Foothill. Follow the marked dry approach through the ridge gallery toward its gateway.')
+    expect(publicRegionTransitionText(stormline, stormline)).toBeNull()
+    expect(publicRegionTransitionText(stormline, highland))
+      .toBe('Entered Highland Quarry. Follow the rocky trail to the Quarry Crown.')
+  })
   it('announces the region boundary instead of retaining an unrelated old message', () => {
     const greenway = createFreshPublicWorld(seed, 'greenway-classic-v1')
     const mireglass = { ...greenway, movementOwner: 'streamed' as const }

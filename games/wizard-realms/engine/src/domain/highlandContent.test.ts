@@ -4,6 +4,7 @@ import { hashSeed } from './generation'
 import {
   classifyStreamedRegion, HIGHLAND_CONTENT_REVISION, HIGHLAND_CORE, HIGHLAND_LANDMARK,
   highlandCorridorCells, highlandLandmark, highlandStoneNodes, isHighlandAuthoredPosition,
+  isStormlineAuthoredPosition, STORMLINE_CORE, STORMLINE_GATEWAY, stormlineApproachCells,
 } from './highlandContent'
 import { mireglassAnchors } from './mireglassContent'
 import { mireglassMoveBarrier } from './mireglassMovementGate'
@@ -33,6 +34,21 @@ describe('Highland quarry pinned content', () => {
       const b = route[index]
       expect(Math.abs(a.x - b.x) + Math.abs(a.z - b.z)).toBe(CELL)
     }
+  })
+
+  it('pins one unique, cardinal dry approach from Highland to the Stormline gateway', () => {
+    const approach = stormlineApproachCells()
+    expect(approach).toHaveLength(29)
+    expect(approach[0]).toEqual({ x: 540, z: -500 })
+    expect(approach.at(-1)).toEqual(STORMLINE_GATEWAY)
+    expect(new Set(approach.map(({ x, z }) => `${x}:${z}`)).size).toBe(approach.length)
+    expect(Object.isFrozen(approach)).toBe(true)
+    expect(approach.every(Object.isFrozen)).toBe(true)
+    for (let index = 1; index < approach.length; index += 1) {
+      const a = approach[index - 1], b = approach[index]
+      expect(Math.abs(a.x - b.x) + Math.abs(a.z - b.z)).toBe(CELL)
+    }
+    expect(stormlineApproachCells()).toBe(approach)
   })
 
   it('selects four stable, physically rocky nodes at least 20 m apart over all 102 seeds', () => {
@@ -150,4 +166,16 @@ describe('Highland quarry pinned content', () => {
     expect(classifyStreamedRegion(firstSeed, approach)).toBe('mireglass_reach')
     expect(classifyStreamedRegion(otherSeed!, approach)).toBe('wilderness')
   }, 45_000)
+
+  it('classifies Stormline without stealing established Highland, Mireglass, or wilderness cells', () => {
+    expect(STORMLINE_CORE).toEqual({ minX: 600, maxX: 696, minZ: -520, maxZ: -416 })
+    expect(isStormlineAuthoredPosition(STORMLINE_GATEWAY)).toBe(true)
+    for (const seed of seeds.slice(0, 3)) {
+      expect(classifyStreamedRegion(seed, { x: 540, z: -500 })).toBe('highland_quarry')
+      expect(classifyStreamedRegion(seed, STORMLINE_GATEWAY)).toBe('stormline_foothill')
+      expect(classifyStreamedRegion(seed, { x: 696, z: -416 })).toBe('stormline_foothill')
+      expect(classifyStreamedRegion(seed, { x: 708, z: -416 })).toBe('wilderness')
+      expect(classifyStreamedRegion(seed, { x: -300, z: 400 })).toBe('mireglass_reach')
+    }
+  })
 })

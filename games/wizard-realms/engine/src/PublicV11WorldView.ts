@@ -1,6 +1,7 @@
 import { backpackSlotsAfterAdd } from './domain/backpackSlots'
-import { HIGHLAND_CORE, HIGHLAND_LANDMARK, classifyStreamedRegion, highlandCorridorCells,
-  highlandLandmark, highlandStoneNodes } from './domain/highlandContent'
+import { HIGHLAND_CORE, HIGHLAND_LANDMARK, STORMLINE_GATEWAY, classifyStreamedRegion,
+  highlandCorridorCells, highlandLandmark, highlandStoneNodes, isStormlineAuthoredPosition,
+  stormlineApproachCells } from './domain/highlandContent'
 import { highlandRidgeCellAt, highlandRidgeRecoveryTarget } from './domain/highlandRidge'
 import { mireglassAnchors } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
@@ -16,7 +17,8 @@ import type { WizardFieldCampView, WizardMapTile, WizardTerrainCell, WizardViewP
 type Point = Readonly<{ x: number; z: number }>
 const key = (point: Point) => `${point.x}:${point.z}`
 const route = highlandCorridorCells()
-const routeIndex = new Map(route.map((point, index) => [key(point), index]))
+const stormlineApproach = stormlineApproachCells()
+const stormlineGallery = stormlineApproach.find(({ z }) => z === STORMLINE_GATEWAY.z)!
 const trailSegments = new Map<string, { from: readonly [number, number]; to: readonly [number, number] }>()
 const lateHighlandCells = new Set<string>()
 const midpoint = (a: Point, b: Point): readonly [number, number] => [(a.x + b.x) / 2, (a.z + b.z) / 2]
@@ -30,6 +32,10 @@ for (const [index, point] of route.entries()) {
     if (dx * dx + dz * dz <= 64) lateHighlandCells.add(key({ x: point.x + dx, z: point.z + dz }))
   }
 }
+for (const [index, point] of stormlineApproach.entries()) trailSegments.set(key(point), {
+  from: index === 0 ? [point.x, point.z] : midpoint(stormlineApproach[index - 1], point),
+  to: index === stormlineApproach.length - 1 ? [point.x, point.z] : midpoint(point, stormlineApproach[index + 1]),
+})
 
 const inCore = ({ x, z }: Point) => x >= HIGHLAND_CORE.minX && x <= HIGHLAND_CORE.maxX
   && z >= HIGHLAND_CORE.minZ && z <= HIGHLAND_CORE.maxZ
@@ -58,7 +64,7 @@ export function publicV11PracticeDigHint(state: PublicWorldV11State): string | n
 
 const terrainCache = new WeakMap<readonly WizardTerrainCell[], { seed: string; dressed: readonly WizardTerrainCell[] }>()
 
-/** Highland scenery tags the dry path, quarry, and ridge without changing collision or tile authority. */
+/** Highland and Stormline scenery tag dry paths and stone without changing collision or tile authority. */
 export function highlandTerrainFor(cells: readonly WizardTerrainCell[], seed: string): readonly WizardTerrainCell[] {
   const cached = terrainCache.get(cells)
   if (cached?.seed === seed) return cached.dressed
@@ -66,7 +72,7 @@ export function highlandTerrainFor(cells: readonly WizardTerrainCell[], seed: st
     const point = { x: cell.position[0], z: cell.position[2] }
     const segment = trailSegments.get(key(point))
     const surface: WizardTerrainCell['highlandSurface'] = isAuthoredHighlandCell(point)
-      ? 'quarry' : segment ? 'trail' : undefined
+      ? 'quarry' : isStormlineAuthoredPosition(point) ? 'foothill' : segment ? 'trail' : undefined
     const highlandRidgeCell = highlandRidgeCellAt(point.x, point.z)
     return surface || segment || highlandRidgeCell ? { ...cell,
       ...(surface ? { highlandSurface: surface } : {}),
@@ -89,7 +95,7 @@ export function highlandMapTiles(tiles: readonly WizardMapTile[], state: PublicW
       z: (tile.gridZ - 3) * WORLD_CELL_METERS }
     const nodeId = nodes.get(tile.id)
     return { ...tile,
-      ...(routeIndex.has(key(point)) ? { hasHighlandTrail: true } : {}),
+      ...(trailSegments.has(key(point)) ? { hasHighlandTrail: true } : {}),
       ...(tile.id === landmarkId ? { hasHighlandLandmark: true } : {}),
       ...(nodeId ? { hasHighlandNode: true, highlandNodeReady: readiness.get(nodeId) === true } : {}),
     }
@@ -106,10 +112,18 @@ function nextRoutePoint(position: Point, returning: boolean): Point {
   return route[Math.max(0, Math.min(route.length - 1, nearest + (returning ? -12 : 12)))]
 }
 
-function highlandGuidance(state: PublicWorldV11State, region: 'highland_quarry' | 'wilderness'): string {
+function highlandGuidance(state: PublicWorldV11State,
+  region: 'highland_quarry' | 'stormline_foothill' | 'wilderness'): string {
   const from = state.player.position
   const recovery = highlandRidgeRecoveryTarget(from.x, from.z)
   if (recovery) return `Old save inside newly raised ridge rock. Ridge scenery is temporarily hidden here. Walk ${bearing(from, recovery)} about ${Math.round(recovery.distance)} m to the nearest open cell.`
+  if (region === 'stormline_foothill') {
+    if (from.x <= stormlineGallery.x + 8 && from.z < stormlineGallery.z - 4)
+      return `Follow the marked dry approach ${bearing(from, stormlineGallery)} toward the ridge gallery, about ${Math.round(distance2(from, stormlineGallery))} m. Then turn east through its open row.`
+    if (from.x < STORMLINE_GATEWAY.x - 8)
+      return `Follow the marked dry ridge gallery east toward the Stormline gateway, about ${Math.round(distance2(from, STORMLINE_GATEWAY))} m along the approach. Ridge rock on either side is impassable.`
+    return 'You are in Stormline Foothill. Explore to chart new ground; return west through the marked ridge gallery.'
+  }
   const carryingStone = quantity(state, 'stone') > 0 && state.highland.landmarkDiscovered
   const routePoint = nextRoutePoint(from, carryingStone)
   if (region === 'wilderness' && from.x < 8) {
@@ -299,11 +313,15 @@ export function publicWorldV11ViewProjection(state: PublicWorldV11State, message
       label: extraction.label, action: extraction.actionable ? 'Extract' : extraction.reason,
       actionable: extraction.actionable } : null,
     ...(extraction ? { highlandExtraction: extraction } : {}),
-    ...(region === 'highland_quarry' ? { ambience: 'highland-wind' as const } : {}),
+    ...(region === 'highland_quarry' || region === 'stormline_foothill'
+      ? { ambience: 'highland-wind' as const } : {}),
     map: { ...base.map,
-      title: region === 'highland_quarry' ? 'Highland Quarry' : 'Uncharted wilderness',
+      title: region === 'highland_quarry' ? 'Highland Quarry'
+        : region === 'stormline_foothill' ? 'Stormline Foothill' : 'Uncharted wilderness',
       guidance: highlandGuidance(state, region),
-      legend: '▲ you · · walked quarry path · Q Quarry Crown · ◆ ready stone · ◌ recovering stone · C field camp · ? unexplored',
+      legend: region === 'stormline_foothill'
+        ? '▲ you · · walked dry gallery · C field camp · ? unexplored'
+        : '▲ you · · walked quarry path · Q Quarry Crown · ◆ ready stone · ◌ recovering stone · C field camp · ? unexplored',
       tiles: highlandMapTiles(base.map.tiles, state),
     },
   })
