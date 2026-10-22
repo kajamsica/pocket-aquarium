@@ -10,7 +10,8 @@ import type { PublicV43Root, PublicV43Witness } from './publicWorldV43Snapshot'
 import { confirmPublicV44GroundMountAction } from './publicWorldV44GroundMount'
 import { createPublicV44Root, decodePublicV44Root, PUBLIC_V44_SCHEMA }
   from './publicWorldV44Snapshot'
-import { confirmPublicV45RideFrame } from './publicWorldV45RideAction'
+import { confirmPublicV45Action, confirmPublicV45RideFrame }
+  from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import { decodePublicV45CheckedSuccessor, decodePublicV45Root,
   decodePublicV45Witness } from './publicWorldV45Snapshot'
@@ -26,7 +27,7 @@ const ride = (x: number): PublicV45Witness => ({
   kind: 'sedgehorn-assisted-ride-frame/v1', intents: [{ type: 'move', delta: { x, z: 0 } }],
 })
 
-function eligibleSource(): PublicV42Root {
+function eligibleSource(atTracks = false): PublicV42Root {
   const fresh = createFreshPublicV42Root(seed)
   const site = resolveSedgehornFamiliarSite(fresh.head)!
   const bridge = waystationRiverSite(seed)!
@@ -45,7 +46,8 @@ function eligibleSource(): PublicV42Root {
         ...decodeDiscoveredTileIds(fresh.head.state.discoveryMask),
         ...bridge.footprintTileIds, ...nearby,
       ])].sort()), player: { ...fresh.head.state.player,
-        position: { ...site.keeper.center }, verticalVelocity: 0 } } }
+        position: { ...(atTracks ? site.tracks.center : site.keeper.center) },
+        verticalVelocity: 0 } } }
   const source: PublicV42Root = { lineage: { origin: 'v41-migration',
     rulesProfile: 'iron-hall-rewards/v1', seed, sourceRevision: 4, genesis },
     previous: null, head: { ...structuredClone(genesis),
@@ -104,7 +106,7 @@ function mountedGenesis(boots = false): PublicV45Root {
 function next(before: PublicV45Root, witness: PublicV45Witness): PublicV45Root {
   const { schemaVersion: _schema, saveRevision: _revision,
     witness: _prior, ...flat } = before.head
-  const progress = confirmPublicV45RideFrame(flat, witness).progress
+  const progress = confirmPublicV45Action(flat, witness).progress
   expect(progress).toBeDefined()
   const checked = decodePublicV45CheckedSuccessor(before, { lineage: before.lineage,
     previous: before.head, head: { ...progress, schemaVersion: PUBLIC_V45_SCHEMA,
@@ -114,6 +116,38 @@ function next(before: PublicV45Root, witness: PublicV45Witness): PublicV45Root {
 }
 
 describe('V45 checked assisted-ride root', () => {
+  it('replays parked V43 frame and familiar action without changing V44 lineage', () => {
+    const source = createPublicV44Root(createPublicV43Root(eligibleSource(true)))
+    const genesis = createPublicV45Genesis(source)
+    const saved = structuredClone(genesis)
+    const first = next(genesis, { kind: 'familiar-tracks/v1' })
+    expect(first.head.familiar.phase).toBe('tracks')
+    expect(first.head.groundMount).toEqual(genesis.head.groundMount)
+    expect(first.head.tack).toBe(genesis.head.tack)
+    expect(first.lineage.source).toEqual(source)
+    expect(decodePublicV45Root(structuredClone(first))).toEqual(first)
+    const second = next(first, idle)
+    expect(second.head.state.tick).toBe(first.head.state.tick + 1)
+    expect(second.previous).toEqual(first.head)
+    expect(decodePublicV45Root(structuredClone(second))).toEqual(second)
+    expect(genesis).toEqual(saved)
+    for (const playerChange of [
+      { coins: first.head.state.player.coins + 100 },
+      { position: { ...first.head.state.player.position,
+        x: first.head.state.player.position.x + 0.01 } },
+    ]) {
+      const previous = { ...first.head, state: { ...first.head.state,
+        player: { ...first.head.state.player, ...playerChange } } }
+      const { schemaVersion: _schema, saveRevision: _revision,
+        witness: _prior, ...flat } = previous
+      const advanced = confirmPublicV45Action(flat, idle).progress
+      expect(advanced).toBeDefined()
+      expect(decodePublicV45Root({ lineage: second.lineage, previous,
+        head: { ...advanced, schemaVersion: PUBLIC_V45_SCHEMA,
+          saveRevision: 2, witness: idle } })).toBeNull()
+    }
+  }, 30_000)
+
   it('accepts exact imported genesis but no flat or forged tack entitlement', () => {
     const source = createPublicV44Root(createPublicV43Root(eligibleSource()))
     const genesis = createPublicV45Genesis(source)
@@ -149,8 +183,12 @@ describe('V45 checked assisted-ride root', () => {
     expect(genesis).toEqual(saved)
   }, 30_000)
 
-  it('accepts only canonical payload-free assisted witnesses', () => {
+  it('accepts canonical ride or V43 witnesses but not V44 mount actions', () => {
     expect(decodePublicV45Witness(ride(0.16))).toEqual(ride(0.16))
+    expect(decodePublicV45Witness(idle)).toEqual(idle)
+    expect(decodePublicV45Witness({ kind: 'familiar-tracks/v1' }))
+      .toEqual({ kind: 'familiar-tracks/v1' })
+    expect(decodePublicV45Witness({ kind: 'sedgehorn-mount/v1' })).toBeNull()
     for (const invalid of [null, { ...ride(0.16), speed: 2 },
       { ...ride(0.16), admission: {} }, { ...ride(0), intents: [] },
       { kind: 'sedgehorn-assisted-ride-frame/v1', intents: [{ type: 'jump' }] },

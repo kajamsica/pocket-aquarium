@@ -8,7 +8,8 @@ import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { resolveIronHallCrestOutcome } from './publicWorldV42RewardAction'
 import { createFreshPublicV43Root, decodePublicV43Progress }
   from './publicWorldV43Snapshot'
-import { confirmPublicV45RideFrame } from './publicWorldV45RideAction'
+import { confirmPublicV45Action, confirmPublicV45RideFrame }
+  from './publicWorldV45RideAction'
 import type { PublicV45Progress } from './publicWorldV45RideAction'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
@@ -52,6 +53,26 @@ function at(x: number, z: number, boots = false): PublicV45Progress {
 }
 
 describe('V45 checked assisted Sedgehorn ride', () => {
+  it('replays ordinary V43 frames only while parked without mount or tack changes', () => {
+    const riding = at(36, 4)
+    const parked: PublicV45Progress = { ...riding, groundMount: {
+      mode: 'parked', parkedPosition: null } }
+    const saved = structuredClone(parked)
+    const frame = { kind: 'frame-batch/v1', frames: [{ intents: [],
+      walkRequested: true }] }
+    const result = confirmPublicV45Action(parked, frame)
+    expect(result.rejection).toBeUndefined()
+    expect(result.events).toEqual([])
+    expect(result.progress!.state.tick).toBe(parked.state.tick + 1)
+    expect(result.progress!.groundMount).toEqual(parked.groundMount)
+    expect(result.progress!.tack).toBe(parked.tack)
+    expect(parked).toEqual(saved)
+    expect(confirmPublicV45Action(riding, frame).rejection).toBe('not_eligible')
+    expect(confirmPublicV45Action(parked, { ...frame, speed: 2 }).rejection)
+      .toBe('invalid_witness')
+    expect(confirmPublicV45Action(parked, ride(0.16)).rejection).toBe('not_eligible')
+  })
+
   it('makes a barefoot rider faster than walking with one tick and two ordered moves', () => {
     const before = { ...at(36, 4), greenwayOrder: { claimedAtSequence: null },
       greenwayBagUpgrade: { claimedAtSequence: null } }

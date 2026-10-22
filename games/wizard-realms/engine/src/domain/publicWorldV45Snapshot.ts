@@ -1,9 +1,12 @@
 import { decodePublicV14FrameWitness } from './publicWorldV14Snapshot'
 import { exactPublicV23 } from './publicWorldV23Snapshot'
+import { publicV32Monotonic, publicV32Preserves } from './publicWorldV32Snapshot'
 import { PUBLIC_V43_PROGRESS_KEYS } from './publicWorldV43FamiliarAction'
-import { decodePublicV43Progress } from './publicWorldV43Snapshot'
+import { decodePublicV43Progress, decodePublicV43Witness,
+  publicV43Monotonic } from './publicWorldV43Snapshot'
+import type { PublicV43Witness } from './publicWorldV43Snapshot'
 import { projectPublicV43MountTraining } from './publicWorldV43MountTraining'
-import { confirmPublicV45RideFrame } from './publicWorldV45RideAction'
+import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import type { PublicV45Progress, PublicV45RideWitness } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, decodePublicV45Genesis, PUBLIC_V45_SCHEMA }
   from './publicWorldV45Migration'
@@ -11,7 +14,7 @@ import type { PublicV45Lineage } from './publicWorldV45Migration'
 import { decodePublicV44Root } from './publicWorldV44Snapshot'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
 
-export type PublicV45Witness = PublicV45RideWitness
+export type PublicV45Witness = PublicV45RideWitness | PublicV43Witness
 export type PublicV45Head = PublicV45Progress & Readonly<{
   schemaVersion: typeof PUBLIC_V45_SCHEMA
   saveRevision: number
@@ -25,19 +28,20 @@ export type PublicV45Root = Readonly<{
 
 const RAW_LIMIT = 3 << 20
 const OPTIONAL_KEYS = ['mountTraining', 'greenwayOrder', 'greenwayBagUpgrade'] as const
-const V31_KEYS = new Set(['state', 'greenwayWorks', 'regionalWorks', 'terrain',
-  'nextHomeAtMs', 'riverBridgeIds', 'miningTools', 'claimedBridgeheadId',
-  'raisedSoilCells'])
 const progressOf = ({ schemaVersion: _schema, saveRevision: _revision,
   witness: _witness, ...progress }: PublicV45Head): PublicV45Progress => progress
-const immutableOf = (head: PublicV45Head) => Object.fromEntries(
-  Object.entries(progressOf(head)).filter(([key]) => !V31_KEYS.has(key)))
+const preservesGenesis = (genesis: PublicV45Head, head: PublicV45Head,
+  seed: string) => publicV32Preserves(genesis, head, seed)
+  && publicV43Monotonic(genesis, head)
+  && sameStrictBoundedRaw([head.groundMount, head.tack],
+    [genesis.groundMount, genesis.tack], RAW_LIMIT)
 
-/** A client supplies only one canonical move, optionally preceded by a look. */
+/** Accept a canonical assisted ride or an existing V43 ordinary witness. */
 export function decodePublicV45Witness(raw: unknown): PublicV45Witness | null {
   try {
     if (!exactPublicV23(raw, ['kind', 'intents'])
-      || raw.kind !== 'sedgehorn-assisted-ride-frame/v1') return null
+      || raw.kind !== 'sedgehorn-assisted-ride-frame/v1')
+      return decodePublicV43Witness(raw)
     const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1',
       frames: [{ intents: raw.intents, walkRequested: false }] })?.frames[0]
     const move = frame?.intents.at(-1)
@@ -97,7 +101,7 @@ function replayMatches(previous: PublicV45Head, head: PublicV45Head,
   rawHead: unknown): boolean {
   if (!head.witness || !Number.isSafeInteger(previous.saveRevision + 1)
     || head.saveRevision !== previous.saveRevision + 1) return false
-  const checked = confirmPublicV45RideFrame(progressOf(previous), head.witness)
+  const checked = confirmPublicV45Action(progressOf(previous), head.witness)
   return !!checked.progress && sameStrictBoundedRaw(rawHead, {
     ...checked.progress, schemaVersion: PUBLIC_V45_SCHEMA,
     saveRevision: head.saveRevision, witness: head.witness }, RAW_LIMIT)
@@ -114,8 +118,10 @@ export function decodePublicV45Root(raw: unknown): PublicV45Root | null {
     const previous = decodeHead(raw.previous, lineage)
     const genesis = createPublicV45Genesis(lineage.source).head
     if (!previous || head.saveRevision !== previous.saveRevision + 1
-      || !sameStrictBoundedRaw(immutableOf(head), immutableOf(genesis), RAW_LIMIT)
-      || !sameStrictBoundedRaw(immutableOf(previous), immutableOf(genesis), RAW_LIMIT)) return null
+      || !preservesGenesis(genesis, head, lineage.seed)
+      || !preservesGenesis(genesis, previous, lineage.seed)
+      || !publicV32Monotonic(previous, head)
+      || !publicV43Monotonic(previous, head)) return null
     if (previous.saveRevision === 0 && !sameStrictBoundedRaw(raw.previous,
       genesis, RAW_LIMIT)) return null
     if (previous.saveRevision === 1 && !replayMatches(genesis, previous,
@@ -134,7 +140,11 @@ export function decodePublicV45CheckedSuccessor(rawBefore: PublicV45Root,
       || !sameStrictBoundedRaw(raw.lineage, before.lineage, RAW_LIMIT)
       || !sameStrictBoundedRaw(raw.previous, before.head, RAW_LIMIT)) return null
     const head = decodeHead(raw.head, before.lineage)
-    return head && replayMatches(before.head, head, raw.head)
+    const genesis = createPublicV45Genesis(before.lineage.source).head
+    return head && preservesGenesis(genesis, head, before.lineage.seed)
+      && publicV32Monotonic(before.head, head)
+      && publicV43Monotonic(before.head, head)
+      && replayMatches(before.head, head, raw.head)
       ? { lineage: before.lineage, previous: before.head, head } : null
   } catch { return null }
 }

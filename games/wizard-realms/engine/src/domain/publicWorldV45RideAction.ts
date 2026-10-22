@@ -13,7 +13,8 @@ import { PUBLIC_V43_PROGRESS_KEYS } from './publicWorldV43FamiliarAction'
 import { publicV43FamiliarTouchesForbiddenSupport,
   publicV43FamiliarTouchesUnrevealedCell } from './publicWorldV43FamiliarFollower'
 import { projectPublicV43MountTraining } from './publicWorldV43MountTraining'
-import { decodePublicV43Progress } from './publicWorldV43Snapshot'
+import { decodePublicV43Progress, decodePublicV43Witness,
+  replayPublicV43Witness } from './publicWorldV43Snapshot'
 import type { PublicV43Progress } from './publicWorldV43Snapshot'
 import type { PublicV44GroundMountState } from './publicWorldV44GroundMount'
 import { publicV45AssistedPathSupported } from './publicWorldV45AssistedPath'
@@ -141,4 +142,24 @@ export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
       || !publicV32Monotonic(before, next)) return reject('ride_blocked')
     return { progress: next, events: checked.events }
   } catch { return reject('ride_blocked') }
+}
+
+/** Ordinary V43 replay remains available only while the imported mount is parked. */
+export function confirmPublicV45Action(rawBefore: PublicV45Progress,
+  rawWitness: unknown): PublicV45RideResult {
+  try {
+    if (rawWitness && typeof rawWitness === 'object'
+      && 'kind' in rawWitness
+      && rawWitness.kind === 'sedgehorn-assisted-ride-frame/v1')
+      return confirmPublicV45RideFrame(rawBefore, rawWitness)
+    const before = decodeProgress(rawBefore)
+    if (!before) return { rejection: 'invalid_progress' }
+    const witness = decodePublicV43Witness(rawWitness)
+    if (!witness) return { rejection: 'invalid_witness' }
+    if (before.groundMount.mode !== 'parked') return { rejection: 'not_eligible' }
+    const after = replayPublicV43Witness(before, witness)
+    const progress = after && decodeProgress({ ...after,
+      groundMount: before.groundMount, tack: before.tack })
+    return progress ? { progress, events: [] } : { rejection: 'ride_blocked' }
+  } catch { return { rejection: 'ride_blocked' } }
 }
