@@ -71,3 +71,14 @@ it('keeps unsupported V45 on the existing sync writers without a ride port', asy
   expect(seams.syncHome).toHaveBeenCalledWith(props.locks, props.store,
     props.v44Store, 4, props.start.lineage)
 })
+
+it('fails closed on missing or forged blocked status without constructing a writer', () => {
+  const base = { ...bindings, version: 'v45', start: start(4) }
+  for (const v45SaveOpen of [undefined, { status: 'blocked', reason: 'storage-error' }])
+    expect(() => createPublicV45RuntimeForEntry(
+      { ...base, v45SaveOpen } as unknown as PublicV45ControllerProps))
+      .toThrow('V45 save transport status is required')
+  expect(seams.adapter).not.toHaveBeenCalled()
+  expect(seams.runtime).not.toHaveBeenCalled()
+  expect(seams.syncWrite).not.toHaveBeenCalled()
+})

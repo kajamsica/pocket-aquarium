@@ -37,6 +37,22 @@ type RideFlight = Readonly<{ id: number; before: PublicV45Start;
 const progressOf = ({ schemaVersion: _schema, saveRevision: _revision,
   witness: _witness, ...progress }: PublicV45Start['head']): PublicV45Progress => progress
 
+/** Effects own this lifecycle; a speculative render never subscribes or disposes. */
+export function createPublicV45RuntimeLifecycle(runtime: Readonly<{
+  activate: () => void; deactivate: () => void; dispose: () => void }>) {
+  let mounted = false, generation = 0
+  return { mount: () => {
+    mounted = true; ++generation; runtime.activate()
+    return () => {
+      mounted = false; runtime.deactivate()
+      const closing = ++generation
+      queueMicrotask(() => {
+        if (!mounted && generation === closing) runtime.dispose()
+      })
+    }
+  } }
+}
+
 /** V43 supplies parked controls, but every durable write goes through V45. */
 export function createPublicV45ControllerRuntime(initial: PublicV45Start, write: Writer,
   homeWrite?: HomeWriter, ridePort?: RideSavePort) {
@@ -54,11 +70,12 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
     for (const listener of statusListeners) try { listener() }
     catch { /* UI listeners cannot change save authority. */ }
   }
-  const unsubscribeFatal = ridePort?.onFatal((reason) => {
+  let unsubscribeFatal: (() => void) | null = null, disposed = false
+  const onFatal = (reason: string) => {
     directBlocked = reason || 'worker-failed'
     wakeFatal()
     notifyStatus()
-  })
+  }
   const gate = () => directBlocked
     ? { status: 'blocked' as const, reason: directBlocked }
     : directBusy ? { status: 'busy' as const } : null
@@ -200,6 +217,11 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         code, message }] })
   return {
     committed: () => structuredClone(committed),
+    activate() {
+      if (!disposed && ridePort && !unsubscribeFatal)
+        unsubscribeFatal = ridePort.onFatal(onFatal)
+    },
+    deactivate() { unsubscribeFatal?.(); unsubscribeFatal = null },
     subscribeStatus(listener: () => void) {
       statusListeners.add(listener)
       return () => { statusListeners.delete(listener) }
@@ -325,6 +347,9 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         return { status: 'blocked' as const, reason: directBlocked }
       } finally { directBusy = false }
     },
-    dispose() { unsubscribeFatal?.(); statusListeners.clear() },
+    dispose() {
+      unsubscribeFatal?.(); unsubscribeFatal = null
+      disposed = true; statusListeners.clear()
+    },
   }
 }

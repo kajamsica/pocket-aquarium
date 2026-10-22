@@ -67,7 +67,8 @@ import { commitPublicV44, requestPublicV44ReturnHome } from './domain/publicWorl
 import type { PublicV44Start } from './domain/publicWorldV44Flow'
 import { PUBLIC_V44_MAX_RIDE_BATCH } from './domain/publicWorldV44GroundMount'
 import type { PublicV44GroundMountWitness } from './domain/publicWorldV44GroundMount'
-import { createPublicV45ControllerRuntime } from './PublicV45ControllerRuntime'
+import { createPublicV45ControllerRuntime, createPublicV45RuntimeLifecycle }
+  from './PublicV45ControllerRuntime'
 import { createPublicV45WorkerBindings } from './PublicV45WorkerBindings'
 import type { PublicV45EntryBindings } from './PublicV45Entry'
 import { commitPublicV45, requestPublicV45ReturnHome } from './domain/publicWorldV45Flow'
@@ -1197,7 +1198,7 @@ export type PublicV44ControllerProps = PublicV44EntryBindings & Readonly<{
   start: PublicV44Start; version: 'v44' }>
 export type PublicV45ControllerProps = PublicV45EntryBindings & Readonly<{
   start: PublicV45Start; version: 'v45';
-  v45SaveOpen?: import('./PublicV45Entry').PublicV45SessionSaveOpen }>
+  v45SaveOpen: import('./PublicV45Entry').PublicV45SessionSaveOpen }>
 
 /** READY never falls back to a page writer, including after an uncertain Worker result. */
 export function createPublicV45RuntimeForEntry(props: PublicV45ControllerProps): V45Runtime {
@@ -1212,6 +1213,8 @@ export function createPublicV45RuntimeForEntry(props: PublicV45ControllerProps):
       worker.homeWrite, worker.ridePort)
     return runtime
   }
+  if (props.v45SaveOpen?.status !== 'unsupported')
+    throw Error('V45 save transport status is required')
   return createPublicV45ControllerRuntime(props.start, (revision, lineage, witness) =>
     commitPublicV45(props.locks, props.store, props.v44Store, revision, lineage, witness),
     (revision, lineage) => requestPublicV45ReturnHome(props.locks, props.store,
@@ -1585,6 +1588,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           revision, lineage, witness))
   }
   const runtime = runtimeRef.current
+  const v45LifecycleRef = useRef<ReturnType<typeof createPublicV45RuntimeLifecycle> | null>(null)
+  if (v45 && !v45LifecycleRef.current)
+    v45LifecycleRef.current = createPublicV45RuntimeLifecycle(runtime as V45Runtime)
+  useEffect(() => v45LifecycleRef.current?.mount(), [runtime])
   const activeMemo = useRef<ActiveViewMemo | null>(null)
   const readActive = (status?: ReturnType<typeof runtime.status>) =>
     publicV23ReadActiveView(runtime, activeMemo, status)

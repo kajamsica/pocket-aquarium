@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { publicV14MovementIntents } from './PublicV14Controller'
-import { createPublicV45ControllerRuntime } from './PublicV45ControllerRuntime'
+import { createPublicV45ControllerRuntime, createPublicV45RuntimeLifecycle }
+  from './PublicV45ControllerRuntime'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { createFreshPublicV42Root, decodePublicV42Root, PUBLIC_V42_SCHEMA }
   from './domain/publicWorldV42Snapshot'
@@ -114,6 +115,7 @@ async function queuedRider() {
     commitRideBatch: (input) => new Promise((resolve) => { pending.push({ input, resolve }) }),
     onFatal: (listener) => { fatal = listener; return () => { fatal = null } } }
   const runtime = createPublicV45ControllerRuntime(genesis, writer.write, undefined, port)
+  runtime.activate()
   expect(await runtime.action({ kind: 'sedgehorn-mount/v1' }))
     .toMatchObject({ status: 'saved' })
   const settle = async (index: number, alter: (ack: RideAck) => RideAck = (ack) => ack) => {
@@ -137,6 +139,36 @@ const turn = (delta: number) => [{ type: 'look' as const,
   yawDelta: delta, pitchDelta: 0 }]
 
 describe('V45 controller runtime', () => {
+  it('does not subscribe during render and survives StrictMode effect replay', async () => {
+    const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
+    const unsubscribes: Array<ReturnType<typeof vi.fn>> = []
+    const port: RidePort = { epoch: 'test-session',
+      commitRideBatch: async () => ({ status: 'blocked', reason: 'unused',
+        durability: 'not-committed' }),
+      onFatal: vi.fn(() => {
+        const unsubscribe = vi.fn()
+        unsubscribes.push(unsubscribe)
+        return unsubscribe
+      }) }
+    const runtime = createPublicV45ControllerRuntime(genesis,
+      async () => ({ ok: false, reason: 'unused' }), undefined, port)
+    const dispose = vi.spyOn(runtime, 'dispose')
+    const lifecycle = createPublicV45RuntimeLifecycle(runtime)
+    expect(port.onFatal).not.toHaveBeenCalled() // Speculative render, no effect.
+    const replayCleanup = lifecycle.mount()
+    expect(port.onFatal).toHaveBeenCalledOnce()
+    replayCleanup()
+    const unmount = lifecycle.mount()
+    await Promise.resolve()
+    expect(unsubscribes[0]).toHaveBeenCalledOnce()
+    expect(port.onFatal).toHaveBeenCalledTimes(2)
+    expect(dispose).not.toHaveBeenCalled()
+    unmount()
+    await Promise.resolve()
+    expect(unsubscribes[1]).toHaveBeenCalledOnce()
+    expect(dispose).toHaveBeenCalledOnce()
+  }, 30_000)
+
   it('notifies subscribers on an asynchronous ride ACK and Worker fatal', async () => {
     const { runtime, settle, fail } = await queuedRider()
     const seen: Array<{ revision: number; gate: string }> = []
