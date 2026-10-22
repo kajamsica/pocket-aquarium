@@ -556,6 +556,30 @@ describe('V27 starter route coaching', () => {
     expect(stage.action).not.toContain('return east')
   })
 
+  it('retains a V28 river-bank bearing in starter Map and HUD before building', () => {
+    const base = toViewProjection(createWizardWorld('wizard-realms'), [])
+    const cue = 'Follow this dry bank west, revealing ground until Works shows a supported crossing.'
+    const view = { ...base, map: { ...base.map, guidance: cue },
+      backpack: { ...base.backpack, stacks: [{ ...base.backpack.stacks[0]!,
+        id: 'logs-test', itemId: 'logs' as const, quantity: 8 }] },
+      savedTerrainWorks: { builtSites: [], dugTileIds: [], preview: null,
+        context: 'v28-river' as const } }
+    const works = { builtLadderIds: [ladder], builtBridgeIds: [bridge], dugTileIds: [] }
+    const before = publicV27StarterGuide(view, works,
+      { movementOwner: 'streamed', riverBridgeBuilt: false })
+    expect(before).toMatchObject({ summary: 'River bank: find a supported crossing', action: cue })
+    expect(publicV27StarterGuide({ ...view, savedTerrainWorks: {
+      ...view.savedTerrainWorks, context: 'works4-greenway' as const } }, works,
+    { movementOwner: 'streamed', riverBridgeBuilt: false }).action)
+      .toContain('open Works at a marked Ready dry-bank site')
+    expect(publicV27StarterGuide(view, works,
+      { movementOwner: 'streamed', riverBridgeBuilt: true }).action)
+      .toContain('saved deck')
+    expect(publicV27StarterGuide({ ...view, map: { ...view.map, title: 'Mireglass Reach' } },
+      works, { movementOwner: 'streamed', riverBridgeBuilt: false,
+        mireglassGuidance: 'Mireglass guidance.' }).action).toBe('Mireglass guidance.')
+  })
+
   it('stops telling a far-bank player to cross after the River Works find is claimed', () => {
     const base = toViewProjection(createWizardWorld('wizard-realms'), [])
     const site = resolvePublicV28RiverBridge(base.seed, 'works6:river-bridge:-43')!

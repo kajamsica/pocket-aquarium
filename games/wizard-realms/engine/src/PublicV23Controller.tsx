@@ -591,6 +591,9 @@ export function publicV27StarterGuide(view: WizardViewProjection,
         action: 'Continue along the saved deck to a dry bank.' } : null
   const regionalGuide = streamed && view.map.title === 'Mireglass Reach'
     ? context.mireglassGuidance ?? view.map.guidance : null
+  const riverBankGuide = streamed && !context.riverBridgeBuilt && logs >= 8
+    && view.savedTerrainWorks?.context === 'v28-river'
+    && !view.savedTerrainWorks.preview?.selected ? view.map.guidance : null
   const salvagerGuide = streamed && context.fringeMarkerStudied && !context.mireglassCacheRevealed
     && !context.fieldSpadeOwned && riverSite && claimed
     && view.player.position[2] >= riverSite.to.z
@@ -926,7 +929,9 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     : slateGuide ? slateGuide.summary
     : upperSurveyGuide ? upperSurveyGuide.summary
     : slateReturnGuide ? slateReturnGuide.summary
-    : regionalGuide ? 'Mireglass Reach' : riverStage?.summary ?? (streamed ? context.riverBridgeBuilt
+    : regionalGuide ? 'Mireglass Reach' : riverStage?.summary
+      ?? (riverBankGuide ? 'River bank: find a supported crossing' : null)
+      ?? (streamed ? context.riverBridgeBuilt
     ? 'Connected-river bridge ready: cross its deck'
     : logs >= 8 ? 'Connected-river bridge next: build at a Ready bank'
       : 'Connected-river bridge next: return for 8 logs'
@@ -943,7 +948,7 @@ export function publicV27StarterGuide(view: WizardViewProjection,
       ?? slateGuide?.action
       ?? upperSurveyGuide?.action
       ?? slateReturnGuide?.action
-      ?? regionalGuide ?? riverStage?.action ?? action,
+      ?? regionalGuide ?? riverStage?.action ?? riverBankGuide ?? action,
     boots, spade }
 }
 const PUBLIC_V23_PANEL_STYLES = `
