@@ -760,6 +760,7 @@ export function publicAreaTitle(state: PublicWorldState): string {
     const region = classifyStreamedRegion(state.seed, state.player.position)
     return region === 'mireglass_reach' ? 'Mireglass Reach'
       : region === 'highland_quarry' && 'highlandContentRevision' in state ? 'Highland Quarry'
+        : region === 'stormline_foothill' && 'highlandContentRevision' in state ? 'Stormline Foothill'
         : 'Open Wilderness'
   }
   return areaAt(state.greenway.areas, state.player.position.x, state.player.position.z).name
@@ -771,6 +772,7 @@ export function publicRegionTransitionText(before: PublicWorldState, after: Publ
   if (beforeArea === afterArea) return null
   return after.movementOwner === 'greenway' ? 'Returned to Greenway.'
     : afterArea === 'Highland Quarry' ? 'Entered Highland Quarry. Follow the rocky trail to the Quarry Crown.'
+      : afterArea === 'Stormline Foothill' ? 'Entered Stormline Foothill. Follow the marked dry approach through the ridge gallery toward its gateway.'
       : afterArea === 'Mireglass Reach' ? 'Entered Mireglass Reach. Follow the dry frontier trail to its marker.'
         : 'Entered Open Wilderness.'
 }
