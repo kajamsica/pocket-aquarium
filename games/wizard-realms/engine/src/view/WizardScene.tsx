@@ -604,7 +604,7 @@ export function highlandDetailFor(cell: WizardTerrainCell) {
     : cell.highlandSurface === 'foothill' ? 0.12 : 0
   return {
     trail, yaw, length, trailX, trailZ,
-    scree: !trail && hashUnit(cell.id, 35) < screeDensity,
+    scree: screeDensity > 0 && !trail && hashUnit(cell.id, 35) < screeDensity,
     x: (hashUnit(cell.id, 36) - 0.5) * 2.0,
     z: (hashUnit(cell.id, 37) - 0.5) * 2.0,
     rotation: hashUnit(cell.id, 38) * Math.PI,

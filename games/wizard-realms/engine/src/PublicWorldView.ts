@@ -275,7 +275,8 @@ export function publicWorldViewProjection(state: PublicWorldState, messages: rea
   const streamedRegion = state.movementOwner === 'streamed'
     ? classifyStreamedRegion(state.seed, state.player.position) : null
   const openWilderness = streamedRegion === 'wilderness'
-    || (streamedRegion === 'highland_quarry' && !('highlandContentRevision' in state))
+    || ((streamedRegion === 'highland_quarry' || streamedRegion === 'stormline_foothill')
+      && !('highlandContentRevision' in state))
   let overview: WizardWorldOverview | undefined
   const campTileIds = new Set(fieldCamp?.camps.map((camp) => camp.tileId))
   return { ...projection, visualWorld, ...(fieldCamp ? { fieldCamp } : {}), map: { ...projection.map,

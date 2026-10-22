@@ -1256,6 +1256,26 @@ describe('Highland quarry scenery', () => {
       highlandDetailFor({ ...cell, highlandSurface: 'quarry' }))
   })
 
+  it('keeps Stormline scree deterministic and sparse while leaving the marked gallery clear', () => {
+    const cell = { id: 'stormline-0', position: [620, 3, -468] as const,
+      size: [4, 4] as const, height: 2.4, climate: 'dry_highland', color: '#7b765e' }
+    const foothill = { ...cell, highlandSurface: 'foothill' as const }
+    const old = terrainAppearanceFor(cell).top
+    const slate = terrainAppearanceFor(foothill).top
+    expect(Math.hypot(slate.r - old.r, slate.g - old.g, slate.b - old.b)).toBeGreaterThan(0.04)
+    expect(terrainCellVisualsEqual(cell, foothill)).toBe(false)
+    const details = Array.from({ length: 289 }, (_, index) => highlandDetailFor({ ...foothill,
+      id: `stormline-${index}` }))
+    const scree = details.filter((detail) => detail.scree).length
+    expect(scree).toBeGreaterThan(15)
+    expect(scree * 2).toBeLessThan(110) // Two shared-geometry meshes per sparse scree cluster.
+    expect(highlandDetailFor(foothill)).toEqual(highlandDetailFor(foothill))
+    const gallery = highlandDetailFor({ ...foothill,
+      highlandTrailSegment: { from: [618, -468], to: [622, -468] } })
+    expect(gallery).toMatchObject({ trail: true, scree: false, length: 4 })
+    expect(highlandDetailFor(cell)).toMatchObject({ trail: false, scree: false })
+  })
+
   it('draws a joined pale trail but leaves its centre clear of quarry scree', () => {
     const first = highlandDetailFor({ id: 'highland-trail-a', position: [96, 0, 0],
       size: [4, 4], height: 2, climate: 'dry_highland', highlandSurface: 'trail',

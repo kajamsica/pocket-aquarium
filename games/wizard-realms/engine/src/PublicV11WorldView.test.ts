@@ -1,7 +1,7 @@
 import { createElement, createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { highlandLandmark, highlandStoneNodes } from './domain/highlandContent'
+import { highlandLandmark, highlandStoneNodes, STORMLINE_GATEWAY } from './domain/highlandContent'
 import { mireglassAnchors } from './domain/mireglassContent'
 import { mireglassRouteSites } from './domain/mireglassRouteSites'
 import { canonicalRouteSites } from './domain/routeSites'
@@ -236,6 +236,39 @@ describe('v11 Highland read-only projection', () => {
     const old = publicWorldViewProjection(start, [], null)
     expect(old.map.tiles.every((tile) => !Object.hasOwn(tile, 'hasHighlandNode'))).toBe(true)
     expect(old.terrain.every((cell) => !Object.hasOwn(cell, 'highlandSurface'))).toBe(true)
+  })
+
+  it('shows Stormline trail marks only on saved discoveries and keeps the older projection unchanged', () => {
+    const gateway = worldTileAtGrid(seed, STORMLINE_GATEWAY.x / WORLD_CELL_METERS,
+      STORMLINE_GATEWAY.z / WORLD_CELL_METERS)
+    const next = worldTileAtGrid(seed, (STORMLINE_GATEWAY.x - WORLD_CELL_METERS) / WORLD_CELL_METERS,
+      STORMLINE_GATEWAY.z / WORLD_CELL_METERS)
+    const start = fresh()
+    const state = at({ ...start, discoveredTileIds: [gateway.id] },
+      STORMLINE_GATEWAY.x, STORMLINE_GATEWAY.z)
+    const saved = JSON.stringify(state)
+    const view = publicWorldV11ViewProjection(state, [], null)
+    expect(view.map.title).toBe('Stormline Foothill')
+    expect(view.map.guidance).toContain('gateway')
+    expect(view.terrain.some((cell) => cell.highlandSurface === 'foothill')).toBe(true)
+    expect(view.map.tiles.find((tile) => tile.id === gateway.id)).toMatchObject({
+      discovered: true, hasHighlandTrail: true })
+    expect(view.map.tiles.find((tile) => tile.id === next.id)).toMatchObject({ discovered: false })
+    expect(view.map.tiles.find((tile) => tile.id === next.id)?.hasHighlandTrail).toBeFalsy()
+    expect(JSON.stringify(state)).toBe(saved)
+    const older = publicWorldViewProjection(state, [], null)
+    expect(older.terrain.every((cell) => !Object.hasOwn(cell, 'highlandSurface'))).toBe(true)
+    expect(older.map.tiles.every((tile) => !Object.hasOwn(tile, 'hasHighlandTrail'))).toBe(true)
+  })
+
+  it('keeps pre-v11 saves in Stormline on the Open Wilderness map copy', () => {
+    const start = createFreshPublicWorld(seed, 'greenway-classic-v1')
+    const old = { ...start, movementOwner: 'streamed' as const,
+      player: { ...start.player, position: { ...start.player.position,
+        x: STORMLINE_GATEWAY.x, z: STORMLINE_GATEWAY.z } } }
+    const map = publicWorldViewProjection(old, [], null).map
+    expect(map.title).toBe('Open Wilderness')
+    expect(map.guidance).toBe('Explore dry ground to chart Open Wilderness. The map shows only visited terrain.')
   })
 
   it('uses the committed recovery ledger for visible depletion and regrowth', () => {
