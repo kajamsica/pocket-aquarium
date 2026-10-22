@@ -967,6 +967,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-version=v34] .v34-branch-label,[data-public-version=v35] .v34-branch-label{position:fixed;z-index:20;top:8px;right:12px;max-width:min(250px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
 [data-public-v23] .v23-obstacle-cue{position:fixed;z-index:22;top:36%;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(390px,calc(100vw - 32px));margin:0;padding:10px 14px;border:1px solid #f5d889;border-radius:10px;background:#10251df2;color:#fff;box-shadow:0 8px 24px #0009;text-align:center;pointer-events:none}
 [data-public-v23] .v23-save{position:fixed;z-index:21;top:8px;right:12px;max-width:220px;box-sizing:border-box;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
+@media (min-width:901px), (min-width:720px) and (min-height:591px){[data-public-version=v45] .v23-save[data-v45-confirmed-idle="true"]{display:none}}
 [data-public-v23] .v23-save button{min-height:44px}
 [data-public-v23] .v23-save p{margin:4px 0 0}
 [data-public-v23] .v23-input-trace{box-sizing:border-box;max-width:min(640px,calc(100vw - 260px));overflow-wrap:anywhere}
@@ -1600,7 +1601,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const obstacleCueUntil = useRef(0)
   const repaint = () => redraw((value) => value + 1)
   const repaintQueued = () => { if (!busy.current) repaint() }
-  const tell = (message: string) => setMessages((prior) => [...prior.slice(-3), message])
+  const tell = (message: string) => setMessages((prior) =>
+    v45 && message === 'V45 progress saved on this device.' && prior.at(-1) === message
+      ? prior : [...prior.slice(-3), message])
   const renderStartedAt = trace ? performance.now() : 0
   const status = runtime.status(), active = readActive(status), snapshot = runtime.preview()
   const viewFinishedAt = trace ? performance.now() : 0
@@ -2852,7 +2855,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     {obstacleCue && <p className="v23-obstacle-cue" role="status" aria-label="Movement blocked">
       {obstacleCue}</p>}
     {(status.pendingFrames > 0 || saveTask.current || savedNotice) &&
-      <div className="v23-save">
+      <div className="v23-save" data-v45-confirmed-idle={v45 && savedNotice
+        && status.pendingFrames === 0 && !saveTask.current && status.gate !== 'blocked' ? 'true' : undefined}>
         {status.pendingFrames > 0 && <button type="button" onClick={() => void save()}
           disabled={busy.current || status.gate === 'blocked'}>Save now</button>}
         <p role="status">{status.gate === 'blocked' ? 'Save blocked. Keep this tab open.'
