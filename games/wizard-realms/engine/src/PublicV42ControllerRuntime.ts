@@ -3,6 +3,7 @@ import { publicV28BlockedMoveMessage } from './PublicV28ControllerRuntime'
 import { discoveredTileIdsInActiveWindow } from './domain/publicV13DiscoveryWindow'
 import { HERB_CYCLE_TICKS } from './domain/mireglassHerbForaging'
 import { createPublicV23StreamTerrain } from './domain/publicWorldV14Terrain'
+import type { ReadonlyWorldTile } from './domain/activeWorldTerrain'
 import { decodePublicV14FrameWitness, PUBLIC_V14_MAX_FRAME_BATCH } from './domain/publicWorldV14Snapshot'
 import type { PublicV14Frame } from './domain/publicWorldV14Snapshot'
 import { publicV17StarterAdvanceMove } from './domain/publicWorldV17StarterMovement'
@@ -15,7 +16,7 @@ import type { PublicV36Start } from './domain/publicWorldV36Flow'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { replayPublicV28FramesWithEvents } from './domain/publicWorldV28Replay'
 import { starterCliffFace } from './domain/starterCliffProfile'
-import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from './domain/worldChunks'
+import { activeChunkCoordinates, WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from './domain/worldChunks'
 import { decodePublicV36Witness, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
 import type { PublicV42Operation, PublicV42Start } from './domain/publicWorldV42Flow'
 import type { PublicV42SavePhase, PublicV42SaveTrace } from './domain/publicWorldV42Flow'
@@ -120,6 +121,7 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
   write: Writer, homeWrite?: HomeWriter, onSavePhase?: PublicV42SaveTrace) {
   let committed = structuredClone(initial), preview = progress(committed)
   let pending: PublicV14Frame[] = [], busy = false, blockedReason: string | null = null
+  let streamedViewTiles: { key: string; tiles: readonly ReadonlyWorldTile[] } | null = null
   const reportPhase = (phase: PublicV42SavePhase['phase'], startedAt: number,
     frameCount: number) => {
     if (!onSavePhase) return
@@ -148,6 +150,7 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
         || !samePublicV14Value(progress(reply.value), expected))
         return { ok: false as const, reason: 'writer-mismatch' }
       committed = structuredClone(reply.value); preview = progress(committed); pending = []
+      streamedViewTiles = null
       return { ok: true as const, value: asV36(committed) }
     } catch { return { ok: false as const, reason: 'writer-mismatch' } }
   }
@@ -205,9 +208,18 @@ export function createPublicV42ControllerRuntime(initial: PublicV42Start,
     previewTick: () => preview.state.tick,
     view() {
       const { state } = preview
+      if (state.movementOwner === 'greenway') streamedViewTiles = null
+      // Only tile inputs are cached. Pose, tick, and discovery are read afresh below.
+      const key = state.movementOwner === 'streamed' && JSON.stringify([
+        state.seed, state.generationProfile, activeChunkCoordinates(state.player.position),
+        state.fieldCampTileIds, state.mireglass.cacheExcavated, state.mireglass.builtRoutes,
+        state.terrainWorks, preview.regionalWorks.builtLadderIds,
+      ])
       const activeTiles = state.movementOwner === 'greenway' ? state.greenway.tiles.map((tile) =>
         publicWorldV16TileAtGrid(state.seed, tile.center.x / 4, tile.center.z / 4))
-        : createPublicV23StreamTerrain(state, preview.regionalWorks.builtLadderIds).activeTiles()
+        : streamedViewTiles?.key === key ? streamedViewTiles.tiles
+          : createPublicV23StreamTerrain(state, preview.regionalWorks.builtLadderIds).activeTiles()
+      if (key && streamedViewTiles?.key !== key) streamedViewTiles = { key, tiles: activeTiles }
       return { movementOwner: state.movementOwner, tick: state.tick,
         player: structuredClone(state.player), activeTiles: structuredClone(activeTiles),
         activeKnownTileIds: discoveredTileIdsInActiveWindow(state.discoveryMask, state.player.position),
