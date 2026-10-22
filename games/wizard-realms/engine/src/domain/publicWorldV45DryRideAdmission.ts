@@ -24,13 +24,13 @@ export function createPublicV45DryRideAdmission(from: Vec3, middle: Vec3,
   return admission
 }
 
-/** Private issuance and exact carrier endpoints are required at both passage leaves. */
+/** Private issuance and exact XZ endpoints are required; checked replay owns carrier Y. */
 export function publicV45DryRideMidpoint(value: unknown, from: Vec3, to: Vec3): Vec3 | null {
   if (!value || typeof value !== 'object') return null
   const original = issued.get(value)
   return original && [from, to].every((point) => point
     && [point.x, point.y, point.z].every(Number.isFinite))
-    && from.x === original.from.x && from.y === original.from.y && from.z === original.from.z
-    && to.x === original.to.x && to.y === original.to.y && to.z === original.to.z
+    && from.x === original.from.x && from.z === original.from.z
+    && to.x === original.to.x && to.z === original.to.z
     ? { ...original.middle } : null
 }

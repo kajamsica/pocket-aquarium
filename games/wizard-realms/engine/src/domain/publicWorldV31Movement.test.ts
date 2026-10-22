@@ -107,6 +107,36 @@ describe('V31 effective soil support and checked movement', () => {
     expect(replayPublicV31FramesWithEvents(before, move(0, 0.2), false,
       () => assisted, admission!)).toBeNull()
   })
+  it.each([false, true])('settles the same admitted dry descent with remote bridge=%s', (bridge) => {
+    const base = streamedBootsAt({ x: 41.85, z: -56 })
+    const site = resolvePublicV28RiverBridge(seed, 'works6:river-bridge:-14')!
+    const before: PublicV31Progress = bridge ? { ...base, riverBridgeIds: [site.id],
+      state: { ...base.state, discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(base.state.discoveryMask), ...site.footprintTileIds])].sort()) } } : base
+    expect(decodePublicV31ActionProgress(before)).not.toBeNull()
+    const saved = structuredClone(before), from = before.state.player.position
+    expect(from.y).toBeCloseTo(1.4092623804)
+    const endFloor = resolvePublicV23Surface(before.state, { x: 42.15, z: -56 }, [])
+    expect(endFloor?.floorY).toBeCloseTo(1.3470645734)
+    const admission = createPublicV45DryRideAdmission(from,
+      { ...from, x: from.x + 0.15 }, { x: 42.15, y: endFloor!.floorY, z: -56 })
+    const assisted = { substeps: [{ x: 0.15, z: 0 }, { x: 0.15, z: 0 }] as const,
+      settle: (after: PublicV23Progress) => after }
+    const frames = move(0.2, 0), policy = () => assisted
+    expect(admission).not.toBeNull()
+    expect(replayPublicV31FramesWithEvents(before, frames, false, policy)).toBeNull()
+    const checked = replayPublicV31FramesWithEvents(before, frames, false, policy, admission!)
+    expect(checked).not.toBeNull()
+    expect(checked!.progress.state.player.position).toEqual({ x: 42.15, y: endFloor!.floorY, z: -56 })
+    expect(checked!.progress.state.tick).toBe(before.state.tick + 1)
+    const moved = checked!.events.filter((event) => event.type === 'player_moved')
+    expect(moved).toHaveLength(2)
+    expect(moved[0]).toMatchObject({ tick: checked!.progress.state.tick,
+      position: { x: 42, y: from.y, z: -56 } })
+    expect(moved[1]).toMatchObject({ tick: checked!.progress.state.tick,
+      position: checked!.progress.state.player.position })
+    expect(before).toEqual(saved)
+  })
   it('retreats from the off-lane Slate upper pose, aligns on the shelf, and descends the saved rung', () => {
     const farSeed = 'greenway-alpha', { head } = createPublicV23Root(farSeed)
     const site = resolvePublicV23Site(farSeed, 'works5:ladder:mireglass-slate:W:-103:4311')!
