@@ -249,7 +249,6 @@ describe('v11 Highland read-only projection', () => {
     const saved = JSON.stringify(state)
     const view = publicWorldV11ViewProjection(state, [], null)
     expect(view.map.title).toBe('Stormline Foothill')
-    expect(view.map.guidance).toContain('gateway')
     expect(view.terrain.some((cell) => cell.highlandSurface === 'foothill')).toBe(true)
     expect(view.map.tiles.find((tile) => tile.id === gateway.id)).toMatchObject({
       discovered: true, hasHighlandTrail: true })
@@ -259,6 +258,12 @@ describe('v11 Highland read-only projection', () => {
     const older = publicWorldViewProjection(state, [], null)
     expect(older.terrain.every((cell) => !Object.hasOwn(cell, 'highlandSurface'))).toBe(true)
     expect(older.map.tiles.every((tile) => !Object.hasOwn(tile, 'hasHighlandTrail'))).toBe(true)
+  })
+
+  it('guides players already beyond the Stormline gateway back through the gallery', () => {
+    const view = publicWorldV11ViewProjection(at(fresh(), 662, -468), [], null)
+    expect(view.map.title).toBe('Stormline Foothill')
+    expect(view.map.guidance).toBe('You are in Stormline Foothill. Explore to chart new ground; return west through the marked ridge gallery.')
   })
 
   it('keeps pre-v11 saves in Stormline on the Open Wilderness map copy', () => {

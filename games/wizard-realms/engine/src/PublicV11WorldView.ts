@@ -122,7 +122,7 @@ function highlandGuidance(state: PublicWorldV11State,
       return `Follow the marked dry approach ${bearing(from, stormlineGallery)} toward the ridge gallery, about ${Math.round(distance2(from, stormlineGallery))} m. Then turn east through its open row.`
     if (from.x < STORMLINE_GATEWAY.x - 8)
       return `Follow the marked dry ridge gallery east toward the Stormline gateway, about ${Math.round(distance2(from, STORMLINE_GATEWAY))} m along the approach. Ridge rock on either side is impassable.`
-    return 'Stormline Foothill opens beyond the gateway. Explore to chart new ground; return west through the marked ridge gallery.'
+    return 'You are in Stormline Foothill. Explore to chart new ground; return west through the marked ridge gallery.'
   }
   const carryingStone = quantity(state, 'stone') > 0 && state.highland.landmarkDiscovered
   const routePoint = nextRoutePoint(from, carryingStone)
