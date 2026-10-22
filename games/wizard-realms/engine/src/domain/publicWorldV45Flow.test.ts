@@ -23,7 +23,8 @@ import * as v45Migration from './publicWorldV45Migration'
 import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import { decodePublicV45Root } from './publicWorldV45Snapshot'
 import type { PublicV45Root } from './publicWorldV45Snapshot'
-import { commitPublicV45, inspectPublicV45, resumePublicV45,
+import { commitPublicV45, consumePublicV45CommitReceipt,
+  inspectPublicV45, resumePublicV45,
   requestPublicV45ReturnHome, startPublicV45 } from './publicWorldV45Flow'
 import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
@@ -246,6 +247,8 @@ describe('V45 fenced source-only flow', () => {
         started.value.lineage)
       if (!saved.ok) throw new Error(saved.reason)
       expect(saved.value.head.witness).toEqual({ kind: 'return-home/v1', atMs: 10_000 })
+      expect(consumePublicV45CommitReceipt(saved, started.value, null)).toBe(true)
+      expect(consumePublicV45CommitReceipt(saved, started.value, null)).toBe(false)
       expect(saved.value.head.nextHomeAtMs).toBe(1_810_000)
       expect(saved.value.head.state.player.position).toMatchObject({ x: 0, z: 0 })
       expect(saved.value.head.groundMount.mode).toBe('parked')
@@ -440,6 +443,43 @@ describe('V45 fenced source-only flow', () => {
     request.onsuccess?.call(request, {} as Event)
     expect(close).toHaveBeenCalledTimes(1)
   })
+
+  it('issues only single-use exact durable receipts and rejects copies or mutations', async () => {
+    const { source, store } = await setup()
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const first = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, idle)
+    if (!first.ok) throw new Error(first.reason)
+    expect(consumePublicV45CommitReceipt(structuredClone(first),
+      started.value, idle)).toBe(false)
+    expect(consumePublicV45CommitReceipt(first, started.value, idle)).toBe(true)
+    expect(consumePublicV45CommitReceipt(first, started.value, idle)).toBe(false)
+
+    const second = await commitPublicV45(locks, store, source, 1,
+      first.value.lineage, idle)
+    if (!second.ok) throw new Error(second.reason)
+    const beforeSecond = { head: first.value.head, lineage: first.value.lineage }
+    expect(consumePublicV45CommitReceipt(second, beforeSecond,
+      { ...idle, frames: [] })).toBe(false)
+    expect(consumePublicV45CommitReceipt(second, beforeSecond, idle)).toBe(false)
+
+    const third = await commitPublicV45(locks, store, source, 2,
+      second.value.lineage, idle)
+    if (!third.ok) throw new Error(third.reason)
+    const beforeThird = { head: second.value.head, lineage: second.value.lineage }
+    ;(third.value.head as { saveRevision: number }).saveRevision = 99
+    expect(consumePublicV45CommitReceipt(third, beforeThird, idle)).toBe(false)
+    const resumed = await resumePublicV45(locks, store, source, 3,
+      first.value.lineage)
+    if (!resumed.ok) throw new Error(resumed.reason)
+    const fourth = await commitPublicV45(locks, store, source, 3,
+      resumed.value.lineage, idle)
+    if (!fourth.ok) throw new Error(fourth.reason)
+    expect(consumePublicV45CommitReceipt(fourth, started.value, idle)).toBe(false)
+    expect(consumePublicV45CommitReceipt({ ok: true,
+      value: structuredClone(fourth.value) }, resumed.value, idle)).toBe(false)
+  }, 30_000)
 
   it('commits only checked ride witnesses and rejects stale competing writers', async () => {
     const { factory, source, store } = await setup(mountedV44Root())

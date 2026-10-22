@@ -72,6 +72,16 @@ function matureSource(): PublicV43Root {
 }
 
 describe('V45 controller runtime', () => {
+  it('fully checks a writer reply with no durable Flow receipt', async () => {
+    const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
+    const runtime = createPublicV45ControllerRuntime(genesis,
+      async (revision, lineage, witness) => ({ ok: true,
+        value: { head: { ...genesis.head, saveRevision: revision + 1, witness },
+          lineage } }))
+    expect(await runtime.action({ kind: 'sedgehorn-mount/v1' }))
+      .toMatchObject({ status: 'blocked', reason: 'writer-mismatch' })
+  })
+
   it('keeps assisted preview transient and writes one checked bounded ride batch', async () => {
     const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
     let current: PublicV45Root = genesis

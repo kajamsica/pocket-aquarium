@@ -11,6 +11,7 @@ import type { PublicV45Progress, PublicV45RideFrameWitness }
   from './domain/publicWorldV45RideAction'
 import { decodePublicV45Root } from './domain/publicWorldV45Snapshot'
 import type { PublicV45Witness } from './domain/publicWorldV45Snapshot'
+import { consumePublicV45CommitReceipt } from './domain/publicWorldV45Flow'
 import type { PublicV45Operation, PublicV45Start } from './domain/publicWorldV45Flow'
 import { sameStrictBoundedRaw } from './domain/strictBoundedRaw'
 
@@ -45,16 +46,18 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
   const accept = (before: PublicV45Start, requested: PublicV45Witness | null,
     reply: PublicV45Operation<PublicV45Start>) => {
     if (!reply.ok) return reply
-    const witness = reply.value.head.witness
-    const expected = witness && confirmPublicV45Action(progressOf(before.head), witness)
-    const checked = decodePublicV45Root({ lineage: reply.value.lineage,
-      previous: before.head, head: reply.value.head })
-    if (!checked || !expected?.progress
-      || !sameStrictBoundedRaw(reply.value.lineage, before.lineage, 3 << 20)
-      || !sameStrictBoundedRaw(progressOf(reply.value.head), expected.progress, 3 << 20)
-      || (requested ? !sameStrictBoundedRaw(witness, requested, 3 << 20)
-        : witness?.kind !== 'return-home/v1'))
-      return { ok: false as const, reason: 'writer-mismatch' }
+    if (!consumePublicV45CommitReceipt(reply, before, requested)) {
+      const witness = reply.value.head.witness
+      const expected = witness && confirmPublicV45Action(progressOf(before.head), witness)
+      const checked = decodePublicV45Root({ lineage: reply.value.lineage,
+        previous: before.head, head: reply.value.head })
+      if (!checked || !expected?.progress
+        || !sameStrictBoundedRaw(reply.value.lineage, before.lineage, 3 << 20)
+        || !sameStrictBoundedRaw(progressOf(reply.value.head), expected.progress, 3 << 20)
+        || (requested ? !sameStrictBoundedRaw(witness, requested, 3 << 20)
+          : witness?.kind !== 'return-home/v1'))
+        return { ok: false as const, reason: 'writer-mismatch' }
+    }
     committed = structuredClone(reply.value)
     ridePreview = progressOf(committed.head)
     return reply

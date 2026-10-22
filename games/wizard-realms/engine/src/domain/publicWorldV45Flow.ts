@@ -25,6 +25,36 @@ export type PublicV45Operation<T> = { ok: true; value: T }
 export type PublicV45Inspection = { status: 'migration-available'; sourceRevision: number }
   | { status: 'valid'; start: PublicV45Start }
   | { status: 'blocked'; reason: string }
+type CommitReceipt = Readonly<{
+  beforeHead: PublicV45Head
+  lineage: PublicV45Start['lineage']
+  witness: PublicV45Witness
+  nextHead: PublicV45Head
+  events: readonly PublicWorldEvent[]
+  returnHome: boolean
+}>
+const commitReceipts = new WeakMap<object, CommitReceipt>()
+
+/** A durable Flow reply grants one validation shortcut, never a forgeable field. */
+export function consumePublicV45CommitReceipt(
+  reply: PublicV45Operation<PublicV45Start>, before: PublicV45Start,
+  requested: PublicV45Witness | null): boolean {
+  if (!reply.ok) return false
+  const receipt = commitReceipts.get(reply)
+  if (!receipt) return false
+  commitReceipts.delete(reply)
+  try {
+    return sameStrictBoundedRaw(before.head, receipt.beforeHead, 3 << 20)
+      && sameStrictBoundedRaw(before.lineage, receipt.lineage, 3 << 20)
+      && (requested === null ? receipt.returnHome
+        && receipt.witness.kind === 'return-home/v1'
+        : !receipt.returnHome && sameStrictBoundedRaw(requested,
+          receipt.witness, 3 << 20))
+      && sameStrictBoundedRaw(reply, { ok: true, value: {
+        head: receipt.nextHead, lineage: receipt.lineage,
+        events: receipt.events } }, 3 << 20)
+  } catch { return false }
+}
 
 async function lock<T>(locks: PublicV7LockProvider | undefined,
   body: () => Promise<PublicV45Operation<T>>): Promise<PublicV45Operation<T>> {
@@ -183,9 +213,17 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore,
       schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: revision + 1, witness }
     const candidate: PublicV45Root = { lineage, previous: head, head: nextHead }
     const committed = await store.commit(fenced.proof, candidate)
-    return committed === 'committed'
-      ? { ok: true, value: { head: candidate.head, lineage, events: action.events } }
-      : { ok: false, reason: committed === 'invalid' ? 'invalid-successor' : committed }
+    if (committed !== 'committed') return { ok: false,
+      reason: committed === 'invalid' ? 'invalid-successor' : committed }
+    const reply: PublicV45Operation<PublicV45Commit> = { ok: true,
+      value: { head: candidate.head, lineage, events: action.events } }
+    try {
+      commitReceipts.set(reply, { beforeHead: structuredClone(head),
+        lineage: structuredClone(lineage), witness: structuredClone(witness),
+        nextHead: structuredClone(nextHead), events: structuredClone(action.events),
+        returnHome })
+    } catch { /* A durable write still succeeds; its caller uses full validation. */ }
+    return reply
 }
 
 export function commitPublicV45(locks: PublicV7LockProvider | undefined,

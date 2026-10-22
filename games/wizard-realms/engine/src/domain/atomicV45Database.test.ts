@@ -180,6 +180,57 @@ describe('atomic V45 checked root storage', () => {
     expect((await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))).toEqual(second)
   }, 30_000)
 
+  it('reuses only the same checked record and cold-checks changed or torn bytes', async () => {
+    const factory = new IDBFactory(), store = createAtomicV45Store(factory)
+    const genesis = mountedGenesis()
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw new Error('Expected empty V45 store')
+    expect(await store.commit(missing.proof, genesis)).toBe('committed')
+    const first = await store.readChecked(), second = await store.readChecked()
+    if (first.status !== 'valid' || second.status !== 'valid')
+      throw new Error('Expected warm checked reads')
+    expect(second.root).toEqual(genesis)
+    ;(first.root.head as { saveRevision: number }).saveRevision = 77
+    expect((await store.readChecked())).toMatchObject({ status: 'valid', root: genesis })
+    const other = createAtomicV45Store(factory), competing = await other.readChecked()
+    if (competing.status !== 'valid') throw new Error('Expected second-store root')
+    const advanced = successor(competing.root)
+    expect(await other.commit(competing.proof, advanced)).toBe('committed')
+    expect((await store.readChecked())).toMatchObject({ status: 'valid', root: advanced })
+    await record(factory, PUBLIC_V45_DATABASE_NAME, 'root', { ...advanced,
+      head: { ...advanced.head, saveRevision: 23 } })
+    expect(await store.readChecked()).toEqual({ status: 'blocked',
+      reason: 'invalid-v45-root' })
+    await record(factory, PUBLIC_V45_DATABASE_NAME, 'root', advanced)
+    expect((await store.readChecked())).toMatchObject({ status: 'valid', root: advanced })
+    expect((await createAtomicV45Store(factory).readChecked())).toMatchObject({
+      status: 'valid', root: advanced })
+  }, 30_000)
+
+  it('does not warm an uncommitted successor after a failed transaction', async () => {
+    const factory = new IDBFactory(), store = createAtomicV45Store(factory)
+    const genesis = mountedGenesis()
+    const missing = await store.readChecked()
+    if (missing.status !== 'missing') throw new Error('Expected empty V45 store')
+    expect(await store.commit(missing.proof, genesis)).toBe('committed')
+    const read = await store.readChecked()
+    if (read.status !== 'valid') throw new Error('Expected checked genesis')
+    const db = await open(factory)
+    const prototype = Object.getPrototypeOf(db) as IDBDatabase
+    const transaction = prototype.transaction
+    db.close()
+    const failed = vi.spyOn(prototype, 'transaction').mockImplementation(function (
+      this: IDBDatabase, ...args: Parameters<IDBDatabase['transaction']>) {
+      if (args[1] === 'readwrite') throw new Error('injected transaction failure')
+      return Reflect.apply(transaction, this, args) as IDBTransaction
+    })
+    try {
+      expect(await store.commit(read.proof, successor(read.root))).toBe('storage-error')
+    } finally { failed.mockRestore() }
+    expect(await record(factory, PUBLIC_V45_DATABASE_NAME, 'root')).toEqual(genesis)
+    expect((await store.readChecked())).toMatchObject({ status: 'valid', root: genesis })
+  }, 30_000)
+
   it('keeps the private checked proof detached from a mutated returned root', async () => {
     const factory = new IDBFactory(), store = createAtomicV45Store(factory)
     const genesis = mountedGenesis()
