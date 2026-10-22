@@ -21,13 +21,14 @@ import { sameStrictBoundedRaw } from './domain/strictBoundedRaw'
 import { waystationRiverSite } from './domain/waystationRiverContent'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './domain/worldChunks'
 
-function matureSource(): PublicV43Root {
+function matureSource(careCount = 3): PublicV43Root {
   const seed = 'wizard-realms'
   const fresh = createFreshPublicV42Root(seed)
   const site = resolveSedgehornFamiliarSite(fresh.head)!
   const bridge = waystationRiverSite(seed)!
   const nearby: string[] = []
-  for (const tile of [site.tracks, site.shelter, site.dryApproach, site.keeper]) {
+  for (const tile of [site.tracks, site.shelter, site.dryApproach,
+    site.keeper, site.careStation]) {
     const gx = Math.round(tile.center.x / WORLD_CELL_METERS)
     const gz = Math.round(tile.center.z / WORLD_CELL_METERS)
     for (let x = gx - 1; x <= gx + 1; x++)
@@ -40,8 +41,11 @@ function matureSource(): PublicV43Root {
       discoveryMask: encodeDiscoveredTileIds([...new Set([
         ...decodeDiscoveredTileIds(fresh.head.state.discoveryMask),
         ...bridge.footprintTileIds, ...nearby])].sort()),
-      player: { ...fresh.head.state.player, position: { ...site.keeper.center },
-        verticalVelocity: 0 } } }
+      player: { ...fresh.head.state.player, position: { ...(careCount < 3
+        ? site.careStation.center : site.keeper.center) }, verticalVelocity: 0,
+        ...(careCount < 3 ? { coins: 300, inventory: [
+          ...fresh.head.state.player.inventory,
+          { itemId: 'marsh_herb' as const, quantity: 1 }] } : {}) } } }
   const v42: PublicV42Root = { lineage: { origin: 'v41-migration',
     rulesProfile: 'iron-hall-rewards/v1', seed, sourceRevision: 4, genesis },
     previous: null, head: { ...structuredClone(genesis), schemaVersion: PUBLIC_V42_SCHEMA,
@@ -62,9 +66,11 @@ function matureSource(): PublicV43Root {
     familiar: { ...head.familiar, phase: 'claimed' as const,
       routeChoice: 'shelter' as const, position: { ...site.keeper.center },
       trust: 2, creatureCareXp: 40, stationKnown: true },
-    mountTraining: { careWitnesses }, state: { ...head.state,
-      player: { ...head.state.player, position: { ...site.keeper.center },
-        coins: head.state.player.coins + 25, xp: head.state.player.xp + 40,
+    mountTraining: { careWitnesses: careWitnesses.slice(0, careCount) }, state: { ...head.state,
+      player: { ...head.state.player, position: { ...(careCount < 3
+        ? site.careStation.center : site.keeper.center) },
+        coins: careCount < 3 ? 300 : head.state.player.coins + 25,
+        xp: head.state.player.xp + 40,
         level: 1 + Math.floor((head.state.player.xp + 40) / 100) } } })
   const checked = decodePublicV43Root({ ...root,
     previous: claimed(root.previous!), head: claimed(root.head) })
@@ -131,6 +137,23 @@ const turn = (delta: number) => [{ type: 'look' as const,
   yawDelta: delta, pitchDelta: 0 }]
 
 describe('V45 controller runtime', () => {
+  it('continues checked V43 Sedgehorn care after V44 import while parked', async () => {
+    const genesis = createPublicV45Genesis(createPublicV44Root(matureSource(2)))
+    const writer = checkedWriter(genesis)
+    const runtime = createPublicV45ControllerRuntime(genesis, writer.write)
+    expect(runtime.preview().mountTraining?.careWitnesses).toHaveLength(2)
+    expect(runtime.preview().state.player.coins).toBe(300)
+    expect(await runtime.action({ kind: 'sedgehorn-care/v1', extra: true } as never))
+      .toMatchObject({ status: 'rejected', reason: 'invalid_value' })
+    expect(await runtime.action({ kind: 'sedgehorn-unknown/v1' } as never))
+      .toMatchObject({ status: 'rejected', reason: 'unavailable_here' })
+    expect(await runtime.action({ kind: 'sedgehorn-care/v1' }))
+      .toEqual({ status: 'saved', events: [], resetWalkRequested: false })
+    expect(writer.writes.at(-1)?.kind).toBe('sedgehorn-care/v1')
+    expect(runtime.committed().head.mountTraining?.careWitnesses).toHaveLength(3)
+    expect(runtime.committed().head.saveRevision).toBe(genesis.head.saveRevision + 1)
+  }, 30_000)
+
   it('fully checks a writer reply with no durable Flow receipt', async () => {
     const genesis = createPublicV45Genesis(createPublicV44Root(matureSource()))
     const runtime = createPublicV45ControllerRuntime(genesis,

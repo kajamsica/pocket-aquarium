@@ -280,7 +280,8 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
         return { status: 'rejected' as const, reason: 'invalid_value' as const }
       if (raw.kind !== 'sedgehorn-mount/v1' && raw.kind !== 'sedgehorn-dismount/v1'
         && raw.kind !== 'buy-sedgehorn-tack/v1' && raw.kind !== 'sell-marsh-herb/v1')
-        return isRiding() || raw.kind.startsWith('sedgehorn-')
+        return isRiding() || (raw.kind.startsWith('sedgehorn-')
+          && raw.kind !== 'sedgehorn-care/v1')
           ? { status: 'rejected' as const, reason: 'unavailable_here' as const }
           : runtime.action(raw as ShellAction)
       const ridingCheck = isRiding() ? confirmPublicV45Action(ridePreview, raw) : null
