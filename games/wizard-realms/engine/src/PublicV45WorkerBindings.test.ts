@@ -4,8 +4,8 @@ import type { PublicV45EntryBindings } from './PublicV45Entry'
 import type { PublicV45SaveTransport } from './PublicV45SaveTransport'
 import type { PublicV45Start } from './domain/publicWorldV45Flow'
 
-const checks = vi.hoisted(() => ({ resume: vi.fn(), root: vi.fn((value: unknown) => value) }))
-vi.mock('./domain/publicWorldV45Flow', () => ({ resumePublicV45: checks.resume }))
+const checks = vi.hoisted(() => ({ read: vi.fn(), root: vi.fn((value: unknown) => value) }))
+vi.mock('./domain/publicWorldV45Flow', () => ({ readPublicV45Root: checks.read }))
 vi.mock('./domain/publicWorldV45Snapshot', async (original) => ({
   ...await original<typeof import('./domain/publicWorldV45Snapshot')>(),
   decodePublicV45Root: checks.root,
@@ -18,6 +18,8 @@ const start = (revision: number, witness: unknown = null,
       player: { position: { x: 1, y: 0, z: 2 }, yaw: 0.5 } },
     groundMount: { mode: 'parked' },
   } } as unknown as PublicV45Start)
+const retained = (after: PublicV45Start, before: PublicV45Start) => ({
+  lineage: after.lineage, previous: before.head, head: after.head })
 const ack = (requestId: number, baseRevision: number, tick = 9) => ({
   epoch: 'epoch-1', requestId, baseRevision, nextRevision: baseRevision + 1,
   frameCount: 0, terminal: { tick, position: { x: 1, y: 0, z: 2 },
@@ -37,8 +39,8 @@ it('shares increasing action/home IDs and accepts only a checked full successor'
   let current = start(4)
   const afterAction = start(5, buy, 9)
   const afterHome = start(6, { kind: 'return-home/v1', atMs: 123 }, 10)
-  checks.resume.mockResolvedValueOnce({ ok: true, value: afterAction })
-    .mockResolvedValueOnce({ ok: true, value: afterHome })
+  checks.read.mockResolvedValueOnce({ ok: true, value: retained(afterAction, current) })
+    .mockResolvedValueOnce({ ok: true, value: retained(afterHome, afterAction) })
   worker.commitAction.mockResolvedValue({ status: 'committed', ack: ack(1, 4) })
   worker.requestReturnHome.mockResolvedValue({ status: 'committed', ack: ack(2, 5, 10) })
   const adapter = createPublicV45WorkerBindings(worker, bindings, () => current)
@@ -51,7 +53,7 @@ it('shares increasing action/home IDs and accepts only a checked full successor'
     expectedRevision: 4, witness: buy })
   expect(worker.requestReturnHome.mock.calls[0][0]).toEqual({ requestId: 2,
     expectedRevision: 5 })
-  expect(checks.resume.mock.calls.map((call) => call.slice(3)))
+  expect(checks.read.mock.calls.map((call) => call.slice(3)))
     .toEqual([[5, lineage], [6, lineage]])
   expect(checks.root.mock.calls[0][0]).toEqual({ lineage,
     previous: start(4).head, head: afterAction.head })
@@ -62,8 +64,8 @@ it('retains the exact requested witness when the caller mutates it during the AC
   let release: ((value: unknown) => void) | undefined
   worker.commitAction.mockReturnValue(new Promise((resolve) => { release = resolve }))
   const requested = { kind: 'sell-marsh-herb/v1' as const, quantity: 1 }
-  checks.resume.mockResolvedValue({ ok: true, value: start(5,
-    { kind: 'sell-marsh-herb/v1', quantity: 1 }, 9) })
+  checks.read.mockResolvedValue({ ok: true, value: retained(start(5,
+    { kind: 'sell-marsh-herb/v1', quantity: 1 }, 9), start(4)) })
   const adapter = createPublicV45WorkerBindings(worker, bindings, () => start(4))
   const result = adapter.write(4, lineage as PublicV45Start['lineage'], requested)
   requested.quantity = 9
@@ -79,9 +81,9 @@ it('blocks a mismatched terminal, witness, or concurrent readback', async () => 
   worker.commitAction.mockResolvedValueOnce({ status: 'committed', ack: ack(1, 4, 99) })
     .mockResolvedValueOnce({ status: 'committed', ack: ack(2, 4) })
     .mockResolvedValueOnce({ status: 'committed', ack: ack(3, 4) })
-  checks.resume.mockResolvedValueOnce({ ok: true, value: start(5, buy, 9) })
-    .mockResolvedValueOnce({ ok: true, value: start(5,
-      { kind: 'sell-marsh-herb/v1', quantity: 1 }, 9) })
+  checks.read.mockResolvedValueOnce({ ok: true, value: retained(start(5, buy, 9), start(4)) })
+    .mockResolvedValueOnce({ ok: true, value: retained(start(5,
+      { kind: 'sell-marsh-herb/v1', quantity: 1 }, 9), start(4)) })
     .mockResolvedValueOnce({ ok: false, reason: 'revision-changed' })
   expect(await adapter.write(4, lineage as PublicV45Start['lineage'], buy))
     .toEqual({ ok: false, reason: 'worker-readback-mismatch' })
@@ -98,7 +100,7 @@ it('never downgrades uncertain home durability to a gameplay rejection', async (
   const adapter = createPublicV45WorkerBindings(worker, bindings, () => start(4))
   expect(await adapter.homeWrite(4, lineage as PublicV45Start['lineage']))
     .toEqual({ ok: false, reason: 'worker-outcome-unknown' })
-  expect(checks.resume).not.toHaveBeenCalled()
+  expect(checks.read).not.toHaveBeenCalled()
 })
 
 it('rejects a spoofed ACK before reading and a root the decoder cannot prove', async () => {
@@ -109,9 +111,23 @@ it('rejects a spoofed ACK before reading and a root the decoder cannot prove', a
     .mockResolvedValueOnce({ status: 'committed', ack: ack(2, 4) })
   expect(await adapter.write(4, lineage as PublicV45Start['lineage'], buy))
     .toEqual({ ok: false, reason: 'worker-ack-mismatch' })
-  expect(checks.resume).not.toHaveBeenCalled()
-  checks.resume.mockResolvedValue({ ok: true, value: start(5, buy, 9) })
+  expect(checks.read).not.toHaveBeenCalled()
+  checks.read.mockResolvedValue({ ok: true, value: retained(start(5, buy, 9), start(4)) })
   checks.root.mockReturnValueOnce(null)
   expect(await adapter.write(4, lineage as PublicV45Start['lineage'], buy))
     .toEqual({ ok: false, reason: 'worker-readback-mismatch' })
+})
+
+it('rejects the actual stored root when only its retained predecessor differs', async () => {
+  const worker = transport()
+  const buy = { kind: 'buy-sedgehorn-tack/v1' as const }
+  const after = start(5, buy, 9)
+  worker.commitAction.mockResolvedValue({ status: 'committed', ack: ack(1, 4) })
+  checks.read.mockResolvedValue({ ok: true, value: retained(after,
+    start(4, { kind: 'frame-batch/v1', frames: [] }, 7)) })
+  const adapter = createPublicV45WorkerBindings(worker, bindings, () => start(4))
+  expect(await adapter.write(4, lineage as PublicV45Start['lineage'], buy))
+    .toEqual({ ok: false, reason: 'worker-readback-mismatch' })
+  expect(checks.root).toHaveBeenCalledWith(retained(after,
+    start(4, { kind: 'frame-batch/v1', frames: [] }, 7)))
 })

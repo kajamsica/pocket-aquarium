@@ -180,6 +180,22 @@ export function resumePublicV45(locks: PublicV7LockProvider | undefined,
   })
 }
 
+/** Return the actual checked retained pair, including its stored predecessor. */
+export function readPublicV45Root(locks: PublicV7LockProvider | undefined,
+  store: Store, source: SourceStore, revision: number, rawLineage: unknown):
+  Promise<PublicV45Operation<PublicV45Root>> {
+  return lock(locks, async () => {
+    const result = await succession(store, source, false)
+    if (result.status !== 'valid') return { ok: false,
+      reason: result.status === 'blocked' ? result.reason : 'target-missing' }
+    if (!sameStrictBoundedRaw(rawLineage, result.root.lineage, 3 << 20))
+      return { ok: false, reason: 'lineage-changed' }
+    return result.root.head.saveRevision === revision
+      ? { ok: true, value: result.root }
+      : { ok: false, reason: 'revision-changed' }
+  })
+}
+
 async function commitWitnessUnderLock(store: Store, source: SourceStore,
   revision: number, rawLineage: unknown, witnessFromWriter: () => unknown,
   returnHome: boolean): Promise<PublicV45Operation<PublicV45Commit>> {

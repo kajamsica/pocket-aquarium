@@ -1,6 +1,6 @@
 import type { PublicV45EntryBindings } from './PublicV45Entry'
 import type { PublicV45SaveAck, PublicV45SaveTransport } from './PublicV45SaveTransport'
-import { resumePublicV45 } from './domain/publicWorldV45Flow'
+import { readPublicV45Root } from './domain/publicWorldV45Flow'
 import type { PublicV45Operation, PublicV45Start } from './domain/publicWorldV45Flow'
 import { decodePublicV45Root, decodePublicV45Witness }
   from './domain/publicWorldV45Snapshot'
@@ -41,14 +41,14 @@ export function createPublicV45WorkerBindings(transport: PublicV45SaveTransport,
       || ack.nextRevision !== ack.baseRevision + 1 || ack.frameCount !== 0)
       return blocked('worker-ack-mismatch')
     try {
-      const resumed = await resumePublicV45(bindings.locks, bindings.store,
+      const read = await readPublicV45Root(bindings.locks, bindings.store,
         bindings.v44Store, ack.nextRevision, before.lineage)
-      if (!resumed.ok) return blocked('worker-readback-failed')
-      const after = resumed.value
-      const candidate = { lineage: after.lineage, previous: before.head,
-        head: after.head }
-      const checked = decodePublicV45Root(candidate)
-      if (!checked || !sameStrictBoundedRaw(checked, candidate, 3 << 20)
+      if (!read.ok) return blocked('worker-readback-failed')
+      const actual = read.value
+      const after = { head: actual.head, lineage: actual.lineage }
+      const checked = decodePublicV45Root(actual)
+      if (!checked || !sameStrictBoundedRaw(checked, actual, 3 << 20)
+        || !sameStrictBoundedRaw(actual.previous, before.head, 3 << 20)
         || !sameStrictBoundedRaw(after.lineage, before.lineage, 3 << 20)
         || after.head.saveRevision !== ack.nextRevision
         || !sameStrictBoundedRaw(ack.terminal, progressTerminal(after), 1024)

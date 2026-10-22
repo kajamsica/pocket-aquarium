@@ -1,5 +1,8 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it, vi } from 'vitest'
+import { createPublicV45WorkerBindings } from '../PublicV45WorkerBindings'
+import type { PublicV45EntryBindings } from '../PublicV45Entry'
+import type { PublicV45SaveTransport } from '../PublicV45SaveTransport'
 import { publicV14MovementIntents } from '../PublicV14Controller'
 import './atomicV41Database'
 import { createAtomicV43Store } from './atomicV43Database'
@@ -24,7 +27,7 @@ import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import { decodePublicV45Root } from './publicWorldV45Snapshot'
 import type { PublicV45Root } from './publicWorldV45Snapshot'
 import { commitPublicV45, consumePublicV45CommitReceipt,
-  inspectPublicV45, resumePublicV45,
+  inspectPublicV45, readPublicV45Root, resumePublicV45,
   requestPublicV45ReturnHome, startPublicV45 } from './publicWorldV45Flow'
 import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
@@ -219,6 +222,48 @@ async function setup(root: PublicV44Root = createPublicV44Root(
 }
 
 describe('V45 fenced source-only flow', () => {
+  it('rejects a matching head and ACK when the stored retained predecessor differs', async () => {
+    const ready = purchaseReadyRoot()
+    const { factory, source, store } = await setup(ready.lineage.source)
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    await record(factory, PUBLIC_V45_DATABASE_NAME, 'root', ready)
+    const previous = ready.previous!
+    const alternate = { head: { ...previous,
+      state: { ...previous.state, tick: previous.state.tick + 1 } },
+      lineage: ready.lineage }
+    const ack = { epoch: 'epoch-1', requestId: 1,
+      baseRevision: previous.saveRevision, nextRevision: ready.head.saveRevision,
+      frameCount: 0, terminal: { tick: ready.head.state.tick,
+        position: ready.head.state.player.position, yaw: ready.head.state.player.yaw,
+        groundMountMode: ready.head.groundMount.mode } }
+    const worker = { epoch: 'epoch-1',
+      commitAction: async () => ({ status: 'committed', ack }) } as unknown as PublicV45SaveTransport
+    const bindings = { locks, store, v44Store: source } as PublicV45EntryBindings
+    const adapter = createPublicV45WorkerBindings(worker, bindings, () => alternate)
+    expect(await adapter.write(previous.saveRevision, ready.lineage, idle))
+      .toEqual({ ok: false, reason: 'worker-readback-mismatch' })
+    expect(await readPublicV45Root(locks, store, source,
+      ready.head.saveRevision, ready.lineage)).toMatchObject({ ok: true,
+      value: { previous, head: ready.head } })
+  }, 30_000)
+
+  it('reads the actual retained predecessor under the V44 fence', async () => {
+    const { factory, source, store } = await setup()
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const committed = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, idle)
+    if (!committed.ok) throw new Error(committed.reason)
+    const stored = await createAtomicV45Store(factory).readChecked()
+    if (stored.status !== 'valid') throw new Error('Expected checked root')
+    expect(await readPublicV45Root(locks, store, source, 1,
+      started.value.lineage)).toEqual({ ok: true, value: stored.root })
+    expect(stored.root.previous).toEqual(started.value.head)
+    expect(await readPublicV45Root(locks, store, source, 1,
+      { forged: true })).toEqual({ ok: false, reason: 'lineage-changed' })
+  }, 30_000)
+
   it('rejects client Return Home timestamps and a nontrapped request', async () => {
     const { factory, source, store } = await setup()
     const started = await startPublicV45(locks, store, source, 0)
