@@ -55,6 +55,40 @@ function at(x: number, z: number, boots = false): PublicV45Progress {
 }
 
 describe('V45 checked assisted Sedgehorn ride', () => {
+  it('matches sequential checked frames for motion, turns, blocked paths, and bad progress', () => {
+    const turn = { kind: 'sedgehorn-assisted-ride-frame/v1' as const,
+      intents: [{ type: 'look' as const, yawDelta: 0.04, pitchDelta: 0 }] }
+    const valid = at(36, 4, true)
+    const cases = [
+      { before: valid, frames: [ride(0.02), ride(-0.02)] },
+      { before: valid, frames: [turn, ride(0.02), turn] },
+      { before: at(36, 11, true), frames: [ride(0, 0.18)] },
+      { before: { ...valid, tack: 'forged' } as unknown as PublicV45Progress,
+        frames: [ride(0.02)] },
+    ]
+    for (const { before, frames } of cases) {
+      const original = structuredClone(before)
+      let current = before
+      const events = [] as NonNullable<ReturnType<typeof confirmPublicV45RideFrame>['events']>[number][]
+      let rejection: ReturnType<typeof confirmPublicV45RideFrame>['rejection']
+      for (const frame of frames) {
+        const result = confirmPublicV45RideFrame(current, frame)
+        if (!result.progress) { rejection = result.rejection; break }
+        current = result.progress
+        events.push(...result.events)
+      }
+      const batch = confirmPublicV45Action(before,
+        { kind: 'sedgehorn-assisted-ride-batch/v1', frames })
+      expect(batch).toEqual(rejection ? { rejection } : { progress: current, events })
+      expect(before).toEqual(original)
+    }
+    const malformed = [ride(0.02), ride(0.02)]
+    delete malformed[1]
+    expect(confirmPublicV45Action(valid,
+      { kind: 'sedgehorn-assisted-ride-batch/v1', frames: malformed }))
+      .toEqual({ rejection: 'invalid_witness' })
+  }, 30_000)
+
   it('rejects a whole checked batch when a later dry frame leaves the revealed area', () => {
     const before = at(36, 4, true)
     const saved = structuredClone(before)

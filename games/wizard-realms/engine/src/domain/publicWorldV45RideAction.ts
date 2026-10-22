@@ -155,15 +155,11 @@ function dryLeg(progress: PublicV31Progress, from: Vec3, to: Vec3): boolean {
     && publicV26ValleyRimPassage(progress.state.seed, from, to, []).ok
 }
 
-/** One checked V45 action. Neither the witness nor a UI preview can supply an admission. */
-export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
-  rawWitness: unknown): PublicV45RideResult {
+/** The caller has already decoded both values; every frame still checks its resulting progress. */
+function confirmCheckedRideFrame(before: PublicV45Progress,
+  witness: PublicV45RideFrameWitness): PublicV45RideResult {
   const reject = (rejection: PublicV45RideRejection): PublicV45RideResult => ({ rejection })
   try {
-    const before = decodeProgress(rawBefore)
-    if (!before) return reject('invalid_progress')
-    const witness = decodePublicV45RideFrameWitness(rawWitness)
-    if (!witness) return reject('invalid_witness')
     const frame = { intents: witness.intents, walkRequested: false }
     const last = frame.intents.at(-1)
     if (!last) return reject('invalid_witness')
@@ -223,6 +219,16 @@ export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
   } catch { return reject('ride_blocked') }
 }
 
+/** One checked V45 action. Neither the witness nor a UI preview can supply an admission. */
+export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
+  rawWitness: unknown): PublicV45RideResult {
+  const before = decodeProgress(rawBefore)
+  if (!before) return { rejection: 'invalid_progress' }
+  const witness = decodePublicV45RideFrameWitness(rawWitness)
+  return witness ? confirmCheckedRideFrame(before, witness)
+    : { rejection: 'invalid_witness' }
+}
+
 /** Ordinary V43 replay remains available only while the imported mount is parked. */
 export function confirmPublicV45Action(rawBefore: PublicV45Progress,
   rawWitness: unknown): PublicV45ActionResult {
@@ -232,10 +238,12 @@ export function confirmPublicV45Action(rawBefore: PublicV45Progress,
     if (kind === 'sedgehorn-assisted-ride-batch/v1') {
       const batch = decodePublicV45RideBatchWitness(rawWitness)
       if (!batch) return { rejection: 'invalid_witness' }
-      let current = rawBefore
+      const before = decodeProgress(rawBefore)
+      if (!before) return { rejection: 'invalid_progress' }
+      let current = before
       const events: PublicWorldEvent[] = []
       for (const frame of batch.frames) {
-        const result = confirmPublicV45RideFrame(current, frame)
+        const result = confirmCheckedRideFrame(current, frame)
         if (!result.progress) return result
         current = result.progress
         events.push(...result.events)
