@@ -1195,7 +1195,8 @@ export type PublicV43ControllerProps = PublicV43EntryBindings & Readonly<{
 export type PublicV44ControllerProps = PublicV44EntryBindings & Readonly<{
   start: PublicV44Start; version: 'v44' }>
 export type PublicV45ControllerProps = PublicV45EntryBindings & Readonly<{
-  start: PublicV45Start; version: 'v45' }>
+  start: PublicV45Start; version: 'v45';
+  v45SaveOpen?: import('./PublicV45Entry').PublicV45SessionSaveOpen }>
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {

@@ -82,8 +82,9 @@ const routedApp = <Suspense fallback={<main role="status">Loading game…</main>
   : mireglassDev ? <MireglassPlayableApp />
   : streamedPreview ? <StreamedPreviewApp /> : publicWorld === 'v45'
     ? import.meta.env.DEV
-      ? <PublicV45EntryApp renderSession={(start, bindings) =>
-        <PublicV23Controller version="v45" start={start} {...bindings} />} />
+      ? <PublicV45EntryApp renderSession={(start, bindings, saveOpen) =>
+        <PublicV23Controller version="v45" start={start} v45SaveOpen={saveOpen}
+          {...bindings} />} />
       : <main role="status">Experimental V45 is development-only.</main>
     : publicWorld === 'v44'
     ? import.meta.env.DEV

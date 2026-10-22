@@ -6,6 +6,8 @@ import type { PublicV45Operation, PublicV45Start } from './domain/publicWorldV45
 import { PUBLIC_V7_LOCK_NAME } from './domain/publicWorldV7'
 import type { PublicV7LockProvider } from './domain/publicWorldV7Flow'
 import { sameStrictBoundedRaw } from './domain/strictBoundedRaw'
+import { openPublicV45SaveTransport } from './PublicV45SaveTransport'
+import type { PublicV45SaveOpen, PublicV45SaveTransport } from './PublicV45SaveTransport'
 
 export type PublicV45EntryBindings = Readonly<{
   locks: PublicV7LockProvider
@@ -16,6 +18,41 @@ export type PublicV45EntryDecision = { status: 'resume'; start: PublicV45Start }
   | { status: 'migration-available'; sourceRevision: number; interrupted: boolean }
   | { status: 'blocked'; reason: string }
 type Choice = 'resume' | 'migrate'
+export type PublicV45SessionSaveOpen = Extract<PublicV45SaveOpen,
+  { status: 'ready' | 'unsupported' }>
+
+/** A deferred close survives React StrictMode's synchronous effect replay. */
+export function createPublicV45EntryTransportGate(open = openPublicV45SaveTransport) {
+  let mounted = false, generation = 0, choice = 0
+  let held: PublicV45SaveTransport | null = null
+  return {
+    isMounted: () => mounted,
+    mount: () => {
+      mounted = true; ++generation
+      return () => {
+        mounted = false
+        const closing = ++generation
+        queueMicrotask(() => {
+          if (mounted || generation !== closing) return
+          ++choice; held?.dispose(); held = null
+        })
+      }
+    },
+    open: async (start: PublicV45Start): Promise<PublicV45SaveOpen> => {
+      const current = ++choice
+      held?.dispose(); held = null
+      let result: PublicV45SaveOpen
+      try { result = await open(start) }
+      catch { result = { status: 'blocked', reason: 'worker-init-error' } }
+      if (!mounted || current !== choice) {
+        if (result.status === 'ready') result.transport.dispose()
+        return { status: 'blocked', reason: 'choice-superseded' }
+      }
+      if (result.status === 'ready') held = result.transport
+      return result
+    },
+  }
+}
 
 /** Read checked roots and the V44 marker without completing a pending handoff. */
 export async function inspectPublicV45Entry(bindings: PublicV45EntryBindings | null):
@@ -105,16 +142,21 @@ export function PublicV45EntryView({ entry, busyChoice, onChoose, onRetry, actio
 }
 
 export function PublicV45EntryApp({ renderSession }: {
-  renderSession: (start: PublicV45Start, bindings: PublicV45EntryBindings) => ReactNode }) {
+  renderSession: (start: PublicV45Start, bindings: PublicV45EntryBindings,
+    saveOpen: PublicV45SessionSaveOpen) => ReactNode }) {
   const bindings = useRef<PublicV45EntryBindings | null>(null)
+  const transportGate = useRef<ReturnType<typeof createPublicV45EntryTransportGate> | null>(null)
+  transportGate.current ??= createPublicV45EntryTransportGate()
   const choosing = useRef(false)
   const [entry, setEntry] = useState<PublicV45EntryDecision | { status: 'checking' }>(
     { status: 'checking' })
   const [busyChoice, setBusyChoice] = useState<Choice | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [session, setSession] = useState<PublicV45Start | null>(null)
+  const [session, setSession] = useState<{ start: PublicV45Start;
+    saveOpen: PublicV45SessionSaveOpen } | null>(null)
   useEffect(() => {
     let cancelled = false
+    const unmountGate = transportGate.current!.mount()
     const inspect = async () => {
       try {
         const locks = (navigator as Navigator & { locks?: PublicV7LockProvider }).locks
@@ -131,19 +173,32 @@ export function PublicV45EntryApp({ renderSession }: {
       } catch { if (!cancelled) setEntry({ status: 'blocked', reason: 'storage-error' }) }
     }
     void inspect()
-    return () => { cancelled = true }
+    return () => { cancelled = true; unmountGate() }
   }, [])
   const choose = async (choice: Choice) => {
     if (choosing.current || !bindings.current || entry.status === 'checking') return
     choosing.current = true; setBusyChoice(choice); setActionError(null)
     try {
       const result = await choosePublicV45Entry(entry, choice, bindings.current)
-      if (result.ok) setSession(result.value)
-      else { setActionError(result.reason); setEntry(await inspectPublicV45Entry(bindings.current)) }
-    } catch { setActionError('storage-error') }
-    finally { choosing.current = false; setBusyChoice(null) }
+      if (!transportGate.current!.isMounted()) return
+      if (result.ok) {
+        const saveOpen = await transportGate.current!.open(result.value)
+        if (!transportGate.current!.isMounted()) return
+        if (saveOpen.status === 'blocked') setEntry({ status: 'blocked', reason: saveOpen.reason })
+        else setSession({ start: result.value, saveOpen })
+      } else {
+        setActionError(result.reason)
+        const next = await inspectPublicV45Entry(bindings.current)
+        if (transportGate.current!.isMounted()) setEntry(next)
+      }
+    } catch { if (transportGate.current!.isMounted()) setActionError('storage-error') }
+    finally {
+      choosing.current = false
+      if (transportGate.current!.isMounted()) setBusyChoice(null)
+    }
   }
-  if (session && bindings.current) return <>{renderSession(session, bindings.current)}</>
+  if (session && bindings.current) return <>{renderSession(session.start, bindings.current,
+    session.saveOpen)}</>
   return <PublicV45EntryView entry={entry} busyChoice={busyChoice}
     onChoose={(choice) => void choose(choice)} onRetry={() => window.location.reload()}
     actionError={actionError} />
