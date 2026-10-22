@@ -32,7 +32,14 @@ const progressOf = ({ schemaVersion: _schema, saveRevision: _revision,
   witness: _witness, ...progress }: PublicV45Head): PublicV45Progress => progress
 const preservesGenesis = (genesis: PublicV45Head, head: PublicV45Head,
   seed: string) => publicV32Preserves(genesis, head, seed)
+  && publicV32Monotonic(genesis, head)
   && publicV43Monotonic(genesis, head)
+  && (!genesis.mountTraining || !!head.mountTraining
+    && genesis.mountTraining.careWitnesses.length
+      <= head.mountTraining.careWitnesses.length
+    && sameStrictBoundedRaw(genesis.mountTraining.careWitnesses,
+      head.mountTraining.careWitnesses.slice(0,
+        genesis.mountTraining.careWitnesses.length), RAW_LIMIT))
   && sameStrictBoundedRaw([head.groundMount, head.tack],
     [genesis.groundMount, genesis.tack], RAW_LIMIT)
 

@@ -148,6 +148,44 @@ describe('V45 checked assisted-ride root', () => {
     }
   }, 30_000)
 
+  it('rejects rollback of an imported mining entitlement after revision one is evicted', () => {
+    const eligible = eligibleSource(true)
+    const miningTools = { ...eligible.head.miningTools, basicPickOwned: true }
+    const source: PublicV42Root = { lineage: { ...eligible.lineage,
+      genesis: { ...eligible.lineage.genesis, miningTools } }, previous: null,
+    head: { ...eligible.head, miningTools } }
+    expect(decodePublicV42Root(source)).not.toBeNull()
+    const genesis = createPublicV45Genesis(createPublicV44Root(createPublicV43Root(source)))
+    const first = next(genesis, idle)
+    const second = next(first, idle)
+    const previous = { ...second.head, miningTools: {
+      ...second.head.miningTools, basicPickOwned: false } }
+    const { schemaVersion: _schema, saveRevision: _revision,
+      witness: _prior, ...flat } = previous
+    const advanced = confirmPublicV45Action(flat, idle).progress
+    expect(advanced).toBeDefined()
+    expect(decodePublicV45Root({ lineage: second.lineage, previous,
+      head: { ...advanced, schemaVersion: PUBLIC_V45_SCHEMA,
+        saveRevision: 3, witness: idle } })).toBeNull()
+    expect(decodePublicV45Root(second)).not.toBeNull()
+  }, 30_000)
+
+  it('retains imported mount training after early revisions are evicted', () => {
+    const genesis = createPublicV45Genesis(createPublicV44Root(matureRoot(false)))
+    expect(genesis.head.mountTraining?.careWitnesses).toHaveLength(3)
+    const first = next(genesis, idle)
+    const second = next(first, idle)
+    const { mountTraining: _training, ...previous } = second.head
+    const { schemaVersion: _schema, saveRevision: _revision,
+      witness: _prior, ...flat } = previous
+    const advanced = confirmPublicV45Action(flat, idle).progress
+    expect(advanced).toBeDefined()
+    expect(decodePublicV45Root({ lineage: second.lineage, previous,
+      head: { ...advanced, schemaVersion: PUBLIC_V45_SCHEMA,
+        saveRevision: 3, witness: idle } })).toBeNull()
+    expect(decodePublicV45Root(second)).not.toBeNull()
+  }, 30_000)
+
   it('accepts exact imported genesis but no flat or forged tack entitlement', () => {
     const source = createPublicV44Root(createPublicV43Root(eligibleSource()))
     const genesis = createPublicV45Genesis(source)
