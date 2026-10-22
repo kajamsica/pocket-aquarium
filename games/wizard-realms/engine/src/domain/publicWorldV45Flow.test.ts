@@ -484,6 +484,42 @@ describe('V45 fenced source-only flow', () => {
     expect((await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))).toBeDefined()
   }, 90_000)
 
+  it('persists one checked ride batch edge and leaves rejected batches unwritten', async () => {
+    const { factory, source, store } = await setup(mountedV44Root())
+    const started = await startPublicV45(locks, store, source, 1)
+    if (!started.ok) throw new Error(started.reason)
+    const v44Bytes = JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root'))
+    const marker = await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor')
+    const batch = { kind: 'sedgehorn-assisted-ride-batch/v1' as const,
+      frames: [ride, ride] }
+    const saved = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, batch)
+    if (!saved.ok) throw new Error(saved.reason)
+    expect(saved.value.head.saveRevision).toBe(1)
+    expect(saved.value.head.state.tick).toBe(started.value.head.state.tick + 2)
+    expect(saved.value.events.filter((event) => event.type === 'player_moved'))
+      .toHaveLength(4)
+    const read = await createAtomicV45Store(factory).readChecked()
+    expect(read).toMatchObject({ status: 'valid', root: { previous: { saveRevision: 0 },
+      head: { saveRevision: 1, witness: { kind: batch.kind, frames: batch.frames } } } })
+    expect(await resumePublicV45(locks, createAtomicV45Store(factory), source, 1,
+      started.value.lineage)).toMatchObject({ ok: true,
+      value: { head: { saveRevision: 1, state: { tick: saved.value.head.state.tick } } } })
+    const targetBytes = JSON.stringify(await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))
+    const invalidLateFrame = { kind: batch.kind,
+      frames: [ride, { ...ride, intents: [{ type: 'move' as const,
+        delta: { x: 1, z: 0 } }] }] } as never
+    expect(await commitPublicV45(locks, store, source, 1,
+      started.value.lineage, invalidLateFrame)).toEqual({ ok: false,
+      reason: 'invalid-witness' })
+    expect(JSON.stringify(await record(factory, PUBLIC_V45_DATABASE_NAME, 'root')))
+      .toBe(targetBytes)
+    expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+      .toBe(v44Bytes)
+    expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
+      .toEqual(marker)
+  }, 90_000)
+
   it('persists a checked herb sale and reloads without rewriting V44 or its marker', async () => {
     const { factory, source, store } = await setup(saleV44Root())
     const started = await startPublicV45(locks, store, source, 0)
