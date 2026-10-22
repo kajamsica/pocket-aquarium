@@ -23,7 +23,8 @@ import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import { decodePublicV45Root } from './publicWorldV45Snapshot'
 import type { PublicV45Root } from './publicWorldV45Snapshot'
 import { commitPublicV45, inspectPublicV45, resumePublicV45,
-  startPublicV45 } from './publicWorldV45Flow'
+  requestPublicV45ReturnHome, startPublicV45 } from './publicWorldV45Flow'
+import { publicV17StarterSupportAt } from './publicWorldV17StarterMovement'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
 import { waystationRiverSite } from './waystationRiverContent'
 import { WORLD_CELL_METERS, worldTileAtGrid } from './worldChunks'
@@ -111,6 +112,27 @@ function mountedV44Root(): PublicV44Root {
   return structuredClone(mountedCache)
 }
 
+function trappedV44Root(): PublicV44Root {
+  const source = matureRoot()
+  const point = { x: 12, z: 4 }
+  const support = publicV17StarterSupportAt({ seed,
+    profile: source.head.state.generationProfile,
+    route: source.head.state.greenway.routes.find((entry) =>
+      entry.id === 'greenway_ladder') ?? null,
+    built: false, greenwayWorks: source.head.greenwayWorks }, point)
+  if (!support || support.kind !== 'ground') throw new Error('Missing pit floor')
+  const trapped = (head: PublicV43Root['head']) => ({ ...head,
+    terrain: { ...head.terrain, columns: [{ gx: 3, gz: 1,
+      openDepth: 8, rewardDepth: 8, pitLadder: false }] },
+    state: { ...head.state, movementOwner: 'greenway' as const,
+      player: { ...head.state.player, verticalVelocity: 0,
+        position: { ...point, y: support.floorY } } } })
+  const checked = decodePublicV43Root({ ...source,
+    previous: trapped(source.previous!), head: trapped(source.head) })
+  if (!checked) throw new Error('Invalid trapped V43 fixture')
+  return createPublicV44Root(checked)
+}
+
 function saleV44Root(): PublicV44Root {
   const root = matureRoot()
   const salvager = mireglassAnchors(seed).salvager.tile
@@ -195,6 +217,62 @@ async function setup(root: PublicV44Root = createPublicV44Root(
 }
 
 describe('V45 fenced source-only flow', () => {
+  it('rejects client Return Home timestamps and a nontrapped request', async () => {
+    const { factory, source, store } = await setup()
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const old = JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root'))
+    expect(await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, { kind: 'return-home/v1', atMs: 10 } as never))
+      .toEqual({ ok: false, reason: 'invalid-witness' })
+    expect(await requestPublicV45ReturnHome(locks, store, source, 0,
+      started.value.lineage)).toEqual({ ok: false, reason: 'not_trapped' })
+    expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+      .toBe(old)
+    expect((await store.readChecked())).toMatchObject({ status: 'valid',
+      root: { head: { saveRevision: 0 } } })
+  })
+
+  it('mints, replays, reloads, and cools down a trapped Return Home', async () => {
+    const { factory, source, store } = await setup(trappedV44Root())
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const old = JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root'))
+    const marker = await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor')
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(10_000)
+    try {
+      const saved = await requestPublicV45ReturnHome(locks, store, source, 0,
+        started.value.lineage)
+      if (!saved.ok) throw new Error(saved.reason)
+      expect(saved.value.head.witness).toEqual({ kind: 'return-home/v1', atMs: 10_000 })
+      expect(saved.value.head.nextHomeAtMs).toBe(1_810_000)
+      expect(saved.value.head.state.player.position).toMatchObject({ x: 0, z: 0 })
+      expect(saved.value.head.groundMount.mode).toBe('parked')
+      expect(await resumePublicV45(locks, createAtomicV45Store(factory), source, 1,
+        started.value.lineage)).toEqual({ ok: true, value: {
+          head: saved.value.head, lineage: saved.value.lineage } })
+      expect(await requestPublicV45ReturnHome(locks, store, source, 1,
+        started.value.lineage)).toEqual({ ok: false, reason: 'cooldown' })
+      expect(await commitPublicV45(locks, store, source, 1,
+        started.value.lineage, { kind: 'return-home/v1', atMs: 2_000_000 } as never))
+        .toEqual({ ok: false, reason: 'invalid-witness' })
+      expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+        .toBe(old)
+      expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
+        .toEqual(marker)
+    } finally { clock.mockRestore() }
+  }, 30_000)
+
+  it('requires dismounting before Return Home', async () => {
+    const { source, store } = await setup(mountedV44Root())
+    const started = await startPublicV45(locks, store, source, 1)
+    if (!started.ok) throw new Error(started.reason)
+    expect(await requestPublicV45ReturnHome(locks, store, source, 0,
+      started.value.lineage)).toEqual({ ok: false, reason: 'must-dismount' })
+    expect((await store.readChecked())).toMatchObject({ status: 'valid',
+      root: { head: { saveRevision: 0 } } })
+  }, 30_000)
+
   it('inspects without reservation, starts checked genesis, and resumes a fenced save', async () => {
     const { factory, root, source, store } = await setup()
     const ancestor = createAtomicV43Store(factory)

@@ -1,5 +1,6 @@
 import type { createAtomicV44PromotionStore } from './atomicV44Promotion'
 import type { createAtomicV45Store } from './atomicV45Database'
+import { applyPublicV26ReturnHome } from './publicWorldV26Escape'
 import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import { decodePublicV45Root, decodePublicV45Witness }
@@ -148,10 +149,9 @@ export function resumePublicV45(locks: PublicV7LockProvider | undefined,
   })
 }
 
-export function commitPublicV45(locks: PublicV7LockProvider | undefined,
-  store: Store, source: SourceStore, revision: number, rawLineage: unknown,
-  rawWitness: PublicV45Witness): Promise<PublicV45Operation<PublicV45Commit>> {
-  return lock(locks, async () => {
+async function commitWitnessUnderLock(store: Store, source: SourceStore,
+  revision: number, rawLineage: unknown, witnessFromWriter: () => unknown,
+  returnHome: boolean): Promise<PublicV45Operation<PublicV45Commit>> {
     const fenced = await succession(store, source, false)
     if (fenced.status !== 'valid') return { ok: false,
       reason: fenced.status === 'blocked' ? fenced.reason : 'target-missing' }
@@ -161,13 +161,24 @@ export function commitPublicV45(locks: PublicV7LockProvider | undefined,
     if (head.saveRevision !== revision) return { ok: false, reason: 'revision-changed' }
     if (!Number.isSafeInteger(revision + 1))
       return { ok: false, reason: 'invalid-revision' }
-    const witness = decodePublicV45Witness(rawWitness)
-    if (!witness) return { ok: false, reason: 'invalid-witness' }
+    if (returnHome && head.groundMount.mode !== 'parked')
+      return { ok: false, reason: 'must-dismount' }
+    const witness = decodePublicV45Witness(witnessFromWriter())
+    if (!witness || (witness.kind === 'return-home/v1') !== returnHome)
+      return { ok: false, reason: 'invalid-witness' }
     const { schemaVersion: _schema, saveRevision: _revision,
       witness: _previous, ...progress } = head
     const action = confirmPublicV45Action(progress, witness)
-    if (!action.progress) return { ok: false,
-      reason: action.rejection ?? 'action-rejected' }
+    if (!action.progress) {
+      if (returnHome && witness.kind === 'return-home/v1') {
+        const { state, greenwayWorks, regionalWorks, terrain, nextHomeAtMs } = head
+        const reason = applyPublicV26ReturnHome({ state, greenwayWorks,
+          regionalWorks, terrain, nextHomeAtMs }, witness.atMs).rejection
+        if (reason === 'not_trapped' || reason === 'cooldown')
+          return { ok: false, reason }
+      }
+      return { ok: false, reason: action.rejection ?? 'action-rejected' }
+    }
     const nextHead: PublicV45Head = { ...action.progress,
       schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: revision + 1, witness }
     const candidate: PublicV45Root = { lineage, previous: head, head: nextHead }
@@ -175,5 +186,18 @@ export function commitPublicV45(locks: PublicV7LockProvider | undefined,
     return committed === 'committed'
       ? { ok: true, value: { head: candidate.head, lineage, events: action.events } }
       : { ok: false, reason: committed === 'invalid' ? 'invalid-successor' : committed }
-  })
+}
+
+export function commitPublicV45(locks: PublicV7LockProvider | undefined,
+  store: Store, source: SourceStore, revision: number, rawLineage: unknown,
+  rawWitness: PublicV45Witness): Promise<PublicV45Operation<PublicV45Commit>> {
+  return lock(locks, () => commitWitnessUnderLock(store, source, revision,
+    rawLineage, () => rawWitness, false))
+}
+
+export function requestPublicV45ReturnHome(locks: PublicV7LockProvider | undefined,
+  store: Store, source: SourceStore, revision: number, rawLineage: unknown):
+  Promise<PublicV45Operation<PublicV45Commit>> {
+  return lock(locks, () => commitWitnessUnderLock(store, source, revision,
+    rawLineage, () => ({ kind: 'return-home/v1', atMs: Date.now() }), true))
 }
