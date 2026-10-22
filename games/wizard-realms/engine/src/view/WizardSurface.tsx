@@ -170,7 +170,8 @@ export function pointerAimTap(press: PointerPress | null, pointerId: number,
 export function devNavigationEnabled(search: string): boolean {
   const params = new URLSearchParams(search)
   return params.get('dev') === '1' && (params.get('publicWorld') === 'v42'
-    || params.get('publicWorld') === 'v43')
+    || params.get('publicWorld') === 'v43' || params.get('publicWorld') === 'v44'
+    || params.get('publicWorld') === 'v45')
 }
 
 type SceneTap = { atMs: number; point: readonly [number, number] }
