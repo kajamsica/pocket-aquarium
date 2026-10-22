@@ -229,9 +229,17 @@ describe('V45 fenced source-only flow', () => {
     if (!started.ok) throw new Error(started.reason)
     await record(factory, PUBLIC_V45_DATABASE_NAME, 'root', ready)
     const previous = ready.previous!
+    // At rev 3 the older edge is no longer retained. This alternate canonical
+    // witness changes no progress, so replay of the same rev 4 head still passes.
     const alternate = { head: { ...previous,
-      state: { ...previous.state, tick: previous.state.tick + 1 } },
+      witness: { kind: 'frame-batch/v1' as const,
+        frames: [{ intents: [], walkRequested: false }] } },
       lineage: ready.lineage }
+    const synthetic = { lineage: ready.lineage, previous: alternate.head,
+      head: ready.head }
+    expect(alternate.head.state).toEqual(previous.state)
+    expect(alternate.head.witness).not.toEqual(previous.witness)
+    expect(decodePublicV45Root(synthetic)).toEqual(synthetic)
     const ack = { epoch: 'epoch-1', requestId: 1,
       baseRevision: previous.saveRevision, nextRevision: ready.head.saveRevision,
       frameCount: 0, terminal: { tick: ready.head.state.tick,
