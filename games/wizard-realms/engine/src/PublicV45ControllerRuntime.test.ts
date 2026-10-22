@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { publicV14MovementIntents } from './PublicV14Controller'
 import { createPublicV45ControllerRuntime } from './PublicV45ControllerRuntime'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { createFreshPublicV42Root, decodePublicV42Root, PUBLIC_V42_SCHEMA }
@@ -98,6 +99,17 @@ describe('V45 controller runtime', () => {
     expect(await runtime.action({ kind: 'sedgehorn-mount/v1' })).toMatchObject({
       status: 'saved' })
     const count = writes.length
+    const beforeTurn = runtime.preview().state.player
+    const turn = publicV14MovementIntents(beforeTurn.yaw, [1, 0], 0.24)
+    expect(turn).toHaveLength(1)
+    expect(runtime.advanceFrame(turn, false).rejections).toEqual([])
+    const turnedYaw = runtime.preview().state.player.yaw
+    expect(turnedYaw).not.toBe(beforeTurn.yaw)
+    expect(runtime.preview().state.player.position).toEqual(beforeTurn.position)
+    expect(runtime.advanceFrame([{ type: 'look', yawDelta: 99, pitchDelta: 0 }], false)
+      .rejections).toHaveLength(1)
+    expect(runtime.preview().state.player.yaw).toBe(turnedYaw)
+    expect(runtime.preview().state.player.position).toEqual(beforeTurn.position)
     const frame = [{ type: 'move' as const, delta: { x: 0.12, z: 0 } }]
     const initial = runtime.preview().state.player.position.x
     expect(runtime.advanceFrame(frame, false).rejections).toEqual([])
@@ -115,9 +127,13 @@ describe('V45 controller runtime', () => {
     expect(await runtime.save()).toMatchObject({ status: 'saved' })
     expect(writes).toHaveLength(count + 1)
     expect(writes.at(-1)).toMatchObject({ kind: 'sedgehorn-assisted-ride-batch/v1',
-      frames: [{ kind: 'sedgehorn-assisted-ride-frame/v1' },
+      frames: [{ kind: 'sedgehorn-assisted-ride-frame/v1', intents: turn },
+        { kind: 'sedgehorn-assisted-ride-frame/v1' },
         { kind: 'sedgehorn-assisted-ride-frame/v1' }] })
     expect(runtime.committed().head.state.player.position)
       .toEqual(runtime.preview().state.player.position)
+    const resumed = createPublicV45ControllerRuntime({ head: current.head,
+      lineage: current.lineage }, async () => ({ ok: false, reason: 'read-only' }))
+    expect(resumed.preview().state.player.yaw).toBe(turnedYaw)
   }, 30_000)
 })

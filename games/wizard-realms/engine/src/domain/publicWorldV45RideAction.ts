@@ -36,7 +36,8 @@ export type PublicV45Progress = PublicV43Progress & Readonly<{
 export const PUBLIC_V45_MAX_RIDE_BATCH = 32
 export type PublicV45RideFrameWitness = Readonly<{
   kind: 'sedgehorn-assisted-ride-frame/v1'
-  intents: readonly [{ type: 'move'; delta: Readonly<{ x: number; z: number }> }]
+  intents: readonly [{ type: 'look'; yawDelta: number; pitchDelta: number }]
+    | readonly [{ type: 'move'; delta: Readonly<{ x: number; z: number }> }]
     | readonly [{ type: 'look'; yawDelta: number; pitchDelta: number },
       { type: 'move'; delta: Readonly<{ x: number; z: number }> }]
 }>
@@ -56,6 +57,7 @@ export type PublicV45ActionResult = PublicV45RideResult | Readonly<{
 
 const EPSILON = 1e-6
 const MAX_GRADE = 0.55
+const MAX_TURN_RADIANS = 0.13
 const V31_KEYS = ['state', 'greenwayWorks', 'regionalWorks', 'terrain',
   'nextHomeAtMs', 'riverBridgeIds', 'miningTools', 'claimedBridgeheadId',
   'raisedSoilCells'] as const
@@ -68,9 +70,14 @@ export function decodePublicV45RideFrameWitness(raw: unknown):
       || raw.kind !== 'sedgehorn-assisted-ride-frame/v1') return null
     const frame = decodePublicV14FrameWitness({ kind: 'frame-batch/v1',
       frames: [{ intents: raw.intents, walkRequested: false }] })?.frames[0]
-    const move = frame?.intents.at(-1)
-    if (!frame || move?.type !== 'move'
-      || Math.hypot(move.delta.x, move.delta.z) <= 0) return null
+    const last = frame?.intents.at(-1)
+    const turnOnly = last?.type === 'look' && frame?.intents.length === 1
+    if (!frame || !last || turnOnly && (last.pitchDelta !== 0
+      || last.yawDelta === 0
+      || Math.abs(last.yawDelta) > MAX_TURN_RADIANS + EPSILON)
+      || last.type === 'move' && Math.hypot(last.delta.x, last.delta.z) <= 0
+      || last.type === 'look' && !turnOnly
+      || last.type !== 'move' && last.type !== 'look') return null
     structuredClone(raw)
     return { kind: 'sedgehorn-assisted-ride-frame/v1',
       intents: frame.intents as PublicV45RideFrameWitness['intents'] }
@@ -158,10 +165,8 @@ export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
     const witness = decodePublicV45RideFrameWitness(rawWitness)
     if (!witness) return reject('invalid_witness')
     const frame = { intents: witness.intents, walkRequested: false }
-    const move = frame.intents.at(-1)
-    if (move?.type !== 'move') return reject('invalid_witness')
-    const length = Math.hypot(move.delta.x, move.delta.z)
-    if (!(length > 0)) return reject('invalid_witness')
+    const last = frame.intents.at(-1)
+    if (!last) return reject('invalid_witness')
     if (before.familiar.phase !== 'claimed'
       || projectPublicV43MountTraining(before)?.mature !== true
       || before.tack === 'not_owned' || before.groundMount.mode !== 'riding')
@@ -169,10 +174,31 @@ export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
     if (before.ironHall.engaged || before.ironHallReward.spar.active
       || before.state.tick < before.state.windstep.activeUntilTick)
       return reject('competing_mode')
-    if (length > publicV11Gait(before.state.player.equipment.feet, false).metersPerStep + 1e-9)
-      return reject('invalid_witness')
     const start = before.state.player.position
     if (!safePose(before, start)) return reject('unsafe_mount')
+    const finish = (checked: NonNullable<ReturnType<typeof replayPublicV31FramesWithEvents>>):
+      PublicV45RideResult => {
+      const nextBase = Object.fromEntries(V31_KEYS.map((key) =>
+        [key, checked.progress[key]])) as Pick<PublicV43Progress, typeof V31_KEYS[number]>
+      const next = decodeProgress({ ...before, ...nextBase })
+      if (!next || !publicV32Preserves(before, next, before.state.seed)
+        || !publicV32Monotonic(before, next)) return reject('ride_blocked')
+      return { progress: next, events: checked.events }
+    }
+    if (last.type === 'look') {
+      const checked = replayPublicV31FramesWithEvents(before, [frame])
+      const position = checked?.progress.state.player.position
+      if (!checked || checked.progress.state.tick !== before.state.tick + 1
+        || checked.events.some((event) => event.type === 'player_moved')
+        || !position || position.x !== start.x || position.y !== start.y
+        || position.z !== start.z || !safePose(checked.progress, position))
+        return reject('ride_blocked')
+      return finish(checked)
+    }
+    const move = last
+    const length = Math.hypot(move.delta.x, move.delta.z)
+    if (length > publicV11Gait(before.state.player.equipment.feet, false).metersPerStep + 1e-9)
+      return reject('invalid_witness')
     const first = { x: move.delta.x * 5 / 6, z: move.delta.z * 5 / 6 }
     const assisted = { substeps: [first, first] as const,
       settle: (after: PublicV23Progress) => after }
@@ -193,12 +219,7 @@ export function confirmPublicV45RideFrame(rawBefore: PublicV45Progress,
       || !dryLeg(before, start, moves[0].position)
       || !dryLeg(before, moves[0].position, arrival)
       || !dryLeg(before, start, arrival)) return reject('ride_blocked')
-    const nextBase = Object.fromEntries(V31_KEYS.map((key) =>
-      [key, checked.progress[key]])) as Pick<PublicV43Progress, typeof V31_KEYS[number]>
-    const next = decodeProgress({ ...before, ...nextBase })
-    if (!next || !publicV32Preserves(before, next, before.state.seed)
-      || !publicV32Monotonic(before, next)) return reject('ride_blocked')
-    return { progress: next, events: checked.events }
+    return finish(checked)
   } catch { return reject('ride_blocked') }
 }
 

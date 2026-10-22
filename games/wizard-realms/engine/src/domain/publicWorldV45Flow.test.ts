@@ -1,5 +1,6 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it, vi } from 'vitest'
+import { publicV14MovementIntents } from '../PublicV14Controller'
 import './atomicV41Database'
 import { createAtomicV43Store } from './atomicV43Database'
 import { createAtomicV44PromotionStore } from './atomicV44Promotion'
@@ -547,6 +548,37 @@ describe('V45 fenced source-only flow', () => {
       .toBe(rootBytes)
     expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
       .toEqual(marker)
+  }, 60_000)
+
+  it('persists a checked mounted A/D turn without translating the rider', async () => {
+    const { source, store } = await setup(mountedV44Root())
+    const started = await startPublicV45(locks, store, source, 1)
+    if (!started.ok) throw new Error(started.reason)
+    const before = started.value.head.state.player
+    const intents = publicV14MovementIntents(before.yaw, [1, 0], 0.24)
+    if (intents.length !== 1 || intents[0]?.type !== 'look')
+      throw new Error('A/D did not yield one turn intent')
+    const witness = { kind: 'sedgehorn-assisted-ride-batch/v1' as const,
+      frames: [{ kind: 'sedgehorn-assisted-ride-frame/v1' as const,
+        intents: [intents[0]] as const }] }
+    const saved = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, witness)
+    if (!saved.ok) throw new Error(saved.reason)
+    expect(saved.value.head.state.player.yaw).not.toBe(before.yaw)
+    expect(saved.value.head.state.player.position).toEqual(before.position)
+    expect(saved.value.events.some((event) => event.type === 'player_moved')).toBe(false)
+    const resumed = await resumePublicV45(locks, store, source, 1,
+      started.value.lineage)
+    if (!resumed.ok) throw new Error(resumed.reason)
+    expect(resumed.value.head.state.player.yaw).toBe(saved.value.head.state.player.yaw)
+    expect(resumed.value.head.state.player.position).toEqual(before.position)
+    expect(await commitPublicV45(locks, store, source, 1,
+      started.value.lineage, { kind: 'sedgehorn-assisted-ride-frame/v1',
+        intents: [{ type: 'look', yawDelta: 99, pitchDelta: 0 }] }))
+      .toEqual({ ok: false, reason: 'invalid-witness' })
+    const moved = await commitPublicV45(locks, store, source, 1,
+      started.value.lineage, ride)
+    expect(moved.ok).toBe(true)
   }, 60_000)
 
   it('persists paid tack through witnessed travel, mount, ride, dismount, and reload', async () => {
