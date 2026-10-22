@@ -509,7 +509,7 @@ describe('V28 checked controller runtime', () => {
 
   it.each([
     { side: 'upper', ladderBuilt: true, z: -6.08, step: 0.16,
-      message: 'The cliff lip is a drop. Back away and stay on the upper shelf, or return to your built ladder to descend.' },
+      message: 'The cliff lip is a drop. Back north onto the upper shelf, go west past the rock return, then turn south on dry ground toward the river; use your built ladder to descend here.' },
     { side: 'lower', ladderBuilt: true, z: -5.92, step: -0.16,
       message: 'The cliff blocks this step. Follow the lower face to your built ladder and climb its rungs.' },
     { side: 'lower', ladderBuilt: false, z: -5.92, step: -0.16,
@@ -572,6 +572,17 @@ describe('V28 checked controller runtime', () => {
     Reflect.set(proxied, 'state', new Proxy(proxied.state, {}))
     expect(replayPublicV28FramesWithEvents(proxied, [frame])).toBeNull()
     expect(replayPublicV28FramesWithEvents(owned(builder.committed()), [])).toBeNull()
+  })
+
+  it('guides the reported west cliff-lip stop without moving the player', () => {
+    const start = startAtPoint(true, { x: -26.9, z: -6.08 })
+    const runtime = createPublicV28ControllerRuntime(start,
+      async () => ({ ok: false as const, reason: 'not-called' }))
+    const before = runtime.preview()
+    expect(runtime.advanceFrame(move(0.16), false).rejections)
+      .toEqual([expect.objectContaining({ code: 'terrain_missing',
+        message: expect.stringMatching(/Back north onto the upper shelf, go west past the rock return, then turn south/) })])
+    expect(runtime.preview()).toEqual(before)
   })
 
   it('saves a 64-frame bridge crossing with the exact replayed progress and events', async () => {

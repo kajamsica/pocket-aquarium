@@ -64,7 +64,7 @@ export function publicV35LedgerQuest(view: WizardViewProjection,
     ? riverBridge
       ? 'Build or use a marked north cliff ladder with 4 logs, then return west to your saved connected-river bridge.'
       : 'Build or use a marked north cliff ladder with 4 logs, then carry 8 logs west to build a connected-river bridge at a Ready dry-bank site.'
-    : 'Carry 8 logs up your saved north cliff ladder. Follow revealed dry upper ground west past the west rock return, descend on revealed dry ground to the connected river, and follow its dry bank until a site is marked Ready. Build there, then cross.', pendingReward)
+    : 'Carry 8 logs up your saved north cliff ladder. Stay north of the cliff lip on the upper shelf, go west past the rock return, then turn south on revealed dry ground to the connected river. Follow its dry bank until a site is marked Ready. Build there, then cross.', pendingReward)
 
   return finish('survey',
     'Cross your saved connected-river bridge. Reach its revealed dry far-bank exit and use Survey at the River Works post.', pendingReward)

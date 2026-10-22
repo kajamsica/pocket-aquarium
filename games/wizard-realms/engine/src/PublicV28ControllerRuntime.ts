@@ -173,7 +173,9 @@ export function publicV28BlockedMoveMessage(preview: PublicV28Progress, frame: P
     if (rim && !rim.ok && rim.reason === 'cliff-needs-ladder') {
       if (from.z <= starterCliffCanonicalFace(preview.state.seed).to.z)
         return spans?.length
-          ? 'The cliff lip is a drop. Back away and stay on the upper shelf, or return to your built ladder to descend.'
+          ? from.x < 0
+            ? 'The cliff lip is a drop. Back north onto the upper shelf, go west past the rock return, then turn south on dry ground toward the river; use your built ladder to descend here.'
+            : 'The cliff lip is a drop. Back away and stay on the upper shelf, or return to your built ladder to descend.'
           : 'The cliff lip is a drop. Back away and stay on the upper shelf.'
       return spans?.length
         ? 'The cliff blocks this step. Follow the lower face to your built ladder and climb its rungs.'

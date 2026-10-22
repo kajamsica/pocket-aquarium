@@ -41,8 +41,8 @@ describe('V35 read-only ledger journal', () => {
       greenwayWorks: { builtLadderIds: [ladder] } })
     expect(withLadder.stage).toBe('route')
     expect(withLadder.objective).toMatch(/8 logs.*saved north cliff ladder/)
-    expect(withLadder.objective).toMatch(/revealed dry upper ground west.*west rock return/)
-    expect(withLadder.objective).toMatch(/descend on revealed dry ground.*connected river/)
+    expect(withLadder.objective).toMatch(/Stay north of the cliff lip.*go west past the rock return.*turn south on revealed dry ground/)
+    expect(withLadder.objective).toMatch(/turn south on revealed dry ground to the connected river/)
     expect(withLadder.objective).toMatch(/dry bank until a site is marked Ready.*Build there, then cross/)
     expect(withLadder.reward).toBe(withoutLadder.reward)
     expect(publicV35LedgerQuest(view, { ...claimed, greenwayWorks: { builtLadderIds: [ladder] },
