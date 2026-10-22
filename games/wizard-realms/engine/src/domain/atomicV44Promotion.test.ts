@@ -79,9 +79,10 @@ describe('V44 to V45 durable successor reservation', () => {
       status: 'blocked', reason: 'storage-error' })
   })
 
-  it('holds a blocked upgrade and its callback until the old tab closes', async () => {
+  it('fails a blocked upgrade promptly without allowing a late marker write', async () => {
     const factory = new IDBFactory(), store = createAtomicV44PromotionStore(factory)
     await write(factory, 'root', root)
+    const before = await inspect(factory)
     const held = await open(factory, 1)
     const read = await checkedRead(store)
     const onBlocked = vi.fn()
@@ -92,14 +93,37 @@ describe('V44 to V45 durable successor reservation', () => {
     }).then((result) => { settled = true; return result })
     try {
       await blocked
-      await new Promise((resolve) => setTimeout(resolve, 0))
+      expect(await Promise.race([transition,
+        new Promise((resolve) => setTimeout(() => resolve('still-pending'), 20))]))
+        .toBe('storage-error')
       expect(onBlocked).toHaveBeenCalledTimes(1)
-      expect(settled).toBe(false)
+      expect(settled).toBe(true)
       expect(held.version).toBe(1)
     } finally { held.close() }
-    expect(await transition).toBe('committed')
+    expect(await transition).toBe('storage-error')
     expect(onBlocked).toHaveBeenCalledTimes(1)
+    const after = await inspect(factory)
+    expect(after).toEqual(before)
+    expect(await store.transitionSuccessor((await checkedRead(store)).proof,
+      'pending')).toBe('committed')
     expect((await inspect(factory)).version).toBe(2)
+  })
+
+  it('closes a late successful connection after a blocked return', async () => {
+    const actual = new IDBFactory()
+    await write(actual, 'root', root)
+    const close = vi.fn()
+    const request = { result: { close }, onblocked: null, onupgradeneeded: null,
+      onerror: null, onsuccess: null } as unknown as IDBOpenDBRequest
+    const factory = { open: (name: string, version?: number) => version === 2
+      ? request : actual.open(name, version) } as unknown as IDBFactory
+    const store = createAtomicV44PromotionStore(factory)
+    const transition = store.transitionSuccessor((await checkedRead(store)).proof, 'pending')
+    request.onblocked?.call(request, {} as IDBVersionChangeEvent)
+    expect(await transition).toBe('storage-error')
+    request.onsuccess?.call(request, {} as Event)
+    expect(close).toHaveBeenCalledTimes(1)
+    expect(await inspect(actual)).toMatchObject({ version: 1, keys: ['root'] })
   })
 
   it('rejects a stale concurrent V1 proof without silently accepting its upgrade', async () => {

@@ -146,19 +146,22 @@ export function createAtomicV44PromotionStore(factory: IDBFactory,
 function reservePending(factory: IDBFactory, name: string, prior: Prior,
   next: V44SuccessorMarker, onBlocked?: () => void): Promise<Transition> {
   return new Promise((resolve) => {
-    let changed = false, upgraded = false, blockedNotified = false
+    let changed = false, upgraded = false, blockedNotified = false, cancelled = false
     let request: IDBOpenDBRequest
     try { request = factory.open(name, 2) }
     catch { resolve('storage-error'); return }
     request.onblocked = () => {
       if (!blockedNotified) {
         blockedNotified = true
+        cancelled = true
+        resolve('storage-error')
         try { onBlocked?.() } catch { /* A UI callback cannot cancel the upgrade. */ }
       }
     }
     request.onupgradeneeded = (event) => {
-      upgraded = true
       const tx = request.transaction
+      if (cancelled) { tx?.abort(); return }
+      upgraded = true
       if (event.oldVersion !== 1 || !tx) { changed = true; tx?.abort(); return }
       try {
         const records = tx.objectStore('records')
@@ -176,6 +179,7 @@ function reservePending(factory: IDBFactory, name: string, prior: Prior,
     request.onerror = () => resolve(changed ? 'revision-changed' : 'storage-error')
     request.onsuccess = () => {
       request.result.close()
+      if (cancelled) return
       resolve(upgraded ? 'committed' : 'revision-changed')
     }
   })
