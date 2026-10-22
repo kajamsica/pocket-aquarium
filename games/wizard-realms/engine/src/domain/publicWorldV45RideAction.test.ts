@@ -254,6 +254,34 @@ describe('V45 checked assisted Sedgehorn ride', () => {
     expect(result.progress!.state.tick).toBe(before.state.tick + 1)
   })
 
+  it('preserves the exact v1 position of a previously admitted ride frame', () => {
+    const before = at(36, 4, true)
+    const saved = structuredClone(before)
+    const oldLeg = 0.2 * 5 / 6
+    const result = confirmPublicV45RideFrame(before, ride(0.2))
+    expect(result.rejection).toBeUndefined()
+    expect(result.events!.filter((event) => event.type === 'player_moved')[0].position.x)
+      .toBe(36 + oldLeg)
+    expect(result.progress!.state.player.position.x).toBe((36 + oldLeg) + oldLeg)
+    expect(result.progress!.state.player.position.z).toBe(4)
+    expect(before).toEqual(saved)
+  })
+
+  it('admits a maximum booted step at large coordinates but rejects an over-limit witness', () => {
+    const base = at(-375.375688, 348.856846, true)
+    const before = { ...base, state: { ...base.state, player: { ...base.state.player,
+      yaw: -3.25 } } }
+    const saved = structuredClone(before)
+    const delta = { x: -Math.sin(before.state.player.yaw) * 0.24,
+      z: -Math.cos(before.state.player.yaw) * 0.24 }
+    const result = confirmPublicV45RideFrame(before, ride(delta.x, delta.z))
+    expect(result.rejection).toBeUndefined()
+    expect(result.progress!.state.player.position.z).toBeGreaterThan(before.state.player.position.z)
+    expect(confirmPublicV45RideFrame(before, ride(delta.x * 1.001,
+      delta.z * 1.001)).rejection).toBe('invalid_witness')
+    expect(before).toEqual(saved)
+  })
+
   it.each([false, true])('settles a dry descent with remote bridge=%s', (bridge) => {
     const base = at(41.85, -56, true)
     const site = resolvePublicV28RiverBridge(seed, 'works6:river-bridge:-14')!

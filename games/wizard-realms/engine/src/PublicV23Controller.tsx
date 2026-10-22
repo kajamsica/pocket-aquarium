@@ -77,6 +77,11 @@ import { PUBLIC_V45_MAX_RIDE_BATCH } from './domain/publicWorldV45RideAction'
 import type { PublicV45Progress } from './domain/publicWorldV45RideAction'
 import { SEDGEHORN_TACK_PRICE } from './domain/publicWorldV45TackPurchase'
 import { MIREGLASS_HERB_UNIT_PRICE } from './domain/publicWorldV45HerbSale'
+import { resolveSedgehornFamiliarSite } from './domain/sedgehornFamiliarContent'
+import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
+import { projectPublicV31Pose } from './domain/publicWorldV31Support'
+import { publicV43FamiliarTouchesForbiddenSupport }
+  from './domain/publicWorldV43FamiliarFollower'
 import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint,
   publicV44FamiliarObjective }
   from './view/PublicV43FamiliarQuest'
@@ -1969,7 +1974,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             : 'kind' in intent && intent.kind === 'sedgehorn-dismount/v1'
             ? 'Dismounted. Your adult Sedgehorn is parked here and saved.'
             : 'kind' in intent && intent.kind === 'buy-sedgehorn-tack/v1'
-            ? `Sedgehorn tack purchased at Greenway Outfitters for ${SEDGEHORN_TACK_PRICE} coins and saved.`
+            ? `Sedgehorn tack purchased for ${SEDGEHORN_TACK_PRICE} coins and saved.`
             : 'kind' in intent && intent.kind === 'sell-marsh-herb/v1'
             ? `Sold ${intent.quantity} marsh herb at the Mireglass salvager for ${intent.quantity * MIREGLASS_HERB_UNIT_PRICE} coins. Sale saved.`
             : 'kind' in intent && (intent.kind.startsWith('familiar-')
@@ -2065,7 +2070,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
             || intent.kind === 'sedgehorn-dismount/v1')
           ? ({ not_mature: 'Care for and bond with the juvenile Sedgehorn before riding.',
-              tack_required: `Buy Sedgehorn tack at Greenway Outfitters for ${SEDGEHORN_TACK_PRICE} coins before mounting.`,
+              tack_required: `Buy ${SEDGEHORN_TACK_PRICE}-coin Sedgehorn tack at the Mireglass keeper or Greenway Outfitters before mounting.`,
               too_far: 'Move within 3 m of your adult Sedgehorn.',
               unsafe_mount: 'Mount only on revealed, dry, level ground.',
               not_grounded: 'Land on safe ground before dismounting.',
@@ -2078,9 +2083,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           ? ({ already_owned: 'Sedgehorn tack is already owned.',
               not_parked: 'Dismount before buying tack.',
               not_mature: 'Bond with and mature your Sedgehorn before buying tack.',
-              wrong_region: 'Tack is sold only at Greenway Outfitters.',
-              not_grounded: 'Land before buying tack.',
-              too_far: 'Move within 3 m of Greenway Outfitters to buy tack.',
+              wrong_region: 'Buy tack at the Mireglass keeper or Greenway Outfitters.',
+              unrevealed: 'Discover the Mireglass keeper before buying tack there.',
+              not_grounded: 'Stand on revealed, dry ground before buying tack.',
+              too_far: 'Move within 3 m of the Mireglass keeper or Greenway Outfitters to buy tack.',
               insufficient_coins: `Sedgehorn tack costs ${SEDGEHORN_TACK_PRICE} coins.` } as
               Record<string, string>)[result.reason ?? '']
             ?? `Tack purchase was not saved (${result.reason}).`
@@ -2883,6 +2889,34 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     active.player.position.z - adult.position.z) : null
   const v45Progress = v45 ? snapshot as PublicV45Progress : null
   const v45TackOwned = !!v45Progress && v45Progress.tack !== 'not_owned'
+  // Only resolve the keeper while its journal is open and the adult is close enough
+  // that a 3 m keeper purchase could be possible. The checked action remains final.
+  const v45Keeper = v45Progress && familiarOpen && !v45TackOwned
+    && active.movementOwner === 'streamed' && (adultDistance ?? Infinity) <= 6
+    ? resolveSedgehornFamiliarSite(v45Progress)?.keeper : null
+  const v45KeeperRevealed = !!v45Keeper && !!v45Progress
+    && discoveryMaskHasTileId(v45Progress.state.discoveryMask, v45Keeper.id)
+  const v45KeeperDistance = v45Keeper ? Math.hypot(
+    active.player.position.x - v45Keeper.center.x,
+    active.player.position.y - v45Keeper.center.y,
+    active.player.position.z - v45Keeper.center.z) : Infinity
+  const v45KeeperNearby = v45KeeperRevealed && v45KeeperDistance <= 3
+  const v45KeeperPose = v45Progress && v45KeeperNearby
+    ? projectPublicV31Pose(v45Progress) : null
+  const v45KeeperSurface = v45Progress && v45KeeperPose
+    ? resolvePublicV23Surface(v45Progress.state, active.player.position,
+      v45Progress.regionalWorks.builtLadderIds) : null
+  const v45KeeperSafeGround = !!v45Progress && !!v45KeeperPose && !!v45KeeperSurface
+    && active.player.verticalVelocity === 0 && v45KeeperPose.support === 'terrain'
+    && v45KeeperSurface.support === 'terrain'
+    && worldTileAtGrid(v45Progress.state.seed, v45KeeperPose.cell.gx,
+      v45KeeperPose.cell.gz).terrain !== 'wetland'
+    && Math.abs(active.player.position.y - v45KeeperPose.effective.floorY) <= 1e-6
+    && Math.abs(active.player.position.y - v45KeeperSurface.floorY) <= 1e-6
+    && discoveryMaskHasTileId(v45Progress.state.discoveryMask, v45KeeperSurface.tileId)
+    && !publicV43FamiliarTouchesForbiddenSupport(v45Progress.state.seed,
+      active.player.position, active.player.position, v45Progress.terrain.columns,
+      v45Progress.raisedSoilCells)
   const v45HerbsOwned = v45 ? active.player.inventory
     .filter((stack) => stack.itemId === 'marsh_herb')
     .reduce((total, stack) => total + stack.quantity, 0) : 0
@@ -3054,7 +3088,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       <summary><span>{mountWorld ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
         <small>{mountWorld && adult?.visible
           ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
-            : v45 && !v45TackOwned ? 'Adult Sedgehorn ready; buy tack at Greenway Outfitters before mounting.'
+            : v45 && !v45TackOwned ? 'Adult Sedgehorn ready; buy tack at the Mireglass keeper or Greenway Outfitters.'
             : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`
           : journalLeadObjective
           ?? 'Open the journal for completed leads and the optional carpenter order.'}</small></summary>
@@ -3065,8 +3099,26 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : adult.mode === 'riding'
             ? 'Riding on revealed safe ground. Dismount to gather, build, trade, jump, or use quest actions.'
             : v45 && !v45TackOwned
-              ? `Parked ${Math.ceil(adultDistance ?? 0)} m away. Buy ${SEDGEHORN_TACK_PRICE}-coin tack at Greenway Outfitters before mounting.`
+              ? `Parked ${Math.ceil(adultDistance ?? 0)} m away. Buy ${SEDGEHORN_TACK_PRICE}-coin tack at the revealed Mireglass keeper or Greenway Outfitters before mounting.`
               : `Parked ${Math.ceil(adultDistance ?? 0)} m away. Stand within 3 m on dry, level ground to mount.`}</p>
+        {v45 && adult?.visible && !v45TackOwned && active.movementOwner === 'streamed'
+          && <><button type="button" disabled={status.gate !== 'open' || busy.current
+            || queuedChecked || adult.mode !== 'parked' || !v45KeeperNearby
+            || !v45KeeperSafeGround
+            || active.player.coins < SEDGEHORN_TACK_PRICE}
+            onClick={() => queueChecked({ kind: 'buy-sedgehorn-tack/v1' })}>
+            Buy Sedgehorn tack at keeper · {SEDGEHORN_TACK_PRICE} coins
+          </button><p className="wr-caption">{!v45Keeper
+            ? 'Return toward the Mireglass keeper on the dry marsh edge.'
+            : !v45KeeperRevealed
+              ? 'Discover the Mireglass keeper on the dry marsh edge.'
+            : !v45KeeperNearby
+              ? `Move within 3 m of the keeper (${Math.ceil(v45KeeperDistance)} m away).`
+              : !v45KeeperSafeGround
+                ? 'Step onto revealed, dry, unchanged ground within 3 m of the keeper.'
+                : active.player.coins < SEDGEHORN_TACK_PRICE
+                  ? `Need ${SEDGEHORN_TACK_PRICE - active.player.coins} more coins.`
+                  : 'Ready to buy on safe keeper ground.'}</p></>}
         {adult?.visible && <button type="button"
           disabled={status.gate !== 'open' || busy.current || queuedChecked
             || (adult.mode === 'parked' && ((adultDistance ?? Infinity) > 3

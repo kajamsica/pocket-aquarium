@@ -58,6 +58,9 @@ export type PublicV45ActionResult = PublicV45RideResult | Readonly<{
 const EPSILON = 1e-6
 const MAX_GRADE = 0.55
 const MAX_TURN_RADIANS = 0.13
+const ASSISTED_LEG_CAP = 0.2
+const ASSISTED_SPAN_CAP = 0.4
+const ROUNDING_ONLY_METERS = 1e-12
 const V31_KEYS = ['state', 'greenwayWorks', 'regionalWorks', 'terrain',
   'nextHomeAtMs', 'riverBridgeIds', 'miningTools', 'claimedBridgeheadId',
   'raisedSoilCells'] as const
@@ -193,13 +196,31 @@ function confirmCheckedRideFrame(before: PublicV45Progress,
     }
     const move = last
     const length = Math.hypot(move.delta.x, move.delta.z)
-    if (length > publicV11Gait(before.state.player.equipment.feet, false).metersPerStep + 1e-9)
+    const gaitLimit = publicV11Gait(before.state.player.equipment.feet, false).metersPerStep
+    if (length > gaitLimit + 1e-9)
       return reject('invalid_witness')
-    const first = { x: move.delta.x * 5 / 6, z: move.delta.z * 5 / 6 }
+    // Preserve exact v1 replay arithmetic whenever the old path fits the strict caps.
+    // Only a nominal maximum gait step rounded over a cap at world coordinates needs
+    // a sub-nanometre shorter path; all earlier admitted positions stay bit-identical.
+    let first = { x: move.delta.x * 5 / 6, z: move.delta.z * 5 / 6 }
+    let middle = { x: start.x + first.x, y: start.y, z: start.z + first.z }
+    let target = { x: middle.x + first.x, y: start.y, z: middle.z + first.z }
+    const legA = Math.hypot(middle.x - start.x, middle.z - start.z)
+    const legB = Math.hypot(target.x - middle.x, target.z - middle.z)
+    if ((legA > ASSISTED_LEG_CAP || legB > ASSISTED_LEG_CAP
+      || legA + legB > ASSISTED_SPAN_CAP)
+      && length <= gaitLimit + 1e-15
+      && Math.abs(length * 5 / 6 - ASSISTED_LEG_CAP) <= 1e-15
+      && legA <= ASSISTED_LEG_CAP + ROUNDING_ONLY_METERS
+      && legB <= ASSISTED_LEG_CAP + ROUNDING_ONLY_METERS
+      && legA + legB <= ASSISTED_SPAN_CAP + 2 * ROUNDING_ONLY_METERS) {
+      first = { x: move.delta.x * (5 / 6 - 1e-9),
+        z: move.delta.z * (5 / 6 - 1e-9) }
+      middle = { x: start.x + first.x, y: start.y, z: start.z + first.z }
+      target = { x: middle.x + first.x, y: start.y, z: middle.z + first.z }
+    }
     const assisted = { substeps: [first, first] as const,
       settle: (after: PublicV23Progress) => after }
-    const middle = { x: start.x + first.x, y: start.y, z: start.z + first.z }
-    const target = { x: middle.x + first.x, y: start.y, z: middle.z + first.z }
     if (!dryLeg(before, start, middle) || !dryLeg(before, middle, target))
       return reject('ride_blocked')
     const admission = createPublicV45DryRideAdmission(start, middle, target)

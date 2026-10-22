@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
 import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import { createFreshPublicV43Root, decodePublicV43Progress }
   from './publicWorldV43Snapshot'
@@ -27,6 +28,22 @@ function ready(coins = SEDGEHORN_TACK_PRICE): PublicV45Progress {
   if (!progress) throw new Error('Invalid mature Greenway fixture')
   return { ...progress, groundMount: { mode: 'parked', parkedPosition: null },
     tack: 'not_owned' }
+}
+
+function atKeeper(coins = SEDGEHORN_TACK_PRICE): PublicV45Progress {
+  const before = ready(coins)
+  const site = resolveSedgehornFamiliarSite(before)!
+  const { groundMount, tack, ...v43 } = before
+  const progress = decodePublicV43Progress({ ...v43, state: { ...before.state,
+    movementOwner: 'streamed',
+    discoveryMask: encodeDiscoveredTileIds([...new Set([
+      ...decodeDiscoveredTileIds(before.state.discoveryMask),
+      ...[site.keeper, site.tracks, site.shelter, site.dryApproach, site.habitat]
+        .map((tile) => tile.id),
+    ])].sort()),
+    player: { ...before.state.player, position: { ...site.keeper.center } } } })
+  if (!progress) throw new Error('Invalid mature keeper fixture')
+  return { ...progress, groundMount, tack }
 }
 
 describe('V45 fixed-price Sedgehorn tack purchase', () => {
@@ -65,7 +82,8 @@ describe('V45 fixed-price Sedgehorn tack purchase', () => {
     expect(confirmPublicV45TackPurchase({ ...before, groundMount: {
       mode: 'riding', parkedPosition: null } }).rejection).toBe('not_parked')
     expect(confirmPublicV45TackPurchase({ ...before, state: { ...before.state,
-      movementOwner: 'streamed' } }).rejection).toBe('wrong_region')
+      movementOwner: 'unknown' as typeof before.state.movementOwner } }).rejection)
+      .toBe('wrong_region')
     expect(confirmPublicV45TackPurchase({ ...before, state: { ...before.state,
       player: { ...before.state.player, verticalVelocity: 1 } } }).rejection)
       .toBe('not_grounded')
@@ -89,5 +107,45 @@ describe('V45 fixed-price Sedgehorn tack purchase', () => {
       player: { ...before.state.player,
         coins: Number.MAX_SAFE_INTEGER + 1 } } }).rejection).toBe('invalid_value')
     expect(before).toEqual(original)
+  })
+
+  it('sells tack once at the revealed dry Mireglass keeper without changing other progress', () => {
+    const before = atKeeper(300), original = structuredClone(before)
+    expect(resolveSedgehornFamiliarSite(before)!.keeper.terrain).toBe('loam')
+    const result = confirmPublicV45TackPurchase(before)
+    expect(result.rejection).toBeUndefined()
+    const after = result.progress!
+    expect(after.tack).toBe('purchased')
+    expect(after.state.player.coins).toBe(60)
+    expect(after.state.eventSequence).toBe(before.state.eventSequence + 1)
+    expect({ ...after, state: before.state, tack: before.tack }).toEqual(before)
+    expect(confirmPublicV45TackPurchase(after).rejection).toBe('already_owned')
+    expect(before).toEqual(original)
+  })
+
+  it('rejects unrevealed, wet, distant, airborne, immature, and underfunded keeper buys', () => {
+    const before = atKeeper(), site = resolveSedgehornFamiliarSite(before)!
+    expect(site.habitat.terrain).toBe('wetland')
+    const rejects = (candidate: PublicV45Progress, reason: string) => {
+      const original = structuredClone(candidate)
+      expect(confirmPublicV45TackPurchase(candidate).rejection).toBe(reason)
+      expect(candidate).toEqual(original)
+    }
+    const playerAt = (position: typeof before.state.player.position): PublicV45Progress =>
+      ({ ...before, state: { ...before.state, player: { ...before.state.player,
+        position: { ...position } } } })
+    const tracks = playerAt(site.tracks.center)
+    expect(Math.hypot(site.tracks.center.x - site.keeper.center.x,
+      site.tracks.center.z - site.keeper.center.z)).toBeGreaterThan(3)
+    rejects({ ...tracks, state: { ...tracks.state,
+      discoveryMask: encodeDiscoveredTileIds(decodeDiscoveredTileIds(
+        tracks.state.discoveryMask).filter((id) => id !== site.keeper.id)) } }, 'unrevealed')
+    rejects(playerAt(site.habitat.center), 'not_grounded')
+    rejects(tracks, 'too_far')
+    rejects({ ...before, state: { ...before.state, player: { ...before.state.player,
+      verticalVelocity: 1 } } }, 'not_grounded')
+    rejects({ ...before, mountTraining: { careWitnesses:
+      before.mountTraining!.careWitnesses.slice(0, 2) } }, 'not_mature')
+    rejects(atKeeper(239), 'insufficient_coins')
   })
 })
