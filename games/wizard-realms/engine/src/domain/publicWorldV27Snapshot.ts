@@ -7,6 +7,7 @@ import { visitPublicV23FramesWithEvents } from './publicWorldV23Transitions'
 import type { PublicV23StreamedMovePolicy } from './publicWorldV23Transitions'
 import type { PublicV24Progress } from './publicWorldV24Snapshot'
 import { publicV25RiverPassage } from './publicWorldV25Passage'
+import type { PublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { decodePublicV26Witness, publicV26SavedLadderSpans,
   replayPublicV26Witness } from './publicWorldV26Snapshot'
 import type { PublicV26Witness } from './publicWorldV26Snapshot'
@@ -38,13 +39,13 @@ export function createPublicV27Root(rawV26Receipt: unknown): PublicV27Root {
 
 /** Preserve river, rim and excavated-pit rules before allowing ordinary dry 0.8 m steps. */
 function acceptsSegment(before: PublicV24Progress, after: PublicV24Progress,
-  terrain: PublicV27Progress['terrain']): boolean {
+  terrain: PublicV27Progress['terrain'], admission?: PublicV45DryRideAdmission): boolean {
   const from = before.state.player.position, to = after.state.player.position
   const start = projectPublicV26Pose(before, terrain), end = projectPublicV26Pose(after, terrain)
   if (!start || !end) return false
   if (from.x !== to.x || from.z !== to.z) {
     const spans = publicV26SavedLadderSpans(before)
-    if (!spans || !publicV25RiverPassage(before, from, to).ok
+    if (!spans || !publicV25RiverPassage(before, from, to, admission).ok
       || !publicV26ValleyRimPassage(before.state.seed, from, to, spans).ok) return false
   }
   const heightChange = end.effective.floorY - start.effective.floorY
@@ -80,14 +81,14 @@ export function publicV27MovementSegmentAccepted(before: PublicV27Progress,
 /** V27 frame replay provides authoritative event effects for the controller and writer. */
 export function replayPublicV27FramesWithEvents(before: PublicV27Progress,
   frames: readonly PublicV14Frame[], allowAirborne = false,
-  streamedMove?: PublicV23StreamedMovePolicy):
+  streamedMove?: PublicV23StreamedMovePolicy, admission?: PublicV45DryRideAdmission):
   { progress: PublicV27Progress; events: readonly PublicWorldEvent[] } | null {
   try {
     const terrain = decodePublicV26TerrainLedger(before.terrain)
     if (!terrain || !Number.isSafeInteger(before.nextHomeAtMs)
       || before.nextHomeAtMs < 0) return null
     const next = visitPublicV23FramesWithEvents(progress(before), frames, (prior, after) =>
-      acceptsSegment(prior, after, terrain), allowAirborne, movementPolicy, streamedMove)
+      acceptsSegment(prior, after, terrain, admission), allowAirborne, movementPolicy, streamedMove)
     return next && projectPublicV26Pose(next.progress, terrain)
       ? { progress: { ...next.progress, terrain, nextHomeAtMs: before.nextHomeAtMs },
         events: next.events } : null

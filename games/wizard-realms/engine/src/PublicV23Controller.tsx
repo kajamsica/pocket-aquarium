@@ -67,6 +67,21 @@ import { commitPublicV44, requestPublicV44ReturnHome } from './domain/publicWorl
 import type { PublicV44Start } from './domain/publicWorldV44Flow'
 import { PUBLIC_V44_MAX_RIDE_BATCH } from './domain/publicWorldV44GroundMount'
 import type { PublicV44GroundMountWitness } from './domain/publicWorldV44GroundMount'
+import { createPublicV45ControllerRuntime, createPublicV45RuntimeLifecycle }
+  from './PublicV45ControllerRuntime'
+import { createPublicV45WorkerBindings } from './PublicV45WorkerBindings'
+import type { PublicV45EntryBindings } from './PublicV45Entry'
+import { commitPublicV45, requestPublicV45ReturnHome } from './domain/publicWorldV45Flow'
+import type { PublicV45Start } from './domain/publicWorldV45Flow'
+import { PUBLIC_V45_MAX_RIDE_BATCH } from './domain/publicWorldV45RideAction'
+import type { PublicV45Progress } from './domain/publicWorldV45RideAction'
+import { SEDGEHORN_TACK_PRICE } from './domain/publicWorldV45TackPurchase'
+import { MIREGLASS_HERB_UNIT_PRICE } from './domain/publicWorldV45HerbSale'
+import { resolveSedgehornFamiliarSite } from './domain/sedgehornFamiliarContent'
+import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
+import { projectPublicV31Pose } from './domain/publicWorldV31Support'
+import { publicV43FamiliarTouchesForbiddenSupport }
+  from './domain/publicWorldV43FamiliarFollower'
 import { PublicV43FamiliarQuestPanel, publicV43FamiliarRejectionHint,
   publicV44FamiliarObjective }
   from './view/PublicV43FamiliarQuest'
@@ -200,7 +215,8 @@ type V41Runtime = ReturnType<typeof createPublicV41ControllerRuntime>
 type V42Runtime = ReturnType<typeof createPublicV42ControllerRuntime>
 type V43Runtime = ReturnType<typeof createPublicV43ControllerRuntime>
 type V44Runtime = ReturnType<typeof createPublicV44ControllerRuntime>
-type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime
+type V45Runtime = ReturnType<typeof createPublicV45ControllerRuntime>
+type V33PlusRuntime = V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime | V45Runtime
 type V32PlusRuntime = V32Runtime | V33PlusRuntime
 type ActiveViewSource = Readonly<{ status: () => { saveRevision: number; pendingFrames: number }
   view: () => PublicV17ActiveView }>
@@ -241,6 +257,7 @@ type CheckedIntent = PublicWorldIntent | { id: string; kind: 'regional-work' | '
   | PublicV43FamiliarWitness | PublicV43MountTrainingWitness | PublicV43LogOrderWitness
   | PublicV43BagUpgradeWitness
   | Extract<PublicV44GroundMountWitness, { kind: 'sedgehorn-mount/v1' | 'sedgehorn-dismount/v1' }>
+  | { kind: 'buy-sedgehorn-tack/v1' } | { kind: 'sell-marsh-herb/v1'; quantity: number }
   | Extract<PublicV29Witness, { kind: 'mining-tool/v1' | 'deep-dig' | 'sell-mineral/v1' }>
   | MireglassWitness | TerrainWitness | PitLadderWitness | ReturnHomeRequest
 type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: boolean;
@@ -957,6 +974,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-version=v34] .v34-branch-label,[data-public-version=v35] .v34-branch-label{position:fixed;z-index:20;top:8px;right:12px;max-width:min(250px,calc(100vw - 24px));box-sizing:border-box;margin:0;padding:6px 9px;background:#10251de8;color:#fff;border-radius:8px;pointer-events:none}
 [data-public-v23] .v23-obstacle-cue{position:fixed;z-index:22;top:36%;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(390px,calc(100vw - 32px));margin:0;padding:10px 14px;border:1px solid #f5d889;border-radius:10px;background:#10251df2;color:#fff;box-shadow:0 8px 24px #0009;text-align:center;pointer-events:none}
 [data-public-v23] .v23-save{position:fixed;z-index:21;top:8px;right:12px;max-width:220px;box-sizing:border-box;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
+@media (min-width:901px), (min-width:720px) and (min-height:591px){[data-public-version=v45] .v23-save[data-v45-confirmed-idle="true"]{display:none}}
 [data-public-v23] .v23-save button{min-height:44px}
 [data-public-v23] .v23-save p{margin:4px 0 0}
 [data-public-v23] .v23-input-trace{box-sizing:border-box;max-width:min(640px,calc(100vw - 260px));overflow-wrap:anywhere}
@@ -964,6 +982,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 [data-public-v23] .v24-actions{position:fixed;z-index:21;right:12px;bottom:96px;box-sizing:border-box;width:min(300px,calc(100vw - 24px));max-height:45vh;overflow:auto;padding:10px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v24-actions button{display:block;min-height:44px;width:100%;margin-top:6px;text-align:left}
 :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
+[data-public-version=v45] .v24-actions summary{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:44px;background:#10251d;cursor:pointer;font-weight:700}
 [data-public-v23] .v26-safety{position:fixed;z-index:21;left:50%;bottom:8px;transform:translateX(-50%);box-sizing:border-box;width:min(230px,calc(100vw - 24px));max-height:35vh;overflow:auto;padding:8px;background:#10251de8;color:#fff;border-radius:8px}
 [data-public-v23] .v26-safety:not([open]){width:140px;padding:0 6px;opacity:.85}
 [data-public-v23] .v26-safety summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -996,12 +1015,17 @@ const PUBLIC_V23_PANEL_STYLES = `
   [data-public-v23] .v23-save{top:76px;right:8px}
   [data-public-v23] .v24-actions{right:8px;bottom:calc(156px + env(safe-area-inset-bottom,0px));max-height:30vh}
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]) .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
+  [data-public-version=v45] .v24-actions:not([open]){width:156px;max-height:none;padding:0 8px}
   :is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-surface[data-work-mode="true"]) .v24-actions,:is([data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42]):has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
+  [data-public-version=v45]:has(.wr-surface[data-work-mode="true"]) .v24-actions,[data-public-version=v45]:has(.wr-v35-quest[data-expanded="true"]) .v24-actions{display:none}
   [data-public-v23] .v26-safety{bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 300px);min-height:0}
   [data-public-v23] .v43-familiar{top:210px;left:auto;right:8px;transform:none;bottom:auto;max-height:calc(100dvh - 220px - env(safe-area-inset-bottom,0px))}
   :is([data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
   :is([data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
+  [data-public-version=v45] .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
+  [data-public-version=v45] .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
+@media(max-width:719px) and (min-height:700px){[data-public-version=v45] .wr-surface .wr-context[data-store-panel]{bottom:calc(270px + env(safe-area-inset-bottom,0px));max-height:calc(100% - 490px - env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain}}
 @media(min-width:380px) and (max-width:719px) and (min-height:401px){[data-public-version=v43] .v26-safety:not([open]){left:calc(50% + 55px);right:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(84px,calc(100vw - 306px))}}
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){
   [data-public-v23] .v43-familiar:not([open]){top:316px;width:calc(100vw - 560px)}
@@ -1012,9 +1036,9 @@ body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has
 [data-public-version=v26],[data-public-version=v27],[data-public-version=v28],[data-public-version=v29],[data-public-version=v30],[data-public-version=v31],[data-public-version=v32],[data-public-version=v33],[data-public-version=v34]{height:100dvh}
 [data-public-version=v26] .wr-surface,[data-public-version=v27] .wr-surface,[data-public-version=v28] .wr-surface,[data-public-version=v29] .wr-surface,[data-public-version=v30] .wr-surface,[data-public-version=v31] .wr-surface,[data-public-version=v32] .wr-surface,[data-public-version=v33] .wr-surface,[data-public-version=v34] .wr-surface{height:100%;min-height:0}
 @media(min-width:901px),(min-width:720px) and (min-height:591px){
-body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44])){margin:0;background:#14221f}
-:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]){height:100dvh}
-:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .wr-surface{height:100%;min-height:0}
+body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44],[data-public-version=v45])){margin:0;background:#14221f}
+:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44],[data-public-version=v45]){height:100dvh}
+:is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44],[data-public-version=v45]) .wr-surface{height:100%;min-height:0}
 }
 @media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide{left:166px;bottom:16px}}
 `
@@ -1177,6 +1201,30 @@ export type PublicV43ControllerProps = PublicV43EntryBindings & Readonly<{
   start: PublicV43Start; version: 'v43' }>
 export type PublicV44ControllerProps = PublicV44EntryBindings & Readonly<{
   start: PublicV44Start; version: 'v44' }>
+export type PublicV45ControllerProps = PublicV45EntryBindings & Readonly<{
+  start: PublicV45Start; version: 'v45';
+  v45SaveOpen: import('./PublicV45Entry').PublicV45SessionSaveOpen }>
+
+/** READY never falls back to a page writer, including after an uncertain Worker result. */
+export function createPublicV45RuntimeForEntry(props: PublicV45ControllerProps): V45Runtime {
+  if (props.v45SaveOpen?.status === 'ready') {
+    let runtime: V45Runtime | null = null
+    const worker = createPublicV45WorkerBindings(props.v45SaveOpen.transport, props,
+      () => {
+        if (!runtime) throw Error('V45 runtime is not ready')
+        return runtime.committed()
+      })
+    runtime = createPublicV45ControllerRuntime(props.start, worker.write,
+      worker.homeWrite, worker.ridePort)
+    return runtime
+  }
+  if (props.v45SaveOpen?.status !== 'unsupported')
+    throw Error('V45 save transport status is required')
+  return createPublicV45ControllerRuntime(props.start, (revision, lineage, witness) =>
+    commitPublicV45(props.locks, props.store, props.v44Store, revision, lineage, witness),
+    (revision, lineage) => requestPublicV45ReturnHome(props.locks, props.store,
+      props.v44Store, revision, lineage))
+}
 
 /** The clicked cell is not a claim of mineability; only the checked action decides. */
 export function publicV29ActionRejectionMessage(reason: string): string {
@@ -1367,9 +1415,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   | PublicV34ControllerProps | PublicV35ControllerProps | PublicV36ControllerProps
   | PublicV37ControllerProps | PublicV38ControllerProps | PublicV39ControllerProps
   | PublicV40ControllerProps | PublicV41ControllerProps | PublicV42ControllerProps
-  | PublicV43ControllerProps | PublicV44ControllerProps) {
+  | PublicV43ControllerProps | PublicV44ControllerProps | PublicV45ControllerProps) {
+  const v45 = 'version' in props && props.version === 'v45'
+  const v45OverlapReady = 'version' in props && props.version === 'v45'
+    && props.v45SaveOpen?.status === 'ready'
   const v44 = 'version' in props && props.version === 'v44'
-  const v43 = 'version' in props && (props.version === 'v43' || v44)
+  const mountWorld = v44 || v45
+  const v43 = 'version' in props && (props.version === 'v43' || mountWorld)
   const v42 = 'version' in props && (props.version === 'v42' || v43)
   const v41 = 'version' in props && (props.version === 'v41' || v42)
   const v40 = 'version' in props && (props.version === 'v40' || v41)
@@ -1394,7 +1446,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const physicalWorld = v26 || v27 || riverBridgeWorld
   const river = v25 || physicalWorld
   const v24 = 'version' in props
-  const saveVersion = v44 ? '44' : v43 ? '43' : v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
+  const saveVersion = v45 ? '45' : v44 ? '44' : v43 ? '43' : v42 ? '42' : v41 ? '41' : v40 ? '40' : v39 ? '39' : v38 ? '38' : v37 ? '37' : v36 ? '36' : v35 ? '35' : v34 ? '34' : v33 ? '33' : v32 ? '32' : v31 ? '31' : v30 ? '30' : v29 ? '29' : v28 ? '28' : v27 ? '27' : v26 ? '26' : v25 ? '25' : v24 ? '24' : '23'
   const traceRef = useRef<ReturnType<typeof createPublicV17InputTrace> | null | undefined>(undefined)
   if (traceRef.current === undefined) traceRef.current = publicV17InputTraceEnabled(
     typeof window === 'undefined' ? '' : window.location?.hostname ?? '',
@@ -1405,9 +1457,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     trace)
   const runtimeRef = useRef<Runtime | V24Runtime | V25Runtime | V26Runtime | V27Runtime
     | V28Runtime | V29Runtime | V30Runtime | V31Runtime | V32Runtime
-    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime | null>(null)
+    | V33Runtime | V34Runtime | V35Runtime | V36Runtime | V37Runtime | V38Runtime | V39Runtime | V40Runtime | V41Runtime | V42Runtime | V43Runtime | V44Runtime | V45Runtime | null>(null)
   if (!runtimeRef.current) {
-    runtimeRef.current = 'version' in props && props.version === 'v44'
+    runtimeRef.current = 'version' in props && props.version === 'v45'
+      ? createPublicV45RuntimeForEntry(props)
+      : 'version' in props && props.version === 'v44'
       ? createPublicV44ControllerRuntime(props.start, (revision, lineage, witness) =>
         commitPublicV44(props.locks, props.store, props.v43Store, revision, lineage, witness),
         (revision, lineage) => requestPublicV44ReturnHome(props.locks, props.store,
@@ -1541,6 +1595,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           revision, lineage, witness))
   }
   const runtime = runtimeRef.current
+  const v45LifecycleRef = useRef<ReturnType<typeof createPublicV45RuntimeLifecycle> | null>(null)
+  if (v45 && !v45LifecycleRef.current)
+    v45LifecycleRef.current = createPublicV45RuntimeLifecycle(runtime as V45Runtime)
+  useEffect(() => v45LifecycleRef.current?.mount(), [runtime])
+  const readyRideAtCap = () => v45OverlapReady
+    && runtime.status().gate === 'cap-paused'
+    && (runtime as V45Runtime).groundMount().mode === 'riding'
   const activeMemo = useRef<ActiveViewMemo | null>(null)
   const readActive = (status?: ReturnType<typeof runtime.status>) =>
     publicV23ReadActiveView(runtime, activeMemo, status)
@@ -1575,7 +1636,11 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const obstacleCueUntil = useRef(0)
   const repaint = () => redraw((value) => value + 1)
   const repaintQueued = () => { if (!busy.current) repaint() }
-  const tell = (message: string) => setMessages((prior) => [...prior.slice(-3), message])
+  useEffect(() => v45OverlapReady
+    ? (runtime as V45Runtime).subscribeStatus(repaint) : undefined, [runtime, v45OverlapReady])
+  const tell = (message: string) => setMessages((prior) =>
+    v45 && message === 'V45 progress saved on this device.' && prior.at(-1) === message
+      ? prior : [...prior.slice(-3), message])
   const renderStartedAt = trace ? performance.now() : 0
   const status = runtime.status(), active = readActive(status), snapshot = runtime.preview()
   const viewFinishedAt = trace ? performance.now() : 0
@@ -1686,8 +1751,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const v40FinishedAt = trace && v40 ? performance.now() : v39FinishedAt
   const worldProjection = v42 ? projectPublicV42IronHall(snapshot as PublicV42RewardProgress, waystationView)
     : v41 ? projectPublicV41IronHall(snapshot as PublicV41CombatProgress, waystationView) : waystationView
-  const adult = v44 ? (runtime as V44Runtime).groundMount() : null
-  const mounted = v44 && adult?.mode === 'riding'
+  const adult = mountWorld ? (runtime as V44Runtime | V45Runtime).groundMount() : null
+  const mounted = mountWorld && adult?.mode === 'riding'
   const view: WizardViewProjection = { ...worldProjection,
     ...(mounted ? { unavailableActions: true as const, openStoreId: null,
       gait: publicV44EffectiveGait(active.player.equipment.feet, true, walkRequested),
@@ -1717,6 +1782,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     const due = Math.floor((atMs - timed.nextAtMs) / STEP_MS) + 1
     const firstSampleAtMs = timed.nextAtMs
     timed.nextAtMs += due * STEP_MS
+    if (readyRideAtCap()) return
     if (!timed.vector.some(Boolean) || matchesBlockedHeld(timed.vector)
       || readActive().player.verticalVelocity !== 0) return
     const saveForward = !!saveTask.current && timed.vector[1] > 0
@@ -1825,7 +1891,12 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     actionTask.current = (async () => {
       try {
         const { intent } = token
-        const result = 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
+        const result = v45 && 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
+          || intent.kind === 'sedgehorn-dismount/v1'
+          || intent.kind === 'buy-sedgehorn-tack/v1'
+          || intent.kind === 'sell-marsh-herb/v1')
+          ? await (runtime as V45Runtime).action(intent)
+          : 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
           || intent.kind === 'sedgehorn-dismount/v1')
           ? await (runtime as V44Runtime).action(intent)
           : 'kind' in intent && intent.kind === 'return-home-request'
@@ -1902,12 +1973,16 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             ? 'Mounted the adult Sedgehorn. Stay on revealed, safe ground.'
             : 'kind' in intent && intent.kind === 'sedgehorn-dismount/v1'
             ? 'Dismounted. Your adult Sedgehorn is parked here and saved.'
+            : 'kind' in intent && intent.kind === 'buy-sedgehorn-tack/v1'
+            ? `Sedgehorn tack purchased for ${SEDGEHORN_TACK_PRICE} coins and saved.`
+            : 'kind' in intent && intent.kind === 'sell-marsh-herb/v1'
+            ? `Sold ${intent.quantity} marsh herb at the Mireglass salvager for ${intent.quantity * MIREGLASS_HERB_UNIT_PRICE} coins. Sale saved.`
             : 'kind' in intent && (intent.kind.startsWith('familiar-')
               || intent.kind === 'sedgehorn-care/v1')
             ? intent.kind === 'familiar-claim/v1'
               ? 'The Lost Familiar reward and bond saved. Check your coins, XP, and care station.'
               : intent.kind === 'sedgehorn-care/v1'
-                ? v44 ? 'Sedgehorn care visit saved. Check the quest panel; the adult can be mounted after the third visit.'
+                ? mountWorld ? 'Sedgehorn care visit saved. Check the quest panel; the adult can be mounted after the third visit.'
                   : publicV43SedgehornCareSavedMessage
                 : 'The Lost Familiar quest step saved. Check the quest panel for the next objective.'
             : 'kind' in intent && intent.kind === 'fulfill-greenway-logs/v1'
@@ -1995,12 +2070,36 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : 'kind' in intent && (intent.kind === 'sedgehorn-mount/v1'
             || intent.kind === 'sedgehorn-dismount/v1')
           ? ({ not_mature: 'Care for and bond with the juvenile Sedgehorn before riding.',
+              tack_required: `Buy ${SEDGEHORN_TACK_PRICE}-coin Sedgehorn tack at the Mireglass keeper or Greenway Outfitters before mounting.`,
               too_far: 'Move within 3 m of your adult Sedgehorn.',
               unsafe_mount: 'Mount only on revealed, dry, level ground.',
               not_grounded: 'Land on safe ground before dismounting.',
-              wrong_region: 'Mount in the explorable world, not the starter area.' } as
+              wrong_region: 'Mount in the explorable world, not the starter area.',
+              already_riding: 'You are already riding the Sedgehorn.',
+              not_riding: 'You are not riding the Sedgehorn.' } as
               Record<string, string>)[result.reason ?? '']
             ?? `Sedgehorn action was not saved (${result.reason}).`
+          : 'kind' in intent && intent.kind === 'buy-sedgehorn-tack/v1'
+          ? ({ already_owned: 'Sedgehorn tack is already owned.',
+              not_parked: 'Dismount before buying tack.',
+              not_mature: 'Bond with and mature your Sedgehorn before buying tack.',
+              wrong_region: 'Buy tack at the Mireglass keeper or Greenway Outfitters.',
+              unrevealed: 'Discover the Mireglass keeper before buying tack there.',
+              not_grounded: 'Stand on revealed, dry ground before buying tack.',
+              too_far: 'Move within 3 m of the Mireglass keeper or Greenway Outfitters to buy tack.',
+              insufficient_coins: `Sedgehorn tack costs ${SEDGEHORN_TACK_PRICE} coins.` } as
+              Record<string, string>)[result.reason ?? '']
+            ?? `Tack purchase was not saved (${result.reason}).`
+          : 'kind' in intent && intent.kind === 'sell-marsh-herb/v1'
+          ? ({ invalid_quantity: 'Choose between 1 and 256 owned marsh herbs to sell.',
+              not_eligible: 'Dismount before selling marsh herbs.',
+              unavailable_here: 'Marsh herbs are bought only at the Mireglass salvager.',
+              too_far: 'Move within 3 m of the Mireglass salvager to sell herbs.',
+              unrevealed: 'Discover the Mireglass salvager before trading.',
+              unsafe_pose: 'Stand on revealed, dry ground to trade.',
+              not_owned: 'You do not have that many marsh herbs.' } as
+              Record<string, string>)[result.reason ?? '']
+            ?? `Herb sale was not saved (${result.reason}).`
           : 'kind' in intent && (intent.kind.startsWith('familiar-')
             || intent.kind === 'sedgehorn-care/v1')
           ? publicV43FamiliarRejectionHint(result.reason ?? 'unavailable_here')
@@ -2065,7 +2164,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   }
   const queueChecked = (intent: CheckedIntent) => {
     if ('kind' in intent && intent.kind === 'soil-place/v1') setSoilPlaceRejection(null)
-    if (v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
+    if (mountWorld && (runtime as V44Runtime | V45Runtime).groundMount().mode === 'riding'
       && (!('kind' in intent) || intent.kind !== 'sedgehorn-dismount/v1')) {
       tell('Dismount the Sedgehorn to gather, build, trade, or use quest actions.'); return
     }
@@ -2088,6 +2187,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   }
   const queuePulse = (vector: readonly [number, number], jump: boolean,
     heldInput = false, atMs?: number) => {
+    if (heldInput && readyRideAtCap()) return
     if (readActive().player.verticalVelocity !== 0) {
       tell('Land before starting another short movement or jump.'); return
     }
@@ -2197,8 +2297,20 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           queued: inputQueue.current.length })
         return
       }
-      if (v44 && runtime.status().gate === 'cap-paused'
-        && runtime.status().pendingFrames > 0) { void save(); return }
+      if (mountWorld && runtime.status().gate === 'cap-paused'
+        && runtime.status().pendingFrames > 0) {
+        if (readyRideAtCap()) {
+          const queued = inputQueue.current.length
+          inputQueue.current = inputQueue.current.filter((token) => token.kind !== 'pulse'
+            || !token.heldInput)
+          if (edgePulse.current && !inputQueue.current.includes(edgePulse.current))
+            edgePulse.current = null
+          if (timedHeld.current) sampleTimedUntil(performance.now())
+          if (queued !== inputQueue.current.length) repaintQueued()
+          return
+        }
+        void save(); return
+      }
       if (running.current || runtime.status().gate !== 'open') return
       running.current = true
       let advanced = false
@@ -2220,11 +2332,15 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           if (readActive().player.verticalVelocity === 0) { void save(); return }
         }
         const before = readActive()
-        const riding = v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
-        const reserveAt = riding ? PUBLIC_V44_MAX_RIDE_BATCH : MOVE_RESERVE_AT
-        if (runtime.status().pendingFrames >= reserveAt
+        const riding = mountWorld
+          && (runtime as V44Runtime | V45Runtime).groundMount().mode === 'riding'
+        const rideBatchMax = v45 ? PUBLIC_V45_MAX_RIDE_BATCH : PUBLIC_V44_MAX_RIDE_BATCH
+        const reserveAt = riding ? rideBatchMax : MOVE_RESERVE_AT
+        const reserveReached = !(v45OverlapReady && riding)
+          && runtime.status().pendingFrames >= reserveAt
+        if (reserveReached
           && before.player.verticalVelocity === 0) { void save(); return }
-        const neutral = runtime.status().pendingFrames >= reserveAt
+        const neutral = reserveReached
           && before.player.verticalVelocity !== 0
         if (!neutral && timedHeld.current
           && (!inputQueue.current.length || inputQueue.current[0] === edgePulse.current
@@ -2334,7 +2450,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           inputQueue.current = inputQueue.current.filter((token) => token.kind === 'checked')
           if (remaining) tell('Short inputs queued before takeoff were cancelled; land before pressing again.')
         }
-        if (runtime.status().pendingFrames >= (riding ? PUBLIC_V44_MAX_RIDE_BATCH : 64)
+        if (!(v45OverlapReady && riding)
+          && runtime.status().pendingFrames >= (riding ? rideBatchMax : 64)
           && after.player.verticalVelocity === 0) void save()
         else drainChecked()
         if (!request || request.jump || before.player.verticalVelocity !== 0
@@ -2357,7 +2474,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       return
     }
     if (runtime.status().gate === 'blocked') return
-    if (v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
+    if (mountWorld && (runtime as V44Runtime | V45Runtime).groundMount().mode === 'riding'
       && intent.type !== 'movement' && intent.type !== 'movement.tap'
       && intent.type !== 'store.close'
       && !(intent.type === 'saved-work.mode' && !intent.active)) {
@@ -2744,7 +2861,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const questLeads = v43 ? { head: snapshot as PublicV43Progress, ledgerQuest: ledgerQuest!,
     waystationQuest: view.v40WaystationQuest, ironHallQuest: publicV42IronHallQuest(view) } : null
   const questCue = questLeads && selectPublicV43QuestLead(questLeads)
-  const questCueObjective = v44 && questCue?.id === 'sedgehorn-familiar/v1'
+  const questCueObjective = mountWorld && questCue?.id === 'sedgehorn-familiar/v1'
     ? publicV44FamiliarObjective(questCue.objective,
       (snapshot as PublicV43Progress).familiar.phase,
       (snapshot as PublicV43Progress).mountTraining?.careWitnesses.length ?? 0)
@@ -2770,6 +2887,41 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     active.player.position.x - adult.position.x,
     active.player.position.y - adult.position.y,
     active.player.position.z - adult.position.z) : null
+  const v45Progress = v45 ? snapshot as PublicV45Progress : null
+  const v45TackOwned = !!v45Progress && v45Progress.tack !== 'not_owned'
+  // Only resolve the keeper while its journal is open and the adult is close enough
+  // that a 3 m keeper purchase could be possible. The checked action remains final.
+  const v45Keeper = v45Progress && familiarOpen && !v45TackOwned
+    && active.movementOwner === 'streamed' && (adultDistance ?? Infinity) <= 6
+    ? resolveSedgehornFamiliarSite(v45Progress)?.keeper : null
+  const v45KeeperRevealed = !!v45Keeper && !!v45Progress
+    && discoveryMaskHasTileId(v45Progress.state.discoveryMask, v45Keeper.id)
+  const v45KeeperDistance = v45Keeper ? Math.hypot(
+    active.player.position.x - v45Keeper.center.x,
+    active.player.position.y - v45Keeper.center.y,
+    active.player.position.z - v45Keeper.center.z) : Infinity
+  const v45KeeperNearby = v45KeeperRevealed && v45KeeperDistance <= 3
+  const v45KeeperPose = v45Progress && v45KeeperNearby
+    ? projectPublicV31Pose(v45Progress) : null
+  const v45KeeperSurface = v45Progress && v45KeeperPose
+    ? resolvePublicV23Surface(v45Progress.state, active.player.position,
+      v45Progress.regionalWorks.builtLadderIds) : null
+  const v45KeeperSafeGround = !!v45Progress && !!v45KeeperPose && !!v45KeeperSurface
+    && active.player.verticalVelocity === 0 && v45KeeperPose.support === 'terrain'
+    && v45KeeperSurface.support === 'terrain'
+    && worldTileAtGrid(v45Progress.state.seed, v45KeeperPose.cell.gx,
+      v45KeeperPose.cell.gz).terrain !== 'wetland'
+    && Math.abs(active.player.position.y - v45KeeperPose.effective.floorY) <= 1e-6
+    && Math.abs(active.player.position.y - v45KeeperSurface.floorY) <= 1e-6
+    && discoveryMaskHasTileId(v45Progress.state.discoveryMask, v45KeeperSurface.tileId)
+    && !publicV43FamiliarTouchesForbiddenSupport(v45Progress.state.seed,
+      active.player.position, active.player.position, v45Progress.terrain.columns,
+      v45Progress.raisedSoilCells)
+  const v45HerbsOwned = v45 ? active.player.inventory
+    .filter((stack) => stack.itemId === 'marsh_herb')
+    .reduce((total, stack) => total + stack.quantity, 0) : 0
+  const v45AtSalvager = v45 && !!salvagerId
+    && (view.nearbyStoreId === salvagerId || view.openStoreId === salvagerId)
   const savedNotice = messages.at(-1) === `V${saveVersion} progress saved on this device.`
   const MireglassActionsPanel = v36 ? 'details' : 'aside'
   return <main data-public-v23="true" data-public-version={`v${saveVersion}`}
@@ -2785,16 +2937,21 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       Movement is frozen; keep this tab open.</p>}
     {obstacleCue && <p className="v23-obstacle-cue" role="status" aria-label="Movement blocked">
       {obstacleCue}</p>}
-    {(status.pendingFrames > 0 || saveTask.current || savedNotice) &&
-      <div className="v23-save">
+    {(v45OverlapReady || status.pendingFrames > 0 || saveTask.current || savedNotice) &&
+      <div className="v23-save" data-v45-confirmed-idle={v45 && !v45OverlapReady && savedNotice
+        && status.pendingFrames === 0 && !saveTask.current && status.gate !== 'blocked' ? 'true' : undefined}>
         {status.pendingFrames > 0 && <button type="button" onClick={() => void save()}
           disabled={busy.current || status.gate === 'blocked'}>Save now</button>}
         <p role="status">{status.gate === 'blocked' ? 'Save blocked. Keep this tab open.'
-          : saveTask.current ? 'Saving progress…'
+          : saveTask.current || v45OverlapReady && actionTask.current ? 'Saving progress…'
+            : v45OverlapReady && status.pendingFrames === 0
+              ? 'Current checked progress is saved on this device.'
             : savedNotice ? status.pendingFrames > 0
               ? 'Last checkpoint saved on this device; newer progress is not yet saved.'
               : `V${saveVersion} progress saved on this device.`
               : 'Travel since the last checkpoint is not saved.'}</p>
+        {v45OverlapReady && <p>Durable revision {(status as ReturnType<V45Runtime['status']>).durableRevision};
+          {' '}{status.pendingFrames} unsaved frame(s).</p>}
       </div>}
     {nearWestFace && !regional && !slateGuideVisible && <aside className="v23-guide v23-guide-west" role="note">
       {marker ? `West Slate cliff lower foot: x ${marker.from.x}, z ${marker.from.z}. Gather 4 logs; use B Works, 2 Ladder, then aim.`
@@ -2844,7 +3001,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </button>}
       <button type="button" disabled={status.gate !== 'open'
         || busy.current || queuedChecked || publicV26KnownPitLadderHere(view)
-        || v44 && adult?.mode === 'riding'}
+        || mountWorld && adult?.mode === 'riding'}
         onClick={() => queueChecked({ kind: 'return-home-request' })}>
         Return home if trapped
       </button>
@@ -2913,45 +3070,99 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
               {`Buy ${GREENWAY_BAG_UPGRADE.extraSlots} backpack spaces · ${GREENWAY_BAG_UPGRADE.price} coins`}
             </button>{active.player.coins < GREENWAY_BAG_UPGRADE.price
               && <p className="wr-caption">Need {GREENWAY_BAG_UPGRADE.price - active.player.coins} more coins.</p>}</>}
-      </section></> : undefined} />
+      </section>{v45 && <section aria-label="Sedgehorn tack purchase">
+        <h3 className="wr-caption">Sedgehorn tack</h3>
+        <p className="wr-caption">{v45TackOwned
+          ? 'Owned. Your mature Sedgehorn can be mounted on revealed, safe ground.'
+          : `Buy tack here for ${SEDGEHORN_TACK_PRICE} coins once your Sedgehorn is mature.`}</p>
+        {!v45TackOwned && <><button type="button" disabled={status.gate !== 'open'
+          || busy.current || queuedChecked || !adult?.visible
+          || active.player.coins < SEDGEHORN_TACK_PRICE}
+          onClick={() => queueChecked({ kind: 'buy-sedgehorn-tack/v1' })}>
+          Buy Sedgehorn tack · {SEDGEHORN_TACK_PRICE} coins
+        </button>{!adult?.visible && <p className="wr-caption">Bond with and care for your juvenile Sedgehorn first.</p>}
+        {active.player.coins < SEDGEHORN_TACK_PRICE && <p className="wr-caption">Need {SEDGEHORN_TACK_PRICE - active.player.coins} more coins.</p>}</>}
+      </section>}</> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
-        <small>{v44 && adult?.visible
+      <summary><span>{mountWorld ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
+        <small>{mountWorld && adult?.visible
           ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
+            : v45 && !v45TackOwned ? 'Adult Sedgehorn ready; buy tack at the Mireglass keeper or Greenway Outfitters.'
             : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`
           : journalLeadObjective
           ?? 'Open the journal for completed leads and the optional carpenter order.'}</small></summary>
-      {familiarOpen && <>{v44 && <section aria-label="Ground mount">
+      {familiarOpen && <>{mountWorld && <section aria-label="Ground mount">
         <h3>Adult Sedgehorn</h3>
         <p role="status">{!adult?.visible
           ? 'Bond with your juvenile Sedgehorn and complete its care before it can grow into a mount.'
           : adult.mode === 'riding'
             ? 'Riding on revealed safe ground. Dismount to gather, build, trade, jump, or use quest actions.'
-            : `Parked ${Math.ceil(adultDistance ?? 0)} m away. Stand within 3 m on dry, level ground to mount.`}</p>
+            : v45 && !v45TackOwned
+              ? `Parked ${Math.ceil(adultDistance ?? 0)} m away. Buy ${SEDGEHORN_TACK_PRICE}-coin tack at the revealed Mireglass keeper or Greenway Outfitters before mounting.`
+              : `Parked ${Math.ceil(adultDistance ?? 0)} m away. Stand within 3 m on dry, level ground to mount.`}</p>
+        {v45 && adult?.visible && !v45TackOwned && active.movementOwner === 'streamed'
+          && <><button type="button" disabled={status.gate !== 'open' || busy.current
+            || queuedChecked || adult.mode !== 'parked' || !v45KeeperNearby
+            || !v45KeeperSafeGround
+            || active.player.coins < SEDGEHORN_TACK_PRICE}
+            onClick={() => queueChecked({ kind: 'buy-sedgehorn-tack/v1' })}>
+            Buy Sedgehorn tack at keeper · {SEDGEHORN_TACK_PRICE} coins
+          </button><p className="wr-caption">{!v45Keeper
+            ? 'Return toward the Mireglass keeper on the dry marsh edge.'
+            : !v45KeeperRevealed
+              ? 'Discover the Mireglass keeper on the dry marsh edge.'
+            : !v45KeeperNearby
+              ? `Move within 3 m of the keeper (${Math.ceil(v45KeeperDistance)} m away).`
+              : !v45KeeperSafeGround
+                ? 'Step onto revealed, dry, unchanged ground within 3 m of the keeper.'
+                : active.player.coins < SEDGEHORN_TACK_PRICE
+                  ? `Need ${SEDGEHORN_TACK_PRICE - active.player.coins} more coins.`
+                  : 'Ready to buy on safe keeper ground.'}</p></>}
         {adult?.visible && <button type="button"
           disabled={status.gate !== 'open' || busy.current || queuedChecked
-            || (adult.mode === 'parked' && (adultDistance ?? Infinity) > 3)}
+            || (adult.mode === 'parked' && ((adultDistance ?? Infinity) > 3
+              || v45 && !v45TackOwned))}
           onClick={() => queueChecked({ kind: adult.mode === 'riding'
             ? 'sedgehorn-dismount/v1' : 'sedgehorn-mount/v1' })}>
           {adult.mode === 'riding' ? 'Dismount Sedgehorn' : 'Mount Sedgehorn'}
         </button>}
+      </section>}{v45 && <section aria-label="Mireglass marsh herb sale">
+        <h3>Marsh herbs · Mireglass salvager</h3>
+        <p role="status">{v45HerbsOwned} owned · {MIREGLASS_HERB_UNIT_PRICE} coins each.{' '}
+          {v45AtSalvager ? 'Open Mireglass actions here to sell on dry ground.'
+            : 'Travel to the Mireglass salvager and stand within 3 m on revealed, dry ground to sell.'}</p>
       </section>}<PublicV43StarterChapter head={snapshot as PublicV43Progress} />
-        <PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
+        <PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={mountWorld} />
         <PublicV43FamiliarQuestPanel
           head={snapshot as PublicV43Progress}
           actionsEnabled={status.gate === 'open' && !busy.current && !queuedChecked && !mounted}
-          rideableAfterMaturity={v44}
+          rideableAfterMaturity={mountWorld}
           onAction={(action) => queueChecked(action)} /></>}
     </details>}
-    {v24 && active.movementOwner === 'streamed' && mireglass?.choices.length
+    {v24 && active.movementOwner === 'streamed'
+      && (mireglass?.choices.length || v45AtSalvager)
       ? <MireglassActionsPanel className="v24-actions" aria-label="Mireglass actions">
         {v36 ? <summary>Mireglass actions</summary> : <strong>Mireglass actions</strong>}
-        {mireglass.choices.map((choice) => <button key={choice.id} type="button"
+        {mireglass?.choices.map((choice) => <button key={choice.id} type="button"
           disabled={!choice.actionable || status.gate === 'blocked' || mounted}
           onClick={() => queueMireglassChoice(choice.id, 'explicit')}>
           {choice.label}{choice.actionable ? '' : `: ${choice.disabledReason ?? 'Unavailable'}`}
         </button>)}
+        {v45AtSalvager && <section aria-label="Sell marsh herbs">
+          <h3>Marsh herbs · {MIREGLASS_HERB_UNIT_PRICE} coins each</h3>
+          <p role="status">{v45HerbsOwned} in backpack. Stand on revealed, dry ground to sell.</p>
+          {v45HerbsOwned > 0 && <><button type="button"
+            disabled={status.gate !== 'open' || busy.current || queuedChecked || mounted}
+            onClick={() => queueChecked({ kind: 'sell-marsh-herb/v1', quantity: 1 })}>
+            Sell 1 herb · {MIREGLASS_HERB_UNIT_PRICE} coins
+          </button>{v45HerbsOwned > 1 && <button type="button"
+            disabled={status.gate !== 'open' || busy.current || queuedChecked || mounted}
+            onClick={() => queueChecked({ kind: 'sell-marsh-herb/v1',
+              quantity: Math.min(256, v45HerbsOwned) })}>
+            Sell {Math.min(256, v45HerbsOwned)} herbs · {Math.min(256, v45HerbsOwned) * MIREGLASS_HERB_UNIT_PRICE} coins
+          </button>}</>}
+        </section>}
       </MireglassActionsPanel> : null}
     {trace && <details className="v23-input-trace" style={{ position: 'fixed', bottom: 8, left: 8, zIndex: 100,
       background: '#101a17', color: '#fff', padding: 8 }}

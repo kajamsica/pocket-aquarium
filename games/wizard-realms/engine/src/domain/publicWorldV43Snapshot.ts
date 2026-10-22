@@ -79,6 +79,7 @@ function decodeProgress(raw: unknown): PublicV43Progress | null {
       ...(checkedBag && { greenwayBagUpgrade: checkedBag }) }
   } catch { return null }
 }
+export { decodeProgress as decodePublicV43Progress }
 function preserveOverlays(before: PublicV43Progress,
   after: PublicV43FamiliarProgress | null): PublicV43Progress | null {
   if (!after) return null
@@ -287,7 +288,7 @@ function inheritedMonotonic(a: PublicV43FamiliarProgress,
     && a.ironHall.combatXp <= b.ironHall.combatXp
     && a.ironHall.knockouts <= b.ironHall.knockouts
 }
-function monotonic(a: PublicV43Progress, b: PublicV43Progress): boolean {
+export function publicV43Monotonic(a: PublicV43Progress, b: PublicV43Progress): boolean {
   const before = a.familiar, after = b.familiar
   return inheritedMonotonic(a, b)
     && (!Object.hasOwn(a, 'greenwayOrder') || Object.hasOwn(b, 'greenwayOrder'))
@@ -358,9 +359,10 @@ export function decodePublicV43Root(raw: unknown): PublicV43Root | null {
     if (!lineage || !head || (head.saveRevision === 0 ? raw.previous !== null
       : !previous || head.saveRevision !== previous.saveRevision + 1 || !head.witness)
       || !publicV32Preserves(lineage.genesis, head, lineage.seed)
-      || !monotonic(genesisHead(lineage), head)
+      || !publicV43Monotonic(genesisHead(lineage), head)
       || previous && (!publicV32Preserves(lineage.genesis, previous, lineage.seed)
-        || !publicV32Monotonic(previous, head) || !monotonic(previous, head))) return null
+        || !publicV32Monotonic(previous, head)
+        || !publicV43Monotonic(previous, head))) return null
     if (!previous) return { lineage, head, previous: null }
     if (previous.saveRevision === 0
       && !samePublicV14Value(previous, genesisHead(lineage))) return null
@@ -382,7 +384,7 @@ export function decodePublicV43CheckedSuccessor(before: PublicV43Root,
     if (!head || !head.witness || head.saveRevision !== before.head.saveRevision + 1
       || !publicV32Preserves(before.lineage.genesis, head, before.lineage.seed)
       || !publicV32Monotonic(before.head, head)
-      || !monotonic(before.head, head)
+      || !publicV43Monotonic(before.head, head)
       || !samePublicV14Value(replayPublicV43Witness(progressOf(before.head), head.witness),
         progressOf(head))) return null
     return { lineage: before.lineage, previous: before.head, head }

@@ -6,6 +6,7 @@ import { visitPublicV23FramesWithEvents } from './publicWorldV23Transitions'
 import type { PublicV23StreamedMovePolicy } from './publicWorldV23Transitions'
 import type { PublicV24Progress } from './publicWorldV24Snapshot'
 import { publicV25RiverTouchesSegment } from './publicWorldV25RiverSweep'
+import type { PublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { publicV26SavedLadderSpans } from './publicWorldV26Snapshot'
 import { decodePublicV26TerrainLedger } from './publicWorldV26TerrainLedger'
 import { publicV26ValleyRimPassage } from './publicWorldV26ValleyRim'
@@ -80,14 +81,14 @@ function groundedDeckCarrier(before: PublicV24Progress, after: PublicV24Progress
 /** V28-only gate. V27's private visitor starts with the V25 river check and cannot admit this deck. */
 function acceptsSegment(before: PublicV24Progress, after: PublicV24Progress,
   terrain: PublicV28Progress['terrain'], riverBridgeIds: readonly string[],
-  passageTo = after.state.player.position): boolean {
+  passageTo = after.state.player.position, admission?: PublicV45DryRideAdmission): boolean {
   const from = before.state.player.position, to = after.state.player.position
   const start = projectPublicV28Pose(before, terrain, riverBridgeIds)
   const end = projectPublicV28Pose(after, terrain, riverBridgeIds)
   if (!start || !end) return false
   if (from.x !== to.x || from.z !== to.z) {
     const spans = publicV26SavedLadderSpans(before)
-    if (!spans || !publicV28RiverPassage(before, terrain, riverBridgeIds, from, passageTo).ok
+    if (!spans || !publicV28RiverPassage(before, terrain, riverBridgeIds, from, passageTo, admission).ok
       || !publicV26ValleyRimPassage(before.state.seed, from, to, spans).ok) return false
   }
   const heightChange = end.effective.floorY - start.effective.floorY
@@ -150,7 +151,8 @@ function bufferedFlightSegment(before: PublicV24Progress, after: PublicV24Progre
 /** A jump-led flight has one V23 session; collect its frames once instead of replaying every prefix. */
 function replayJumpFlight(before: PublicV28Progress, frames: readonly PublicV14Frame[],
   terrain: PublicV28Progress['terrain'],
-  allowAirborne: boolean, streamedMove?: PublicV23StreamedMovePolicy): { progress: PublicV28Progress;
+  allowAirborne: boolean, streamedMove?: PublicV23StreamedMovePolicy,
+  admission?: PublicV45DryRideAdmission): { progress: PublicV28Progress;
     events: readonly PublicWorldEvent[]; flight: BufferedFlight | null } | null {
   if (frames[0]?.intents[0]?.type !== 'jump') return null
   const states: PublicV24Progress[] = []
@@ -171,7 +173,7 @@ function replayJumpFlight(before: PublicV28Progress, frames: readonly PublicV14F
     const checked = allowAirborne || airborne && index < states.length - 1
       ? candidate : decodePublicV23Progress(candidate, old.state.seed)
     if (!checked || !acceptsSegment(current, checked, terrain, before.riverBridgeIds,
-      candidate.state.player.position)) return null
+      candidate.state.player.position, admission)) return null
     current = checked
     airborneBefore = airborne
   }
@@ -184,12 +186,12 @@ function replayJumpFlight(before: PublicV28Progress, frames: readonly PublicV14F
 /** Authoritative frame events and movement replay share one checked V28 visitor. */
 function replayCheckedFrames(before: PublicV28Progress,
   frames: readonly PublicV14Frame[], allowAirborne = false,
-  streamedMove?: PublicV23StreamedMovePolicy):
+  streamedMove?: PublicV23StreamedMovePolicy, admission?: PublicV45DryRideAdmission):
   { progress: PublicV28Progress; events: readonly PublicWorldEvent[];
     flight: BufferedFlight | null } | null {
   try {
     if (Array.isArray(before.riverBridgeIds) && before.riverBridgeIds.length === 0) {
-      const inherited = replayPublicV27FramesWithEvents(before, frames, allowAirborne, streamedMove)
+      const inherited = replayPublicV27FramesWithEvents(before, frames, allowAirborne, streamedMove, admission)
       return inherited ? { progress: { ...inherited.progress, riverBridgeIds: [] },
         events: inherited.events, flight: null } : null
     }
@@ -197,7 +199,7 @@ function replayCheckedFrames(before: PublicV28Progress,
     const witness = decodePublicV14FrameWitness({ kind: 'frame-batch/v1', frames })
     if (!terrain || !witness || !Number.isSafeInteger(before.nextHomeAtMs)
       || before.nextHomeAtMs < 0) return null
-    const jumpFlight = replayJumpFlight(before, witness.frames, terrain, allowAirborne, streamedMove)
+    const jumpFlight = replayJumpFlight(before, witness.frames, terrain, allowAirborne, streamedMove, admission)
     if (jumpFlight) return jumpFlight
     let current: PublicV24Progress | null = null
     let flight: BufferedFlight | null = null
@@ -240,7 +242,7 @@ function replayCheckedFrames(before: PublicV28Progress,
         && frameIndex < witness.frames.length - 1
         ? candidate : decodePublicV23Progress(candidate, current.state.seed)
       if (!checked || !acceptsSegment(current, checked, terrain, before.riverBridgeIds,
-        trial.progress.state.player.position)) return null
+        trial.progress.state.player.position, admission)) return null
       const frameEvents = [...(dryRetry?.events ?? trial.events).slice(priorFlight?.eventCount ?? 0)]
       flight = airborne && bufferedFlight ? { origin: priorFlight?.origin ?? current,
         frames: flightFrames, eventCount: trial.events.length } : null
@@ -264,9 +266,9 @@ function replayCheckedFrames(before: PublicV28Progress,
 /** An accepted airborne preview must have an in-batch idle path to checked landing. */
 export function replayPublicV28FramesWithEvents(before: PublicV28Progress,
   frames: readonly PublicV14Frame[], allowAirborne = false,
-  streamedMove?: PublicV23StreamedMovePolicy):
+  streamedMove?: PublicV23StreamedMovePolicy, admission?: PublicV45DryRideAdmission):
   { progress: PublicV28Progress; events: readonly PublicWorldEvent[] } | null {
-  const result = replayCheckedFrames(before, frames, allowAirborne, streamedMove)
+  const result = replayCheckedFrames(before, frames, allowAirborne, streamedMove, admission)
   if (!result) return null
   const { flight, ...publicResult } = result
   if (!allowAirborne || !flight) return publicResult

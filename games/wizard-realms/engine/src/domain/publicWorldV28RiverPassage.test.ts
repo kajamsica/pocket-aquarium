@@ -10,6 +10,7 @@ import { projectPublicV26Pose } from './publicWorldV26Pose'
 import { emptyPublicV26TerrainLedger } from './publicWorldV26TerrainLedger'
 import { replayPublicV27FramesWithEvents } from './publicWorldV27Snapshot'
 import { publicV28AdjacentBankSeam, publicV28RiverPassage } from './publicWorldV28RiverPassage'
+import { createPublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { projectPublicV28Pose, publicV28ResolvedRiverBridges } from './publicWorldV28RiverSupport'
 import type { Vec3 } from './types'
@@ -33,6 +34,35 @@ function streamedAt(point: { x: number; z: number }, worldSeed = seed) {
 }
 
 describe('V28 saved river bridge support and passage', () => {
+  it('preserves the old cap unless a matching dry two-leg admission is supplied', () => {
+    const dry = streamedAt({ x: 36, z: 4 }, 'wizard-realms')
+    const from = dry.state.player.position
+    const middle = { ...from, z: from.z + 0.15 }, to = { ...from, z: from.z + 0.3 }
+    const admission = createPublicV45DryRideAdmission(from, middle, to)
+    expect(admission).not.toBeNull()
+    expect(publicV28RiverPassage(dry, terrain, [], from, { ...from, z: from.z + 0.24 }))
+      .toEqual({ ok: true })
+    expect(publicV28RiverPassage(dry, terrain, [], from, to))
+      .toEqual({ ok: false, reason: 'invalid-segment' })
+    expect(publicV28RiverPassage(dry, terrain, [], from, to, admission!)).toEqual({ ok: true })
+    expect(publicV28RiverPassage(dry, terrain, [], from, to,
+      JSON.parse(JSON.stringify(admission)) as never))
+      .toEqual({ ok: false, reason: 'invalid-segment' })
+    const wet = streamedAt({ x: 36, z: 11 }, 'wizard-realms')
+    const wetFrom = wet.state.player.position, wetTo = { ...wetFrom, z: wetFrom.z + 0.3 }
+    const wetAdmission = createPublicV45DryRideAdmission(wetFrom,
+      { ...wetFrom, z: wetFrom.z + 0.15 }, wetTo)
+    expect(wetAdmission).not.toBeNull()
+    expect(publicV28RiverPassage(wet, terrain, [], wetFrom, wetTo, wetAdmission!))
+      .toEqual({ ok: false, reason: 'river-needs-bridge' })
+    const deck = streamedAt({ x: -56, z: 12 })
+    const deckFrom = deck.state.player.position, deckTo = { ...deckFrom, z: deckFrom.z + 0.3 }
+    const deckAdmission = createPublicV45DryRideAdmission(deckFrom,
+      { ...deckFrom, z: deckFrom.z + 0.15 }, deckTo)
+    expect(deckAdmission).not.toBeNull()
+    expect(publicV28RiverPassage(deck, terrain, [site.id], deckFrom, deckTo, deckAdmission!))
+      .toEqual({ ok: false, reason: 'river-needs-bridge' })
+  })
   it('authenticates only the saved -11 adjacent bank seam in both directions', () => {
     const riverSeed = 'wizard-realms'
     const saved = resolvePublicV28RiverBridge(riverSeed, 'works6:river-bridge:-11')

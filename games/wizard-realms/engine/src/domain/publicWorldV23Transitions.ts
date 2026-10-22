@@ -20,12 +20,34 @@ import type { StreamedWorldIntent } from './streamedWorld'
 
 const MAX_TERMINAL_DRY_DESCENT_METERS = 0.10
 
+/** Closed segment against the inclusive Greenway owner rectangle from publicWorldV14Boundary. */
+function touchesGreenwaySegment(from: Readonly<{ x: number; z: number }>,
+  to: Readonly<{ x: number; z: number }>): boolean {
+  let enter = 0, exit = 1
+  for (const [start, delta, min, max] of [
+    [from.x, to.x - from.x, -30, 34], [from.z, to.z - from.z, -30, 34],
+  ]) {
+    if (delta === 0) {
+      if (start < min || start > max) return false
+    } else {
+      const a = (min - start) / delta, b = (max - start) / delta
+      enter = Math.max(enter, Math.min(a, b))
+      exit = Math.min(exit, Math.max(a, b))
+      if (enter > exit) return false
+    }
+  }
+  return true
+}
+
 /** Trusted version policy, never decoded from a witness. Ordinary gait is checked first. */
 export type PublicV23StreamedMovePolicy = (before: PublicV23Progress,
-  frame: PublicV14FrameWitness['frames'][number]) => Readonly<{
-    delta: Readonly<{ x: number; z: number }>
-    settle: (after: PublicV23Progress) => PublicV23Progress
-  }> | null
+  frame: PublicV14FrameWitness['frames'][number]) => (
+    | Readonly<{ delta: Readonly<{ x: number; z: number }>
+      settle: (after: PublicV23Progress) => PublicV23Progress }>
+    | Readonly<{ substeps: readonly [Readonly<{ x: number; z: number }>,
+      Readonly<{ x: number; z: number }>]
+      settle: (after: PublicV23Progress) => PublicV23Progress }>
+  ) | null
 
 const actionKeys = {
   equip_item: ['itemId', 'slot'], unequip_item: ['slot'], harvest: ['resourceId'],
@@ -135,10 +157,32 @@ function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['
         > publicV11Gait(old.player.equipment.feet, frame.walkRequested).metersPerStep + 1e-9) return failed()
       const assisted: ReturnType<PublicV23StreamedMovePolicy> = move?.type === 'move'
         ? streamedMove?.(progress, frame) ?? null : null
-      if (assisted && (!Number.isFinite(assisted.delta.x) || !Number.isFinite(assisted.delta.z)
-        || Math.hypot(assisted.delta.x, assisted.delta.z) > 0.2 + 1e-9)) return failed()
-      const intents = assisted ? frame.intents.map((intent) => intent.type === 'move'
-        ? { ...intent, delta: assisted.delta } : intent) : frame.intents
+      if (assisted) {
+        if ('delta' in assisted) {
+          if (!Number.isFinite(assisted.delta.x) || !Number.isFinite(assisted.delta.z)
+            || Math.hypot(assisted.delta.x, assisted.delta.z) > 0.2 + 1e-9) return failed()
+        } else {
+          const raw = move?.type === 'move' ? move.delta : null
+          const rawLength = raw ? Math.hypot(raw.x, raw.z) : 0
+          const steps = assisted.substeps
+          if (!raw || !Number.isFinite(rawLength) || rawLength <= 0
+            || !Array.isArray(steps) || steps.length !== 2) return failed()
+          const lengths = steps.map((step) => Math.hypot(step.x, step.z))
+          if (steps.some((step, index) => !Number.isFinite(step.x) || !Number.isFinite(step.z)
+            || !Number.isFinite(lengths[index]) || lengths[index] <= 0 || lengths[index] > 0.2 + 1e-9
+            || raw.x * step.x + raw.z * step.z <= 0
+            || Math.abs(raw.x * step.z - raw.z * step.x) > 1e-8 * rawLength * lengths[index])
+            || lengths[0] + lengths[1] > Math.min(0.4, rawLength * 5 / 3) + 1e-9) return failed()
+          const from = old.player.position
+          const between = { x: from.x + steps[0].x, z: from.z + steps[0].z }
+          const to = { x: between.x + steps[1].x, z: between.z + steps[1].z }
+          if (touchesGreenwaySegment(from, between) || touchesGreenwaySegment(between, to)) return failed()
+        }
+      }
+      const intents = assisted ? frame.intents.flatMap<StreamedWorldIntent>((intent) => intent.type !== 'move'
+        ? [intent as StreamedWorldIntent]
+        : 'delta' in assisted ? [{ ...intent, delta: assisted.delta }]
+          : assisted.substeps.map((delta) => ({ ...intent, delta }))) : frame.intents
       stream ??= createPublicV23StreamTerrain(old, progress.regionalWorks.builtLadderIds)
       const result = stream.advance(intents as StreamedWorldIntent[],
         { atomicOnRejection: true, nearbyDiscovery: true })
@@ -171,12 +215,13 @@ function framesResult(before: PublicV23Progress, frames: PublicV14FrameWitness['
         position: settledPosition, verticalVelocity: 0 } : result.state.player
       let sequence = old.eventSequence
       const added: string[] = []
-      for (const event of result.events) {
+      const terminalMoveIndex = result.events.findLastIndex((event) => event.type === 'player_moved')
+      for (const [eventIndex, event] of result.events.entries()) {
         if (event.type === 'tile_discovered') {
           if (discoveryMaskHasTileId(old.discoveryMask, event.tileId)) continue
           added.push(event.tileId)
         }
-        events.push({ ...event, ...(settledPosition && event.type === 'player_moved'
+        events.push({ ...event, ...(settledPosition && eventIndex === terminalMoveIndex
           ? { position: settledPosition } : {}), sequence: ++sequence } as PublicWorldEvent)
       }
       const tick = old.tick + 1, mask = new Uint8Array(old.discoveryMask)

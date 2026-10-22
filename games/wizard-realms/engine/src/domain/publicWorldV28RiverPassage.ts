@@ -3,6 +3,8 @@ import { resolvePublicV23Surface } from './publicWorldV14Terrain'
 import type { PublicV24Progress } from './publicWorldV24Snapshot'
 import { publicV25RiverPassage } from './publicWorldV25Passage'
 import { publicV25RiverCellAtGrid } from './publicWorldV25River'
+import { publicV45DryRideMidpoint } from './publicWorldV45DryRideAdmission'
+import type { PublicV45DryRideAdmission } from './publicWorldV45DryRideAdmission'
 import { projectPublicV26Pose } from './publicWorldV26Pose'
 import { decodePublicV26TerrainLedger } from './publicWorldV26TerrainLedger'
 import type { PublicV26TerrainLedger } from './publicWorldV26TerrainLedger'
@@ -133,19 +135,22 @@ export function publicV28AdjacentBankSeam(progress: PublicV24Progress,
 /** Old supported crossings remain valid; every other wet contact needs saved V28 deck. */
 export function publicV28RiverPassage(progress: PublicV24Progress,
   terrain: PublicV26TerrainLedger, riverBridgeIds: readonly string[],
-  fromCarrier: Vec3, toCarrier: Vec3): Passage {
+  fromCarrier: Vec3, toCarrier: Vec3, admission?: PublicV45DryRideAdmission): Passage {
   const invalid = { ok: false, reason: 'invalid-segment' } as const
   const blocked = { ok: false, reason: 'river-needs-bridge' } as const
   try {
+    const length = fromCarrier && toCarrier
+      ? Math.hypot(toCarrier.x - fromCarrier.x, toCarrier.z - fromCarrier.z) : NaN
     if (!fromCarrier || !toCarrier
       || ![fromCarrier.x, fromCarrier.y, fromCarrier.z,
         toCarrier.x, toCarrier.y, toCarrier.z].every(Number.isFinite)
-      || Math.hypot(toCarrier.x - fromCarrier.x, toCarrier.z - fromCarrier.z)
-        > PUBLIC_RUN_STEP_METERS + EPSILON) return invalid
+      || length > PUBLIC_RUN_STEP_METERS + EPSILON
+        && (!publicV45DryRideMidpoint(admission, fromCarrier, toCarrier) || length > 0.4)) return invalid
     const checkedTerrain = decodePublicV26TerrainLedger(terrain)
     const sites = publicV28ResolvedRiverBridges(progress.state.seed, riverBridgeIds)
     if (!checkedTerrain || !sites) return invalid
-    const old = publicV25RiverPassage(progress, fromCarrier, toCarrier)
+    const old = publicV25RiverPassage(progress, fromCarrier, toCarrier, admission)
+    if (length > PUBLIC_RUN_STEP_METERS + EPSILON) return old
     if (old.ok) return old
     // V23 can yield a transient carrier a few millimetres above its old floor
     // between streamed frames. The V28 check below validates that offset and
