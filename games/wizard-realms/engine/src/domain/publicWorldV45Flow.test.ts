@@ -5,7 +5,7 @@ import { createAtomicV43Store } from './atomicV43Database'
 import { createAtomicV44PromotionStore } from './atomicV44Promotion'
 import { createAtomicV45Store, PUBLIC_V45_DATABASE_NAME } from './atomicV45Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
-import { mireglassAnchors } from './mireglassContent'
+import { MIREGLASS_RING_ID, mireglassAnchors, mireglassFairyRing } from './mireglassContent'
 import { createFreshPublicV42Root, decodePublicV42Root, PUBLIC_V42_SCHEMA }
   from './publicWorldV42Snapshot'
 import type { PublicV42Root } from './publicWorldV42Snapshot'
@@ -17,8 +17,11 @@ import { confirmPublicV44GroundMountAction } from './publicWorldV44GroundMount'
 import { createPublicV44Root, decodePublicV44Root, PUBLIC_V44_DATABASE_NAME,
   PUBLIC_V44_SCHEMA } from './publicWorldV44Snapshot'
 import type { PublicV44Root } from './publicWorldV44Snapshot'
-import { createPublicV45Genesis } from './publicWorldV45Migration'
+import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import * as v45Migration from './publicWorldV45Migration'
+import { confirmPublicV45Action } from './publicWorldV45RideAction'
+import { decodePublicV45Root } from './publicWorldV45Snapshot'
+import type { PublicV45Root } from './publicWorldV45Snapshot'
 import { commitPublicV45, inspectPublicV45, resumePublicV45,
   startPublicV45 } from './publicWorldV45Flow'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
@@ -122,6 +125,42 @@ function saleV44Root(): PublicV44Root {
     previous: atSalvager(root.previous!), head: atSalvager(root.head) })
   if (!checked) throw new Error('Invalid sale V43 fixture')
   return createPublicV44Root(checked)
+}
+
+/** Checked retained pair after maturation and travel edges have aged out. */
+function purchaseReadyRoot(): PublicV45Root {
+  const root = matureRoot()
+  const store = root.head.state.greenway.stores.find(({ id }) => id === 'store-greenway')!
+  const ring = root.head.state.greenway.fairyRings.find(({ id }) => id === 'ring-greenway')!
+  const ringTile = worldTileAtGrid(seed, Math.ceil(ring.position.x / WORLD_CELL_METERS - .5),
+    Math.ceil(ring.position.z / WORLD_CELL_METERS - .5))
+  const mireRing = mireglassFairyRing(seed).tile
+  const prepared = (head: PublicV43Root['head']) => ({ ...head,
+    mountTraining: { careWitnesses: head.mountTraining!.careWitnesses.slice(0, 2) },
+    state: { ...head.state, movementOwner: 'greenway' as const,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(head.state.discoveryMask), ringTile.id,
+        mireRing.id])].sort()),
+      player: { ...head.state.player, position: { ...store.position }, coins: 300,
+        discoveredRingIds: ['ring-greenway', MIREGLASS_RING_ID] } } })
+  const imported = decodePublicV43Root({ ...root,
+    previous: prepared(root.previous!), head: prepared(root.head) })
+  if (!imported) throw new Error('Invalid purchase V43 fixture')
+  const genesis = createPublicV45Genesis(createPublicV44Root(imported))
+  if (genesis.head.tack !== 'not_owned') throw new Error('Expected unowned V45 genesis')
+  const care = { kind: 'sedgehorn-care/v1' as const,
+    tick: genesis.head.state.tick, eventSequence: genesis.head.state.eventSequence + 1 }
+  const previous = { ...genesis.head, saveRevision: 3, witness: idle,
+    mountTraining: { careWitnesses: [...genesis.head.mountTraining!.careWitnesses, care] },
+    state: { ...genesis.head.state, eventSequence: care.eventSequence } }
+  const { schemaVersion: _schema, saveRevision: _revision, witness: _witness,
+    ...flat } = previous
+  const progress = confirmPublicV45Action(flat, idle).progress
+  const ready = progress && decodePublicV45Root({ lineage: genesis.lineage, previous,
+    head: { ...progress, schemaVersion: PUBLIC_V45_SCHEMA,
+      saveRevision: 4, witness: idle } })
+  if (!ready) throw new Error('Invalid retained purchase V45 fixture')
+  return ready
 }
 
 function open(factory: IDBFactory, name: string): Promise<IDBDatabase> {
@@ -395,4 +434,69 @@ describe('V45 fenced source-only flow', () => {
     expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
       .toEqual(marker)
   }, 60_000)
+
+  it('persists paid tack through witnessed travel, mount, ride, dismount, and reload', async () => {
+    const ready = purchaseReadyRoot()
+    const { factory, source, store } = await setup(ready.lineage.source)
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    // Seed a checked retained save; every purchase and travel edge below uses Flow.
+    await record(factory, PUBLIC_V45_DATABASE_NAME, 'root', ready)
+    expect(await createAtomicV45Store(factory).readChecked()).toMatchObject({
+      status: 'valid', root: { head: { saveRevision: 4, tack: 'not_owned' } } })
+    const v44Bytes = JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root'))
+    const marker = await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor')
+    const write = async (kind: Parameters<typeof commitPublicV45>[5]) => {
+      const read = await store.readChecked()
+      if (read.status !== 'valid') throw new Error('Expected checked V45 root')
+      const saved = await commitPublicV45(locks, store, source,
+        read.root.head.saveRevision, ready.lineage, kind)
+      if (!saved.ok) throw new Error(`${String(kind.kind)}: ${saved.reason}`)
+      return saved.value.head
+    }
+    const bought = await write({ kind: 'buy-sedgehorn-tack/v1' })
+    expect(bought.tack).toBe('purchased')
+    expect(bought.state.player.coins).toBe(60)
+    const walkTo = async (target: { x: number; z: number }, limit: number) => {
+      for (let index = 0; index < limit; index++) {
+        const read = await store.readChecked()
+        if (read.status !== 'valid') throw new Error('Expected checked V45 root')
+        const at = read.root.head.state.player.position
+        const distance = Math.hypot(target.x - at.x, target.z - at.z)
+        if (distance < 1.5) return read.root.head
+        const frames = Array.from({ length: Math.min(128, Math.ceil(distance / .16)) },
+          () => ({ intents: [{ type: 'move' as const,
+            delta: { x: (target.x - at.x) * .16 / distance,
+              z: (target.z - at.z) * .16 / distance } }], walkRequested: true }))
+        await write({ kind: 'frame-batch/v1', frames })
+      }
+      throw new Error('Checked walking route did not reach target')
+    }
+    const greenRing = bought.state.greenway.fairyRings
+      .find(({ id }) => id === 'ring-greenway')!
+    await walkTo(greenRing.position, 2)
+    const arrived = await write({ kind: 'fairy-ring-travel/v1',
+      sourceRingId: 'ring-greenway', targetRingId: MIREGLASS_RING_ID })
+    expect(arrived.state.movementOwner).toBe('streamed')
+    const keeper = resolveSedgehornFamiliarSite(arrived)!.keeper.center
+    const nearby = await walkTo(keeper, 10)
+    expect(nearby.tack).toBe('purchased')
+    const mounted = await write({ kind: 'sedgehorn-mount/v1' })
+    expect(mounted.groundMount.mode).toBe('riding')
+    const ridden = await write(ride)
+    expect(ridden.tack).toBe('purchased')
+    const parked = await write({ kind: 'sedgehorn-dismount/v1' })
+    expect(parked.groundMount.parkedPosition)
+      .toEqual(parked.state.player.position)
+    expect(await createAtomicV45Store(factory).readChecked()).toMatchObject({
+      status: 'valid', root: { head: { saveRevision: parked.saveRevision,
+        tack: 'purchased', groundMount: { mode: 'parked' } } } })
+    expect(await resumePublicV45(locks, createAtomicV45Store(factory), source,
+      parked.saveRevision, ready.lineage)).toMatchObject({ ok: true,
+        value: { head: { tack: 'purchased', saveRevision: parked.saveRevision } } })
+    expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+      .toBe(v44Bytes)
+    expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
+      .toEqual(marker)
+  }, 180_000)
 })
