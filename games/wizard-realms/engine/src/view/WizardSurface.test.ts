@@ -6,7 +6,7 @@ import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT
 import { WizardHud } from './WizardHud'
 import { cameraFramingFor } from './WizardScene'
 import { pickV26TerrainColumn } from './V26TerrainPicker'
-import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
+import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapFacingHeading, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
 import type { WizardTerrainCell, WizardViewProjection } from './contracts'
 import { publicV13WorkIntentStillReady } from '../PublicV13Controller'
 import { encodeDiscoveredTileIds } from '../domain/discoveryMask'
@@ -1648,8 +1648,27 @@ describe('wizard atlas markup', () => {
     expect(onToggle).toHaveBeenCalledTimes(1)
     const closed = renderMap(false)
     expect(closed.match(/<button/g)).toHaveLength(1)
-    expect(closed).toMatch(/<button class="wr-map-toggle" aria-expanded="false">.*<span class="wr-map-compact" aria-hidden="true"><span class="wr-map-grid".*<\/button>/)
+    expect(closed).toMatch(/<button class="wr-map-toggle" aria-expanded="false" aria-label="Map \/ routes, facing N">.*<span class="wr-map-compact" aria-hidden="true"><strong[^>]*>Facing N<\/strong><span class="wr-map-grid".*<\/button>/)
     expect(closed.slice(closed.indexOf('<button'), closed.indexOf('</button>'))).not.toContain('<div')
+  })
+
+  it('shows W-facing world heading on compact and full north-up maps', () => {
+    const bearings: Array<[number, string]> = [
+      [0, 'N'], [-Math.PI / 4, 'NE'], [-Math.PI / 2, 'E'], [-3 * Math.PI / 4, 'SE'],
+      [Math.PI, 'S'], [3 * Math.PI / 4, 'SW'], [Math.PI / 2, 'W'], [Math.PI / 4, 'NW'],
+      [8.58, 'SW'],
+    ]
+    for (const [yaw, bearing] of bearings) expect(mapFacingHeading(yaw)).toBe(bearing)
+    const facingSouthwest = {
+      ...projection,
+      map: { ...projection.map, player: { ...projection.map.player, yaw: 8.58 } },
+    } as WizardViewProjection
+    const compact = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(false), projection: facingSouthwest }))
+    const full = renderToStaticMarkup(createElement(WizardMap, { ...mapProps(true), projection: facingSouthwest }))
+    expect(compact).toContain('aria-label="Map / routes, facing SW"')
+    expect(compact).toContain('Facing SW')
+    expect(full).toContain('Facing SW. W moves SW on this north-up map.')
+    expect(full).toContain('NORTH-UP EXPLORATION MAP')
   })
 
   it('keeps aria-expanded and aria-controls truthful across closed and open states', () => {

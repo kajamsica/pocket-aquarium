@@ -12,6 +12,11 @@ export const mapToggleForKey = (open: boolean, code: string, repeat = false) => 
 export const mapSheetMode = (width: number) => width < 720 ? 'sheet' : 'modal'
 // World forward is (-sin(yaw), -cos(yaw)); CSS rotation is clockwise on a north-up map.
 export const mapHeadingRotation = (yaw: number) => yaw === 0 ? 0 : -yaw
+export const mapFacingHeading = (yaw: number) => {
+  const east = -Math.sin(yaw), north = Math.cos(yaw)
+  const compass = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
+  return compass[(Math.round(Math.atan2(east, north) / (Math.PI / 4)) + 8) % 8]
+}
 export const northUpGridOrder = <T extends { gridX: number; gridZ: number }>(tiles: readonly T[]) =>
   [...tiles].sort((left, right) => left.gridZ - right.gridZ || left.gridX - right.gridX)
 export const mapDialogTabTarget = (open: boolean, code: string, shiftKey: boolean, activeIndex: number, count: number) =>
@@ -302,6 +307,7 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
   buttonRef: RefObject<HTMLButtonElement | null>
   closeRef: RefObject<HTMLButtonElement | null>
 }) {
+  const heading = mapFacingHeading(projection.map.player.yaw)
   const savePaused = projection.controllerActionsEnabled === false
   const starterGreenwayWorks = projection.savedTerrainWorks?.context === 'starter-greenway'
   const works3Greenway = projection.savedTerrainWorks?.context === 'works3-greenway'
@@ -528,9 +534,10 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
       onSelect={(siteId) => { onIntent({ type: 'build-site.select', siteId }); onToggle() }} />}
   </div>
   return <>
-    <button ref={buttonRef} className="wr-map-toggle" aria-expanded={open} aria-controls={open ? 'wizard-world-map' : undefined} onClick={onToggle}>
+    <button ref={buttonRef} className="wr-map-toggle" aria-expanded={open} aria-controls={open ? 'wizard-world-map' : undefined}
+      aria-label={!open ? `Map / routes, facing ${heading}` : undefined} onClick={onToggle}>
       <span className="wr-map-toggle-label"><span>Map / routes</span><small>M</small></span>
-      {!open && <span className="wr-map-compact" aria-hidden="true"><MapGrid projection={projection} compact /></span>}
+      {!open && <span className="wr-map-compact" aria-hidden="true"><strong style={{ display: 'block', color: '#f5d670', fontSize: 12 }}>Facing {heading}</strong><MapGrid projection={projection} compact /></span>}
     </button>
     {open && <div className="wr-map-backdrop"><section id="wizard-world-map" className="wr-map-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-world-map-title"
       onKeyDown={(event) => {
@@ -545,6 +552,7 @@ export function WizardMap({ projection, open, onToggle, onIntent, buttonRef, clo
         if (next !== null) { event.preventDefault(); controls[next].focus() }
       }}>
       <header><div><small>NORTH-UP EXPLORATION MAP</small><h2 id="wizard-world-map-title">{projection.map.title ?? 'Greenway atlas'}</h2></div><button ref={closeRef} onClick={onToggle} aria-label="Close map">×</button></header>
+      <p className="wr-map-facing">Facing {heading}. W moves {heading} on this north-up map.</p>
       {projection.savedTerrainWorks && <style>{`.wr-map-work-guide{margin:10px 0;font-size:12px;color:#b7c2b9}.wr-map-work-guide>summary{box-sizing:border-box;display:flex;align-items:center;min-height:44px;padding:8px;border:1px solid #d5b86f88;border-radius:8px;color:#f5d889;cursor:pointer}.wr-map-work-guide>summary:focus-visible{outline:3px solid #ffe395;outline-offset:2px}.wr-map-work-guide p{margin:8px 0;overflow-wrap:anywhere}.wr-map-route-key{padding:8px;border:1px solid #d5b86f88;border-radius:8px;background:#1d2a24}.wr-map-route-key h3{margin:0 0 6px;color:#f5d889;font-size:13px}.wr-map-route-key ul{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:0;padding:0;list-style:none}.wr-map-route-key li{display:grid;gap:3px;align-content:start;font-size:11px}.wr-map-route-key li span{color:#e3e6d8}.wr-map-route-key li small{color:#f5d889;overflow-wrap:anywhere}@media(min-width:900px) and (min-height:600px){.wr-map-dialog:has(.wr-map-route-key){width:min(1000px,94vw)}.wr-map-local:has(.wr-map-route-key){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}.wr-map-local:has(.wr-map-route-key)>.wr-map-guidance:first-child{grid-column:1/-1}.wr-map-local:has(.wr-map-route-key)>.wr-map-grid,.wr-map-local:has(.wr-map-route-key)>.wr-map-camp-window{grid-column:1;grid-row:2;width:min(55vh,100%)}.wr-map-local:has(.wr-map-route-key)>.wr-map-legend{grid-column:1;grid-row:3}.wr-map-local:has(.wr-map-route-key)>.wr-map-route-key{grid-column:2;grid-row:2/span 2}.wr-map-local:has(.wr-map-route-key)>.wr-map-route-key ul{grid-template-columns:1fr}.wr-map-local:has(.wr-map-route-key)>:not(.wr-map-grid):not(.wr-map-camp-window):not(.wr-map-legend):not(.wr-map-route-key){grid-column:1/-1}}`}</style>}
       {projection.map.overview ? <>
         <style>{`.wr-map-overview[open]~.wr-map-local{display:none}.wr-map-overview>summary{box-sizing:border-box;display:flex;align-items:center;min-height:44px;margin:0 0 12px;padding:8px 12px;border:1px solid #d5b86f88;border-radius:8px;background:#283a30;color:#f5d889;cursor:pointer}.wr-map-overview>summary:focus-visible{outline:3px solid #ffe395;outline-offset:2px}.wr-overview-grid{display:grid;gap:2px;width:min(60vh,100%);margin:auto}.wr-overview-cell{position:relative;display:grid;place-items:center;min-width:0;aspect-ratio:1;border:1px solid #ffffff1b;background:#17201e;color:#fff;font-size:10px}.wr-overview-cell[data-discovered=false]{border-style:dashed}.wr-overview-cell i{position:absolute;inset:20%;border-radius:2px;opacity:.72}.wr-overview-cell b{position:relative}.wr-map-overview p,.wr-map-local>p{margin:10px 0;color:#b7c2b9;font-size:12px}`}</style>
