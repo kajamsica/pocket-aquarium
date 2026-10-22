@@ -126,10 +126,13 @@ export function publicWorldV28ViewProjection(progress: PublicV28Progress,
   })()
   const nearRiver = Math.abs(grid(position.z) - publicV25RiverCenterZ(state.seed,
     grid(position.x))) <= 3
-  const nearestSameBank = nearRiver ? local.filter((site) => !builtIds.has(site.id)
-    && position.z <= site.from.z && site.from.z - position.z <= 16)
-    .sort((a, b) => Math.abs(a.from.x - position.x) - Math.abs(b.from.x - position.x)
-      || a.id.localeCompare(b.id))[0] : null
+  const markedSameBank = candidates.some(({ site }) => position.z <= site.from.z
+    && site.from.z - position.z <= 16)
+  const nearestSameBank = nearRiver && !builtIds.size && !markedSameBank
+    ? local.filter((site) => !builtIds.has(site.id)
+      && position.z <= site.from.z && site.from.z - position.z <= 16)
+      .sort((a, b) => Math.abs(a.from.x - position.x) - Math.abs(b.from.x - position.x)
+        || a.id.localeCompare(b.id))[0] : null
   const bankDirection = nearestSameBank && Math.abs(nearestSameBank.from.x - position.x) >= 2
     ? nearestSameBank.from.x < position.x ? 'west' : 'east' : null
   const bankCue = bankDirection
@@ -167,11 +170,14 @@ export function publicWorldV28ViewProjection(progress: PublicV28Progress,
   const candidateFrom = new Set(discovered.filter((site) => !builtIds.has(site.id))
     .map((site) => tileAt(site.from.x, site.from.z)))
   const builtTiles = new Set(built.flatMap((site) => site.footprintTileIds))
+  const markedCue = 'Connected river: use only marked dry-bank crossings. Open Works, choose Bridge, and confirm when Ready.'
   const map = { ...carrier.map, tiles: carrier.map.tiles.map((tile) => ({ ...tile,
     hasRouteSite: tile.hasRouteSite || tile.discovered && candidateFrom.has(tile.id),
     hasBuiltRoute: tile.hasBuiltRoute || tile.discovered && builtTiles.has(tile.id) })),
-    ...(riverContext ? { guidance: selectedRiver?.reason ?? preview?.guidance
-      ?? bankCue ?? 'Connected river: use only marked dry-bank crossings. Open Works, choose Bridge, and confirm when Ready.' }
+    ...(riverContext ? { guidance: builtIds.size
+      ? 'Your connected-river bridge is built; use its saved deck from a dry bank to cross.'
+      : selectedRiver?.reason ?? (markedSameBank ? markedCue : null)
+        ?? preview?.guidance ?? bankCue ?? markedCue }
       : {}) }
   return { ...carrier, player, savedTerrainWorks, map, v28TravelContinuity }
 }

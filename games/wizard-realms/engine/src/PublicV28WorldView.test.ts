@@ -14,7 +14,8 @@ import { projectPublicV28Pose } from './domain/publicWorldV28RiverSupport'
 import { worldTileAtGrid } from './domain/worldChunks'
 import { publicWorldV23ViewProjection } from './PublicV23WorldView'
 import { publicWorldV26ViewProjection } from './PublicV26WorldView'
-import { displayPublicV28RiverBridge, publicWorldV28ViewProjection } from './PublicV28WorldView'
+import { displayPublicV28RiverBridge, localPublicV28RiverBridgeSites,
+  publicWorldV28ViewProjection } from './PublicV28WorldView'
 import { savedTerrainWorkVisuals, terrainWorkStructureGeometry } from './view/WizardScene'
 
 const seed = 'greenway-alpha'
@@ -88,6 +89,34 @@ describe('V28 connected-river Works view overlay', () => {
     expect(unsupported.map.guidance).toBe(unsupported.savedTerrainWorks?.preview?.guidance)
   })
 
+  it('prefers a marked supported crossing over a nearer hidden one', () => {
+    const base = bankProgress('wizard-realms', -35.09145, -1.91889)
+    const { x, z } = base.state.player.position
+    const sites = localPublicV28RiverBridgeSites(base.state.seed, x, z)
+      .filter((choice) => z <= choice.from.z && choice.from.z - z <= 16
+        && Math.hypot(choice.from.x - x, choice.from.z - z) <= 16)
+      .sort((a, b) => Math.abs(a.from.x - x) - Math.abs(b.from.x - x))
+    expect(sites.length).toBeGreaterThan(1)
+    const hidden = sites[0]!, marked = sites[1]!
+    const progress = { ...base, state: { ...base.state,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(base.state.discoveryMask), ...marked.footprintTileIds])].sort()) } }
+    const view = publicWorldV28ViewProjection(progress, carrierFor(progress),
+      { ...work, modeActive: false, aimX: null })
+    expect(view.map.guidance).toContain('use only marked dry-bank crossings')
+    expect(view.map.guidance).not.toContain('Follow this dry bank')
+    expect(view.savedTerrainWorks?.suggestedSites?.some((choice) => choice.id === marked.id))
+      .toBe(true)
+    expect(view.savedTerrainWorks?.suggestedSites?.some((choice) => choice.id === hidden.id))
+      .toBe(false)
+    expect(view.map.tiles.some((tile) => tile.id === hidden.footprintTileIds[1]
+      && tile.hasRouteSite)).toBe(false)
+    const unsupported = publicWorldV28ViewProjection(progress, carrierFor(progress),
+      { ...work, aimX: -36 })
+    expect(unsupported.map.guidance).toContain('use only marked dry-bank crossings')
+    expect(unsupported.savedTerrainWorks?.preview?.guidance).not.toContain('Follow this dry bank')
+  })
+
   it('derives the opposite bank direction from another seed without adding a marker', () => {
     const progress = bankProgress(seed, site.from.x - 2, site.from.z - 4)
     const view = publicWorldV28ViewProjection(progress, carrierFor(progress),
@@ -109,6 +138,18 @@ describe('V28 connected-river Works view overlay', () => {
       { ...work, aimX: unsupportedGX * 4 })
     expect(unsupported.savedTerrainWorks?.preview?.guidance)
       .toContain('Follow the bank to a marked, dry-bank site')
+  })
+
+  it('prioritizes a saved connected-river deck over another unbuilt bank site', () => {
+    const base = ready()
+    expect(localPublicV28RiverBridgeSites(base.state.seed, site.from.x, site.from.z)
+      .some((choice) => choice.id !== site.id)).toBe(true)
+    const confirmed = confirmPublicV28RiverBridge(base, site.id)
+    if ('rejection' in confirmed) throw new Error(`Bridge rejected: ${confirmed.rejection}`)
+    const view = publicWorldV28ViewProjection(confirmed.progress,
+      carrierFor(confirmed.progress), { ...work, modeActive: false })
+    expect(view.map.guidance).toContain('use its saved deck from a dry bank')
+    expect(view.map.guidance).not.toContain('Follow this dry bank')
   })
 
   it('projects a checked Ready choice and renders the exact canonical deck path', () => {
