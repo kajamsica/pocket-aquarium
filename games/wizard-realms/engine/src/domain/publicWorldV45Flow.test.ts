@@ -561,6 +561,35 @@ describe('V45 fenced source-only flow', () => {
       .toEqual(marker)
   }, 90_000)
 
+  it('durably saves a 32-frame batch with the same checked per-frame result', async () => {
+    const { factory, source, store } = await setup(mountedV44Root())
+    const started = await startPublicV45(locks, store, source, 1)
+    if (!started.ok) throw new Error(started.reason)
+    const sourceBytes = JSON.stringify(await record(factory,
+      PUBLIC_V44_DATABASE_NAME, 'root'))
+    const marker = await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor')
+    const batch = { kind: 'sedgehorn-assisted-ride-batch/v1' as const,
+      frames: Array.from({ length: 32 }, (_, index) => ({ ...ride,
+        intents: [{ type: 'move' as const,
+          delta: { x: index % 2 ? -0.12 : 0.12, z: 0 } }] })) }
+    const { schemaVersion: _schema, saveRevision: _revision,
+      witness: _witness, ...progress } = started.value.head
+    const expected = confirmPublicV45Action(progress, batch)
+    if (!expected.progress) throw new Error('Expected checked batch')
+    const saved = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, batch)
+    if (!saved.ok) throw new Error(saved.reason)
+    expect(saved.value.head).toEqual({ ...expected.progress,
+      schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: 1, witness: batch })
+    expect(saved.value.events).toEqual(expected.events)
+    expect((await createAtomicV45Store(factory).readChecked())).toMatchObject({
+      status: 'valid', root: { head: saved.value.head } })
+    expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+      .toBe(sourceBytes)
+    expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
+      .toEqual(marker)
+  }, 90_000)
+
   it('persists a checked herb sale and reloads without rewriting V44 or its marker', async () => {
     const { factory, source, store } = await setup(saleV44Root())
     const started = await startPublicV45(locks, store, source, 0)

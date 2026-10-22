@@ -1,4 +1,5 @@
-import { decodePublicV45Root, decodePublicV45SuccessorOfCheckedRoot }
+import { decodePublicV45PreparedRideBatchSuccessor, decodePublicV45Root,
+  decodePublicV45SuccessorOfCheckedRoot }
   from './publicWorldV45Snapshot'
 import type { PublicV45Root } from './publicWorldV45Snapshot'
 import { sameStrictBoundedRaw } from './strictBoundedRaw'
@@ -38,6 +39,60 @@ export function createAtomicV45Store(factory: IDBFactory,
   }
   const exactStore = (db: IDBDatabase) => db.version === 1
     && db.objectStoreNames.length === 1 && db.objectStoreNames[0] === 'records'
+  async function commitInternal(proof: object, next: PublicV45Root,
+    preparedBatch?: object): Promise<CommitResult> {
+    if (!proofs.has(proof)) return 'invalid'
+    const prior = proofs.get(proof)!; proofs.delete(proof)
+    if (!sameStrictBoundedRaw(next, next, RAW_LIMIT)) return 'invalid'
+    const decoded = prior === null ? preparedBatch ? null : decodePublicV45Root(next)
+      : preparedBatch ? decodePublicV45PreparedRideBatchSuccessor(prior.root,
+        next, preparedBatch, proof) : decodePublicV45SuccessorOfCheckedRoot(prior.root, next)
+    if (!decoded || prior === null && decoded.head.saveRevision !== 0) return 'invalid'
+    let candidate: PublicV45Root
+    try {
+      candidate = structuredClone(decoded)
+      if (!sameStrictBoundedRaw(candidate, decoded, RAW_LIMIT)) return 'invalid'
+    } catch { return 'invalid' }
+    let db: IDBDatabase | undefined
+    try {
+      db = await open()
+      if (!exactStore(db)) { warm = null; return 'storage-error' }
+      return await new Promise<CommitResult>((resolve) => {
+        let tx: IDBTransaction
+        try { tx = db!.transaction('records', 'readwrite', { durability: 'strict' }) }
+        catch (error) {
+          if (!(error instanceof TypeError) && !(error instanceof DOMException
+            && error.name === 'NotSupportedError')) throw error
+          tx = db!.transaction('records', 'readwrite')
+        }
+        const records = tx.objectStore('records'), read = records.get('root')
+        const keys = records.getAllKeys()
+        let result: CommitResult = 'storage-error'
+        tx.oncomplete = () => {
+          warm = null
+          if (result === 'committed') {
+            try { warm = { raw: structuredClone(candidate),
+              root: structuredClone(candidate) } }
+            catch { /* The committed record remains durable without a warm copy. */ }
+          }
+          resolve(result)
+        }
+        tx.onabort = () => { warm = null; resolve('storage-error') }
+        keys.onsuccess = () => {
+          let matches = false
+          try {
+            matches = keys.result.length === (prior === null ? 0 : 1)
+              && (prior === null || keys.result[0] === 'root'
+                && sameStrictBoundedRaw(read.result, prior.raw, RAW_LIMIT))
+          } catch { /* A changed record cannot satisfy the proof. */ }
+          if (!matches) { result = 'revision-changed'; return }
+          try { records.put(candidate, 'root'); result = 'committed' }
+          catch { tx.abort() }
+        }
+      })
+    } catch { warm = null; return 'storage-error' }
+    finally { db?.close() }
+  }
   return {
     async readChecked(): Promise<AtomicV45Read> {
       let db: IDBDatabase | undefined
@@ -87,57 +142,12 @@ export function createAtomicV45Store(factory: IDBFactory,
       }
       finally { db?.close() }
     },
-    async commit(proof: object, next: PublicV45Root): Promise<CommitResult> {
-      if (!proofs.has(proof)) return 'invalid'
-      const prior = proofs.get(proof)!; proofs.delete(proof)
-      if (!sameStrictBoundedRaw(next, next, RAW_LIMIT)) return 'invalid'
-      const decoded = prior === null ? decodePublicV45Root(next)
-        : decodePublicV45SuccessorOfCheckedRoot(prior.root, next)
-      if (!decoded || prior === null && decoded.head.saveRevision !== 0) return 'invalid'
-      let candidate: PublicV45Root
-      try {
-        candidate = structuredClone(decoded)
-        if (!sameStrictBoundedRaw(candidate, decoded, RAW_LIMIT)) return 'invalid'
-      } catch { return 'invalid' }
-      let db: IDBDatabase | undefined
-      try {
-        db = await open()
-        if (!exactStore(db)) { warm = null; return 'storage-error' }
-        return await new Promise<CommitResult>((resolve) => {
-          let tx: IDBTransaction
-          try { tx = db!.transaction('records', 'readwrite', { durability: 'strict' }) }
-          catch (error) {
-            if (!(error instanceof TypeError) && !(error instanceof DOMException
-              && error.name === 'NotSupportedError')) throw error
-            tx = db!.transaction('records', 'readwrite')
-          }
-          const records = tx.objectStore('records'), read = records.get('root')
-          const keys = records.getAllKeys()
-          let result: CommitResult = 'storage-error'
-          tx.oncomplete = () => {
-            warm = null
-            if (result === 'committed') {
-              try { warm = { raw: structuredClone(candidate),
-                root: structuredClone(candidate) } }
-              catch { /* The committed record remains durable without a warm copy. */ }
-            }
-            resolve(result)
-          }
-          tx.onabort = () => { warm = null; resolve('storage-error') }
-          keys.onsuccess = () => {
-            let matches = false
-            try {
-              matches = keys.result.length === (prior === null ? 0 : 1)
-                && (prior === null || keys.result[0] === 'root'
-                  && sameStrictBoundedRaw(read.result, prior.raw, RAW_LIMIT))
-            } catch { /* A changed record cannot satisfy the proof. */ }
-            if (!matches) { result = 'revision-changed'; return }
-            try { records.put(candidate, 'root'); result = 'committed' }
-            catch { tx.abort() }
-          }
-        })
-      } catch { warm = null; return 'storage-error' }
-      finally { db?.close() }
+    commit(proof: object, next: PublicV45Root): Promise<CommitResult> {
+      return commitInternal(proof, next)
+    },
+    commitPreparedRideBatch(proof: object, next: PublicV45Root,
+      certificate: object): Promise<CommitResult> {
+      return commitInternal(proof, next, certificate)
     },
   }
 }

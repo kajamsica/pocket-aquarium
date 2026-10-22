@@ -3,7 +3,8 @@ import type { createAtomicV45Store } from './atomicV45Database'
 import { applyPublicV26ReturnHome } from './publicWorldV26Escape'
 import { confirmPublicV45Action } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
-import { decodePublicV45Root, decodePublicV45Witness }
+import { decodePublicV45Root, decodePublicV45Witness,
+  preparePublicV45RideBatch }
   from './publicWorldV45Snapshot'
 import type { PublicV45Head, PublicV45Root,
   PublicV45Witness } from './publicWorldV45Snapshot'
@@ -198,7 +199,12 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore,
       return { ok: false, reason: 'invalid-witness' }
     const { schemaVersion: _schema, saveRevision: _revision,
       witness: _previous, ...progress } = head
-    const action = confirmPublicV45Action(progress, witness)
+    // For short batches the certificate costs more than one ordinary replay.
+    const prepared = witness.kind === 'sedgehorn-assisted-ride-batch/v1'
+      && witness.frames.length >= 8
+      ? preparePublicV45RideBatch(fenced.root, witness, fenced.proof) : null
+    const action = prepared ? { progress: prepared.candidate.head,
+      events: prepared.events } : confirmPublicV45Action(progress, witness)
     if (!action.progress) {
       if (returnHome && witness.kind === 'return-home/v1') {
         const { state, greenwayWorks, regionalWorks, terrain, nextHomeAtMs } = head
@@ -209,10 +215,14 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore,
       }
       return { ok: false, reason: action.rejection ?? 'action-rejected' }
     }
-    const nextHead: PublicV45Head = { ...action.progress,
-      schemaVersion: PUBLIC_V45_SCHEMA, saveRevision: revision + 1, witness }
-    const candidate: PublicV45Root = { lineage, previous: head, head: nextHead }
-    const committed = await store.commit(fenced.proof, candidate)
+    const nextHead: PublicV45Head = prepared ? prepared.candidate.head
+      : { ...action.progress, schemaVersion: PUBLIC_V45_SCHEMA,
+        saveRevision: revision + 1, witness }
+    const candidate: PublicV45Root = prepared?.candidate
+      ?? { lineage, previous: head, head: nextHead }
+    const committed = prepared
+      ? await store.commitPreparedRideBatch(fenced.proof, candidate,
+        prepared.certificate) : await store.commit(fenced.proof, candidate)
     if (committed !== 'committed') return { ok: false,
       reason: committed === 'invalid' ? 'invalid-successor' : committed }
     const reply: PublicV45Operation<PublicV45Commit> = { ok: true,

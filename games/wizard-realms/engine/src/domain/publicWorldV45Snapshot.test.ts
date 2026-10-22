@@ -17,7 +17,8 @@ import { confirmPublicV45Action, confirmPublicV45RideFrame,
 import type { PublicV45RideFrameWitness } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
 import { decodePublicV45CheckedSuccessor, decodePublicV45Root,
-  decodePublicV45Witness } from './publicWorldV45Snapshot'
+  decodePublicV45PreparedRideBatchSuccessor, decodePublicV45Witness,
+  preparePublicV45RideBatch } from './publicWorldV45Snapshot'
 import type { PublicV45Root, PublicV45Witness } from './publicWorldV45Snapshot'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
 import { waystationRiverSite } from './waystationRiverContent'
@@ -362,6 +363,43 @@ describe('V45 checked assisted-ride root', () => {
       expect(confirmPublicV45Action(progress, invalid).progress).toBeUndefined()
     }
   }, 60_000)
+
+  it('binds one prepared batch to its exact checked prior and canonical candidate', () => {
+    const genesis = mountedGenesis()
+    const witness = { kind: 'sedgehorn-assisted-ride-batch/v1' as const,
+      frames: Array.from({ length: 32 }, () => ride(0.002)) }
+    const expected = next(genesis, witness)
+    const proof = {}
+    const prepared = preparePublicV45RideBatch(genesis, witness, proof)
+    if (!prepared) throw new Error('Expected prepared ride batch')
+    expect(prepared.candidate).toEqual(expected)
+    expect(prepared.events.filter((event) => event.type === 'player_moved'))
+      .toHaveLength(64)
+    const wrongPrior = { ...genesis, head: { ...genesis.head, saveRevision: 7 } }
+    expect(decodePublicV45PreparedRideBatchSuccessor(wrongPrior,
+      prepared.candidate, prepared.certificate, proof)).toBeNull()
+    expect(decodePublicV45PreparedRideBatchSuccessor(genesis,
+      prepared.candidate, prepared.certificate, proof)).toBeNull()
+    const tampered = preparePublicV45RideBatch(genesis, witness, proof)!
+    const forged = { ...tampered.candidate, head: { ...tampered.candidate.head,
+      state: { ...tampered.candidate.head.state,
+        tick: tampered.candidate.head.state.tick + 1 } } }
+    expect(decodePublicV45PreparedRideBatchSuccessor(genesis,
+      forged, tampered.certificate, proof)).toBeNull()
+    const wrongProof = preparePublicV45RideBatch(genesis, witness, proof)!
+    expect(decodePublicV45PreparedRideBatchSuccessor(genesis,
+      wrongProof.candidate, wrongProof.certificate, {})).toBeNull()
+    const valid = preparePublicV45RideBatch(genesis, witness, proof)!
+    expect(decodePublicV45PreparedRideBatchSuccessor(genesis,
+      valid.candidate, {}, proof)).toBeNull()
+    expect(decodePublicV45PreparedRideBatchSuccessor(genesis,
+      valid.candidate, valid.certificate, proof)).toEqual(expected)
+    expect(decodePublicV45PreparedRideBatchSuccessor(genesis,
+      valid.candidate, valid.certificate, proof)).toBeNull()
+    expect(decodePublicV45Root(valid.candidate)).toEqual(expected)
+    expect(preparePublicV45RideBatch(genesis, { ...witness,
+      frames: [...witness.frames, ride(0.002)] }, proof)).toBeNull()
+  }, 90_000)
 
   it('checks purchase replay and retained tack monotonicity', () => {
     const genesis = economyGenesis('greenway')

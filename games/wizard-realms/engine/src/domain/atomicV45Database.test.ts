@@ -16,7 +16,8 @@ import { createPublicV44Root, decodePublicV44Root, PUBLIC_V44_DATABASE_NAME,
   PUBLIC_V44_SCHEMA } from './publicWorldV44Snapshot'
 import { confirmPublicV45RideFrame } from './publicWorldV45RideAction'
 import { createPublicV45Genesis, PUBLIC_V45_SCHEMA } from './publicWorldV45Migration'
-import { decodePublicV45CheckedSuccessor, decodePublicV45Root }
+import { decodePublicV45CheckedSuccessor, decodePublicV45Root,
+  preparePublicV45RideBatch }
   from './publicWorldV45Snapshot'
 import type { PublicV45Root, PublicV45Witness } from './publicWorldV45Snapshot'
 import { resolveSedgehornFamiliarSite } from './sedgehornFamiliarContent'
@@ -179,6 +180,42 @@ describe('atomic V45 checked root storage', () => {
       status: 'valid', root: second })
     expect((await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))).toEqual(second)
   }, 30_000)
+
+  it('commits only a prepared batch bound to its private proof and exact CAS', async () => {
+    const factory = new IDBFactory(), first = createAtomicV45Store(factory)
+    const genesis = mountedGenesis()
+    const missing = await first.readChecked()
+    if (missing.status !== 'missing') throw new Error('Expected empty store')
+    expect(await first.commit(missing.proof, genesis)).toBe('committed')
+    const other = createAtomicV45Store(factory)
+    const read = await first.readChecked(), competing = await other.readChecked()
+    if (read.status !== 'valid' || competing.status !== 'valid')
+      throw new Error('Expected checked roots')
+    const batch = { kind: 'sedgehorn-assisted-ride-batch/v1' as const,
+      frames: [ride, ride] }
+    const prepared = preparePublicV45RideBatch(read.root, batch, read.proof)!
+    expect(await first.commitPreparedRideBatch(read.proof,
+      { ...prepared.candidate, head: { ...prepared.candidate.head,
+        saveRevision: 8 } }, prepared.certificate)).toBe('invalid')
+    expect(await first.commitPreparedRideBatch(competing.proof,
+      prepared.candidate, prepared.certificate)).toBe('invalid')
+    const refreshed = await first.readChecked()
+    if (refreshed.status !== 'valid') throw new Error('Expected checked root')
+    const good = preparePublicV45RideBatch(refreshed.root, batch,
+      refreshed.proof)!
+    expect(await first.commitPreparedRideBatch(refreshed.proof,
+      good.candidate, good.certificate)).toBe('committed')
+    expect(await first.commitPreparedRideBatch(refreshed.proof,
+      good.candidate, good.certificate)).toBe('invalid')
+    const stale = preparePublicV45RideBatch(competing.root, batch,
+      competing.proof)!
+    expect(await other.commitPreparedRideBatch(competing.proof,
+      stale.candidate, stale.certificate)).toBe('revision-changed')
+    expect((await createAtomicV45Store(factory).readChecked())).toMatchObject({
+      status: 'valid', root: good.candidate })
+    expect(await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))
+      .toEqual(good.candidate)
+  }, 90_000)
 
   it('reuses only the same checked record and cold-checks changed or torn bytes', async () => {
     const factory = new IDBFactory(), store = createAtomicV45Store(factory)

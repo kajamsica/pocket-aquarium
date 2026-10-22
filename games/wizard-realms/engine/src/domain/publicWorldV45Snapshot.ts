@@ -9,6 +9,7 @@ import type { PublicV45MountWitness } from './publicWorldV45MountTransition'
 import { confirmPublicV45Action, decodePublicV45RideBatchWitness,
   decodePublicV45RideFrameWitness } from './publicWorldV45RideAction'
 import type { PublicV45Progress, PublicV45RideWitness } from './publicWorldV45RideAction'
+import type { PublicWorldEvent } from './publicWorldRuntime'
 import { createPublicV45GenesisFromCheckedSource, PUBLIC_V45_SCHEMA }
   from './publicWorldV45Migration'
 import type { PublicV45Lineage } from './publicWorldV45Migration'
@@ -31,6 +32,9 @@ export type PublicV45Root = Readonly<{
 }>
 
 const RAW_LIMIT = 3 << 20
+type PreparedRideBatch = Readonly<{ before: PublicV45Root; candidate: PublicV45Root;
+  proof: object }>
+const preparedRideBatches = new WeakMap<object, PreparedRideBatch>()
 const OPTIONAL_KEYS = ['mountTraining', 'greenwayOrder', 'greenwayBagUpgrade'] as const
 const progressOf = ({ schemaVersion: _schema, saveRevision: _revision,
   witness: _witness, ...progress }: PublicV45Head): PublicV45Progress => progress
@@ -164,17 +168,55 @@ export function decodePublicV45CheckedSuccessor(rawBefore: PublicV45Root,
 /** Only a private checked-read proof may supply before without redecoding it. */
 export function decodePublicV45SuccessorOfCheckedRoot(before: PublicV45Root,
   raw: unknown): PublicV45Root | null {
+  return successorOfCheckedRoot(before, raw, false)
+}
+
+/** Replay exactly once while preparing a batch, before any durable-write shortcut. */
+export function preparePublicV45RideBatch(before: PublicV45Root,
+  rawWitness: unknown, proof: object): Readonly<{ candidate: PublicV45Root; certificate: object;
+    events: readonly PublicWorldEvent[] }> | null {
+  try {
+    const witness = decodePublicV45RideBatchWitness(rawWitness)
+    if (!witness || !Number.isSafeInteger(before.head.saveRevision + 1)) return null
+    const action = confirmPublicV45Action(progressOf(before.head), witness)
+    if (!action.progress) return null
+    const candidate: PublicV45Root = { lineage: before.lineage, previous: before.head,
+      head: { ...action.progress, schemaVersion: PUBLIC_V45_SCHEMA,
+        saveRevision: before.head.saveRevision + 1, witness } }
+    const certificate = {}
+    preparedRideBatches.set(certificate, { before: structuredClone(before),
+      candidate: structuredClone(candidate), proof })
+    return { candidate, certificate, events: action.events }
+  } catch { return null }
+}
+
+/** Only the atomic store's private checked-read root can redeem this one-use proof. */
+export function decodePublicV45PreparedRideBatchSuccessor(before: PublicV45Root,
+  raw: unknown, certificate: object, proof: object): PublicV45Root | null {
+  const prepared = preparedRideBatches.get(certificate)
+  preparedRideBatches.delete(certificate)
+  try {
+    return prepared && proof === prepared.proof
+      && sameStrictBoundedRaw(before, prepared.before, RAW_LIMIT)
+      && sameStrictBoundedRaw(raw, prepared.candidate, RAW_LIMIT)
+      ? successorOfCheckedRoot(before, raw, true) : null
+  } catch { return null }
+}
+
+function successorOfCheckedRoot(before: PublicV45Root, raw: unknown,
+  preparedBatch: boolean): PublicV45Root | null {
   try {
     if (!exactPublicV23(raw, ['lineage', 'previous', 'head'])
       || !sameStrictBoundedRaw(raw.lineage, before.lineage, RAW_LIMIT)
       || !sameStrictBoundedRaw(raw.previous, before.head, RAW_LIMIT)) return null
     const head = decodeHead(raw.head, before.lineage)
     const genesis = createPublicV45GenesisFromCheckedSource(before.lineage.source).head
-    return head && preservesGenesis(genesis, head, before.lineage.seed)
+    return head && head.saveRevision === before.head.saveRevision + 1
+      && preservesGenesis(genesis, head, before.lineage.seed)
       && tackMonotonic(before.head, head)
       && publicV32Monotonic(before.head, head)
       && publicV43Monotonic(before.head, head)
-      && replayMatches(before.head, head, raw.head)
+      && (preparedBatch || replayMatches(before.head, head, raw.head))
       ? { lineage: before.lineage, previous: before.head, head } : null
   } catch { return null }
 }
