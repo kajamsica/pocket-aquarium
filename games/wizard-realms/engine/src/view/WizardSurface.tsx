@@ -192,7 +192,7 @@ export function pointerDevNavigateIntent(enabled: boolean, projection: WizardVie
   mapOpen: boolean, ground: ReturnType<SceneGroundPicker>): WizardViewIntent | null {
   if (!enabled || mapOpen || projection.openStoreId
     || projection.savedTerrainWorks?.modeActive || projection.controllerActionsEnabled === false
-    || projection.unavailableActions
+    || projection.groundMount?.mode === 'riding'
     || !ground || !Number.isFinite(ground.x) || !Number.isFinite(ground.z)) return null
   return { type: 'dev.navigate', destination: { x: ground.x, z: ground.z } }
 }
@@ -642,7 +642,9 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           const tap = pointerAimTap(press, event.pointerId, [event.clientX, event.clientY])
           const eligible = devNavigation && tap && pressedKeys.current.size === 0
             && !mapOpen && !projection.openStoreId
-            && !projection.savedTerrainWorks?.modeActive && !projection.unavailableActions
+            && !projection.savedTerrainWorks?.modeActive
+            && projection.controllerActionsEnabled !== false
+            && projection.groundMount?.mode !== 'riding'
           const currentTap = { atMs: event.timeStamp,
             point: [event.clientX, event.clientY] as const }
           const decision = devSceneTapDecision(eligible, lastSceneTap.current, currentTap, terrainMode)

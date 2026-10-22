@@ -98,6 +98,16 @@ describe('dev-only ground navigation handoff', () => {
     expect(request({ ...projection, savedTerrainWorks: { modeActive: true } as WizardViewProjection['savedTerrainWorks'] }, false)).toBeNull()
     expect(request(projection, false, null)).toBeNull()
   })
+
+  it('routes on-foot streamed dev ground without enabling mounted routing', () => {
+    const streamed = { ...projection, unavailableActions: true as const,
+      controllerActionsEnabled: true }
+    const enabled = devNavigationEnabled('?dev=1&publicWorld=v45')
+    expect(pointerDevNavigateIntent(enabled, streamed, false, ground))
+      .toEqual({ type: 'dev.navigate', destination: { x: ground.x, z: ground.z } })
+    expect(pointerDevNavigateIntent(enabled, { ...streamed, groundMount: {
+      mode: 'riding', position: [0, 0, 0], yaw: 0 } }, false, ground)).toBeNull()
+  })
 })
 
 type Props = Record<string, unknown>
