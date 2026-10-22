@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
+import { mireglassAnchors } from './mireglassContent'
 import { createFreshPublicV42Root, decodePublicV42Root, PUBLIC_V42_SCHEMA }
   from './publicWorldV42Snapshot'
 import type { PublicV42Root } from './publicWorldV42Snapshot'
@@ -101,6 +102,49 @@ function mountedGenesis(boots = false): PublicV45Root {
   const genesis = createPublicV45Genesis(source!)
   expect(genesis.head.tack).toBe('legacy')
   return genesis
+}
+
+function economyGenesis(region: 'greenway' | 'mireglass'): PublicV45Root {
+  const root = matureRoot(false)
+  const salvager = mireglassAnchors(seed).salvager.tile
+  const store = root.head.state.greenway.stores.find(({ id }) => id === 'store-greenway')!
+  const position = region === 'greenway' ? store.position : salvager.center
+  const ready = (head: PublicV43Root['head']) => ({ ...head,
+    mountTraining: region === 'greenway'
+      ? { careWitnesses: head.mountTraining!.careWitnesses.slice(0, 2) }
+      : head.mountTraining,
+    state: { ...head.state,
+      movementOwner: region === 'greenway' ? 'greenway' as const : 'streamed' as const,
+      discoveryMask: region === 'mireglass'
+        ? encodeDiscoveredTileIds([...new Set([
+          ...decodeDiscoveredTileIds(head.state.discoveryMask), salvager.id])].sort())
+        : head.state.discoveryMask,
+      player: { ...head.state.player, position: { ...position }, coins: 300,
+        inventory: region === 'mireglass'
+          ? [...head.state.player.inventory, { itemId: 'marsh_herb' as const,
+            quantity: 3 }] : head.state.player.inventory } } })
+  const imported = decodePublicV43Root({ ...root,
+    previous: ready(root.previous!), head: ready(root.head) })
+  expect(imported).not.toBeNull()
+  return createPublicV45Genesis(createPublicV44Root(imported!))
+}
+
+/** Retained pair after the earlier care and travel edges have been evicted. */
+function purchaseReadyRoot(): PublicV45Root {
+  const genesis = economyGenesis('greenway')
+  const care = { kind: 'sedgehorn-care/v1' as const,
+    tick: genesis.head.state.tick, eventSequence: genesis.head.state.eventSequence + 1 }
+  const previous = { ...genesis.head, saveRevision: 3, witness: idle,
+    mountTraining: { careWitnesses: [...genesis.head.mountTraining!.careWitnesses, care] },
+    state: { ...genesis.head.state, eventSequence: care.eventSequence } }
+  const { schemaVersion: _schema, saveRevision: _revision,
+    witness: _prior, ...flat } = previous
+  const progress = confirmPublicV45Action(flat, idle).progress!
+  const root = decodePublicV45Root({ lineage: genesis.lineage, previous,
+    head: { ...progress, schemaVersion: PUBLIC_V45_SCHEMA,
+      saveRevision: 4, witness: idle } })
+  expect(root).not.toBeNull()
+  return root!
 }
 
 function next(before: PublicV45Root, witness: PublicV45Witness): PublicV45Root {
@@ -260,13 +304,21 @@ describe('V45 checked assisted-ride root', () => {
     expect(genesis).toEqual(saved)
   }, 30_000)
 
-  it('accepts canonical ride or V43 witnesses but not V44 mount actions', () => {
+  it('accepts exact V45 economy, mount, ride, and V43 witnesses', () => {
     expect(decodePublicV45Witness(ride(0.16))).toEqual(ride(0.16))
     expect(decodePublicV45Witness(idle)).toEqual(idle)
     expect(decodePublicV45Witness({ kind: 'familiar-tracks/v1' }))
       .toEqual({ kind: 'familiar-tracks/v1' })
-    expect(decodePublicV45Witness({ kind: 'sedgehorn-mount/v1' })).toBeNull()
+    for (const witness of [{ kind: 'sedgehorn-mount/v1' },
+      { kind: 'sedgehorn-dismount/v1' }, { kind: 'buy-sedgehorn-tack/v1' },
+      { kind: 'sell-marsh-herb/v1', quantity: 2 }])
+      expect(decodePublicV45Witness(witness)).toEqual(witness)
     for (const invalid of [null, { ...ride(0.16), speed: 2 },
+      { kind: 'sedgehorn-mount/v1', speed: 2 },
+      { kind: 'buy-sedgehorn-tack/v1', price: 0 },
+      { kind: 'sell-marsh-herb/v1', quantity: 0 },
+      { kind: 'sell-marsh-herb/v1', quantity: 257 },
+      { kind: 'sell-marsh-herb/v1', quantity: 2, unitPrice: 999 },
       { ...ride(0.16), admission: {} }, { ...ride(0), intents: [] },
       { kind: 'sedgehorn-assisted-ride-frame/v1', intents: [{ type: 'jump' }] },
       { kind: 'sedgehorn-assisted-ride-frame/v1', intents: [
@@ -274,6 +326,72 @@ describe('V45 checked assisted-ride root', () => {
         { type: 'look', yawDelta: 0, pitchDelta: 0 }] }])
       expect(decodePublicV45Witness(invalid)).toBeNull()
   })
+
+  it('checks purchase replay and retained tack monotonicity', () => {
+    const genesis = economyGenesis('greenway')
+    expect(genesis.head.tack).toBe('not_owned')
+    const ready = purchaseReadyRoot()
+    const source = structuredClone(genesis.lineage.source)
+    expect(decodePublicV45Root({ ...ready,
+      previous: { ...ready.previous!, tack: 'legacy' },
+      head: { ...ready.head, tack: 'legacy' } })).toBeNull()
+    const { schemaVersion: _schema, saveRevision: _revision,
+      witness: _prior, ...flatReady } = ready.head
+    expect(confirmPublicV45Action(flatReady,
+      { kind: 'sedgehorn-mount/v1' }).rejection).toBe('tack_required')
+    const bought = next(ready, { kind: 'buy-sedgehorn-tack/v1' })
+    expect(bought.head.tack).toBe('purchased')
+    expect(bought.head.state.player.coins).toBe(60)
+    expect(decodePublicV45Root(structuredClone(bought))).toEqual(bought)
+    const stale = decodePublicV45CheckedSuccessor(ready, { ...bought,
+      previous: bought.head })
+    expect(stale).toBeNull()
+    expect(decodePublicV45Root({ ...bought,
+      head: { ...bought.head, state: { ...bought.head.state,
+        player: { ...bought.head.state.player, coins: 300 } } } })).toBeNull()
+    expect(decodePublicV45Root({ ...bought,
+      head: { ...bought.head, tack: 'legacy' } })).toBeNull()
+    const retained = next(bought, idle)
+    expect(decodePublicV45Root({ ...retained,
+      previous: { ...retained.previous!, tack: 'not_owned' } })).toBeNull()
+    expect(decodePublicV45Root({ ...retained,
+      head: { ...retained.head, tack: 'not_owned' } })).toBeNull()
+    expect(bought.lineage.source).toEqual(source)
+    expect(genesis.lineage.source).toEqual(source)
+  }, 30_000)
+
+  it('replays dismount and remount without accepting forged mount positions or modes', () => {
+    const genesis = mountedGenesis()
+    const ridden = next(genesis, ride(0.16))
+    const parked = next(ridden, { kind: 'sedgehorn-dismount/v1' })
+    expect(parked.head.groundMount).toEqual({ mode: 'parked',
+      parkedPosition: parked.head.state.player.position })
+    expect(decodePublicV45Root({ ...parked,
+      head: { ...parked.head, groundMount: { mode: 'parked',
+        parkedPosition: { ...parked.head.groundMount.parkedPosition!, x: 0 } } } }))
+      .toBeNull()
+    const mounted = next(parked, { kind: 'sedgehorn-mount/v1' })
+    expect(mounted.head.groundMount.mode).toBe('riding')
+    expect(decodePublicV45Root({ ...mounted,
+      head: { ...mounted.head, groundMount: { mode: 'parked', parkedPosition: null } } }))
+      .toBeNull()
+    expect(decodePublicV45Root(structuredClone(mounted))).toEqual(mounted)
+  }, 30_000)
+
+  it('replays a fixed-price marsh herb sale without changing legacy tack or V44', () => {
+    const genesis = economyGenesis('mireglass')
+    const source = structuredClone(genesis.lineage.source)
+    const sold = next(genesis, { kind: 'sell-marsh-herb/v1', quantity: 2 })
+    expect(sold.head.tack).toBe('legacy')
+    expect(sold.head.state.player.coins).toBe(316)
+    expect(sold.head.state.player.inventory.filter(({ itemId }) =>
+      itemId === 'marsh_herb')).toEqual([{ itemId: 'marsh_herb', quantity: 1 }])
+    expect(decodePublicV45Root(structuredClone(sold))).toEqual(sold)
+    expect(decodePublicV45Root({ ...sold,
+      head: { ...sold.head, state: { ...sold.head.state,
+        player: { ...sold.head.state.player, coins: 324 } } } })).toBeNull()
+    expect(sold.lineage.source).toEqual(source)
+  }, 30_000)
 
   it('checks retained revision one against genesis before accepting revision two', () => {
     const genesis = mountedGenesis(true)

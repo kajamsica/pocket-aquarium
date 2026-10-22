@@ -5,6 +5,7 @@ import { createAtomicV43Store } from './atomicV43Database'
 import { createAtomicV44PromotionStore } from './atomicV44Promotion'
 import { createAtomicV45Store, PUBLIC_V45_DATABASE_NAME } from './atomicV45Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './discoveryMask'
+import { mireglassAnchors } from './mireglassContent'
 import { createFreshPublicV42Root, decodePublicV42Root, PUBLIC_V42_SCHEMA }
   from './publicWorldV42Snapshot'
 import type { PublicV42Root } from './publicWorldV42Snapshot'
@@ -105,6 +106,22 @@ function mountedV44Root(): PublicV44Root {
     if (!mountedCache) throw new Error('Invalid mounted V44 fixture')
   }
   return structuredClone(mountedCache)
+}
+
+function saleV44Root(): PublicV44Root {
+  const root = matureRoot()
+  const salvager = mireglassAnchors(seed).salvager.tile
+  const atSalvager = (head: PublicV43Root['head']) => ({ ...head,
+    state: { ...head.state,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(head.state.discoveryMask), salvager.id])].sort()),
+      player: { ...head.state.player, position: { ...salvager.center },
+        inventory: [...head.state.player.inventory,
+          { itemId: 'marsh_herb' as const, quantity: 3 }] } } })
+  const checked = decodePublicV43Root({ ...root,
+    previous: atSalvager(root.previous!), head: atSalvager(root.head) })
+  if (!checked) throw new Error('Invalid sale V43 fixture')
+  return createPublicV44Root(checked)
 }
 
 function open(factory: IDBFactory, name: string): Promise<IDBDatabase> {
@@ -331,6 +348,51 @@ describe('V45 fenced source-only flow', () => {
     expect(await resumePublicV45(locks, store, source, 1,
       started.value.lineage)).toMatchObject({ ok: true,
         value: { head: { saveRevision: 1 } } })
+    const parked = await commitPublicV45(locks, store, source, 1,
+      started.value.lineage, { kind: 'sedgehorn-dismount/v1' })
+    if (!parked.ok) throw new Error(parked.reason)
+    expect(parked.value.head.groundMount.mode).toBe('parked')
+    expect(parked.value.head.groundMount.parkedPosition)
+      .toEqual(parked.value.head.state.player.position)
+    expect(await commitPublicV45(locks, store, source, 1,
+      started.value.lineage, { kind: 'sedgehorn-mount/v1' })).toEqual({
+        ok: false, reason: 'revision-changed' })
+    const mounted = await commitPublicV45(locks, store, source, 2,
+      started.value.lineage, { kind: 'sedgehorn-mount/v1' })
+    if (!mounted.ok) throw new Error(mounted.reason)
+    expect(mounted.value.head.groundMount.mode).toBe('riding')
+    expect(await createAtomicV45Store(factory).readChecked()).toMatchObject({
+      status: 'valid', root: { head: { saveRevision: 3,
+        witness: { kind: 'sedgehorn-mount/v1' } } } })
     expect((await record(factory, PUBLIC_V45_DATABASE_NAME, 'root'))).toBeDefined()
   }, 90_000)
+
+  it('persists a checked herb sale and reloads without rewriting V44 or its marker', async () => {
+    const { factory, source, store } = await setup(saleV44Root())
+    const started = await startPublicV45(locks, store, source, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const rootBytes = JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root'))
+    const marker = await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor')
+    expect(await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, { kind: 'sell-marsh-herb/v1', quantity: 2,
+        unitPrice: 999 } as never)).toEqual({ ok: false, reason: 'invalid-witness' })
+    const sold = await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, { kind: 'sell-marsh-herb/v1', quantity: 2 })
+    if (!sold.ok) throw new Error(sold.reason)
+    expect(sold.value.head.state.player.coins)
+      .toBe(started.value.head.state.player.coins + 16)
+    expect(sold.value.head.state.player.inventory.filter(({ itemId }) =>
+      itemId === 'marsh_herb')).toEqual([{ itemId: 'marsh_herb', quantity: 1 }])
+    expect(await resumePublicV45(locks, createAtomicV45Store(factory), source, 1,
+      started.value.lineage)).toMatchObject({ ok: true,
+        value: { head: { saveRevision: 1,
+          witness: { kind: 'sell-marsh-herb/v1', quantity: 2 } } } })
+    expect(await commitPublicV45(locks, store, source, 0,
+      started.value.lineage, { kind: 'sell-marsh-herb/v1', quantity: 1 }))
+      .toEqual({ ok: false, reason: 'revision-changed' })
+    expect(JSON.stringify(await record(factory, PUBLIC_V44_DATABASE_NAME, 'root')))
+      .toBe(rootBytes)
+    expect(await record(factory, PUBLIC_V44_DATABASE_NAME, 'v45-successor'))
+      .toEqual(marker)
+  }, 60_000)
 })
