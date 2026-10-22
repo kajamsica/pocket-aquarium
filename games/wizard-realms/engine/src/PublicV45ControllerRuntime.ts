@@ -47,8 +47,11 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
   let inFlight: RideFlight | null = null
   let flightPromise: Promise<void> | null = null
   let nextBatchId = 1, drainRequested = false
+  let wakeFatal = () => {}
+  const fatalSignal = new Promise<void>((resolve) => { wakeFatal = resolve })
   const unsubscribeFatal = ridePort?.onFatal((reason) => {
     directBlocked = reason || 'worker-failed'
+    wakeFatal()
   })
   const gate = () => directBlocked
     ? { status: 'blocked' as const, reason: directBlocked }
@@ -146,7 +149,7 @@ export function createPublicV45ControllerRuntime(initial: PublicV45Start, write:
       while ((inFlight || rideFrames.length) && !directBlocked) {
         if (!inFlight) launchRide()
         if (!flightPromise) { blockRide('worker-failed'); break }
-        await flightPromise
+        await Promise.race([flightPromise, fatalSignal])
       }
       if (directBlocked) return { status: 'blocked' as const,
         reason: directBlocked }

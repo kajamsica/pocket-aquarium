@@ -288,6 +288,27 @@ describe('V45 controller runtime', () => {
     runtime.dispose()
   }, 30_000)
 
+  it.each(['save', 'dismount'] as const)(
+    'settles a %s already waiting on an unresolved Worker batch after fatal',
+    async (operation) => {
+      const { runtime, pending, fail } = await queuedRider()
+      for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
+        expect(runtime.advanceFrame(turn(index % 2 ? -0.04 : 0.04), false)
+          .rejections).toEqual([])
+      await Promise.resolve()
+      expect(pending).toHaveLength(1)
+      const waiting = operation === 'save' ? runtime.save()
+        : runtime.action({ kind: 'sedgehorn-dismount/v1' })
+      await Promise.resolve()
+      fail('worker-crashed')
+      const result = await Promise.race([waiting, new Promise<{ status: 'timed-out' }>(
+        (resolve) => setTimeout(() => resolve({ status: 'timed-out' }), 100))])
+      expect(result).toMatchObject({ status: 'blocked', reason: 'worker-crashed' })
+      expect(runtime.status()).toMatchObject({ gate: 'blocked',
+        pendingFrames: PUBLIC_V45_MAX_RIDE_BATCH })
+      runtime.dispose()
+    }, 30_000)
+
   it('does not retry an uncertain Worker write', async () => {
     const { runtime, pending } = await queuedRider()
     for (let index = 0; index < PUBLIC_V45_MAX_RIDE_BATCH; index++)
