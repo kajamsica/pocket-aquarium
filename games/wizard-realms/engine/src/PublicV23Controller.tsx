@@ -1017,6 +1017,7 @@ const PUBLIC_V23_PANEL_STYLES = `
   [data-public-version=v45] .v26-safety{left:auto;right:8px;transform:none;width:min(200px,calc(100vw - 160px))}
   [data-public-version=v45] .v26-safety:not([open]){bottom:calc(214px + env(safe-area-inset-bottom,0px))}
 }
+@media(max-width:719px) and (min-height:700px){[data-public-version=v45] .wr-surface .wr-context[data-store-panel]{bottom:calc(270px + env(safe-area-inset-bottom,0px));max-height:calc(100% - 490px - env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain}}
 @media(min-width:380px) and (max-width:719px) and (min-height:401px){[data-public-version=v43] .v26-safety:not([open]){left:calc(50% + 55px);right:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(84px,calc(100vw - 306px))}}
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){
   [data-public-v23] .v43-familiar:not([open]){top:316px;width:calc(100vw - 560px)}
