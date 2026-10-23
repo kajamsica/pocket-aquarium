@@ -80,7 +80,26 @@ describe('V43 starter chapter', () => {
     expect(html).toContain('data-starter-chapter="gather"')
     expect(html).toContain('0/8 logs')
     expect(html).toContain('Equip your woodcutter axe')
+    expect(html).toContain('Later: seek the north-cliff ladder')
     expect(head).toEqual(before)
+  })
+
+  it('replaces the ladder lead after either built north-cliff ladder is recorded', () => {
+    const head = fresh()
+    const canonical: PublicV43Progress = { ...head,
+      state: { ...head.state, greenway: { ...head.state.greenway,
+        builtRouteIds: [...head.state.greenway.builtRouteIds, 'greenway_ladder' as const] } } }
+    const works: PublicV43Progress = { ...head, greenwayWorks: { ...head.greenwayWorks,
+      builtLadderIds: ['works4:ladder:greenway-north-cliff:11'] } }
+    for (const built of [canonical, works]) {
+      expect(projectPublicV43StarterChapter(built).stage).toBe('gather')
+      const html = renderToStaticMarkup(createElement(PublicV43StarterChapter, { head: built }))
+      expect(html).toContain('North-cliff ladder built')
+      expect(html).toContain('Finish any chapter objective above')
+      expect(html).toContain('active lead in the Greenway journal')
+      expect(html).not.toContain('Check the Greenway journal for Wayfinder Glow')
+      expect(html).not.toContain('Later: seek the north-cliff ladder')
+    }
   })
 
   it('requires the saved creek crossing and bridgehead claim after eight logs', () => {

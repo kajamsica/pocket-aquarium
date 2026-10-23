@@ -1,5 +1,6 @@
 import { publicV25StratumAt } from '../domain/publicWorldV25Strata'
-import { resolvePublicV17GreenwaySite } from '../domain/publicWorldV17GreenwaySites'
+import { publicV17NorthCliffLadderBuilt, resolvePublicV17GreenwaySite }
+  from '../domain/publicWorldV17GreenwaySites'
 import { projectPublicV43GreenwayQuestChain }
   from '../domain/publicWorldV43GreenwayQuestChain'
 import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
@@ -80,12 +81,17 @@ export function projectPublicV43StarterChapter(
 
 export function PublicV43StarterChapter({ head }: { head: PublicV43Progress }) {
   const chapter = projectPublicV43StarterChapter(head)
+  const ladderBuilt = publicV17NorthCliffLadderBuilt(head.state.seed,
+    head.state.greenway.builtRouteIds.includes('greenway_ladder'),
+    head.greenwayWorks.builtLadderIds)
   return <section aria-label="Starter chapter" data-starter-chapter={chapter.stage}>
     <h2>Chapter 1: {chapter.title}</h2>
     <p><strong>{chapter.progressLabel}</strong></p>
     <p>{chapter.objective}</p>
     <p><small>{chapter.reward}</small></p>
     <p><small>Chapter instructions live in this journal. The Outfitters keeper is scenery for now; stand near the store and use its panel to buy supplies or deliver logs.</small></p>
-    <p><small>Later: seek the north-cliff ladder, learn Wayfinder Glow, and follow the Sedgehorn trail.</small></p>
+    <p><small>{ladderBuilt
+      ? 'North-cliff ladder built. Finish any chapter objective above before following the active lead in the Greenway journal.'
+      : 'Later: seek the north-cliff ladder, learn Wayfinder Glow, and follow the Sedgehorn trail.'}</small></p>
   </section>
 }

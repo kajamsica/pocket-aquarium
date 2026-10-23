@@ -8,6 +8,7 @@ import { emptyPublicV26TerrainLedger } from './publicWorldV26TerrainLedger'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { emptyPublicV29MiningTools } from './publicWorldV29MiningTools'
 import { replayPublicV35Witness } from './publicWorldV35Snapshot'
+import { starterCliffCanonicalSite } from './starterCliffProfile'
 import { confirmPublicV35LedgerAction as confirm,
   decodePublicV35LedgerWitness as decode, previewPublicV35LedgerAction as preview } from './publicWorldV35LedgerAction'
 import type { PublicV35Progress } from './publicWorldV35LedgerAction'
@@ -61,6 +62,18 @@ describe('V35 checked Outfitters Ledger authority', () => {
     expect(confirm({ ...before, riverBridgeIds: [] }, witness).rejection).toBe('not_built')
     expect(confirm({ ...before, greenwayWorks: { ...before.greenwayWorks,
       builtLadderIds: [] } }, witness).rejection).toBe('not_built')
+    const starterSite = starterCliffCanonicalSite(seed)
+    const canonicalOnly = { ...before,
+      state: { ...before.state, greenway: { ...before.state.greenway,
+        routes: before.state.greenway.routes.map((route) => route.id === 'greenway_ladder'
+          ? { ...route, siteId: starterSite.id, from: starterSite.from, to: starterSite.to }
+          : route),
+        builtRouteIds: [...before.state.greenway.builtRouteIds, 'greenway_ladder' as const],
+        unlockedRecipeIds: [...before.state.greenway.unlockedRecipeIds,
+          'highland_bridge' as const].sort() } },
+      greenwayWorks: { ...before.greenwayWorks, builtLadderIds: [] } }
+    expect(preview(canonicalOnly, witness).rejection).toBeNull()
+    expect(confirm(canonicalOnly, witness).progress?.ledgerSurveyBridgeId).toBe(bridgeId)
     expect(confirm(before, { ...witness, bridgeId: creekId }).rejection).toBe('invalid_site')
     const farBank = resolvePublicV28RiverBridge(seed, bridgeId)!.approach
     const farFloor = resolvePublicV23Surface(before.state, farBank, [])!.floorY

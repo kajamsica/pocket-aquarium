@@ -1,5 +1,5 @@
 import { backpackSlotsUsed } from '../domain/backpackSlots'
-import { resolvePublicV17GreenwaySite } from '../domain/publicWorldV17GreenwaySites'
+import { publicV17NorthCliffLadderBuilt } from '../domain/publicWorldV17GreenwaySites'
 import { resolvePublicV28RiverBridge } from '../domain/publicWorldV28RiverBridgeSites'
 import type { WizardViewProjection } from './contracts'
 
@@ -56,8 +56,9 @@ export function publicV35LedgerQuest(view: WizardViewProjection,
   if (facts.claimedBridgeheadId === null) return finish('first-find',
     'Complete and claim The Surveyor’s First Find at a saved River Works bridgehead before starting the Ledger route.', pendingReward)
 
-  const ladderBuilt = facts.greenwayWorks.builtLadderIds.some((id) =>
-    resolvePublicV17GreenwaySite(view.seed, id)?.kind === 'ladder')
+  const ladderBuilt = publicV17NorthCliffLadderBuilt(view.seed,
+    view.routes.some((route) => route.id === 'greenway_ladder' && route.built),
+    facts.greenwayWorks.builtLadderIds)
   const riverBridge = facts.riverBridgeIds.map((id) =>
     resolvePublicV28RiverBridge(view.seed, id)).find((site) => site !== null)
   if (!ladderBuilt || !riverBridge) return finish('route', !ladderBuilt

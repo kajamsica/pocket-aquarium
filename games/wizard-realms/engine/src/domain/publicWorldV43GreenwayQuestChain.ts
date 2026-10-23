@@ -62,7 +62,8 @@ export function projectPublicV43GreenwayQuestChain(
     && creekBridgeIds.includes(progress.claimedBridgeheadId)
   const bridgeheadClaimedElsewhere = progress.claimedBridgeheadId !== null
     && !bridgeheadClaimed
-  const ladderBuilt = built(greenwayWorks.builtLadderIds, 'ladder')
+  const ladderBuilt = state.greenway.builtRouteIds.includes('greenway_ladder')
+    || built(greenwayWorks.builtLadderIds, 'ladder')
   const waystoneStudied = state.greenway.studiedInscriptionIds
     .includes('greenway_waystone')
   const legacyDigDone = greenwayWorks.dugTileIds.some((id) =>
