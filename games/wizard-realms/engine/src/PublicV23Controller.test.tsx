@@ -392,7 +392,8 @@ describe('V31 Slate checked preview carrier', () => {
   }, 30_000)
 })
 
-function guide(version: 'v25' | 'v26' | 'v27', builtLadder: boolean, builtBridge: boolean) {
+function guide(version: 'v25' | 'v26' | 'v27', builtLadder: boolean, builtBridge: boolean,
+  fullMarkup = false) {
   const factory = new IDBFactory(), v23 = createPublicV23Root('greenway-alpha')
   const v24 = createPublicV24Root({ head: v23.head, lineage: v23.lineage })
   const v25 = createPublicV25Root({ head: v24.head, lineage: v24.lineage })
@@ -427,7 +428,8 @@ function guide(version: 'v25' | 'v26' | 'v27', builtLadder: boolean, builtBridge
       version, start: { ...v27, head: { ...v27.head, state, greenwayWorks: works } }, locks,
       store: createAtomicV27Store(factory), sourceStore: createAtomicV26Store(factory),
       v25Store, v24Store, v23Store, v17Store }))
-  return html.match(/<details class="v23-guide v25-start-guide">([\s\S]*?)<\/details>/)?.[1] ?? ''
+  return fullMarkup ? html
+    : html.match(/<details class="v23-guide v25-start-guide">([\s\S]*?)<\/details>/)?.[1] ?? ''
 }
 
 describe('V26 starter route guide', () => {
@@ -447,6 +449,12 @@ describe('V26 starter route guide', () => {
   it('preserves V25 guide copy regardless of saved works', () => {
     expect(guide('v25', true, true)).toBe(guide('v25', false, false))
     expect(guide('v25', true, true)).toContain('First steps: chop trees for logs')
+  })
+
+  it('keeps the V43/V44 starter guide beside the compact Map button on tall screens', () => {
+    const markup = guide('v27', false, true, true)
+    expect(markup).toContain('<details class="v23-guide v25-start-guide">')
+    expect(markup).toContain('@media(min-width:720px) and (min-height:591px){:is([data-public-version=v43],[data-public-version=v44]) .v25-start-guide{left:166px;bottom:16px;width:280px;max-height:min(38vh,240px);overflow:auto}}')
   })
 })
 
