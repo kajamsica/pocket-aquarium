@@ -63,7 +63,7 @@ export function projectPublicV43StarterChapter(
     'A rewarded soil dig gives 30 character XP, 30 Excavation XP, and 1 terrain-bag soil.')
   if (!raisedFarBankStep) return step('soil-step', 5,
     `${spadeEquipped ? '' : 'Equip the field spade. '}${head.terrain.bag.soil > 0
-      ? 'Choose Terrain Place soil, walk a few meters inland, and tap a different clear, revealed dry far-bank cell within 5 m.'
+      ? 'Choose Terrain Place soil. Follow the far bank to a dry clearing beyond the protected bridge corridor, then tap a different clear, revealed cell within 5 m of where you stand.'
       : 'Your terrain bag has no soil. Dig another safe, revealed dry loam cell, then choose Terrain Place soil on a different clear far-bank cell within 5 m.'} Avoid the open dig hole, protected bridge corridor, and trees or other resource cells. One placement raises a 0.4 m step; it does not make a bridge.`,
     'Placing soil spends 1 terrain-bag soil. It gives no extra XP or coins.')
   if (!orderClaimed) return step('carpenter-order', 6,

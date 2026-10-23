@@ -503,8 +503,12 @@ describe('third-person control grammar', () => {
       [201, 101], picker)).toBeNull()
     expect(pointerV31SoilPlaceTapIntent(ready, false, 'place-soil', press, 7,
       [201, 101], () => null)).toBeNull()
-    expect(renderToStaticMarkup(createElement(WizardSurface,
-      { projection: ready, onIntent: vi.fn() }))).toContain('Place soil')
+    const readyMarkup = renderToStaticMarkup(createElement(WizardSurface,
+      { projection: ready, onIntent: vi.fn() }))
+    expect(readyMarkup).toContain('Place soil')
+    expect(readyMarkup).toContain('data-terrain-mode="dig"')
+    expect(readyMarkup).toContain('.wr-surface[data-terrain-mode="place-soil"] .wr-v26-terrain .wr-terrain-inline-hint{display:block')
+    expect(readyMarkup).toContain('@media(max-width:719px){[data-public-v23]:has(.wr-surface[data-terrain-mode="place-soil"]) .v43-familiar:not([open]),[data-public-v23]:has(.wr-surface[data-terrain-mode="place-soil"]) .v26-safety{display:none}')
     expect(renderToStaticMarkup(createElement(WizardSurface,
       { projection: { ...ready, v31Soil: undefined }, onIntent: vi.fn() })))
       .not.toContain('Place soil')

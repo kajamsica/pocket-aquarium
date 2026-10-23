@@ -434,7 +434,8 @@ export interface WizardViewProjection {
   }>
   /** V31-only checked soil sidecar, read for placement controls and top/edge presentation. */
   v31Soil?: Readonly<{ raisedCells: readonly Readonly<{ gx: number; gz: number }>[];
-    soilAvailable: number }>
+    soilAvailable: number
+    placePreview?: readonly Readonly<{ gx: number; gz: number; rejection: string | null }>[] }>
   /** Saved open pits on revealed, currently visible canonical 4 m ground. */
   v26OpenPitColumns?: readonly { gx: number; gz: number; openDepth: number }[]
   /** A read-only hint for the current saved pit; the writer still validates the action. */
