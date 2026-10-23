@@ -2878,7 +2878,17 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       soilPlaceRejection={soilPlaceRejection}
       starterChapterActors={v43}
       starterChapterPrimary={!!chapterIsLead}
-      greenwayLogOrder={v43 && !mounted ? <><section aria-label="Greenway carpenter order">
+      greenwayLogOrder={v43 && !mounted ? <>{starterChapter && <section aria-label="Outfitters keeper">
+        <h3 className="wr-caption">Outfitters keeper</h3>
+        {starterChapter.complete
+          ? <p className="wr-caption">Fine work on the Creekside Errand. The north-cliff ladder, Wayfinder Glow, and the Sedgehorn trail are waiting beyond.</p>
+          : <><p className="wr-caption">{starterChapter.progressLabel}: {starterChapter.objective}</p>
+            <p className="wr-caption">{greenwayOrderClaimed
+              ? 'Your timber order is recorded. Keep exploring to finish the errand.'
+              : greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity
+                ? `I can take four spare logs when you have them (${greenwayOrderLogs}/4). Keep route timber for bridges and ladders first.`
+                : 'I can take four logs now, but keep enough timber for your next bridge or ladder.'}</p></>}
+      </section>}<section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
           ? <p role="status" className="wr-caption">Claimed. Four logs were delivered for 10 coins.</p>
