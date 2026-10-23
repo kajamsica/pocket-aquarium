@@ -167,3 +167,12 @@ export function resolvePublicV17GreenwaySite(seed: string, id: unknown): PublicV
   }
   catch { return null }
 }
+
+/** Either saved north-cliff route can satisfy later route prerequisites. */
+export function publicV17NorthCliffLadderBuilt(seed: string, canonicalBuilt: boolean,
+  builtLadderIds: readonly string[]): boolean {
+  return canonicalBuilt || builtLadderIds.some((id) => {
+    const site = resolvePublicV17GreenwaySite(seed, id)
+    return site?.kind === 'ladder' && site.obstacle === 'greenway_north_cliff'
+  })
+}

@@ -268,9 +268,9 @@ export function RouteKey({ routes, buildSites, selectedBuildSiteId, onSelect, ph
     const fromSide = Math.abs(east) >= Math.abs(south) ? east > 0 ? 'West' : 'East' : south > 0 ? 'North' : 'South'
     const toSide = Math.abs(east) >= Math.abs(south) ? east > 0 ? 'east' : 'west' : south > 0 ? 'south' : 'north'
     return <section key={route.id}>
-      <h3>{route.built ? '✓' : route.unlocked ? '◇' : '×'} {routeLabel} <small>{route.built ? 'completed' : route.unlocked ? `${route.logCost} logs` : 'locked'}</small></h3>
-      {cliffLadder ? <small>{route.built || candidates.length
-        ? `The centered starter ${route.built ? 'ladder' : 'ladder site'} is x ${route.from[0]}, z ${route.from[2]}. Off-center Works ladder candidates are separate; follow the selected Works x/z, not this centered route. Build with ${route.logCost} logs, then face north and use W to climb or S to descend between the rails.${worksLadderBuilt ? ' Your built Works ladder follows its own preview coordinates.' : ''}`
+      <h3>{route.built ? '✓' : route.unlocked ? '◇' : '×'} {routeLabel} <small>{route.built ? 'completed' : route.unlocked ? `${worksLadderBuilt && cliffLadder ? 'optional, ' : ''}${route.logCost} logs` : 'locked'}</small></h3>
+      {cliffLadder ? <small>{route.built || candidates.length || worksLadderBuilt
+        ? `The centered starter ${route.built ? 'ladder' : 'ladder site'} is x ${route.from[0]}, z ${route.from[2]}. Off-center Works ladder candidates are separate; follow the selected Works x/z, not this centered route. ${route.built ? 'Use the completed ladder: face north and walk with W to climb or S to descend between the rails.' : worksLadderBuilt ? 'The centered build is optional; use your saved Works ladder at its own x/z to climb.' : `Build with ${route.logCost} logs, then face north and use W to climb or S to descend between the rails.`}${worksLadderBuilt && route.built ? ' Your built Works ladder follows its own preview coordinates.' : ''}`
         : `Find the cliff foot at Greenway's north edge. Chop a tree twice for ${route.logCost} logs, then build the ladder.`}</small>
         : starterSteps && <small>First route: low steps to Northern Ridge, not a cliff ladder. {route.built ? 'The climbable Slate ladder is a separate work in Mireglass.' : `Explore Greenway's north edge for a discovered ◇ build site; bring ${route.logCost} logs. The climbable Slate ladder is a separate work in Mireglass.`}</small>}
       {highlandBridge && !route.built && <small>Next route: bridge the gap east from Northern Ridge to Eastern Highland. Build the low steps and reach level 2 first; then bring {route.logCost} logs to a discovered ◇ site.</small>}
@@ -284,7 +284,7 @@ export function RouteKey({ routes, buildSites, selectedBuildSiteId, onSelect, ph
       {!route.built && candidates.map((site) => <button key={site.id} type="button" className="wr-map-site" disabled={!actionsEnabled} aria-label={`Preview ${cliffLadder ? routeLabel : starterSteps ? site.label.replace(/^Greenway ladder/, 'Greenway low steps') : site.label}`} aria-pressed={selectedBuildSiteId === site.id} onClick={() => onSelect(site.id)}>
         <span>{cliffLadder ? routeLabel : starterSteps ? site.label.replace(/^Greenway ladder/, 'Greenway low steps') : site.label} <small>{site.logCost} logs</small></span><small>{savePaused ? 'Route actions paused for save' : actionsEnabled ? site.reason || 'Ready to build' : 'Route actions unavailable here'}</small>
       </button>)}
-      {!route.built && candidates.length === 0 && <small>{route.id === 'highland_bridge'
+      {!route.built && candidates.length === 0 && !(cliffLadder && worksLadderBuilt) && <small>{route.id === 'highland_bridge'
         ? 'No discovered Highland bridge sites yet. Walk east along Northern Ridge to chart the gap.'
         : cliffLadder ? 'No discovered starter cliff foot yet. Explore Greenway’s north edge.'
           : route.id === 'greenway_ladder'

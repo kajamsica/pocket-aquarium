@@ -1,7 +1,7 @@
 import { discoveryMaskHasTileId } from './discoveryMask'
 import { decodePublicV31ActionProgress } from './publicWorldV31Soil'
 import { exactPublicV23 } from './publicWorldV23Snapshot'
-import { resolvePublicV17GreenwaySite } from './publicWorldV17GreenwaySites'
+import { publicV17NorthCliffLadderBuilt } from './publicWorldV17GreenwaySites'
 import { resolvePublicV28RiverBridge } from './publicWorldV28RiverBridgeSites'
 import { projectPublicV28Pose } from './publicWorldV28RiverSupport'
 import type { PublicV33Progress } from './publicWorldV33Migration'
@@ -91,8 +91,9 @@ function checked(raw: PublicV35Progress, rawWitness: unknown): Checked {
       if (old.claimedBridgeheadId === null) return reject('requires_first_find', located)
       if (progress.ledgerSurveyBridgeId !== null) return reject('already_surveyed', located)
       if (!progress.riverBridgeIds.includes(site.id)) return reject('not_built', located)
-      if (!progress.greenwayWorks.builtLadderIds.some((id) =>
-        resolvePublicV17GreenwaySite(state.seed, id)?.kind === 'ladder')) {
+      if (!publicV17NorthCliffLadderBuilt(state.seed,
+        state.greenway.builtRouteIds.includes('greenway_ladder'),
+        progress.greenwayWorks.builtLadderIds)) {
         return reject('not_built', located)
       }
       if (!discoveryMaskHasTileId(state.discoveryMask,

@@ -2216,6 +2216,16 @@ describe('V27 starter route coaching', () => {
     expect(stage.action).not.toContain('Pack full')
   })
 
+  it('guides canonical starter ladder owners past the north-cliff build step', () => {
+    const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
+    const canonical = { ...base, routes: base.routes.map((route) => route.id === 'greenway_ladder'
+      ? { ...route, built: true } : route) }
+    const works = { builtLadderIds: [], builtBridgeIds: [bridge], dugTileIds: [] }
+    const action = publicV27StarterGuide(canonical, works).action
+    expect(action).toContain('Ladder built:')
+    expect(action).not.toContain('Then build the north cliff ladder')
+  })
+
   it('keeps legacy full-pack sale copy while describing V29 terrain-bag sales', () => {
     const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
     const full = { ...base, backpack: { ...base.backpack, stacks: [] },

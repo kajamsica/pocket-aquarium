@@ -285,8 +285,23 @@ describe('precise Greenway work route map guidance', () => {
     const steep = renderToStaticMarkup(createElement(RouteKey, { ...props,
       starterCliff: { face: starterCliffCanonicalFace('greenway-alpha'), ladder: 'built' } }))
     expect(steep).toContain('Climb the steep rung ladder')
+    expect(steep).toContain('Use the completed ladder')
+    expect(steep).not.toContain('Build with 4 logs')
     expect(steep).not.toContain('Walk the low steps')
     expect(steep).not.toContain('Hidden ladder at x 7')
+    const unbuilt = renderToStaticMarkup(createElement(RouteKey, { ...props,
+      routes: [{ ...route, built: false }],
+      buildSites: [{ ...hiddenSite, id: starterCliffCanonicalFace('greenway-alpha').siteId,
+        discovered: true }],
+      starterCliff: { face: starterCliffCanonicalFace('greenway-alpha'), ladder: null } }))
+    expect(unbuilt).toContain('Build with 4 logs')
+    const worksOnly = renderToStaticMarkup(createElement(RouteKey, { ...props,
+      routes: [{ ...route, built: false }], buildSites: [], worksLadderBuilt: true,
+      starterCliff: { face: starterCliffCanonicalFace('greenway-alpha'), ladder: null } }))
+    expect(worksOnly).toContain('optional, 4 logs')
+    expect(worksOnly).toContain('use your saved Works ladder at its own x/z')
+    expect(worksOnly).not.toContain('Build with 4 logs')
+    expect(worksOnly).not.toContain('No discovered starter cliff foot')
     const older = renderToStaticMarkup(createElement(RouteKey, props))
     expect(older).toContain('Walk the low steps')
     expect(older).not.toContain('Climb the steep rung ladder')

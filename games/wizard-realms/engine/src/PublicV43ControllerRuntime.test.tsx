@@ -24,6 +24,7 @@ import { decodePublicV43CheckedSuccessor, replayPublicV43Witness,
   createPublicV43Root, PUBLIC_V43_SCHEMA } from './domain/publicWorldV43Snapshot'
 import type { PublicV43Root, PublicV43Witness } from './domain/publicWorldV43Snapshot'
 import { resolveSedgehornFamiliarSite } from './domain/sedgehornFamiliarContent'
+import { starterCliffCanonicalSite } from './domain/starterCliffProfile'
 import { waystationRiverSite } from './domain/waystationRiverContent'
 import { worldTileAtGrid } from './domain/worldChunks'
 import type { WizardViewProjection } from './view/contracts'
@@ -384,6 +385,21 @@ describe('V43 checked controller bridge', () => {
           'greenway_waystone' as const] } } } }
     renderToStaticMarkup(createElement(PublicV23Controller, {
       version: 'v43', start: demoted, locks, store, v42Store }))
+    expect(probe.starterChapterPrimary).toBe(false)
+
+    const site = starterCliffCanonicalSite(start.head.state.seed)
+    const canonicalLadder = { ...start, head: { ...start.head,
+      state: { ...start.head.state,
+        player: { ...start.head.state.player, xp: start.head.state.player.xp + 60,
+          skillXp: { ...start.head.state.player.skillXp,
+            construction: start.head.state.player.skillXp.construction + 60 } },
+        greenway: { ...start.head.state.greenway,
+          routes: start.head.state.greenway.routes.map((route) => route.id === 'greenway_ladder'
+            ? { ...route, siteId: site.id, from: site.from, to: site.to } : route),
+          builtRouteIds: [...start.head.state.greenway.builtRouteIds,
+            'greenway_ladder' as const] } } } }
+    renderToStaticMarkup(createElement(PublicV23Controller, {
+      version: 'v43', start: canonicalLadder, locks, store, v42Store }))
     expect(probe.starterChapterPrimary).toBe(false)
   }, 120_000)
 

@@ -139,6 +139,7 @@ import { commitPublicV31, requestPublicV31ReturnHome } from './domain/publicWorl
 import type { PublicV31Start } from './domain/publicWorldV31Flow'
 import type { PublicV31Progress } from './domain/publicWorldV31Migration'
 import { publicV31HasRaisedSoilCell } from './domain/publicWorldV31Soil'
+import { publicV17NorthCliffLadderBuilt } from './domain/publicWorldV17GreenwaySites'
 import type { PublicV31SoilWitness } from './domain/publicWorldV31Soil'
 import { HIGHLAND_LANDMARK } from './domain/highlandContent'
 import { commitPublicV32, requestPublicV32ReturnHome } from './domain/publicWorldV32Flow'
@@ -525,7 +526,10 @@ export function publicV27StarterGuide(view: WizardViewProjection,
     >= view.backpack.capacity
   const logHarvestBlocked = backpackSlotsAfterAdd(view.backpack.stacks, listed, 'logs', 4,
     terrainUnits) > view.backpack.capacity
-  const ladder = works.builtLadderIds.length > 0, creekBridge = works.builtBridgeIds.length > 0
+  const ladder = publicV17NorthCliffLadderBuilt(view.seed,
+    view.routes.some((route) => route.id === 'greenway_ladder' && route.built),
+    works.builtLadderIds)
+  const creekBridge = works.builtBridgeIds.length > 0
   const streamed = context.movementOwner === 'streamed'
   // This coordinate describes the Greenway cliff only, never the streamed world.
   const upperShelf = !streamed && view.player.position[2] <= -6
@@ -2711,9 +2715,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     || v27Guide?.summary.startsWith('Slate ladder:')
     || v27Guide?.summary.startsWith('Upper Slate shelf:')
     || snapshot.regionalWorks.builtLadderIds.length > 0 || false
-  const ladderBuilt = Boolean(v26Works?.builtLadderIds.length)
+  const ladderBuilt = publicV17NorthCliffLadderBuilt(snapshot.state.seed,
+    snapshot.state.greenway.builtRouteIds.includes('greenway_ladder'),
+    v26Works?.builtLadderIds ?? [])
   const v32NorthLadderBuilt = ladderBuilt
-    || snapshot.state.greenway.builtRouteIds.includes('greenway_ladder')
   const bridgeBuilt = Boolean(v26Works?.builtBridgeIds.length)
   const v32HighlandGuide = v32 ? publicV32HighlandObjective(view,
     active.movementOwner, active.player.position,
@@ -2753,7 +2758,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     ? projectPublicV43StarterChapter(snapshot as PublicV43Progress) : null
   const chapterHead = v43 ? snapshot as PublicV43Progress : null
   const laterWorldMilestone = chapterHead && (
-    chapterHead.greenwayWorks.builtLadderIds.length > 0
+    publicV17NorthCliffLadderBuilt(chapterHead.state.seed,
+      chapterHead.state.greenway.builtRouteIds.includes('greenway_ladder'),
+      chapterHead.greenwayWorks.builtLadderIds)
     || chapterHead.state.greenway.studiedInscriptionIds.includes('greenway_waystone')
     || chapterHead.riverBridgeIds.length > 0
     || chapterHead.ledgerSurveyBridgeId !== null

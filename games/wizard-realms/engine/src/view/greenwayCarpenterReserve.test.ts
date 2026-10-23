@@ -29,6 +29,11 @@ describe('Greenway carpenter timber warning', () => {
       builtBridgeIds: [creekId] } }
     expect(greenwayCarpenterReserve(creek)).toEqual({ route: 'north-cliff ladder',
       required: 4, remaining: 0, shortfall: 4 })
+    const canonicalOnly = { ...creek, state: { ...creek.state,
+      greenway: { ...creek.state.greenway,
+        builtRouteIds: [...creek.state.greenway.builtRouteIds, 'greenway_ladder' as const] } } }
+    expect(greenwayCarpenterReserve(canonicalOnly)).toEqual({ route: 'connected-river bridge',
+      required: 8, remaining: 0, shortfall: 8 })
     const ladder = { ...creek, greenwayWorks: { ...creek.greenwayWorks,
       builtLadderIds: [ladderId] } }
     expect(greenwayCarpenterReserve(ladder)).toEqual({ route: 'connected-river bridge',

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { toViewProjection } from '../App'
+import { createWizardWorld } from '../domain'
 import type { WizardViewProjection } from './contracts'
 import { publicV35LedgerQuest } from './publicV35LedgerQuest'
 import type { PublicV35LedgerQuestFacts } from './publicV35LedgerQuest'
 
-const view = { seed: 'wizard-realms', backpack: { stacks: [], capacity: 20 },
+const view = { seed: 'wizard-realms',
+  routes: toViewProjection(createWizardWorld('wizard-realms'), []).routes,
+  backpack: { stacks: [], capacity: 20 },
   tradeListings: [], v26TerrainBag: { soil: 0, stone: 0, iron_ore: 0,
     gold_ore: 0, diamond: 0 }, v29Mining: { tools: {
     basicPickOwned: true, activePick: 'basic' } } } as unknown as WizardViewProjection
@@ -46,6 +50,13 @@ describe('V35 read-only ledger journal', () => {
     expect(withLadder.objective).toMatch(/dry bank until a site is marked Ready.*Build there, then cross/)
     expect(withLadder.reward).toBe(withoutLadder.reward)
     expect(publicV35LedgerQuest(view, { ...claimed, greenwayWorks: { builtLadderIds: [ladder] },
+      riverBridgeIds: [bridge] }).stage).toBe('survey')
+    const canonicalView: WizardViewProjection = { ...view,
+      routes: view.routes.map((route) => route.id === 'greenway_ladder'
+        ? { ...route, built: true } : route) }
+    const canonicalOnly = publicV35LedgerQuest(canonicalView, claimed)
+    expect(canonicalOnly.objective).toMatch(/8 logs.*saved north cliff ladder/)
+    expect(publicV35LedgerQuest(canonicalView, { ...claimed,
       riverBridgeIds: [bridge] }).stage).toBe('survey')
   })
 

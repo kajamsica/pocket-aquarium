@@ -1,4 +1,5 @@
-import { resolvePublicV17GreenwaySite } from '../domain/publicWorldV17GreenwaySites'
+import { publicV17NorthCliffLadderBuilt, resolvePublicV17GreenwaySite }
+  from '../domain/publicWorldV17GreenwaySites'
 import { resolvePublicV28RiverBridge } from '../domain/publicWorldV28RiverBridgeSites'
 import type { PublicV43Progress } from '../domain/publicWorldV43Snapshot'
 import { GREENWAY_LOG_ORDER } from '../domain/greenwayProcurementOrder'
@@ -15,10 +16,9 @@ export function greenwayCarpenterReserve(progress: Pick<PublicV43Progress,
     const site = resolvePublicV17GreenwaySite(seed, id)
     return site?.kind === 'bridge' && site.obstacle === 'greenway_creek'
   })
-  const ladderBuilt = progress.greenwayWorks.builtLadderIds.some((id) => {
-    const site = resolvePublicV17GreenwaySite(seed, id)
-    return site?.kind === 'ladder' && site.obstacle === 'greenway_north_cliff'
-  })
+  const ladderBuilt = publicV17NorthCliffLadderBuilt(seed,
+    progress.state.greenway.builtRouteIds.includes('greenway_ladder'),
+    progress.greenwayWorks.builtLadderIds)
   const riverBuilt = progress.riverBridgeIds.some((id) =>
     resolvePublicV28RiverBridge(seed, id) !== null)
   const next = !creekBuilt ? { route: 'creek bridge', required: 8 }
