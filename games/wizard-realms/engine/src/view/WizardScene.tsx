@@ -120,7 +120,7 @@ const TERRAIN_TARGET_OUTLINE = new THREE.BufferGeometry().setFromPoints([
 const TERRAIN_TARGET_MATERIAL = new THREE.LineBasicMaterial({ color: '#b7d8e1', transparent: true,
   opacity: 0.8, depthWrite: false })
 export const SOIL_PLACE_VALID_MATERIAL = new THREE.LineBasicMaterial({ color: '#dfff38', transparent: true,
-  opacity: 1, depthWrite: false, depthTest: false, toneMapped: false })
+  opacity: 1, depthWrite: false, depthTest: true, toneMapped: false })
 const SOIL_PLACE_BLOCKED_MATERIAL = new THREE.LineBasicMaterial({ color: '#efb75d', transparent: true,
   opacity: 0.95, depthWrite: false, depthTest: false })
 const SOIL_PLACE_REJECTION_HINTS = new Map<string, string>([
@@ -2519,7 +2519,7 @@ export function sceneTerrainHoverFeedback(mode: 'dig' | 'fill' | 'mine' | 'place
 export function sceneSoilPlaceEmptyGuidance(
   preview: readonly { rejection: string | null }[] | undefined): string | null {
   return preview && !preview.some(({ rejection }) => rejection === null)
-    ? 'No clear soil target nearby. Move farther along the far bank to clear, dry ground, then try Place soil again.'
+    ? 'No clear soil target nearby. Move farther to clear, dry ground, then try Place soil again.'
     : null
 }
 

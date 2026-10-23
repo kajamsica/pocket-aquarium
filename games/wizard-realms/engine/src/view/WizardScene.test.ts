@@ -193,7 +193,7 @@ describe('V26 scene discovery gate', () => {
   it('guides travel when checked Place soil preview has no eligible nearby cell', () => {
     expect(sceneSoilPlaceEmptyGuidance(undefined)).toBeNull()
     expect(sceneSoilPlaceEmptyGuidance([{ rejection: 'wet' }, { rejection: 'occupied' }]))
-      .toContain('Move farther along the far bank to clear, dry ground')
+      .toBe('No clear soil target nearby. Move farther to clear, dry ground, then try Place soil again.')
     expect(sceneSoilPlaceEmptyGuidance([])).toContain('No clear soil target nearby')
     expect(sceneSoilPlaceEmptyGuidance([{ rejection: 'wet' }, { rejection: null }])).toBeNull()
   })
@@ -226,10 +226,10 @@ describe('V26 scene discovery gate', () => {
       .toContain('about 4 m east (x 8, z 20)')
   })
 
-  it('keeps checked-valid soil outlines bright and visible over terrain', () => {
+  it('keeps checked-valid soil outlines bright over terrain and hidden behind foreground', () => {
     expect(SOIL_PLACE_VALID_MATERIAL.color.getHexString()).toBe('dfff38')
     expect(SOIL_PLACE_VALID_MATERIAL).toMatchObject({ transparent: true, opacity: 1,
-      depthWrite: false, depthTest: false, toneMapped: false })
+      depthWrite: false, depthTest: true, toneMapped: false })
   })
 
   it('opts only the V29 view into saved-pit targeting for Dig, Mine, and hover', () => {
