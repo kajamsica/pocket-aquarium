@@ -27,7 +27,7 @@ import { publicV26TerrainCellIsWet } from '../domain/publicWorldV26TerrainSurfac
 import { publicV14InsideGreenway } from '../domain/publicWorldV14Boundary'
 import { publicV23PlacementId, resolvePublicV23Site } from '../domain/publicWorldV23Sites'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
-import { ADULT_SEDGEHORN_PREVIEW, RIDER_SEAT_OFFSET, missingAdultSedgehornClips } from '../workbench/characterCatalog'
+import { ADULT_SEDGEHORN_PREVIEW, CHARACTER_ACTION_CLIPS, RIDER_SEAT_OFFSET, missingAdultSedgehornClips } from '../workbench/characterCatalog'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -43,7 +43,8 @@ const WAYFARER_V9_URL = new URL('../../art/characters/wayfarer_v9_game/wayfarer_
 const WAYFARER_V9_SOCKETS = ['Socket.RightHand', 'Socket.LeftHand', 'Socket.Head', 'Socket.Chest',
   'Socket.Legs', 'Socket.RightFoot', 'Socket.LeftFoot'] as const
 const WAYFARER_V9_CLIPS = ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump', 'ToolGrip',
-  'RideIdle', 'RideWalk', 'RideRun'] as const
+  'RideIdle', 'RideWalk', 'RideRun', ...CHARACTER_ACTION_CLIPS] as const
+export type V9WorkActionCue = Readonly<{ kind: typeof CHARACTER_ACTION_CLIPS[number]; sequence: number }>
 const WILD_SEDGEHORN_TACK = ['SH_blanket', 'SH_saddle', 'SH_girth', 'SH_stirrups',
   'SH_bridle', 'SH_reins'] as const
 
@@ -934,9 +935,10 @@ export function advanceV9JumpPresentation(previous: V9JumpPresentation, vertical
 }
 
 function WizardAvatar({ source, pose, equipment, activePick = null, windwardActive = false,
-  guardVestVisible = false, riding = false }: {
+  guardVestVisible = false, riding = false, workActionCue = null }: {
   source: GLTF; pose: PresentationPose; equipment: AvatarEquipment; activePick?: ActivePick
   windwardActive?: boolean; guardVestVisible?: boolean; riding?: boolean
+  workActionCue?: V9WorkActionCue | null
 }) {
   const gear = avatarGearFor(equipment, activePick)
   const root = useRef<THREE.Group>(null)
@@ -1005,11 +1007,17 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
     return { idle: action('Idle'), walk: action('Walk'), run: action('Run'),
       turnLeft: action('TurnLeft'),
       turnRight: action('TurnRight'), jump: action('Jump'), toolGrip: action('ToolGrip'),
-      rideIdle: action('RideIdle'), rideWalk: action('RideWalk'), rideRun: action('RideRun') }
+      rideIdle: action('RideIdle'), rideWalk: action('RideWalk'), rideRun: action('RideRun'),
+      Chop: action('Chop'), Dig: action('Dig'), Mine: action('Mine'), Cast: action('Cast') }
   }, [mixer, source.animations])
   useEffect(() => {
     actions.jump.setLoop(THREE.LoopOnce, 1)
     actions.jump.clampWhenFinished = true
+    for (const kind of CHARACTER_ACTION_CLIPS) {
+      actions[kind].setLoop(THREE.LoopOnce, 1)
+      actions[kind].clampWhenFinished = true
+      actions[kind].setEffectiveWeight(0)
+    }
     actions.toolGrip.setEffectiveWeight(0)
     Object.values(actions).forEach((action) => action.play())
     return () => { mixer.stopAllAction() }
@@ -1018,6 +1026,8 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
   const jumpPresentation = useRef<V9JumpPresentation>({ stage: 'grounded', phase: 0,
     airborneSeconds: 0, landingSeconds: 0 })
   const jumpBlend = useRef(0)
+  const lastWorkSequence = useRef(0)
+  const activeWork = useRef<{ kind: V9WorkActionCue['kind']; elapsed: number } | null>(null)
   useFrame(({ clock }, delta) => {
     if (!root.current || !modelRoot.current) return
     root.current.position.copy(seatOffset).applyAxisAngle(THREE.Object3D.DEFAULT_UP, pose.yaw)
@@ -1030,12 +1040,25 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
     jumpBlend.current += ((jumpActive ? 1 : 0) - jumpBlend.current) * damping(20, delta)
     const weights = v9AnimationWeightsFor(pose.speed, pose.turnRate, jumpBlend.current)
     const rideWeights = riding ? rideAnimationWeightsFor(pose.speed) : null
-    actions.idle.setEffectiveWeight(riding ? 0 : weights.idle)
-    actions.walk.setEffectiveWeight(riding ? 0 : weights.walk)
-    actions.run.setEffectiveWeight(riding ? 0 : weights.run)
-    actions.turnLeft.setEffectiveWeight(riding ? 0 : weights.turnLeft)
-    actions.turnRight.setEffectiveWeight(riding ? 0 : weights.turnRight)
-    actions.jump.setEffectiveWeight(riding ? 0 : weights.jump)
+    if (workActionCue && workActionCue.sequence !== lastWorkSequence.current) {
+      lastWorkSequence.current = workActionCue.sequence
+      activeWork.current = { kind: workActionCue.kind, elapsed: 0 }
+      actions[workActionCue.kind].reset().play()
+    }
+    const work = activeWork.current
+    const workDuration = work ? actions[work.kind].getClip().duration : 0
+    if (work) work.elapsed = Math.min(work.elapsed + delta, workDuration)
+    const workWeight = work && !riding ? Math.min(1, work.elapsed / 0.12,
+      (workDuration - work.elapsed) / 0.2) * (1 - jumpBlend.current) : 0
+    const gaitWeight = riding ? 0 : 1 - workWeight
+    actions.idle.setEffectiveWeight(gaitWeight * weights.idle)
+    actions.walk.setEffectiveWeight(gaitWeight * weights.walk)
+    actions.run.setEffectiveWeight(gaitWeight * weights.run)
+    actions.turnLeft.setEffectiveWeight(gaitWeight * weights.turnLeft)
+    actions.turnRight.setEffectiveWeight(gaitWeight * weights.turnRight)
+    actions.jump.setEffectiveWeight(gaitWeight * weights.jump)
+    for (const kind of CHARACTER_ACTION_CLIPS)
+      actions[kind].setEffectiveWeight(work?.kind === kind ? workWeight : 0)
     actions.toolGrip.setEffectiveWeight(!riding && gear.mainHand ? 1 : 0)
     actions.rideIdle.setEffectiveWeight(rideWeights?.idle ?? 0)
     actions.rideWalk.setEffectiveWeight(rideWeights?.walk ?? 0)
@@ -1049,15 +1072,21 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
     actions.turnRight.time = turnPhase.current
     actions.jump.time = jumpPresentation.current.phase * actions.jump.getClip().duration
     actions.toolGrip.time = 0
+    if (work) {
+      actions[work.kind].time = work.elapsed
+      if (work.elapsed >= workDuration) activeWork.current = null
+    }
     actions.rideIdle.time = clock.elapsedTime % actions.rideIdle.getClip().duration
     actions.rideWalk.time = pose.phase / (Math.PI * 2) * actions.rideWalk.getClip().duration
     actions.rideRun.time = pose.phase / (Math.PI * 2) * actions.rideRun.getClip().duration
     restoreV9EquippedCarryPose(rightArmCarry.upperArm, rightArmCarry.forearm, rightArmCarry.state)
     mixer.update(0)
-    carryBlend.current += ((!riding && gear.mainHand ? V9_EQUIPPED_CARRY_STRENGTH : 0) - carryBlend.current)
+    carryBlend.current += ((!riding && gear.mainHand
+      ? V9_EQUIPPED_CARRY_STRENGTH * (1 - workWeight) : 0) - carryBlend.current)
       * damping(10, delta)
     if (!riding) applyV9EquippedCarryPose(rightArmCarry.upperArm, rightArmCarry.forearm,
-      rightArmCarry.restUpperArm, rightArmCarry.restForearm, carryBlend.current, rightArmCarry.state)
+      rightArmCarry.restUpperArm, rightArmCarry.restForearm,
+      carryBlend.current * (1 - workWeight), rightArmCarry.state)
     modelRoot.current.position.y = riding ? 0
       : BODY_BOB_M * (weights.walk + weights.run) * 0.5 * (1 + Math.cos(2 * pose.phase))
     if (windRibbon.current) windRibbon.current.rotation.y = clock.elapsedTime * 1.4
@@ -2629,7 +2658,7 @@ function SaveFrameLoopResume({ saveInProgress, frameloop, inputTrace }: {
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onTerrainHoverFeedback, inputTrace,
-  saveInProgress = false, starterChapterActors = false }: {
+  saveInProgress = false, starterChapterActors = false, workActionCue = null }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
   orbiting: boolean
@@ -2641,6 +2670,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
   starterChapterActors?: boolean
+  workActionCue?: V9WorkActionCue | null
 }) {
   const [wayfarerV9, setWayfarerV9] = useState<{ source: GLTF | null; error: string | null }>({
     source: null, error: null,
@@ -2993,6 +3023,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         mount={projection.groundMount} pose={pose} />}
       {wayfarerV9.source && <WizardAvatar source={wayfarerV9.source}
         pose={pose} equipment={projection.equipment}
+        workActionCue={workActionCue}
         riding={projection.groundMount?.mode === 'riding' && sedgehorn.source !== null}
         activePick={projection.v29Mining?.tools.activePick}
         guardVestVisible={!!projection.v42IronHall?.vestEquipped &&

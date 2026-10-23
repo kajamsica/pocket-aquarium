@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import { Axe, MiningPick, Spade, V9_EQUIPPED_CARRY_STRENGTH, Wand, applyV9EquippedCarryPose, restoreV9EquippedCarryPose, rightHandToolMountFor } from '../view/WizardScene'
-import { ADULT_SEDGEHORN_PREVIEW, CHARACTER_TOOL_GRIP_CLIP, RIDER_SEAT_OFFSET, missingAdultSedgehornClips, onFootHeldTool, overlappingToolGripTracks, type CharacterCandidate, type CharacterClip, type CharacterHeldTool, type CharacterRideClip } from './characterCatalog'
+import { ADULT_SEDGEHORN_PREVIEW, CHARACTER_ACTION_CLIPS, CHARACTER_TOOL_GRIP_CLIP, RIDER_SEAT_OFFSET, missingAdultSedgehornClips, onFootHeldTool, overlappingToolGripTracks, type CharacterCandidate, type CharacterClip, type CharacterHeldTool, type CharacterRideClip } from './characterCatalog'
 
 // Vite can load Three through separate optimized chunks. glTF nodes still expose these
 // intrinsic flags even when `instanceof THREE.Mesh` crosses module instances.
@@ -45,6 +45,7 @@ export function CharacterModel({
 }: CharacterModelProps) {
   const mainHand = onFootHeldTool(candidate.id, heldTool, riding)
   const toolSelected = mainHand !== null
+  const actionPreview = CHARACTER_ACTION_CLIPS.some((name) => name === clipName)
   const source = useLoader(GLTFLoader, candidate.glbUrl)
   const turntableRoot = useRef<THREE.Group>(null)
   const reportClock = useRef(0)
@@ -200,7 +201,7 @@ export function CharacterModel({
         rightArmCarry.state)
       if (playing) mixer.update(Math.min(delta, 0.05) * playbackRate)
       else mixer.setTime(phase * clip.duration)
-      if (toolSelected && rightArmCarry) applyV9EquippedCarryPose(rightArmCarry.upperArm, rightArmCarry.forearm,
+      if (toolSelected && !actionPreview && rightArmCarry) applyV9EquippedCarryPose(rightArmCarry.upperArm, rightArmCarry.forearm,
         rightArmCarry.restUpperArm, rightArmCarry.restForearm, V9_EQUIPPED_CARRY_STRENGTH,
         rightArmCarry.state)
       phaseRef.current = clip.duration > 0 ? (action.time / clip.duration) % 1 : 0

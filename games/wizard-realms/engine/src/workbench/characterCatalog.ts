@@ -1,4 +1,5 @@
-export const CHARACTER_ON_FOOT_CLIPS = ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump'] as const
+export const CHARACTER_ACTION_CLIPS = ['Chop', 'Dig', 'Mine', 'Cast'] as const
+export const CHARACTER_ON_FOOT_CLIPS = ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump', ...CHARACTER_ACTION_CLIPS] as const
 export const CHARACTER_RIDE_CLIPS = ['RideIdle', 'RideWalk', 'RideRun'] as const
 export const CHARACTER_TOOL_GRIP_CLIP = 'ToolGrip' as const
 export const CHARACTER_CLIPS = [...CHARACTER_ON_FOOT_CLIPS, ...CHARACTER_RIDE_CLIPS] as const
@@ -94,7 +95,7 @@ export const CHARACTER_CANDIDATES: readonly CharacterCandidate[] = [
     reviewNotes: [
       'The bottom-row V9 design is the approved art direction; this GLB is the game asset candidate.',
       'Compare the loaded model with the approved V9 bust renders and the game asset review renders.',
-      'Check Idle, Walk, Run, stepping TurnLeft and TurnRight, and the Jump preview with each right-hand tool, plus an exported height of about 2.1 to 2.4 m.',
+      'Check Idle, Walk, Run, stepping TurnLeft and TurnRight, Jump, and Chop, Dig, Mine, Cast previews with each right-hand tool, plus an exported height of about 2.1 to 2.4 m.',
     ],
   },
   {

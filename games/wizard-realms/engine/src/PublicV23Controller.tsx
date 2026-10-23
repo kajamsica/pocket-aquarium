@@ -174,6 +174,7 @@ import { surveyorCrossingQuest } from './view/surveyorCrossingQuest'
 import { publicV35LedgerQuest } from './view/publicV35LedgerQuest'
 import { publicV36MarkerQuest, publicV36MarkerRejectionMessage } from './view/publicV36MarkerQuest'
 import { WizardSurface } from './view/WizardSurface'
+import type { V9WorkActionCue } from './view/WizardScene'
 import { greenwayCarpenterOrderStep, greenwayCarpenterReserve }
   from './view/greenwayCarpenterReserve'
 import type { GreenwayCarpenterReserve } from './view/greenwayCarpenterReserve'
@@ -1558,6 +1559,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   const [traceJson, setTraceJson] = useState('')
   const [obstacleCue, setObstacleCue] = useState<string | null>(null)
   const [soilPlaceRejection, setSoilPlaceRejection] = useState<string | null>(null)
+  const [workActionCue, setWorkActionCue] = useState<V9WorkActionCue | null>(null)
+  const workActionSequence = useRef(0)
   const held = useRef<readonly [number, number]>([0, 0])
   const blockedHeldVector = useRef<readonly [number, number] | null>(null)
   const matchesBlockedHeld = (vector: readonly [number, number]) =>
@@ -1890,6 +1893,30 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           : 'id' in intent ? await runtime.action({ kind: intent.kind, id: intent.id })
             : await runtime.action({ kind: 'legacy-action', intent: intent as PublicWorldIntent })
         if (result.status === 'saved') {
+          const workActionKind: V9WorkActionCue['kind'] | null =
+            result.events.some((event) => event.type === 'spell_cast')
+              || 'kind' in intent && (intent.kind === 'windward-cast/v1'
+                || intent.kind === 'mireglass-action/v1'
+                  && (intent.action.type === 'cast_wayfinder_glow'
+                    || intent.action.type === 'cast_wayfinder_glow_wide'))
+              ? 'Cast'
+              : 'kind' in intent && intent.kind === 'mireglass-action/v1'
+                && intent.action.type === 'chop_tree'
+                || result.events.some((event) => event.type === 'resource_damaged'
+                  || event.type === 'resource_harvested')
+              ? 'Chop'
+              : 'kind' in intent && intent.kind === 'deep-dig'
+              ? 'Mine'
+              : 'kind' in intent && (intent.kind === 'terrain-action/v1'
+                && intent.action.kind === 'dig' || intent.kind === 'soil-remove/v1'
+                || intent.kind === 'highland-extract/v1'
+                || intent.kind === 'mireglass-action/v1'
+                  && (intent.action.type === 'dig_tree_stump'
+                    || intent.action.type === 'excavate_cache'))
+                || 'workEvent' in result && result.workEvent?.kind === 'dig'
+              ? 'Dig' : null
+          if (workActionKind) setWorkActionCue({ kind: workActionKind,
+            sequence: ++workActionSequence.current })
           if (result.resetWalkRequested) setWalkRequested(false)
           if ('id' in intent) setWorkMode(false)
           if ('kind' in intent && intent.kind === 'sedgehorn-mount/v1') {
@@ -2874,6 +2901,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </button>}
     </section>}
     <WizardSurface projection={view} onIntent={onIntent} inputTrace={trace}
+      workActionCue={workActionCue}
       saveInProgress={saveTask.current !== null}
       soilPlaceRejection={soilPlaceRejection}
       starterChapterActors={v43}
