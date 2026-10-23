@@ -1017,6 +1017,7 @@ body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-ve
 :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .wr-surface{height:100%;min-height:0}
 }
 @media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide{left:166px;bottom:16px}}
+@media(min-width:720px) and (min-height:591px){:is([data-public-version=v43],[data-public-version=v44]) .v25-start-guide{left:166px;bottom:16px;width:280px;max-height:min(38vh,240px);overflow:auto}}
 `
 export function publicV23SavedWorkMessage(event: NonNullable<Extract<
   Awaited<ReturnType<Runtime['action']>>, { status: 'saved' }>['workEvent']>): string {
