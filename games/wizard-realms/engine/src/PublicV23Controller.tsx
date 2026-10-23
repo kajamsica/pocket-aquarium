@@ -1008,6 +1008,7 @@ const PUBLIC_V23_PANEL_STYLES = `
 }
 @media(max-width:719px){[data-public-v23] .v43-familiar:not([open]){top:260px;left:16px;right:auto}}
 @media(min-width:720px) and (max-width:1000px){[data-public-v23]:has(.v43-familiar[open]) .wr-backpack,[data-public-v23]:has(.v43-familiar[open]) .wr-gear{display:none}}
+@media(min-width:720px) and (max-width:900px){[data-public-version=v43]:has(.v43-familiar[open]) :is(.wr-events,.wr-v26-terrain),[data-public-version=v43]:has(.wr-context[data-store-panel]) :is(.wr-events,.wr-backpack){display:none}}
 body:has([data-public-version=v26]),body:has([data-public-version=v27]),body:has([data-public-version=v28]),body:has([data-public-version=v29]),body:has([data-public-version=v30]),body:has([data-public-version=v31]),body:has([data-public-version=v32]),body:has([data-public-version=v33]),body:has([data-public-version=v34]){margin:0;background:#14221f}
 [data-public-version=v26],[data-public-version=v27],[data-public-version=v28],[data-public-version=v29],[data-public-version=v30],[data-public-version=v31],[data-public-version=v32],[data-public-version=v33],[data-public-version=v34]{height:100dvh}
 [data-public-version=v26] .wr-surface,[data-public-version=v27] .wr-surface,[data-public-version=v28] .wr-surface,[data-public-version=v29] .wr-surface,[data-public-version=v30] .wr-surface,[data-public-version=v31] .wr-surface,[data-public-version=v32] .wr-surface,[data-public-version=v33] .wr-surface,[data-public-version=v34] .wr-surface{height:100%;min-height:0}
