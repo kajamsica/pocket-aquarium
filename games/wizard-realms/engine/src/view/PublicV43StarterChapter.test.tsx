@@ -103,6 +103,9 @@ describe('V43 starter chapter', () => {
     expect(projectPublicV43StarterChapter(dug)).toMatchObject({
       stage: 'soil-step', progressLabel: 'Chapter step 5 of 6' })
     expect(projectPublicV43StarterChapter(dug).objective).toContain('Terrain Place soil')
+    expect(projectPublicV43StarterChapter(dug).objective)
+      .toContain('Follow the far bank to a dry clearing')
+    expect(projectPublicV43StarterChapter(dug).objective).not.toContain('a few meters inland')
     expect(farBankStep).not.toEqual(farBankLoam)
     expect(projectPublicV43StarterChapter(withSoilStep(dug)).stage)
       .toBe('carpenter-order')
