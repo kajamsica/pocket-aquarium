@@ -28,6 +28,9 @@ import { publicV14InsideGreenway } from '../domain/publicWorldV14Boundary'
 import { publicV23PlacementId, resolvePublicV23Site } from '../domain/publicWorldV23Sites'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
 import { ADULT_SEDGEHORN_PREVIEW, RIDER_SEAT_OFFSET, missingAdultSedgehornClips } from '../workbench/characterCatalog'
+import { selectMountCandidate } from '../workbench/mountCatalog'
+import { WildCreature } from './WildCreature'
+import { visibleWildCreatureEncounters } from './wildCreatureEncounters'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -2703,6 +2706,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     : visual.terrain, [v42, visual.terrain, projection.seed, projection.v26OpenPitColumns,
       projection.v42FrontierBridgeId])
   const { revealedTerrain, unchartedFringe, discoveryFog } = sceneTerrainFor(projection, visualTerrain)
+  const wildCreatureEncounters = visibleWildCreatureEncounters(revealedTerrain,
+    projection.player.position, projection.v26OpenPitColumns)
   const keeperStore = starterChapterActors
     ? visual.stores.find((store) => store.id === 'store-greenway') : undefined
   const keeperPosition: [number, number, number] | null = keeperStore
@@ -2954,6 +2959,10 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         position={keeperPosition} />}
       {wildPosition && sedgehorn.source && <WildStarterSedgehorn source={sedgehorn.source}
         position={wildPosition} />}
+      {wildCreatureEncounters.map((encounter) => {
+        const modelUrl = selectMountCandidate(encounter.modelId)?.modelUrl
+        return modelUrl ? <WildCreature key={encounter.id} {...encounter} modelUrl={modelUrl} /> : null
+      })}
       {visual.fairyRings.filter((ring) => ring.id !== 'ring-highland-quarry'
         || projection.v39QuarryRing && revealedTerrain.some((cell) =>
           Math.abs(cell.position[0] - projection.v39QuarryRing!.position[0]) <= cell.size[0] / 2
