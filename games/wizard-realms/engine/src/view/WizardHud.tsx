@@ -52,7 +52,8 @@ export function publicV25NorthLadderGuidance(projection: WizardViewProjection): 
   const works = projection.savedTerrainWorks
   if (!projection.v25RiverActive || works?.context !== 'works4-greenway'
     || !works.builtSites.some((site) => site.kind === 'bridge')
-    || works.builtSites.some((site) => site.kind === 'ladder')) return null
+    || works.builtSites.some((site) => site.kind === 'ladder')
+    || projection.routes.some((route) => route.id === 'greenway_ladder' && route.built)) return null
   const logs = projection.backpack.stacks.reduce((total, stack) =>
     total + (stack.itemId === 'logs' ? stack.quantity : 0), 0)
   const remaining = Math.max(0, 4 - logs)
@@ -383,9 +384,11 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
       && savedWorks?.dugTileIds.includes(starterWork.site.footprintTileIds[0])
   const greenwayLogs = carriedLogs
   const greenwayBridgeBuilt = savedWorks?.builtSites.some((site) => site.kind === 'bridge')
-  const greenwayLadderBuilt = savedWorks?.builtSites.some((site) => site.kind === 'ladder')
+  const worksLadderBuilt = savedWorks?.builtSites.some((site) => site.kind === 'ladder')
+  const greenwayLadderBuilt = worksLadderBuilt
+    || projection.routes.some((route) => route.id === 'greenway_ladder' && route.built)
   const firstCreekBridgePending = v27Terrain && !!mining && works4Greenway
-    && !greenwayBridgeBuilt && !greenwayLadderBuilt
+    && !greenwayBridgeBuilt && !worksLadderBuilt
   const firstNorthLadderPending = v27Terrain && !!mining && works4Greenway
     && !!greenwayBridgeBuilt && !greenwayLadderBuilt
   const discoveredCreekSite = firstCreekBridgePending

@@ -175,7 +175,7 @@ describe('starter cliff HUD capability gate', () => {
       .not.toContain('Pack full. A Ready ladder costs 4 logs')
   })
 
-  it('advances one checked first-run cue from axe to logs to bridge, then follows saved route guidance', () => {
+  it('advances first-run cues and honors the built starter ladder after the bridge', () => {
     const state = createWizardWorld('greenway-alpha')
     const base = toViewProjection(state, [])
     const saved = { context: 'works4-greenway' as const, builtSites: [], dugTileIds: [],
@@ -313,6 +313,13 @@ describe('starter cliff HUD capability gate', () => {
     expect(bridgeStage).toContain('Boots and the carpenter order are optional.')
     expect(bridgeStage).not.toContain('Open Backpack and equip your Woodcutter axe.')
     expect(bridgeStage).not.toContain('Pack full of logs?')
+    const legacyLadderStage = objective({ ...fresh,
+      routes: fresh.routes.map((route) => route.id === 'greenway_ladder'
+        ? { ...route, built: true } : route),
+      savedTerrainWorks: { ...saved, builtSites: [displayedBridge] },
+      map: { ...fresh.map, guidance: bridgeGuidance } })
+    expect(legacyLadderStage).toContain(`Field objective:</strong> ${bridgeGuidance}`)
+    expect(legacyLadderStage).not.toContain('Next route: keep 0/4 logs for the north cliff ladder')
     const ladderLogs = objective({ ...logs(4), savedTerrainWorks: { ...saved,
       builtSites: [displayedBridge] }, map: { ...fresh.map, guidance: bridgeGuidance } })
     expect(ladderLogs).toContain('Next route: keep 4 logs for a marked north cliff ladder.')
@@ -465,6 +472,10 @@ describe('starter cliff HUD capability gate', () => {
     expect(publicV25NorthLadderGuidance(view())).toContain('4 in your bag, enough to build')
     expect(publicV25NorthLadderGuidance({ ...view(), savedTerrainWorks: {
       ...saved, builtSites: [displayedBridge, ladder] } })).toBeNull()
+    const builtStarter = view()
+    expect(publicV25NorthLadderGuidance({ ...builtStarter,
+      routes: builtStarter.routes.map((route) => route.id === 'greenway_ladder'
+        ? { ...route, built: true } : route) })).toBeNull()
   })
 
   it('gives a checked Greenway waystone lesson before study and a frontier casting hint after learning', () => {

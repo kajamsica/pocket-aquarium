@@ -223,6 +223,8 @@ describe('checked Greenway quest guidance', () => {
       ...bridgeOnly.greenwayWorks,
       builtLadderIds: ['works4:ladder:greenway-north-cliff:11'],
     } }
+    expect(projectPublicV43GreenwayQuestChain(bridgeAndLadder)[1].status)
+      .toBe('complete')
     expect(projectPublicV43GreenwayQuestChain(bridgeAndLadder)[4].objective)
       .toContain('connected-river bridge (8 logs)')
 
@@ -250,6 +252,22 @@ describe('checked Greenway quest guidance', () => {
           studiedInscriptionIds: ['greenway_waystone' as const] } } }
     expect(projectPublicV43GreenwayQuestChain(advanced)
       .map((quest) => quest.status)).toEqual(Array(5).fill('complete'))
+  })
+
+  it('recognizes the built starter ladder without a Works ladder record', () => {
+    const head = fresh()
+    const legacyLadder = { ...head,
+      state: { ...head.state, greenway: { ...head.state.greenway,
+        builtRouteIds: [...head.state.greenway.builtRouteIds, 'greenway_ladder' as const] } },
+      greenwayWorks: { ...head.greenwayWorks,
+        builtBridgeIds: ['works4:bridge:greenway-creek:-14'] } }
+    const before = structuredClone(legacyLadder)
+    expect(legacyLadder.greenwayWorks.builtLadderIds).toEqual([])
+    const quests = projectPublicV43GreenwayQuestChain(legacyLadder)
+    expect(quests[1]).toMatchObject({ status: 'complete',
+      objective: 'The marked north-cliff ladder is built.' })
+    expect(quests[4].objective).toContain('connected-river bridge (8 logs)')
+    expect(legacyLadder).toEqual(before)
   })
 
   it('only asks for pack room when the next oak needs a wood space', () => {
