@@ -495,6 +495,20 @@ describe('V23 controller input admission', () => {
     expect(probe.workActionCue).toEqual({ kind: 'Chop', sequence: 2 })
   })
 
+  it('plays Cast only after a checked spell event is saved', async () => {
+    probe.greenwayOak = true
+    probe.actionEvents = [{ type: 'spell_cast' }]
+    mount()
+    probe.onIntent!({ type: 'interact' }); await settle()
+    rerender()
+    expect(probe.workActionCue).toEqual({ kind: 'Cast', sequence: 1 })
+
+    probe.actionRejection = 'blocked'
+    probe.onIntent!({ type: 'interact' }); await settle()
+    rerender()
+    expect(probe.workActionCue).toEqual({ kind: 'Cast', sequence: 1 })
+  })
+
   it('ignores barefoot pace toggles so newly equipped boots begin at the default run pace', () => {
     mount()
     expect(probe.projection?.gait).toMatchObject({ canRun: false, pace: 'walk' })
