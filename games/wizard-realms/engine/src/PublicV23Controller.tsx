@@ -2722,6 +2722,10 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         && stack.quantity > 0), v32NorthLadderBuilt) : null
   const queuedChecked = inputQueue.current.some((token) => token.kind === 'checked')
   const queuedPulses = inputQueue.current.filter((token) => token.kind === 'pulse').length
+  const v42HandoffReady = 'version' in props && props.version === 'v42'
+    && status.gate === 'open' && status.pendingFrames === 0
+    && !busy.current && !saveTask.current && !actionTask.current
+    && !queuedChecked && queuedPulses === 0
   const greenwayOrderLogs = v43 ? view.backpack.stacks.filter((stack) =>
     stack.itemId === GREENWAY_LOG_ORDER.itemId).reduce((sum, stack) => sum + stack.quantity, 0) : 0
   const greenwayOrderClaimed = v43
@@ -2851,6 +2855,22 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       <p>{mounted ? 'Dismount to use ground tools or the current rescue action. ' : ''}
         The checked rescue works only when every exit is blocked.
         Successful rescue starts a 30-minute cooldown.</p>
+      {'version' in props && props.version === 'v42' && (v42HandoffReady
+        ? <p><a href="?publicWorld=v43" style={{ color: '#d8edbb' }}
+          onClick={(event) => {
+            if (runtime.status().gate !== 'open' || runtime.status().pendingFrames !== 0
+              || busy.current || saveTask.current || actionTask.current
+              || inputQueue.current.length !== 0) {
+              event.preventDefault()
+              tell('Save now and finish queued actions before opening the expanded adventure.')
+            }
+          }}>Expanded adventure (V43)</a>. V43 asks before moving this checked V42 save.
+          Choosing Move there fences the V42 source; it cannot be played independently afterward.</p>
+        : <p>{status.gate === 'blocked'
+          ? 'Save blocked. Keep this tab open; do not move to V43.'
+          : status.pendingFrames > 0
+            ? 'Use Save now, then finish queued actions before opening the expanded adventure.'
+            : 'Finish the current save or queued action before opening the expanded adventure.'}</p>)}
     </details>}
     {regional && !mounted && <section className="v23-aim" aria-label="West cliff ladder aim">
       {marker ? <><label htmlFor="v23-west-aim">West cliff ladder, {preview?.site
