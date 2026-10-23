@@ -66,7 +66,7 @@
    "V9_satchel",
    "V9_strap hip extension",
    "distance-falloff skinning",
-   "Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump/RideIdle/RideWalk/RideRun clips",
+   "Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump/RideIdle/RideWalk/RideRun/Chop/Dig/Mine/Cast clips",
    "RideDrape robe/tunic morph",
    "sockets",
    "camera/light rigs",
@@ -1669,13 +1669,33 @@
      "channelsAfter": 53,
      "samplersRemoved": 30
     },
+    "Chop": {
+     "channelsBefore": 83,
+     "channelsAfter": 52,
+     "samplersRemoved": 31
+    },
+    "Dig": {
+     "channelsBefore": 83,
+     "channelsAfter": 52,
+     "samplersRemoved": 31
+    },
+    "Mine": {
+     "channelsBefore": 83,
+     "channelsAfter": 52,
+     "samplersRemoved": 31
+    },
+    "Cast": {
+     "channelsBefore": 83,
+     "channelsAfter": 52,
+     "samplersRemoved": 31
+    },
     "ToolGrip": {
      "channelsBefore": 81,
      "channelsAfter": 10,
      "samplersRemoved": 71
     },
-    "accessorsPruned": 253,
-    "bufferViewsPruned": 253
+    "accessorsPruned": 248,
+    "bufferViewsPruned": 248
    }
   }
  },
@@ -1958,6 +1978,94 @@
     }
    }
   },
+  "Chop": {
+   "channels": 52,
+   "durationSeconds": 1.208,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "rotation": 17,
+    "scale": 17,
+    "translation": 16,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
+    },
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Dig": {
+   "channels": 52,
+   "durationSeconds": 1.375,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "rotation": 17,
+    "scale": 17,
+    "translation": 16,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
+    },
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Mine": {
+   "channels": 52,
+   "durationSeconds": 1.292,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "rotation": 17,
+    "scale": 17,
+    "translation": 16,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
+    },
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
+  "Cast": {
+   "channels": 52,
+   "durationSeconds": 1.542,
+   "firstKeySeconds": 0.0417,
+   "channelsByPath": {
+    "rotation": 17,
+    "scale": 17,
+    "translation": 16,
+    "weights": 2
+   },
+   "fingerChannels": 0,
+   "morphWeightTracks": {
+    "V9_robe": {
+     "min": 0.0,
+     "max": 0.0
+    },
+    "V9_tunic": {
+     "min": 0.0,
+     "max": 0.0
+    }
+   }
+  },
   "ToolGrip": {
    "channels": 10,
    "durationSeconds": 0.542,
@@ -1967,6 +2075,32 @@
    },
    "fingerChannels": 10,
    "morphWeightTracks": {}
+  }
+ },
+ "workActionClips": {
+  "Chop": {
+   "durationSeconds": 1.208,
+   "loops": false,
+   "inPlace": true,
+   "neutralAtStartAndEnd": true
+  },
+  "Dig": {
+   "durationSeconds": 1.375,
+   "loops": false,
+   "inPlace": true,
+   "neutralAtStartAndEnd": true
+  },
+  "Mine": {
+   "durationSeconds": 1.292,
+   "loops": false,
+   "inPlace": true,
+   "neutralAtStartAndEnd": true
+  },
+  "Cast": {
+   "durationSeconds": 1.542,
+   "loops": false,
+   "inPlace": true,
+   "neutralAtStartAndEnd": true
   }
  },
  "runClip": {
@@ -3373,14 +3507,15 @@
   }
  },
  "hairLocks": 124,
- "glbBytes": 2396520,
+ "glbBytes": 2442744,
  "sha256": {
-  "glb": "916b2a2961595c9c332488816c56a4770125d30d5fe57c27c3859d1a86ee9044",
-  "blend": "40a93bbc2eec5fe66fe5325bf8ff7e939e53b52420475e8da5bde6e2f52e47ae"
+  "glb": "c0cc759ad7089e6521dcc1c35901e372b520ad41fa0b396ac9cc40b964e877c4",
+  "blend": "eb4ca738e380eda942e3455fdb5e0d6963eb20f96af498ecf8bd2030e6a08d9f"
  },
  "glbChecks": {
   "clipsIdleWalkRunTurn": true,
   "clipsTurnLeftTurnRightJump": true,
+  "clipsChopDigMineCast": true,
   "toolGripClipFingerRotationOnly": true,
   "locomotionAndRideClipsHaveNoFingerChannels": true,
   "neutralHandUnchangedByFingerBones": true,
@@ -3441,8 +3576,8 @@
   "Run is in place with no root motion or foot IK; the stance foot dips a few centimetres through the floor at mid-stance.",
   "V9_feet and V9_boots are both exported visible; the runtime must toggle them (feet sole and boot sole share the floor plane)."
  ],
- "peakProcessMemoryMB": 330.1,
- "authorSeconds": 13.79,
+ "peakProcessMemoryMB": 308.3,
+ "authorSeconds": 15.96,
  "blender": "5.2.2 LTS",
  "command": "blender -b -t 4 --factory-startup --python author_v9_game.py",
  "scopeGuards": {

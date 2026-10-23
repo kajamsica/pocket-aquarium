@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { WizardViewIntent, WizardViewProjection } from './contracts'
 import { WizardHud } from './WizardHud'
 import { WizardMap, mapToggleForKey } from './WizardMap'
-import { WizardScene, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneGroundPicker, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
+import { WizardScene, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneGroundPicker, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker, type V9WorkActionCue } from './WizardScene'
 import type { PublicV17InputTrace } from '../PublicV17InputScheduler'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
 
@@ -13,6 +13,7 @@ export interface WizardSurfaceProps {
   diagnostics?: boolean
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
+  workActionCue?: V9WorkActionCue | null
   greenwayLogOrder?: ReactNode
   starterChapterActors?: boolean
   starterChapterPrimary?: boolean
@@ -375,7 +376,7 @@ const STYLES = `
 `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace,
-  saveInProgress = false,
+  saveInProgress = false, workActionCue = null,
   greenwayLogOrder, starterChapterActors = false, starterChapterPrimary = false,
   soilPlaceRejection = null }: WizardSurfaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -723,6 +724,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           && <span className="wr-keyboard-terrain-aim" aria-hidden="true">+</span>}
         <WizardScene projection={projection} cameraOrbit={cameraOrbit} orbiting={dragging}
           terrainMode={terrainMode} inputTrace={inputTrace} saveInProgress={saveInProgress}
+          workActionCue={workActionCue}
           starterChapterActors={starterChapterActors}
           onTerrainHoverFeedback={setTerrainHoverFeedback}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}

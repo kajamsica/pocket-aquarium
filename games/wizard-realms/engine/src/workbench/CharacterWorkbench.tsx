@@ -21,6 +21,10 @@ const CLIP_LABELS: Partial<Record<CharacterClip, string>> = {
   TurnLeft: 'TurnLeft (stepping)',
   TurnRight: 'TurnRight (stepping)',
   Jump: 'Jump (preview)',
+  Chop: 'Chop (axe strike)',
+  Dig: 'Dig (spade thrust)',
+  Mine: 'Mine (pick strike)',
+  Cast: 'Cast (spell)',
   RideIdle: 'Ride idle',
   RideWalk: 'Ride walk',
   RideRun: 'Ride run',
@@ -372,7 +376,7 @@ export function CharacterWorkbench({ workbenchId }: { readonly workbenchId: stri
           <label className="character-workbench__scrub" htmlFor="character-workbench-phase">Phase {(phase * 100).toFixed(0)}%</label>
           <input id="character-workbench-phase" type="range" min="0" max="1" step="0.01" value={phase} disabled={playing} onChange={(event) => setPhase(Number(event.target.value))} />
           <small>{candidate.id === 'wayfarer-v9-male'
-            ? riding ? 'Ride idle, walk, and run loop in place with the adult mount. Pause to scrub both together.' : 'Turn left and right play the full stepping clips. Jump repeats as a preview. Pause to scrub any clip.'
+            ? riding ? 'Ride idle, walk, and run loop in place with the adult mount. Pause to scrub both together.' : 'Turn left and right play the full stepping clips. Jump, Chop, Dig, Mine, and Cast repeat as previews. Pause to scrub any clip.'
             : 'Pause to scrub the rig pose.'}</small>
         </fieldset>
 

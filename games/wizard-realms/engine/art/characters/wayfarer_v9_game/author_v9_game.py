@@ -11,8 +11,8 @@ New in this file (technical completion in V9 style, authorised by the lane): ful
 gold trim, bell sleeves with gold cuffs, leather belt and buckle, trousers, boots, hip satchel, removal of
 body faces hidden under cloth, the V2-compatible 17-deform-bone rig, seven equipment sockets, Idle /
 Walk / Turn clips, GLB export with +Y up / -Z forward, GLB structure validation and the manifest. Later additions:
-Run, TurnLeft/TurnRight, Jump, the dormant GripRight morph, and riding (RideIdle/RideWalk/RideRun seated clips plus the
-RideDrape robe/tunic morph) authored against ../../creatures/sedgehorn_mount.
+Run, TurnLeft/TurnRight, Jump, Chop/Dig/Mine/Cast work actions, the dormant GripRight morph, and riding
+(RideIdle/RideWalk/RideRun seated clips plus the RideDrape robe/tunic morph) authored against ../../creatures/sedgehorn_mount.
 
 Base mesh: Blender Studio "Human Base Meshes" v1.4.1, collection "Body Male - Stylized", CC0, as staged
 in ../wayfarer_v3_staging/wayfarer_v3_artist_staging.blend (opened read-only, saved-as here first).
@@ -1415,6 +1415,83 @@ def jump_raw(phase):
     raise ValueError(phase)
 jump_pose = floored(jump_raw)
 
+# Work actions stay in place and begin/end at the standing rest pose. The right hand carries an equipped tool through
+# its existing socket and independent ToolGrip layer; Cast also reads as a barehanded gesture. No Root or finger pose is keyed.
+# Each middle pose is an intentional silhouette: axe overhead/down, spade thrust/lever, pick cross-body/recoil, spell raise/aim.
+WORK_ACTION_KEYS = {
+    "Chop": [
+        (0.00, {}),
+        (0.18, {"Spine": (0.10, -0.12, 0.08), "Head": (-0.08, 0.08, 0),
+                "UpperArm.R": (1.45, 0, -0.05), "Forearm.R": (0.15, 0, 0), "Hand.R": (0.60, 0, 0.05),
+                "UpperArm.L": (0.70, -0.08, 0.16), "Forearm.L": (0.85, 0, 0)}),
+        (0.43, {"Spine": (-0.34, 0.13, -0.08), "Head": (0.15, -0.07, 0),
+                "UpperArm.R": (0.55, 0, -0.12), "Forearm.R": (0.15, 0, 0), "Hand.R": (-1.00, 0, -0.05),
+                "UpperArm.L": (0.08, 0.06, 0.04), "Forearm.L": (0.70, 0, 0),
+                "Thigh.L": (0.12, 0, 0), "Thigh.R": (-0.10, 0, 0)}),
+        (0.62, {"Spine": (-0.22, 0.07, -0.04), "Head": (0.09, 0, 0),
+                "UpperArm.R": (0.48, 0, -0.06), "Forearm.R": (0.38, 0, 0), "Hand.R": (-0.75, 0, 0),
+                "UpperArm.L": (0.02, 0, 0.03)}),
+        (1.00, {}),
+    ],
+    # The spade blade is on local -Y, opposite its carry vector; the T-handle stays above the hand at the plant.
+    "Dig": [
+        (0.00, {}),
+        (0.20, {"Spine": (0.06, -0.08, 0), "Head": (-0.02, 0.06, 0),
+                "UpperArm.R": (1.15, 0, 0), "Forearm.R": (-0.10, 0, 0), "Hand.R": (-1.35, 0, 0),
+                "UpperArm.L": (0.45, 0, 0.08), "Forearm.L": (0.68, 0, 0)}),
+        (0.44, {"Spine": (-0.38, 0, 0), "Head": (0.17, 0, 0),
+                "UpperArm.R": (0.30, 0, 0), "Forearm.R": (-0.20, 0, 0), "Hand.R": (-0.60, 0, 0),
+                "UpperArm.L": (0.25, 0, 0.05), "Forearm.L": (0.44, 0, 0),
+                "Thigh.L": (0.32, 0, 0), "Thigh.R": (0.26, 0, 0),
+                "Shin.L": (-0.42, 0, 0), "Shin.R": (-0.36, 0, 0)}),
+        (0.68, {"Spine": (0.10, 0.10, 0), "Head": (-0.03, -0.05, 0),
+                "UpperArm.R": (0.75, 0, 0), "Forearm.R": (-0.20, 0, 0), "Hand.R": (-0.90, 0, 0),
+                "UpperArm.L": (-0.18, 0, 0.06), "Forearm.L": (0.90, 0, 0),
+                "Thigh.L": (0.12, 0, 0), "Thigh.R": (0.10, 0, 0),
+                "Shin.L": (-0.14, 0, 0), "Shin.R": (-0.12, 0, 0)}),
+        (1.00, {}),
+    ],
+    "Mine": [
+        (0.00, {}),
+        (0.24, {"Spine": (0.10, 0.27, -0.10), "Head": (-0.04, -0.12, 0),
+                "UpperArm.R": (1.35, 0.18, -0.35), "Forearm.R": (0.25, 0, 0), "Hand.R": (0.65, 0, 0.16),
+                "UpperArm.L": (0.45, -0.08, 0.20), "Forearm.L": (0.65, 0, 0)}),
+        (0.47, {"Spine": (-0.31, -0.24, 0.10), "Head": (0.13, 0.11, 0),
+                "UpperArm.R": (0.55, -0.15, 0.35), "Forearm.R": (0.15, 0, 0), "Hand.R": (-0.90, 0, -0.10),
+                "UpperArm.L": (0.12, 0.10, -0.08), "Forearm.L": (0.58, 0, 0)}),
+        (0.65, {"Spine": (-0.10, -0.10, 0.03), "Head": (0.04, 0.03, 0),
+                "UpperArm.R": (0.70, 0, -0.16), "Forearm.R": (0.90, 0, 0), "Hand.R": (-0.40, 0, 0.06),
+                "UpperArm.L": (-0.12, 0, 0.06)}),
+        (1.00, {}),
+    ],
+    "Cast": [
+        (0.00, {}),
+        (0.25, {"Spine": (0.13, -0.13, 0), "Head": (-0.09, 0.08, 0),
+                "UpperArm.R": (0.30, 0, -0.05), "Forearm.R": (0.20, 0, 0), "Hand.R": (1.15, 0, 0),
+                "UpperArm.L": (-0.24, 0, 0.38), "Forearm.L": (0.48, 0, 0)}),
+        (0.56, {"Spine": (-0.08, 0.09, 0), "Head": (-0.02, -0.05, 0),
+                "UpperArm.R": (0.55, -0.08, -0.10), "Forearm.R": (1.05, 0, 0), "Hand.R": (-0.90, 0, 0),
+                "UpperArm.L": (-0.52, 0, 0.55), "Forearm.L": (0.68, 0, 0), "Hand.L": (-0.16, 0, 0)}),
+        (0.72, {"Spine": (-0.05, 0.06, 0), "Head": (0, -0.03, 0),
+                "UpperArm.R": (0.55, -0.04, -0.08), "Forearm.R": (1.05, 0, 0), "Hand.R": (-0.90, 0, 0),
+                "UpperArm.L": (-0.44, 0, 0.42), "Forearm.L": (0.62, 0, 0)}),
+        (1.00, {}),
+    ],
+}
+
+def work_action_pose(keys):
+    def fn(phase):
+        p = min(max(phase, 0.0), 1.0)
+        for (p0, a), (p1, b) in zip(keys, keys[1:]):
+            if p0 <= p <= p1:
+                t = smooth(p0, p1, p)
+                pose = {name: tuple(lerp(a.get(name, (0, 0, 0))[i], b.get(name, (0, 0, 0))[i], t) for i in range(3))
+                        for name in a.keys() | b.keys()}
+                return pose, (0.0, 0.0, 0.0)
+        raise ValueError(phase)
+    return fn
+WORK_ACTIONS = {name: work_action_pose(keys) for name, keys in WORK_ACTION_KEYS.items()}
+
 # ------------------------------------------------------------------------ riding: seated pose, RideIdle/RideWalk/RideRun, robe drape morph
 # The adult sedgehorn (../../creatures/sedgehorn_mount) is the reference mount. Its manifest gives the saddle seat point, stirrup
 # treads, rein-hand points and the per-frame seat motion of its Idle/Walk/Run clips (all glTF space: +Y up, -Z forward). The rider
@@ -1737,7 +1814,9 @@ CLIPS = [("Idle", 48, idle_pose, True, 3), ("Walk", 24, walk_pose, True, 3), ("R
          ("Jump", 36, jump_pose, False, 2),                 # (name, cycle frames at 24 fps, pose, loops, key step)
          ("RideIdle", RIDE_FRAMES["RideIdle"], ride_idle_pose, True, RIDE_STEP["RideIdle"]),
          ("RideWalk", RIDE_FRAMES["RideWalk"], ride_walk_pose, True, RIDE_STEP["RideWalk"]),
-         ("RideRun", RIDE_FRAMES["RideRun"], ride_run_pose, True, RIDE_STEP["RideRun"])]
+         ("RideRun", RIDE_FRAMES["RideRun"], ride_run_pose, True, RIDE_STEP["RideRun"]),
+         ("Chop", 28, WORK_ACTIONS["Chop"], False, 2), ("Dig", 32, WORK_ACTIONS["Dig"], False, 2),
+         ("Mine", 30, WORK_ACTIONS["Mine"], False, 2), ("Cast", 36, WORK_ACTIONS["Cast"], False, 2)]
 for clip_name, frames, pose_fn, loop, step in CLIPS:        # warm the floor-solve caches before any action is assigned
     for f in range(1, frames + 2):
         pose_fn((f - 1) / frames)
@@ -1955,8 +2034,8 @@ bpy.ops.export_scene.gltf(filepath=OUT_GLB, export_format='GLB', use_selection=T
 # channels" switch cannot tell a keyed-but-constant bone from an unkeyed one in NLA mode, so it would also drop the ride clips'
 # constant seated legs). The .blend already holds the contract (ToolGrip keys only the finger bones; no other action keys
 # them), so the GLB is rewritten to match it: finger channels are removed from every other clip, and ToolGrip keeps only the
-# finger rotation channels. Nothing else in the file changes; the other clips' remaining channels are byte-identical to the
-# exporter's output, and orphaned accessors/bufferViews are pruned (indices remapped, binary blob untouched).
+# finger rotation channels. Work actions also omit the exporter's constant Root translation channel. The remaining channels
+# are byte-identical to the exporter's output, and orphaned accessors/bufferViews are pruned (indices remapped, binary blob untouched).
 def parse_glb(path):
     data = open(path, "rb").read()
     magic, version, length = struct.unpack_from("<III", data, 0)
@@ -1988,7 +2067,9 @@ def apply_tool_grip_channel_contract(path):
         keep = []
         for ch in a["channels"]:
             finger = names[ch["target"]["node"]] in FINGER_BONES
-            wanted = (finger and ch["target"]["path"] == "rotation") if a["name"] == "ToolGrip" else not finger
+            target = ch["target"]
+            wanted = (finger and target["path"] == "rotation") if a["name"] == "ToolGrip" else (
+                not finger and not (a["name"] in WORK_ACTIONS and names[target["node"]] == "Root" and target["path"] == "translation"))
             if wanted:
                 keep.append(ch)
         used = sorted({ch["sampler"] for ch in keep}); remap = {o: i for i, o in enumerate(used)}
@@ -2380,8 +2461,13 @@ for a in gltf.get("animations", []):
 ext_used = gltf.get("extensionsUsed", [])
 checks = {
     "clipsIdleWalkRunTurn": {"Idle", "Walk", "Run", "Turn"} <= set(animations) and all(v["durationSeconds"] > 0 for v in animations.values()),
-    "clipsTurnLeftTurnRightJump": {"TurnLeft", "TurnRight", "Jump"} <= set(animations) and len(animations) == 11
+    "clipsTurnLeftTurnRightJump": {"TurnLeft", "TurnRight", "Jump"} <= set(animations) and len(animations) == 15
                                   and all(animations[k]["durationSeconds"] > 0 for k in ("TurnLeft", "TurnRight", "Jump")),
+    "clipsChopDigMineCast": set(WORK_ACTIONS) <= set(animations)
+                             and all(animations[k]["durationSeconds"] > 0 and not finger_channels[k]
+                                     and not any(node_names[ch["target"]["node"]] == "Root" and ch["target"]["path"] == "translation"
+                                                 for ch in next(a for a in gltf["animations"] if a["name"] == k)["channels"])
+                                     for k in WORK_ACTIONS),
     "toolGripClipFingerRotationOnly": animations.get("ToolGrip", {}).get("durationSeconds", 0) > 0
                                       and animations.get("ToolGrip", {}).get("channelsByPath") == {"rotation": len(FINGER_BONES)}
                                       and finger_channels.get("ToolGrip") == sorted("%s.rotation" % n for n in FINGER_BONES),
@@ -2519,7 +2605,7 @@ manifest = {
                          "reuse": "17 deform-bone names/hierarchy, seven socket names with role extras, NLA clip layout (Idle/Walk/Turn, plus Run authored here); "
                                   "no V2 geometry, materials or weights are used"},
         "authoredHere": ["full-length V9_robe", "V9_sleeves", "V9_belt (+buckle)", "V9_trousers", "V9_boots", "V9_feet (barefoot variant, split from the CC0 body)", "V9_satchel",
-                         "V9_strap hip extension", "distance-falloff skinning", "Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump/RideIdle/RideWalk/RideRun clips", "RideDrape robe/tunic morph", "sockets", "camera/light rigs",
+                         "V9_strap hip extension", "distance-falloff skinning", "Idle/Walk/Run/Turn/TurnLeft/TurnRight/Jump/RideIdle/RideWalk/RideRun/Chop/Dig/Mine/Cast clips", "RideDrape robe/tunic morph", "sockets", "camera/light rigs",
                          "right-hand finger bones (10) and the finger-only ToolGrip clip"],
         "thirdPartyPixelsOrMeshes": "none beyond the CC0 base mesh; concept sheets are visual targets only",
         "license": "Derived asset: CC0 base mesh plus original Wizard Realms geometry, materials and rig authored in-repo.",
@@ -2572,6 +2658,8 @@ manifest = {
     },
     "equipmentSockets": socket_nodes,
     "animationClips": animations,
+    "workActionClips": {name: {"durationSeconds": animations.get(name, {}).get("durationSeconds"), "loops": False,
+                                "inPlace": True, "neutralAtStartAndEnd": True} for name in WORK_ACTIONS},
     "runClip": {**RUN_CLIP,
                 "glbTimeline": {"firstKeySeconds": animations.get("Run", {}).get("firstKeySeconds"), "closingKeySeconds": animations.get("Run", {}).get("durationSeconds"),
                                 "rule": "post-export: Run's time accessors are shifted so the first key is t=0 and the closing (loop-matching) key is cycleFrames/fps; "

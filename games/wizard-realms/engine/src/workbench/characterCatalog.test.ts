@@ -39,7 +39,7 @@ describe('Wizard character workbench catalog', () => {
   })
 
   it('keeps adult riding clips separate from on-foot inspection and maps them to the mount', () => {
-    expect(CHARACTER_ON_FOOT_CLIPS).toEqual(['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump'])
+    expect(CHARACTER_ON_FOOT_CLIPS).toEqual(['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump', 'Chop', 'Dig', 'Mine', 'Cast'])
     expect(CHARACTER_RIDE_CLIPS).toEqual(['RideIdle', 'RideWalk', 'RideRun'])
     expect(ADULT_SEDGEHORN_PREVIEW.clipsByRiderClip).toEqual({ RideIdle: 'Idle', RideWalk: 'Walk', RideRun: 'Run' })
     expect(ADULT_SEDGEHORN_PREVIEW.requiredClips).toEqual(['Idle', 'Walk', 'Run'])

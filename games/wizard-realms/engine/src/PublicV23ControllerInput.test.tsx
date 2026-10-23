@@ -37,6 +37,7 @@ import { resolvePublicV23Site } from './domain/publicWorldV23Sites'
 import { resolvePublicV14Surface } from './domain/publicWorldV14Terrain'
 import type { WizardViewIntent, WizardViewProjection } from './view/contracts'
 import { keyboardMovementIntents, savedWorkKeyboardIntent } from './view/WizardSurface'
+import type { V9WorkActionCue } from './view/WizardScene'
 
 const workId = 'works4:bridge:greenway-creek:0'
 const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
@@ -51,6 +52,7 @@ const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   onIntent: null as ((intent: WizardViewIntent) => void) | null,
   trace: null as PublicV17InputTrace | null,
   projection: null as WizardViewProjection | null,
+  workActionCue: null as V9WorkActionCue | null,
   saveInProgress: null as boolean | null,
   soilPlaceRejection: null as string | null,
   gate: 'open' as 'open' | 'checkpointing' | 'blocked', pending: 0,
@@ -94,6 +96,7 @@ vi.mock('./view/WizardSurface', async (importOriginal) => {
   return { ...actual, WizardSurface: (props: Parameters<typeof actual.WizardSurface>[0]) => {
     if (probe.enabled) { probe.onIntent = props.onIntent; probe.projection = props.projection
       probe.trace = props.inputTrace ?? null
+      probe.workActionCue = props.workActionCue ?? null
       probe.saveInProgress = props.saveInProgress ?? false
       probe.soilPlaceRejection = props.soilPlaceRejection ?? null
       return null }
@@ -412,6 +415,7 @@ afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = p
   probe.poseOnJump = probe.poseOnMove = false
   probe.cursor = probe.stateCursor = 0; probe.refs = []; probe.states = []
   probe.tick = probe.onIntent = probe.releaseSave = null; probe.projection = probe.trace = null
+  probe.workActionCue = null
   probe.saveInProgress = null
   probe.soilPlaceRejection = null
   probe.holdAction = false; probe.releaseAction = null
@@ -466,11 +470,13 @@ describe('V23 controller input admission', () => {
     expect((probe.states[1] as string[]).at(-1)).toBe(
       'That chop did not count: a checked action is pending. Wait for it to finish, then chop again.')
     rerender()
+    expect(probe.workActionCue).toBeNull()
     expect(probe.projection!.recentEvents.at(-1)).toContain('That chop did not count')
     probe.releaseAction!(); await settle()
     expect((probe.states[1] as string[]).at(-1)).toBe(
       'Oak chopped once and saved. Chop again to gather 4 logs.')
     rerender()
+    expect(probe.workActionCue).toEqual({ kind: 'Chop', sequence: 1 })
     expect(probe.projection!.recentEvents.at(-1)).toBe(
       'Oak chopped once and saved. Chop again to gather 4 logs.')
     probe.holdAction = false
@@ -480,7 +486,13 @@ describe('V23 controller input admission', () => {
     expect((probe.states[1] as string[]).at(-1)).toBe(
       'Oak felled. Four logs saved to your backpack.')
     rerender()
+    expect(probe.workActionCue).toEqual({ kind: 'Chop', sequence: 2 })
     expect(probe.projection!.recentEvents.at(-1)).toBe('Oak felled. Four logs saved to your backpack.')
+    probe.actionRejection = 'too_far'
+    probe.onIntent!({ type: 'interact' }); await settle()
+    rerender()
+    expect(probe.actions).toHaveLength(3)
+    expect(probe.workActionCue).toEqual({ kind: 'Chop', sequence: 2 })
   })
 
   it('ignores barefoot pace toggles so newly equipped boots begin at the default run pace', () => {
@@ -556,12 +568,16 @@ describe('V23 controller input admission', () => {
     expect(probe.actions).toEqual([{ kind: 'terrain-action/v1',
       action: { kind: 'dig', gx: 3, gz: 1 } }])
     expect(probe.states[1]).toContain('Dig saved at column 3, 1.')
+    rerender(false, false, true)
+    expect(probe.workActionCue).toEqual({ kind: 'Dig', sequence: 1 })
     probe.actionRejection = 'requires-soil'
     probe.onIntent!({ type: 'v26.terrain', kind: 'fill', gx: 3, gz: 1 })
     await settle()
     expect(probe.actions.at(-1)).toEqual({ kind: 'terrain-action/v1',
       action: { kind: 'fill', gx: 3, gz: 1 } })
     expect(probe.states[1]).toContain('Earn soil by digging before filling this column.')
+    rerender(false, false, true)
+    expect(probe.workActionCue).toEqual({ kind: 'Dig', sequence: 1 })
     probe.frameRejections = [
       { intentType: 'move', message: 'River crossing blocked. Build a bridge to cross.' },
       { intentType: 'move', message: 'Build a ladder at this cliff face.' },
@@ -1940,6 +1956,15 @@ describe('V31 controller soil intent routing', () => {
     expect(probe.actions).toEqual([
       { kind: 'terrain-action/v1', action: { kind: 'dig', gx: 1, gz: 0 } },
     ])
+  })
+
+  it('plays Mine for a saved checked deep dig', async () => {
+    mountV31()
+    probe.onIntent!({ type: 'v29.deep-dig', gx: 1, gz: 0 })
+    await settle()
+    expect(probe.actions).toEqual([{ kind: 'deep-dig', gx: 1, gz: 0 }])
+    rerenderV31()
+    expect(probe.workActionCue).toEqual({ kind: 'Mine', sequence: 1 })
   })
 
   it('never admits Place soil from the V26 route', async () => {
