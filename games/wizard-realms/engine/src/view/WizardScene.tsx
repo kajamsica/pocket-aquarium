@@ -27,7 +27,7 @@ import { publicV26TerrainCellIsWet } from '../domain/publicWorldV26TerrainSurfac
 import { publicV14InsideGreenway } from '../domain/publicWorldV14Boundary'
 import { publicV23PlacementId, resolvePublicV23Site } from '../domain/publicWorldV23Sites'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
-import { ADULT_SEDGEHORN_PREVIEW, RIDER_SEAT_OFFSET, missingAdultSedgehornClips } from '../workbench/characterCatalog'
+import { ADULT_SEDGEHORN_PREVIEW, CHARACTER_ACTION_CLIPS, RIDER_SEAT_OFFSET, missingAdultSedgehornClips } from '../workbench/characterCatalog'
 
 // Authoritative transforms arrive at 20 Hz; the view eases a presentation pose toward them each frame.
 const TELEPORT_SNAP_DISTANCE_M = 3
@@ -42,10 +42,9 @@ const BODY_BOB_M = 0.05
 const WAYFARER_V9_URL = new URL('../../art/characters/wayfarer_v9_game/wayfarer_v9_male.glb', import.meta.url).href
 const WAYFARER_V9_SOCKETS = ['Socket.RightHand', 'Socket.LeftHand', 'Socket.Head', 'Socket.Chest',
   'Socket.Legs', 'Socket.RightFoot', 'Socket.LeftFoot'] as const
-const V9_WORK_CLIPS = ['Chop', 'Dig', 'Mine', 'Cast'] as const
 const WAYFARER_V9_CLIPS = ['Idle', 'Walk', 'Run', 'TurnLeft', 'TurnRight', 'Jump', 'ToolGrip',
-  'RideIdle', 'RideWalk', 'RideRun', ...V9_WORK_CLIPS] as const
-export type V9WorkActionCue = Readonly<{ kind: typeof V9_WORK_CLIPS[number]; sequence: number }>
+  'RideIdle', 'RideWalk', 'RideRun', ...CHARACTER_ACTION_CLIPS] as const
+export type V9WorkActionCue = Readonly<{ kind: typeof CHARACTER_ACTION_CLIPS[number]; sequence: number }>
 const WILD_SEDGEHORN_TACK = ['SH_blanket', 'SH_saddle', 'SH_girth', 'SH_stirrups',
   'SH_bridle', 'SH_reins'] as const
 
@@ -1014,7 +1013,7 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
   useEffect(() => {
     actions.jump.setLoop(THREE.LoopOnce, 1)
     actions.jump.clampWhenFinished = true
-    for (const kind of V9_WORK_CLIPS) {
+    for (const kind of CHARACTER_ACTION_CLIPS) {
       actions[kind].setLoop(THREE.LoopOnce, 1)
       actions[kind].clampWhenFinished = true
       actions[kind].setEffectiveWeight(0)
@@ -1058,7 +1057,7 @@ function WizardAvatar({ source, pose, equipment, activePick = null, windwardActi
     actions.turnLeft.setEffectiveWeight(gaitWeight * weights.turnLeft)
     actions.turnRight.setEffectiveWeight(gaitWeight * weights.turnRight)
     actions.jump.setEffectiveWeight(gaitWeight * weights.jump)
-    for (const kind of V9_WORK_CLIPS)
+    for (const kind of CHARACTER_ACTION_CLIPS)
       actions[kind].setEffectiveWeight(work?.kind === kind ? workWeight : 0)
     actions.toolGrip.setEffectiveWeight(!riding && gear.mainHand ? 1 : 0)
     actions.rideIdle.setEffectiveWeight(rideWeights?.idle ?? 0)
