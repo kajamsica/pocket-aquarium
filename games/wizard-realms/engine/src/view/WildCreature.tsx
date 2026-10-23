@@ -4,6 +4,21 @@ import * as THREE from 'three'
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
+const sourcesByUrl = new Map<string, Promise<GLTF>>()
+
+function loadSource(modelUrl: string): Promise<GLTF> {
+  const cached = sourcesByUrl.get(modelUrl)
+  if (cached) return cached
+  const pending = new Promise<GLTF>((resolve, reject) => {
+    new GLTFLoader().load(modelUrl, resolve, undefined, reject)
+  })
+  sourcesByUrl.set(modelUrl, pending)
+  void pending.catch(() => {
+    if (sourcesByUrl.get(modelUrl) === pending) sourcesByUrl.delete(modelUrl)
+  })
+  return pending
+}
+
 export type WildCreatureProps = {
   id: string
   label: string
@@ -21,11 +36,10 @@ export function WildCreature({ id, label, modelUrl, position, yaw, scale, idleCl
   const [loaded, setLoaded] = useState<{ url: string; source: GLTF } | null>(null)
   useEffect(() => {
     let mounted = true
-    new GLTFLoader().load(modelUrl, (source) => {
-      if (mounted) setLoaded({ url: modelUrl, source })
-    }, undefined, (error) => {
-      if (mounted) console.error(`Wild creature ${id} could not load`, error)
-    })
+    void loadSource(modelUrl).then(
+      (source) => { if (mounted) setLoaded({ url: modelUrl, source }) },
+      (error) => { if (mounted) console.error(`Wild creature ${id} could not load`, error) },
+    )
     return () => { mounted = false }
   }, [id, modelUrl])
 
@@ -55,6 +69,11 @@ export function WildCreature({ id, label, modelUrl, position, yaw, scale, idleCl
     return () => {
       mixer.stopAllAction()
       mixer.uncacheRoot(model)
+      const skeletons = new Set<THREE.Skeleton>()
+      model.traverse((node) => {
+        if ((node as THREE.SkinnedMesh).isSkinnedMesh) skeletons.add((node as THREE.SkinnedMesh).skeleton)
+      })
+      skeletons.forEach((skeleton) => skeleton.dispose())
     }
   }, [id, idleClip, mixer, model, source])
   useFrame((_, delta) => { mixer?.update(delta) })
